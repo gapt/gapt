@@ -1,0 +1,100 @@
+\documentclass[a4paper, 11pt]{article}
+
+\usepackage{vmargin}
+\usepackage{graphics}
+\usepackage{graphicx}
+\usepackage{amscd}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\setpapersize{A4}
+\setmarginsrb{25mm}{30mm}{25mm}{30mm}{12pt}{11mm}{0pt}{11mm}
+
+\usepackage{fancyhdr}
+% initiate fancy headers
+\pagestyle{fancy}
+\fancyhf{} % Clear all fields
+\cfoot[\bfseries\thepage]{\thepage}
+
+\title{Guidelines for writing Scala code in institute 185/2}
+\date{1 September 2009}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+\noindent This document summarizes all the guidelines, conventions, requirements and procedures regarding writing code and projects.
+\end{abstract}
+
+\section{Files and software}
+\subsection{Required software and versions}
+\begin{enumerate}
+ \item Java JDK - minimum version: 1.6.0
+ \item Scala - minimum version: 2.7.5
+ \item Maven2 - minimum version: 2.2.1
+\end{enumerate}
+
+\subsection{Maven2}
+The project is being managed by Maven2 according to the default conventions. Please follow these conventions strictly as it will help automatic building of the whole project.
+\begin{itemize}
+ \item Each project will reside inside the folder 'cutelim', when you add a project please update the pom.xml file so it will recognize it.
+ \item Please divide each project into smaller projects when needed (i.e. the UI of a specific application should reside in a new nested project).
+ \item Inside the 'src' folder in each project there will be a 'main' directory containing the source code using sub directories according to the package tree structure.
+ \item Also inside the 'src' folder there will be a 'test' directory which will contain all tests in the same directory structure as the source. Please read more aboud testing in the testing section.
+ \item Maven has plugins for IDEs like eclipse. In order to use them you must run maven in order to generate eclipse project file.
+\end{itemize}
+
+\subsection{File names}
+Each scala file must be named in one of two possible ways:
+\begin{enumerate}
+ \item If the file contains many short definitions and classes then it will be named with a pseudo/concrete package name. I.e. for pseudo name: if the file defines all of the abstract language and resides in package language it will be called abstractLanguage.scala. The name must start with a small letter. 
+ \item If the file contain an algorithm or a big class then the class must be the only class in the file and the file must be named after this class. The name must start with a capital letter.
+\end{enumerate}
+
+\subsection{CVS}
+\begin{itemize}
+ \item Please do not include any build output like compiled classes in cvs.
+\end{itemize}
+
+
+\section{Code conventions}
+\subsection{Class names}
+\begin{itemize}
+ \item Class names start with capital letters.
+ \item Abstract classes names end with a capital 'A'.
+ \item Traits names end with a capital 'T'.
+\end{itemize}
+
+\section{Design considerations}
+\subsection{Abstraction layers}
+As Scala has a very expressive inheritence mechanism, the interaction between different modules should always be done on the most abstract layer possible. For example, a resolution theorem prover should work with a type theory like language and clause calculus. Therefore, this two layers should be created. If we add already only first already language already implemented, we would create a new type theory layer and insert it as an abstraction of first order language and work with it. If there will be raised the need to work with a language more abstract than type theory, then this layer should be created and the next layer above it in the abstraction hierarchy should be modified to inherit from the new layer (the interface of existing layer should never change in order to be backward compatible) 
+
+\section{Documentation}
+\subsection{Documenting classes}
+Please write before any class,trait or object a brief summary enclosed in:
+\begin{verbatim}  
+/**
+ *
+ */
+\end{verbatim}
+If the class is a case class, include also the following annotation:
+\begin{enumerate}
+ \item @param (for each parameter)
+\end{enumerate}
+
+\subsection{Documeting methods}
+As for classes, include before any public method a brief summary and the following annotations:
+\begin{enumerate}
+ \item @param (for each parameter)
+ \item @return
+ \item @exception (when applicable)
+\end{enumerate}
+
+\section{Testing}
+\subsection{specs}
+The tests must reside in the test folder of the respective project, in the right directory structure as the class it tests. In order to encourage Behaviour Driven Development (BDD), the tests should be using the 'specs' testing framework. The tests should include also ScalaCheck tests encapsulated in specs and possibly use the other frameworks which are supported by specs (Mockito and JMock, JUnit, ScalaTest, etc.).
+
+
+\end{document}
