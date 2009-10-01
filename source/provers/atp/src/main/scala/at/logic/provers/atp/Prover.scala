@@ -2,7 +2,7 @@
  * Description: An abstract prover
  */
 
-package at.logic.prover
+package at.logic.provers.atp
 
 import at.logic.syntax.calculus.RuleA
 import at.logic.syntax.calculus.resolution._

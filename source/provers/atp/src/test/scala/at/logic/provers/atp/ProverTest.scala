@@ -5,7 +5,7 @@ import org.specs._
 import org.specs.runner._
 import org.specs.mock.Mockito
 import org.mockito.Matchers._  // to use matchers like anyInt()
-import at.logic.prover.Prover
+import at.logic.provers.atp.Prover
 import at.logic.parsing.calculus._
 import at.logic.parsing.language.prover9._
 import at.logic.parsing.readers._
