@@ -11,7 +11,7 @@
 
   <modules>
     <module>syntax</module>
-    <module>prover</module>
+    <module>provers</module>
     <module>parsing</module>
     <module>unification</module>
   </modules>
