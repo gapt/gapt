@@ -17,5 +17,4 @@ trait LkProof[+T <: RuleA] extends RuleA{
 }
 
 final case class AxiomRule(s : Sequent) extends NullaryRuleA(Axiom,s) with LkProof[AxiomRule]
-final case class ForallLeftRule(u : LkProof[RuleA], c2 : Sequent, a2 : FormulaOccurrence, p2 : FormulaOccurrence) extends UnaryRuleA(ForallLeft, u, c2, Some(List[Formul    aOccurrence](a2)), Some(List[FormulaOccurrence](p2))) with LkProof[ForallLeftRule]
-~
+final case class ForallLeftRule(u : LkProof[RuleA], c2 : Sequent, a2 : FormulaOccurrence, p2 : FormulaOccurrence) extends UnaryRuleA(ForallLeft, u, c2, Some(List[FormulaOccurrence](a2)), Some(List[FormulaOccurrence](p2))) with LkProof[ForallLeftRule]
