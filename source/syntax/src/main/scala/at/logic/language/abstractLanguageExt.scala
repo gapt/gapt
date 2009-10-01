@@ -2,7 +2,7 @@
  * Description: This file defines the logical extensions (like logical operators\equality etc.) to the abstract language
  */
 
-package at.logic.syntax.language
+package at.logic.syntax.language.ext
 
 /**
  * Operators extends Symbols and represent a symbol which may have some effect other that just a name
