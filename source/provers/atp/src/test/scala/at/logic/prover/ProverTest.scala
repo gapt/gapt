@@ -23,7 +23,7 @@ private class MyParser(str: String) extends StringReader(str) with FOLProver9Ter
 
 class ProverTest extends Specification with JUnit { 
   "Prover" should {
-    "in case it has only one clause return it if it is the empty clause" in {
+    /*"in case it has only one clause return it if it is the empty clause" in {
       new Prover().refute(new MyParser(".")) must beLike {case Some((InitialRule(Clause(Nil,Nil)), _)) => true}
     }
     "in case it has an empty clause set return None" in {
@@ -34,6 +34,6 @@ class ProverTest extends Specification with JUnit {
     }
     "When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {
       "ex1"
-    }
+    }*/
   }
 }
