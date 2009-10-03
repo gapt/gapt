@@ -8,6 +8,7 @@ import scala.util.parsing.combinator._
 import at.logic.parsing.language.prover9.Prover9TermParser
 import at.logic.parsing.language.TermParser
 import at.logic.syntax.language._
+import at.logic.syntax.language.ext._
 import at.logic.syntax.calculus._
 import at.logic.parsing.calculus.SequentsParser
 
