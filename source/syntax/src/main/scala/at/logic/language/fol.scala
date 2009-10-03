@@ -5,6 +5,7 @@
 package at.logic.syntax.language.fol
 
 import at.logic.syntax.language
+import at.logic.syntax.language.ext._
 
 trait FOL[+S <: TypeA, +T <: TermA[S]] extends TermA[S] {
   this: T with FOL[S,T] =>
