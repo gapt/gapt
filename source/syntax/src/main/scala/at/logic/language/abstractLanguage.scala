@@ -81,20 +81,4 @@ abstract case class ConstantA[+T <: TypeA](n: Name ) extends FunctionA[T](n,Nil)
 
 
 
-case class Arrow[+T1 <: TypeA, +T2 <: TypeA](left : T1, right : T2) extends ComplexTypeA
-
-abstract class ExpressionA[+T <: TypeA] {
-  /**
-   * Creates an indentical copy of the concrete implementing term
-   * @return the copy
-   */
-  def cloneTerm() : TermA[T]
-}
-
-abstract case class VarA[+T <: TypeA](symbol: SymbolA ) extends ExpressionA[T]
-
-abstract case class LambdaAbstractionA[+T1 <: TypeA, +T2 <: TypeA](boundvar: VarA[T1], expression: ExpressionA[T2] ) extends ExpressionA[Arrow[T1,T2]]
-
-abstract case class LambdaApplicationA[+T1 <: TypeA, +T2 <: TypeA](function: ExpressionA[Arrow[T1, T2]], argument: T1 ) extends ExpressionA[T2]
-
 

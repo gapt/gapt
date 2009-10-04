@@ -7,29 +7,61 @@
 
 package at.logic.language
 
-/**
- * Implementation representing a symbol which is a string
- * @param name the value of the name
- */
-case class Name(name: String) extends SymbolA 
+object TypedLambdaCalculus {
 
-object NameImplicitConverters {
-    implicit def toName(s: String) = Name(s)
-}
+    import at.logic.language.Types._
+    
+    abstract class SymbolA
 
-case class Var[+T <: TA](override val symbol: SymbolA ) extends LambdaVarA[T](symbol)
+    case class StringSymbol(string: String) extends SymbolA {
+        override def toString = string
+    }
+    object StringSymbolImplicitConverters {
+        implicit def toStringSymbol(s: String) = StringSymbol(s)
+    }
 
-case class Abs[+T1 <: TA, +T2 <: TA](override val variable: LambdaVarA[T1], override val expression: LambdaExpressionA[T2] )
-    extends LambdaAbstractionA[T1, T2](variable, expression)
+    abstract class LambdaExpression {
+        def exptype: TA
+    }
 
-case class App[+T1 <: TA, +T2 <: TA](override val function: LambdaExpressionA[TArrow[T1, T2]], override val argument: LambdaExpressionA[T1] ) extends LambdaApplicationA[T1, T2](function, argument)
+
+    case class Var(name: SymbolA, exptype: TA )
+        extends LambdaExpression
+
+    case class Abs(variable: Var, expression: LambdaExpression)
+        extends LambdaExpression {
+            def exptype: TA = ->(variable.exptype,expression.exptype)
+        }
+
+    case class App(function: LambdaExpression, argument: LambdaExpression )
+        extends LambdaExpression {
+            require({
+                function.exptype match {
+                    case ->(in,out) => {if (in == argument.exptype) true
+                                        else false}
+                    case _          => false
+                }
+            })
+            def exptype: TA = {
+                function.exptype match {
+                    case ->(in,out) => out
+                }
+            }
+        }
 
 
-object B {
-    import NameImplicitConverters._
-    def f = {
-        val b = Var[TInd]("p")
-        val a = Abs(Var[TInd](Name("a")), App( Var[TArrow[TInd,TBool]](Name("P")), Var[TInd](Name("a"))) )
-        println("hello")
+    def exportLambdaExpressionToString(expression: LambdaExpression):String = expression match {
+        case Var(name,exptype) => name.toString
+        case Abs(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
+        case App(function, argument) => "(" + exportLambdaExpressionToString(function) + " " + exportLambdaExpressionToString(argument)  + ")"
+    }
+
+    def exportLambdaExpressionToStringWithTypes(expression: LambdaExpression):String = expression match {
+        case Abs(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
+        case App(function, argument) => "(" + exportLambdaExpressionToString(function) + " " + exportLambdaExpressionToString(argument)  + ")"
+        case Var(name,exptype) => {
+            name.toString +
+                "ToDo"
+        }
     }
 }
