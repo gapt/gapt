@@ -62,6 +62,7 @@ object TypedLambdaCalculus {
         case Var(name,exptype) => {
             name.toString +
                 "ToDo"
+
         }
     }
 }
