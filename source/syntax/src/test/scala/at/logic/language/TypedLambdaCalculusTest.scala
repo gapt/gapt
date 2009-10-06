@@ -35,5 +35,15 @@ class TypedLambdaCalculusTest extends Specification with JUnit {
         val exp3 = Abs(exp1,exp2)
         (exportLambdaExpressionToString(exp3)) must beEqual ("\\x.(P x)")
     }
+    "create N-ary abstractions (AbsN) correctly" in {
+        val v1 = Var("x",i)
+        val v2 = Var("y",i)
+        val f = Var("f",i -> (i -> o))
+        // ( AbsN(v1::v2::Nil, f) ) must beEqual ( Abs(v1,Abs(v2,f)) )
+        ( AbsN(v1::v2::Nil, f) match {
+            case Abs(v1,Abs(v2,f)) => true
+            case _ => false
+            }) must beEqual ( true )
+    }
   }
 }
