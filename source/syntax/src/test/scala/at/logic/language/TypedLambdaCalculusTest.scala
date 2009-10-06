@@ -45,5 +45,6 @@ class TypedLambdaCalculusTest extends Specification with JUnit {
             case _ => false
             }) must beEqual ( true )
     }
+
   }
 }
