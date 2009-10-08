@@ -12,8 +12,10 @@ import org.specs.runner._
 
 
 import Types._
+import Symbols._
+import Symbols.StringSymbolImplicitConverters._
 import TypedLambdaCalculus._
-import TypedLambdaCalculus.StringSymbolImplicitConverters._
+
 
 
 class LambdaCalculusTest extends Specification with JUnit {
