@@ -16,7 +16,7 @@ object Types {
     case class To() extends TAtomicA ; def o = To()
     case class ->(in:TA, out:TA) extends TComplexA
 
-    object  TypesToStringExtractor {
+    object  StringExtractor {
         def apply(t:TA):String = t match {
             case Ti() => "i"
             case To() => "o"
@@ -29,7 +29,7 @@ object Types {
     }
 
     object TAImplicitConverters {
-        implicit def toTA(s:String):TA = TypesToStringExtractor.unapply(s) match {
+        implicit def fromString(s:String):TA = StringExtractor.unapply(s) match {
             case Some(result) => result
             case None =>  throw new IllegalArgumentException("Bad syntax for types: "+s)
         }

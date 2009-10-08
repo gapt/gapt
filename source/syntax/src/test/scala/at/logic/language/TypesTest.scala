@@ -38,7 +38,7 @@ class TypesTest  extends Specification with JUnit {
     }
     "extract from string (1)" in {
         ( "(i -> (o -> o))" match {
-                case TypesToStringExtractor( ->(Ti(), ->(To(),To())) ) => true
+                case StringExtractor( ->(Ti(), ->(To(),To())) ) => true
                 case _ => false
             } ) must beEqual ( true )
     }

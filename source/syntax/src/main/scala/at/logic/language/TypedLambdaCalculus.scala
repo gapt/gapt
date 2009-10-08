@@ -5,19 +5,13 @@
 
 package at.logic.language
 
+import at.logic.language.Symbols._
+
 object TypedLambdaCalculus {
 
     import at.logic.language.Types._
     
-    abstract class SymbolA
-
-    case class StringSymbol(string: String) extends SymbolA {
-        override def toString = string
-    }
-    object StringSymbolImplicitConverters {
-        implicit def toStringSymbol(s: String) = StringSymbol(s)
-    }
-
+    
     abstract class LambdaExpression {
         def exptype: TA
     }
