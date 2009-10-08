@@ -88,8 +88,9 @@ object TypedLambdaCalculus {
     
 
 
-    case class AppN(override val function: LambdaExpression, arguments: ::[LambdaExpression])
-        extends App(function, arguments.head)
+    case class AppN(function: LambdaExpression, argument: LambdaExpression*) {
+        val x = argument.toList(1)
+    }
 
     def exportLambdaExpressionToString(expression: LambdaExpression):String = expression match {
         case Var(name,exptype) => name.toString
