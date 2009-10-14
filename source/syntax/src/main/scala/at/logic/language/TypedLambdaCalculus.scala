@@ -46,12 +46,10 @@ object TypedLambdaCalculus {
     def AbsN(variables: List[Var], expression: LambdaExpression):LambdaExpression =
         if (!variables.isEmpty) (variables :\ expression)(Abs)
         else expression
-    
 
-
-    case class AppN(function: LambdaExpression, argument: LambdaExpression*) {
-        val x = argument.toList(1)
-    }
+    def AppN(function: LambdaExpression, arguments: List[LambdaExpression]):LambdaExpression =
+        if (!arguments.isEmpty) (function /: arguments)(App)
+        else function
 
     def exportLambdaExpressionToString(expression: LambdaExpression):String = expression match {
         case Var(name,exptype) => name.toString
