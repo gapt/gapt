@@ -41,9 +41,17 @@ class LambdaCalculusTest extends Specification with JUnit {
         val v1 = Var("x",i)
         val v2 = Var("y",i)
         val f = Var("f",i -> (i -> o))
-        // ( AbsN(v1::v2::Nil, f) ) must beEqual ( Abs(v1,Abs(v2,f)) )
         ( AbsN(v1::v2::Nil, f) match {
             case Abs(v1,Abs(v2,f)) => true
+            case _ => false
+            }) must beEqual ( true )
+    }
+    "create N-ary applications (AppN) correctly" in {
+        val v1 = Var("x",i)
+        val v2 = Var("y",i)
+        val f = Var("f",i -> (i -> o))
+        ( AppN(f, List(v1,v2)) match {
+            case App(App(f, v1), v2) => true
             case _ => false
             }) must beEqual ( true )
     }
