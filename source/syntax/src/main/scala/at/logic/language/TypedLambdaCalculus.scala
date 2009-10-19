@@ -41,16 +41,6 @@ object TypedLambdaCalculus {
             }
         }
 
-
-
-//    def AbsN(variables: List[Var], expression: LambdaExpression):LambdaExpression =
-//        if (!variables.isEmpty) (variables :\ expression)(Abs)
-//        else expression
-//
-//    def AppN(function: LambdaExpression, arguments: List[LambdaExpression]):LambdaExpression =
-//        if (!arguments.isEmpty) (function /: arguments)(App)
-//        else function
-
     object AbsN {
         def apply(variables: List[Var], expression: LambdaExpression) = if (!variables.isEmpty) (variables :\ expression)(Abs)
                                                                         else expression
