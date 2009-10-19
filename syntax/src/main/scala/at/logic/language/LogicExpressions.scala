@@ -19,20 +19,14 @@ object LogicExpressions {
     val orS = LatexSymbol("\\vee", "or")            ; val orC  = Var(orS, "(o -> (o -> o))")
     val impS = LatexSymbol("\\rightarrow", "imp")   ; val impC  = Var(impS, "(o -> (o -> o))")
 
-    val exS = LatexSymbol("\\exists", "ex")         ; def exQ(exptype:TA) = Var(exS, ->(exptype,"o"))
-    val allS = LatexSymbol("\\forall", "all")       ; def allQ(exptype:TA) = Var(allS, ->(exptype,"o"))
-
     trait LogicExpression extends LambdaExpression {
-        def and(that: LambdaExpression) = new And(this, that)
-        def or(that: LambdaExpression) = new Or(this, that)
-        def imp(that: LambdaExpression) = new Imp(this, that)
+        def and(that: LambdaExpression) = And(this, that)
+        def or(that: LambdaExpression) = Or(this, that)
+        def imp(that: LambdaExpression) = Imp(this, that)
     }
 
-//    case class Atom(predicate: LambdaExpression, arguments:List[LambdaExpression])
-//        extends App(AppN(predicate,arguments.take(arguments.length - 1)),arguments.last)
-
     object Atom {
-        def apply(predicate: LambdaExpression, arguments:List[LambdaExpression]) = App(AppN(predicate,arguments.take(arguments.length - 1)),arguments.last)
+        def apply(predicate: LambdaExpression, arguments:List[LambdaExpression]) = new App(AppN(predicate,arguments.take(arguments.length - 1)),arguments.last) with LogicExpression
         def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = expression.exptype match {
             case To() => Some(unapplyRec(expression))
             case _ => None
@@ -45,20 +39,36 @@ object LogicExpressions {
         }
     }
 
-    //ToDo: Fix this so that Atom returns a LogicExpression
-//    def Atom(predicate: LambdaExpression, arguments:List[LambdaExpression]): LambdaExpression =
-//        if (!arguments.isEmpty) (predicate /: arguments)(App)
-//        else predicate
+    object Neg {
+        def apply(sub: LambdaExpression) = new App(negC,sub) with LogicExpression
+        def unapply(expression: LambdaExpression) = expression match {
+            case App(negC,sub) => Some( (sub) )
+            case _ => None
+        }
+    }
 
+    object And {
+        def apply(left: LambdaExpression, right: LambdaExpression) = new App(App(andC,left),right) with LogicExpression
+        def unapply(expression: LambdaExpression) = expression match {
+            case App(App(andC,left),right) => Some( (left,right) )
+            case _ => None
+        }
+    }
 
-    case class Neg(sub: LambdaExpression) extends App(negC,sub) with LogicExpression
-    case class And(left: LambdaExpression, right: LambdaExpression) extends App(App(andC,left),right) with LogicExpression
-    case class Or(left: LambdaExpression, right: LambdaExpression) extends App(App(orC,left),right) with LogicExpression
-    case class Imp(left: LambdaExpression, right: LambdaExpression) extends App(App(impC,left),right) with LogicExpression
+    object Or {
+        def apply(left: LambdaExpression, right: LambdaExpression) = new App(App(orC,left),right) with LogicExpression
+        def unapply(expression: LambdaExpression) = expression match {
+            case App(App(orC,left),right) => Some( (left,right) )
+            case _ => None
+        }
+    }
 
-    case class Ex(sub: LambdaExpression) extends App(exQ(sub.exptype),sub) with LogicExpression
-    case class All(sub: LambdaExpression) extends App(allQ(sub.exptype),sub) with LogicExpression
-    case class ExVar(variable: Var, subformula: LambdaExpression) extends Ex(Abs(variable, subformula))
-    case class AllVar(variable: Var, subformula: LambdaExpression) extends All(Abs(variable, subformula))
+    object Imp {
+        def apply(left: LambdaExpression, right: LambdaExpression) = new App(App(impC,left),right) with LogicExpression
+        def unapply(expression: LambdaExpression) = expression match {
+            case App(App(impC,left),right) => Some( (left,right) )
+            case _ => None
+        }
+    }
 
 }
