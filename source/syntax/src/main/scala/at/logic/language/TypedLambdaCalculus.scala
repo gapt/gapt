@@ -43,13 +43,35 @@ object TypedLambdaCalculus {
 
 
 
-    def AbsN(variables: List[Var], expression: LambdaExpression):LambdaExpression =
-        if (!variables.isEmpty) (variables :\ expression)(Abs)
-        else expression
+//    def AbsN(variables: List[Var], expression: LambdaExpression):LambdaExpression =
+//        if (!variables.isEmpty) (variables :\ expression)(Abs)
+//        else expression
+//
+//    def AppN(function: LambdaExpression, arguments: List[LambdaExpression]):LambdaExpression =
+//        if (!arguments.isEmpty) (function /: arguments)(App)
+//        else function
 
-    def AppN(function: LambdaExpression, arguments: List[LambdaExpression]):LambdaExpression =
-        if (!arguments.isEmpty) (function /: arguments)(App)
-        else function
+    object AbsN {
+        def apply(variables: List[Var], expression: LambdaExpression) = if (!variables.isEmpty) (variables :\ expression)(Abs)
+                                                                        else expression
+        def unapply(expression: LambdaExpression):Option[(List[Var], LambdaExpression)] = Some(unapplyRec(expression))
+        def unapplyRec(expression: LambdaExpression): (List[Var], LambdaExpression) = expression match {
+            case Abs(v,exp) => (v :: unapplyRec(exp)._1, unapplyRec(exp)._2 )
+            case v: Var => (Nil, v) 
+            case a: App => (Nil, a)
+        }
+    }
+
+    object AppN {
+        def apply(function: LambdaExpression, arguments:List[LambdaExpression]) = if (!arguments.isEmpty) (function /: arguments)(App)
+                                                                                  else function
+        def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = Some(unapplyRec(expression))
+        def unapplyRec(expression: LambdaExpression):(LambdaExpression, List[LambdaExpression]) = expression match {
+            case App(f,arg) => (unapplyRec(f)._1, unapplyRec(f)._2 ::: (arg::Nil) )
+            case v: Var => (v,Nil)
+            case a: Abs => (a,Nil)
+        }
+    }
 
     def exportLambdaExpressionToString(expression: LambdaExpression):String = expression match {
         case Var(name,exptype) => name.toString
