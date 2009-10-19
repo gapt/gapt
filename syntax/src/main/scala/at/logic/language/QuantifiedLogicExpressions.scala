@@ -21,11 +21,6 @@ object QuantifiedLogicExpressions {
 
     trait QuantifiedLogicExpression extends LogicExpression
 
-//    case class Ex(sub: LambdaExpression) extends App(exQ(sub.exptype),sub) with LogicExpression
-//    case class All(sub: LambdaExpression) extends App(allQ(sub.exptype),sub) with LogicExpression
-//    case class ExVar(variable: Var, subformula: LambdaExpression) extends Ex(Abs(variable, subformula))
-//    case class AllVar(variable: Var, subformula: LambdaExpression) extends All(Abs(variable, subformula))
-
     object Ex {
         def apply(sub: LambdaExpression) = new App(exQ(sub.exptype),sub) with QuantifiedLogicExpression
         def unapply(expression: LambdaExpression) = expression match {
