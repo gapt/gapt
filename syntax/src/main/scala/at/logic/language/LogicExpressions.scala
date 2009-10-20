@@ -25,42 +25,6 @@ object LogicExpressions {
         def imp(that: LambdaExpression) = Imp(this, that)
     }
 
-//    case class A()
-//    trait T
-//    case class C() extends T
-//    trait T1[+Q]
-//
-//
-//
-//    def test1 = {
-//        val a = new A() with T
-//        a match {
-//            case A() => true
-//        }
-//    }
-//
-//    def test2 = {
-//        val c = new C()
-//        c match {
-//            case C() => true
-//        }
-//    }
-
-//    def test3 = {
-//        val a = new A() with T1[A]
-//        a match {
-//            case A() => true
-//        }
-//    }
-
-
-//    def test4 = {
-//        val a = new A() with B
-//        a match {
-//            case A() with B => true
-//        }
-//    }
-
     object Atom {
         def apply(predicate: LambdaExpression, arguments:List[LambdaExpression]) = new App(AppN(predicate,arguments.take(arguments.length - 1)),arguments.last) with LogicExpression
         def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = expression.exptype match {
