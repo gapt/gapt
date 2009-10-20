@@ -39,7 +39,7 @@ class LogicExpressionsTest extends Specification with JUnit {
         val v1 = Var("x",i)
         val v2 = Var("y",i)
         val p = Var("P",i -> (i -> o))
-        ( Atom(p, List(v1,v2)) match {
+        ( (Atom(p, List(v1,v2)):LambdaExpression) match {
             case App(App(p, v1), v2) => true
             case _ => false
             }) must beEqual ( true )
