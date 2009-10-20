@@ -26,7 +26,7 @@ object LogicExpressions {
     }
 
     object Atom {
-        def apply(predicate: LambdaExpression, arguments:List[LambdaExpression]) = new App(AppN(predicate,arguments.take(arguments.length - 1)),arguments.last) with LogicExpression
+        def apply(predicate: LambdaExpression, arguments:List[LambdaExpression]) = new App(AppN(predicate,arguments.take(arguments.length - 1)),arguments.last) // with LogicExpression
         def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = expression.exptype match {
             case To() => Some(unapplyRec(expression))
             case _ => None
