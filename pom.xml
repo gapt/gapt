@@ -10,6 +10,7 @@
   <name>General Architecture for Proofs</name>
 
   <modules>
+    <module>utils</module>
     <module>syntax</module>
     <module>provers</module>
     <module>parsing</module>
