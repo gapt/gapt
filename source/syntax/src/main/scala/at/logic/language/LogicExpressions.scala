@@ -12,14 +12,14 @@ import TypedLambdaCalculus._
 import Types._
 import Types.TAImplicitConverters._
 
-object LogicExpressions {
+object LogicExpressions {  // change to "BooleanConnectives"
 
     val negS = LatexSymbol("\\neg", "neg")          ; val negC = Var(negS, "(o -> o)")
     val andS = LatexSymbol("\\wedge", "and")        ; val andC = Var(andS, "(o -> (o -> o))")
     val orS = LatexSymbol("\\vee", "or")            ; val orC  = Var(orS, "(o -> (o -> o))")
     val impS = LatexSymbol("\\rightarrow", "imp")   ; val impC  = Var(impS, "(o -> (o -> o))")
 
-    trait LogicExpression extends LambdaExpression {
+    trait LogicExpression extends LambdaExpression {   // change to "BooleanExpression"
         def and(that: LambdaExpression) = And(this, that)
         def or(that: LambdaExpression) = Or(this, that)
         def imp(that: LambdaExpression) = Imp(this, that)
