@@ -18,4 +18,15 @@
       <version>1.5.8</version>
     </dependency>
   </dependencies>
+
+  <build>
+      <resources>
+            <resource>
+	            <directory>src/main/config</directory>
+        	    <includes>
+             	 	<include>log4j.xml</include>
+            	    </includes>
+            </resource>
+     </resources>
+  </build>
 </project>

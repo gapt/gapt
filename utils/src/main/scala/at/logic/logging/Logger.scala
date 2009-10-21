@@ -2,7 +2,7 @@ package at.logic.logging
 
 import org.slf4j.LoggerFactory
 
-trait Logging {
+trait Logger {
 
   val log = LoggerFactory.getLogger(getClass)
 
