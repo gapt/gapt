@@ -19,6 +19,7 @@ object Symbols {
 
     object StringSymbolImplicitConverters {
         implicit def fromString(s: String) = StringSymbol(s)
+        implicit def toString(symbol: StringSymbol) = symbol.string
     }
 
     object LatexSymbolImplicitConverters {
