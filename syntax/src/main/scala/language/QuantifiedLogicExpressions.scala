@@ -24,7 +24,7 @@ object QuantifiedLogicExpressions { // change to "Quantifiers"
     object Ex {
         def apply(sub: LambdaExpression) = new App(exQ(sub.exptype),sub) with QuantifiedLogicExpression
         def unapply(expression: LambdaExpression) = expression match {
-            case App(Var(exS, ->(t,To())),sub) => if (sub.exptype == t) Some( (sub) ) else None
+            case App(Var(exS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
         }
     }
@@ -32,7 +32,7 @@ object QuantifiedLogicExpressions { // change to "Quantifiers"
     object All {
         def apply(sub: LambdaExpression) = new App(allQ(sub.exptype),sub) with QuantifiedLogicExpression
         def unapply(expression: LambdaExpression) = expression match {
-            case App(Var(allS, ->(t,To())),sub) => if (sub.exptype == t) Some( (sub) ) else None
+            case App(Var(allS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
         }
     }
