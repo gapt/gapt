@@ -3,13 +3,13 @@
 
   <parent>
   <groupId>at.logic</groupId>
-  <artifactId>gap</artifactId>
+  <artifactId>transformations</artifactId>
   <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>unification</artifactId>
+  <artifactId>gentzen-cutelim</artifactId>
   <packaging>jar</packaging>  
-  <name>Unification algorithms</name>
+  <name>Gentzen's Cut-Elimination</name>
 
   <dependencies>
     <dependency>
