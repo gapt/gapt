@@ -13,8 +13,9 @@
     <module>utils</module>
     <module>syntax</module>
     <module>provers</module>
-    <module>parsing</module>
-    <module>unification</module>
+    <module>transformations</module>
+    <module>algorithms</module>
+    <module>gui</module>
   </modules>
 
   <packaging>pom</packaging>
