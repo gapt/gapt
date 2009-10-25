@@ -80,10 +80,18 @@ object TypedLambdaCalculus {
     }
 
     object freshVar {
-        private var counter = 0
-        def apply(exptype: TA) = {
-            counter += 1
-            new Var(StringSymbol("#"+counter), exptype)
+        def apply(exptype: TA, disallowedVariables: Set[Var]):Var = {
+            var counter = 1
+            var v = new Var(StringSymbol("#"+counter), exptype)
+            while (disallowedVariables.contains(v)) {
+                counter += 1
+                v = new Var(StringSymbol("#"+counter), exptype)
+            }
+            v
+        }
+        def apply(exptype: TA, context: LambdaExpression):Var = {
+            val (cFV, cBV) = context.getFreeAndBoundVariables
+            apply(exptype, cFV ++ cBV)
         }
     }
 
