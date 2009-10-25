@@ -17,29 +17,33 @@ object Substitutions {
         def _1 = variable
         def _2 = expression
 
-        def apply(expression: LambdaExpression):LambdaExpression = substituteWithRenaming(expression, this)
+        def apply(expression: LambdaExpression):LambdaExpression = substituteWithRenaming(expression)
 
-        private def substituteWithRenaming(expression: LambdaExpression, sigma: SingleSubstitution):LambdaExpression = expression match {
-                case x:Var => if (x == sigma.variable)  sigma.expression else x
-                case App(m,n) => App(substituteWithRenaming(m,sigma), substituteWithRenaming(n,sigma))
-                case Abs(x,m) => if (x == sigma.variable) expression
-                                 else {
-                                     val eFV = sigma.expression.getFreeAndBoundVariables._1
+        private def substituteWithRenaming(exp: LambdaExpression):LambdaExpression = {
+            val eFV = expression.getFreeAndBoundVariables._1
+            exp match {
+                case x:Var => if (x == variable)  expression else x
+                case App(m,n) => App(substituteWithRenaming(m), substituteWithRenaming(n))
+                case Abs(x,m) => if (x == variable) exp
+                                 else {                                     
                                      if (eFV.contains(x)) {
-                                         val Abs(y,n) = renameBoundVariable(Abs(x,m))
-                                         Abs(y,substituteWithRenaming(n, sigma))
+                                         val Abs(y,n) = renameBoundVariable(Abs(x,m), eFV)
+                                         Abs(y,substituteWithRenaming(n))
                                      }
-                                     else Abs(x,substituteWithRenaming(m, sigma))
+                                     else Abs(x,substituteWithRenaming(m))
                                  }
+            }
         }
 
-        private def renameBoundVariable(exp: Abs) = exp match {
+        private def renameBoundVariable(exp: Abs, disallowedVariables: Set[Var]) = exp match {
            case Abs(x,m) => {
-                    val v = freshVar(x.exptype)
-                    val sigma: SingleSubstitution = (x,v)
-                    val n = sigma(m)
-                    Abs(v,n)
-            }
+                   val (eFV,eBV) = exp.getFreeAndBoundVariables
+                   val disallowed = disallowedVariables ++ eFV
+                   val v = freshVar(x.exptype, disallowed)
+                   val sigma: SingleSubstitution = (x,v)
+                   val n = sigma(m)
+                   Abs(v,n)
+           }
         }
         private def substitute(exp: LambdaExpression):LambdaExpression = exp match {
                 case x:Var => if (x == variable)  expression else x
@@ -55,76 +59,32 @@ object Substitutions {
 
     case class Substitution(substitutions: List[SingleSubstitution]) extends (LambdaExpression => LambdaExpression) {
         def this(subs: SingleSubstitution*) = this(subs.toList)
+        def this(variable: Var, expression: LambdaExpression) = this(List(SingleSubstitution(variable, expression)))
 
         def ::(sub:SingleSubstitution) = new Substitution(sub::substitutions)
         def :::(otherSubstitutionList:Substitution) = new Substitution(otherSubstitutionList.substitutions:::this.substitutions)
         def apply(expression: LambdaExpression):LambdaExpression = {
             var result = expression       // ToDo: Replace this by an immutable and more functional alternative...
-            for ( s <- substitutions ) result = substituteWithRenaming(result, s)
+            for ( sigma <- substitutions ) result = sigma(result)
             result
         }
-
-        private def substitute(expression: LambdaExpression, sigma: SingleSubstitution):LambdaExpression = expression match {
-                case x:Var => if (x == sigma.variable)  sigma.expression else x
-                case App(m,n) => App(substitute(m,sigma), substitute(n,sigma))
-                case Abs(x,m) => if (x == sigma.variable) expression
-                                 else Abs(x,substitute(m, sigma))
-        }
-
-
-        private def substituteWithRenaming(expression: LambdaExpression, sigma: SingleSubstitution):LambdaExpression = expression match {
-                case x:Var => if (x == sigma.variable)  sigma.expression else x
-                case App(m,n) => App(substitute(m,sigma), substitute(n,sigma))
-                case Abs(x,m) => if (x == sigma.variable) expression
-                                 else {
-                                     val eFV = sigma.expression.getFreeAndBoundVariables._1
-                                     if (eFV.contains(x)) {
-                                         val Abs(y,n) = renameBoundVariable(Abs(x,m))
-                                         Abs(y,substituteWithRenaming(n, sigma))
-                                     }
-                                     else Abs(x,substituteWithRenaming(m, sigma))
-                                 }
-
-        }
-
-        private def renameBoundVariable(expression: Abs) = expression match {
-           case Abs(x,m) => {
-                    val v = freshVar(x.exptype)
-                    val n = substitute(m,(x,v))
-                    Abs(v,n)
-            }
-        }
     }
-
-//
-//
-//    private def substituteRec(expression: LambdaExpression, substitution: Substitution, boundVariables:Set[Var]): LambdaExpression = {
-//        val (v, t) = substitution
-//        expression match {
-//            case x:Var => if ( (x == v) && !(boundVariables.contains(x)) ) t else x
-//            case App(m,n) => App(substitute(m,(v,t)), substitute(n,(v,t)))
-//            case Abs(x,m) => if (x == v) substitute(renameBoundVariables(expression, Set(x)), (v,t))  // this line can be optimized
-//                             else Abs(x,substitute(m, (v,t)))
-//        }
-//    }
+    implicit def convertPairToSubstitution(pair: Tuple2[Var,LambdaExpression]):Substitution = new Substitution(pair._1, pair._2)
+    implicit def convertSubstitutionToPair(sub: Substitution):Tuple2[Var,LambdaExpression] = {
+        require(sub.substitutions.length == 1)
+        (sub.substitutions.head.variable, sub.substitutions.head.expression)
+    }
+    implicit def convertSingleSubstitutionToSubstitution(sub: SingleSubstitution):Substitution = new Substitution(sub.variable, sub.expression)
+    implicit def convertSubstitutionToSingleSubstitution(sub: Substitution):SingleSubstitution = {
+        require(sub.substitutions.length == 1)
+        sub.substitutions.head
+    }
 
 //    def betaReduce(redex: LambdaExpression) = {
 //        redex match {
 //            case App(Abs(x,body),arg) => substitute(body, (x,arg))
 //            case _ => throw new IllegalArgumentException
 //        }
-//    }
-
-//    def renameBoundVariables(expression:LambdaExpression, environment: Set[Var]):LambdaExpression = expression match {
-//        case Abs(x,m) => if (environment.contains(x)) {
-//                            val v = freshVar(x.exptype)
-//                            val n = substitute(m,(x,v))
-//                            val newEnvironment = environment + v
-//                            Abs(v, renameBoundVariables(n, newEnvironment) )
-//                         }
-//                         else Abs(x,renameBoundVariables(m, environment))
-//        case App(m, n) => App(renameBoundVariables(m, environment), renameBoundVariables(n, environment))
-//        case expression:Var => expression
 //    }
 
 
