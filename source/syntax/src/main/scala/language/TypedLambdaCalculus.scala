@@ -6,6 +6,7 @@
 package at.logic.language
 
 import at.logic.language.Symbols._
+import scala.collection.immutable._
 
 object TypedLambdaCalculus {
 
@@ -14,6 +15,21 @@ object TypedLambdaCalculus {
     
     abstract class LambdaExpression {
         def exptype: TA
+
+        def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
+            case v: Var => (HashSet(v),  new EmptySet )
+            case App(m,n) => {
+                    val mFBV = m.getFreeAndBoundVariables()
+                    val nFBV = n.getFreeAndBoundVariables()
+                    (mFBV._1 ++ nFBV._1, mFBV._2 ++ nFBV._2)
+            }
+            case Abs(x,m) => {
+                    val mFBV = m.getFreeAndBoundVariables()
+                    val bound = mFBV._2 + x
+                    val free = mFBV._1 - x
+                    (free, bound)
+            }
+        }
     }
 
 
@@ -60,6 +76,14 @@ object TypedLambdaCalculus {
             case App(f,arg) => (unapplyRec(f)._1, unapplyRec(f)._2 ::: (arg::Nil) )
             case v: Var => (v,Nil)
             case a: Abs => (a,Nil)
+        }
+    }
+
+    object freshVar {
+        private var counter = 0
+        def apply(exptype: TA) = {
+            counter += 1
+            new Var(StringSymbol("#"+counter), exptype)
         }
     }
 
