@@ -42,5 +42,11 @@ class GraphsTest extends Specification with JUnit {
     "contains no cycles" in {
         (new org.jgrapht.alg.CycleDetector[String, org.jgrapht.graph.DefaultEdge](t4.graph).detectCycles()) must beEqual (false)
     }
+    "be backed up by a correctly-constructed graph" in {
+      import scala.collection.jcl.Conversions._
+      val g40 = VertexGraph[String]("d", "c"::Nil, VertexGraph[String]("c", "b"::Nil, VertexGraph[String]("b", "a"::Nil, VertexGraph[String]("a", Nil, EmptyGraph[String]))))
+      (t4.graph.vertexSet()) must beEqual (g40.graph.vertexSet())
+      (t4.graph.edgeSet().toString) must beEqual (g40.graph.edgeSet().toString) // equals on DefaultEdge is comparing pointers and not values
+    }
   }
 }
