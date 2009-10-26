@@ -6,10 +6,10 @@ import org.specs.runner._
 import org.specs.mock.Mockito
 import org.mockito.Matchers._  // to use matchers like anyInt()
 import at.logic.provers.atp.Prover
-import at.logic.parsing.calculus._
+/*import at.logic.parsing.calculus._
 import at.logic.parsing.language.prover9._
 import at.logic.parsing.readers._
-import at.logic.parsing.calculus.prover9._
+import at.logic.parsing.calculus.prover9._*/
 import at.logic.syntax.calculus.resolution._
 import at.logic.syntax.language.fol._
 
@@ -19,7 +19,7 @@ object RefutableExamples {
 }
 */
 
-private class MyParser(str: String) extends StringReader(str) with FOLProver9TermParser with Prover9SequentsParser[Clause] with ClausesCreator
+/*private class MyParser(str: String) extends StringReader(str) with FOLProver9TermParser with Prover9SequentsParser[Clause] with ClausesCreator
 
 class ProverTest extends Specification with JUnit { 
   "Prover" should {
@@ -36,4 +36,4 @@ class ProverTest extends Specification with JUnit {
       "ex1"
     }*/
   }
-}
+}*/
