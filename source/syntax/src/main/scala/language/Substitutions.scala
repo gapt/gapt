@@ -80,13 +80,5 @@ object Substitutions {
         sub.substitutions.head
     }
 
-//    def betaReduce(redex: LambdaExpression) = {
-//        redex match {
-//            case App(Abs(x,body),arg) => substitute(body, (x,arg))
-//            case _ => throw new IllegalArgumentException
-//        }
-//    }
-
-
 
 }
