@@ -16,7 +16,6 @@ import Symbols._
 import Symbols.StringSymbolImplicitConverters._
 import TypedLambdaCalculus._
 import Substitutions._
-import at.logic.logging._
 
 
 class SubstitutionsTest extends Specification with JUnit {
