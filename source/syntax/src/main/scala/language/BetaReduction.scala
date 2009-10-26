@@ -18,7 +18,7 @@ import at.logic.language.Substitutions._
  * be used for reduction. The chosen strategies determine which redex is
  * selected for reduction first. The strategy options are implemented as
  * an Enumeration and are:
- * 1) Outermost (call-by-name) or Innermost (call_by-value)
+ * 1) Outermost (call-by-name) or Innermost (call-by-value)
  * 2) Leftmost or Rightmost [these are only relevant for betaReduce]
  *
  * In principle, betaNormalize could have been implemented as a while loop
@@ -45,8 +45,8 @@ object BetaReduction {
                             betaNormalize(sigma(body),strategy)                          // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
                     }
                     case StrategyOuterInner.Innermost => {
-                            val sigma: Substitution = (x,betaNormalize(arg,strategy))    // If it is innermost strategy, we first normalize the argument and then we reduce the current redex.
-                            sigma(body)
+                            val sigma: Substitution = (x,betaNormalize(arg,strategy))    // If it is innermost strategy, we first normalize the argument and the body and then we reduce the current redex.
+                            sigma(betaNormalize(body,strategy))
                     }
                 }
         }
@@ -63,12 +63,43 @@ object BetaReduction {
                             sigma(body)
                     }
                     case StrategyOuterInner.Innermost => {
-                            val argr = betaReduce(arg,strategyOI,strategyLR)    // Since it is innermost redex strategy, we try first to reduce the argument.
-                            if (argr != arg) App(Abs(x, body), argr)            // If it succeeds, great!
-                            else {                                              // If it doesn't, then the current redex is the innermost redex, and hence we reduce it.
-                                val sigma: Substitution = (x,arg)
-                                sigma(body)
+                            strategyLR match {
+                                case StrategyLeftRight.Rightmost => {
+                                    val argr = betaReduce(arg,strategyOI,strategyLR)    // Since it is innerrightmost redex strategy, we try first to reduce the argument.
+                                    println(argr)
+                                    println(arg)
+                                    println(argr != arg)
+                                    if (argr != arg) App(Abs(x, body), argr)            // If it succeeds, great!
+                                    else {                                              // If it doesn't, then we try to find an innermost redex in the left side, i.e. in the body.
+                                        val bodyr = betaReduce(body,strategyOI,strategyLR)
+                                        if (bodyr != body) App(Abs(x, bodyr), arg)      // If it succeeds, great!
+                                        else {                                          // If it doesn't, then the current redex is innermost, and hence we reduce it.
+                                            val sigma: Substitution = (x,arg)
+                                            sigma(body)
+                                        }
+                                    }
+                                }
+                                case StrategyLeftRight.Leftmost => {                    // Analogous to the previous case, but giving priority to the left side (body) instead of the ride side (arg)
+                                    val bodyr = betaReduce(body,strategyOI,strategyLR)
+                                    println(bodyr)
+                                    println(body)
+                                    println(bodyr != body)
+                                    if (bodyr != body) App(Abs(x, bodyr), arg)
+                                    else {
+                                        val argr = betaReduce(arg,strategyOI,strategyLR)
+                                        println(argr)
+                                        println(arg)
+                                        println(argr != arg)
+                                        if (argr != arg) App(Abs(x, body), argr)
+                                        else {
+                                            val sigma: Substitution = (x,arg)
+                                            sigma(body)
+                                        }
+                                    }
+                                }
+
                             }
+
                     }
                 }
         }
@@ -77,12 +108,12 @@ object BetaReduction {
                     case StrategyLeftRight.Leftmost => {
                             val mr = betaReduce(m,strategyOI,strategyLR)        // Since it is leftmost redex strategy, we try first to reduce the left side (m).
                             if (mr != m) App(mr,n)                              // If it succeeds, great!
-                            else App(m, betaReduce(n,strategyOI,strategyLR))    // If it doesn't, then we try to find and reduce redexs in the right side (n)
+                            else App(m, betaReduce(n,strategyOI,strategyLR))    // If it doesn't, then we try to find and reduce a redex in the right side (n)
                     }
                     case StrategyLeftRight.Rightmost => {
                             val nr = betaReduce(n,strategyOI,strategyLR)        // Since it is rightmost redex strategy, we try first to reduce the right side (n).
                             if (nr != n) App(m,nr)                              // If it succeeds, great!
-                            else App(betaReduce(m,strategyOI,strategyLR), n )    // If it doesn't, then we try to find and reduce redexs in the left side (m)
+                            else App(betaReduce(m,strategyOI,strategyLR), n )   // If it doesn't, then we try to find and reduce a redex in the left side (m)
                     }
                 }
         }
