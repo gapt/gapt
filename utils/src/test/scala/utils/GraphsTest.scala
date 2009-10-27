@@ -15,14 +15,24 @@ import Graphs._
 class GraphsTest extends Specification with JUnit {
   "Graph" should {
       val g1 = EmptyGraph[String]
-      val g2 = VertexGraph[String]("a", Nil, g1)
-      val g3 = VertexGraph[String]("b", "a"::Nil, g2)
-      val g4 = VertexGraph[String]("c", "a"::"b"::Nil, g3)
+      val g2 = VertexGraph("a", g1)
+      val g3 = EdgeGraph("a", "b", VertexGraph("b", g2))
+      val g4 = EdgeGraph("a", "c", EdgeGraph("b", "c", VertexGraph("c", g3)))
+      val g5 = EdgeGraph("e", "f", VertexGraph("f", VertexGraph("e", EmptyGraph[String])))
+      val g6 = UnionGraph(g4, g5)
     "maintain subgraph property with vertices" in {
         (g3.graph.vertexSet().size()) must beEqual (2)
         (g2.graph.vertexSet().size()) must beEqual (1)
         (g2.graph.vertexSet().iterator.next()) must beEqual("a")
         (g1.graph.vertexSet().isEmpty()) must beEqual (true)
+    }
+    "maintain subgraph property with union" in {
+        (g6.graph.vertexSet().size()) must beEqual (5)
+        (g6.graph.edgeSet().size()) must beEqual (4)
+        (g5.graph.vertexSet().size()) must beEqual (2)
+        (g5.graph.edgeSet().size()) must beEqual (1)
+        (g4.graph.vertexSet().size()) must beEqual (3)
+        (g4.graph.edgeSet().size()) must beEqual (3)
     }
     "maintain subgraph property with edges" in {
         (g3.graph.edgeSet().size()) must beEqual (1)
@@ -34,19 +44,20 @@ class GraphsTest extends Specification with JUnit {
         (g4.graph.edgeSet.size()) must beEqual (3)
     }
   }
+  import TreeImplicitConverters._
   "Tree" should {
-      val t1 = LeafTree[String]("a")
-      val t2 = LinearTree[String]("b", t1)
-      val t3 = LinearTree[String]("c", t2)
-      val t4 = LinearTree[String]("d", t3)
+        val t1 = UnaryTree("d",UnaryTree("c",UnaryTree("b","a")))
+        val t2 = UnaryTree("3", UnaryTree("2", "1"))
     "contains no cycles" in {
-        (new org.jgrapht.alg.CycleDetector[String, org.jgrapht.graph.DefaultEdge](t4.graph).detectCycles()) must beEqual (false)
+        (new org.jgrapht.alg.CycleDetector[String, org.jgrapht.graph.DefaultEdge](t1.graph).detectCycles()) must beEqual (false)
+        (BinaryTree("X", t1, t2)) must throwA [java.lang.IllegalArgumentException]
+        (UnaryTree("a", "a")) must throwA [java.lang.IllegalArgumentException]
     }
     "be backed up by a correctly-constructed graph" in {
-      import scala.collection.jcl.Conversions._
-      val g40 = VertexGraph[String]("d", "c"::Nil, VertexGraph[String]("c", "b"::Nil, VertexGraph[String]("b", "a"::Nil, VertexGraph[String]("a", Nil, EmptyGraph[String]))))
-      (t4.graph.vertexSet()) must beEqual (g40.graph.vertexSet())
-      (t4.graph.edgeSet().toString) must beEqual (g40.graph.edgeSet().toString) // equals on DefaultEdge is comparing pointers and not values
+        val g10 = EdgeGraph("c", "d", VertexGraph[String]("d", EdgeGraph("b", "c", VertexGraph[String]("c", EdgeGraph("a", "b", VertexGraph[String]("b", VertexGraph[String]("a", EmptyGraph[String])))))))
+        (t1.graph.vertexSet()) must beEqual (g10.graph.vertexSet())
+        (t1.graph.edgeSet().toString) must beEqual (g10.graph.edgeSet().toString) // equals on DefaultEdge is comparing pointers and not values
     }
+
   }
 }
