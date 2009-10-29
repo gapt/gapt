@@ -21,6 +21,10 @@ case object AndOp extends OperatorA
  */
 case object OrOp extends OperatorA
 /**
+ * Impl operator
+ */
+case object ImplOp extends OperatorA
+/**
  * Not operator
  */
 case object NotOp extends OperatorA
