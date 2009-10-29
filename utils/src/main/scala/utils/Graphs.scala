@@ -67,6 +67,12 @@ object Graphs {
             case g: Graph[_] => None
         }
     }
+    object GraphImplicitConverters {
+        implicit def toEmptyGraph[V](u: Unit): EmptyGraph[V] = EmptyGraph[V]
+        implicit def toVertexGraph[V](pair: Tuple2[V, Graph[V]]): VertexGraph[V] = VertexGraph[V](pair._1, pair._2)
+        implicit def toEdgeGraph[V](triple: Tuple3[V, V, Graph[V]]): EdgeGraph[V] = EdgeGraph[V](triple._1, triple._2, triple._3)
+        implicit def toUnionGraph[V](triple: Tuple2[Graph[V], Graph[V]]): UnionGraph[V] = UnionGraph[V](triple._1, triple._2)
+    }
     /**
      * Trees are constructed over the inductive graph type and are characterised by vertices not repeating in the subtrees.
      * 
@@ -125,9 +131,9 @@ object Graphs {
         }
     }
 
-    case object TreeImplicitConverters {
+    object TreeImplicitConverters {
         implicit def toLeafTree[V](v:V): LeafTree[V] = LeafTree[V](v)
-        //implicit def toUnaryTree[V](v:V, t: Tree[V]): UnaryTree[V] = UnaryTree[V](v, t)
-        //implicit def toBinaryTree[V](v:V, t1: Tree[V], t2: Tree[V]): BinaryTree[V] = BinaryTree[V](v, t1, t2)
+        implicit def toUnaryTree[V](pair: Tuple2[V, Tree[V]]): UnaryTree[V] = UnaryTree[V](pair._1, pair._2)
+        implicit def toBinaryTree[V](triple: Tuple3[V, Tree[V], Tree[V]]): BinaryTree[V] = BinaryTree[V](triple._1, triple._2, triple._3)
     }
 }
