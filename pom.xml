@@ -16,6 +16,7 @@
     <module>transformations</module>
     <module>algorithms</module>
     <module>gui</module>
+    <module>parsing</module>
   </modules>
 
   <packaging>pom</packaging>

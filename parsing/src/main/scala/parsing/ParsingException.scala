@@ -3,4 +3,4 @@
  */
 
  package at.logic.parsing
- class ParsingException(msg: String) extends RuntimeException
+ class ParsingException(msg: String) extends RuntimeException(msg)

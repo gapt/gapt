@@ -73,6 +73,14 @@ final case class Or(form1 : FOLFormula[TermA[OType]], form2 : FOLFormula[TermA[O
   def cloneTerm() = Or(form1, form2)
 }
 /**
+ * Fol or formula
+ * @param form1 the left formula
+ * @param form2 the right formula
+ */
+final case class Impl(form1 : FOLFormula[TermA[OType]], form2 : FOLFormula[TermA[OType]]) extends FunctionA[OType](ImplOp, form1::form2::Nil) with FOLFormula[Impl] {
+  def cloneTerm() = Impl(form1, form2)
+}
+/**
  * Fol not formula
  * @param form the negated formula
  */
