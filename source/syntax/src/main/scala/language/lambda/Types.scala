@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.language
+package at.logic.language.lambda
 
 
 object Types {

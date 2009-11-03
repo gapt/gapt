@@ -5,10 +5,10 @@
  * and open the template in the editor.
  */
 
-package at.logic.language
+package at.logic.language.lambda
 
-import at.logic.language.Symbols._
-import at.logic.language.TypedLambdaCalculus._
+import Symbols._
+import TypedLambdaCalculus._
 import scala.collection.immutable._
 
 object Substitutions {

@@ -5,18 +5,18 @@
  * and open the template in the editor.
  */
 
-package at.logic.language
+package at.logic.language.hol
 
 import org.specs._
 import org.specs.runner._
 
-import Types._
-import TypedLambdaCalculus._
-import Symbols._
+import at.logic.language.lambda.Types._
+import at.logic.language.lambda.TypedLambdaCalculus._
+import at.logic.language.lambda.Symbols._
 import LogicSymbols._
 import LogicSymbols.LogicSymbolsImplicitConverters._
-import Symbols.SymbolImplicitConverters._
-import Types.TAImplicitConverters._
+import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
+import at.logic.language.lambda.Types.TAImplicitConverters._
 import HigherOrderLogic._
 
 class HigherOrderLogicTest extends Specification with JUnit {

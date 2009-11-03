@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.language
+package at.logic.language.lambda
 
 object Symbols {
 
