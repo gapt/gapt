@@ -11,7 +11,7 @@ import org.specs.runner._
 
 import Types._
 import Symbols._
-import Symbols.StringSymbolImplicitConverters._
+import Symbols.SymbolImplicitConverters._
 import TypedLambdaCalculus._
 import Substitutions._
 import BetaReduction._

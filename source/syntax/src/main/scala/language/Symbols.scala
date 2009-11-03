@@ -11,18 +11,24 @@ object Symbols {
 
     abstract class SymbolA
 
-    case class StringSymbol(string: String) extends SymbolA {
-        override def toString = string
+    abstract class VariableSymbolA extends SymbolA
+
+    trait StringSymbol extends SymbolA {
+        val string: String
+        override def equals(a: Any) = a match {
+            case s: StringSymbol => (s.string == string)
+            case _ => false
+        }
+        override def hashCode() = string.hashCode
+        override def toString() = string
     }
 
-    case class LatexSymbol(latexCommand: String, override val string: String) extends StringSymbol(string)
+    trait LatexSymbol extends SymbolA {
+        val latexCommand: String
+    }
 
-    object StringSymbolImplicitConverters {
-        implicit def fromString(s: String) = StringSymbol(s)
+    object SymbolImplicitConverters {
+        implicit def stringToVariableSymbol(s: String): VariableSymbolA = new VariableSymbolA with StringSymbol {val string = s}
         implicit def toString(symbol: StringSymbol) = symbol.string
-    }
-
-    object LatexSymbolImplicitConverters {
-        implicit def toLatexSymbol(s: String) = LatexSymbol(s,s)
     }
 }

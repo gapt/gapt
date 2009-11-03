@@ -4,9 +4,9 @@
 
 package at.logic.provers.atp
 
-import at.logic.syntax.calculus.RuleA
-import at.logic.syntax.calculus.resolution._
-import at.logic.unification.Unifier
+//import at.logic.syntax.calculus.RuleA
+//import at.logic.syntax.calculus.resolution._
+//import at.logic.unification.Unifier
 //import at.logic.parsing.calculus.SequentsParser
 
 /**

@@ -13,7 +13,7 @@ import org.specs.runner._
 
 import Types._
 import Symbols._
-import Symbols.StringSymbolImplicitConverters._
+import Symbols.SymbolImplicitConverters._
 import TypedLambdaCalculus._
 
 
@@ -21,7 +21,7 @@ import TypedLambdaCalculus._
 class LambdaCalculusTest extends Specification with JUnit {
   "TypedLambdaCalculus" should {
     "make implicit conversion from String to Name" in {
-        (Var("p",i) ) must beEqual (Var(StringSymbol("p"), i ))
+        (Var("p",i) ) must beEqual (Var("p", i ))
     }
     "export lambda expressions to strings correctly (1)" in {
         val exp = Var("P", i)
