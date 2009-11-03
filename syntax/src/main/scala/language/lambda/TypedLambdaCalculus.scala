@@ -3,15 +3,16 @@
  *
  */
 
-package at.logic.language
+package at.logic.language.lambda
 
 import Symbols._
 import Symbols.SymbolImplicitConverters._
 import scala.collection.immutable._
+import Types._
 
 object TypedLambdaCalculus {
 
-    import at.logic.language.Types._
+
      
     abstract class LambdaExpression {
         def exptype: TA

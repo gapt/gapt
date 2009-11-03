@@ -5,9 +5,9 @@
  * and open the template in the editor.
  */
 
-package at.logic.language
+package at.logic.language.hol
 
-import Symbols._
+import at.logic.language.lambda.Symbols._
 
 object LogicSymbols {
     abstract class ConstantSymbolA extends SymbolA

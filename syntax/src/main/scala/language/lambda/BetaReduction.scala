@@ -3,11 +3,11 @@
  *
  */
 
-package at.logic.language
+package at.logic.language.lambda
 
-import at.logic.language.Symbols._
-import at.logic.language.TypedLambdaCalculus._
-import at.logic.language.Substitutions._
+import Symbols._
+import TypedLambdaCalculus._
+import Substitutions._
 
 /*
  * The BetaReduction object encapsulates two functions:

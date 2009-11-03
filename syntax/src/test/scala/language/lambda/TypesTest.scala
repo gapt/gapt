@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.language
+package at.logic.language.lambda
 
 import org.specs._
 import org.specs.runner._

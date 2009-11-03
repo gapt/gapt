@@ -5,14 +5,14 @@
  * and open the template in the editor.
  */
 
-package at.logic.language
+package at.logic.language.hol
 
-import Symbols._
+import at.logic.language.lambda.Symbols._
 import LogicSymbols._
-import TypedLambdaCalculus._
-import Types._
-import Types.TAImplicitConverters._
-import TypedLambdaCalculus._
+import at.logic.language.lambda.TypedLambdaCalculus._
+import at.logic.language.lambda.Types._
+import at.logic.language.lambda.Types.TAImplicitConverters._
+import at.logic.language.lambda.TypedLambdaCalculus._
 
 object HigherOrderLogic {  // change file to "HigherOrderLogic"
 
