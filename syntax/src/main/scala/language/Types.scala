@@ -42,4 +42,6 @@ object Types {
         def oType: Parser[TA] = "o" ^^ {x => To()}
         def arrowType: Parser[TA] = "("~> Type~"->"~Type <~")" ^^ {case in ~ "->" ~ out => ->(in,out)}
     }
+
+    class TypeException(s: String) extends Exception
 }

@@ -7,7 +7,7 @@
 		</layout>
 	</appender>
 	<appender name="FA" class="org.apache.log4j.FileAppender">
-		<param name="File" value="sample.log"/>
+		<param name="File" value="errors.log"/>
 		<param name="Threshold" value="WARN"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%-4r [%t] %-5p %c %x - %m%n" />

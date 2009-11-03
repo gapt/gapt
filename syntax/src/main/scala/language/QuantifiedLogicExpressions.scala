@@ -4,7 +4,7 @@
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
  */
-
+/*
 package at.logic.language
 
 import Symbols._
@@ -54,3 +54,4 @@ object QuantifiedLogicExpressions { // change to "Quantifiers"
     }
 
 }
+*/
