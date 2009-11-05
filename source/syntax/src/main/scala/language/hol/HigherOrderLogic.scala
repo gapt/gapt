@@ -57,16 +57,43 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
             case _ => None
         }
     }
-    
-    implicit object HOLAppFactory extends AppFactory[HOL] {
-        def create (function: HOL, argument: LambdaExpression) = if (isFormulaWhenApplied(function.exptype)) new App(function, argument) with HOL with HOLFormula else new App(function, argument) with HOL
+
+    private def createHOLApp(function: HOL, argument: LambdaExpression) = if (isFormulaWhenApplied(function.exptype)) new App(function, argument) with HOLFormula else new App(function, argument) with HOL
+    implicit object HOLConstHOLAppFactory extends AppFactory[HOLConst] {
+        def create (function: HOLConst, argument: LambdaExpression) = createHOLApp(function, argument)
     }
-    implicit object HOLAbsFactory extends AbsFactory[HOL] {
-        def create (variable: Var, expression: HOL) = new Abs(variable, expression) with HOL
+    implicit object HOLVarHOLAppFactory extends AppFactory[HOLVar] {
+        def create (function: HOLVar, argument: LambdaExpression) = createHOLApp(function, argument)
+    }
+    implicit object AppHOLAppFactory extends AppFactory[App with HOL] {
+        def create (function: App with HOL, argument: LambdaExpression) = createHOLApp(function, argument)
+    }
+    implicit object AbsHOLAppFactory extends AppFactory[Abs with HOL] {
+        def create (function: Abs with HOL, argument: LambdaExpression) = createHOLApp(function, argument)
+    }
+    implicit object HOLFormulaAppFactory extends AppFactory[HOLFormula] {
+        def create (function: HOLFormula, argument: LambdaExpression) = createHOLApp(function, argument)
+    }
+
+    private def createHOLAbs(variable: Var, expression: HOL) = new Abs(variable, expression) with HOL
+    implicit object HOLConstHOLAbsFactory extends AbsFactory[HOLConst] {
+        def create (variable: Var, expression: HOLConst) = createHOLAbs(variable, expression)
+    }
+    implicit object HOLVarHOLAbsFactory extends AbsFactory[HOLVar] {
+        def create (variable: Var, expression: HOLVar) = createHOLAbs(variable, expression)
+    }
+    implicit object AppHOLAbsFactory extends AbsFactory[App with HOL] {
+        def create (variable: Var, expression: App with HOL) = createHOLAbs(variable, expression)
+    }
+    implicit object AbsHOLAbsFactory extends AbsFactory[Abs with HOL] {
+        def create (variable: Var, expression: Abs with HOL) = createHOLAbs(variable, expression)
+    }
+    implicit object HOLFormulaAbsFactory extends AbsFactory[HOLFormula] {
+        def create (variable: Var, expression: HOLFormula) = createHOLAbs(variable, expression)
     }
 
     object Neg {
-        def apply(sub: HOLFormula) = App[HOL](negC,sub)
+        def apply(sub: HOLFormula) = App(negC,sub)
         def unapply(expression: LambdaExpression) = expression match {
             case App(negC,sub) => Some( (sub) )
             case _ => None
@@ -74,7 +101,7 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
     }
 
     object And {
-        def apply(left: HOLFormula, right: HOLFormula) = App[HOL](App[HOL](andC,left).asInstanceOf[HOL],right)
+        def apply(left: HOLFormula, right: HOLFormula) = App(App(andC,left).asInstanceOf[App with HOL],right)
         def unapply(expression: LambdaExpression) = expression match {
             case App(App(andC,left),right) => Some( (left,right) )
             case _ => None
@@ -82,7 +109,7 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
     }
 
     object Or {
-        def apply(left: HOLFormula, right: HOLFormula) = App[HOL](App[HOL](orC,left).asInstanceOf[HOL],right)
+        def apply(left: HOLFormula, right: HOLFormula) = App(App(orC,left).asInstanceOf[App with HOL],right)
         def unapply(expression: LambdaExpression) = expression match {
             case App(App(orC,left),right) => Some( (left,right) )
             case _ => None
@@ -90,7 +117,7 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
     }
 
     object Imp {
-        def apply(left: HOLFormula, right: HOLFormula) = App[HOL](App[HOL](impC,left).asInstanceOf[HOL],right)
+        def apply(left: HOLFormula, right: HOLFormula) = App(App(impC,left).asInstanceOf[App with HOL],right)
         def unapply(expression: LambdaExpression) = expression match {
             case App(App(impC,left),right) => Some( (left,right) )
             case _ => None
@@ -98,7 +125,7 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
     }
 
     object Ex {
-        def apply(sub: LambdaExpression) = App[HOL](exQ(sub.exptype),sub)
+        def apply(sub: LambdaExpression) = App(exQ(sub.exptype),sub)
         def unapply(expression: LambdaExpression) = expression match {
             case App(Var(exS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
@@ -106,7 +133,7 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
     }
 
     object All {
-        def apply(sub: LambdaExpression) = App[HOL](allQ(sub.exptype),sub)
+        def apply(sub: LambdaExpression) = App(allQ(sub.exptype),sub)
         def unapply(expression: LambdaExpression) = expression match {
             case App(Var(allS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
@@ -114,7 +141,7 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
     }
 
     object ExVar {
-        def apply(variable: Var, sub: HOLFormula) = Ex(Abs[HOL](variable, sub))
+        def apply(variable: Var, sub: HOLFormula) = Ex(Abs(variable, sub))
         def unapply(expression: LambdaExpression) = expression match {
             case Ex(Abs(variable, sub)) => Some( (variable, sub) )
             case _ => None
@@ -122,7 +149,7 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
     }
 
     object AllVar {
-        def apply(variable: Var, sub: HOLFormula) = All(Abs[HOL](variable, sub))
+        def apply(variable: Var, sub: HOLFormula) = All(Abs(variable, sub))
         def unapply(expression: LambdaExpression) = expression match {
             case All(Abs(variable, sub)) => Some( (variable, sub) )
             case _ => None

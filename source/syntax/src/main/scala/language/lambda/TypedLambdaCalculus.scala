@@ -11,9 +11,7 @@ import scala.collection.immutable._
 import Types._
 
 object TypedLambdaCalculus {
-
-
-     
+    
     abstract class LambdaExpression {
         def exptype: TA
 
