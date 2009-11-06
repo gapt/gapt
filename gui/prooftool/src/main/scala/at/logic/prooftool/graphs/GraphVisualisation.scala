@@ -177,15 +177,15 @@ object AdapterApp extends Application {
   var c = 0
   var it = map.values().iterator()
   var i = null
-  while (it.hasNext()) {
-    i = it.next() 
-    i match {
-//      case Map => Console.out.println("map")
-      case _   => c += 1;// Console.out.println("_")
-    }
-//    GraphConstants.setAutoSize(it.next() : Map[Any, Any] , true)
-  }
-  Console.println("done "+c)
+//  while (it.hasNext()) {
+//    i = it.next() 
+//    i match {
+////      case Map => Console.out.println("map")
+//      case _   => c += 1;// Console.out.println("_")
+//    }
+////    GraphConstants.setAutoSize(it.next() : Map[Any, Any] , true)
+//  }
+//  Console.println("done "+c)
   jgraph.getGraphLayoutCache().edit(map)
   
 
