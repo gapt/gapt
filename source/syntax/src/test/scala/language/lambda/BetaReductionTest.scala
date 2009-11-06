@@ -2,7 +2,7 @@
  * BetaReductionTest.scala
  *
  */
-
+/*
 package at.logic.language.lambda
 
 import org.specs._
@@ -76,4 +76,4 @@ class BetaReductionTest extends Specification with JUnit {
         ( betaReduce(e) ) must beEqual ( App(Abs(x, App(f, x)),y) )
     }
   }
-}
+}*/

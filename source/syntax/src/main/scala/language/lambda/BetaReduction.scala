@@ -2,7 +2,7 @@
  * BetaReduction.scala
  *
  */
-
+/*
 package at.logic.language.lambda
 
 import Symbols._
@@ -114,4 +114,4 @@ object BetaReduction {
         case Abs(x,m) => Abs(x,betaReduce(m)(strategyOI,strategyLR))
         case x: Var => x
     }
-}
+}*/
