@@ -19,8 +19,12 @@ object LogicSymbols {
     case object ExistsSymbol extends ConstantSymbolA
     case object ForallSymbol extends ConstantSymbolA
 
-    object LogicSymbolsImplicitConverters {
+    object LogicSymbolsDefaultConverters {
 
-        implicit def stringToConstantSymbol(s: String): ConstantSymbolA = new ConstantSymbolA with StringSymbol {val string = s}
+        implicit def stringToVarConstSymbol(s: String): SymbolA = {
+            val chr = s.charAt(0)
+            if (chr.isUpperCase || chr.equals('a') || chr.equals('b') || chr.equals('c')) new ConstantSymbolA with StringSymbol {val string = s}
+            else new VariableSymbolA with StringSymbol {val string = s}
+        }
     }
 }

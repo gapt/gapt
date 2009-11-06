@@ -14,31 +14,55 @@ import at.logic.language.lambda.Types._
 import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.language.lambda.Symbols._
 import LogicSymbols._
-import LogicSymbols.LogicSymbolsImplicitConverters._
-import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
+import LogicSymbols.LogicSymbolsDefaultConverters._
+//import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
 import at.logic.language.lambda.Types.TAImplicitConverters._
 import HigherOrderLogic._
 
 class HigherOrderLogicTest extends Specification with JUnit {
   "HigherOrderLogic" should {
-      "use the right implicit AppFactory" in {
-          val c1: HOL = HOLConst("a", i->o)
-          val v1: HOL = HOLVar("x", i)
-          val a1 = App[HOL](c1,v1)
-          (a1) must beLike {case x: HOLFormula => true}
-          val c2: HOL = HOLConst("a", i->(i->o))
-          val v21: HOL = HOLVar("x", i)
-          val v22: HOL = HOLVar("y", i)
-          val a21 = App[HOL](c2,v21)
-          val a22 = App[HOL](a21.asInstanceOf[HOL],v22)
-          (a22) must beLike {case x: HOLFormula => true}
+    "use the right implicit AppFactory" in {
+          val c1 = Var[HOL]("a", i->o)
+          val v1 = Var[HOL]("x", i)
+          val a1 = App(c1,v1)
+          (a1) must beLike {case x: Formula => true}
+          val c2 = Var[HOL]("a", i->(i->o))
+          val v21 = Var[HOL]("x", i)
+          val v22 = Var[HOL]("y", i)
+          val a21 = App(c2,v21)
+          val a22 = App(a21,v22)
+          (a22) must beLike {case x: Formula => true}
       }
-      "And connective should return the right And formula" in {
-          val c1: HOLFormula = HOLConst("a", o).asInstanceOf[HOLFormula]
-          val c2: HOLFormula = HOLConst("b", o).asInstanceOf[HOLFormula]
+    "And connective should return the right And formula" in {
+          val c1 = Var[HOL]("a", o).asInstanceOf[LambdaExpression[HOL] with Formula]
+          val c2 = Var[HOL]("b", o).asInstanceOf[LambdaExpression[HOL] with Formula]
           (c1 and c2) must beLike {case App(App(andC, c1), c2) => true}
       }
-    /*"create atoms correctly" in {
+    "Or connective should return the right formula" in {
+          val c1 = Var[HOL]("a", o).asInstanceOf[LambdaExpression[HOL] with Formula]
+          val c2 = Var[HOL]("b", o).asInstanceOf[LambdaExpression[HOL] with Formula]
+          (c1 or c2) must beLike {case App(App(orC, c1), c2) => true}
+      }
+    "Imp connective should return the right formula" in {
+          val c1 = Var[HOL]("a", o).asInstanceOf[LambdaExpression[HOL] with Formula]
+          val c2 = Var[HOL]("b", o).asInstanceOf[LambdaExpression[HOL] with Formula]
+          (c1 imp c2) must beLike {case App(App(impC, c1), c2) => true}
+    }
+    "Neg connective should return the right formula" in {
+          val c1 = Var[HOL]("a", o).asInstanceOf[LambdaExpression[HOL] with Formula]
+          (Neg(c1)) must beLike {case App(negC, c1) => true}
+    }
+    "Constants are created correctly using the default implicit converter" in {
+        val c1 = Var[HOL]("a", i->o)
+        val v1 = Var[HOL]("x", i)
+        (c1) must beLike {case x: Const => true}
+        (v1) must beLike {
+            case x: Const => false
+            case _ => true
+        }
+    }
+    /*
+    "create atoms correctly" in {
         val v1 = Var("x",i)
         val v2 = Var("y",i)
         val p = Var("P",i -> (i -> o))

@@ -14,21 +14,35 @@ import at.logic.language.lambda.Types._
 import at.logic.language.lambda.Types.TAImplicitConverters._
 import at.logic.language.lambda.TypedLambdaCalculus._
 
-object HigherOrderLogic {  // change file to "HigherOrderLogic"
+object HigherOrderLogic {
 
-    val negC = HOLConst(NegSymbol, "(o -> o)")
-    val andC = HOLConst(AndSymbol, "(o -> (o -> o))")
-    val orC  = HOLConst(OrSymbol, "(o -> (o -> o))")
-    val impC = HOLConst(ImpSymbol, "(o -> (o -> o))")
-    def exQ(exptype:TA) = HOLConst(ExistsSymbol, ->(exptype,"o"))
-    def allQ(exptype:TA) = HOLConst(ForallSymbol, ->(exptype,"o"))
+    trait Const
 
-    trait HOL extends LambdaExpression
+    implicit object HOLVarFactory extends VarFactory[HOL] {
+        def create (name: SymbolA, exptype: TA) = name match {
+            case a: ConstantSymbolA => 
+                if (isFormula(exptype)) new Var[HOL](name, exptype) with Const with Formula
+                else new Var[HOL](name, exptype) with Const
+            case _ => 
+                if (isFormula(exptype)) new Var[HOL](name, exptype) with Formula
+                else new Var[HOL](name, exptype)
+        }
+    }
+
+    val negC = Var[HOL](NegSymbol, "(o -> o)")
+    val andC = Var[HOL](AndSymbol, "(o -> (o -> o))")
+    val orC  = Var[HOL](OrSymbol, "(o -> (o -> o))")
+    val impC = Var[HOL](ImpSymbol, "(o -> (o -> o))")
+    def exQ(exptype:TA) = Var[HOL](ExistsSymbol, ->(exptype,"o"))
+    def allQ(exptype:TA) = Var[HOL](ForallSymbol, ->(exptype,"o"))
+
+    trait HOL extends Lambda
     
-    trait HOLFormula extends HOL {
-        def and(that: HOLFormula) =  And(this, that)
-        def or(that: HOLFormula) = Or(this, that)
-        def imp(that: HOLFormula) = Imp(this, that)
+    trait Formula {
+        this: LambdaExpression[HOL] =>
+        def and(that: LambdaExpression[HOL] with Formula) =  And(this, that)
+        def or(that: LambdaExpression[HOL] with Formula) = Or(this, that)
+        def imp(that: LambdaExpression[HOL] with Formula) = Imp(this, that)
     }
 
     def isFormula(typ: TA) = typ match {
@@ -40,117 +54,74 @@ object HigherOrderLogic {  // change file to "HigherOrderLogic"
         case _        => false
     }
 
-    class HOLConst private(override val name: ConstantSymbolA, override val exptype: TA) extends Var(name, exptype) with HOL
-    object HOLConst {
-        def apply(name: ConstantSymbolA, exptype: TA) = if (isFormula(exptype)) new HOLConst(name, exptype) with HOLFormula else new HOLConst(name, exptype)
-        def unapply(exp: HOL) = exp match {
-            case a: HOLConst => Some((a.name, a.exptype))
-            case _ => None
-        }
+    implicit object HOLAppFactory extends AppFactory[HOL] {
+        def create (function: LambdaExpression[HOL], argument: LambdaExpression[HOL]) = 
+            if (isFormulaWhenApplied(function.exptype)) new App[HOL](function, argument) with Formula
+            else new App[HOL](function, argument)
     }
-
-    class HOLVar (override val name: VariableSymbolA, override val exptype: TA) extends Var(name, exptype) with HOL
-    object HOLVar {
-        def apply(name: VariableSymbolA, exptype: TA) = if (isFormula(exptype)) new HOLVar(name, exptype) with HOLFormula else new HOLVar(name, exptype)
-        def unapply(exp: HOL) = exp match {
-            case a: HOLVar => Some((a.name, a.exptype))
-            case _ => None
-        }
-    }
-
-    private def createHOLApp(function: HOL, argument: LambdaExpression) = if (isFormulaWhenApplied(function.exptype)) new App(function, argument) with HOLFormula else new App(function, argument) with HOL
-    implicit object HOLConstHOLAppFactory extends AppFactory[HOLConst] {
-        def create (function: HOLConst, argument: LambdaExpression) = createHOLApp(function, argument)
-    }
-    implicit object HOLVarHOLAppFactory extends AppFactory[HOLVar] {
-        def create (function: HOLVar, argument: LambdaExpression) = createHOLApp(function, argument)
-    }
-    implicit object AppHOLAppFactory extends AppFactory[App with HOL] {
-        def create (function: App with HOL, argument: LambdaExpression) = createHOLApp(function, argument)
-    }
-    implicit object AbsHOLAppFactory extends AppFactory[Abs with HOL] {
-        def create (function: Abs with HOL, argument: LambdaExpression) = createHOLApp(function, argument)
-    }
-    implicit object HOLFormulaAppFactory extends AppFactory[HOLFormula] {
-        def create (function: HOLFormula, argument: LambdaExpression) = createHOLApp(function, argument)
-    }
-
-    private def createHOLAbs(variable: Var, expression: HOL) = new Abs(variable, expression) with HOL
-    implicit object HOLConstHOLAbsFactory extends AbsFactory[HOLConst] {
-        def create (variable: Var, expression: HOLConst) = createHOLAbs(variable, expression)
-    }
-    implicit object HOLVarHOLAbsFactory extends AbsFactory[HOLVar] {
-        def create (variable: Var, expression: HOLVar) = createHOLAbs(variable, expression)
-    }
-    implicit object AppHOLAbsFactory extends AbsFactory[App with HOL] {
-        def create (variable: Var, expression: App with HOL) = createHOLAbs(variable, expression)
-    }
-    implicit object AbsHOLAbsFactory extends AbsFactory[Abs with HOL] {
-        def create (variable: Var, expression: Abs with HOL) = createHOLAbs(variable, expression)
-    }
-    implicit object HOLFormulaAbsFactory extends AbsFactory[HOLFormula] {
-        def create (variable: Var, expression: HOLFormula) = createHOLAbs(variable, expression)
+    implicit object HOLAbsFactory extends AbsFactory[HOL] {
+        def create (variable: Var[HOL], expression: LambdaExpression[HOL]) = new Abs[HOL](variable, expression)
     }
 
     object Neg {
-        def apply(sub: HOLFormula) = App(negC,sub)
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(sub: LambdaExpression[HOL] with Formula) = App(negC,sub)
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case App(negC,sub) => Some( (sub) )
             case _ => None
         }
     }
 
     object And {
-        def apply(left: HOLFormula, right: HOLFormula) = App(App(andC,left).asInstanceOf[App with HOL],right)
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(left: LambdaExpression[HOL] with Formula, right: LambdaExpression[HOL] with Formula) = App(App(andC,left),right)
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case App(App(andC,left),right) => Some( (left,right) )
             case _ => None
         }
     }
 
     object Or {
-        def apply(left: HOLFormula, right: HOLFormula) = App(App(orC,left).asInstanceOf[App with HOL],right)
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(left: LambdaExpression[HOL] with Formula, right: LambdaExpression[HOL] with Formula) = App(App(orC,left),right)
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case App(App(orC,left),right) => Some( (left,right) )
             case _ => None
         }
     }
 
     object Imp {
-        def apply(left: HOLFormula, right: HOLFormula) = App(App(impC,left).asInstanceOf[App with HOL],right)
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(left: LambdaExpression[HOL] with Formula, right: LambdaExpression[HOL] with Formula) = App(App(impC,left),right)
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case App(App(impC,left),right) => Some( (left,right) )
             case _ => None
         }
     }
 
     object Ex {
-        def apply(sub: LambdaExpression) = App(exQ(sub.exptype),sub)
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(sub: LambdaExpression[HOL]) = App(exQ(sub.exptype),sub)
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case App(Var(exS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
         }
     }
 
     object All {
-        def apply(sub: LambdaExpression) = App(allQ(sub.exptype),sub)
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(sub: LambdaExpression[HOL]) = App(allQ(sub.exptype),sub)
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case App(Var(allS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
         }
     }
 
     object ExVar {
-        def apply(variable: Var, sub: HOLFormula) = Ex(Abs(variable, sub))
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(variable: Var[HOL], sub: LambdaExpression[HOL] with Formula) = Ex(Abs(variable, sub))
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case Ex(Abs(variable, sub)) => Some( (variable, sub) )
             case _ => None
         }
     }
 
     object AllVar {
-        def apply(variable: Var, sub: HOLFormula) = All(Abs(variable, sub))
-        def unapply(expression: LambdaExpression) = expression match {
+        def apply(variable: Var[HOL], sub: LambdaExpression[HOL] with Formula) = All(Abs(variable, sub))
+        def unapply(expression: LambdaExpression[HOL]) = expression match {
             case All(Abs(variable, sub)) => Some( (variable, sub) )
             case _ => None
         }

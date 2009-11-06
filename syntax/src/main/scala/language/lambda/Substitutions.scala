@@ -4,7 +4,7 @@
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
  */
-
+/*
 package at.logic.language.lambda
 
 import Symbols._
@@ -81,4 +81,4 @@ object Substitutions {
     }
 
 
-}
+}*/
