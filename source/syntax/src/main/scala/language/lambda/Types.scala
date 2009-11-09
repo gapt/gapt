@@ -16,6 +16,11 @@ object Types {
     case class To() extends TAtomicA ; def o = To()
     case class ->(in:TA, out:TA) extends TComplexA
 
+    // convenience factory to create function types
+    object FunctionType {
+      def apply(to: TA, from: List[TA]) : TA = if (!from.isEmpty) (from :\ to)(->) else to
+    }
+
     object  StringExtractor {
         def apply(t:TA):String = t match {
             case Ti() => "i"
