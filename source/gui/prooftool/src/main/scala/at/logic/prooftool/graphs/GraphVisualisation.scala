@@ -2,6 +2,8 @@ package at.logic.prooftool.graphs
 
 //import at.logic.prooftool.graphs.wrappers._
 
+import at.logic.utils.ds._
+
 import org.jgraph._
 import org.jgraph.graph._
 import javax.swing._
@@ -14,10 +16,64 @@ import org.jgrapht.ext._
 import org.jgrapht.graph._
 
 
-/**
- * Hello world!
- *
- */
+
+class GraphVisualisation[T] {
+
+  /* shows a frame with the graph*/
+  def show(g :  at.logic.utils.ds.Graphs.Graph[T]) = {
+    var jf = buildFrame(create(g))
+    jf.setVisible(true)
+    
+  }
+
+  /* calls create and puts the jgraph into a frame */
+  def buildFrame(g : at.logic.utils.ds.Graphs.Graph[T]) : JFrame = buildFrame(create(g))
+
+  def buildFrame(g : JGraph) : JFrame = {
+    var jf = new JFrame
+    jf.getContentPane.add(new JScrollPane(g))
+    jf.pack
+    jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+
+    return jf;
+  }
+
+  /* creates a jgraph from out graph model */
+  def create(g : at.logic.utils.ds.Graphs.Graph[T]) : JGraph = {
+    if (! g.graph.isInstanceOf[ListenableGraph[Any,Any]])
+      throw new Exception("Excpecting a Listenable Graph in the at.logic.utils.ds.Graph model!")
+
+    var jgraph = new JGraph( new JGraphModelAdapter( g.graph ) )
+    return jgraph;
+  }
+
+}
+
+object VisualisationUtils {
+  def placeNodes(jgraph : JGraph) = {
+    var map = jgraph.getGraphLayoutCache().createNestedMap()
+
+//    Console.print(map)
+    var c = 0
+    var it = map.values().iterator()
+    var i : Any = null
+    while (it.hasNext()) {
+      i = it.next()
+      i match {
+	case null => // do nothing
+//	case Map => Console.println(i)
+//	case _ => Console.print("no map")
+	  case _ =>
+      }
+
+//    jgraph.getGraphLayoutCache().edit(map)
+    }
+
+  }
+
+}
+
+/* --- only tests from here on --- */
 object JGraphApp extends Application {
   var jf = new JFrame
   var jm = new DefaultGraphModel
