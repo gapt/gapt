@@ -17,6 +17,12 @@ import at.logic.language.lambda.TypedLambdaCalculus._
 object HigherOrderLogic {
 
     trait Const
+    
+//    trait FOL extends HOL
+//    implicit object FOLVarFactory extends VarFactory[FOL] {
+//      def create (name: SymbolA, exptype: TA) = {
+//        if exptype != Ti() throw...
+//      }
 
     implicit object HOLVarFactory extends VarFactory[HOL] {
         def create (name: SymbolA, exptype: TA) = name match {
@@ -128,5 +134,23 @@ object HigherOrderLogic {
             case All(Abs(variable, sub)) => Some( (variable, sub) )
             case _ => None
         }
+    }
+
+    // HOL formulas of the form P(t_1,...,t_n)
+    object Atom {
+      def apply( sym: SymbolA, args: List[LambdaExpression[HOL]] ) = {
+        val pred = Var[HOL]( sym, FunctionType( To(), args.map( a => a.exptype ) ) )
+        AppN(pred, args).asInstanceOf[LambdaExpression[HOL] with Formula]
+      }
+      def unapply( expression: LambdaExpression[HOL] ) = expression match {
+        case Neg(_) => None
+        case Or(_, _) => None
+        case Imp(_, _) => None
+        case Ex(_) => None
+        case All(_) => None
+        case AppN( Var( name, t ), args ) 
+          if t == FunctionType( To(), args.map( a => a.exptype ) ) => Some( ( name, args ) )
+        case _ => None
+      }
     }
 }

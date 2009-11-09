@@ -32,6 +32,8 @@ class HigherOrderLogicTest extends Specification with JUnit {
           val a21 = App(c2,v21)
           val a22 = App(a21,v22)
           (a22) must beLike {case x: Formula => true}
+          val at1 = Atom("P", c2::a22::Nil)
+          (at1) must beLike {case x: Formula => true}
       }
     "And connective should return the right And formula" in {
           val c1 = Var[HOL]("a", o).asInstanceOf[LambdaExpression[HOL] with Formula]

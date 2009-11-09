@@ -19,12 +19,15 @@ object LogicSymbols {
     case object ExistsSymbol extends ConstantSymbolA
     case object ForallSymbol extends ConstantSymbolA
 
+    class ConstantStringSymbol( val string : String ) extends ConstantSymbolA with StringSymbol
+    class VariableStringSymbol( val string : String ) extends VariableSymbolA with StringSymbol
+
     object LogicSymbolsDefaultConverters {
 
         implicit def stringToVarConstSymbol(s: String): SymbolA = {
             val chr = s.charAt(0)
-            if (chr.isUpperCase || chr.equals('a') || chr.equals('b') || chr.equals('c')) new ConstantSymbolA with StringSymbol {val string = s}
-            else new VariableSymbolA with StringSymbol {val string = s}
+            if (chr.isUpperCase || chr.equals('a') || chr.equals('b') || chr.equals('c')) new ConstantStringSymbol( s )
+            else new VariableStringSymbol( s )
         }
     }
 }
