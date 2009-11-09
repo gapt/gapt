@@ -12,25 +12,25 @@ import Types._
 
 object TypedLambdaCalculus {
     
-    abstract class LambdaExpression[A <: Lambda] {
+    abstract class LambdaExpression[+A <: Lambda] {
         def exptype: TA
 
         // all variables must be of the same level
-        def getFreeAndBoundVariables():Tuple2[Set[Var[A]],Set[Var[A]]] = this match {
-            case v: Var[_] => (HashSet(v),  new EmptySet )
-            case App(m1,n1) => {
-                    val m = m1.asInstanceOf[LambdaExpression[A]] // casting is safe as a term will only contains variables of the same level
-                    val n = n1.asInstanceOf[LambdaExpression[A]]
-                    val mFBV:Tuple2[Set[Var[A]],Set[Var[A]]] = m.getFreeAndBoundVariables()
-                    val nFBV:Tuple2[Set[Var[A]],Set[Var[A]]] = n.getFreeAndBoundVariables()
+        // The casting in the body of the function is required because we assume different elements are parameterized over A but as all variables must be of the same Athere is no problem.
+        // TODO change List into a covariant Set
+        def getFreeAndBoundVariables():Tuple2[List[Var[A]],List[Var[A]]] = this match {
+            case v: Var[_] => (v::Nil,  Nil )
+            case app: App[_] => {
+                    val mFBV = app.function.getFreeAndBoundVariables()
+                    val nFBV = app.argument.getFreeAndBoundVariables()
                     (mFBV._1 ++ nFBV._1, mFBV._2 ++ nFBV._2)
             }
-            case Abs(x1,m1) => {
-                    val x = x1.asInstanceOf[Var[A]]
-                    val m = m1.asInstanceOf[LambdaExpression[A]]
-                    val mFBV:Tuple2[Set[Var[A]],Set[Var[A]]] = m.getFreeAndBoundVariables()
-                    val bound = mFBV._2 + x
-                    val free = mFBV._1 - x
+            case abs: Abs[_] => {
+                    val mFBV = abs.expression.getFreeAndBoundVariables()
+                    //val bound = mFBV._2 + x
+                    //val free = mFBV._1 - x
+                    val bound = abs.variable::mFBV._2
+                    val free = mFBV._1.filter(y => abs.variable != y)
                     (free, bound)
             }
         }
@@ -41,7 +41,7 @@ object TypedLambdaCalculus {
     /*
         Definition of Var
     */
-    class Var[A <: Lambda](val name: SymbolA, val exptype: TA ) extends LambdaExpression[A] {
+    class Var[+A <: Lambda](val name: SymbolA, val exptype: TA ) extends LambdaExpression[A] {
         override def equals(a: Any) = a match {
             case s: Var[_] => (s.name == name && s.exptype == exptype)
             case _ => false
@@ -69,7 +69,7 @@ object TypedLambdaCalculus {
     /*
         Definition of Abs
     */
-    class Abs[A <: Lambda] (val variable: Var[A], val expression: LambdaExpression[A]) extends LambdaExpression[A]  {
+    class Abs[+A <: Lambda] (val variable: Var[A], val expression: LambdaExpression[A]) extends LambdaExpression[A]  {
         def exptype: TA = ->(variable.exptype,expression.exptype)
         override def equals(a: Any) = a match {
             case s: Abs[_] => (s.variable == variable && s.expression == expression && s.exptype == exptype)
@@ -100,7 +100,7 @@ object TypedLambdaCalculus {
                                                                         else expression*/
         def unapply[A <: Lambda](expression: LambdaExpression[A]):Option[(List[Var[A]], LambdaExpression[A])] = Some(unapplyRec(expression))
         def unapplyRec[A <: Lambda](expression: LambdaExpression[A]): (List[Var[A]], LambdaExpression[A]) = expression match {
-            case Abs(v1,exp1) => { val v = v1.asInstanceOf[Var[A]]; val exp = exp1.asInstanceOf[LambdaExpression[A]]; (v :: unapplyRec(exp)._1, unapplyRec(exp)._2 ) }
+            case abs: Abs[_] => (abs.variable :: unapplyRec(abs.expression)._1, unapplyRec(abs.expression)._2 )
             case v: Var[_] => (Nil, v)
             case a: App[_] => (Nil, a)
         }
@@ -110,7 +110,7 @@ object TypedLambdaCalculus {
     /*
         Definition of App
     */
-    class App[A <: Lambda] (val function: LambdaExpression[A], val argument: LambdaExpression[A]) extends LambdaExpression[A] {
+    class App[+A <: Lambda] (val function: LambdaExpression[A], val argument: LambdaExpression[A]) extends LambdaExpression[A] {
         require({
             function.exptype match {
                 case ->(in,out) => {if (in == argument.exptype) true
@@ -154,7 +154,7 @@ object TypedLambdaCalculus {
                                                                                   else function*/
         def unapply[A <: Lambda](expression: LambdaExpression[A]):Option[(LambdaExpression[A], List[LambdaExpression[A]])] = Some(unapplyRec(expression))
         def unapplyRec[A <: Lambda](expression: LambdaExpression[A]):(LambdaExpression[A], List[LambdaExpression[A]]) = expression match {
-            case App(f1,arg1) => {val f = f1.asInstanceOf[LambdaExpression[A]]; val arg = arg1.asInstanceOf[LambdaExpression[A]]; (unapplyRec(f)._1, unapplyRec(f)._2 ::: (arg::Nil) )}
+            case app: App[_] => (unapplyRec(app.function)._1, unapplyRec(app.function)._2 ::: (app.argument::Nil) )
             case v: Var[_] => (v,Nil)
             case a: Abs[_] => (a,Nil)
         }
@@ -162,7 +162,7 @@ object TypedLambdaCalculus {
     /* end of App */
 
     object freshVar {
-        def apply[A <: Lambda](exptype: TA, disallowedVariables: Set[Var[A]])(implicit factory: VarFactory[A]) :Var[A] = {
+        def apply[A <: Lambda](exptype: TA, disallowedVariables: List[Var[A]])(implicit factory: VarFactory[A]) :Var[A] = {
             var counter = 1
             var v = Var[A]("#"+counter, exptype)
             while (disallowedVariables.contains(v)) {
