@@ -92,7 +92,7 @@ object TypedLambdaCalculus {
         def create (variable: Var[Lambda], expression: LambdaExpression[Lambda]) = new Abs[Lambda](variable, expression)
     }
     object AbsN {
-        def apply(variables: List[Var[Lambda]], expression: LambdaExpression[Lambda]): LambdaExpression[Lambda] = variables match {
+        def apply[A <: Lambda](variables: List[Var[A]], expression: LambdaExpression[A])(implicit factory: AbsFactory[A]): LambdaExpression[A] = variables match {
             case Nil => expression
             case x::ls => Abs(x, apply(ls, expression))
         }
@@ -146,7 +146,7 @@ object TypedLambdaCalculus {
     }
    
     object AppN {
-        def apply(function: LambdaExpression[Lambda], arguments:List[LambdaExpression[Lambda]]): LambdaExpression[Lambda] = arguments match {
+        def apply[A <: Lambda](function: LambdaExpression[A], arguments:List[LambdaExpression[A]])(implicit factory: AppFactory[A]): LambdaExpression[A] = arguments match {
             case Nil => function
             case x::ls => apply(App(function, x), ls)
         }
