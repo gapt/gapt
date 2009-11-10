@@ -63,7 +63,7 @@ class XMLParserTest extends Specification with JUnit {
                       // FIXME: remove cast!
                       Atom("P",
                         AppN(Var[HOL](new ConstantStringSymbol("f"), "(i -> (i -> i))"),
-                           Var[HOL]("x", "i")::Var[HOL](new ConstantStringSymbol("c"), "i")::Nil).asInstanceOf[LambdaExpression[HOL]]
+                           Var[HOL]("x", "i")::Var[HOL](new ConstantStringSymbol("c"), "i")::Nil)
                          ::Var[HOL]("y", "i")::Nil))
 
     }
@@ -86,18 +86,17 @@ class XMLParserTest extends Specification with JUnit {
                       Atom(new ConstantStringSymbol("="), Var[HOL]("x", "i")::Var[HOL]("x", "i")::Nil))
                 )
     }
-    /*
     "parse correctly a second-order variable X" in {
-      (new NodeReader(<secondordervariable symbol="X"/>) with XMLSetTermParser).getSetTerm() must beEqual(...)
+      (new NodeReader(<secondordervariable symbol="X"/>) with XMLSetTermParser).getSetTerm() must
+      beEqual(Var[HOL](new VariableStringSymbol("X"), "(i -> o)"))
     }
-    "parse correctly a variable atom formula X(c,y)" in {
+    "parse correctly a variable atom formula X(c)" in {
       (new NodeReader(<variableatomformula>
                         <secondordervariable symbol="X"/>
                         <constant symbol="c"/>
-                        <variable symbol="y"/>
                       </variableatomformula>) with XMLFormulaParser).getFormula() must beEqual(
                     Atom(new VariableStringSymbol("X"),
-                         Var[HOL](new ConstantStringSymbol("c"), "i")::Var[HOL]("y", "i")::Nil)
+                         Var[HOL](new ConstantStringSymbol("c"), "i")::Nil)
                   )
     }
     "parse correctly a second-order quantified formula (all Z)Z(c)" in {
@@ -107,9 +106,12 @@ class XMLParserTest extends Specification with JUnit {
                           <secondordervariable symbol="Z"/>
                           <constant symbol="c"/>
                         </variableatomformula>
-                      </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqual(...)
+                      </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqual(
+                    AllVar(Var[HOL](new VariableStringSymbol("Z"), "(i -> o)"),
+                      Atom(new VariableStringSymbol("Z"),
+                           Var[HOL](new ConstantStringSymbol("c"), "i")::Nil))
+                  )
     }
-    */
     "parse correctly a LambdaExpression lambda x . P(x)" in {
       (new NodeReader(<lambdasubstitution>
                         <variablelist>
@@ -135,28 +137,37 @@ class XMLParserTest extends Specification with JUnit {
                     AbsN(Var[HOL]("x", "i")::Var[HOL]("y", "i")::Nil,
                          Atom("R", Var[HOL]("x", "i")::Var[HOL]("y", "i")::Nil)))
     }
-    /*
-    "parse correctly a defined set \cap(X, Y)" in {
+    "parse correctly a defined set \\cap(X, Y)" in {
       (new NodeReader(<definedset symbol="\cap" definition="\cap">
                         <secondordervariable symbol="X"/>
                         <secondordervariable symbol="Y"/>
-                      </definedset>) with XMLSetTermParser).getSetTerm() must beEqual(...)
+                      </definedset>) with XMLSetTermParser).getSetTerm() must beEqual(
+                    AppN( Var[HOL]( new ConstantStringSymbol("\\cap"),
+                                    "((i -> o) -> ((i -> o) -> (i -> o)))"),
+                          Var[HOL]( new VariableStringSymbol("X"), "(i -> o)" )::
+                          Var[HOL]( new VariableStringSymbol("Y"), "(i -> o)" )::Nil)
+                  )
     }
-    "parse correctly a defined set formula \cup(X,Y)(c)" in {
+    "parse correctly a defined set formula \\cup(X,Y)(c)" in {
       (new NodeReader(<definedsetformula>
                         <definedset symbol="\cup" definition="\cup">
                           <secondordervariable symbol="X"/>
                           <secondordervariable symbol="Y"/>
                         </definedset>
                         <constant symbol="c"/>
-                      </definedsetformula>) with XMLFormulaParser).getFormula() must beEqual(...)
+                      </definedsetformula>) with XMLFormulaParser).getFormula() must beEqual(
+                    App(AppN( Var[HOL]( new ConstantStringSymbol("\\cup"),
+                                        "((i -> o) -> ((i -> o) -> (i -> o)))"),
+                               Var[HOL]( new VariableStringSymbol("X"), "(i -> o)" )::
+                               Var[HOL]( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
+                        Var[HOL]( new ConstantStringSymbol("c"), "i" ) ) )
     }
-    "parse correctly a complex sentence (all X)(all Y)(all z) X(z) impl \cup(X,Y)(z)" in {
-      (new NodeReader(<secondorderquantifiedformula>
-                        <secondordervariable symbol="X">
-                        <secondorderquantifiedformula>
-                          <secondordervariable symbol="Y">
-                          <quantifiedformula>
+    "parse correctly a complex sentence (all X)(all Y)(all z) X(z) impl \\cup(X,Y)(z)" in {
+      (new NodeReader(<secondorderquantifiedformula type="all">
+                        <secondordervariable symbol="X"/>
+                        <secondorderquantifiedformula type="all">
+                          <secondordervariable symbol="Y"/>
+                          <quantifiedformula type="all">
                             <variable symbol="z"/>
                             <conjunctiveformula type="impl">
                               <variableatomformula>
@@ -173,9 +184,19 @@ class XMLParserTest extends Specification with JUnit {
                             </conjunctiveformula>
                           </quantifiedformula>
                         </secondorderquantifiedformula>
-                      </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqual(...)
+                      </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqual(
+                    AllVar( Var[HOL]( new VariableStringSymbol("X"), "(i -> o)" ),
+                      AllVar( Var[HOL]( new VariableStringSymbol("Y"), "(i -> o)"),
+                        AllVar( Var[HOL]( new VariableStringSymbol("z"), "i"),
+                          Imp( Atom( new VariableStringSymbol("X"), Var[HOL]( "z", "i" )::Nil ),
+                            App(AppN( Var[HOL]( new ConstantStringSymbol("\\cup"),
+                                               "((i -> o) -> ((i -> o) -> (i -> o)))"),
+                                       Var[HOL]( new VariableStringSymbol("X"), "(i -> o)" )::
+                                       Var[HOL]( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
+                                Var[HOL]( "z", "i" ) ).asInstanceOf[LambdaExpression[HOL] with Formula] ) ) ) )
+                  )
     }
-    *//*
+    /*
     "parse correctly a sequent A, B :- C, D" in {
       (new NodeReader(<sequent>
                         <formulalist>

@@ -109,30 +109,34 @@ This class parses the elements subsumed under the entity &formula;
     def getFormula(n : Node) : LambdaExpression[HOL] with Formula =
       trim(n) match {
         case <constantatomformula>{ ns @ _* }</constantatomformula>
-             => Atom(new ConstantStringSymbol( n.attribute("symbol").get.first.text ),
-                     nodesToTerms(ns.toList))
-        /*
+          => Atom(new ConstantStringSymbol( n.attribute("symbol").get.first.text ),
+                  nodesToTerms(ns.toList))
+        // FIXME: this cast is necessary because of the formula trait?
+        // ask tomer!
         case <variableatomformula>{ ns @ _* }</variableatomformula>
-             => {
-                  createVariableAtomFormula( (new NodeReader( ns.first ) with XMLSOLTermParser).getTerm(),
-                                             nodesToTerms( ns.toList.tail ) )
-                }
+          => AppN( (new NodeReader( ns.first ) with XMLSetTermParser).getSetTerm(),
+                   nodesToTerms( ns.toList.tail ) ).asInstanceOf[LambdaExpression[HOL] with Formula]
         case <definedsetformula>{ ns @ _* }</definedsetformula>
-          => 
-        */
+          => AppN( (new NodeReader( ns.first ) with XMLSetTermParser).getSetTerm(),
+                   nodesToTerms( ns.toList.tail ) ).asInstanceOf[LambdaExpression[HOL] with Formula]
         case <conjunctiveformula>{ ns @ _* }</conjunctiveformula> 
-             => createConjunctiveFormula(n.attribute("type").get.first.text,
+          => createConjunctiveFormula(n.attribute("type").get.first.text,
                                          nodesToFormulas(ns.toList))
-        case <quantifiedformula>{ ns @ _* }</quantifiedformula>
-             => {
+        case <quantifiedformula>{ ns @ _* }</quantifiedformula> =>
+        {
                   val variable = ( new NodeReader(ns.first) with XMLTermParser).getTerm().asInstanceOf[Var[HOL]]
                   val form = ( new NodeReader(ns.last) with XMLFormulaParser).getFormula() 
-                  createQuantifiedFormula(n.attribute("type").get.first.text,
-                                          variable, form)
-                }
-        /*
-        case <secondorderquantifiedformula>{_*}</secondorderquantifiedformula>
-          => */
+                  createQuantifiedFormula( n.attribute("type").get.first.text,
+                                           variable, form )
+        }
+        case <secondorderquantifiedformula>{ ns @ _*}</secondorderquantifiedformula> =>
+        {
+          val variable = ( new NodeReader(ns.first) with XMLSetTermParser).getSetTerm().asInstanceOf[Var[HOL]]
+          val form = ( new NodeReader(ns.last) with XMLFormulaParser).getFormula()
+          createQuantifiedFormula( n.attribute("type").get.first.text,
+                                              variable, form )
+
+        }
         case _ => throw throw new ParsingException("Could not parse XML: " + n.toString)
       }
 
@@ -209,15 +213,29 @@ This class parses the elements subsumed under the entity &setterm;
     
     def getSetTerm(n: Node) : LambdaExpression[HOL] =
       trim(n) match {
-        // TODO: how do we determine the arity of the secondordervariable?
-        // case <secondordervariable/> => { /* TODO */}
+        // FIXME: the arity of the second-order variable is not
+        // provided here, so we assume for the moment that all second order
+        // variables have type i -> o.
+        case <secondordervariable/> => 
+          Var[HOL](new VariableStringSymbol( n.attribute("symbol").get.first.text ),
+                   i -> o)
         case <lambdasubstitution>{ ns @ _* }</lambdasubstitution> => {
           AbsN( (new NodeReader(ns.first) with XMLVariableListParser).getVariableList(),
                 (new NodeReader(ns.last) with XMLFormulaParser).getFormula() )
         }
-        //case <definedset>{_*}</definedset> => { /* TODO */}
+        // TODO: treat definitional aspect of definedset
+        case <definedset>{ ns @ _* }</definedset> =>
+        {
+          val args = getAbstractTerms( ns.toList )
+          AppN( Var[HOL](new ConstantStringSymbol( n.attribute("symbol").get.first.text ),
+                         FunctionType( i -> o, args.map( t => t.exptype ) ) ),
+                args )
+        }
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
+
+      def getAbstractTerms(ns: List[Node]) : List[LambdaExpression[HOL]] = 
+        ns.map( n => (new NodeReader(n) with XMLAbstractTermParser).getAbstractTerm() )
   }
   
   trait XMLVariableListParser extends XMLNodeParser {
