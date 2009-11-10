@@ -17,6 +17,7 @@ object Types {
     case class ->(in:TA, out:TA) extends TComplexA
 
     // convenience factory to create function types
+    // with argument types from and return type to
     object FunctionType {
       def apply(to: TA, from: List[TA]) : TA = if (!from.isEmpty) (from :\ to)(->) else to
     }
