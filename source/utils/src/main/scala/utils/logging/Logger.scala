@@ -1,4 +1,4 @@
-package at.logic.logging
+package at.logic.utils.logging
 
 import org.slf4j.LoggerFactory
 

@@ -6,7 +6,7 @@
  */
 
 package at.logic.utils.ds
-import logging.Logger
+import at.logic.utils.logging.Logger
 
 import Graphs._
 import scala.collection.jcl.Conversions._
