@@ -6,7 +6,6 @@
  */
 
 package at.logic.utils.ds
-import logging.Logger
 
 object Graphs {
 

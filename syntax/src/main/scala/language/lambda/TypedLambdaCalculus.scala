@@ -47,7 +47,7 @@ object TypedLambdaCalculus {
             case _ => false
         }
         override def hashCode() = exptype.hashCode
-        override def toString() = "(" + name + "," + exptype + ")"
+        override def toString() = "Var(" + name + "," + exptype + ")"
     }
     object Var {
         def apply[A <: Lambda](name: SymbolA, exptype: TA)(implicit factory: VarFactory[A]) = factory.create(name, exptype)
@@ -76,7 +76,7 @@ object TypedLambdaCalculus {
             case _ => false
         }
         override def hashCode() = exptype.hashCode
-        override def toString() = "(" + variable + "," + expression + ")"
+        override def toString() = "Abs(" + variable + "," + expression + ")"
     }
     object Abs {
         def apply[A <: Lambda](variable: Var[A], expression: LambdaExpression[A])(implicit factory: AbsFactory[A]) = factory.create(variable, expression)
@@ -128,7 +128,7 @@ object TypedLambdaCalculus {
             case _ => false
         }
         override def hashCode() = exptype.hashCode
-        override def toString() = "(" + function + "," + argument + ")"
+        override def toString() = "App(" + function + "," + argument + ")"
     }
 
     object App {
