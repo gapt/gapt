@@ -31,9 +31,9 @@ class HigherOrderLogicTest extends Specification with JUnit {
           val v22 = Var[HOL]("y", i)
           val a21 = App(c2,v21)
           val a22 = App(a21,v22)
-          (a22) must beLike {case x: HOLFormula => true}
+          (a22) must beLike {case x: Formula[_] => true}
           val at1 = Atom("P", c2::a22::Nil)
-          (at1) must beLike {case x: HOLFormula => true}
+          (at1) must beLike {case x: Formula[_] => true}
       }
     "And connective should return the right And formula" in {
           val c1 = new HOLConstFormula(new ConstantStringSymbol("a"))

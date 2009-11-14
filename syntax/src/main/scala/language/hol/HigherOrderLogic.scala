@@ -16,6 +16,9 @@ import at.logic.language.lambda.TypedLambdaCalculus._
 
 object HigherOrderLogic {
 
+    type HOLFormula = LambdaExpression[HOL] with Formula[HOL]
+    type HOLTerm = LambdaExpression[HOL]
+    
     trait Const
     
 //    trait FOL extends HOL
@@ -64,10 +67,10 @@ object HigherOrderLogic {
     // The validity of the applicaton is tested in the App class
 
     // convenient classes for creating HOL formulas and consts
-    trait HOLFormula extends LambdaExpression[HOL] with Formula[HOL]
-    class HOLAppFormula(function: LambdaExpression[HOL], argument: LambdaExpression[HOL]) extends App[HOL](function, argument) with HOLFormula
-    class HOLVarFormula(name: VariableSymbolA) extends Var[HOL](name, To()) with HOLFormula
-    class HOLConstFormula(name: ConstantSymbolA) extends Var[HOL](name, To()) with HOLFormula with Const
+    //trait HOLFormula extends LambdaExpression[HOL] with Formula[HOL]
+    class HOLAppFormula(function: LambdaExpression[HOL], argument: LambdaExpression[HOL]) extends App[HOL](function, argument) with Formula[HOL]
+    class HOLVarFormula(name: VariableSymbolA) extends Var[HOL](name, To()) with Formula[HOL]
+    class HOLConstFormula(name: ConstantSymbolA) extends Var[HOL](name, To()) with Formula[HOL] with Const
     class HOLConst(name: ConstantSymbolA, exptype: TA) extends Var[HOL](name, exptype) with Const
 
     implicit object HOLAppFactory extends AppFactory[HOL] {
