@@ -28,10 +28,10 @@ object XMLParser {
   }
 
   object XMLUtils {
-    def nodesToAbstractTerms(ns : List[Node]) : List[LambdaExpression[HOL]] =
+    def nodesToAbstractTerms(ns : List[Node]) : List[HOLTerm] =
       ns.map( c => (new NodeReader( c ) with XMLAbstractTermParser).getAbstractTerm() )
     
-    def nodesToFormulas(ns : List[Node]) : List[LambdaExpression[HOL] with Formula] =
+    def nodesToFormulas(ns : List[Node]) : List[HOLFormula] =
       ns.map( c => (new NodeReader( c ) with XMLFormulaParser).getFormula() )
   }
 
@@ -113,9 +113,9 @@ object XMLParser {
 This class parses the elements subsumed under the entity &formula;
  */
   trait XMLFormulaParser extends XMLNodeParser {
-    def getFormula() : LambdaExpression[HOL] with Formula = getFormula( getInput() )
+    def getFormula() : HOLFormula = getFormula( getInput() )
 
-    def getFormula(n : Node) : LambdaExpression[HOL] with Formula =
+    def getFormula(n : Node) : LambdaExpression[HOL] with Formula[HOL] =
       trim(n) match {
         case <constantatomformula>{ ns @ _* }</constantatomformula>
           => Atom(new ConstantStringSymbol( n.attribute("symbol").get.first.text ),
@@ -124,10 +124,10 @@ This class parses the elements subsumed under the entity &formula;
         // ask tomer!
         case <variableatomformula>{ ns @ _* }</variableatomformula>
           => AppN( (new NodeReader( ns.first ) with XMLSetTermParser).getSetTerm(),
-                   XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[LambdaExpression[HOL] with Formula]
+                   XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[HOLFormula]
         case <definedsetformula>{ ns @ _* }</definedsetformula>
           => AppN( (new NodeReader( ns.first ) with XMLSetTermParser).getSetTerm(),
-                   XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[LambdaExpression[HOL] with Formula]
+                   XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[LambdaExpression[HOL] with Formula[HOL]]
         case <conjunctiveformula>{ ns @ _* }</conjunctiveformula> 
           => createConjunctiveFormula(n.attribute("type").get.first.text,
                                          XMLUtils.nodesToFormulas(ns.toList))
@@ -149,7 +149,7 @@ This class parses the elements subsumed under the entity &formula;
         case _ => throw throw new ParsingException("Could not parse XML: " + n.toString)
       }
 
-    def createConjunctiveFormula(sym: String, formulas: List[LambdaExpression[HOL] with Formula]) : LambdaExpression[HOL] with Formula =
+    def createConjunctiveFormula(sym: String, formulas: List[LambdaExpression[HOL] with Formula[HOL]]) : LambdaExpression[HOL] with Formula[HOL] =
     {
       sym match {
         case "and" => And(formulas.first, formulas.last)
@@ -160,7 +160,7 @@ This class parses the elements subsumed under the entity &formula;
       }
     }
 
-    def createQuantifiedFormula(sym: String, variable: Var[HOL], formula: LambdaExpression[HOL] with Formula) : LambdaExpression[HOL] with Formula =
+    def createQuantifiedFormula(sym: String, variable: Var[HOL], formula: LambdaExpression[HOL] with Formula[HOL]) : LambdaExpression[HOL] with Formula[HOL] =
       sym match {
         case "all" => AllVar(variable, formula)
         case "exists" => ExVar(variable, formula)
@@ -172,9 +172,9 @@ This class parses the elements subsumed under the entity &formula;
 This class parses the elements subsumed under the entity &abstractterm;
  */
   trait XMLAbstractTermParser extends XMLNodeParser {
-    def getAbstractTerm() : LambdaExpression[HOL] = getAbstractTerm( getInput() )
+    def getAbstractTerm() : HOLTerm = getAbstractTerm( getInput() )
     
-    def getAbstractTerm(n: Node) : LambdaExpression[HOL] =
+    def getAbstractTerm(n: Node) : HOLTerm =
       try {
         (new NodeReader(n) with XMLTermParser).getTerm()
       }
@@ -190,9 +190,9 @@ This class parses the elements subsumed under the entity &abstractterm;
 This class parses the elements subsumed under the entity &term;
  */
   trait XMLTermParser extends XMLNodeParser {
-    def getTerm() : LambdaExpression[HOL] = getTerm(getInput())
+    def getTerm() : HOLTerm = getTerm(getInput())
     
-    def getTerm(n: Node) : LambdaExpression[HOL] =
+    def getTerm(n: Node) : HOLTerm =
       trim(n) match {
         case <variable/> => Var[HOL](new VariableStringSymbol( n.attribute("symbol").get.first.text ), Ti())
         case <constant/> => Var[HOL](new ConstantStringSymbol( n.attribute("symbol").get.first.text ), Ti())
@@ -200,7 +200,7 @@ This class parses the elements subsumed under the entity &term;
                                                              XMLUtils.nodesToAbstractTerms(ns.toList))
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
-    def createFunction( sym: String, args : List[LambdaExpression[HOL]] ) : LambdaExpression[HOL] =
+    def createFunction( sym: String, args : List[HOLTerm] ) : HOLTerm =
       AppN( Var[HOL](new ConstantStringSymbol(sym), FunctionType( Ti(), args.map( a => a.exptype ) ) ),
             args)
   }
@@ -209,9 +209,9 @@ This class parses the elements subsumed under the entity &term;
 This class parses the elements subsumed under the entity &setterm;
  */
   trait XMLSetTermParser extends XMLNodeParser {
-    def getSetTerm() : LambdaExpression[HOL] = getSetTerm(getInput())
+    def getSetTerm() : HOLTerm = getSetTerm(getInput())
     
-    def getSetTerm(n: Node) : LambdaExpression[HOL] =
+    def getSetTerm(n: Node) : HOLTerm =
       trim(n) match {
         // FIXME: the arity of the second-order variable is not
         // provided here, so we assume for the moment that all second order

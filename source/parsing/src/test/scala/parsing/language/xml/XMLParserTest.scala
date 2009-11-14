@@ -72,7 +72,7 @@ class XMLParserTest extends Specification with JUnit {
                         <constantatomformula symbol="P"/>
                         <constantatomformula symbol="Q"/>
                       </conjunctiveformula>) with XMLFormulaParser).getFormula() must beEqual(
-                    And(Atom("P", Nil), Atom("Q", Nil)))
+                    And(Atom("P", (Nil: List[LambdaExpression[HOL]])), Atom("Q", (Nil: List[LambdaExpression[HOL]]))))
     }
     "parse correctly a quantified formula (exists x) x = x" in {
       (new NodeReader(<quantifiedformula type="exists">
@@ -193,7 +193,7 @@ class XMLParserTest extends Specification with JUnit {
                                                "((i -> o) -> ((i -> o) -> (i -> o)))"),
                                        Var[HOL]( new VariableStringSymbol("X"), "(i -> o)" )::
                                        Var[HOL]( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
-                                Var[HOL]( "z", "i" ) ).asInstanceOf[LambdaExpression[HOL] with Formula] ) ) ) )
+                                Var[HOL]( "z", "i" ) ).asInstanceOf[LambdaExpression[HOL] with Formula[HOL]] ) ) ) )
                   )
     }
     /*
