@@ -16,6 +16,9 @@ import Types._
 
 class TypesTest  extends Specification with JUnit {
   "Types" should {
+    "produce a binary function type ( i -> (i -> o ) )" in {
+      FunctionType( To(), Ti()::Ti()::Nil ) must beEqual ( ->(Ti(), ->( Ti(), To() ) ) )
+    }
     import Types.Parsers._
     "parse correctly from string (1)" in {
         ( parseAll(Type, "i").get ) must beEqual ( Ti() )
