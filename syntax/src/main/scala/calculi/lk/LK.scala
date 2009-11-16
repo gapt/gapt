@@ -7,7 +7,7 @@
 
 package at.logic.calculi.lk
 
-import ExpressionOccurrences._
+import at.logic.calculi.ExpressionOccurrences._
 import at.logic.language.hol.HigherOrderLogic._
 import at.logic.utils.ds.Trees._
 import scala.collection.immutable.{Set, EmptySet}
@@ -71,7 +71,7 @@ object LK {
         def uProof1 = t1.asInstanceOf[LKProof[A]]
         def uProof2 = t2.asInstanceOf[LKProof[A]]
     }
-
+    
     // traits denoting having auxiliary and main formulas
     trait AuxiliaryFormulas[A <: HOL] {
         // for each upper sequent we have a list of occurrences
@@ -87,14 +87,14 @@ object LK {
     object Axiom {  
         def apply[A <: HOL](seq: Sequent[A]) =
             new LeafTree[SequentOccurrence[A]](SequentOccurrence(seq.antecedent.map(createOccurrence[A]), seq.succedent.map(createOccurrence[A]))) with LKProof[A] {def rule = InitialRuleType}
-        def createOccurrence[A <: HOL](f: Formula[A]): FormulaOccurrence[A] = { ids = ids + 1; FormulaOccurrence[A](f, BaseOccur[Int](ids)) }
+        def createOccurrence[A <: HOL](f: Formula[A]): FormulaOccurrence[A] = { ids = ids + 1; FormulaOccurrence[A](f, BaseOccur(ids)) }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == InitialRuleType) Some((proof.root)) else None
     }
 
     object WeakeningLeftRule {
         def apply[A <: HOL](s1: LKProof[A], f: Formula[A]) = {
             ids = ids + 1
-            val prinFormula = FormulaOccurrence[A](f, BaseOccur[Int](ids))
+            val prinFormula = FormulaOccurrence[A](f, BaseOccur(ids))
             new UnaryTree[SequentOccurrence[A]](SequentOccurrence(prinFormula :: s1.root.antecedent, s1.root.succedent), s1)
                 with UnaryLKProof[A] with PrincipalFormulas[A] {
                     def rule = WeakeningLeftRuleType
@@ -112,7 +112,7 @@ object LK {
     object WeakeningRightRule {
         def apply[A <: HOL](s1: LKProof[A], f: Formula[A]) = {
             ids = ids + 1
-            val prinFormula = FormulaOccurrence[A](f, BaseOccur[Int](ids))
+            val prinFormula = FormulaOccurrence[A](f, BaseOccur(ids))
             new UnaryTree[SequentOccurrence[A]](SequentOccurrence(s1.root.antecedent, prinFormula :: s1.root.succedent), s1)
                 with UnaryLKProof[A] with PrincipalFormulas[A] {
                     def rule = WeakeningRightRuleType
