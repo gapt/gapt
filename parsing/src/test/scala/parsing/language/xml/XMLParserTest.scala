@@ -4,23 +4,33 @@
 
 import org.specs._
 import org.specs.runner._
-import org.specs.mock.Mockito
-import org.mockito.Matchers._  // to use matchers like anyInt()
+import org.specs.matcher.Matcher
 import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers._
+import at.logic.parsing.readers.XMLReaders._
 import scala.xml._
 import at.logic.language.hol.HigherOrderLogic._
 import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.language.hol.LogicSymbols.{ConstantStringSymbol, VariableStringSymbol}
 import at.logic.language.lambda.Types.TAImplicitConverters._
 import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
+import at.logic.calculi.lk.LK._
+
+case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
+  def apply(v: => Array[T]) = ( v.deepEquals(a), "successful deepEquals", v.deepToString + " not deepEquals " + a.deepToString )
+}
 
 class XMLParserTest extends Specification with JUnit {
   "XMLParser" should {
     "parse correctly a constant c" in {
       (new NodeReader(<constant symbol="c"/>) with XMLTermParser).getTerm() must beEqual(
         Var[HOL](new ConstantStringSymbol("c"), "i")
-      )
+        )
+    }
+    "parse correctly a constant c from a StringReader" in {
+      (new XMLReader(
+        new java.io.StringReader("<constant symbol=\"c\"/>")) with XMLTermParser).getTerm() must beEqual(
+          Var[HOL](new ConstantStringSymbol("c"), "i")
+        )
     }
     "parse correctly a term g(c)" in {
       (new NodeReader(<function symbol="g">
@@ -196,7 +206,6 @@ class XMLParserTest extends Specification with JUnit {
                                 Var[HOL]( "z", "i" ) ).asInstanceOf[LambdaExpression[HOL] with Formula[HOL]] ) ) ) )
                   )
     }
-    /*
     "parse correctly a sequent A, B :- C, D" in {
       (new NodeReader(<sequent>
                         <formulalist>
@@ -208,10 +217,10 @@ class XMLParserTest extends Specification with JUnit {
                           <constantatomformula symbol="D"/>
                         </formulalist>
                       </sequent>) with XMLSequentParser).getSequent() must beEqual(
-                                    new Sequent(Atom("A", Nil)::Atom("B", Nil)::Nil,
-                                                Atom("C", Nil)::Atom("D", Nil)::Nil))
+                    Sequent(Atom("A", Nil : List[HOLTerm])::Atom("B", Nil : List[HOLTerm])::Nil,
+                            Atom("C", Nil : List[HOLTerm])::Atom("D", Nil : List[HOLTerm])::Nil))
     }
-    "parse correctly a proof p of P :- P" in {
+    "parse correctly an axiom P :- P" in {
       (new NodeReader(<proof symbol="p" calculus="LK">
                         <rule type="axiom">
                           <sequent>
@@ -223,9 +232,149 @@ class XMLParserTest extends Specification with JUnit {
                             </formulalist>
                           </sequent>
                         </rule>
-                      </proof>) with XMLProofParser).getProof() must beEqual(
-                                  new Rule( new Sequent(Atom("P", Nil)::Nil, Atom("P", Nil)::Nil ),
-                                    Nil)
-    }*/
+                      </proof>) with XMLProofParser).getProof() must
+                      beLike{ case Axiom( conc ) => true }
+    }
+    "parse a permutation parameter (1 2)" in {
+      XMLUtils.permStringToCycles("(1 2)", 2) must
+        beDeeplyEqual( (2::1::Nil).map(i => i - 1).toArray )
+    }
+    "parse a permutation parameter (1 2 3)(5 6)" in {
+      XMLUtils.permStringToCycles("(1 2 3)(5 6)", 6) must
+        beDeeplyEqual( (2::3::1::4::6::5::Nil).map( i => i - 1 ).toArray )
+    }
+    "parse a permutation rule" in {
+      (new NodeReader(<rule type="permr" param="(1 3)(2)">
+                        <sequent>
+                          <formulalist>
+                            <constantatomformula symbol="A"/>
+                            <constantatomformula symbol="B"/>
+                          </formulalist>
+                          <formulalist>
+                            <constantatomformula symbol="E"/>
+                            <constantatomformula symbol="D"/>
+                            <constantatomformula symbol="C"/>
+                          </formulalist>
+                        </sequent>
+                        <rule type="axiom">
+                          <sequent>
+                          <formulalist>
+                            <constantatomformula symbol="A"/>
+                            <constantatomformula symbol="B"/>
+                          </formulalist>
+                          <formulalist>
+                            <constantatomformula symbol="C"/>
+                            <constantatomformula symbol="D"/>
+                            <constantatomformula symbol="E"/>
+                          </formulalist>
+                        </sequent>
+                      </rule>
+                    </rule>) with XMLProofParser).getProof() must
+                    beLike{ case Axiom( conc ) => true }
+    }
+    "parse correctly a proof of A, A :- A and A" in {
+      (new NodeReader(<proof symbol="p" calculus="LK">
+                        <rule type="andr">
+                          <sequent>
+                            <formulalist>
+                              <constantatomformula symbol="A"/>
+                              <constantatomformula symbol="A"/>
+                            </formulalist>
+                            <formulalist>
+                              <conjunctiveformula type="and">
+                                <constantatomformula symbol="A"/>
+                                <constantatomformula symbol="A"/>
+                              </conjunctiveformula>
+                            </formulalist>
+                          </sequent>
+                          <rule type="axiom">
+                            <sequent>
+                              <formulalist>
+                                <constantatomformula symbol="A"/>
+                              </formulalist>
+                              <formulalist>
+                                <constantatomformula symbol="A"/>
+                              </formulalist>
+                            </sequent>
+                          </rule>
+                          <rule type="axiom">
+                            <sequent>
+                              <formulalist>
+                                <constantatomformula symbol="A"/>
+                              </formulalist>
+                              <formulalist>
+                                <constantatomformula symbol="A"/>
+                              </formulalist>
+                            </sequent>
+                          </rule>
+                        </rule>
+                      </proof>) with XMLProofParser).getProof() must
+                    beLike{ case AndRightRule( a1, a2, conc, aux1, aux2, p ) => true }
+    }
+    "parse correctly a proof with logical rules and permutations" in {
+      (new NodeReader(<proof symbol="p" calculus="LK">
+                        <rule type="orr1">
+                          <sequent>
+                            <formulalist/>
+                            <formulalist>
+                              <conjunctiveformula type="or">
+                                <constantatomformula symbol="A"/>
+                                <constantatomformula symbol="C"/>
+                              </conjunctiveformula>
+                              <conjunctiveformula type="or">
+                                <constantatomformula symbol="B"/>
+                                <constantatomformula symbol="D"/>
+                              </conjunctiveformula>
+                            </formulalist>
+                          </sequent>
+                          <rule type="perml" param="(1 2)">
+                            <sequent>
+                              <formulalist/>
+                              <formulalist>
+                                <conjunctiveformula type="or">
+                                  <constantatomformula symbol="A"/>
+                                  <constantatomformula symbol="C"/>
+                                </conjunctiveformula>
+                                <constantatomformula symbol="B"/>
+                              </formulalist>
+                            </sequent>
+                            <rule type="orr1">
+                              <sequent>
+                                <formulalist/>
+                                <formulalist>
+                                  <constantatomformula symbol="B"/>
+                                  <conjunctiveformula type="or">
+                                    <constantatomformula symbol="A"/>
+                                    <constantatomformula symbol="C"/>
+                                  </conjunctiveformula>
+                                </formulalist>
+                              </sequent>
+                              <rule type="perml" param="(1 2)">
+                                <sequent>
+                                  <formulalist/>
+                                  <formulalist>
+                                    <constantatomformula symbol="B"/>
+                                    <constantatomformula symbol="A"/>
+                                  </formulalist>
+                                </sequent>
+                                <rule type="axiom">
+                                  <sequent>
+                                    <formulalist/>
+                                    <formulalist>
+                                      <constantatomformula symbol="A"/>
+                                      <constantatomformula symbol="B"/>
+                                    </formulalist>
+                                  </sequent>
+                                </rule>
+                              </rule>
+                            </rule>
+                          </rule>
+                        </rule>
+                      </proof>) with XMLProofParser).getProof().root.succedent must beEqual(
+                        Or(Atom("A", (Nil: List[LambdaExpression[HOL]])),
+                           Atom("C", (Nil: List[LambdaExpression[HOL]])))::
+                        Or(Atom("B", (Nil: List[LambdaExpression[HOL]])),
+                           Atom("D", (Nil: List[LambdaExpression[HOL]])))::Nil)
+    }
   }
 }
