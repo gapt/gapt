@@ -85,32 +85,32 @@ object HigherOrderLogic {
     // We do in all of them additional casting into Formula as Formula is a static type and the only way to deynamically express it is via casting.
     object Neg {
         def apply[A <: HOL](sub: LambdaExpression[A] with Formula[A]) = App(negC,sub).asInstanceOf[LambdaExpression[A] with Formula[A]]
-        def unapply(expression: LambdaExpression[HOL]) = expression match {
-            case App(negC,sub) => Some( (sub) )
+        def unapply[A <: HOL](expression: LambdaExpression[A]) = expression match {
+            case App(negC,sub) => Some( (sub.asInstanceOf[LambdaExpression[A] with Formula[A]]) )
             case _ => None
         }
     }
 
     object And {
         def apply[A <: HOL](left: LambdaExpression[A] with Formula[A], right: LambdaExpression[A] with Formula[A]) = (App(App(andC,left),right)).asInstanceOf[LambdaExpression[A] with Formula[A]]
-        def unapply(expression: LambdaExpression[HOL]) = expression match {
-            case App(App(andC,left),right) => Some( (left,right) )
+        def unapply[A <: HOL](expression: LambdaExpression[A]) = expression match {
+            case App(App(andC,left),right) => Some( (left.asInstanceOf[LambdaExpression[A] with Formula[A]],right.asInstanceOf[LambdaExpression[A] with Formula[A]]) )
             case _ => None
         }
     }
 
     object Or {
         def apply[A <: HOL](left: LambdaExpression[A] with Formula[A], right: LambdaExpression[A] with Formula[A]) = App(App(orC,left),right).asInstanceOf[LambdaExpression[A] with Formula[A]]
-        def unapply(expression: LambdaExpression[HOL]) = expression match {
-            case App(App(orC,left),right) => Some( (left,right) )
+        def unapply[A <: HOL](expression: LambdaExpression[A]) = expression match {
+            case App(App(orC,left),right) => Some( (left.asInstanceOf[LambdaExpression[A] with Formula[A]],right.asInstanceOf[LambdaExpression[A] with Formula[A]]) )
             case _ => None
         }
     }
 
     object Imp {
         def apply[A <: HOL](left: LambdaExpression[A] with Formula[A], right: LambdaExpression[A] with Formula[A]) = App(App(impC,left),right).asInstanceOf[LambdaExpression[A] with Formula[A]]
-        def unapply(expression: LambdaExpression[HOL]) = expression match {
-            case App(App(impC,left),right) => Some( (left,right) )
+        def unapply[A <: HOL](expression: LambdaExpression[A]) = expression match {
+            case App(App(impC,left),right) => Some( (left.asInstanceOf[LambdaExpression[A] with Formula[A]],right.asInstanceOf[LambdaExpression[A] with Formula[A]]) )
             case _ => None
         }
     }
@@ -133,16 +133,16 @@ object HigherOrderLogic {
 
     object ExVar {
         def apply[A <: HOL](variable: Var[A], sub: LambdaExpression[A] with Formula[A])(implicit factory: AbsFactory[A]) = Ex(Abs(variable, sub))
-        def unapply(expression: LambdaExpression[HOL]) = expression match {
-            case Ex(Abs(variable, sub)) => Some( (variable, sub) )
+        def unapply[A <: HOL](expression: LambdaExpression[A]) = expression match {
+            case Ex(Abs(variable, sub)) => Some( (variable, sub.asInstanceOf[LambdaExpression[A] with Formula[A]]) )
             case _ => None
         }
     }
 
     object AllVar {
         def apply[A <: HOL](variable: Var[A], sub: LambdaExpression[A] with Formula[A])(implicit factory: AbsFactory[A]) = All(Abs(variable, sub))
-        def unapply(expression: LambdaExpression[HOL]) = expression match {
-            case All(Abs(variable, sub)) => Some( (variable, sub) )
+        def unapply[A <: HOL](expression: LambdaExpression[A]) = expression match {
+            case All(Abs(variable, sub)) => Some( (variable, sub.asInstanceOf[LambdaExpression[A] with Formula[A]]) )
             case _ => None
         }
     }
