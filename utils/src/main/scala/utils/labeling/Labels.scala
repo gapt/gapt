@@ -14,7 +14,5 @@ object Labels {
 
     abstract class LabelKey
     
-    trait MultiLabeled[A] extends Labeled[Map[LabelKey, A]] {
-        def map = label
-    }
+    trait MultiLabeled[A] extends Labeled[Map[LabelKey, A]]
 }
