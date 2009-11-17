@@ -5,6 +5,7 @@
 
 package at.logic.language.lambda
 
+import scala.util.parsing.combinator._
 
 object Types {
     abstract class TA {
@@ -28,9 +29,12 @@ object Types {
             case To() => "o"
             case ->(in,out) => "("+ apply(in) + " -> " + apply(out) +")"
         }
-        def unapply(s:String):Option[TA] = Parsers.parseAll(Parsers.Type,s) match {
-            case Parsers.Success(result,_) => Some(result)
-            case _ => None
+        def unapply(s:String):Option[TA] = {
+            val p = new JavaTokenParsers with Parsers
+            p.parseAll(p.Type,s) match {
+                case p.Success(result,_) => Some(result)
+                case _ => None
+            }
         }
     }
 
@@ -41,8 +45,7 @@ object Types {
         }
     }
 
-    import scala.util.parsing.combinator._
-    object Parsers extends JavaTokenParsers {
+    trait Parsers extends JavaTokenParsers {
         def Type: Parser[TA] = (arrowType | iType | oType)
         def iType: Parser[TA] = "i" ^^ {x => Ti()}
         def oType: Parser[TA] = "o" ^^ {x => To()}

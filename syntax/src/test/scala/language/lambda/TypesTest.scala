@@ -14,26 +14,28 @@ import org.specs.runner._
 import Types._
 
 
+
 class TypesTest  extends Specification with JUnit {
   "Types" should {
     "produce a binary function type ( i -> (i -> o ) )" in {
       FunctionType( To(), Ti()::Ti()::Nil ) must beEqual ( ->(Ti(), ->( Ti(), To() ) ) )
     }
-    import Types.Parsers._
+    import scala.util.parsing.combinator._
+    val p = new JavaTokenParsers with Types.Parsers
     "parse correctly from string (1)" in {
-        ( parseAll(Type, "i").get ) must beEqual ( Ti() )
+        ( p.parseAll(p.Type, "i").get ) must beEqual ( Ti() )
     }
     "parse correctly from string (2)" in {
-        ( parseAll(Type, "o").get ) must beEqual ( To() )
+        ( p.parseAll(p.Type, "o").get ) must beEqual ( To() )
     }
     "parse correctly from string (3)" in {
-        ( parseAll(Type, "(i -> o)").get ) must beEqual ( ->(Ti(),To()) )
+        ( p.parseAll(p.Type, "(i -> o)").get ) must beEqual ( ->(Ti(),To()) )
     }
     "parse correctly from string (4)" in {
-        ( parseAll(Type, "((i -> o) -> o)").get ) must beEqual ( ->(->(Ti(),To()),To()) )
+        ( p.parseAll(p.Type, "((i -> o) -> o)").get ) must beEqual ( ->(->(Ti(),To()),To()) )
     }
     "parse correctly from string (5)" in {
-        ( parseAll(Type, "(i -> (o -> o))").get ) must beEqual ( ->(Ti(), ->(To(),To())) )
+        ( p.parseAll(p.Type, "(i -> (o -> o))").get ) must beEqual ( ->(Ti(), ->(To(),To())) )
     }
     import Types.TAImplicitConverters._
     "implicitly convert from string (1)" in {
