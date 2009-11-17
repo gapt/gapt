@@ -9,6 +9,7 @@ package at.logic.calculi.lk
 
 import at.logic.calculi.ExpressionOccurrences._
 import at.logic.language.hol.HigherOrderLogic._
+import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.utils.ds.Trees._
 import scala.collection.immutable.{Set, EmptySet}
 
@@ -84,6 +85,35 @@ object LK {
     // running int for giving formula occurrences a specific id
     private var ids: Int = 0
 
+    // convenient extractors
+    object UnaryLKProof {
+        def unapply[A <: HOL](proof: LKProof[A]) = proof match {
+            case WeakeningLeftRule(up, r, p1) => Some((WeakeningLeftRuleType, up, r, Nil, p1))
+            case WeakeningRightRule(up, r, p1) => Some((WeakeningRightRuleType, up, r, Nil, p1))
+            case ContractionLeftRule(up, r, a1, a2, p1) => Some((ContractionLeftRuleType, up, r, a1::a2::Nil, p1))
+            case ContractionRightRule(up, r, a1, a2, p1) => Some((ContractionRightRuleType, up, r, a1::a2::Nil, p1))
+            case AndLeft1Rule(up, r, a, p) => Some((AndLeft1RuleType, up, r, a::Nil, p))
+            case AndLeft2Rule(up, r, a, p) => Some((AndLeft2RuleType, up, r, a::Nil, p))
+            case OrRight1Rule(up, r, a, p) => Some((OrRight1RuleType, up, r, a::Nil, p))
+            case OrRight2Rule(up, r, a, p) => Some((OrRight2RuleType, up, r, a::Nil, p))
+            case ImpRightRule(up, r, a1, a2, p) => Some((ImpRightRuleType, up, r, a1::a2::Nil, p))
+            case NegLeftRule(up, r, a, p) => Some((NegLeftRuleType, up, r, a::Nil, p))
+            case NegRightRule(up, r, a, p) => Some((NegRightRuleType, up, r, a::Nil, p))
+            case _ => None
+        }
+    }
+
+    object BinaryLKProof {
+        def unapply[A <: HOL](proof: LKProof[A]) = proof match {
+            case CutRule(up1, up2, r, a1, a2) => Some((CutRuleType, up1, up2, r, a1, a2, None))
+            case AndRightRule(up1, up2, r, a1, a2, p) => Some((AndRightRuleType, up1, up2, r, a1, a2, Some(p)))
+            case OrLeftRule(up1, up2, r, a1, a2, p) => Some((OrLeftRuleType, up1, up2, r, a1, a2, Some(p)))
+            case ImpLeftRule(up1, up2, r, a1, a2, p) => Some((ImpLeftRuleType, up1, up2, r, a1, a2, Some(p)))
+            case _ => None
+        }
+    }
+    
+    // actual rule extractor/factories
     object Axiom {  
         def apply[A <: HOL](seq: Sequent[A]) =
             new LeafTree[SequentOccurrence[A]](SequentOccurrence(seq.antecedent.map(createOccurrence[A]), seq.succedent.map(createOccurrence[A]))) with LKProof[A] {def rule = InitialRuleType}
@@ -141,6 +171,13 @@ object LK {
                         }
                 }
         }
+        // convenient method to choose the first two formulas
+        def apply[A <: HOL](s1: LKProof[A], term1: Formula[A]): UnaryTree[SequentOccurrence[A]] with UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]  = {
+            s1.root.antecedent.filter(x => x.formula == term1) match {
+                case (x::y::_) => apply(s1, x, y)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+            }
+        }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == ContractionLeftRuleType) {
                 val r = proof.asInstanceOf[UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]]
                 val ((a1::a2::Nil)::Nil) = r.aux
@@ -163,6 +200,13 @@ object LK {
                             def prin = term1::Nil
                         }
                 }
+        }
+        // convenient method to choose the first two formulas
+        def apply[A <: HOL](s1: LKProof[A], term1: Formula[A]): UnaryTree[SequentOccurrence[A]] with UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]  = {
+            s1.root.succedent.filter(x => x.formula == term1) match {
+                case (x::y::_) => apply(s1, x, y)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+            }
         }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == ContractionRightRuleType) {
                 val r = proof.asInstanceOf[UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]]
@@ -189,6 +233,13 @@ object LK {
                     }
                 }
         }
+        // convenient method to choose the first two formulas
+        def apply[A <: HOL](s1: LKProof[A], s2: LKProof[A], term1: Formula[A]): BinaryTree[SequentOccurrence[A]] with BinaryLKProof[A] with AuxiliaryFormulas[A]  = {
+            (s1.root.succedent.filter(x => x.formula == term1),s2.root.antecedent.filter(x => x.formula == term1)) match {
+                case ((x::_),(y::_)) => apply(s1, s2, x, y)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+            }
+        }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == CutRuleType) {
                 val r = proof.asInstanceOf[BinaryLKProof[A] with AuxiliaryFormulas[A]]
                 val ((a1::Nil)::(a2::Nil)::Nil) = r.aux
@@ -213,7 +264,14 @@ object LK {
                         def prin = prinFormula::Nil
                     }
             }
-        } 
+        }
+        // convenient method to choose the first two formulas
+        def apply[A <: HOL](s1: LKProof[A], s2: LKProof[A], term1: Formula[A], term2: Formula[A]): BinaryLKProof[A] with BinaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]  = {
+            (s1.root.succedent.filter(x => x.formula == term1),s2.root.succedent.filter(x => x.formula == term2)) match {
+                case ((x::_),(y::_)) => apply(s1, s2, x, y)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+            }
+        }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == AndRightRuleType) {
                 val r = proof.asInstanceOf[BinaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]]
                 val ((a1::Nil)::(a2::Nil)::Nil) = r.aux
@@ -236,6 +294,13 @@ object LK {
                     }
             }
         }
+        // convenient method to choose the first  formula
+        def apply[A <: HOL](s1: LKProof[A], term1: Formula[A], term2: Formula[A]): UnaryTree[SequentOccurrence[A]] with UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A] = {
+            s1.root.antecedent.filter(x => x.formula == term1) match {
+                case (x::_) => apply(s1, x, term2)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+            }
+        }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == AndLeft1RuleType) {
                 val r = proof.asInstanceOf[UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]]
                 val ((a1::Nil)::Nil) = r.aux
@@ -256,6 +321,13 @@ object LK {
                         def aux = ((term2)::Nil)::Nil
                         def prin = prinFormula::Nil
                     }
+            }
+        }
+        // convenient method to choose the first  formula
+        def apply[A <: HOL](s1: LKProof[A], term1: Formula[A], term2: Formula[A]): UnaryTree[SequentOccurrence[A]] with UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A] = {
+            s1.root.antecedent.filter(x => x.formula == term2) match {
+                case (x::_) => apply(s1, term1, x)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
             }
         }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == AndLeft2RuleType) {
@@ -284,6 +356,13 @@ object LK {
                     }
             }
         }
+        // convenient method to choose the first two formulas
+        def apply[A <: HOL](s1: LKProof[A], s2: LKProof[A], term1: Formula[A], term2: Formula[A]): BinaryTree[SequentOccurrence[A]] with BinaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]  = {
+            (s1.root.antecedent.filter(x => x.formula == term1),s2.root.antecedent.filter(x => x.formula == term2)) match {
+                case ((x::_),(y::_)) => apply(s1, s2, x, y)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+            }
+        }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == OrLeftRuleType) {
                 val r = proof.asInstanceOf[BinaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]]
                 val ((a1::Nil)::(a2::Nil)::Nil) = r.aux
@@ -306,6 +385,13 @@ object LK {
                     }
             }
         }
+        // convenient method to choose the first  formula
+        def apply[A <: HOL](s1: LKProof[A], term1: Formula[A], term2: Formula[A]): UnaryTree[SequentOccurrence[A]] with UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A] = {
+            s1.root.succedent.filter(x => x.formula == term1) match {
+                case (x::_) => apply(s1, x, term2)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+            }
+        }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == OrRight1RuleType) {
                 val r = proof.asInstanceOf[UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A]]
                 val ((a1::Nil)::Nil) = r.aux
@@ -326,6 +412,13 @@ object LK {
                         def aux = ((term2)::Nil)::Nil
                         def prin = prinFormula::Nil
                     }
+            }
+        }
+        // convenient method to choose the first  formula
+        def apply[A <: HOL](s1: LKProof[A], term1: Formula[A], term2: Formula[A]): UnaryTree[SequentOccurrence[A]] with UnaryLKProof[A] with AuxiliaryFormulas[A] with PrincipalFormulas[A] = {
+            s1.root.succedent.filter(x => x.formula == term2) match {
+                case (x::_) => apply(s1, term1, x)
+                case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
             }
         }
         def unapply[A <: HOL](proof: LKProof[A]) = if (proof.rule == OrRight1RuleType) {
@@ -430,8 +523,8 @@ object LK {
     }
 /*
     object ForallLeftRule {
-        def apply[A <: HOL](s1: LKProof[A], term1: FormulaOccurrence[A]) = {
-            if (!s1.root.antecedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+        def apply[A <: HOL](s1: LKProof[A], f: FormulaOccurrence[A], pos: Position) = {
+            if (!s1.root.antecedent.contains(f)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
             else {
                 val prinFormula = FormulaOccurrence(Neg(term1.formula), term1.label)
                 new UnaryTree[SequentOccurrence[A]](SequentOccurrence(s1.root.antecedent - term1, prinFormula :: s1.root.succedent), s1)
