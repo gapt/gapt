@@ -14,7 +14,15 @@ import scala.util.Sorting
 
 object Sets {
     trait Set[+A] extends Collection[A]{
-        //def apply[U>:A](s:Set[A])
+        def size() : Int
+        def elements : Iterator[A]
+        def +[B>:A](x:B) : Set[B]
+        def -[B>:A](x:B) : Set[B]
+        def ++[B>:A](x : Set[B]) : Set[B]
+        def contains[B>:A](x : B) : Boolean
+        def ::[B>:A](x:B) : Set[B]
+        def equals(x:Any) : Boolean
+        def sameElements[B>:A](that : Iterable[B]) : Boolean
     }
 
     object Set {
@@ -40,13 +48,13 @@ object Sets {
         }
 
         /* there is no difference in adding in the beginning or the end in a hashset */
-        def +[B>:A](x:B) : CovariantSet[B] = this.::(x)
+        def +[B>:A](x:B) : Set[B] = this.::(x)
 
 
 
 
 	  /* deletes an element from the set */
-        def -[B>:A](x:B) : CovariantSet[B] =
+        def -[B>:A](x:B) : Set[B] =
 	  {
 	//	println("\nThe set:"+"\n")
 		var setb : HashSet[B] = new HashSet[B]
@@ -76,7 +84,7 @@ object Sets {
 
 
 	  /* makes a union of x and the current set */
-	  def ++[B>:A](x : CovariantSet[B]) : CovariantSet[B] =
+	  def ++[B>:A](x : Set[B]) : Set[B] =
 	  {
 		var setb : HashSet[B] = new HashSet[B]
 		for(elem <- set)
@@ -93,7 +101,7 @@ object Sets {
 
 
         /* override of list constructor */
-        def ::[B>:A](x:B) : CovariantSet[B] = {
+        def ::[B>:A](x:B) : Set[B] = {
             var setb : HashSet[B] = new HashSet[B]
             setb ++= set
 
@@ -162,6 +170,6 @@ object Sets {
     }
 
     object SetImplicitDefs {
-        implicit def listToSet[A](l: List[A]): Set[A] = l.foldLeft(Set[A])((x,y) => x + y)
+        implicit def listToSet[A](l: List[A]): Set[A] = {val s: Set[A] = Set[A]; l.foldLeft(s)((x,y) => x + y)}
     }
  }
