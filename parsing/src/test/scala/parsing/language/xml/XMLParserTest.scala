@@ -2,6 +2,8 @@
  * Description: 
 **/
 
+package at.logic.parsing.language.xml
+
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
@@ -10,7 +12,8 @@ import at.logic.parsing.readers.XMLReaders._
 import scala.xml._
 import at.logic.language.hol.HigherOrderLogic._
 import at.logic.language.lambda.TypedLambdaCalculus._
-import at.logic.language.hol.LogicSymbols.{ConstantStringSymbol, VariableStringSymbol}
+import at.logic.language.hol.LogicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.Symbols.VariableStringSymbol
 import at.logic.language.lambda.Types.TAImplicitConverters._
 import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
 import at.logic.calculi.lk.LK._
