@@ -15,6 +15,10 @@ object Sets {
         //def apply[U>:A](s:Set[A])
     }
 
+    object Set {
+        def apply[A]() = new Sets.CovariantSet[A]
+    }
+    
     /* a hashset based implementation of a covariant set */
     class CovariantSet[+A] private (
         private[this] var set : HashSet[A]  )
@@ -103,5 +107,9 @@ object Sets {
     /*class HashSet[+A] extends Set[A] {
 
     }*/
+    }
+
+    object SetImplicitDefs {
+        implicit def listToSet[A](l: List[A]): Set[A] = l.foldLeft(Set[A])((x,y) => x + y)
     }
  }

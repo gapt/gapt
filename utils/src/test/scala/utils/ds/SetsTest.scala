@@ -10,13 +10,13 @@ package at.logic.utils.ds
 import org.specs._
 import org.specs.runner._
 
-import at.logic.utils.ds.Sets._
+import Sets._
 
 
 class SetsTest extends Specification with JUnit {
 
     "Sets" should {
-        var set = new Sets.CovariantSet[String]
+        var set = Set[String]
         set = set + "abc"
         set = set + "abc"
         set = set + "abc"
@@ -57,7 +57,7 @@ class SetsTest extends Specification with JUnit {
 
 
     "be invariant to multiple additions of an element" in {
-        var set2 = new Sets.CovariantSet[String]
+        var set2 = Set[String]
         set2 = set2 + "xyz"
         set2 = set2 + "abc"
         //set == set2
@@ -86,6 +86,18 @@ class SetsTest extends Specification with JUnit {
 
         set1.sameElements(set2) must beEqual (true)
     }
+    }
+
+    import Sets.SetImplicitDefs._
+
+    "Implicit conversions on sets" should {
+        "convert correctly between a list and a set" in {
+            val ls = "a"::"a"::"b"::"c"::"a"::Nil
+            val st1 = "a"::"b"::"c"::Set[String]
+            val st2 = Set[String] + "b" + "c" + "a"
+            (listToSet(ls)) must beEqual (st1)
+            (listToSet(ls)) must beEqual (st2)
+        }
     }
 
 }
