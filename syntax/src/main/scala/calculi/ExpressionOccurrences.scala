@@ -10,6 +10,7 @@ import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.language.lambda.Types._
 import at.logic.language.hol.HigherOrderLogic._
 import at.logic.utils.labeling.Labels._
+import at.logic.utils.ds.Sets._
 
 object ExpressionOccurrences {
 
@@ -36,13 +37,13 @@ object ExpressionOccurrences {
             case _ => false
         }
     }
-
-
     
     // parameterized by the element used as an id (which must be orderable via an implicit conversion)
     abstract class Occurrence extends Labeled[Occur] {
         def merge(other: Occurrence): Occur = CombinedOccur(label, other.label)
     }
 
+    def getOccurrence(o: Occur, set: Set[Occurrence]): Option[Occurrence] = set.elements.find(x => x.label == o)
+    
     case class FormulaOccurrence[+A <: HOL](formula: Formula[A], val label: Occur) extends Occurrence
 }

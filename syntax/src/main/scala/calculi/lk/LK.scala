@@ -11,7 +11,8 @@ import at.logic.calculi.ExpressionOccurrences._
 import at.logic.language.hol.HigherOrderLogic._
 import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.utils.ds.Trees._
-import scala.collection.immutable.{Set, EmptySet}
+import at.logic.utils.ds.Sets._
+import at.logic.utils.ds.Sets.SetImplicitDefs._
 
 object LK {
 
@@ -19,7 +20,7 @@ object LK {
     // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
     case class Sequent[A <: HOL](antecedent: List[Formula[A]], succedent: List[Formula[A]])
     // List should be changed into set
-    case class SequentOccurrence[A <: HOL](antecedent: List[FormulaOccurrence[A]], succedent: List[FormulaOccurrence[A]])
+    case class SequentOccurrence[A <: HOL](antecedent: Set[FormulaOccurrence[A]], succedent: Set[FormulaOccurrence[A]])
     
     abstract class RuleTypeA
     abstract class NullaryRuleTypeA extends RuleTypeA
@@ -64,13 +65,17 @@ object LK {
     trait LKProof[A <: HOL] extends Tree[SequentOccurrence[A]] {
         def root = vertex
         def rule: RuleTypeA
+        def getFormulaAncestor(fo: FormulaOccurrence[A]): Option[FormulaOccurrence[A]] = None// there is always one possible ancestor in the upper sequents
     }
     trait UnaryLKProof[A <: HOL] extends UnaryTree[SequentOccurrence[A]] with LKProof[A] {
         def uProof = t.asInstanceOf[LKProof[A]]
+        override def getFormulaAncestor(fo: FormulaOccurrence[A]) = getOccurrence(fo.label, uProof.root.antecedent ++ uProof.root.succedent).asInstanceOf[Option[FormulaOccurrence[A]]]
+
     }
     trait BinaryLKProof[A <: HOL] extends BinaryTree[SequentOccurrence[A]] with LKProof[A] {
         def uProof1 = t1.asInstanceOf[LKProof[A]]
         def uProof2 = t2.asInstanceOf[LKProof[A]]
+        override def getFormulaAncestor(fo: FormulaOccurrence[A]) = getOccurrence(fo.label, uProof1.root.antecedent ++ uProof1.root.succedent ++ uProof2.root.antecedent ++ uProof2.root.succedent).asInstanceOf[Option[FormulaOccurrence[A]]]
     }
     
     // traits denoting having auxiliary and main formulas
@@ -114,6 +119,8 @@ object LK {
     }
     
     // actual rule extractor/factories
+    // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
+    // It is used together with an implicit conversion between this pair into a proof so users who are not interested in this information will not see it.
     object Axiom {  
         def apply[A <: HOL](seq: Sequent[A]) =
             new LeafTree[SequentOccurrence[A]](SequentOccurrence(seq.antecedent.map(createOccurrence[A]), seq.succedent.map(createOccurrence[A]))) with LKProof[A] {def rule = InitialRuleType}
