@@ -16,7 +16,7 @@ import Sets._
 class SetsTest extends Specification with JUnit {
 
     "Sets" should {
-        var set = Set[String]
+        var set: Set[String] = Set[String]
         set = set + "abc"
         set = set + "abc"
         set = set + "abc"
@@ -57,7 +57,7 @@ class SetsTest extends Specification with JUnit {
 
 
     "be invariant to multiple additions of an element" in {
-        var set2 = Set[String]
+        var set2: Set[String] = Set[String]
         set2 = set2 + "xyz"
         set2 = set2 + "abc"
         //set == set2
