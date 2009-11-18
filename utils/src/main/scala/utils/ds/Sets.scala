@@ -1,9 +1,11 @@
+
 /*
  * Sets.scala
  *
  * None mathematical definition of sets. I.e. sets code does not follow the scala convention of defining mathematical objects in mathematical terms (set as a function (A => Noolean)),
  * as we want the set to be covariant. We will only follow the interface that two sets are equal if they have the same elements.
  */
+
 
 package at.logic.utils.ds
 
@@ -18,14 +20,14 @@ object Sets {
     object Set {
         def apply[A]() = new Sets.CovariantSet[A]
     }
-    
+
+
     /* a hashset based implementation of a covariant set */
-    class CovariantSet[+A] private (
-        private[this] var set : HashSet[A]  )
-    extends Set[A] 
+
+    class CovariantSet[+A] private ( private[this] var set: HashSet[A]) extends Set[A]
     {
         def this() = this(new HashSet[A])
-        
+
         def size() : Int = return set.size
         def elements : Iterator[A]= { return set.elements }
 
@@ -39,6 +41,56 @@ object Sets {
 
         /* there is no difference in adding in the beginning or the end in a hashset */
         def +[B>:A](x:B) : CovariantSet[B] = this.::(x)
+
+
+
+
+	  /* deletes an element from the set */
+        def -[B>:A](x:B) : CovariantSet[B] =
+	  {
+	//	println("\nThe set:"+"\n")
+		var setb : HashSet[B] = new HashSet[B]
+		for(elem <- set)
+		{
+	//		println(elem.toString)
+			if(!elem.equals(x))
+				setb+=elem
+		}
+	//	println("\nThe set after deletion of  "+x+"  :\n")
+		var s : CovariantSet[B] = new CovariantSet[B](setb)
+	//	for(elem1 <- s)
+	//		println(elem1.toString)
+		return s
+	  }
+
+
+	  def contains[B>:A](x : B) : Boolean =
+	  {
+		for(elem <- set)
+		{
+			if(elem.equals(x))
+				return true
+		}
+		return false
+	  }
+
+
+	  /* makes a union of x and the current set */
+	  def ++[B>:A](x : CovariantSet[B]) : CovariantSet[B] =
+	  {
+		var setb : HashSet[B] = new HashSet[B]
+		for(elem <- set)
+			setb+=elem
+
+		for(elem1 <- x)
+			if(!this.contains(elem1))
+				setb+=elem1
+
+		var s : CovariantSet[B] = new CovariantSet[B](setb)
+		return s
+	  }
+
+
 
         /* override of list constructor */
         def ::[B>:A](x:B) : CovariantSet[B] = {
@@ -75,7 +127,7 @@ object Sets {
         }
 
     /** two sets A and B are the same, if they have the same size,
-     * and if every element from A is in B and vice versa          
+     * and if every element from A is in B and vice versa
      *
      */
     override def sameElements[B>:A](that : Iterable[B]) : Boolean = {
