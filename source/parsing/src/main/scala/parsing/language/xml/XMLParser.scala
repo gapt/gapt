@@ -19,7 +19,7 @@ import at.logic.parsing.readers.XMLReaders.NodeReader
 import at.logic.language.hol.HigherOrderLogic._
 import at.logic.language.lambda.Symbols._
 import at.logic.language.lambda.Types._
-import at.logic.language.hol.LogicSymbols.{ConstantStringSymbol, VariableStringSymbol}
+import at.logic.language.hol.LogicSymbols.ConstantStringSymbol
 import at.logic.calculi.lk.LK._
 import scala.collection.mutable.ArrayBuffer
 
@@ -228,7 +228,7 @@ object XMLParser {
           val mainf = conc.succedent.apply( conc.succedent.size - 1 )
           mainf match {
             // FIXME: this typecast sucks!
-            case Or(_, weakf : HOLFormula) => ( OrRight1Rule( prem, auxf, weakf ), l_perm, r_perm )
+            case Or(_, weakf : Formula[_]) => ( OrRight1Rule( prem, auxf, weakf ), l_perm, r_perm )
             case _ => throw new ParsingException("Rule type is orr1, but main formula is not a disjunction.")
           }
         }
