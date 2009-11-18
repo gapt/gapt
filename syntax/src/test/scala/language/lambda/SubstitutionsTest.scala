@@ -38,13 +38,13 @@ class SubstitutionsTest extends Specification with JUnit {
     "substitute correctly when SingleSubstitution is applied (1)" in {
         val v = Var[Lambda]("v", i); val x = Var[Lambda]("x", i); val f = Var[Lambda]("f", i -> i)
         val e = App(f, x)
-        val sigma: SingleSubstitution[Lambda] = new SingleSubstitution[Lambda](v,e)
+        val sigma: SingleSubstitution[Lambda] = Pair[Var[Lambda], App[Lambda]](v,e)
         ( e ) must beEqual ( sigma(v) )
     }
     "substitute correctly when SingleSubstitution is applied (2)" in {
         val v = Var[Lambda]("v", i); val x = Var[Lambda]("x", i); val f = Var[Lambda]("f", i -> i)
         val e = App(f, x)
-        val sigma: SingleSubstitution[Lambda] = new SingleSubstitution[Lambda](v,e)
+        val sigma: SingleSubstitution[Lambda] = Pair[Var[Lambda], App[Lambda]](v,e)
         val expression = App(f, v)
         ( App(f, App(f, x)) ) must beEqual ( sigma(expression) )
     }
