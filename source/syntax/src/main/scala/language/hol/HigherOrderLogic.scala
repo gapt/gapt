@@ -25,7 +25,7 @@ object HigherOrderLogic {
     trait Const
     trait HOL
 
-    type HOLFormula = LambdaExpression with Formula with HOL
+    type HOLFormula = HOLTerm with Formula
     type HOLTerm = LambdaExpression with HOL
 
     private[HigherOrderLogic] class HOLVar(name: VariableSymbolA, exptype: TA) extends Var(name, exptype, HOLFactory) with HOL
@@ -89,39 +89,39 @@ object HigherOrderLogic {
 
       // We do in all of them additional casting into Formula as Formula is a static type and the only way to deynamically express it is via casting.
     object Neg {
-        def apply(sub: Formula) = App(negC,sub).asInstanceOf[Formula]
+        def apply(sub: Formula) = App(negC,sub).asInstanceOf[HOLFormula]
         def unapply(expression: LambdaExpression) = expression match {
-            case App(negC,sub) => Some( (sub.asInstanceOf[Formula]) )
+            case App(negC,sub) => Some( (sub.asInstanceOf[HOLFormula]) )
             case _ => None
         }
     }
 
     object And {
-        def apply(left: Formula, right: Formula) = (App(App(andC,left),right)).asInstanceOf[Formula]
+        def apply(left: Formula, right: Formula) = (App(App(andC,left),right)).asInstanceOf[HOLFormula]
         def unapply(expression: LambdaExpression) = expression match {
-            case App(App(andC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[Formula]) )
+            case App(App(andC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
             case _ => None
         }
     }
 
     object Or {
-        def apply(left: Formula, right: Formula) = App(App(orC,left),right).asInstanceOf[Formula]
+        def apply(left: Formula, right: Formula) = App(App(orC,left),right).asInstanceOf[HOLFormula]
         def unapply(expression: LambdaExpression) = expression match {
-            case App(App(orC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[Formula]) )
+            case App(App(orC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
             case _ => None
         }
     }
 
     object Imp {
-        def apply(left: Formula, right: Formula) = App(App(impC,left),right).asInstanceOf[Formula]
+        def apply(left: Formula, right: Formula) = App(App(impC,left),right).asInstanceOf[HOLFormula]
         def unapply(expression: LambdaExpression) = expression match {
-            case App(App(impC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[Formula]) )
+            case App(App(impC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
             case _ => None
         }
     }
 
     object Ex {
-        def apply(sub: LambdaExpression) = App(exQ(sub.exptype),sub).asInstanceOf[Formula]
+        def apply(sub: LambdaExpression) = App(exQ(sub.exptype),sub).asInstanceOf[HOLFormula]
         def unapply(expression: LambdaExpression) = expression match {
             case App(Var(exS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
@@ -129,7 +129,7 @@ object HigherOrderLogic {
     }
 
     object All {
-        def apply(sub: LambdaExpression) = App(allQ(sub.exptype),sub).asInstanceOf[Formula]
+        def apply(sub: LambdaExpression) = App(allQ(sub.exptype),sub).asInstanceOf[HOLFormula]
         def unapply(expression: LambdaExpression) = expression match {
             case App(Var(allS, ->(t,To())),sub) => Some( (sub) )
             case _ => None
