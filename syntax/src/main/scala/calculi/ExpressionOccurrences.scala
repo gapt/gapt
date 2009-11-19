@@ -10,7 +10,7 @@ import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.language.lambda.Types._
 import at.logic.language.hol.HigherOrderLogic._
 import at.logic.utils.labeling.Labels._
-import at.logic.utils.ds.Sets._
+import scala.collection.immutable.Set
 
 object ExpressionOccurrences {
 
