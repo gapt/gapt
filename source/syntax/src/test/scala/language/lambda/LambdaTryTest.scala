@@ -19,9 +19,8 @@ import TypedLambdaCalculus._
 class LambdaCalculusTryTest extends Specification with JUnit {
   "LambdaCalculusTry" should {
     "create higher-order atom formulas" in {
-      ExpressionFactory.factory = HOLFactory
-      val f = new Var( "f", i -> o )
-      val g = new Var( "g", (i -> o) -> o )
+      val f = Var( "f", i -> o, hol)
+      val g = Var( "g", (i -> o) -> o , hol)
       // P(f, g)
       val a = Atom( "P", f::g::Nil )
       (a) must beLike{ case x: HOLFormula => true }
