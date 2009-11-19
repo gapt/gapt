@@ -23,6 +23,8 @@ object Sets {
         def ::[B>:A](x:B) : Set[B]
         def equals(x:Any) : Boolean
         def sameElements[B>:A](that : Iterable[B]) : Boolean
+        def filter1[B>:A]( p:(B)=>Boolean ) : Set[B]
+
     }
 
     object Set {
@@ -163,6 +165,21 @@ object Sets {
 
         return this.size == that_size
     }
+
+
+    /* returns a set containing only those elements of the current set which satisfy the predicate p*/
+    /* there is a conflict with another function with the same name in */
+    def filter1[B>:A]( p: (B)=>Boolean ) : Set[B]=
+    {
+		var setb : HashSet[B] = new HashSet[B]
+		for(elem <- set)
+			if(p(elem))
+				setb+=elem
+
+		var s : CovariantSet[B] = new CovariantSet[B](setb)
+		return s
+    }
+
 
     /*class HashSet[+A] extends Set[A] {
 
