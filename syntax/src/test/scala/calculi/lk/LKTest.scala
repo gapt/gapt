@@ -23,11 +23,11 @@ import scala.collection.immutable._
 class LKTest extends Specification with JUnit {
   "LK factories and extractors" should {
     "work for Axioms" in {
-        val c1 = Var[HOL]("a", i->o)
-        val v1 = Var[HOL]("x", i)
-        val f1 = App(c1,v1).asInstanceOf[Formula[HOL]]
-        val f2 = App(c1,v1).asInstanceOf[Formula[HOL]]
-        val a1 = Axiom(Sequent(f1::Nil, f2::Nil))
+        val c1 = Var("a", i->o, hol)
+        val v1 = Var("x", i, hol)
+        val f1 = App(c1,v1).asInstanceOf[Formula]
+        val f2 = App(c1,v1).asInstanceOf[Formula]
+        val a1: LKProof = Axiom(Sequent(f1::Nil, f2::Nil))
         (a1) must beLike {case Axiom(x) => true}
     }
     /*"work for AndRightRule" in {

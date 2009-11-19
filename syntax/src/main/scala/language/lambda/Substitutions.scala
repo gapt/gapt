@@ -14,70 +14,70 @@ import scala.collection.immutable._
 
 
 object Substitutions {
-    case class SingleSubstitution[A <: Lambda](variable: Var[A], expression: LambdaExpression[A]) {
+    case class SingleSubstitution(variable: Var, expression: LambdaExpression) {
         def _1 = variable
         def _2 = expression
 
-        def apply(expression: LambdaExpression[A])(implicit factory1: AbsFactory[A], factory2: AppFactory[A]):LambdaExpression[A] = substituteWithRenaming(expression)
+        def apply(expression: LambdaExpression):LambdaExpression = substituteWithRenaming(expression)
 
-        private def substituteWithRenaming(exp: LambdaExpression[A])(implicit factory1: AbsFactory[A], factory2: AppFactory[A]):LambdaExpression[A] = {
+        private def substituteWithRenaming(exp: LambdaExpression): LambdaExpression = {
             val eFV = expression.getFreeAndBoundVariables._1
             exp match {
-                case x:Var[_] => if (x == variable)  expression else x
-                case App(m,n) => App(substituteWithRenaming(m.asInstanceOf[LambdaExpression[A]]), substituteWithRenaming(n.asInstanceOf[LambdaExpression[A]]))
+                case x:Var => if (x == variable)  expression else x
+                case App(m,n) => App(substituteWithRenaming(m), substituteWithRenaming(n))
                 case Abs(x,m) => if (x == variable) exp
                                  else {                                     
                                      if (eFV.contains(x)) {
-                                         val Abs(y,n) = renameBoundVariable(Abs(x,m.asInstanceOf[LambdaExpression[A]]), eFV)
-                                         Abs(y.asInstanceOf[Var[A]],substituteWithRenaming(n.asInstanceOf[LambdaExpression[A]]))
+                                         val Abs(y,n) = renameBoundVariable(Abs(x,m), eFV)
+                                         Abs(y,substituteWithRenaming(n))
                                      }
-                                     else Abs(x.asInstanceOf[Var[A]],substituteWithRenaming(m.asInstanceOf[LambdaExpression[A]]))
+                                     else Abs(x,substituteWithRenaming(m))
                                  }
             }
         }
 
-        private def renameBoundVariable[A <: Lambda](exp: Abs[A], disallowedVariables: List[Var[A]])(implicit factory1: AbsFactory[A], factory2: AppFactory[A], factory3: VarFactory[A]) = exp match {
+        private def renameBoundVariable(exp: Abs, disallowedVariables: Set[Var]) = exp match {
            case Abs(x,m) => {
                    val (eFV,eBV) = exp.getFreeAndBoundVariables
                    val disallowed = disallowedVariables ++ eFV
-                   val v = freshVar[A](x.exptype, disallowed)
-                   val sigma: SingleSubstitution[A] = SingleSubstitution(x.asInstanceOf[Var[A]],v)
-                   val n = sigma(m.asInstanceOf[LambdaExpression[A]])
+                   val v = freshVar(x.exptype, disallowed, exp)
+                   val sigma: SingleSubstitution = SingleSubstitution(x,v)
+                   val n = sigma(m)
                    Abs(v,n)
            }
         }
-        private def substitute(exp: LambdaExpression[A])(implicit factory1: AbsFactory[A], factory2: AppFactory[A]):LambdaExpression[A] = exp match {
-                case x:Var[_] => if (x == variable)  expression else x
-                case App(m,n) => App(substitute(m.asInstanceOf[LambdaExpression[A]]), substitute(n.asInstanceOf[LambdaExpression[A]]))
+        private def substitute(exp: LambdaExpression):LambdaExpression = exp match {
+                case x:Var => if (x == variable)  expression else x
+                case App(m,n) => App(substitute(m), substitute(n))
                 case Abs(x,m) => if (x == variable) expression
-                                 else Abs(x.asInstanceOf[Var[A]],substitute(m.asInstanceOf[LambdaExpression[A]]))
+                                 else Abs(x,substitute(m))
         }
     }
-    implicit def convertPairToSingleSubstitution[A <: Lambda](pair: Tuple2[Var[A],LambdaExpression[A]]):SingleSubstitution[A] = SingleSubstitution(pair._1, pair._2)
-    implicit def convertSingleSubstitutionToPair[A <: Lambda](sub: SingleSubstitution[A]):Tuple2[Var[A],LambdaExpression[A]] = (sub.variable, sub.expression)
+    implicit def convertPairToSingleSubstitution(pair: Tuple2[Var,LambdaExpression]):SingleSubstitution = SingleSubstitution(pair._1, pair._2)
+    implicit def convertSingleSubstitutionToPair(sub: SingleSubstitution):Tuple2[Var,LambdaExpression] = (sub.variable, sub.expression)
 
 
 
-    case class Substitution[A <: Lambda](substitutions: List[SingleSubstitution[A]])(implicit factory1: AbsFactory[A], factory2: AppFactory[A]) extends (LambdaExpression[A] => LambdaExpression[A]) {
+    case class Substitution(substitutions: List[SingleSubstitution]) extends (LambdaExpression => LambdaExpression) {
 
-        def this(subs: SingleSubstitution[A]*)(implicit factory1: AbsFactory[A], factory2: AppFactory[A]) = this(subs.toList)
-        def this(variable: Var[A], expression: LambdaExpression[A])(implicit factory1: AbsFactory[A], factory2: AppFactory[A]) = this(List(SingleSubstitution(variable, expression)))
+        def this(subs: SingleSubstitution*) = this(subs.toList)
+        def this(variable: Var, expression: LambdaExpression) = this(List(SingleSubstitution(variable, expression)))
 
-        def ::(sub:SingleSubstitution[A]) = new Substitution(sub::substitutions)
-        def :::(otherSubstitutionList:Substitution[A]) = new Substitution(otherSubstitutionList.substitutions:::this.substitutions)
-        def apply(expression: LambdaExpression[A]):LambdaExpression[A] = {
+        def ::(sub:SingleSubstitution) = new Substitution(sub::substitutions)
+        def :::(otherSubstitutionList:Substitution) = new Substitution(otherSubstitutionList.substitutions:::this.substitutions)
+        def apply(expression: LambdaExpression):LambdaExpression = {
             var result = expression       // ToDo: Replace this by an immutable and more functional alternative...
             for ( sigma <- substitutions ) result = sigma(result)
             result
         }
     }
-    implicit def convertPairToSubstitution[A <: Lambda](pair: Tuple2[Var[A],LambdaExpression[A]])(implicit factory1: AbsFactory[A], factory2: AppFactory[A]):Substitution[A] = new Substitution[A](pair._1, pair._2)
-    implicit def convertSubstitutionToPair[A <: Lambda](sub: Substitution[A]):Tuple2[Var[A],LambdaExpression[A]] = {
+    implicit def convertPairToSubstitution(pair: Tuple2[Var, LambdaExpression]):Substitution = new Substitution(pair._1, pair._2)
+    implicit def convertSubstitutionToPair(sub: Substitution):Tuple2[Var,LambdaExpression] = {
         require(sub.substitutions.length == 1)
         (sub.substitutions.head.variable, sub.substitutions.head.expression)
     }
-    implicit def convertSingleSubstitutionToSubstitution[A <: Lambda](sub: SingleSubstitution[A])(implicit factory1: AbsFactory[A], factory2: AppFactory[A]):Substitution[A] = new Substitution[A](sub.variable, sub.expression)
-    implicit def convertSubstitutionToSingleSubstitution[A <: Lambda](sub: Substitution[A]):SingleSubstitution[A] = {
+    implicit def convertSingleSubstitutionToSubstitution(sub: SingleSubstitution):Substitution = new Substitution(sub.variable, sub.expression)
+    implicit def convertSubstitutionToSingleSubstitution(sub: Substitution):SingleSubstitution = {
         require(sub.substitutions.length == 1)
         sub.substitutions.head
     }
