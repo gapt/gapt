@@ -7,10 +7,6 @@ import at.logic.language.lambda.Types._
 import at.logic.language.hol.LogicSymbols._
 
 object TypedLambdaCalculus {
-  // Set the language globally
-  object ExpressionFactory {
-    var factory : LambdaFactoryA = LambdaFactory
-  }
 
   //
   // TYPED LAMBDA CALCULUS
@@ -18,6 +14,7 @@ object TypedLambdaCalculus {
 
   trait LambdaExpression {
     def exptype: TA
+    private[TypedLambdaCalculus] val factory: LambdaFactoryA
   }
 
   trait LambdaFactoryA {
@@ -27,34 +24,34 @@ object TypedLambdaCalculus {
   }
 
   object LambdaFactory extends LambdaFactoryA {
-    def createVar( name: SymbolA, exptype: TA ) : Var = new Var( name, exptype )
-    def createAbs( variable: Var, exp: LambdaExpression ) : Abs = new Abs( variable, exp )
-    def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = new App( fun, arg )
+    def createVar( name: SymbolA, exptype: TA ) : Var = new Var( name, exptype, this )
+    def createAbs( variable: Var, exp: LambdaExpression ) : Abs = new Abs( variable, exp, this )
+    def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = new App( fun, arg, this )
   }
 
-  class Var( val name: SymbolA, val exptype: TA ) extends LambdaExpression
+  class Var private[TypedLambdaCalculus]( val name: SymbolA, val exptype: TA, val factory: LambdaFactoryA) extends LambdaExpression
 
   object Var {
-    def apply(name: SymbolA, exptype: TA) = ExpressionFactory.factory.createVar(name, exptype)
+    def apply(name: SymbolA, exptype: TA, factory: LambdaFactoryA) = factory.createVar(name, exptype)
     def unapply(expression: LambdaExpression) = expression match {
       case a: Var => Some((a.name, a.exptype))
       case _ => None
     }
   }
 
-  class Abs( val variable: Var, val expression: LambdaExpression ) extends LambdaExpression  {
+  class Abs private[TypedLambdaCalculus]( val variable: Var, val expression: LambdaExpression, val factory: LambdaFactoryA ) extends LambdaExpression  {
     def exptype: TA = ->(variable.exptype,expression.exptype)
   }
 
   object Abs {
-    def apply(variable: Var, expression: LambdaExpression) = ExpressionFactory.factory.createAbs(variable, expression)
+    def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression)
     def unapply(expression: LambdaExpression) = expression match {
       case a: Abs => Some((a.variable, a.expression))
       case _ => None
     }
   }
 
-  class App( val function: LambdaExpression, val argument: LambdaExpression) extends LambdaExpression {
+  class App private[TypedLambdaCalculus]( val function: LambdaExpression, val argument: LambdaExpression, val factory: LambdaFactoryA) extends LambdaExpression {
     require({
       function.exptype match {
         case ->(in,out) => {if (in == argument.exptype) true
@@ -70,7 +67,7 @@ object TypedLambdaCalculus {
   }
 
   object App {
-    def apply(function: LambdaExpression, argument: LambdaExpression) = ExpressionFactory.factory.createApp( function, argument )
+    def apply(function: LambdaExpression, argument: LambdaExpression) = function.factory.createApp( function, argument )
     def unapply(expression: LambdaExpression) = expression match {
         case a: App => Some((a.function, a.argument))
         case _ => None
@@ -96,13 +93,18 @@ object TypedLambdaCalculus {
 
   trait Formula
   trait Const
+  trait HOL
 
-  type HOLFormula = LambdaExpression with Formula
+  type HOLFormula = LambdaExpression with Formula with HOL
+  type HOLTerm = LambdaExpression with HOL
 
-  class HOLConst(name: ConstantSymbolA, exptype: TA) extends Var(name, exptype) with Const
-  class HOLVarFormula(name: VariableSymbolA) extends Var(name, To()) with Formula
-  class HOLConstFormula(name: ConstantSymbolA) extends HOLConst(name, To()) with Formula
-  class HOLAppFormula(function: LambdaExpression, argument: LambdaExpression) extends App(function, argument) with Formula
+  private class HOLVar(name: VariableSymbolA, exptype: TA) extends Var(name, exptype, HOLFactory) with HOL
+  private class HOLConst(name: ConstantSymbolA, exptype: TA) extends Var(name, exptype, HOLFactory) with Const with HOL
+  private class HOLVarFormula(name: VariableSymbolA) extends Var(name, To(), HOLFactory) with Formula with HOL
+  private class HOLConstFormula(name: ConstantSymbolA) extends HOLConst(name, To()) with Formula with HOL
+  private class HOLAppFormula(function: LambdaExpression, argument: LambdaExpression) extends App(function, argument, HOLFactory) with Formula with HOL
+  private class HOLApp(function: LambdaExpression, argument: LambdaExpression) extends App(function, argument, HOLFactory) with Formula with HOL
+  private class HOLAbs(variable: Var, expression: LambdaExpression) extends Abs(variable, expression, HOLFactory) with HOL
 
   def isFormula(typ: TA) = typ match {
     case To() => true
@@ -122,18 +124,23 @@ object TypedLambdaCalculus {
           else new HOLConst(a, exptype)
         case a: VariableSymbolA =>
           if (isFormula(exptype)) new HOLVarFormula(a)
-          else new Var(a, exptype)
+          else new HOLVar(a, exptype)
     }
     def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = 
       if (isFormulaWhenApplied(fun.exptype)) new HOLAppFormula(fun, arg)
-      else new App(fun, arg)
-    def createAbs( variable: Var, exp: LambdaExpression ) = LambdaFactory.createAbs( variable, exp )
+      else new HOLApp(fun, arg)
+    def createAbs( variable: Var, exp: LambdaExpression ) : Abs  = new HOLAbs( variable, exp )
   }
+
+  def hol = HOLFactory
+
+  implicit def lambdaToHOL(exp: LambdaExpression): HOLTerm = exp.asInstanceOf[HOLTerm]
+  implicit def listLambdaToListHOL(l: List[LambdaExpression]): List[HOLTerm] = l.asInstanceOf[List[HOLTerm]]
 
   // HOL formulas of the form P(t_1,...,t_n)
   object Atom {
-    def apply( sym: SymbolA, args: List[LambdaExpression]) = {
-      val pred : Var = new Var( sym, FunctionType( To(), args.map( a => a.exptype ) ) )
+    def apply( sym: SymbolA, args: List[HOLTerm]) = {
+      val pred : Var = HOLFactory.createVar( sym, FunctionType( To(), args.map( a => a.exptype ) ) )
       AppN(pred, args).asInstanceOf[HOLFormula]
     }
     /*
