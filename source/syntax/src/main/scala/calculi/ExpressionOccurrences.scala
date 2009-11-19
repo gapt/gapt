@@ -45,5 +45,5 @@ object ExpressionOccurrences {
 
     def getOccurrence(o: Occur, set: Set[Occurrence]): Option[Occurrence] = set.elements.find(x => x.label == o)
     
-    case class FormulaOccurrence[+A <: HOL](formula: Formula[A], val label: Occur) extends Occurrence
+    case class FormulaOccurrence(formula: Formula, val label: Occur) extends Occurrence
 }

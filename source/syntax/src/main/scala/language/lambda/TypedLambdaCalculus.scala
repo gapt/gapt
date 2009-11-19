@@ -11,110 +11,83 @@ import scala.collection.immutable._
 import Types._
 
 object TypedLambdaCalculus {
-    
-    abstract class LambdaExpression[+A <: Lambda] {
-        def exptype: TA
 
-        // all variables must be of the same level
-        // The casting in the body of the function is required because we assume different elements are parameterized over A but as all variables must be of the same Athere is no problem.
-        // TODO change List into a covariant Set
-        def getFreeAndBoundVariables():Tuple2[List[Var[A]],List[Var[A]]] = this match {
-            case v: Var[_] => (v::Nil,  Nil )
-            case app: App[_] => {
+    trait LambdaExpression {
+        def exptype: TA
+        private[TypedLambdaCalculus] val factory: LambdaFactoryA
+        def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
+            case v: Var => (HashSet(v), new EmptySet)
+            case app: App => {
                     val mFBV = app.function.getFreeAndBoundVariables()
                     val nFBV = app.argument.getFreeAndBoundVariables()
                     (mFBV._1 ++ nFBV._1, mFBV._2 ++ nFBV._2)
             }
-            case abs: Abs[_] => {
+            case abs: Abs => {
                     val mFBV = abs.expression.getFreeAndBoundVariables()
                     //val bound = mFBV._2 + x
                     //val free = mFBV._1 - x
-                    val bound = abs.variable::mFBV._2
+                    val bound = mFBV._2 + abs.variable
                     val free = mFBV._1.filter(y => abs.variable != y)
                     (free, bound)
             }
         }
     }
 
-    trait Lambda
+    trait LambdaFactoryA {
+        def createVar( name: SymbolA, exptype: TA ) : Var
+        def createAbs( variable: Var, exp: LambdaExpression ) : Abs
+        def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App
+    }
 
-    /*
-        Definition of Var
-    */
-    class Var[+A <: Lambda](val name: SymbolA, val exptype: TA ) extends LambdaExpression[A] {
+    object LambdaFactory extends LambdaFactoryA {
+        def createVar( name: SymbolA, exptype: TA ) : Var = new Var( name, exptype, this )
+        def createAbs( variable: Var, exp: LambdaExpression ) : Abs = new Abs( variable, exp, this )
+        def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = new App( fun, arg, this )
+    }
+
+    class Var protected[TypedLambdaCalculus]( val name: SymbolA, val exptype: TA, val factory: LambdaFactoryA) extends LambdaExpression {
         override def equals(a: Any) = a match {
-            case s: Var[_] => (s.name == name && s.exptype == exptype)
+            case s: Var => (s.name == name && s.exptype == exptype)
             case _ => false
         }
         override def hashCode() = exptype.hashCode
         override def toString() = "Var(" + name + "," + exptype + ")"
     }
+    object LambdaVar {
+        def apply(name: SymbolA, exptype: TA) = Var(name, exptype, LambdaFactory)
+    }
+
     object Var {
-        def apply[A <: Lambda](name: SymbolA, exptype: TA)(implicit factory: VarFactory[A]) = factory.create(name, exptype)
-        // this apply is used to create a Var of specific type implicitly
-        def apply[A <: Lambda](name: SymbolA, exptype: TA, dummy: LambdaExpression[A])(implicit factory: VarFactory[A]) = factory.create(name, exptype)
-        def unapply(expression: LambdaExpression[Lambda]) = expression match {
-            case a: Var[_] => Some((a.name, a.exptype))
-            case _ => None
+        def apply(name: SymbolA, exptype: TA, factory: LambdaFactoryA) = factory.createVar(name, exptype)
+        def unapply(expression: LambdaExpression) = expression match {
+        case a: Var => Some((a.name, a.exptype))
+        case _ => None
         }
     }
-    trait VarFactory[A <: Lambda] {
-        def create (name: SymbolA, exptype: TA): Var[A]
-    }
-    implicit object LambdaVarFactory extends VarFactory[Lambda] {
-        def create (name: SymbolA, exptype: TA) = new Var[Lambda](name, exptype)
-    }
-    /* end of Var */
 
-    /*
-        Definition of Abs
-    */
-    class Abs[+A <: Lambda] (val variable: Var[A], val expression: LambdaExpression[A]) extends LambdaExpression[A]  {
+    class Abs protected[TypedLambdaCalculus]( val variable: Var, val expression: LambdaExpression, val factory: LambdaFactoryA ) extends LambdaExpression  {
         def exptype: TA = ->(variable.exptype,expression.exptype)
         override def equals(a: Any) = a match {
-            case s: Abs[_] => (s.variable == variable && s.expression == expression && s.exptype == exptype)
+            case s: Abs => (s.variable == variable && s.expression == expression && s.exptype == exptype)
             case _ => false
         }
         override def hashCode() = exptype.hashCode
         override def toString() = "Abs(" + variable + "," + expression + ")"
     }
+
     object Abs {
-        def apply[A <: Lambda](variable: Var[A], expression: LambdaExpression[A])(implicit factory: AbsFactory[A]) = factory.create(variable, expression)
-        def unapply(expression: LambdaExpression[Lambda]) = expression match {
-            case a: Abs[_] => Some((a.variable, a.expression))
+        def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression)
+        def unapply(expression: LambdaExpression) = expression match {
+            case a: Abs => Some((a.variable, a.expression))
             case _ => None
         }
     }
-    trait AbsFactory[A <: Lambda] {
-        def create (variable: Var[A], expression: LambdaExpression[A]): Abs[A]
-    }
-    implicit object LambdaAbsFactory extends AbsFactory[Lambda] {
-        def create (variable: Var[Lambda], expression: LambdaExpression[Lambda]) = new Abs[Lambda](variable, expression)
-    }
-    object AbsN {
-        def apply[A <: Lambda](variables: List[Var[A]], expression: LambdaExpression[A])(implicit factory: AbsFactory[A]): LambdaExpression[A] = variables match {
-            case Nil => expression
-            case x::ls => Abs(x, apply(ls, expression))
-        }
-        /*def apply(variables: List[Var], expression: LambdaExpression) = if (!variables.isEmpty) (variables :\ expression)(Abs)
-                                                                        else expression*/
-        def unapply(expression: LambdaExpression[Lambda]):Option[(List[Var[Lambda]], LambdaExpression[Lambda])] = Some(unapplyRec(expression))
-        def unapplyRec(expression: LambdaExpression[Lambda]): (List[Var[Lambda]], LambdaExpression[Lambda]) = expression match {
-            case Abs(v, e) => {val t = unapplyRec(e); (v :: t._1, t._2 )}
-            case v: Var[_] => (Nil, v)
-            case a: App[_] => (Nil, a)
-        }
-    }
-    /* end of App */
 
-    /*
-        Definition of App
-    */
-    class App[+A <: Lambda] (val function: LambdaExpression[A], val argument: LambdaExpression[A]) extends LambdaExpression[A] {
+    class App protected[TypedLambdaCalculus]( val function: LambdaExpression, val argument: LambdaExpression, val factory: LambdaFactoryA) extends LambdaExpression {
         require({
             function.exptype match {
                 case ->(in,out) => {if (in == argument.exptype) true
-                                    else false}
+                    else false}
                 case _          => false
             }
         })
@@ -124,7 +97,7 @@ object TypedLambdaCalculus {
             }
         }
         override def equals(a: Any) = a match {
-            case s: App[_] => (s.function == function && s.argument == argument && s.exptype == exptype)
+            case s: App => (s.function == function && s.argument == argument && s.exptype == exptype)
             case _ => false
         }
         override def hashCode() = exptype.hashCode
@@ -132,58 +105,64 @@ object TypedLambdaCalculus {
     }
 
     object App {
-        def apply[A <: Lambda](function: LambdaExpression[A], argument: LambdaExpression[A])(implicit factory: AppFactory[A]) = factory.create(function, argument)
-        def unapply(expression: LambdaExpression[Lambda]) = expression match {
-            case a: App[_] => Some((a.function, a.argument))
+        def apply(function: LambdaExpression, argument: LambdaExpression) = function.factory.createApp( function, argument )
+        def unapply(expression: LambdaExpression) = expression match {
+            case a: App => Some((a.function, a.argument))
             case _ => None
         }
     }
-    trait AppFactory[A <: Lambda] {
-        def create (function: LambdaExpression[A], argument: LambdaExpression[A]): App[A]
+
+    object AbsN {
+        def apply(variables: List[Var], expression: LambdaExpression): LambdaExpression = variables match {
+            case Nil => expression
+            case x::ls => Abs(x, apply(ls, expression))
+        }
+        /*def apply(variables: List[Var], expression: LambdaExpression) = if (!variables.isEmpty) (variables :\ expression)(Abs)
+                                                                        else expression*/
+        def unapply(expression: LambdaExpression):Option[(List[Var], LambdaExpression)] = Some(unapplyRec(expression))
+        def unapplyRec(expression: LambdaExpression): (List[Var], LambdaExpression) = expression match {
+            case Abs(v, e) => {val t = unapplyRec(e); (v :: t._1, t._2 )}
+            case v: Var => (Nil, v)
+            case a: App => (Nil, a)
+        }
     }
-    implicit object LambdaAppFactory extends AppFactory[Lambda] {
-        def create (function: LambdaExpression[Lambda], argument: LambdaExpression[Lambda]) = new App[Lambda](function, argument)
-    }
-   
+
     object AppN {
-        def apply[A <: Lambda](function: LambdaExpression[A], arguments:List[LambdaExpression[A]])(implicit factory: AppFactory[A]): LambdaExpression[A] = arguments match {
+        def apply(function: LambdaExpression, arguments:List[LambdaExpression]): LambdaExpression = arguments match {
             case Nil => function
             case x::ls => apply(App(function, x), ls)
         }
-    /*if (!arguments.isEmpty) (function /: arguments)(App(factory))
-                                                                                  else function*/
-        def unapply(expression: LambdaExpression[Lambda]):Option[(LambdaExpression[Lambda], List[LambdaExpression[Lambda]])] = Some(unapplyRec(expression))
-        def unapplyRec(expression: LambdaExpression[Lambda]):(LambdaExpression[Lambda], List[LambdaExpression[Lambda]]) = expression match {
+        def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = Some(unapplyRec(expression))
+        def unapplyRec(expression: LambdaExpression):(LambdaExpression, List[LambdaExpression]) = expression match {
             case App(f, arg) => {val t = unapplyRec(f); (t._1, t._2 ::: (arg::Nil)) }
-            case v: Var[_] => (v,Nil)
-            case a: Abs[_] => (a,Nil)
+            case v: Var => (v,Nil)
+            case a: Abs => (a,Nil)
         }
     }
-    /* end of App */
 
     object freshVar {
-        def apply[A <: Lambda](exptype: TA, disallowedVariables: List[Var[A]])(implicit factory: VarFactory[A]) :Var[A] = {
+        def apply(exptype: TA, disallowedVariables: Set[Var], dummy: LambdaExpression) :Var = {
             var counter = 1
-            var v = Var[A]("#"+counter, exptype)
+            var v = Var("#"+counter, exptype,dummy.factory)
             while (disallowedVariables.contains(v)) {
                 counter += 1
-                v = Var[A]("#"+counter, exptype)
+                v = Var("#"+counter, exptype,dummy.factory)
             }
             v
         }
-        def apply[A <: Lambda](exptype: TA, context: LambdaExpression[A])(implicit factory: VarFactory[A]) :Var[A] = {
+        def apply(exptype: TA, context: LambdaExpression, dummy: LambdaExpression) :Var = {
             val (cFV, cBV) = context.getFreeAndBoundVariables
-            apply(exptype, cFV ++ cBV)
+            apply(exptype, cFV ++ cBV, dummy)
         }
     }
 
-    def exportLambdaExpressionToString(expression: LambdaExpression[Lambda]):String = expression match {
+    def exportLambdaExpressionToString(expression: LambdaExpression):String = expression match {
         case Var(name,exptype) => name.toString
         case Abs(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
         case App(function, argument) => "(" + exportLambdaExpressionToString(function) + " " + exportLambdaExpressionToString(argument)  + ")"
     }
 
-    def exportLambdaExpressionToStringWithTypes(expression: LambdaExpression[Lambda]):String = expression match {
+    def exportLambdaExpressionToStringWithTypes(expression: LambdaExpression):String = expression match {
         case Abs(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
         case App(function, argument) => "(" + exportLambdaExpressionToString(function) + " " + exportLambdaExpressionToString(argument)  + ")"
         case Var(name,exptype) => {
