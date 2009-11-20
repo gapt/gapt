@@ -43,7 +43,15 @@ object ExpressionOccurrences {
         def merge(other: Occurrence): Occur = CombinedOccur(label, other.label)
     }
 
-    def getOccurrence(o: Occur, set: Set[Occurrence]): Option[Occurrence] = set.elements.find(x => x.label == o)
-    
-    case class FormulaOccurrence(formula: Formula, val label: Occur) extends Occurrence
+    def getOccurrence(o: Occur, set: Set[Occurrence]): Set[Occurrence] = set.filter(x => x.label == o)
+
+    // equality is done by reference so each two generated formula occurrences (even with the the label) are different
+    class FormulaOccurrence private(val formula: Formula, val label: Occur, val ancestors: List[FormulaOccurrence]) extends Occurrence
+    object FormulaOccurrence {
+        private var ids: Int = 0
+        def apply(formula: Formula) = new FormulaOccurrence(formula, {ids = ids + 1; BaseOccur(ids)}, Nil)
+        def apply(f: Formula, fo: FormulaOccurrence) = new FormulaOccurrence(f, fo.label, fo::Nil)
+        def apply(fo: FormulaOccurrence) = new FormulaOccurrence(fo.formula, fo.label, fo::Nil)
+        def apply(f: Formula, fo1: FormulaOccurrence, fo2: FormulaOccurrence) = new FormulaOccurrence(f, fo1.merge(fo2), fo1::fo2::Nil)
+    }
 }
