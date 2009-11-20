@@ -18,9 +18,9 @@ import at.logic.language.lambda.Types._
 import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
 import at.logic.parsing.readers.StringReader
 
-class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
+private class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
 
-class SimpleHOLParserTest extends Specification with JUnit {
+class SimpleHOLParserTest extends SpecificationWithJUnit {
     "SimpleHOLParser" should {
         val var1 = Var[HOL](new VariableStringSymbol("x1"), i->(i->i))
         "parse correctly a variable" in {

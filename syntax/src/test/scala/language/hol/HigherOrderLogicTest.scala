@@ -19,7 +19,7 @@ import LogicSymbols.LogicSymbolsDefaultConverters._
 import at.logic.language.lambda.Types.TAImplicitConverters._
 import HigherOrderLogic._
 
-class HigherOrderLogicTest extends Specification with JUnit {
+class HigherOrderLogicTest extends SpecificationWithJUnit {
     "HigherOrderLogic" should {
         val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
         val v1 = Var("x", i, hol)

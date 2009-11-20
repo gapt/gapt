@@ -13,7 +13,7 @@ import org.specs.runner._
 import Multisets._
 
 
-class MultisetsTest extends Specification with JUnit {
+class MultisetsTest extends SpecificationWithJUnit {
     
 }
 

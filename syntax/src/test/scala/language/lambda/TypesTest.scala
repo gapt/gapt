@@ -10,12 +10,9 @@ package at.logic.language.lambda
 import org.specs._
 import org.specs.runner._
 
-
 import Types._
 
-
-
-class TypesTest  extends Specification with JUnit {
+class TypesTest  extends SpecificationWithJUnit {
   "Types" should {
     "produce a binary function type ( i -> (i -> o ) )" in {
       FunctionType( To(), Ti()::Ti()::Nil ) must beEqual ( ->(Ti(), ->( Ti(), To() ) ) )

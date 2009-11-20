@@ -18,7 +18,7 @@ import TypedLambdaCalculus._
 import Substitutions._
 
 
-class SubstitutionsTest extends Specification with JUnit {
+class SubstitutionsTest extends SpecificationWithJUnit {
   level = Info  // sets the printing of extra information (level can be: Debug, Info, Warning, Error)
   "Substitutions" should {
     "make implicit conversion from pair to SingleSubstitution" in {

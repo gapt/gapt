@@ -14,7 +14,7 @@ import org.specs.runner._
 import Symbols._
 import at.logic.language.hol.LogicSymbols._
 
-class SymbolsTest extends Specification with JUnit {
+class SymbolsTest extends SpecificationWithJUnit {
     "Equality between symbols" should {
         "return true if it is the same class" in {
             (new VariableSymbolA {}) must beEqual (new VariableSymbolA {})

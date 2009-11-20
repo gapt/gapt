@@ -22,7 +22,7 @@ case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
   def apply(v: => Array[T]) = ( v.deepEquals(a), "successful deepEquals", v.deepToString + " not deepEquals " + a.deepToString )
 }
 
-class XMLParserTest extends Specification with JUnit {
+class XMLParserTest extends SpecificationWithJUnit {
   "XMLParser" should {
     "parse correctly a constant c" in {
       (new NodeReader(<constant symbol="c"/>) with XMLTermParser).getTerm() must beEqual(

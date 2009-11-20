@@ -14,7 +14,7 @@ import Trees._
 import Graphs._
 import TreeImplicitConverters._
 
-class TreesTest extends Specification with JUnit {
+class TreesTest extends SpecificationWithJUnit {
   "Tree" should {
     "contains no cycles" in {
         val t1 = UnaryTree("d",UnaryTree("c",UnaryTree("b","a")))
