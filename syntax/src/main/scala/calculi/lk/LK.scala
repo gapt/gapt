@@ -12,14 +12,43 @@ import at.logic.language.hol.HigherOrderLogic._
 import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.utils.ds.Trees._
 import scala.collection.immutable.Set
+import scala.collection.mutable.HashMap
 
 object LK {
 
     // List should be changed into multiset (I am not sure anymore as we need to map formula occurrences also in the original sequent.
     // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
     case class Sequent(antecedent: List[Formula], succedent: List[Formula])
+    {
+      // equality defined by equality on antecedent and succedent *lists*
+      // perhaps defining it on multisets is more suitable?
+      override def equals( o: Any ) = o match {
+        case os : Sequent => antecedent == os.antecedent && succedent == os.succedent
+        case _ => false
+      }
+      // TODO: use multisets in implementation!
+      def multisetEquals( o: Sequent ) = {
+        def updater( f: Formula, mt: HashMap[Formula, Int]) =
+          if (!mt.contains(f)) mt.put( f, 1 ) else mt.update( f, mt.apply( f ) + 1 )
+        val mt = new HashMap[Formula, Int]
+        antecedent.foreach( f => updater( f, mt ) )
+        val mo = new HashMap[Formula, Int]
+        o.antecedent.foreach( f => updater( f, mo ) )
+        if ( mt != mo )
+          false
+        mt.clear
+        mo.clear
+        succedent.foreach( f => updater( f, mt ) )
+        o.succedent.foreach( f => updater( f, mo ) )
+        mt == mo
+      }
+      override def toString : String = antecedent.toString + " :- " + succedent.toString
+    }
     // List should be changed into set
     case class SequentOccurrence(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence])
+    {
+      def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
+    }
     
     abstract class RuleTypeA
     abstract class NullaryRuleTypeA extends RuleTypeA

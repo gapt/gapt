@@ -28,13 +28,20 @@ object HigherOrderLogic {
     type HOLFormula = HOLTerm with Formula
     type HOLTerm = LambdaExpression with HOL
 
-    private[HigherOrderLogic] class HOLVar(name: VariableSymbolA, exptype: TA) extends Var(name, exptype, HOLFactory) with HOL
-    private[HigherOrderLogic] class HOLConst(name: ConstantSymbolA, exptype: TA) extends Var(name, exptype, HOLFactory) with Const with HOL
-    private[HigherOrderLogic] class HOLVarFormula(name: VariableSymbolA) extends Var(name, To(), HOLFactory) with Formula with HOL
-    private[HigherOrderLogic] class HOLConstFormula(name: ConstantSymbolA) extends HOLConst(name, To()) with Formula with HOL
-    private[HigherOrderLogic] class HOLAppFormula(function: LambdaExpression, argument: LambdaExpression) extends App(function, argument, HOLFactory) with Formula with HOL
-    private[HigherOrderLogic] class HOLApp(function: LambdaExpression, argument: LambdaExpression) extends App(function, argument, HOLFactory) with HOL
-    private[HigherOrderLogic] class HOLAbs(variable: Var, expression: LambdaExpression) extends Abs(variable, expression, HOLFactory) with HOL
+    class HOLVar private[HigherOrderLogic] (name: VariableSymbolA, exptype: TA)
+      extends Var(name, exptype, HOLFactory) with HOL
+    class HOLConst private[HigherOrderLogic] (name: ConstantSymbolA, exptype: TA)
+      extends Var(name, exptype, HOLFactory) with Const with HOL
+    class HOLVarFormula private[HigherOrderLogic] (name: VariableSymbolA)
+      extends HOLVar(name, To()) with Formula
+    class HOLConstFormula private[HigherOrderLogic] (name: ConstantSymbolA)
+      extends HOLConst(name, To()) with Formula
+    private[HigherOrderLogic] class HOLApp(function: LambdaExpression, argument: LambdaExpression)
+      extends App(function, argument, HOLFactory) with HOL
+    class HOLAppFormula private[HigherOrderLogic] (function: LambdaExpression, argument: LambdaExpression)
+      extends HOLApp(function, argument) with Formula
+    private[HigherOrderLogic] class HOLAbs(variable: Var, expression: LambdaExpression)
+      extends Abs(variable, expression, HOLFactory) with HOL
 
     object HOLVar {
         def apply(name: VariableSymbolA, exptype: TA) = new HOLVar(name, exptype)
@@ -47,6 +54,9 @@ object HigherOrderLogic {
     }
     object HOLConstFormula {
         def apply(name: ConstantSymbolA) = new HOLConstFormula(name)
+    }
+    object HOLAppFormula {
+        def apply(function: LambdaExpression, argument: LambdaExpression) = new HOLAppFormula(function, argument)
     }
 
     val negC = new HOLConst(NegSymbol, "(o -> o)")
