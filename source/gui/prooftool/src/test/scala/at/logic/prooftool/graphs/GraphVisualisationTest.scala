@@ -6,7 +6,7 @@ import org.specs.runner._
 import at.logic.utils.ds.Graphs._
 import GraphImplicitConverters._
 
-class GraphVisualisationTest extends Specification with JUnit {
+class GraphVisualisationTest extends SpecificationWithJUnit {
   "Creation of a JPanel works" should {
     val g1: EmptyGraph[String] = ( )
     val g2: VertexGraph[String] = ("a", g1)
