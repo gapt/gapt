@@ -16,7 +16,7 @@ import Symbols._
 import Symbols.SymbolImplicitConverters._
 import TypedLambdaCalculus._
 
-class LambdaCalculusTest extends Specification with JUnit {
+class LambdaCalculusTest extends SpecificationWithJUnit {
   "TypedLambdaCalculus" should {
     "make implicit conversion from String to Name" in {
         (LambdaVar("p",i) ) must beEqual (LambdaVar("p", i ))

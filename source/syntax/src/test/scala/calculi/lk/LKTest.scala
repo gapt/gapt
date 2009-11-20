@@ -20,7 +20,7 @@ import at.logic.language.lambda.Types.TAImplicitConverters._
 
 import scala.collection.immutable._
 
-class LKTest extends Specification with JUnit {
+class LKTest extends SpecificationWithJUnit {
   "LK factories and extractors" should {
     "work for Axioms" in {
         val c1 = Var("a", i->o, hol)

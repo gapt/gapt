@@ -13,7 +13,7 @@ import org.specs.runner._
 import Sets._
 
 
-class SetsTest extends Specification with JUnit {
+class SetsTest extends SpecificationWithJUnit {
 
     "Sets" should {
         var set: Set[String] = Set[String]

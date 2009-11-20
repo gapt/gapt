@@ -65,6 +65,7 @@ object LK {
         def root = vertex
         def rule: RuleTypeA
         def getFormulaAncestor(fo: FormulaOccurrence): Option[FormulaOccurrence] = None// there is always one possible ancestor in the upper sequents
+        def getFormulaDescendant(fo: FormulaOccurrence): Option[FormulaOccurrence] = getOccurrence(fo.label, root.asInstanceOf[Set[Occurrence]]).asInstanceOf[Option[FormulaOccurrence]]
     }
     trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof {
         def uProof = t.asInstanceOf[LKProof]
@@ -126,11 +127,7 @@ object LK {
         traverse(list)(Set[T]())
     }
 
-    def toList[T](set: Set[T]) = {
-        val list = List[T]()
-        set.foreach(arg => arg::list)
-        list
-    }
+    def toList[T](set: Set[T]) = set.toList
 
     // actual rule extractor/factories
     // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.

@@ -13,7 +13,7 @@ import org.specs.runner._
 import Graphs._
 import GraphImplicitConverters._
 
-class GraphsTest extends Specification with JUnit {
+class GraphsTest extends SpecificationWithJUnit {
   "Graph" should {
       val g1: EmptyGraph[String] = ()
       val g2: VertexGraph[String] = ("a", g1)
