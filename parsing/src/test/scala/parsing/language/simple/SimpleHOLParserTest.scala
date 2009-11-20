@@ -22,25 +22,25 @@ private class MyParser(input: String) extends StringReader(input) with SimpleHOL
 
 class SimpleHOLParserTest extends SpecificationWithJUnit {
     "SimpleHOLParser" should {
-        val var1 = Var[HOL](new VariableStringSymbol("x1"), i->(i->i))
+        val var1 = HOLVar(new VariableStringSymbol("x1"), i->(i->i))
         "parse correctly a variable" in {
             (new MyParser("x1: (i -> (i -> i))").getTerm()) must beEqual (var1)
         }
-        val const1 = Var[HOL](new ConstantStringSymbol("c1"), i->i)
+        val const1 = HOLConst(new ConstantStringSymbol("c1"), i->i)
         "parse correctly an constant" in {    
             (new MyParser("c1: (i -> i)").getTerm()) must beEqual (const1)
         }
-        val var2 = Var[HOL](new VariableStringSymbol("x2"), i)
+        val var2 = HOLVar(new VariableStringSymbol("x2"), i)
         val atom1 = Atom(new ConstantStringSymbol("a"),var1::var2::const1::Nil)
         "parse correctly an atom" in {  
             (new MyParser("a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqual (atom1)
         }
-        val var3 = Var[HOL](new VariableStringSymbol("x3"), o).asInstanceOf[Formula[HOL]]
+        val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
         "parse correctly a formula variable" in {
-            (new MyParser("x3: o").getTerm()) must beLike {case x: Formula[_] => true}
+            (new MyParser("x3: o").getTerm()) must beLike {case x: Formula => true}
         }
         "parse correctly a formula constant" in {
-            (new MyParser("c: o").getTerm()) must beLike {case x: Formula[_] => true}
+            (new MyParser("c: o").getTerm()) must beLike {case x: Formula => true}
         }
         val and1 = And(atom1, var3)
         "parse correctly an and" in {
