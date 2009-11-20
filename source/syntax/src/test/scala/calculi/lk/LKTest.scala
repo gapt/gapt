@@ -15,10 +15,12 @@ import at.logic.language.lambda.TypedLambdaCalculus._
 import at.logic.language.lambda.Types._
 import at.logic.language.lambda.Symbols._
 import LK._
-import at.logic.language.hol.LogicSymbols.LogicSymbolsDefaultConverters._
 import at.logic.language.lambda.Types.TAImplicitConverters._
+import at.logic.calculi.lk.LKSpecs.beMultisetEqual
+import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
 
 import scala.collection.immutable._
+import at.logic.language.lambda.Symbols.VariableStringSymbol
 
 class LKTest extends SpecificationWithJUnit {
   "LK factories and extractors" should {
@@ -38,6 +40,12 @@ class LKTest extends SpecificationWithJUnit {
         val a2 = Axiom(Sequent(f1::Nil, f1::Nil))
         (AndRightRule(a1, a2, f1, f1)) must beLike {case AndRightRule(a1, a2, x, aux1, aux2, prin1) => true}
     }*/
+    " A, A, B :- C, D, C should multiset-equal A, B, A :- D, C, C" in {
+      Sequent(HOLVarFormula("A")::HOLVarFormula("A")::HOLVarFormula("B")::Nil,
+              HOLVarFormula("C")::HOLVarFormula("D")::HOLVarFormula("C")::Nil) must beMultisetEqual(
+      Sequent(HOLVarFormula("A")::HOLVarFormula("B")::HOLVarFormula("A")::Nil,
+              HOLVarFormula("D")::HOLVarFormula("C")::HOLVarFormula("C")::Nil))
+    }
   }
   "LK rules convenient factories (taking the first formulas)" should {
       "create the correct proof for Contractions" in {
