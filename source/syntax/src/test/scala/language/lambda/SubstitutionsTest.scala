@@ -11,44 +11,45 @@ import org.specs._
 import org.specs.runner._
 
 
-import Types._
-import Symbols._
-import Symbols.SymbolImplicitConverters._
-import TypedLambdaCalculus._
-import Substitutions._
-
+import types._
+import symbols._
+import symbols.ImplicitConverters._
+import typedLambdaCalculus._
+import substitutions._
+import types.Definitions._
+import substitutions.ImplicitConverters._
 
 class SubstitutionsTest extends SpecificationWithJUnit {
   level = Info  // sets the printing of extra information (level can be: Debug, Info, Warning, Error)
   "Substitutions" should {
     "make implicit conversion from pair to SingleSubstitution" in {
-        val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
-        val e = App(f, x)
-        val sigma = SingleSubstitution(v,e)
-        val eta = (v,e)
-        ( eta : SingleSubstitution ) must beEqual ( sigma )
+      val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
+      val e = App(f, x)
+      val sigma = SingleSubstitution(v,e)
+      val eta = (v,e)
+      ( eta : SingleSubstitution ) must beEqual ( sigma )
     }
     "make implicit conversion from SingleSubstitution to pair" in {
-        val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
-        val e = App(f, x)
-        val sigma = SingleSubstitution(v,e)
-        val eta = (v,e)
-        ( eta ) must beEqual ( sigma : Tuple2[Var,LambdaExpression] )
+      val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
+      val e = App(f, x)
+      val sigma = SingleSubstitution(v,e)
+      val eta = (v,e)
+      ( eta ) must beEqual ( sigma : Tuple2[Var,LambdaExpression] )
     }
     "substitute correctly when SingleSubstitution is applied (1)" in {
-        val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
-        val e = App(f, x)
-        val d = (v,e)
-        val sigma: SingleSubstitution = d
-        ( e ) must beEqual ( sigma(v) )
+      val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
+      val e = App(f, x)
+      val d = (v,e)
+      val sigma: SingleSubstitution = d
+      ( e ) must beEqual ( sigma(v) )
     }
     "substitute correctly when SingleSubstitution is applied (2)" in {
-        val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
-        val e = App(f, x)
-        val d = (v,e)
-        val sigma: SingleSubstitution = d
-        val expression = App(f, v)
-        ( App(f, App(f, x)) ) must beEqual ( sigma(expression) )
+      val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
+      val e = App(f, x)
+      val d = (v,e)
+      val sigma: SingleSubstitution = d
+      val expression = App(f, v)
+      ( App(f, App(f, x)) ) must beEqual ( sigma(expression) )
     }
 //    "substitute correctly when SingleSubstitution is applied (3)" in {
 //        val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
