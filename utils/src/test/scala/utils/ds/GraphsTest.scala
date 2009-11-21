@@ -10,7 +10,7 @@ package at.logic.utils.ds
 import org.specs._
 import org.specs.runner._
 
-import Graphs._
+import graphs._
 import GraphImplicitConverters._
 
 class GraphsTest extends SpecificationWithJUnit {

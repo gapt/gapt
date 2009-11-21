@@ -10,8 +10,8 @@ package at.logic.utils.ds
 import org.specs._
 import org.specs.runner._
 
-import Trees._
-import Graphs._
+import trees._
+import graphs._
 import TreeImplicitConverters._
 
 class TreesTest extends SpecificationWithJUnit {
