@@ -79,12 +79,6 @@ package propositionalRules {
   case object NegLeftRuleType extends UnaryRuleTypeA
   case object NegRightRuleType extends UnaryRuleTypeA
 
-  // Quanitifier rules
-  case object ForallLeftRuleType extends UnaryRuleTypeA
-  case object ForallRightRuleType extends UnaryRuleTypeA
-  case object ExistsLeftRuleType extends UnaryRuleTypeA
-  case object ExistsRightRuleType extends UnaryRuleTypeA
-
   // exceptions
   class LKRuleException(msg: String) extends Exception(msg)
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
