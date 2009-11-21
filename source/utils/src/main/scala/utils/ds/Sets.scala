@@ -38,6 +38,8 @@ object Sets {
     {
         def this() = this(new HashSet[A])
 
+        //def apply(xs:List[A]) = new CovariantSet(xs)
+        
         def size() : Int = return set.size
         def elements : Iterator[A]= { return set.elements }
 
@@ -146,7 +148,7 @@ object Sets {
         for (b <- that) {
             that_size += 1
             if (this.elements.find((x : B) => x == b) == None) {
-                //Console.println("could not find "+b)
+                //Console.println("cou  ld not find "+b)
                 return false
             } else {
                 //Console.println("found "+b)
