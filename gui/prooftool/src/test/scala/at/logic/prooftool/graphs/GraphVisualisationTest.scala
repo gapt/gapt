@@ -3,7 +3,7 @@ package at.logic.prooftool.graphs
 import org.specs._
 import org.specs.runner._
 
-import at.logic.utils.ds.Graphs._
+import at.logic.utils.ds.graphs._
 import GraphImplicitConverters._
 
 class GraphVisualisationTest extends SpecificationWithJUnit {
@@ -37,8 +37,15 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
 
     var gv = new GraphVisualisation[String]
     var jgraph = gv.create(g6)
-
     VisualisationUtils.placeNodes(jgraph)
+
+    var frame = gv.buildFrame(g6)
+    //frame.show()
+
+    frame.invalidate()
+
+    //Thread.sleep(15000)
+    
 
     ()
   }

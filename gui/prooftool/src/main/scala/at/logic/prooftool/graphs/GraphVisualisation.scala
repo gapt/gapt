@@ -16,18 +16,36 @@ import org.jgrapht.ext._
 import org.jgrapht.graph._
 
 
+/*
+trait ResultMatcher {
+        class PositiveResultMatcher extends BeMatcher[Test.Result] {
+            def apply(r : Test.Result) =
+                r match {
+                    case Test.Result(Test.Passed,_,_,_) => MatchResult(true," passed.","(should not happen)");
+                    //case Test.Result(Test.Proved,_,_,_) => MatchResult(true,r.toString + " proved.","(should not happen)");
+                    //case Test.Result(Test.Failed,_,_,_) => MatchResult(false,"(should not happen)",r.toString + " failed.");
+                    case _ => MatchResult(false,"(should not happen)"," was neither passed, proved nor failed.");
+                }
+
+        }
+
+        val positive = new PositiveResultMatcher
+}
+
+object ResultMatcher extends ResultMatcher
+*/
 
 class GraphVisualisation[T] {
 
   /* shows a frame with the graph*/
-  def show(g :  at.logic.utils.ds.Graphs.Graph[T]) = {
+  def show(g :  at.logic.utils.ds.graphs.Graph[T]) = {
     var jf = buildFrame(create(g))
     jf.setVisible(true)
     
   }
 
   /* calls create and puts the jgraph into a frame */
-  def buildFrame(g : at.logic.utils.ds.Graphs.Graph[T]) : JFrame = buildFrame(create(g))
+  def buildFrame(g : at.logic.utils.ds.graphs.Graph[T]) : JFrame = buildFrame(create(g))
 
   def buildFrame(g : JGraph) : JFrame = {
     var jf = new JFrame
@@ -39,9 +57,9 @@ class GraphVisualisation[T] {
   }
 
   /* creates a jgraph from out graph model */
-  def create(g : at.logic.utils.ds.Graphs.Graph[T]) : JGraph = {
+  def create(g : at.logic.utils.ds.graphs.Graph[T]) : JGraph = {
     if (! g.graph.isInstanceOf[ListenableGraph[Any,Any]])
-      throw new Exception("Excpecting a Listenable Graph in the at.logic.utils.ds.Graph model!")
+      throw new Exception("Excpecting a Listenable Graph in the at.logic.utils.ds.graph model!")
 
     var jgraph = new JGraph( new JGraphModelAdapter( g.graph ) )
     return jgraph;
@@ -51,29 +69,117 @@ class GraphVisualisation[T] {
 
 object VisualisationUtils {
   def placeNodes(jgraph : JGraph) = {
-    var map = jgraph.getGraphLayoutCache().createNestedMap()
+    // hm this should work, shouldn't it?
+    Console.println("placement")
 
-//    Console.print(map)
-    var c = 0
-    var it = map.values().iterator()
-    var i : Any = null
+
+    var cache : GraphLayoutCache  = jgraph.getGraphLayoutCache();
+    var m  = cache.createNestedMap();
+    var it  = m.values().iterator();
+    var i : Any = null;
+
     while (it.hasNext()) {
-      i = it.next()
-      i match {
-	case null => // do nothing
-//	case Map => Console.println(i)
-//	case _ => Console.print("no map")
-	  case _ =>
-      }
+      i = it.next();
 
-//    jgraph.getGraphLayoutCache().edit(map)
+      if (i.isInstanceOf[Map[Any,Any] ]) {
+        var im  = i.asInstanceOf[Map[Any,Any] ];
+	var j : Any = null;
+	var it2 = im.values().iterator()
+
+        while (it2.hasNext() ) {
+	  j = it2.next();
+
+          if (j.isInstanceOf[AttributeMap.SerializableRectangle2D]) {
+            var  r :Rectangle2D.Double = j.asInstanceOf[AttributeMap.SerializableRectangle2D];
+            r.x = 10.0;
+            r.y = 400.0;
+            r.width = 100.0;
+            r.height = 50.0;
+            Console.println("setting new rectangle:"+r.toString());
+          }
+        }
+      }
     }
 
+    Console.println("cache partial? "+cache.isPartial)
+            
+    cache.edit(m);
   }
-
 }
 
-/* --- only tests from here on --- */
+
+
+//    var map = cache.createNestedMap()
+//
+////    Console.print(map)
+//    var c = 0
+//    var it = map.values().iterator()
+//    var i : Any = null
+//
+//    var x_ : Double = 200
+//    var y_ : Double = 200
+//
+    
+
+//    while (it.hasNext()) {
+//      i = it.next()
+//      if (i.isInstanceOf[Map[Any,Any]]) {
+////      try {
+//	Console.print("Found an Attribute Map:")
+//	var m = i.asInstanceOf[Map[Any,Any]]
+//	//Console.print(m)
+//	var rect : Rectangle2D.Double  = GraphConstants.getBounds(m).asInstanceOf[Rectangle2D.Double]
+//	if (rect != null) {
+//	  rect.setRect(x_ ,y_ , rect.width, rect.height)
+//	  y_ += 50
+//
+//	  //Console.print(rect)
+//	  GraphConstants.setBounds(m,rect)
+//	  //Console.println(m)
+//	}
+//	()
+//      } else {
+//	if (i.isInstanceOf[AnyRef]) {
+//	  val ar = i.asInstanceOf[AnyRef];
+//	  Console.println("skipping..."+ ar.getClass );
+//	} else {
+//	  Console.println("skipping...");
+//	}
+//      }
+
+////      Console.println(map)
+////      cache.edit(map)
+////      Console.println("   ---- ")
+////      Console.println(cache.createNestedMap())
+////  }
+//}
+
+
+// --- only tests from here on ---
+
+object PlacementTestApp extends Application {
+import at.logic.utils.ds.graphs._
+import GraphImplicitConverters._
+
+    override def main(args : Array[String]) {
+    val g1: EmptyGraph[String] = ( )
+    val g2: VertexGraph[String] = ("a", g1)
+    val g21: VertexGraph[String] = ("b", g2)
+    val g3: EdgeGraph[String] = ("a", "b", g21)
+    val g4: EdgeGraph[String] = ("a", "c", EdgeGraph("b", "c", VertexGraph("c", g3)))
+    val g5 = EdgeGraph("e", "f", VertexGraph("f", VertexGraph("e", EmptyGraph[String])))
+    val g6: UnionGraph[String] = (g4, g5)
+      
+
+    var gv = new GraphVisualisation[String]
+    var jgraph = gv.create(g6)
+    VisualisationUtils.placeNodes(jgraph)
+
+    var frame = gv.buildFrame(g6)
+    frame.show()
+    }
+}
+
 object JGraphApp extends Application {
   var jf = new JFrame
   var jm = new DefaultGraphModel
