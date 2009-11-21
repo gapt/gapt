@@ -249,12 +249,12 @@ object LK {
             else if (!s1.root.succedent.contains(term1) || !s1.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
             else {
                 val prinFormula = FormulaOccurrence(term1)
-                    new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1 - term2) + prinFormula), s1)
-                        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-                            def rule = ContractionRightRuleType
-                            def aux = (term1::term2::Nil)::Nil
-                            def prin = term1::Nil
-                        }
+                new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1 - term2) + prinFormula), s1)
+                    with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+                        def rule = ContractionRightRuleType
+                        def aux = (term1::term2::Nil)::Nil
+                        def prin = prinFormula::Nil
+                    }
                 }
         }
         // convenient method to choose the first two formulas
@@ -276,11 +276,11 @@ object LK {
     object CutRule {
         def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
             if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be cut are not identical")
-            else if (!s1.root.succedent.contains(term1) || !s1.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+            else if (!s1.root.succedent.contains(term1) || !s2.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
             else {
                 new BinaryTree[SequentOccurrence](SequentOccurrence(
                             createContext(s1.root.antecedent ++ (s2.root.antecedent - term2)),
-                            createContext((s1.root.succedent - term1) ++ s1.root.succedent)
+                            createContext((s1.root.succedent - term1) ++ s2.root.succedent)
                         ),
                         s1, s2)
                     with BinaryLKProof with AuxiliaryFormulas {
@@ -299,7 +299,7 @@ object LK {
         def unapply(proof: LKProof) = if (proof.rule == CutRuleType) {
                 val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas]
                 val ((a1::Nil)::(a2::Nil)::Nil) = r.aux
-                Some((r.uProof1, r.uProof1, r.root, a1, a2))
+                Some((r.uProof1, r.uProof2, r.root, a1, a2))
             }
             else None
     }
@@ -564,7 +564,7 @@ object LK {
         // convenient method to choose the first formula
         def apply(s1: LKProof, term1: Formula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
             (s1.root.succedent.filter(x => x.formula == term1)).toList match {
-                case (x::_) => apply(s1, term1)
+                case (x::_) => apply(s1, x)
                 case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
             }
         }
@@ -593,7 +593,7 @@ object LK {
         // convenient method to choose the first formula
         def apply(s1: LKProof, term1: Formula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
             (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
-                case (x::_) => apply(s1, term1)
+                case (x::_) => apply(s1, x)
                 case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
             }
         }
