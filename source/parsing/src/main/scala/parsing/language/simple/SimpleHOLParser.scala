@@ -10,13 +10,16 @@ package at.logic.parsing.language.simple
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import at.logic.parsing.language.HOLParser
-import at.logic.language.hol.HigherOrderLogic._
-import at.logic.language.lambda.Types.TA
-import at.logic.language.lambda.TypedLambdaCalculus._
-import at.logic.language.lambda.Symbols.VariableStringSymbol
-import at.logic.language.hol.LogicSymbols.ConstantStringSymbol
+import at.logic.language.hol.propositions._
+import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol.propositions.Definitions._
+import at.logic.language.hol.propositions.ImplicitConverters._
+import at.logic.language.lambda.types.TA
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
-trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.language.lambda.Types.Parsers {
+trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.language.lambda.types.Parsers {
   def term: Parser[HOLTerm] = (formula | non_formula)
   def formula: Parser[HOLFormula] = (atom | and | or | imp | neg | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
   def non_formula: Parser[HOLTerm] = (variable | constant)

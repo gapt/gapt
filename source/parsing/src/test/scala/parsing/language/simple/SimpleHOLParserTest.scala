@@ -9,13 +9,18 @@ package at.logic.parsing.language.simple
 
 import org.specs._
 import org.specs.runner._
-import at.logic.language.hol.HigherOrderLogic._
-import at.logic.language.lambda.TypedLambdaCalculus._
-import at.logic.language.hol.LogicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.Symbols.VariableStringSymbol
-import at.logic.language.lambda.Types.TAImplicitConverters._
-import at.logic.language.lambda.Types._
-import at.logic.language.lambda.Symbols.SymbolImplicitConverters._
+import at.logic.language.hol.propositions._
+import at.logic.language.hol.quantifiers._
+import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol.propositions.Definitions._
+import at.logic.language.hol.propositions.ImplicitConverters._
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.types.ImplicitConverters._
+import at.logic.language.lambda.types.Definitions._
+import at.logic.language.lambda.types._
+import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.parsing.readers.StringReader
 
 private class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
