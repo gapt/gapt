@@ -10,19 +10,17 @@ package at.logic.utils.ds
 import org.specs._
 import org.specs.runner._
 
+import org.scalacheck._
+import org.scalacheck.Prop._
+
+
 import Sets._
 
+import Sets.SetImplicitDefs._
 
 class SetsTest extends SpecificationWithJUnit {
 
     "Sets" should {
-        var set: Set[String] = Set[String]
-        set = set + "abc"
-        set = set + "abc"
-        set = set + "abc"
-        set = set + "xyz"
-        set = set + "xyz"
-        set = set + "xyz"
 
         class Fruit(var name : String) {
             override def equals(x:Any) : Boolean = {
@@ -57,38 +55,51 @@ class SetsTest extends SpecificationWithJUnit {
 
 
     "be invariant to multiple additions of an element" in {
+        var set: Set[String] = Set[String]
         var set2: Set[String] = Set[String]
+
+        set = set + "abc"
+        set = set + "abc"
+        set = set + "abc"
+        set = set + "xyz"
+        set = set + "xyz"
+        set = set + "xyz"
+
         set2 = set2 + "xyz"
         set2 = set2 + "abc"
-        //set == set2
 
-        //Console.println(set == set2)
         set.sameElements(set2) must beEqual (true)
+    }
+
+    "be scalacheck invariant to multiple additions of an element" in {
+        var mul_additions = forAll( (str1:String, str2:String) => {
+            var set1: Set[String] = Set[String];
+            var set2: Set[String] = Set[String];
+            
+            (set1 + new String(str1) + new String(str2)) sameElements
+            (set2 + new String(str2) + new String(str1)
+             + new String(str1) + new String(str2)
+             + new String(str1) + new String(str2)
+             + new String(str1) + new String(str2))
+        })
+        
+        Test.check(Test.defaultParams , mul_additions).passed must beEqual (true)
     }
 
     "be covariant" in {
         var set1 = (new Sets.CovariantSet) + apple + orange
         var set2 = (new Sets.CovariantSet) + orange + apple2
 
-        //var set3 = set1 + orange
-        //var set4 = set2 + apple
-        /*
-        Console.print("Fruit:"+(apple.asInstanceOf[Fruit]).name)
-        Console.print(" Apple:"+(apple.asInstanceOf[Apple]).name)
-        Console.print(" "+ ((apple.asInstanceOf[Fruit]).name eq (apple.asInstanceOf[Fruit]).name))
-        Console.println(" Apple:"+(apple.asInstanceOf[Apple]).colors)
-        Console.println("check for apple equality" + (apple == apple2))
-        Console.println(set1)
-        Console.println(set2)
-        Console.println(set1.sameElements(set2))
-        */
-        //val f = x
-
         set1.sameElements(set2) must beEqual (true)
     }
+
+    " be idempotent " in {
+        val idempotency = forAll { (l : List[Int]) => var s = listToSet(l);
+                                  s.sameElements(s++s) }
+        Test.check(Test.defaultParams , idempotency).passed must beEqual (true)
+    }
     }
 
-    import Sets.SetImplicitDefs._
 
     "Implicit conversions on sets" should {
         "convert correctly between a list and a set" in {
