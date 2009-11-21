@@ -13,15 +13,20 @@ package at.logic.parsing.language.xml
 
 import scala.xml._
 import scala.xml.Utility.trim
-import at.logic.language.lambda.TypedLambdaCalculus._
+import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ParsingException
 import at.logic.parsing.readers.XMLReaders.NodeReader
-import at.logic.language.hol.HigherOrderLogic._
-import at.logic.language.lambda.Symbols._
-import at.logic.language.lambda.Types._
-import at.logic.language.hol.LogicSymbols.ConstantStringSymbol
-import at.logic.calculi.lk.LK._
-import at.logic.calculi.ExpressionOccurrences.FormulaOccurrence
+import at.logic.language.hol.propositions._
+import at.logic.language.hol.quantifiers._
+import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol.propositions.Definitions._
+import at.logic.language.hol.propositions.ImplicitConverters._
+import at.logic.language.lambda.symbols._
+import at.logic.language.lambda.types._
+import at.logic.language.lambda.types.Definitions._
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 /**
  * This object contains several classes responsible for the parsing of the CERES XML
