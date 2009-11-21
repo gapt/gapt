@@ -16,24 +16,6 @@ import org.jgrapht.ext._
 import org.jgrapht.graph._
 
 
-/*
-trait ResultMatcher {
-        class PositiveResultMatcher extends BeMatcher[Test.Result] {
-            def apply(r : Test.Result) =
-                r match {
-                    case Test.Result(Test.Passed,_,_,_) => MatchResult(true," passed.","(should not happen)");
-                    //case Test.Result(Test.Proved,_,_,_) => MatchResult(true,r.toString + " proved.","(should not happen)");
-                    //case Test.Result(Test.Failed,_,_,_) => MatchResult(false,"(should not happen)",r.toString + " failed.");
-                    case _ => MatchResult(false,"(should not happen)"," was neither passed, proved nor failed.");
-                }
-
-        }
-
-        val positive = new PositiveResultMatcher
-}
-
-object ResultMatcher extends ResultMatcher
-*/
 
 class GraphVisualisation[T] {
 
