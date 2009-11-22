@@ -2,15 +2,16 @@
  * BetaReduction.scala
  *
  */
-/*
+
 package at.logic.language.lambda
 
-import Symbols._
-import TypedLambdaCalculus._
-import Substitutions._
+import symbols._
+import typedLambdaCalculus._
+import substitutions._
+import substitutions.ImplicitConverters._
 
-/*
- * The BetaReduction object encapsulates two functions:
+
+/* The BetaReduction object encapsulates two functions:
  * 1) betaNormalize, which transforms a lambda expression to beta normal form.
  * 2) betaReduce, which applies only one rewrite step to a lambda expression.
  *
@@ -25,40 +26,40 @@ import Substitutions._
  * iterating betaReduce. However, for efficiency reasons, this has not been done.
  *
  */
-object BetaReduction {
+package betaReduction {
 
-    abstract class Strategy extends Enumeration
-    object StrategyOuterInner extends Strategy {
-        val Outermost = Value
-        val Innermost = Value
-    }
-    object StrategyLeftRight extends Strategy {
-        val Leftmost = Value
-        val Rightmost = Value
-    }
+  abstract class Strategy extends Enumeration
+  object StrategyOuterInner extends Strategy {
+    val Outermost = Value
+    val Innermost = Value
+  }
+  object StrategyLeftRight extends Strategy {
+    val Leftmost = Value
+    val Rightmost = Value
+  }
 
-    object ImplicitStandardStrategy {
-        implicit val implicitOuter = StrategyOuterInner.Outermost
-        implicit val implicitLeft = StrategyLeftRight.Leftmost
-    }
+  object ImplicitStandardStrategy {
+    implicit val implicitOuter = StrategyOuterInner.Outermost
+    implicit val implicitLeft = StrategyLeftRight.Leftmost
+  }
     
-    def betaNormalize(expression: LambdaExpression)(implicit strategy: StrategyOuterInner.Value):LambdaExpression = expression match {
-        case App(Abs(x,body),arg) => {
-                strategy match {
-                    case StrategyOuterInner.Outermost => {
-                            val sigma: Substitution = (x,arg)
-                            betaNormalize(sigma(body))(strategy)                          // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
-                    }
-                    case StrategyOuterInner.Innermost => {
-                            val sigma: Substitution = (x,betaNormalize(arg)(strategy))    // If it is innermost strategy, we first normalize the argument and the body and then we reduce the current redex.
-                            sigma(betaNormalize(body)(strategy))
-                    }
-                }
+  def betaNormalize(expression: LambdaExpression)(implicit strategy: StrategyOuterInner.Value):LambdaExpression = expression match {
+    case App(Abs(x,body),arg) => {
+      strategy match {
+        case StrategyOuterInner.Outermost => {
+          val sigma: Substitution = (x,arg)
+          betaNormalize(sigma(body))(strategy)                          // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
         }
-        case App(m,n) => App(betaNormalize(m)(strategy),betaNormalize(n)(strategy))
-        case Abs(x,m) => Abs(x,betaNormalize(m)(strategy))
-        case x: Var => x
+        case StrategyOuterInner.Innermost => {
+          val sigma: Substitution = (x,betaNormalize(arg)(strategy))    // If it is innermost strategy, we first normalize the argument and the body and then we reduce the current redex.
+          sigma(betaNormalize(body)(strategy))
+        }
+      }
     }
+    case App(m,n) => App(betaNormalize(m)(strategy),betaNormalize(n)(strategy))
+    case Abs(x,m) => Abs(x,betaNormalize(m)(strategy))
+    case x: Var => x
+  }
 
     def betaReduce(expression: LambdaExpression)(implicit strategyOI: StrategyOuterInner.Value, strategyLR: StrategyLeftRight.Value):LambdaExpression = expression match {
         case App(Abs(x,body),arg) => {
@@ -114,4 +115,4 @@ object BetaReduction {
         case Abs(x,m) => Abs(x,betaReduce(m)(strategyOI,strategyLR))
         case x: Var => x
     }
-}*/
+}
