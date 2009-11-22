@@ -132,6 +132,15 @@ package propositions {
     }
   }
 
+  object BynaryFormula {
+    def unapply(expression: LambdaExpression) = expression match {
+        case And(left,right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+        case Or(left,right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+        case Imp(left,right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+        case _ => None
+    }
+  }
+
   // HOL formulas of the form P(t_1,...,t_n)
   object Atom {
     def apply( sym: SymbolA, args: List[HOLTerm]) = {
