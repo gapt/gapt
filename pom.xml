@@ -16,7 +16,7 @@
     <module>transformations</module>
     <module>algorithms</module>
     <module>gui</module>
-<!--    <module>parsing</module> -->
+    <module>parsing</module>
   </modules>
 
   <packaging>pom</packaging>
@@ -63,6 +63,11 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <version>1.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scalacheck</groupId>
+      <artifactId>scalacheck</artifactId>
+      <version>1.5</version>
     </dependency>
   </dependencies>
 

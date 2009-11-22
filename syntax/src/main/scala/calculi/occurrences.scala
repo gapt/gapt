@@ -51,5 +51,6 @@ package occurrences {
     def apply(f: Formula, fo: FormulaOccurrence) = new FormulaOccurrence(f, fo.label, fo::Nil)
     def apply(fo: FormulaOccurrence) = new FormulaOccurrence(fo.formula, fo.label, fo::Nil)
     def apply(f: Formula, fo1: FormulaOccurrence, fo2: FormulaOccurrence) = new FormulaOccurrence(f, fo1.merge(fo2), fo1::fo2::Nil)
+    def unapply(fo: FormulaOccurrence) = Some(fo.formula, fo.label, fo.ancestors)
   }
 }
