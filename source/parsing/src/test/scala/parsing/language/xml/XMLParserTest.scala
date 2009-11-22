@@ -98,7 +98,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                       </conjunctiveformula>) with XMLFormulaParser).getFormula() must beEqual(
                     And(pc("P"), pc("Q")))
     }
-    "parse correctly a quantified formula (exists x) x = x" in {
+    /*"parse correctly a quantified formula (exists x) x = x" in {
       (new NodeReader(<quantifiedformula type="exists">
                         <variable symbol="x"/>
                         <constantatomformula symbol="=">
@@ -109,7 +109,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                     ExVar(HOLVar("x", "i"), 
                       Atom(new ConstantStringSymbol("="), HOLVar("x", "i")::HOLVar("x", "i")::Nil))
                 )
-    }
+    }*/
     "parse correctly a second-order variable X" in {
       (new NodeReader(<secondordervariable symbol="X"/>) with XMLSetTermParser).getSetTerm() must
       beEqual(HOLVar(new VariableStringSymbol("X"), "(i -> o)"))
@@ -123,7 +123,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                          HOLConst(new ConstantStringSymbol("c"), "i")::Nil)
                   )
     }
-    "parse correctly a second-order quantified formula (all Z)Z(c)" in {
+    /*"parse correctly a second-order quantified formula (all Z)Z(c)" in {
       (new NodeReader(<secondorderquantifiedformula type="all">
                         <secondordervariable symbol="Z"/>
                         <variableatomformula>
@@ -135,7 +135,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                       Atom(new VariableStringSymbol("Z"),
                            HOLConst(new ConstantStringSymbol("c"), "i")::Nil))
                   )
-    }
+    }*/
     "parse correctly a LambdaExpression lambda x . P(x)" in {
       (new NodeReader(<lambdasubstitution>
                         <variablelist>
@@ -186,7 +186,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                                HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
                         HOLConst( new ConstantStringSymbol("c"), "i" ) ) )
     }
-    "parse correctly a complex sentence (all X)(all Y)(all z) X(z) impl \\cup(X,Y)(z)" in {
+    /*"parse correctly a complex sentence (all X)(all Y)(all z) X(z) impl \\cup(X,Y)(z)" in {
       (new NodeReader(<secondorderquantifiedformula type="all">
                         <secondordervariable symbol="X"/>
                         <secondorderquantifiedformula type="all">
@@ -219,7 +219,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                                        HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
                                 HOLVar( "z", "i" ) ) ) ) ) )
                   )
-    }
+    }*/
     "parse correctly a sequent A, B :- C, D" in {
       (new NodeReader(<sequent>
                         <formulalist>
