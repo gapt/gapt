@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.struct
+package struct
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.occurrences._
@@ -19,6 +19,7 @@ case class Plus(left: Struct, right: Struct) extends Struct
 case class Dual(sub: Struct) extends Struct
 case class A(fo: FormulaOccurrence) extends Struct // Atomic Struct
 case class EmptyTimesJunction() extends Struct
+case class EmptyPlusJunction() extends Struct
 
 object StructCreators {
 
