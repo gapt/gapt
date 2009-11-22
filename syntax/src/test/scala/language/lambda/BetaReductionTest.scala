@@ -2,29 +2,30 @@
  * BetaReductionTest.scala
  *
  */
-/*
+
 package at.logic.language.lambda
 
 import org.specs._
 import org.specs.runner._
 
 
-import Types._
-import Symbols._
-import Symbols.SymbolImplicitConverters._
-import TypedLambdaCalculus._
-import Substitutions._
+import types._
+import types.Definitions._
+import symbols._
+import symbols.ImplicitConverters._
+import typedLambdaCalculus._
+import substitutions._
 import BetaReduction._
 
 
 
-class BetaReductionTest extends Specification with JUnit {
+class BetaReductionTest extends SpecificationWithJUnit {
   import StrategyOuterInner._
   import StrategyLeftRight._
   level = Debug  // sets the printing of extra information (level can be: Debug, Info, Warning, Error)
 
-  val v = Var("v", i); val x = Var("x", i); val y = Var("y", i);
-  val f = Var("f", i -> i)
+  val v = Var("v", i, LambdaFactory); val x = Var("x", i, LambdaFactory); val y = Var("y", i, LambdaFactory);
+  val f = Var("f", i -> i, LambdaFactory)
 
   "BetaReduction" should {
     "betaReduce a simple redex" in {
@@ -76,4 +77,4 @@ class BetaReductionTest extends Specification with JUnit {
         ( betaReduce(e) ) must beEqual ( App(Abs(x, App(f, x)),y) )
     }
   }
-}*/
+}
