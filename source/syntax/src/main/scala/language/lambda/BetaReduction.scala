@@ -26,7 +26,7 @@ import substitutions.ImplicitConverters._
  * iterating betaReduce. However, for efficiency reasons, this has not been done.
  *
  */
-package betaReduction {
+object BetaReduction {
 
   abstract class Strategy extends Enumeration
   object StrategyOuterInner extends Strategy {
