@@ -132,11 +132,11 @@ package propositions {
     }
   }
 
-  object BynaryFormula {
+  object BinaryFormula {
     def unapply(expression: LambdaExpression) = expression match {
-        case And(left,right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
-        case Or(left,right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
-        case Imp(left,right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+        case And(left,right) => Some( (left,right) )
+        case Or(left,right) => Some( (left,right) )
+        case Imp(left,right) => Some( (left,right) )
         case _ => None
     }
   }
