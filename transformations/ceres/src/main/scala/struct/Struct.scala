@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package struct
+package at.logic.struct
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.occurrences._
