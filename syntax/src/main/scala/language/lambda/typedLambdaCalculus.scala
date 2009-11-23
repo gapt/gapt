@@ -12,9 +12,12 @@ import types._
 
 package typedLambdaCalculus {
 
-  trait LambdaExpression {
+  trait LambdaFactoryProvider {
+    def factory : LambdaFactoryA = LambdaFactory
+  }
+
+  trait LambdaExpression extends LambdaFactoryProvider {
     def exptype: TA
-    private[typedLambdaCalculus] val factory: LambdaFactoryA
     def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var => (HashSet(v), new EmptySet)
       case app: App => {
@@ -40,12 +43,12 @@ package typedLambdaCalculus {
   }
 
   object LambdaFactory extends LambdaFactoryA {
-    def createVar( name: SymbolA, exptype: TA ) : Var = new Var( name, exptype, this )
-    def createAbs( variable: Var, exp: LambdaExpression ) : Abs = new Abs( variable, exp, this )
-    def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = new App( fun, arg, this )
+    def createVar( name: SymbolA, exptype: TA ) : Var = new Var( name, exptype )
+    def createAbs( variable: Var, exp: LambdaExpression ) : Abs = new Abs( variable, exp )
+    def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = new App( fun, arg )
   }
 
-  class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA, val factory: LambdaFactoryA) extends LambdaExpression {
+  class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA ) extends LambdaExpression {
     override def equals(a: Any) = a match {
       case s: Var => (s.name == name && s.exptype == exptype)
       case _ => false
@@ -53,6 +56,7 @@ package typedLambdaCalculus {
     override def hashCode() = exptype.hashCode
     override def toString() = "Var(" + name + "," + exptype + ")"
   }
+  // TODO: remove!?!
   object LambdaVar {
     def apply(name: SymbolA, exptype: TA) = Var(name, exptype, LambdaFactory)
   }
@@ -65,7 +69,7 @@ package typedLambdaCalculus {
     }
   }
 
-  class Abs protected[typedLambdaCalculus]( val variable: Var, val expression: LambdaExpression, val factory: LambdaFactoryA ) extends LambdaExpression  {
+  class Abs protected[typedLambdaCalculus]( val variable: Var, val expression: LambdaExpression ) extends LambdaExpression  {
     def exptype: TA = ->(variable.exptype,expression.exptype)
     override def equals(a: Any) = a match {
       case s: Abs => (s.variable == variable && s.expression == expression && s.exptype == exptype)
@@ -83,7 +87,7 @@ package typedLambdaCalculus {
     }
   }
 
-  class App protected[typedLambdaCalculus]( val function: LambdaExpression, val argument: LambdaExpression, val factory: LambdaFactoryA) extends LambdaExpression {
+  class App protected[typedLambdaCalculus]( val function: LambdaExpression, val argument: LambdaExpression ) extends LambdaExpression {
     require({
       function.exptype match {
         case ->(in,out) => {if (in == argument.exptype) true
