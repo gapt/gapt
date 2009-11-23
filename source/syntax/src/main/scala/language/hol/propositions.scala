@@ -23,7 +23,9 @@ package propositions {
     def imp(that: Formula) = Imp(this, that)
   }
   trait Const
-  trait HOL
+  trait HOL extends LambdaFactoryProvider {
+    override def factory : LambdaFactoryA = HOLFactory
+  }
 
   object TypeSynonyms {
     type HOLFormula = HOLTerm with Formula
@@ -33,19 +35,19 @@ package propositions {
   import TypeSynonyms._
   
   class HOLVar protected[propositions] (name: VariableSymbolA, exptype: TA)
-    extends Var(name, exptype, HOLFactory) with HOL
+    extends Var(name, exptype) with HOL
   class HOLConst protected[propositions] (name: ConstantSymbolA, exptype: TA)
-    extends Var(name, exptype, HOLFactory) with Const with HOL
+    extends Var(name, exptype) with Const with HOL
   class HOLVarFormula protected[propositions] (name: VariableSymbolA)
     extends HOLVar(name, To()) with Formula
   class HOLConstFormula protected[propositions] (name: ConstantSymbolA)
     extends HOLConst(name, To()) with Formula
-  private[propositions] class HOLApp(function: LambdaExpression, argument: LambdaExpression)
-    extends App(function, argument, HOLFactory) with HOL
+  class HOLApp protected[propositions] (function: LambdaExpression, argument: LambdaExpression)
+    extends App(function, argument) with HOL
   class HOLAppFormula protected[propositions] (function: LambdaExpression, argument: LambdaExpression)
     extends HOLApp(function, argument) with Formula
-  private[propositions] class HOLAbs(variable: Var, expression: LambdaExpression)
-    extends Abs(variable, expression, HOLFactory) with HOL
+  class HOLAbs protected[propositions] (variable: Var, expression: LambdaExpression)
+    extends Abs(variable, expression) with HOL
 
   object HOLVar {
     def apply(name: VariableSymbolA, exptype: TA) = new HOLVar(name, exptype)

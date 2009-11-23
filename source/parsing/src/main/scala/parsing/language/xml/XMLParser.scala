@@ -19,7 +19,6 @@ import at.logic.parsing.readers.XMLReaders.NodeReader
 import at.logic.language.hol.propositions._
 import at.logic.language.hol.quantifiers._
 import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions.Definitions._
 import at.logic.language.hol.propositions.ImplicitConverters._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
@@ -27,6 +26,7 @@ import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.lk.base._
 
 /**
  * This object contains several classes responsible for the parsing of the CERES XML
@@ -344,7 +344,10 @@ object XMLParser {
 
     private def createRule( rt : String, conc: Sequent, prems: List[LKProof],
       l_perms: List[Array[FormulaOccurrence]], r_perms : List[Array[FormulaOccurrence]], param : Option[String] ) : (LKProof, Array[FormulaOccurrence], Array[FormulaOccurrence]) = {
-      def mapToDesc( r: LKProof )( o : FormulaOccurrence ) = r.getDescendantInLowerSequent( o )
+      def mapToDesc( r: LKProof )( o : FormulaOccurrence ) = r.getDescendantInLowerSequent( o ) match {
+        case Some( d ) => d
+        case _ => throw new Exception("Expected to find formula occurrence descendant, but didn't!")
+      }
       rt match {
         case "axiom" => {
           val a = Axiom(conc) // The Axiom factory provides the axiom and the initial map from 

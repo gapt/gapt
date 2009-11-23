@@ -24,6 +24,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import java.io.FileReader
 import java.io.File.separator
+import at.logic.calculi.lk.base._
 
 case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
   def apply(v: => Array[T]) = ( v.deepEquals(a), "successful deepEquals", v.deepToString + " not deepEquals " + a.deepToString )
