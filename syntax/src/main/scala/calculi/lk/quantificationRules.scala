@@ -8,6 +8,8 @@
 package at.logic.calculi.lk
 
 import propositionalRules._
+import at.logic.calculi.occurrences._
+import at.logic.calculi.proofs._
 
 package quantificationRules {
 

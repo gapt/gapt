@@ -2,7 +2,7 @@ package at.logic.calculi.lk
 
 import at.logic.language.hol.propositions.HOL
 import org.specs.matcher.Matcher
-import at.logic.calculi.lk.propositionalRules.Sequent
+import at.logic.calculi.lk.base.Sequent
 
 package lkSpecs {
   // A matcher which compares sequents using a multiset interpretation of the lists

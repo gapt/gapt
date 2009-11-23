@@ -19,7 +19,9 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.symbols._
 import propositionalRules._
+import base._
 import propositionalRules.ImplicitConverters._
+import quantificationRules._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.language.lambda.symbols.ImplicitConverters._

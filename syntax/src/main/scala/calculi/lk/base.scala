@@ -8,6 +8,7 @@
 package at.logic.calculi.lk
 
 import at.logic.calculi.occurrences._
+import at.logic.calculi.proofs._
 import at.logic.language.hol.propositions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
@@ -53,18 +54,11 @@ package base {
   }
 
   // exceptions
-  class LKRuleException(msg: String) extends Exception(msg)
+  class LKRuleException(msg: String) extends RuleException(msg)
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
-  abstract class RuleTypeA
-  abstract class NullaryRuleTypeA extends RuleTypeA
-  abstract class UnaryRuleTypeA extends RuleTypeA
-  abstract class BinaryRuleTypeA extends RuleTypeA
-
-  trait LKProof extends Tree[SequentOccurrence] {
-    def root = vertex
-    def rule: RuleTypeA
+   trait LKProof extends Proof[SequentOccurrence]{
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
       val set = getOccurrence(fo.label, (root.antecedent ++ root.succedent)) // double casting because set is invariant in the type parameter
       set.toList match {
@@ -74,12 +68,12 @@ package base {
     }
     def getOccurrence(o: Occur, set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.filter(x => x.label == o)
   }
-  trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof {
-    def uProof = t.asInstanceOf[LKProof]
+  trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof with UnaryProof[SequentOccurrence] {
+    override def uProof = t.asInstanceOf[LKProof]
   }
-  trait BinaryLKProof extends BinaryTree[SequentOccurrence] with LKProof {
-    def uProof1 = t1.asInstanceOf[LKProof]
-    def uProof2 = t2.asInstanceOf[LKProof]
+  trait BinaryLKProof extends BinaryTree[SequentOccurrence] with LKProof with BinaryProof[SequentOccurrence] {
+    override def uProof1 = t1.asInstanceOf[LKProof]
+    override def uProof2 = t2.asInstanceOf[LKProof]
   }
 
   // traits denoting having auxiliary and main formulas
