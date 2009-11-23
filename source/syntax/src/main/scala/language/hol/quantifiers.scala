@@ -17,21 +17,33 @@ import propositions._
 import propositions.TypeSynonyms._
 
 package quantifiers {
-  case class ExQ(override val exptype:TA) extends HOLConst(ExistsSymbol, ->(exptype,"o"))
-  case class AllQ(override val exptype:TA) extends HOLConst(ForallSymbol, ->(exptype,"o"))
+  class ExQ protected[quantifiers](override val exptype:TA) extends HOLConst(ExistsSymbol, ->(exptype,"o"))
+  class AllQ protected[quantifiers](override val exptype:TA) extends HOLConst(ForallSymbol, ->(exptype,"o"))
+  object ExQ {
+    def unapply(v: Var) = v match {
+      case ex: ExQ => Some(ex.exptype)
+      case _ => None
+    }
+  }
+  object AllQ {
+    def unapply(v: Var) = v match {
+      case ex: AllQ => Some(ex.exptype)
+      case _ => None
+    }
+  }
 
   object Ex {
-    def apply(sub: LambdaExpression) = App(ExQ(sub.exptype),sub).asInstanceOf[HOLFormula]
+    def apply(sub: LambdaExpression) = App(new ExQ(sub.exptype),sub).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-      case App(Var(exS, ->(t,To())),sub) => Some( (sub) )
+      case App(ExQ(_),sub) => Some( (sub) )
       case _ => None
     }
   }
 
   object All {
-    def apply(sub: LambdaExpression) = App(AllQ(sub.exptype),sub).asInstanceOf[HOLFormula]
+    def apply(sub: LambdaExpression) = App(new AllQ(sub.exptype),sub).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-      case App(Var(allS, ->(t,To())),sub) => Some( (sub) )
+      case App(AllQ(_),sub) => Some( (sub) )
       case _ => None
     }
   }
