@@ -68,7 +68,7 @@ class SimpleHOLParserTest extends SpecificationWithJUnit {
             (new MyParser("Exists x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqual (ex1)
         }
         val all1 = AllVar(var1,atom1)
-        "parse correctly an exists" in {
+        "parse correctly a forall" in {
             (new MyParser("Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqual (all1)
         }
     }
