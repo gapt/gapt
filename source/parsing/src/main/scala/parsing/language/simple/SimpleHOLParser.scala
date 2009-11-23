@@ -11,6 +11,7 @@ import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import at.logic.parsing.language.HOLParser
 import at.logic.language.hol.propositions._
+import at.logic.language.hol.quantifiers._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.propositions.Definitions._
 import at.logic.language.hol.propositions.ImplicitConverters._
@@ -21,15 +22,17 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
 trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.language.lambda.types.Parsers {
   def term: Parser[HOLTerm] = (formula | non_formula)
-  def formula: Parser[HOLFormula] = (atom | and | or | imp | neg | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
+  def formula: Parser[HOLFormula] = (atom | and | or | imp | neg | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
   def non_formula: Parser[HOLTerm] = (variable | constant)
-  def variable: Parser[HOLTerm] = regex(new Regex("[u-z]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => Var(new VariableStringSymbol(x), tp, hol)}
-  def constant: Parser[HOLTerm] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => Var(new ConstantStringSymbol(x), tp, hol)}
+  def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => Var(new VariableStringSymbol(x), tp, hol).asInstanceOf[HOLVar]}
+  def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => Var(new ConstantStringSymbol(x), tp, hol).asInstanceOf[HOLConst]}
   def and: Parser[HOLFormula] = "And" ~ formula ~ formula ^^ {case "And" ~ x ~ y => And(x,y)}
   def or: Parser[HOLFormula] = "Or" ~ formula ~ formula ^^ {case "Or" ~ x ~ y => Or(x,y)}
   def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}
   def neg: Parser[HOLFormula] = "Neg" ~ formula ^^ {case "Neg" ~ x => Neg(x)}
   def atom: Parser[HOLFormula] = (var_atom | const_atom)
+  def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
+  def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
   def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new VariableStringSymbol(x), params)}
   def const_atom: Parser[HOLFormula] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params)}
   private def word: String = """[a-zA-Z0-9$_]*"""

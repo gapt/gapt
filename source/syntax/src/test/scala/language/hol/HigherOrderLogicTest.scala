@@ -71,4 +71,20 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       }
     }
   }
+  "Exists quantifier" should {
+    val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
+    val v1 = HOLVar(new VariableStringSymbol("x"), i)
+    val f1 = HOLAppFormula(c1,v1)
+    "cretae a term of the right type" in {
+      (ExVar(v1, f1).exptype) must beEqual (o)
+    }
+  }
+  "Forall quantifier" should {
+    val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
+    val v1 = HOLVar(new VariableStringSymbol("x"), i)
+    val f1 = HOLAppFormula(c1,v1)
+    "cretae a term of the right type" in {
+      (AllVar(v1, f1).exptype) must beEqual (o)
+    }
+  }
 }

@@ -17,17 +17,17 @@ import propositions._
 import propositions.TypeSynonyms._
 
 package quantifiers {
-  class ExQ protected[quantifiers](override val exptype:TA) extends HOLConst(ExistsSymbol, ->(exptype,"o"))
-  class AllQ protected[quantifiers](override val exptype:TA) extends HOLConst(ForallSymbol, ->(exptype,"o"))
+  class ExQ protected[quantifiers](e:TA) extends HOLConst(ExistsSymbol, ->(e,"o"))
+  class AllQ protected[quantifiers](e:TA) extends HOLConst(ForallSymbol, ->(e,"o"))
   object ExQ {
     def unapply(v: Var) = v match {
-      case ex: ExQ => Some(ex.exptype)
+      case vo: ExQ => Some(vo.exptype)
       case _ => None
     }
   }
   object AllQ {
     def unapply(v: Var) = v match {
-      case ex: AllQ => Some(ex.exptype)
+      case vo: AllQ => Some(vo.exptype)
       case _ => None
     }
   }
