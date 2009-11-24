@@ -104,7 +104,7 @@ package propositionalRules {
       else if (term1.label == term2.label) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
       else if (!s1.root.antecedent.contains(term1) || !s1.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = FormulaOccurrence(term1)
+        val prinFormula = FormulaOccurrence(term1.formula, term1, term2)
         new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1 - term2) + prinFormula, createContext(s1.root.succedent)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = ContractionLeftRuleType
@@ -135,7 +135,7 @@ package propositionalRules {
       else if (term1.label == term2.label) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
       else if (!s1.root.succedent.contains(term1) || !s1.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = FormulaOccurrence(term1)
+        val prinFormula = FormulaOccurrence(term1.formula, term1, term2)
         new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1 - term2) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = ContractionRightRuleType
