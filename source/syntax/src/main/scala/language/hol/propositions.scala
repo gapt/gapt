@@ -50,19 +50,25 @@ package propositions {
     extends Abs(variable, expression) with HOL
 
   object HOLVar {
-    def apply(name: VariableSymbolA, exptype: TA) = new HOLVar(name, exptype)
+    def apply(name: VariableSymbolA, exptype: TA) = HOLFactory.createVar(name, exptype).asInstanceOf[HOLVar]
   }
   object HOLConst {
-    def apply(name: ConstantSymbolA, exptype: TA) = new HOLConst(name, exptype)
+    def apply(name: ConstantSymbolA, exptype: TA) = HOLFactory.createVar(name, exptype).asInstanceOf[HOLConst]
   }
   object HOLVarFormula {
-    def apply(name: VariableSymbolA) = new HOLVarFormula(name)
+    def apply(name: VariableSymbolA) = HOLFactory.createVar(name, To()).asInstanceOf[HOLVarFormula]
   }
   object HOLConstFormula {
-    def apply(name: ConstantSymbolA) = new HOLConstFormula(name)
+    def apply(name: ConstantSymbolA) = HOLFactory.createVar(name, To()).asInstanceOf[HOLConstFormula]
+  }
+  object HOLApp {
+    def apply(function: LambdaExpression, argument: LambdaExpression) = function.factory.createApp(function, argument).asInstanceOf[HOLApp]
   }
   object HOLAppFormula {
-    def apply(function: LambdaExpression, argument: LambdaExpression) = new HOLAppFormula(function, argument)
+    def apply(function: LambdaExpression, argument: LambdaExpression) = function.factory.createApp(function, argument).asInstanceOf[HOLAppFormula]
+  }
+  object HOLAbs {
+    def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression).asInstanceOf[HOLAbs]
   }
 
   case object NegC extends HOLConst(NegSymbol, "(o -> o)")

@@ -25,6 +25,7 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
 
@@ -448,7 +449,7 @@ object XMLParser {
           val rule = ImpRightRule( prem, auxf1, auxf2 )
           ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
         }
-        case "notr" => {
+        case "negr" => {
           val prem = prems.first
           val l_perm = l_perms.first
           val r_perm = r_perms.first
@@ -458,7 +459,7 @@ object XMLParser {
           ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
             ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.first ) ).toArray )
         }
-        case "notl" => {
+        case "negl" => {
           val prem = prems.first
           val l_perm = l_perms.first
           val r_perm = r_perms.first
@@ -513,6 +514,62 @@ object XMLParser {
           val rule = mainf match {
             case And(_, weakf) => AndLeft2Rule( prem, weakf, auxf )
             case _ => throw new ParsingException("Rule type is andl2, but main formula is not a conjunction.")
+          }
+          ( rule , l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+        }
+        case "foralll" => {
+          val prem = prems.first
+          val l_perm = l_perms.first
+          val r_perm = r_perms.first
+          val auxf = l_perm.first
+          val mainf = conc.antecedent.first
+          val rule = mainf match {
+            // TODO: give auxf instead of auxf.formula
+            // TODO: compute substitution term by unification, right now: dummy variable "a"
+            case All(sub) => ForallLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case _ => throw new ParsingException("Rule type is foralll, but main formula is not all-quantified.")
+          }
+          ( rule , l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+        }
+        case "existsl" => {
+          val prem = prems.first
+          val l_perm = l_perms.first
+          val r_perm = r_perms.first
+          val auxf = l_perm.first
+          val mainf = conc.antecedent.first
+          val rule = mainf match {
+            // TODO: give auxf instead of auxf.formula
+            // TODO: compute eigenvar by unification, right now: dummy variable "a"
+            case Ex(sub) => ExistsLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case _ => throw new ParsingException("Rule type is existsl, but main formula is not ex-quantified.")
+          }
+          ( rule , l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+        }
+        case "forallr" => {
+          val prem = prems.first
+          val l_perm = l_perms.first
+          val r_perm = r_perms.first
+          val auxf = r_perm.last
+          val mainf = conc.succedent.last
+          val rule = mainf match {
+            // TODO: give auxf instead of auxf.formula
+            // TODO: compute eigenvar by unification, right now: dummy variable "a"
+            case All(sub) => ForallRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case _ => throw new ParsingException("Rule type is forallr, but main formula is not all-quantified.")
+          }
+          ( rule , l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+        }
+        case "existsr" => {
+          val prem = prems.first
+          val l_perm = l_perms.first
+          val r_perm = r_perms.first
+          val auxf = r_perm.last
+          val mainf = conc.succedent.last
+          val rule = mainf match {
+            // TODO: give auxf instead of auxf.formula
+            // TODO: compute substitution term by unification, right now: dummy variable "a"
+            case Ex(sub) => ExistsRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case _ => throw new ParsingException("Rule type is existsr, but main formula is not ex-quantified.")
           }
           ( rule , l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }

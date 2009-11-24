@@ -40,14 +40,14 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
  * 1) To check that all exceptions are thrown when needed
  */
 class LKTest extends SpecificationWithJUnit {
-  val c1 = Var("a", i->o, hol)
-  val v1 = Var("x", i, hol)
-  val f1 = App(c1,v1).asInstanceOf[HOLFormula]
+  val c1 = HOLVar("a", i->o)
+  val v1 = HOLVar("x", i)
+  val f1 = HOLAppFormula(c1,v1)
   val a1: LKProof = Axiom(Sequent(f1::Nil, f1::Nil))
-  val c2 = Var("b", i->o, hol)
-  val v2 = Var("c", i, hol)
-  val f2 = App(c1,v1).asInstanceOf[HOLFormula]
-  val f3 = Var("e", o, hol).asInstanceOf[HOLFormula]
+  val c2 = HOLVar("b", i->o)
+  val v2 = HOLVar("c", i)
+  val f2 = HOLAppFormula(c1,v1)
+  val f3 = HOLVarFormula("e")
   val a2 = Axiom(Sequent(f2::f3::Nil, f2::f3::Nil))
   val a3 = Axiom(Sequent(f2::f2::f3::Nil, f2::f2::f3::Nil))
 
@@ -379,6 +379,58 @@ class LKTest extends SpecificationWithJUnit {
       "- Formula occurrences in context must be different (if not empty)" in {
         (x - prin1) must beDifferent ((up1.root.antecedent))
         ((y)) must beDifferent ((up1.root.succedent - aux1))
+      }
+    }
+
+    "work for ForallLeftRule" in {
+      val q = HOLVar( "q", i -> o )
+      val x = HOLVar( "X", i )
+      val subst = HOLAbs( x, HOLApp( q, x ) ) // lambda x. q(x)
+      val p = HOLVar( "p", (i -> o) -> o )
+      val a = HOLVar( "a", i )
+      val qa = HOLAppFormula( q, a )
+      val pl = HOLAppFormula( p, subst )
+      val aux = Or( pl, qa )                  // p(lambda x. q(x)) or q(a)
+      val z = HOLVar( "Z", i -> o )
+      val pz = HOLAppFormula( p, z )
+      val za = HOLAppFormula( z, a )
+      val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
+      val ax = Axiom( Sequent( aux::Nil, Nil ) )
+      val rule = ForallLeftRule(ax, aux, main, subst)
+      val (up1,  SequentOccurrence(ant,succ), aux1, prin1) = ForallLeftRule.unapply(rule).get
+      "- Principal formula is created correctly" in {
+        (prin1.formula) must beEqual (main)
+      }
+      "- Principal formula must be contained in the right part of the sequent" in {
+        (ant) must contain(prin1)
+      }
+      "- Lower sequent must not contain the auxiliary formulas" in {
+        (ant) must notContain(aux1)
+      }
+    }
+
+    "work for ForallRightRule" in {
+      val x = HOLVar( "X", i -> o)            // eigenvar
+      val p = HOLVar( "p", (i -> o) -> o )
+      val a = HOLVar( "a", i )
+      val xa = HOLAppFormula( x, a )
+      val px = HOLAppFormula( p, x )
+      val aux = Or( px, xa )                  // p(x) or x(a)
+      val z = HOLVar( "Z", i -> o )
+      val pz = HOLAppFormula( p, z )
+      val za = HOLAppFormula( z, a )
+      val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
+      val ax = Axiom( Sequent( Nil, aux::Nil ) )
+      val rule = ForallRightRule(ax, aux, main, x)
+      val (up1,  SequentOccurrence(ant,succ), aux1, prin1) = ForallRightRule.unapply(rule).get
+      "- Principal formula is created correctly" in {
+        (prin1.formula) must beEqual (main)
+      }
+      "- Principal formula must be contained in the right part of the sequent" in {
+        (succ) must contain(prin1)
+      }
+      "- Lower sequent must not contain the auxiliary formulas" in {
+        (succ) must notContain(aux1)
       }
     }
 
