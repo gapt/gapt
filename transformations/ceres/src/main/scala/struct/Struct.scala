@@ -9,8 +9,9 @@ package struct
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.occurrences._
-import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk.lkExtractors._
 
 trait Struct
 
