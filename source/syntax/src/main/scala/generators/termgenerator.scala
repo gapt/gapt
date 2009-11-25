@@ -8,6 +8,7 @@ import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.Definitions._
+import at.logic.language.hol.logicSymbols._
 
 class FOLtermGenerator {
     var random : Random = null
@@ -26,5 +27,13 @@ class FOLtermGenerator {
         var x = new VariableStringSymbol("x_"+count) ;
         FOLFactory.createVar(x, i)
     }
-    
+
+    def generateConstant() =
+    {
+        count += 1;
+        var P = new ConstantStringSymbol( "c_"+count);
+        FOLFactory.createVar(P, Definitions.i);        
+    }
+
+
 }
