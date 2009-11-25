@@ -7,6 +7,7 @@
 
 package at.logic.utils.ds
 
+
 import org.specs._
 import org.specs.runner._
 
@@ -19,31 +20,11 @@ import org.specs.matcher._
 import Sets._
 
 import Sets.SetImplicitDefs._
+import at.logic.utils.testing.PropMatcher.bePassed
 
-trait ResultMatcher {
-        class PositiveResultMatcher extends Matcher[Test.Result] {
-            def apply(r : => Test.Result) : (Boolean,String,String)= { (r.passed,"ScalaCheck passed!","SclaCheck failed!") }
-        }
-
-        val bePassed = new PositiveResultMatcher
-}
-
-object ResultMatcher extends ResultMatcher
-
-trait PropMatcher {
-        class PositiveResultMatcher extends Matcher[Prop] {
-            def apply(r : => Prop) =
-                (Test.check(Test.defaultParams,r).passed,"ScalaCheck passed!","SclaCheck failed!")
-        }
-
-        val bePassed = new PositiveResultMatcher
-}
-
-object PropMatcher extends PropMatcher
 
 
 class SetsTest extends SpecificationWithJUnit {
-    import PropMatcher.bePassed
 
     "Sets" should {
 
@@ -108,7 +89,6 @@ class SetsTest extends SpecificationWithJUnit {
              + new String(str1) + new String(str2))
         })
         
-        //Test.check(Test.defaultParams , mul_additions).passed must beEqual (true)
         mul_additions must bePassed
     }
 
