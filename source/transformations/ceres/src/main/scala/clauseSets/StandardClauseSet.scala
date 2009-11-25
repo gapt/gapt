@@ -8,7 +8,7 @@
 package at.logic.clauseSets
 
 import struct._
-import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable._
