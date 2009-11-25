@@ -6,8 +6,10 @@ package at.logic.utils.generators
 import scala.util.Random
 import at.logic.language.fol._
 
-class FOLtermGenerator(seed : Int) {
+class FOLtermGenerator {
     var random : Random = null
+
+    def apply(seed : Int) = new FOLtermGenerator(seed)
 
     //def this() = {}
     def this(seed : Int) = {
