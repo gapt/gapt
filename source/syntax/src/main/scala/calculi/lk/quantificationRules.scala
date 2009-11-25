@@ -33,6 +33,9 @@ package quantificationRules {
     def apply(s1: LKProof, aux: Formula, main: Formula, subst: HOLTerm) = {
       main match {
         case All( sub ) => {
+          // TODO: comment in to check validity of the rule.
+          // commented out at the moment because we don't know the subst term
+          // in the XML parser. We need first-order unification for that.
           //assert( betaNormalize( App( sub, subst ) ) == aux )
           s1.root.antecedent.filter( x => x.formula == aux ).toList match {
             case (x::_) => {
