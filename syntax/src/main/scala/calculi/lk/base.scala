@@ -17,6 +17,12 @@ import scala.collection.mutable.HashMap
 
 package base {
 
+  private[lk] object LKFOFactory extends FOFactory {
+    def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
+    def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
+    def createOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = new FormulaOccurrence(formula, ancestors) {def factory = LKFOFactory}
+  }
+
   // List should be changed into multiset (I am not sure anymore as we need to map formula occurrences also in the original sequent.
   // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
   case class Sequent(antecedent: List[Formula], succedent: List[Formula])
@@ -60,13 +66,11 @@ package base {
 
    trait LKProof extends Proof[SequentOccurrence]{
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-      val set = getOccurrence(fo.label, (root.antecedent ++ root.succedent)) // double casting because set is invariant in the type parameter
-      set.toList match {
-        case x::Nil if x.ancestors.contains(fo) => Some(x)
+      (root.antecedent ++ root.succedent).find(x => x == fo) match {
+        case Some(x) if x.ancestors.contains(fo) => Some(x)
         case _ => None
       }
     }
-    def getOccurrence(o: Occur, set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.filter(x => x.label == o)
   }
   trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof with UnaryProof[SequentOccurrence] {
     override def uProof = t.asInstanceOf[LKProof]
@@ -87,5 +91,5 @@ package base {
 
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
-  object createContext { def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => FormulaOccurrence(x.formula, x)) }
+  object createContext { def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x::Nil)) }
 }

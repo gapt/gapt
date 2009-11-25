@@ -39,7 +39,7 @@ package quantificationRules {
           //assert( betaNormalize( App( sub, subst ) ) == aux )
           s1.root.antecedent.filter( x => x.formula == aux ).toList match {
             case (x::_) => {
-              val prinFormula = FormulaOccurrence( main, x )
+              val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext((s1.root.antecedent - x)) + prinFormula,
                                     createContext((s1.root.succedent))), s1 )
@@ -72,7 +72,7 @@ package quantificationRules {
           //assert( betaNormalize( App( sub, subst ) ) == aux )
           s1.root.succedent.filter( x => x.formula == aux ).toList match {
             case (x::_) => {
-              val prinFormula = FormulaOccurrence( main, x )
+              val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext(s1.root.antecedent),
                                     createContext((s1.root.succedent - x)) + prinFormula), s1 )
@@ -106,7 +106,7 @@ package quantificationRules {
           //assert( betaNormalize( App( sub, eigenvar ) ) == aux )
           s1.root.succedent.filter( x => x.formula == aux ).toList match {
             case (x::_) => {
-              val prinFormula = FormulaOccurrence( main, x )
+              val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext(s1.root.antecedent),
                                     createContext((s1.root.succedent - x)) + prinFormula), s1 )
@@ -140,7 +140,7 @@ package quantificationRules {
           //assert( betaNormalize( App( sub, eigenvar ) ) == aux )
           s1.root.antecedent.filter( x => x.formula == aux ).toList match {
             case (x::_) => {
-              val prinFormula = FormulaOccurrence( main, x )
+              val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext((s1.root.antecedent - x)) + prinFormula,
                                     createContext((s1.root.succedent))), s1 )
