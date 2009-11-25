@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE proofdatabase
-SYSTEM "http://www.logic.at/ceres/xml/4.0/proofdatabase.dtd">
+SYSTEM "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd">
 <proofdatabase>
  <definitionlist/>
  <axiomset/>
