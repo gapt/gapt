@@ -25,6 +25,7 @@ import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import java.io.FileReader
 import java.io.File.separator
 import at.logic.calculi.lk.base._
+import at.logic.language.lambda.types.Definitions._
 
 case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
   def apply(v: => Array[T]) = ( v.deepEquals(a), "successful deepEquals", v.deepToString + " not deepEquals " + a.deepToString )
@@ -294,6 +295,55 @@ class XMLParserTest extends SpecificationWithJUnit {
                     </rule>) with XMLProofParser).getProof() must
                     beLike{ case Axiom( conc ) => true }
     }
+    "parse a simple contraction rule" in {
+      (new NodeReader(<rule type="contrl" param="2">
+                        <sequent>
+                          <formulalist>
+                            <constantatomformula symbol="A"/>
+                          </formulalist>
+                          <formulalist/>
+                        </sequent>
+                        <rule type="axiom">
+                          <sequent>
+                            <formulalist>
+                              <constantatomformula symbol="A"/>
+                              <constantatomformula symbol="A"/>
+                            </formulalist>
+                            <formulalist/>
+                          </sequent>
+                        </rule>
+                      </rule>) with XMLProofParser).getProof().root.getSequent must beMultisetEqual(
+                      Sequent(pc("A")::Nil, Nil))
+    }
+    "parse an involved contraction rule" in {
+      (new NodeReader(<rule type="contrl" param="2,1,2,1,1">
+                        <sequent>
+                          <formulalist>
+                            <constantatomformula symbol="A"/>
+                            <constantatomformula symbol="B"/>
+                            <constantatomformula symbol="C"/>
+                            <constantatomformula symbol="C"/>
+                            <constantatomformula symbol="D"/>
+                          </formulalist>
+                          <formulalist/>
+                        </sequent>
+                        <rule type="axiom">
+                          <sequent>
+                            <formulalist>
+                              <constantatomformula symbol="A"/>
+                              <constantatomformula symbol="A"/>
+                              <constantatomformula symbol="B"/>
+                              <constantatomformula symbol="C"/>
+                              <constantatomformula symbol="C"/>
+                              <constantatomformula symbol="C"/>
+                              <constantatomformula symbol="D"/>
+                            </formulalist>
+                            <formulalist/>
+                          </sequent>
+                        </rule>
+                      </rule>) with XMLProofParser).getProof().root.getSequent must beMultisetEqual(
+                      Sequent(pc("A")::pc("B")::pc("C")::pc("C")::pc("D")::Nil, Nil))
+    }
     "parse correctly a proof of A, A :- A and A" in {
       (new NodeReader(<proof symbol="p" calculus="LK">
                         <rule type="andr">
@@ -385,14 +435,21 @@ class XMLParserTest extends SpecificationWithJUnit {
                         Or(pc("B"),
                            pc("D"))::Nil))
     }
-    /*
     "parse correctly an involved proof from a file" in {
       val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test1.xml")) with XMLProofDatabaseParser).getProofs()
+      val X = HOLVar( new VariableStringSymbol( "X" ), i -> o )
+      val t = HOLConst( new ConstantStringSymbol( "t" ), i)
+      val s = HOLConst( new ConstantStringSymbol( "s" ), i)
+      val r = HOLConst( new ConstantStringSymbol( "r" ), i)
+      val f = HOLConst( new ConstantStringSymbol( "f" ), i -> i)
+      val x = HOLVar( new VariableStringSymbol( "x" ), i )
+      val Rs = new ConstantStringSymbol( "R" )
+      val f1 = AllVar( X, And( HOLAppFormula( X, t ), Neg( HOLAppFormula( X, s ) ) ) )
+      val f2 = And( Imp( Atom( Rs, r::t::Nil ), Atom( Rs, r::HOLApp( f, t )::Nil ) ),
+                    ExVar( x, And( Atom( Rs, x::s::Nil ), Neg( Atom( Rs, x::HOLApp( f, s )::Nil ) ) ) ) )
+
       proofs.size must beEqual(1)
-      proofs.first.root.getSequent must beMultisetEqual(
-      // TODO: write down sequent
-      Sequent( Nil, Nil ) )
+      proofs.first.root.getSequent must beMultisetEqual( Sequent( f1::Nil, f2::Nil ) )
     }
-    */
   }
 }

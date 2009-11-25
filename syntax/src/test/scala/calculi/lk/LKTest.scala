@@ -50,11 +50,25 @@ class LKTest extends SpecificationWithJUnit {
   val f3 = HOLVarFormula("e")
   val a2 = Axiom(Sequent(f2::f3::Nil, f2::f3::Nil))
   val a3 = Axiom(Sequent(f2::f2::f3::Nil, f2::f2::f3::Nil))
+  val ap = Axiom(Sequent(f1::f1::Nil, Nil))
+  val a4 = ap._1
 
   "The factories/extractors for LK" should {
 
     "work for Axioms" in {
-      (a1) must beLike {case Axiom(SequentOccurrence(x,y)) => (x.toArray(0).formula == f1) && (y.toArray(0).formula == f1)}
+      "- Formula occurrences have correct formulas" in {
+        (a1) must beLike {case Axiom(SequentOccurrence(x,y)) => (x.toArray(0).formula == f1) && (y.toArray(0).formula == f1)}
+      }
+      "- Same formulas on the same side must become different occurrences" in {
+        val ant = a4.root.antecedent.toList
+        (ant.length) must beEqual(2)
+        (ant.first) must notBe(ant.last)
+      }
+      "- FormulaOccurrence mapping must be correct" in {
+        val map = ap._2._1
+        (map.first) must notBe(map.last)
+        (map.filter( o => o != map.first ) ).length must beEqual(1)
+      }
     }
 
     "work for WeakeningLeftRule" in {

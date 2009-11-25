@@ -14,7 +14,7 @@ package symbols {
       case s1: SymbolA => unique == s1.unique && toString == s1.toString
       case _ => false
     }
-    def unique: String // used to allow equality to work properly even for anonymous classes
+    protected def unique: String // used to allow equality to work properly even for anonymous classes
     override def toString() = unique
   }
 

@@ -34,6 +34,7 @@ package typedLambdaCalculus {
         (free, bound)
       }
     }
+    def toStringSimple: String
   }
 
   trait LambdaFactoryA {
@@ -55,6 +56,7 @@ package typedLambdaCalculus {
     }
     override def hashCode() = exptype.hashCode
     override def toString() = "Var(" + name + "," + exptype + ")"
+    def toStringSimple() = name.toString
   }
   // TODO: remove!?!
   object LambdaVar {
@@ -77,6 +79,7 @@ package typedLambdaCalculus {
     }
     override def hashCode() = exptype.hashCode
     override def toString() = "Abs(" + variable + "," + expression + ")"
+    def toStringSimple = "(λ" + variable.toStringSimple + "." + expression.toStringSimple + ")"
   }
 
   object Abs {
@@ -106,6 +109,7 @@ package typedLambdaCalculus {
     }
     override def hashCode() = exptype.hashCode
     override def toString() = "App(" + function + "," + argument + ")"
+    def toStringSimple() = "(" + function.toStringSimple + argument.toStringSimple + ")"
   }
 
   object App {
