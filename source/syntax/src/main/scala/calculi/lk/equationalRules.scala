@@ -29,7 +29,7 @@ package equationalRules {
     def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.antecedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = FormulaOccurrence( main, eqocc, auxocc )
+        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
         new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext((s1.root.antecedent) ++ s2.root.antecedent - auxocc) + prinFormula,
                               createContext((s1.root.succedent - eqocc) ++ s2.root.succedent) ), s1, s2 )
@@ -54,7 +54,7 @@ package equationalRules {
     def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.antecedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = FormulaOccurrence( main, eqocc, auxocc )
+        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
         new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext((s1.root.antecedent) ++ s2.root.antecedent - auxocc) + prinFormula,
                               createContext((s1.root.succedent - eqocc) ++ s2.root.succedent) ), s1, s2 )
@@ -79,7 +79,7 @@ package equationalRules {
     def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.succedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = FormulaOccurrence( main, eqocc, auxocc )
+        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
         new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent ++ s2.root.antecedent),
                               createContext((s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc)) + prinFormula ),
@@ -105,7 +105,7 @@ package equationalRules {
     def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.succedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = FormulaOccurrence( main, eqocc, auxocc )
+        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
         new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent ++ s2.root.antecedent),
                               createContext((s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc)) + prinFormula),
