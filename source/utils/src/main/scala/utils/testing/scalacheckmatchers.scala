@@ -21,7 +21,7 @@ import org.specs.matcher._
 trait ResultMatcher {
         class PositiveResultMatcher extends Matcher[Test.Result] {
             def apply(r : => Test.Result) : (Boolean,String,String)=
-                (r.passed,"ScalaCheck passed!","SclaCheck failed!")
+                (r.passed,"ScalaCheck passed!","ScalaCheck failed!")
         }
 
         val bePassed = new PositiveResultMatcher
@@ -34,7 +34,7 @@ trait PropMatcher {
             def apply(r : => Prop) =
                 (Test.check(Test.defaultParams,r).passed,
                  "ScalaCheck passed!",
-                 "SclaCheck failed!")
+                 "ScalaCheck failed!")
         }
 
         val bePassed = new PositiveResultMatcher
