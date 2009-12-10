@@ -43,7 +43,8 @@ class LKTest extends SpecificationWithJUnit {
   val c1 = HOLVar("a", i->o)
   val v1 = HOLVar("x", i)
   val f1 = HOLAppFormula(c1,v1)
-  val a1: LKProof = Axiom(Sequent(f1::Nil, f1::Nil))
+  val ax = Axiom(Sequent(f1::Nil, f1::Nil))
+  val a1 = ax._1
   val c2 = HOLVar("b", i->o)
   val v2 = HOLVar("c", i)
   val f2 = HOLAppFormula(c1,v1)
@@ -260,6 +261,18 @@ class LKTest extends SpecificationWithJUnit {
         (y) must beDifferent ((up1.root.succedent ++ up2.root.succedent))
         ((x - prin1)) must beDifferent ((up1.root.antecedent ++ up2.root.antecedent - aux1 - aux2))
       }
+      "- Descendants must be correctly computed" in {
+        // get descendant of occurrence of left auxiliary formula
+        a.getDescendantInLowerSequent(ax._2._1.first) must beLike {
+          case Some(x) => x == a.prin && x.formula == Or(f1, f2)
+          case None => false
+        }
+        // get descendant of occurrence of left premise context in succedent
+        a.getDescendantInLowerSequent(ax._2._2.first) must beLike {
+          case Some(x) => x.formula == f1
+          case None => false
+        }
+      }
     }
 
     "work for OrRight1Rule" in {
@@ -448,7 +461,7 @@ class LKTest extends SpecificationWithJUnit {
       }
     }
 
-    " A, A, B :- C, D, C should multiset-equal A, B, A :- D, C, C" in {
+    "A, A, B :- C, D, C should multiset-equal A, B, A :- D, C, C" in {
       Sequent(HOLVarFormula("A")::HOLVarFormula("A")::HOLVarFormula("B")::Nil,
               HOLVarFormula("C")::HOLVarFormula("D")::HOLVarFormula("C")::Nil) must beMultisetEqual(
       Sequent(HOLVarFormula("A")::HOLVarFormula("B")::HOLVarFormula("A")::Nil,
