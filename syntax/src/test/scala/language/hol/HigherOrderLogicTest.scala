@@ -21,6 +21,7 @@ import quantifiers._
 import at.logic.language.lambda.types.Definitions._
 import propositions.Definitions._
 import propositions.ImplicitConverters._
+import HOLTermsToStringExporter._
 
 class HigherOrderLogicTest extends SpecificationWithJUnit {
   "HigherOrderLogic" should {
@@ -87,4 +88,16 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       (AllVar(v1, f1).exptype) must beEqual (o)
     }
   }
+  /*"HOL terms exporter" should {
+    "export binary connectives correctly" in {
+      " - A∨B" in {
+        (exportToString(Or(Var("A", o, hol).asInstanceOf[Formula], Var("A", o, hol).asInstanceOf[Formula]))) must beEqual ("A∨B")
+      }
+    }
+    "export binary terms correctly" in {
+      " - " in {
+
+      }
+    }
+  }*/
 }
