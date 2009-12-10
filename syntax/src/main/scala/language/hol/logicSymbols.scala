@@ -38,7 +38,7 @@ package logicSymbols {
     override def toString = "∀"
   }
 
-  class ConstantStringSymbol( val string : String ) extends ConstantSymbolA with StringSymbol
+  case class ConstantStringSymbol( val string : String ) extends ConstantSymbolA with StringSymbol
 
   object ImplicitConverters {
     implicit def stringToVarConstSymbol(s: String): SymbolA = {

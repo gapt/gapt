@@ -26,14 +26,14 @@ package symbols {
     override def toString() = string
   }
 
-  class VariableStringSymbol( val string : String ) extends VariableSymbolA with StringSymbol
+  case class VariableStringSymbol( val string : String ) extends VariableSymbolA with StringSymbol
 
   trait LatexSymbol extends SymbolA {
     val latexCommand: String
   }
 
   object ImplicitConverters {
-    implicit def stringToVariableSymbol(s: String): VariableSymbolA = new VariableSymbolA with StringSymbol {val string = s}
+    implicit def stringToVariableSymbol(s: String): VariableSymbolA = VariableStringSymbol(s)
     implicit def toString(symbol: StringSymbol) = symbol.string
   }
 }

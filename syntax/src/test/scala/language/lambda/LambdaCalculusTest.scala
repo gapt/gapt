@@ -54,4 +54,9 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
         }) must beEqual ( true )
     }
   }
+  "AbsN" should {
+    "extract correctly" in {
+      (LambdaVar("x",i)) mustNot beLike {case AbsN(_,_) => true}
+    }
+  }
 }
