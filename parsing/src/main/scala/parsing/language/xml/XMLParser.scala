@@ -403,7 +403,7 @@ object XMLParser {
 
     private def mapToDesc( r: LKProof )( o : FormulaOccurrence ) = r.getDescendantInLowerSequent( o ) match {
       case Some( d ) => d
-      case _ => throw new Exception("Expected to find formula occurrence descendant, but didn't!")
+      case None => throw new Exception("Expected to find formula occurrence descendant, but didn't!")
     }
 
     private def createRule( rt : String, conc: Sequent, prems: List[LKProof],
