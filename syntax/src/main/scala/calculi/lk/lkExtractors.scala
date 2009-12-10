@@ -16,6 +16,8 @@ import scala.collection.mutable.HashMap
 import base._
 import propositionalRules._
 import quantificationRules._
+import definitionRules._
+import equationalRules._
 
 package lkExtractors {
  // convenient extractors
@@ -36,6 +38,8 @@ package lkExtractors {
       case ExistsRightRule(up, r, a, p) => Some((ExistsRightRuleType, up, r, a::Nil, p))
       case ForallRightRule(up, r, a, p) => Some((ForallRightRuleType, up, r, a::Nil, p))
       case ExistsLeftRule(up, r, a, p) => Some((ExistsLeftRuleType, up, r, a::Nil, p))
+      case DefinitionLeftRule(up, r, a, p) => Some((DefinitionLeftRuleType, up, r, a::Nil, p))
+      case DefinitionRightRule(up, r, a, p) => Some((DefinitionRightRuleType, up, r, a::Nil, p))
       case _ => None
     }
   }
@@ -46,6 +50,10 @@ package lkExtractors {
       case AndRightRule(up1, up2, r, a1, a2, p) => Some((AndRightRuleType, up1, up2, r, a1, a2, Some(p)))
       case OrLeftRule(up1, up2, r, a1, a2, p) => Some((OrLeftRuleType, up1, up2, r, a1, a2, Some(p)))
       case ImpLeftRule(up1, up2, r, a1, a2, p) => Some((ImpLeftRuleType, up1, up2, r, a1, a2, Some(p)))
+      case EquationLeft1Rule(up1, up2, r, a1, a2, p) => Some((EquationLeft1RuleType, up1, up2, r, a1, a2, Some(p)))
+      case EquationLeft2Rule(up1, up2, r, a1, a2, p) => Some((EquationLeft2RuleType, up1, up2, r, a1, a2, Some(p)))
+      case EquationRight1Rule(up1, up2, r, a1, a2, p) => Some((EquationRight1RuleType, up1, up2, r, a1, a2, Some(p)))
+      case EquationRight2Rule(up1, up2, r, a1, a2, p) => Some((EquationRight2RuleType, up1, up2, r, a1, a2, Some(p)))
       case _ => None
     }
   }
