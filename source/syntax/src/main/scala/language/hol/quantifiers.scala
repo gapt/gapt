@@ -63,4 +63,12 @@ package quantifiers {
       case _ => None
     }
   }
+
+  object Quantifier {
+    def unapply(expression: LambdaExpression) = expression match {
+      case ExVar(x, f) => Some(ExistsSymbol, x, f)
+      case AllVar(x, f) => Some(ForallSymbol, x, f)
+      case _ => None
+    }
+  }
 }
