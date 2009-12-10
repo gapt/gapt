@@ -134,6 +134,11 @@ class FOLtermGenerator {
         FOLVar(lang.vs(position)._1 )
     }
 
+    def Faulty111generateVariable(lang : Language) : FOLTerm = {
+        
+        FOLVar(new VariableStringSymbol("abc"))
+    }
+
     def generateConstant(lang : Language) : FOLTerm =
     {
         val position = random.nextInt(lang.cs.length)
@@ -157,6 +162,7 @@ class FOLtermGenerator {
                 args = generateConstant(lang) :: args
             } else /* variable */ {
                 args = generateVariable(lang) :: args
+                //args = Faulty111generateVariable(lang) :: args
             }
         }
 

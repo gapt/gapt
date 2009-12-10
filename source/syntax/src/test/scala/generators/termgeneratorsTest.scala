@@ -21,7 +21,7 @@ import org.specs.matcher._
 import at.logic.utils.testing.PropMatcher.bePassed
 
 class termgeneratorTest extends SpecificationWithJUnit {
-    "The generator " should {
+    "The generator" should {
         "be able to convert between tuples and langauges" in {
             import Language.languageFromTuple
             import Language.tupleFromLanguage
@@ -85,14 +85,12 @@ class termgeneratorTest extends SpecificationWithJUnit {
         }
 
         "generate first order functions" in {
-            val prop = forAll( (seed : Int) => {
+            //symbol names must be in the language
+            val prop : Prop = forAll( (seed : Int) => {
+                   //println("!!seed="+seed)
                 var generator = new FOLtermGenerator(seed)
                 val l = generator.generateSymbols(10,5,6,5)
                 val x = generator.generateFunction(l, 30, 50, 7)
-                //println(x)
-                //    println(Language.flattenTerm(x))
-                //println(Language.printFunction(x))
-                //val f = ((t:FOLTerm) => {f_ (f_,t) })
                 val symbols : List[String] = (l._1 ++ l._2 ++ l._3).map( (x=>x._1.toString) )
                 val getName : (FOLTerm=>String) = ((t:FOLTerm)=>{t match {
                             case FOLVar(x)     => x.toString
@@ -104,12 +102,16 @@ class termgeneratorTest extends SpecificationWithJUnit {
                 val conj = ((b1:Boolean,b2:Boolean)=> {b1 && b2})
                 val tests = Language.flattenTerm(x).map(fun)
                 //println(symbols)
+                Language.printTerm(x)
                 //println(Language.flattenTerm(x).map(getName))
+                //println(tests)
                 val r : Boolean = tests.foldLeft(true)(conj)
                 r
                 
                 })
-                prop must bePassed
+            //prop.desc = td
+            //Test.Params
+            prop must bePassed
 
         }
     }
