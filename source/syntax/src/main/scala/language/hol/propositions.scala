@@ -111,7 +111,7 @@ package propositions {
   object Neg {
     def apply(sub: Formula) = App(NegC,sub).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-      case App(negC,sub) => Some( (sub.asInstanceOf[HOLFormula]) )
+      case App(NegC,sub) => Some( (sub.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }
@@ -119,7 +119,7 @@ package propositions {
   object And {
     def apply(left: Formula, right: Formula) = (App(App(AndC,left),right)).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-      case App(App(andC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
+      case App(App(AndC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }
@@ -127,7 +127,7 @@ package propositions {
   object Or {
     def apply(left: Formula, right: Formula) = App(App(OrC,left),right).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-      case App(App(orC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+      case App(App(OrC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }
@@ -135,7 +135,7 @@ package propositions {
   object Imp {
     def apply(left: Formula, right: Formula) = App(App(ImpC,left),right).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-        case App(App(impC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+        case App(App(ImpC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
         case _ => None
     }
   }

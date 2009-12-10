@@ -58,9 +58,14 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       val c2 = Var("b", o, hol).asInstanceOf[Formula]
       (c1 imp c2) must beLike {case App(App(impC, c1), c2) => true}
     }
-    "Neg connective should return the right formula" in {
-      val c1 = Var("a", o, hol).asInstanceOf[Formula]
-      (Neg(c1)) must beLike {case App(negC, c1) => true}
+    "Neg connective should " in {
+      "return the right formula" in {
+        val c1 = Var("a", o, hol).asInstanceOf[Formula]
+        (Neg(c1)) must beLike {case App(negC, c1) => true}
+      }
+      "be extracted correctly" in {
+        (AppN(HOLConst(new ConstantStringSymbol("g"),"(i -> i)"), HOLConst(new ConstantStringSymbol("c"), "i")::Nil)) mustNot beLike {case Neg(c) => true}
+      }
     }
     "Constants are created correctly using the default implicit converter" in {
       val c1 = Var("a", i->o, hol)
