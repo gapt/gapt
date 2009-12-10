@@ -27,10 +27,8 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.calculi.lk.base._
 
-import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
-
 
 case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
   def apply(v: => Array[T]) = ( v.deepEquals(a), "successful deepEquals", v.deepToString + " not deepEquals " + a.deepToString )
@@ -455,10 +453,6 @@ class XMLParserTest extends SpecificationWithJUnit {
 
       proofs.size must beEqual(1)
       proofs.first.root.getSequent must beMultisetEqual( Sequent( f1::Nil, f2::Nil ) )
-    }
-    "parse correctly the second-order primeproof" in {
-      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "xml" + separator + "prime2.xml.gz")))) with XMLProofDatabaseParser).getProofs()
-      proofs.size must beEqual(1)
     }
   }
 }

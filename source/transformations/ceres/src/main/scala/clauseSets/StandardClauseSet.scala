@@ -5,13 +5,14 @@
  * and open the template in the editor.
  */
 
-package at.logic.clauseSets
+package at.logic.transformations.ceres.clauseSets
 
 import struct._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable._
+import at.logic.language.hol.propositions.Formula
 
 object StandardClauseSet {
   def normalize(struct:Struct):Struct = struct match {
@@ -54,22 +55,20 @@ object StandardClauseSet {
     case Times(s1,s2) => getLiterals(s1):::getLiterals(s2)
   }
 
-  private def clausifyTimesJunctions(struct: Struct): SequentOccurrence = {
+  private def clausifyTimesJunctions(struct: Struct): Sequent = {
     def isDual(s:Struct):Boolean = s match {case x: Dual => true; case _ => false}
     val literals = getLiterals(struct)
     val (negative,positive) = literals.partition(x => isDual(x))
-    val negativeFO: List[FormulaOccurrence] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].fo) // extracting the formula occurrences from the negative literal structs
-    val positiveFO: List[FormulaOccurrence] = positive.map(x => x.asInstanceOf[A].fo)     // extracting the formula occurrences from the positive atomic struct
+    val negativeFO: List[Formula] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].formula) // extracting the formula occurrences from the negative literal structs
+    val positiveFO: List[Formula] = positive.map(x => x.asInstanceOf[A].formula)     // extracting the formula occurrences from the positive atomic struct
     def convertListToSet[T](list:List[T]):Set[T] = list match {
       case x::rest => convertListToSet(rest)+x
       case Nil => new HashSet[T]
     }
-    val negativeFOSet = convertListToSet(negativeFO)
-    val positiveFOSet = convertListToSet(positiveFO)
-    SequentOccurrence(negativeFOSet,positiveFOSet)
+    Sequent(negativeFO,positiveFO)
   }
 
-  def clausify(struct: Struct): List[SequentOccurrence] = {
+  def clausify(struct: Struct): List[Sequent] = {
     val timesJunctions = getTimesJunctions(struct)
     timesJunctions.map(x => clausifyTimesJunctions(x))
   }
