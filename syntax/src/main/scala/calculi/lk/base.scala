@@ -66,9 +66,10 @@ package base {
 
    trait LKProof extends Proof[SequentOccurrence]{
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-      (root.antecedent ++ root.succedent).find(x => x == fo) match {
-        case Some(x) if x.ancestors.contains(fo) => Some(x)
-        case _ => None
+      (root.antecedent ++ root.succedent).filter(x => x.ancestors.contains(fo)).toList match {
+        case x::Nil => Some(x)
+        case Nil => None
+        case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
       }
     }
   }

@@ -44,7 +44,7 @@ class LKTest extends SpecificationWithJUnit {
   val v1 = HOLVar("x", i)
   val f1 = HOLAppFormula(c1,v1)
   val ax = Axiom(Sequent(f1::Nil, f1::Nil))
-  val a1 = ax._1
+  val a1 = ax._1 // Axiom return a pair of the proof and a mapping and we want only the proof here
   val c2 = HOLVar("b", i->o)
   val v2 = HOLVar("c", i)
   val f2 = HOLAppFormula(c1,v1)
@@ -262,15 +262,19 @@ class LKTest extends SpecificationWithJUnit {
         ((x - prin1)) must beDifferent ((up1.root.antecedent ++ up2.root.antecedent - aux1 - aux2))
       }
       "- Descendants must be correctly computed" in {
-        // get descendant of occurrence of left auxiliary formula
-        a.getDescendantInLowerSequent(ax._2._1.first) must beLike {
-          case Some(x) => x == a.prin && x.formula == Or(f1, f2)
-          case None => false
+        "(1)" in {
+          // get descendant of occurrence of left auxiliary formula
+          a.getDescendantInLowerSequent(ax._2._1.first) must beLike {
+            case Some(x) => x == prin1 && x.formula == Or(f1, f2)
+            case None => false
+          }
         }
-        // get descendant of occurrence of left premise context in succedent
-        a.getDescendantInLowerSequent(ax._2._2.first) must beLike {
-          case Some(x) => x.formula == f1
-          case None => false
+        "(2)" in {
+          // get descendant of occurrence of left premise context in succedent
+          a.getDescendantInLowerSequent(ax._2._2.first) must beLike {
+            case Some(x) => x.formula == f1
+            case None => false
+          }
         }
       }
     }
