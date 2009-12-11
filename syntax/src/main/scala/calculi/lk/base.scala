@@ -17,7 +17,7 @@ import scala.collection.mutable.HashMap
 
 package base {
 
-  private[lk] object LKFOFactory extends FOFactory {
+  private[calculi] object LKFOFactory extends FOFactory {
     def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
     def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
     def createOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = new FormulaOccurrence(formula, ancestors) {def factory = LKFOFactory}
