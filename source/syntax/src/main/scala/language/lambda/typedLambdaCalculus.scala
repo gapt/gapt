@@ -120,6 +120,7 @@ package typedLambdaCalculus {
     }
   }
 
+  // when using AbsN it will match also for n=0 i.e. variables, constants, etc. so it must always be matched last
   object AbsN {
     def apply(variables: List[Var], expression: LambdaExpression): LambdaExpression = variables match {
       case Nil => expression
@@ -127,14 +128,18 @@ package typedLambdaCalculus {
     }
     /*def apply(variables: List[Var], expression: LambdaExpression) = if (!variables.isEmpty) (variables :\ expression)(Abs)
                                                                     else expression*/
-    def unapply(expression: LambdaExpression):Option[(List[Var], LambdaExpression)] = expression match {
-      case _: Abs => Some(unapplyRec(expression))
-      case _ => None
-    }
+    def unapply(expression: LambdaExpression):Option[(List[Var], LambdaExpression)] = Some(unapplyRec(expression))
     def unapplyRec(expression: LambdaExpression): (List[Var], LambdaExpression) = expression match {
       case Abs(v, e) => {val t = unapplyRec(e); (v :: t._1, t._2 )}
       case v: Var => (Nil, v)
       case a: App => (Nil, a)
+    }
+  }
+  // matches only if n > 0
+  object AbsN1 {
+    def unapply(expression: LambdaExpression):Option[(List[Var], LambdaExpression)] = expression match {
+      case Abs(_,_) => AbsN.unapply(expression)
+      case _ => None
     }
   }
 
@@ -143,14 +148,18 @@ package typedLambdaCalculus {
       case Nil => function
       case x::ls => apply(App(function, x), ls)
     }
-    def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = expression match {
-      case _: App => Some(unapplyRec(expression))
-      case _ => None
-    }
+    def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = Some(unapplyRec(expression))
     def unapplyRec(expression: LambdaExpression):(LambdaExpression, List[LambdaExpression]) = expression match {
       case App(f, arg) => {val t = unapplyRec(f); (t._1, t._2 ::: (arg::Nil)) }
       case v: Var => (v,Nil)
       case a: Abs => (a,Nil)
+    }
+  }
+  // matches only if n > 0
+  object AppN1 {
+    def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = expression match {
+      case App(_,_) => AppN.unapply(expression)
+      case _ => None
     }
   }
 

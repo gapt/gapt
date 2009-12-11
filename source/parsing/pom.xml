@@ -9,7 +9,7 @@
 
   <artifactId>parsing</artifactId>
   <packaging>jar</packaging>  
-  <name>Tools for parsing</name>
+  <name>Parsing and exporting tools</name>
 
   <dependencies>
     <dependency>

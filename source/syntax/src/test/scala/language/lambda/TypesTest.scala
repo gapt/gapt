@@ -44,4 +44,23 @@ class TypesTest  extends SpecificationWithJUnit {
       } ) must beEqual ( true )
     }
   }
+  "FunctionType" should {
+    "be created/extracted correctly for" in {
+      "(i -> (o -> o))" in {
+        FunctionType(To(), Ti()::To()::Nil) must beLike {case FunctionType(To(), Ti()::To()::Nil) => true}
+      }
+      "(i -> ((o -> o) -> i))" in {
+        FunctionType(Ti(), Ti()::(->(To(),To()))::Nil) must beLike {case FunctionType(Ti(), Ti()::(->(To(),To()))::Nil) => true}
+      }
+      "(i)" in {
+        FunctionType(Ti(), Nil) must beLike {case FunctionType(Ti(), Nil) => true}
+      }
+      "(i -> i -> i -> i -> i -> i -> i -> i -> i -> i -> i -> i -> o)" in {
+        FunctionType(To(), Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Nil) must beLike {case FunctionType(To(), Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Ti()::Nil) => true}
+      }
+      "((i -> o) -> ((i -> o) -> (i -> o)))" in {
+        FunctionType(->(Ti(), To()), (->(Ti(), To()))::(->(Ti(), To()))::Nil) must beLike {case FunctionType(To(), (->(Ti(), To()))::(->(Ti(), To()))::Ti()::Nil) => true}
+      }
+    }
+  }
 }
