@@ -5,7 +5,10 @@
  * and open the template in the editor.
  */
 
+
 package at.logic.parsing.calculus.xml
+
+import scala.xml.dtd._
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
@@ -34,8 +37,25 @@ trait LKExporter extends HOLTermExporter {
       </formulalist>
     </sequent>
 
-  def exportSequentList(ls: List[Sequent]) =
-    <sequentlist>
+  def exportSequentList(name: String, ls: List[Sequent]) =
+    <sequentlist symbol={name}>
       {ls.map(x => exportSequent(x))}
     </sequentlist>
+}
+
+object saveXML {
+  def apply( sequentlists: List[Pair[String, List[Sequent]]], filename: String ) =
+  {
+    val exporter = new LKExporter{}
+    val xmls = sequentlists.map( p => exporter.exportSequentList(p._1, p._2) )
+    val output =
+      <proofdatabase>
+        <definitionlist/>
+        <axiomset/>
+        { xmls }
+        <variabledefinitions/>
+      </proofdatabase>
+    scala.xml.XML.saveFull(filename, output, "UTF-8", true,
+        DocType( "proofdatabase", SystemID( "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd" ) , Nil ) )
+  }
 }

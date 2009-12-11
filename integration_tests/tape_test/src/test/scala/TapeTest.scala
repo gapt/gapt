@@ -30,6 +30,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.getCutAncestors
+import at.logic.parsing.calculus.xml.saveXML
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
@@ -39,19 +40,13 @@ class TapeTest extends SpecificationWithJUnit {
   "The system" should {
     "parse correctly the tape proof" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofs()
+      proofs.size must beEqual(1)
       val proof = proofs.first
+
       val cut_occs = getCutAncestors( proof )
       val s = StructCreators.extract( proof, cut_occs )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
-      def sequentToString( s: Sequent ) = {
-        var ret = ""
-        s.antecedent.foreach( formula => ret += formula.toStringSimple + ", ")
-        ret += " :- "
-        s.succedent.foreach( formula => ret += formula.toStringSimple + ", ")
-        ret
-      }
-      cs.foreach( s => print( sequentToString( s ) + "\n") )
-      proofs.size must beEqual(1)
+      saveXML( Pair("cs", cs)::Nil, "target" + separator + "test-classes" + separator + "tape-cs.xml" )
     }
   }
 }
