@@ -32,6 +32,7 @@ import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
+import at.logic.parsing.calculus.xml.saveXML
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
@@ -54,21 +55,24 @@ class PrimeProofTest extends SpecificationWithJUnit {
     print("cuts: " + stats.cuts + "\n")
   }
 
+
   "The system" should {
     "parse correctly the second-order prime proof" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime2.xml.gz")))) with XMLProofDatabaseParser).getProofs()
+      proofs.size must beEqual(1)
       val proof = proofs.first
+      printStats( proof )
+
       val cut_occs = getCutAncestors( proof )
       val s = StructCreators.extract( proof, cut_occs )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
 //      cs.foreach( s => print( sequentToString( s ) + "\n") )
-      proofs.size must beEqual(1)
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
       print("cs size: " + cs.size + "\n")
       print("after tautology deletion: " + dcs.size + "\n")
       print("after set-normalization: " + css.size + "\n")
-      printStats( proof )
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
 
     "parse correctly the first-order prime proof, n=0" in {

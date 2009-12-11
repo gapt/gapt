@@ -61,8 +61,8 @@ class LkExporterTest extends SpecificationWithJUnit {
     }
   }
   "export correctly a sequent list {A1, B1 :- C1, D1, A2, B2 :- C2, D2}" in {
-    trim(exporter.exportSequentList(Sequent(pc("A1")::pc("B1")::Nil, pc("C1")::pc("D1")::Nil)::Sequent(pc("A2")::pc("B2")::Nil, pc("C2")::pc("D2")::Nil)::Nil)) must beEqual (trim(
-        <sequentlist>
+    trim(exporter.exportSequentList( "testlist", Sequent(pc("A1")::pc("B1")::Nil, pc("C1")::pc("D1")::Nil)::Sequent(pc("A2")::pc("B2")::Nil, pc("C2")::pc("D2")::Nil)::Nil)) must beEqual (trim(
+        <sequentlist symbol="testlist">
           <sequent>
             <formulalist>
               <constantatomformula symbol="A1"/>
