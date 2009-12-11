@@ -12,8 +12,11 @@ package graphs {
   import scala.collection.jcl.Conversions._
 
   trait Graph[V] {
-    var graph: org.jgrapht.DirectedGraph[V,org.jgrapht.graph.DefaultEdge] = null
-  }
+      var graph: org.jgrapht.DirectedGraph[V,org.jgrapht.graph.DefaultEdge] = null
+
+      //needed for interfaceing with java
+      def getGraph() : org.jgrapht.DirectedGraph[V,org.jgrapht.graph.DefaultEdge] = graph
+}
   class EmptyGraph[V] extends Graph[V] { graph = new org.jgrapht.graph.ListenableDirectedGraph[V,org.jgrapht.graph.DefaultEdge](classOf[org.jgrapht.graph.DefaultEdge])}
   object EmptyGraph {
     def apply[V]() = new EmptyGraph[V]
