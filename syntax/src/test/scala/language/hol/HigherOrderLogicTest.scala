@@ -21,7 +21,6 @@ import quantifiers._
 import at.logic.language.lambda.types.Definitions._
 import propositions.Definitions._
 import propositions.ImplicitConverters._
-import HOLTermsToStringExporter._
 
 class HigherOrderLogicTest extends SpecificationWithJUnit {
   "HigherOrderLogic" should {
