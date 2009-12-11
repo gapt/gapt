@@ -29,6 +29,7 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.calculi.lk.base._
+import at.logic.algorithms.lk.getCutAncestors
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
