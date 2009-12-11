@@ -9,7 +9,7 @@
 
   <artifactId>lkalgorithms</artifactId>
   <packaging>jar</packaging>  
-  <name>Algorithms for the sequent calculus and related datastructures</name>
+  <name>Algorithms for LK and related datastructures</name>
 
   <dependencies>
     <dependency>

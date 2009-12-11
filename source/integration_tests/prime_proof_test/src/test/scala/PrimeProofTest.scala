@@ -29,28 +29,82 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.calculi.lk.base._
+import at.logic.algorithms.lk.simplification._
+import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.lk._
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
 class PrimeProofTest extends SpecificationWithJUnit {
+
+  def sequentToString( s: Sequent ) = {
+    var ret = ""
+    s.antecedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    ret += " :- "
+    s.succedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    ret
+  }
+
+  def printStats( p: LKProof ) = {
+    val stats = getStatistics( p )
+    print("unary: " + stats.unary + "\n")
+    print("binary: " + stats.binary + "\n")
+    print("cuts: " + stats.cuts + "\n")
+  }
+
   "The system" should {
-    "parse correctly the second-order primeproof" in {
+    "parse correctly the second-order prime proof" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime2.xml.gz")))) with XMLProofDatabaseParser).getProofs()
       val proof = proofs.first
       val cut_occs = getCutAncestors( proof )
       val s = StructCreators.extract( proof, cut_occs )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
-//      def sequentToString( s: Sequent ) = {
-//        var ret = ""
-//        s.antecedent.foreach( formula => ret += formula.toStringSimple + ", ")
-//        ret += " :- "
-//        s.succedent.foreach( formula => ret += formula.toStringSimple + ", ")
-//        ret
-//      }
 //      cs.foreach( s => print( sequentToString( s ) + "\n") )
       proofs.size must beEqual(1)
+      val dcs = deleteTautologies( cs )
+      val css = setNormalize( dcs )
+      print("cs size: " + cs.size + "\n")
+      print("after tautology deletion: " + dcs.size + "\n")
+      print("after set-normalization: " + css.size + "\n")
+      printStats( proof )
+    }
+
+    "parse correctly the first-order prime proof, n=0" in {
+      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofs()
+      val proof = proofs.first
+      val cut_occs = getCutAncestors( proof )
+      val s = StructCreators.extract( proof, cut_occs )
+      val cs = StandardClauseSet.transformStructToClauseSet( s )
+//      cs.foreach( s => print( sequentToString( s ) + "\n") )
+      proofs.size must beEqual(1)
+      print("cs size: " + cs.size + "\n")
+      printStats( proof )
+    }
+
+    "parse correctly the first-order prime proof, n=1" in {
+      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-1.xml.gz")))) with XMLProofDatabaseParser).getProofs()
+      val proof = proofs.first
+      val cut_occs = getCutAncestors( proof )
+      val s = StructCreators.extract( proof, cut_occs )
+      val cs = StandardClauseSet.transformStructToClauseSet( s )
+//      cs.foreach( s => print( sequentToString( s ) + "\n") )
+      proofs.size must beEqual(1)
+      print("cs size: " + cs.size + "\n")
+      printStats( proof )
+    }
+
+    "parse correctly the first-order prime proof, n=2" in {
+      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-2.xml.gz")))) with XMLProofDatabaseParser).getProofs()
+      val proof = proofs.first
+      val cut_occs = getCutAncestors( proof )
+      val s = StructCreators.extract( proof, cut_occs )
+      val cs = StandardClauseSet.transformStructToClauseSet( s )
+//      cs.foreach( s => print( sequentToString( s ) + "\n") )
+      proofs.size must beEqual(1)
+      print("cs size: " + cs.size + "\n")
+      printStats( proof )
     }
   }
 }
