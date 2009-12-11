@@ -13,6 +13,7 @@
 
   <modules>
     <module>unification</module>
+    <module>lk</module>
   </modules>
 
   <packaging>pom</packaging>
