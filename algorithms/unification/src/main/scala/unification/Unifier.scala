@@ -14,7 +14,7 @@ import at.logic.language.hol.propositions._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
-
+/*
 
 
 
@@ -59,4 +59,4 @@ object FOLUnification {
         return unifier
         //None
     }
-}
+}*/
