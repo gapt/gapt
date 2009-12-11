@@ -13,6 +13,13 @@ package types {
   }
   abstract class TAtomicA extends TA
   abstract class TComplexA extends TA
+  object TAtomicA {
+    def unapply(ta: TA) = ta match {
+      case Ti() => Some(ta)
+      case To() => Some(ta)
+      case _ => None
+    }
+  }
   case class Ti() extends TAtomicA
   case class To() extends TAtomicA
   case class ->(in:TA, out:TA) extends TComplexA
@@ -26,6 +33,17 @@ package types {
   // with argument types from and return type to
   object FunctionType {
     def apply(to: TA, from: List[TA]) : TA = if (!from.isEmpty) (from :\ to)(->) else to
+    def unapply(ta: TA): Option[Pair[TA, List[TA]]] = ta match {
+      case TAtomicA(_) => Some(ta, Nil)
+      case ->(t1, TAtomicA(t2)) => Some(t2, t1::Nil)
+      case ->(t1, t2) => {
+        unapply(t2) match {
+          case Some((ta, ls)) => Some(ta, t1::ls)
+          case None => None
+        }
+      }
+      case _ => None
+    }
   }
 
   object  StringExtractor {

@@ -105,4 +105,17 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       }
     }
   }*/
+  "Atoms" should {
+    "be extracted correctly" in {
+      (HOLConst(new ConstantStringSymbol("P"), o)) must beLike {case Atom(ConstantStringSymbol("P"), Nil) => true}
+    }
+  }
+  "Complex AppN" should {
+    "be extracted correctly" in {
+      AppN( HOLConst( new ConstantStringSymbol("\\cap"),"((i -> o) -> ((i -> o) -> (i -> o)))"),
+          HOLVar( new VariableStringSymbol("X"), "(i -> o)" )::HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil) must beLike {
+        case AppN(Var(ConstantStringSymbol(_),FunctionType(To(),(->(Ti(),To()))::(->(Ti(),To()))::Ti()::Nil)),args) => true
+      }
+    }
+  }
 }
