@@ -50,6 +50,22 @@ class GraphVisualisation[T] {
 }
 
 object VisualisationUtils {
+  def createTree(label:String, depth : Int) : at.logic.utils.ds.graphs.Graph[String] = {
+      if (depth <= 0) {
+          graphs.VertexGraph[String](label, graphs.EmptyGraph[String])
+      } else {
+          var label1 = "l"+label
+          var label2 = "r"+label
+          var tree1 = createTree(label1, depth-1)
+          var tree2 = createTree(label2, depth-1)
+
+          var g : graphs.Graph[String] = graphs.VertexGraph(label,graphs.UnionGraph(tree1,tree2))
+          g = graphs.EdgeGraph[String](label,label1,g )
+          g = graphs.EdgeGraph[String](label,label2,g )
+          g
+      }
+  }
+
   def placeNodes(jgraph : JGraph) = {
     // hm this should work, shouldn't it?
     Console.println("placement")
