@@ -48,8 +48,8 @@ trait PropMatcher {
 
                 var res = Test.check(Test.defaultParams,r)
                 res.status match {
-                    case Test.Proved(args) => println("ok!"); println(args); (true,"OK, proved property.","")
-                    case Test.Passed => println("ok!"); (true,"OK, passed "+res.succeeded+" tests.","")
+                    case Test.Proved(args) => /* println("ok!"); println(args); */ (true,"OK, proved property.","")
+                    case Test.Passed => /*println("ok!");*/ (true,"OK, passed "+res.succeeded+" tests.","")
                     case Test.Failed(args, l) =>
                         println("Failed labels:"+labels(l)+" args were "+args)
 
