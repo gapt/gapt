@@ -59,11 +59,7 @@ package substitutions {
 
     def ::(sub:SingleSubstitution) = new Substitution(sub::substitutions)
     def :::(otherSubstitutionList:Substitution) = new Substitution(otherSubstitutionList.substitutions:::this.substitutions)
-    def apply(expression: LambdaExpression):LambdaExpression = {
-      var result = expression       // ToDo: Replace this by an immutable and more functional alternative...
-      for ( sigma <- substitutions ) result = sigma(result)
-      result
-    }
+    def apply(expression: LambdaExpression):LambdaExpression = substitutions.foldLeft(expression)((exp, sigma) => sigma(exp))
   }
 
 
