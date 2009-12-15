@@ -31,7 +31,10 @@ trait FOLUnification {
   }
   private def func(sigmaOption: Option[Substitution], x: Pair[FOLTerm, FOLTerm]): Option[Substitution] = sigmaOption match {
     case None => None
-    case Some(sigma) => unify(sigma(x._1).asInstanceOf[FOLTerm], sigma(x._2).asInstanceOf[FOLTerm])
+    case Some(sigma) => unify(sigma(x._1).asInstanceOf[FOLTerm], sigma(x._2).asInstanceOf[FOLTerm]) match {
+      case None => None
+      case Some(theta) => Some(theta:::sigma)
+    }
   }
 }
 /*
