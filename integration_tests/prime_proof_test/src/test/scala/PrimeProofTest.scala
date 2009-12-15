@@ -8,31 +8,20 @@ import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
 
-import scala.xml._
-
 import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.quantifiers._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions.Definitions._
-import at.logic.language.hol.propositions.ImplicitConverters._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.types.Definitions._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.symbols.ImplicitConverters._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.lkSpecs.beMultisetEqual
-import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
+
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.algorithms.lk.simplification._
+import at.logic.algorithms.lk._
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
