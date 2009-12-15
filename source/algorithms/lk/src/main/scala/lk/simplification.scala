@@ -9,7 +9,7 @@ package simplification {
   object deleteTautologies
   {
     def apply(sequents: List[Sequent]) : List[Sequent] =
-      sequents.filter( s => s.antecedent.exists( f => s.succedent.contains( f ) ) )
+      sequents.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
   }
 
   object setNormalize
