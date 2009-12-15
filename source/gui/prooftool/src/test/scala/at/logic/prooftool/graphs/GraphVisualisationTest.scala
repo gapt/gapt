@@ -17,10 +17,10 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
     val g5 = EdgeGraph("e", "f", VertexGraph("f", VertexGraph("e", EmptyGraph[String])))
     val g6: UnionGraph[String] = (g4, g5)
 
-    val tree = VisualisationUtils.createTree("x",5)
-    var pv = new ProofViewer(tree)
+    val tree = VisualisationUtils.createTree("x",13)
+    var pv = new ProofViewer[String](tree)
     //pv.insertLotsOfCells()
-    pv.doPlacement()
+    pv.doTreePlacement()
     //pv.run()
     //Thread.sleep(150000)
     ()
