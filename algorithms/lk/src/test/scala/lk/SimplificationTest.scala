@@ -23,7 +23,7 @@ class SimplificationTest extends SpecificationWithJUnit {
       val s4 = Sequent( b::Nil, a::Nil )
 
     "correctly delete tautologous sequents" in {
-      val list = s1::s2::s3::s4::Nil
+      val list = s1::s2::s3::s4::s1::Nil
       val dlist = deleteTautologies( list )
       dlist.size must beEqual( 2 )
     }
