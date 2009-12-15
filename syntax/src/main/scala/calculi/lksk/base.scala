@@ -13,10 +13,11 @@ import at.logic.language.hol.propositions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.{Set,EmptySet}
-import scala.collection.mutable.{Map,HashMap}
+import scala.collection.immutable.{Map,HashMap}
 import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 
-import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent}
+import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent,SequentOccurrence}
+import at.logic.calculi.occurrences._
 
 package base {
   object TypeSynonyms {
@@ -28,56 +29,43 @@ package base {
 
   import TypeSynonyms._
 
-  case class LabelledSequentOccurrence(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence], map: Map[FormulaOccurrence,Label])
-  {
-    def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
-    def ++( that: LabelledSequentOccurrence ) = LabelledSequentOccurrence( antecedent ++ that.antecedent, succedent ++ that.succedent, map ++ that.map )
+  class LabelledFormulaOccurrence (override val formula: Formula, 
+                                   override val ancestors: List[LabelledFormulaOccurrence],
+                                   val label: Label) extends FormulaOccurrence( formula, ancestors ) {
+    def factory: FOFactory = LKskFOFactory
   }
 
-  // exceptions
-  class LKskRuleException(msg: String) extends RuleException(msg)
-  class LKskRuleCreationException(msg: String) extends LKskRuleException(msg)
-
-   trait LKskProof extends Proof[LabelledSequentOccurrence]{
-    def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-      (root.antecedent ++ root.succedent).filter(x => x.ancestors.contains(fo)).toList match {
-        case x::Nil => Some(x)
-        case Nil => None
-        case _ => throw new LKskRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
+  private[lksk] object LKskFOFactory extends FOFactory {
+    def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = {
+      assert( ancestors.isInstanceOf[List[LabelledFormulaOccurrence]] )
+      createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
+    }
+    def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = {
+      assert( ancestors.isInstanceOf[List[LabelledFormulaOccurrence]] )
+      createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
+    }
+    def createOccurrence(formula: Formula, ancestors: List[LabelledFormulaOccurrence]) = {
+      val l = ancestors.first.label
+      assert( ancestors.forall( a => a.label == l ) )
+      new LabelledFormulaOccurrence(formula, ancestors, l)
+    }
+    // when creating a main formula for a weak quantifier inference in LKsk, we may choose
+    // whether to delete the term from the label, or not. If deletion is not desired,
+    // term should be set to None.
+    def createWeakQuantMain(formula: Formula, ancestor: LabelledFormulaOccurrence, term: Option[LambdaExpression]) =
+    {
+      val newlabel = term match {
+        case None => ancestor.label
+        case Some(x) => ancestor.label - x
       }
+      new LabelledFormulaOccurrence(formula, ancestor::Nil, newlabel )
     }
-  }
-  trait UnaryLKskProof extends UnaryTree[LabelledSequentOccurrence] with LKskProof with UnaryProof[LabelledSequentOccurrence] {
-    override def uProof = t.asInstanceOf[LKskProof]
-  }
-  trait BinaryLKskProof extends BinaryTree[LabelledSequentOccurrence] with LKskProof with BinaryProof[LabelledSequentOccurrence] {
-    override def uProof1 = t1.asInstanceOf[LKskProof]
-    override def uProof2 = t2.asInstanceOf[LKskProof]
+    def createInitialOccurrence(formula: Formula, label: Label) =
+      new LabelledFormulaOccurrence( formula, Nil, label )
   }
 
-  object createLeftContext {
-    def apply(set: Set[FormulaOccurrence], map: Map[FormulaOccurrence, Label]): LabelledSequentOccurrence = 
-    {
-      val newmap = new HashMap[FormulaOccurrence, Label]
-      val newset = set.map(x => {
-        val newx = x.factory.createContextFormulaOccurrence(x.formula, x::Nil)
-        newmap.update( newx, map.apply( x ) )
-        newx
-      })
-      LabelledSequentOccurrence( newset, new EmptySet, newmap )
-    }
-  }
-
-  object createRightContext {
-    def apply(set: Set[FormulaOccurrence], map: Map[FormulaOccurrence, Label]): LabelledSequentOccurrence = 
-    {
-      val newmap = new HashMap[FormulaOccurrence, Label]
-      val newset = set.map(x => {
-        val newx = x.factory.createContextFormulaOccurrence(x.formula, x::Nil)
-        newmap.update( newx, map.apply( x ) )
-        newx
-      })
-      LabelledSequentOccurrence( new EmptySet, newset, newmap )
-    }
-  }
+  class LabelledSequentOccurrence(antecedent: Set[LabelledFormulaOccurrence],
+                                  succedent: Set[LabelledFormulaOccurrence])
+    extends SequentOccurrence( antecedent.asInstanceOf[Set[FormulaOccurrence]],
+                               succedent.asInstanceOf[Set[FormulaOccurrence]] )
 }

@@ -428,7 +428,7 @@ class LKTest extends SpecificationWithJUnit {
       val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
       val ax = Axiom( Sequent( aux::Nil, Nil ) )
       val rule = ForallLeftRule(ax, aux, main, subst)
-      val (up1,  SequentOccurrence(ant,succ), aux1, prin1) = ForallLeftRule.unapply(rule).get
+      val (up1,  SequentOccurrence(ant,succ), aux1, prin1, term) = ForallLeftRule.unapply(rule).get
       "- Principal formula is created correctly" in {
         (prin1.formula) must beEqual (main)
       }

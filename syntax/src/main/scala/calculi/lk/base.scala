@@ -14,10 +14,12 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
+import at.logic.language.hol.propositions.TypeSynonyms._
+
 
 package base {
 
-  private[calculi] object LKFOFactory extends FOFactory {
+  private[lk] object LKFOFactory extends FOFactory {
     def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
     def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
     def createOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = new FormulaOccurrence(formula, ancestors) {def factory = LKFOFactory}
@@ -88,6 +90,9 @@ package base {
   }
   trait PrincipalFormulas {
     def prin: List[FormulaOccurrence]
+  }
+  trait SubstitutionTerm {
+    def subst: HOLTerm
   }
 
   // method for creating the context of the lower sequent. Essentially creating nre occurrences

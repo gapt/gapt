@@ -30,23 +30,24 @@ package quantificationRules {
   case object ExistsRightRuleType extends UnaryRuleTypeA
 
   object ForallLeftRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula, subst: HOLTerm) = {
+    def apply(s1: LKProof, aux: Formula, main: Formula, term: HOLTerm) = {
       main match {
         case All( sub ) => {
           // TODO: comment in to check validity of the rule.
           // commented out at the moment because we don't know the subst term
           // in the XML parser. We need first-order unification for that.
-          //assert( betaNormalize( App( sub, subst ) ) == aux )
+          //assert( betaNormalize( App( sub, term ) ) == aux )
           s1.root.antecedent.filter( x => x.formula == aux ).toList match {
             case (x::_) => {
               val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext((s1.root.antecedent - x)) + prinFormula,
                                     createContext((s1.root.succedent))), s1 )
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
                 def rule = ForallLeftRuleType
                 def aux = (x::Nil)::Nil
                 def prin = prinFormula::Nil
+                def subst = term
               }
             }
             case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
@@ -57,43 +58,44 @@ package quantificationRules {
     }
 
     def unapply(proof: LKProof) = if (proof.rule == ForallLeftRuleType) {
-        val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+        val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
         val ((a1::Nil)::Nil) = r.aux
         val (p1::Nil) = r.prin
-        Some((r.uProof, r.root, a1, p1))
+        Some((r.uProof, r.root, a1, p1, r.subst))
       }
       else None
   }
 
   object ExistsRightRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula, subst: HOLTerm) = {
+    def apply(s1: LKProof, aux: Formula, main: Formula, term: HOLTerm) = {
       main match {
         case Ex( sub ) => {
-          //assert( betaNormalize( App( sub, subst ) ) == aux )
+          //assert( betaNormalize( App( sub, term ) ) == aux )
           s1.root.succedent.filter( x => x.formula == aux ).toList match {
             case (x::_) => {
               val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext(s1.root.antecedent),
                                     createContext((s1.root.succedent - x)) + prinFormula), s1 )
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
                 def rule = ExistsRightRuleType
                 def aux = (x::Nil)::Nil
                 def prin = prinFormula::Nil
+                def subst = term
               }
             }
             case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
             }
         }
-        case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
+        case _ => throw new LKRuleCreationException("Main formula of ExistsRightRule must have a universal quantifier as head symbol.")
       }
     }
 
     def unapply(proof: LKProof) = if (proof.rule == ExistsRightRuleType) {
-        val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+        val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
         val ((a1::Nil)::Nil) = r.aux
         val (p1::Nil) = r.prin
-        Some((r.uProof, r.root, a1, p1))
+        Some((r.uProof, r.root, a1, p1, r.subst))
       }
       else None
   }
