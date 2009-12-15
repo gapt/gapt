@@ -1,7 +1,7 @@
 /* Description: A unifier represents a map between variables and terms
 **/
 
-package at.logic.unification.fol
+package at.logic.unification
 
 import scala.collection.mutable._
 
@@ -23,7 +23,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 trait FOLUnification {
   def unify(f: FOLTerm, g: FOLTerm) : Option[Substitution] = (f,g) match {
     case (FOLConst(x), FOLConst(y)) if x != y => None // symbol clash constants
-    case (FOLConst(x), FOLConst(y)) if x == y => Some(Substitution(Nil))
+    case (FOLConst(x), FOLConst(y)) => Some(Substitution(Nil))
     case (Function(x, _), Function(y, _)) if x != y => None // symbol clash functions
     case (Function(_, args1), Function(_, args2)) if args1.length != args2.length => None // symbol clash functions arity
     case (Function(_, args1), Function(_, args2)) => args1.zip(args2).foldLeft(Some(Substitution(Nil)): Option[Substitution])(func)
