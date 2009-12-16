@@ -20,6 +20,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 //trait Unifier extends Map[VariableA[TypeA], TermA[TypeA]]
 //trait Unifier extends Substitution//Map[Var, LambdaExpression]
 
+
 trait FOLUnification {
   def unify(f: FOLTerm, g: FOLTerm) : Option[Substitution] = (f,g) match {
     case (FOLConst(x), FOLConst(y)) if x != y => None // symbol clash constants
@@ -27,8 +28,8 @@ trait FOLUnification {
     case (Function(x, _), Function(y, _)) if x != y => None // symbol clash functions
 
 
-    case (FOLVar(x), FOLConst(c)) => Some(Substitution(SingleSubstitution(x.asInstanceOf[Var],c.asInstanceOf[LambdaExpression])::Nil))
-    case (FOLConst(c), FOLVar(x)) => Some(Substitution(SingleSubstitution(x.asInstanceOf[Var],c.asInstanceOf[LambdaExpression])::Nil))
+    case (t1 @ FOLVar(x), t2 @ FOLConst(c)) => Some(Substitution(SingleSubstitution(t1.asInstanceOf[FOLVar],t2)::Nil))
+    case (t3 @ FOLConst(c), t4 @ FOLVar(x)) => unify(t4,t3)
     
 
     case (Function(_, args1), Function(_, args2)) if args1.length != args2.length => None // symbol clash functions arity
@@ -43,48 +44,3 @@ trait FOLUnification {
     }
   }
 }
-/*
-
-trait FOLUnification {
-    def unifiy(f:FOLTerm, g:FOLTerm) : Option[Unifier] =
-    {
-        var unifier : Unifier = new FOLUnifier();
-        f match
-        {
-            case x:Var =>
-                    g match
-                    {
-                        case a:Constant => 
-                            {
-                                var pair: SingleSubstitution = new SingleSubstitution(x,y)
-                                var sub1 = new Substitution(pair)
-                                unifier = unifier.applySubstitution(sub1)
-                                unifier = unifier:::sub1
-                                unifier
-                            }
-                        case y:Var =>
-                            {
-                                var pair: SingleSubstitution = new SingleSubstitution(x,y)
-                                var sub1 = new Substitution(pair)
-                                sub1 = sub1.applySubstitution(unifier)
-                                unifier = unifier:::sub1
-                                unifier
-                            }
-                        case y: FOLTerm =>
-                            {
-                                if(y.getFreeAndBoundVariables._1.contains() || y.getFreeAndBoundVariables._2.contains())
-                                  return NULL
-                                var pair: SingleSubstitution = new SingleSubstitution(x,y)
-                                var sub1 = new Substitution(pair)
-                                sub1 = sub1.applySubstitution(unifier)
-                                unifier = unifier:::sub1
-                                unifier
-                            }
-                    }
-
-        }
-
-        return unifier
-        //None
-    }
-}*/
