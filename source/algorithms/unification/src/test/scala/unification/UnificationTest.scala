@@ -48,48 +48,23 @@ class UnificationTest extends SpecificationWithJUnit {
         (alg.unify(a,b)) must beEqual (Some(Substitution(Nil)))
       }
     }
-    "returns the substitution {x->a,y->b} where a nd b are constants, x and y are variables" in {
+    "returns the substitution {x->a,y->b} where a and b are constants, x and y are variables" in {
         val t1 = Function(ConstantStringSymbol("f"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t2 = Function(ConstantStringSymbol("f"), FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
         (alg.unify(t1, t2)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)))
-        
-            //(Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)))
+       
+                                       //(Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)))
     
+        //Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil))
+    } 
+    "returns the substitution {x->a} where a is a constant, x is a variable" in {
+        val x = FOLVar(VariableStringSymbol("x"))
+        val a = FOLConst(ConstantStringSymbol("a"))
+        (alg.unify(x, a)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil)))
+
+                                       //(Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)))
+
         //Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil))
     }
   }
 }
-      /*"term 2" in
-      {
-        var b: FOLConst = FOLConst(ConstantStringSymbol("b"))
-        var sym: ConstantSymbolA = ConstantStringSymbol("f")
-        var args: List[FOLTerm]
-        args = args+b
-        var func2 = Function(sym, args)
-      }
-      val unif: FOLUnification = new FOLUnification(func1,func2)
-      unif.unify(func1,func2) must beEqual(NULL)
-    }
-    "return an empty unifier if terms are unifiable but identical" in {
-      "term 1" in {
-
-      }
-    }
-    "return None if there is an occur check" in {
-      "term 1" in {
-
-      }
-      "term 2" in {
-
-      }
-    }
-    "return None if there is a symbol clash" in {
-      "term 1" in {
-
-      }
-    }
-    "should throw an exception if higher order terms are given" in {
-      () must throw
-    }
-  }
-}*/
