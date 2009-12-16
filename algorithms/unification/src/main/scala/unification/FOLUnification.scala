@@ -30,7 +30,7 @@ trait FOLUnification {
 
     case (t1 @ FOLVar(x), t2 @ FOLConst(c)) => Some(Substitution(SingleSubstitution(t1.asInstanceOf[FOLVar],t2)::Nil))
     case (t3 @ FOLConst(c), t4 @ FOLVar(x)) => unify(t4,t3)
-    
+
 
     case (Function(_, args1), Function(_, args2)) if args1.length != args2.length => None // symbol clash functions arity
     case (Function(_, args1), Function(_, args2)) => args1.zip(args2).foldLeft(Some(Substitution(Nil)): Option[Substitution])(func)
@@ -40,7 +40,7 @@ trait FOLUnification {
     case None => None
     case Some(sigma) => unify(sigma(x._1).asInstanceOf[FOLTerm], sigma(x._2).asInstanceOf[FOLTerm]) match {
       case None => None
-      case Some(theta) => Some(theta:::sigma)
+      case Some(theta) => Some(sigma:::theta)
     }
   }
 }
