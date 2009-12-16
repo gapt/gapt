@@ -25,6 +25,12 @@ trait FOLUnification {
     case (FOLConst(x), FOLConst(y)) if x != y => None // symbol clash constants
     case (FOLConst(x), FOLConst(y)) => Some(Substitution(Nil))
     case (Function(x, _), Function(y, _)) if x != y => None // symbol clash functions
+
+
+    case (FOLVar(x), FOLConst(c)) => Some(Substitution(SingleSubstitution(x.asInstanceOf[Var],c.asInstanceOf[LambdaExpression])::Nil))
+    case (FOLConst(c), FOLVar(x)) => Some(Substitution(SingleSubstitution(x.asInstanceOf[Var],c.asInstanceOf[LambdaExpression])::Nil))
+    
+
     case (Function(_, args1), Function(_, args2)) if args1.length != args2.length => None // symbol clash functions arity
     case (Function(_, args1), Function(_, args2)) => args1.zip(args2).foldLeft(Some(Substitution(Nil)): Option[Substitution])(func)
     case _ => throw new UnificationException("Unknown terms was given to first order unification: " + f.toString + " - " + g.toString)
