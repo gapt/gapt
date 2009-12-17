@@ -55,4 +55,9 @@ trait FOLUnification {
       case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil   
       case (function @ Function(_, args @ _)) => args.flatMap( a => getVars(a) )
   }
+  def printSubst(sub: Substitution) = {
+      print("\n\n{")
+      for (s <- sub.substitutions) print("<"+s._1+" , "+s._2+">, ")
+      print("}\n\n")
+  }
 }
