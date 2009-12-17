@@ -61,10 +61,17 @@ class UnificationTest extends SpecificationWithJUnit {
         val x = FOLVar(VariableStringSymbol("x"))
         val a = FOLConst(ConstantStringSymbol("a"))
         (alg.unify(x, a)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil)))
-
-                                       //(Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)))
-
-        //Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil))
     }
+    "returns a list of all variables (i.e. x::y::Nil) in the term  f(g(x,a),y,b), where a and b are constants " in {
+        val t3 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
+        val t4 = Function(ConstantStringSymbol("f"), t3::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
+        (alg.getVars(t4)) must beEqual (FOLVar(VariableStringSymbol("x"))::FOLVar(VariableStringSymbol("y"))::Nil)
+    }/*
+    "returns a unifier for the pair <z,f(g(x,a),y,b)>, where x,y,z are vars, a and b are consts" in {
+        val z = FOLVar(VariableStringSymbol("z"))
+        val t5 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
+        val t6 = Function(ConstantStringSymbol("f"), t5::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
+        (alg.unify(z, t6)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], t6)::Nil)))
+    }*/
   }
 }
