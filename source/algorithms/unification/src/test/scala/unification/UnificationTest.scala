@@ -66,12 +66,39 @@ class UnificationTest extends SpecificationWithJUnit {
         val t3 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t4 = Function(ConstantStringSymbol("f"), t3::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
         (alg.getVars(t4)) must beEqual (FOLVar(VariableStringSymbol("x"))::FOLVar(VariableStringSymbol("y"))::Nil)
-    }/*
+    }
     "returns a unifier for the pair <z,f(g(x,a),y,b)>, where x,y,z are vars, a and b are consts" in {
         val z = FOLVar(VariableStringSymbol("z"))
         val t5 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t6 = Function(ConstantStringSymbol("f"), t5::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
-        (alg.unify(z, t6)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], t6)::Nil)))
+        (alg.unify(z, t6)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("z")).asInstanceOf[Var], t6)::Nil)))
+    }
+    "returns the None for the pair <a,f(g(x,a),y,b)>, where x,y are vars, a and b are consts" in {
+        val a = FOLConst(ConstantStringSymbol("a"))
+        val t7 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
+        val t8 = Function(ConstantStringSymbol("f"), t7::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
+        (alg.unify(a, t8)) must beEqual (None)//(Some(Substitution( Nil)))
+    }
+    "returns the None for the pair <x,f(g(x,a),y,b)>, where x,y are vars, a and b are consts" in {
+        val x = FOLVar(VariableStringSymbol("x"))
+        val t7 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
+        val t8 = Function(ConstantStringSymbol("f"), t7::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
+      //   alg.printSubst(alg.unify(x,t8).get)
+        (alg.unify(x, t8)) must beEqual (None)//(Some(Substitution( Nil)))
+    }/*
+    "returns the unifier {x->b,y->g(b)} for the pair <f(y,b),f(g(x),y)>, where x,y are vars, a and b are consts" in {
+        val x = FOLVar(VariableStringSymbol("x"))
+        val y = FOLVar(VariableStringSymbol("y"))
+        val b = FOLConst(ConstantStringSymbol("b"))
+        val c = FOLConst(ConstantStringSymbol("c"))
+        val gx = Function(ConstantStringSymbol("g"),x::Nil)
+        val gb = Function(ConstantStringSymbol("g"),b::Nil)
+        val t9 = Function(ConstantStringSymbol("f"), gx::y::Nil)
+        val t10 = Function(ConstantStringSymbol("f"), y::gb::Nil)
+     
+     //this line does not work   alg.printSubst(alg.unify(t9,t10).get)
+      //  (alg.unify(t9,t10)) must beEqual (Some(Substitution(SingleSubstitution(x,b) :: SingleSubstitution(y,gb) :: Nil)))
+        (alg.unify(c,t10)) must beEqual (None)
     }*/
   }
 }
