@@ -31,6 +31,12 @@ trait FOLUnification {
     case (t1 @ FOLVar(x), t2 @ FOLConst(c)) => Some(Substitution(SingleSubstitution(t1.asInstanceOf[FOLVar],t2)::Nil))
     case (t3 @ FOLConst(c), t4 @ FOLVar(x)) => unify(t4,t3)
 
+    case (FOLConst(_), Function(_, _)) => None
+    case (Function(_, _), FOLConst(_)) => None
+
+    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if getVars(t6).exists(z => z==t5) => None
+    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if !getVars(t6).exists(z => z==t5) => Some(Substitution(SingleSubstitution(t5.asInstanceOf[FOLVar],t6)::Nil))
+
 
     case (Function(_, args1), Function(_, args2)) if args1.length != args2.length => None // symbol clash functions arity
     case (Function(_, args1), Function(_, args2)) => args1.zip(args2).foldLeft(Some(Substitution(Nil)): Option[Substitution])(func)
@@ -42,5 +48,11 @@ trait FOLUnification {
       case None => None
       case Some(theta) => Some(sigma:::theta)
     }
+  }
+  //returs a list containing all variables in f
+  def getVars(f: FOLTerm): List[FOLVar] = f match{
+      case (FOLConst(c)) => Nil
+      case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil
+      case (function @ Function(_, args @ _)) => getVars(args.head):::getVars(Function(ConstantStringSymbol("f"),args.tail))
   }
 }
