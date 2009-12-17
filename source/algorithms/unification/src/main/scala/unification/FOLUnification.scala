@@ -34,8 +34,8 @@ trait FOLUnification {
     case (FOLConst(_), Function(_, _)) => None
     case (Function(_, _), FOLConst(_)) => None
 
-    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if getVars(t6).exists(z => z==t5) => None
-    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if !getVars(t6).exists(z => z==t5) => Some(Substitution(SingleSubstitution(t5.asInstanceOf[FOLVar],t6)::Nil))
+    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if getVars(t6).contains(t5) => None
+    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if !getVars(t6).contains(t5) => Some(Substitution(SingleSubstitution(t5.asInstanceOf[FOLVar],t6)::Nil))
 
 
     case (Function(_, args1), Function(_, args2)) if args1.length != args2.length => None // symbol clash functions arity
@@ -52,7 +52,7 @@ trait FOLUnification {
   //returs a list containing all variables in f
   def getVars(f: FOLTerm): List[FOLVar] = f match{
       case (FOLConst(c)) => Nil
-      case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil
-      case (function @ Function(_, args @ _)) => getVars(args.head):::getVars(Function(ConstantStringSymbol("f"),args.tail))
+      case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil   
+      case (function @ Function(_, args @ _)) => args.flatMap( a => getVars(a) )
   }
 }
