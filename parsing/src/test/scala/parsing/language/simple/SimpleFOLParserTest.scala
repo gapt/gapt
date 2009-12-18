@@ -42,6 +42,10 @@ class SimpleFOLParserTest extends SpecificationWithJUnit {
             (new MyParser("X3").getTerm()) must beLike {case x: FOLFormula => true}
             (new MyParser("X3").getTerm()) must beEqual (var3)
         }
+        val func1 = Func(new ConstantStringSymbol("f"), var1::var2::const1::Nil)
+        "parse correctly a function" in {
+            (new MyParser("f(x1, x2, c1)").getTerm()) must beEqual (func1)
+        }
         val and1 = And(atom1, var3)
         "parse correctly an and" in {
             (new MyParser("And A(x1, x2, c1) X3").getTerm()) must beEqual (and1)
