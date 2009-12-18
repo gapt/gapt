@@ -23,7 +23,7 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.language.lambda.types.Parsers {
   def term: Parser[HOLTerm] = (formula | non_formula)
   def formula: Parser[HOLFormula] = (atom | and | or | imp | neg | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
-  def non_formula: Parser[HOLTerm] = (variable | constant)
+  def non_formula: Parser[HOLTerm] = (variable | constant | var_func | const_func)
   def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => hol.createVar(new VariableStringSymbol(x), tp).asInstanceOf[HOLVar]}
   def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => hol.createVar(new ConstantStringSymbol(x), tp).asInstanceOf[HOLConst]}
   def and: Parser[HOLFormula] = "And" ~ formula ~ formula ^^ {case "And" ~ x ~ y => And(x,y)}
@@ -35,7 +35,9 @@ trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.lang
   def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
   def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new VariableStringSymbol(x), params)}
   def const_atom: Parser[HOLFormula] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params)}
-  private def word: String = """[a-zA-Z0-9$_]*"""
-  private def symbol: Parser[String] = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073]+""".r // +-*/\^<>=`~?@&|!#';
+  def var_func: Parser[HOLTerm] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Func(new VariableStringSymbol(x), params, tp)}
+  def const_func: Parser[HOLTerm] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp  => Func(new ConstantStringSymbol(x), params, tp)}
+  protected def word: String = """[a-zA-Z0-9$_]*"""
+  protected def symbol: Parser[String] = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073]+""".r // +-*/\^<>=`~?@&|!#';
 }
 

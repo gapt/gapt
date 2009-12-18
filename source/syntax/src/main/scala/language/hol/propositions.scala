@@ -149,6 +149,19 @@ package propositions {
     }
   }
 
+  object Func {
+    def apply( sym: SymbolA, args: List[HOLTerm], returnType: TA) = {
+      val pred : Var = HOLFactory.createVar( sym, FunctionType( returnType, args.map( a => a.exptype ) ) )
+      AppN(pred, args).asInstanceOf[HOLTerm]
+    }
+    def unapply( expression: LambdaExpression ) = expression match {
+      case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
+      case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
+      case AppN( Var( name, t ), args )
+        if t != FunctionType( To(), args.map( a => a.exptype ) ) => Some( ( name, args, t ) )
+      case _ => None
+    }
+  }
   // HOL formulas of the form P(t_1,...,t_n)
   object Atom {
     def apply( sym: SymbolA, args: List[HOLTerm]) = {
