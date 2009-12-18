@@ -149,7 +149,7 @@ package propositions {
     }
   }
 
-  object Func {
+  object Function {
     def apply( sym: SymbolA, args: List[HOLTerm], returnType: TA) = {
       val pred : Var = HOLFactory.createVar( sym, FunctionType( returnType, args.map( a => a.exptype ) ) )
       AppN(pred, args).asInstanceOf[HOLTerm]

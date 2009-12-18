@@ -27,6 +27,6 @@ trait SimpleFOLParser extends SimpleHOLParser {
   override def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word)) ^^ {case x => FOLFactory.createVar(new ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
 
   override def const_atom: Parser[HOLFormula] = regex(new Regex("[A-Z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
-  override def const_func: Parser[HOLTerm] = regex(new Regex("[a-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Func(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  override def const_func: Parser[HOLTerm] = regex(new Regex("[a-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
 }
 

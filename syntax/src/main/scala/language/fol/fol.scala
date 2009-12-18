@@ -63,20 +63,6 @@ object FOLConst {
   }
 }
 
-object Func {
-    def apply( sym: ConstantSymbolA, args: List[FOLTerm]) = {
-      val pred : Var = FOLFactory.createVar( sym, FunctionType( Ti(), args.map( a => a.exptype ) ) )
-      AppN(pred, args).asInstanceOf[FOLTerm]
-    }
-    def unapply( expression: LambdaExpression ) = expression match {
-      case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case AppN( Var( name, t ), args )
-        if t == FunctionType( Ti(), args.map( a => a.exptype ) ) => Some( ( name, args.asInstanceOf[List[FOLTerm]]) )
-      case _ => None
-    }
-  }
-
 // FOL atom of the form P(t_1,...,t_n)
 object Atom {
   def apply( sym: ConstantSymbolA, args: List[FOLTerm]) = {
