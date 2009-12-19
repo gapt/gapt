@@ -15,94 +15,145 @@ import org.jgrapht._
 import org.jgrapht.ext._
 import org.jgrapht.graph._
 
-
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.language.hol.propositions._
+import at.logic.language.lambda.typedLambdaCalculus._
 
 class GraphVisualisation[T] {
 
-  /* shows a frame with the graph*/
-  def show(g :  at.logic.utils.ds.graphs.Graph[T]) = {
-    var jf = buildFrame(create(g))
-    jf.setVisible(true)
+    /* shows a frame with the graph*/
+    def show(g :  at.logic.utils.ds.graphs.Graph[T]) = {
+        var jf = buildFrame(create(g))
+        jf.setVisible(true)
     
-  }
+    }
 
-  /* calls create and puts the jgraph into a frame */
-  def buildFrame(g : at.logic.utils.ds.graphs.Graph[T]) : JFrame = buildFrame(create(g))
+    /* calls create and puts the jgraph into a frame */
+    def buildFrame(g : at.logic.utils.ds.graphs.Graph[T]) : JFrame = buildFrame(create(g))
 
-  def buildFrame(g : JGraph) : JFrame = {
-    var jf = new JFrame
-    jf.getContentPane.add(new JScrollPane(g))
-    jf.pack
-    jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+    def buildFrame(g : JGraph) : JFrame = {
+        var jf = new JFrame
+        jf.getContentPane.add(new JScrollPane(g))
+        jf.pack
+        jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 
-    return jf;
-  }
+        return jf;
+    }
 
-  /* creates a jgraph from out graph model */
-  def create(g : at.logic.utils.ds.graphs.Graph[T]) : JGraph = {
-    if (! g.graph.isInstanceOf[ListenableGraph[Any,Any]])
-      throw new Exception("Excpecting a Listenable Graph in the at.logic.utils.ds.graph model!")
+    /* creates a jgraph from out graph model */
+    def create(g : at.logic.utils.ds.graphs.Graph[T]) : JGraph = {
+        if (! g.graph.isInstanceOf[ListenableGraph[Any,Any]])
+        throw new Exception("Excpecting a Listenable Graph in the at.logic.utils.ds.graph model!")
 
-    var jgraph = new JGraph( new JGraphModelAdapter( g.graph ) )
-    return jgraph;
-  }
+        var jgraph = new JGraph( new JGraphModelAdapter( g.graph ) )
+        return jgraph;
+    }
 
 }
 
 object VisualisationUtils {
-  def createTree(label:String, depth : Int) : at.logic.utils.ds.graphs.Graph[String] = {
-      if (depth <= 0) {
-          graphs.VertexGraph[String](label, graphs.EmptyGraph[String])
-      } else {
-          var label1 = "l"+label
-          var label2 = "r"+label
-          var tree1 = createTree(label1, depth-1)
-          var tree2 = createTree(label2, depth-1)
+    def createTree(label:String, depth : Int) : at.logic.utils.ds.graphs.Graph[String] = {
+        if (depth <= 0) {
+            graphs.VertexGraph[String](label, graphs.EmptyGraph[String])
+        } else {
+            var label1 = "l"+label
+            var label2 = "r"+label
+            var tree1 = createTree(label1, depth-1)
+            var tree2 = createTree(label2, depth-1)
 
-          var g : graphs.Graph[String] = graphs.VertexGraph(label,graphs.UnionGraph(tree1,tree2))
-          g = graphs.EdgeGraph[String](label,label1,g )
-          g = graphs.EdgeGraph[String](label,label2,g )
-          g
-      }
-  }
-
-  def placeNodes(jgraph : JGraph) = {
-    // hm this should work, shouldn't it?
-    Console.println("placement")
-
-
-    var cache : GraphLayoutCache  = jgraph.getGraphLayoutCache();
-    var m  = cache.createNestedMap();
-    var it  = m.values().iterator();
-    var i : Any = null;
-
-    while (it.hasNext()) {
-      i = it.next();
-
-      if (i.isInstanceOf[Map[Any,Any] ]) {
-        var im  = i.asInstanceOf[Map[Any,Any] ];
-	var j : Any = null;
-	var it2 = im.values().iterator()
-
-        while (it2.hasNext() ) {
-	  j = it2.next();
-
-          if (j.isInstanceOf[AttributeMap.SerializableRectangle2D]) {
-            var  r :Rectangle2D.Double = j.asInstanceOf[AttributeMap.SerializableRectangle2D];
-            r.x = 10.0;
-            r.y = 400.0;
-            r.width = 100.0;
-            r.height = 50.0;
-            Console.println("setting new rectangle:"+r.toString());
-          }
+            var g : graphs.Graph[String] = graphs.VertexGraph(label,graphs.UnionGraph(tree1,tree2))
+            g = graphs.EdgeGraph[String](label,label1,g )
+            g = graphs.EdgeGraph[String](label,label2,g )
+            g
         }
-      }
     }
 
-    Console.println("cache partial? "+cache.isPartial)
+    def formulaToString(f:LambdaExpression) : String = {
+        f match {
+            case App(App(Var(name,t),x),y)    => "(" + formulaToString(x) + " "+ name.toString()+ " " +formulaToString(y) +")"
+            case App(x,y)    => formulaToString(x) + "("+ formulaToString(y) +")"
+            case Var(name,t) => name.toString()
+            case Abs(x,y)    => formulaToString(x)+".("+formulaToString(y)+")"
+            case  x : Any    => "(unmatched class: "+x.getClass() + ")"
+                //            case _ => "(argl!!!)"
+        }
+    }
+
+    def sequentToString(s : Sequent) : String = {
+        var sb = new scala.StringBuilder()
+        var first = true
+        for (f <- s.antecedent) {
+            if (! first) sb.append(", ")
+            else first = false
+
+            sb.append(formulaToString(f))
+        }
+        sb.append(" :- ")
+        first =true
+        for (f <- s.succedent) {
+            if (! first) sb.append(", ")
+            else first = false
+            sb.append(formulaToString(f))
             
-    cache.edit(m);
-  }
+        }
+        sb.toString
+    }
+
+    def toDotFormat(g : graphs.Graph[SequentOccurrence]) : String = {
+        var sb = new scala.StringBuilder()
+        var m = new scala.collection.mutable.HashMap[SequentOccurrence,Int]()
+        var vs = g.graph.vertexSet()
+        var it = vs.iterator
+        var v: SequentOccurrence = null
+        var i = 0
+        while (it.hasNext) {
+            v = it.next
+            m.put(v,i)
+            sb.append("v"+i+ " [label=\""+sequentToString(v.getSequent)+"\"]\n")
+            i += 1
+        }
+
+        sb.toString
+    }
+
+    def placeNodes(jgraph : JGraph) = {
+        // hm this should work, shouldn't it?
+        Console.println("placement")
+
+
+        var cache : GraphLayoutCache  = jgraph.getGraphLayoutCache();
+        var m  = cache.createNestedMap();
+        var it  = m.values().iterator();
+        var i : Any = null;
+
+        while (it.hasNext()) {
+            i = it.next();
+
+            if (i.isInstanceOf[Map[Any,Any] ]) {
+                var im  = i.asInstanceOf[Map[Any,Any] ];
+                var j : Any = null;
+                var it2 = im.values().iterator()
+
+                while (it2.hasNext() ) {
+                    j = it2.next();
+
+                    if (j.isInstanceOf[AttributeMap.SerializableRectangle2D]) {
+                        var  r :Rectangle2D.Double = j.asInstanceOf[AttributeMap.SerializableRectangle2D];
+                        r.x = 10.0;
+                        r.y = 400.0;
+                        r.width = 100.0;
+                        r.height = 50.0;
+                        Console.println("setting new rectangle:"+r.toString());
+                    }
+                }
+            }
+        }
+
+        Console.println("cache partial? "+cache.isPartial)
+            
+        cache.edit(m);
+    }
 }
 
 
@@ -156,79 +207,79 @@ object VisualisationUtils {
 // --- only tests from here on ---
 
 object PlacementTestApp extends Application {
-import at.logic.utils.ds.graphs._
-import GraphImplicitConverters._
+    import at.logic.utils.ds.graphs._
+    import GraphImplicitConverters._
 
     override def main(args : Array[String]) {
-    val g1: EmptyGraph[String] = ( )
-    val g2: VertexGraph[String] = ("a", g1)
-    val g21: VertexGraph[String] = ("b", g2)
-    val g3: EdgeGraph[String] = ("a", "b", g21)
-    val g4: EdgeGraph[String] = ("a", "c", EdgeGraph("b", "c", VertexGraph("c", g3)))
-    val g5 = EdgeGraph("e", "f", VertexGraph("f", VertexGraph("e", EmptyGraph[String])))
-    val g6: UnionGraph[String] = (g4, g5)
+        val g1: EmptyGraph[String] = ( )
+        val g2: VertexGraph[String] = ("a", g1)
+        val g21: VertexGraph[String] = ("b", g2)
+        val g3: EdgeGraph[String] = ("a", "b", g21)
+        val g4: EdgeGraph[String] = ("a", "c", EdgeGraph("b", "c", VertexGraph("c", g3)))
+        val g5 = EdgeGraph("e", "f", VertexGraph("f", VertexGraph("e", EmptyGraph[String])))
+        val g6: UnionGraph[String] = (g4, g5)
       
 
-    var gv = new GraphVisualisation[String]
-    var jgraph = gv.create(g6)
-    VisualisationUtils.placeNodes(jgraph)
+        var gv = new GraphVisualisation[String]
+        var jgraph = gv.create(g6)
+        VisualisationUtils.placeNodes(jgraph)
 
-    var frame = gv.buildFrame(g6)
-    frame.show()
+        var frame = gv.buildFrame(g6)
+        frame.show()
     }
 }
 
 object JGraphApp extends Application {
-  var jf = new JFrame
-  var jm = new DefaultGraphModel
-  var cache = new GraphLayoutCache(jm, new DefaultCellViewFactory)
-  var jg = new JGraph (jm, cache)
+    var jf = new JFrame
+    var jm = new DefaultGraphModel
+    var cache = new GraphLayoutCache(jm, new DefaultCellViewFactory)
+    var jg = new JGraph (jm, cache)
   
-  var cells = new Array[DefaultGraphCell](3)
-  cells.update(0, new DefaultGraphCell(new String("cell 1") ))
+    var cells = new Array[DefaultGraphCell](3)
+    cells.update(0, new DefaultGraphCell(new String("cell 1") ))
   
-  GraphConstants.setBounds(cells.apply(0).getAttributes(), new Rectangle2D.Double(20,20,40,20));
-  GraphConstants.setGradientColor(cells.apply(0).getAttributes(), Color.orange);
-  GraphConstants.setOpaque(cells.apply(0).getAttributes(), true);
+    GraphConstants.setBounds(cells.apply(0).getAttributes(), new Rectangle2D.Double(20,20,40,20));
+    GraphConstants.setGradientColor(cells.apply(0).getAttributes(), Color.orange);
+    GraphConstants.setOpaque(cells.apply(0).getAttributes(), true);
 
   
-  cells.update(1, new DefaultGraphCell(new String("cell 2") ))
-  GraphConstants.setBounds(cells(1).getAttributes(), new Rectangle2D.Double(20,50,40,20));
-  GraphConstants.setGradientColor(cells(1).getAttributes(), Color.orange);
-  GraphConstants.setOpaque(cells(1).getAttributes(), true);
+    cells.update(1, new DefaultGraphCell(new String("cell 2") ))
+    GraphConstants.setBounds(cells(1).getAttributes(), new Rectangle2D.Double(20,50,40,20));
+    GraphConstants.setGradientColor(cells(1).getAttributes(), Color.orange);
+    GraphConstants.setOpaque(cells(1).getAttributes(), true);
   
-  var port0 = new DefaultPort
-  var port1 = new DefaultPort
+    var port0 = new DefaultPort
+    var port1 = new DefaultPort
   
-  cells(0).add(port0)
-  cells(1).add(port1)
+    cells(0).add(port0)
+    cells(1).add(port1)
   
-  var edge = new org.jgraph.graph.DefaultEdge("edge")
-  edge.setSource(cells(0).getChildAt(0))
-  edge.setTarget(cells(1).getChildAt(0))
+    var edge = new org.jgraph.graph.DefaultEdge("edge")
+    edge.setSource(cells(0).getChildAt(0))
+    edge.setTarget(cells(1).getChildAt(0))
   
-  cells(2) = edge
+    cells(2) = edge
   
   
-  for (c <- cells) {
+    for (c <- cells) {
+        jg.getGraphLayoutCache().insert(c)
+    }
+
+    // jg.getGraphLayoutCache().insert(cells) // adding the whole array does only work in java!
+
+  
+    jf.getContentPane.add(new JScrollPane(jg))
+    jf.pack
+    jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+    jf.setVisible(true)
+
+    var c = new DefaultGraphCell(new String("cell 3") )
+    //  GraphConstants.setBounds(c.getAttributes(), new Rectangle2D.Double(20,20,40,20));
+    GraphConstants.setGradientColor(c.getAttributes(), Color.orange);
+    GraphConstants.setOpaque(c.getAttributes(), true);
+    GraphConstants.setAutoSize(c.getAttributes(), true)
+
     jg.getGraphLayoutCache().insert(c)
-  }
-
-  // jg.getGraphLayoutCache().insert(cells) // adding the whole array does only work in java!
-
-  
-  jf.getContentPane.add(new JScrollPane(jg))
-  jf.pack
-  jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
-  jf.setVisible(true)
-
-  var c = new DefaultGraphCell(new String("cell 3") )
-//  GraphConstants.setBounds(c.getAttributes(), new Rectangle2D.Double(20,20,40,20));
-  GraphConstants.setGradientColor(c.getAttributes(), Color.orange);
-  GraphConstants.setOpaque(c.getAttributes(), true);
-  GraphConstants.setAutoSize(c.getAttributes(), true)
-
-  jg.getGraphLayoutCache().insert(c)  
 }
 
 
@@ -237,7 +288,7 @@ class IteratorWrapper[A](iter:java.util.Iterator[A])
 {
     def foreach(f: A => Unit): Unit = {
         while(iter.hasNext){
-          f(iter.next)
+            f(iter.next)
         }
     }
 }
@@ -245,110 +296,110 @@ class IteratorWrapper[A](iter:java.util.Iterator[A])
 
 // small hack to try out vertex placement
 object YOffset {
-  var offset = 0;
+    var offset = 0;
 }
 
 /* Mini Vertex and Edge Classes*/
 
 class Vertex(desc : String) extends DefaultGraphCell(desc) {
-  var description: String = desc
-  //GraphConstants.setResize(getAttributes(), true) //does not work as expected - perhaps it's only about the cell size not it's placement
-  //GraphConstants.setAutoSize(getAttributes(), true)
+    var description: String = desc
+    //GraphConstants.setResize(getAttributes(), true) //does not work as expected - perhaps it's only about the cell size not it's placement
+    //GraphConstants.setAutoSize(getAttributes(), true)
 
-  //GraphConstants.setBounds(getAttributes(), new Rectangle2D.Double(20, 20+YOffset.offset, 40,20))
-  //YOffset.offset += 30
+    //GraphConstants.setBounds(getAttributes(), new Rectangle2D.Double(20, 20+YOffset.offset, 40,20))
+    //YOffset.offset += 30
 			   
 
-  //Console.println("vertex "+ description + " created!")
+    //Console.println("vertex "+ description + " created!")
   
   
   
-  def print() { 
-    Console.print("vertex description=\"" + description + "\"")
-  }
+    def print() {
+        Console.print("vertex description=\"" + description + "\"")
+    }
 }
 
 class Edge(description : String, v1 : Vertex, v2 : Vertex) extends DefaultGraphCell(description) {
-  def print() { 
-    Console.print("edge between \""+ v1.description +"\" and \"" + v2.description+"\"") 
-  }
+    def print() {
+        Console.print("edge between \""+ v1.description +"\" and \"" + v2.description+"\"")
+    }
 }
 
 
 class GEdgeFactory extends EdgeFactory[Vertex,Edge] {
-  def createEdge(v1:Vertex, v2: Vertex) : Edge = { new Edge("edge", v1,v2) }
+    def createEdge(v1:Vertex, v2: Vertex) : Edge = { new Edge("edge", v1,v2) }
 } 
 
 
 /* JGrapht Adapter*/
 
 object AdapterApp extends Application {
-  implicit def iteratorToWrapper[T](iter:java.util.Iterator[T]):IteratorWrapper[T] = new IteratorWrapper[T](iter)
+    implicit def iteratorToWrapper[T](iter:java.util.Iterator[T]):IteratorWrapper[T] = new IteratorWrapper[T](iter)
 
 
 
-  var v1 = new Vertex("v1")
-  var v2 = new Vertex("v2")
-  var v3 = new Vertex("v3")
-  var v4 = new Vertex("v4")
-  var v5 = new Vertex("v5")
-  var e  = new Edge("e",v1,v2)
-  e.print()
-  Console.println()
+    var v1 = new Vertex("v1")
+    var v2 = new Vertex("v2")
+    var v3 = new Vertex("v3")
+    var v4 = new Vertex("v4")
+    var v5 = new Vertex("v5")
+    var e  = new Edge("e",v1,v2)
+    e.print()
+    Console.println()
   
-  var factory = new GEdgeFactory
+    var factory = new GEdgeFactory
   
-  var g = new DefaultDirectedGraph[Vertex,Edge](factory)
-  g.addVertex(v1)
-  g.addVertex(v2)
-  g.addVertex(v3)
-  g.addVertex(v4)
-  g.addVertex(v5)
-  g.addEdge(v1,v2)
-  g.addEdge(v2,v4)
-  g.addEdge(v2,v3)
-  g.addEdge(v3,v5)
+    var g = new DefaultDirectedGraph[Vertex,Edge](factory)
+    g.addVertex(v1)
+    g.addVertex(v2)
+    g.addVertex(v3)
+    g.addVertex(v4)
+    g.addVertex(v5)
+    g.addEdge(v1,v2)
+    g.addEdge(v2,v4)
+    g.addEdge(v2,v3)
+    g.addEdge(v3,v5)
 
-  //Console.print(g.toString())
+    //Console.print(g.toString())
 
-  // create a JGraphT graph
-  /* scala does not see the ListenableDirectedGraph(java.lang.Class) constructor,
-   solve via java wrapper hiding the copy constructor?
-   */
+    // create a JGraphT graph
+    /* scala does not see the ListenableDirectedGraph(java.lang.Class) constructor,
+     solve via java wrapper hiding the copy constructor?
+     */
 
-  var graph = new ListenableDirectedGraph( g )
+    var graph = new ListenableDirectedGraph( g )
 
-  // create a visualization using JGraph, via the adapter
-  var jgraph = new JGraph( new JGraphModelAdapter( graph ) )
+    // create a visualization using JGraph, via the adapter
+    var jgraph = new JGraph( new JGraphModelAdapter( graph ) )
 
-  var jf = new JFrame
-  jf.getContentPane.add(new JScrollPane(jgraph))
-  jf.pack
-  jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
-  jf.setVisible(true)
-
-
-  var map = jgraph.getGraphLayoutCache().createNestedMap()
-//  for (m <- map.values()) {
-//    GraphConstants.setAutoSize(m, true)
-//  }
+    var jf = new JFrame
+    jf.getContentPane.add(new JScrollPane(jgraph))
+    jf.pack
+    jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+    jf.setVisible(true)
 
 
-  var c = 0
-  var it = map.values().iterator()
-  var i = null
-//  while (it.hasNext()) {
-//    i = it.next() 
-//    i match {
-////      case Map => Console.out.println("map")
-//      case _   => c += 1;// Console.out.println("_")
-//    }
-////    GraphConstants.setAutoSize(it.next() : Map[Any, Any] , true)
-//  }
-//  Console.println("done "+c)
-  jgraph.getGraphLayoutCache().edit(map)
+    var map = jgraph.getGraphLayoutCache().createNestedMap()
+    //  for (m <- map.values()) {
+    //    GraphConstants.setAutoSize(m, true)
+    //  }
+
+
+    var c = 0
+    var it = map.values().iterator()
+    var i = null
+    //  while (it.hasNext()) {
+    //    i = it.next()
+    //    i match {
+    ////      case Map => Console.out.println("map")
+    //      case _   => c += 1;// Console.out.println("_")
+    //    }
+    ////    GraphConstants.setAutoSize(it.next() : Map[Any, Any] , true)
+    //  }
+    //  Console.println("done "+c)
+    jgraph.getGraphLayoutCache().edit(map)
   
 
-  // --- main code end
+    // --- main code end
 
 }
