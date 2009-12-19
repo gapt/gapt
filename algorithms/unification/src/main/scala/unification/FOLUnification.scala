@@ -12,7 +12,7 @@ import at.logic.language.lambda.substitutions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol._
-import at.logic.language.hol.propositions._
+//import at.logic.language.hol.propositions._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -30,6 +30,7 @@ trait FOLUnification {
 
     case (t1 @ FOLVar(x), t2 @ FOLConst(c)) => Some(Substitution(SingleSubstitution(t1.asInstanceOf[FOLVar],t2)::Nil))
     case (t3 @ FOLConst(c), t4 @ FOLVar(x)) => unify(t4,t3)
+    case (t31 @ Function(_, _), t41 @ FOLVar(x)) => unify(t41,t31)
 
     case (FOLConst(_), Function(_, _)) => None
     case (Function(_, _), FOLConst(_)) => None
