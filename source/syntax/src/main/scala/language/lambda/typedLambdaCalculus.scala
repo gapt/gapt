@@ -18,6 +18,7 @@ package typedLambdaCalculus {
 
   trait LambdaExpression extends LambdaFactoryProvider {
     def exptype: TA
+    def toString1(): String
     def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var => (HashSet(v), new EmptySet)
       case app: App => {
@@ -56,6 +57,7 @@ package typedLambdaCalculus {
     }
     override def hashCode() = exptype.hashCode
     override def toString() = "Var(" + name + "," + exptype + ")"
+    def toString1(): String = name.toString
     def toStringSimple() = name.toString
   }
   // TODO: remove!?!
@@ -79,6 +81,7 @@ package typedLambdaCalculus {
     }
     override def hashCode() = exptype.hashCode
     override def toString() = "Abs(" + variable + "," + expression + ")"
+    def toString1(): String = "Abs(" + variable.toString1 + "," + expression.toString1 + ")"
     def toStringSimple = "(λ" + variable.toStringSimple + "." + expression.toStringSimple + ")"
   }
 
@@ -109,6 +112,7 @@ package typedLambdaCalculus {
     }
     override def hashCode() = exptype.hashCode
     override def toString() = "App(" + function + "," + argument + ")"
+    def toString1(): String = "App(" + function.toString1+", "+argument.toString1+")"
     def toStringSimple() = "(" + function.toStringSimple + argument.toStringSimple + ")"
   }
 
