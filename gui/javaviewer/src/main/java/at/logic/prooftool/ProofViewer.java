@@ -1,22 +1,15 @@
 package at.logic.prooftool;
 
-import java.awt.event.WindowEvent;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-//import java.util.HashSet;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowStateListener;
 import java.awt.geom.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import org.jgraph.*;
 import org.jgraph.graph.*;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.ListenableDirectedGraph;
 
@@ -28,80 +21,6 @@ public class ProofViewer<V> {
     private JGraph graph = null;
     private JFrame frame = null;
     private DirectedGraph<V, DefaultEdge> graph_data;
-
-    public class ListSet<T> implements Set<T> {
-
-        private ArrayList<T> list = new ArrayList<T>();
-
-        @Override
-        public int size() {
-            return list.size();
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return list.isEmpty();
-        }
-
-        @Override
-        public boolean contains(Object arg0) {
-            return list.contains(arg0);
-        }
-
-        @Override
-        public Iterator<T> iterator() {
-            return list.iterator();
-        }
-
-        @Override
-        public Object[] toArray() {
-            return list.toArray();
-        }
-
-        @Override
-        public <S> S[] toArray(S[] arg0) {
-            return list.toArray(arg0);
-        }
-
-        @Override
-        public boolean add(T arg0) {
-            if (list.contains(arg0)) {
-                return false;
-            }
-            list.add(arg0);
-            return true;
-        }
-
-        @Override
-        public boolean remove(Object arg0) {
-            return list.remove(arg0);
-        }
-
-        @Override
-        public boolean containsAll(Collection arg0) {
-            return list.contains(arg0);
-        }
-
-        @Override
-        public boolean addAll(Collection arg0) {
-            return list.addAll(arg0);
-        }
-
-        @Override
-        public boolean retainAll(Collection arg0) {
-            return list.retainAll(arg0);
-        }
-
-        @Override
-        public boolean removeAll(Collection arg0) {
-            return list.removeAll(arg0);
-        }
-
-        @Override
-        public void clear() {
-            list.clear();
-        }
-    }
 
     public ProofViewer() {
         this.model = new JGraphModelAdapter(new ListenableDirectedGraph<V, DefaultEdge>(DefaultEdge.class));
@@ -156,17 +75,23 @@ public class ProofViewer<V> {
         model.endUpdate();
     }
 
+    public boolean checkTree(org.jgrapht.Graph<V,DefaultEdge> tree) {
+        
+
+        return true;
+    }
+
     public void run() {
         /*
         this.frame.addWindowStateListener(new WindowStateListener() {
-            public void windowStateChanged(WindowEvent arg0) {
-                System.err.println("event:"+arg0);
-                if (WindowEvent.WINDOW_CLOSING) {
-                    arg0.getWindow().setVisible(false);
-                    System.err.println("Closing...");
-                    
-                }
-            }
+        public void windowStateChanged(WindowEvent arg0) {
+        System.err.println("event:"+arg0);
+        if (WindowEvent.WINDOW_CLOSING) {
+        arg0.getWindow().setVisible(false);
+        System.err.println("Closing...");
+
+        }
+        }
         })*/
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.frame.setVisible(true);
@@ -307,7 +232,7 @@ public class ProofViewer<V> {
         for (V v : vertices) {
             if (graph_data.inDegreeOf(v) == 0) {
                 slice.add(v);
-                System.err.println("root " + v);
+                //System.err.println("root " + v);
             } else {
                 //System.err.println("nonroot"+v);
             }
@@ -344,7 +269,6 @@ public class ProofViewer<V> {
 
 
         Integer max_depth = level;
-        System.err.println("point 3");
 
         Map m = new HashMap();
         DefaultGraphCell cell = null;
@@ -356,7 +280,7 @@ public class ProofViewer<V> {
         for (V v : leaves) {
             cell = model.getVertexCell(v);
             amap = cell.getAttributes();
-            rect = new Rectangle2D.Double(leafx, 50 + 50 *(max_depth- depthOf(v, slices)), 60, 20);
+            rect = new Rectangle2D.Double(leafx, 50 + 50 * (max_depth - depthOf(v, slices)), 60, 20);
             GraphConstants.setBounds(amap, rect);
             GraphConstants.setGradientColor(amap, Color.yellow);
             GraphConstants.setOpaque(amap, true);
@@ -379,7 +303,7 @@ public class ProofViewer<V> {
 
                 cell = model.getVertexCell(v);
                 amap = cell.getAttributes();
-                rect = new Rectangle2D.Double(getChildrenMean(v, m), 50 + 50 *(max_depth - depthOf(v, slices)), 60, 20);
+                rect = new Rectangle2D.Double(getChildrenMean(v, m), 50 + 50 * (max_depth - depthOf(v, slices)), 60, 20);
                 GraphConstants.setBounds(amap, rect);
                 GraphConstants.setGradientColor(amap, Color.yellow);
                 GraphConstants.setOpaque(amap, true);
