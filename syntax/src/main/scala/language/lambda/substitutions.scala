@@ -10,8 +10,11 @@ package at.logic.language.lambda
 import symbols._
 import typedLambdaCalculus._
 import scala.collection.immutable._
+//import at.logic.unification.FOLUnification._
+
 
 package substitutions {
+  // import at.logic.unification.FOLUnification._
   case class SingleSubstitution(variable: Var, expression: LambdaExpression) {
     def _1 = variable
     def _2 = expression
@@ -60,6 +63,30 @@ package substitutions {
     def ::(sub:SingleSubstitution) = new Substitution(sub::substitutions)
     def :::(otherSubstitutionList:Substitution) = new Substitution(otherSubstitutionList.substitutions:::this.substitutions)
     def apply(expression: LambdaExpression):LambdaExpression = substitutions.foldLeft(expression)((exp, sigma) => sigma(exp))
+
+ /* def applySub(sub: Substitution): Substitution =
+    {
+        var newSubstitution: Substitution = new Substitution(Nil)
+        for(s <- sub.substitutions)
+        {
+            var newSubst: Substitution = new Substitution(Nil)
+            for(s1 <- substitutions)
+            {
+                if(s1._1 != s._1)
+                {
+                    newSubst = Substitution(SingleSubstitution(s1._1, Substitution(s::Nil).apply(s1._2))::Nil):::newSubst
+                }
+                else
+                {
+                    val alg = new FOLUnification{}
+                    val s2 = (alg.unify(s._2,s1._2)):::Substitution(s::Nil)
+                    newSubst = Substitution(SingleSubstitution(s1._1, Substitution(s2::Nil).apply(s1._2))::Nil):::newSubst
+                }
+            }
+            newSubstitution = newSubstitution:::newSubst
+        }
+        return newSubstitution
+    }*/
   }
 
 
