@@ -14,7 +14,7 @@ import at.logic.language.lambda.substitutions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol._
-import at.logic.language.hol.propositions._
+//import at.logic.language.hol.propositions._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -85,8 +85,8 @@ class UnificationTest extends SpecificationWithJUnit {
         val t8 = Function(ConstantStringSymbol("f"), t7::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
       //   alg.printSubst(alg.unify(x,t8).get)
         (alg.unify(x, t8)) must beEqual (None)//(Some(Substitution( Nil)))
-    }/*
-    "returns the unifier {x->b,y->g(b)} for the pair <f(y,b),f(g(x),y)>, where x,y are vars, a and b are consts" in {
+    }
+    "returns the unifier {x->b,y->g(b)} for the pair <f(g(x),y), f(y,g(b))> where x,y are vars, a and b are consts" in {
         val x = FOLVar(VariableStringSymbol("x"))
         val y = FOLVar(VariableStringSymbol("y"))
         val b = FOLConst(ConstantStringSymbol("b"))
@@ -96,9 +96,9 @@ class UnificationTest extends SpecificationWithJUnit {
         val t9 = Function(ConstantStringSymbol("f"), gx::y::Nil)
         val t10 = Function(ConstantStringSymbol("f"), y::gb::Nil)
      
-     //this line does not work   alg.printSubst(alg.unify(t9,t10).get)
-      //  (alg.unify(t9,t10)) must beEqual (Some(Substitution(SingleSubstitution(x,b) :: SingleSubstitution(y,gb) :: Nil)))
-        (alg.unify(c,t10)) must beEqual (None)
-    }*/
+        alg.printSubst(alg.unify(t9,t10).get)
+        (alg.unify(t9,t10)) must beEqual (Some(Substitution(SingleSubstitution(y,gb) :: SingleSubstitution(x,b) :: Nil)))
+     
+    }
   }
 }
