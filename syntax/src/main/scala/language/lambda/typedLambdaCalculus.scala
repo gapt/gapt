@@ -39,26 +39,34 @@ package typedLambdaCalculus {
   }
 
   trait LambdaFactoryA {
-    def createVar( name: SymbolA, exptype: TA ) : Var
+    def createVar( name: SymbolA, exptype: TA ): Var = createVar(name, exptype, None)
+    def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var
     def createAbs( variable: Var, exp: LambdaExpression ) : Abs
     def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App
   }
 
   object LambdaFactory extends LambdaFactoryA {
-    def createVar( name: SymbolA, exptype: TA ) : Var = new Var( name, exptype )
+    def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int])  = new Var( name, exptype, dbInd )
     def createAbs( variable: Var, exp: LambdaExpression ) : Abs = new Abs( variable, exp )
     def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = new App( fun, arg )
   }
 
-  class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA ) extends LambdaExpression {
-    override def equals(a: Any) = a match {
-      case s: Var => (s.name == name && s.exptype == exptype)
+  class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA,  dbInd: Option[Int]) extends LambdaExpression {
+    private[lambda] val dbIndex: Option[Int] = dbInd // represents a bound variable and its de Bruijn index
+    def this(name: SymbolA, exptype: TA) = this(name, exptype, None)
+    // alpha equlas as ignores bound variable names
+    override def equals(a: Any) = (a,dbIndex) match {
+      case (s: Var, None) if s.isFree => (s.name == name && s.exptype == exptype) // a free variable can only be equal to another free variable
+      case (s: Var, Some(dbi)) if s.isBound => (dbi == s.dbIndex.get && s.exptype == exptype) // a bound variable can only be equal to another bound variable
       case _ => false
     }
     override def hashCode() = exptype.hashCode
-    override def toString() = "Var(" + name + "," + exptype + ")"
+    override def toString() = "Var(" + toStringSimple() + "," + exptype + ")"
     def toString1(): String = name.toString
-    def toStringSimple() = name.toString
+    // in curly brackets is the de bruijn index
+    def toStringSimple() = name.toString + (if (isBound) """{""" + dbIndex.get + """}""" else "")
+    def isFree = dbIndex == None
+    def isBound = !isFree
   }
   // TODO: remove!?!
   object LambdaVar {
@@ -73,7 +81,10 @@ package typedLambdaCalculus {
     }
   }
 
-  class Abs protected[typedLambdaCalculus]( val variable: Var, val expression: LambdaExpression ) extends LambdaExpression  {
+   class Abs protected[typedLambdaCalculus]( vari: Var, exp: LambdaExpression ) extends LambdaExpression  {
+    // apply db indexing only if vari is not already a bound variable (i.e. sometimes we want to build inductively an existing term and there is no reason to index all variables again.
+    val expression = if (vari.isFree) createDeBruijnIndex(vari, exp) else exp // currently a not very functional operation, should be imporved
+    val variable = if (vari.isFree) vari.factory.createVar(vari.name, vari.exptype, Some(1)) else vari // set bounded variable index for given variable, must be done only after the index was alrewady set as otherwise the new var will be bound and the old ones not
     def exptype: TA = ->(variable.exptype,expression.exptype)
     override def equals(a: Any) = a match {
       case s: Abs => (s.variable == variable && s.expression == expression && s.exptype == exptype)
@@ -83,6 +94,13 @@ package typedLambdaCalculus {
     override def toString() = "Abs(" + variable + "," + expression + ")"
     def toString1(): String = "Abs(" + variable.toString1 + "," + expression.toString1 + ")"
     def toStringSimple = "(λ" + variable.toStringSimple + "." + expression.toStringSimple + ")"
+    private def createDeBruijnIndex(variable: Var, exp: LambdaExpression): LambdaExpression = exp match {
+      case v: Var if variable == v => v.factory.createVar(v.name, v.exptype, Some(1)) // also does not match if v is already a bound variable do to the Var equals method
+      case v: Var if v.isBound => v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+1)) // increase bound variable dbIndex by 1
+      case v: Var => v
+      case App(a, b) => App(createDeBruijnIndex(variable, a), createDeBruijnIndex(variable, b))
+      case Abs(v, a) => Abs(v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+1)), createDeBruijnIndex(variable, a))
+    }
   }
 
   object Abs {
@@ -164,6 +182,15 @@ package typedLambdaCalculus {
     def unapply(expression: LambdaExpression):Option[(LambdaExpression, List[LambdaExpression])] = expression match {
       case App(_,_) => AppN.unapply(expression)
       case _ => None
+    }
+  }
+  
+  object IncreaseDBIndices {
+    def apply(expression: LambdaExpression, indInc: Int): LambdaExpression = expression match {
+      case v:Var if v.isBound => v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+indInc))
+      case App(m,n) => App(apply(m, indInc), apply(n, indInc))
+      case Abs(v,m) => Abs(v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+indInc)), apply(m, indInc))
+      case _ => expression
     }
   }
 

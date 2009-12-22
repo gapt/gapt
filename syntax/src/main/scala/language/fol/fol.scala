@@ -30,8 +30,8 @@ trait FOLTerm extends LambdaExpression with HOL with FOL
 }
 
 // individual variable
-class FOLVar (name: VariableSymbolA)
-  extends HOLVar(name, Ti()) with FOLTerm
+class FOLVar (name: VariableSymbolA, dbInd: Option[Int])
+  extends HOLVar(name, Ti(), dbInd) with FOLTerm
 
 // individual constant
 class FOLConst (name: ConstantSymbolA)
@@ -48,7 +48,7 @@ object FOLAbs {
 }
 
 object FOLVar {
-  def apply(name: VariableSymbolA) = new FOLVar(name)
+  def apply(name: VariableSymbolA) = new FOLVar(name,None)
   def unapply(exp: LambdaExpression) = exp match {
     case Var( sym : VariableSymbolA, t : Ti ) => Some( sym )
     case _ => None
@@ -140,10 +140,10 @@ object AllVar {
 }
 
 object FOLFactory extends LambdaFactoryA {
-  def createVar( name: SymbolA, exptype: TA ) : Var = exptype match {
+  def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int] ) : Var = exptype match {
     case Ti() => name match {
       case a: ConstantSymbolA => FOLConst(a)
-      case a: VariableSymbolA => FOLVar(a)
+      case a: VariableSymbolA => new FOLVar(a,dbInd)
     }
     case To() => name match {
       case a: ConstantSymbolA => new HOLConstFormula(a) with FOL
