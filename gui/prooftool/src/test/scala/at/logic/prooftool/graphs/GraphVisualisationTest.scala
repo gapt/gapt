@@ -8,12 +8,12 @@ import GraphImplicitConverters._
 import at.logic.prooftool.ProofViewer
 
 import java.util.zip.GZIPInputStream
-import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
+import java.io.{PrintWriter, FileReader, FileInputStream, InputStreamReader}
 
 class GraphVisualisationTest extends SpecificationWithJUnit {
     "Passing of scala graph to JavaViewer works" in {
@@ -41,7 +41,13 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
 
         val proof = proofs.first
 
-        //println(VisualisationUtils.toDotFormat(proof))
+        /* // --- output graph to dot format, works but commented out, because it creates additional files in the project
+        val writer = new PrintWriter(new java.io.File("primeproof.dot"))
+        writer.append(VisualisationUtils.toDotFormat(proof))
+        writer.close
+        */
+      
+       // println(VisualisationUtils.toDotFormat(proof))
 
 
         var pv = new ProofViewer[SequentOccurrence](proof)
