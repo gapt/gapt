@@ -13,13 +13,14 @@ import org.specs.runner._
 import trees._
 import graphs._
 import TreeImplicitConverters._
+import org.jgrapht.graph.DefaultEdge
 
 class TreesTest extends SpecificationWithJUnit {
   "Tree" should {
     "contains no cycles" in {
       val t1 = UnaryTree("d",UnaryTree("c",UnaryTree("b","a")))
       val t2 = UnaryTree("3", UnaryTree("2", "1"))
-      (new org.jgrapht.alg.CycleDetector[String, org.jgrapht.graph.DefaultEdge](t1.graph).detectCycles()) must beEqual (false)
+      (new org.jgrapht.alg.CycleDetector[String, DefaultEdge](t1.graph).detectCycles()) must beEqual (false)
       (BinaryTree("X", t1, t2)) mustNot throwA [java.lang.IllegalArgumentException]
       (UnaryTree("a", "a")) must throwA [java.lang.IllegalArgumentException]
     }

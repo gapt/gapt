@@ -23,8 +23,8 @@ import at.logic.utils.testing.PropMatcher.bePassed
 class termgeneratorTest extends SpecificationWithJUnit {
     "The generator" should {
         "be able to convert between tuples and langauges" in {
-            import Language.languageFromTuple
-            import Language.tupleFromLanguage
+            //import Language.languageFromTuple
+            //import Language.tupleFromLanguage
 
             val prop = forAll( (seed:Int, nv:Int, nc:Int, nf:Int) => {
                 var generator = new FOLtermGenerator(seed)

@@ -10,14 +10,15 @@ package at.logic.utils.ds
 package graphs {
 
   import scala.collection.jcl.Conversions._
+import org.jgrapht.graph.DefaultEdge
 
-  trait Graph[V] {
-      var graph: org.jgrapht.DirectedGraph[V,org.jgrapht.graph.DefaultEdge] = null
+trait Graph[V] {
+      var graph: org.jgrapht.DirectedGraph[V,DefaultEdge] = null
 
-      //needed for interfaceing with java
-      def getGraph() : org.jgrapht.DirectedGraph[V,org.jgrapht.graph.DefaultEdge] = graph
+      //needed for interfacing with java
+      def getGraph() : org.jgrapht.DirectedGraph[V,DefaultEdge] = graph
 }
-  class EmptyGraph[V] extends Graph[V] { graph = new org.jgrapht.graph.ListenableDirectedGraph[V,org.jgrapht.graph.DefaultEdge](classOf[org.jgrapht.graph.DefaultEdge])}
+  class EmptyGraph[V] extends Graph[V] { graph = new org.jgrapht.graph.ListenableDirectedGraph[V,DefaultEdge](classOf[DefaultEdge])}
   object EmptyGraph {
     def apply[V]() = new EmptyGraph[V]
     def unapply[V](g: Graph[_]) = g match {
@@ -29,7 +30,7 @@ package graphs {
     graph = g.graph
     val vset = new java.util.HashSet[V](g.graph.vertexSet())
     graph.addVertex(v)
-    g.graph = new org.jgrapht.graph.DirectedSubgraph[V,org.jgrapht.graph.DefaultEdge](graph, vset, g.graph.edgeSet())
+    g.graph = new org.jgrapht.graph.DirectedSubgraph[V,DefaultEdge](graph, vset, g.graph.edgeSet())
   }
   object VertexGraph {
     def apply[V](v: V, g: Graph[V]) = new VertexGraph[V](v,g)
@@ -40,9 +41,9 @@ package graphs {
   }
   class EdgeGraph[V](val v1: V, val v2: V, val g: Graph[V]) extends Graph[V] {
     graph = g.graph
-    val eset = new java.util.HashSet[org.jgrapht.graph.DefaultEdge](g.graph.edgeSet());
+    val eset = new java.util.HashSet[DefaultEdge](g.graph.edgeSet());
     graph.addEdge(v1, v2)
-    g.graph = new org.jgrapht.graph.DirectedSubgraph[V,org.jgrapht.graph.DefaultEdge](graph, g.graph.vertexSet(), eset)
+    g.graph = new org.jgrapht.graph.DirectedSubgraph[V,DefaultEdge](graph, g.graph.vertexSet(), eset)
   }
   object EdgeGraph {
     def apply[V](v1: V, v2: V, g: Graph[V]) = new EdgeGraph[V](v1,v2,g)
@@ -55,12 +56,12 @@ package graphs {
     graph = g1.graph
     val vset1 = new java.util.HashSet[V](g1.graph.vertexSet())
     val vset2 = new java.util.HashSet[V](g2.graph.vertexSet())
-    val eset1 = new java.util.HashSet[org.jgrapht.graph.DefaultEdge](g1.graph.edgeSet())
-    val eset2 = new java.util.HashSet[org.jgrapht.graph.DefaultEdge](g2.graph.edgeSet())
+    val eset1 = new java.util.HashSet[DefaultEdge](g1.graph.edgeSet())
+    val eset2 = new java.util.HashSet[DefaultEdge](g2.graph.edgeSet())
     for (v0 <- g2.graph.vertexSet()) graph.addVertex(v0)
     for (e0 <- g2.graph.edgeSet()) graph.addEdge(graph.getEdgeSource(e0), graph.getEdgeTarget(e0), e0)
-    g1.graph = new org.jgrapht.graph.DirectedSubgraph[V,org.jgrapht.graph.DefaultEdge](graph, vset1, eset1)
-    g2.graph = new org.jgrapht.graph.DirectedSubgraph[V,org.jgrapht.graph.DefaultEdge](graph, vset2, eset2)
+    g1.graph = new org.jgrapht.graph.DirectedSubgraph[V,DefaultEdge](graph, vset1, eset1)
+    g2.graph = new org.jgrapht.graph.DirectedSubgraph[V,DefaultEdge](graph, vset2, eset2)
   }
   object UnionGraph {
     def apply[V](g1: Graph[V], g2: Graph[V]) = new UnionGraph[V](g1, g2)

@@ -8,6 +8,7 @@ import java.awt.geom.*;
 import java.util.HashMap;
 import org.jgraph.*;
 import org.jgraph.graph.*;
+import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -23,11 +24,10 @@ public class ProofViewer<V> {
     private DirectedGraph<V, DefaultEdge> graph_data;
 
     public ProofViewer() {
-        this.model = new JGraphModelAdapter(new ListenableDirectedGraph<V, DefaultEdge>(DefaultEdge.class));
+        this.graph_data = new ListenableDirectedGraph<V, DefaultEdge>(DefaultEdge.class);
+        this.model = new JGraphModelAdapter(graph_data);
         this.view = new GraphLayoutCache(model, new DefaultCellViewFactory());
         this.graph = new JGraph(model, view);
-
-
 
         frame = new JFrame();
         frame.getContentPane().add(new JScrollPane(graph));
@@ -46,6 +46,7 @@ public class ProofViewer<V> {
         frame.pack();
     }
 
+    /*
     public void insertLotsOfCells(int number) {
         if (number < 1) {
             number = 1;
@@ -73,13 +74,7 @@ public class ProofViewer<V> {
         model.beginUpdate();
         model.insert(morecells, null, cs, null, null);
         model.endUpdate();
-    }
-
-    public boolean checkTree(org.jgrapht.Graph<V,DefaultEdge> tree) {
-        
-
-        return true;
-    }
+    } */
 
     public void run() {
         /*
@@ -232,7 +227,7 @@ public class ProofViewer<V> {
         for (V v : vertices) {
             if (graph_data.inDegreeOf(v) == 0) {
                 slice.add(v);
-                //System.err.println("root " + v);
+                //System.err.println("root " + VisualisationUtils.sequentToString(v) );
             } else {
                 //System.err.println("nonroot"+v);
             }
@@ -245,7 +240,7 @@ public class ProofViewer<V> {
         Integer level = 0;
         slices.put(level, slice);
         Set<V> oldslice = null;
-        Set<DefaultEdge> edges = null;
+        Set<DefaultEdge > edges = null;
         Set<V> leaves = new ListSet<V>();
 
         while (slice.size() > 0) {
@@ -316,13 +311,15 @@ public class ProofViewer<V> {
     // --- main method for testing ----
     public static void main(String[] args) {
         try {
+            /*
             ProofViewer v = new ProofViewer();
             v.insertLotsOfCells(1000);
             v.doTreePlacement();
             v.run();
-            //Thread.sleep(15000);
+            //Thread.sleep(15000);*/
         } catch (Exception e) {
             //do nothing
+            e.printStackTrace();
         }
     }
 }
