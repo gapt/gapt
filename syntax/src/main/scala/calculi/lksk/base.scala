@@ -14,16 +14,16 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.{Set,EmptySet}
 import scala.collection.immutable.{Map,HashMap}
-import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 
 import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent,SequentOccurrence}
 import at.logic.calculi.occurrences._
+import at.logic.language.hol.propositions.TypeSynonyms._
 
 package base {
   object TypeSynonyms {
-    type Label = Set[LambdaExpression]
+    type Label = Set[HOLTerm]
     object EmptyLabel {
-      def apply() = new EmptySet[LambdaExpression]
+      def apply() = new EmptySet[HOLTerm]
     }
   }
 
@@ -33,6 +33,7 @@ package base {
                                    override val ancestors: List[LabelledFormulaOccurrence],
                                    val label: Label) extends FormulaOccurrence( formula, ancestors ) {
     def factory: FOFactory = LKskFOFactory
+    override def toString: String = formula.toString + " (label: " + label.toString + ")"
   }
 
   private[lksk] object LKskFOFactory extends FOFactory {
@@ -52,7 +53,7 @@ package base {
     // when creating a main formula for a weak quantifier inference in LKsk, we may choose
     // whether to delete the term from the label, or not. If deletion is not desired,
     // term should be set to None.
-    def createWeakQuantMain(formula: Formula, ancestor: LabelledFormulaOccurrence, term: Option[LambdaExpression]) =
+    def createWeakQuantMain(formula: Formula, ancestor: LabelledFormulaOccurrence, term: Option[HOLTerm]) =
     {
       val newlabel = term match {
         case None => ancestor.label
@@ -64,8 +65,12 @@ package base {
       new LabelledFormulaOccurrence( formula, Nil, label )
   }
 
-  class LabelledSequentOccurrence(antecedent: Set[LabelledFormulaOccurrence],
-                                  succedent: Set[LabelledFormulaOccurrence])
-    extends SequentOccurrence( antecedent.asInstanceOf[Set[FormulaOccurrence]],
-                               succedent.asInstanceOf[Set[FormulaOccurrence]] )
+  // TODO: instead of l_antecedent, use override val antecedent
+  // does not work right now because Set is not covariant!
+  class LabelledSequentOccurrence(val l_antecedent: Set[LabelledFormulaOccurrence],
+                                  val l_succedent: Set[LabelledFormulaOccurrence])
+    extends SequentOccurrence( l_antecedent.asInstanceOf[Set[FormulaOccurrence]],
+                               l_succedent.asInstanceOf[Set[FormulaOccurrence]] ) {
+    override def toString: String = l_antecedent.toString + " :- " + l_succedent.toString
+  }
 }
