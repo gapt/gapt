@@ -14,6 +14,7 @@
   <modules>
     <module>prime_proof_test</module>
     <module>tape_test</module>
+    <module>misc_test</module>
   </modules>
 
   <packaging>pom</packaging>

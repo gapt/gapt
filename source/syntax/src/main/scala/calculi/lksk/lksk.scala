@@ -17,7 +17,7 @@ import scala.collection.mutable.{Map,HashMap}
 import base._
 import base.TypeSynonyms._
 
-import at.logic.calculi.lk.base.{LKFOFactory,Sequent,AuxiliaryFormulas,PrincipalFormulas}
+import at.logic.calculi.lk.base.{LKFOFactory,Sequent,AuxiliaryFormulas,PrincipalFormulas, SubstitutionTerm}
 import at.logic.calculi.lk.propositionalRules.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType}
 import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
 import at.logic.calculi.lk.quantificationRules._
@@ -59,7 +59,7 @@ object WeakeningLeftRule {
   def unapply(proof: LKProof) = if (proof.rule == WeakeningLeftRuleType) {
       val r = proof.asInstanceOf[UnaryLKProof with PrincipalFormulas]
       val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, p1))
+      Some((r.uProof, r.root, p1.asInstanceOf[LabelledFormulaOccurrence]))
     }
     else None
 }
@@ -77,7 +77,7 @@ object WeakeningRightRule {
   def unapply(proof: LKProof) = if (proof.rule == WeakeningRightRuleType) {
       val r = proof.asInstanceOf[UnaryLKProof with PrincipalFormulas]
       val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, p1))
+      Some((r.uProof, r.root.asInstanceOf[LabelledSequentOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]))
     }
     else None
 }
@@ -92,25 +92,26 @@ case object ExistsSkRightRuleType extends UnaryRuleTypeA
 
 object ForallSkLeftRule {
   // removeFromLabel indicates whether to remove the term subst from the label of the main formula.
-  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst: HOLTerm, removeFromLabel: Boolean) = {
+  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: HOLTerm, removeFromLabel: Boolean) = {
     main match {
-      case All( sub ) => {
+      case All( sub, _ ) => {
         // TODO: comment in to check validity of the rule.
         // commented out at the moment because we don't know the subst term
         // in the XML parser. We need first-order unification for that.
-        //assert( betaNormalize( App( sub, subst ) ) == aux )
+        //assert( betaNormalize( App( sub, subst_t ) ) == aux )
         if ( !s1.root.antecedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
-        if ( !auxf.label.contains( subst ) )
-          throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term.")
+        if ( !auxf.label.contains( subst_t ) )
+          throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term. Label: " + auxf.label.toString + ", substitution term: " + subst_t.toString)
         val prinFormula = 
-          LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst) else None)
+          LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)
         new UnaryTree[SequentOccurrence](
           new LabelledSequentOccurrence(createContext((s1.root.antecedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula, createContext((s1.root.succedent)).asInstanceOf[Set[LabelledFormulaOccurrence]]), s1 )
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ForallSkLeftRuleType
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
+            def subst = subst_t
           }
       }
       case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
@@ -118,31 +119,32 @@ object ForallSkLeftRule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == ForallSkLeftRuleType) {
-      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, a1, p1))
+      Some((r.uProof, r.root.asInstanceOf[LabelledSequentOccurrence], a1.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence], r.subst))
     }
     else None
 }
 
 object ExistsSkRightRule {
-  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst: HOLTerm, removeFromLabel: Boolean) = {
+  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: HOLTerm, removeFromLabel: Boolean) = {
     main match {
-      case Ex( sub ) => {
-        //assert( betaNormalize( App( sub, subst ) ) == aux )
+      case Ex( sub, _ ) => {
+        //assert( betaNormalize( App( sub, subst_t ) ) == aux )
         if ( !s1.root.succedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
-        if ( !auxf.label.contains( subst ) )
+        if ( !auxf.label.contains( subst_t ) )
           throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term.")
         val prinFormula = 
-          LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst) else None)
+          LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)
         new UnaryTree[SequentOccurrence](
           new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]], createContext((s1.root.succedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula), s1 )
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ExistsSkRightRuleType
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
+            def subst = subst_t
           }
       }
       case _ => throw new LKRuleCreationException("Main formula of ExistsSkRightRule must have a universal quantifier as head symbol.")
@@ -150,10 +152,10 @@ object ExistsSkRightRule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == ExistsSkRightRuleType) {
-      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, a1, p1))
+      Some((r.uProof, r.root.asInstanceOf[LabelledSequentOccurrence], a1.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence], r.subst))
     }
     else None
 }
@@ -161,17 +163,18 @@ object ExistsSkRightRule {
 object ForallSkRightRule {
   def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: HOLTerm) = {
     main match {
-      case All( sub ) => {
+      case All( sub, _ ) => {
         // TODO: check Skolem term
         if (!s1.root.succedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
         val prinFormula = auxf.factory.createPrincipalFormulaOccurrence(main, auxf::Nil).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryTree[SequentOccurrence](
           new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]], createContext((s1.root.succedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula), s1 )
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ForallSkRightRuleType
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
+            def subst = skolem_term
           }
         }
       case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
@@ -179,10 +182,10 @@ object ForallSkRightRule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == ForallSkRightRuleType) {
-      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, a1, p1))
+      Some((r.uProof, r.root.asInstanceOf[LabelledSequentOccurrence], a1.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence], r.subst))
     }
     else None
 }
@@ -190,17 +193,18 @@ object ForallSkRightRule {
 object ExistsSkLeftRule {
   def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: HOLTerm) = {
     main match {
-      case Ex( sub ) => {
+      case Ex( sub, _ ) => {
         // TODO: check Skolem term
         if (!s1.root.antecedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
         val prinFormula = auxf.factory.createPrincipalFormulaOccurrence(main, auxf::Nil).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryTree[SequentOccurrence](
           new LabelledSequentOccurrence(createContext((s1.root.antecedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula, createContext((s1.root.succedent)).asInstanceOf[Set[LabelledFormulaOccurrence]]), s1 )
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ExistsSkLeftRuleType
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
+            def subst = skolem_term
           }
         }
       case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
@@ -208,10 +212,10 @@ object ExistsSkLeftRule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == ExistsSkLeftRuleType) {
-      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, a1, p1))
+      Some((r.uProof, r.root.asInstanceOf[LabelledSequentOccurrence], a1.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence], r.subst))
     }
     else None
 }

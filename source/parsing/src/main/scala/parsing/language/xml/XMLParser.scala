@@ -625,7 +625,7 @@ object XMLParser {
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
             // TODO: compute substitution term by unification, right now: dummy variable "a"
-            case All(sub) => ForallLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case All(_, _) => ForallLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("\\alpha"), i) )
             case _ => throw new ParsingException("Rule type is foralll, but main formula is not all-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -638,7 +638,7 @@ object XMLParser {
           val mainf = conc.antecedent.first
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
-            case All(sub) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
+            case All(_, _) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
             case _ => throw new ParsingException("Rule type is foralll2, but main formula is not all-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -652,7 +652,7 @@ object XMLParser {
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
             // TODO: compute eigenvar by unification, right now: dummy variable "a"
-            case Ex(sub) => ExistsLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case Ex(_, _) => ExistsLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("\\beta"), i) )
             case _ => throw new ParsingException("Rule type is existsl, but main formula is not ex-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -666,7 +666,7 @@ object XMLParser {
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
             // TODO: compute eigenvar by unification, right now: dummy variable "a"
-            case Ex(sub) => ExistsLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i -> o) )
+            case Ex(_, _) => ExistsLeftRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i -> o) )
             case _ => throw new ParsingException("Rule type is existsl, but main formula is not ex-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -680,7 +680,7 @@ object XMLParser {
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
             // TODO: compute eigenvar by unification, right now: dummy variable "a"
-            case All(sub) => ForallRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case All(_, _) => ForallRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("\\alpha"), i) )
             case _ => throw new ParsingException("Rule type is forallr, but main formula is not all-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -694,7 +694,7 @@ object XMLParser {
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
             // TODO: compute eigenvar by unification, right now: dummy variable "a"
-            case All(sub) => ForallRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i -> o) )
+            case All(_, _) => ForallRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i -> o) )
             case _ => throw new ParsingException("Rule type is forallr, but main formula is not all-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -708,7 +708,7 @@ object XMLParser {
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
             // TODO: compute substitution term by unification, right now: dummy variable "a"
-            case Ex(sub) => ExistsRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("a"), i) )
+            case Ex(_, _) => ExistsRightRule( prem, auxf.formula, mainf, HOLVar(new VariableStringSymbol("\\alpha"), i) )
             case _ => throw new ParsingException("Rule type is existsr, but main formula is not ex-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -721,7 +721,7 @@ object XMLParser {
           val mainf = conc.succedent.last
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
-            case Ex(sub) => ExistsRightRule( prem, auxf.formula, mainf, subst.get )
+            case Ex(_, _) => ExistsRightRule( prem, auxf.formula, mainf, subst.get )
             case _ => throw new ParsingException("Rule type is existsr, but main formula is not ex-quantified.")
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )

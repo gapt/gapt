@@ -126,7 +126,7 @@ object Imp {
 object ExVar {
   def apply(variable: FOLVar, sub: FOLFormula) = Ex(FOLAbs(variable, sub))
   def unapply(expression: LambdaExpression) = expression match {
-    case Ex(Abs(variable: FOLVar, sub: FOLFormula)) => Some( (variable, sub) )
+    case Ex(Abs(variable: FOLVar, sub: FOLFormula), _) => Some( (variable, sub) )
     case _ => None
   }
 }
@@ -134,7 +134,7 @@ object ExVar {
 object AllVar {
   def apply(variable: FOLVar, sub: FOLFormula) = All(FOLAbs(variable, sub))
   def unapply(expression: LambdaExpression) = expression match {
-    case All(Abs(variable: FOLVar, sub: FOLFormula)) => Some( (variable, sub) )
+    case All(Abs(variable: FOLVar, sub: FOLFormula), _) => Some( (variable, sub) )
     case _ => None
   }
 }

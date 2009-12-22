@@ -31,10 +31,11 @@ import at.logic.language.hol.logicSymbols._
 
 class LKskcTest extends SpecificationWithJUnit {
   "Transformation from LK to LKskc" should {
-    "work for a small proof" in {
-      val c = HOLConst(new ConstantStringSymbol("c"), i)
-      val x = HOLVar("x", i)
-      val y = HOLVar("y", i)
+    val x = HOLVar("x", i)
+    val y = HOLVar("y", i)
+    val c = HOLConst(new ConstantStringSymbol("c"), i)
+
+    "work for a small proof with only weak quantifiers" in {
       val Rcc = Atom("R", c::c::Nil)
       val Rcx = Atom("R", c::x::Nil)
       val Ryx = Atom("R", y::x::Nil)
@@ -45,8 +46,23 @@ class LKskcTest extends SpecificationWithJUnit {
                       LKAxiom( Sequent( Rcc::Nil, Nil ) )._1,
                     Rcc, allxRcx, c ),
                   allxRcx, allyallxRyx, c )
-      val lkskc_proof = LKtoLKskc( proof )
-      lkskc_proof.root.antecedent.toList.first must beLike {case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == proof.root.antecedent.toList.first.formula }
+      val lkskc_proof = LKtoLKskc( proof, new EmptySet )
+      lkskc_proof.root.antecedent.toList.first must beLike {case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == proof.root.getSequent.antecedent.first }
+    }
+
+    "work for a cut-free proof" in {
+      val a = HOLVar("a", i)
+      val b = HOLVar("b", i)
+      val Rab = Atom( "R", a::b::Nil )
+      val exyRay = ExVar( y, Atom( "R", a::y::Nil ) )
+      val allxexyRxy = AllVar( x, ExVar( y, Atom( "R", x::y::Nil ) ) )
+      val ax = LKAxiom( Sequent( Rab::Nil, Rab::Nil ) )
+      val r1 = ExistsRightRule( ax._1, Rab, exyRay, b )
+      val r2 = ExistsLeftRule( r1, Rab, exyRay, b )
+      val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
+      val r4 = ForallRightRule( r3, exyRay, allxexyRxy, a )
+      val lkskc_proof = LKtoLKskc( r4, new EmptySet )
+      lkskc_proof.root.antecedent.toList.first must beLike{ case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == r4.root.getSequent.antecedent.first }
     }
   }
 }

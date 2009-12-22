@@ -36,8 +36,8 @@ package lkExtractors {
       case NegRightRule(up, r, a, p) => Some((NegRightRuleType, up, r, a::Nil, p))
       case ForallLeftRule(up, r, a, p, _) => Some((ForallLeftRuleType, up, r, a::Nil, p))
       case ExistsRightRule(up, r, a, p, _) => Some((ExistsRightRuleType, up, r, a::Nil, p))
-      case ForallRightRule(up, r, a, p) => Some((ForallRightRuleType, up, r, a::Nil, p))
-      case ExistsLeftRule(up, r, a, p) => Some((ExistsLeftRuleType, up, r, a::Nil, p))
+      case ForallRightRule(up, r, a, p, _) => Some((ForallRightRuleType, up, r, a::Nil, p))
+      case ExistsLeftRule(up, r, a, p, _) => Some((ExistsLeftRuleType, up, r, a::Nil, p))
       case DefinitionLeftRule(up, r, a, p) => Some((DefinitionLeftRuleType, up, r, a::Nil, p))
       case DefinitionRightRule(up, r, a, p) => Some((DefinitionRightRuleType, up, r, a::Nil, p))
       case _ => None

@@ -94,6 +94,9 @@ package base {
   trait SubstitutionTerm {
     def subst: HOLTerm
   }
+  trait Eigenvariable {
+    def eigenvar: HOLVar
+  }
 
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
