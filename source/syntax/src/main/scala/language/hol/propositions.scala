@@ -34,12 +34,12 @@ package propositions {
 
   import TypeSynonyms._
   
-  class HOLVar protected[propositions] (name: VariableSymbolA, exptype: TA)
-    extends Var(name, exptype) with HOL
+  class HOLVar protected[propositions] (name: VariableSymbolA, exptype: TA, dbInd: Option[Int])
+    extends Var(name, exptype, dbInd) with HOL
   class HOLConst protected[propositions] (name: ConstantSymbolA, exptype: TA)
-    extends Var(name, exptype) with Const with HOL
-  class HOLVarFormula protected[propositions] (name: VariableSymbolA)
-    extends HOLVar(name, To()) with Formula
+    extends Var(name, exptype, None) with Const with HOL
+  class HOLVarFormula protected[propositions] (name: VariableSymbolA, dbInd: Option[Int])
+    extends HOLVar(name, To(), dbInd) with Formula
   class HOLConstFormula protected[propositions] (name: ConstantSymbolA)
     extends HOLConst(name, To()) with Formula
   class HOLApp protected[propositions] (function: LambdaExpression, argument: LambdaExpression)
@@ -77,15 +77,16 @@ package propositions {
   case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))")
 
   object HOLFactory extends LambdaFactoryA {
-    def createVar( name: SymbolA, exptype: TA ) : Var =
+    def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var =
       name match {
         case a: ConstantSymbolA =>
           if (isFormula(exptype)) new HOLConstFormula(a)
           else new HOLConst(a, exptype)
         case a: VariableSymbolA =>
-          if (isFormula(exptype)) new HOLVarFormula(a)
-          else new HOLVar(a, exptype)
+          if (isFormula(exptype)) new HOLVarFormula(a,dbInd)
+          else new HOLVar(a, exptype,dbInd)
       }
+
     def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App =
       if (isFormulaWhenApplied(fun.exptype)) new HOLAppFormula(fun, arg)
       else new HOLApp(fun, arg)

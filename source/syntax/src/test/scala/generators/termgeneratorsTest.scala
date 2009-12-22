@@ -19,7 +19,7 @@ import org.scalacheck.Prop._
 import org.specs.matcher._
 
 import at.logic.utils.testing.PropMatcher.bePassed
-
+/*
 class termgeneratorTest extends SpecificationWithJUnit {
     "The generator" should {
         "be able to convert between tuples and langauges" in {
@@ -115,4 +115,4 @@ class termgeneratorTest extends SpecificationWithJUnit {
 
         }
     }
-}
+}*/

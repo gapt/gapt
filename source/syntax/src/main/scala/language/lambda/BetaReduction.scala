@@ -7,9 +7,6 @@ package at.logic.language.lambda
 
 import symbols._
 import typedLambdaCalculus._
-import substitutions._
-import substitutions.ImplicitConverters._
-
 
 /* The BetaReduction object encapsulates two functions:
  * 1) betaNormalize, which transforms a lambda expression to beta normal form.
@@ -28,6 +25,8 @@ import substitutions.ImplicitConverters._
  */
 object BetaReduction {
 
+  class ReductionException(msg: String) extends Exception(msg)
+  
   abstract class Strategy extends Enumeration
   object StrategyOuterInner extends Strategy {
     val Outermost = Value
@@ -42,18 +41,12 @@ object BetaReduction {
     implicit val implicitOuter = StrategyOuterInner.Outermost
     implicit val implicitLeft = StrategyLeftRight.Leftmost
   }
-    
+
   def betaNormalize(expression: LambdaExpression)(implicit strategy: StrategyOuterInner.Value):LambdaExpression = expression match {
     case App(Abs(x,body),arg) => {
       strategy match {
-        case StrategyOuterInner.Outermost => {
-          val sigma: Substitution = (x,arg)
-          betaNormalize(sigma(body))(strategy)                          // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
-        }
-        case StrategyOuterInner.Innermost => {
-          val sigma: Substitution = (x,betaNormalize(arg)(strategy))    // If it is innermost strategy, we first normalize the argument and the body and then we reduce the current redex.
-          sigma(betaNormalize(body)(strategy))
-        }
+        case StrategyOuterInner.Outermost => betaNormalize(replace(x, arg, body,0))(strategy)  // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
+        case StrategyOuterInner.Innermost => replace(x, betaNormalize(arg), betaNormalize(body),0)
       }
     }
     case App(m,n) => App(betaNormalize(m)(strategy),betaNormalize(n)(strategy))
@@ -61,13 +54,22 @@ object BetaReduction {
     case x: Var => x
   }
 
-  def betaReduce(expression: LambdaExpression)(implicit strategyOI: StrategyOuterInner.Value, strategyLR: StrategyLeftRight.Value):LambdaExpression = expression match {
+  // replace bound variables, needs to recompute db indices
+  private def replace(bvar: Var, withTerm: LambdaExpression, inTerm: LambdaExpression, index: Int)(implicit strategy: StrategyOuterInner.Value): LambdaExpression =
+    if (bvar.isFree) throw new ReductionException("Error in beta reduction: Malformed Abs term, bounded variable has no db index and therefore is not bound")
+    else inTerm match {
+      case v: Var if v == bvar => IncreaseDBIndices(withTerm,index)
+      case v: Var if v.isBound => v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get-1)) // decreases all bound variables inside the term
+      case v: Var => v
+      case App(a, b) => App(replace(bvar, withTerm, a, index), replace(bvar, withTerm, b,index))
+      case Abs(v, a) if v != bvar => Abs(v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get-1)), replace(bvar, withTerm, a, index+1))
+      case _ => throw new ReductionException("Error in beta reduction: the same bound variable (with the same db index) appears inside the other one scope")
+    }
+  
+  def betaReduce(expression: LambdaExpression)(implicit strategyOI: StrategyOuterInner.Value, strategyLR: StrategyLeftRight.Value): LambdaExpression = expression match {
     case App(Abs(x,body),arg) => {
       strategyOI match {
-        case StrategyOuterInner.Outermost => {
-          val sigma: Substitution = (x,arg)
-          sigma(body)
-        }
+        case StrategyOuterInner.Outermost => replace(x, arg, body,0)
         case StrategyOuterInner.Innermost => {
           strategyLR match {
             case StrategyLeftRight.Rightmost => {
@@ -76,10 +78,7 @@ object BetaReduction {
               else {                                              // If it doesn't, then we try to find an innermost redex in the left side, i.e. in the body.
                 val bodyr = betaReduce(body)(strategyOI,strategyLR)
                 if (bodyr != body) App(Abs(x, bodyr), arg)      // If it succeeds, great!
-                else {                                          // If it doesn't, then the current redex is innermost, and hence we reduce it.
-                  val sigma: Substitution = (x,arg)
-                  sigma(body)
-                }
+                else replace(x, arg, body,0)
               }
             }
             case StrategyLeftRight.Leftmost => {                    // Analogous to the previous case, but giving priority to the left side (body) instead of the ride side (arg)
@@ -88,10 +87,7 @@ object BetaReduction {
               else {
                 val argr = betaReduce(arg)(strategyOI,strategyLR)
                 if (argr != arg) App(Abs(x, body), argr)
-                else {
-                  val sigma: Substitution = (x,arg)
-                  sigma(body)
-                }
+                else replace(x, arg, body,0)
               }
             }
           }

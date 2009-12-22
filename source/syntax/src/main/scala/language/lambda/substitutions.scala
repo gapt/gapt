@@ -1,108 +1,49 @@
-/*
- * Substitutions.scala
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package at.logic.language.lambda
 
 import symbols._
 import typedLambdaCalculus._
-import scala.collection.immutable._
-//import at.logic.unification.FOLUnification._
-
 
 package substitutions {
-  // import at.logic.unification.FOLUnification._
-  case class SingleSubstitution(variable: Var, expression: LambdaExpression) {
-    def _1 = variable
-    def _2 = expression
 
-    def apply(expression: LambdaExpression):LambdaExpression = substituteWithRenaming(expression)
-
-    private def substituteWithRenaming(exp: LambdaExpression): LambdaExpression = {
-      val eFV = expression.getFreeAndBoundVariables._1
-      exp match {
-        case x:Var => if (x == variable)  expression else x
-        case App(m,n) => App(substituteWithRenaming(m), substituteWithRenaming(n))
-        case Abs(x,m) => if (x == variable) exp
-        else {
-          if (eFV.contains(x)) {
-            val Abs(y,n) = renameBoundVariable(Abs(x,m), eFV)
-            Abs(y,substituteWithRenaming(n))
-          }
-          else Abs(x,substituteWithRenaming(m))
-        }
-      }
+  /* substitution preserves the following:
+   * 1) it is a valid function, i.e. order of elements is irrelevant and each varialbe is mapped to only one element
+   * 2) all mappings are applied simultaneously to a term i.e. {x |-> y, y |-> a}x = y and not a.
+   */
+  class Substitution private[substitutions](m: scala.collection.immutable.Map[Var, LambdaExpression]) extends (LambdaExpression => LambdaExpression) {
+    val map = m
+    def ::(sub:Tuple2[Var, LambdaExpression]) = new Substitution(map + sub)
+    def :::(otherSubstitution:Substitution) = new Substitution(map ++ otherSubstitution.map.elements)
+    def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndices(expression,0)
+    override def equals(a: Any) = a match {
+      case s: Substitution => map.equals(s.map)
+      case _ => false
     }
-
-    private def renameBoundVariable(exp: Abs, disallowedVariables: Set[Var]) = exp match {
-      case Abs(x,m) => {
-        val (eFV,eBV) = exp.getFreeAndBoundVariables
-        val disallowed = disallowedVariables ++ eFV
-        val v = freshVar(x.exptype, disallowed, exp)
-        val sigma: SingleSubstitution = SingleSubstitution(x,v)
-        val n = sigma(m)
-        Abs(v,n)
+    override def hashCode() = map.hashCode
+    override def toString = map.toString
+    private def applyWithChangeDBIndices(expression: LambdaExpression, indInc: Int): LambdaExpression = expression match {
+      case x:Var if x.isFree => map.get(x) match {
+          case Some(t) => IncreaseDBIndices(t, indInc)
+          case None => x
       }
-    }
-    private def substitute(exp: LambdaExpression):LambdaExpression = exp match {
-      case x:Var => if (x == variable)  expression else x
-      case App(m,n) => App(substitute(m), substitute(n))
-      case Abs(x,m) => if (x == variable) expression
-      else Abs(x,substitute(m))
+      case App(m,n) => App(applyWithChangeDBIndices(m, indInc), applyWithChangeDBIndices(n, indInc))
+      case Abs(x,m) => Abs(x, applyWithChangeDBIndices(m, indInc+1))
+      case _ => expression
     }
   }
 
-  case class Substitution(substitutions: List[SingleSubstitution]) extends (LambdaExpression => LambdaExpression) {
-
-    def this(subs: SingleSubstitution*) = this(subs.toList)
-    def this(variable: Var, expression: LambdaExpression) = this(List(SingleSubstitution(variable, expression)))
-
-    def ::(sub:SingleSubstitution) = new Substitution(sub::substitutions)
-    def :::(otherSubstitutionList:Substitution) = new Substitution(otherSubstitutionList.substitutions:::this.substitutions)
-    def apply(expression: LambdaExpression):LambdaExpression = substitutions.foldLeft(expression)((exp, sigma) => sigma(exp))
-
- /* def applySub(sub: Substitution): Substitution =
-    {
-        var newSubstitution: Substitution = new Substitution(Nil)
-        for(s <- sub.substitutions)
-        {
-            var newSubst: Substitution = new Substitution(Nil)
-            for(s1 <- substitutions)
-            {
-                if(s1._1 != s._1)
-                {
-                    newSubst = Substitution(SingleSubstitution(s1._1, Substitution(s::Nil).apply(s1._2))::Nil):::newSubst
-                }
-                else
-                {
-                    val alg = new FOLUnification{}
-                    val s2 = (alg.unify(s._2,s1._2)):::Substitution(s::Nil)
-                    newSubst = Substitution(SingleSubstitution(s1._1, Substitution(s2::Nil).apply(s1._2))::Nil):::newSubst
-                }
-            }
-            newSubstitution = newSubstitution:::newSubst
-        }
-        return newSubstitution
-    }*/
+  object Substitution {
+    def apply(subs: Iterator[Tuple2[Var, LambdaExpression]]): Substitution = new Substitution(new scala.collection.immutable.HashMap[Var, LambdaExpression]() ++ subs)
+    def apply(subs: Tuple2[Var, LambdaExpression]*): Substitution = apply(subs.elements)
+    def apply(subs: List[Tuple2[Var, LambdaExpression]]): Substitution = apply(subs.elements)
+    def apply(variable: Var, expression: LambdaExpression): Substitution = apply((variable, expression))
+    def apply() = new Substitution(new scala.collection.immutable.EmptyMap)
   }
-
-
+  
   object ImplicitConverters {
-    implicit def convertPairToSingleSubstitution(pair: Tuple2[Var,LambdaExpression]):SingleSubstitution = SingleSubstitution(pair._1, pair._2)
-    implicit def convertSingleSubstitutionToPair(sub: SingleSubstitution):Tuple2[Var,LambdaExpression] = (sub.variable, sub.expression)
-
-    implicit def convertPairToSubstitution(pair: Tuple2[Var, LambdaExpression]):Substitution = new Substitution(pair._1, pair._2)
-    implicit def convertSubstitutionToPair(sub: Substitution):Tuple2[Var,LambdaExpression] = {
-      require(sub.substitutions.length == 1)
-      (sub.substitutions.head.variable, sub.substitutions.head.expression)
+    implicit def convertSubstitutionToPair(sub: Substitution): Tuple2[Var,LambdaExpression] = {
+      require(sub.map.size == 1)
+      sub.map.elements.next
     }
-    implicit def convertSingleSubstitutionToSubstitution(sub: SingleSubstitution):Substitution = new Substitution(sub.variable, sub.expression)
-    implicit def convertSubstitutionToSingleSubstitution(sub: Substitution):SingleSubstitution = {
-      require(sub.substitutions.length == 1)
-      sub.substitutions.head
-    }
+    implicit def convertPairToSubstitution(pair: Tuple2[Var, LambdaExpression]): Substitution = Substitution(pair)
   }
 }

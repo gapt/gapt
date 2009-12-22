@@ -17,8 +17,6 @@ import typedLambdaCalculus._
 import substitutions._
 import BetaReduction._
 
-
-
 class BetaReductionTest extends SpecificationWithJUnit {
   import StrategyOuterInner._
   import StrategyLeftRight._
@@ -75,6 +73,18 @@ class BetaReductionTest extends SpecificationWithJUnit {
         import ImplicitStandardStrategy._
         val e = App(Abs(v, App(Abs(x, App(f, x)),v)),y)
         ( betaReduce(e) ) must beEqual ( App(Abs(x, App(f, x)),y) )
+    }
+    "betaReduce correctly with reard to de Bruijn indices" in {
+      "- 1" in {
+        val term1 = App(Abs(LambdaVar("x",i->i),Abs(LambdaVar("y",i),App(LambdaVar("x",i->i),LambdaVar("y",i)))),Abs(LambdaVar("z",i),LambdaVar("z",i)))
+        val term2 = Abs(LambdaVar("y",i),App(Abs(LambdaVar("z",i),LambdaVar("z",i)),LambdaVar("y",i)))
+        (betaReduce(term1)(Outermost, Leftmost)) must beEqual (term2)
+      }
+      "- 2" in {
+        val term1 = App(Abs(LambdaVar("x",i->i),Abs(LambdaVar("x",i),App(LambdaVar("x",i->i),LambdaVar("x",i)))),Abs(LambdaVar("x",i),LambdaVar("x",i)))
+        val term2 = Abs(LambdaVar("y",i),App(Abs(LambdaVar("z",i),LambdaVar("z",i)),LambdaVar("y",i)))
+        (betaReduce(term1)(Outermost, Leftmost)) must beEqual (term2)
+      }
     }
   }
 }
