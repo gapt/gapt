@@ -82,9 +82,8 @@ package typedLambdaCalculus {
   }
 
    class Abs protected[typedLambdaCalculus]( vari: Var, exp: LambdaExpression ) extends LambdaExpression  {
-    // apply db indexing only if vari is not already a bound variable (i.e. sometimes we want to build inductively an existing term and there is no reason to index all variables again.
-    val expression = if (vari.isFree) createDeBruijnIndex(vari, exp) else exp // currently a not very functional operation, should be imporved
-    val variable = if (vari.isFree) vari.factory.createVar(vari.name, vari.exptype, Some(1)) else vari // set bounded variable index for given variable, must be done only after the index was alrewady set as otherwise the new var will be bound and the old ones not
+    val expression = createDeBruijnIndex(vari, exp, computeMaxDBIndex(exp)+1)
+    val variable = vari.factory.createVar(vari.name, vari.exptype, Some(computeMaxDBIndex(exp)+1))  // set bounded variable index for given variable, must be done only after the index was alrewady set as otherwise the new var will be bound and the old ones not
     def exptype: TA = ->(variable.exptype,expression.exptype)
     override def equals(a: Any) = a match {
       case s: Abs => (s.variable == variable && s.expression == expression && s.exptype == exptype)
@@ -94,15 +93,22 @@ package typedLambdaCalculus {
     override def toString() = "Abs(" + variable + "," + expression + ")"
     def toString1(): String = "Abs(" + variable.toString1 + "," + expression.toString1 + ")"
     def toStringSimple = "(λ" + variable.toStringSimple + "." + expression.toStringSimple + ")"
-    private def createDeBruijnIndex(variable: Var, exp: LambdaExpression): LambdaExpression = exp match {
-      case v: Var if variable == v => v.factory.createVar(v.name, v.exptype, Some(1)) // also does not match if v is already a bound variable do to the Var equals method
-      case v: Var if v.isBound => v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+1)) // increase bound variable dbIndex by 1
+    private def createDeBruijnIndex(variable: Var, exp: LambdaExpression, nextDBIndex: Int): LambdaExpression = exp match {
+      case v: Var if variable == v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) do to the Var equals method
       case v: Var => v
-      case App(a, b) => App(createDeBruijnIndex(variable, a), createDeBruijnIndex(variable, b))
-      case Abs(v, a) => Abs(v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+1)), createDeBruijnIndex(variable, a))
+      case App(a, b) => App(createDeBruijnIndex(variable, a, nextDBIndex), createDeBruijnIndex(variable, b, nextDBIndex))
+      case Abs(v, a) => if (variable == v)
+        Abs(v, a) // in the case the inside bvar is the same do not replace index in it
+        else Abs(v, createDeBruijnIndex(variable, a, nextDBIndex))
+    }
+    // returns the highest db index, returns 0 for no index. Based on the fact that outer abs has always a bigger index than inner one.
+    private def computeMaxDBIndex(exp: LambdaExpression): Int = exp match {
+      case App(x,y) => Math.max(computeMaxDBIndex(x), computeMaxDBIndex(y))
+      case Abs(v,_) => v.dbIndex.get
+      case _ => 0
     }
   }
-
+  
   object Abs {
     def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression)
     def unapply(expression: LambdaExpression) = expression match {
