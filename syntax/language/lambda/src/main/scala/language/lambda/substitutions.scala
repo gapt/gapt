@@ -13,24 +13,23 @@ package substitutions {
     val map = m
     def ::(sub:Tuple2[Var, LambdaExpression]) = new Substitution(map + sub)
     def :::(otherSubstitution:Substitution) = new Substitution(map ++ otherSubstitution.map.elements)
-    def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndices(expression,0)
+    def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndices(expression)
     override def equals(a: Any) = a match {
       case s: Substitution => map.equals(s.map)
       case _ => false
     }
     override def hashCode() = map.hashCode
     override def toString = map.toString
-    private def applyWithChangeDBIndices(expression: LambdaExpression, indInc: Int): LambdaExpression = expression match {
+    private def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
       case x:Var if x.isFree => map.get(x) match {
-          case Some(t) => IncreaseDBIndices(t, indInc)
+          case Some(t) => t
           case None => x
       }
-      case App(m,n) => App(applyWithChangeDBIndices(m, indInc), applyWithChangeDBIndices(n, indInc))
-      case Abs(x,m) => Abs(x, applyWithChangeDBIndices(m, indInc+1))
+      case App(m,n) => App(applyWithChangeDBIndices(m), applyWithChangeDBIndices(n))
+      case Abs(x,m) => Abs(x,applyWithChangeDBIndices(m))
       case _ => expression
     }
   }
-
   object Substitution {
     def apply(subs: Iterator[Tuple2[Var, LambdaExpression]]): Substitution = new Substitution(new scala.collection.immutable.HashMap[Var, LambdaExpression]() ++ subs)
     def apply(subs: Tuple2[Var, LambdaExpression]*): Substitution = apply(subs.elements)

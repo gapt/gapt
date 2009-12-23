@@ -45,8 +45,8 @@ object BetaReduction {
   def betaNormalize(expression: LambdaExpression)(implicit strategy: StrategyOuterInner.Value):LambdaExpression = expression match {
     case App(Abs(x,body),arg) => {
       strategy match {
-        case StrategyOuterInner.Outermost => betaNormalize(replace(x, arg, body,0))(strategy)  // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
-        case StrategyOuterInner.Innermost => replace(x, betaNormalize(arg), betaNormalize(body),0)
+        case StrategyOuterInner.Outermost => betaNormalize(replace(x, arg, body))(strategy)  // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
+        case StrategyOuterInner.Innermost => replace(x, betaNormalize(arg), betaNormalize(body))
       }
     }
     case App(m,n) => App(betaNormalize(m)(strategy),betaNormalize(n)(strategy))
@@ -55,21 +55,20 @@ object BetaReduction {
   }
 
   // replace bound variables, needs to recompute db indices
-  private def replace(bvar: Var, withTerm: LambdaExpression, inTerm: LambdaExpression, index: Int)(implicit strategy: StrategyOuterInner.Value): LambdaExpression =
+  private def replace(bvar: Var, withTerm: LambdaExpression, inTerm: LambdaExpression)(implicit strategy: StrategyOuterInner.Value): LambdaExpression =
     if (bvar.isFree) throw new ReductionException("Error in beta reduction: Malformed Abs term, bounded variable has no db index and therefore is not bound")
     else inTerm match {
-      case v: Var if v == bvar => IncreaseDBIndices(withTerm,index)
-      case v: Var if v.isBound => v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get-1)) // decreases all bound variables inside the term
+      case v: Var if v == bvar => withTerm
       case v: Var => v
-      case App(a, b) => App(replace(bvar, withTerm, a, index), replace(bvar, withTerm, b,index))
-      case Abs(v, a) if v != bvar => Abs(v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get-1)), replace(bvar, withTerm, a, index+1))
+      case App(a, b) => App(replace(bvar, withTerm, a), replace(bvar, withTerm, b))
+      case Abs(v, a) if v != bvar => Abs(v, replace(bvar, withTerm, a))
       case _ => throw new ReductionException("Error in beta reduction: the same bound variable (with the same db index) appears inside the other one scope")
     }
   
   def betaReduce(expression: LambdaExpression)(implicit strategyOI: StrategyOuterInner.Value, strategyLR: StrategyLeftRight.Value): LambdaExpression = expression match {
     case App(Abs(x,body),arg) => {
       strategyOI match {
-        case StrategyOuterInner.Outermost => replace(x, arg, body,0)
+        case StrategyOuterInner.Outermost => replace(x, arg, body)
         case StrategyOuterInner.Innermost => {
           strategyLR match {
             case StrategyLeftRight.Rightmost => {
@@ -78,7 +77,7 @@ object BetaReduction {
               else {                                              // If it doesn't, then we try to find an innermost redex in the left side, i.e. in the body.
                 val bodyr = betaReduce(body)(strategyOI,strategyLR)
                 if (bodyr != body) App(Abs(x, bodyr), arg)      // If it succeeds, great!
-                else replace(x, arg, body,0)
+                else replace(x, arg, body)
               }
             }
             case StrategyLeftRight.Leftmost => {                    // Analogous to the previous case, but giving priority to the left side (body) instead of the ride side (arg)
@@ -87,7 +86,7 @@ object BetaReduction {
               else {
                 val argr = betaReduce(arg)(strategyOI,strategyLR)
                 if (argr != arg) App(Abs(x, body), argr)
-                else replace(x, arg, body,0)
+                else replace(x, arg, body)
               }
             }
           }
