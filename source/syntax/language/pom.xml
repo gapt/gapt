@@ -3,25 +3,18 @@
 
   <parent>
   <groupId>at.logic</groupId>
-  <artifactId>gap</artifactId>
+  <artifactId>syntax</artifactId>
   <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>syntax</artifactId>
+  <artifactId>language</artifactId>
   <packaging>pom</packaging>  
-  <name>Syntax definitions</name>
+  <name>Core languages</name>
 
   <modules>
-    <module>language</module>
-    <module>calculi</module>
-    <module>generators</module>
+    <module>lambda</module>
+    <module>hol</module>
+    <module>fol</module>
   </modules>
   
-  <dependencies>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>utils</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-  </dependencies>
 </project>

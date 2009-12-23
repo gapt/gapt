@@ -3,24 +3,23 @@
 
   <parent>
   <groupId>at.logic</groupId>
-  <artifactId>gap</artifactId>
+  <artifactId>calculi</artifactId>
   <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>syntax</artifactId>
-  <packaging>pom</packaging>  
-  <name>Syntax definitions</name>
+  <artifactId>lksk</artifactId>
+  <packaging>jar</packaging>  
+  <name>Sequent calculus with skolemization rules</name>
 
-  <modules>
-    <module>language</module>
-    <module>calculi</module>
-    <module>generators</module>
-  </modules>
-  
   <dependencies>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>utils</artifactId>
+      <artifactId>lk</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>proofs</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
