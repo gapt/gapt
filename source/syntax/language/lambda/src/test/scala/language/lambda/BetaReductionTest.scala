@@ -85,7 +85,7 @@ class BetaReductionTest extends SpecificationWithJUnit {
         val term2 = Abs(LambdaVar("y",i),App(Abs(LambdaVar("z",i),LambdaVar("z",i)),LambdaVar("y",i)))
         (betaReduce(term1)(Outermost, Leftmost)) must beEqual (term2)
       }
-      /*"- 3" in {
+      "- 3" in {
         val x1 = LambdaVar("x",i->i)
         val x2 = LambdaVar("y",i)
         val x3 = LambdaVar("z",i)
@@ -96,9 +96,9 @@ class BetaReductionTest extends SpecificationWithJUnit {
         val t2 = App(t1,App(x1,x3))
         val t3 = Abs(x4,x4)
         val term1 = App(AbsN(x1::x2::x3::Nil, t2),t3)
-        val term2 = AbsN(x2::x3::Nil, App(App(c1,App(t3,x2)),App(t3,x3)))-
+        val term2 = AbsN(x2::x3::Nil, App(App(c1,App(t3,x2)),App(t3,x3)))
         (betaReduce(term1)(Outermost, Leftmost)) must beEqual (term2)
-      }*/
+      }
     }
   }
 }
