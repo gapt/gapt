@@ -19,7 +19,22 @@ package typedLambdaCalculus {
   trait LambdaExpression extends LambdaFactoryProvider {
     def exptype: TA
     def toString1(): String
+    def syntaxEquals(e: LambdaExpression): Boolean
+    def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
     def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
+      case v: Var if v.isFree => (HashSet(v), new EmptySet)
+      case App(exp, arg) => {
+        val mFBV = exp.getFreeAndBoundVariables()
+        val nFBV = arg.getFreeAndBoundVariables()
+        (mFBV._1 ++ nFBV._1, mFBV._2 ++ nFBV._2)
+      }
+      case Abs(v, exp) => {
+        val mFBV = exp.getFreeAndBoundVariables()
+        val bound = mFBV._2 + v
+        (mFBV._1, bound)
+      }
+    }
+    /*def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var => (HashSet(v), new EmptySet)
       case app: App => {
         val mFBV = app.function.getFreeAndBoundVariables()
@@ -34,7 +49,7 @@ package typedLambdaCalculus {
         val free = mFBV._1.filter(y => abs.variable != y)
         (free, bound)
       }
-    }
+    }*/
     def toStringSimple: String
   }
 
@@ -58,6 +73,10 @@ package typedLambdaCalculus {
     override def equals(a: Any) = (a,dbIndex) match {
       case (s: Var, None) if s.isFree => (s.name == name && s.exptype == exptype) // a free variable can only be equal to another free variable
       case (s: Var, Some(dbi)) if s.isBound => (dbi == s.dbIndex.get && s.exptype == exptype) // a bound variable can only be equal to another bound variable
+      case _ => false
+    }
+    def syntaxEquals(e: LambdaExpression) = e match {
+      case v: Var => (v.name == name && v.exptype == exptype && v.dbIndex == dbIndex)
       case _ => false
     }
     override def hashCode() = exptype.hashCode
@@ -89,15 +108,29 @@ package typedLambdaCalculus {
       case s: Abs => (s.variable == variable && s.expression == expression && s.exptype == exptype)
       case _ => false
     }
+    def syntaxEquals(e: LambdaExpression) = e match {
+      case Abs(v,exp) => (v =^ variable && exp =^ expression && e.exptype == exptype)
+      case _ => false
+    }
     override def hashCode() = exptype.hashCode
     override def toString() = "Abs(" + variable + "," + expression + ")"
     def toString1(): String = "Abs(" + variable.toString1 + "," + expression.toString1 + ")"
     def toStringSimple = "(λ" + variable.toStringSimple + "." + expression.toStringSimple + ")"
     private def createDeBruijnIndex(variable: Var, exp: LambdaExpression, nextDBIndex: Int): LambdaExpression = exp match {
-      case v: Var if variable == v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) do to the Var equals method
+      case v: Var if variable =^ v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) do to the Var equals method
       case v: Var => v
-      case App(a, b) => App(createDeBruijnIndex(variable, a, nextDBIndex), createDeBruijnIndex(variable, b, nextDBIndex))
-      case Abs(v, a) => if (variable == v)
+      case v @ App(a, b) => App(createDeBruijnIndex(variable, a, nextDBIndex), createDeBruijnIndex(variable, b, nextDBIndex))
+      /* In Abs we check if the nested abs does not have the same variable. As the creation of nested abs is inductive we might have
+       * two nested abs where the index must be increased by 1. This will cause the nested abs to:
+       * 1) if both nested and outer bvar name is equal then it will have the exact same bound variable as it will be increased by one
+       * and in general will bound the appearances of the outer variable appearing within the nested abs. This is imposible as two abs
+       * cannot have the same bound variable name if both also appears in the body of the nested abs. for example: \x.\x.xx . In the
+       * example both variables in the nested will be bound only by the second x. To deal with that we recursively go into the nested
+       * abs to increase the index of the variables only if the bound variables differs with regard to name.
+       * 2) if they dont have the same name then as we compare indexed bvars also by their name, they will never be equal and there is
+       * no danger of doing a mistake here.
+       */
+      case Abs(v, a) => if (variable =^ v)
         Abs(v, a) // in the case the inside bvar is the same do not replace index in it
         else Abs(v, createDeBruijnIndex(variable, a, nextDBIndex))
     }
@@ -132,6 +165,10 @@ package typedLambdaCalculus {
     }
     override def equals(a: Any) = a match {
       case s: App => (s.function == function && s.argument == argument && s.exptype == exptype)
+      case _ => false
+    }
+    def syntaxEquals(e: LambdaExpression) = e match {
+      case App(a,b) => (a =^ function && b =^ argument && e.exptype == exptype)
       case _ => false
     }
     override def hashCode() = exptype.hashCode
