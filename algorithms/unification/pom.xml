@@ -11,4 +11,12 @@
   <packaging>jar</packaging>  
   <name>Unification algorithms</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>simple_parsing</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
 </project>
