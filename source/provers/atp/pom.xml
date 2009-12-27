@@ -14,27 +14,7 @@
   <dependencies>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>fol</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>hol</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>lambda</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lk</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lksk</artifactId>
+      <artifactId>parsing_core</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
