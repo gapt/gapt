@@ -46,6 +46,10 @@ class SimpleHOLParserTest extends SpecificationWithJUnit {
         "parse correctly a formula constant" in {
             (new MyParser("c: o").getTerm()) must beLike {case x: Formula => true}
         }
+        val f1 = Function(ConstantStringSymbol("f"), Var(ConstantStringSymbol("a"), i, hol)::Nil,i)
+        /*"parse correctly a function" in {
+          (new MyParser("f(a:i):i")).getTerm must beEqual (f1)
+        }*/
         val and1 = And(atom1, var3)
         "parse correctly an and" in {
             (new MyParser("And a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)) x3: o").getTerm()) must beEqual (and1)
