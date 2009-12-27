@@ -20,7 +20,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 //trait Unifier extends Map[VariableA[TypeA], TermA[TypeA]]
 //trait Unifier extends Substitution//Map[Var, LambdaExpression]
 
-
+/*
 trait FOLUnification {
   def unify(f: FOLTerm, g: FOLTerm) : Option[Substitution] = (f,g) match {
     case (FOLConst(x), FOLConst(y)) if x != y => None // symbol clash constants
@@ -126,4 +126,4 @@ trait FOLUnification {
         }
         return newSub
     }*/
-}
+}*/

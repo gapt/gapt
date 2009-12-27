@@ -17,4 +17,12 @@
 
   <packaging>pom</packaging>
 
+  <dependencies>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>syntax_dependency</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <type>pom</type>
+    </dependency>
+  </dependencies>
 </project>

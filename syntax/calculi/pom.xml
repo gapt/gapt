@@ -15,6 +15,7 @@
     <module>lk</module>
     <module>lksk</module>
     <module>proofs</module>
+    <module>resolution</module>
   </modules>
   
   <dependencies>

@@ -4,23 +4,23 @@
 
 package at.logic.provers.atp
 
-//import at.logic.syntax.calculus.RuleA
-//import at.logic.syntax.calculus.resolution._
-//import at.logic.unification.Unifier
-//import at.logic.parsing.calculus.SequentsParser
+import at.logic.calculi.resolution.base._
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.substitutions._
+import at.logic.language.hol.propositions._
+import at.logic.parsing.calculi.ResolutionParser
 
 /**
- * A generic prover in resolution calculus
+ * A generic prover for resolution calculus
  */
-class Prover
-{
+trait Prover {
   /**
    * Refutes input clauses if possible
    * @param clausesInput the input clauses
-   * @return an Option that is not None if a refutation exists. Then it contains aa tuple of a resolution proof and a unifier
+   * @return a stream that instantiate all possible refutations
    */
-  /*def refute(clausesInput: SequentsParser[Clause]) : Option[(ResolutionProof[RuleA], Unifier)] = {
-    val clauses  = clausesInput.getSequents()
-    None  
-  }*/
+  def refute(clausesInput: ResolutionParser) : Stream[Tuple2[ResolutionProof, Substitution]] = {
+    val clauses  = clausesInput.getClauseList()
+    Stream()
+  }
 }

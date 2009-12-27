@@ -20,7 +20,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 //import at.logic.parsing.language.simple._
 
-class UnificationTest extends SpecificationWithJUnit {
+/*class UnificationTest extends SpecificationWithJUnit {
   val alg = new FOLUnification {}
   "Unification" should {
     "return None if terms are not unifiable" in
@@ -144,4 +144,4 @@ class UnificationTest extends SpecificationWithJUnit {
       //  (0) must beEqual (0)
     }
   }
-}
+}*/
