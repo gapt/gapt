@@ -21,7 +21,7 @@ import at.logic.calculi.resolution.base._
 
 trait SimpleResolutionParser extends ResolutionParser with SimpleHOLParser {
   def clauseList: Parser[List[Clause]] = rep(clause)
-  def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas),ls.filter(x => !filterPosFormulas(x)))}
+  def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas).map(stripNeg),ls.filter(x => !filterPosFormulas(x)))}
 
   override def formula: Parser[HOLFormula] = (atom | neg)
   override def neg: Parser[HOLFormula] = "-" ~ atom ^^ {case "-" ~ x => Neg(x)}
@@ -29,5 +29,9 @@ trait SimpleResolutionParser extends ResolutionParser with SimpleHOLParser {
   private def filterPosFormulas(f: HOLFormula): Boolean = f match {
     case Neg(x) => true
     case _ => false
+  }
+  private def stripNeg(f: HOLFormula): HOLFormula = f match {
+    case Neg(x) => x
+    case _ => f
   }
 }

@@ -39,9 +39,20 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
     "return the correct clause of p(a)." in {
       (new MyParser("p(a:i).").getClauseList) must beEqual (Clause(Nil,pa::Nil)::Nil)
     }
-    /*val pfa = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"), Var(ConstantStringSymbol("a"), i, hol)::Nil,i)::Nil)
-    "return the correct clause of p(a)." in {
-      (new MyParser("p(f(a:i):i).").getClauseList) must beEqual (Clause(Nil,pfa::Nil)::Nil)
-    }*/
+    val pfx = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"), Var(VariableStringSymbol("x"), i, hol)::Nil,i)::Nil)
+    "return the correct clause of p(f(x))." in {
+      (new MyParser("p(f(x:i):i).").getClauseList) must beEqual (Clause(Nil,pfx::Nil)::Nil)
+    }
+    val px = Atom(ConstantStringSymbol("p"),Var(VariableStringSymbol("x"), i, hol)::Nil)
+    "return the correct clause of -p(x)." in {
+      (new MyParser("-p(x:i).").getClauseList) must beEqual (Clause(px::Nil,Nil)::Nil)
+    }
+    "return the correct clause of -p(x) | p(f(x))" in {
+      (new MyParser("-p(x:i) | p(f(x:i):i).").getClauseList) must beEqual (Clause(px::Nil,pfx::Nil)::Nil)
+    }
+    val pffa = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"),Function(ConstantStringSymbol("f"), Var(ConstantStringSymbol("a"), i, hol)::Nil,i)::Nil, i)::Nil)
+    "return the correct clauses for p(a). -p(x) | p(f(x)). -p(f(f(a)))." in {
+      (new MyParser("p(a:i). -p(x:i) | p(f(x:i):i). -p(f(f(a:i):i):i).").getClauseList) must beEqual (Clause(Nil,pa::Nil)::Clause(px::Nil,pfx::Nil)::Clause(pffa::Nil,Nil)::Nil)
+    }
   }
 }
