@@ -1,33 +1,32 @@
 /* Description: Tests for the base prover
 **/
 
+package at.logic.provers.atp
+
 import org.specs._
 import org.specs.runner._
 import org.specs.mock.Mockito
 import org.mockito.Matchers._  // to use matchers like anyInt()
-import at.logic.provers.atp.Prover
+import at.logic.parsing.calculi.simple.SimpleResolutionParser
+import at.logic.parsing.readers.StringReader
 
-/* we should use a string sequent parser in order to easily generate examples
-object RefutableExamples {
-  def ex1 = TermBuilder.build("-f(x) | f(f(x))")
-}
-*/
+import commands._
 
-/*private class MyParser(str: String) extends StringReader(str) with FOLProver9TermParser with Prover9SequentsParser[Clause] with ClausesCreator
+private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParser
 
-class ProverTest extends Specification with JUnit { 
+class ProverTest extends SpecificationWithJUnit {
   "Prover" should {
     /*"in case it has only one clause return it if it is the empty clause" in {
       new Prover().refute(new MyParser(".")) must beLike {case Some((InitialRule(Clause(Nil,Nil)), _)) => true}
     }
     "in case it has an empty clause set return None" in {
-      new Prover().refute(new MyParser("")) must beEqual (None)
+      new Prover{}.refute(AutomatedFOLStream(new MyParser("").getClauseList)) must beEqual (Stream.empty)
     }
     "in case it has only one clause return None if it is not the empty clause" in {
-      new Prover().refute(new MyParser("P(x)")) must beEqual (None)
+      new Prover{}.refute(AutomatedFOLStream(new MyParser("P(x:i).").getClauseList)) must beEqual (Stream())
     }
     "When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {
       "ex1"
     }*/
   }
-}*/
+}
