@@ -13,12 +13,12 @@
     <module>utils</module>
     <module>syntax</module>
     <module>provers</module>
-    <module>transformations</module>
+    <!--    <module>transformations</module> -->
     <module>dependencies</module>
     <module>algorithms</module>
     <module>gui</module>
     <module>parsing</module>
-    <module>integration_tests</module>
+    <!--    <module>integration_tests</module> -->
   </modules>
 
   <packaging>pom</packaging>
@@ -43,7 +43,7 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>2.7.7</version>
+      <version>${scala.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -67,9 +67,9 @@
       <version>1.8.0</version>
     </dependency>
     <dependency>
-      <groupId>org.scalacheck</groupId>
-      <artifactId>scalacheck</artifactId>
-      <version>1.5</version>
+      <groupId>org.scala-tools.testing</groupId>
+      <artifactId>scalacheck_2.7.7</artifactId>
+      <version>1.6</version>
     </dependency>
   </dependencies>
 
@@ -92,9 +92,9 @@
 	  <execution>
 	    <configuration>
 	      <args>
-                <arg>-unchecked</arg>
+            <arg>-unchecked</arg>
    	        <arg>-deprecation</arg>
-                <arg>-explaintypes</arg>
+            <arg>-explaintypes</arg>
 	      </args>
 	    </configuration>
             <goals>
@@ -104,7 +104,7 @@
           </execution>
         </executions>
         <configuration>
-          <scalaVersion>2.7.7</scalaVersion>
+	  <scalaVersion>${scala.version}</scalaVersion>
           <args>
             <arg>-target:jvm-1.6</arg>
           </args>
@@ -142,7 +142,7 @@
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
         <configuration>
-          <scalaVersion>2.7.7</scalaVersion>
+          <scalaVersion>${scala.version}</scalaVersion>
         </configuration>
       </plugin>
     </plugins>
