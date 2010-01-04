@@ -24,8 +24,9 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>parsing</artifactId>
+      <artifactId>parsing_dependency</artifactId>
       <version>1.0-SNAPSHOT</version>
+      <type>pom</type>
     </dependency>
   </dependencies>
 </project>
