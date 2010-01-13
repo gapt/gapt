@@ -8,7 +8,6 @@ import java.awt.geom.*;
 import java.util.HashMap;
 import org.jgraph.*;
 import org.jgraph.graph.*;
-import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -154,31 +153,12 @@ public class ProofViewer<V> {
 
     }
 
+
     public Set<V> getChildren(V v) {
         Set<DefaultEdge> e = graph_data.outgoingEdgesOf(v);
         Set<V> r = new ListSet();
         for (DefaultEdge e_ : e) {
             r.add(graph_data.getEdgeTarget(e_));
-        }
-        return r;
-    }
-
-    public V getParent(V v) throws Exception {
-        Set<DefaultEdge> e = graph_data.incomingEdgesOf(v);
-        if (e.size() > 1) {
-            throw new Exception("");
-        }
-        for (DefaultEdge e_ : e) {
-            return graph_data.getEdgeSource(e_);
-        }
-        return null;
-    }
-
-    public Set<V> getParents(V v) {
-        Set<DefaultEdge> e = graph_data.incomingEdgesOf(v);
-        Set<V> r = new ListSet();
-        for (DefaultEdge e_ : e) {
-            r.add(graph_data.getEdgeSource(e_));
         }
         return r;
     }
@@ -193,8 +173,8 @@ public class ProofViewer<V> {
         return -1;
     }
 
-    public int getChildrenMean(V v, Map<DefaultGraphCell, AttributeMap> newmap) {
-        Set<DefaultEdge> e = graph_data.outgoingEdgesOf(v);
+    public int getParentMean(V v, Map<DefaultGraphCell, AttributeMap> newmap) {
+        Set<DefaultEdge> e = graph_data.incomingEdgesOf(v);
         if (e.size() == 0) {
             return 0;
         }
@@ -204,9 +184,10 @@ public class ProofViewer<V> {
         int x = 0;
         for (DefaultEdge e_ : e) {
             //amap = model.getVertexCell(graph_data.getEdgeTarget(e_)).getAttributes();
-            amap = newmap.get(model.getVertexCell(graph_data.getEdgeTarget(e_)));
+            amap = newmap.get(model.getVertexCell(graph_data.getEdgeSource(e_)));
             if (amap == null) {
-                System.err.println("amap null for" + v);
+                //TODO: find out why some vertices have no attribute map
+                //System.err.println("amap null for" + v);
                 continue;
             }
             rect = GraphConstants.getBounds(amap);
@@ -216,26 +197,14 @@ public class ProofViewer<V> {
     }
 
     public void doTreePlacement() {
+        /* assumption: edges are directed to the root */
         model.beginUpdate();
         //System.err.println("point 1");
 
         // find roots
-        Set<V> vertices = graph_data.vertexSet();
-        //System.err.println("vs size=" + vertices.size());
+        Set<V> slice = getRoots(graph_data);
 
-        Set<V> slice = new ListSet<V>();
-        for (V v : vertices) {
-            if (graph_data.inDegreeOf(v) == 0) {
-                slice.add(v);
-                //System.err.println("root " + VisualisationUtils.sequentToString(v) );
-            } else {
-                //System.err.println("nonroot"+v);
-            }
-
-        }
-
-        //System.err.println("point 2");
-        // seperate nodes by the depth in the tree
+        // separate nodes by the depth in the tree, the root is at level 0
         Map<Integer, Set<V>> slices = new HashMap<Integer, Set<V>>();
         Integer level = 0;
         slices.put(level, slice);
@@ -248,18 +217,19 @@ public class ProofViewer<V> {
             oldslice = slice;
             slice = new ListSet<V>();
             for (V v : oldslice) {
-                edges = graph_data.outgoingEdgesOf(v);
+                edges = graph_data.incomingEdgesOf(v);
                 if (edges.size() == 0) {
                     leaves.add(v);
                     continue;
                 }
 
                 for (DefaultEdge e : edges) {
-                    slice.add(graph_data.getEdgeTarget(e));
+                    slice.add(graph_data.getEdgeSource(e));
                 }
             }
 
             slices.put(level, slice);
+            //System.err.println("slice on level "+level+" with size "+slice.size());
         }
 
 
@@ -283,22 +253,22 @@ public class ProofViewer<V> {
             //System.err.println("leaf "+ cell+" at "+rect);
             leafx += 100;
 
-            slice.addAll(getParents(v));
+            slice.addAll(getChildren(v));
         }
 
         ConnectionSet cs = model.getConnectionSet();
         model.edit(m, cs, null, null);
         //oldslice = leaves;
         while (!slice.isEmpty()) {
-            //System.err.println(slice);
+            //System.err.println(slice.size()+" "+slice);
             oldslice = slice;
             slice = new ListSet<V>();
             for (V v : oldslice) {
-                slice.addAll(getParents(v));
+                slice.addAll(getChildren(v));
 
                 cell = model.getVertexCell(v);
                 amap = cell.getAttributes();
-                rect = new Rectangle2D.Double(getChildrenMean(v, m), 50 + 50 * (max_depth - depthOf(v, slices)), 60, 20);
+                rect = new Rectangle2D.Double(getParentMean(v, m), 50 + 50 * (max_depth - depthOf(v, slices)), 60, 20);
                 GraphConstants.setBounds(amap, rect);
                 GraphConstants.setGradientColor(amap, Color.yellow);
                 GraphConstants.setOpaque(amap, true);
@@ -306,6 +276,23 @@ public class ProofViewer<V> {
             }
         }
         model.endUpdate();
+    }
+
+
+    public Set<V> getRoots(DirectedGraph<V, DefaultEdge> graph) {
+        Set<V> vertices = graph.vertexSet();
+
+        Set<V> slice = new ListSet<V>();
+        for (V v : vertices) {
+            if (graph.outDegreeOf(v) == 0) {
+                slice.add(v);
+                //System.err.println("root " + v );
+            } else {
+                //System.err.println("nonroot"+v);
+            }
+
+        }
+        return slice;
     }
 
     // --- main method for testing ----

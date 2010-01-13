@@ -24,12 +24,12 @@ import at.logic.language.lambda.typedLambdaCalculus._
 trait FOLUnification {
   def unify(f: FOLTerm, g: FOLTerm) : Option[Substitution] = (f,g) match {
     case (FOLConst(x), FOLConst(y)) if x != y => None // symbol clash constants
-    case (x1 @ FOLVar(x), y1 @ FOLVar(y)) => Some(Substitution(SingleSubstitution(x1.asInstanceOf[FOLVar],y1):: Nil))
+    case (x1 @ FOLVar(x), y1 @ FOLVar(y)) => Some(Substitution((x1.asInstanceOf[FOLVar],y1):: Nil))
     case (FOLConst(x), FOLConst(y)) => Some(Substitution(Nil))
     case (Function(x, _), Function(y, _)) if x != y => None // symbol clash functions
 
 
-    case (t1 @ FOLVar(x), t2 @ FOLConst(c)) => Some(Substitution(SingleSubstitution(t1.asInstanceOf[FOLVar],t2)::Nil))
+    case (t1 @ FOLVar(x), t2 @ FOLConst(c)) => Some(Substitution((t1.asInstanceOf[FOLVar],t2)::Nil))
     case (t3 @ FOLConst(c), t4 @ FOLVar(x)) => unify(t4,t3)
     case (t31 @ Function(_, _), t41 @ FOLVar(x)) => unify(t41,t31)
 
@@ -37,7 +37,7 @@ trait FOLUnification {
     case (Function(_, _), FOLConst(_)) => None
 
     case (t5 @ FOLVar(x), t6 @ Function(f, args)) if getVars(t6).contains(t5) => None
-    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if !getVars(t6).contains(t5) => Some(Substitution(SingleSubstitution(t5.asInstanceOf[FOLVar],t6)::Nil))
+    case (t5 @ FOLVar(x), t6 @ Function(f, args)) if !getVars(t6).contains(t5) => Some(Substitution((t5.asInstanceOf[FOLVar],t6)::Nil))
 
 
     case (Function(_, args1), Function(_, args2)) if args1.length != args2.length => None // symbol clash functions arity
@@ -60,28 +60,28 @@ trait FOLUnification {
   }
   def printSubst(sub: Substitution) = {
       print("\n\n{")
-      for (s <- sub.substitutions) print("<"+s._1.toString1+" , "+s._2.toString1+">; ")
+      for (s <- sub.map) print("<"+s._1.toString1+" , "+s._2.toString1+">; ")
       print("}\n\n")
   }
   
   //applyingSub is applied to sub
   def applySub(sub: Substitution, applyingSub: Substitution): Substitution =
   {
-        var newSubstitution: Substitution = new Substitution(Nil)
-        for(singleSub <- sub.substitutions)
+        var newSubstitution: Substitution = Substitution(Nil)
+        for(singleSub <- sub.map)
         {
-            var newSubst: Substitution = new Substitution(Nil)
-            for(applyingSingleSub <- applyingSub.substitutions)
+            var newSubst: Substitution = Substitution(Nil)
+            for(applyingSingleSub <- applyingSub.map)
             {
                 if(applyingSingleSub._1 != singleSub._1)
                 {
-                    newSubst = Substitution(SingleSubstitution(singleSub._1, Substitution(applyingSingleSub::Nil).apply(singleSub._2))::Nil):::newSubst
+                    newSubst = Substitution((singleSub._1, Substitution(applyingSingleSub::Nil).apply(singleSub._2))::Nil):::newSubst
                 }
                 else
                 {
                     val alg = new FOLUnification{}
                     val s2 = (alg.unify(singleSub._2.asInstanceOf[FOLTerm],applyingSingleSub._2.asInstanceOf[FOLTerm])).get// ::: Substitution(singleSub::Nil)
-                    newSubst = Substitution(SingleSubstitution(singleSub._1, s2.apply(singleSub._2))::Nil):::newSubst
+                    newSubst = Substitution((singleSub._1, s2.apply(singleSub._2))::Nil):::newSubst
                 }
             }
             newSubstitution = newSubstitution:::newSubst
@@ -92,11 +92,11 @@ trait FOLUnification {
     //removes redundnt singleSubstitution from a Substitution
   def removeRedundanceFromSubst(sub: Substitution): Substitution = {
       var newSubst: Substitution = Substitution(Nil)
-      var sub1: Substitution = new Substitution(sub.substitutions)
-      for(s <- sub.substitutions)
+      var sub1: Substitution = Substitution(sub.map.elements)
+      for(s <- sub.map)
       {
-          sub1 = Substitution(sub1.substitutions.tail)
-          if(!sub1.substitutions.contains(s))
+          sub1 = Substitution(sub1.map.elements.next)
+          if(!sub1.map.elements.contains(s))
             newSubst = Substitution(s::Nil) ::: newSubst
       }
       return newSubst

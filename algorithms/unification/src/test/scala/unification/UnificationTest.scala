@@ -14,14 +14,24 @@ import at.logic.language.lambda.substitutions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol._
+import at.logic.parsing.readers.StringReader
+import org.scalacheck.Prop
 //import at.logic.language.hol.propositions._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 //import at.logic.parsing.language.simple._
+import at.logic.parsing.language.simple.SimpleFOLParser
+//import at.logic.utils.generators.FOLtermGenerator
+//import at.logic.utils.generators.Language
+import at.logic.utils.testing.PropMatcher.bePassed
+
+import org.scalacheck.Prop._
 
 /*class UnificationTest extends SpecificationWithJUnit {
   val alg = new FOLUnification {}
+  private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
+
   "Unification" should {
     "return None if terms are not unifiable" in
     {
@@ -142,6 +152,35 @@ import at.logic.language.lambda.typedLambdaCalculus._
  //       alg.printSubst(alg.unify(f_x_y, f_y_gx))
         (alg.unify(f_x_y, f_y_gx)) must beEqual (None)
       //  (0) must beEqual (0)
+    }
+
+    /*
+    "additional tests" in {
+      val x = new MyParser("x").getTerm()
+      val y = new MyParser("y").getTerm()
+      val a = new MyParser("a").getTerm()
+      val b = new MyParser("b").getTerm()
+      val fxa = new MyParser("f(x,a)").getTerm()
+      val fby = new MyParser("f(b,y)").getTerm()
+      val fxb = new MyParser("f(x,b)").getTerm()
+      val fbx = new MyParser("f(x,b)").getTerm()
+      (alg.unify(fxa,fby)) must beEqual (Substitution(SingleSubstitution(x,b) :: SingleSubstitution(y,a) :: Nil))
+      
+      true must beEqual (true)
+    } */
+
+    "terms must be unifiable with themselves via an empty substitution" {
+      val epsilon = Substitution(Nil)
+
+      val prop : Prop = forAll( (seed : Int) => {
+          var generator = new FOLtermGenerator(seed)
+          val l = generator.generateSymbols(10,5,6,5)
+          val x = generator.generateFunction(l, 30, 50, 7)
+          alg.unify(x,x) == epsilon
+          })
+
+      prop must bePassed
+      0
     }
   }
 }*/

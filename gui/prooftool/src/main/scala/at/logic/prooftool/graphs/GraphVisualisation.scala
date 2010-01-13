@@ -99,18 +99,37 @@ object VisualisationUtils {
         val it2 = es.iterator
         var e: DefaultEdge[SequentOccurrence] = null
         i = 0
-            
+
+      var targetset = new HashSet[Int]
+      var sourceset = new HashSet[Int]
+
         while (it2.hasNext) {
             e = it2.next
             (m.get(g.graph.getEdgeSource(e)), m.get(g.graph.getEdgeTarget(e))) match {
               case (Some(src), Some(trg)) =>
                 sb.append("\t v"+src + " -> v"+ trg + ";\n")
+                sourceset.add(src)
+                targetset.add(trg)
 
               case _ => ;
             }
             i += 1
         }
-        
+
+      //println("roots=" + (vs.size-sourceset.size) + " leafs="+ (vs.size-targetset.size))
+
+      /*
+      var rootset = new HashSet[Int]
+      var c :Int = 0
+      while (c<i) {
+        rootset.add(c)
+        c += 1
+      }
+  
+      rootset.removeAll(sourceset)
+      println(rootset)
+      */
+
         sb.append("\n}\n")
         
 
@@ -118,43 +137,4 @@ object VisualisationUtils {
     }
 
 
-    /*
-    def placeNodes(jgraph : JGraph) = {
-        // hm this should work, shouldn't it?
-        Console.println("placement")
-
-
-        var cache : GraphLayoutCache  = jgraph.getGraphLayoutCache();
-        var m  = cache.createNestedMap();
-        var it  = m.values().iterator();
-        var i : Any = null;
-
-        while (it.hasNext()) {
-            i = it.next();
-
-            if (i.isInstanceOf[Map[Any,Any] ]) {
-                var im  = i.asInstanceOf[Map[Any,Any] ];
-                var j : Any = null;
-                var it2 = im.values().iterator()
-
-                while (it2.hasNext() ) {
-                    j = it2.next();
-
-                    if (j.isInstanceOf[AttributeMap.SerializableRectangle2D]) {
-                        var  r :Rectangle2D.Double = j.asInstanceOf[AttributeMap.SerializableRectangle2D];
-                        r.x = 10.0;
-                        r.y = 400.0;
-                        r.width = 100.0;
-                        r.height = 50.0;
-                        Console.println("setting new rectangle:"+r.toString());
-                    }
-                }
-            }
-        }
-
-        Console.println("cache partial? "+cache.isPartial)
-            
-        cache.edit(m);
-
-    }   */
 }

@@ -40,12 +40,12 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
                         new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofs()
 
         val proof = proofs.first
-
-        /* // --- output graph to dot format, works but commented out, because it creates additional files in the project
+        /*
+        // --- output graph to dot format, works but commented out, because it creates additional files in the project
         val writer = new PrintWriter(new java.io.File("primeproof.dot"))
         writer.append(VisualisationUtils.toDotFormat(proof))
         writer.close
-        */
+         */
       
        // println(VisualisationUtils.toDotFormat(proof))
 
