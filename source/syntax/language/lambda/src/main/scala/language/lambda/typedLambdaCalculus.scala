@@ -76,7 +76,7 @@ package typedLambdaCalculus {
       case _ => false
     }
     def syntaxEquals(e: LambdaExpression) = e match {
-      case v: Var => (v.name == name && v.exptype == exptype && v.dbIndex == dbIndex)
+      case v: Var => (v.name == name && v.exptype == exptype)
       case _ => false
     }
     override def hashCode() = exptype.hashCode
@@ -100,26 +100,36 @@ package typedLambdaCalculus {
     }
   }
 
-   class Abs protected[typedLambdaCalculus]( vari: Var, exp: LambdaExpression ) extends LambdaExpression  {
-    val expression = createDeBruijnIndex(vari, exp, computeMaxDBIndex(exp)+1)
-    val variable = vari.factory.createVar(vari.name, vari.exptype, Some(computeMaxDBIndex(exp)+1))  // set bounded variable index for given variable, must be done only after the index was alrewady set as otherwise the new var will be bound and the old ones not
+  /*
+   * There are two ways to view an abstraction with db indices. The physical way of the concatenataion of a variable and an expression
+   * and the theoretical way of bindind the variable within the expression. In practice we need both versions:
+   * - we need to be able to decompose an Abs so the specific variable in the expression is no longer bound in the subterm
+   * - we need also to be able to inductively go over a term and know that a variable is bound up-somewhere.
+   * Our solution to that is to have the default methods behave in the physical way. Decomposing an Abs return a free variable and
+   * an expression with the variable unbound. We will also include a method that return the subterm together with the binding information.
+   * the non-default methods will have the suffix InScope.
+   */
+   class Abs protected[typedLambdaCalculus](val variable: Var, val expression: LambdaExpression ) extends LambdaExpression  {
+     require (variable.isFree)
+    val expressionInScope = createDeBruijnIndex(variable, expression, computeMaxDBIndex(expression)+1)
+    val variableInScope = variable.factory.createVar(variable.name, variable.exptype, Some(computeMaxDBIndex(expression)+1))  // set bounded variable index for given variable, must be done only after the index was alrewady set as otherwise the new var will be bound and the old ones not
     def exptype: TA = ->(variable.exptype,expression.exptype)
     override def equals(a: Any) = a match {
-      case s: Abs => (s.variable == variable && s.expression == expression && s.exptype == exptype)
+      case s: Abs => (s.variableInScope == variableInScope && s.expressionInScope == expressionInScope && s.exptype == exptype)
       case _ => false
     }
     def syntaxEquals(e: LambdaExpression) = e match {
-      case Abs(v,exp) => (v =^ variable && exp =^ expression && e.exptype == exptype)
+      case AbsInScope(v,exp) => (v =^ variableInScope && exp =^ expressionInScope && e.exptype == exptype)
       case _ => false
     }
     override def hashCode() = exptype.hashCode
-    override def toString() = "Abs(" + variable + "," + expression + ")"
-    def toString1(): String = "Abs(" + variable.toString1 + "," + expression.toString1 + ")"
-    def toStringSimple = "(λ" + variable.toStringSimple + "." + expression.toStringSimple + ")"
-    private def createDeBruijnIndex(variable: Var, exp: LambdaExpression, nextDBIndex: Int): LambdaExpression = exp match {
-      case v: Var if variable =^ v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) do to the Var equals method
+    override def toString() = "Abs(" + variableInScope + "," + expressionInScope + ")"
+    def toString1(): String = "Abs(" + variableInScope.toString1 + "," + expressionInScope.toString1 + ")"
+    def toStringSimple = "(λ" + variableInScope.toStringSimple + "." + expressionInScope.toStringSimple + ")"
+    private def createDeBruijnIndex(vr: Var, exp: LambdaExpression, nextDBIndex: Int): LambdaExpression = exp match {
+      case v: Var if vr =^ v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) do to the Var equals method
       case v: Var => v
-      case v @ App(a, b) => App(createDeBruijnIndex(variable, a, nextDBIndex), createDeBruijnIndex(variable, b, nextDBIndex))
+      case v @ App(a, b) => App(createDeBruijnIndex(vr, a, nextDBIndex), createDeBruijnIndex(vr, b, nextDBIndex))
       /* In Abs we check if the nested abs does not have the same variable. As the creation of nested abs is inductive we might have
        * two nested abs where the index must be increased by 1. This will cause the nested abs to:
        * 1) if both nested and outer bvar name is equal then it will have the exact same bound variable as it will be increased by one
@@ -130,22 +140,35 @@ package typedLambdaCalculus {
        * 2) if they dont have the same name then as we compare indexed bvars also by their name, they will never be equal and there is
        * no danger of doing a mistake here.
        */
-      case Abs(v, a) => if (variable =^ v)
-        Abs(v, a) // in the case the inside bvar is the same do not replace index in it
-        else Abs(v, createDeBruijnIndex(variable, a, nextDBIndex))
+      case abs: Abs => if (vr =^ abs.variable)
+        abs // in the case the inside bvar is the same do not replace index in it
+        else Abs(abs.variable, createDeBruijnIndex(vr, abs.expression, nextDBIndex))
     }
     // returns the highest db index, returns 0 for no index. Based on the fact that outer abs has always a bigger index than inner one.
     private def computeMaxDBIndex(exp: LambdaExpression): Int = exp match {
       case App(x,y) => Math.max(computeMaxDBIndex(x), computeMaxDBIndex(y))
-      case Abs(v,_) => v.dbIndex.get
+      case AbsInScope(v,_) => v.dbIndex.get
       case _ => 0
     }
   }
-  
+
+  /*
+   * This extractor decompose an Abs to its two arguments without the extra bninding information added in Abs constructor
+   */
   object Abs {
     def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression)
     def unapply(expression: LambdaExpression) = expression match {
       case a: Abs => Some((a.variable, a.expression))
+      case _ => None
+    }
+  }
+
+  /*
+   * This extractor contains the binding information in the variable and in the expression
+   */
+  object AbsInScope {
+    def unapply(expression: LambdaExpression) = expression match {
+      case a: Abs => Some((a.variableInScope, a.expressionInScope))
       case _ => None
     }
   }
@@ -227,15 +250,6 @@ package typedLambdaCalculus {
       case _ => None
     }
   }
-  
-  object IncreaseDBIndices {
-    def apply(expression: LambdaExpression, indInc: Int): LambdaExpression = expression match {
-      case v:Var if v.isBound => v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+indInc))
-      case App(m,n) => App(apply(m, indInc), apply(n, indInc))
-      case Abs(v,m) => Abs(v.factory.createVar(v.name, v.exptype, Some(v.dbIndex.get+indInc)), apply(m, indInc))
-      case _ => expression
-    }
-  }
 
   object freshVar {
     def apply(exptype: TA, disallowedVariables: Set[Var], dummy: LambdaExpression) :Var = {
@@ -256,14 +270,14 @@ package typedLambdaCalculus {
   object exportLambdaExpressionToString {
     def apply(expression: LambdaExpression): String = expression match {
       case Var(name,exptype) => name.toString
-      case Abs(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
+      case AbsInScope(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
       case App(function, argument) => "(" + exportLambdaExpressionToString(function) + " " + exportLambdaExpressionToString(argument)  + ")"
     }
   }
 
   object exportLambdaExpressionToStringWithTypes {
     def apply(expression: LambdaExpression):String = expression match {
-      case Abs(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
+      case AbsInScope(variable, exp) => "\\" + exportLambdaExpressionToString(variable) + "." + exportLambdaExpressionToString(exp)
       case App(function, argument) => "(" + exportLambdaExpressionToString(function) + " " + exportLambdaExpressionToString(argument)  + ")"
       case Var(name,exptype) => {
         name.toString +

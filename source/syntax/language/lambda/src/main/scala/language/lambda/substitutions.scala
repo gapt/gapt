@@ -9,8 +9,7 @@ package substitutions {
    * 1) it is a valid function, i.e. order of elements is irrelevant and each varialbe is mapped to only one element
    * 2) all mappings are applied simultaneously to a term i.e. {x |-> y, y |-> a}x = y and not a.
    */
-  class Substitution private[substitutions](m: scala.collection.immutable.Map[Var, LambdaExpression]) extends (LambdaExpression => LambdaExpression) {
-    val map = m
+  class Substitution private[substitutions](val map: scala.collection.immutable.Map[Var, LambdaExpression]) extends (LambdaExpression => LambdaExpression) {
     def ::(sub:Tuple2[Var, LambdaExpression]) = new Substitution(map + sub)
     def :::(otherSubstitution:Substitution) = new Substitution(map ++ otherSubstitution.map.elements)
     def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndices(expression)
@@ -20,13 +19,14 @@ package substitutions {
     }
     override def hashCode() = map.hashCode
     override def toString = map.toString
+    // the change of db indices is done automatically in the constructor of abs
     private def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
       case x:Var if x.isFree => map.get(x) match {
           case Some(t) => t
           case None => x
       }
       case App(m,n) => App(applyWithChangeDBIndices(m), applyWithChangeDBIndices(n))
-      case Abs(x,m) => Abs(x,applyWithChangeDBIndices(m))
+      case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope))
       case _ => expression
     }
   }
