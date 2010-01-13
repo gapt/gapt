@@ -127,4 +127,10 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       (sub(term1)) must beEqual (term2)
     }
   }
+  "work correctly on subterms of abs (i.e. the variables which were bound there are no longer bound)" in {
+    val term1 = Abs(LambdaVar("F",i->i),Abs(LambdaVar("x",i), App(LambdaVar("F",i->i),LambdaVar("x",i))))
+    val sub: Substitution = (term1.variable, Abs(LambdaVar("x",i), App(LambdaVar("f",i->i),LambdaVar("x",i))))
+    val term2 = Abs(LambdaVar("x",i), App(Abs(LambdaVar("x",i), App(LambdaVar("f",i->i),LambdaVar("x",i))),LambdaVar("x",i)))
+    (sub(term1.expression)) must beEqual (term2)
+  }
 }
