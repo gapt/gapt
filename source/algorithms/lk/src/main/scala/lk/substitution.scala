@@ -6,9 +6,8 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
-//import at.logic.language.hol.substitutions.Substitution
+import at.logic.language.hol.substitutions.Substitution
 import at.logic.language.hol.propositions._
-import at.logic.language.lambda.substitutions.Substitution
 
 // TODO: also apply substitution to labels in LKsk!
 // perhaps make a new class for LKsk, which deals only with LKsk specific parts?
