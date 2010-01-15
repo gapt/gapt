@@ -39,10 +39,8 @@ package quantificationRules {
     def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, term: HOLTerm) : LKProof = {
       main match {
         case All( sub, _ ) => {
-          // TODO: comment in to check validity of the rule.
-          // commented out at the moment because we don't know the subst term
-          // in the XML parser. We need first-order unification for that.
-          //assert( betaNormalize( App( sub, term ) ) == aux )
+          val aux_form = betaNormalize( App( sub, term ) )
+          assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toStringSimple + " is not equal to the formula " + aux_fo.formula.toStringSimple + " at the given occurrence")
             val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
             new UnaryTree[SequentOccurrence](
               SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
@@ -78,7 +76,7 @@ package quantificationRules {
     def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, term: HOLTerm) : LKProof = {
       main match {
         case Ex( sub, _ ) => {
-          //assert( betaNormalize( App( sub, term ) ) == aux )
+          assert( betaNormalize( App( sub, term ) ) == aux_fo.formula )
           val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
           new UnaryTree[SequentOccurrence](
               SequentOccurrence(createContext(s1.root.antecedent),
@@ -114,7 +112,7 @@ package quantificationRules {
       main match {
         case All( sub, _ ) => {
           // TODO: check eigenvariable condition
-          //assert( betaNormalize( App( sub, eigen_var ) ) == aux )
+          assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
               val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext(s1.root.antecedent),
@@ -149,7 +147,7 @@ package quantificationRules {
       main match {
         case Ex( sub, _ ) => {
           // TODO: check eigenvariable condition
-          //assert( betaNormalize( App( sub, eigen_var ) ) == aux )
+          assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
               val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
               new UnaryTree[SequentOccurrence](
                   SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,

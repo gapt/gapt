@@ -14,7 +14,6 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.language.hol.substitutions.Substitution
-import at.logic.language.lambda.substitutions.SingleSubstitution
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -30,8 +29,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
     val a = HOLConst( new ConstantStringSymbol( "a" ), i )
     val f = HOLConst( new ConstantStringSymbol( "f" ), i -> i )
     val fa = HOLApp( f, a )
-    val ssubst = SingleSubstitution( x, fa )
-    val subst = Substitution( ssubst::Nil )
+    val subst = Substitution( x, fa )
 
     "apply correctly to a simple proof" in {
       val p_s = applySubstitution( proof, subst )

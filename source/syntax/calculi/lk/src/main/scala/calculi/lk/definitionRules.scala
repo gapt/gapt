@@ -24,19 +24,21 @@ package definitionRules {
 
   // TODO: implement verification of the rule
   object DefinitionLeftRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula) =
+    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: Formula) = {
+      val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
+      new UnaryTree[SequentOccurrence](
+          SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
+                            createContext((s1.root.succedent))), s1 )
+      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = DefinitionLeftRuleType
+        def aux = (aux_fo::Nil)::Nil
+        def prin = prinFormula::Nil
+      }
+    }
+
+    def apply(s1: LKProof, aux: Formula, main: Formula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
-        case (x::_) => {
-          val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
-          new UnaryTree[SequentOccurrence](
-              SequentOccurrence(createContext((s1.root.antecedent - x)) + prinFormula,
-                                createContext((s1.root.succedent))), s1 )
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-            def rule = DefinitionLeftRuleType
-            def aux = (x::Nil)::Nil
-            def prin = prinFormula::Nil
-          }
-        }
+        case (x::_) => apply( s1, x, main )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 
@@ -51,19 +53,21 @@ package definitionRules {
 
   // TODO: implement verification of the rule
   object DefinitionRightRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula) =
+    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: Formula) = {
+      val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
+      new UnaryTree[SequentOccurrence](
+          SequentOccurrence(createContext(s1.root.antecedent),
+                            createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
+      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = DefinitionRightRuleType
+        def aux = (aux_fo::Nil)::Nil
+        def prin = prinFormula::Nil
+      }
+    }
+
+    def apply(s1: LKProof, aux: Formula, main: Formula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
-        case (x::_) => {
-          val prinFormula = x.factory.createPrincipalFormulaOccurrence(main, x::Nil)
-          new UnaryTree[SequentOccurrence](
-              SequentOccurrence(createContext(s1.root.antecedent),
-                                createContext((s1.root.succedent - x)) + prinFormula), s1 )
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-            def rule = DefinitionRightRuleType
-            def aux = (x::Nil)::Nil
-            def prin = prinFormula::Nil
-          }
-        }
+        case (x::_) => apply( s1, x, main )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 

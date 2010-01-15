@@ -13,8 +13,8 @@
 
   <modules>
     <module>unification</module>
-    <!--    <module>lk</module>
-    <module>lksk</module>-->
+    <module>lk</module>
+    <module>lksk</module>
   </modules>
 
   <packaging>pom</packaging>

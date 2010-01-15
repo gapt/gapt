@@ -13,12 +13,12 @@
     <module>utils</module>
     <module>syntax</module>
     <module>provers</module>
-    <!--    <module>transformations</module> -->
+    <module>transformations</module>
     <module>dependencies</module>
     <module>algorithms</module>
-    <module>gui</module>
+    <!--    <module>gui</module> -->
     <module>parsing</module>
-    <!--    <module>integration_tests</module> -->
+    <module>integration_tests</module>
   </modules>
 
   <packaging>pom</packaging>
@@ -131,7 +131,7 @@
 	<groupId>org.apache.maven.plugins</groupId>
 	<artifactId>maven-surefire-plugin</artifactId>
 	<configuration>
-	  <argLine>-Xss2m</argLine>
+	  <argLine>-Xss2m -Xmx2g</argLine> <!-- 2MB Stack Size, 2GB max. Heap Size -->
 	</configuration>
       </plugin>
     </plugins>
