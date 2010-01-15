@@ -38,11 +38,11 @@ package base {
 
   private[lksk] object LKskFOFactory extends FOFactory {
     def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = {
-      assert( ancestors.isInstanceOf[List[LabelledFormulaOccurrence]] )
+      assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
     def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = {
-      assert( ancestors.isInstanceOf[List[LabelledFormulaOccurrence]] )
+      assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
     def createOccurrence(formula: Formula, ancestors: List[LabelledFormulaOccurrence]) = {

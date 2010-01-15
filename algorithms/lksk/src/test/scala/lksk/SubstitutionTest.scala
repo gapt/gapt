@@ -16,7 +16,6 @@ import at.logic.calculi.lksk._
 import at.logic.calculi.lksk.base.TypeSynonyms._
 import at.logic.calculi.lksk.base._
 import at.logic.language.hol.substitutions.Substitution
-import at.logic.language.lambda.substitutions.SingleSubstitution
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -45,7 +44,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val Pc = Atom("P", c::Nil)
 
       val a = Axiom( Sequent( Px::Nil, Px::Nil ), Pair( (EmptyLabel() + x)::Nil, (EmptyLabel() + y)::Nil ) )
-      val subst = new Substitution( SingleSubstitution(x, c)::Nil )
+      val subst = Substitution(x, c)
       val r = applySubstitution(a._1, subst)
       r._1.root.antecedent.toList.first must beLike {case o : LabelledFormulaOccurrence => o.label == (EmptyLabel() + c) && o.formula == Pc }
       r._1.root.succedent.toList.first must beLike {case o : LabelledFormulaOccurrence => o.label == (EmptyLabel() + y) && o.formula == Pc }
@@ -58,8 +57,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val fgc = HOLApp(f, gc)
       val Rgcfgc = Atom("R", gc::fgc::Nil )
       val exyRgcy = ExVar(y, Atom( "R", gc::y::Nil ) )
-      val ssubst = SingleSubstitution( a, gc ) // a <- g(c)
-      val subst = Substitution(ssubst::Nil)
+      val subst = Substitution( a, gc ) // a <- g(c)
 
       val p_s = applySubstitution( r2, subst )
       p_s._1.root.antecedent.toList.first must beLike{ case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == allxexy }

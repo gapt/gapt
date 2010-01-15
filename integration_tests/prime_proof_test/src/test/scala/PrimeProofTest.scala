@@ -22,6 +22,7 @@ import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk._
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
@@ -52,52 +53,49 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val proof = proofs.first
       printStats( proof )
 
-      val cut_occs = getCutAncestors( proof )
-      val s = StructCreators.extract( proof, cut_occs )
+      val proof_sk = LKtoLKskc( proof )
+      val s = StructCreators.extract( proof_sk )
+
       val cs = StandardClauseSet.transformStructToClauseSet( s )
-//      cs.foreach( s => print( sequentToString( s ) + "\n") )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
-      print("cs size: " + cs.size + "\n")
-      print("after tautology deletion: " + dcs.size + "\n")
-      print("after set-normalization: " + css.size + "\n")
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
 
     "parse correctly the first-order prime proof, n=0" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofs()
-      val proof = proofs.first
-      val cut_occs = getCutAncestors( proof )
-      val s = StructCreators.extract( proof, cut_occs )
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
-//      cs.foreach( s => print( sequentToString( s ) + "\n") )
       proofs.size must beEqual(1)
-      print("cs size: " + cs.size + "\n")
-      printStats( proof )
+      val proof = proofs.first
+      val proof_sk = LKtoLKskc( proof )
+      val s = StructCreators.extract( proof_sk )
+      val cs = StandardClauseSet.transformStructToClauseSet( s )
+      val dcs = deleteTautologies( cs )
+      val css = setNormalize( dcs )
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime1-0-cs.xml" )
     }
 
     "parse correctly the first-order prime proof, n=1" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-1.xml.gz")))) with XMLProofDatabaseParser).getProofs()
-      val proof = proofs.first
-      val cut_occs = getCutAncestors( proof )
-      val s = StructCreators.extract( proof, cut_occs )
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
-//      cs.foreach( s => print( sequentToString( s ) + "\n") )
       proofs.size must beEqual(1)
-      print("cs size: " + cs.size + "\n")
-      printStats( proof )
+      val proof = proofs.first
+      val proof_sk = LKtoLKskc( proof )
+      val s = StructCreators.extract( proof_sk )
+      val cs = StandardClauseSet.transformStructToClauseSet( s )
+      val dcs = deleteTautologies( cs )
+      val css = setNormalize( dcs )
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime1-1-cs.xml" )
     }
 
     "parse correctly the first-order prime proof, n=2" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-2.xml.gz")))) with XMLProofDatabaseParser).getProofs()
-      val proof = proofs.first
-      val cut_occs = getCutAncestors( proof )
-      val s = StructCreators.extract( proof, cut_occs )
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
-//      cs.foreach( s => print( sequentToString( s ) + "\n") )
       proofs.size must beEqual(1)
-      print("cs size: " + cs.size + "\n")
-      printStats( proof )
+      val proof = proofs.first
+      val proof_sk = LKtoLKskc( proof )
+      val s = StructCreators.extract( proof_sk )
+      val cs = StandardClauseSet.transformStructToClauseSet( s )
+      val dcs = deleteTautologies( cs )
+      val css = setNormalize( dcs )
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime1-2-cs.xml" )
     }
   }
 }

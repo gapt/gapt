@@ -15,6 +15,7 @@
     <module>prime_proof_test</module>
     <module>tape_test</module>
     <module>misc_test</module>
+    <module>lattice_test</module>
   </modules>
 
   <packaging>pom</packaging>
@@ -22,37 +23,19 @@
   <dependencies>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>fol</artifactId>
+      <artifactId>syntax_dependency</artifactId>
       <version>1.0-SNAPSHOT</version>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>hol</artifactId>
+      <artifactId>parsing_dependency</artifactId>
       <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>lambda</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lk</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lksk</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>unification</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>parsing</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>

@@ -30,7 +30,9 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.getCutAncestors
+import at.logic.algorithms.lk.simplification._
 import at.logic.parsing.calculus.xml.saveXML
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
@@ -43,10 +45,13 @@ class TapeTest extends SpecificationWithJUnit {
       proofs.size must beEqual(1)
       val proof = proofs.first
 
-      val cut_occs = getCutAncestors( proof )
-      val s = StructCreators.extract( proof, cut_occs )
+      val proof_sk = LKtoLKskc( proof )
+      val s = StructCreators.extract( proof_sk )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
-      saveXML( Pair("cs", cs)::Nil, "target" + separator + "test-classes" + separator + "tape-cs.xml" )
+      val dcs = deleteTautologies( cs )
+      val css = setNormalize( dcs )
+
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "tape-cs.xml" )
     }
   }
 }

@@ -9,7 +9,9 @@ import at.logic.calculi.lksk.base.TypeSynonyms._
 import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.propositionalRules.{ImpLeftRule, AndRightRule, OrRight1Rule, ImpRightRule, WeakeningLeftRule => LKWeakeningLeftRule, OrRight2Rule, ContractionRightRule, WeakeningRightRule => LKWeakeningRightRule, OrLeftRule}
+import at.logic.calculi.lk.propositionalRules.{ImpLeftRule, AndRightRule, OrRight1Rule, ImpRightRule, WeakeningLeftRule => LKWeakeningLeftRule, OrRight2Rule, ContractionRightRule, ContractionLeftRule, WeakeningRightRule => LKWeakeningRightRule, OrLeftRule, CutRule, AndLeft1Rule, AndLeft2Rule,NegRightRule,NegLeftRule}
+import at.logic.calculi.lk.definitionRules._
+import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base.{LKProof,Sequent,SequentOccurrence}
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.propositions._
@@ -17,13 +19,15 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.quantifiers._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
-import at.logic.language.lambda.substitutions.SingleSubstitution
 import at.logic.language.hol.substitutions._
 import at.logic.algorithms.lksk.applySubstitution
+import at.logic.algorithms.lk.getCutAncestors
 
 object LKtoLKskc {
+  def apply(proof: LKProof) : LKProof = apply( proof, getCutAncestors( proof ) )
+
   // cut_occs is the set of cut-ancestors in the proof.
-  def apply(proof: LKProof, cut_occs: Set[FormulaOccurrence]) = {
+  def apply(proof: LKProof, cut_occs: Set[FormulaOccurrence]) : LKProof = {
     // initialize map from occurrences to substitution terms:
     // in the end-sequent, there are no substitution terms for any
     // formula occurrences on the path to the end-sequent
@@ -32,7 +36,10 @@ object LKtoLKskc {
     proof.root.succedent.foreach( fo => subst_terms.update( fo, EmptyLabel() ) )
     rec( proof, subst_terms, cut_occs )._1
   }
-  
+
+  // TODO: refactor this method! There is redundancy w.r.t. the symmetric rules
+  // like ForallLeft, ExistsRight etc. For an example, see algorithms.lk.substitution
+  // and the handleEquationalRule method below!
   def rec(proof: LKProof, subst_terms: Map[FormulaOccurrence, Label], cut_occs: Set[FormulaOccurrence]) : (LKProof, Map[FormulaOccurrence,LabelledFormulaOccurrence]) = proof match {
     case LKAxiom(so) => {
       val ant = so.antecedent.toList
@@ -69,9 +76,7 @@ object LKtoLKskc {
           case All(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
             val s = Function( f, args, alpha )
-            val ssubst = new SingleSubstitution( v, s )
-            println( "applying substitution: " + v.toStringSimple + " <- " + s.toStringSimple )
-            val subst = new Substitution( ssubst::Nil )
+            val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequentOccurrence] )
@@ -103,9 +108,7 @@ object LKtoLKskc {
           case Ex(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
             val s = Function( f, args, alpha )
-            val ssubst = new SingleSubstitution( v, s )
-            println( "applying substitution: " + v.toStringSimple + " <- " + s.toStringSimple )
-            val subst = new Substitution( ssubst::Nil )
+            val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ExistsSkLeftRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequentOccurrence] )
@@ -172,15 +175,44 @@ object LKtoLKskc {
       val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
       val r1 = rec( p1, new_label_map, cut_occs )
       val r2 = rec( p2, new_label_map, cut_occs )
-      println( "label left: " )
-      r1._2( a1 ).label.foreach( f => println( f.toStringSimple ) )
-      println
-      println( "label right: ")
-      r2._2( a2 ).label.foreach( f => println( f.toStringSimple ) )
       val sk_proof = OrLeftRule( r1._1, r2._1, r1._2( a1 ), r2._2( a2 ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
       (sk_proof, computeMap( p1.root.antecedent ++ p1.root.succedent, proof, sk_proof, r1._2 ) ++
                  computeMap( p2.root.antecedent ++ p2.root.succedent, proof, sk_proof, r2._2 ) )
+    }
+    case AndLeft1Rule(p, s, a, m) => {
+      val weak = m.formula match { case And(_, w) => w }
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r = rec( p, new_label_map, cut_occs )
+      //assert( r._1.root.isInstanceOf[LabelledSequentOccurrence] )
+      val sk_proof = AndLeft1Rule( r._1, r._2( a ), weak )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
+    }
+    case AndLeft2Rule(p, s, a, m) => {
+      val weak = m.formula match { case And(w, _) => w }
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r = rec( p, new_label_map, cut_occs )
+      //assert( r._1.root.isInstanceOf[LabelledSequentOccurrence] )
+      val sk_proof = AndLeft2Rule( r._1, weak, r._2( a ) )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
+    }
+    case NegLeftRule(p, s, a, m) => {
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r = rec( p, new_label_map, cut_occs )
+      //assert( r._1.root.isInstanceOf[LabelledSequentOccurrence] )
+      val sk_proof = NegLeftRule( r._1, r._2( a ) )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
+    }
+    case NegRightRule(p, s, a, m) => {
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r = rec( p, new_label_map, cut_occs )
+      //assert( r._1.root.isInstanceOf[LabelledSequentOccurrence] )
+      val sk_proof = NegRightRule( r._1, r._2( a ) )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
     case OrRight1Rule(p, s, a, m) => {
       val weak = m.formula match { case Or(_, w) => w }
@@ -229,7 +261,73 @@ object LKtoLKskc {
       //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
-    // TODO: implement other propositional and structural rules!
+    case ContractionLeftRule(p, s, a1, a2, m) => {
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r = rec( p, new_label_map, cut_occs )
+      val sk_proof = ContractionLeftRule( r._1, r._2( a1 ), r._2( a2 ) )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
+    }
+    case CutRule(p1, p2, s, a1, a2) => {
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms ) +
+                          ( (a1, EmptyLabel()), (a2, EmptyLabel()) ) 
+      val r1 = rec( p1, new_label_map, cut_occs )
+      val r2 = rec( p2, new_label_map, cut_occs )
+      val sk_proof = CutRule( r1._1, r2._1, r1._2( a1 ), r2._2( a2 ) )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p1.root.antecedent ++ (p1.root.succedent - a1), proof, sk_proof, r1._2 ) ++
+                 computeMap( (p2.root.antecedent - a2) ++ p2.root.succedent, proof, sk_proof, r2._2 ) )
+
+    }
+    case DefinitionRightRule( p, s, a, m ) =>
+    {
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r = rec( p, new_label_map, cut_occs )
+      //assert( r._1.root.isInstanceOf[LabelledSequentOccurrence] )
+      val sk_proof = DefinitionRightRule( r._1, r._2( a ), m.formula )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
+    }
+    case DefinitionLeftRule( p, s, a, m ) =>
+    {
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r = rec( p, new_label_map, cut_occs )
+      //assert( r._1.root.isInstanceOf[LabelledSequentOccurrence] )
+      val sk_proof = DefinitionLeftRule( r._1, r._2( a ), m.formula )
+      //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
+      (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
+    }
+    case EquationLeft1Rule( p1, p2, s, a1, a2, m ) =>
+      handleEquationRule( EquationLeft1Rule.apply, p1, p2, s, a1, a2,
+        m.formula, proof, subst_terms, cut_occs )
+    case EquationLeft2Rule( p1, p2, s, a1, a2, m ) =>
+      handleEquationRule( EquationLeft2Rule.apply, p1, p2, s, a1, a2, 
+        m.formula, proof, subst_terms, cut_occs )
+    case EquationRight1Rule( p1, p2, s, a1, a2, m ) =>
+      handleEquationRule( EquationRight1Rule.apply, p1, p2, s, a1, a2, 
+        m.formula, proof, subst_terms, cut_occs )
+    case EquationRight2Rule( p1, p2, s, a1, a2, m ) =>
+      handleEquationRule( EquationRight2Rule.apply, p1, p2, s, a1, a2, 
+        m.formula, proof, subst_terms, cut_occs )
+  }
+
+  def handleEquationRule(
+    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula) => LKProof,
+    p1: LKProof,
+    p2: LKProof,
+    s: SequentOccurrence,
+    a1: FormulaOccurrence,
+    a2: FormulaOccurrence,
+    m: Formula,
+    old_proof: LKProof,
+    subst_terms: Map[FormulaOccurrence, Label],
+    cut_occs: Set[FormulaOccurrence] ) = {
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
+      val r1 = rec( p1, new_label_map, cut_occs )
+      val r2 = rec( p2, new_label_map, cut_occs )
+      val sk_proof = constructor( r1._1, r2._1, r1._2( a1 ), r2._2( a2 ), m )
+      (sk_proof, computeMap( p1.root.antecedent ++ p1.root.succedent, old_proof, sk_proof, r1._2 ) ++
+                 computeMap( p2.root.antecedent ++ p2.root.succedent, old_proof, sk_proof, r2._2 ) )
   }
 
   def computeMap( occs: Set[FormulaOccurrence], old_proof: LKProof, 

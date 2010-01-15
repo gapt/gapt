@@ -22,27 +22,44 @@ import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk._
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import scala.collection.immutable.EmptySet
+class LatticeTest extends SpecificationWithJUnit {
 
-class MiscTest extends SpecificationWithJUnit {
+  def sequentToString( s: Sequent ) = {
+    var ret = ""
+    s.antecedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    ret += " :- "
+    s.succedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    ret
+  }
+
+  def printStats( p: LKProof ) = {
+    val stats = getStatistics( p )
+    print("unary: " + stats.unary + "\n")
+    print("binary: " + stats.binary + "\n")
+    print("cuts: " + stats.cuts + "\n")
+  }
+
 
   "The system" should {
-    "parse, skolemize, extract clause set for a simple induction proof" in {
-      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple_ind.xml"))) with XMLProofDatabaseParser).getProofs()
+    "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
+      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofs()
       proofs.size must beEqual(1)
       val proof = proofs.first
+      printStats( proof )
+
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )
+
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
-      val cs_path = "target" + separator + "test-classes" + separator + "simple_ind-cs.xml"
+      val cs_path = "target" + separator + "test-classes" + separator + "lattice-cs.xml"
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, cs_path )
       (new java.io.File( cs_path ) ).exists() must beEqual( true )
     }

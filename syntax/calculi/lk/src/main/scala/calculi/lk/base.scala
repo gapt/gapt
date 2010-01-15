@@ -52,6 +52,8 @@ package base {
       mt == mo
     }
     override def toString : String = antecedent.toString + " :- " + succedent.toString
+    def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
+                                  succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
   }
   // List should be changed into set
   case class SequentOccurrence(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence])

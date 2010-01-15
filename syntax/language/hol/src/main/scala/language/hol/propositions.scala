@@ -51,9 +51,17 @@ package propositions {
 
   object HOLVar {
     def apply(name: VariableSymbolA, exptype: TA) = HOLFactory.createVar(name, exptype).asInstanceOf[HOLVar]
+    def unapply(exp: LambdaExpression) = exp match {
+      case Var(n: VariableSymbolA, t) => Some( n )
+      case _ => None
+    }
   }
   object HOLConst {
     def apply(name: ConstantSymbolA, exptype: TA) = HOLFactory.createVar(name, exptype).asInstanceOf[HOLConst]
+    def unapply(exp: LambdaExpression) = exp match {
+      case Var(n: ConstantSymbolA, t) => Some( n )
+      case _ => None
+    }
   }
   object HOLVarFormula {
     def apply(name: VariableSymbolA) = HOLFactory.createVar(name, To()).asInstanceOf[HOLVarFormula]
@@ -63,12 +71,31 @@ package propositions {
   }
   object HOLApp {
     def apply(function: LambdaExpression, argument: LambdaExpression) = function.factory.createApp(function, argument).asInstanceOf[HOLApp]
+    def unapply(exp: LambdaExpression) = exp match {
+      case App(t1: HOLTerm, t2: HOLTerm) => Some( ( t1, t2 ) )
+      case _ => None
+    }
   }
   object HOLAppFormula {
     def apply(function: LambdaExpression, argument: LambdaExpression) = function.factory.createApp(function, argument).asInstanceOf[HOLAppFormula]
   }
   object HOLAbs {
     def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression).asInstanceOf[HOLAbs]
+    def unapply(exp: LambdaExpression) = exp match {
+      case Abs(v: HOLVar, sub: HOLTerm) => Some( (v, sub) )
+      case _ => None
+    }
+  }
+
+  /*
+   * This extractor contains the binding information in the variable and in the expression
+   */
+  object HOLAbsInScope {
+    def unapply(expression: LambdaExpression) = expression match {
+      case a : Abs if a.variable.isInstanceOf[HOLVar] && a.expression.isInstanceOf[HOLTerm] => 
+        Some((a.variableInScope.asInstanceOf[HOLVar], a.expressionInScope.asInstanceOf[HOLTerm]))
+      case _ => None
+    }
   }
 
   case object NegC extends HOLConst(NegSymbol, "(o -> o)")
