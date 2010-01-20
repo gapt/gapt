@@ -75,6 +75,9 @@ trait Prover {
    */
   private def refuteOne1Step(composedCommand: Command, newCommand: Command): Command = (composedCommand, newCommand) match {
     // insert clauses to set
+    case (EmptyCom, SetTargetResolventCom(tProof)) => targetProof = tProof; EmptyCom
+    // deal with the case the input set already contains the target clause
+    case (EmptyCom, InsertClausesCom(clauses)) if targetExistsIn(clauses) => CorrectResolventFound(targetProof)
     case (EmptyCom, InsertClausesCom(clauses)) => refinement.insertClauses(clauses); EmptyCom
     // try to obtain the required clauses, return fail command if not possible
     case (EmptyCom, GetClausesCom) => refinement.getClauses match {
@@ -86,6 +89,8 @@ trait Prover {
     case _ => commandsParser.parse(composedCommand, newCommand)
   }
 
+  private def targetExistsIn(clauses: List[Clause]) = clauses.exists(a => targetProof.root.formulaEquivalece(a))
+  var targetProof: ResolutionProof = theEmptyClause() // override in commands if target is different
   // to be implemented in specific traits
   def refinement: Refinement
   def commandsParser: CommandsParser

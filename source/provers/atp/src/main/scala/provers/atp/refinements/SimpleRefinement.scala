@@ -11,8 +11,8 @@ import scala.collection.mutable.Queue
 import at.logic.calculi.resolution.base._
 
 trait SimpleRefinement extends Refinement {
-  val queue: Queue[Tuple2[ResolutionProof,ResolutionProof]]
-  val clauses: Queue[ResolutionProof]
+  val queue = new Queue[Tuple2[ResolutionProof,ResolutionProof]]
+  val clauses = new Queue[ResolutionProof]
   
   def getClauses: Option[Tuple2[ResolutionProof, ResolutionProof]] = try {
     Some(queue.dequeue)
@@ -25,7 +25,7 @@ trait SimpleRefinement extends Refinement {
   }
   def insertProof(proof: ResolutionProof) = {addPairs(proof); clauses.enqueue(proof)}
 
-  def createInitialProof(c: Clause): ResolutionProof
+  private def createInitialProof(c: Clause): ResolutionProof = Axiom(c)
   private def addPairs(proof: ResolutionProof) = clauses.foreach(x =>
     if (x != proof) queue += (proof,x)
   )
