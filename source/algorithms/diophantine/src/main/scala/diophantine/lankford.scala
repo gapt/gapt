@@ -40,6 +40,26 @@ object MathHelperFunctions {
     }
   }
 
+
+  def createZeroRow(n:Int) : List[Int] = {
+    if (n<=0) {
+      Nil
+    } else {
+      0 :: createZeroRow(n-1)
+    }
+  }
+
+  def createIdentityMatrix(n:Int) : List[List[Int]] = {
+    if (n<= 0) {
+      Nil
+    }
+    else {
+      Nil
+    }
+    
+    
+  }
+
 }
 
 class LankfordSolver[Data] extends DiophantineSolver[Data] {
