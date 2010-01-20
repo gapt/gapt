@@ -10,6 +10,11 @@ package at.logic.provers.atp
 import at.logic.calculi.resolution.base._
 
 package commands {
+
+  object theEmptyClause{
+    def apply(): ResolutionProof = Axiom(Clause(Nil,Nil))
+  }
+  
   sealed abstract class Command
   case object EmptyCom extends Command
   case class InsertClausesCom(clauses: List[Clause]) extends Command
@@ -21,7 +26,8 @@ package commands {
   case class ResolventCom(resolvent: ResolutionProof) extends Command
   case object InsertCom extends Command
   case class CorrectResolventFound(res: ResolutionProof) extends Command
-
+  case class SetTargetResolventCom(target: ResolutionProof) extends Command
+  
   // default commands streams
   object AutomatedFOLStream {
     def apply(clauses: List[Clause]) = Stream.cons(InsertClausesCom(clauses),rest)
