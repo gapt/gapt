@@ -35,7 +35,7 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
     }
 
     //skip("this takes a lot of time")
-    "Passing of scala graph to JavaViewer works" in {
+    "Passing of prime proof to JavaViewer works" in {
         val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(
                         new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofs()
 
