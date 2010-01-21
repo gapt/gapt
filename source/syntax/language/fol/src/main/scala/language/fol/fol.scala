@@ -21,9 +21,10 @@ trait FOL extends HOL
   override def factory : LambdaFactoryA = FOLFactory
 }
 
-trait FOLFormula extends LambdaExpression with HOL with Formula with FOL
+trait FOLExpression extends LambdaExpression with HOL with FOL
+trait FOLFormula extends FOLExpression with Formula
 //trait FOLFormula extends HOLFormula with FOL
-trait FOLTerm extends LambdaExpression with HOL with FOL
+trait FOLTerm extends FOLExpression
 // trait FOLTerm extends HOLTerm with FOL
 {
   require( exptype == Ti() )
