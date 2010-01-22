@@ -14,10 +14,11 @@ import at.logic.language.fol._
 
 object FOLUnificationAlgorithm extends UnificationAlgorithm {
   def unifiy(term1: LambdaExpression, term2: LambdaExpression) = {
-    require(term1.isInstanceOf[FOLTerm] && term2.isInstanceOf[FOLTerm])
- //   Substitution(unifySetOfTuples(Tuple2(term1.asInstanceOf[FOLTerm],term2.asInstanceOf[FOLTerm])::Nil))
-        //Some(Substitution())
-    None
+    require(term1.isInstanceOf[FOLExpression] && term2.isInstanceOf[FOLExpression])
+    unifySetOfTuples(Tuple2(term1.asInstanceOf[FOLTerm],term2.asInstanceOf[FOLTerm])::Nil,Nil) match {
+      case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
+      case _ => None
+    }
   }
 
  def applySubToListOfPairs(l : List[Tuple2[FOLTerm, FOLTerm]], s : Substitution) : List[Tuple2[FOLTerm, FOLTerm]] =
