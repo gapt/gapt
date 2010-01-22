@@ -10,11 +10,13 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol
 import at.logic.language.hol.propositions.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp}
 import at.logic.language.hol.propositions.{HOL, Formula, HOLVar, HOLConst, HOLApp, HOLAbs, HOLConstFormula, HOLFactory, HOLAppFormula}
-import at.logic.language.hol.quantifiers.{All, Ex, AllQ, ExQ}
+import at.logic.language.hol.quantifiers.{AllQ => HOLAllQ, ExQ => HOLExQ}
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.types.ImplicitConverters._
+
 
 trait FOL extends HOL
 {
@@ -92,35 +94,70 @@ object Function {
   }
 }
 
+case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
+case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
+case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))") with FOL
+case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))") with FOL
+class ExQ(e:TA) extends HOLExQ(e) with FOL
+class AllQ(e:TA) extends HOLAllQ(e) with FOL
+object ExQ {
+  def unapply(v: Var) = v match {
+    case vo: ExQ => Some(vo.exptype)
+    case _ => None
+  }
+}
+object AllQ {
+  def unapply(v: Var) = v match {
+    case vo: AllQ => Some(vo.exptype)
+    case _ => None
+  }
+}
+  
 object Neg {
-  def apply(sub: FOLFormula) = HOLNeg(sub).asInstanceOf[FOLFormula]
+  def apply(sub: FOLFormula) = App(NegC,sub).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case HOLNeg(sub : FOLFormula) => Some( (sub) )
+    case App(NegC,sub) => Some( (sub) )
     case _ => None
   }
 }
 
 object And {
-  def apply(left: FOLFormula, right: FOLFormula) = HOLAnd(left, right).asInstanceOf[FOLFormula]
+  def apply(left: FOLFormula, right: FOLFormula) = (App(App(AndC,left),right)).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case HOLAnd(left: FOLFormula, right: FOLFormula) => Some( left, right )
+    case App(App(AndC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
     case _ => None
   }
 }
 
 object Or {
-  def apply(left: FOLFormula, right: FOLFormula) = HOLOr(left, right).asInstanceOf[FOLFormula]
+  def apply(left: FOLFormula, right: FOLFormula) = App(App(OrC,left),right).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case HOLOr(left: FOLFormula, right: FOLFormula) => Some( left, right )
+    case App(App(OrC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
     case _ => None
   }
 }
 
 object Imp {
-  def apply(left: FOLFormula, right: FOLFormula) = HOLImp(left, right).asInstanceOf[FOLFormula]
+  def apply(left: FOLFormula, right: FOLFormula) = App(App(ImpC,left),right).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-      case HOLImp(left: FOLFormula, right: FOLFormula) => Some( left, right )
+      case App(App(ImpC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
       case _ => None
+  }
+}
+
+object Ex {
+  def apply(sub: LambdaExpression) = App(new ExQ(sub.exptype),sub).asInstanceOf[FOLFormula]
+  def unapply(expression: LambdaExpression) = expression match {
+    case App(ExQ(t),sub) => Some( (sub, t) )
+    case _ => None
+  }
+}
+
+object All {
+  def apply(sub: LambdaExpression) = App(new AllQ(sub.exptype),sub).asInstanceOf[FOLFormula]
+  def unapply(expression: LambdaExpression) = expression match {
+    case App(AllQ(t),sub) => Some( (sub, t) )
+    case _ => None
   }
 }
 
