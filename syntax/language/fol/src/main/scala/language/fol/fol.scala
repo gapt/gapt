@@ -21,7 +21,7 @@ trait FOL extends HOL
   override def factory : LambdaFactoryA = FOLFactory
 }
 
-trait FOLExpression extends LambdaExpression with HOL with FOL
+trait FOLExpression extends LambdaExpression with FOL with HOL
 trait FOLFormula extends FOLExpression with Formula
 //trait FOLFormula extends HOLFormula with FOL
 trait FOLTerm extends FOLExpression
@@ -147,7 +147,7 @@ object FOLFactory extends LambdaFactoryA {
       case a: VariableSymbolA => new FOLVar(a,dbInd)
     }
     case To() => name match {
-      case a: ConstantSymbolA => new HOLConstFormula(a) with FOL
+      case a: ConstantSymbolA => new HOLConstFormula(a) with FOLFormula
       case _ => throw new Exception("In FOL, of type 'o' only constants may be created.")
     }
     case ->(tr, ta) => {
