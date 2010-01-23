@@ -10,7 +10,7 @@ import org.specs.runner._
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.language.lambda.substitutions._
+import at.logic.language.fol.substitutions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol._
@@ -18,9 +18,25 @@ import at.logic.language.hol._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
-//import at.logic.parsing.language.simple._
+import at.logic.parsing.language.simple._
+import at.logic.parsing.readers.StringReader
+import at.logic.unification.fol.FOLUnificationAlgorithm
 
-/*class UnificationTest extends SpecificationWithJUnit {
+class UnificationTest extends SpecificationWithJUnit {
+  private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
+  
+  "FOL Unification" should {
+    "unify the terms" in {
+      "P(x_1), P(x_2)" in {
+        val px1 = new MyParser("P(x_1)").getTerm.asInstanceOf[FOLExpression]
+        val px2 = new MyParser("P(x_2)").getTerm.asInstanceOf[FOLExpression]
+        (FOLUnificationAlgorithm.unify(px1,px2)) must 
+          beEqual (Some(Substitution(FOLVar(VariableStringSymbol("x_1")), FOLVar(VariableStringSymbol("x_2")))))
+
+      }
+    }
+  }
+  /*
   val alg = new FOLUnification {}
   "Unification" should {
     "return None if terms are not unifiable" in
@@ -143,5 +159,5 @@ import at.logic.language.lambda.typedLambdaCalculus._
         (alg.unify(f_x_y, f_y_gx)) must beEqual (None)
       //  (0) must beEqual (0)
     }
-  }
-}*/
+  }*/
+}

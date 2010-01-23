@@ -24,17 +24,24 @@ package commands {
   case object FactorCom extends Command
   case object ResolveCom extends Command
   case class ResolventCom(resolvent: ResolutionProof) extends Command
+  case object NoResolventCom extends Command
   case object InsertCom extends Command
   case class CorrectResolventFound(res: ResolutionProof) extends Command
   case class SetTargetResolventCom(target: ResolutionProof) extends Command
+  case class ApplyOnAllLiteralPairsCom(ls: List[Command]) extends Command
+  case class AppendCommandsCom(ls: Seq[Command]) extends Command
+  case class ApplyOnLiteralPositionCom(pos: Tuple2[Int,Int], clauses: Tuple2[ResolutionProof, ResolutionProof]) extends Command
+  case class SetUnificationAlgorithmCom(alg: at.logic.unification.UnificationAlgorithm) extends Command
   
   // default commands streams
   object AutomatedFOLStream {
-    def apply(clauses: List[Clause]) = Stream.cons(InsertClausesCom(clauses),rest)
+    def apply(clauses: List[Clause]) = 
+      // the setting of the algorithm is not required as we set a default one in the commands parser
+      //Stream.cons(SetUnificationAlgorithmCom(at.logic.unification.fol.FOLUnificationAlgorithm),
+      Stream.cons(InsertClausesCom(clauses),rest)//)
     def rest: Stream[Command] = Stream(
       GetClausesCom,
-      ResolveCom,
-      InsertCom
+      ApplyOnAllLiteralPairsCom(ResolveCom::InsertCom::Nil)
     ).append(rest)
   }
 }

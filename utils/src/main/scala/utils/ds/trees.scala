@@ -23,9 +23,11 @@ package trees {
 
   class LeafTree[V](val vertex: V) extends VertexGraph[V](vertex, EmptyGraph[V]) with Tree[V] {
     override def equals(a: Any) = a match {
-      case tree: LeafTree[_] => vertex == tree.vertex
+      case LeafTree(v) => vertex == v
+      case _ => false
     }
     override def hashCode = vertex.hashCode
+    override def toString = vertex.toString
   }
   object LeafTree {
     def apply[V](vertex: V) = new LeafTree[V](vertex)
@@ -35,11 +37,12 @@ package trees {
     }
   }
   class UnaryTree[V](val vertex: V, val t: Tree[V]) extends EdgeGraph[V](t.vertex, vertex, VertexGraph[V](vertex, t)) with Tree[V] {
-    require (!t.graph.vertexSet.contains(vertex))
     override def equals(a: Any) = a match {
-      case tree: UnaryTree[_] => vertex == tree.vertex && t == tree.t
+      case UnaryTree(v,up) => vertex == v && t == up
+      case _ => false
     }
     override def hashCode = vertex.hashCode + t.hashCode
+    override def toString = vertex.toString + " (" + t.toString + ")"
   }
   object UnaryTree {
     def apply[V](vertex: V, t: Tree[V]) = new UnaryTree[V](vertex, t)
@@ -49,12 +52,12 @@ package trees {
     }
   }
   class BinaryTree[V](val vertex: V, val t1: Tree[V], val t2: Tree[V]) extends EdgeGraph[V](t2.vertex, vertex, UnionGraph[V](EdgeGraph[V](t1.vertex, vertex, VertexGraph[V](vertex, t1)), t2)) with Tree[V] {
-    require (!t1.graph.vertexSet.contains(vertex) && ! t2.graph.vertexSet.contains(vertex)
-    && !new java.util.HashSet[V](t1.graph.vertexSet).removeAll(t2.graph.vertexSet) /* returns true if the first set changed, i.e. contained an element from the second set*/)
     override def equals(a: Any) = a match {
-      case tree: BinaryTree[_] => vertex == tree.vertex && t1 == tree.t1 && t2 == tree.t2
+      case BinaryTree(v,up1,up2) => vertex == v && t1 == up1 && t2 == up2
+      case _ => false
     }
     override def hashCode = vertex.hashCode + t1.hashCode + t2.hashCode
+    override def toString = vertex.toString + " (" + t1.toString + ", " + t2.toString + ")"
   }
   object BinaryTree {
     def apply[V](vertex: V, t1: Tree[V], t2: Tree[V]) = new BinaryTree[V](vertex, t1, t2)

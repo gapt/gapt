@@ -13,7 +13,7 @@ import at.logic.unification.UnificationAlgorithm
 import at.logic.language.fol._
 
 object FOLUnificationAlgorithm extends UnificationAlgorithm {
-  def unifiy(term1: LambdaExpression, term2: LambdaExpression) = {
+  def unify(term1: LambdaExpression, term2: LambdaExpression) = {
     require(term1.isInstanceOf[FOLExpression] && term2.isInstanceOf[FOLExpression])
     unifySetOfTuples(Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
       case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
@@ -47,7 +47,12 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
   def unifySetOfTuples(s1: List[Tuple2[FOLExpression, FOLExpression]], s2 : List[Tuple2[FOLExpression, FOLExpression]]) : Option[(List[Tuple2[FOLExpression, FOLExpression]], List[Tuple2[FOLExpression, FOLExpression]])] = (s1,s2) match
   {
     case (((a1,a2)::s), s2) if a1 == a2 => unifySetOfTuples(s, s2)
-    case (((Function(f1,args1), Function(f2, args2)):: (s : List[Tuple2[FOLExpression, FOLExpression]])), s2)
+    case (((Function(f1,args1), Function(f2, args2)):: (s)), s2)
+      if args1.length == args2.length && f1==f2  =>
+        {
+            return unifySetOfTuples(args1.zip(args2) ::: s, s2)
+        }
+    case (((Atom(f1,args1), Atom(f2, args2)):: (s)), s2)
       if args1.length == args2.length && f1==f2  =>
         {
             return unifySetOfTuples(args1.zip(args2) ::: s, s2)

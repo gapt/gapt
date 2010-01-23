@@ -23,7 +23,23 @@ trait FOL extends HOL
   override def factory : LambdaFactoryA = FOLFactory
 }
 
-trait FOLExpression extends LambdaExpression with FOL with HOL
+trait FOLExpression extends LambdaExpression with FOL with HOL {
+    override def toString = this match {
+      case Var(x,_) => x.toString
+      case Atom(x, args) => x + "(" +
+        (if (args.size > 1) args.head.toString + args.foldLeft("")((s,a) => s+", "+a.toString)
+        else args.foldLeft("")((s,a) => s+a.toString)) + ")"
+      case Function(x, args) => x + "(" +
+        (if (args.size > 1) args.head.toString + args.foldLeft("")((s,a) => s+", "+a.toString)
+        else args.foldLeft("")((s,a) => s+a.toString)) + ")"
+      case And(x,y) => "(" + x.toString + AndSymbol + y.toString + ")"
+      case Or(x,y) => "(" + x.toString + OrSymbol + y.toString + ")"
+      case Imp(x,y) => "(" + x.toString + ImpSymbol + y.toString + ")"
+      case Neg(x) => NegSymbol + x.toString
+      case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
+      case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
+    }
+  }
 trait FOLFormula extends FOLExpression with Formula
 //trait FOLFormula extends HOLFormula with FOL
 trait FOLTerm extends FOLExpression
@@ -116,7 +132,7 @@ object AllQ {
 object Neg {
   def apply(sub: FOLFormula) = App(NegC,sub).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case App(NegC,sub) => Some( (sub) )
+    case App(NegC,sub) => Some( (sub.asInstanceOf[FOLFormula]) )
     case _ => None
   }
 }
@@ -220,5 +236,5 @@ object FOLFactory extends LambdaFactoryA {
       case t : Ti => t == retType
       case t : To => t == retType
       case ->(ta, tr) => ta == argType && checkType( tr, retType, argType )
-    }
+  }
 }
