@@ -38,7 +38,6 @@ trait Prover {
     // insertClause
     // apply para modulation
     // prover should execute command by command
-
     refute(commands, EmptyCom)
   }
 
@@ -67,6 +66,8 @@ trait Prover {
     refuteOne1Step(last, commands.head) match {
       case CorrectResolventFound(res) => (Some(res),(commands.tail,CorrectResolventFound(res)))
       case FailureCom => (None, (commands.tail, FailureCom))
+      // if the command was to insert into command stream
+      case AppendCommandsCom(coms) => refuteOne(coms.foldRight(commands.tail)((a,b) => Stream.cons(a,b)), EmptyCom)
       case x => refuteOne(commands.tail, x)
     }
 
@@ -77,6 +78,7 @@ trait Prover {
     // insert clauses to set
     case (EmptyCom, SetTargetResolventCom(tProof)) => targetProof = tProof; EmptyCom
     // deal with the case the input set already contains the target clause
+    // therefore it returns the default empty clause as no refutation was made
     case (EmptyCom, InsertClausesCom(clauses)) if targetExistsIn(clauses) => CorrectResolventFound(targetProof)
     case (EmptyCom, InsertClausesCom(clauses)) => refinement.insertClauses(clauses); EmptyCom
     // try to obtain the required clauses, return fail command if not possible
@@ -84,8 +86,10 @@ trait Prover {
       case None => FailureCom
       case Some(clauses) => ApplyOnClausesCom(clauses)
     }
+    case (ResolventCom(res), InsertCom) if (targetProof.root.formulaEquivalece(res.root)) => CorrectResolventFound(res)
     case (ResolventCom(res), InsertCom) => refinement.insertProof(res); EmptyCom
     // pass parsing to customized commands parser
+    case (NoResolventCom, InsertCom) => EmptyCom
     case _ => commandsParser.parse(composedCommand, newCommand)
   }
 
