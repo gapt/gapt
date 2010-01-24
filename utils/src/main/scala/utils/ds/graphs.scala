@@ -15,12 +15,14 @@ import at.logic.utils.logging.Logger
 
 trait Graph[V] extends Logger {
   // this value is computed when needed from the structure of the inductive graph
-  def graph: org.jgrapht.DirectedGraph[V,DefaultEdge] = throw new UnsupportedOperationException("interfacing with jgrapt is not implemented yet")
+  def graph: org.jgrapht.DirectedGraph[V,DefaultEdge]
 
   //needed for interfacing with java
   def getGraph(): org.jgrapht.DirectedGraph[V,DefaultEdge] = graph
 }
-  class EmptyGraph[V] extends Graph[V] 
+  class EmptyGraph[V] extends Graph[V] {
+    def graph: org.jgrapht.DirectedGraph[V,DefaultEdge] = new org.jgrapht.graph.DefaultDirectedGraph[V,DefaultEdge](classOf[DefaultEdge])
+  }
   object EmptyGraph {
     def apply[V]() = new EmptyGraph[V]
     def unapply[V](g: Graph[_]) = g match {
@@ -28,7 +30,13 @@ trait Graph[V] extends Logger {
       case g: Graph[_] => false
     }
   }
-  class VertexGraph[V](val v: V, val g: Graph[V]) extends Graph[V]
+  class VertexGraph[V](val v: V, val g: Graph[V]) extends Graph[V] {
+    def graph = {
+      val ret = g.graph
+      ret.addVertex(v)
+      ret
+    }
+  }
   object VertexGraph {
     def apply[V](v: V, g: Graph[V]) = new VertexGraph[V](v,g)
     def unapply[V](g: Graph[V]) = g match {
@@ -36,7 +44,13 @@ trait Graph[V] extends Logger {
       case g: Graph[_] => None
     }
   }
-  class EdgeGraph[V](val v1: V, val v2: V, val g: Graph[V]) extends Graph[V]
+  class EdgeGraph[V](val v1: V, val v2: V, val g: Graph[V]) extends Graph[V]{
+    def graph = {
+      val ret = g.graph
+      ret.addEdge(v1,v2)
+      ret
+    }
+  }
   object EdgeGraph {
     def apply[V](v1: V, v2: V, g: Graph[V]) = new EdgeGraph[V](v1,v2,g)
     def unapply[V](g: Graph[V]) = g match {
@@ -44,7 +58,15 @@ trait Graph[V] extends Logger {
       case g: Graph[_] => None
     }
   }
-  class UnionGraph[V](val g1: Graph[V], val g2: Graph[V]) extends Graph[V]
+  class UnionGraph[V](val g1: Graph[V], val g2: Graph[V]) extends Graph[V]{
+    def graph = {
+      val ret = g1.graph
+      val g2graph = g2.graph
+      for (v0 <- g2graph.vertexSet()) ret.addVertex(v0)
+      for (e0 <- g2graph.edgeSet()) ret.addEdge(ret.getEdgeSource(e0), ret.getEdgeTarget(e0), e0)
+      ret
+    }
+  }
   object UnionGraph {
     def apply[V](g1: Graph[V], g2: Graph[V]) = new UnionGraph[V](g1, g2)
     def unapply[V](g: Graph[V]) = g match {
