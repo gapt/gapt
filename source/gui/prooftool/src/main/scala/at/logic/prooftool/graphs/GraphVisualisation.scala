@@ -21,6 +21,7 @@ import at.logic.language.hol.propositions._
 import at.logic.language.lambda.typedLambdaCalculus._
 
 
+
 object VisualisationUtils {
 
     //generates a binary tree of given depth and name of parent label. subsequnt nodes will get
@@ -41,38 +42,6 @@ object VisualisationUtils {
         }
     }
 
-    //formats a lambda term to a readable string, dropping the types and printing binary function symbols infix
-    def formulaToString(f:LambdaExpression) : String = {
-        f match {
-            case App(App(Var(name,t),x),y)    => "(" + formulaToString(x) + " "+ name.toString()+ " " +formulaToString(y) +")"
-            case App(x,y)    => formulaToString(x) + "("+ formulaToString(y) +")"
-            case Var(name,t) => name.toString()
-            case Abs(x,y)    => formulaToString(x)+".("+formulaToString(y)+")"
-            case  x : Any    => "(unmatched class: "+x.getClass() + ")"
-                //            case _ => "(argl!!!)"
-        }
-    }
-
-    // formats a sequent to a readable string
-    def sequentToString(s : Sequent) : String = {
-        var sb = new scala.StringBuilder()
-        var first = true
-        for (f <- s.antecedent) {
-            if (! first) sb.append(", ")
-            else first = false
-
-            sb.append(formulaToString(f))
-        }
-        sb.append(" :- ")
-        first =true
-        for (f <- s.succedent) {
-            if (! first) sb.append(", ")
-            else first = false
-            sb.append(formulaToString(f))
-            
-        }
-        sb.toString
-    }
 
     // formats a graph to dot format (http://graphviz.org)
     def toDotFormat(g : graphs.Graph[SequentOccurrence]) : String = {
@@ -89,7 +58,8 @@ object VisualisationUtils {
         while (it.hasNext) {
             v = it.next
             m.put(v,i)
-            sb.append("\tv"+i+ " [label=\""+sequentToString(v.getSequent)+"\"];\n")
+//            sb.append("\tv"+i+ " [label=\""+SequentFormatter.sequentToString(v.getSequent)+"\"];\n")
+            sb.append("\tv"+i+ " [label=\""+v.getSequent+"\"];\n")
             i += 1
         }
 
