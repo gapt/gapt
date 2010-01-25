@@ -61,6 +61,7 @@ package base {
     def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
     def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
     //def multisetEquals( o: SequentOccurrence ) = (((antecedent.toList.map(x => x.formula)) == o.antecedent.toList.map(x => x.formula)) && ((succedent.toList.map(x => x.formula)) == o.succedent.toList.map(x => x.formula)))
+    override def toString : String = SequentFormatter.sequentOccurenceToString(this)
   }
 
   // exceptions
@@ -103,4 +104,43 @@ package base {
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
   object createContext { def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x::Nil)) }
+
+  object SequentFormatter {
+    //formats a lambda term to a readable string, dropping the types and printing binary function symbols infix
+    def formulaToString(f:LambdaExpression) : String = {
+        f match {
+            case App(App(Var(name,t),x),y)    => "(" + formulaToString(x) + " "+ name.toString()+ " " +formulaToString(y) +")"
+            case App(x,y)    => formulaToString(x) + "("+ formulaToString(y) +")"
+            case Var(name,t) => name.toString()
+            case Abs(x,y)    => formulaToString(x)+".("+formulaToString(y)+")"
+            case  x : Any    => "(unmatched class: "+x.getClass() + ")"
+                //            case _ => "(argl!!!)"
+        }
+    }
+
+    // formats a sequent to a readable string
+    def sequentToString(s : Sequent) : String = {
+        var sb = new scala.StringBuilder()
+        var first = true
+        for (f <- s.antecedent) {
+            if (! first) sb.append(", ")
+            else first = false
+
+            sb.append(formulaToString(f))
+        }
+        sb.append(" :- ")
+        first =true
+        for (f <- s.succedent) {
+            if (! first) sb.append(", ")
+            else first = false
+            sb.append(formulaToString(f))
+
+        }
+        sb.toString
+    }
+
+    def sequentOccurenceToString(s: SequentOccurrence) : String = sequentToString(s.getSequent)
+
+  }
+
 }
