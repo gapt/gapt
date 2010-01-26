@@ -1,4 +1,4 @@
-/*
+  /*
  * base.scala
  *
  * To change this template, choose Tools | Template Manager
@@ -43,9 +43,9 @@ package base {
     // returns the n literal of the clause considering that the literals are ordered negative ++ positive
     def apply(n: Int) = if (n < negative.size) negative(n) else positive(n - negative.size)
     override def toString = 
-      (if (negative.size > 1) negative.head.toString + negative.foldLeft("")((s,a) => s+", "+a.toString)
+      (if (negative.size > 1) negative.head.toString + negative.tail.foldLeft("")((s,a) => s+", "+a.toString)
       else negative.foldLeft("")((s,a) => s+a.toString)) + ":-" +
-      (if (positive.size > 1) positive.head.toString + positive.foldLeft("")((s,a) => s+", "+a.toString)
+      (if (positive.size > 1) positive.head.toString + positive.tail.foldLeft("")((s,a) => s+", "+a.toString)
       else positive.foldLeft("")((s,a) => s+a.toString))
   }
   /*object Clause {
@@ -91,18 +91,20 @@ package base {
     }
     // compose two clauses on all elements except with the index given and apply sub on all terms
     private def createClause(c1: Clause, c2: Clause, i: Int, j: Int, sub: Substitution) = {
-      val (neg1,pos1) = if (i < c1.negative.size) (c1.negative - c1.negative(i), c1.positive) else (c1.negative, c1.positive - c1.positive(i - c1.negative.size))
-      val (neg2,pos2) = if (j < c2.negative.size) (c2.negative - c2.negative(j), c2.positive) else (c2.negative, c2.positive - c2.positive(j - c2.negative.size))
+      val (neg1,pos1) = if (i < c1.negative.size)
+          (removeAtIndex(c1.negative, i), c1.positive)
+        else (c1.negative, removeAtIndex(c1.positive, i - c1.negative.size))
+      val (neg2,pos2) = if (j < c2.negative.size) 
+          (removeAtIndex(c2.negative, j), c2.positive)
+        else (c2.negative, removeAtIndex(c2.positive, j - c2.negative.size))
       Clause((neg1 ++ neg2).map(x => sub(x).asInstanceOf[HOLFormula]), (pos1 ++ pos2).map(x => sub(x).asInstanceOf[HOLFormula]))
     }
-
+    private def removeAtIndex(ls: List[HOLFormula], i: Int) = ls.zipWithIndex.filter(x => x._2 != i).map(x => x._1)
     def unapply(proof: ResolutionProof) = if (proof.rule == ResolutionType) {
         val pr = proof.asInstanceOf[BinaryResolutionProof]
         Some((pr.root, pr.uProof1, pr.uProof2))
       }
       else None
-
-    // should be optimized as it was done now just to save coding time
   }
 
 

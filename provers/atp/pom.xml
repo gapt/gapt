@@ -22,5 +22,10 @@
       <artifactId>unification</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>org.scalaforge</groupId>
+      <artifactId>scalax</artifactId>
+      <version>0.1</version>
+    </dependency>
   </dependencies>
 </project>
