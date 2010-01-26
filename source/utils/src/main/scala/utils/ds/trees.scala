@@ -19,6 +19,7 @@ package trees {
 
   trait Tree[V] extends Graph[V] {
     val vertex: V
+    def name: String // used to contain more information about the tree, like rule names in LK
   }
 
   class LeafTree[V](val vertex: V) extends VertexGraph[V](vertex, EmptyGraph[V]) with Tree[V] {
@@ -28,6 +29,7 @@ package trees {
     }
     override def hashCode = vertex.hashCode
     override def toString = vertex.toString
+    def name = "Leaf"
   }
   object LeafTree {
     def apply[V](vertex: V) = new LeafTree[V](vertex)
@@ -43,6 +45,8 @@ package trees {
     }
     override def hashCode = vertex.hashCode + t.hashCode
     override def toString = vertex.toString + " (" + t.toString + ")"
+    def name = "Unary"
+    def latexQTree = "[{." + vertex.toString + "} ({" + name + ")}"
   }
   object UnaryTree {
     def apply[V](vertex: V, t: Tree[V]) = new UnaryTree[V](vertex, t)
@@ -58,6 +62,7 @@ package trees {
     }
     override def hashCode = vertex.hashCode + t1.hashCode + t2.hashCode
     override def toString = vertex.toString + " (" + t1.toString + ", " + t2.toString + ")"
+    def name = "Binary"
   }
   object BinaryTree {
     def apply[V](vertex: V, t1: Tree[V], t2: Tree[V]) = new BinaryTree[V](vertex, t1, t2)
@@ -66,7 +71,15 @@ package trees {
       case t: Tree[_] => None
     }
   }
-  class ArbitraryTree[V] private (val vertex: V, val lastParent: Tree[V], val restParents: List[Tree[V]], graph: Graph[V]) extends EdgeGraph[V](lastParent.vertex, vertex, UnionGraph[V](graph, lastParent)) with Tree[V]
+  class ArbitraryTree[V] private (val vertex: V, val lastParent: Tree[V], val restParents: List[Tree[V]], graph: Graph[V]) extends EdgeGraph[V](lastParent.vertex, vertex, UnionGraph[V](graph, lastParent)) with Tree[V] {
+    override def equals(a: Any) = a match {
+      case ArbitraryTree(v,ls) => vertex == v && ls == lastParent::restParents
+      case _ => false
+    }
+    override def hashCode = vertex.hashCode + (lastParent::restParents).hashCode
+    override def toString = vertex.toString + " (" + (lastParent::restParents) + ")"
+    def name = "Arbitrary"
+  }
   // TODO add a require so it remains a tree (check no vertex repeats and new vertex is new)
   object ArbitraryTree extends Logger {
     def apply[V](vertex: V, parents: Tree[V]*) = {val ls = parents.toList; ls match {

@@ -15,10 +15,7 @@ import commands._
 import commandsParsers.FOLResolutionCommandsParser
 
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
-private object MyProver extends Prover {
-  val ref = new SimpleRefinement{}; val prs = new FOLResolutionCommandsParser{};
-  def refinement = ref; def commandsParser = prs
-}
+private object MyProver extends Prover
 
 class ProverTest extends SpecificationWithJUnit {
   "Prover" should {
@@ -40,6 +37,13 @@ class ProverTest extends SpecificationWithJUnit {
         }
       }
     }
+    /*"refute the following clauses" in {
+      "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
+        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3)).head must beLike {
+          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => Console.println(a); true
+        }
+      }
+    }*/
     /*"When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {
       "ex1"
     }*/
