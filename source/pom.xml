@@ -19,6 +19,7 @@
     <!--    --> <module>gui</module>
     <module>parsing</module>
     <module>integration_tests</module>
+    <module>cli</module>
   </modules>
 
   <packaging>pom</packaging>
