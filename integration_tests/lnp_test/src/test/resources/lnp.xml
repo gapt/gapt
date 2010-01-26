@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE proofdatabase
-SYSTEM "proofdatabase.dtd">
+SYSTEM "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd">
 <proofdatabase>
  <definitionlist/>
  <axiomset>
@@ -8,14 +8,14 @@ SYSTEM "proofdatabase.dtd">
    <formulalist/>
    <formulalist>
     <constantatomformula symbol="=">
-     <function symbol="?">
+     <function symbol="∑">
       <function symbol="+">
        <variable symbol="n"/>
        <constant symbol="1"/>
       </function>
      </function>
      <function symbol="+">
-      <function symbol="?">
+      <function symbol="∑">
        <variable symbol="n"/>
       </function>
       <function symbol="+">
@@ -30,7 +30,7 @@ SYSTEM "proofdatabase.dtd">
    <formulalist/>
    <formulalist>
     <constantatomformula symbol="=">
-     <function symbol="?">
+     <function symbol="∑">
       <constant symbol="0"/>
      </function>
      <constant symbol="0"/>
@@ -101,7 +101,7 @@ SYSTEM "proofdatabase.dtd">
          <constant symbol="1"/>
          <constant symbol="1"/>
         </function>
-        <function symbol="?">
+        <function symbol="∑">
          <variable symbol="n"/>
         </function>
        </function>
@@ -1698,7 +1698,7 @@ SYSTEM "proofdatabase.dtd">
           <constant symbol="1"/>
           <constant symbol="1"/>
          </function>
-         <function symbol="?">
+         <function symbol="∑">
           <variable symbol="n"/>
          </function>
         </function>
@@ -1760,7 +1760,7 @@ SYSTEM "proofdatabase.dtd">
            <constant symbol="1"/>
            <constant symbol="1"/>
           </function>
-          <function symbol="?">
+          <function symbol="∑">
            <variable symbol="n"/>
           </function>
          </function>
@@ -1786,7 +1786,7 @@ SYSTEM "proofdatabase.dtd">
              <constant symbol="1"/>
              <constant symbol="1"/>
             </function>
-            <function symbol="?">
+            <function symbol="∑">
              <constant symbol="0"/>
             </function>
            </function>
@@ -1807,7 +1807,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <variable symbol="y"/>
               </function>
              </function>
@@ -1825,7 +1825,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <function symbol="+">
                 <variable symbol="y"/>
                 <constant symbol="1"/>
@@ -1857,7 +1857,7 @@ SYSTEM "proofdatabase.dtd">
              <constant symbol="1"/>
              <constant symbol="1"/>
             </function>
-            <function symbol="?">
+            <function symbol="∑">
              <variable symbol="y"/>
             </function>
            </function>
@@ -1881,7 +1881,7 @@ SYSTEM "proofdatabase.dtd">
             <constant symbol="1"/>
             <constant symbol="1"/>
            </function>
-           <function symbol="?">
+           <function symbol="∑">
             <variable symbol="n"/>
            </function>
           </function>
@@ -1907,7 +1907,7 @@ SYSTEM "proofdatabase.dtd">
              <constant symbol="1"/>
              <constant symbol="1"/>
             </function>
-            <function symbol="?">
+            <function symbol="∑">
              <constant symbol="0"/>
             </function>
            </function>
@@ -1928,7 +1928,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <variable symbol="y"/>
               </function>
              </function>
@@ -1946,7 +1946,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <function symbol="+">
                 <variable symbol="y"/>
                 <constant symbol="1"/>
@@ -1982,7 +1982,7 @@ SYSTEM "proofdatabase.dtd">
              <constant symbol="1"/>
              <constant symbol="1"/>
             </function>
-            <function symbol="?">
+            <function symbol="∑">
              <constant symbol="0"/>
             </function>
            </function>
@@ -2001,7 +2001,7 @@ SYSTEM "proofdatabase.dtd">
           <formulalist/>
           <formulalist>
            <constantatomformula symbol="=">
-            <function symbol="?">
+            <function symbol="∑">
              <constant symbol="0"/>
             </function>
             <constant symbol="0"/>
@@ -2080,7 +2080,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <variable symbol="y"/>
               </function>
              </function>
@@ -2098,7 +2098,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <function symbol="+">
                 <variable symbol="y"/>
                 <constant symbol="1"/>
@@ -2134,7 +2134,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <variable symbol="y_0"/>
               </function>
              </function>
@@ -2152,7 +2152,7 @@ SYSTEM "proofdatabase.dtd">
                <constant symbol="1"/>
                <constant symbol="1"/>
               </function>
-              <function symbol="?">
+              <function symbol="∑">
                <function symbol="+">
                 <variable symbol="y_0"/>
                 <constant symbol="1"/>
@@ -2187,7 +2187,7 @@ SYSTEM "proofdatabase.dtd">
                 <constant symbol="1"/>
                 <constant symbol="1"/>
                </function>
-               <function symbol="?">
+               <function symbol="∑">
                 <variable symbol="y_0"/>
                </function>
               </function>
@@ -2205,7 +2205,7 @@ SYSTEM "proofdatabase.dtd">
                 <constant symbol="1"/>
                 <constant symbol="1"/>
                </function>
-               <function symbol="?">
+               <function symbol="∑">
                 <function symbol="+">
                  <variable symbol="y_0"/>
                  <constant symbol="1"/>
@@ -2234,7 +2234,7 @@ SYSTEM "proofdatabase.dtd">
                 <constant symbol="1"/>
                 <constant symbol="1"/>
                </function>
-               <function symbol="?">
+               <function symbol="∑">
                 <variable symbol="y_0"/>
                </function>
               </function>
@@ -2252,7 +2252,7 @@ SYSTEM "proofdatabase.dtd">
                 <constant symbol="1"/>
                 <constant symbol="1"/>
                </function>
-               <function symbol="?">
+               <function symbol="∑">
                 <function symbol="+">
                  <variable symbol="y_0"/>
                  <constant symbol="1"/>
@@ -2281,14 +2281,14 @@ SYSTEM "proofdatabase.dtd">
             <formulalist/>
             <formulalist>
              <constantatomformula symbol="=">
-              <function symbol="?">
+              <function symbol="∑">
                <function symbol="+">
                 <variable symbol="y_0"/>
                 <constant symbol="1"/>
                </function>
               </function>
               <function symbol="+">
-               <function symbol="?">
+               <function symbol="∑">
                 <variable symbol="y_0"/>
                </function>
                <function symbol="+">
@@ -2311,7 +2311,7 @@ SYSTEM "proofdatabase.dtd">
                  <constant symbol="1"/>
                  <constant symbol="1"/>
                 </function>
-                <function symbol="?">
+                <function symbol="∑">
                  <variable symbol="y_0"/>
                 </function>
                </function>
@@ -2329,7 +2329,7 @@ SYSTEM "proofdatabase.dtd">
                  <constant symbol="1"/>
                  <constant symbol="1"/>
                 </function>
-                <function symbol="?">
+                <function symbol="∑">
                  <function symbol="+">
                   <variable symbol="y_0"/>
                   <constant symbol="1"/>
@@ -2358,7 +2358,7 @@ SYSTEM "proofdatabase.dtd">
                  <constant symbol="1"/>
                  <constant symbol="1"/>
                 </function>
-                <function symbol="?">
+                <function symbol="∑">
                  <variable symbol="y_0"/>
                 </function>
                </function>
@@ -2377,7 +2377,7 @@ SYSTEM "proofdatabase.dtd">
                  <constant symbol="1"/>
                 </function>
                 <function symbol="+">
-                 <function symbol="?">
+                 <function symbol="∑">
                   <variable symbol="y_0"/>
                  </function>
                  <function symbol="+">
@@ -2414,7 +2414,7 @@ SYSTEM "proofdatabase.dtd">
                   <constant symbol="1"/>
                   <constant symbol="1"/>
                  </function>
-                 <function symbol="?">
+                 <function symbol="∑">
                   <variable symbol="y_0"/>
                  </function>
                 </function>
@@ -2433,7 +2433,7 @@ SYSTEM "proofdatabase.dtd">
                   <constant symbol="1"/>
                  </function>
                  <function symbol="+">
-                  <function symbol="?">
+                  <function symbol="∑">
                    <variable symbol="y_0"/>
                   </function>
                   <function symbol="+">
@@ -2464,7 +2464,7 @@ SYSTEM "proofdatabase.dtd">
                   <constant symbol="1"/>
                   <constant symbol="1"/>
                  </function>
-                 <function symbol="?">
+                 <function symbol="∑">
                   <variable symbol="y_0"/>
                  </function>
                 </function>
@@ -2482,7 +2482,7 @@ SYSTEM "proofdatabase.dtd">
                   <constant symbol="1"/>
                   <constant symbol="1"/>
                  </function>
-                 <function symbol="?">
+                 <function symbol="∑">
                   <function symbol="+">
                    <variable symbol="y_0"/>
                    <constant symbol="1"/>
@@ -2515,7 +2515,7 @@ SYSTEM "proofdatabase.dtd">
                   <constant symbol="1"/>
                   <constant symbol="1"/>
                  </function>
-                 <function symbol="?">
+                 <function symbol="∑">
                   <variable symbol="y_0"/>
                  </function>
                 </function>
@@ -2536,7 +2536,7 @@ SYSTEM "proofdatabase.dtd">
                    <constant symbol="1"/>
                    <constant symbol="1"/>
                   </function>
-                  <function symbol="?">
+                  <function symbol="∑">
                    <variable symbol="y_0"/>
                   </function>
                  </function>
@@ -2555,7 +2555,7 @@ SYSTEM "proofdatabase.dtd">
                    <constant symbol="1"/>
                   </function>
                   <function symbol="+">
-                   <function symbol="?">
+                   <function symbol="∑">
                     <variable symbol="y_0"/>
                    </function>
                    <function symbol="+">
@@ -2585,7 +2585,7 @@ SYSTEM "proofdatabase.dtd">
                   <constant symbol="1"/>
                   <constant symbol="1"/>
                  </function>
-                 <function symbol="?">
+                 <function symbol="∑">
                   <function symbol="+">
                    <variable symbol="y_0"/>
                    <constant symbol="1"/>
@@ -2617,7 +2617,7 @@ SYSTEM "proofdatabase.dtd">
                    <constant symbol="1"/>
                    <constant symbol="1"/>
                   </function>
-                  <function symbol="?">
+                  <function symbol="∑">
                    <variable symbol="y_0"/>
                   </function>
                  </function>
@@ -2638,7 +2638,7 @@ SYSTEM "proofdatabase.dtd">
                     <constant symbol="1"/>
                     <constant symbol="1"/>
                    </function>
-                   <function symbol="?">
+                   <function symbol="∑">
                     <variable symbol="y_0"/>
                    </function>
                   </function>
@@ -2657,7 +2657,7 @@ SYSTEM "proofdatabase.dtd">
                     <constant symbol="1"/>
                    </function>
                    <function symbol="+">
-                    <function symbol="?">
+                    <function symbol="∑">
                      <variable symbol="y_0"/>
                     </function>
                     <function symbol="+">
@@ -2694,7 +2694,7 @@ SYSTEM "proofdatabase.dtd">
                      <constant symbol="1"/>
                      <constant symbol="1"/>
                     </function>
-                    <function symbol="?">
+                    <function symbol="∑">
                      <variable symbol="y_0"/>
                     </function>
                    </function>
@@ -2713,7 +2713,7 @@ SYSTEM "proofdatabase.dtd">
                      <constant symbol="1"/>
                     </function>
                     <function symbol="+">
-                     <function symbol="?">
+                     <function symbol="∑">
                       <variable symbol="y_0"/>
                      </function>
                      <function symbol="+">
@@ -2748,7 +2748,7 @@ SYSTEM "proofdatabase.dtd">
                      <constant symbol="1"/>
                      <constant symbol="1"/>
                     </function>
-                    <function symbol="?">
+                    <function symbol="∑">
                      <variable symbol="y_0"/>
                     </function>
                    </function>
@@ -2769,7 +2769,7 @@ SYSTEM "proofdatabase.dtd">
                      <constant symbol="1"/>
                     </function>
                     <function symbol="+">
-                     <function symbol="?">
+                     <function symbol="∑">
                       <variable symbol="y_0"/>
                      </function>
                      <function symbol="+">
@@ -2805,7 +2805,7 @@ SYSTEM "proofdatabase.dtd">
                       <constant symbol="1"/>
                      </function>
                      <function symbol="+">
-                      <function symbol="?">
+                      <function symbol="∑">
                        <variable symbol="y_0"/>
                       </function>
                       <function symbol="+">
@@ -2820,7 +2820,7 @@ SYSTEM "proofdatabase.dtd">
                        <constant symbol="1"/>
                        <constant symbol="1"/>
                       </function>
-                      <function symbol="?">
+                      <function symbol="∑">
                        <variable symbol="y_0"/>
                       </function>
                      </function>
@@ -2848,7 +2848,7 @@ SYSTEM "proofdatabase.dtd">
                       <constant symbol="1"/>
                       <constant symbol="1"/>
                      </function>
-                     <function symbol="?">
+                     <function symbol="∑">
                       <variable symbol="y_0"/>
                      </function>
                     </function>
@@ -2869,7 +2869,7 @@ SYSTEM "proofdatabase.dtd">
                        <constant symbol="1"/>
                        <constant symbol="1"/>
                       </function>
-                      <function symbol="?">
+                      <function symbol="∑">
                        <variable symbol="y_0"/>
                       </function>
                      </function>
@@ -2909,7 +2909,7 @@ SYSTEM "proofdatabase.dtd">
                        <constant symbol="1"/>
                        <constant symbol="1"/>
                       </function>
-                      <function symbol="?">
+                      <function symbol="∑">
                        <variable symbol="y_0"/>
                       </function>
                      </function>
@@ -2929,7 +2929,7 @@ SYSTEM "proofdatabase.dtd">
                        <constant symbol="1"/>
                        <constant symbol="1"/>
                       </function>
-                      <function symbol="?">
+                      <function symbol="∑">
                        <variable symbol="y_0"/>
                       </function>
                      </function>
@@ -3007,7 +3007,7 @@ SYSTEM "proofdatabase.dtd">
              <constant symbol="1"/>
              <constant symbol="1"/>
             </function>
-            <function symbol="?">
+            <function symbol="∑">
              <variable symbol="y"/>
             </function>
            </function>
@@ -3030,7 +3030,7 @@ SYSTEM "proofdatabase.dtd">
              <constant symbol="1"/>
              <constant symbol="1"/>
             </function>
-            <function symbol="?">
+            <function symbol="∑">
              <variable symbol="n"/>
             </function>
            </function>
@@ -3056,7 +3056,7 @@ SYSTEM "proofdatabase.dtd">
               <constant symbol="1"/>
               <constant symbol="1"/>
              </function>
-             <function symbol="?">
+             <function symbol="∑">
               <variable symbol="y"/>
              </function>
             </function>
@@ -3077,7 +3077,7 @@ SYSTEM "proofdatabase.dtd">
              <constant symbol="1"/>
              <constant symbol="1"/>
             </function>
-            <function symbol="?">
+            <function symbol="∑">
              <variable symbol="n_0"/>
             </function>
            </function>
@@ -3100,7 +3100,7 @@ SYSTEM "proofdatabase.dtd">
               <constant symbol="1"/>
               <constant symbol="1"/>
              </function>
-             <function symbol="?">
+             <function symbol="∑">
               <variable symbol="n_0"/>
              </function>
             </function>
@@ -3120,7 +3120,7 @@ SYSTEM "proofdatabase.dtd">
               <constant symbol="1"/>
               <constant symbol="1"/>
              </function>
-             <function symbol="?">
+             <function symbol="∑">
               <variable symbol="n_0"/>
              </function>
             </function>
@@ -3148,7 +3148,7 @@ SYSTEM "proofdatabase.dtd">
          <constant symbol="1"/>
          <constant symbol="1"/>
         </function>
-        <function symbol="?">
+        <function symbol="∑">
          <variable symbol="n"/>
         </function>
        </function>
