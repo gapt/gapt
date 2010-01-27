@@ -366,7 +366,9 @@ object XMLParser {
           val conc = ( new NodeReader(ns.first) with XMLSequentParser ).getSequent()
           // TODO: according to DTD, there may be a "substitution" element here
           // but I think it's not actually used.
-          val substnodes = ns.filter( n => n.label == "lambdasubstitution" )
+          val substnodes = ns.filter( n => n.label == "lambdasubstitution" ||
+                                           n.label == "secondordervariable" ||
+                                           n.label == "definedset" )
           val subst = if ( !substnodes.isEmpty )
                         Some((new NodeReader( substnodes.first ) with XMLSetTermParser).getSetTerm)
                       else
