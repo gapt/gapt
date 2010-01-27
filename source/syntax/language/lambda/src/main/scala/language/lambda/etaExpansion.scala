@@ -24,7 +24,7 @@ package etaExpansion {
         
         case AbsN1(lsVars, sub) => sub.exptype match {
             case FunctionType(_, lsArgs ) if lsVars.size < lsArgs.size => {
-                val v = sub.Factory.createVar(VariableStringSymbol("x"), lsArgs.head, Some(1))
+                val v = sub.factory.createVar(VariableStringSymbol("x"), lsArgs.head, Some(1))
                 Abs(v, LambdaFactory.createApp(sub, v))
             }
             case Ti() => AbsN(lsVars, sub)
@@ -38,10 +38,8 @@ package etaExpansion {
 
   object EtaNormalize {
     def apply(term: LambdaExpression): LambdaExpression = {
-      term match {
-        case t: LambdaExpression if EtaExpand.apply(term) == t => term
-        case _ => EtaNormalize.apply(term)
-      }
+      val term2 = EtaExpand(term)
+      if (term2 == term) term else EtaNormalize(EtaExpand(term))
     }
   }
 }
