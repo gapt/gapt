@@ -22,6 +22,7 @@ import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk._
+import at.logic.algorithms.subsumption._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
@@ -59,6 +60,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
+      //val cssv = variantsRemoval(css)
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
 
@@ -95,6 +97,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
+      //val cssv = variantsRemoval(css)
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime1-2-cs.xml" )
     }
   }
