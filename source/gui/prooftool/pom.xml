@@ -11,6 +11,33 @@
   <packaging>jar</packaging>  
   <name>Proof Tool</name>
 
+  <build>
+    <plugins>
+       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+          <executions>
+            <execution>
+               <goals>
+                 <goal>attached</goal>
+               </goals>
+               <phase>package</phase>
+               <configuration>
+                 <descriptorRefs>
+                   <descriptorRef>jar-with-dependencies</descriptorRef>
+                </descriptorRefs>
+                <archive>
+                  <manifest>
+                    <mainClass>at.logic.prooftool.graphs.VisualisationUtils</mainClass>
+                  </manifest>
+                </archive>
+              </configuration>
+           </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>at.logic</groupId>

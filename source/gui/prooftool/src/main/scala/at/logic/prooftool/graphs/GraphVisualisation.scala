@@ -20,9 +20,27 @@ import at.logic.calculi.lk.base._
 import at.logic.language.hol.propositions._
 import at.logic.language.lambda.typedLambdaCalculus._
 
+import at.logic.utils.ds.graphs._
+import GraphImplicitConverters._
+import at.logic.prooftool.ProofViewer
 
+import at.logic.parsing.language.xml.XMLParser._
+import at.logic.parsing.readers.XMLReaders._
+import java.io.{PrintWriter, FileReader, FileInputStream, InputStreamReader}
+import java.util.zip.GZIPInputStream
+import java.io.File.separator
 
 object VisualisationUtils {
+
+    def main(args: Array[String]) {
+      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(
+                        new FileInputStream(args(0))))) with XMLProofDatabaseParser).getProofs()
+        val proof = proofs.first
+        var pv = new ProofViewer[SequentOccurrence](proof)
+        //pv.doTreePlacement()
+        pv.run()
+    }
+
 
     //generates a binary tree of given depth and name of parent label. subsequnt nodes will get
     // the character l or r prepended depending wether they went _l_eft ot _r_ight
