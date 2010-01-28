@@ -60,8 +60,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
-      //val cssv = variantsRemoval(css)
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
+      val cssv = sequentNormalize(css)
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
 
     "parse correctly the first-order prime proof, n=0" in {
@@ -73,7 +73,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime1-0-cs.xml" )
+      val cssv = sequentNormalize(css)
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime1-0-cs.xml" )
     }
 
     "parse correctly the first-order prime proof, n=1" in {
@@ -85,7 +86,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime1-1-cs.xml" )
+      val cssv = sequentNormalize(css)
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime1-1-cs.xml" )
     }
 
     "parse correctly the first-order prime proof, n=2" in {
@@ -97,8 +99,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
-      //val cssv = variantsRemoval(css)
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "prime1-2-cs.xml" )
+      val cssv = sequentNormalize(css)
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime1-2-cs.xml" )
     }
   }
 }

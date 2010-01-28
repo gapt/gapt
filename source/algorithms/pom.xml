@@ -13,6 +13,7 @@
 
   <modules>
       <module>unification</module>
+      <module>normalization</module>
       <module>subsumption</module>
       <module>diophantine</module>
     <module>lk</module>
