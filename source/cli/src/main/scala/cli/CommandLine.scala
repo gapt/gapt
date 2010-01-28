@@ -44,7 +44,8 @@ object CommandLine {
 
       val proof = proofs.first
       printStats( proof )
-      val proof_sk = LKtoLKskc( proof )
+      val proof_reg = regularize( proof )._1
+      val proof_sk = LKtoLKskc( proof_reg )
       val s = StructCreators.extract( proof_sk )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
