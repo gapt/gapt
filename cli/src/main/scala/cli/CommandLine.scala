@@ -50,7 +50,9 @@ object CommandLine {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, out_file )
+      println("css size: " + css.size )
+      Runtime.getRuntime().gc();
+      saveXML( Pair("css", (css.toList))::Nil, out_file )
       return 0
     }
 
