@@ -36,10 +36,12 @@ package simplification {
   // variable normalization and sorting according to a standard order, also removal of duplicates of formulas within the sequent
   object sequentNormalize {
     def apply(sequents: Set[Sequent]): Set[Sequent] = {
-      var id = 0
-      val map = Map[Var,Var]()
-      def nextId = {id = id + 1; id}
-      sequents.toList.foldLeft(Set[Sequent]())((set, el) => set + (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId))))
+      sequents.toList.foldLeft(Set[Sequent]())((set, el) => {
+          var id = 0
+          val map = Map[Var,Var]()
+          def nextId = {id = id + 1; id}
+          set + (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId)))
+        })
     }
     private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = toSet(ls.map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).sort((t1,t2) => t1.hashCode < t2.hashCode)).toList
     private def toSet[A](ls: List[A]): Set[A] = ls match {
