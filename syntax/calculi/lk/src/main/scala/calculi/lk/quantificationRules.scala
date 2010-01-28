@@ -111,7 +111,10 @@ package quantificationRules {
     def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, eigen_var: HOLVar ) : LKProof =
       main match {
         case All( sub, _ ) => {
-          // TODO: check eigenvariable condition
+          // eigenvar condition
+          assert( ( s1.root.antecedent ++ (s1.root.succedent - aux_fo) ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
+            "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.root.getSequent.toStringSimple )
+          // correct auxiliary formula
           assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
               val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
               new UnaryTree[SequentOccurrence](
@@ -146,24 +149,26 @@ package quantificationRules {
     def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, eigen_var: HOLVar ) : LKProof =
       main match {
         case Ex( sub, _ ) => {
-          // TODO: check eigenvariable condition
+          // eigenvar condition
+          assert( ( (s1.root.antecedent - aux_fo) ++ s1.root.succedent ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
+            "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.root.getSequent.toStringSimple )
+          // correct auxiliary formula
           assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
-              val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-              new UnaryTree[SequentOccurrence](
-                  SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
-                                    createContext((s1.root.succedent))), s1 )
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
-                def rule = ExistsLeftRuleType
-                def aux = (aux_fo::Nil)::Nil
-                def prin = prinFormula::Nil
-                def eigenvar = eigen_var
-              }
-            }
+          val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
+          new UnaryTree[SequentOccurrence](
+              SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
+                                createContext((s1.root.succedent))), s1 )
+          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
+            def rule = ExistsLeftRuleType
+            def aux = (aux_fo::Nil)::Nil
+            def prin = prinFormula::Nil
+            def eigenvar = eigen_var
+          }
+        }
         case _ => throw new LKRuleCreationException("Main formula of ExistsLeftRule must have an existential quantifier as head symbol.")
       }
-     
 
-    def unapply(proof: LKProof) = if (proof.rule == ExistsLeftRuleType) {
+      def unapply(proof: LKProof) = if (proof.rule == ExistsLeftRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable]
         val ((a1::Nil)::Nil) = r.aux
         val (p1::Nil) = r.prin
