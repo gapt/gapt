@@ -20,18 +20,17 @@ import at.logic.language.lambda.typedLambdaCalculus._
 
 class SubstitutionTest extends SpecificationWithJUnit {
   "Substitutions" should {
-    val x = HOLVar( "x", i )
-    val Px = Atom( "P", x::Nil )
-    val s = Sequent( Px::Nil, Px::Nil )
-    val ax1 = Axiom( s )._1
-    val ax2 = Axiom( s )._1
-    val proof = CutRule( ax1, ax2, ax1.root.succedent.toList.first, ax2.root.antecedent.toList.first )
-    val a = HOLConst( new ConstantStringSymbol( "a" ), i )
-    val f = HOLConst( new ConstantStringSymbol( "f" ), i -> i )
-    val fa = HOLApp( f, a )
-    val subst = Substitution( x, fa )
-
     "apply correctly to a simple proof" in {
+      val x = HOLVar( "x", i )
+      val Px = Atom( "P", x::Nil )
+      val s = Sequent( Px::Nil, Px::Nil )
+      val ax1 = Axiom( s )._1
+      val ax2 = Axiom( s )._1
+      val proof = CutRule( ax1, ax2, ax1.root.succedent.toList.first, ax2.root.antecedent.toList.first )
+      val a = HOLConst( new ConstantStringSymbol( "a" ), i )
+      val f = HOLConst( new ConstantStringSymbol( "f" ), i -> i )
+      val fa = HOLApp( f, a )
+      val subst = Substitution( x, fa )
       val p_s = applySubstitution( proof, subst )
       val Pfa = Atom( "P", fa::Nil )
       val new_seq = Sequent( Pfa::Nil, Pfa::Nil )
