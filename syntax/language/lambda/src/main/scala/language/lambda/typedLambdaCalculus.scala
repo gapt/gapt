@@ -23,6 +23,7 @@ package typedLambdaCalculus {
     def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
     def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var if v.isFree => (HashSet(v), new EmptySet)
+      case v: Var => (new EmptySet, HashSet(v))
       case App(exp, arg) => {
         val mFBV = exp.getFreeAndBoundVariables()
         val nFBV = arg.getFreeAndBoundVariables()
