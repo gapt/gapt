@@ -44,6 +44,7 @@ object applySubstitution {
     ( new_proof, computeMap( old_parent_1.root.antecedent ++ old_parent_1.root.succedent ++ old_parent_2.root.antecedent ++ old_parent_2.root.succedent,
       old_proof, new_proof, new_parent_1._2 ++ new_parent_2._2 ) )
   }
+
   def handleEquationRule(
     constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula) => LKProof,
     p1: LKProof,
@@ -109,6 +110,7 @@ object applySubstitution {
       val new_proof = OrRight2Rule( new_parent._1, subst( f ), new_parent._2( a ) )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
+    // TODO: use handleBinaryProp here!?
     case ImpLeftRule(p1, p2, s, a1, a2, m) => {
       val new_p1 = new_parents.first
       val new_p2 = new_parents.last
