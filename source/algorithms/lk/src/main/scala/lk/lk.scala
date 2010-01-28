@@ -90,7 +90,7 @@ object regularize {
     }
     case ContractionRightRule(p, s, a1, a2, m) => {
       val new_parent = rec( p, vars )
-      handleContraction( ( new_parent._1, new_parent._3 ), p, proof, a1, a2, new_parent._2, ContractionLeftRule.apply )
+      handleContraction( ( new_parent._1, new_parent._3 ), p, proof, a1, a2, new_parent._2, ContractionRightRule.apply )
     }
     case AndLeft1Rule(p, s, a, m) => {
       val f = m.formula match { case And(_, w) => w }
@@ -154,7 +154,7 @@ object regularize {
       ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
     }
     case ExistsLeftRule( p, s, a, m, v ) => {
-      val new_parent = rec( p, vars )
+      val new_parent = rec( p, vars + v )
       val blacklist = new_parent._2
       val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
       {
@@ -169,13 +169,12 @@ object regularize {
       ( new_proof, new_blacklist, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_map ) )
     }
     case ForallRightRule( p, s, a, m, v ) => {
-      val new_parent = rec( p, vars )
+      val new_parent = rec( p, vars + v )
       val blacklist = new_parent._2
       val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
       {
         // FIXME: casts!?
         val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], v ).asInstanceOf[HOLVar]
-        println( "applying substitution " + v.toStringSimple + " <- " + new_var.toStringSimple )
         val new_new_parent = applySubstitution( new_parent._1, Substitution( v, new_var ) )
         val new_map = new_parent._3.clone
         new_map.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
