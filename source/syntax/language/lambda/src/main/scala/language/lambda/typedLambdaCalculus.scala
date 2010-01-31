@@ -67,6 +67,11 @@ package typedLambdaCalculus {
     def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App = new App( fun, arg )
   }
 
+  /**
+   * The De-Bruijn Index (dbIndex) is not exactly as De-Bruijns as db the definition of db is the number of nesting binders
+   * over the variable used and our definition is the number of nested binders over the binding variable (i.e.
+   * \x.x + \y.y + x is {1}+({1}+{2}) in original notation and {2}+({1}+{2}) as it seems easier to compute and use.
+   */
   class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA,  dbInd: Option[Int]) extends LambdaExpression {
     private[lambda] val dbIndex: Option[Int] = dbInd // represents a bound variable and its de Bruijn index
     def this(name: SymbolA, exptype: TA) = this(name, exptype, None)
