@@ -17,7 +17,7 @@ object TermNormalizer {
     case v1 @ Var(VariableStringSymbol(_),_) => map.getOrElseUpdate(v1.asInstanceOf[Var], normalizeVar(v1.asInstanceOf[Var], nextId))
     case v1: Var => v1
     case App(e1, arg1) => App(apply(e1,map, nextId), apply(arg1,map, nextId))
-    case Abs(v, e1) => Abs(apply(v,map, nextId).asInstanceOf[Var], apply(e1,map, nextId))
+    case AbsInScope(v, e1) => Abs(apply(v,map, nextId).asInstanceOf[Var], apply(e1,map, nextId))
   }
 
   private def normalizeVar(v: Var, nextId: => Int): Var = v match {

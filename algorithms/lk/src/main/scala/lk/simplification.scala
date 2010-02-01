@@ -43,7 +43,7 @@ package simplification {
           set + (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId)))
         })
     }
-    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = toSet(ls.map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).sort((t1,t2) => t1.hashCode < t2.hashCode)).toList
+    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = toSet(ls.map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).sort((t1,t2) => t1.toString < t2.toString)).toList
     private def toSet[A](ls: List[A]): Set[A] = ls match {
       case x :: rest => toSet( rest ) + x
       case Nil => Set[A]()
