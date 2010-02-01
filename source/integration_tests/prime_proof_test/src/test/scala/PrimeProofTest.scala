@@ -17,6 +17,9 @@ import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
+import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.parsing.writers.FileWriter
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
@@ -61,6 +64,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
       val cssv = sequentNormalize(css)
+      (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cssv.toList.sort((s1,s2) => s1.toString < s2.toString)).close
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
 
@@ -73,7 +77,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
+      Console.println("css: " + css.size)
       val cssv = sequentNormalize(css)
+      Console.println("cssv: " + cssv.size)
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime1-0-cs.xml" )
     }
 
@@ -86,7 +92,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
+      Console.println("css: " + css.size)
       val cssv = sequentNormalize(css)
+      Console.println("cssv: " + cssv.size)
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime1-1-cs.xml" )
     }
 
@@ -99,7 +107,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
+      Console.println("css: " + css.size)
       val cssv = sequentNormalize(css)
+      Console.println("cssv: " + cssv.size)
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime1-2-cs.xml" )
     }
   }
