@@ -58,8 +58,8 @@ class SimplificationTest extends SpecificationWithJUnit {
     }
 
     "correctly remove variants from a set of Sequents" in {
-      val set = Set(s5,s6,s7,s8)
-      val ret = variantsRemoval( set )
+      val ls = List(s5,s6,s7,s8)
+      val ret = variantsRemoval( ls )
       ret.size must beEqual( 2 )
     }
   }

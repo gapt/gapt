@@ -25,7 +25,7 @@ package simplification {
   }
 
   object variantsRemoval {
-    def apply(sequents: Set[Sequent]): Set[Sequent] = sequents.toList.foldLeft(Set[Sequent]())((ls, el) => if (ls.exists(x => isVariantSequent(x,el))) ls else (ls + el))
+    def apply(sequents: List[Sequent]): List[Sequent] = sequents.toList.foldLeft(List[Sequent]())((ls, el) => if (ls.exists(x => isVariantSequent(x,el))) ls else (ls + el))
     private def isVariantSequent(s1: Sequent, s2: Sequent) = {
       val map = Map[Var,Var]();
       s1.antecedent.size == s2.antecedent.size && s1.succedent.size == s2.succedent.size &&
@@ -35,18 +35,15 @@ package simplification {
 
   // variable normalization and sorting according to a standard order, also removal of duplicates of formulas within the sequent
   object sequentNormalize {
-    def apply(sequents: Set[Sequent]): Set[Sequent] = {
-      sequents.toList.foldLeft(Set[Sequent]())((set, el) => {
+    def apply(sequents: List[Sequent]): List[Sequent] = {
+      (sequents.foldLeft(List[Sequent]())((ls, el) => {
           var id = 0
           val map = Map[Var,Var]()
           def nextId = {id = id + 1; id}
-          set + (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId)))
-        })
+          if (!ls.exists(x => x.multisetEquals(el))) (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId)))::ls
+          else ls
+        })).removeDuplicates
     }
-    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = toSet(ls.map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).sort((t1,t2) => t1.toString < t2.toString)).toList
-    private def toSet[A](ls: List[A]): Set[A] = ls match {
-      case x :: rest => toSet( rest ) + x
-      case Nil => Set[A]()
-    }
+    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = ls.map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).sort((t1,t2) => t1.toString < t2.toString)
   }
 }
