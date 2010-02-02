@@ -23,14 +23,6 @@ package base {
   object RunningId {
     var id = -1
   }
-  class VariantGenerator extends (VariableStringSymbol => VariableStringSymbol) {
-    val varsMap = Map[VariableStringSymbol, VariableStringSymbol]()
-    def apply(a: VariableStringSymbol) = varsMap.getOrElseUpdate(a,updateVal(a))
-    private def updateVal(a: VariableStringSymbol) = {
-      RunningId.id = RunningId.id + 1
-      VariableStringSymbol(a.string + "_" + RunningId.id)
-    }
-  }
 
   case class Clause(negative: List[HOLFormula], positive: List[HOLFormula]){
     // set equivalence
@@ -110,7 +102,7 @@ package base {
 
   object Variant {
     def apply(p: ResolutionProof): ResolutionProof = {
-      val varGen = new VariantGenerator
+      val varGen = new VariantGenerator(RunningId.id)
       val newCl = Clause(
           p.root.negative.map(variantTerm(varGen)).asInstanceOf[List[HOLFormula]],
           p.root.positive.map(variantTerm(varGen)).asInstanceOf[List[HOLFormula]])
