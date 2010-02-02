@@ -7,7 +7,8 @@ package at.logic.language.lambda
 
 import symbols._
 import symbols.ImplicitConverters._
-import scala.collection.immutable._
+import scala.collection.immutable.{HashSet, EmptySet}
+import scala.collection.mutable.Map
 import types._
 
 package typedLambdaCalculus {
@@ -35,6 +36,7 @@ package typedLambdaCalculus {
         (mFBV._1, bound)
       }
     }
+    def variant(gen: => VariantGenerator): LambdaExpression
     /*def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var => (HashSet(v), new EmptySet)
       case app: App => {
@@ -52,6 +54,15 @@ package typedLambdaCalculus {
       }
     }*/
     def toStringSimple: String
+  }
+
+  class VariantGenerator(var id: Int) extends (VariableStringSymbol => VariableStringSymbol) {
+    val varsMap = Map[VariableStringSymbol, VariableStringSymbol]()
+    def apply(a: VariableStringSymbol) = varsMap.getOrElseUpdate(a,updateVal(a))
+    private def updateVal(a: VariableStringSymbol) = {
+      id = id + 1
+      VariableStringSymbol(a.string + "_" + id)
+    }
   }
 
   trait LambdaFactoryA {
@@ -92,6 +103,10 @@ package typedLambdaCalculus {
     def toStringSimple() = name.toString + (if (isBound) """{""" + dbIndex.get + """}""" else "")
     def isFree = dbIndex == None
     def isBound = !isFree
+    def variant(gen: => VariantGenerator) = name match {
+      case v: VariableStringSymbol if isFree => factory.createVar(gen(v), exptype)
+      case _ => this
+    }
   }
   // TODO: remove!?!
   object LambdaVar {
@@ -130,6 +145,7 @@ package typedLambdaCalculus {
     }
     override def hashCode() = exptype.hashCode
     override def toString() = "Abs(" + variableInScope + "," + expressionInScope + ")"
+    def variant(gen: => VariantGenerator) = Abs(variable, expressionInScope.variant(gen))
     def toString1(): String = "Abs(" + variableInScope.toString1 + "," + expressionInScope.toString1 + ")"
     def toStringSimple = "(λ" + variableInScope.toStringSimple + "." + expressionInScope.toStringSimple + ")"
     private def createDeBruijnIndex(vr: Var, exp: LambdaExpression, nextDBIndex: Int): LambdaExpression = exp match {
@@ -187,6 +203,7 @@ package typedLambdaCalculus {
         case _          => false
       }
     })
+    def variant(gen: => VariantGenerator) = App(function.variant(gen), argument.variant(gen))
     def exptype: TA = {
       function.exptype match {
           case ->(in,out) => out
