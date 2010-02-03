@@ -385,7 +385,10 @@ object XMLParser {
             perm.zip( perm.indices ).foreach( p => assert( p._1.formula == list.apply( p._2 ),
               "formula at occurrence " + p._1.formula.toStringSimple +
               " is not equal to formula in list position " + p._2 + ": " +
-              list.apply( p._2 ).toStringSimple + " after creating rule of type " + rt
+              list.apply( p._2 ).toStringSimple + " after creating rule of type " + rt + ".\n" +
+              "Conclusion sequent: " + conc.toStringSimple + "\n" +
+              { param match { case Some( s ) => "permutation parameter: " + s
+                            case None => "" } }
           ) )
           checkPerm( triple._2, conc.antecedent )
           checkPerm( triple._3, conc.succedent )
