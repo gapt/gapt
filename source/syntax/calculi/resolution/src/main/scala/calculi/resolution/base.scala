@@ -57,7 +57,14 @@ package base {
     override def uProof2 = t2.asInstanceOf[ResolutionProof]
   }
 
+  trait LiteralIds {
+    def literalIdLeft: Int
+    def literalIdRight: Int
+  }
 
+  trait AppliedSubstitution {
+    def substitution: Substitution
+  }
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
   object createContext { def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x::Nil)) }
@@ -67,6 +74,7 @@ package base {
   // axioms
   case object AxiomType extends NullaryRuleTypeA
   case object VariantType extends UnaryRuleTypeA
+  case object FactorType extends UnaryRuleTypeA
   case object ResolutionType extends BinaryRuleTypeA
 
   object Axiom {
@@ -79,7 +87,8 @@ package base {
 
   object Resolution {
     def apply(p1: ResolutionProof, p2: ResolutionProof, i: Int, j: Int, sub: Substitution): ResolutionProof = {
-      new BinaryTree[Clause](createClause(p1.root, p2.root, i, j, sub), p1, p2) with BinaryResolutionProof {def rule = ResolutionType}
+      new BinaryTree[Clause](createClause(p1.root, p2.root, i, j, sub), p1, p2) with BinaryResolutionProof with LiteralIds with AppliedSubstitution
+      {def rule = ResolutionType; def literalIdLeft = i; def literalIdRight = j; def substitution = sub}
     }
     // compose two clauses on all elements except with the index given and apply sub on all terms
     private def createClause(c1: Clause, c2: Clause, i: Int, j: Int, sub: Substitution) = {
@@ -93,8 +102,8 @@ package base {
     }
     private def removeAtIndex(ls: List[HOLFormula], i: Int) = ls.zipWithIndex.filter(x => x._2 != i).map(x => x._1)
     def unapply(proof: ResolutionProof) = if (proof.rule == ResolutionType) {
-        val pr = proof.asInstanceOf[BinaryResolutionProof]
-        Some((pr.root, pr.uProof1, pr.uProof2))
+        val pr = proof.asInstanceOf[BinaryResolutionProof with LiteralIds with AppliedSubstitution]
+        Some((pr.root, pr.uProof1, pr.uProof2, pr.literalIdLeft, pr.literalIdRight, pr.substitution))
       }
       else None
   }
@@ -109,18 +118,30 @@ package base {
       // create a variant only if needed
       if (!(newCl #= p.root))
         new UnaryTree[Clause](newCl, p)
-          with UnaryResolutionProof {def rule = VariantType}
+          with UnaryResolutionProof with AppliedSubstitution {def rule = VariantType; def substitution = Substitution(varGen.varsMap.elements)}
       else p
     }
-    private def variantTerm(op: VariableStringSymbol => VariableStringSymbol)(t: HOLTerm): HOLTerm = t match {
-      case v @ Var(sym: VariableStringSymbol, t) if v.asInstanceOf[Var].isFree => v.factory.createVar(op(sym), t).asInstanceOf[HOLTerm]
+    private def variantTerm(op: Var => Var)(t: HOLTerm): HOLTerm = t match {
+      case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => op(v.asInstanceOf[Var]).asInstanceOf[HOLTerm]
       case v: Var => v
       case App(a,b) => App(variantTerm(op)(a.asInstanceOf[HOLTerm]), variantTerm(op)(b.asInstanceOf[HOLTerm])).asInstanceOf[HOLTerm]
       case Abs(x,a) => Abs(x, variantTerm(op)(a.asInstanceOf[HOLTerm])).asInstanceOf[HOLTerm]
     }
     def unapply(proof: ResolutionProof) = if (proof.rule == VariantType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof]
-        Some((pr.root, pr.uProof))
+        val pr = proof.asInstanceOf[UnaryResolutionProof with AppliedSubstitution]
+        Some((pr.root, pr.uProof, pr.substitution))
+      }
+      else None
+  }
+
+  object Factor {
+    def apply(p: ResolutionProof, c: Clause, sub: Substitution): ResolutionProof = {
+      new UnaryTree[Clause](c, p)
+        with UnaryResolutionProof with AppliedSubstitution {def rule = FactorType; def substitution = sub}
+    }
+    def unapply(proof: ResolutionProof) = if (proof.rule == FactorType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof with AppliedSubstitution]
+        Some((pr.root, pr.uProof, pr.substitution))
       }
       else None
   }
