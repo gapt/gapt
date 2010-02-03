@@ -56,12 +56,16 @@ package typedLambdaCalculus {
     def toStringSimple: String
   }
 
-  class VariantGenerator(var id: Int) extends (VariableStringSymbol => VariableStringSymbol) {
-    val varsMap = Map[VariableStringSymbol, VariableStringSymbol]()
-    def apply(a: VariableStringSymbol) = varsMap.getOrElseUpdate(a,updateVal(a))
-    private def updateVal(a: VariableStringSymbol) = {
-      id = id + 1
-      VariableStringSymbol(a.string + "_" + id)
+  // Var must have as symbol VariableStringSymbol (if new symbols are added the definition of how to
+  // create a variant from them should be defined here
+  class VariantGenerator(var id: Int) extends (Var => Var) {
+    val varsMap = Map[Var, Var]()
+    def apply(a: Var) = varsMap.getOrElseUpdate(a,updateVal(a))
+    private def updateVal(a: Var) = a.name match {
+      case VariableStringSymbol(x) => {
+        id = id + 1
+        a.factory.createVar(VariableStringSymbol(x + "_" + id), a.exptype)
+      }
     }
   }
 
@@ -103,10 +107,7 @@ package typedLambdaCalculus {
     def toStringSimple() = name.toString + (if (isBound) """{""" + dbIndex.get + """}""" else "")
     def isFree = dbIndex == None
     def isBound = !isFree
-    def variant(gen: => VariantGenerator) = name match {
-      case v: VariableStringSymbol if isFree => factory.createVar(gen(v), exptype)
-      case _ => this
-    }
+    def variant(gen: => VariantGenerator) = if (isFree) gen(this) else this
   }
   // TODO: remove!?!
   object LambdaVar {
