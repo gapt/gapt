@@ -70,7 +70,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     getOutput.write("\n")
     getOutput.write("""\begin{tabular}{ll}""")
     val dumap = Map[Int, Tuple2[Abs,Var]]()
-    defs.foreach(x => {exportTerm1(x._2._2,dumap); getOutput.write(" & "); exportTerm1(x._2._1,dumap); getOutput.write(""" \\ """); getOutput.write("\n")})
+    defs.toList.sort((x,y) => x._2._2.toString < y._2._2.toString).foreach(x => {exportTerm1(x._2._2,dumap); getOutput.write(" & "); exportTerm1(x._2._1,dumap); getOutput.write(""" \\ """); getOutput.write("\n")})
     getOutput.write("""\end{tabular}""")
     getOutput.write("\n")
     getOutput.write("""\section{Clauses}""")
@@ -101,7 +101,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     case _ => ()
   }
   // ignore variants
-  private def extractAbs(a: Abs): Int = a.hashCode
+  private def extractAbs(a: Abs): Int = a.hashCode // to change as the hashCode could be changed later.
   
   private def exportTerm1(f: LambdaExpression, defs: Map[Int, Tuple2[Abs,Var]]) = {
     getOutput.write("$")
