@@ -25,7 +25,7 @@ package simplification {
   }
 
   object variantsRemoval {
-    def apply(sequents: List[Sequent]): List[Sequent] = sequents.toList.foldLeft(List[Sequent]())((ls, el) => if (ls.exists(x => isVariantSequent(x,el))) ls else (ls + el))
+    def apply(sequents: List[Sequent]): List[Sequent] = sequents.toList.foldLeft(List[Sequent]())((ls, el) => if (ls.exists(x => isVariantSequent(x,el))) ls else (el::ls))
     private def isVariantSequent(s1: Sequent, s2: Sequent) = {
       val map = Map[Var,Var]();
       s1.antecedent.size == s2.antecedent.size && s1.succedent.size == s2.succedent.size &&
@@ -33,17 +33,24 @@ package simplification {
     }
   }
 
-  // variable normalization and sorting according to a standard order, also removal of duplicates of formulas within the sequent
+  // We first order the literals according to lexicographic order but ignoring the variables (as their names are unimportant)
+  // Then we normalize the variables, remove duplicates and also normalize the return list by removing duplicates
   object sequentNormalize {
     def apply(sequents: List[Sequent]): List[Sequent] = {
       (sequents.foldLeft(List[Sequent]())((ls, el) => {
           var id = 0
           val map = Map[Var,Var]()
           def nextId = {id = id + 1; id}
-          if (!ls.exists(x => x.multisetEquals(el))) (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId)))::ls
-          else ls
+          (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId)))::ls
         })).removeDuplicates
     }
-    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = ls.map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).sort((t1,t2) => t1.toString < t2.toString)
+    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = 
+      ls.sort((t1,t2) => myToString(t1) < myToString(t2)).map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).removeDuplicates
+    private def myToString(exp: at.logic.language.lambda.typedLambdaCalculus.LambdaExpression): String = exp match {
+      case v@ Var(at.logic.language.lambda.symbols.VariableStringSymbol(_),_) => ""
+      case v: Var => v.toString
+      case at.logic.language.lambda.typedLambdaCalculus.App(a,b) => myToString(a) + myToString(b)
+      case at.logic.language.lambda.typedLambdaCalculus.Abs(a,b) => myToString(b)
+    }
   }
 }
