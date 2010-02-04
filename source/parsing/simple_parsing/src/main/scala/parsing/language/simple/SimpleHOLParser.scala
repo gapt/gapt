@@ -37,7 +37,7 @@ trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.lang
   def const_atom: Parser[HOLFormula] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params)}
   def var_func: Parser[HOLTerm] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
   def const_func: Parser[HOLTerm] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp  => Function(new ConstantStringSymbol(x), params, tp)}
-  protected def word: String = """[a-zA-Z0-9$_]*"""
-  protected def symbol: Parser[String] = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073]+""".r // +-*/\^<>=`~?@&|!#';
+  protected def word: String = """[a-zA-Z0-9$_{}]*"""
+  protected def symbol: Parser[String] = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""".r // +-*/\^<>=`~?@&|!#{}';
 }
 

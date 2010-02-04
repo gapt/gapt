@@ -472,4 +472,16 @@ class LKTest extends SpecificationWithJUnit {
               HOLVarFormula("D")::HOLVarFormula("C")::HOLVarFormula("C")::Nil))
     }
   }
+  "Equals" should {
+    "denote multiset equals" in {
+      "1" in {
+        Sequent(f2::f3::f2::Nil, f3::f2::f2::Nil) must beEqual (Sequent(f2::f2::f3::Nil, f2::f2::f3::Nil))
+      }
+    }
+    "fail to denote set equals" in {
+      "1" in {
+        Sequent(f2::f3::f3::Nil, f3::f2::f2::Nil) mustNot beEqual (Sequent(f2::f2::f3::Nil, f2::f2::f3::Nil))
+      }
+    }
+  }
 }

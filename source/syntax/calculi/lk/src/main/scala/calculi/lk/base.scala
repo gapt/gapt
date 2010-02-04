@@ -29,10 +29,11 @@ package base {
   // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
   case class Sequent(antecedent: List[Formula], succedent: List[Formula])
   {
-    // equality defined by equality on antecedent and succedent *lists*
-    // perhaps defining it on multisets is more suitable?
+    val ant = antecedent.sort((x1,x2) => x1.toString < x2.toString)
+    val suc = succedent.sort((x1,x2) => x1.toString < x2.toString)
+    // The two parts of the sequent are ordered lexicographically so equal denotes multiset equals
     override def equals( o: Any ) = o match {
-      case os : Sequent => antecedent == os.antecedent && succedent == os.succedent
+      case os : Sequent => ant == os.ant && suc == os.suc
       case _ => false
     }
     // TODO: use multisets in implementation!

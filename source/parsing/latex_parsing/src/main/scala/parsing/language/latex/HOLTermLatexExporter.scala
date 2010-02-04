@@ -18,6 +18,9 @@ import at.logic.language.lambda.typedLambdaCalculus._
 trait HOLTermLatexExporter extends OutputExporter with HOLTermExporter {
   // it is LambdaExpression and require because of the stupid design chose not to have a common element for HOL
   def exportTerm(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLTerm]); t match {
+    // to be removed as should be defined in the import from XML
+    case Atom(ConstantStringSymbol("⊃"), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" \supset """); exportTerm(y); getOutput.write(")")}
+    // end of to be removed
     case Var(name, _) => getOutput.write(name.toString)
     case Atom(name, args) => exportFunction(t)
     case Function(name, args, _) => exportFunction(t)
