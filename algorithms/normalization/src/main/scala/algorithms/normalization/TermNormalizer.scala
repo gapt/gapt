@@ -22,7 +22,7 @@ object TermNormalizer {
 
   private def normalizeVar(v: Var, nextId: => Int): Var = v match {
     // we dont need to take care of dbIndices here as Abs recomputes them anyway
-    case Var(VariableStringSymbol(_),_) => v.factory.createVar(VariableStringSymbol("x_" + nextId), v.exptype)
+    case Var(VariableStringSymbol(_),_) => v.factory.createVar(VariableStringSymbol("x_{" + nextId + "}"), v.exptype)
     // other cases should be treated when they are implemented
   }
 }

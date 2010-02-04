@@ -49,6 +49,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
     print("cuts: " + stats.cuts + "\n")
   }
 
+  def mySort(x: Sequent, y: Sequent) = 
+    (x.toString < y.toString) // lexicographically
 
   "The system" should {
     "parse correctly the second-order prime proof" in {
@@ -65,9 +67,15 @@ class PrimeProofTest extends SpecificationWithJUnit {
       Console.println("dcs size: " + dcs.size)
       val css = dcs.removeDuplicates
       Console.println("css size: " + css.size)
+
       val cssv = sequentNormalize(css)
       Console.println("cssv size: " + cssv.size)
-      (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cssv.toList.sort((s1,s2) => s1.toString < s2.toString)).close
+      val neg = cssv.filter(x => x.succedent.isEmpty)
+      val mix = cssv.filter(x => !x.succedent.isEmpty && !x.antecedent.isEmpty)
+      val pos = cssv.filter(x => x.antecedent.isEmpty)
+
+      (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+        .exportSequentList(neg.sort(mySort) ++ mix.sort(mySort) ++ pos.sort(mySort)).close
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
 
