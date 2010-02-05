@@ -23,8 +23,7 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
   def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Substitution) : List[Tuple2[FOLExpression, FOLExpression]] = {
   //  l.foldLeft(Nil)((Tuple2(x,v))=> (Tuple2(s.applyFOL(x),s.applyFOL(v))))
-    l.map((a) => (s.applyFOL(a._1), s.applyFOL(a._2)))
-    return l;
+    return l.map(a => (s.applyFOL(a._1), s.applyFOL(a._2)))
   }
 
   def isSolvedVarIn(x : FOLVar, l : List[Tuple2[FOLExpression, FOLExpression]]) : Boolean = {
@@ -43,6 +42,8 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
   def unifySetOfTuples(s1: List[Tuple2[FOLExpression, FOLExpression]], s2 : List[Tuple2[FOLExpression, FOLExpression]]) : Option[(List[Tuple2[FOLExpression, FOLExpression]], List[Tuple2[FOLExpression, FOLExpression]])] = (s1,s2) match {
     case (((a1,a2)::s), s2) if a1 == a2 => unifySetOfTuples(s, s2)
+
+    case ((FOLConst (name1),FOLConst (name2))::s,s2) if name1 != name2 => None
     case (((Function(f1,args1), Function(f2, args2)):: (s)), s2)
       if args1.length == args2.length && f1==f2  => {
           return unifySetOfTuples(args1.zip(args2) ::: s, s2)
@@ -51,11 +52,14 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
       if args1.length == args2.length && f1==f2  => {
           return unifySetOfTuples(args1.zip(args2) ::: s, s2)
       }
-    case (((x : FOLVar,v)::s), s2) if !getVars(v).contains(x) && isSolvedVarIn(x,s) =>
+
+    case (((x : FOLVar,v)::s), s2) if !getVars(v).contains(x) =>
       //  x does not occur in v && x is not in solved form =>
+   //   print(applySubToListOfPairs(s,Substitution(x,v)).toString+"\n")
         unifySetOfTuples(applySubToListOfPairs(s,Substitution(x,v)), (x,v)::applySubToListOfPairs(s2,Substitution(x,v)))
 
-    case (((v, x : FOLVar)::s), s2) if !getVars(v).contains(x) && isSolvedVarIn(x,s) =>
+
+    case (((v, x : FOLVar)::s), s2) if !getVars(v).contains(x) =>
         unifySetOfTuples(applySubToListOfPairs(s,Substitution(x,v)), (x,v)::applySubToListOfPairs(s2,Substitution(x,v)))
     case (Nil, s2) => Some((Nil, s2))
     case _ => None
