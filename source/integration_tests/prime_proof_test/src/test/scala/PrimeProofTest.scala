@@ -49,8 +49,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
     print("cuts: " + stats.cuts + "\n")
   }
 
-  def mySort(x: Sequent, y: Sequent) = 
-    (x.toString < y.toString) // lexicographically
+  def mySort(x: Sequent, y: Sequent) = (x.toString < y.toString) // lexicographically
 
   "The system" should {
     "parse correctly the second-order prime proof" in {
