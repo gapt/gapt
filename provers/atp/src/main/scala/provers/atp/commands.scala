@@ -39,7 +39,7 @@ package commands {
   case class ApplyOnAllLiteralPairsCom(ls: List[Command]) extends Command
   case class AppendCommandsCom(ls: Seq[Command]) extends Command
   case class ApplyOnLiteralPositionCom(pos: Tuple2[Int,Int], clauses: Tuple2[ResolutionProof, ResolutionProof]) extends Command
-  case class SetUnificationAlgorithmCom(alg: at.logic.unification.UnificationAlgorithm) extends Command
+  case class SetUnificationAlgorithmCom(alg: at.logic.algorithms.unification.UnificationAlgorithm) extends Command
   case object FactorizeCom extends Command
   //case class ApplyOnAllClausePairsOnLiteralPairs(ls: List[Command]) extends Command
   case object CreateVariantCom extends Command

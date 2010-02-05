@@ -11,4 +11,11 @@
   <packaging>jar</packaging>  
   <name>Matching algorithms</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>unification</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
 </project>
