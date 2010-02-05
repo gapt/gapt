@@ -69,8 +69,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val csPre = StandardClauseSet.transformStructToClauseSet( s )
 
       // we will add three axioms: 0 < p(x), 1 < p(x), x = x
-      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("0"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
-      val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
+      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("0"), Ti())::Function(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
+      val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Function(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
       val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Nil)
 
       val cs = seq1::seq2::seq3::csPre
