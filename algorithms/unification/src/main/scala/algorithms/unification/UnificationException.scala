@@ -5,6 +5,6 @@
  * and open the template in the editor.
  */
 
-package at.logic.unification
+package at.logic.algorithms.unification
 
 class UnificationException(msg: String) extends Exception(msg)

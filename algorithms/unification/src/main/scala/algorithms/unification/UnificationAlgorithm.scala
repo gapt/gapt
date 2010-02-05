@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.unification
+package at.logic.algorithms.unification
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
