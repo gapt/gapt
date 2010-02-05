@@ -17,6 +17,9 @@ import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
+import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.parsing.writers.FileWriter
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
@@ -58,8 +61,13 @@ class LNPProofTest extends SpecificationWithJUnit {
 
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
-      val css = setNormalize( dcs )
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "lnp-cs.xml" )
+      Console.println("dcs size: " + dcs.size)
+      val css = dcs.removeDuplicates
+      Console.println("css size: " + css.size)
+      val cssv = sequentNormalize(css)
+      Console.println("cssv size: " + cssv.size)
+      (new FileWriter("target" + separator + "test-classes" + separator + "lnp-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cssv.sort((x,y) => x.toString < y.toString)).close
+      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css))::Pair("cssv", (cssv))::Nil, "target" + separator + "test-classes" + separator + "lnp-cs.xml" )
     }
   }
 }

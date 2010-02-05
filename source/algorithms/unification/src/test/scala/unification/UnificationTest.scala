@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.unification
+package at.logic.algorithms.unification
 
 import org.specs._
 import org.specs.runner._
@@ -20,7 +20,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.language.simple._
 import at.logic.parsing.readers.StringReader
-import at.logic.unification.fol.FOLUnificationAlgorithm
+import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
 class UnificationTest extends SpecificationWithJUnit {
   private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser

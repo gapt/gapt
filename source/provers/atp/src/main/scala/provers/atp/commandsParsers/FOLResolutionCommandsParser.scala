@@ -8,12 +8,12 @@
 package at.logic.provers.atp.commandsParsers
 
 import at.logic.provers.atp.commands._
-import at.logic.unification.UnificationAlgorithm
+import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.lambda.substitutions._
 import at.logic.calculi.resolution.base._
 
 trait FOLResolutionCommandsParser extends CommandsParser {
-  var unifAlg: UnificationAlgorithm = at.logic.unification.fol.FOLUnificationAlgorithm
+  var unifAlg: UnificationAlgorithm = at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
   def parse(combinedCommand: Command, currentCommand: Command): Command = (combinedCommand, currentCommand) match {
     case (a, SetUnificationAlgorithmCom(alg)) => unifAlg = alg; a
