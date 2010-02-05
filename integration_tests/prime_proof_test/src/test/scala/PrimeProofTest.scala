@@ -21,6 +21,11 @@ import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 
+import at.logic.language.lambda.symbols._
+import at.logic.language.lambda.types._
+import at.logic.language.hol.propositions._
+import at.logic.language.hol.logicSymbols._
+
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.simplification._
@@ -61,13 +66,24 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
+      val csPre = StandardClauseSet.transformStructToClauseSet( s )
+
+      // we will add three axioms: 0 < p(x), 1 < p(x), x = x
+      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("0"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
+      val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
+      val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Nil)
+
+      val cs = seq1::seq2::seq3::csPre
+      
       val dcs = deleteTautologies( cs )
       Console.println("dcs size: " + dcs.size)
       val css = dcs.removeDuplicates
       Console.println("css size: " + css.size)
 
-      val cssv = sequentNormalize(css)
+      val scss = subsumedClausesRemoval(css)
+      Console.println("scss size: " + scss.size)
+
+      val cssv = sequentNormalize(scss)
       Console.println("cssv size: " + cssv.size)
       val neg = cssv.filter(x => x.succedent.isEmpty)
       val mix = cssv.filter(x => !x.succedent.isEmpty && !x.antecedent.isEmpty)

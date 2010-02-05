@@ -25,14 +25,21 @@ package simplification {
   }
 
   object variantsRemoval {
-    def apply(sequents: List[Sequent]): List[Sequent] = sequents.toList.foldLeft(List[Sequent]())((ls, el) => if (ls.exists(x => isVariantSequent(x,el))) ls else (el::ls))
+    def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => if (ls.exists(x => isVariantSequent(x,el))) ls else (el::ls))
     private def isVariantSequent(s1: Sequent, s2: Sequent) = {
       val map = Map[Var,Var]();
       s1.antecedent.size == s2.antecedent.size && s1.succedent.size == s2.succedent.size &&
       s1.antecedent.zip(s2.antecedent).forall(x => VariantsDeletion.isVariantOf(x._1, x._2, map)) && s1.succedent.zip(s2.succedent).forall(x => VariantsDeletion.isVariantOf(x._1, x._2, map))
     }
   }
-
+  
+  object subsumedClausesRemoval {
+    val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm {val matchAlg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm}
+    def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
+    private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x.antecedent, el.antecedent) && alg.subsumes(x.succedent, el.succedent))) ls else (el::ls)
+    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el.antecedent, x.antecedent) && alg.subsumes(el.succedent, x.succedent))
+  }
+  
   // We first order the literals according to lexicographic order but ignoring the variables (as their names are unimportant)
   // Then we normalize the variables, remove duplicates and also normalize the return list by removing duplicates
   object sequentNormalize {

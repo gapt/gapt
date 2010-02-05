@@ -10,6 +10,7 @@ import org.specs.matcher.Matcher
 
 import at.logic.language.hol.propositions._
 import at.logic.language.lambda.symbols.ImplicitConverters._
+import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
 import at.logic.calculi.lk.base.Sequent
@@ -44,6 +45,21 @@ class SimplificationTest extends SpecificationWithJUnit {
       val s6 = Sequent( f1b::Nil, f2b::Nil )
       val s7 = Sequent( f1c::Nil, f2c::Nil )
       val s8 = Sequent( f1d::Nil, f2d::Nil )
+      
+      val a1 = new MyParser("P(x:i)").getTerm().asInstanceOf[Formula]
+      val a2 = new MyParser("P(f(x:i,y:i):i)").getTerm().asInstanceOf[Formula]
+      val a3 = new MyParser("P(a:i)").getTerm().asInstanceOf[Formula]
+      val a4 = new MyParser("P(b:i)").getTerm().asInstanceOf[Formula]
+      val a5 = new MyParser("P(f(b:i,a:i):i)").getTerm().asInstanceOf[Formula]
+      
+      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
+      val seq2 = Sequent(Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLConst(ConstantStringSymbol("s"), Ti())::Nil))::Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
+
+      val s9 = Sequent(Nil, a1::a2::Nil)
+      val s10 = Sequent(f1a::f1b::Nil, a3::a4::a5::Nil)
+
+      val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLConst(ConstantStringSymbol("1"), Ti())::(HOLConst(ConstantStringSymbol("1"), Ti())::Nil))::Nil)
+      val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLConst(ConstantStringSymbol("1"), Ti())::Nil))::Nil)
 
     "correctly delete tautologous sequents" in {
       val list = s1::s2::s3::s4::s1::Nil
@@ -61,6 +77,19 @@ class SimplificationTest extends SpecificationWithJUnit {
       val ls = List(s5,s6,s7,s8)
       val ret = variantsRemoval( ls )
       ret.size must beEqual( 2 )
+    }
+
+    "correctly remove subsumed sequents from a set of Sequents" in {
+      "1" in {
+        val ls = List(s9,s10)
+        val ret = subsumedClausesRemoval( ls )
+        ret.size must beEqual( 1 )
+      }
+      "2" in {
+        val ls = List(seq1,seq2,seq3,seq4)
+        val ret = subsumedClausesRemoval( ls )
+        ret.size must beEqual( 2 )
+      }
     }
   }
 }
