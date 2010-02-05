@@ -2,6 +2,7 @@
 // a transformation from LK to LK_skc
 package at.logic.transformations.skolemization.lksk
 
+import at.logic.utils.logging.Logger
 import scala.collection.mutable.{Map,HashMap}
 import at.logic.calculi.lksk._
 import at.logic.calculi.lksk.base._
@@ -24,6 +25,8 @@ import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.lk.getCutAncestors
 
 object LKtoLKskc {
+  def logInfo( msg: String ) = (new Logger{}).info( msg )
+
   def apply(proof: LKProof) : LKProof = apply( proof, getCutAncestors( proof ) )
 
   // cut_occs is the set of cut-ancestors in the proof.
@@ -75,6 +78,7 @@ object LKtoLKskc {
         m.formula match {
           case All(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
+            logInfo( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
             val s = Function( f, args, alpha )
             val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
@@ -107,6 +111,7 @@ object LKtoLKskc {
         m.formula match {
           case Ex(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
+            logInfo( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
             val s = Function( f, args, alpha )
             val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
