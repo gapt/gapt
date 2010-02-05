@@ -12,7 +12,6 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.propositions._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.hol.quantifiers._
-import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ExportingException
@@ -115,10 +114,5 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
       case Some(v) => v._2
       case _ => Abs(x, replaceTerm(b, defs))
     }
-  }
-  private def latexType(ta: TA): String = ta match {
-    case Ti() => "i"
-    case To() => "o"
-    case ->(a,b) => "(" + latexType(a) + """ \rightarrow """ + latexType(b) + ")"
   }
 }
