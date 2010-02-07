@@ -40,7 +40,7 @@ package commands {
   case class AppendCommandsCom(ls: Seq[Command]) extends Command
   case class ApplyOnLiteralPositionCom(pos: Tuple2[Int,Int], clauses: Tuple2[ResolutionProof, ResolutionProof]) extends Command
   case class SetUnificationAlgorithmCom(alg: at.logic.algorithms.unification.UnificationAlgorithm) extends Command
-  case object FactorizeCom extends Command
+  case class ApplyOnAllFactorsCom(ls: List[Command]) extends Command
   //case class ApplyOnAllClausePairsOnLiteralPairs(ls: List[Command]) extends Command
   case object CreateVariantCom extends Command
   case class GotClausesPairCom(clauses: Tuple2[ResolutionProof, ResolutionProof]) extends Command
@@ -58,7 +58,7 @@ package commands {
       )
     def rest: Stream[Command] = Stream(
       GetClausesCom, CreateVariantCom,
-      ApplyOnAllLiteralPairsCom(ResolveCom::InsertCom::Nil)
+      ApplyOnAllLiteralPairsCom(ResolveCom::ApplyOnAllFactorsCom(InsertCom::Nil)::Nil)
     ).append(rest)
   }
 }

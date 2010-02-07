@@ -39,6 +39,10 @@ package base {
       else negative.foldLeft("")((s,a) => s+a.toString)) + ":-" +
       (if (positive.size > 1) positive.head.toString + positive.tail.foldLeft("")((s,a) => s+", "+a.toString)
       else positive.foldLeft("")((s,a) => s+a.toString))
+    def removeFormulasAtIndices(inds: List[Int]): Clause = Clause(
+        negative.zipWithIndex.filter(x => !inds.contains(x._2)).map(x => x._1),
+        positive.zipWithIndex.filter(x => !inds.contains(x._2)).map(x => x._1)
+      )
   }
   /*object Clause {
     def apply(negative: List[HOLFormula], positive: List[HOLFormula]) = new Clause(negative, positive)
@@ -85,6 +89,7 @@ package base {
     // should be optimized as it was done now just to save coding time
   }
 
+  // left side is always resolved on positive literal and right on negative
   object Resolution {
     def apply(p1: ResolutionProof, p2: ResolutionProof, i: Int, j: Int, sub: Substitution): ResolutionProof = {
       new BinaryTree[Clause](createClause(p1.root, p2.root, i, j, sub), p1, p2) with BinaryResolutionProof with LiteralIds with AppliedSubstitution
@@ -135,8 +140,8 @@ package base {
   }
 
   object Factor {
-    def apply(p: ResolutionProof, c: Clause, sub: Substitution): ResolutionProof = {
-      new UnaryTree[Clause](c, p)
+    def apply(p: ResolutionProof, indicesToRemove: List[Int], sub: Substitution): ResolutionProof = {
+      new UnaryTree[Clause](p.root.removeFormulasAtIndices(indicesToRemove), p)
         with UnaryResolutionProof with AppliedSubstitution {def rule = FactorType; def substitution = sub}
     }
     def unapply(proof: ResolutionProof) = if (proof.rule == FactorType) {
