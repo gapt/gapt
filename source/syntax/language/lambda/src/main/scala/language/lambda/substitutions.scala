@@ -29,6 +29,8 @@ package substitutions {
       case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope))
       case _ => expression
     }
+    // make sure the overriden keys are of the applying sub
+    def compose(sub: Substitution): Substitution = Substitution(map ++ sub.map.map(x => (x._1, apply(x._2))))
   }
 
   object Substitution {
