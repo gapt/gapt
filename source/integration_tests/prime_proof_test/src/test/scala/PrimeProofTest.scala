@@ -28,8 +28,6 @@ import at.logic.language.hol.logicSymbols._
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk._
 import at.logic.algorithms.subsumption._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
