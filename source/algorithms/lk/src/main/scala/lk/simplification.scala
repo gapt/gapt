@@ -4,6 +4,8 @@ import scala.collection.immutable.Set
 import at.logic.algorithms.subsumption.VariantsDeletion
 import at.logic.calculi.lk.base.Sequent
 import at.logic.language.hol.propositions._
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.symbols._
 import scala.collection.mutable.Map
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.algorithms.normalization.TermNormalizer
@@ -39,7 +41,26 @@ package simplification {
     private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x.antecedent, el.antecedent) && alg.subsumes(x.succedent, el.succedent))) ls else (el::ls)
     private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el.antecedent, x.antecedent) && alg.subsumes(el.succedent, x.succedent))
   }
-  
+
+  // for any positive unit clause, we try to match it with all negative ground literals of the other clauses, if there is a match we remove the literal.
+  object simpleUnitResolutionNormalization {
+    val alg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
+    def apply(seqs: List[Sequent]): List[Sequent] = {
+      val posUnit = seqs.filter(x => x.antecedent.isEmpty && x.succedent.size == 1)
+      seqs.map(x => if (!x.antecedent.isEmpty) (matchPos(posUnit, x)) else x)
+    }
+    private def matchPos(posUnit: List[Sequent], s: Sequent): Sequent = {
+      val newAnt = s.antecedent.foldLeft(Nil: List[Formula])((ls, x) => if (isGround(x) && posUnit.exists(y => alg.matchTerm(y.succedent.head, x) != None)) ls else x::ls)
+      if (newAnt.size == s.antecedent.size) s else Sequent(newAnt, s.succedent)
+    }
+    // should be moved into HOLTerm when we have one
+    private def isGround(exp: LambdaExpression): Boolean = exp match {
+      case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => false
+      case Var(_,_) => true
+      case App(a,b) => isGround(a) && isGround(b)
+      case AbsInScope(_,a) => isGround(a)
+    }
+  }
   // We first order the literals according to lexicographic order but ignoring the variables (as their names are unimportant)
   // Then we normalize the variables, remove duplicates and also normalize the return list by removing duplicates
   object sequentNormalize {

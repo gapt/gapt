@@ -66,25 +66,31 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val csPre = StandardClauseSet.transformStructToClauseSet( s )
+      val csPre = StandardClauseSet.transformStructToClauseSet(s)
 
       // we will add three axioms: 0 < p(x), 1 < p(x), x = x
       val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("0"), Ti())::Function(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
       val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Function(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
       val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Nil)
+      val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), Function(ConstantStringSymbol("+"), HOLConst(ConstantStringSymbol("0"), Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)
 
-      val cs = seq1::seq2::seq3::csPre
+      val cs = seq1::seq2::seq3::seq4::csPre
       
       val dcs = deleteTautologies( cs )
       Console.println("dcs size: " + dcs.size)
       val css = dcs.removeDuplicates
       Console.println("css size: " + css.size)
 
-      val scss = subsumedClausesRemoval(css)
+      val cssUnit = simpleUnitResolutionNormalization(css)
+      Console.println("cssUnit size: " + cssUnit.size)
+
+      val scss = subsumedClausesRemoval(cssUnit)
       Console.println("scss size: " + scss.size)
 
       val cssv = sequentNormalize(scss)
       Console.println("cssv size: " + cssv.size)
+
+      // done for preserving order
       val neg = cssv.filter(x => x.succedent.isEmpty)
       val mix = cssv.filter(x => !x.succedent.isEmpty && !x.antecedent.isEmpty)
       val pos = cssv.filter(x => x.antecedent.isEmpty)
@@ -94,7 +100,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
 
-    "parse correctly the first-order prime proof, n=0" in {
+    /*"parse correctly the first-order prime proof, n=0" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofs()
       proofs.size must beEqual(1)
       val proof = proofs.first
@@ -137,6 +143,6 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cssv = sequentNormalize(css)
       Console.println("cssv: " + cssv.size)
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css))::Pair("cssv", cssv)::Nil, "target" + separator + "test-classes" + separator + "prime1-2-cs.xml" )
-    }
+    }*/
   }
 }
