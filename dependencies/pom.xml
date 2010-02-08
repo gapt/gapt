@@ -14,5 +14,6 @@
   <modules>
  	  <module>syntax_dependency</module>
     <module>parsing_dependency</module>
+    <module>algorithms_dependency</module>
   </modules>
 </project>
