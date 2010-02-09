@@ -51,10 +51,11 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
         val cl2 = new MyParserHOL("P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i)).").getClauseList.head
         MyAlg.subsumes((Nil, new MyParserHOL("P(x:i,x:i).").getClauseList.head.positive), (cl2.negative, cl2.positive)) must beEqual (true)
       }
-      /*val str = """+(s50(q1:(i->o)):i, *(s43(q1: (i->o), +(*(+(x3:i, 1):i, s49(q1:(i->o), s50(q1:(i->o)):i):i):i, x3:i):i):i, *(+(x3, 1):i, +(s49(q1:(i->o), s50(q1:(i->o)):i), 1:i):i):i):i):i"""
-      "=(x,x):i and =("+str+","+str+"):i" in {
-        MyAlg.subsumes((Nil, new MyParserHOL("=(x:i,x:i):i.").getClauseList.head.positive), (Nil, new MyParserHOL("=("+str+","+str+"):i.").getClauseList.head.positive)) must beEqual (true)
-      }*/
+      //val str = """+(s50(q1:(i->o)):i, *(s43(q1: (i->o), +(*(+(x3:i, 1):i, s49(q1:(i->o), s50(q1:(i->o)):i):i):i, x3:i):i):i, *(+(x3, 1):i, +(s49(q1:(i->o), s50(q1:(i->o)):i), 1:i):i):i):i):i"""
+      val str = """p(x_10:i,m(x_3:i,m(m(p(x_4:i,one:i):i,p(x_5:i,one:i):i):i):i):i):i"""
+      "e(x,x):i and e("+str+","+str+"):i" in {
+        MyAlg.subsumes((Nil, new MyParserHOL("e(x:i,x:i).").getClauseList.head.positive), (Nil, new MyParserHOL("e("+str+","+str+").").getClauseList.head.positive)) must beEqual (true)
+      }
     }
     "return false on the following clauses" in {
       "P(x) | P(f(x)) and P(f(a)) | P(f(b))" in {
