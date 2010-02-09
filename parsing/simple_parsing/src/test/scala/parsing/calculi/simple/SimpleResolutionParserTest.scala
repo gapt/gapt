@@ -73,5 +73,9 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
     "return the correct clause for p(x) | -p(x) in fol" in {
       (new MyParser2("P(x) | -P(x).").getClauseList) must beEqual (Clause(px_fol::Nil,px_fol::Nil)::Nil)
     }
+    "manage to parse a complex term" in {
+      val str = """p(x_10:i,m(x_3:i,m(m(p(x_4:i,one:i):i,p(x_5:i,one:i):i):i):i):i):i"""
+      (new MyParser("e("+str+","+str+").").getClauseList) mustNot throwA [Exception]
+    }
   }
 }

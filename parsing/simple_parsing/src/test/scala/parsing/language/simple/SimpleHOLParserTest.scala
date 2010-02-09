@@ -74,6 +74,10 @@ class SimpleHOLParserTest extends SpecificationWithJUnit {
         "parse correctly a forall" in {
             (new MyParser("Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqual (all1)
         }
+        val str = """p(x_10:i,m(x_3:i,m(m(p(x_4:i,one:i):i,p(x_5:i,one:i):i):i):i):i):i"""
+        "parse correctly a complex term" in {
+            (new MyParser(str).getTerm()) mustNot throwA [Exception]
+        }
     }
     
 }
