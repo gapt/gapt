@@ -38,11 +38,11 @@ package simplification {
   object subsumedClausesRemoval {
     val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm {val matchAlg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm}
     def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
-    private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x.antecedent, el.antecedent) && alg.subsumes(x.succedent, el.succedent))) ls else (el::ls)
-    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el.antecedent, x.antecedent) && alg.subsumes(el.succedent, x.succedent))
+    private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes((x.antecedent,x.succedent), (el.antecedent,el.succedent)))) ls else (el::ls)
+    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes((el.antecedent, el.succedent), (x.antecedent, x.succedent)))
   }
 
-  // for any positive unit clause, we try to match it with all negative ground literals of the other clauses, if there is a match we remove the literal.
+  // for any positive unit clause, we try to match it with all negative "ground" literals of the other clauses, if there is a match we remove the literal.
   object simpleUnitResolutionNormalization {
     val alg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
     def apply(seqs: List[Sequent]): List[Sequent] = {
@@ -50,16 +50,17 @@ package simplification {
       seqs.map(x => if (!x.antecedent.isEmpty) (matchPos(posUnit, x)) else x)
     }
     private def matchPos(posUnit: List[Sequent], s: Sequent): Sequent = {
-      val newAnt = s.antecedent.foldLeft(Nil: List[Formula])((ls, x) => if (isGround(x) && posUnit.exists(y => alg.matchTerm(y.succedent.head, x) != None)) ls else x::ls)
+      val newAnt = s.antecedent.foldLeft(Nil: List[Formula])((ls, x) => if (posUnit.exists(y => alg.matchTerm(y.succedent.head, x) != None)) ls else x::ls)
       if (newAnt.size == s.antecedent.size) s else Sequent(newAnt, s.succedent)
     }
-    // should be moved into HOLTerm when we have one
+    // no need to check for groundness as the matching algorithm does not return a substitution which can affect the instance
+    /*// should be moved into HOLTerm when we have one
     private def isGround(exp: LambdaExpression): Boolean = exp match {
       case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => false
       case Var(_,_) => true
       case App(a,b) => isGround(a) && isGround(b)
       case AbsInScope(_,a) => isGround(a)
-    }
+    }*/
   }
   // We first order the literals according to lexicographic order but ignoring the variables (as their names are unimportant)
   // Then we normalize the variables, remove duplicates and also normalize the return list by removing duplicates

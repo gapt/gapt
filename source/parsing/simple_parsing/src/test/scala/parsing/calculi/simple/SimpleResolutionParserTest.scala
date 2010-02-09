@@ -67,5 +67,11 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
     "return the correct clauses for p(a). -p(x) | p(f(x)). -p(f(f(a))). in fol" in {
       (new MyParser2("P(a). -P(x) | P(f(x)). -P(f(f(a))).").getClauseList) must beEqual (Clause(Nil,pa_fol::Nil)::Clause(px_fol::Nil,pfx_fol::Nil)::Clause(pffa_fol::Nil,Nil)::Nil)
     }
+    "return the correct clause for p(x) | -p(x) in hol" in {
+      (new MyParser("p(x:i) | -p(x:i).").getClauseList) must beEqual (Clause(px::Nil,px::Nil)::Nil)
+    }
+    "return the correct clause for p(x) | -p(x) in fol" in {
+      (new MyParser2("P(x) | -P(x).").getClauseList) must beEqual (Clause(px_fol::Nil,px_fol::Nil)::Nil)
+    }
   }
 }
