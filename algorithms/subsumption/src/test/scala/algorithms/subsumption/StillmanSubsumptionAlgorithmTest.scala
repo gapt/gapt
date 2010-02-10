@@ -56,6 +56,9 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
       "e(x,x):i and e("+str+","+str+"):i" in {
         MyAlg.subsumes((Nil, new MyParserHOL("e(x:i,x:i).").getClauseList.head.positive), (Nil, new MyParserHOL("e("+str+","+str+").").getClauseList.head.positive)) must beEqual (true)
       }
+      "P(x:i) and P(a:i) | Q(x:i)" in {
+        MyAlg.subsumes((Nil, new MyParserHOL("P(x:i).").getClauseList.head.positive), (Nil, new MyParserHOL("P(a:i) | Q(x:i).").getClauseList.head.positive)) must beEqual (true)
+      }
     }
     "return false on the following clauses" in {
       "P(x) | P(f(x)) and P(f(a)) | P(f(b))" in {
