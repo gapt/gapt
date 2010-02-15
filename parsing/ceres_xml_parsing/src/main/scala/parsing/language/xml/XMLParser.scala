@@ -34,6 +34,8 @@ import at.logic.language.lambda.substitutions._
 
 import scala.collection.immutable.{Set,EmptySet}
 
+class ProofDatabase( val proofs: List[LKProof], val axioms: List[Sequent] );
+
 // performs the matching necessary to compute substitution terms/eigenvars
 object Match {
   def apply( s: HOLTerm, t: HOLTerm ) : Option[Substitution] =
@@ -247,6 +249,15 @@ object XMLParser {
     def getSequentList() : List[Sequent] = getSequentList( getInput() )
 
     /**
+     * If the Node provided by XMLNodeParser is an &lt;axiomset&gt; element,
+     * a List of Sequent objects corresponding to the Node is returned.
+     *
+     * @return A List of Sequent objects corresponding to the Node provided by getInput().
+     * @throws ParsingException If the Node provided by getInput() is not a &lt;axiomset&gt; Node.
+     */
+    def getAxiomSet() : List[Sequent] = getAxiomSet( getInput() )
+
+    /**
      * If the Node provided by XMLNodeParser is a &lt;formulalist&gt; element,
      * a List of HOLFormula objects corresponding to the Node is returned.
      *
@@ -285,6 +296,20 @@ object XMLParser {
       }
 
      /**
+     * If the Node n is an &lt;axiomset&gt; element,
+     * a List of Sequent objects corresponding to the Node is returned.
+     *
+     * @return A List of Sequent objects corresponding to n.
+     * @throws ParsingException If n is not an &lt;axiomset&gt; node.
+     */
+    def getAxiomSet(n: Node) =
+      trim(n) match {
+        case <axiomset>{ns @ _*}</axiomset> => {
+          ns.map( n => getSequent(n) ).toList
+        }
+        case _ => throw new ParsingException("Could not parse XML: " + n.toString)
+      }
+     /**
      * If the Node n is a &lt;formulalist&gt; element,
      * a List of HOLFormula objects corresponding to the Node is returned.
      *
@@ -301,9 +326,10 @@ object XMLParser {
   }
 
   trait XMLProofDatabaseParser extends XMLNodeParser {
-    def getProofs() : List[LKProof] = getProofs( getInput() )
-    def getProofs( pdb : Node ) : List[LKProof] =
-      (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getProof() ).toList
+    def getProofDatabase() : ProofDatabase = getProofDatabase( getInput() )
+    def getProofDatabase( pdb : Node ) : ProofDatabase = 
+      new ProofDatabase( (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getProof() ).toList,
+                         (new NodeReader( (pdb\"axiomset").first ) with XMLSequentParser).getAxiomSet() )
   }
 
   /**

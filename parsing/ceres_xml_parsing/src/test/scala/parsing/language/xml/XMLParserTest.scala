@@ -422,7 +422,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                     Sequent(Nil, pc("B")::Or(pc("A"), pc("C"))::Nil))
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
-      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test3.xml")) with XMLProofDatabaseParser).getProofs()
+      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test3.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqual(1)
       proofs.first.root.getSequent must beMultisetEqual(
         Sequent(Nil, pc("A")::pc("C")::pc("F")::
@@ -430,7 +430,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                      Or(pc("D"), pc("G"))::Nil))
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
-      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test2.xml")) with XMLProofDatabaseParser).getProofs()
+      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test2.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqual(1)
       proofs.first.root.getSequent must beMultisetEqual(
                         Sequent(Nil, Or(pc("A"),
@@ -439,7 +439,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                            pc("D"))::Nil))
     }
     "parse correctly an involved proof from a file" in {
-      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test1.xml")) with XMLProofDatabaseParser).getProofs()
+      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test1.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
       val X = HOLVar( new VariableStringSymbol( "X" ), i -> o )
       val t = HOLConst( new ConstantStringSymbol( "t" ), i)
       val s = HOLConst( new ConstantStringSymbol( "s" ), i)
