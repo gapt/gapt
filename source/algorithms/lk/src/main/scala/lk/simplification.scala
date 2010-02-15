@@ -38,8 +38,8 @@ package simplification {
   object subsumedClausesRemoval {
     val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm {val matchAlg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm}
     def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
-    private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes((x.antecedent,x.succedent), (el.antecedent,el.succedent)))) ls else (el::ls)
-    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes((el.antecedent, el.succedent), (x.antecedent, x.succedent)))
+    private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x, el))) ls else (el::ls)
+    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el, x))
   }
 
   // for any positive unit clause, we try to match it with all negative "ground" literals of the other clauses, if there is a match we remove the literal.

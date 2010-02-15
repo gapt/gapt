@@ -13,8 +13,5 @@ import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
 object UnificationBasedFOLMatchingAlgorithm extends MatchingAlgorithm {
-  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = FOLUnificationAlgorithm.unify(term, posInstance) match {
-    case s @ Some(sub) if (sub(posInstance) == posInstance) => s // i.e. the substitution is applicable only on term
-    case _ => None
-  }
+  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = FOLUnificationAlgorithm.unify(term, ground(posInstance))
 }

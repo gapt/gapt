@@ -17,6 +17,7 @@ import scala.collection.immutable.Set
 import scala.collection.mutable.Map
 import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.lambda.substitutions._
+import at.logic.calculi.lk.base._
 
 package base {
 
@@ -24,7 +25,10 @@ package base {
     var id = -1
   }
 
-  case class Clause(negative: List[HOLFormula], positive: List[HOLFormula]){
+  trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {case Atom(_,_) => true; case _ => false}))}
+  class Clause(neg: List[HOLFormula], pos: List[HOLFormula]) extends Sequent(neg, pos) with CNF {
+    def negative = antecedent.asInstanceOf[List[HOLFormula]]
+    def positive = succedent.asInstanceOf[List[HOLFormula]]
     // set equivalence
     def formulaEquivalece(clause: Clause) =
       negative.size == clause.negative.size &&
@@ -43,6 +47,13 @@ package base {
         negative.zipWithIndex.filter(x => !inds.contains(x._2)).map(x => x._1),
         positive.zipWithIndex.filter(x => !inds.contains(x._2)).map(x => x._1)
       )
+  }
+  object Clause {
+    def apply(neg: List[HOLFormula], pos: List[HOLFormula]) = new Clause(neg,pos)
+    def unapply(s: Sequent) = s match {
+      case c: Clause => Some(c.negative, c.positive)
+      case _ => None
+    }
   }
   /*object Clause {
     def apply(negative: List[HOLFormula], positive: List[HOLFormula]) = new Clause(negative, positive)
