@@ -56,9 +56,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
   "The system" should {
     "parse correctly the second-order prime proof" in {
-      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime2.xml.gz")))) with XMLProofDatabaseParser).getProofs()
-      proofs.size must beEqual(1)
-      val proof = proofs.first
+      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime2.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      pdb.proofs.size must beEqual(1)
+      val proof = pdb.proofs.first
       printStats( proof )
 
       val proof_sk = LKtoLKskc( proof )
@@ -72,7 +72,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Nil)
       val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), Function(ConstantStringSymbol("+"), HOLConst(ConstantStringSymbol("0"), Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)
 
-      val cs = seq1::seq2::seq3::seq4::csPre
+      val cs = pdb.axioms ::: ( seq1::seq2::seq3::seq4::Nil ) ::: csPre
       
       val dcs = deleteTautologies( cs )
       Console.println("dcs size: " + dcs.size)
@@ -95,9 +95,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
       (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
         .exportSequentList(neg.sort(mySort) ++ mix.sort(mySort) ++ pos.sort(mySort)).close
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
+      //saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
-
     /*"parse correctly the first-order prime proof, n=0" in {
       val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofs()
       proofs.size must beEqual(1)
