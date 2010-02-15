@@ -15,10 +15,7 @@ import at.logic.language.hol.propositions.TypeSynonyms._
 import scala.collection.immutable.EmptySet
 
 object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
-  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = holMatch(term.asInstanceOf[HOLTerm], posInstance.asInstanceOf[HOLTerm]) match {
-    case Some(sub) if (posInstance == sub(posInstance)) => Some(sub)
-    case _ => None
-  }
+  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = holMatch(term.asInstanceOf[HOLTerm], ground(posInstance).asInstanceOf[HOLTerm])
 
   def holMatch( s: HOLTerm, t: HOLTerm ) : Option[Substitution] =
     (s, t) match {

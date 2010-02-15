@@ -27,7 +27,7 @@ package base {
 
   // List should be changed into multiset (I am not sure anymore as we need to map formula occurrences also in the original sequent.
   // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
-  case class Sequent(antecedent: List[Formula], succedent: List[Formula])
+  class Sequent(val antecedent: List[Formula], val succedent: List[Formula])
   {
     val ant = antecedent.sort((x1,x2) => x1.toString < x2.toString)
     val suc = succedent.sort((x1,x2) => x1.toString < x2.toString)
@@ -55,6 +55,10 @@ package base {
     override def toString : String = antecedent.toString + " :- " + succedent.toString
     def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
+  }
+  object Sequent {
+    def apply(antecedent: List[Formula], succedent: List[Formula]) = new Sequent(antecedent, succedent)
+    def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
   }
   // List should be changed into set
   case class SequentOccurrence(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence])
