@@ -52,14 +52,14 @@ package propositions {
   object HOLVar {
     def apply(name: VariableSymbolA, exptype: TA) = HOLFactory.createVar(name, exptype).asInstanceOf[HOLVar]
     def unapply(exp: LambdaExpression) = exp match {
-      case Var(n: VariableSymbolA, t) => Some( n )
+      case Var(n: VariableSymbolA, t) => Some( n, t )
       case _ => None
     }
   }
   object HOLConst {
     def apply(name: ConstantSymbolA, exptype: TA) = HOLFactory.createVar(name, exptype).asInstanceOf[HOLConst]
     def unapply(exp: LambdaExpression) = exp match {
-      case Var(n: ConstantSymbolA, t) => Some( n )
+      case Var(n: ConstantSymbolA, t) => Some( n, t )
       case _ => None
     }
   }
@@ -155,7 +155,7 @@ package propositions {
   object Or {
     def apply(left: Formula, right: Formula) = App(App(OrC,left),right).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-      case App(App(OrC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+      case App(App(OrC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }
@@ -163,7 +163,7 @@ package propositions {
   object Imp {
     def apply(left: Formula, right: Formula) = App(App(ImpC,left),right).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
-        case App(App(ImpC,left),right) => Some( (left.asInstanceOf[Formula],right.asInstanceOf[HOLFormula]) )
+        case App(App(ImpC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
         case _ => None
     }
   }
