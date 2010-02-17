@@ -39,6 +39,9 @@ class SimpleHOLParserTest extends SpecificationWithJUnit {
         "parse correctly an atom" in {  
             (new MyParser("a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqual (atom1)
         }
+        "parse correctly an abs" in {
+            (new MyParser("Abs x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqual (Abs(var1, atom1))
+        }
         val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
         "parse correctly a formula variable" in {
             (new MyParser("x3: o").getTerm()) must beLike {case x: Formula => true}

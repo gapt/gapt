@@ -93,8 +93,5 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
         (a6) mustNot beEqual (b6)
       }
     }
-    "be computed correctly" in {
-      
-    }
   }
 }

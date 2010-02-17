@@ -23,8 +23,9 @@ package typedLambdaCalculus {
     def syntaxEquals(e: LambdaExpression): Boolean
     def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
     def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
-      case v: Var if v.isFree => (HashSet(v), new EmptySet)
-      case v: Var => (new EmptySet, HashSet(v))
+      case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (HashSet(v), new EmptySet)
+      case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new EmptySet, HashSet(v))
+      case v: Var => (new EmptySet, new EmptySet)// not variables (constants in this case)
       case App(exp, arg) => {
         val mFBV = exp.getFreeAndBoundVariables()
         val nFBV = arg.getFreeAndBoundVariables()
@@ -58,17 +59,16 @@ package typedLambdaCalculus {
 
   // Var must have as symbol VariableStringSymbol (if new symbols are added the definition of how to
   // create a variant from them should be defined here
-  class VariantGenerator(var id: Int) extends (Var => Var) {
+  class VariantGenerator(id: {def nextId: Int}, varName: String) extends (Var => Var) {
     val varsMap = Map[Var, Var]()
     def apply(a: Var) = varsMap.getOrElseUpdate(a,updateVal(a))
     private def updateVal(a: Var) = a.name match {
       case VariableStringSymbol(x) => {
-        id = id + 1
-        a.factory.createVar(VariableStringSymbol(x + "_" + id), a.exptype)
+        a.factory.createVar(VariableStringSymbol(varName + "_{" + id.nextId + "}"), a.exptype)
       }
     }
   }
-
+  
   trait LambdaFactoryA {
     def createVar( name: SymbolA, exptype: TA ): Var = createVar(name, exptype, None)
     def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var
@@ -107,7 +107,7 @@ package typedLambdaCalculus {
     def toStringSimple() = name.toString + (if (isBound) """{""" + dbIndex.get + """}""" else "")
     def isFree = dbIndex == None
     def isBound = !isFree
-    def variant(gen: => VariantGenerator) = if (isFree) gen(this) else this
+    def variant(gen: => VariantGenerator) = if (isFree && name.isInstanceOf[VariableSymbolA]) gen(this) else this
   }
   // TODO: remove!?!
   object LambdaVar {
