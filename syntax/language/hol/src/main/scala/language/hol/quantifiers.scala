@@ -51,7 +51,7 @@ package quantifiers {
   object ExVar {
     def apply(variable: Var, sub: Formula) = Ex(Abs(variable, sub))
     def unapply(expression: LambdaExpression) = expression match {
-      case Ex(Abs(variable, sub), _) => Some( (variable, sub.asInstanceOf[Formula]) )
+      case Ex(Abs(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }
@@ -59,7 +59,7 @@ package quantifiers {
   object AllVar {
     def apply(variable: Var, sub: Formula) = All(Abs(variable, sub))
     def unapply(expression: LambdaExpression) = expression match {
-      case All(Abs(variable, sub), _) => Some( (variable, sub.asInstanceOf[Formula]) )
+      case All(Abs(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }
