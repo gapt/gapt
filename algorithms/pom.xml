@@ -12,13 +12,14 @@
   </parent>
 
   <modules>
-      <module>unification</module>
-      <module>normalization</module>
-      <module>subsumption</module>
-      <module>diophantine</module>
-      <module>matching</module>
+    <module>unification</module>
+    <module>normalization</module>
+    <module>subsumption</module>
+    <module>diophantine</module>
+    <module>matching</module>
     <module>lk</module>
     <module>lksk</module>
+    <module>fol</module>
   </modules>
 
   <packaging>pom</packaging>
