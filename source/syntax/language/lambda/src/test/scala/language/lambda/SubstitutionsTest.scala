@@ -22,6 +22,20 @@ import substitutions.ImplicitConverters._
 class SubstitutionsTest extends SpecificationWithJUnit {
   level = Info  // sets the printing of extra information (level can be: Debug, Info, Warning, Error)
   "Substitutions" should {
+    "NOT compose the substitution {f(y)/x} and {g(y)/x}" in {
+      val x = LambdaVar("x", i);
+      val y = LambdaVar("y", i);
+      val f = LambdaVar("f", i -> i)
+      val g = LambdaVar("g", i -> i)
+      val e1 = App(f, y)
+      val e2 = App(g, y)
+      val sub1 = Substitution(x,e1)
+      val sub2 = Substitution(x,e2)
+      val sub = sub1 compose sub2
+      println("\n\n\n"+sub.toString+"\n\n\n")
+      sub must beEqual (sub2)
+    }
+
     "make implicit conversion from pair to Substitution" in {
       val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
       val e = App(f, x)
