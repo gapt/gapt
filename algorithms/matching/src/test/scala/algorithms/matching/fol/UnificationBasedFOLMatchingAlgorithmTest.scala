@@ -16,7 +16,7 @@ import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
 private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
 
-class UnificationBasedFOLMatchingAlgorithmTest extends SpecificationWithJUnit {
+/*class UnificationBasedFOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 
   "UnificationBasedFOLMatchingAlgorithm " should {
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
@@ -86,3 +86,4 @@ class UnificationBasedFOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 
   
 
+*/

@@ -16,7 +16,7 @@ import at.logic.language.fol._
 object FOLMatchingAlgorithm extends MatchingAlgorithm {
   //def matchTerm(term: LambdaExpression, posInstance: LambdaExpression) = matchTermModulo(term, posInstance, getVars(posInstance.asInstanceOf[FOLExpression]))
   
-  def matchTerm(term1: LambdaExpression, term2: LambdaExpression) = matchSetOfTuples(getVars(term2.asInstanceOf[FOLExpression]), Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
+  def matchTerm(term1: LambdaExpression, term2: LambdaExpression) = matchSetOfTuples(term2.getFreeAndBoundVariables._1.toList, Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
       case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
       case _ => None
     }
@@ -90,7 +90,7 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
 
 
 
-    case (v : FOLVar,term)   if !getVars(term.asInstanceOf[FOLExpression]).contains(v) && !moduloVarList.contains(v)  =>
+    case (v : FOLVar,term)   if !term.getFreeAndBoundVariables._1.toList.contains(v) && !moduloVarList.contains(v)  =>
       {
         println("\n\n\n 6 \n\n\n")
         println("\n\n\n" + "(" +v.toString + ", "+ term.toString+") \n\n\n")
@@ -116,17 +116,6 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
     case _ => { println("\n\n\n 8 \n\n\n"); None}
   }
 
-
-
-  def getVars(f: FOLExpression): List[FOLVar] = f match {
-      case (FOLConst(c)) => Nil
-      case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil
-      case (function @ Function(_, args @ _)) => args.flatMap( a => getVars(a) )
-      case (atom @ Atom(_, args @ _)) => args.flatMap( a => getVars(a) )
-  }
-
-
-
   def appendSubstitutions(sub1: MatchingSubstitution, sub2: MatchingSubstitution) : Option[MatchingSubstitution] =
   {
     for (s <- sub1.map)
@@ -138,8 +127,8 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
 
   private[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution(m)
   {
-    override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
-    protected def applyWithChangeDBIndicesModuloVarList(moduloVarList: List[Var], expression: LambdaExpression): LambdaExpression = expression match {
+    //override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
+    override protected def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
       case x:Var if x.isFree && !moduloVarList.contains(x) => map.get(x) match {
           case Some(t) => t
           case None => x
@@ -184,13 +173,13 @@ def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : 
           return matchSetOfTuples(moduloVarList, args1.zip(args2) ::: s, s2)
       }
 
-    case (((x : FOLVar,v)::s), s2) if !getVars(v).contains(x) && !moduloVarList.contains(x) =>
+    case (((x : FOLVar,v)::s), s2) if !v.getFreeAndBoundVariables._1.toList.contains(x) && !moduloVarList.contains(x) =>
       //  x does not occur in v && x is not in solved form =>
    //   print(applySubToListOfPairs(s,Substitution(x,v)).toString+"\n")
         matchSetOfTuples(moduloVarList, applySubToListOfPairs(s,MatchingSubstitution(moduloVarList,x,v)), (x,v)::applySubToListOfPairs(s2,MatchingSubstitution(moduloVarList,x,v)))
 
 
-    case (((x : FOLVar,v)::s), s2) if !getVars(v).contains(x) && moduloVarList.contains(x)  =>
+    case (((x : FOLVar,v)::s), s2) if !v.getFreeAndBoundVariables._1.toList.contains(x) && moduloVarList.contains(x)  =>
       {        
         if(createSubstFromListOfPairs(s2).apply(v) != createSubstFromListOfPairs(s2).map.get(x))
             return None
