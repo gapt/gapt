@@ -122,6 +122,7 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
       case (FOLConst(c)) => Nil
       case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil
       case (function @ Function(_, args @ _)) => args.flatMap( a => getVars(a) )
+      case (atom @ Atom(_, args @ _)) => args.flatMap( a => getVars(a) )
   }
 
 
@@ -137,8 +138,8 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
 
   private[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution(m)
   {
-    //override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
-    override protected def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
+    override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
+    protected def applyWithChangeDBIndicesModuloVarList(moduloVarList: List[Var], expression: LambdaExpression): LambdaExpression = expression match {
       case x:Var if x.isFree && !moduloVarList.contains(x) => map.get(x) match {
           case Some(t) => t
           case None => x
