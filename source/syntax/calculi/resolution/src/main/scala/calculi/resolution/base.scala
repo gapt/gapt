@@ -22,7 +22,8 @@ import at.logic.calculi.lk.base._
 package base {
 
   object RunningId {
-    var id = -1
+    var id = 0
+    def nextId = {id = id + 1; id}
   }
 
   trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {case Atom(_,_) => true; case _ => false}))}
@@ -127,7 +128,7 @@ package base {
 
   object Variant {
     def apply(p: ResolutionProof): ResolutionProof = {
-      val varGen = new VariantGenerator(RunningId.id)
+      val varGen = new VariantGenerator(RunningId, "v")
       val newCl = Clause(
           p.root.negative.map(variantTerm(varGen)).asInstanceOf[List[HOLFormula]],
           p.root.positive.map(variantTerm(varGen)).asInstanceOf[List[HOLFormula]])

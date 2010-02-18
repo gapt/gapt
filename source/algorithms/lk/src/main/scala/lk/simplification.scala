@@ -35,8 +35,14 @@ package simplification {
     }
   }
   
-  object subsumedClausesRemoval {
+  object subsumedClausesRemovalHOL {
     val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm {val matchAlg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm}
+    def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
+    private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x, el))) ls else (el::ls)
+    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el, x))
+  }
+  object subsumedClausesRemoval {
+    val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm {val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm}
     def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
     private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x, el))) ls else (el::ls)
     private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el, x))
@@ -50,7 +56,7 @@ package simplification {
       seqs.map(x => if (!x.antecedent.isEmpty) (matchPos(posUnit, x)) else x)
     }
     private def matchPos(posUnit: List[Sequent], s: Sequent): Sequent = {
-      val newAnt = s.antecedent.foldLeft(Nil: List[Formula])((ls, x) => if (posUnit.exists(y => alg.matchTerm(y.succedent.head, x) != None)) ls else x::ls)
+      val newAnt = s.antecedent.filter(x => posUnit.forall(y => alg.matchTerm(y.succedent.head, x) == None))
       if (newAnt.size == s.antecedent.size) s else Sequent(newAnt, s.succedent)
     }
     // no need to check for groundness as the matching algorithm does not return a substitution which can affect the instance

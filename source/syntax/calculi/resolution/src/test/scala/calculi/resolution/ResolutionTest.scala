@@ -37,8 +37,8 @@ class ResolutionTest extends SpecificationWithJUnit {
   
   "VariantRule" should {
     "create correct Variant proofs" in {
-      val pxeq = Atom(ConstantStringSymbol("p"),Var(VariableStringSymbol("x_0"), i, hol)::Nil)
-      val pfxeq = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"), Var(VariableStringSymbol("x_0"), i, hol)::Nil,i)::Nil)
+      val pxeq = Atom(ConstantStringSymbol("p"),Var(VariableStringSymbol("v_{1}"), i, hol)::Nil)
+      val pfxeq = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"), Var(VariableStringSymbol("v_{1}"), i, hol)::Nil,i)::Nil)
       val var1 = Variant(ax2)
       (var1.root.negative.head) must beEqual (pxeq)
       (var1.root.positive.head) must beEqual (pfxeq)

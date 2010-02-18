@@ -82,12 +82,12 @@ class SimplificationTest extends SpecificationWithJUnit {
     "correctly remove subsumed sequents from a set of Sequents" in {
       "1" in {
         val ls = List(s9,s10)
-        val ret = subsumedClausesRemoval( ls )
+        val ret = subsumedClausesRemovalHOL( ls )
         ret.size must beEqual( 1 )
       }
       "2" in {
         val ls = List(seq1,seq2,seq3,seq4)
-        val ret = subsumedClausesRemoval( ls )
+        val ret = subsumedClausesRemovalHOL( ls )
         ret.size must beEqual( 2 )
       }
     }

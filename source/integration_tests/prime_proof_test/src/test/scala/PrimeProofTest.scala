@@ -25,15 +25,20 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.propositions._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.fol.FOLFormula
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.subsumption._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.algorithms.fol.hol2fol._
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
+
+import scala.collection.mutable.Map
 
 class PrimeProofTest extends SpecificationWithJUnit {
 
@@ -72,8 +77,16 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Nil)
       val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), Function(ConstantStringSymbol("+"), HOLConst(ConstantStringSymbol("0"), Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)
 
-      val cs = pdb.axioms ::: ( seq1::seq2::seq3::seq4::Nil ) ::: csPre
-      
+      val holcs = pdb.axioms ::: ( seq1::seq2::seq3::seq4::Nil ) ::: csPre
+
+      // convert to fol
+      val imap = Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]() // the scope for most tests is just the term itself
+      val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
+      val cs = holcs.map(x => Sequent(
+          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLTerm],imap,iid).asInstanceOf[FOLFormula]),
+          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLTerm],imap,iid).asInstanceOf[FOLFormula])
+      ))
+
       val dcs = deleteTautologies( cs )
       Console.println("dcs size: " + dcs.size)
       val css = dcs.removeDuplicates
