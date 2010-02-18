@@ -137,8 +137,8 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
 
   private[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution(m)
   {
-    override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
-    private def applyWithChangeDBIndicesModuloVarList(moduloVarList: List[Var], expression: LambdaExpression): LambdaExpression = expression match {
+    //override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
+    override protected def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
       case x:Var if x.isFree && !moduloVarList.contains(x) => map.get(x) match {
           case Some(t) => t
           case None => x
