@@ -14,9 +14,9 @@ import at.logic.language.lambda.substitutions._
 import at.logic.language.fol._
 
 object FOLMatchingAlgorithm extends MatchingAlgorithm {
-  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression) = matchTermModulo(term, posInstance, getVars(posInstance.asInstanceOf[FOLExpression]))
+  //def matchTerm(term: LambdaExpression, posInstance: LambdaExpression) = matchTermModulo(term, posInstance, getVars(posInstance.asInstanceOf[FOLExpression]))
   
-  def matchTerm1(term1: LambdaExpression, term2: LambdaExpression) = matchSetOfTuples(getVars(term2.asInstanceOf[FOLExpression]), Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
+  def matchTerm(term1: LambdaExpression, term2: LambdaExpression) = matchSetOfTuples(getVars(term2.asInstanceOf[FOLExpression]), Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
       case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
       case _ => None
     }
