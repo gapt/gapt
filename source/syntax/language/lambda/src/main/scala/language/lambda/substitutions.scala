@@ -20,7 +20,7 @@ package substitutions {
     override def hashCode() = map.hashCode
     override def toString = map.toString
     // the change of db indices is done automatically in the constructor of abs
-    private def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
+    protected def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
       case x:Var if x.isFree => map.get(x) match {
           case Some(t) => t
           case None => x
@@ -29,6 +29,7 @@ package substitutions {
       case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope))
       case _ => expression
     }
+
     // make sure the overriden keys are of the applying sub
     def compose(sub: Substitution): Substitution = Substitution(map ++ sub.map.map(x => (x._1, apply(x._2))))
   }
