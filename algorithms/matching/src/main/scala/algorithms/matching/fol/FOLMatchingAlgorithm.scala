@@ -125,17 +125,19 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
     return Some(new MatchingSubstitution(sub1.moduloVarList, sub1.map ++ sub2.map))
   }
 
-  private[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution(m)
-  {
-    //override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
-    override protected def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
+  protected[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution(m) {
+//    override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
+//    protected def applyWithChangeDBIndicesModuloVarList(moduloVarList: List[Var], expression: LambdaExpression): LambdaExpression = expression match {
+
+      override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndices(expression)
+      override protected def applyWithChangeDBIndices(expression: LambdaExpression): LambdaExpression = expression match {
       case x:Var if x.isFree && !moduloVarList.contains(x) => map.get(x) match {
           case Some(t) => t
           case None => x
       }
       case App(m,n) => App(applyWithChangeDBIndices(m), applyWithChangeDBIndices(n))
       case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope))
-      case _ => expression
+      case _ => { expression }
     }
   }
   object MatchingSubstitution {
@@ -149,11 +151,9 @@ def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Su
   return l.map(a => (s.apply(a._1).asInstanceOf[FOLExpression], s.apply(a._2).asInstanceOf[FOLExpression]))
   }
 
-def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : Substitution =
-{
+def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : Substitution = {
   var sub = Substitution()
-  for(x <- l)
-  {
+  for(x <- l) {
     sub = sub:::Substitution(x._1.asInstanceOf[FOLVar],x._2)
   }
   return sub
@@ -168,10 +168,42 @@ def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : 
       if args1.length == args2.length && f1==f2  => {
           return matchSetOfTuples(moduloVarList, args1.zip(args2) ::: s, s2)
       }
-    case (((Atom(f1,args1), Atom(f2, args2)):: (s)), s2)
+    case ((Atom(f1,args1), Atom(f2, args2)):: s, s2)
       if args1.length == args2.length && f1==f2  => {
           return matchSetOfTuples(moduloVarList, args1.zip(args2) ::: s, s2)
       }
+
+    case ((And(left1: FOLFormula, right1: FOLFormula), And(left2: FOLFormula, right2: FOLFormula)) ::s, s2) =>
+      {
+        return matchSetOfTuples(moduloVarList, (left1.asInstanceOf[FOLExpression], left2) :: (right1, right2) :: s, s2)
+      }
+
+    case ((Or(left1: FOLFormula, right1: FOLFormula), Or(left2: FOLFormula, right2: FOLFormula)) ::s, s2) =>
+      {
+        return matchSetOfTuples(moduloVarList, (left1.asInstanceOf[FOLExpression], left2) :: (right1, right2) :: s, s2)
+      }
+
+    case ((Imp(left1: FOLFormula, right1: FOLFormula), Imp(left2: FOLFormula, right2: FOLFormula)) ::s, s2) =>
+      {
+        return matchSetOfTuples(moduloVarList, (left1.asInstanceOf[FOLExpression], left2) :: (right1, right2) :: s, s2)
+      }
+
+    case ((Neg(sub1: FOLFormula), Neg(sub2: FOLFormula)) ::s, s2) =>
+      {
+        return matchSetOfTuples(moduloVarList, (sub1.asInstanceOf[FOLExpression], sub2.asInstanceOf[FOLExpression]) :: s, s2)
+      }
+
+    case ((AllVar(var1: FOLVar, sub1: FOLFormula), AllVar(var2: FOLVar, sub2: FOLFormula)) ::s, s2) =>
+      {
+        return matchSetOfTuples(var1::var2::moduloVarList, (sub1.asInstanceOf[FOLExpression], sub2.asInstanceOf[FOLExpression]) :: s, s2)
+      }
+
+
+    case ((ExVar(var1: FOLVar, sub1: FOLFormula), ExVar(var2: FOLVar, sub2: FOLFormula)) ::s, s2) =>
+      {
+        return matchSetOfTuples(var1::var2::moduloVarList, (sub1.asInstanceOf[FOLExpression], sub2.asInstanceOf[FOLExpression]) :: s, s2)
+      }
+
 
     case (((x : FOLVar,v)::s), s2) if !v.getFreeAndBoundVariables._1.toList.contains(x) && !moduloVarList.contains(x) =>
       //  x does not occur in v && x is not in solved form =>
