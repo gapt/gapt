@@ -13,10 +13,20 @@ import at.logic.language.lambda.substitutions._
 import at.logic.language.hol.propositions._
 import at.logic.language.hol.propositions.TypeSynonyms._
 import scala.collection.immutable.EmptySet
+import at.logic.language.lambda.symbols._
+import at.logic.language.hol.logicSymbols._
 
 object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
   def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = holMatch(term.asInstanceOf[HOLTerm], ground(posInstance).asInstanceOf[HOLTerm])
 
+   // in all instances of the algorithm we ground the second term by replacing all free variables by constants
+  private def ground(e: LambdaExpression): LambdaExpression = e match {
+    case v @ Var(VariableStringSymbol(s),ta) if v.asInstanceOf[Var].isFree => v.factory.createVar(ConstantStringSymbol(s), ta)
+    case v: Var => v
+    case App(a,b) => App(ground(a), ground(b))
+    case abs: Abs => Abs(abs.variable, ground(abs.expressionInScope))
+  }
+  
   def holMatch( s: HOLTerm, t: HOLTerm ) : Option[Substitution] =
     (s, t) match {
       case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( holMatch(s_1, t_1), holMatch(s_2, t_2) )

@@ -30,7 +30,7 @@ import at.logic.language.lambda.substitutions._
 
 private class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
 
-/*class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
+class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
   "NaiveIncompleteMatchingAlgorithm " should {
     "match correctly the HOL expressions P(a,x) and P(a,f(b))" in {
     val P = HOLConst(new ConstantStringSymbol("P"), i->(i->o))
@@ -94,6 +94,6 @@ private class MyParser(input: String) extends StringReader(input) with SimpleHOL
     }
 
 }
-}*/
+}
 
 
