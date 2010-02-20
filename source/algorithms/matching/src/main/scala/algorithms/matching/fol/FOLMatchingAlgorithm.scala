@@ -20,111 +20,6 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
       case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
       case _ => None
     }
-
-
-  def matchTermModulo(term: LambdaExpression, posInstance: LambdaExpression, moduloVarList: List[Var]): Option[Substitution] = (term,posInstance) match
-  {
-    case (FOLVar(name1), FOLVar(name2)) if name1 == name2 => Some(MatchingSubstitution(moduloVarList))     
-
-    case (FOLConst(name1),FOLConst (name2)) if name1 != name2 => { println("\n\n\n 2 \n\n\n"); None}
-      
-    case (FOLConst(name1),FOLConst (name2)) if name1 == name2 => { println("\n\n\n 3 \n\n\n"); Some(MatchingSubstitution(moduloVarList))}
-
-/*
-    case (Function(f1,args1), Function(f2, args2))
-      if (args1.length == args2.length && f1==f2) =>
-        {
-            println("\n\n\n 5 \n\n\n");
-            println("\n\n\n zip: "+ args1.zip(args2).toString +"\n\n\n");
-
-            //val subst = args1.zip(args2).foldLeft(Some(MatchingSubstitution(moduloVarList)))
-            var restrictedDomainSubst: Option[MatchingSubstitution] = Some(MatchingSubstitution(moduloVarList).asInstanceOf[MatchingSubstitution]);
-            for(x <- args1.zip(args2))
-            {
-              if (restrictedDomainSubst == None)
-               {
-                 println("\n\n\n restrictedDomainSubst == None \n\n\n");
-                 return None
-               }
-               else
-               {
-                 println("\n\n\n restrictedDomainSubst: "+ restrictedDomainSubst.toString +"\n\n\n");
-                 val sub = matchTermModulo(restrictedDomainSubst.get(x._1),x._2, moduloVarList);
-                 if(sub == None)
-                      return None
-                 else
-                  {
-                    println("\n\n\n 6 sub   " + sub.toString +"\n\n\n");
-                    restrictedDomainSubst = appendSubstitutions(new MatchingSubstitution(moduloVarList, sub.get.map), restrictedDomainSubst.get)
-                    if(restrictedDomainSubst == None)
-                        return None
-                    println("\n\n\n app: "+ restrictedDomainSubst.toString +"\n\n\n");
-                    
-                  }
-               }
-            }
-            return restrictedDomainSubst
-        }
-
-  */
-
-    case (Function(f1,args1), Function(f2, args2))
-      if (args1.length == args2.length && f1==f2) =>
-        {
-            println("\n\n\n 5 \n\n\n");
-            println("\n\n\n zip: "+ args1.zip(args2).toString +"\n\n\n");
-            val subst = args1.zip(args2).foldLeft(Some(MatchingSubstitution(moduloVarList)): Option[Substitution])((restrictedDomainSubst, x) => restrictedDomainSubst match
-               {
-                  case Some(restrDom) => matchTermModulo(restrDom(x._1),x._2, moduloVarList) match 
-                    {
-                      case Some(sub) => Some(sub compose restrDom)
-                      case _ => None
-                    }
-                  case _ => None         
-               }) match {
-                 case Some(s) => Some(s)
-                 case _ => None
-               }
-               subst
-        }
-
-
-
-    case (v : FOLVar,term)   if !term.getFreeAndBoundVariables._1.toList.contains(v) && !moduloVarList.contains(v)  =>
-      {
-        println("\n\n\n 6 \n\n\n")
-        println("\n\n\n" + "(" +v.toString + ", "+ term.toString+") \n\n\n")
-        val sub = Some(Substitution(v.asInstanceOf[FOLVar],term))
-        if(sub == None)
-            None
-        else
-            {
-              println("\n\n\n" + sub.toString + "\n\n\n")
-              return sub
-            }
-        
-      }
-      //  x does not occur in v && x is not in solved form =>
-   //   print(applySubToListOfPairs(s,Substitution(x,v)).toString+"\n")
-        
-        //matchTerm(applySubToListOfPairs(s,Substitution(x,v)), (x,v)::applySubToListOfPairs(s2,Substitution(x,v)))
-
-    case (FOLConst(name1),_) => { println("\n\n\n 7 \n\n\n"); None}
-//    case (((v, x : FOLVar)::s), s2) if !getVars(v).contains(x) =>
-//        unifySetOfTuples(applySubToListOfPairs(s,Substitution(x,v)), (x,v)::applySubToListOfPairs(s2,Substitution(x,v)))
-//
-    case _ => { println("\n\n\n 8 \n\n\n"); None}
-  }
-
-  def appendSubstitutions(sub1: MatchingSubstitution, sub2: MatchingSubstitution) : Option[MatchingSubstitution] =
-  {
-    for (s <- sub1.map)
-      if(sub2.map.contains(s._1) && s._2 != sub2.map.get(s._1))
-        return None
-
-    return Some(new MatchingSubstitution(sub1.moduloVarList, sub1.map ++ sub2.map))
-  }
-
   protected[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution(m) {
 //    override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
 //    protected def applyWithChangeDBIndicesModuloVarList(moduloVarList: List[Var], expression: LambdaExpression): LambdaExpression = expression match {
@@ -172,7 +67,9 @@ def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : 
       if args1.length == args2.length && f1==f2  => {
           return matchSetOfTuples(moduloVarList, args1.zip(args2) ::: s, s2)
       }
-
+    case _ => matchSetOfTuples1(moduloVarList, s1, s2)
+  }
+  def matchSetOfTuples1(moduloVarList: List[Var], s1: List[Tuple2[FOLExpression, FOLExpression]], s2 : List[Tuple2[FOLExpression, FOLExpression]]) : Option[(List[Tuple2[FOLExpression, FOLExpression]], List[Tuple2[FOLExpression, FOLExpression]])] = (s1,s2) match {
     case ((And(left1: FOLFormula, right1: FOLFormula), And(left2: FOLFormula, right2: FOLFormula)) ::s, s2) =>
       {
         return matchSetOfTuples(moduloVarList, (left1.asInstanceOf[FOLExpression], left2) :: (right1, right2) :: s, s2)
@@ -182,12 +79,13 @@ def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : 
       {
         return matchSetOfTuples(moduloVarList, (left1.asInstanceOf[FOLExpression], left2) :: (right1, right2) :: s, s2)
       }
-
     case ((Imp(left1: FOLFormula, right1: FOLFormula), Imp(left2: FOLFormula, right2: FOLFormula)) ::s, s2) =>
       {
         return matchSetOfTuples(moduloVarList, (left1.asInstanceOf[FOLExpression], left2) :: (right1, right2) :: s, s2)
       }
-
+    case _ => matchSetOfTuples2(moduloVarList, s1, s2)
+  }
+  def matchSetOfTuples2(moduloVarList: List[Var], s1: List[Tuple2[FOLExpression, FOLExpression]], s2 : List[Tuple2[FOLExpression, FOLExpression]]) : Option[(List[Tuple2[FOLExpression, FOLExpression]], List[Tuple2[FOLExpression, FOLExpression]])] = (s1,s2) match {
     case ((Neg(sub1: FOLFormula), Neg(sub2: FOLFormula)) ::s, s2) =>
       {
         return matchSetOfTuples(moduloVarList, (sub1.asInstanceOf[FOLExpression], sub2.asInstanceOf[FOLExpression]) :: s, s2)
@@ -204,7 +102,9 @@ def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : 
         return matchSetOfTuples(var1::var2::moduloVarList, (sub1.asInstanceOf[FOLExpression], sub2.asInstanceOf[FOLExpression]) :: s, s2)
       }
 
-
+    case _ => matchSetOfTuples3(moduloVarList, s1, s2)
+  }
+  def matchSetOfTuples3(moduloVarList: List[Var], s1: List[Tuple2[FOLExpression, FOLExpression]], s2 : List[Tuple2[FOLExpression, FOLExpression]]) : Option[(List[Tuple2[FOLExpression, FOLExpression]], List[Tuple2[FOLExpression, FOLExpression]])] = (s1,s2) match {
     case (((x : FOLVar,v)::s), s2) if !v.getFreeAndBoundVariables._1.toList.contains(x) && !moduloVarList.contains(x) =>
       //  x does not occur in v && x is not in solved form =>
    //   print(applySubToListOfPairs(s,Substitution(x,v)).toString+"\n")

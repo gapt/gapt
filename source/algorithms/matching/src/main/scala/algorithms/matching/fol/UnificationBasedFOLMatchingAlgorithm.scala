@@ -10,8 +10,7 @@ package at.logic.algorithms.matching.fol
 import at.logic.algorithms.matching.MatchingAlgorithm
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
 object UnificationBasedFOLMatchingAlgorithm extends MatchingAlgorithm {
-  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = FOLUnificationAlgorithm.unify(term, ground(posInstance))
+  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = FOLMatchingAlgorithm.matchTerm(term, posInstance)
 }
