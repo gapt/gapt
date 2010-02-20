@@ -38,12 +38,12 @@ class ProverTest extends SpecificationWithJUnit {
       }
       "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
         MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3)).head must beLike {
-          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => Console.println(a); true
+          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
       }
       "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
         MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3)).head must beLike {
-          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => Console.println(a); true
+          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
       }
       ""
@@ -52,5 +52,24 @@ class ProverTest extends SpecificationWithJUnit {
       "ex1"
     }*/
     // test with a different target clause than the empty
+  }
+  " Prover with unit refinement" should {
+    "refute the following clauses" in {
+      "p(a). -p(x) | p(f(x)). -p(f(f(a)))" in {
+        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | P(f(x)). -P(f(f(a))).").getClauseList, 3, new at.logic.provers.atp.refinements.UnitRefinement{})).head must beLike {
+          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
+        }
+      }
+      "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
+        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3, new at.logic.provers.atp.refinements.UnitRefinement{})).head must beLike {
+          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
+        }
+      }
+      "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
+        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3, new at.logic.provers.atp.refinements.UnitRefinement{})).head must beLike {
+          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
+        }
+      }
+    }
   }
 }

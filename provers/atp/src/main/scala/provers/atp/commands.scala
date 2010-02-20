@@ -48,11 +48,12 @@ package commands {
 
   // default commands streams
   object AutomatedFOLStream {
-    def apply(clauses: List[Clause]): Stream[Command] = apply(clauses, -1)
-    def apply(clauses: List[Clause], timeLimit: Long): Stream[Command] =
+    def apply(clauses: List[Clause]): Stream[Command] = apply(clauses, -1, new at.logic.provers.atp.refinements.SimpleRefinement{})
+    def apply(clauses: List[Clause], timeLimit: Long): Stream[Command] = apply(clauses, timeLimit, new at.logic.provers.atp.refinements.SimpleRefinement{})
+    def apply(clauses: List[Clause], timeLimit: Long, ref: at.logic.provers.atp.refinements.Refinement): Stream[Command] =
       Stream.cons(SetTimeLimit(timeLimit),
         Stream.cons(SetUICom(new at.logic.provers.atp.ui.CommandLineUserInterface{}),
-          Stream.cons(SetRefinementCom(new at.logic.provers.atp.refinements.SimpleRefinement{}),
+          Stream.cons(SetRefinementCom(ref),
             Stream.cons(SetCommandsParserCom(new at.logic.provers.atp.commandsParsers.FOLResolutionCommandsParser{}),
               Stream.cons(InsertClausesCom(clauses),rest) )))
       )
