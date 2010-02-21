@@ -19,7 +19,8 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>unification</artifactId>
+      <artifactId>algorithms_dependency</artifactId>
+      <type>pom</type>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>

@@ -45,21 +45,25 @@ package commands {
   case object CreateVariantCom extends Command
   case class GotClausesPairCom(clauses: Tuple2[ResolutionProof, ResolutionProof]) extends Command
   case class GotListOfClausePairsCom(clausePairs: List[Tuple2[ResolutionProof, ResolutionProof]]) extends Command
+  case object IfNotTautologyCom extends Command
+  case class IfNotForwardSubsumedCom(subsumpMng: at.logic.algorithms.subsumption.managers.SubsumptionManager) extends Command
+  case class BackwardSubsumptionCom(subsumpMng: at.logic.algorithms.subsumption.managers.SubsumptionManager) extends Command
 
+  /*
+   * If commands have one result only then they should be specified sequentially. I.e. GetClauseCom and then apply
+   * on the result CreateVariantCom. If the command generates several results then the commands to be applied on
+   * each result should be passed as arguments
+   */
   // default commands streams
   object AutomatedFOLStream {
-    def apply(clauses: List[Clause]): Stream[Command] = apply(clauses, -1, new at.logic.provers.atp.refinements.SimpleRefinement{})
-    def apply(clauses: List[Clause], timeLimit: Long): Stream[Command] = apply(clauses, timeLimit, new at.logic.provers.atp.refinements.SimpleRefinement{})
-    def apply(clauses: List[Clause], timeLimit: Long, ref: at.logic.provers.atp.refinements.Refinement): Stream[Command] =
+    def apply(timeLimit: Long, ref: at.logic.provers.atp.refinements.Refinement, subsumpMng: at.logic.algorithms.subsumption.managers.SubsumptionManager): Stream[Command] =
       Stream.cons(SetTimeLimit(timeLimit),
         Stream.cons(SetUICom(new at.logic.provers.atp.ui.CommandLineUserInterface{}),
           Stream.cons(SetRefinementCom(ref),
-            Stream.cons(SetCommandsParserCom(new at.logic.provers.atp.commandsParsers.FOLResolutionCommandsParser{}),
-              Stream.cons(InsertClausesCom(clauses),rest) )))
-      )
-    def rest: Stream[Command] = Stream(
+            Stream.cons(SetCommandsParserCom(new at.logic.provers.atp.commandsParsers.FOLResolutionCommandsParser{}), rest(subsumpMng)))))
+    def rest(subsumpMng: at.logic.algorithms.subsumption.managers.SubsumptionManager): Stream[Command] = Stream(
       GetClausesCom, CreateVariantCom,
-      ApplyOnAllLiteralPairsCom(ResolveCom::ApplyOnAllFactorsCom(InsertCom::Nil)::Nil)
-    ).append(rest)
+      ApplyOnAllLiteralPairsCom(ResolveCom::ApplyOnAllFactorsCom(IfNotTautologyCom::IfNotForwardSubsumedCom(subsumpMng)::BackwardSubsumptionCom(subsumpMng)::InsertCom::Nil)::Nil)
+    ).append(rest(subsumpMng))
   }
 }

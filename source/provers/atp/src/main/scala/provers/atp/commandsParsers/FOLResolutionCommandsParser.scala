@@ -52,8 +52,9 @@ trait FOLResolutionCommandsParser extends CommandsParser {
       val factors2 = computeFactors(cl2, cl2Ind, cl2(id2), sub, Nil)
       AppendCommandsCom((r::commands) ++
         (for {
-          (ls1,sub1) <- factors1
-          (ls2,sub2) <- factors2
+          (ls1,sub1) <- (List(), Substitution())::factors1
+          (ls2,sub2) <- (List(), Substitution())::factors2
+          if !(ls1.isEmpty && ls2.isEmpty)
         } yield (ResolventCom(Resolution(Factor(pr1, ls1.map(x => pr1.root.negative.size + x), sub1),Factor(pr2, ls2, sub2), comInd(id1, ls1), comInd(id2, ls2), sub)))
           ).flatMap(x => x::commands))
     }
