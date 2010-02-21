@@ -9,27 +9,34 @@ package at.logic.provers.atp.refinements
 
 import scala.collection.mutable.{Queue,ListBuffer}
 import at.logic.calculi.resolution.base._
+import at.logic.utils.ds.PublishingBuffer
 
-trait SimpleRefinement extends Refinement {
-  var queue: Queue[Tuple2[ResolutionProof,ResolutionProof]] = null
-  var clauses:ListBuffer[ResolutionProof] = null
+class SimpleRefinement(c: PublishingBuffer[Clause]) extends Refinement {
+  val clauses = c // all clauses
+  val pairs = new ListBuffer[Tuple2[ResolutionProof,ResolutionProof]] // all pairs of possible two clauses
+  val proofs = new ListBuffer[ResolutionProof] // all clauses as proofs
+  insertClauses
   
-  def getClauses: Option[Tuple2[ResolutionProof, ResolutionProof]] = try {
-    Some(queue.dequeue)
-  } catch {
-    case ex: Predef.NoSuchElementException => None
-  }
-  def insertClauses(c: List[Clause]) = {
-    clauses = new ListBuffer[ResolutionProof]
-    queue = new Queue[Tuple2[ResolutionProof,ResolutionProof]]
-    clauses ++= c.map(createInitialProof)
-    val tmp = clauses.toList
-    queue ++= (for {
+  def getNextClausesPair: Option[Tuple2[ResolutionProof, ResolutionProof]] = if (pairs.isEmpty) None else Some(pairs.remove(0))
+
+  private def insertClauses = {
+    proofs ++= clauses.map(createInitialProof)
+    val tmp = proofs.toList
+    pairs ++= (for {
       (a,i) <- tmp.zip(tmp.indices)
       j <- tmp.indices
       if (j > i)
-    } yield (a, clauses(j)))
+    } yield (a, proofs(j)))
   }
-  def insertProof(proof: ResolutionProof) = {queue ++= clauses.map(a => (proof, a)); clauses += proof}
+  def insertProof(proof: ResolutionProof) = {
+    clauses.append(proof.root)
+    proofs += proof
+    pairs ++= proofs.map(a => (proof, a))
+  }
+
+  protected def removeClause(s: Clause) = {
+    proofs.filter(x => x.root == s).foreach(x => proofs -= x)
+    pairs.filter(x => x._1.root == s || x._2.root == s).foreach(x => pairs -= x)
+  }
   private def createInitialProof(c: Clause): ResolutionProof = Axiom(c)
 }

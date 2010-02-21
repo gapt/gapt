@@ -32,6 +32,7 @@ import at.logic.language.fol.FOLFormula
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
+import at.logic.calculi.resolution.base.Clause
 import at.logic.algorithms.subsumption._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.algorithms.fol.hol2fol._
@@ -108,9 +109,15 @@ class PrimeProofTest extends SpecificationWithJUnit {
       Console.println("cssv size: " + cssv.size)
 
       // apply unit resolution and subsumption on the resulted clause set
-      val ref = new at.logic.provers.atp.refinements.UnitRefinement{}
-      new Prover{}.refute(AutomatedFOLStream(cssv.map(x => at.logic.calculi.resolution.base.Clause(x.antecedent.asInstanceOf[List[HOLFormula]], x.succedent.asInstanceOf[List[HOLFormula]])), -1, ref))
-      val newUnitSet = ref.clauses.map(x => x.root).toList
+      val pb = new at.logic.utils.ds.PublishingBuffer[Clause]
+      pb.insertAll(0,cssv.map(x => at.logic.calculi.resolution.base.Clause(x.antecedent.asInstanceOf[List[HOLFormula]], x.succedent.asInstanceOf[List[HOLFormula]])))
+      val ref = new at.logic.provers.atp.refinements.UnitRefinement(pb)
+      val subsumMng = new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
+        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
+        AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.UnitRefinement(pb), subsumMng)
+      val res = new Prover{}.refute(AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.UnitRefinement(pb), subsumMng))
+      Console.println("has a refutation? " + (!res.isEmpty))
+      val newUnitSet = pb.toList
       Console.println("newUnitSet size: " + newUnitSet.size)
       val newUnitSetSubsum = subsumedClausesRemoval(newUnitSet)
       Console.println("newUnitSetSubsum size: " + newUnitSetSubsum.size)

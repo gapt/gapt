@@ -9,6 +9,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
 import at.logic.language.hol.propositions._
 import at.logic.parsing.calculi.ResolutionParser
+import at.logic.algorithms.subsumption.{StillmanSubsumptionAlgorithm, SubsumptionAlgorithm} // to enable configuration
 import refinements._
 import commands._
 import commandsParsers._
@@ -73,21 +74,26 @@ trait Prover {
       case (EmptyCom, SetTargetResolventCom(tProof)) => targetProof = tProof; EmptyCom
       // deal with the case the input set already contains the target clause
       // therefore it returns the default empty clause as no refutation was made
-      case (EmptyCom, InsertClausesCom(clauses)) if targetExistsIn(clauses) => CorrectResolventFound(targetProof)
-      case (EmptyCom, InsertClausesCom(clauses)) => refinement.insertClauses(clauses); EmptyCom
+      case (EmptyCom, GetClausesCom) if targetExistsIn(refinement.clauses) => CorrectResolventFound(targetProof)
       // try to obtain the required clauses, return fail command if not possible
-      case (EmptyCom, GetClausesCom) => refinement.getClauses match {
+      case (EmptyCom, GetClausesCom) => refinement.getNextClausesPair match {
         case None => FailureCom
         case Some(clauses) => GotClausesPairCom(clauses)
       }
-      case (ResolventCom(res), InsertCom) if (targetProof.root.formulaEquivalece(res.root)) => CorrectResolventFound(res)
+      case (ResolventCom(res), _) if (targetProof.root.formulaEquivalece(res.root)) => CorrectResolventFound(res)
       case (ResolventCom(res), InsertCom) => refinement.insertProof(res); EmptyCom
-      // pass parsing to customized commands parser
+      case (r@ ResolventCom(res), IfNotTautologyCom) => if (!res.root.negative.exists(f => res.root.positive.contains(f))) r else NoResolventCom
+      case (r@ ResolventCom(res), IfNotForwardSubsumedCom(subsumpMng)) => if (!subsumpMng.forwardSubsumption(res.root)) r else NoResolventCom
+      case (r@ ResolventCom(res), BackwardSubsumptionCom(subsumpMng)) => {subsumpMng.backwardSubsumption(res.root); r}
       case (NoResolventCom, InsertCom) => EmptyCom
+      case (NoResolventCom, IfNotTautologyCom) => NoResolventCom
+      case (NoResolventCom, IfNotForwardSubsumedCom(_)) => NoResolventCom
+      case (NoResolventCom, BackwardSubsumptionCom(_)) => NoResolventCom
+      // pass parsing to customized commands parser
       case _ => commandsParser.parse(composedCommand, newCommand)
     }
 
-  private def targetExistsIn(clauses: List[Clause]) = clauses.exists(a => targetProof.root.formulaEquivalece(a))
+  private def targetExistsIn(clauses: Iterable[Clause]) = clauses.exists(a => targetProof.root.formulaEquivalece(a))
 
   var targetProof: ResolutionProof = theEmptyClause() // override in commands if target is different
   var timeLimit: Long = -1

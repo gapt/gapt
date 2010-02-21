@@ -20,33 +20,27 @@ private object MyProver extends Prover
 class ProverTest extends SpecificationWithJUnit {
   "Prover" should {
     "in case it has only one clause return it if it is the empty clause" in {
-      MyProver.refute(AutomatedFOLStream(new MyParser(".").getClauseList)).head must beLike {
+      MyProver.refute(simpleAutoStream(".")).head must beLike {
         case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
       }
     }
     "in case it has an empty clause set return None" in {
-      MyProver.refute(AutomatedFOLStream(new MyParser("").getClauseList)) must beEqual (Stream.empty)
+      MyProver.refute(simpleAutoStream("")) must beEqual (Stream.empty)
     }
     "in case it has only one clause return None if it is not the empty clause" in {
-      MyProver.refute(AutomatedFOLStream(new MyParser("P(x).").getClauseList)) must beEqual (Stream.empty)
+      MyProver.refute(simpleAutoStream("P(x).")) must beEqual (Stream.empty)
     }
     "refute the following clauses" in {
       "p(a). -p(x) | p(f(x)). -p(f(f(a)))" in {
-        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | P(f(x)). -P(f(f(a))).").getClauseList)).head must beLike {
+        MyProver.refute(simpleAutoStream("P(a). -P(x) | P(f(x)). -P(f(f(a))).")).head must beLike {
           case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
       }
       "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
-        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3)).head must beLike {
+        MyProver.refute(simpleAutoStream("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).")).head must beLike {
           case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
       }
-      "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
-        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3)).head must beLike {
-          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
-        }
-      }
-      ""
     }
     /*"When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {
       "ex1"
@@ -56,20 +50,31 @@ class ProverTest extends SpecificationWithJUnit {
   " Prover with unit refinement" should {
     "refute the following clauses" in {
       "p(a). -p(x) | p(f(x)). -p(f(f(a)))" in {
-        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | P(f(x)). -P(f(f(a))).").getClauseList, 3, new at.logic.provers.atp.refinements.UnitRefinement{})).head must beLike {
+        MyProver.refute(unitAutoStream("P(a). -P(x) | P(f(x)). -P(f(f(a))).")).head must beLike {
           case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
       }
       "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
-        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3, new at.logic.provers.atp.refinements.UnitRefinement{})).head must beLike {
-          case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
-        }
-      }
-      "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
-        MyProver.refute(AutomatedFOLStream(new MyParser("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).").getClauseList, 3, new at.logic.provers.atp.refinements.UnitRefinement{})).head must beLike {
+        MyProver.refute(unitAutoStream("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).")).head must beLike {
           case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
       }
     }
+  }
+  def simpleAutoStream(cl: String) = {
+    val pb = new at.logic.utils.ds.PublishingBuffer[Clause]
+    val cls = new MyParser(cl).getClauseList
+    pb.insertAll(0,cls)
+    val subsumMng = new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
+        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
+    AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.SimpleRefinement(pb), subsumMng)
+  }
+  def unitAutoStream(cl: String) = {
+    val pb = new at.logic.utils.ds.PublishingBuffer[Clause]
+    val cls = new MyParser(cl).getClauseList
+    pb.insertAll(0,cls)
+    val subsumMng = new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
+        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
+    AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.UnitRefinement(pb), subsumMng)
   }
 }

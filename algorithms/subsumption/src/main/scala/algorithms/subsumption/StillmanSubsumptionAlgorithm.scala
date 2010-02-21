@@ -18,7 +18,7 @@ import at.logic.calculi.lk.base._
 
 trait StillmanSubsumptionAlgorithm extends SubsumptionAlgorithm {
   val matchAlg: MatchingAlgorithm
-  def subsumes(s1: Sequent, s2: Sequent): Boolean =
+  def subsumes(s1: Sequent, s2: Sequent): Boolean = 
     ST(s1.antecedent.map(x => neg(x)) ++ s1.succedent, s2.antecedent.map(x => neg(x)) ++ s2.succedent, Substitution())
 
   /* for the case of the second term we replace all variables by constants of the same name), therefore preventing unsound results
