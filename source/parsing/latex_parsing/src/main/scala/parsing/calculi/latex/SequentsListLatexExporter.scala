@@ -26,21 +26,18 @@ import scala.collection.mutable.Map
 trait SequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = "\n\n"
   val mdskip = "\n\n"+ """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
-  private def exportSequent(seq: Sequent, defs: Map[Int, Tuple2[Abs,Var]]) = {
-    if (seq.antecedent.size > 0) exportTerm1(seq.antecedent.head,defs)
-    if (seq.antecedent.size > 1) seq.antecedent.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x,defs)})
+  private def exportSequent(seq: Sequent) = {
+    if (seq.antecedent.size > 0) exportTerm1(seq.antecedent.head)
+    if (seq.antecedent.size > 1) seq.antecedent.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x)})
     getOutput.write(smskip); getOutput.write(""" $\vdash$ """); getOutput.write(smskip)
-    if (seq.succedent.size > 0) exportTerm1(seq.succedent.head,defs)
-    if (seq.succedent.size > 1) seq.succedent.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x,defs)})
+    if (seq.succedent.size > 0) exportTerm1(seq.succedent.head)
+    if (seq.succedent.size > 1) seq.succedent.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x)})
   }
   
-  def exportSequentList(ls: List[Sequent]): OutputExporter = {
+  def exportSequentList(ls: List[Sequent], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 
-    val types = Map[LambdaExpression, String]()
-    val defs = Map[Int, Tuple2[Abs,Var]]()
-    ls.foreach(x => mapValues(x, types, defs))
     getOutput.write("""\documentclass[10pt, a4paper]{article}""")
     getOutput.write("\n")
     getOutput.write("""\setlength{\topmargin}{-1.5cm}""")
@@ -59,60 +56,44 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     getOutput.write("\n")
     getOutput.write("""\begin{document}""")
     getOutput.write("\n")
-    getOutput.write("""\section{Types}""")
-    getOutput.write("\n")
-    getOutput.write("""\begin{tabular}{ll}""")
-    types.toList.sort((x,y) => x._1.toString < y._1.toString).foreach(x => {exportTerm1(x._1,defs); getOutput.write(" & "); getOutput.write(x._2); getOutput.write(""" \\ """); getOutput.write("\n")})
-    getOutput.write("""\end{tabular}""")
-    getOutput.write("\n")
-    getOutput.write("""\section{Definitions}""")
-    getOutput.write("\n")
-    getOutput.write("""\begin{tabular}{ll}""")
-    val dumap = Map[Int, Tuple2[Abs,Var]]()
-    defs.toList.sort((x,y) => x._2._2.toString < y._2._2.toString).foreach(x => {exportTerm1(x._2._2,dumap); getOutput.write(" & "); exportTerm1(x._2._1,dumap); getOutput.write(""" \\ """); getOutput.write("\n")})
-    getOutput.write("""\end{tabular}""")
-    getOutput.write("\n")
+    sections.foreach(x => {
+      getOutput.write("""\section{""" + x._1 + "}")
+      getOutput.write("\n")
+      getOutput.write("""\begin{tabular}{ll}""")
+      x._2.foreach(y => {
+        printOnMatch(y._1)
+        getOutput.write(" & ")
+        printOnMatch(y._2)
+        getOutput.write(""" \\ """)
+        getOutput.write("\n")
+      })
+      getOutput.write("""\end{tabular}""")
+      getOutput.write("\n")
+    })
     getOutput.write("""\section{Clauses}""")
     getOutput.write("\n")
-    ls.foreach(x => {exportSequent(x, defs); getOutput.write(mdskip)})
+    ls.foreach(x => {exportSequent(x); getOutput.write(mdskip)})
     getOutput.write("""\end{document}""")
     this
   }
-  object DefId {
-   var id = 0
-   def nextId = {id = id + 1; id}
+
+  private def printOnMatch(a: Any) = a match {
+    case le: LambdaExpression => exportTerm1(le)
+    case ta: TA => getOutput.write("$" + latexType(ta) + "$")
+    case _ => getOutput.write(a.toString)
   }
-  private def mapValues(s: Sequent, types: Map[LambdaExpression, String], defs: Map[Int, Tuple2[Abs,Var]]) = {s.antecedent.foreach(mapValuesInTerm(types,defs));  s.succedent.foreach(mapValuesInTerm(types,defs));}
-  private def mapValuesInTerm(types: Map[LambdaExpression, String], defs: Map[Int, Tuple2[Abs,Var]])(f: LambdaExpression): Unit = f match {
-    case v @ Var(at.logic.language.hol.logicSymbols.ConstantStringSymbol(x), t) => types.getOrElseUpdate(v, "$" + latexType(t) + "$")
-    case App(a,b) => mapValuesInTerm(types,defs)(a); mapValuesInTerm(types,defs)(b)
-    case a @ Abs(x,b) => {
-      mapValuesInTerm(types,defs)(b)
-      defs.get(extractAbs(a.asInstanceOf[Abs])) match {
-        case Some(_) => ()
-        case None => {
-          val newConst: Var = x.factory.createVar(at.logic.language.hol.logicSymbols.ConstantStringSymbol("q_{" + DefId.nextId + "}"), a.exptype)
-          defs.put(extractAbs(a.asInstanceOf[Abs]), (a.asInstanceOf[Abs], newConst))
-          types.getOrElseUpdate(newConst, "$" + latexType(newConst.exptype) + "$")
-        }
-      }
-    }
-    case _ => ()
-  }
-  // ignore variants
-  private def extractAbs(a: Abs): Int = a.hashCode // to change as the hashCode could be changed later.
   
-  private def exportTerm1(f: LambdaExpression, defs: Map[Int, Tuple2[Abs,Var]]) = {
+  private def exportTerm1(f: LambdaExpression) = {
     getOutput.write("$")
-    exportTerm(replaceTerm(f, defs))
+    exportTerm(f)
     getOutput.write("$")
   }
-  private def replaceTerm(f: LambdaExpression, defs: Map[Int, Tuple2[Abs,Var]]): LambdaExpression = f match {
+  /*private def replaceTerm(f: LambdaExpression, defs: Map[Int, Tuple2[Abs,Var]]): LambdaExpression = f match {
     case v: Var => v
     case App(a,b) => App(replaceTerm(a, defs), replaceTerm(b, defs))
     case a @ Abs(x,b) => defs.get(extractAbs(a.asInstanceOf[Abs])) match {
       case Some(v) => v._2
       case _ => Abs(x, replaceTerm(b, defs))
     }
-  }
+  }*/
 }
