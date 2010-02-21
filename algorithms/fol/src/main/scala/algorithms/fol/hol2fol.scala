@@ -42,4 +42,8 @@ package hol2fol {
       case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order function or atom") // for cases of higher order atoms and functions
     }
   }
+  // TODO - support generated function symbols by checking the arity from le and add the variables to the returned term. Right now only constants are supported
+  object createExampleFOLConstant {
+    def apply(le: LambdaExpression, css: ConstantStringSymbol) = FOLConst(css)
+  }
 }
