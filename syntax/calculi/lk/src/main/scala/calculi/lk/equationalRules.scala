@@ -9,7 +9,7 @@ package at.logic.calculi.lk
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
@@ -26,7 +26,7 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationLeft1Rule {
-    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
+    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: HOLFormula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.antecedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -51,7 +51,7 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationLeft2Rule {
-    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
+    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: HOLFormula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.antecedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -76,7 +76,7 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationRight1Rule {
-    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
+    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: HOLFormula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.succedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -102,7 +102,7 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationRight2Rule {
-    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: Formula) =
+    def apply(s1: LKProof, s2: LKProof, eqocc: FormulaOccurrence, auxocc: FormulaOccurrence, main: HOLFormula) =
       if (!s1.root.succedent.contains(eqocc) || !s2.root.succedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)

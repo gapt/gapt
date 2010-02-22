@@ -16,20 +16,18 @@ import at.logic.language.lambda.symbols._
 import logicSymbols._
 import logicSymbols.ImplicitConverters._
 import at.logic.language.lambda.types.ImplicitConverters._
-import propositions._
-import quantifiers._
 import at.logic.language.lambda.types.Definitions._
-import propositions.Definitions._
-import propositions.ImplicitConverters._
+import ImplicitConverters._
+import Definitions._
 
 class HigherOrderLogicTest extends SpecificationWithJUnit {
   "HigherOrderLogic" should {
     val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
     val v1 = Var("x", i, hol)
     val a1 = App(c1,v1)
-    val c2 = Var("a", i->(i->o), hol)
-    val v21 = Var("x", i, hol)
-    val v22 = Var("y", i, hol)
+    val c2 = Var("a", i->(i->o), HOLFactory)
+    val v21 = Var("x", i, HOLFactory)
+    val v22 = Var("y", i, HOLFactory)
     val a21 = App(c2,v21)
     val a22 = App(a21,v22)
     "mix correctly the formula trait (1)" in {
@@ -53,13 +51,13 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       (c1 or c2) must beLike {case App(App(orC, c1), c2) => true}
       }
     "Imp connective should return the right formula" in {
-      val c1 = Var("a", o, hol).asInstanceOf[Formula]
-      val c2 = Var("b", o, hol).asInstanceOf[Formula]
+      val c1 = Var("a", o, HOLFactory).asInstanceOf[HOLFormula]
+      val c2 = Var("b", o, HOLFactory).asInstanceOf[HOLFormula]
       (c1 imp c2) must beLike {case App(App(impC, c1), c2) => true}
     }
     "Neg connective should " in {
       "return the right formula" in {
-        val c1 = Var("a", o, hol).asInstanceOf[Formula]
+        val c1 = Var("a", o, HOLFactory).asInstanceOf[HOLFormula]
         (Neg(c1)) must beLike {case App(negC, c1) => true}
       }
       "be extracted correctly" in {
@@ -67,8 +65,8 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       }
     }
     "Constants are created correctly using the default implicit converter" in {
-      val c1 = Var("a", i->o, hol)
-      val v1 = Var("x", i, hol)
+      val c1 = Var("a", i->o, HOLFactory)
+      val v1 = Var("x", i, HOLFactory)
       (c1) must beLike {case x: Const => true}
       (v1) must beLike {
         case x: Const => false
@@ -92,18 +90,6 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       (AllVar(v1, f1).exptype) must beEqual (o)
     }
   }
-  /*"HOL terms exporter" should {
-    "export binary connectives correctly" in {
-      " - A∨B" in {
-        (exportToString(Or(Var("A", o, hol).asInstanceOf[Formula], Var("A", o, hol).asInstanceOf[Formula]))) must beEqual ("A∨B")
-      }
-    }
-    "export binary terms correctly" in {
-      " - " in {
-
-      }
-    }
-  }*/
   "Atoms" should {
     "be extracted correctly" in {
       (HOLConst(new ConstantStringSymbol("P"), o)) must beLike {case Atom(ConstantStringSymbol("P"), Nil) => true}

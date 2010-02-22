@@ -1,6 +1,5 @@
 package at.logic.calculi.lk
 
-import at.logic.language.hol.propositions.HOL
 import org.specs.matcher.Matcher
 import at.logic.calculi.lk.base.Sequent
 

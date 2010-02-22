@@ -11,12 +11,11 @@ package at.logic.language.fol
 import scala.collection.immutable._
 import at.logic.language.hol.substitutions.{Substitution => HOLSubstitution}
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression,Var}
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol._
 
 
 package substitutions {
-  class Substitution protected[substitutions](m: scala.collection.immutable.Map[FOLVar, FOLExpression]) extends HOLSubstitution(m.asInstanceOf[Map[HOLVar,HOLTerm]]) {
+  class Substitution protected[substitutions](m: scala.collection.immutable.Map[FOLVar, FOLExpression]) extends HOLSubstitution(m.asInstanceOf[Map[HOLVar,HOLExpression]]) {
     // cannot call this method "apply" because of signature clash with other method due to erasure :-(
     def applyFOL( term: FOLExpression ) : FOLExpression = apply( term ).asInstanceOf[FOLExpression]
   }

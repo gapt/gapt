@@ -9,7 +9,7 @@ package at.logic.calculi.lksk
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.{Set,EmptySet}
@@ -17,19 +17,18 @@ import scala.collection.immutable.{Map,HashMap}
 
 import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent,SequentOccurrence}
 import at.logic.calculi.occurrences._
-import at.logic.language.hol.propositions.TypeSynonyms._
 
 package base {
   object TypeSynonyms {
-    type Label = Set[HOLTerm]
+    type Label = Set[HOLExpression]
     object EmptyLabel {
-      def apply() = new EmptySet[HOLTerm]
+      def apply() = new EmptySet[HOLExpression]
     }
   }
 
   import TypeSynonyms._
 
-  class LabelledFormulaOccurrence (override val formula: Formula, 
+  class LabelledFormulaOccurrence (override val formula: HOLFormula,
                                    override val ancestors: List[LabelledFormulaOccurrence],
                                    val label: Label) extends FormulaOccurrence( formula, ancestors ) {
     def factory: FOFactory = LKskFOFactory
@@ -37,15 +36,15 @@ package base {
   }
 
   private[lksk] object LKskFOFactory extends FOFactory {
-    def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = {
+    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
-    def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = {
+    def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
-    def createOccurrence(formula: Formula, ancestors: List[LabelledFormulaOccurrence]) = {
+    def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) = {
       val l = ancestors.first.label
       assert( ancestors.forall( a => a.label == l ) )
       new LabelledFormulaOccurrence(formula, ancestors, l)
@@ -53,7 +52,7 @@ package base {
     // when creating a main formula for a weak quantifier inference in LKsk, we may choose
     // whether to delete the term from the label, or not. If deletion is not desired,
     // term should be set to None.
-    def createWeakQuantMain(formula: Formula, ancestor: LabelledFormulaOccurrence, term: Option[HOLTerm]) =
+    def createWeakQuantMain(formula: HOLFormula, ancestor: LabelledFormulaOccurrence, term: Option[HOLExpression]) =
     {
       val newlabel = term match {
         case None => ancestor.label
@@ -61,7 +60,7 @@ package base {
       }
       new LabelledFormulaOccurrence(formula, ancestor::Nil, newlabel )
     }
-    def createInitialOccurrence(formula: Formula, label: Label) =
+    def createInitialOccurrence(formula: HOLFormula, label: Label) =
       new LabelledFormulaOccurrence( formula, Nil, label )
   }
 

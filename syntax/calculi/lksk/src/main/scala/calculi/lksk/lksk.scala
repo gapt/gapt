@@ -9,7 +9,7 @@ package at.logic.calculi.lksk
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.{Set,EmptySet}
@@ -23,8 +23,6 @@ import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.base.{LKProof,SequentOccurrence,createContext,UnaryLKProof,LKRuleCreationException}
 import at.logic.calculi.occurrences._
-import at.logic.language.hol.quantifiers._
-import at.logic.language.hol.propositions.TypeSynonyms._
 
 // lksk proofs
 // rules are extracted in the form (UpperSequent(s), LowerSequent, AuxialiaryFormula(s), PrincipalFormula(s))
@@ -40,13 +38,13 @@ object Axiom {
     // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
     (new LeafTree[SequentOccurrence](new LabelledSequentOccurrence(LKAxiom.toSet(left), LKAxiom.toSet(right) ) ) with LKProof {def rule = InitialRuleType}, (left,right))
   }
-  def createOccurrence(f: Formula, l: Label): LabelledFormulaOccurrence = 
+  def createOccurrence(f: HOLFormula, l: Label): LabelledFormulaOccurrence =
     LKskFOFactory.createInitialOccurrence(f, l)
   def unapply(proof: LKProof) = if (proof.rule == InitialRuleType) Some((proof.root)) else None
 }
 
 object WeakeningLeftRule {
-  def apply(s1: LKProof, f: Formula, l: Label) = {
+  def apply(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence(f, l)
     // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
     new UnaryTree[SequentOccurrence](
@@ -65,7 +63,7 @@ object WeakeningLeftRule {
 }
 
 object WeakeningRightRule {
-  def apply(s1: LKProof, f: Formula, l: Label) = {
+  def apply(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence(f, l)
     new UnaryTree[SequentOccurrence](
       new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]], createContext(s1.root.succedent).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula), s1)
@@ -92,7 +90,7 @@ case object ExistsSkRightRuleType extends UnaryRuleTypeA
 
 object ForallSkLeftRule {
   // removeFromLabel indicates whether to remove the term subst from the label of the main formula.
-  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: HOLTerm, removeFromLabel: Boolean) = {
+  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean) = {
     main match {
       case All( sub, _ ) => {
         // TODO: comment in to check validity of the rule.
@@ -128,7 +126,7 @@ object ForallSkLeftRule {
 }
 
 object ExistsSkRightRule {
-  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: HOLTerm, removeFromLabel: Boolean) = {
+  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean) = {
     main match {
       case Ex( sub, _ ) => {
         //assert( betaNormalize( App( sub, subst_t ) ) == aux )
@@ -161,7 +159,7 @@ object ExistsSkRightRule {
 }
 
 object ForallSkRightRule {
-  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: HOLTerm) = {
+  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression) = {
     main match {
       case All( sub, _ ) => {
         // TODO: check Skolem term
@@ -191,7 +189,7 @@ object ForallSkRightRule {
 }
 
 object ExistsSkLeftRule {
-  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: HOLTerm) = {
+  def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression) = {
     main match {
       case Ex( sub, _ ) => {
         // TODO: check Skolem term

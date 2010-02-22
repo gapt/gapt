@@ -12,9 +12,7 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.quantifiers._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
@@ -30,13 +28,13 @@ package quantificationRules {
   case object ExistsRightRuleType extends UnaryRuleTypeA
 
   object ForallLeftRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula, term: HOLTerm) : LKProof =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
         }
 
-    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, term: HOLTerm) : LKProof = {
+    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
       main match {
         case All( sub, _ ) => {
           val aux_form = betaNormalize( App( sub, term ) )
@@ -66,14 +64,14 @@ package quantificationRules {
   }
 
   object ExistsRightRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula, term: HOLTerm) : LKProof = {
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
         }
     }
 
-    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, term: HOLTerm) : LKProof = {
+    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
       main match {
         case Ex( sub, _ ) => {
           assert( betaNormalize( App( sub, term ) ) == aux_fo.formula )
@@ -102,13 +100,13 @@ package quantificationRules {
   }
 
   object ForallRightRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula, eigen_var: HOLVar) : LKProof =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: HOLVar) : LKProof =
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, eigen_var )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 
-    def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, eigen_var: HOLVar ) : LKProof =
+    def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof =
       main match {
         case All( sub, _ ) => {
           // eigenvar condition
@@ -140,13 +138,13 @@ package quantificationRules {
   }
 
   object ExistsLeftRule {
-    def apply(s1: LKProof, aux: Formula, main: Formula, eigen_var: HOLVar) : LKProof =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: HOLVar) : LKProof =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, eigen_var )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 
-    def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: Formula, eigen_var: HOLVar ) : LKProof =
+    def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof =
       main match {
         case Ex( sub, _ ) => {
           // eigenvar condition
