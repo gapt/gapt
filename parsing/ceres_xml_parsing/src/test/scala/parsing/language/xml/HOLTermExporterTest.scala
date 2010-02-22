@@ -1,5 +1,5 @@
 /*
- * HOLTermExporterTest.scala
+ * HOLExpressionExporterTest.scala
  *
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
@@ -13,11 +13,9 @@ import org.specs.matcher.Matcher
 
 import scala.xml._
 
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.quantifiers._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions.Definitions._
-import at.logic.language.hol.propositions.ImplicitConverters._
+import at.logic.language.hol._
+import at.logic.language.hol.Definitions._
+import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.ImplicitConverters._
@@ -39,7 +37,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
   // helper to create 0-ary predicate constants
   def pc( sym: String ) = HOLConstFormula( new ConstantStringSymbol( sym ) )
   
-  "HOLTermExporter" should {
+  "HOLExpressionExporter" should {
     "export correctly a constant c" in {
       exporter.exportTerm(HOLConst(new ConstantStringSymbol("c"), "i")) must beEqual(<constant symbol="c"/>)
     }

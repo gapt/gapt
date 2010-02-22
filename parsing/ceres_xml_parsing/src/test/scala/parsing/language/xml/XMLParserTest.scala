@@ -12,11 +12,9 @@ import scala.xml._
 
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.quantifiers._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions.Definitions._
-import at.logic.language.hol.propositions.ImplicitConverters._
+import at.logic.language.hol._
+import at.logic.language.hol.Definitions._
+import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.ImplicitConverters._

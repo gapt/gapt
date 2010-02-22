@@ -11,7 +11,7 @@ import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
 
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._

@@ -1,5 +1,5 @@
 /*
- * HOLTermExporter.scala
+ * HOLExpressionExporter.scala
  *
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
@@ -9,9 +9,7 @@ package at.logic.parsing.language.xml
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.quantifiers._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.ImplicitConverters._
@@ -19,7 +17,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ExportingException
 
 trait HOLTermExporter {
-  def exportTerm(term: HOLTerm): scala.xml.Elem = term match {
+  def exportTerm(term: HOLExpression): scala.xml.Elem = term match {
     case Atom(ConstantStringSymbol(name),args) =>
       <constantatomformula symbol={name}>
         {exportList(args)}
@@ -46,7 +44,7 @@ trait HOLTermExporter {
       </conjunctiveformula>
     case _ => exportTerm2(term)
   }
-  private def exportTerm2(term: HOLTerm): scala.xml.Elem = term match {
+  private def exportTerm2(term: HOLExpression): scala.xml.Elem = term match {
     case AllVar(vr@Var(_,Ti()),f) =>
       <quantifiedformula type="all">
         {exportList(vr::f::Nil)}
@@ -65,7 +63,7 @@ trait HOLTermExporter {
       </secondorderquantifiedformula>
     case _ => exportTerm3(term)
   }
-  private def exportTerm3(term: HOLTerm): scala.xml.Elem = term match {
+  private def exportTerm3(term: HOLExpression): scala.xml.Elem = term match {
     case Var(VariableStringSymbol(a), Ti()) =>
       <variable symbol={a}/>
     case Var(ConstantStringSymbol(a), Ti()) =>
@@ -80,7 +78,7 @@ trait HOLTermExporter {
       <lambdasubstitution>
         <variablelist>
           {exportList(varlist)}
-        </variablelist>{exportTerm(func.asInstanceOf[HOLTerm])}
+        </variablelist>{exportTerm(func.asInstanceOf[HOLExpression])}
       </lambdasubstitution>
     case AppN(Var(ConstantStringSymbol(a),FunctionType(To(),ls)),args) if (ls.last == Ti()) =>
       <definedset definition={a} symbol={a}>
@@ -88,5 +86,5 @@ trait HOLTermExporter {
       </definedset>
     case _ => throw new ExportingException("Term cannot be exported into the required xml format: " + term.toString)
   }
-  private def exportList(ls: List[LambdaExpression]) = ls.map(x => exportTerm(x.asInstanceOf[HOLTerm]))
+  private def exportList(ls: List[LambdaExpression]) = ls.map(x => exportTerm(x.asInstanceOf[HOLExpression]))
 }

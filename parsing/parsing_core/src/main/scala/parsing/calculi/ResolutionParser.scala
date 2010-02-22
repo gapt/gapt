@@ -7,7 +7,6 @@
 
 package at.logic.parsing.calculi
 
-import at.logic.language.hol.propositions._
 import at.logic.calculi.resolution.base._
 
 trait ResolutionParser extends InputParser {
