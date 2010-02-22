@@ -14,7 +14,7 @@ import at.logic.parsing.OutputExporter
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 
-trait HOLExpressionLatexExporter extends OutputExporter with HOLTermExporter {
+trait HOLTermLatexExporter extends OutputExporter with HOLTermExporter {
   // it is LambdaExpression and require because of the stupid design chose not to have a common element for HOL
   def exportTerm(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]); t match {
     case Var(name, _) => getOutput.write(name.toString)
