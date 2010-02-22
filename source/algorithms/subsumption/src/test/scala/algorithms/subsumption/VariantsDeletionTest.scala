@@ -10,14 +10,14 @@ package at.logic.algorithms.subsumption
 import org.specs._
 import org.specs.runner._
 
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.quantifiers._
-import at.logic.language.hol.logicSymbols._
+import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
+
+import at.logic.language.hol.logicSymbols._
 
 import VariantsDeletion._
 
