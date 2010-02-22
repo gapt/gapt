@@ -88,7 +88,7 @@ object HuetAlgorithm extends UnificationAlgorithm
 
         case ((App(var1,exp1) , App(var2,exp2))::s, s2) =>
           {
-            println("\n\nEvala !!!\n\n")
+        //    println("\n\nEvala !!!\n\n")
             (None)
           }
 
