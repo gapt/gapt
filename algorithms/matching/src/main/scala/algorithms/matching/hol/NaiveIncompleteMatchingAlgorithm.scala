@@ -10,14 +10,13 @@ package at.logic.algorithms.matching.hol
 import at.logic.algorithms.matching.MatchingAlgorithm
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol._
 import scala.collection.immutable.EmptySet
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 
 object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
-  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = holMatch(term.asInstanceOf[HOLTerm], ground(posInstance).asInstanceOf[HOLTerm])
+  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = holMatch(term.asInstanceOf[HOLExpression], ground(posInstance).asInstanceOf[HOLExpression])
 
    // in all instances of the algorithm we ground the second term by replacing all free variables by constants
   private def ground(e: LambdaExpression): LambdaExpression = e match {
@@ -27,7 +26,7 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
     case abs: Abs => Abs(abs.variable, ground(abs.expressionInScope))
   }
   
-  def holMatch( s: HOLTerm, t: HOLTerm ) : Option[Substitution] =
+  def holMatch( s: HOLExpression, t: HOLExpression ) : Option[Substitution] =
     (s, t) match {
       case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( holMatch(s_1, t_1), holMatch(s_2, t_2) )
       // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
@@ -58,7 +57,7 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
     case (_, None) => None
   }
 
-  def getVars( t: HOLTerm ) : Set[HOLVar] = t match {
+  def getVars( t: HOLExpression ) : Set[HOLVar] = t match {
     case HOLApp(t_1, t_2) => getVars( t_1 ) ++ getVars( t_2 )
     // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
     case HOLVar(_,_) => (new EmptySet()) + t.asInstanceOf[HOLVar]
