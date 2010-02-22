@@ -12,7 +12,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.propositions.{Neg => HOLNeg, Formula}
+import at.logic.language.hol._
 import at.logic.language.fol.{Neg => FOLNeg, FOLFormula}
 import at.logic.calculi.lk.base._
 
@@ -31,5 +31,5 @@ trait StillmanSubsumptionAlgorithm extends SubsumptionAlgorithm {
     })
   }
 
-  private def neg(f: Formula) = if (f.isInstanceOf[FOLFormula]) FOLNeg(f.asInstanceOf[FOLFormula]) else HOLNeg(f)
+  private def neg(f: Formula) = if (f.isInstanceOf[FOLFormula]) FOLNeg(f.asInstanceOf[FOLFormula]) else Neg(f.asInstanceOf[HOLFormula])
 }
