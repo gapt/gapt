@@ -7,11 +7,9 @@
 package at.logic.language.fol
 
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.hol
-import at.logic.language.hol.propositions.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp}
-import at.logic.language.hol.propositions.{HOL, Formula, HOLVar, HOLConst, HOLApp, HOLAbs, HOLConstFormula, HOLFactory, HOLAppFormula}
-import at.logic.language.hol.quantifiers.{AllQ => HOLAllQ, ExQ => HOLExQ}
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp}
+import at.logic.language.hol.{HOLExpression, HOL, HOLFormula, HOLVar, HOLConst, HOLApp, HOLAbs, HOLConstFormula, HOLFactory, HOLAppFormula}
+import at.logic.language.hol.{AllQ => HOLAllQ, ExQ => HOLExQ}
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
@@ -23,7 +21,7 @@ trait FOL extends HOL
   override def factory : LambdaFactoryA = FOLFactory
 }
 
-trait FOLExpression extends LambdaExpression with FOL with HOL {
+trait FOLExpression extends HOLExpression with FOL {
     override def toString = this match {
       case Var(x,_) => x.toString
       case Atom(x, args) => x + "(" +
@@ -40,10 +38,10 @@ trait FOLExpression extends LambdaExpression with FOL with HOL {
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
     }
   }
-trait FOLFormula extends FOLExpression with Formula
+trait FOLFormula extends FOLExpression with HOLFormula
 //trait FOLFormula extends HOLFormula with FOL
 trait FOLTerm extends FOLExpression
-// trait FOLTerm extends HOLTerm with FOL
+// trait FOLTerm extends HOLExpression with FOL
 {
   require( exptype == Ti() )
 }

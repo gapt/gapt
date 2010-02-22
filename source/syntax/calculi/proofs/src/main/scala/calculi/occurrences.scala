@@ -8,10 +8,9 @@ package at.logic.calculi
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.utils.labeling.labels._
 import scala.collection.immutable.Set
-import proofs._
 
 package occurrences {
 
@@ -45,11 +44,11 @@ package occurrences {
   }
 
   trait FOFactory {
-    def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]): FormulaOccurrence
-    def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]): FormulaOccurrence
+    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]): FormulaOccurrence
+    def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]): FormulaOccurrence
   }
   // equality is done by reference so each two generated formula occurrences are different
-  abstract class FormulaOccurrence(val formula: Formula, val ancestors: List[FormulaOccurrence]) {
+  abstract class FormulaOccurrence(val formula: HOLFormula, val ancestors: List[FormulaOccurrence]) {
     def factory: FOFactory
   }
 }

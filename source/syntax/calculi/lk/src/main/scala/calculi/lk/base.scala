@@ -9,25 +9,24 @@ package at.logic.calculi.lk
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
-import at.logic.language.hol.propositions.TypeSynonyms._
 
 
 package base {
 
   private[lk] object LKFOFactory extends FOFactory {
-    def createPrincipalFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
-    def createContextFormulaOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
-    def createOccurrence(formula: Formula, ancestors: List[FormulaOccurrence]) = new FormulaOccurrence(formula, ancestors) {def factory = LKFOFactory}
+    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
+    def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
+    def createOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = new FormulaOccurrence(formula, ancestors) {def factory = LKFOFactory}
   }
 
   // List should be changed into multiset (I am not sure anymore as we need to map formula occurrences also in the original sequent.
   // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
-  class Sequent(val antecedent: List[Formula], val succedent: List[Formula])
+  class Sequent(val antecedent: List[HOLFormula], val succedent: List[HOLFormula])
   {
     val ant = antecedent.sort((x1,x2) => x1.toString < x2.toString)
     val suc = succedent.sort((x1,x2) => x1.toString < x2.toString)
@@ -57,7 +56,7 @@ package base {
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
   }
   object Sequent {
-    def apply(antecedent: List[Formula], succedent: List[Formula]) = new Sequent(antecedent, succedent)
+    def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)
     def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
   }
   // List should be changed into set
@@ -100,7 +99,7 @@ package base {
     def prin: List[FormulaOccurrence]
   }
   trait SubstitutionTerm {
-    def subst: HOLTerm
+    def subst: HOLExpression
   }
   trait Eigenvariable {
     def eigenvar: HOLVar

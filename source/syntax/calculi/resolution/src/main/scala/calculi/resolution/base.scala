@@ -9,13 +9,12 @@ package at.logic.calculi.resolution
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.Map
-import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.lambda.substitutions._
 import at.logic.calculi.lk.base._
 
@@ -138,11 +137,11 @@ package base {
           with UnaryResolutionProof with AppliedSubstitution {def rule = VariantType; def substitution = Substitution(varGen.varsMap.elements)}
       else p
     }
-    private def variantTerm(op: Var => Var)(t: HOLTerm): HOLTerm = t match {
-      case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => op(v.asInstanceOf[Var]).asInstanceOf[HOLTerm]
+    private def variantTerm(op: Var => Var)(t: HOLExpression): HOLExpression = t match {
+      case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => op(v.asInstanceOf[Var]).asInstanceOf[HOLExpression]
       case v: Var => v
-      case App(a,b) => App(variantTerm(op)(a.asInstanceOf[HOLTerm]), variantTerm(op)(b.asInstanceOf[HOLTerm])).asInstanceOf[HOLTerm]
-      case Abs(x,a) => Abs(x, variantTerm(op)(a.asInstanceOf[HOLTerm])).asInstanceOf[HOLTerm]
+      case App(a,b) => App(variantTerm(op)(a.asInstanceOf[HOLExpression]), variantTerm(op)(b.asInstanceOf[HOLExpression])).asInstanceOf[HOLExpression]
+      case Abs(x,a) => Abs(x, variantTerm(op)(a.asInstanceOf[HOLExpression])).asInstanceOf[HOLExpression]
     }
     def unapply(proof: ResolutionProof) = if (proof.rule == VariantType) {
         val pr = proof.asInstanceOf[UnaryResolutionProof with AppliedSubstitution]
