@@ -15,7 +15,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol._
 //import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.language.simple._
