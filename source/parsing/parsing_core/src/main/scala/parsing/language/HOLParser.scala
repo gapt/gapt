@@ -7,12 +7,11 @@
 
 package at.logic.parsing.language
 
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol._
 
 trait HOLParser extends InputParser {
-    def term : Parser[HOLTerm]
-    def getTerm(): HOLTerm = {
+    def term : Parser[HOLExpression]
+    def getTerm(): HOLExpression = {
         val reader = getInput()
         try
         {

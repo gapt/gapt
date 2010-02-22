@@ -12,8 +12,7 @@ import scala.util.matching.Regex
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols.VariableStringSymbol

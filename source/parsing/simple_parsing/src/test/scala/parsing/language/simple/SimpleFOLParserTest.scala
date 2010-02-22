@@ -9,8 +9,7 @@ package at.logic.parsing.language.simple
 
 import org.specs._
 import org.specs.runner._
-import at.logic.language.hol.propositions.{HOLVar,HOLConst}
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol.{HOLVar,HOLConst}
 import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol

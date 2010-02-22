@@ -1,5 +1,5 @@
 /*
- * HOLTermArithmeticalExporter.scala
+ * HOLExpressionArithmeticalExporter.scala
  *
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
@@ -9,14 +9,12 @@ package at.logic.parsing.language.arithmetic
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.quantifiers._
+import at.logic.language.hol._
 import at.logic.parsing.OutputExporter
 import at.logic.language.lambda.typedLambdaCalculus._
 
 trait HOLTermArithmeticalExporter extends OutputExporter with HOLTermExporter {
-  def exportFunction(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLTerm]); t match {
+  def exportFunction(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]); t match {
     case Function(ConstantStringSymbol("+"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" + "); exportTerm(y); getOutput.write(")")}
     case Function(ConstantStringSymbol("-"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" - "); exportTerm(y); getOutput.write(")")}
     case Function(ConstantStringSymbol("*"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" * "); exportTerm(y); getOutput.write(")")}

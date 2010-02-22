@@ -9,9 +9,7 @@ package at.logic.parsing.calculi.latex
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.quantifiers._
+import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ExportingException

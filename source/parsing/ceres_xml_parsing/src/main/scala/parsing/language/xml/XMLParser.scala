@@ -16,10 +16,8 @@ import scala.xml.Utility.trim
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ParsingException
 import at.logic.parsing.readers.XMLReaders.NodeReader
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.quantifiers._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions.ImplicitConverters._
+import at.logic.language.hol._
+import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.Definitions._
@@ -38,7 +36,7 @@ class ProofDatabase( val proofs: List[LKProof], val axioms: List[Sequent] );
 
 // performs the matching necessary to compute substitution terms/eigenvars
 object Match {
-  def apply( s: HOLTerm, t: HOLTerm ) : Option[Substitution] =
+  def apply( s: HOLExpression, t: HOLExpression ) : Option[Substitution] =
     (s, t) match {
       case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( apply(s_1, t_1), apply(s_2, t_2) )
       // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
@@ -69,7 +67,7 @@ object Match {
     case (_, None) => None
   }
 
-  def getVars( t: HOLTerm ) : Set[HOLVar] = t match {
+  def getVars( t: HOLExpression ) : Set[HOLVar] = t match {
     case HOLApp(t_1, t_2) => getVars( t_1 ) ++ getVars( t_2 )
     // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
     case HOLVar(_,_) => (new EmptySet()) + t.asInstanceOf[HOLVar]
@@ -98,14 +96,14 @@ object XMLParser {
   object XMLUtils {
     /**
      * This function converts a list of nodes, which are assumed to be instances
-     * of the XML &amp;abstractterm; entity, to a list of HOLTerms.
+     * of the XML &amp;abstractterm; entity, to a list of HOLExpressions.
      *
      * @param ns A list of nodes, each of which is an instance of the XML 
                  &amp;abstractterm; entity.
-     * @return   A list of HOLTerms corresponding to the list of nodes.
+     * @return   A list of HOLExpressions corresponding to the list of nodes.
      * @see XMLParser.XMLAbstractTermParser
      */
-    def nodesToAbstractTerms(ns : List[Node]) : List[HOLTerm] =
+    def nodesToAbstractTerms(ns : List[Node]) : List[HOLExpression] =
       ns.map( c => (new NodeReader( c ) with XMLAbstractTermParser).getAbstractTerm() )
    
     /**
@@ -1073,24 +1071,24 @@ object XMLParser {
   trait XMLAbstractTermParser extends XMLNodeParser {
     /**
      * If the Node provided by XMLNodeParser is one of the elements defined by the
-     * &amp;abstractterm; entity, a HOLTerm object corresponding to the Node is returned.
+     * &amp;abstractterm; entity, a HOLExpression object corresponding to the Node is returned.
      *
-     * @return An HOLTerm object corresponding to the Node provided by getInput().
+     * @return An HOLExpression object corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not one of the elements
      *                          defined by the &amp;abstractterm; entity.
      */
-    def getAbstractTerm() : HOLTerm = getAbstractTerm( getInput() )
+    def getAbstractTerm() : HOLExpression = getAbstractTerm( getInput() )
 
     /**
      * If n is one of the elements defined by the
-     * &amp;abstractterm; entity, a HOLTerm object corresponding to the Node is returned.
+     * &amp;abstractterm; entity, a HOLExpression object corresponding to the Node is returned.
      *
      * @param n A Node corresponding to an element defined by the &amp;abstractterm; entity.
-     * @return An HOLTerm object corresponding to the Node provided by getInput().
+     * @return An HOLExpression object corresponding to the Node provided by getInput().
      * @throws ParsingException If n is not one of the elements
      *                          defined by the &amp;abstractterm; entity.
      */
-    def getAbstractTerm(n: Node) : HOLTerm =
+    def getAbstractTerm(n: Node) : HOLExpression =
       try {
         (new NodeReader(n) with XMLTermParser).getTerm()
       }
@@ -1108,13 +1106,13 @@ object XMLParser {
   trait XMLTermParser extends XMLNodeParser {
     /**
      * If the Node provided by XMLNodeParser is one of the elements defined by the
-     * &amp;term; entity, a HOLTerm object corresponding to the Node is returned.
+     * &amp;term; entity, a HOLExpression object corresponding to the Node is returned.
      *
-     * @return A HOLTerm object corresponding to the Node provided by getInput().
+     * @return A HOLExpression object corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not one of the elements
      *                          defined by the &amp;term; entity.
      */
-    def getTerm() : HOLTerm = getTerm(getInput())
+    def getTerm() : HOLExpression = getTerm(getInput())
 
     /**
      * If the Node provided by XMLNodeParser is a &lt;variable&gt; element,
@@ -1141,14 +1139,14 @@ object XMLParser {
 
     /**
      * If n is one of the elements defined by the
-     * &amp;term; entity, a HOLTerm object corresponding to the Node is returned.
+     * &amp;term; entity, a HOLExpression object corresponding to the Node is returned.
      *
      * @param n A Node corresponding to an element defined by the &amp;term; entity.
-     * @return A HOLTerm object corresponding to the Node provided by getInput().
+     * @return A HOLExpression object corresponding to the Node provided by getInput().
      * @throws ParsingException If n is not one of the elements
      *                          defined by the &amp;term; entity.
      */
-    def getTerm(n: Node) : HOLTerm =
+    def getTerm(n: Node) : HOLExpression =
       trim(n) match {
         case <variable/> => HOLVar(new VariableStringSymbol( n.attribute("symbol").get.first.text ), Ti() )
         case <constant/> => HOLConst(new ConstantStringSymbol( n.attribute("symbol").get.first.text ), Ti() )
@@ -1156,7 +1154,7 @@ object XMLParser {
                                                              XMLUtils.nodesToAbstractTerms(ns.toList))
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
-    private def createFunction( sym: String, args : List[HOLTerm] ) : HOLTerm =
+    private def createFunction( sym: String, args : List[HOLExpression] ) : HOLExpression =
       AppN( HOLConst(new ConstantStringSymbol(sym), FunctionType( Ti(), args.map( a => a.exptype ) ) ),
             args )
   }
@@ -1167,24 +1165,24 @@ object XMLParser {
   trait XMLSetTermParser extends XMLNodeParser {
     /**
      * If the Node provided by XMLNodeParser is one of the elements defined by the
-     * &amp;setterm; entity, a HOLTerm object corresponding to the Node is returned.
+     * &amp;setterm; entity, a HOLExpression object corresponding to the Node is returned.
      *
-     * @return A HOLTerm object corresponding to the Node provided by getInput().
+     * @return A HOLExpression object corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not one of the elements
      *                          defined by the &amp;setterm; entity.
      */
-    def getSetTerm() : HOLTerm = getSetTerm(getInput())
+    def getSetTerm() : HOLExpression = getSetTerm(getInput())
 
      /**
      * If n is one of the elements defined by the
-     * &amp;setterm; entity, a HOLTerm object corresponding to the Node is returned.
+     * &amp;setterm; entity, a HOLExpression object corresponding to the Node is returned.
      *
      * @param n A Node corresponding to an element defined by the &amp;setterm; entity.
-     * @return A HOLTerm object corresponding to the Node provided by getInput().
+     * @return A HOLExpression object corresponding to the Node provided by getInput().
      * @throws ParsingException If n is not one of the elements
      *                          defined by the &amp;setterm; entity.
      */ 
-    def getSetTerm(n: Node) : HOLTerm =
+    def getSetTerm(n: Node) : HOLExpression =
       trim(n) match {
         // FIXME: the arity of the second-order variable is not
         // provided here, so we assume for the moment that all second order

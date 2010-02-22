@@ -10,9 +10,8 @@ package at.logic.algorithms.fol
 import org.specs._
 
 import at.logic.language.fol._
-import at.logic.language.hol.propositions.{HOLVar, HOLConst, Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom}
-import at.logic.language.hol.quantifiers.{ExVar => HOLExVar, AllVar => HOLAllVar}
-import at.logic.language.hol.propositions.TypeSynonyms._
+import at.logic.language.hol.{HOLVar, HOLConst, Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom}
+import at.logic.language.hol.{ExVar => HOLExVar, AllVar => HOLAllVar}
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._

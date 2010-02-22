@@ -1,5 +1,5 @@
 /*
- * HOLTermLatexExporter.scala
+ * HOLExpressionLatexExporter.scala
  *
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
@@ -9,16 +9,14 @@ package at.logic.parsing.language.latex
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.quantifiers._
+import at.logic.language.hol._
 import at.logic.parsing.OutputExporter
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 
-trait HOLTermLatexExporter extends OutputExporter with HOLTermExporter {
+trait HOLExpressionLatexExporter extends OutputExporter with HOLTermExporter {
   // it is LambdaExpression and require because of the stupid design chose not to have a common element for HOL
-  def exportTerm(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLTerm]); t match {
+  def exportTerm(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]); t match {
     case Var(name, _) => getOutput.write(name.toString)
     case Neg(f) => {getOutput.write("("); getOutput.write("""\neg """); exportTerm(f); getOutput.write(")")}
     case And(f1,f2) => {getOutput.write("("); exportTerm(f1); getOutput.write(""" \wedge """); exportTerm(f2); getOutput.write(")")}
