@@ -10,13 +10,12 @@ package at.logic.algorithms.unification.hol
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.substitutions._
 import at.logic.algorithms.unification.UnificationAlgorithm
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 
 object rigidTerm
 {
-  def unapply(exp: HOLTerm) : Option[HOLTerm] = exp match
+  def unapply(exp: HOLExpression) : Option[HOLExpression] = exp match
   {
     case Function(sym: ConstantStringSymbol, args, returnType) => Some(exp)
     case AbsN(varList , lambdaExp) => lambdaExp match
@@ -31,20 +30,20 @@ object rigidTerm
 object HuetAlgorithm extends UnificationAlgorithm
 {
     def unify(term1: LambdaExpression, term2: LambdaExpression) = {
-      require(term1.isInstanceOf[HOLTerm] && term2.isInstanceOf[HOLTerm])
-      unifySetOfTuples(Tuple2(term1.asInstanceOf[HOLTerm],term2.asInstanceOf[HOLTerm])::Nil,Nil) match {
+      require(term1.isInstanceOf[HOLExpression] && term2.isInstanceOf[HOLExpression])
+      unifySetOfTuples(Tuple2(term1.asInstanceOf[HOLExpression],term2.asInstanceOf[HOLExpression])::Nil,Nil) match {
         case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[HOLVar],x._2))))
         case _ => None
       }
     }
     
-    def applySubToListOfPairs(l : List[Tuple2[HOLTerm, HOLTerm]], s : Substitution) : List[Tuple2[HOLTerm, HOLTerm]] =
+    def applySubToListOfPairs(l : List[Tuple2[HOLExpression, HOLExpression]], s : Substitution) : List[Tuple2[HOLExpression, HOLExpression]] =
     {
     //  l.foldLeft(Nil)((Tuple2(x,v))=> (Tuple2(s.applyFOL(x),s.applyFOL(v))))
       return l.map((a) => (s.applyHOL(a._1), s.applyHOL(a._2)))
     }
 
-    def unifySetOfTuples(s1: List[Tuple2[HOLTerm, HOLTerm]], s2 : List[Tuple2[HOLTerm,HOLTerm]]) : Option[(List[Tuple2[HOLTerm,HOLTerm]], List[Tuple2[HOLTerm,HOLTerm]])] = (s1,s2) match
+    def unifySetOfTuples(s1: List[Tuple2[HOLExpression, HOLExpression]], s2 : List[Tuple2[HOLExpression,HOLExpression]]) : Option[(List[Tuple2[HOLExpression,HOLExpression]], List[Tuple2[HOLExpression,HOLExpression]])] = (s1,s2) match
     {
         //rule (1)
         case (((a1,a2)::s), s2) if a1 == a2 => unifySetOfTuples(s, s2)
@@ -54,7 +53,7 @@ object HuetAlgorithm extends UnificationAlgorithm
           if sym1 == sym2 && varList1.size == varList2.size && returnType1 == returnType2 =>
           {
             val l = args1.map(x => AbsN(varList1,x)).zip(args2.map(x => AbsN(varList2,x))):::s
-            unifySetOfTuples(l.asInstanceOf[List[Tuple2[HOLTerm, HOLTerm]]],s2.asInstanceOf[List[Tuple2[HOLTerm, HOLTerm]]])
+            unifySetOfTuples(l.asInstanceOf[List[Tuple2[HOLExpression, HOLExpression]]],s2.asInstanceOf[List[Tuple2[HOLExpression, HOLExpression]]])
           }
 
         //rule (3)
@@ -72,7 +71,7 @@ object HuetAlgorithm extends UnificationAlgorithm
             val newVarList = args1.map(x => freshVar(x.exptype, args1.asInstanceOf[Set[Var]], args1.asInstanceOf[LambdaExpression]))
             val generalFlexibleTermList = args1.map(x => freshVar(x.exptype, args1.asInstanceOf[Set[Var]], args1.asInstanceOf[LambdaExpression]))
             val newArgsList = generalFlexibleTermList.map(x => AppN(x,newVarList))
-            val t: HOLTerm = AbsN(newVarList, Function(sym , args1.asInstanceOf[List[HOLTerm]], returnType)).asInstanceOf[HOLTerm]
+            val t: HOLExpression = AbsN(newVarList, Function(sym , args1.asInstanceOf[List[HOLExpression]], returnType)).asInstanceOf[HOLExpression]
             Some(((funcVar,t)::s1 ,s2))
           }
 
@@ -83,7 +82,7 @@ object HuetAlgorithm extends UnificationAlgorithm
             val newVarList = args1.map(x => freshVar(x.exptype, args1.asInstanceOf[Set[Var]], args1.asInstanceOf[LambdaExpression]))
             val generalFlexibleTermList = args1.map(x => freshVar(x.exptype, args1.asInstanceOf[Set[Var]], args1.asInstanceOf[LambdaExpression]))
             val newArgsList = generalFlexibleTermList.map(x => AppN(x,newVarList))
-            val t: HOLTerm = AbsN(newVarList, AppN(funcVar2, newArgsList)).asInstanceOf[HOLTerm]
+            val t: HOLExpression = AbsN(newVarList, AppN(funcVar2, newArgsList)).asInstanceOf[HOLExpression]
             Some(((funcVar,t)::s1 ,s2))
           }
 
@@ -100,19 +99,19 @@ object HuetAlgorithm extends UnificationAlgorithm
       
 
 
-        case ( (HOLAbs(v1: HOLVar, exp1: HOLTerm), subArg @ HOLAbs(v2: HOLVar, exp2: HOLTerm))::s  ,s2) if v1 == v2 && exp1.exptype == exp2.exptype => exp1 match
+        case ( (HOLAbs(v1: HOLVar, exp1: HOLExpression), subArg @ HOLAbs(v2: HOLVar, exp2: HOLExpression))::s  ,s2) if v1 == v2 && exp1.exptype == exp2.exptype => exp1 match
           {
             //rule (3)
-            case HOLApp(f: HOLVar, arg: HOLTerm) /*if f not in FV(exp2)*/ =>
+            case HOLApp(f: HOLVar, arg: HOLExpression) /*if f not in FV(exp2)*/ =>
               {
                 val sigma = Substitution(f,subArg)
                 unifySetOfTuples((f,subArg)::applySubToListOfPairs(s,sigma), (f,subArg)::s2)
               }
 
             //rule (2')
-            case Function(sym1 : ConstantStringSymbol, args1: List[HOLTerm], returnType1) => exp2 match
+            case Function(sym1 : ConstantStringSymbol, args1: List[HOLExpression], returnType1) => exp2 match
               {
-                case Function(sym2 : ConstantStringSymbol, args2: List[HOLTerm], returnType2) if sym1 == sym2 && args1.size == args2.size && returnType1 == returnType2 =>
+                case Function(sym2 : ConstantStringSymbol, args2: List[HOLExpression], returnType2) if sym1 == sym2 && args1.size == args2.size && returnType1 == returnType2 =>
                   {
                     val l = args1.map(x => HOLAbs(v1,x)).zip(args2.map(x => HOLAbs(v1,x))):::s
                     unifySetOfTuples(l,s2)
@@ -130,18 +129,18 @@ object HuetAlgorithm extends UnificationAlgorithm
           }
 
         //rule (4'a)
-        case left @ AbsN(varList1, a @ Function(sym : ConstantStringSymbol, args1: List[HOLTerm], returnType1)) => left match
+        case left @ AbsN(varList1, a @ Function(sym : ConstantStringSymbol, args1: List[HOLExpression], returnType1)) => left match
           {
-            case AbsN(varList2, AppN(f : HOLVar, args2: List[HOLTerm])) if !varList2.contains(f) && varList1.size==varList2.size =>
+            case AbsN(varList2, AppN(f : HOLVar, args2: List[HOLExpression])) if !varList2.contains(f) && varList1.size==varList2.size =>
               {
                 val newVarList = args2.map(x => freshVar(x.exptype, left, left))
                 val generalFlexibleTermList = args1.map(x => freshVar(x.exptype, left, left))
                 val newArgsList = generalFlexibleTermList.map(x => AppN(x,newVarList))
-                val t: HOLTerm = AbsN(newVarList, Function(sym , args1, returnType1)).asInstanceOf[HOLTerm]
+                val t: HOLExpression = AbsN(newVarList, Function(sym , args1, returnType1)).asInstanceOf[HOLExpression]
                 Some(((f,t)::s1 ,s2))
               }
           }
-        case Function(sym1 : ConstantStringSymbol, args1: List[HOLTerm], returnType1) => exp2 match
+        case Function(sym1 : ConstantStringSymbol, args1: List[HOLExpression], returnType1) => exp2 match
           {
             case AbsN(varList, AppN(f : HOLVar, args)) if !varList.contains(f) =>
               {
@@ -157,7 +156,7 @@ object HuetAlgorithm extends UnificationAlgorithm
         }
 
       //rule (2')
-        case ( (HOLAbs(v1: HOLVar, exp1: HOLTerm), subArg @ HOLAbs(v2: HOLVar, exp2: HOLTerm))::s  ,s2) if v1 == v2 && exp1.exptype == exp2.exptype => exp1 match
+        case ( (HOLAbs(v1: HOLVar, exp1: HOLExpression), subArg @ HOLAbs(v2: HOLVar, exp2: HOLExpression))::s  ,s2) if v1 == v2 && exp1.exptype == exp2.exptype => exp1 match
         case (((Function(f1,args1), Function(f2, args2)):: (s)), s2)  if args1.length == args2.length && f1==f2  =>
         {
             return unifySetOfTuples(args1.zip(args2) ::: s, s2)
