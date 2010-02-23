@@ -8,7 +8,7 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.language.hol.substitutions.Substitution
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.algorithms.lk.{applySubstitution => LKapplySubstitution}
 
 object applySubstitution {
@@ -22,7 +22,7 @@ def apply( proof: LKProof, subst: Substitution ) : (LKProof, Map[LabelledFormula
     case Axiom(so : LabelledSequentOccurrence) => {
       val ant_occs  = so.l_antecedent.toList
       val succ_occs = so.l_succedent.toList
-      val a = Axiom(Sequent(ant_occs.map( fo => subst(fo.formula) ), succ_occs.map( fo => subst(fo.formula) ) ),
+      val a = Axiom(Sequent(ant_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ), succ_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ) ),
         Pair( ant_occs.map( fo => fo.label.map( t => subst.applyHOL(t) ) ), 
               succ_occs.map( fo => fo.label.map( t => subst.applyHOL(t) ) ) ) )
       val map = new HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
@@ -32,37 +32,37 @@ def apply( proof: LKProof, subst: Substitution ) : (LKProof, Map[LabelledFormula
     }
     case WeakeningLeftRule(p, s, m) => {
       val new_parent = apply( p, subst )
-      val new_proof = WeakeningLeftRule( new_parent._1, subst(m.formula), m.label.map( e => subst.applyHOL(e) ) )
+      val new_proof = WeakeningLeftRule( new_parent._1, subst(m.formula).asInstanceOf[HOLFormula], m.label.map( e => subst.applyHOL(e) ) )
       val es = toLabelledSequentOccurrence( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.first ) )
     }
     case WeakeningRightRule(p, s, m) => {
       val new_parent = apply( p, subst )
-      val new_proof = WeakeningRightRule( new_parent._1, subst(m.formula), m.label.map( e => subst.applyHOL(e) ) )
+      val new_proof = WeakeningRightRule( new_parent._1, subst(m.formula).asInstanceOf[HOLFormula], m.label.map( e => subst.applyHOL(e) ) )
       val es = toLabelledSequentOccurrence( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.first ) )
     }
     case ForallSkLeftRule(p, s, a, m, t) => {
       val new_parent = apply( p, subst )
-      val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2(a), subst(m.formula), subst.applyHOL(t), a.label.contains(t) )
+      val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.applyHOL(t), a.label.contains(t) )
       val es = toLabelledSequentOccurrence( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
     }
     case ExistsSkRightRule(p, s, a, m, t) => {
       val new_parent = apply( p, subst )
-      val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2(a), subst(m.formula), subst.applyHOL(t), a.label.contains(t) )
+      val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.applyHOL(t), a.label.contains(t) )
       val es = toLabelledSequentOccurrence( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
     }
     case ForallSkRightRule(p, s, a, m, t) => {
       val new_parent = apply( p, subst )
-      val new_proof = ForallSkRightRule( new_parent._1, new_parent._2(a), subst(m.formula), subst.applyHOL( t ) )
+      val new_proof = ForallSkRightRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.applyHOL( t ) )
       val es = toLabelledSequentOccurrence( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
     }
     case ExistsSkLeftRule(p, s, a, m, t) => {
       val new_parent = apply( p, subst )
-      val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2(a), subst(m.formula), subst.applyHOL( t ) )
+      val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.applyHOL( t ) )
       val es = toLabelledSequentOccurrence( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
     }
