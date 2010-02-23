@@ -9,7 +9,7 @@ package at.logic.transformations
 
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.base._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.calculi.occurrences._
 
 /*object ReductiveCutElim {

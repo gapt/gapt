@@ -10,7 +10,7 @@ import org.specs.matcher.Matcher
 
 import scala.xml._
 
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.Sequent

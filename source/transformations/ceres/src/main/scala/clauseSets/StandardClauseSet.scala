@@ -12,7 +12,7 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable._
-import at.logic.language.hol.propositions.Formula
+import at.logic.language.hol.HOLFormula
 
 object StandardClauseSet {
   def normalize(struct:Struct):Struct = struct match {
@@ -59,8 +59,8 @@ object StandardClauseSet {
     def isDual(s:Struct):Boolean = s match {case x: Dual => true; case _ => false}
     val literals = getLiterals(struct)
     val (negative,positive) = literals.partition(x => isDual(x))
-    val negativeFO: List[Formula] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].formula) // extracting the formula occurrences from the negative literal structs
-    val positiveFO: List[Formula] = positive.map(x => x.asInstanceOf[A].formula)     // extracting the formula occurrences from the positive atomic struct
+    val negativeFO: List[HOLFormula] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].formula) // extracting the formula occurrences from the negative literal structs
+    val positiveFO: List[HOLFormula] = positive.map(x => x.asInstanceOf[A].formula)     // extracting the formula occurrences from the positive atomic struct
     def convertListToSet[T](list:List[T]):Set[T] = list match {
       case x::rest => convertListToSet(rest)+x
       case Nil => new HashSet[T]
