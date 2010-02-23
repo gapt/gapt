@@ -11,7 +11,7 @@ import org.specs._
 import org.specs.runner._
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.algorithms.matching.fol.UnificationBasedFOLMatchingAlgorithm
+
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
 private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
