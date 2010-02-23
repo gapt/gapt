@@ -14,15 +14,13 @@ import at.logic.calculi.lk.propositionalRules.{ImpLeftRule, AndRightRule, OrRigh
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base.{LKProof,Sequent,SequentOccurrence}
-import at.logic.language.hol.propositions.TypeSynonyms._
-import at.logic.language.hol.propositions._
-import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.quantifiers._
+import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
 import at.logic.language.hol.substitutions._
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.lk.getCutAncestors
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
 object LKtoLKskc {
   def logInfo( msg: String ) = (new Logger{}).info( msg )
@@ -317,13 +315,13 @@ object LKtoLKskc {
   }
 
   def handleEquationRule(
-    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula) => LKProof,
+    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => LKProof,
     p1: LKProof,
     p2: LKProof,
     s: SequentOccurrence,
     a1: FormulaOccurrence,
     a2: FormulaOccurrence,
-    m: Formula,
+    m: HOLFormula,
     old_proof: LKProof,
     subst_terms: Map[FormulaOccurrence, Label],
     cut_occs: Set[FormulaOccurrence] ) = {
@@ -346,8 +344,8 @@ object LKtoLKskc {
 
   def copyWeakQuantRule( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label],
                          parent: LKProof, aux: FormulaOccurrence, main: FormulaOccurrence,
-                         term: HOLTerm, end_seq: SequentOccurrence, cut_occs: Set[FormulaOccurrence],
-                         constructor: (LKProof, FormulaOccurrence, Formula, HOLTerm) => LKProof ) = {
+                         term: HOLExpression, end_seq: SequentOccurrence, cut_occs: Set[FormulaOccurrence],
+                         constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLExpression) => LKProof ) = {
     val new_label_map = copyMapFromAncestor( end_seq.antecedent ++ end_seq.succedent, subst_terms )
     val r = rec( parent, new_label_map, cut_occs )
     val sk_proof = constructor( r._1, r._2(aux), main.formula, term )
@@ -357,8 +355,8 @@ object LKtoLKskc {
 
   def transformWeakQuantRule( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label],
                               parent: LKProof, aux: FormulaOccurrence, main: FormulaOccurrence,
-                              term: HOLTerm, context: Set[FormulaOccurrence], cut_occs: Set[FormulaOccurrence],
-                              constructor: (LKProof, LabelledFormulaOccurrence, Formula, HOLTerm, Boolean) => LKProof )
+                              term: HOLExpression, context: Set[FormulaOccurrence], cut_occs: Set[FormulaOccurrence],
+                              constructor: (LKProof, LabelledFormulaOccurrence, HOLFormula, HOLExpression, Boolean) => LKProof )
   = {
       val new_label_map = copyMapFromAncestor( context, subst_terms ) + Pair(aux, subst_terms(main) + term)
       val r = rec( parent, new_label_map, cut_occs )
