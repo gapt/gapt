@@ -7,7 +7,7 @@ package at.logic.provers.atp
 import at.logic.calculi.resolution.base._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.algorithms.subsumption.{StillmanSubsumptionAlgorithm, SubsumptionAlgorithm} // to enable configuration
 import refinements._

@@ -60,7 +60,7 @@ package simplification {
       if (newAnt.size == s.antecedent.size) s else Sequent(newAnt, s.succedent)
     }
     // no need to check for groundness as the matching algorithm does not return a substitution which can affect the instance
-    /*// should be moved into HOLTerm when we have one
+    /*// should be moved into HOLExpression when we have one
     private def isGround(exp: LambdaExpression): Boolean = exp match {
       case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => false
       case Var(_,_) => true
