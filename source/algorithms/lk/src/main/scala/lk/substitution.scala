@@ -10,7 +10,7 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.language.hol.substitutions.Substitution
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 
 object applySubstitution {
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
@@ -18,9 +18,9 @@ object applySubstitution {
                        subst: Substitution,
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       constructor: (LKProof, Formula) => LKProof with PrincipalFormulas,
+                       constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
-    val new_proof = constructor( new_parent._1, subst(m.formula) )
+     val new_proof = constructor( new_parent._1, subst(m.formula).asInstanceOf[HOLFormula] )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.first ) )  
   }
   def handleContraction( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
@@ -46,7 +46,7 @@ object applySubstitution {
   }
 
   def handleEquationRule(
-    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula) => LKProof,
+    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => LKProof,
     p1: LKProof,
     p2: LKProof,
     old_proof: LKProof,
@@ -55,7 +55,7 @@ object applySubstitution {
     s: SequentOccurrence,
     a1: FormulaOccurrence,
     a2: FormulaOccurrence,
-    m: Formula ) = {
+    m: HOLFormula ) = {
       val new_proof = constructor( new_p1._1, new_p2._1, a1, a2, m )
       ( new_proof, computeMap( p1.root.antecedent ++ p1.root.succedent ++ p2.root.antecedent ++ p2.root.succedent,
         old_proof, new_proof, new_p1._2 ++ new_p2._2 ) )
@@ -66,7 +66,7 @@ object applySubstitution {
     case Axiom(so) => {
       val ant_occs = so.antecedent.toList
       val succ_occs = so.succedent.toList
-      val a = Axiom(Sequent(ant_occs.map( fo => subst(fo.formula) ), succ_occs.map( fo => subst(fo.formula) ) ) )
+      val a = Axiom(Sequent(ant_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ), succ_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ) ) )
       val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
       a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
       a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
@@ -88,26 +88,26 @@ object applySubstitution {
     case AndLeft1Rule(p, s, a, m) => {
       val f = m.formula match { case And(_, w) => w }
       val new_parent = new_parents.first
-      val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), subst( f ) )
+      val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), subst( f ).asInstanceOf[HOLFormula] )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case AndLeft2Rule(p, s, a, m) => {
       val f = m.formula match { case And(w, _) => w }
       val new_parent = new_parents.first
-      val new_proof = AndLeft2Rule( new_parent._1, subst( f ), new_parent._2( a ) )
+      val new_proof = AndLeft2Rule( new_parent._1, subst( f ).asInstanceOf[HOLFormula], new_parent._2( a ) )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case OrLeftRule(p1, p2, s, a1, a2, m) => handleBinaryProp( new_parents.first, new_parents.last, a1, a2, p1, p2, proof, OrLeftRule.apply )
     case OrRight1Rule(p, s, a, m) => {
       val f = m.formula match { case Or(_, w) => w }
       val new_parent = new_parents.first
-      val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), subst( f ) )
+      val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), subst( f ).asInstanceOf[HOLFormula] )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case OrRight2Rule(p, s, a, m) => {
       val f = m.formula match { case Or(w, _) => w }
       val new_parent = new_parents.first
-      val new_proof = OrRight2Rule( new_parent._1, subst( f ), new_parent._2( a ) )
+      val new_proof = OrRight2Rule( new_parent._1, subst( f ).asInstanceOf[HOLFormula], new_parent._2( a ) )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     // TODO: use handleBinaryProp here!?
@@ -137,50 +137,50 @@ object applySubstitution {
     }
     case DefinitionRightRule( p, s, a, m ) => {
       val new_parent = new_parents.first
-      val new_proof = DefinitionRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ) )
+      val new_proof = DefinitionRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula] )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case DefinitionLeftRule( p, s, a, m ) => {
       val new_parent = new_parents.first
-      val new_proof = DefinitionLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ) )
+      val new_proof = DefinitionLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula] )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case EquationLeft1Rule( p1, p2, s, a1, a2, m ) =>
       handleEquationRule( EquationLeft1Rule.apply, p1, p2, proof, new_parents.first, new_parents.last, s, 
         new_parents.first._2( a1 ), new_parents.last._2( a2 ),
-        subst( m.formula ) )
+        subst( m.formula ).asInstanceOf[HOLFormula] )
     case EquationLeft2Rule( p1, p2, s, a1, a2, m ) =>
       handleEquationRule( EquationLeft2Rule.apply, p1, p2, proof, new_parents.first, new_parents.last, s, 
         new_parents.first._2( a1 ), new_parents.last._2( a2 ),
-        subst( m.formula ) )
+        subst( m.formula ).asInstanceOf[HOLFormula] )
     case EquationRight1Rule( p1, p2, s, a1, a2, m ) =>
       handleEquationRule( EquationRight1Rule.apply, p1, p2, proof, new_parents.first, new_parents.last, s, 
         new_parents.first._2( a1 ), new_parents.last._2( a2 ),
-        subst( m.formula ) )
+        subst( m.formula ).asInstanceOf[HOLFormula] )
     case EquationRight2Rule( p1, p2, s, a1, a2, m ) =>
       handleEquationRule( EquationRight2Rule.apply, p1, p2, proof, new_parents.first, new_parents.last, s, 
         new_parents.first._2( a1 ), new_parents.last._2( a2 ),
-        subst( m.formula ) )
+        subst( m.formula ).asInstanceOf[HOLFormula] )
     case ForallLeftRule( p, s, a, m, t ) => {
       val new_parent = new_parents.first
-      val new_proof = ForallLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ), subst.applyHOL( t ) )
+      val new_proof = ForallLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst.applyHOL( t ) )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
   }
     case ExistsRightRule( p, s, a, m, t ) => {
       val new_parent = new_parents.first
-      val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ), subst.applyHOL( t ) )
+      val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst.applyHOL( t ) )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case ExistsLeftRule( p, s, a, m, v ) => {
       assert( !subst.map.contains( v ) )
       val new_parent = new_parents.first
-      val new_proof = ExistsLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ), v )
+      val new_proof = ExistsLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], v )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case ForallRightRule( p, s, a, m, v ) => {
       assert( !subst.map.contains( v ) )
       val new_parent = new_parents.first
-      val new_proof = ForallRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ), v )
+      val new_proof = ForallRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], v )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
   }
