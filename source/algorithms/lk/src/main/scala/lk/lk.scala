@@ -11,7 +11,7 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
 import at.logic.language.hol.substitutions.Substitution
 
@@ -189,7 +189,7 @@ object regularize {
                        old_parent: LKProof,
                        old_proof: LKProof,
                        vars: Set[HOLVar],
-                       constructor: (LKProof, Formula) => LKProof with PrincipalFormulas,
+                       constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.first ) )  
@@ -206,8 +206,8 @@ object regularize {
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
 
-  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m :Formula, vars: Set[HOLVar],
-    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula) => BinaryLKProof with AuxiliaryFormulas ) = {
+  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m :HOLFormula, vars: Set[HOLVar],
+    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => BinaryLKProof with AuxiliaryFormulas ) = {
        // first left, then right
       val rec1 = rec( p1, vars )
       val rec2 = rec( p2, vars ++ rec1._2 )
