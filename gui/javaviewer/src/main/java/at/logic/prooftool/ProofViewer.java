@@ -242,16 +242,26 @@ public class ProofViewer<V> {
         slice = new ListSet<V>();
         Rectangle2D.Double rect = null;
 
+/*        int xsize = 60;
+        int ysize = 20;
+        int ystep = 50;
+        int xstep = 100;
+        */
+        int xsize = 260;
+        int ysize = 20;
+        int ystep = 70;
+        int xstep = 400;
+
         for (V v : leaves) {
             cell = model.getVertexCell(v);
             amap = cell.getAttributes();
-            rect = new Rectangle2D.Double(leafx, 50 + 50 * (max_depth - depthOf(v, slices)), 60, 20);
+            rect = new Rectangle2D.Double(leafx, 50 + ystep * (max_depth - depthOf(v, slices)), xsize, ysize);
             GraphConstants.setBounds(amap, rect);
             GraphConstants.setGradientColor(amap, Color.yellow);
             GraphConstants.setOpaque(amap, true);
             m.put(cell, amap);
             //System.err.println("leaf "+ cell+" at "+rect);
-            leafx += 100;
+            leafx += xstep;
 
             slice.addAll(getChildren(v));
         }
@@ -268,7 +278,7 @@ public class ProofViewer<V> {
 
                 cell = model.getVertexCell(v);
                 amap = cell.getAttributes();
-                rect = new Rectangle2D.Double(getParentMean(v, m), 50 + 50 * (max_depth - depthOf(v, slices)), 60, 20);
+                rect = new Rectangle2D.Double(getParentMean(v, m), 50 + ystep * (max_depth - depthOf(v, slices)), xsize, ysize);
                 GraphConstants.setBounds(amap, rect);
                 GraphConstants.setGradientColor(amap, Color.yellow);
                 GraphConstants.setOpaque(amap, true);
