@@ -14,8 +14,11 @@ import at.logic.parsing.readers.XMLReaders._
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import java.io.{PrintWriter, FileReader, FileInputStream, InputStreamReader}
+import scala.collection.immutable.HashSet
 
 class GraphVisualisationTest extends SpecificationWithJUnit {
+  val showWindow = false
+  
     "Passing of scala graph to JavaViewer works" in {
         val g1: EmptyGraph[String] = ( )
         val g2: VertexGraph[String] = ("a", g1)
@@ -36,10 +39,27 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
 
     //skip("this takes a lot of time")
     "Passing of prime proof to JavaViewer works" in {
-        val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(
-                        new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofs()
+      /*
+      class A {
+        def rule = null;
+        def name = "abc";
+        val vertex = new SequentOccurrence(new HashSet, new HashSet)
+        def graph = null;
+      }
+      def p = new A with LKProof
+      def q : Graph[SequentOccurrence] = p
+      var pv = new ProofViewer[SequentOccurrence](p)      
+        */
 
-        val proof = proofs.first
+
+      /*  */
+        val reader = (new XMLReader(new InputStreamReader(new GZIPInputStream(
+                        new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser)
+
+        val proofs = reader.getProofDatabase.proofs
+
+        //TODO: the scala infer the inheritance of LKProof from Graph - hotfix: giving tpe by hand
+        val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first
         /*
         // --- output graph to dot format, works but commented out, because it creates additional files in the project
         val writer = new PrintWriter(new java.io.File("primeproof.dot"))
@@ -52,8 +72,10 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
 
         var pv = new ProofViewer[SequentOccurrence](proof)
         pv.doTreePlacement()
-        //pv.run()
-        //Thread.sleep(150000)
+        if (showWindow) {
+          pv.run()
+          Thread.sleep(150000)
+        }
         ()
     }
     /*

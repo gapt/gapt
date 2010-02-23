@@ -17,7 +17,7 @@ import org.jgrapht.graph._
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 
 import at.logic.utils.ds.graphs._
@@ -31,16 +31,20 @@ import java.util.zip.GZIPInputStream
 import java.io.File.separator
 
 object VisualisationUtils {
-
+  /* */
+    //TODO: A Proof is no Graph anymore -> will fix
     def main(args: Array[String]) {
-      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(
-                        new FileInputStream(args(0))))) with XMLProofDatabaseParser).getProofs()
-        val proof = proofs.first
+
+      val reader = (new XMLReader(new InputStreamReader(new GZIPInputStream(
+                        new FileInputStream(args(0))))) with XMLProofDatabaseParser)
+      val proofs = reader.getProofDatabase.proofs
+      //TODO: the scala infer the inheritance of LKProof from Graph - hotfix: giving tpe by hand
+        val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first
         var pv = new ProofViewer[SequentOccurrence](proof)
         //pv.doTreePlacement()
         pv.run()
     }
-
+    /* */
 
     //generates a binary tree of given depth and name of parent label. subsequnt nodes will get
     // the character l or r prepended depending wether they went _l_eft ot _r_ight
