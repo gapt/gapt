@@ -3,7 +3,7 @@ package at.logic.algorithms.lk
 import scala.collection.immutable.Set
 import at.logic.algorithms.subsumption.VariantsDeletion
 import at.logic.calculi.lk.base.Sequent
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
 import scala.collection.mutable.Map
@@ -76,7 +76,7 @@ package simplification {
           var id = 0
           val map = Map[Var,Var]()
           def nextId = {id = id + 1; id}
-          (Sequent(normalize(el.antecedent,map,nextId),normalize(el.succedent,map,nextId)))::ls
+          (Sequent(normalize(el.antecedent,map,nextId).asInstanceOf[List[HOLFormula]],normalize(el.succedent,map,nextId).asInstanceOf[List[HOLFormula]]))::ls
         })).removeDuplicates
     }
     private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = 
