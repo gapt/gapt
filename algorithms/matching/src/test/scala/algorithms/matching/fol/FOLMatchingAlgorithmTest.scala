@@ -17,11 +17,7 @@ import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.hol
-import at.logic.language.hol.propositions.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp}
-import at.logic.language.hol.propositions.{HOL, Formula, HOLVar, HOLConst, HOLApp, HOLAbs, HOLConstFormula, HOLFactory, HOLAppFormula}
-import at.logic.language.hol.quantifiers.{AllQ => HOLAllQ, ExQ => HOLExQ}
-import at.logic.language.hol.propositions.TypeSynonyms._
+//import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
@@ -151,8 +147,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val x3 = new MyParser("x3").getTerm
      val a = new MyParser("a").getTerm
      val c = new MyParser("c").getTerm
-     val P1:Formula  = AllVar(x1,Atom(new ConstantStringSymbol("P"), x1::term1.asInstanceOf[FOLTerm]::Nil))
-     val P2:Formula  = AllVar(x1,Atom(new ConstantStringSymbol("P"), c.asInstanceOf[FOLConst]::term2.asInstanceOf[FOLTerm]::Nil))
+     val P1:FOLFormula  = AllVar(x1,Atom(new ConstantStringSymbol("P"), x1::term1.asInstanceOf[FOLTerm]::Nil))
+     val P2:FOLFormula  = AllVar(x1,Atom(new ConstantStringSymbol("P"), c.asInstanceOf[FOLConst]::term2.asInstanceOf[FOLTerm]::Nil))
  //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
 //     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
@@ -174,8 +170,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val x3 = new MyParser("x3").getTerm
      val a = new MyParser("a").getTerm
      val c = new MyParser("c").getTerm
-     val P1:Formula  = And(Atom(new ConstantStringSymbol("P"), x1::term1.asInstanceOf[FOLTerm]::Nil), Atom(new ConstantStringSymbol("Q"), x1::Nil))
-     val P2:Formula  = And(Atom(new ConstantStringSymbol("P"), c.asInstanceOf[FOLConst]::term2.asInstanceOf[FOLTerm]::Nil), Atom(new ConstantStringSymbol("Q"), c.asInstanceOf[FOLConst]::Nil))
+     val P1:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), x1::term1.asInstanceOf[FOLTerm]::Nil), Atom(new ConstantStringSymbol("Q"), x1::Nil))
+     val P2:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), c.asInstanceOf[FOLConst]::term2.asInstanceOf[FOLTerm]::Nil), Atom(new ConstantStringSymbol("Q"), c.asInstanceOf[FOLConst]::Nil))
  //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
 //     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
@@ -200,8 +196,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val x3 = new MyParser("x3").getTerm.asInstanceOf[FOLVar]
      val a = new MyParser("a").getTerm.asInstanceOf[FOLConst]
      val c = new MyParser("c").getTerm.asInstanceOf[FOLConst]
-     val P1:Formula  = And(Atom(new ConstantStringSymbol("P"), term1::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
-     val P2:Formula  = And(Atom(new ConstantStringSymbol("P"), term2::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
+     val P1:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), term1::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
+     val P2:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), term2::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
  //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
 //     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
@@ -225,8 +221,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val x3 = new MyParser("x3").getTerm.asInstanceOf[FOLVar]
      val a = new MyParser("a").getTerm.asInstanceOf[FOLConst]
      val c = new MyParser("c").getTerm.asInstanceOf[FOLConst]
-     val P1:Formula  = And(Atom(new ConstantStringSymbol("P"), term1::Nil), Atom(new ConstantStringSymbol("Q"), x2::Nil))
-     val P2:Formula  = And(Atom(new ConstantStringSymbol("P"), term2::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
+     val P1:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), term1::Nil), Atom(new ConstantStringSymbol("Q"), x2::Nil))
+     val P2:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), term2::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
  //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
 //     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()

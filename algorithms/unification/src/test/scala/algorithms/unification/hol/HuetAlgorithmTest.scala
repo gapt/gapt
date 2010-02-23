@@ -13,16 +13,20 @@ import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.algorithms.unification.hol._
 import at.logic.language.hol._
-import at.logic.language.hol.propositions._
+
 import at.logic.language.lambda.symbols._
 import logicSymbols._
 import at.logic.language.lambda.types._
 
-import propositions.Definitions._
-import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import logicSymbols.ImplicitConverters._
 import at.logic.language.lambda.types.Definitions._
+import at.logic.language.hol.Definitions
+
+import at.logic.language.lambda.symbols.ImplicitConverters._
+import at.logic.language.hol.Definitions
+
+
 
 private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
 
@@ -30,17 +34,17 @@ class HuetAlgorithmTest extends SpecificationWithJUnit {
     "UnificationBasedFOLMatchingAlgorithm" should {
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
     val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
-    val v1 = Var("x", i, hol)
+    val v1 = HOLVar("x", i)
     val a1 = App(c1,v1)
-    val c2 = Var("a", i->(i->o), hol)
-    val v21 = Var("x", i, hol)
-    val v22 = Var("y", i, hol)
+    val c2 = HOLVar("a", i->(i->o))
+    val v21 = HOLVar("x", i)
+    val v22 = HOLVar("y", i)
     val a21 = App(c2,v21)
     val a22 = App(a21,v22)
 
     val a = HOLConst(new ConstantStringSymbol("a"), i)
     val f = HOLConst(new ConstantStringSymbol("f"), i->i)
-    val F = Var("F", i->i, hol)  
+    val F = HOLVar("F", i->i)
     
     val fa = App(f,a)
     val Fa = App(F,a)
