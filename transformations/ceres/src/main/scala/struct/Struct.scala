@@ -12,7 +12,7 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkExtractors._
-import at.logic.language.hol.propositions.Formula
+import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lksk.lkskExtractors._
 import at.logic.algorithms.lk.getCutAncestors
 
@@ -24,7 +24,7 @@ package struct {
   case class Times(left: Struct, right: Struct) extends Struct
   case class Plus(left: Struct, right: Struct) extends Struct
   case class Dual(sub: Struct) extends Struct
-  case class A(formula: Formula) extends Struct // Atomic Struct
+  case class A(formula: HOLFormula) extends Struct // Atomic Struct
   case class EmptyTimesJunction() extends Struct
   case class EmptyPlusJunction() extends Struct
 
