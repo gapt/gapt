@@ -12,7 +12,7 @@ import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.lambda.substitutions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.resolution.base._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 
 trait FOLResolutionCommandsParser extends CommandsParser {
   var unifAlg: UnificationAlgorithm = at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
