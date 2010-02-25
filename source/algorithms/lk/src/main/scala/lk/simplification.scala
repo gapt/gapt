@@ -56,7 +56,8 @@ package simplification {
       seqs.map(x => if (!x.antecedent.isEmpty) (matchPos(posUnit, x)) else x)
     }
     private def matchPos(posUnit: List[Sequent], s: Sequent): Sequent = {
-      val newAnt = s.antecedent.filter(x => posUnit.forall(y => alg.matchTerm(y.succedent.head, x) == None))
+      val restDomain = (s.antecedent.flatMap(x => x.getFreeAndBoundVariables._1) ++ s.succedent.flatMap(x => x.getFreeAndBoundVariables._1)).toList
+      val newAnt = s.antecedent.filter(x => posUnit.forall(y => alg.matchTerm(y.succedent.head, x, restDomain) == None))
       if (newAnt.size == s.antecedent.size) s else Sequent(newAnt, s.succedent)
     }
     // no need to check for groundness as the matching algorithm does not return a substitution which can affect the instance

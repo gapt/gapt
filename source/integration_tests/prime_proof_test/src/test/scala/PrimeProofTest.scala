@@ -25,9 +25,8 @@ import at.logic.provers.atp.commands._
 import at.logic.provers.atp.refinements.UnitRefinement
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.propositions.TypeSynonyms._
 import at.logic.language.fol.FOLFormula
 
 import at.logic.calculi.lk._
@@ -89,8 +88,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val imap = Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
       val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
       val cs = holcs.map(x => Sequent(
-          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLTerm],imap,iid).asInstanceOf[FOLFormula]),
-          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLTerm],imap,iid).asInstanceOf[FOLFormula])
+          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
+          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
       ))
       val sections = ("Definitions", imap.toList.map(x => (x._1, createExampleFOLConstant(x._1, x._2))))::sectionsPre
 
@@ -108,7 +107,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val cssv = sequentNormalize(scss)
       Console.println("cssv size: " + cssv.size)
 
-      // apply unit resolution and subsumption on the resulted clause set
+ /*     // apply unit resolution and subsumption on the resulted clause set
       val pb = new at.logic.utils.ds.PublishingBuffer[Clause]
       pb.insertAll(0,cssv.map(x => at.logic.calculi.resolution.base.Clause(x.antecedent.asInstanceOf[List[HOLFormula]], x.succedent.asInstanceOf[List[HOLFormula]])))
       val ref = new at.logic.provers.atp.refinements.UnitRefinement(pb)
@@ -121,25 +120,25 @@ class PrimeProofTest extends SpecificationWithJUnit {
       Console.println("newUnitSet size: " + newUnitSet.size)
       val newUnitSetSubsum = subsumedClausesRemoval(newUnitSet)
       Console.println("newUnitSetSubsum size: " + newUnitSetSubsum.size)
-
+*/
       // done for preserving order
       val neg = cssv.filter(x => x.succedent.isEmpty)
       val mix = cssv.filter(x => !x.succedent.isEmpty && !x.antecedent.isEmpty)
       val pos = cssv.filter(x => x.antecedent.isEmpty)
-
+/*
       // done for preserving order
       val neg2 = newUnitSetSubsum.filter(x => x.succedent.isEmpty)
       val mix2 = newUnitSetSubsum.filter(x => !x.succedent.isEmpty && !x.antecedent.isEmpty)
       val pos2 = newUnitSetSubsum.filter(x => x.antecedent.isEmpty)
-
+*/
       val subsum = sequentNormalize(cssUnit).diff(cssv)
       Console.println("subsum size: " + subsum.size)
       (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs-subsumed.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
         .exportSequentList(subsum, sections).close
       (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
         .exportSequentList(neg.sort(mySort) ++ mix.sort(mySort) ++ pos.sort(mySort), sections).close
-      (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs-unit.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
-        .exportSequentList(neg2.sort(mySort) ++ mix2.sort(mySort) ++ pos2.sort(mySort), sections).close
+ /*     (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs-unit.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+        .exportSequentList(neg2.sort(mySort) ++ mix2.sort(mySort) ++ pos2.sort(mySort), sections).close*/
       //saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
       //saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
     }
