@@ -10,6 +10,7 @@ package at.logic.algorithms.subsumption
 import org.specs._
 import org.specs.runner._
 import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
 import at.logic.parsing.readers.StringReader
@@ -19,7 +20,8 @@ import at.logic.calculi.lk.base._
 
 private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserFOL
 private class MyParserHOL(input: String) extends StringReader(input) with SimpleResolutionParserHOL
-private object MyAlg extends StillmanSubsumptionAlgorithm {val matchAlg = NaiveIncompleteMatchingAlgorithm} // incomplete matching algorithm
+private object MyAlg extends StillmanSubsumptionAlgorithm {val matchAlg = FOLMatchingAlgorithm}
+private object MyAlgHOL extends StillmanSubsumptionAlgorithm {val matchAlg = NaiveIncompleteMatchingAlgorithm} // incomplete matching algorithm
 
 class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
   "StillmanSubsumptionAlgorithm" should {
@@ -43,22 +45,22 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
         MyAlg.subsumes(new MyParser("P(x,x) | P(x,a).").getClauseList.head, new MyParser("P(a,a).").getClauseList.head) must beEqual (true)
       }
       "P(x:i,x:i) | P(x:i,a:i) and P(a:i,a:i)" in {
-        MyAlg.subsumes(new MyParserHOL("P(x:i,x:i) | P(x:i,a:i).").getClauseList.head, new MyParserHOL("P(a:i,a:i).").getClauseList.head) must beEqual (true)
+        MyAlgHOL.subsumes(new MyParserHOL("P(x:i,x:i) | P(x:i,a:i).").getClauseList.head, new MyParserHOL("P(a:i,a:i).").getClauseList.head) must beEqual (true)
       }
       "P(x:i,x:i) and P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i)" in {
-        MyAlg.subsumes(new MyParserHOL("P(x:i,x:i).").getClauseList.head, new MyParserHOL("P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i).").getClauseList.head) must beEqual (true)
+        MyAlgHOL.subsumes(new MyParserHOL("P(x:i,x:i).").getClauseList.head, new MyParserHOL("P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i).").getClauseList.head) must beEqual (true)
       }
       "P(x:i,x:i) and P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i))" in {
         val cl2 = new MyParserHOL("P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i)).").getClauseList.head
-        MyAlg.subsumes(new MyParserHOL("P(x:i,x:i).").getClauseList.head, cl2) must beEqual (true)
+        MyAlgHOL.subsumes(new MyParserHOL("P(x:i,x:i).").getClauseList.head, cl2) must beEqual (true)
       }
       //val str = """+(s50(q1:(i->o)):i, *(s43(q1: (i->o), +(*(+(x3:i, 1):i, s49(q1:(i->o), s50(q1:(i->o)):i):i):i, x3:i):i):i, *(+(x3, 1):i, +(s49(q1:(i->o), s50(q1:(i->o)):i), 1:i):i):i):i):i"""
       val str = """p(x_10:i,m(x_3:i,m(m(p(x_4:i,one:i):i,p(x_5:i,one:i):i):i):i):i):i"""
       "e(x,x):i and e("+str+","+str+"):i" in {
-        MyAlg.subsumes(new MyParserHOL("e(x:i,x:i).").getClauseList.head, new MyParserHOL("e("+str+","+str+").").getClauseList.head) must beEqual (true)
+        MyAlgHOL.subsumes(new MyParserHOL("e(x:i,x:i).").getClauseList.head, new MyParserHOL("e("+str+","+str+").").getClauseList.head) must beEqual (true)
       }
       "P(x:i) and P(a:i) | Q(x:i)" in {
-        MyAlg.subsumes(new MyParserHOL("P(x:i).").getClauseList.head, new MyParserHOL("P(a:i) | Q(x:i).").getClauseList.head) must beEqual (true)
+        MyAlgHOL.subsumes(new MyParserHOL("P(x:i).").getClauseList.head, new MyParserHOL("P(a:i) | Q(x:i).").getClauseList.head) must beEqual (true)
       }
     }
     "return false on the following clauses" in {

@@ -15,8 +15,9 @@ import scala.collection.immutable.EmptySet
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 
+// should use the restricted domain instead of grounding the second term
 object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
-  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression): Option[Substitution] = holMatch(term.asInstanceOf[HOLExpression], ground(posInstance).asInstanceOf[HOLExpression])
+  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression, restrictedDomain: List[Var]): Option[Substitution] = holMatch(term.asInstanceOf[HOLExpression], ground(posInstance).asInstanceOf[HOLExpression])
 
    // in all instances of the algorithm we ground the second term by replacing all free variables by constants
   private def ground(e: LambdaExpression): LambdaExpression = e match {

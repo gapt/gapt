@@ -38,7 +38,7 @@ package hol2fol {
           val freeVarList = exp.getFreeAndBoundVariables._1.toList.sort((x,y) => x.toString < y.toString).map(x => apply(x.asInstanceOf[HOLExpression],scope,id))
           if (freeVarList.isEmpty) FOLConst(sym) else Function(sym, freeVarList.asInstanceOf[List[FOLTerm]])
       }
-      case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order function or atom") // for cases of higher order atoms and functions
+      case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions
     }
   }
   // TODO - support generated function symbols by checking the arity from le and add the variables to the returned term. Right now only constants are supported
