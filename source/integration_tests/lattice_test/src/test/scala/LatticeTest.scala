@@ -1,7 +1,7 @@
 /** 
  * Description: 
 **/
-
+/*
 package at.logic.integration_tests
 
 import org.specs._
@@ -65,3 +65,4 @@ class LatticeTest extends SpecificationWithJUnit {
     }
   }
 }
+*/

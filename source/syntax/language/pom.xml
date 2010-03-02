@@ -10,7 +10,7 @@
   <artifactId>language</artifactId>
   <packaging>pom</packaging>  
   <name>Core languages</name>
-
+  
   <modules>
     <module>lambda</module>
     <module>hol</module>

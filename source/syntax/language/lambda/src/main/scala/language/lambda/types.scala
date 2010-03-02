@@ -20,9 +20,9 @@ package types {
       case _ => None
     }
   }
-  case class Ti() extends TAtomicA
-  case class To() extends TAtomicA
-  case class ->(in:TA, out:TA) extends TComplexA
+  case class Ti() extends TAtomicA {override def toString = "i"}
+  case class To() extends TAtomicA {override def toString = "o"}
+  case class ->(in:TA, out:TA) extends TComplexA {override def toString = "(" + in.toString + "->" + out.toString + ")"}
 
   object Definitions {
     def i = Ti()

@@ -22,7 +22,24 @@ package hol {
     override def factory : LambdaFactoryA = HOLFactory
   }
 
-  trait HOLExpression extends LambdaExpression with HOL
+  trait HOLExpression extends LambdaExpression with HOL {
+    override def toString = this match {
+      case Var(x,tpe) => x.toString + ":" + tpe.toString
+      case Atom(x, args) => x + "(" +
+        (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
+        else args.foldLeft("")((s,a) => s+a.toString)) + "): o"
+      case Function(x, args, tpe) => x + "(" +
+        (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
+        else args.foldLeft("")((s,a) => s+a.toString)) + "):" + tpe.toString
+      case And(x,y) => "(" + x.toString + AndSymbol + y.toString + ")"
+      case Or(x,y) => "(" + x.toString + OrSymbol + y.toString + ")"
+      case Imp(x,y) => "(" + x.toString + ImpSymbol + y.toString + ")"
+      case Neg(x) => NegSymbol + x.toString
+      case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
+      case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
+      case AbsInScope(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
+    }
+  }
   trait HOLFormula extends HOLExpression with Formula {
     def and(that: HOLFormula) =  And(this, that)
     def or(that: HOLFormula) = Or(this, that)

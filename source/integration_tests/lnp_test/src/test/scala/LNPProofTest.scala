@@ -1,7 +1,7 @@
 /** 
  * Description: 
 **/
-
+/*
 package at.logic.integration_tests
 
 import org.specs._
@@ -19,7 +19,7 @@ import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.writers.FileWriter
-import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
+import at.logic.parsing.language.arithmetic.HOLExpressionArithmeticalExporter
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
@@ -66,8 +66,9 @@ class LNPProofTest extends SpecificationWithJUnit {
       Console.println("css size: " + css.size)
       val cssv = sequentNormalize(css)
       Console.println("cssv size: " + cssv.size)
-      (new FileWriter("target" + separator + "test-classes" + separator + "lnp-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cssv.sort((x,y) => x.toString < y.toString)).close
+      (new FileWriter("target" + separator + "test-classes" + separator + "lnp-cs.tex") with SequentsListLatexExporter with HOLExpressionArithmeticalExporter).exportSequentList(cssv.sort((x,y) => x.toString < y.toString)).close
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css))::Pair("cssv", (cssv))::Nil, "target" + separator + "test-classes" + separator + "lnp-cs.xml" )
     }
   }
 }
+*/

@@ -73,6 +73,15 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       val expression = Abs(y, App(f, v))
       ( Abs(y,App(f, App(f, x))) ) must beEqual ( sigma(expression) )
     }
+    /*"substitute correctly when Substitution is applied (4)" in {
+      "(λx1:i.x2((λx3:i.v(x1:i):o)):o)"
+      val x1 = LambdaVar("x1", i); val x2 = LambdaVar("x2", i->o); val x3 = LambdaVar("x3", i); val v = LambdaVar("v", )
+      val y = LambdaVar("y", i)
+      val e = App(f, x)
+      val sigma: Substitution = (v,e)
+      val expression = Abs(y, App(f, v))
+      ( Abs(y,App(f, App(f, x))) ) must beEqual ( sigma(expression) )
+    }*/
             /*"substitute correctly when SingleSubstitution is applied, renaming bound variables (1)" in {
                 val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
                 val e = App(f, x)
