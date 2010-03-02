@@ -1,7 +1,7 @@
 /** 
  * Description: 
 **/
-
+/*
 package at.logic.integration_tests
 
 import org.specs._
@@ -55,3 +55,4 @@ class TapeTest extends SpecificationWithJUnit {
     }
   }
 }
+*/

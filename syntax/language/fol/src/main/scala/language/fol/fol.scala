@@ -25,10 +25,10 @@ trait FOLExpression extends HOLExpression with FOL {
     override def toString = this match {
       case Var(x,_) => x.toString
       case Atom(x, args) => x + "(" +
-        (if (args.size > 1) args.head.toString + args.foldLeft("")((s,a) => s+", "+a.toString)
+        (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
         else args.foldLeft("")((s,a) => s+a.toString)) + ")"
       case Function(x, args) => x + "(" +
-        (if (args.size > 1) args.head.toString + args.foldLeft("")((s,a) => s+", "+a.toString)
+        (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
         else args.foldLeft("")((s,a) => s+a.toString)) + ")"
       case And(x,y) => "(" + x.toString + AndSymbol + y.toString + ")"
       case Or(x,y) => "(" + x.toString + OrSymbol + y.toString + ")"

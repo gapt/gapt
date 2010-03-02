@@ -35,7 +35,7 @@ object CommandLine {
       val in_file = args(0)
       val out_file = args(1)
 
-      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream(in_file))) with XMLProofDatabaseParser).getProofs()
+      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream(in_file))) with XMLProofDatabaseParser).getProofDatabase().proofs
       if ( proofs.size != 1 )
       { 
         println( in_file + " must not contain more than one proof!" )

@@ -23,7 +23,8 @@ import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.readers.StringReader
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.language.hol.propositions._
+import at.logic.language.hol._
+import at.logic.language.fol.FOLFormula
 import at.logic.language.hol.logicSymbols._
 
 import at.logic.calculi.lk._
@@ -31,14 +32,16 @@ import at.logic.calculi.lk.base._
 import at.logic.algorithms.subsumption._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.struct._
+import at.logic.algorithms.fol.hol2fol._
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
+import scala.collection.mutable.Map
 
 package GAPScalaInteractiveShellLibrary {
   object loadProofs {
-    def apply(gzipedFile: String) = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(gzipedFile)))) with XMLProofDatabaseParser).getProofs()
+    def apply(gzipedFile: String) = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(gzipedFile)))) with XMLProofDatabaseParser).getProofDatabase().proofs
   }
   object printPoofStats {
     def apply(p: LKProof) = {val stats = getStatistics( p ); println("unary: " + stats.unary); println("binary: " + stats.binary); println("cuts: " + stats.cuts)}
@@ -52,7 +55,7 @@ package GAPScalaInteractiveShellLibrary {
   object structToClausesList {
     def apply(s: Struct) = StandardClauseSet.transformStructToClauseSet(s)
   }
-  object createHOLTerm {
+  object createHOLExpression {
     def apply(s: String) = (new StringReader(s) with SimpleHOLParser {}).getTerm()
   }
   object deleteTautologies {
@@ -71,7 +74,20 @@ package GAPScalaInteractiveShellLibrary {
     def apply(ls: List[Sequent]) = sequentNormalize(ls)
   }
   object writeLatex {
-    def apply(ls: List[Sequent], outputFile: String) = (new FileWriter(outputFile) with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls).close
+    def apply(ls: List[Sequent], outputFile: String) = {
+      // maps original types and definitions of abstractions
+      val sectionsPre = ("Types", getTypeInformation(ls).toList.sort((x,y) => x.toString < y.toString))::Nil
+
+      // convert to fol and obtain map of definitons
+      val imap = Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
+      val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
+      val cs = ls.map(x => Sequent(
+          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
+          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
+      ))
+      val sections = ("Definitions", imap.toList.map(x => (x._1, createExampleFOLConstant(x._1, x._2))))::sectionsPre
+      (new FileWriter(outputFile) with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls,sections).close
+    }
   }
   object ceresHelp {
     def apply() = {
@@ -81,7 +97,7 @@ package GAPScalaInteractiveShellLibrary {
       println("lkTolksk: LKProof => LKProof")
       println("extractStruct: LKProof => Struct")
       println("structToClausesList: Struct => List[Sequent]")
-      println("createHOLTerm: String => HOLTerm (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
+      println("createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
       println("deleteTautologies: List[Sequent] => List[Sequent]")
       println("removeDuplicates: List[Sequent] => List[Sequent]")
       println("unitResolve: List[Sequent] => List[Sequent]")
