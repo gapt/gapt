@@ -80,15 +80,17 @@ trait Prover {
         case None => FailureCom
         case Some(clauses) => GotClausesPairCom(clauses)
       }
-      case (ResolventCom(res), _) if (targetProof.root.formulaEquivalece(res.root)) => CorrectResolventFound(res)
-      case (ResolventCom(res), InsertCom) => refinement.insertProof(res); EmptyCom
-      case (r@ ResolventCom(res), IfNotTautologyCom) => if (!res.root.negative.exists(f => res.root.positive.contains(f))) r else NoResolventCom
-      case (r@ ResolventCom(res), IfNotForwardSubsumedCom(subsumpMng)) => if (!subsumpMng.forwardSubsumption(res.root)) r else NoResolventCom
-      case (r@ ResolventCom(res), BackwardSubsumptionCom(subsumpMng)) => {subsumpMng.backwardSubsumption(res.root); r}
-      case (NoResolventCom, InsertCom) => EmptyCom
-      case (NoResolventCom, IfNotTautologyCom) => NoResolventCom
-      case (NoResolventCom, IfNotForwardSubsumedCom(_)) => NoResolventCom
-      case (NoResolventCom, BackwardSubsumptionCom(_)) => NoResolventCom
+      case (ResultedClauseCom(res), _) if (targetProof.root.formulaEquivalece(res.root)) => CorrectResolventFound(res)
+      case (ResultedClauseCom(res), InsertCom) => refinement.insertProof(res); EmptyCom
+      case (r@ ResultedClauseCom(res), IfNotTautologyCom) => if (!res.root.negative.exists(f => res.root.positive.contains(f))) r else NoResultedClauseCom()
+      case (r@ ResultedClauseCom(res), IfNotForwardSubsumedCom(subsumpMng)) => if (!subsumpMng.forwardSubsumption(res.root)) r else NoResultedClauseCom()
+      case (r@ ResultedClauseCom(res), BackwardSubsumptionCom(subsumpMng)) => {subsumpMng.backwardSubsumption(res.root); r}
+      case (NoResultedClauseCom(), InsertCom) => EmptyCom
+      case (NoResultedClauseCom(), IfNotTautologyCom) => NoResultedClauseCom()
+      case (NoResultedClauseCom(), IfNotForwardSubsumedCom(_)) => NoResultedClauseCom()
+      case (NoResultedClauseCom(), BackwardSubsumptionCom(_)) => NoResultedClauseCom()
+      // logical commands
+      case (com, AndCom(ls1, ls2)) => AppendCommandsCom((com::ls1):::(com::ls2))
       // pass parsing to customized commands parser
       case _ => commandsParser.parse(composedCommand, newCommand)
     }
