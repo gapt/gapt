@@ -77,15 +77,20 @@ package GAPScalaInteractiveShellLibrary {
     def apply(ls: List[Sequent], outputFile: String) = {
       // maps original types and definitions of abstractions
       val sectionsPre = ("Types", getTypeInformation(ls).toList.sort((x,y) => x.toString < y.toString))::Nil
-
-      // convert to fol and obtain map of definitons
-      val imap = Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
-      val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
-      val cs = ls.map(x => Sequent(
-          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
-          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
-      ))
-      val sections = ("Definitions", imap.toList.map(x => (x._1, createExampleFOLConstant(x._1, x._2))))::sectionsPre
+      
+      val sections = try {
+        // convert to fol and obtain map of definitons
+        val imap = Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
+        val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
+        val cs = ls.map(x => Sequent(
+            x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
+            x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
+        ))
+        ("Definitions", imap.toList.map(x => (x._1, createExampleFOLConstant(x._1, x._2))))::sectionsPre
+      }
+      catch {
+        case _ => sectionsPre
+      }
       (new FileWriter(outputFile) with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls,sections).close
     }
   }
