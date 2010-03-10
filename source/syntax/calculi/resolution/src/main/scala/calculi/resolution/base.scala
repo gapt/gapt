@@ -124,6 +124,28 @@ package base {
       else None
   }
 
+  object Paramodulation {
+    def apply(p1: ResolutionProof, p2: ResolutionProof, i: Int, j: Int, newLiteral: HOLFormula, sub: Substitution): ResolutionProof = {
+      new BinaryTree[Clause](createClause(p1.root, p2.root, i, j, newLiteral, sub), p1, p2) with BinaryResolutionProof with LiteralIds with AppliedSubstitution
+      {def rule = ResolutionType; def literalIdLeft = i; def literalIdRight = j; def substitution = sub}
+    }
+    // compose two clauses on all elements except with the index given and apply sub on all terms
+    private def createClause(c1: Clause, c2: Clause, i: Int, j: Int, newLiteral: HOLFormula, sub: Substitution) = {
+      val (neg1,pos1) = if (i < c1.negative.size)
+          (removeAtIndex(c1.negative, i), c1.positive)
+        else (c1.negative, removeAtIndex(c1.positive, i - c1.negative.size))
+      val (neg2,pos2) = if (j < c2.negative.size)
+          (newLiteral::removeAtIndex(c2.negative, j), c2.positive)
+        else (c2.negative, newLiteral::removeAtIndex(c2.positive, j - c2.negative.size))
+      Clause((neg1 ++ neg2).map(x => sub(x).asInstanceOf[HOLFormula]), (pos1 ++ pos2).map(x => sub(x).asInstanceOf[HOLFormula]))
+    }
+    private def removeAtIndex(ls: List[HOLFormula], i: Int) = ls.zipWithIndex.filter(x => x._2 != i).map(x => x._1)
+    def unapply(proof: ResolutionProof) = if (proof.rule == ResolutionType) {
+        val pr = proof.asInstanceOf[BinaryResolutionProof with LiteralIds with AppliedSubstitution]
+        Some((pr.root, pr.uProof1, pr.uProof2, pr.literalIdLeft, pr.literalIdRight, pr.substitution))
+      }
+      else None
+  }
 
   object Variant {
     def apply(p: ResolutionProof): ResolutionProof = {

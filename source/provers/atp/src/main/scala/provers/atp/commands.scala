@@ -11,6 +11,7 @@ import at.logic.calculi.resolution.base._
 import at.logic.provers.atp.ui.UserInterface
 import at.logic.provers.atp.commandsParsers.CommandsParser
 import at.logic.provers.atp.refinements.Refinement
+import at.logic.language.hol.HOLExpression
 
 package commands {
 
@@ -58,9 +59,10 @@ package commands {
   case class ApplyOnAllPolarizedLiteralPairsCom(ls: List[Command]) extends Command
   case class ApplyOnAllLiteralPairsCom(ls: List[Command]) extends Command
   case class ApplyOnAllPositiveEitherLiteralPairsCom(ls: List[Command]) extends Command // one must be positive at least
-  case class ApplyOnAllSecondLiteralSubterms(ls: List[Command]) extends Command
+  case class ApplyOnAllSecondLiteralNonVarSubterms(ls: List[Command]) extends Command
   case class AppendCommandsCom(ls: Seq[Command]) extends Command
   case class ApplyOnLiteralPositionCom(pos: Tuple2[Int,Int], clauses: Tuple2[ResolutionProof, ResolutionProof]) extends Command
+  case class ApplyOnSecondSubtermCom(pos: Tuple2[Int,Int], clauses: Tuple2[ResolutionProof, ResolutionProof], posi: List[Int], subterm: HOLExpression) extends Command
   case class SetUnificationAlgorithmCom(alg: at.logic.algorithms.unification.UnificationAlgorithm) extends Command
   case class ApplyOnAllFactorsCom(ls: List[Command]) extends Command
   //case class ApplyOnAllClausePairsOnLiteralPairs(ls: List[Command]) extends Command
@@ -89,7 +91,7 @@ package commands {
     def rest(subsumpMng: at.logic.algorithms.subsumption.managers.SubsumptionManager): Stream[Command] = Stream(
       GetClausesCom, CreateVariantCom, AndCom(
         ApplyOnAllPolarizedLiteralPairsCom(ResolveCom::ApplyOnAllFactorsCom(IfNotTautologyCom::IfNotForwardSubsumedCom(subsumpMng)::BackwardSubsumptionCom(subsumpMng)::InsertCom::Nil)::Nil)::Nil,
-        ApplyOnAllPositiveEitherLiteralPairsCom(IfFirstLiteralIsEqualityCom::ApplyOnAllSecondLiteralSubterms(ParamodulateCom::IfNotTautologyCom::IfNotForwardSubsumedCom(subsumpMng)::BackwardSubsumptionCom(subsumpMng)::InsertCom::Nil)::Nil)::Nil)
+        ApplyOnAllPositiveEitherLiteralPairsCom(IfFirstLiteralIsEqualityCom::ApplyOnAllSecondLiteralNonVarSubterms(ParamodulateCom::IfNotTautologyCom::IfNotForwardSubsumedCom(subsumpMng)::BackwardSubsumptionCom(subsumpMng)::InsertCom::Nil)::Nil)::Nil)
     ).append(rest(subsumpMng))
   }
 }
