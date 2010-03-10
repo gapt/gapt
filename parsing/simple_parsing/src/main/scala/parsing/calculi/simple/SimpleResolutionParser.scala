@@ -40,7 +40,7 @@ trait SimpleResolutionParser extends ResolutionParser {
   def clauseList: Parser[List[Clause]] = rep(clause)
   def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas).map(stripNeg),ls.filter(x => !filterPosFormulas(x)))}
 
-  protected def formula2: Parser[HOLFormula] = (atom | neg)
+  protected def formula2: Parser[HOLFormula] = (neg | atom)
   protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ {case "-" ~ x => Neg(x)}
   
   private def filterPosFormulas(f: HOLFormula): Boolean = f match {

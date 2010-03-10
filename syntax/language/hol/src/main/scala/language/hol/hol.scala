@@ -192,9 +192,12 @@ package hol {
   }
 
   object Function {
-    def apply( sym: SymbolA, args: List[HOLExpression], returnType: TA) = {
+    def apply( sym: SymbolA, args: List[HOLExpression], returnType: TA): HOLExpression = {
       val pred : Var = HOLFactory.createVar( sym, FunctionType( returnType, args.map( a => a.exptype ) ) )
-      AppN(pred, args).asInstanceOf[HOLExpression]
+      apply(pred, args)
+    }
+    def apply(head: Var, args: List[HOLExpression]): HOLExpression = {
+      AppN(head, args).asInstanceOf[HOLExpression]
     }
     def unapply( expression: LambdaExpression ) = expression match {
       case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
@@ -206,9 +209,12 @@ package hol {
   }
   // HOL formulas of the form P(t_1,...,t_n)
   object Atom {
-    def apply( sym: SymbolA, args: List[HOLExpression]) = {
+    def apply( sym: SymbolA, args: List[HOLExpression]): HOLFormula = {
       val pred : Var = HOLFactory.createVar( sym, FunctionType( To(), args.map( a => a.exptype ) ) )
-      AppN(pred, args).asInstanceOf[HOLFormula]
+      apply(pred, args)
+    }
+    def apply(head: Var, args: List[HOLExpression]): HOLFormula = {
+      AppN(head, args).asInstanceOf[HOLFormula]
     }
     def unapply( expression: LambdaExpression ) = expression match {
       case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None

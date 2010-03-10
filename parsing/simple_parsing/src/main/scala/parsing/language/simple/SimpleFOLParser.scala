@@ -26,9 +26,9 @@ trait SimpleFOLParser extends SimpleHOLParser {
   override def constant: Parser[HOLConst] = regex(new Regex("[a-t]" + word)) ^^ {case x => FOLFactory.createVar(new ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
 
   override def const_atom: Parser[HOLFormula] = const_atom1 | const_atom2
-  def const_atom1: Parser[HOLFormula] = regex(new Regex("[A-Z]" + word)) ~ "(" ~ repsep(non_formula,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
-  def const_atom2: Parser[HOLFormula] = regex(new Regex("[A-Z]" + word)) ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
-  override def const_func: Parser[HOLExpression] = regex(new Regex("[a-z]" + word)) ~ "(" ~ repsep(non_formula,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  def const_atom1: Parser[HOLFormula] = regex(new Regex("["+symbols+"A-Z]" + word)) ~ "(" ~ repsep(non_formula,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  def const_atom2: Parser[HOLFormula] = regex(new Regex("["+symbols+"A-Z]" + word)) ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
+  override def const_func: Parser[HOLExpression] = regex(new Regex("["+symbols+"a-z]" + word)) ~ "(" ~ repsep(non_formula,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
 
   override def and: Parser[HOLFormula] = "And" ~ formula ~ formula ^^ {case "And" ~ x ~ y => And(x.asInstanceOf[FOLFormula],y.asInstanceOf[FOLFormula])}
   override def or: Parser[HOLFormula] = "Or" ~ formula ~ formula ^^ {case "Or" ~ x ~ y => Or(x.asInstanceOf[FOLFormula],y.asInstanceOf[FOLFormula])}

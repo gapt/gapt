@@ -14,6 +14,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.resolution.base._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.hol.replacements._
 
 trait FOLResolutionCommandsParser extends CommandsParser {
   var unifAlg: UnificationAlgorithm = at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
@@ -43,17 +44,15 @@ trait FOLResolutionCommandsParser extends CommandsParser {
       case Atom(ConstantStringSymbol("="), _::_::Nil) => a
       case _ => NoParamodulantCom
     }
-    case (NoParamodulantCom, ApplyOnAllSecondLiteralSubterms(commands)) => AppendCommandsCom(NoParamodulantCom::commands)
+    case (NoParamodulantCom, ApplyOnAllSecondLiteralNonVarSubterms(commands)) => AppendCommandsCom(NoParamodulantCom::commands)
     case (NoParamodulantCom, ParamodulateCom) => NoParamodulantCom
-    /*case (ApplyOnLiteralPositionCom((i,j),(c1,c2)), ApplyOnAllSecondLiteralSubterms(commands)) => {
+    case (ApplyOnLiteralPositionCom((i,j),(c1,c2)), ApplyOnAllSecondLiteralNonVarSubterms(commands)) => {
       // compute all subterms of c2.root(j)
+      val t = c2.root(j)
       AppendCommandsCom(
-        (for (i <- 0 to c1.root.positive.size - 1; j <- 0 to (c2.root.negative.size+c2.root.positive.size) - 1) yield (i + c1.root.negative.size,j))
-          .flatMap(x => ApplyOnLiteralPositionCom(x, (c2, c1)) :: commands) ++
-        (for (j <- 0 to c2.root.positive.size - 1; i <- 0 to (c1.root.negative.size+c1.root.positive.size) - 1) yield (j + c2.root.negative.size,i))
-          .flatMap(x => ApplyOnLiteralPositionCom(x, (c1, c2)) :: commands)
+        getAllPositions(t).flatMap(pos => ApplyOnSecondSubtermCom((i,j), (c1,c2), pos._1, pos._2) :: commands)
       )
-    }*/
+    }
     // dummy for skipping the EmptyCom before applying to specific literals
     case (EmptyCom, a) => a
     case (ApplyOnLiteralPositionCom((i,j),(c1,c2)), ResolveCom) => {
@@ -62,21 +61,14 @@ trait FOLResolutionCommandsParser extends CommandsParser {
         case Some(sub) => ResolventCom(Resolution(c1,c2,i,j,sub))
       }
     }
-    /*case (ApplyOnLiteralPositionCom((i,j),(c1,c2)), ParamodulateOnLiteralCom()) => {
-      if (i >= c1.root.negative.size) { // check the case that c1(i) is an equality and positive
-        // for every subterm of c2(j) try to unify it which each of the terms in c1(i) = (t=s)
-        AppendCommandsCom(
-          (for (i <- 0 to (c1.root.negative.size+c1.root.positive.size) - 1; j <- 0 to (c2.root.negative.size+c2.root.positive.size) - 1) yield (i, j))
-              .flatMap(x => ApplyOnLiteralPositionCom(x, (c1, c2)) :: commands)
-          )
-      } else if (j >= c2.root.negative.size) { // check the case that c2(j) is an equality and positive
+    case (ApplyOnSecondSubtermCom((i,j),(c1,c2), pos, t), ParamodulateCom) => c1.root(i) match {
+      // try to unify t and each of the sides of c1(i)
+      case Atom(ConstantStringSymbol("="), a::b::Nil) => unifAlg.unify(a, t) match {
+        case None => NoParamodulantCom
+        case Some(sub) => ParamodulantCom(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))}
+      case _ => NoParamodulantCom
+    }
 
-      } else NoParamodulantCom
-      /*unifAlg.unify(c1.root(i), c2.root(j)) match {
-        case None => NoResolventCom
-        case Some(sub) => ResolventCom(Resolution(c1,c2,i,j,sub))
-      }*/
-    }*/
     // generate all other resolvents that corresponds to two possible factors of the two parent clauses at the specific index
     case (r @ ResolventCom(Resolution(cls, pr1, pr2, id1Pos, id2, sub)), ApplyOnAllFactorsCom(commands)) => {
       val id1 = id1Pos - pr1.root.negative.size
