@@ -40,7 +40,9 @@ import java.io.File.separator
 import scala.collection.mutable.Map
 
 package GAPScalaInteractiveShellLibrary {
-  object loadProofs {
+import at.logic.parsing.language.simple.SimpleFOLParser
+
+object loadProofs {
     def apply(gzipedFile: String) = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(gzipedFile)))) with XMLProofDatabaseParser).getProofDatabase().proofs
   }
   object printPoofStats {
@@ -94,6 +96,25 @@ package GAPScalaInteractiveShellLibrary {
       (new FileWriter(outputFile) with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls,sections).close
     }
   }
+
+  object parse {
+    private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
+    private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
+
+    def fol(string:String) = {
+       (new CLIParserFOL(string)) getTerm
+    }
+
+    def hol(string:String) = {
+       (new CLIParserHOL(string)) getTerm
+    }
+
+    def help() = {
+      println("fol: HOLExpression")
+      println("hol: HOLExpression")
+    }
+  }
+
   object ceresHelp {
     def apply() = {
       println("Available commands:")
@@ -109,6 +130,8 @@ package GAPScalaInteractiveShellLibrary {
       println("removeSubsumed: List[Sequent] => List[Sequent]")
       println("normalizeClauses: List[Sequent] => List[Sequent]")
       println("writeLatex: List[Sequent], String => Unit")
+      println("parse fol: String => HOLTerm")
+      println("parse hol: String => HOLTerm")
     }
   }
 }
