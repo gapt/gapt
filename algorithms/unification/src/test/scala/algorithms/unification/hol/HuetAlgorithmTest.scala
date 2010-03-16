@@ -6,7 +6,7 @@
  */
 
 package at.logic.algorithms.unification.hol
-/*
+
 import org.specs._
 import org.specs.runner._
 import at.logic.parsing.readers.StringReader
@@ -31,7 +31,7 @@ import at.logic.language.hol.Definitions
 private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
 
 class HuetAlgorithmTest extends SpecificationWithJUnit {
-    "UnificationBasedFOLMatchingAlgorithm" should {
+    "HuetAlgorithm" should {
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
     val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
     val v1 = HOLVar("x", i)
@@ -59,5 +59,3 @@ class HuetAlgorithmTest extends SpecificationWithJUnit {
     }
   }
 }
-
-*/
