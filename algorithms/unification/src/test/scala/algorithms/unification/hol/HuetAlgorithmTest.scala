@@ -6,7 +6,7 @@
  */
 
 package at.logic.algorithms.unification.hol
-
+/*
 import org.specs._
 import org.specs.runner._
 import at.logic.parsing.readers.StringReader
@@ -60,4 +60,4 @@ class HuetAlgorithmTest extends SpecificationWithJUnit {
   }
 }
 
-
+*/
