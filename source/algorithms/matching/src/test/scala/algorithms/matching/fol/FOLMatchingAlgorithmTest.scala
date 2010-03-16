@@ -37,7 +37,7 @@ private class MyParser(input: String) extends StringReader(input) with SimpleFOL
 
 
 class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
-  "UnificationBasedFOLMatchingAlgorithm" should {
+  "FOLMatchingAlgorithm" should {
     "match correctly the lambda expressions f(x, x) and f(a,b)" in {
 //     val term = new MyParser("f(x1, x1, x3)").getTerm
 //     val posInstance = new MyParser("f(x3,b,g(d))").getTerm
