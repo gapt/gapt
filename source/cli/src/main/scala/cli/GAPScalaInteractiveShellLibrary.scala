@@ -41,6 +41,7 @@ import scala.collection.mutable.Map
 
 package GAPScalaInteractiveShellLibrary {
 import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.language.fol.FOLTerm
 
 object loadProofs {
     def apply(gzipedFile: String) = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(gzipedFile)))) with XMLProofDatabaseParser).getProofDatabase().proofs
@@ -102,17 +103,23 @@ object loadProofs {
     private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
 
     def fol(string:String) = {
-       (new CLIParserFOL(string)) getTerm
+       (new CLIParserFOL(string)).getTerm.asInstanceOf[FOLTerm]
     }
 
+    //this is redundant
     def hol(string:String) = {
        (new CLIParserHOL(string)) getTerm
     }
 
     def help() = {
-      println("fol: HOLExpression")
-      println("hol: HOLExpression")
+      println("fol: String => FOLTerm")
+      println("hol: String => HOLExpression")
     }
+  }
+
+
+  object ceres {
+    def help = ceresHelp.apply
   }
 
   object ceresHelp {
@@ -130,8 +137,8 @@ object loadProofs {
       println("removeSubsumed: List[Sequent] => List[Sequent]")
       println("normalizeClauses: List[Sequent] => List[Sequent]")
       println("writeLatex: List[Sequent], String => Unit")
-      println("parse fol: String => HOLTerm")
-      println("parse hol: String => HOLTerm")
+      println("parse fol: String => FOLTerm")
+      println("parse hol: String => HOLExpression")
     }
   }
 }

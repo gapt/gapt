@@ -25,12 +25,22 @@ class Vector(val vector : List[Int]) {
   def >(v:Vector)  : Boolean = { mapVectors(_>_,  vector,v.vector).foldLeft(true)(_&&_)  }
   def >=(v:Vector) : Boolean = { mapVectors(_>=_, vector,v.vector).foldLeft(true)(_&&_)  }
 
+
+  def lex_<(v:Vector) : Boolean = Vector.lex_<(this,v)
+
   override def equals(v:Any) : Boolean = { try { vector equals v.asInstanceOf[Vector].vector } catch { case _ => false} }
   override def toString = "Vector(" + (vector.foldRight(")") ((x:Int,y:String) => if (y==")") x.toString+y else x+","+ y))
   override def hashCode = vector.hashCode
 
   def anyless(v:Vector)  : Boolean = { mapVectors( _<_ ,  vector,v.unapply).foldLeft(false)(_||_)  }
-  def anylesszero = { vector.map( _< 0).foldLeft(false)(_||_)  }
+  def anylesszero = { vector.map( _ < 0).foldLeft(false)(_||_)  }
+  def anylesseqzero = { vector.map( _ <= 0).foldLeft(false)(_||_) }
+
+  def anyeqzero = { vector.map( _ == 0).foldLeft(false)(_||_) }
+
+  def allgreaterzero = ! anylesseqzero
+  def allgreatereqzero = ! anylesszero
+
   def zero = apply(MathHelperFunctions.createZeroRow(vector.length))
 
   def length = vector.length
@@ -86,6 +96,17 @@ object Vector {
   def apply(v : Int*) = new Vector(v.toList)
   def apply(v : List[Int]) = new Vector(v)
   def unapply(v : Vector) = v.vector
+
+  def lex_<(v1:Vector, v2:Vector) : Boolean = {
+    if (v1.length != v2.length) throw new Exception("Comparing vectors of different length!")
+
+    if (v1.length == 0) return true
+    if (v1.vector(0) < v2.vector(0)) return true
+    if (v1.vector(0) == v2.vector(0))
+      return Vector(v1.vector.tail) lex_< Vector(v2.vector.tail)
+    return false
+  }
+
 }
 
 

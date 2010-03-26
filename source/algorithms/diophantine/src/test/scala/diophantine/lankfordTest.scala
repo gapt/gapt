@@ -84,7 +84,7 @@ class LankfordSolverTest extends SpecificationWithJUnit {
         Vector(0,1,1,1,0),
         Vector(0,0,2,1,0)
         )
-        
+
       val r  = LankfordSolver solve (lhs,rhs)
 //      println("===")
 //      println(r)
@@ -97,5 +97,23 @@ class LankfordSolverTest extends SpecificationWithJUnit {
         expected_result.contains(l) must beTrue
       }
   }
+
+  "new solve the equation x_1 = y_1 + y_2" in {
+    val lhs = Vector(1)
+    val rhs = Vector(1,1)
+
+
+    val expected_result = List(
+      Vector(1,1,0),
+      Vector(1,0,1)
+      )
+
+    val r  = LankfordSolver solve (lhs,rhs)
+    for(l <- expected_result)
+      r.contains(l) must beTrue
+    for(l <- r)
+      expected_result.contains(l) must beTrue
+    }
+
 }
 
