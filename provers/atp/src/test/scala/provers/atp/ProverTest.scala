@@ -14,8 +14,9 @@ import refinements.SimpleRefinement
 import commands._
 import commandsParsers.FOLResolutionCommandsParser
 
+
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
-private object MyProver extends Prover
+private object MyProver extends Prover {val panel = new {def getNextCommand(com:Command, elements: Option[Iterator[Clause]]): Command = ExitCom}}
 
 class ProverTest extends SpecificationWithJUnit {
   "Prover" should {
@@ -70,20 +71,22 @@ class ProverTest extends SpecificationWithJUnit {
       }
     }
   }
-  def simpleAutoStream(cl: String) = {
-    val pb = new at.logic.utils.ds.PublishingBuffer[Clause]
+
+  import at.logic.utils.ds.PublishingBuffer
+
+  def createSubsum(pb: PublishingBuffer[Clause]): at.logic.algorithms.subsumption.managers.SubsumptionManager =
+    new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
+                        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
+
+  def autoStream(cl: String, createRef: (PublishingBuffer[Clause] => at.logic.provers.atp.refinements.Refinement)) = {
     val cls = new MyParser(cl).getClauseList
-    pb.insertAll(0,cls)
-    val subsumMng = new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
-        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
-    AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.SimpleRefinement(pb), subsumMng)
+    AutomatedFOLStream(-1, cls, createRef, createSubsum)
   }
-  def unitAutoStream(cl: String) = {
-    val pb = new at.logic.utils.ds.PublishingBuffer[Clause]
-    val cls = new MyParser(cl).getClauseList
-    pb.insertAll(0,cls)
-    val subsumMng = new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
-        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
-    AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.UnitRefinement(pb), subsumMng)
-  }
+  
+  def createSimple(pb: PublishingBuffer[Clause]): at.logic.provers.atp.refinements.Refinement = new at.logic.provers.atp.refinements.SimpleRefinement(pb)
+  def createUnit(pb: PublishingBuffer[Clause]): at.logic.provers.atp.refinements.Refinement = new at.logic.provers.atp.refinements.UnitRefinement(pb)
+
+  def simpleAutoStream(cl: String) = autoStream(cl, createSimple)
+
+  def unitAutoStream(cl: String) = autoStream(cl, createUnit)
 }

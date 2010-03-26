@@ -19,6 +19,12 @@ class SimpleRefinement(c: PublishingBuffer[Clause]) extends Refinement {
   
   def getNextClausesPair: Option[Tuple2[ResolutionProof, ResolutionProof]] = if (pairs.isEmpty) None else Some(pairs.remove(0))
 
+  def getClausesPair(c1: Clause, c2: Clause): Option[Tuple2[ResolutionProof, ResolutionProof]] = {
+    val pairInd = pairs.findIndexOf(x => (x._1.root == c1 && x._2.root == c2) || (x._1.root == c2 && x._2.root == c1))
+    if (pairInd > -1) {val ret = pairs(pairInd); pairs.remove(pairInd); Some(ret)}
+    else None
+  }
+
   private def insertClauses = {
     proofs ++= clauses.map(createInitialProof)
     val tmp = proofs.toList

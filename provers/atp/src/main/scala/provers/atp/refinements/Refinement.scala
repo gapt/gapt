@@ -20,6 +20,7 @@ trait Refinement {
 
   protected def removeClause(s: Clause): Unit
 
-  def getNextClausesPair: Option[Tuple2[ResolutionProof, ResolutionProof]]
+  def getNextClausesPair: Option[Tuple2[ResolutionProof, ResolutionProof]] // return the next pair
+  def getClausesPair(c1: Clause, c2: Clause): Option[Tuple2[ResolutionProof, ResolutionProof]] // force the refinement to return a specific pair
   def insertProof(proof: ResolutionProof): Unit
 }
