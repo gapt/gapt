@@ -49,8 +49,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term1 = parse("f(x1,x2)")
       val term2 = parse("f(f(y1,y2),y3)")
 
-      for (i<- 1 to 1000)
-        ACUnification unify(f,term1,term2)
+      //for (i<- 1 to 1000)
+      //  ACUnification unify(f,term1,term2)
 
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {

@@ -2,7 +2,7 @@ package diophantine
 
 import _root_.at.logic.algorithms.diophantine.{Vector, LankfordSolver, DiophantineSolver}
 import _root_.at.logic.language.hol.logicSymbols.ConstantSymbolA
-import _root_.at.logic.language.lambda.symbols.{VariableStringSymbol, StringSymbol}
+import _root_.at.logic.language.lambda.symbols.{VariableSymbolA, SymbolA, VariableStringSymbol, StringSymbol}
 import _root_.at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.fol._
 import substitutions.Substitution
@@ -17,9 +17,11 @@ object ACUnification {
   type ArrayEntry = (Vector, MapEntry)
 
   var constant_prefix = "z_"
-  var maxindex = 1
+  var maxindex = 0
 
-  def getFreshVariable() = { maxindex += 1; VariableStringSymbol(constant_prefix+maxindex) }
+  val is_ac1 : Boolean = false
+
+  def getFreshVariable() : VariableSymbolA = { maxindex += 1; VariableStringSymbol(constant_prefix+maxindex) }
   
 
   def unify(function: ConstantSymbolA, term1 : FOLTerm, term2 : FOLTerm) : Option[Substitution] = {
@@ -38,89 +40,133 @@ object ACUnification {
     }
     else {
       val s = Substitution()
-      //println(" "+vlhs + " "+vrhs)
+
       val basis = LankfordSolver solve (vlhs,vrhs)
-      //println("Basis: " + basis)
-      
-      val sums = new HashMap[Vector,List[(Int, List[Vector])]]
-      var oldnewest : List[(Int, Vector,List[Vector])] = Nil
-      var newest : List[(Int, Vector, List[Vector])] = Nil
-
-      for (b<-basis) {
-        val weight = vector_weight(vlhs,b)
-        sums(b) = List((weight,List(b)))
-        newest = (weight,b,List(b)) :: newest
-      }
-
-      val maxweight = calculateMaxWeight(vlhs,vrhs)
-      //println(maxweight)
-      
-      while (newest.size > 0) {
-        oldnewest = newest
-        newest = Nil
-        
-        for (v <- oldnewest) {
-          val candidates = basis map (x => (vector_weight(vlhs,x) + v._1 , x + v._2, x :: v._3  ))
-
-          for (candidate <- candidates) {
-            val (weight,sum,vectors) = candidate
-            val entry : (Int, List[Vector]) = (weight, vectors sort Vector.lex_<)
-            val newest_entry : (Int, Vector, List[Vector]) = (weight, sum, entry._2)
-
-
-            if (sums.contains(sum)) {
-              val l : List[(Int,List[Vector])] = sums(sum)
-              if (! l.contains(entry))
-                sums(sum) = entry :: l
-            } else {
-              sums(sum) = List(entry)
-              if (weight < maxweight && sum.anyeqzero)
-                newest = newest_entry :: newest
-            }
-          }
-        }
-      }
-
-/*            val atransform : ArrayEntry => (Vector, List[Vector]) = (_._1, _._2._2)
-            val afilter : (Vector, List[Vector]) = _._1.allgreaterzero
-            */
+      val sums = calculateSums(basis, vlhs, vrhs)
 
       def gzero(v : Vector) : Boolean = v.allgreaterzero
 
       var results : List[Vector] = Nil
-      for (v <- sums.toList ) {
-        if (gzero(v._1))
-          results = v._1 ::results
-      }
-      /**/
-
-      //results = sums.keySet.toList //AC1 Unification does not filter out
-
-      var temp = results sort Vector.lex_<
-      results = Nil
-      while (temp != Nil) {
-        temp match {
-          case x::xs =>
-            results = x :: results
-            temp = xs filter (y=> !(y>=x))
-          case Nil =>
-            throw new Exception("Error in AC Unification algorithm: list is empty even if it may not be")
+      if (is_ac1) {
+        results = sums.keySet.toList //AC1 Unification does not filter out
+      } else {
+        // ac unification filters
+        for (v <- sums.toList ) {
+          if (gzero(v._1))
+            results = v._1 ::results
         }
       }
 
+      // remove vectors which are subsumed by smaller vectors
+      results = removeSubsumedVectors(results)
+
+      // associate every base vector to a fresh logical variable
+      val varmap = new HashMap[Vector,VariableSymbolA]
+
+      for (b<-basis) {
+        val v : VariableSymbolA = getFreshVariable()
+        //println(""+b+"->"+v)
+        varmap(b) = v 
+      }
+
+      //some helper functions, could be factored out
+      def extract(pair:(Int,List[Vector])) : List[Vector] = pair._2
       
 
+      def createVectors(mapping : HashMap[Vector, VariableSymbolA], v:List[Vector]) : List[FOLTerm]= {
+        val len = v.length
+        val expanded : List[(Int,List[Vector])] = ((0 to len) map ((_,v))).toList //pair vector with every index of a component
+        val filtered : List[List[VariableSymbolA]] =
+              expanded map (x=>
+                  (x._2 filter (_.vector(x._1)>0))  //get only vectors >0 in the given component
+                          map (mapping(_))          //and convert them to VariableSymbols
+              )
+        val ltt : List[VariableSymbolA] => FOLTerm = listToTerm(function,_)
+        filtered map ltt
+      }
+
+      
+      //convert results to list of terms
+      var converted : List[List[FOLTerm]] = Nil
+      for (r <- results)
+        for (i <- sums(r).map(extract))
+          converted = createVectors(varmap, i) :: converted
       
 
-      /*
-      for(i<-results)
-        //println(i+ " ::: "+sums(i))
-        println(i)
-      
-      println(results.size)
-            */
+
+      //println(converted)
+
+      //TODO: unify with constants
 
       Some(s)
+    }
+  }
+
+
+  def calculateSums(basis:List[Vector], vlhs : Vector, vrhs : Vector) = {
+    val sums = new HashMap[Vector,List[(Int, List[Vector])]]
+    var oldnewest : List[(Int, Vector,List[Vector])] = Nil
+    var newest : List[(Int, Vector, List[Vector])] = Nil
+
+    for (b<-basis) {
+      val weight = vector_weight(vlhs,b)
+      sums(b) = List((weight,List(b)))
+      newest = (weight,b,List(b)) :: newest
+    }
+
+    val maxweight = calculateMaxWeight(vlhs,vrhs)
+    //println(maxweight)
+
+    while (newest.size > 0) {
+      oldnewest = newest
+      newest = Nil
+
+      for (v <- oldnewest) {
+        val candidates = basis map (x => (vector_weight(vlhs,x) + v._1 , x + v._2, x :: v._3  ))
+
+        for (candidate <- candidates) {
+          val (weight,sum,vectors) = candidate
+          val entry : (Int, List[Vector]) = (weight, vectors sort Vector.lex_<)
+          val newest_entry : (Int, Vector, List[Vector]) = (weight, sum, entry._2)
+
+
+          if (sums.contains(sum)) {
+            val l : List[(Int,List[Vector])] = sums(sum)
+            if (! l.contains(entry))
+              sums(sum) = entry :: l
+          } else {
+            sums(sum) = List(entry)
+            if (weight < maxweight && sum.anyeqzero)
+              newest = newest_entry :: newest
+          }
+        }
+      }
+    }
+
+    sums
+  }
+
+  def removeSubsumedVectors(arg:List[Vector]) : List[Vector] = {
+    var temp = arg sort Vector.lex_<
+    var results : List[Vector] = Nil
+    while (temp != Nil) {
+      temp match {
+        case x::xs =>
+          results = x :: results
+          temp = xs filter (y=> !(y>=x))
+        case Nil =>
+          throw new Exception("Error in AC Unification algorithm: list is empty even if it may not be")
+      }
+    }
+    results
+  }
+
+  /* convert list of variable symbols to a term f(x_1,f(x_2, ...)) */
+  def listToTerm(function: ConstantSymbolA, terms:List[VariableSymbolA]) : FOLTerm = {
+    terms match {
+      case x::Nil => FOLVar(x)
+      case x::xs => Function(function, List(FOLVar(x),listToTerm(function,xs)))
+      //case Nil => ()
     }
   }
 
@@ -142,14 +188,6 @@ object ACUnification {
   def vector_weight(vlhs:Vector, v:Vector ) : Int = vlhs * Vector(v.vector slice(0, vlhs.length))
 
   def calculateMaxWeight(l : Vector, r : Vector) : Int = {
-    /*
-    def check(f:(Int,Int) => Boolean, xs:List[Int]) = {
-      var min = xs(0);
-      for (x<-xs)
-        if (f(x,min)) min = x;
-      min;
-    }*/
-
     def product(l:List[Int]) = l.foldLeft (1) (_*_)
 
     def min(x:Int,y:Int) = if (x<y) x else y
@@ -157,8 +195,6 @@ object ACUnification {
 
     
     return max(l.length,r.length) * max(lcm(l.vector),lcm(r.vector))
-    
-    
   }
 
   def gcd(x :Int, y:Int) = {
