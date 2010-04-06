@@ -38,13 +38,20 @@ class ProverTest extends SpecificationWithJUnit {
         }
       }
       "requiring factoring" in {
-        "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
-          MyProver.refute(simpleAutoStream("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).")).head must beLike {
+        "p(a). -p(y) | -p(x) | p(f(y)) | p(f(x)). -p(f(f(a)))" in {
+          MyProver.refute(simpleAutoStream("P(a). -P(y) | -P(x) | P(f(y)) | P(f(x)). -P(f(f(a))).")).head must beLike {
             case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
           }
         }
       }
-      "requiring paramodulation" in {
+      "requiring non-terminal factoring" in {
+        "P(a). -P(x) | P(f(x)) | P(f(y)). -P(f(f(a))). -P(f(f(b)))." in {
+          MyProver.refute(simpleAutoStream("P(a). -P(x) | P(f(x)) | P(f(y)). -P(f(f(a))). -P(f(f(b))).")).head must beLike {
+            case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
+          }
+        }
+      }
+     "requiring paramodulation" in {
         "P(a). -P(b). =(a,b)." in {
           MyProver.refute(simpleAutoStream("P(a). -P(b). =(a,b).")).head must beLike {
             case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
@@ -64,11 +71,12 @@ class ProverTest extends SpecificationWithJUnit {
           case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
       }
-      "p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
+      // this should not work as it cannot resolve :-P(f(a)), P(f(a)) with P(f(a)), P(f(a)):-
+      /*"p(a). -p(x) | -p(x) | p(f(x)) | p(f(x)). -p(f(f(a)))" in {
         MyProver.refute(unitAutoStream("P(a). -P(x) | -P(x) | P(f(x)) | P(f(x)). -P(f(f(a))).")).head must beLike {
           case a: ResolutionProof if a.root.formulaEquivalece(theEmptyClause().root) => true
         }
-      }
+      }*/
     }
   }
 

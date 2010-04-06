@@ -27,9 +27,9 @@ object Main {
   }
 }
 
-trait Prover {
+trait Prover extends at.logic.utils.logging.Logger {
 
-  // for executing repeatedly (can be broken only with interactiveness)
+  // for executing repeatedly (can be broken only with interactiveness (scala.actors.Actor.self.exit))
   def recExec(commands: Stream[Command]): Stream[ResolutionProof] = {
     refute(commands) match {
       case Stream.empty => recExec(Stream(NoResolventFoundReply, InteractCom))
@@ -59,7 +59,7 @@ trait Prover {
 
   private def refuteOne(commands: Stream[Command], last: Command) : Tuple2[Option[ResolutionProof],Tuple2[Stream[Command],Command]] = if (commands.isEmpty) (None, (Stream.empty, FailureCom))
     else {
-      //Console.println("last command: " + last + " --- command: " + commands.head)
+      //debug("ATP - 1 step -> last command: " + last + " --- current command: " + commands.head)
       refuteOne1Step(last, commands.head) match {
       case CorrectResolventFoundCom(res) => (Some(res),(commands.tail,CorrectResolventFoundCom(res)))
       case FailureCom => (None, (commands.tail, FailureCom))
@@ -103,9 +103,9 @@ trait Prover {
         case Some(clauses) => GotClausesPairCom(clauses)
       }
       case (ResultedClauseCom(res), _) if (targetProof.root.formulaEquivalece(res.root)) => CorrectResolventFoundCom(res)
-      case (ResultedClauseCom(res), InsertCom) => refinement.get.insertProof(res); EmptyCom
-      case (r@ ResultedClauseCom(res), IfNotTautologyCom) => if (!res.root.negative.exists(f => res.root.positive.contains(f))) r else NoResultedClauseCom()
-      case (r@ ResultedClauseCom(res), IfNotForwardSubsumedCom) => if (!subsumpMng.get.forwardSubsumption(res.root)) r else NoResultedClauseCom()
+      case (ResultedClauseCom(res), InsertCom) => {info(res.root.toString + " added"); refinement.get.insertProof(res); EmptyCom}
+      case (r@ ResultedClauseCom(res), IfNotTautologyCom) => if (!res.root.negative.exists(f => res.root.positive.contains(f))) r else {info(res.root.toString + " is a tautology"); NoResultedClauseCom()}
+      case (r@ ResultedClauseCom(res), IfNotForwardSubsumedCom) => if (!subsumpMng.get.forwardSubsumption(res.root)) r else {info(res.root.toString + " is being subsumed"); NoResultedClauseCom()}
       case (r@ ResultedClauseCom(res), BackwardSubsumptionCom) => {subsumpMng.get.backwardSubsumption(res.root); r}
       case (NoResultedClauseCom(), InsertCom) => EmptyCom
       case (NoResultedClauseCom(), IfNotTautologyCom) => NoResultedClauseCom()

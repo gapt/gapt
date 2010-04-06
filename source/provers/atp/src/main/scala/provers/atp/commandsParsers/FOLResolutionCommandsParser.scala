@@ -16,7 +16,7 @@ import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.replacements._
 
-trait FOLResolutionCommandsParser extends CommandsParser {
+trait FOLResolutionCommandsParser extends CommandsParser with at.logic.utils.logging.Logger {
   var unifAlg: UnificationAlgorithm = at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
   def parse(combinedCommand: Command, currentCommand: Command): Command = (combinedCommand, currentCommand) match {
@@ -71,20 +71,25 @@ trait FOLResolutionCommandsParser extends CommandsParser {
 
     // generate all other resolvents that corresponds to two possible factors of the two parent clauses at the specific index
     case (r @ ResolventCom(Resolution(cls, pr1, pr2, id1Pos, id2, sub)), ApplyOnAllFactorsCom(commands)) => {
-      val id1 = id1Pos - pr1.root.negative.size
-      val cl1 = pr1.root.positive
-      val cl1Ind = for (i <- cl1.indices; if i != id1) yield i
-      val factors1 = computeFactors(cl1, cl1Ind, cl1(id1), sub, Nil)
-      val cl2 = pr2.root.negative
-      val cl2Ind = for (i <- cl2.indices; if i != id2) yield i
-      val factors2 = computeFactors(cl2, cl2Ind, cl2(id2), sub, Nil)
+      val id1 = id1Pos - pr1.root.negative.size // computes the id of the positive resolvent id (the negative is just id2)
+      val cl1 = pr1.root.positive // the set of all positive literals
+      val cl1Ind = for (i <- cl1.indices; if i != id1) yield i // the set of all indices in the above set except the resolvent id
+      val factors1 = computeFactors(cl1, cl1Ind, cl1(id1), sub, Nil) // all the factors in the positive literals of the first clause
+      val cl2 = pr2.root.negative // the set of all negative literals of the second clause
+      val cl2Ind = for (i <- cl2.indices; if i != id2) yield i // the set of their indices except the resolvent id
+      val factors2 = computeFactors(cl2, cl2Ind, cl2(id2), sub, Nil) // all their factors
       AppendCommandsCom((r::commands) ++
         (for {
           (ls1,sub1) <- (List(), Substitution())::factors1
           (ls2,sub2) <- (List(), Substitution())::factors2
           if !(ls1.isEmpty && ls2.isEmpty)
-        } yield (ResolventCom(Resolution(Factor(pr1, ls1.map(x => pr1.root.negative.size + x), sub1),Factor(pr2, ls2, sub2), comInd(id1, ls1), comInd(id2, ls2), sub)))
-          ).flatMap(x => x::commands))
+        } yield (ResolventCom(
+            {val r = Resolution(
+              (if (ls1.isEmpty) pr1 else {debug("factor of " + pr1.root.toString + " without indices " + ls1.map(x => pr1.root.negative.size + x) + " and with substitution " + sub1);(Factor(pr1, ls1.map(x => pr1.root.negative.size + x), sub1))}),
+              (if (ls2.isEmpty) pr2 else {debug("factor of " + pr2.root.toString + " without indices " + ls2 + " and with substitution " + sub2);(Factor(pr2, ls2, sub2))}),
+              comInd(id1Pos, ls1), comInd(id2, ls2), sub)
+            debug("resolvent of factors: " + r.root); r})
+          )).flatMap(x => x::commands))
     }
     case (NoResolventCom, ApplyOnAllFactorsCom(commands)) => AppendCommandsCom(NoResolventCom::commands)
     case _ => Console.println(combinedCommand + " - " + currentCommand); FailureCom
