@@ -17,11 +17,11 @@
     <module>transformations</module>
     <module>dependencies</module>
     <module>algorithms</module>
-    <module>gui</module>
-    <!--<module>ui</module>-->
+    <!--<module>gui</module>
+    <module>cli</module>
+    <module>ui</module>-->
     <module>parsing</module>
     <module>integration_tests</module>
-    <module>cli</module>
   </modules>
 
   <packaging>pom</packaging>
@@ -41,7 +41,7 @@
       <url>http://scala-tools.org/repo-releases</url>
     </pluginRepository>
   </pluginRepositories>
-
+  
   <dependencies>
     <dependency>
       <groupId>org.scala-lang</groupId>
@@ -73,6 +73,16 @@
       <groupId>org.scala-tools.testing</groupId>
       <artifactId>scalacheck_2.7.7</artifactId>
       <version>1.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.5.11</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.5.11</version>
     </dependency>
   </dependencies>
 
