@@ -21,9 +21,14 @@
             <descriptor>src/assemble/jar.xml</descriptor>
           </descriptors>
           <archive>
+            <index>true</index>
             <manifest>
               <mainClass>at.logic.provers.atp.Main</mainClass>
+              <addClasspath>true</addClasspath>
             </manifest>
+            <manifestEntries>
+              <Class-Path>./</Class-Path>
+            </manifestEntries>
           </archive>
         </configuration>
         <executions>
@@ -36,6 +41,7 @@
           </execution>
         </executions>
       </plugin>
+
     </plugins>
   </build>
 
