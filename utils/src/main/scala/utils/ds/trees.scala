@@ -17,12 +17,12 @@ package trees {
    *
    */
 
-  trait Tree[V] extends Graph[V] {
+  trait Tree[+V] extends Graph[V] {
     val vertex: V
     def name: String // used to contain more information about the tree, like rule names in LK
   }
 
-  class LeafTree[V](val vertex: V) extends VertexGraph[V](vertex, EmptyGraph[V]) with Tree[V] {
+  class LeafTree[+V](val vertex: V) extends VertexGraph[V](vertex, EmptyGraph[V]) with Tree[V] {
     override def equals(a: Any) = a match {
       case LeafTree(v) => vertex == v
       case _ => false
@@ -38,7 +38,7 @@ package trees {
       case t: Tree[_] => None
     }
   }
-  class UnaryTree[V](val vertex: V, val t: Tree[V]) extends EdgeGraph[V](t.vertex, vertex, VertexGraph[V](vertex, t)) with Tree[V] {
+  class UnaryTree[+V](val vertex: V, val t: Tree[V]) extends EdgeGraph[V](t.vertex, vertex, VertexGraph[V](vertex, t)) with Tree[V] {
     override def equals(a: Any) = a match {
       case UnaryTree(v,up) => vertex == v && t == up
       case _ => false
@@ -55,7 +55,7 @@ package trees {
       case t: Tree[_] => None
     }
   }
-  class BinaryTree[V](val vertex: V, val t1: Tree[V], val t2: Tree[V]) extends EdgeGraph[V](t2.vertex, vertex, UnionGraph[V](EdgeGraph[V](t1.vertex, vertex, VertexGraph[V](vertex, t1)), t2)) with Tree[V] {
+  class BinaryTree[+V](val vertex: V, val t1: Tree[V], val t2: Tree[V]) extends EdgeGraph[V](t2.vertex, vertex, UnionGraph[V](EdgeGraph[V](t1.vertex, vertex, VertexGraph[V](vertex, t1)), t2)) with Tree[V] {
     override def equals(a: Any) = a match {
       case BinaryTree(v,up1,up2) => vertex == v && t1 == up1 && t2 == up2
       case _ => false
@@ -71,7 +71,7 @@ package trees {
       case t: Tree[_] => None
     }
   }
-  class ArbitraryTree[V] private (val vertex: V, val lastParent: Tree[V], val restParents: List[Tree[V]], graph: Graph[V]) extends EdgeGraph[V](lastParent.vertex, vertex, UnionGraph[V](graph, lastParent)) with Tree[V] {
+  class ArbitraryTree[+V] private (val vertex: V, val lastParent: Tree[V], val restParents: List[Tree[V]], graph: Graph[V]) extends EdgeGraph[V](lastParent.vertex, vertex, UnionGraph[V](graph, lastParent)) with Tree[V] {
     override def equals(a: Any) = a match {
       case ArbitraryTree(v,ls) => vertex == v && ls == lastParent::restParents
       case _ => false
