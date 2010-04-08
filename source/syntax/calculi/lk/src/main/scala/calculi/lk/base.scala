@@ -51,9 +51,25 @@ package base {
       o.succedent.foreach( f => updater( f, mo ) )
       mt == mo
     }
-    override def toString : String = antecedent.toString + " :- " + succedent.toString
+    def setEquals( o: Sequent ) = // to improve!
+      antecedent.forall(a => o.antecedent.contains(a)) &&
+      succedent.forall(a => o.succedent.contains(a)) &&
+      o.antecedent.forall(a => antecedent.contains(a)) &&
+      o.succedent.forall(a => succedent.contains(a))
+    //override def toString : String = antecedent.toString + " :- " + succedent.toString
     def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
+    // returns the n literal of the sequent considering that the literals are ordered antecedent ++ succedent
+    def apply(n: Int) = if (n < antecedent.size) antecedent(n) else succedent(n - antecedent.size)
+    override def toString =
+      (if (antecedent.size > 1) antecedent.head.toString + antecedent.tail.foldLeft("")((s,a) => s+", "+a.toString)
+      else antecedent.foldLeft("")((s,a) => s+a.toString)) + ":-" +
+      (if (succedent.size > 1) succedent.head.toString + succedent.tail.foldLeft("")((s,a) => s+", "+a.toString)
+      else succedent.foldLeft("")((s,a) => s+a.toString))
+    def removeFormulasAtIndices(inds: List[Int]): Sequent = Sequent(
+        antecedent.zipWithIndex.filter(x => !inds.contains(x._2)).map(x => x._1),
+        succedent.zipWithIndex.filter(x => !inds.contains(x._2 + antecedent.size)).map(x => x._1)
+      )
   }
   object Sequent {
     def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)

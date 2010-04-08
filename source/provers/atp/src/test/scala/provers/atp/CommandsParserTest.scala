@@ -25,7 +25,7 @@ private class MyParser(str: String) extends StringReader(str) with SimpleResolut
 class CommandsParserTest extends SpecificationWithJUnit {
   "FOLResolutionCommandsParser" should {
     "generate the right factors" in {
-      val cparser = new FOLResolutionCommandsParser{}
+      val cparser = RobinsonCommandsParser
       "for the clause A(x) | A(a) | A(f(x)) | A(f(y)) with substitution x/f(b) and the resolved literal A(x)" in {
         val cls = new MyParser("A(f(b)) | A(a) | A(f(f(b))) | A(f(y)).").getClauseList.head.positive
         val factors = cparser.computeFactors(cls, cls.indices.tail, cls.head, Substitution(), Nil)

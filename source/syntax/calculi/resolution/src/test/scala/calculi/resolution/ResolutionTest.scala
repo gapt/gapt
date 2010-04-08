@@ -20,6 +20,7 @@ import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import base._
+import robinson._
 import at.logic.language.hol.Definitions._
 
 class ResolutionTest extends SpecificationWithJUnit {
@@ -27,9 +28,9 @@ class ResolutionTest extends SpecificationWithJUnit {
   val pfx = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"), Var(VariableStringSymbol("x"), i, hol)::Nil,i)::Nil)
   val px = Atom(ConstantStringSymbol("p"),Var(VariableStringSymbol("x"), i, hol)::Nil)
   val pffa = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"),Function(ConstantStringSymbol("f"), Var(ConstantStringSymbol("a"), i, hol)::Nil,i)::Nil, i)::Nil)
-  val ax1 = Axiom(Clause(Nil,pa::Nil))
-  val ax2 = Axiom(Clause(px::Nil,pfx::Nil))
-  val ax3 = Axiom(Clause(pffa::Nil,Nil))
+  val ax1 = InitialSequent(Clause(Nil,pa::Nil))
+  val ax2 = InitialSequent(Clause(px::Nil,pfx::Nil))
+  val ax3 = InitialSequent(Clause(pffa::Nil,Nil))
   
   "VariantRule" should {
     "create correct Variant proofs" in {
