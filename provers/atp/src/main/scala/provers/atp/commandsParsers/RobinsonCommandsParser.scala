@@ -12,18 +12,60 @@ import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.lambda.substitutions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.resolution.base._
+import at.logic.calculi.resolution.robinson._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.replacements._
 
-trait FOLResolutionCommandsParser extends CommandsParser with at.logic.utils.logging.Logger {
+package robinson {
+  // commands for robinson resolution
+  case object FactorCom extends Com
+  case object ResolveCom extends Com
+  case object ParamodulateCom extends Com
+  case object ParamodulateOnLiteralCom extends Com
+
+  case class ResolventReply(resolvent: ResolutionProof[Clause]) extends ResultedClauseReply(resolvent)
+  case class ParamodulantReply(paramodulant: ResolutionProof[Clause]) extends ResultedClauseReply[Clause](paramodulant)
+
+  case object NoResolventReply extends NoResultedClauseReply
+    case object NoParamodulantReply extends NoResultedClauseReply
+
+  case class ApplyOnAllFactorsCom(ls: List[Command]) extends Com
+  //case class ApplyOnAllClausePairsOnLiteralPairs(ls: List[Command]) extends Command
+  case object CreateVariantCom extends Com
+
+// default commands streams
+  object AutomatedFOLStream {
+    def apply(timeLimit: Long,
+              clausesList: List[Clause],
+              refCreator: at.logic.utils.ds.PublishingBuffer[Clause] => at.logic.provers.atp.refinements.Refinement[Clause],
+              subsumCreator: at.logic.utils.ds.PublishingBuffer[Clause] => at.logic.algorithms.subsumption.managers.SubsumptionManager): Stream[Command] =
+      Stream.cons(SetTimeLimit(timeLimit),
+      Stream.cons(SetClausesCom(clausesList),
+      Stream.cons(SetRefinementCom(refCreator),
+      Stream.cons(SetSubsumptionManagerCom(subsumCreator),
+      Stream.cons(SetCommandsParserCom(RobinsonCommandsParser), rest)))))
+    def rest: Stream[Command] = Stream(
+      GetClausesCom, CreateVariantCom, AndCom(
+        ApplyOnAllPolarizedLiteralPairsCom(ResolveCom::ApplyOnAllFactorsCom(IfNotTautologyCom::IfNotForwardSubsumedCom::BackwardSubsumptionCom::InsertCom::Nil)::Nil)::Nil,
+        ApplyOnAllPositiveEitherLiteralPairsCom(IfFirstLiteralIsEqualityCom::ApplyOnAllSecondLiteralNonVarSubterms(ParamodulateCom::IfNotTautologyCom::IfNotForwardSubsumedCom::BackwardSubsumptionCom::InsertCom::Nil)::Nil)::Nil)
+    ).append(rest)
+  }
+}
+
+import robinson._
+
+object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging.Logger {
+  
   var unifAlg: UnificationAlgorithm = at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
   def parse(combinedCommand: Command, currentCommand: Command): Command = (combinedCommand, currentCommand) match {
     case (a, SetUnificationAlgorithmCom(alg)) => unifAlg = alg; a
-    case (GotClausesPairCom((c1, c2)), CreateVariantCom) => GotClausesPairCom(Variant(c1), Variant(c2))
+    case (GotClausesPairReply((c1, c2)), CreateVariantCom) => GotClausesPairReply((Variant(c1.asInstanceOf[ResolutionProof[Clause]]), Variant(c2.asInstanceOf[ResolutionProof[Clause]])))
     // always put positive index first and negative index second
-    case (GotClausesPairCom((c1, c2)), ApplyOnAllPolarizedLiteralPairsCom(commands)) => {
+    case (GotClausesPairReply((s1, s2)), ApplyOnAllPolarizedLiteralPairsCom(commands)) => {
+      val c1 = s1.asInstanceOf[ResolutionProof[Clause]]
+      val c2 = s2.asInstanceOf[ResolutionProof[Clause]]
       AppendCommandsCom(
       (for (i <- 0 to c1.root.negative.size - 1; j <- 0 to c2.root.positive.size - 1) yield (j + c2.root.negative.size, i))
           .flatMap(x => ApplyOnLiteralPositionCom(x, (c2, c1)) :: commands) ++
@@ -32,7 +74,9 @@ trait FOLResolutionCommandsParser extends CommandsParser with at.logic.utils.log
       )
     }
     // first terms is the certainly positive
-    case (GotClausesPairCom((c1, c2)), ApplyOnAllPositiveEitherLiteralPairsCom(commands)) => {
+    case (GotClausesPairReply((s1, s2)), ApplyOnAllPositiveEitherLiteralPairsCom(commands)) => {
+      val c1 = s1.asInstanceOf[ResolutionProof[Clause]]
+      val c2 = s2.asInstanceOf[ResolutionProof[Clause]]
       AppendCommandsCom(
         (for (i <- 0 to c1.root.positive.size - 1; j <- 0 to (c2.root.negative.size+c2.root.positive.size) - 1) yield (i + c1.root.negative.size,j))
           .flatMap(x => ApplyOnLiteralPositionCom(x, (c1, c2)) :: commands) ++
@@ -42,10 +86,10 @@ trait FOLResolutionCommandsParser extends CommandsParser with at.logic.utils.log
     }
     case (a @ ApplyOnLiteralPositionCom((i,j),(c1,c2)), IfFirstLiteralIsEqualityCom) => c1.root(i) match {
       case Atom(ConstantStringSymbol("="), _::_::Nil) => a
-      case _ => NoParamodulantCom
+      case _ => NoParamodulantReply
     }
-    case (NoParamodulantCom, ApplyOnAllSecondLiteralNonVarSubterms(commands)) => AppendCommandsCom(NoParamodulantCom::commands)
-    case (NoParamodulantCom, ParamodulateCom) => NoParamodulantCom
+    case (NoParamodulantReply, ApplyOnAllSecondLiteralNonVarSubterms(commands)) => AppendCommandsCom(NoParamodulantReply::commands)
+    case (NoParamodulantReply, ParamodulateCom) => NoParamodulantReply
     case (ApplyOnLiteralPositionCom((i,j),(c1,c2)), ApplyOnAllSecondLiteralNonVarSubterms(commands)) => {
       // compute all subterms of c2.root(j)
       val t = c2.root(j)
@@ -55,22 +99,27 @@ trait FOLResolutionCommandsParser extends CommandsParser with at.logic.utils.log
     }
     // dummy for skipping the EmptyCom before applying to specific literals
     case (EmptyCom, a) => a
-    case (ApplyOnLiteralPositionCom((i,j),(c1,c2)), ResolveCom) => {
+    case (ApplyOnLiteralPositionCom((i,j),(s1,s2)), ResolveCom) => {
+      val c1 = s1.asInstanceOf[ResolutionProof[Clause]]
+      val c2 = s2.asInstanceOf[ResolutionProof[Clause]]
       unifAlg.unify(c1.root(i), c2.root(j)) match {
-        case None => NoResolventCom
-        case Some(sub) => ResolventCom(Resolution(c1,c2,i,j,sub))
+        case None => NoResolventReply
+        case Some(sub) => ResolventReply(Resolution(c1,c2,i,j,sub))
       }
     }
-    case (ApplyOnSecondSubtermCom((i,j),(c1,c2), pos, t), ParamodulateCom) => c1.root(i) match {
+    case (ApplyOnSecondSubtermCom((i,j),(s1,s2), pos, t), ParamodulateCom) => {
+      val c1 = s1.asInstanceOf[ResolutionProof[Clause]]
+      val c2 = s2.asInstanceOf[ResolutionProof[Clause]]
+      c1.root(i) match {
       // try to unify t and each of the sides of c1(i)
       case Atom(ConstantStringSymbol("="), a::b::Nil) => unifAlg.unify(a, t) match {
-        case None => NoParamodulantCom
-        case Some(sub) => ParamodulantCom(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))}
-      case _ => NoParamodulantCom
-    }
+        case None => NoParamodulantReply
+        case Some(sub) => ParamodulantReply(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))}
+      case _ => NoParamodulantReply
+    }}
 
     // generate all other resolvents that corresponds to two possible factors of the two parent clauses at the specific index
-    case (r @ ResolventCom(Resolution(cls, pr1, pr2, id1Pos, id2, sub)), ApplyOnAllFactorsCom(commands)) => {
+    case (r @ ResolventReply(Resolution(cls, pr1, pr2, id1Pos, id2, sub)), ApplyOnAllFactorsCom(commands)) => {
       val id1 = id1Pos - pr1.root.negative.size // computes the id of the positive resolvent id (the negative is just id2)
       val cl1 = pr1.root.positive // the set of all positive literals
       val cl1Ind = for (i <- cl1.indices; if i != id1) yield i // the set of all indices in the above set except the resolvent id
@@ -83,7 +132,7 @@ trait FOLResolutionCommandsParser extends CommandsParser with at.logic.utils.log
           (ls1,sub1) <- (List(), Substitution())::factors1
           (ls2,sub2) <- (List(), Substitution())::factors2
           if !(ls1.isEmpty && ls2.isEmpty)
-        } yield (ResolventCom(
+        } yield (ResolventReply(
             {val r = Resolution(
               (if (ls1.isEmpty) pr1 else {debug("factor of " + pr1.root.toString + " without indices " + ls1.map(x => pr1.root.negative.size + x) + " and with substitution " + sub1);(Factor(pr1, ls1.map(x => pr1.root.negative.size + x), sub1))}),
               (if (ls2.isEmpty) pr2 else {debug("factor of " + pr2.root.toString + " without indices " + ls2 + " and with substitution " + sub2);(Factor(pr2, ls2, sub2))}),
@@ -91,8 +140,8 @@ trait FOLResolutionCommandsParser extends CommandsParser with at.logic.utils.log
             debug("resolvent of factors: " + r.root); r})
           )).flatMap(x => x::commands))
     }
-    case (NoResolventCom, ApplyOnAllFactorsCom(commands)) => AppendCommandsCom(NoResolventCom::commands)
-    case _ => Console.println(combinedCommand + " - " + currentCommand); FailureCom
+    case (NoResolventReply, ApplyOnAllFactorsCom(commands)) => AppendCommandsCom(NoResolventReply::commands)
+    case _ => Console.println(combinedCommand + " - " + currentCommand); FailureReply
   }
 
   // computes factors, calling recursively to smaller sets

@@ -31,7 +31,7 @@ import at.logic.language.fol.FOLFormula
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.resolution.base.Clause
+import at.logic.calculi.resolution.robinson.Clause
 import at.logic.algorithms.subsumption._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.algorithms.fol.hol2fol._

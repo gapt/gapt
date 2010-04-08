@@ -7,11 +7,11 @@
 
 package at.logic.parsing.calculi
 
-import at.logic.calculi.resolution.base._
+import at.logic.calculi.lk.base._
 
-trait ResolutionParser extends InputParser {
-    def clauseList : Parser[List[Clause]]
-    def getClauseList(): List[Clause] = {
+trait ResolutionParser[V <: Sequent] extends InputParser {
+    def clauseList : Parser[List[V]]
+    def getClauseList(): List[V] = {
         val reader = getInput()
         try
         {

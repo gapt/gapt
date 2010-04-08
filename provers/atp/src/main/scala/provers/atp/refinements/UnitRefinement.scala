@@ -8,19 +8,20 @@
 package at.logic.provers.atp.refinements
 
 import at.logic.calculi.resolution.base._
+import at.logic.calculi.lk.base._
 import scala.collection.mutable.{Queue,ListBuffer}
 import at.logic.utils.ds.PublishingBuffer
 
-class UnitRefinement(c: PublishingBuffer[Clause]) extends Refinement {
+class UnitRefinement[V <: Sequent](c: PublishingBuffer[V]) extends Refinement[V] {
   val clauses = c // all clauses
-  val pairs = new ListBuffer[Tuple2[ResolutionProof,ResolutionProof]] // all pairs of possible two clauses
-  val proofs = new ListBuffer[ResolutionProof] // all clauses as proofs
-  val units: ListBuffer[ResolutionProof] = new ListBuffer[ResolutionProof]()
+  val pairs = new ListBuffer[Tuple2[ResolutionProof[V],ResolutionProof[V]]] // all pairs of possible two clauses
+  val proofs = new ListBuffer[ResolutionProof[V]] // all clauses as proofs
+  val units: ListBuffer[ResolutionProof[V]] = new ListBuffer[ResolutionProof[V]]()
   insertClauses
 
-  def getNextClausesPair: Option[Tuple2[ResolutionProof, ResolutionProof]] = if (pairs.isEmpty) None else Some(pairs.remove(0))
+  def getNextClausesPair: Option[Tuple2[ResolutionProof[V], ResolutionProof[V]]] = if (pairs.isEmpty) None else Some(pairs.remove(0))
 
-  def getClausesPair(c1: Clause, c2: Clause): Option[Tuple2[ResolutionProof, ResolutionProof]] = {
+  def getClausesPair(c1: V, c2: V): Option[Tuple2[ResolutionProof[V], ResolutionProof[V]]] = {
     val pairInd = pairs.findIndexOf(x => (x._1.root == c1 && x._2.root == c2) || (x._1.root == c2 && x._2.root == c1))
     if (pairInd > -1) {val ret = pairs(pairInd); pairs.remove(pairInd); Some(ret)}
     else None
@@ -38,7 +39,7 @@ class UnitRefinement(c: PublishingBuffer[Clause]) extends Refinement {
           c1.root != c2.root)
       ) yield (c1,c2))
   }
-  def insertProof(proof: ResolutionProof) = {
+  def insertProof(proof: ResolutionProof[V]) = {
     clauses.append(proof.root)
     pairs ++= {for (
         c1 <- (if (isUnit(proof.root)) proofs else units);
@@ -50,12 +51,12 @@ class UnitRefinement(c: PublishingBuffer[Clause]) extends Refinement {
     if (isUnit(proof.root)) units += proof
   }
 
-  protected def removeClause(s: Clause) = {
+  protected def removeClause(s: V) = {
     proofs.filter(x => x.root == s).foreach(x => proofs -= x)
     pairs.filter(x => x._1.root == s || x._2.root == s).foreach(x => pairs -= x)
   }
-  private def createInitialProof(c: Clause): ResolutionProof = Axiom(c)
-  private def isUnit(c: Clause): Boolean = (c.negative.size + c.positive.size) == 1
+  private def createInitialProof(c: V): ResolutionProof[V] = InitialSequent(c)
+  private def isUnit(c: V): Boolean = (c.antecedent.size + c.succedent.size) == 1
 }
 
   /*
