@@ -1,8 +1,9 @@
 /*
  * Graphs.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * Inductive (and unintuitive) definition of graphs.
+ * We use this definition in order to haev uniformity of presentation in the system as both global (intuitive) graphs
+ * and trees (which are inductive) can be based on inductive graphs
  */
 
 package at.logic.utils.ds
