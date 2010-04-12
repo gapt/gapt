@@ -53,8 +53,8 @@ package base {
   trait InstantiatedVariable {
     def term: HOLExpression
   }
-  trait AppliedSubstitution {
-    def substitution: Substitution
+  trait AppliedSubstitution[T <: LambdaExpression] {
+    def substitution: Substitution[T]
   }
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context

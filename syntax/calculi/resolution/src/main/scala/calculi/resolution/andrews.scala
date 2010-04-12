@@ -162,15 +162,15 @@ package andrews {
   }
 
   object Sub {
-    def apply(p: ResolutionProof[LabeledSequent], sub: Substitution): ResolutionProof[LabeledSequent] = {
+    def apply[T <: HOLExpression](p: ResolutionProof[LabeledSequent], sub: Substitution[T]): ResolutionProof[LabeledSequent] = {
       new UnaryAGraph[LabeledSequent](LabeledSequent(
-          p.root.antecedentLabeled.map(x => (sub(x._1).asInstanceOf[HOLFormula], new Labeled[List[HOLExpression]] {val label = x._2.label.map(y => sub(y).asInstanceOf[HOLFormula])})),
-          p.root.succedentLabeled.map(x => (sub(x._1).asInstanceOf[HOLFormula], new Labeled[List[HOLExpression]] {val label = x._2.label.map(y => sub(y).asInstanceOf[HOLFormula])}))),
+          p.root.antecedentLabeled.map(x => (sub(x._1.asInstanceOf[T]).asInstanceOf[HOLFormula], new Labeled[List[HOLExpression]] {val label = x._2.label.map(y => sub(y.asInstanceOf[T]).asInstanceOf[HOLFormula])})),
+          p.root.succedentLabeled.map(x => (sub(x._1.asInstanceOf[T]).asInstanceOf[HOLFormula], new Labeled[List[HOLExpression]] {val label = x._2.label.map(y => sub(y.asInstanceOf[T]).asInstanceOf[HOLFormula])}))),
         p)
-          with UnaryResolutionProof[LabeledSequent] with AppliedSubstitution {def rule = SubType; def substitution = sub}
+          with UnaryResolutionProof[LabeledSequent] with AppliedSubstitution[T] {def rule = SubType; def substitution = sub}
     }
-    def unapply(proof: ResolutionProof[LabeledSequent]) = if (proof.rule == SubType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof[LabeledSequent] with AppliedSubstitution]
+    def unapply[T <: HOLExpression](proof: ResolutionProof[LabeledSequent]) = if (proof.rule == SubType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[LabeledSequent] with AppliedSubstitution[T]]
         Some((pr.root, pr.uProof, pr.substitution))
     }
   }

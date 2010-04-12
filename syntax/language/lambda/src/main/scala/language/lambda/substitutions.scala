@@ -10,7 +10,7 @@ package substitutions {
    * 2) all mappings are applied simultaneously to a term i.e. {x |-> y, y |-> a}x = y and not a.
    */
   class Substitution[T <: LambdaExpression] protected[substitutions](val map: scala.collection.immutable.Map[Var, T]) extends (T => T) {
-    def ::(sub:Tuple2[Var, LambdaExpression]) = new Substitution(map + sub)
+    def ::(sub:Tuple2[Var, T]) = new Substitution(map + sub)
     def :::(otherSubstitution:Substitution[T]) = new Substitution(map ++ otherSubstitution.map.elements)
     def apply(expression: T): T = applyWithChangeDBIndices(expression)
     override def equals(a: Any) = a match {

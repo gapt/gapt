@@ -50,46 +50,46 @@ package robinson {
 
   // left side is always resolved on positive literal and right on negative
   object Resolution {
-    def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], i: Int, j: Int, sub: Substitution): ResolutionProof[Clause] = {
-      new BinaryAGraph[Clause](createClause(p1.root.asInstanceOf[Clause], p2.root.asInstanceOf[Clause], i, j, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution
+    def apply[T <: HOLExpression](p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], i: Int, j: Int, sub: Substitution[T]): ResolutionProof[Clause] = {
+      new BinaryAGraph[Clause](createClause(p1.root.asInstanceOf[Clause], p2.root.asInstanceOf[Clause], i, j, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution[T]
       {def rule = ResolutionType; def literalIdLeft = i; def literalIdRight = j; def substitution = sub}
     }
     // compose two clauses on all elements except with the index given and apply sub on all terms
-    private def createClause(c1: Clause, c2: Clause, i: Int, j: Int, sub: Substitution) = {
+    private def createClause[T <: LambdaExpression](c1: Clause, c2: Clause, i: Int, j: Int, sub: Substitution[T]) = {
       val (neg1,pos1) = if (i < c1.negative.size)
           (removeAtIndex(c1.negative, i), c1.positive)
         else (c1.negative, removeAtIndex(c1.positive, i - c1.negative.size))
       val (neg2,pos2) = if (j < c2.negative.size)
           (removeAtIndex(c2.negative, j), c2.positive)
         else (c2.negative, removeAtIndex(c2.positive, j - c2.negative.size))
-      Clause((neg1 ++ neg2).map(x => sub(x).asInstanceOf[HOLFormula]), (pos1 ++ pos2).map(x => sub(x).asInstanceOf[HOLFormula]))
+      Clause((neg1 ++ neg2).map(x => sub(x.asInstanceOf[T]).asInstanceOf[HOLFormula]), (pos1 ++ pos2).map(x => sub(x.asInstanceOf[T]).asInstanceOf[HOLFormula]))
     }
     private def removeAtIndex(ls: List[HOLFormula], i: Int) = ls.zipWithIndex.filter(x => x._2 != i).map(x => x._1)
-    def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == ResolutionType) {
-        val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution]
+    def unapply[T <: HOLExpression](proof: ResolutionProof[Clause]) = if (proof.rule == ResolutionType) {
+        val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution[T]]
         Some((pr.root, pr.uProof1, pr.uProof2, pr.literalIdLeft, pr.literalIdRight, pr.substitution))
       }
       else None
   }
 
   object Paramodulation {
-    def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], i: Int, j: Int, newLiteral: HOLFormula, sub: Substitution): ResolutionProof[Clause] = {
-      new BinaryAGraph[Clause](createClause(p1.root, p2.root, i, j, newLiteral, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution
+    def apply[T <: HOLExpression](p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], i: Int, j: Int, newLiteral: HOLFormula, sub: Substitution[T]): ResolutionProof[Clause] = {
+      new BinaryAGraph[Clause](createClause(p1.root, p2.root, i, j, newLiteral, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution[T]
       {def rule = ResolutionType; def literalIdLeft = i; def literalIdRight = j; def substitution = sub}
     }
     // compose two clauses on all elements except with the index given and apply sub on all terms
-    private def createClause(c1: Clause, c2: Clause, i: Int, j: Int, newLiteral: HOLFormula, sub: Substitution) = {
+    private def createClause[T <: HOLExpression](c1: Clause, c2: Clause, i: Int, j: Int, newLiteral: HOLFormula, sub: Substitution[T]) = {
       val (neg1,pos1) = if (i < c1.negative.size)
           (removeAtIndex(c1.negative, i), c1.positive)
         else (c1.negative, removeAtIndex(c1.positive, i - c1.negative.size))
       val (neg2,pos2) = if (j < c2.negative.size)
           (newLiteral::removeAtIndex(c2.negative, j), c2.positive)
         else (c2.negative, newLiteral::removeAtIndex(c2.positive, j - c2.negative.size))
-      Clause((neg1 ++ neg2).map(x => sub(x).asInstanceOf[HOLFormula]), (pos1 ++ pos2).map(x => sub(x).asInstanceOf[HOLFormula]))
+      Clause((neg1 ++ neg2).map(x => sub(x.asInstanceOf[T]).asInstanceOf[HOLFormula]), (pos1 ++ pos2).map(x => sub(x.asInstanceOf[T]).asInstanceOf[HOLFormula]))
     }
     private def removeAtIndex(ls: List[HOLFormula], i: Int) = ls.zipWithIndex.filter(x => x._2 != i).map(x => x._1)
-    def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == ResolutionType) {
-        val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution]
+    def unapply[T <: HOLExpression](proof: ResolutionProof[Clause]) = if (proof.rule == ResolutionType) {
+        val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution[T]]
         Some((pr.root, pr.uProof1, pr.uProof2, pr.literalIdLeft, pr.literalIdRight, pr.substitution))
       }
       else None
@@ -104,7 +104,7 @@ package robinson {
       // create a variant only if needed
       if (newCl != p.root)
         new UnaryAGraph[Clause](newCl, p)
-          with UnaryResolutionProof[Clause] with AppliedSubstitution {def rule = VariantType; def substitution = Substitution(varGen.varsMap.elements)}
+          with UnaryResolutionProof[Clause] with AppliedSubstitution[HOLExpression] {def rule = VariantType; def substitution = Substitution(varGen.varsMap.elements.asInstanceOf[Iterator[Tuple2[Var,HOLExpression]]])}
       else p
     }
     private def variantTerm(op: Var => Var)(t: HOLExpression): HOLExpression = t match {
@@ -113,8 +113,8 @@ package robinson {
       case App(a,b) => App(variantTerm(op)(a.asInstanceOf[HOLExpression]), variantTerm(op)(b.asInstanceOf[HOLExpression])).asInstanceOf[HOLExpression]
       case Abs(x,a) => Abs(x, variantTerm(op)(a.asInstanceOf[HOLExpression])).asInstanceOf[HOLExpression]
     }
-    def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == VariantType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution]
+    def unapply[T <: HOLExpression](proof: ResolutionProof[Clause]) = if (proof.rule == VariantType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution[T]]
         Some((pr.root, pr.uProof, pr.substitution))
       }
       else None
@@ -125,12 +125,12 @@ package robinson {
   // with substitution y -> x and x -> a. but as we combine the substitutions we cannot remove the substitution generated by the first step. This is not important as we apply
   // the same resolution step and therefore this substitution should be anyway generated.
   object Factor {
-    def apply(p: ResolutionProof[Clause], indicesToRemove: List[Int], sub: Substitution): ResolutionProof[Clause] = {
-      new UnaryAGraph[Clause]({val r = p.root.removeFormulasAtIndices(indicesToRemove); Clause(r.negative.map(x => sub(x).asInstanceOf[HOLFormula]), r.positive.map(x => sub(x).asInstanceOf[HOLFormula]))}, p)
-        with UnaryResolutionProof[Clause] with AppliedSubstitution {def rule = FactorType; def substitution = sub}
+    def apply[T <: HOLExpression](p: ResolutionProof[Clause], indicesToRemove: List[Int], sub: Substitution[T]): ResolutionProof[Clause] = {
+      new UnaryAGraph[Clause]({val r = p.root.removeFormulasAtIndices(indicesToRemove); Clause(r.negative.map(x => sub(x.asInstanceOf[T]).asInstanceOf[HOLFormula]), r.positive.map(x => sub(x.asInstanceOf[T]).asInstanceOf[HOLFormula]))}, p)
+        with UnaryResolutionProof[Clause] with AppliedSubstitution[T] {def rule = FactorType; def substitution = sub}
     }
-    def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == FactorType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution]
+    def unapply[T <: HOLExpression](proof: ResolutionProof[Clause]) = if (proof.rule == FactorType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution[T]]
         Some((pr.root, pr.uProof, pr.substitution))
       }
       else None
