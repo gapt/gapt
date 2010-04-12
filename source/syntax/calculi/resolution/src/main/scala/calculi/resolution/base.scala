@@ -12,7 +12,7 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.trees._
+import at.logic.utils.ds.acyclicGraphs._
 import scala.collection.immutable.Set
 import scala.collection.mutable.Map
 import at.logic.language.lambda.substitutions._
@@ -25,13 +25,19 @@ package base {
     def nextId = {id = id + 1; id}
   }
 
+  /* Resolution proofs are graphs by definition. TODO: enforce them to by acyclic
+   */
   trait ResolutionProof[V <: Sequent] extends Proof[V]
-  trait UnaryResolutionProof[V <: Sequent] extends UnaryTree[V] with ResolutionProof[V] with UnaryProof[V] {
+  trait UnaryResolutionProof[V <: Sequent] extends UnaryAGraph[V] with ResolutionProof[V] with UnaryProof[V] {
     override def uProof = t.asInstanceOf[ResolutionProof[V]]
   }
-  trait BinaryResolutionProof[V <: Sequent] extends BinaryTree[V] with ResolutionProof[V] with BinaryProof[V] {
+  trait BinaryResolutionProof[V <: Sequent] extends BinaryAGraph[V] with ResolutionProof[V] with BinaryProof[V] {
     override def uProof1 = t1.asInstanceOf[ResolutionProof[V]]
     override def uProof2 = t2.asInstanceOf[ResolutionProof[V]]
+  }
+
+  trait LiteralId {
+    def literalId: Int
   }
 
   trait LiteralIds {
@@ -39,6 +45,14 @@ package base {
     def literalIdRight: Int
   }
 
+  trait LiteralIdsSets {
+    def literalIdsLeft: List[Int]
+    def literalIdsRight: List[Int]
+  }
+
+  trait InstantiatedVariable {
+    def term: HOLExpression
+  }
   trait AppliedSubstitution {
     def substitution: Substitution
   }
@@ -50,7 +64,7 @@ package base {
 
   object InitialSequent {
     def apply[V <: Sequent](cl: V): ResolutionProof[V] = {
-      new LeafTree[V](cl) with ResolutionProof[V] {def rule = InitiaType}
+      new LeafAGraph[V](cl) with ResolutionProof[V] {def rule = InitiaType}
     }
     def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == InitiaType) Some((proof.root)) else None
     // should be optimized as it was done now just to save coding time

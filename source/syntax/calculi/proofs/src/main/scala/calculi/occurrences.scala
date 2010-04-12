@@ -9,7 +9,7 @@ package at.logic.calculi
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
-import at.logic.utils.labeling.labels._
+import at.logic.utils.labeling._
 import scala.collection.immutable.Set
 
 package occurrences {

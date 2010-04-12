@@ -7,12 +7,10 @@
 
 package at.logic.utils.labeling
 
-package labels {
-  trait Labeled[A] {
-    def label: A
-  }
-
-  abstract class LabelKey
-
-  trait MultiLabeled[A] extends Labeled[Map[LabelKey, A]]
+trait Labeled[A] {
+  def label: A
 }
+
+abstract class LabelKey
+
+trait MultiLabeled[A] extends Labeled[Map[LabelKey, A]]
