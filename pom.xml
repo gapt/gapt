@@ -17,9 +17,9 @@
     <module>transformations</module>
     <module>dependencies</module>
     <module>algorithms</module>
-    <!--<module>gui</module>
+    <!--<module>gui</module> -->
     <module>cli</module>
-    <module>ui</module>-->
+    <!--<module>ui</module>-->
     <module>parsing</module>
     <module>integration_tests</module>
   </modules>

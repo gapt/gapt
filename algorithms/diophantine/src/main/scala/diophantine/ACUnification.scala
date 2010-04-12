@@ -1,10 +1,11 @@
-package diophantine
+package at.logic.algorithms.diophantine
 
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.fol._
 import at.logic.algorithms.diophantine.{Vector, LankfordSolver}
 import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
-import substitutions.Substitution
+import at.logic.language.lambda.substitutions.Substitution
+
 import collection.mutable.HashMap
 
 object ACUnification {
@@ -49,7 +50,7 @@ object ACUnification {
               case FOLVar(v) =>
                 val ve = Substitution(term2.asInstanceOf[FOLVar],term1)
                 val newterms = rest map makesubstitute_pair(ve)
-                collect(substs, (s:Substitution) => unify(function, newterms, List(ve concatFOL s)))
+                collect(substs, (s:Substitution) => unify(function, newterms, List(ve ::: s)))
               // anything else is not unifiable
               case _ =>
                 Nil
@@ -69,7 +70,7 @@ object ACUnification {
                   val acunivs = ac_unify(function, term1, term2)
                   collect(acunivs, ((acu:Substitution) =>
                     collect(substs, ((subst:Substitution) =>
-                      unify(function, rest map makesubstitute_pair(subst), List((acu concatFOL subst))))
+                      unify(function, rest map makesubstitute_pair(subst), List((acu ::: subst))))
                    )))
                 } else  {
                   //non ac unification => decomposition
@@ -83,7 +84,7 @@ object ACUnification {
                 } else {
                   val ve = Substitution(term2.asInstanceOf[FOLVar],term1)
                   val newterms = rest map makesubstitute_pair(ve)
-                  collect(substs, (s:Substitution) => unify(function, newterms, List((ve concatFOL s))))
+                  collect(substs, (s:Substitution) => unify(function, newterms, List((ve ::: s))))
                 }
               // anything else is not unifiable
               case _ =>
@@ -99,7 +100,7 @@ object ACUnification {
                 } else {
                   val ve = Substitution(term1.asInstanceOf[FOLVar],term2)
                   val newterms = rest map makesubstitute_pair(ve)
-                  collect(substs,(s:Substitution) => unify(function, newterms, List((ve concatFOL s).asInstanceOf[Substitution])))
+                  collect(substs,(s:Substitution) => unify(function, newterms, List((ve ::: s).asInstanceOf[Substitution])))
                 }
 
               case _ =>
@@ -109,7 +110,7 @@ object ACUnification {
                 } else {
                   val ve = Substitution(term1.asInstanceOf[FOLVar],term2)
                   val newterms = rest map makesubstitute_pair(ve)
-                  collect(substs, (s:Substitution) => unify(function, newterms, List((ve concatFOL s).asInstanceOf[Substitution])))
+                  collect(substs, (s:Substitution) => unify(function, newterms, List((ve ::: s).asInstanceOf[Substitution])))
                 }
           }
 
@@ -222,7 +223,7 @@ object ACUnification {
         //println("finding unifier for: "+zc)
         val us = unify(function, zc, List(Substitution()) )
         for (unifier <- us) {
-            val uterm : List[FOLTerm] = ts1 map ((x:FOLTerm)=>unifier.applyFOL(x).asInstanceOf[FOLTerm])
+            val uterm : List[FOLTerm] = ts1 map ((x:FOLTerm)=>unifier.apply(x).asInstanceOf[FOLTerm])
             //println("yay found one:" + uterm)
             //unifiers = subst :: unifiers
             unifiers = unifier :: unifiers
@@ -238,12 +239,12 @@ object ACUnification {
       for (u<-unifiers) {
         debug(1,""+u)
         //val splitted : Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]] = (u.mapFOL.partition(term_context contains _._1)).asInstanceOf[Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]]]
-        val umap = (u.mapFOL.elements.toList).asInstanceOf[List[(FOLVar,FOLTerm)]]
+        val umap = (u.map.elements.toList).asInstanceOf[List[(FOLVar,FOLTerm)]]
         
         val in_term = umap.filter((x:(FOLVar,FOLTerm)) => (term_context contains x._1))
         println(in_term)
         val not_in_term = Substitution(umap.filter((x:(FOLVar,FOLTerm)) => !(term_context contains x._1)))
-        val in_term_reduced = in_term map ((x:(FOLVar,FOLTerm))=>(x._1,not_in_term.applyFOL(x._2)))
+        val in_term_reduced = in_term map ((x:(FOLVar,FOLTerm))=>(x._1,not_in_term.apply(x._2)))
         //reduced_unifiers = (Substitution(not_in_term).composeFOL(Substitution(in_term))) :: reduced_unifiers
         reduced_unifiers = Substitution(in_term_reduced) :: reduced_unifiers
       }
@@ -436,7 +437,7 @@ object ACUnification {
     }
   }
 
-  def substitute_pair(subst : Substitution, x : (FOLTerm,FOLTerm)) : (FOLTerm,FOLTerm) = (subst.applyFOL(x._1).asInstanceOf[FOLTerm], subst.applyFOL(x._2).asInstanceOf[FOLTerm])
+  def substitute_pair(subst : Substitution, x : (FOLTerm,FOLTerm)) : (FOLTerm,FOLTerm) = (subst.apply(x._1).asInstanceOf[FOLTerm], subst.apply(x._2).asInstanceOf[FOLTerm])
   def makesubstitute_pair(subst:Substitution) : ( ((FOLTerm,FOLTerm)) => (FOLTerm, FOLTerm)) = substitute_pair(subst,_)
 
   def collect(substitutions : List[Substitution], fun : (Substitution=>List[Substitution])) : List[Substitution] =
