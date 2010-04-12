@@ -89,7 +89,7 @@ package base {
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
-   trait LKProof extends Proof[SequentOccurrence]{
+   trait LKProof extends Proof[SequentOccurrence] with Tree[SequentOccurrence] {
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
       (root.antecedent ++ root.succedent).filter(x => x.ancestors.contains(fo)).toList match {
         case x::Nil => Some(x)

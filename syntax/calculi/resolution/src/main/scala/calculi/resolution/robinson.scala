@@ -11,7 +11,7 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.trees._
+import at.logic.utils.ds.acyclicGraphs._
 import scala.collection.immutable.Set
 import scala.collection.mutable.Map
 import at.logic.language.lambda.substitutions._
@@ -51,7 +51,7 @@ package robinson {
   // left side is always resolved on positive literal and right on negative
   object Resolution {
     def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], i: Int, j: Int, sub: Substitution): ResolutionProof[Clause] = {
-      new BinaryTree[Clause](createClause(p1.root.asInstanceOf[Clause], p2.root.asInstanceOf[Clause], i, j, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution
+      new BinaryAGraph[Clause](createClause(p1.root.asInstanceOf[Clause], p2.root.asInstanceOf[Clause], i, j, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution
       {def rule = ResolutionType; def literalIdLeft = i; def literalIdRight = j; def substitution = sub}
     }
     // compose two clauses on all elements except with the index given and apply sub on all terms
@@ -74,7 +74,7 @@ package robinson {
 
   object Paramodulation {
     def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], i: Int, j: Int, newLiteral: HOLFormula, sub: Substitution): ResolutionProof[Clause] = {
-      new BinaryTree[Clause](createClause(p1.root, p2.root, i, j, newLiteral, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution
+      new BinaryAGraph[Clause](createClause(p1.root, p2.root, i, j, newLiteral, sub), p1, p2) with BinaryResolutionProof[Clause] with LiteralIds with AppliedSubstitution
       {def rule = ResolutionType; def literalIdLeft = i; def literalIdRight = j; def substitution = sub}
     }
     // compose two clauses on all elements except with the index given and apply sub on all terms
@@ -103,7 +103,7 @@ package robinson {
           p.root.positive.map(variantTerm(varGen)).asInstanceOf[List[HOLFormula]])
       // create a variant only if needed
       if (newCl != p.root)
-        new UnaryTree[Clause](newCl, p)
+        new UnaryAGraph[Clause](newCl, p)
           with UnaryResolutionProof[Clause] with AppliedSubstitution {def rule = VariantType; def substitution = Substitution(varGen.varsMap.elements)}
       else p
     }
@@ -126,7 +126,7 @@ package robinson {
   // the same resolution step and therefore this substitution should be anyway generated.
   object Factor {
     def apply(p: ResolutionProof[Clause], indicesToRemove: List[Int], sub: Substitution): ResolutionProof[Clause] = {
-      new UnaryTree[Clause]({val r = p.root.removeFormulasAtIndices(indicesToRemove); Clause(r.negative.map(x => sub(x).asInstanceOf[HOLFormula]), r.positive.map(x => sub(x).asInstanceOf[HOLFormula]))}, p)
+      new UnaryAGraph[Clause]({val r = p.root.removeFormulasAtIndices(indicesToRemove); Clause(r.negative.map(x => sub(x).asInstanceOf[HOLFormula]), r.positive.map(x => sub(x).asInstanceOf[HOLFormula]))}, p)
         with UnaryResolutionProof[Clause] with AppliedSubstitution {def rule = FactorType; def substitution = sub}
     }
     def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == FactorType) {
