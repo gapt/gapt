@@ -1,19 +1,19 @@
-package diophantine
+package at.logic.algorithms.diophantine
 
 import _root_.at.logic.language.fol.FOLTerm
-import _root_.at.logic.language.fol.substitutions.Substitution
 import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
 import org.specs.SpecificationWithJUnit
 import at.logic.algorithms.diophantine.Vector
+import at.logic.language.lambda.substitutions.Substitution
 
 class ACUnificationTest extends SpecificationWithJUnit {
   val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
   val f = new ConstantStringSymbol("f")
   def checkResult(subst:Substitution, t1:FOLTerm, t2:FOLTerm) : Boolean = {
-    val term1 = subst.applyFOL(t1)
-    val term2 = subst.applyFOL(t2)
+    val term1 = subst.apply(t1)
+    val term2 = subst.apply(t2)
     println("")
     println("problem      : "+t1+" =? "+t2)
     println("substitution : "+subst)
@@ -39,8 +39,6 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
         for ((t,r) <- terms zip results) {
           val list = ACUnification nestedFunctions_toList (f,t)
-          /*println(list)
-            println(r)*/
           list must beEqual(r)
         }
       }
@@ -71,12 +69,12 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
       (s14, s24,s34) match {
         case (Some(List(r14)), Some(List(r24)),Some(List(r34))) =>
-          val tl14 = r14.applyFOL(term1)
-          val tr14 = r14.applyFOL(term4)
-          val tl24 = r24.applyFOL(term2)
-          val tr24 = r24.applyFOL(term4)
-          val tl34 = r34.applyFOL(term3)
-          val tr34 = r34.applyFOL(term4)
+          val tl14 = r14.apply(term1)
+          val tr14 = r14.apply(term4)
+          val tl24 = r24.apply(term2)
+          val tr24 = r24.apply(term4)
+          val tl34 = r34.apply(term3)
+          val tr34 = r34.apply(term4)
 
           println(" "+tl14+" "+tr14)
           println(" "+tl24+" "+tr24)
@@ -115,6 +113,19 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
         case None => true must beEqual (false)
       }
+    }
+
+    "unify f(x,a) = f(y,b)" in {
+      val term1 = parse("f(x,a)")
+      val term2 = parse("f(y,b)")
+
+      val mgu = ACUnification unify(f,term1,term2)
+      mgu match {
+        case Some(substs) => true must beEqual (true)
+        for (s<-substs) checkResult(s,term1,term2)
+        case None => true must beEqual (false)
+      }
+      ()
     }
 
     /* */
