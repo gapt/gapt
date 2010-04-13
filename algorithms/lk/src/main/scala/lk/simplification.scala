@@ -36,13 +36,13 @@ package simplification {
   }
   
   object subsumedClausesRemovalHOL {
-    val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm {val matchAlg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm}
+    val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm[HOLExpression] {val matchAlg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm}
     def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
     private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x, el))) ls else (el::ls)
     private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el, x))
   }
   object subsumedClausesRemoval {
-    val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm {val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm}
+    val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm[at.logic.language.fol.FOLExpression] {val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm}
     def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
     private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x, el))) ls else (el::ls)
     private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el, x))
