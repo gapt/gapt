@@ -11,7 +11,6 @@ import org.specs._
 import org.specs.runner._
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.language.fol.substitutions._
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 

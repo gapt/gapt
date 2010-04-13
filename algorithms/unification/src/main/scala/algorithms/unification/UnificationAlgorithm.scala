@@ -10,6 +10,6 @@ package at.logic.algorithms.unification
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
 
-trait UnificationAlgorithm {
-  def unify(term1: LambdaExpression, term2: LambdaExpression): Option[Substitution]
+trait UnificationAlgorithm[Expression <: LambdaExpression] {
+  def unify(term1: Expression, term2: Expression): Option[Substitution[Expression]]
 }

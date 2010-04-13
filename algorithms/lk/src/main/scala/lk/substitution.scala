@@ -9,13 +9,14 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
-import at.logic.language.hol.substitutions.Substitution
 import at.logic.language.hol._
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 
 object applySubstitution {
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
   def handleWeakening( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
-                       subst: Substitution,
+                       subst: Substitution[HOLExpression],
                        old_parent: LKProof,
                        old_proof: LKProof,
                        constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
@@ -62,7 +63,7 @@ object applySubstitution {
   }
 
   def handleRule( proof: LKProof, new_parents: List[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])],
-                  subst: Substitution ) : (LKProof, Map[FormulaOccurrence, FormulaOccurrence]) = proof match {
+                  subst: Substitution[HOLExpression] ) : (LKProof, Map[FormulaOccurrence, FormulaOccurrence]) = proof match {
     case Axiom(so) => {
       val ant_occs = so.antecedent.toList
       val succ_occs = so.succedent.toList
@@ -163,12 +164,12 @@ object applySubstitution {
         subst( m.formula ).asInstanceOf[HOLFormula] )
     case ForallLeftRule( p, s, a, m, t ) => {
       val new_parent = new_parents.first
-      val new_proof = ForallLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst.applyHOL( t ) )
+      val new_proof = ForallLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst.apply( t ) )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
   }
     case ExistsRightRule( p, s, a, m, t ) => {
       val new_parent = new_parents.first
-      val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst.applyHOL( t ) )
+      val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst.apply( t ) )
       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
     case ExistsLeftRule( p, s, a, m, v ) => {
@@ -185,7 +186,7 @@ object applySubstitution {
     }
   }
 
-  def apply( proof: LKProof, subst: Substitution ) : (LKProof, Map[FormulaOccurrence, FormulaOccurrence]) =
+  def apply( proof: LKProof, subst: Substitution[HOLExpression] ) : (LKProof, Map[FormulaOccurrence, FormulaOccurrence]) =
     proof match {
       case Axiom(_) => handleRule( proof, Nil, subst )
       case UnaryLKProof(_, p, _, _, _) => handleRule( proof, apply( p, subst )::Nil, subst )

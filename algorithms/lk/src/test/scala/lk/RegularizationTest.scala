@@ -9,11 +9,9 @@ import org.specs.runner._
 import org.specs.matcher.Matcher
 
 import at.logic.language.hol._
-import at.logic.language.hol._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.propositionalRules._
-import at.logic.language.hol.substitutions.Substitution
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._

@@ -8,10 +8,10 @@
 package at.logic.algorithms.unification.hol
 
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.hol.substitutions._
 import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.substitutions.Substitution
 
 object rigidTerm
 {
@@ -27,20 +27,19 @@ object rigidTerm
   }
 }
 
-object HuetAlgorithm extends UnificationAlgorithm
+object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
 {
-    def unify(term1: LambdaExpression, term2: LambdaExpression) = {
-      require(term1.isInstanceOf[HOLExpression] && term2.isInstanceOf[HOLExpression])
-      unifySetOfTuples(Tuple2(term1.asInstanceOf[HOLExpression],term2.asInstanceOf[HOLExpression])::Nil,Nil) match {
-        case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[HOLVar],x._2))))
+    def unify(term1: HOLExpression, term2: HOLExpression) : Option[Substitution[HOLExpression]] = {
+      unifySetOfTuples(List[(HOLExpression,HOLExpression)](Tuple2(term1.asInstanceOf[HOLExpression],term2.asInstanceOf[HOLExpression])),Nil) match {
+        case Some((Nil,ls)) => Some(Substitution[HOLExpression](ls.map(x => (x._1.asInstanceOf[HOLVar],x._2))))
         case _ => None
       }
     }
     
-    def applySubToListOfPairs(l : List[Tuple2[HOLExpression, HOLExpression]], s : Substitution) : List[Tuple2[HOLExpression, HOLExpression]] =
+    def applySubToListOfPairs(l : List[Tuple2[HOLExpression, HOLExpression]], s : Substitution[HOLExpression]) : List[Tuple2[HOLExpression, HOLExpression]] =
     {
     //  l.foldLeft(Nil)((Tuple2(x,v))=> (Tuple2(s.applyFOL(x),s.applyFOL(v))))
-      return l.map((a) => (s.applyHOL(a._1), s.applyHOL(a._2)))
+      return l.map((a) => (s.apply(a._1), s.apply(a._2)))
     }
 
     def unifySetOfTuples(s1: List[Tuple2[HOLExpression, HOLExpression]], s2 : List[Tuple2[HOLExpression,HOLExpression]]) : Option[(List[Tuple2[HOLExpression,HOLExpression]], List[Tuple2[HOLExpression,HOLExpression]])] = (s1,s2) match
@@ -60,7 +59,7 @@ object HuetAlgorithm extends UnificationAlgorithm
         case ((AbsN(varList1, AppN(funcVar: HOLVar, args1)), v @ AbsN(varList2, exp))::s, s2)
           if varList1.size == varList2.size && exp.exptype == funcVar.exptype =>
           {
-            val sigma = Substitution(funcVar, v)
+            val sigma = Substitution[HOLExpression](funcVar, v)
             unifySetOfTuples((funcVar,v)::applySubToListOfPairs(s,sigma), (funcVar,v)::s2)
           }
 

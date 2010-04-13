@@ -13,10 +13,10 @@ import at.logic.language.hol._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.propositionalRules._
-import at.logic.language.hol.substitutions.Substitution
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.substitutions.Substitution
 
 class SubstitutionTest extends SpecificationWithJUnit {
   "Substitutions" should {
@@ -30,7 +30,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val a = HOLConst( new ConstantStringSymbol( "a" ), i )
       val f = HOLConst( new ConstantStringSymbol( "f" ), i -> i )
       val fa = HOLApp( f, a )
-      val subst = Substitution( x, fa )
+      val subst = Substitution[HOLExpression]( x, fa )
       val p_s = applySubstitution( proof, subst )
       val Pfa = Atom( "P", fa::Nil )
       val new_seq = Sequent( Pfa::Nil, Pfa::Nil )
