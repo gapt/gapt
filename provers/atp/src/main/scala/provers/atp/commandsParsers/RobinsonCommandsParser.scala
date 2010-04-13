@@ -124,10 +124,10 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
       val id1 = id1Pos - pr1.root.negative.size // computes the id of the positive resolvent id (the negative is just id2)
       val cl1 = pr1.root.positive // the set of all positive literals
       val cl1Ind = for (i <- cl1.indices; if i != id1) yield i // the set of all indices in the above set except the resolvent id
-      val factors1 = computeFactors(cl1, cl1Ind, cl1(id1), sub, Nil) // all the factors in the positive literals of the first clause
+      val factors1 = computeFactors(cl1, cl1Ind, cl1(id1), sub.asInstanceOf[Substitution[LambdaExpression]], Nil) // all the factors in the positive literals of the first clause
       val cl2 = pr2.root.negative // the set of all negative literals of the second clause
       val cl2Ind = for (i <- cl2.indices; if i != id2) yield i // the set of their indices except the resolvent id
-      val factors2 = computeFactors(cl2, cl2Ind, cl2(id2), sub, Nil) // all their factors
+      val factors2 = computeFactors(cl2, cl2Ind, cl2(id2), sub.asInstanceOf[Substitution[LambdaExpression]], Nil) // all their factors
       AppendCommandsCom((r::commands) ++
         (for {
           (ls1,sub1) <- (List(), Substitution())::factors1
@@ -147,15 +147,15 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
 
   // computes factors, calling recursively to smaller sets
   // it is assumed in each call that the sub from the previous round is already applied to the formulas
-  def computeFactors(lits: List[Formula], indices: List[Int], form: Formula, sub: Substitution, usedIndices: List[Int]): List[Tuple2[List[Int], Substitution]] = indices match {
+  def computeFactors[T <: LambdaExpression](lits: List[T], indices: List[Int], form: T, sub: Substitution[T], usedIndices: List[Int]): List[Tuple2[List[Int], Substitution[T]]] = indices match {
     case Nil => Nil
-    case x::Nil => unifAlg.unify(sub(lits(x)), sub(form)) match {
+    case x::Nil => unifAlg.unify(sub(lits(x).asInstanceOf[T]), sub(form.asInstanceOf[T])) match {
       case None => Nil
-      case Some(sub2) => (x::usedIndices, (sub2 compose sub))::Nil
+      case Some(sub2: Substitution[T]) => (x::usedIndices, (sub2 compose sub))::Nil
     }
     case x::ls => {
-        val facts: List[Tuple2[List[Int], Substitution]] = computeFactors(lits, ls, form, sub, usedIndices)
-        facts.foldLeft(Nil: List[Tuple2[List[Int], Substitution]])((ls,a) => ls
+        val facts: List[Tuple2[List[Int], Substitution[T]]] = computeFactors(lits, ls, form, sub, usedIndices)
+        facts.foldLeft(Nil: List[Tuple2[List[Int], Substitution[T]]])((ls,a) => ls
             ++ computeFactors(lits, x::Nil, form, a._2, a._1)) ++ facts ++ computeFactors(lits, x::Nil, form, sub, usedIndices)
     }
   }
