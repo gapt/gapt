@@ -39,10 +39,10 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     val b = HOLConst(new ConstantStringSymbol("b"), i)
     val Pa = App(P,a);
     val x = HOLVar(new VariableStringSymbol("x"), i)
-    val Pax = App(Pa,x)   
+    val Pax = App(Pa,x).asInstanceOf[HOLExpression]
     val f = HOLConst(new ConstantStringSymbol("f"), i->i)
     val fb= App(f,b)
-    val Pafb = App(Pa,fb)
+    val Pafb = App(Pa,fb).asInstanceOf[HOLExpression]
     val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pax,Pafb,Pafb.getFreeAndBoundVariables._1.toList)
     val subst1 = Substitution(x,fb)
 //    println("\n\n"+subst.toString)
@@ -59,11 +59,11 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     val z = HOLVar(new VariableStringSymbol("z"), i)
     val Pz = App(P,z)
     
-    val Pzx = App(Pz,x)
+    val Pzx = App(Pz,x).asInstanceOf[HOLExpression]
     val f = HOLConst(new ConstantStringSymbol("f"), i->i)
     val fb= App(f,b)
-    val Pfb = App(P,fb)
-    val Pfbfb = App(Pfb,fb)
+    val Pfb = App(P,fb).asInstanceOf[HOLExpression]
+    val Pfbfb = App(Pfb,fb).asInstanceOf[HOLExpression]
     val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbfb,Pfbfb.getFreeAndBoundVariables._1.toList)
     val subst1 = Substitution(x,fb):::Substitution(z,fb)    
 //    println("\n\n"+Pzx.toString1)
@@ -79,11 +79,11 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     val x = HOLVar(new VariableStringSymbol("x"), i)
     val z = HOLVar(new VariableStringSymbol("z"), i)
     val Pz = App(P,z)
-    val Pzx = App(Pz,x)
+    val Pzx = App(Pz,x).asInstanceOf[HOLExpression]
     val f = HOLConst(new ConstantStringSymbol("f"), i->i)
-    val fb= HOLApp(f,b)//App(f,b)
-    val Pfb = App(P,fb)
-    val Pfbz = App(Pfb,z)
+    val fb= App(f,b).asInstanceOf[HOLExpression]
+    val Pfb = App(P,fb).asInstanceOf[HOLExpression]
+    val Pfbz = App(Pfb,z).asInstanceOf[HOLExpression]
     val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbz,Pfbz.getFreeAndBoundVariables._1.toList)
     val subst1 = Substitution[HOLExpression](z,fb):::Substitution[HOLExpression](x,z)
     println("\n\n"+Pzx.toString1)
