@@ -12,14 +12,15 @@ import at.logic.language.lambda.substitutions._
 //import at.logic.language.fol.substitutions._
 import at.logic.language.fol._
 
+
 object FOLMatchingAlgorithm extends MatchingAlgorithm {
   //def matchTerm(term: LambdaExpression, posInstance: LambdaExpression) = matchTermModulo(term, posInstance, getVars(posInstance.asInstanceOf[FOLExpression]))
-  
+
   def matchTerm(term1: LambdaExpression, term2: LambdaExpression, restrictedDomain: List[Var]) = matchSetOfTuples(restrictedDomain, Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
-      case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
+      case Some((Nil,ls)) => Some(Substitution[LambdaExpression](ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
       case _ => None
     }
-  protected[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution(m) {
+  protected[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, LambdaExpression]) extends Substitution[LambdaExpression](m) {
 //    override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
 //    protected def applyWithChangeDBIndicesModuloVarList(moduloVarList: List[Var], expression: LambdaExpression): LambdaExpression = expression match {
 
@@ -35,20 +36,21 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm {
     }
   }
   object MatchingSubstitution {
-    def apply(moduloVarList: List[Var]): Substitution = new MatchingSubstitution(moduloVarList, new scala.collection.immutable.EmptyMap)
-    def apply(moduloVarList: List[Var], v: Var, t: LambdaExpression): Substitution = new MatchingSubstitution(moduloVarList, Substitution(v,t).map)
+
+    def apply(moduloVarList: List[Var]): Substitution[LambdaExpression] = new MatchingSubstitution(moduloVarList, new scala.collection.immutable.EmptyMap)
+    def apply(moduloVarList: List[Var], v: Var, t: LambdaExpression): Substitution[LambdaExpression] = new MatchingSubstitution(moduloVarList, Substitution[LambdaExpression](v,t).map)
 //    def unapply(moduloVarList: List[Var],  m: scala.collection.immutable.Map[Var, LambdaExpression])
   }
 
-def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Substitution) : List[Tuple2[FOLExpression, FOLExpression]] = {
+def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Substitution[LambdaExpression]) : List[Tuple2[FOLExpression, FOLExpression]] = {
   //  l.foldLeft(Nil)((Tuple2(x,v))=> (Tuple2(s.applyFOL(x),s.applyFOL(v))))
   return l.map(a => (s.apply(a._1).asInstanceOf[FOLExpression], s.apply(a._2).asInstanceOf[FOLExpression]))
   }
 
-def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : Substitution = {
-  var sub = Substitution()
+def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : Substitution[LambdaExpression] = {
+  var sub = Substitution[LambdaExpression]()
   for(x <- l) {
-    sub = sub:::Substitution(x._1.asInstanceOf[FOLVar],x._2)
+    sub = sub:::Substitution[LambdaExpression](x._1.asInstanceOf[FOLVar],x._2)
   }
   return sub
 }

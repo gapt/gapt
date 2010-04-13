@@ -21,10 +21,8 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import logicSymbols.ImplicitConverters._
 import at.logic.language.lambda.types.Definitions._
-import at.logic.language.hol.Definitions
 
 import at.logic.language.lambda.symbols.ImplicitConverters._
-import at.logic.language.hol.Definitions
 
 
 
@@ -46,10 +44,10 @@ class HuetAlgorithmTest extends SpecificationWithJUnit {
     val f = HOLConst(new ConstantStringSymbol("f"), i->i)
     val F = HOLVar("F", i->i)
     
-    val fa = App(f,a)
-    val Fa = App(F,a)
-    val fFa = App(f,Fa)
-    val Ffa = App(F,fa)
+    val fa = HOLApp(f,a)
+    val Fa = HOLApp(F,a)
+    val fFa = HOLApp(f,Fa)
+    val Ffa = HOLApp(F,fa)
 
     // print("\n"+FOLUnificationAlgorithm.applySubToListOfPairs((new MyParser("x").getTerm.asInstanceOf[FOLExpression],new MyParser("a").getTerm.asInstanceOf[FOLExpression])::(new MyParser("x").getTerm.asInstanceOf[FOLExpression],new MyParser("b").getTerm.asInstanceOf[FOLExpression])::Nil,Substitution(new MyParser("x").getTerm.asInstanceOf[FOLVar],new MyParser("c").getTerm.asInstanceOf[FOLExpression])).toString+"\n\n\n")
 

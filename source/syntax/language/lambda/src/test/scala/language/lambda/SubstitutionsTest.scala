@@ -108,8 +108,9 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
       val e = App(f, x)
       val sigma: Substitution[LambdaExpression] = (v,e)
-      val sigma1 = sigma::(Substitution())
-      val sigma2 = sigma::sigma::(Substitution())
+//      val sigma1: Substitution[LambdaExpression] = sigma::(Substitution().asInstanceOf[Substitution[LambdaExpression]])
+      val sigma1: Substitution[LambdaExpression] = sigma::(Substitution[LambdaExpression]())
+      val sigma2 = sigma::sigma::(Substitution[LambdaExpression]())
       val sigma3 = sigma1:::sigma1
       ( sigma2 ) must beEqual ( sigma3 )
     }

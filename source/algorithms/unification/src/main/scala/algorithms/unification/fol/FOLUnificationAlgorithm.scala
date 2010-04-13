@@ -8,22 +8,21 @@
 package at.logic.algorithms.unification.fol
 
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.fol.substitutions._
 import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.fol._
+import at.logic.language.lambda.substitutions.Substitution
 
-object FOLUnificationAlgorithm extends UnificationAlgorithm {
-  def unify(term1: LambdaExpression, term2: LambdaExpression) = {
-    require(term1.isInstanceOf[FOLExpression] && term2.isInstanceOf[FOLExpression])
+object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
+  def unify(term1: FOLExpression, term2: FOLExpression) = {
     unifySetOfTuples(Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
-      case Some((Nil,ls)) => Some(Substitution(ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
+      case Some((Nil,ls)) => Some(Substitution[FOLExpression](ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
       case _ => None
     }
   }
 
-  def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Substitution) : List[Tuple2[FOLExpression, FOLExpression]] = {
+  def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Substitution[FOLExpression]) : List[Tuple2[FOLExpression, FOLExpression]] = {
   //  l.foldLeft(Nil)((Tuple2(x,v))=> (Tuple2(s.applyFOL(x),s.applyFOL(v))))
-    return l.map(a => (s.applyFOL(a._1), s.applyFOL(a._2)))
+    return l.map(a => (s.apply(a._1), s.apply(a._2)))
   }
 
   def isSolvedVarIn(x : FOLVar, l : List[Tuple2[FOLExpression, FOLExpression]]) : Boolean = {
@@ -56,11 +55,11 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
     case (((x : FOLVar,v)::s), s2) if !getVars(v).contains(x) =>
       //  x does not occur in v && x is not in solved form =>
    //   print(applySubToListOfPairs(s,Substitution(x,v)).toString+"\n")
-        unifySetOfTuples(applySubToListOfPairs(s,Substitution(x,v)), (x,v)::applySubToListOfPairs(s2,Substitution(x,v)))
+        unifySetOfTuples(applySubToListOfPairs(s,Substitution[FOLExpression](x,v)), (x,v)::applySubToListOfPairs(s2,Substitution[FOLExpression](x,v)))
 
 
     case (((v, x : FOLVar)::s), s2) if !getVars(v).contains(x) =>
-        unifySetOfTuples(applySubToListOfPairs(s,Substitution(x,v)), (x,v)::applySubToListOfPairs(s2,Substitution(x,v)))
+        unifySetOfTuples(applySubToListOfPairs(s,Substitution[FOLExpression](x,v)), (x,v)::applySubToListOfPairs(s2,Substitution[FOLExpression](x,v)))
     case (Nil, s2) => Some((Nil, s2))
     case _ => None
   }

@@ -12,8 +12,9 @@ import at.logic.provers.atp.commandsParsers.CommandsParser
 import at.logic.language.hol.HOLExpression
 import at.logic.calculi.lk.base._
 package commands {
+import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 
-  object theEmptyClause{
+object theEmptyClause{
     def apply(): ResolutionProof[Sequent] = InitialSequent(Sequent(Nil,Nil))
   }
   
@@ -41,7 +42,7 @@ package commands {
   case class AppendCommandsWithLastCom(last:Command, ls: Seq[Command]) extends Com
   case class ApplyOnLiteralPositionCom[V <: Sequent](pos: Tuple2[Int,Int], clauses: Tuple2[ResolutionProof[V], ResolutionProof[V]]) extends Com
   case class ApplyOnSecondSubtermCom[V <: Sequent](pos: Tuple2[Int,Int], clauses: Tuple2[ResolutionProof[V], ResolutionProof[V]], posi: List[Int], subterm: HOLExpression) extends Com
-  case class SetUnificationAlgorithmCom(alg: at.logic.algorithms.unification.UnificationAlgorithm) extends Com
+  case class SetUnificationAlgorithmCom[Expression<:LambdaExpression](alg: at.logic.algorithms.unification.UnificationAlgorithm[Expression]) extends Com
   case object IfNotTautologyCom extends Com
   case object IfFirstLiteralIsEqualityCom extends Com
   case class AndCom(c1: List[Com], c2: List[Com]) extends Com

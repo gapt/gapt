@@ -25,8 +25,8 @@ object ACUnification {
 
   def getFreshVariable() : VariableSymbolA = { maxindex += 1; VariableStringSymbol(constant_prefix+maxindex) }
 
-  def unify(function: ConstantSymbolA, term1 : FOLTerm, term2 : FOLTerm) : Option[List[Substitution]] = {
-    val mgus = unify(function, List((term1, term2)), List(Substitution()) )
+  def unify(function: ConstantSymbolA, term1 : FOLTerm, term2 : FOLTerm) : Option[List[Substitution[FOLExpression]]] = {
+    val mgus = unify(function, List((term1, term2)), List(Substitution[FOLExpression]()) )
     mgus match {
       case Nil => debug(1,"Found no unifier!"); None;
       case _   => for (mgu<-mgus) debug(1,"found unifier: "+mgu); Some(mgus)}
@@ -34,7 +34,7 @@ object ACUnification {
 
   def unify(function: ConstantSymbolA,
             terms : List[(FOLTerm,FOLTerm)],
-            substs : List[Substitution]) : List[Substitution] = {
+            substs : List[Substitution[FOLExpression]]) : List[Substitution[FOLExpression]] = {
     debug(3,"unifying "+terms+" substitutions are: "+substs)
     terms match {
       case (term1,term2) :: rest =>
@@ -44,13 +44,13 @@ object ACUnification {
             term2 match {
                // if the two constants are equal, the substitution is not changed, else not unifiable 
               case FOLConst(c2) =>
-                if (c1==c2) collect(substs, ((s:Substitution) => unify(function, rest, List(s))))
+                if (c1==c2) collect(substs, ((s:Substitution[FOLExpression]) => unify(function, rest, List(s))))
                 else Nil
               // second one is a var => flip & variable elimination
               case FOLVar(v) =>
-                val ve = Substitution(term2.asInstanceOf[FOLVar],term1)
+                val ve = Substitution[FOLExpression](term2.asInstanceOf[FOLVar],term1)
                 val newterms = rest map makesubstitute_pair(ve)
-                collect(substs, (s:Substitution) => unify(function, newterms, List(ve ::: s)))
+                collect(substs, (s:Substitution[FOLExpression]) => unify(function, newterms, List(ve ::: s)))
               // anything else is not unifiable
               case _ =>
                 Nil
@@ -68,13 +68,13 @@ object ACUnification {
                 } else if (f1 == function) {
                   //ac unification
                   val acunivs = ac_unify(function, term1, term2)
-                  collect(acunivs, ((acu:Substitution) =>
-                    collect(substs, ((subst:Substitution) =>
+                  collect(acunivs, ((acu:Substitution[FOLExpression]) =>
+                    collect(substs, ((subst:Substitution[FOLExpression]) =>
                       unify(function, rest map makesubstitute_pair(subst), List((acu ::: subst))))
                    )))
                 } else  {
                   //non ac unification => decomposition
-                  collect(substs , (s:Substitution) => unify(function, (args1 zip args2):::rest, List(s)))
+                  collect(substs , (s:Substitution[FOLExpression]) => unify(function, (args1 zip args2):::rest, List(s)))
                 }
               // variable as second term: flip & variable elimination
               case FOLVar(v) =>
@@ -82,9 +82,9 @@ object ACUnification {
                 if (occurs(term2.asInstanceOf[FOLVar], term1)) {
                   Nil
                 } else {
-                  val ve = Substitution(term2.asInstanceOf[FOLVar],term1)
+                  val ve = Substitution[FOLExpression](term2.asInstanceOf[FOLVar],term1)
                   val newterms = rest map makesubstitute_pair(ve)
-                  collect(substs, (s:Substitution) => unify(function, newterms, List((ve ::: s))))
+                  collect(substs, (s:Substitution[FOLExpression]) => unify(function, newterms, List((ve ::: s))))
                 }
               // anything else is not unifiable
               case _ =>
@@ -96,11 +96,11 @@ object ACUnification {
             term2 match {
               case FOLVar(w) =>
                 if (v==w) {
-                  collect(substs,(s:Substitution) => unify(function, rest, List(s)))
+                  collect(substs,(s:Substitution[FOLExpression]) => unify(function, rest, List(s)))
                 } else {
-                  val ve = Substitution(term1.asInstanceOf[FOLVar],term2)
+                  val ve = Substitution[FOLExpression](term1.asInstanceOf[FOLVar],term2)
                   val newterms = rest map makesubstitute_pair(ve)
-                  collect(substs,(s:Substitution) => unify(function, newterms, List((ve ::: s).asInstanceOf[Substitution])))
+                  collect(substs,(s:Substitution[FOLExpression]) => unify(function, newterms, List((ve ::: s).asInstanceOf[Substitution[FOLExpression]])))
                 }
 
               case _ =>
@@ -108,9 +108,9 @@ object ACUnification {
                 if (occurs(term1.asInstanceOf[FOLVar], term2)) {
                   Nil
                 } else {
-                  val ve = Substitution(term1.asInstanceOf[FOLVar],term2)
+                  val ve = Substitution[FOLExpression](term1.asInstanceOf[FOLVar],term2)
                   val newterms = rest map makesubstitute_pair(ve)
-                  collect(substs, (s:Substitution) => unify(function, newterms, List((ve ::: s).asInstanceOf[Substitution])))
+                  collect(substs, (s:Substitution[FOLExpression]) => unify(function, newterms, List[Substitution[FOLExpression]]((ve ::: s))))
                 }
           }
 
@@ -125,7 +125,7 @@ object ACUnification {
   }
   
 
-  def ac_unify(function: ConstantSymbolA, term1 : FOLTerm, term2 : FOLTerm) : List[Substitution] = {
+  def ac_unify(function: ConstantSymbolA, term1 : FOLTerm, term2 : FOLTerm) : List[Substitution[FOLExpression]] = {
     val counted_symbols = countSymbols(nestedFunctions_toList(function,term1), nestedFunctions_toList(function,term2))
     val (ts1,count1) = List unzip counted_symbols
     //println("term symbols: "+ts1)
@@ -217,11 +217,11 @@ object ACUnification {
       }
 
       var unified_terms : List[List[FOLTerm]] = Nil
-      var unifiers : List[Substitution] = Nil
+      var unifiers : List[Substitution[FOLExpression]] = Nil
       for (c<-converted) {
         val zc = ts1 zip c
         //println("finding unifier for: "+zc)
-        val us = unify(function, zc, List(Substitution()) )
+        val us = unify(function, zc, List(Substitution[FOLExpression]()) )
         for (unifier <- us) {
             val uterm : List[FOLTerm] = ts1 map ((x:FOLTerm)=>unifier.apply(x).asInstanceOf[FOLTerm])
             //println("yay found one:" + uterm)
@@ -235,7 +235,7 @@ object ACUnification {
 
       //remove variables not in the original term from the substitution
       debug(1,"and the unifiers are:")
-      var reduced_unifiers : List[Substitution] = Nil
+      var reduced_unifiers : List[Substitution[FOLExpression]] = Nil
       for (u<-unifiers) {
         debug(1,""+u)
         //val splitted : Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]] = (u.mapFOL.partition(term_context contains _._1)).asInstanceOf[Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]]]
@@ -243,10 +243,10 @@ object ACUnification {
         
         val in_term = umap.filter((x:(FOLVar,FOLTerm)) => (term_context contains x._1))
         println(in_term)
-        val not_in_term = Substitution(umap.filter((x:(FOLVar,FOLTerm)) => !(term_context contains x._1)))
+        val not_in_term = Substitution[FOLExpression](umap.filter((x:(FOLVar,FOLTerm)) => !(term_context contains x._1)))
         val in_term_reduced = in_term map ((x:(FOLVar,FOLTerm))=>(x._1,not_in_term.apply(x._2)))
         //reduced_unifiers = (Substitution(not_in_term).composeFOL(Substitution(in_term))) :: reduced_unifiers
-        reduced_unifiers = Substitution(in_term_reduced) :: reduced_unifiers
+        reduced_unifiers = Substitution[FOLExpression](in_term_reduced) :: reduced_unifiers
       }
 
       reduced_unifiers
@@ -437,10 +437,10 @@ object ACUnification {
     }
   }
 
-  def substitute_pair(subst : Substitution, x : (FOLTerm,FOLTerm)) : (FOLTerm,FOLTerm) = (subst.apply(x._1).asInstanceOf[FOLTerm], subst.apply(x._2).asInstanceOf[FOLTerm])
-  def makesubstitute_pair(subst:Substitution) : ( ((FOLTerm,FOLTerm)) => (FOLTerm, FOLTerm)) = substitute_pair(subst,_)
+  def substitute_pair(subst : Substitution[FOLExpression], x : (FOLTerm,FOLTerm)) : (FOLTerm,FOLTerm) = (subst.apply(x._1).asInstanceOf[FOLTerm], subst.apply(x._2).asInstanceOf[FOLTerm])
+  def makesubstitute_pair(subst:Substitution[FOLExpression]) : ( ((FOLTerm,FOLTerm)) => (FOLTerm, FOLTerm)) = substitute_pair(subst,_)
 
-  def collect(substitutions : List[Substitution], fun : (Substitution=>List[Substitution])) : List[Substitution] =
+  def collect(substitutions : List[Substitution[FOLExpression]], fun : (Substitution[FOLExpression]=>List[Substitution[FOLExpression]])) : List[Substitution[FOLExpression]] =
     (substitutions map fun).flatten
 
   def occurs(v:FOLVar, term:FOLTerm) : Boolean = {

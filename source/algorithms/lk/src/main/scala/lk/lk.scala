@@ -13,7 +13,8 @@ import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
-import at.logic.language.hol.substitutions.Substitution
+import at.logic.language.lambda.substitutions
+import substitutions.Substitution
 
 // TODO: we use the toSet method from axiom here to convert a list to a set,
 // perhaps refactor this method out of axiom - it seems useful in general
@@ -160,7 +161,7 @@ object regularize {
       {
         // FIXME: casts!?
         val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], v ).asInstanceOf[HOLVar]
-        val new_new_parent = applySubstitution( new_parent._1, Substitution( v, new_var ) )
+        val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
         val new_map = new_parent._3.clone
         new_map.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
           ( ExistsLeftRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist + new_var, new_map )
@@ -175,7 +176,7 @@ object regularize {
       {
         // FIXME: casts!?
         val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], v ).asInstanceOf[HOLVar]
-        val new_new_parent = applySubstitution( new_parent._1, Substitution( v, new_var ) )
+        val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
         val new_map = new_parent._3.clone
         new_map.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
         ( ForallRightRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist + new_var, new_map )

@@ -10,10 +10,10 @@ import org.specs.runner._
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.language.fol.substitutions._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol._
+import at.logic.language.lambda.substitutions.Substitution
 //import at.logic.language.hol.propositions._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._

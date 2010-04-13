@@ -16,6 +16,7 @@ import at.logic.calculi.resolution.robinson._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.replacements._
+import at.logic.language.fol.FOLExpression
 
 package robinson {
   // commands for robinson resolution
@@ -57,7 +58,7 @@ import robinson._
 
 object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging.Logger {
   
-  var unifAlg: UnificationAlgorithm = at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+  var unifAlg: UnificationAlgorithm[LambdaExpression] = at.logic.algorithms.unification.fol.FOLUnificationAlgorithm.asInstanceOf[UnificationAlgorithm[LambdaExpression]]
 
   def parse(combinedCommand: Command, currentCommand: Command): Command = (combinedCommand, currentCommand) match {
     case (a, SetUnificationAlgorithmCom(alg)) => unifAlg = alg; a

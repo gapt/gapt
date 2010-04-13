@@ -1,17 +1,17 @@
 package at.logic.algorithms.diophantine
 
-import _root_.at.logic.language.fol.FOLTerm
 import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
 import org.specs.SpecificationWithJUnit
 import at.logic.algorithms.diophantine.Vector
 import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.fol.{FOLExpression, FOLTerm}
 
 class ACUnificationTest extends SpecificationWithJUnit {
   val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
   val f = new ConstantStringSymbol("f")
-  def checkResult(subst:Substitution, t1:FOLTerm, t2:FOLTerm) : Boolean = {
+  def checkResult(subst:Substitution[FOLExpression], t1:FOLTerm, t2:FOLTerm) : Boolean = {
     val term1 = subst.apply(t1)
     val term2 = subst.apply(t2)
     println("")

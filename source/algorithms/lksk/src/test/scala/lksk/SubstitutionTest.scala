@@ -15,10 +15,10 @@ import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lksk._
 import at.logic.calculi.lksk.base.TypeSynonyms._
 import at.logic.calculi.lksk.base._
-import at.logic.language.hol.substitutions.Substitution
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.substitutions.Substitution
 
 
 class SubstitutionTest extends SpecificationWithJUnit {
@@ -40,7 +40,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
 
     "work for an axiom" in {
       val Px = Atom("P", x::Nil)
-      val c = HOLConst(new ConstantStringSymbol("c"), i)
+      val c : HOLExpression = HOLConst(new ConstantStringSymbol("c"), i)
       val Pc = Atom("P", c::Nil)
 
       val a = Axiom( Sequent( Px::Nil, Px::Nil ), Pair( (EmptyLabel() + x)::Nil, (EmptyLabel() + y)::Nil ) )
@@ -57,7 +57,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val fgc = HOLApp(f, gc)
       val Rgcfgc = Atom("R", gc::fgc::Nil )
       val exyRgcy = ExVar(y, Atom( "R", gc::y::Nil ) )
-      val subst = Substitution( a, gc ) // a <- g(c)
+      val subst = Substitution[HOLExpression]( a, gc ) // a <- g(c)
 
       val p_s = applySubstitution( r2, subst )
       p_s._1.root.antecedent.toList.first must beLike{ case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == allxexy }
