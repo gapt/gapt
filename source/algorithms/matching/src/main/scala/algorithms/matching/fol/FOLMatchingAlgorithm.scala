@@ -16,7 +16,7 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm[FOLExpression] {
   //def matchTerm(term: LambdaExpression, posInstance: LambdaExpression) = matchTermModulo(term, posInstance, getVars(posInstance.asInstanceOf[FOLExpression]))
 
   def matchTerm(term1: FOLExpression, term2: FOLExpression, restrictedDomain: List[Var]) = matchSetOfTuples(restrictedDomain, Tuple2(term1,term2)::Nil,Nil) match {
-      case Some((Nil,ls)) => Some(Substitution[LambdaExpression](ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
+      case Some((Nil,ls)) => Some(Substitution[FOLExpression](ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
       case _ => None
     }
   protected[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, FOLExpression]) extends Substitution[FOLExpression](m) {
@@ -48,7 +48,7 @@ def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Su
 def createSubstFromListOfPairs(l: List[Tuple2[FOLExpression, FOLExpression]]) : Substitution[FOLExpression] = {
   var sub = Substitution[FOLExpression]()
   for(x <- l) {
-    sub = sub:::Substitution[LambdaExpression](x._1.asInstanceOf[FOLVar],x._2)
+    sub = sub:::Substitution[FOLExpression](x._1.asInstanceOf[FOLVar],x._2)
   }
   return sub
 }
