@@ -55,10 +55,10 @@ class FOLConst (name: ConstantSymbolA)
   extends HOLConst(name, Ti()) with FOLTerm
 
 class FOLApp(function: LambdaExpression, argument: LambdaExpression)
-  extends HOLApp(function, argument) with FOL
+  extends HOLApp(function, argument) with FOLExpression
 
 class FOLAbs(variable: FOLVar, expression: LambdaExpression)
-  extends HOLAbs(variable, expression) with FOL
+  extends HOLAbs(variable, expression) with FOLExpression
 
 object FOLAbs {
   def apply(variable: FOLVar, expression: LambdaExpression) = new FOLAbs(variable, expression)
@@ -205,7 +205,7 @@ object FOLFactory extends LambdaFactoryA {
       if (!(isFirstOrderType(exptype)))
         throw new Exception("In FOL, cannot create a symbol of type " + exptype)
       name match {
-        case a: ConstantSymbolA => new HOLConst(a, exptype) with FOL
+        case a: ConstantSymbolA => new HOLConst(a, exptype) with FOLExpression
         case _ => throw new Exception("In FOL, of type 'a -> b' only constants may be created.")
       }
     }
@@ -216,7 +216,7 @@ object FOLFactory extends LambdaFactoryA {
     else if (isTermWhenApplied(fun.exptype)) new FOLApp(fun, arg) with FOLTerm
     else new FOLApp(fun, arg)
 
-  def createAbs( variable: Var, exp: LambdaExpression ) : Abs =  new HOLAbs( variable, exp ) with FOL
+  def createAbs( variable: Var, exp: LambdaExpression ) : Abs =  new HOLAbs( variable, exp ) with FOLExpression
 
   private def isTermWhenApplied(typ: TA) = typ match {
     case ->(_,Ti()) => true
