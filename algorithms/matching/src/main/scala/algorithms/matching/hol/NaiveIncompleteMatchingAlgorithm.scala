@@ -16,8 +16,8 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 
 // should use the restricted domain instead of grounding the second term
-object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
-  def matchTerm(term: LambdaExpression, posInstance: LambdaExpression, restrictedDomain: List[Var]): Option[Substitution[LambdaExpression]] = holMatch(term.asInstanceOf[HOLExpression], ground(posInstance).asInstanceOf[HOLExpression])
+object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression] {
+  def matchTerm(term: HOLExpression, posInstance: HOLExpression, restrictedDomain: List[Var]): Option[Substitution[HOLExpression]] = holMatch(term.asInstanceOf[HOLExpression], ground(posInstance).asInstanceOf[HOLExpression])
 
    // in all instances of the algorithm we ground the second term by replacing all free variables by constants
   private def ground(e: LambdaExpression): LambdaExpression = e match {
@@ -27,7 +27,7 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
     case abs: Abs => Abs(abs.variable, ground(abs.expressionInScope))
   }
   
-  def holMatch( s: HOLExpression, t: HOLExpression ) : Option[Substitution[LambdaExpression]] =
+  def holMatch( s: HOLExpression, t: HOLExpression ) : Option[Substitution[HOLExpression]] =
     (s, t) match {
       case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( holMatch(s_1, t_1), holMatch(s_2, t_2) )
       // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
@@ -42,7 +42,7 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm {
       case _ => None
     }
 
-  def merge( s1: Option[Substitution[LambdaExpression]], s2: Option[Substitution[LambdaExpression]] ) : Option[Substitution[LambdaExpression]] = (s1, s2) match {
+  def merge( s1: Option[Substitution[HOLExpression]], s2: Option[Substitution[HOLExpression]] ) : Option[Substitution[HOLExpression]] = (s1, s2) match {
     case (Some(ss1), Some(ss2)) => {
       if (!ss1.map.forall( s1 =>
         ss2.map.forall( s2 =>
