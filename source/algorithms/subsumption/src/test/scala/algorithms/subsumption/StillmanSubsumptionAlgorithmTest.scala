@@ -17,11 +17,13 @@ import at.logic.parsing.readers.StringReader
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.calculi.simple.SimpleResolutionParserHOL
 import at.logic.calculi.lk.base._
+import at.logic.language.fol._
+import at.logic.language.hol._
 
 private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserFOL
 private class MyParserHOL(input: String) extends StringReader(input) with SimpleResolutionParserHOL
-private object MyAlg extends StillmanSubsumptionAlgorithm {val matchAlg = FOLMatchingAlgorithm}
-private object MyAlgHOL extends StillmanSubsumptionAlgorithm {val matchAlg = NaiveIncompleteMatchingAlgorithm} // incomplete matching algorithm
+private object MyAlg extends StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}
+private object MyAlgHOL extends StillmanSubsumptionAlgorithm[HOLExpression] {val matchAlg = NaiveIncompleteMatchingAlgorithm} // incomplete matching algorithm
 
 class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
   "StillmanSubsumptionAlgorithm" should {

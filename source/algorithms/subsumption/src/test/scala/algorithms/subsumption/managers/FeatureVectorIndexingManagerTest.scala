@@ -101,7 +101,7 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
       val t = new MyTree[Sequent](root, f1::Nil)
       t.createTree(root)
       t.print
-      val manager = new VectorTreeManager with StillmanSubsumptionAlgorithm {val matchAlg = FOLMatchingAlgorithm; var tree = t }
+      val manager = new VectorTreeManager with StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm; var tree = t }
 //      if(manager.forwardSubsumption1(t.root, f1::Nil, "abca"))
 //          println("\n\n\nWORKS\n\n\n")
 
