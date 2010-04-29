@@ -4,23 +4,44 @@ import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
 import org.specs.SpecificationWithJUnit
-import at.logic.algorithms.diophantine.Vector
 import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.fol.{FOLExpression, FOLTerm}
+import at.logic.language.fol._
+import at.logic.language.lambda.typedLambdaCalculus.Var
 
 class ACUnificationTest extends SpecificationWithJUnit {
   val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
   val f = new ConstantStringSymbol("f")
-  def checkResult(subst:Substitution[FOLExpression], t1:FOLTerm, t2:FOLTerm) : Boolean = {
-    val term1 = subst.apply(t1)
-    val term2 = subst.apply(t2)
+
+  def printSubst(s:Substitution[FOLTerm]) = {
+    for (x <- s.map.toList.sort((x:(Var,FOLExpression), y:(Var,FOLExpression)) => x._1.toString < y._1.toString ) )
+      println("$ "+x._1+" <- "+x._2+" $\\\\")
+  }
+
+  def checkResult(substs:List[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
+    return true
+    
     println("")
-    println("problem      : "+t1+" =? "+t2)
-    println("substitution : "+subst)
-    println("checking     : "+term1+" =? "+term2)
+    println("\\subsection*{$"+ACUnification.flatten(f,t1) + "=?"  +ACUnification.flatten(f,t2)+"$}\\\\")
+    //println("                  ***")
+    println("problem : $"+t1+" =? "+t2+"$\\\\")
+    var i = 1
+    for (subst <- substs) {
+      println("("+i+")\\\\")
+      i = i+1
+      val term1 = subst.apply(t1)
+      val term2 = subst.apply(t2)
+      //println("substitution      : "+subst)
+      printSubst(subst)
+      println("substituted terms     : $" +term1 +" =? "+term2 + "$\\\\")
+      println("substituted rewritten : $"+ACUnification.flatten(f,term1)+" =? "+ACUnification.flatten(f,term2)+"$\\\\")
+    }
+    println("\\\\")
+    //println("                  ***")
     println("")
     true
   }
+
+
 
   "AC Unification" should {
       "rewrite terms correctly" in {
@@ -76,9 +97,11 @@ class ACUnificationTest extends SpecificationWithJUnit {
           val tl34 = r34.apply(term3)
           val tr34 = r34.apply(term4)
 
+          /*
           println(" "+tl14+" "+tr14)
           println(" "+tl24+" "+tr24)
           println(" "+tl34+" "+tr34)
+          */
 
           tl14 must beEqual(tr14)
           tl24 must beEqual(tr24)
@@ -97,11 +120,11 @@ class ACUnificationTest extends SpecificationWithJUnit {
         case Some(_) => true must beEqual (false)
         case None => true must beEqual (true)
       }
-    }
+    } 
  
     "unify f(x1,x2) = f(f(y1,y2),y3)" in {
-      val term1 = parse("f(x1,x2)")
-      val term2 = parse("f(f(y1,y2),y3)")
+      val term1 = parse("f(x_1,x_2)")
+      val term2 = parse("f(f(y_1,y_2),y_3)")
 
       //for (i<- 1 to 1000)
       //  ACUnification unify(f,term1,term2)
@@ -109,7 +132,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {
         case Some(substs) => true must beEqual (true)
-          for (s<-substs) checkResult(s,term1,term2)
+          checkResult(substs,term1,term2)
 
         case None => true must beEqual (false)
       }
@@ -122,7 +145,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {
         case Some(substs) => true must beEqual (true)
-        for (s<-substs) checkResult(s,term1,term2)
+        checkResult(substs,term1,term2)
         case None => true must beEqual (false)
       }
       ()
@@ -136,7 +159,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {
         case Some(substs) => true must beEqual (true)
-        for (s<-substs) checkResult(s,term1,term2)
+        checkResult(substs,term1,term2)
         case None => true must beEqual (false)
       }
       ()
@@ -149,7 +172,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {
         case Some(substs) => true must beEqual (true)
-          for (s<-substs) checkResult(s,term1,term2)
+        checkResult(substs,term1,term2)
         case None => true must beEqual (false)
       }
       ()
@@ -162,7 +185,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {
         case Some(substs) => true must beEqual (false)
-          for (s<-substs) checkResult(s,term1,term2)
+        checkResult(substs,term1,term2)
         case None => true must beEqual (true)
       }
       ()
@@ -175,7 +198,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {
         case Some(substs) => true must beEqual (false)
-          for (s<-substs) checkResult(s,term1,term2)
+        checkResult(substs,term1,term2)
         case None => true must beEqual (true)
       }
       ()
@@ -188,12 +211,104 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val mgu = ACUnification unify(f,term1,term2)
       mgu match {
         case Some(substs) => true must beEqual (true)
-          for (s<-substs) checkResult(s,term1,term2)
+        checkResult(substs,term1,term2)
         case None => true must beEqual (false)
       }
       ()
     }
 
-    
+      "unify f(g(f(x, x)), a) = f(u,g(f(y, f(y, y))))" in {
+      val term1 = parse("f(g(f(x, x)), a)")
+      val term2 = parse("f(u,g(f(y, f(y, y))))")
+
+      val mgu = ACUnification unify(f,term1,term2)
+      mgu match {
+        case Some(substs) => true must beEqual (true)
+        checkResult(substs,term1,term2)
+        case None => true must beEqual (false)
+      }
+      ()
+    }
+
+    //this is from the stickel paper
+    "unify f(f(x,f(x,y)),f(f(a,b),c)) = f(f(b,b),f(b,f(c,z)))" in {
+      val term1 = parse("f(f(x,f(x,y)),f(f(a,b),c))")
+      val term2 = parse("f(f(b,b),f(b,f(c,z)))")
+
+      //for (i<-1 to 10000)
+      //  ACUnification unify(f,term1,term2)
+      ACUnification.resetVariablegenerator
+      
+      val mgu = ACUnification unify(f,term1,term2)
+      mgu match {
+        case Some(substs) => true must beEqual (true)
+        checkResult(substs,term1,term2)
+        case None => true must beEqual (false)
+      }
+
+      /* test, if subtitution compose is in prefix or postfix notation
+      val s = Substitution[FOLExpression]((parse("x").asInstanceOf[FOLVar],parse("y").asInstanceOf[FOLExpression]))
+      val t = Substitution[FOLExpression]((parse("y").asInstanceOf[FOLVar],parse("x").asInstanceOf[FOLExpression]))
+      val term = parse("f(x,y)")
+      println((s compose t) apply (term))
+      println((t compose s) apply (term))
+      */
+
+      ()
+    }
+
+    /* */
+    "unify f(x,f(y,x)) = f(z,f(z,z))" in {
+      val term1 = parse("f(x,f(y,x))")
+      val term2 = parse("f(z,f(z,z))")
+
+      val mgu = ACUnification unify(f,term1,term2)
+      mgu match {
+        case Some(substs) => true must beEqual (true)
+        checkResult(substs,term1,term2)
+        case None => true must beEqual (false)
+      }
+      ()
+    }
+
+    "tests for linear indipendence should work" in {
+      val set = List(
+          Vector(2,2,2),
+          Vector(1,4,2),
+          Vector(1,1,1),
+          Vector(3,3,3),
+          Vector(4,1,3))
+      val weight = Vector(2,1,3)
+      val v = Vector(2,2,2)
+      val w = Vector(3,3,3)
+      val x = Vector(3,6,4)
+
+      true must beEqual (ACUnification.linearlydependent_on(v, set - v ))
+      true must beEqual (ACUnification.linearlydependent_on(w, set - v - w ))
+      true must beEqual (ACUnification.linearlydependent_on(x, set - v - w - x ))
+
+      val subsumed = ACUnification.removeSubsumedVectors_new(set,Vector(2,1,3))
+      true must beEqual (subsumed.length < set.length)
+
+      /*
+      val z_1 = Vector(0, 0, 1, 0, 1)
+      val z_2 = Vector(0, 1, 0, 0, 1)
+      val z_3 = Vector(0, 0, 2, 1, 0)
+      val z_4 = Vector(0, 1, 1, 1, 0)
+      val z_5 = Vector(0, 2, 0, 1, 0)
+      val z_6 = Vector(1, 0, 0, 0, 2)
+      val z_7 = Vector(1, 0, 0, 1, 0)
+
+      println(z_4+z_6)
+      println(z_2+z_4+z_6)
+      println(z_1+z_5+z_6)
+      println(z_1+z_2+z_5+z_6)
+      println(z_1+z_2+z_7)
+      println(z_1+z_2+z_6+z_7)
+        */
+
+    }
+
+
   }
 }

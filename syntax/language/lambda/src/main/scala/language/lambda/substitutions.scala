@@ -31,6 +31,7 @@ package substitutions {
     }
 
     // make sure the overriden keys are of the applying sub
+    // note: compose is in function application notation i.e. (sigma compose tau) apply x = sigma(tau(x)) = x.tau.sigma
     def compose(sub: Substitution[T]): Substitution[T] = Substitution(map ++ sub.map.map(x => (x._1, apply(x._2))))
   }
 
