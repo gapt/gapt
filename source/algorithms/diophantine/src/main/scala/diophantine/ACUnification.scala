@@ -142,13 +142,15 @@ object ACUnification {
     val vlhs_length = vlhs.length
     val vrhs_length = vrhs.length
 
-    if ((lhs == Nil) || (rhs == Nil)) {
+    if ((lhs == Nil) && (rhs == Nil)) {
+      List(Substitution[FOLTerm]())
+    } else if ((lhs == Nil) || (rhs == Nil)) {
       Nil
-    }
-    else {
+    } else {
       val basis = LankfordSolver solve (vlhs,vrhs) sort Vector.lex_< 
-      val sums = calculateSums_new(basis, vlhs, vrhs, unifiable_invariant)
-
+      //val sums  = calculateSums_new(basis, vlhs, vrhs, unifiable_invariant)
+      val sums = calculateSums_new_efficient(basis, vlhs, vrhs, unifiable_invariant)
+      //debug(1,"difference :"+(sums-sums2)+ " and "+(sums2-sums))
 
       var results : List[Vector] = Nil
       if (is_ac1) {
@@ -244,6 +246,7 @@ object ACUnification {
       //remove variables not in the original term from the substitution
       debug(2,"and the unifiers are:")
       var reduced_unifiers : List[Substitution[FOLTerm]] = Nil
+      val base_variables = varmap.values.toList.map(FOLVar(_))
       for (u<-unifiers) {
         debug(2,"$"+u+"$")
         //val splitted : Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]] = (u.mapFOL.partition(term_context contains _._1)).asInstanceOf[Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]]]
@@ -251,10 +254,20 @@ object ACUnification {
         
         val in_term = umap.filter((x:(FOLVar,FOLTerm)) => (term_context contains x._1))
         debug(3,"variables in term: "+in_term)
+        //apply subsitutions of z_i<-t to the rest of the substituted terms, since z_i is free
         val not_in_term = Substitution[FOLTerm](umap.filter((x:(FOLVar,FOLTerm)) => !(term_context contains x._1)))
         val in_term_reduced = in_term map ((x:(FOLVar,FOLTerm))=>(x._1,not_in_term.apply(x._2)))
-        //reduced_unifiers = (Substitution(not_in_term).composeFOL(Substitution(in_term))) :: reduced_unifiers
-        reduced_unifiers = Substitution[FOLTerm](in_term_reduced) :: reduced_unifiers
+        //if a variable from the original term is renamed to a base variable, switch the renaming
+        var renamed = in_term_reduced
+        var switch_candidates = renamed filter ((x:(FOLVar,FOLTerm))=>(base_variables contains x._2))
+        while (switch_candidates.length > 0 ) {
+          val candidate = switch_candidates.head
+          val subst = Substitution[FOLTerm]((candidate._2.asInstanceOf[FOLVar]),candidate._1)
+          renamed = (renamed-candidate) map ((x:(FOLVar,FOLTerm))=>(x._1,subst apply x._2))
+          switch_candidates = renamed filter ((x:(FOLVar,FOLTerm))=>(base_variables contains x._2))
+        }
+        
+        reduced_unifiers = Substitution[FOLTerm](renamed) :: reduced_unifiers
       }
 
       reduced_unifiers
@@ -337,7 +350,55 @@ object ACUnification {
     sums
   }
 
-    def removeSubsumedVectors_new(arg:List[Vector], weight : Vector) : List[Vector] = {
+  def calculateSums_new_efficient(basis:List[Vector], vlhs : Vector, vrhs : Vector, invariant : (Vector=>Boolean)) = {
+    val sums = new HashMap[Vector,List[(Int, List[Vector])]]
+    val maxweight = calculateMaxWeight(vlhs,vrhs)
+    val zero = basis(0).zero
+    val invariant_ = (x:Vector)=>invariant(x) && (vector_weight(vlhs,x) <= maxweight ) 
+    val fpowerset = filterpowerset((zero,Nil:List[Vector]),basis,invariant_)
+    for (s<-fpowerset) {
+      val (sum,vectors) = s
+      if (!sums.contains(sum)) {
+        sums(sum) = List((vector_weight(vlhs,sum),vectors))
+      } else {
+        val entry = sums(sum)
+        val new_entry = (vector_weight(vlhs,sum), vectors)
+        if (!entry.contains(new_entry))
+          sums(sum) = new_entry :: entry
+      }
+    }
+    
+    sums
+  }
+
+
+  def dropuntil[A](e:A,l:List[A]) : List[A] = {
+    l match {
+      case Nil => Nil
+      case x::xs => if (e != x) dropuntil(e,xs) else xs
+    }
+  }
+
+  def filterpowerset(in:(Vector,List[Vector]), still_left : List[Vector], invariant:(Vector=>Boolean)) : List[(Vector,List[Vector])] = {
+    still_left match {
+      case Nil => List(in)
+      case _ => rflattenLists(still_left map ((x:Vector) => filterpowerset(in, dropuntil(x,still_left), invariant))) :::
+                rflattenLists(still_left map ((x:Vector) => {
+                  val in_new = ( in._1+x, x::in._2 )
+                  if (invariant(in_new._1))
+                    filterpowerset( in_new , dropuntil(x,still_left), invariant)
+                  else
+                    Nil
+                }))           
+    }
+  }
+
+  def rflattenLists[A](ls : List[List[A]]) : List[A] = ls.foldLeft(Nil:List[A])(_:::_)
+  def flattenLists[A](ls : List[List[A]]) : List[A] = rflattenLists(ls).reverse
+
+
+
+  def removeSubsumedVectors_new(arg:List[Vector], weight : Vector) : List[Vector] = {
       var removed :List[Vector] = Nil
       val sortedarg = arg sort (_ * weight < _ * weight)
       debug(1,"sorted list by "+ weight +" is "+sortedarg)
@@ -579,7 +640,7 @@ object ACUnification {
       case FOLConst(_) => term
       case Function(fun,args) =>
         if (f==fun) {
-          Function(fun, (args map ((x:FOLTerm)=>stripFunctionSymbol(f,x))).reduceRight(_:::_) map ((x:FOLTerm)=>flatten(f,x)))
+          Function(fun, ((args map ((x:FOLTerm)=>stripFunctionSymbol(f,x))).reduceRight(_:::_) map ((x:FOLTerm)=>flatten(f,x))) sort term_<  )
         } else {
           Function(fun, args map  ((x:FOLTerm) => flatten(f,x)))
         }
@@ -607,6 +668,32 @@ object ACUnification {
   }
 
   def vectorSum(l:List[Vector], zero:Vector) : Vector = l.foldLeft(zero)(_+_)
+
+  def term_<(term1:FOLTerm, term2:FOLTerm) : Boolean = {
+    //var < const < f; for equal terms: symbol name string less than, for function equal symbols recursive
+    term1 match {
+      case FOLVar(v1) => term2 match {
+        case FOLVar(v2) => v1.toString<v2.toString;
+        case _ => true }
+      case FOLConst(c1) => term2 match {
+        case FOLConst(c2) => c1.toString < c2.toString;
+        case FOLVar(v2)=>false;
+        case _ => true}
+      case Function(f1,args1) => term2 match {
+        case Function(f2,args2) =>
+          if (f1.toString == f2.toString) {
+            var lt = false
+            for (i <- args1 zip args2) {
+              if (term_<(i._1,i._2)) lt = true
+            }
+            lt
+          } else {
+            f1.toString < f2.toString
+          }
+        case _ => false
+      }
+    }
+  }
 
   
   

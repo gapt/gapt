@@ -11,33 +11,38 @@ import at.logic.language.lambda.typedLambdaCalculus.Var
 class ACUnificationTest extends SpecificationWithJUnit {
   val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
   val f = new ConstantStringSymbol("f")
+  val debuglevel = 0
+  val latex = true
+
+  def striplatex(s:String) = if (latex) s else s.replaceAll("(\\\\|\\$|\\{|\\})","") 
+  def debug(l:Int,s:String) = if (l<=debuglevel) println(striplatex(s))
 
   def printSubst(s:Substitution[FOLTerm]) = {
     for (x <- s.map.toList.sort((x:(Var,FOLExpression), y:(Var,FOLExpression)) => x._1.toString < y._1.toString ) )
-      println("$ "+x._1+" <- "+x._2+" $\\\\")
+      debug(1,"$ "+x._1+" <- "+x._2+" $\\\\")
   }
 
   def checkResult(substs:List[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
-    return true
     
-    println("")
-    println("\\subsection*{$"+ACUnification.flatten(f,t1) + "=?"  +ACUnification.flatten(f,t2)+"$}\\\\")
-    //println("                  ***")
-    println("problem : $"+t1+" =? "+t2+"$\\\\")
+    debug(1,"")
+    debug(1,"\\subsection*{$"+ACUnification.flatten(f,t1) + "=?"  +ACUnification.flatten(f,t2)+"$}")
+    //debug(1,"                  ***")
+    debug(1,"problem : $"+t1+" =? "+t2+"$\\\\")
     var i = 1
     for (subst <- substs) {
-      println("("+i+")\\\\")
+      debug(1,"("+i+")\\\\")
       i = i+1
       val term1 = subst.apply(t1)
       val term2 = subst.apply(t2)
-      //println("substitution      : "+subst)
+      //debug(1,"substitution      : "+subst)
       printSubst(subst)
-      println("substituted terms     : $" +term1 +" =? "+term2 + "$\\\\")
-      println("substituted rewritten : $"+ACUnification.flatten(f,term1)+" =? "+ACUnification.flatten(f,term2)+"$\\\\")
+      debug(1,"substituted terms     : $" +term1 +" =? "+term2 + "$\\\\")
+      debug(1,"substituted rewritten : $"+ACUnification.flatten(f,term1)+" =? "+ACUnification.flatten(f,term2)+"$\\\\")
+      ACUnification.flatten(f,term1) must beEqual (ACUnification.flatten(f,term2))
     }
-    println("\\\\")
-    //println("                  ***")
-    println("")
+    debug(1,"\\\\")
+    //debug(1,"                  ***")
+    debug(1,"")
     true
   }
 
@@ -98,9 +103,9 @@ class ACUnificationTest extends SpecificationWithJUnit {
           val tr34 = r34.apply(term4)
 
           /*
-          println(" "+tl14+" "+tr14)
-          println(" "+tl24+" "+tr24)
-          println(" "+tl34+" "+tr34)
+          debug(1," "+tl14+" "+tr14)
+          debug(1," "+tl24+" "+tr24)
+          debug(1," "+tl34+" "+tr34)
           */
 
           tl14 must beEqual(tr14)
@@ -250,8 +255,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val s = Substitution[FOLExpression]((parse("x").asInstanceOf[FOLVar],parse("y").asInstanceOf[FOLExpression]))
       val t = Substitution[FOLExpression]((parse("y").asInstanceOf[FOLVar],parse("x").asInstanceOf[FOLExpression]))
       val term = parse("f(x,y)")
-      println((s compose t) apply (term))
-      println((t compose s) apply (term))
+      debug(1,(s compose t) apply (term))
+      debug(1,(t compose s) apply (term))
       */
 
       ()
@@ -266,6 +271,34 @@ class ACUnificationTest extends SpecificationWithJUnit {
       mgu match {
         case Some(substs) => true must beEqual (true)
         checkResult(substs,term1,term2)
+        case None => true must beEqual (false)
+      }
+      ()
+    }
+
+    "unification of syntactically equal terms" in {
+      val term1 = parse("f(a,f(b,c))")
+      val term2 = parse("f(a,f(b,c))")
+
+      val mgu = ACUnification unify(f,term1,term2)
+      mgu match {
+        case Some(substs) =>
+          substs.length must beEqual (1)
+          substs(0) must beEqual (Substitution[FOLTerm]())
+        case None => true must beEqual (false)
+      }
+      ()
+    }
+
+    "unification of terms with the same number of symbols" in {
+      val term1 = parse("f(a,f(g(b),x))")
+      val term2 = parse("f(x,f(a,g(b)))")
+
+      val mgu = ACUnification unify(f,term1,term2)
+      mgu match {
+        case Some(substs) =>
+          substs.length must beEqual (1)
+          substs(0) must beEqual (Substitution[FOLTerm]())
         case None => true must beEqual (false)
       }
       ()
@@ -299,12 +332,12 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val z_6 = Vector(1, 0, 0, 0, 2)
       val z_7 = Vector(1, 0, 0, 1, 0)
 
-      println(z_4+z_6)
-      println(z_2+z_4+z_6)
-      println(z_1+z_5+z_6)
-      println(z_1+z_2+z_5+z_6)
-      println(z_1+z_2+z_7)
-      println(z_1+z_2+z_6+z_7)
+      debug(1,z_4+z_6)
+      debug(1,z_2+z_4+z_6)
+      debug(1,z_1+z_5+z_6)
+      debug(1,z_1+z_2+z_5+z_6)
+      debug(1,z_1+z_2+z_7)
+      debug(1,z_1+z_2+z_6+z_7)
         */
 
     }
