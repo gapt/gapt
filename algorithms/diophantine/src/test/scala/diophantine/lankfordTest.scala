@@ -3,9 +3,6 @@ package at.logic.algorithms.diophantine
 import org.specs.SpecificationWithJUnit
 import at.logic.algorithms.diophantine.Vector
 
-
-//import org.specs.specification
-
 class LankfordSolverTest extends SpecificationWithJUnit {
   "The Lankford Diophantine solver" should {
       "handle vectors correctly" in {

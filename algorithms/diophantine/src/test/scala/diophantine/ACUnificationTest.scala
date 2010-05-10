@@ -25,7 +25,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
   def checkResult(substs:List[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
     
     debug(1,"")
-    debug(1,"\\subsection*{$"+ACUnification.flatten(f,t1) + "=?"  +ACUnification.flatten(f,t2)+"$}")
+    debug(1,"\\subsection*{$"+ACUtils.flatten(f,t1) + "=?"  +ACUtils.flatten(f,t2)+"$}")
     //debug(1,"                  ***")
     debug(1,"problem : $"+t1+" =? "+t2+"$\\\\")
     var i = 1
@@ -37,8 +37,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       //debug(1,"substitution      : "+subst)
       printSubst(subst)
       debug(1,"substituted terms     : $" +term1 +" =? "+term2 + "$\\\\")
-      debug(1,"substituted rewritten : $"+ACUnification.flatten(f,term1)+" =? "+ACUnification.flatten(f,term2)+"$\\\\")
-      ACUnification.flatten(f,term1) must beEqual (ACUnification.flatten(f,term2))
+      debug(1,"substituted rewritten : $"+ACUtils.flatten(f,term1)+" =? "+ACUtils.flatten(f,term2)+"$\\\\")
+      ACUtils.flatten(f,term1) must beEqual (ACUtils.flatten(f,term2))
     }
     debug(1,"\\\\")
     //debug(1,"                  ***")
@@ -64,7 +64,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
           ) map (_ map parse)
 
         for ((t,r) <- terms zip results) {
-          val list = ACUnification nestedFunctions_toList (f,t)
+          val list = ACUtils nestedFunctions_toList (f,t)
           list must beEqual(r)
         }
       }
@@ -88,25 +88,17 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val s35 = ACUnification.unify(f,term3,term5)
 
       //non unifiable
-      (s12,s13,s23,s35) match {
-        case (None,None,None,None) => true must beEqual(true)
-        case _ => true must beEqual (false)
-      }
+      for (i<- List(s12,s13,s23,s35))
+        i.length must beEqual (0)
 
       (s14, s24,s34) match {
-        case (Some(List(r14)), Some(List(r24)),Some(List(r34))) =>
+        case (List(r14), List(r24),List(r34)) =>
           val tl14 = r14.apply(term1)
           val tr14 = r14.apply(term4)
           val tl24 = r24.apply(term2)
           val tr24 = r24.apply(term4)
           val tl34 = r34.apply(term3)
           val tr34 = r34.apply(term4)
-
-          /*
-          debug(1," "+tl14+" "+tr14)
-          debug(1," "+tl24+" "+tr24)
-          debug(1," "+tl34+" "+tr34)
-          */
 
           tl14 must beEqual(tr14)
           tl24 must beEqual(tr24)
@@ -121,11 +113,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(f(x,f(a,a)),y)")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(_) => true must beEqual (false)
-        case None => true must beEqual (true)
-      }
-    } 
+      mgu.length must beEqual (0)
+    }
  
     "unify f(x1,x2) = f(f(y1,y2),y3)" in {
       val term1 = parse("f(x_1,x_2)")
@@ -135,12 +124,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       //  ACUnification unify(f,term1,term2)
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-          checkResult(substs,term1,term2)
-
-        case None => true must beEqual (false)
-      }
+      (true) must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
     }
 
     "unify f(x,a) = f(y,b)" in {
@@ -148,11 +133,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(y,b)")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (false)
-      }
+      true must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
       ()
     }
 
@@ -162,11 +144,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(f(x,f(a,a)),y)")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (false)
-      }
+      true must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
       ()
     }
     /* */
@@ -175,11 +154,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(y,f(y,y))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (false)
-      }
+      true must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
       ()
     }
 
@@ -188,11 +164,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(y,f(y,a))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (false)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (true)
-      }
+      mgu.length must beEqual (0)
       ()
     }
 
@@ -201,11 +173,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(y,f(y,g(x)))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (false)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (true)
-      }
+      mgu.length must beEqual (0)
       ()
     }
 
@@ -214,11 +182,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(y,f(y,g(a,u)))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (false)
-      }
+      true must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
       ()
     }
 
@@ -227,11 +192,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(u,g(f(y, f(y, y))))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (false)
-      }
+      true must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
       ()
     }
 
@@ -242,14 +204,11 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
       //for (i<-1 to 10000)
       //  ACUnification unify(f,term1,term2)
-      ACUnification.resetVariablegenerator
+      TermUtils.generator.reset
       
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (false)
-      }
+      mgu.length must beEqual (4)
+      checkResult(mgu,term1,term2)
 
       /* test, if subtitution compose is in prefix or postfix notation
       val s = Substitution[FOLExpression]((parse("x").asInstanceOf[FOLVar],parse("y").asInstanceOf[FOLExpression]))
@@ -268,11 +227,8 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(z,f(z,z))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) => true must beEqual (true)
-        checkResult(substs,term1,term2)
-        case None => true must beEqual (false)
-      }
+      true must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
       ()
     }
 
@@ -281,12 +237,9 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(a,f(b,c))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) =>
-          substs.length must beEqual (1)
-          substs(0) must beEqual (Substitution[FOLTerm]())
-        case None => true must beEqual (false)
-      }
+      mgu.length must beEqual (1)
+      mgu(0) must beEqual (Substitution[FOLTerm]())
+      
       ()
     }
 
@@ -295,16 +248,12 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val term2 = parse("f(x,f(a,g(b)))")
 
       val mgu = ACUnification unify(f,term1,term2)
-      mgu match {
-        case Some(substs) =>
-          substs.length must beEqual (1)
-          substs(0) must beEqual (Substitution[FOLTerm]())
-        case None => true must beEqual (false)
-      }
+      mgu.length must beEqual (1)
+      mgu(0) must beEqual (Substitution[FOLTerm]())
       ()
     }
 
-    "tests for linear indipendence should work" in {
+    "tests for linear independence should work" in {
       val set = List(
           Vector(2,2,2),
           Vector(1,4,2),
@@ -316,11 +265,13 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val w = Vector(3,3,3)
       val x = Vector(3,6,4)
 
+      /*
       true must beEqual (ACUnification.linearlydependent_on(v, set - v ))
       true must beEqual (ACUnification.linearlydependent_on(w, set - v - w ))
       true must beEqual (ACUnification.linearlydependent_on(x, set - v - w - x ))
+      */
 
-      val subsumed = ACUnification.removeSubsumedVectors_new(set,Vector(2,1,3))
+      val subsumed = ACUtils.removeSubsumedVectors_new(set,Vector(2,1,3))
       true must beEqual (subsumed.length < set.length)
 
       /*
