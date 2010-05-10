@@ -11,6 +11,7 @@
 
 package at.logic.parsing.language.xml
 
+import _root_.at.logic.language.lambda.substitutions.Substitution
 import scala.xml._
 import scala.xml.Utility.trim
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -28,30 +29,32 @@ import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
-import at.logic.language.lambda.substitutions._
 
 import scala.collection.immutable.{Set,EmptySet}
 
 class ProofDatabase( val proofs: List[LKProof], val axioms: List[Sequent] );
 
+
 // performs the matching necessary to compute substitution terms/eigenvars
 object Match {
-  def apply( s: HOLExpression, t: HOLExpression ) : Option[Substitution] =
+  //type Substitution = at.logic.language.lambda.substitutions.Substitution[HOLExpression]
+
+  def apply( s: HOLExpression, t: HOLExpression ) : Option[Substitution[HOLExpression]] =
     (s, t) match {
       case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( apply(s_1, t_1), apply(s_2, t_2) )
       // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
-      case ( HOLVar(_,_), _ ) if !getVars(t).contains(s.asInstanceOf[HOLVar]) => Some(Substitution( s.asInstanceOf[HOLVar], t  ) )
-      case ( v1 @ HOLVar(_,_), v2 @ HOLVar(_,_) ) if v1 == v2 => Some(Substitution())
+      case ( HOLVar(_,_), _ ) if !getVars(t).contains(s.asInstanceOf[HOLVar]) => Some(Substitution[HOLExpression]( s.asInstanceOf[HOLVar], t  ) )
+      case ( v1 @ HOLVar(_,_), v2 @ HOLVar(_,_) ) if v1 == v2 => Some(Substitution[HOLExpression]())
       case ( v1 @ HOLVar(_,_), v2 @ HOLVar(_,_) ) if v1 != v2 =>  {
         None
       }
-      case ( c1 @ HOLConst(_,_), c2 @ HOLConst(_,_) ) if c1 == c2 => Some(Substitution())
+      case ( c1 @ HOLConst(_,_), c2 @ HOLConst(_,_) ) if c1 == c2 => Some(Substitution[HOLExpression]())
       case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 == v2 => apply( e1, e2 )
       case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 != v2 => None
       case _ => None
     }
 
-  def merge( s1: Option[Substitution], s2: Option[Substitution] ) : Option[Substitution] = (s1, s2) match {
+  def merge( s1: Option[Substitution[HOLExpression]], s2: Option[Substitution[HOLExpression]] ) : Option[Substitution[HOLExpression]] = (s1, s2) match {
     case (Some(ss1), Some(ss2)) => {
       if (!ss1.map.forall( s1 => 
         ss2.map.forall( s2 => 
@@ -60,7 +63,7 @@ object Match {
       else
       {
         val new_list = ss2.map.filter( s2 => ss1.map.forall( s1 => s1._1 != s2._1 ) )
-        Some(ss1 ::: Substitution( new_list ) )
+        Some(ss1 ::: Substitution[HOLExpression]( new_list ) )
       }
     }
     case (None, _) => None
