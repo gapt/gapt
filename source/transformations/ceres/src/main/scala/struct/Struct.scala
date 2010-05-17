@@ -12,8 +12,8 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkExtractors._
-import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lksk.lkskExtractors._
+import at.logic.calculi.lksk.base._
 import at.logic.algorithms.lk.getCutAncestors
 
 import scala.collection.immutable.Set
@@ -24,7 +24,7 @@ package struct {
   case class Times(left: Struct, right: Struct) extends Struct
   case class Plus(left: Struct, right: Struct) extends Struct
   case class Dual(sub: Struct) extends Struct
-  case class A(formula: HOLFormula) extends Struct // Atomic Struct
+  case class A(formula: FormulaOccurrence) extends Struct // Atomic Struct
   case class EmptyTimesJunction() extends Struct
   case class EmptyPlusJunction() extends Struct
 
@@ -33,10 +33,26 @@ package struct {
     def extract(p: LKProof) : Struct = extract( p, getCutAncestors( p ) )
 
     def extract(p: LKProof, cut_occs: Set[FormulaOccurrence]):Struct = p match {
-      case Axiom(so) => {
-        val cutAncInAntecedent = so.antecedent.toList.filter(x => cut_occs.contains(x)).map(x => Dual(A(x.formula)))   //
-        val cutAncInSuccedent = so.succedent.toList.filter(x => cut_occs.contains(x)).map(x => A(x.formula))
-        makeTimesJunction(cutAncInAntecedent:::cutAncInSuccedent)
+      case Axiom(so) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
+      so match {
+        case lso : LabelledSequentOccurrence if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 => {
+          val left = lso.l_antecedent.toList.first
+          val right = lso.l_succedent.toList.first 
+          val ant = if ( cut_occs.contains( left ) )
+            Dual( A( new LabelledFormulaOccurrence( left.formula, Nil, right.label ) ) )::Nil
+          else
+            Nil
+          val suc = if ( cut_occs.contains( right ) )
+            A( new LabelledFormulaOccurrence( right.formula, Nil, left.label ) )::Nil
+          else
+            Nil
+          makeTimesJunction( ant:::suc )
+        }
+        case _ => {
+          val cutAncInAntecedent = so.antecedent.toList.filter(x => cut_occs.contains(x)).map(x => Dual(A(x)))   //
+          val cutAncInSuccedent = so.succedent.toList.filter(x => cut_occs.contains(x)).map(x => A(x))
+          makeTimesJunction(cutAncInAntecedent:::cutAncInSuccedent)
+        }
       }
       case UnaryLKProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
       case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux, _, _) => 
