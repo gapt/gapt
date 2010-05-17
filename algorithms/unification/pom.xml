@@ -11,4 +11,11 @@
   <packaging>jar</packaging>  
   <name>Unification algorithms</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>diophantine</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
 </project>

@@ -71,7 +71,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val csPre = StandardClauseSet.transformStructToClauseSet(s)
+      val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s) map (_.getSequent)
       
       // we will add three axioms: 0 < p(x), 1 < p(x), x = x
       val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("0"), Ti())::Function(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
@@ -79,7 +79,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Nil)
       val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), Function(ConstantStringSymbol("+"), HOLConst(ConstantStringSymbol("0"), Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)
 
-      val holcs = pdb.axioms ::: ( seq1::seq2::seq3::seq4::Nil ) ::: csPre
+      val holcs : List[Sequent] = pdb.axioms ::: List[Sequent](seq1,seq2,seq3,seq4) ::: csPre
 
       // maps original types and definitions of abstractions
       val sectionsPre = ("Types", getTypeInformation(holcs).toList.sort((x,y) => x.toString < y.toString))::Nil

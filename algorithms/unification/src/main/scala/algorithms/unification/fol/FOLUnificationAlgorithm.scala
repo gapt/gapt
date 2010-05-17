@@ -15,8 +15,8 @@ import at.logic.language.lambda.substitutions.Substitution
 object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
   def unify(term1: FOLExpression, term2: FOLExpression) = {
     unifySetOfTuples(Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
-      case Some((Nil,ls)) => Some(Substitution[FOLExpression](ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
-      case _ => None
+      case Some((Nil,ls)) => List(Substitution[FOLExpression](ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
+      case _ => Nil
     }
   }
 

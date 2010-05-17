@@ -7,7 +7,7 @@
 
 package at.logic.transformations.ceres.clauseSets
 
-import struct._
+import at.logic.transformations.ceres.struct._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lksk.base._
 import at.logic.calculi.lk.propositionalRules._

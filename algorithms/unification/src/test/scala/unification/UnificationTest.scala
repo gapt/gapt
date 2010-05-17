@@ -31,7 +31,7 @@ class UnificationTest extends SpecificationWithJUnit {
         val px1 = new MyParser("P(x_1)").getTerm.asInstanceOf[FOLExpression]
         val px2 = new MyParser("P(x_2)").getTerm.asInstanceOf[FOLExpression]
         (FOLUnificationAlgorithm.unify(px1,px2)) must 
-          beEqual (Some(Substitution(FOLVar(VariableStringSymbol("x_1")), FOLVar(VariableStringSymbol("x_2")))))
+          beEqual (List(Substitution(FOLVar(VariableStringSymbol("x_1")), FOLVar(VariableStringSymbol("x_2")))))
 
       }
     }

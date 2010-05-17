@@ -53,7 +53,7 @@ class HuetAlgorithmTest extends SpecificationWithJUnit {
 
      val sub = HuetAlgorithm.unify(fFa,Ffa)
   //   println("\n\n\n"+sub.toString+"\n\n\n")  
-    sub must beEqual (None)
+    sub must beEqual (Nil)
     }
   }
 }

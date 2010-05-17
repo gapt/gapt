@@ -103,9 +103,13 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
     case (ApplyOnLiteralPositionCom((i,j),(s1,s2)), ResolveCom) => {
       val c1 = s1.asInstanceOf[ResolutionProof[Clause]]
       val c2 = s2.asInstanceOf[ResolutionProof[Clause]]
-      unifAlg.unify(c1.root(i), c2.root(j)) match {
-        case None => NoResolventReply
-        case Some(sub) => ResolventReply(Resolution(c1,c2,i,j,sub))
+      val mgus = unifAlg.unify(c1.root(i), c2.root(j))
+      if (mgus.isEmpty) {
+        NoResolventReply
+      } else {
+          val sub = mgus.first
+          ResolventReply(Resolution(c1,c2,i,j,sub))
+        //TODO: finitary unification
       }
     }
     case (ApplyOnSecondSubtermCom((i,j),(s1,s2), pos, t), ParamodulateCom) => {
@@ -113,9 +117,16 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
       val c2 = s2.asInstanceOf[ResolutionProof[Clause]]
       c1.root(i) match {
       // try to unify t and each of the sides of c1(i)
-      case Atom(ConstantStringSymbol("="), a::b::Nil) => unifAlg.unify(a, t) match {
-        case None => NoParamodulantReply
-        case Some(sub) => ParamodulantReply(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))}
+      case Atom(ConstantStringSymbol("="), a::b::Nil) =>
+        val mgus = unifAlg.unify(a, t)
+        if (mgus.isEmpty) {
+          NoParamodulantReply
+        } else {
+          val sub = mgus.first
+          ParamodulantReply(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))
+        //TODO: finitary unification
+        }
+
       case _ => NoParamodulantReply
     }}
 
@@ -149,10 +160,15 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
   // it is assumed in each call that the sub from the previous round is already applied to the formulas
   def computeFactors[T <: LambdaExpression](lits: List[T], indices: List[Int], form: T, sub: Substitution[T], usedIndices: List[Int]): List[Tuple2[List[Int], Substitution[T]]] = indices match {
     case Nil => Nil
-    case x::Nil => unifAlg.unify(sub(lits(x).asInstanceOf[T]), sub(form.asInstanceOf[T])) match {
-      case None => Nil
-      case Some(sub2: Substitution[T]) => (x::usedIndices, (sub2 compose sub))::Nil
-    }
+    case x::Nil =>
+      val mgus = unifAlg.unify(sub(lits(x).asInstanceOf[T]), sub(form.asInstanceOf[T]))
+      mgus match {
+        case Nil => Nil
+        case List(sub2 : Substitution[T]) =>
+        val subst : Substitution[T] = (sub2 compose sub)
+        List( (x::usedIndices, subst) )
+        //todo: finitary unification
+      }
     case x::ls => {
         val facts: List[Tuple2[List[Int], Substitution[T]]] = computeFactors(lits, ls, form, sub, usedIndices)
         facts.foldLeft(Nil: List[Tuple2[List[Int], Substitution[T]]])((ls,a) => ls
