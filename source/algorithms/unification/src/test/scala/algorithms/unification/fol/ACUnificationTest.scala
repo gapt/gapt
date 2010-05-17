@@ -1,5 +1,6 @@
-package at.logic.algorithms.diophantine
+package at.logic.algorithms.unification
 
+import _root_.at.logic.algorithms.diophantine.Vector
 import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
@@ -22,7 +23,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       debug(1,"$ "+x._1+" <- "+x._2+" $\\\\")
   }
 
-  def checkResult(substs:List[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
+  def checkResult(substs:Seq[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
     
     debug(1,"")
     debug(1,"\\subsection*{$"+ACUtils.flatten(f,t1) + "=?"  +ACUtils.flatten(f,t2)+"$}")

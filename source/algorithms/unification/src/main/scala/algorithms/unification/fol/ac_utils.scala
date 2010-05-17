@@ -1,4 +1,4 @@
-package at.logic.algorithms.diophantine
+package at.logic.algorithms.unification
 
 import at.logic.language.fol.{Function, FOLConst, FOLVar, FOLTerm}
 import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}

@@ -29,10 +29,10 @@ object rigidTerm
 
 object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
 {
-    def unify(term1: HOLExpression, term2: HOLExpression) : Option[Substitution[HOLExpression]] = {
+    def unify(term1: HOLExpression, term2: HOLExpression) : List[Substitution[HOLExpression]] = {
       unifySetOfTuples(List[(HOLExpression,HOLExpression)](Tuple2(term1.asInstanceOf[HOLExpression],term2.asInstanceOf[HOLExpression])),Nil) match {
-        case Some((Nil,ls)) => Some(Substitution[HOLExpression](ls.map(x => (x._1.asInstanceOf[HOLVar],x._2))))
-        case _ => None
+        case Some((Nil,ls)) => List(Substitution[HOLExpression](ls.map(x => (x._1.asInstanceOf[HOLVar],x._2))))
+        case _ => Nil
       }
     }
     

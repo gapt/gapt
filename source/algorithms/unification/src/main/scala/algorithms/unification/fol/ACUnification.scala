@@ -1,20 +1,16 @@
-package at.logic.algorithms.diophantine
+package at.logic.algorithms.unification
 
+import at.logic.algorithms.diophantine.{LankfordSolver, Vector}
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.fol._
-import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
+import at.logic.language.lambda.symbols.VariableSymbolA
 import at.logic.language.lambda.substitutions.Substitution
 
 import collection.mutable.HashMap
-import at.logic.algorithms.diophantine._
-
-trait FinitaryUnification {
-  def unify(term1:FOLTerm, term2:FOLTerm) : List[Substitution[FOLTerm]]
-}
 
 object ACUnification {
-  val algorithms  = new HashMap[ConstantSymbolA, FinitaryUnification]
-  def unify(f:ConstantSymbolA, term1:FOLTerm, term2:FOLTerm) : List[Substitution[FOLTerm]] = {
+  val algorithms  = new HashMap[ConstantSymbolA, FinitaryUnification[FOLTerm]]
+  def unify(f:ConstantSymbolA, term1:FOLTerm, term2:FOLTerm) : Seq[Substitution[FOLTerm]] = {
     if (! (algorithms contains f)) algorithms(f) = new ACUnification(f)
     algorithms(f).unify(term1, term2)
   }
@@ -24,7 +20,7 @@ object ACUnification {
   def debug(level: Int, msg: String) = if (debuglevel >= level) println("DEBUG: " + msg + " \\\\")
 }
 
-class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification {
+class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] {
   import ACUnification.debug
   import ACUtils._
   import ListUtils._
@@ -37,9 +33,9 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification {
   type MapEntry = (Int, List[Vector])
   type ArrayEntry = (Vector, MapEntry)
 
-  var unit_constant = FOLConst(new ConstantStringSymbol("1"))
+//  var unit_constant = FOLConst(new ConstantStringSymbol("1"))
 
-  val is_ac1: Boolean = false
+//  val is_ac1: Boolean = false
 
   def unify(term1:FOLTerm, term2:FOLTerm) : List[Substitution[FOLTerm]] = unify(f,term1,term2)
 
@@ -167,17 +163,14 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification {
       //debug(1,"difference :"+(sums-sums2)+ " and "+(sums2-sums))
 
       var results: List[Vector] = Nil
-      if (is_ac1) {
-        results = sums.keySet.toList.filter(unifiable_condition) //AC1 Unification does not filter out
-      } else {
-        // ac unification filters
-        for (v <- sums.toList) {
+      // filter vectors 
+      for (v <- sums.toList) {
           if (gzero(v._1))
             results = v._1 :: results
-        }
-
-        results = results.filter(unifiable_condition)
       }
+
+      results = results.filter(unifiable_condition)
+
 
       // remove vectors which are subsumed by smaller vectors
       results = removeSubsumedVectors_new(results, Vector(vlhs.vector ::: vrhs.vector))
@@ -402,19 +395,13 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification {
 
 
 
-
-
   /* convert list of variable symbols to a term f(x_1,f(x_2, ...)) */
   def listToTerm(function: ConstantSymbolA, terms: List[VariableSymbolA]): FOLTerm = {
     terms match {
       case x :: Nil => FOLVar(x)
       case x :: xs => Function(function, List(FOLVar(x), listToTerm(function, xs)))
       case Nil =>
-        if (is_ac1) {
-          unit_constant
-        } else {
           throw new Exception("cannot convert empty list to term, there is no unit element!")
-        }
     }
   }
 
@@ -447,46 +434,28 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification {
     return max(l.length, r.length) * maxab
   }
 
-  def calculateMaxWeight_new(l: Vector, r: Vector): Int = {
-
-    return max(l.length, r.length) * max(lcm(l.vector), lcm(r.vector))
-  }
-
-
 
   /* counts the number of symbols, those in terms1 count positively, thos in count2 negatively */
   def countSymbols(terms1: List[FOLTerm], terms2: List[FOLTerm]): List[TermCount] = {
     var result: List[TermCount] = Nil
     for (t <- terms1) {
-      result = insertTerm(t, result)
+      result = insertTerm(t, result, 1)
     }
     for (t <- terms2) {
-      result = removeTerm(t, result)
+      result = insertTerm(t, result, -1)
     }
     result filter (_._2 != 0)
   }
 
   /* finds term in list and increses its counter */
-  def insertTerm(term: FOLTerm, list: List[TermCount]): List[TermCount] = {
+  def insertTerm(term: FOLTerm, list: List[TermCount],i:Int): List[TermCount] = {
     list match {
-      case Nil => List((term, 1))
+      case Nil => List((term, i))
       case (lterm, count) :: rest =>
         if (term == lterm)
-          (lterm, count + 1) :: rest
+          (lterm, count + i) :: rest
         else
-          (lterm, count) :: insertTerm(term, rest)
-    }
-  }
-
-  //TODO: refactor
-  def removeTerm(term: FOLTerm, list: List[TermCount]): List[TermCount] = {
-    list match {
-      case Nil => List((term, -1))
-      case (lterm, count) :: rest =>
-        if (term == lterm)
-          (lterm, count - 1) :: rest
-        else
-          (lterm, count) :: removeTerm(term, rest)
+          (lterm, count) :: insertTerm(term, rest, i)
     }
   }
 

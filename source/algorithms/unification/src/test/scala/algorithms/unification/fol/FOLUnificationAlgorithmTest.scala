@@ -31,7 +31,7 @@ class FOLUnificationAlgorithmTest extends SpecificationWithJUnit {
      val sub = FOLUnificationAlgorithm.unify(term,posInstance)
   //   println("\n\n\n"+sub.toString+"\n\n\n")
   //   sub.get.apply(term) must beEqual (posInstance)
-    sub must beEqual (None)
+    sub must beEqual (Nil)
     }
   }
 
