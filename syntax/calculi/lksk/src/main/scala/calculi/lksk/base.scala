@@ -72,4 +72,9 @@ package base {
                                l_succedent.asInstanceOf[Set[FormulaOccurrence]] ) {
     override def toString: String = l_antecedent.toString + " :- " + l_succedent.toString
   }
+
+  object sequentOccurrenceToLabelledSequentOccurrence {
+    def apply( s: SequentOccurrence ) = new LabelledSequentOccurrence( s.antecedent.asInstanceOf[Set[LabelledFormulaOccurrence]],
+                                                                       s.succedent.asInstanceOf[Set[LabelledFormulaOccurrence]] )
+  }
 }

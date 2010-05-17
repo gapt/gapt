@@ -17,7 +17,7 @@ import at.logic.calculi.lk.base.{LKProof,Sequent,SequentOccurrence}
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
-import at.logic.language.hol.substitutions._
+import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.lk.getCutAncestors
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
@@ -78,7 +78,7 @@ object LKtoLKskc {
             val f = getFreshSkolemFunctionSymbol
             logInfo( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
             val s = Function( f, args, alpha )
-            val subst = Substitution( v, s )
+            val subst = Substitution[HOLExpression]( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequentOccurrence] )
@@ -111,7 +111,7 @@ object LKtoLKskc {
             val f = getFreshSkolemFunctionSymbol
             logInfo( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
             val s = Function( f, args, alpha )
-            val subst = Substitution( v, s )
+            val subst = Substitution[HOLExpression]( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ExistsSkLeftRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequentOccurrence] )

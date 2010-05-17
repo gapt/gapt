@@ -16,7 +16,7 @@ import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
-import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.parsing.calculi.latex._
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.simple.SimpleHOLParser
@@ -29,6 +29,7 @@ import at.logic.language.hol.logicSymbols._
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
+import at.logic.calculi.lksk.base._
 import at.logic.algorithms.subsumption._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.struct._
@@ -44,7 +45,15 @@ import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.language.fol.FOLTerm
 
 object loadProofs {
-    def apply(gzipedFile: String) = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(gzipedFile)))) with XMLProofDatabaseParser).getProofDatabase().proofs
+    def apply(file: String) = 
+      try {
+        (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)))) with XMLProofDatabaseParser).getProofDatabase().proofs
+      }
+      catch
+      {
+        case _ =>
+          (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase().proofs
+      }
   }
   object printPoofStats {
     def apply(p: LKProof) = {val stats = getStatistics( p ); println("unary: " + stats.unary); println("binary: " + stats.binary); println("cuts: " + stats.cuts)}
@@ -57,6 +66,9 @@ object loadProofs {
   }
   object structToClausesList {
     def apply(s: Struct) = StandardClauseSet.transformStructToClauseSet(s)
+  } 
+  object structToLabelledClausesList {
+    def apply(s: Struct) = StandardClauseSet.transformStructToLabelledClauseSet(s)
   }
   object createHOLExpression {
     def apply(s: String) = (new StringReader(s) with SimpleHOLParser {}).getTerm()
@@ -75,6 +87,13 @@ object loadProofs {
   }
   object normalizeClauses {
     def apply(ls: List[Sequent]) = sequentNormalize(ls)
+  }
+  object writeLabelledSequentListLatex {
+    def apply(ls: List[LabelledSequentOccurrence], outputFile: String) = {
+      // maps original types and definitions of abstractions
+      val sections = ("Types", getTypeInformation(ls.map( so => so.getSequent )).toList.sort((x,y) => x.toString < y.toString))::Nil
+      (new FileWriter(outputFile) with LabelledSequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls,sections).close
+    }
   }
   object writeLatex {
     def apply(ls: List[Sequent], outputFile: String) = {
@@ -129,7 +148,8 @@ object loadProofs {
       println("printPoofStats: LKProof => Unit")
       println("lkTolksk: LKProof => LKProof")
       println("extractStruct: LKProof => Struct")
-      println("structToClausesList: Struct => List[Sequent]")
+      println("structToClausesList: Struct => List[SequentOccurrence]")
+      println("structToLabelledClausesList: Struct => List[LabelledSequentOccurrence]")
       println("createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
       println("deleteTautologies: List[Sequent] => List[Sequent]")
       println("removeDuplicates: List[Sequent] => List[Sequent]")
@@ -137,6 +157,7 @@ object loadProofs {
       println("removeSubsumed: List[Sequent] => List[Sequent]")
       println("normalizeClauses: List[Sequent] => List[Sequent]")
       println("writeLatex: List[Sequent], String => Unit")
+      println("writeLabelledSequentListLatex: List[LabelledSequentOccurrence], String => Unit")
       println("parse fol: String => FOLTerm")
       println("parse hol: String => HOLExpression")
     }
