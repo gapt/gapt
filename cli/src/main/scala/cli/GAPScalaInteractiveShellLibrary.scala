@@ -15,7 +15,7 @@ import at.logic.parsing.readers.XMLReaders._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
-import at.logic.parsing.calculus.xml.saveXML
+import at.logic.parsing.calculus.xml._
 import at.logic.parsing.calculi.latex._
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
@@ -117,6 +117,21 @@ object loadProofs {
     }
   }
 
+  object exportXML {
+    def apply( ls: List[LKProof], names: List[String], outputFile: String ) = {
+      val exporter = new LKExporter{}
+      val pairs = ls.zip( names )
+      scala.xml.XML.saveFull( outputFile,
+        <proofdatabase>
+          <definitionlist/>
+          <axiomset/>
+          { pairs.map( p => exporter.exportProof( p._2, p._1 ) ) }
+          <variabledefinitions/>
+        </proofdatabase>, "UTF-8", true,
+        scala.xml.dtd.DocType( "proofdatabase", scala.xml.dtd.SystemID( "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd" ) , Nil ) )
+    }
+  }
+
   object parse {
     private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
     private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
@@ -160,6 +175,7 @@ object loadProofs {
       println("writeLabelledSequentListLatex: List[LabelledSequentOccurrence], String => Unit")
       println("parse fol: String => FOLTerm")
       println("parse hol: String => HOLExpression")
+      println("exportXML: List[Proof], List[String], String => Unit")
     }
   }
 }
