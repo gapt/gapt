@@ -247,7 +247,7 @@ object LKtoLKskc {
       val sk_proof = WeakeningLeftRule( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
-                 Pair( m, sk_proof.prin.first ) )
+                 Pair( m, sk_proof.prin.head ) )
     }
     case LKWeakeningRightRule(p, s, m) => {
       val new_label_map = copyMapFromAncestor( s.antecedent ++ (s.succedent - m), subst_terms )
@@ -255,7 +255,7 @@ object LKtoLKskc {
       val sk_proof = WeakeningRightRule( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
-                 Pair( m, sk_proof.prin.first ) )
+                 Pair( m, sk_proof.prin.head ) )
     }
     case ContractionRightRule(p, s, a1, a2, m) => {
       val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
@@ -369,7 +369,7 @@ object LKtoLKskc {
 
   def copyMapFromAncestor( fos: Set[FormulaOccurrence], map: Map[FormulaOccurrence, Label] ) : 
     Map[FormulaOccurrence, Label] = map ++ 
-                                    fos.map( fo => Pair(fo.ancestors.first, map( fo ) ) ) ++ 
+                                    fos.map( fo => Pair(fo.ancestors.head, map( fo ) ) ) ++ 
                                     fos.map( fo => Pair(fo.ancestors.last, map( fo ) ) )
 
   // TODO: implement this in a reasonable way!
