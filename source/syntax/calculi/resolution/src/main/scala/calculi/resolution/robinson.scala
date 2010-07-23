@@ -104,7 +104,7 @@ package robinson {
       // create a variant only if needed
       if (newCl != p.root)
         new UnaryAGraph[Clause](newCl, p)
-          with UnaryResolutionProof[Clause] with AppliedSubstitution[HOLExpression] {def rule = VariantType; def substitution = Substitution(varGen.varsMap.elements.asInstanceOf[Iterator[Tuple2[Var,HOLExpression]]])}
+          with UnaryResolutionProof[Clause] with AppliedSubstitution[HOLExpression] {def rule = VariantType; def substitution = Substitution(varGen.varsMap.iterator.asInstanceOf[Iterator[Tuple2[Var,HOLExpression]]])}
       else p
     }
     private def variantTerm(op: Var => Var)(t: HOLExpression): HOLExpression = t match {

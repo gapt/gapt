@@ -13,10 +13,10 @@
       <excludes>
         <!--<exclude>org.scala-lang:scala-library</exclude>-->
         <!--<exclude>junit:junit</exclude>-->
-        <exclude>org.scala-tools.testing:specs</exclude>
+        <exclude>org.scala-tools.testing:specs_2.8.0</exclude>
         <exclude>org.mockito:mockito-all</exclude>
-        <exclude>org.scala-tools.testing:scalatest</exclude>
-        <exclude>org.scala-tools.testing:scalacheck_2.7.7</exclude>
+        <exclude>org.scalatest:scalatest</exclude>
+        <exclude>org.scala-tools.testing:scalacheck_2.8.0</exclude>
         <!--<exclude>META-INF/**</exclude>-->
       </excludes>
     </dependencySet>

@@ -47,7 +47,7 @@ class LKskTest extends SpecificationWithJUnit {
     }
     "work for OrLeftRule" in {
       val a = OrLeftRule(a1, a2, f1, f2)
-      a.prin.first must beLike {case o : LabelledFormulaOccurrence => o.label == (EmptyLabel() + f1)}
+      a.prin.head must beLike {case o : LabelledFormulaOccurrence => o.label == (EmptyLabel() + f1)}
     }
   }
 

@@ -60,12 +60,12 @@ class LKTest extends SpecificationWithJUnit {
       "- Same formulas on the same side must become different occurrences" in {
         val ant = a4.root.antecedent.toList
         (ant.length) must beEqual(2)
-        (ant.first) must notBe(ant.last)
+        (ant.head) must notBe(ant.last)
       }
       "- FormulaOccurrence mapping must be correct" in {
         val map = ap._2._1
-        (map.first) must notBe(map.last)
-        (map.filter( o => o != map.first ) ).length must beEqual(1)
+        (map.head) must notBe(map.last)
+        (map.filter( o => o != map.head ) ).length must beEqual(1)
       }
     }
 
@@ -261,14 +261,14 @@ class LKTest extends SpecificationWithJUnit {
       "- Descendants must be correctly computed" in {
         "(1)" in {
           // get descendant of occurrence of left auxiliary formula
-          a.getDescendantInLowerSequent(ax._2._1.first) must beLike {
+          a.getDescendantInLowerSequent(ax._2._1.head) must beLike {
             case Some(x) => x == prin1 && x.formula == Or(f1, f2)
             case None => false
           }
         }
         "(2)" in {
           // get descendant of occurrence of left premise context in succedent
-          a.getDescendantInLowerSequent(ax._2._2.first) must beLike {
+          a.getDescendantInLowerSequent(ax._2._2.head) must beLike {
             case Some(x) => x.formula == f1
             case None => false
           }
