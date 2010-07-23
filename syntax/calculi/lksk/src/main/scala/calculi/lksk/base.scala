@@ -45,7 +45,7 @@ package base {
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
     def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) = {
-      val l = ancestors.first.label
+      val l = ancestors.head.label
       assert( ancestors.forall( a => a.label == l ) )
       new LabelledFormulaOccurrence(formula, ancestors, l)
     }

@@ -78,7 +78,7 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
     else
     (composedCommand, newCommand) match {
       // interactiveness
-      case (com, InteractCom) => {val c = panel.getNextCommand(com, if (pb != None) Some(pb.get.elements) else None); /*Console.println("interactive com: " + c);*/ c}
+      case (com, InteractCom) => {val c = panel.getNextCommand(com, if (pb != None) Some(pb.get.iterator) else None); /*Console.println("interactive com: " + c);*/ c}
       case (EmptyCom, SetTimeLimit(n)) => timeLimit = n; EmptyCom
       case (EmptyCom, SetClausesCom(clauseList)) => pb = Some(new at.logic.utils.ds.PublishingBuffer[V]); pb.get.insertAll(0,clauseList.asInstanceOf[List[V]]); EmptyCom
       // ensures the clauses are loaded

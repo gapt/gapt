@@ -107,7 +107,7 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
       if (mgus.isEmpty) {
         NoResolventReply
       } else {
-          val sub = mgus.first
+          val sub = mgus.head
           ResolventReply(Resolution(c1,c2,i,j,sub))
         //TODO: finitary unification
       }
@@ -122,7 +122,7 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
         if (mgus.isEmpty) {
           NoParamodulantReply
         } else {
-          val sub = mgus.first
+          val sub = mgus.head
           ParamodulantReply(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))
         //TODO: finitary unification
         }

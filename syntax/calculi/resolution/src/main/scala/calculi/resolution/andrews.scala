@@ -30,8 +30,8 @@ package andrews {
         succedentLabeled.zipWithIndex.filter(x => !inds.contains(x._2 + antecedentLabeled.size)).map(x => x._1)
       )
     // the following methods return both the antecedent/succedent without the formula and the removed formula
-    def getAntecedentPairAtIndex(index: Int) = (antecedentLabeled(index), antecedentLabeled.zipWithIndex.remove(x => x._2 == index).map(x => x._1))
-    def getSuccedentPairAtIndex(index: Int) = (succedentLabeled(index), succedentLabeled.zipWithIndex.remove(x => x._2 == index).map(x => x._1))
+    def getAntecedentPairAtIndex(index: Int) = (antecedentLabeled(index), antecedentLabeled.zipWithIndex.filterNot(x => x._2 == index).map(x => x._1))
+    def getSuccedentPairAtIndex(index: Int) = (succedentLabeled(index), succedentLabeled.zipWithIndex.filterNot(x => x._2 == index).map(x => x._1))
   }
 
   case object NotTType extends UnaryRuleTypeA
