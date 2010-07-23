@@ -7,7 +7,7 @@ package at.logic.language.lambda
 
 import symbols._
 import symbols.ImplicitConverters._
-import scala.collection.immutable.{HashSet, EmptySet}
+import scala.collection.immutable.HashSet
 import scala.collection.mutable.Map
 import types._
 
@@ -23,9 +23,9 @@ package typedLambdaCalculus {
     def syntaxEquals(e: LambdaExpression): Boolean
     def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
     def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
-      case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (HashSet(v), new EmptySet)
-      case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new EmptySet, HashSet(v))
-      case v: Var => (new EmptySet, new EmptySet)// not variables (constants in this case)
+      case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (HashSet(v), new HashSet())
+      case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new HashSet(), HashSet(v))
+      case v: Var => (new HashSet(), new HashSet())// not variables (constants in this case)
       case App(exp, arg) => {
         val mFBV = exp.getFreeAndBoundVariables()
         val nFBV = arg.getFreeAndBoundVariables()
@@ -169,7 +169,7 @@ package typedLambdaCalculus {
     }
     // returns the highest db index, returns 0 for no index. Based on the fact that outer abs has always a bigger index than inner one.
     private def computeMaxDBIndex(exp: LambdaExpression): Int = exp match {
-      case App(x,y) => Math.max(computeMaxDBIndex(x), computeMaxDBIndex(y))
+      case App(x,y) => scala.math.max(computeMaxDBIndex(x), computeMaxDBIndex(y))
       case AbsInScope(v,_) => v.dbIndex.get
       case _ => 0
     }

@@ -14,7 +14,6 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
 import at.logic.calculi.lk.base.Sequent
-import scala.collection.immutable.EmptySet
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleHOLParser
 

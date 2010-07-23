@@ -43,7 +43,7 @@ package logicSymbols {
   object ImplicitConverters {
     implicit def stringToVarConstSymbol(s: String): SymbolA = {
       val chr = s.charAt(0)
-      if (chr.isUpperCase || chr.equals('a') || chr.equals('b') || chr.equals('c')) new ConstantStringSymbol( s )
+      if (chr.isUpper || chr.equals('a') || chr.equals('b') || chr.equals('c')) new ConstantStringSymbol( s )
       else new VariableStringSymbol( s )
     }
   }

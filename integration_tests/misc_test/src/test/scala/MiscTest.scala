@@ -28,7 +28,6 @@ import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import scala.collection.immutable.EmptySet
 
 /*class MiscTest extends SpecificationWithJUnit {
 

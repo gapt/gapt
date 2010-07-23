@@ -88,7 +88,7 @@ object skolemize {
         sk( sub( f ).asInstanceOf[HOLFormula], pol, vars, symbols.tail )
       }
       else // TODO: should not be necessary to cast! try to change it in hol.scala.
-        ExVar(x, sk( f, pol, vars + x.asInstanceOf[HOLVar], symbols ) )
+        ExVar(x, sk( f, pol, vars :+ x.asInstanceOf[HOLVar], symbols ) )
     case AllVar(x, f) =>
       if (pol == 0)
       {
@@ -101,7 +101,7 @@ object skolemize {
       else // TODO: should not be necessary to cast! try to change it in hol.scala.
       {
         println("Not substituting!")
-        AllVar(x, sk( f, pol, vars + x.asInstanceOf[HOLVar], symbols ) )
+        AllVar(x, sk( f, pol, vars :+ x.asInstanceOf[HOLVar], symbols ) )
       }
     case Atom(_,_) => f
   }

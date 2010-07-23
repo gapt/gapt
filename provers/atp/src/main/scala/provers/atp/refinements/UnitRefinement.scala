@@ -14,6 +14,7 @@ import at.logic.utils.ds.PublishingBuffer
 
 class UnitRefinement[V <: Sequent](c: PublishingBuffer[V]) extends Refinement[V] {
   val clauses = c // all clauses
+  init
   val pairs = new ListBuffer[Tuple2[ResolutionProof[V],ResolutionProof[V]]] // all pairs of possible two clauses
   val proofs = new ListBuffer[ResolutionProof[V]] // all clauses as proofs
   val units: ListBuffer[ResolutionProof[V]] = new ListBuffer[ResolutionProof[V]]()

@@ -28,8 +28,8 @@ package base {
   // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
   class Sequent(val antecedent: List[HOLFormula], val succedent: List[HOLFormula])
   {
-    val ant = antecedent.sort((x1,x2) => x1.toString < x2.toString)
-    val suc = succedent.sort((x1,x2) => x1.toString < x2.toString)
+    val ant = antecedent.sortWith((x1,x2) => x1.toString < x2.toString)
+    val suc = succedent.sortWith((x1,x2) => x1.toString < x2.toString)
     // The two parts of the sequent are ordered lexicographically so equal denotes multiset equals
     override def equals( o: Any ) = o match {
       case os : Sequent => ant == os.ant && suc == os.suc

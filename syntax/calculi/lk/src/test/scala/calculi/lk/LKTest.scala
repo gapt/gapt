@@ -55,7 +55,7 @@ class LKTest extends SpecificationWithJUnit {
 
     "work for Axioms" in {
       "- Formula occurrences have correct formulas" in {
-        (a1) must beLike {case Axiom(SequentOccurrence(x,y)) => (x.toArray(0).formula == f1) && (y.toArray(0).formula == f1)}
+        (a1) must beLike {case Axiom(SequentOccurrence(x,y)) => (x.toArray.apply(0).formula == f1) && (y.toArray.apply(0).formula == f1)}
       }
       "- Same formulas on the same side must become different occurrences" in {
         val ant = a4.root.antecedent.toList

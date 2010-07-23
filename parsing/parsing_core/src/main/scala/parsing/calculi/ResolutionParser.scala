@@ -8,6 +8,7 @@
 package at.logic.parsing.calculi
 
 import at.logic.calculi.lk.base._
+import at.logic.parsing.InputParser
 
 trait ResolutionParser[V <: Sequent] extends InputParser {
     def clauseList : Parser[List[V]]

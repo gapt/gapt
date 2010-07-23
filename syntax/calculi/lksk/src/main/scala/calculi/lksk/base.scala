@@ -12,7 +12,7 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
-import scala.collection.immutable.{Set,EmptySet}
+import scala.collection.immutable.Set
 import scala.collection.immutable.{Map,HashMap}
 
 import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent,SequentOccurrence}
@@ -22,7 +22,7 @@ package base {
   object TypeSynonyms {
     type Label = Set[HOLExpression]
     object EmptyLabel {
-      def apply() = new EmptySet[HOLExpression]
+      def apply() = Set[HOLExpression]()
     }
   }
 

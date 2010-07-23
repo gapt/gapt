@@ -69,7 +69,7 @@ object StandardClauseSet {
       case x::rest => convertListToSet(rest)+x
       case Nil => new HashSet[T]
     }
-    SequentOccurrence(new EmptySet() ++ negativeFO, new EmptySet() ++ positiveFO)
+    SequentOccurrence(negativeFO.toSet, positiveFO.toSet)
   }
 
   def clausify(struct: Struct): List[SequentOccurrence] = {

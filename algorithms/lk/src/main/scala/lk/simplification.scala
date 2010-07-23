@@ -80,7 +80,7 @@ package simplification {
           (Sequent(normalize(el.antecedent,map,nextId).asInstanceOf[List[HOLFormula]],normalize(el.succedent,map,nextId).asInstanceOf[List[HOLFormula]]))::ls
         })).removeDuplicates
     }
-    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => int): List[Formula] = 
+    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => Int): List[Formula] = 
       ls.sort((t1,t2) => myToString(t1) < myToString(t2)).map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).removeDuplicates
     private def myToString(exp: at.logic.language.lambda.typedLambdaCalculus.LambdaExpression): String = exp match {
       case v@ Var(at.logic.language.lambda.symbols.VariableStringSymbol(_),_) => ""

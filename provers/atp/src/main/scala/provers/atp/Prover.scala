@@ -33,10 +33,9 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
 
   // for executing repeatedly (can be broken only with interactiveness (scala.actors.Actor.self.exit))
   def recExec(commands: Stream[Command]): Stream[ResolutionProof[V]] = {
-    refute(commands) match {
-      case Stream.empty => recExec(Stream(NoResolventFoundReply, InteractCom))
-      case a => val hd = a.head; recExec(Stream(ResolventFoundReply(hd), InteractCom))
-    }
+    val st = refute(commands) 
+    if (st.isEmpty) recExec(Stream(NoResolventFoundReply, InteractCom))
+    else {val hd = st.head; recExec(Stream(ResolventFoundReply(hd), InteractCom))}
   }
 
   /**
@@ -54,7 +53,7 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
 
   private def refute(commands: Stream[Command], lastCommand: Command): Stream[ResolutionProof[V]] =
     refuteOne(commands, lastCommand) match {
-      case (None, (_, ExitCom)) => scala.actors.Actor.self.exit
+      case (None, (_, ExitCom)) => scala.actors.Actor.exit
       case (None, _) => Stream.empty
       case (Some(p), (comms, compocom)) => Stream.cons(p, refute(comms, compocom))
     }

@@ -10,7 +10,7 @@ package at.logic.utils.ds
 
 package graphs {
 
-import scala.collection.jcl.Conversions._
+import scala.collection.JavaConversions._
 import org.jgrapht.graph.DefaultEdge
 import at.logic.utils.logging.Logger
 

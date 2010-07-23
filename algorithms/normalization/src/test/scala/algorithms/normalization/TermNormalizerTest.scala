@@ -15,7 +15,6 @@ import at.logic.language.hol._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
-import scala.collection.immutable.EmptySet
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleHOLParser
 import scala.collection.mutable.Map

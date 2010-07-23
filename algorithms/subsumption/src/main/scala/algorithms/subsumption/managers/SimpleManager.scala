@@ -7,12 +7,14 @@
 
 package at.logic.algorithms.subsumption.managers
 
+import at.logic.algorithms.subsumption._
 import at.logic.calculi.lk.base._
 import at.logic.utils.ds.PublishingBuffer
 
 class SimpleManager(pb: PublishingBuffer[Sequent], alg: SubsumptionAlgorithm) extends SubsumptionManager {
   val sequents = pb
   val sbsmpAlg = alg
+  init
   protected def addSequent(s: Sequent) = ()
   protected def removeSequent(s: Sequent) = ()
 

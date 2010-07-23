@@ -135,10 +135,10 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
       val id1 = id1Pos - pr1.root.negative.size // computes the id of the positive resolvent id (the negative is just id2)
       val cl1 = pr1.root.positive // the set of all positive literals
       val cl1Ind = for (i <- cl1.indices; if i != id1) yield i // the set of all indices in the above set except the resolvent id
-      val factors1 = computeFactors(cl1, cl1Ind, cl1(id1), sub.asInstanceOf[Substitution[LambdaExpression]], Nil) // all the factors in the positive literals of the first clause
+      val factors1 = computeFactors(cl1, cl1Ind.toList, cl1(id1), sub.asInstanceOf[Substitution[LambdaExpression]], Nil) // all the factors in the positive literals of the first clause
       val cl2 = pr2.root.negative // the set of all negative literals of the second clause
       val cl2Ind = for (i <- cl2.indices; if i != id2) yield i // the set of their indices except the resolvent id
-      val factors2 = computeFactors(cl2, cl2Ind, cl2(id2), sub.asInstanceOf[Substitution[LambdaExpression]], Nil) // all their factors
+      val factors2 = computeFactors(cl2, cl2Ind.toList, cl2(id2), sub.asInstanceOf[Substitution[LambdaExpression]], Nil) // all their factors
       AppendCommandsCom((r::commands) ++
         (for {
           (ls1,sub1) <- (List(), Substitution())::factors1

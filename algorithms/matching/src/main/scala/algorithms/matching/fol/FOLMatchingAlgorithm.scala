@@ -35,7 +35,7 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm[FOLExpression] {
     }
   }
   object MatchingSubstitution {
-    def apply(moduloVarList: List[Var]): Substitution[FOLExpression] = new MatchingSubstitution(moduloVarList, new scala.collection.immutable.EmptyMap)
+    def apply(moduloVarList: List[Var]): Substitution[FOLExpression] = new MatchingSubstitution(moduloVarList, Map())
     def apply(moduloVarList: List[Var], v: Var, t: FOLExpression): Substitution[FOLExpression] = new MatchingSubstitution(moduloVarList, Substitution(v,t).map)
 //    def unapply(moduloVarList: List[Var],  m: scala.collection.immutable.Map[Var, LambdaExpression])
   }

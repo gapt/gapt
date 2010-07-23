@@ -1,6 +1,6 @@
 package at.logic.algorithms.lk
 
-import scala.collection.immutable.{Set, EmptySet}
+import scala.collection.immutable.Set
 import scala.collection.mutable.{Map, HashMap}
 
 import at.logic.calculi.lk.propositionalRules._
@@ -34,7 +34,7 @@ object getCutAncestors {
 }
 
 object regularize {
-  def apply( p: LKProof ) = rec( p, new EmptySet )
+  def apply( p: LKProof ) = rec( p, Set[HOLVar]() )
 
   def rec( proof: LKProof, vars: Set[HOLVar] ) : (LKProof, Set[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) = proof match
   {
