@@ -44,7 +44,7 @@ class LKskcTest extends SpecificationWithJUnit {
                     Rcc, allxRcx, c ),
                   allxRcx, allyallxRyx, c )
       val lkskc_proof = LKtoLKskc( proof, Set())
-      lkskc_proof.root.antecedent.toList.first must beLike {case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == proof.root.getSequent.antecedent.first }
+      lkskc_proof.root.antecedent.toList.head must beLike {case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == proof.root.getSequent.antecedent.head }
     }
 
     "work for a cut-free proof" in {
@@ -59,7 +59,7 @@ class LKskcTest extends SpecificationWithJUnit {
       val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
       val r4 = ForallRightRule( r3, exyRay, allxexyRxy, a )
       val lkskc_proof = LKtoLKskc( r4, Set() )
-      lkskc_proof.root.antecedent.toList.first must beLike{ case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == r4.root.getSequent.antecedent.first }
+      lkskc_proof.root.antecedent.toList.head must beLike{ case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == r4.root.getSequent.antecedent.head }
     }
   }
 }
