@@ -43,7 +43,7 @@ class LKskcTest extends SpecificationWithJUnit {
                       LKAxiom( Sequent( Rcc::Nil, Nil ) )._1,
                     Rcc, allxRcx, c ),
                   allxRcx, allyallxRyx, c )
-      val lkskc_proof = LKtoLKskc( proof, new EmptySet )
+      val lkskc_proof = LKtoLKskc( proof, Set())
       lkskc_proof.root.antecedent.toList.first must beLike {case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == proof.root.getSequent.antecedent.first }
     }
 
@@ -58,7 +58,7 @@ class LKskcTest extends SpecificationWithJUnit {
       val r2 = ExistsLeftRule( r1, Rab, exyRay, b )
       val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
       val r4 = ForallRightRule( r3, exyRay, allxexyRxy, a )
-      val lkskc_proof = LKtoLKskc( r4, new EmptySet )
+      val lkskc_proof = LKtoLKskc( r4, Set() )
       lkskc_proof.root.antecedent.toList.first must beLike{ case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == r4.root.getSequent.antecedent.first }
     }
   }

@@ -13,7 +13,7 @@ import at.logic.language.hol._
 import at.logic.parsing.OutputExporter
 import at.logic.language.lambda.typedLambdaCalculus._
 
-trait HOLTermArithmeticalExporter extends OutputExporter with HOLTermExporter {
+trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.language.HOLTermExporter {
   def exportFunction(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]); t match {
     case Function(ConstantStringSymbol("+"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" + "); exportTerm(y); getOutput.write(")")}
     case Function(ConstantStringSymbol("-"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" - "); exportTerm(y); getOutput.write(")")}

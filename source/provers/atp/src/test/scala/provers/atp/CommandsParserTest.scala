@@ -28,7 +28,7 @@ class CommandsParserTest extends SpecificationWithJUnit {
       val cparser = RobinsonCommandsParser
       "for the clause A(x) | A(a) | A(f(x)) | A(f(y)) with substitution x/f(b) and the resolved literal A(x)" in {
         val cls = new MyParser("A(f(b)) | A(a) | A(f(f(b))) | A(f(y)).").getClauseList.head.positive.asInstanceOf[List[FOLExpression]]
-        val factors = cparser.computeFactors(cls, cls.indices.tail, cls.head, Substitution[FOLExpression](), Nil)
+        val factors = cparser.computeFactors(cls, cls.indices.tail.toList, cls.head, Substitution[FOLExpression](), Nil)
         "- number of factors must be 1" in {
           factors.size must beEqual(1)
         }
@@ -42,7 +42,7 @@ class CommandsParserTest extends SpecificationWithJUnit {
       }
       "for the clause A(f(f(a))) | A(f(x)) with  the resolved literal A(f(y))" in {
         val cls = new MyParser("A(f(y)) | A(f(f(a))) | A(f(x)).").getClauseList.head.positive.asInstanceOf[List[FOLExpression]]
-        val factors = cparser.computeFactors(cls, cls.indices.tail, cls.head, Substitution[FOLExpression](), Nil)
+        val factors = cparser.computeFactors(cls, cls.indices.tail.toList, cls.head, Substitution[FOLExpression](), Nil)
         "- number of factors must be 3" in {
           factors.size must beEqual(3)
         }

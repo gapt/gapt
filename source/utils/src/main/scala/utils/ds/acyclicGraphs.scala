@@ -83,7 +83,7 @@ package acyclicGraphs {
     }}
     def applyRec[V](vertex: V, AGraphs: List[AGraph[V]], allParents: List[AGraph[V]], graph: Graph[V]): ArbitraryAGraph[V] = AGraphs match {
       case Nil => error("The recursive call in arbitrary AGraph is always called on at least two arguments as the other cases are being handled by unary and binary AGraphs", new AssertionError())
-      case t::Nil => new ArbitraryAGraph[V](vertex, allParents.first, allParents.tail, graph)
+      case t::Nil => new ArbitraryAGraph[V](vertex, allParents.head, allParents.tail, graph)
       case t::tls => applyRec[V](vertex, tls, allParents, EdgeGraph[V](t.vertex, vertex, UnionGraph[V](graph, t)))
     }
     def unapply[V](t: AGraph[V]) = t match {

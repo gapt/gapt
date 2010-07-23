@@ -9,7 +9,7 @@ package at.logic.utils.ds
 
 object Multisets {
 
-    trait Multiset[+A] extends Collection[A]{
+    trait Multiset[+A] extends Iterable[A]{
     }
 
     /*class HashMultiset[+A] extends Multiset[A] {

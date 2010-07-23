@@ -8,6 +8,7 @@
 package at.logic.parsing.language
 
 import at.logic.language.hol._
+import at.logic.parsing.InputParser
 
 trait HOLParser extends InputParser {
     def term : Parser[HOLExpression]

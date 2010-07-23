@@ -42,7 +42,7 @@ class LKskTest extends SpecificationWithJUnit {
     "work for Axioms" in {
       "- Formula occurrences have correct formulas" in {
         // TODO: check map!
-        (a1) must beLike {case Axiom(o) => o.antecedent.toArray(0).formula == f1 && o.succedent.toArray(0).formula == f1}
+        (a1) must beLike {case Axiom(o) => o.antecedent.toArray.apply(0).formula == f1 && o.succedent.toArray.apply(0).formula == f1}
       }
     }
     "work for OrLeftRule" in {

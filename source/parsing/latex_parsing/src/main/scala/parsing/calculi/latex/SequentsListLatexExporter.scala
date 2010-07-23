@@ -33,7 +33,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     if (seq.succedent.size > 1) seq.succedent.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x)})
   }
   
-  def exportSequentList(ls: List[Sequent], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): OutputExporter = {
+  def exportSequentList(ls: List[Sequent], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 
@@ -110,7 +110,7 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
     if (suc.size > 1) suc.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportLabelledFormulaOccurrence(x)})
   }
   
-  def exportSequentList(ls: List[LabelledSequentOccurrence], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): OutputExporter = {
+  def exportSequentList(ls: List[LabelledSequentOccurrence], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 

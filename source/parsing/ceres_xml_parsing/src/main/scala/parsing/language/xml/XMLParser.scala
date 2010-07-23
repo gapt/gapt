@@ -30,7 +30,7 @@ import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base._
 
-import scala.collection.immutable.{Set,EmptySet}
+import scala.collection.immutable.Set
 
 class ProofDatabase( val proofs: List[LKProof], val axioms: List[Sequent] );
 
@@ -73,9 +73,9 @@ object Match {
   def getVars( t: HOLExpression ) : Set[HOLVar] = t match {
     case HOLApp(t_1, t_2) => getVars( t_1 ) ++ getVars( t_2 )
     // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
-    case HOLVar(_,_) => (new EmptySet()) + t.asInstanceOf[HOLVar]
+    case HOLVar(_,_) => (Set[HOLVar]()) + t.asInstanceOf[HOLVar]
     case HOLAbs(_, sub) => getVars( sub )
-    case _ => new EmptySet()
+    case _ => Set[HOLVar]()
   }
 }
 

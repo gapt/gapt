@@ -11,7 +11,7 @@ package substitutions {
    */
   class Substitution[T <: LambdaExpression] protected[substitutions](val map: scala.collection.immutable.Map[Var, T]) extends (T => T) {
     def ::(sub:Tuple2[Var, T]) = new Substitution(map + sub)
-    def :::(otherSubstitution:Substitution[T]) = new Substitution(map ++ otherSubstitution.map.elements)
+    def :::(otherSubstitution:Substitution[T]) = new Substitution(map ++ otherSubstitution.map.iterator)
     def apply(expression: T): T = applyWithChangeDBIndices(expression)
     override def equals(a: Any) = a match {
       case s: Substitution[_] => map.equals(s.map)
@@ -37,17 +37,17 @@ package substitutions {
 
   object Substitution {
     def apply[T <: LambdaExpression](subs: Iterator[Tuple2[Var, T]]): Substitution[T] = new Substitution(new scala.collection.immutable.HashMap[Var, T]() ++ subs)
-    def apply[T <: LambdaExpression](subs: Tuple2[Var, T]*): Substitution[T] = apply(subs.elements)
-    def apply[T <: LambdaExpression](subs: List[Tuple2[Var, T]]): Substitution[T] = apply(subs.elements)
+    def apply[T <: LambdaExpression](subs: Tuple2[Var, T]*): Substitution[T] = apply(subs.iterator)
+    def apply[T <: LambdaExpression](subs: List[Tuple2[Var, T]]): Substitution[T] = apply(subs.iterator)
     def apply[T <: LambdaExpression](variable: Var, expression: T): Substitution[T] = apply((variable, expression))
     def apply[T <: LambdaExpression](map: scala.collection.immutable.Map[Var, T]): Substitution[T] = new Substitution( map )
-    def apply() = new Substitution(new scala.collection.immutable.EmptyMap)
+    def apply() = new Substitution(new scala.collection.immutable.HashMap())
   }
   
   object ImplicitConverters {
     implicit def convertSubstitutionToPair[T <: LambdaExpression](sub: Substitution[T]): Tuple2[Var,T] = {
       require(sub.map.size == 1)
-      sub.map.elements.next
+      sub.map.iterator.next
     }
     implicit def convertPairToSubstitution[T <: LambdaExpression](pair: Tuple2[Var, T]): Substitution[T] = Substitution(pair)
   }

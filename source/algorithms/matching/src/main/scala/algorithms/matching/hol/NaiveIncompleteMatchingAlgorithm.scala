@@ -11,7 +11,6 @@ import at.logic.algorithms.matching.MatchingAlgorithm
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
 import at.logic.language.hol._
-import scala.collection.immutable.EmptySet
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 
@@ -61,8 +60,8 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression]
   def getVars( t: HOLExpression ) : Set[HOLVar] = t match {
     case HOLApp(t_1, t_2) => getVars( t_1 ) ++ getVars( t_2 )
     // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
-    case HOLVar(_,_) => (new EmptySet()) + t.asInstanceOf[HOLVar]
+    case HOLVar(_,_) => (Set[HOLVar]()) + t.asInstanceOf[HOLVar]
     case HOLAbs(_, sub) => getVars( sub )
-    case _ => new EmptySet()
+    case _ => Set[HOLVar]()
   }
 }

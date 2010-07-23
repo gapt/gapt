@@ -14,11 +14,12 @@ import at.logic.utils.ds.{Add, Remove, PublishingBuffer, PublishingBufferEvent}
 
 trait Refinement[V <: Sequent] {
   val clauses: PublishingBuffer[V]
-  clauses.addListener((x: PublishingBufferEvent[V])=> x.ar match {
+  
+  protected def init =  clauses.addListener((x: PublishingBufferEvent[V])=> x.ar match {
       case Remove => removeClause(x.elem)
       case Add => () // only refinements add clauses so they dont need to listen to that event
   })
-
+  
   protected def removeClause(s: V): Unit
 
   def getNextClausesPair: Option[Tuple2[ResolutionProof[V], ResolutionProof[V]]] // return the next pair
