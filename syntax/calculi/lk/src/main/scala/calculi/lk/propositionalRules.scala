@@ -192,6 +192,10 @@ package propositionalRules {
   }
 
   object AndRightRule {
+    def computeLeftAux( main: HOLFormula ) = main match { case And(l, _) => l }
+
+    def computeRightAux( main: HOLFormula ) = main match { case And(_, r) => r }
+    
     def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
       if (!s1.root.succedent.contains(term1) || !s2.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -224,6 +228,8 @@ package propositionalRules {
   }
 
   object AndLeft1Rule {
+    def computeAux( main: HOLFormula ) = main match { case And(l, _) => l }
+
     def apply(s1: LKProof, term1: FormulaOccurrence, term2: HOLFormula) = {
       if (!s1.root.antecedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -253,6 +259,8 @@ package propositionalRules {
   }
 
   object AndLeft2Rule {
+    def computeAux( main: HOLFormula ) = main match { case And(_, r) => r }
+
     def apply(s1: LKProof, term1: HOLFormula, term2: FormulaOccurrence) = {
       if (!s1.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -282,6 +290,10 @@ package propositionalRules {
   }
 
   object OrLeftRule {
+    def computeLeftAux( main: HOLFormula ) = main match { case Or(l, _) => l }
+
+    def computeRightAux( main: HOLFormula ) = main match { case Or(_, r) => r }
+
     def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
       if (!s1.root.antecedent.contains(term1) || !s2.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -314,6 +326,8 @@ package propositionalRules {
   }
 
   object OrRight1Rule {
+    def computeAux( main: HOLFormula ) = main match { case Or(l, _) => l }
+
     def apply(s1: LKProof, term1: FormulaOccurrence, term2: HOLFormula) = {
       if (!s1.root.succedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -343,6 +357,8 @@ package propositionalRules {
   }
 
   object OrRight2Rule {
+    def computeAux( main: HOLFormula ) = main match { case Or(_, r) => r }
+
     def apply(s1: LKProof, term1: HOLFormula, term2: FormulaOccurrence) = {
       if (!s1.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -372,6 +388,10 @@ package propositionalRules {
   }
 
   object ImpLeftRule {
+    def computeLeftAux( main: HOLFormula ) = main match { case Imp(l, _) => l }
+
+    def computeRightAux( main: HOLFormula ) = main match { case Imp(_, r) => r }
+
     def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
       if (!s1.root.succedent.contains(term1) || !s2.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -433,6 +453,7 @@ package propositionalRules {
   }
 
   object NegLeftRule {
+    def computeAux( main: HOLFormula ) = main match { case Neg(s) => s }
     def apply(s1: LKProof, term1: FormulaOccurrence) = {
       if (!s1.root.succedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
@@ -462,6 +483,7 @@ package propositionalRules {
   }
 
   object NegRightRule {
+    def computeAux( main: HOLFormula ) = main match { case Neg(s) => s }
     def apply(s1: LKProof, term1: FormulaOccurrence) = {
       if (!s1.root.antecedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {

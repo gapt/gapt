@@ -406,7 +406,7 @@ object XMLParser {
           val r_perms = recl.map( p => p._3 )
           val triple = createRule( rt, conc, prems, l_perms, r_perms, param, subst )
           // check whether conclusion has been correctly constructed
-          assert( triple._1.root.getSequent.multisetEquals( conc ) )
+          assert( triple._1.root.getSequent.multisetEquals( conc ), triple._1.root.getSequent.toStringSimple + " does not equal " + conc.toStringSimple + "(rule type " + rt + ")")
           // check whether the permutation of the formula occurrences corresponds to the conclusion
           def checkPerm( perm: Array[FormulaOccurrence], list: List[Formula] ) =
             perm.zip( perm.indices ).foreach( p => assert( p._1.formula == list.apply( p._2 ),

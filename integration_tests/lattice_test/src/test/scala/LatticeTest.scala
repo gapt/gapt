@@ -1,7 +1,6 @@
 /** 
  * Description: 
 **/
-/*
 package at.logic.integration_tests
 
 import org.specs._
@@ -28,6 +27,8 @@ import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
+import at.logic.transformations.skolemization.skolemize
+
 class LatticeTest extends SpecificationWithJUnit {
 
   def sequentToString( s: Sequent ) = {
@@ -48,21 +49,32 @@ class LatticeTest extends SpecificationWithJUnit {
 
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
-      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofs()
-      proofs.size must beEqual(1)
-      val proof = proofs.first
+      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head
       printStats( proof )
 
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )
-
+/*
       val cs = StandardClauseSet.transformStructToClauseSet( s )
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
       val cs_path = "target" + separator + "test-classes" + separator + "lattice-cs.xml"
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, cs_path )
       (new java.io.File( cs_path ) ).exists() must beEqual( true )
+*/
     }
+
+    "parse and skolemize the lattice proof" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head
+
+      val proof_sk = skolemize( proof )
+      println("skolemized proof: ")
+      println( proof_sk )
+    }
+
   }
 }
-*/

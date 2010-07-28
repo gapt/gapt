@@ -21,9 +21,16 @@ package substitutions {
     override def toString = map.toString
     // the change of db indices is done automatically in the constructor of abs
     protected def applyWithChangeDBIndices(expression: T): T = expression match {
-      case x:Var if x.isFree => map.get(x) match {
+      case x:Var if x.isFree => {
+//        println("var " + x + " is free, substituting if necessary")
+        map.get(x) match {
           case Some(t) => t
           case None => x.asInstanceOf[T]
+      }
+    }
+      case x:Var if !x.isFree => {
+//        println("var " + x + " is not free")
+       expression 
       }
       case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T]), applyWithChangeDBIndices(n.asInstanceOf[T])).asInstanceOf[T]
       case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope.asInstanceOf[T])).asInstanceOf[T]

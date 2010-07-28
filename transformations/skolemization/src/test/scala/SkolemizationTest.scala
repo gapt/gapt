@@ -88,9 +88,11 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val ax_sk = Axiom( Sequent( Ps0::Nil, Ps0::Nil ) )
       val proof_sk = ForallLeftRule( ax_sk._1, Ps0, allxPx, cs1 )
 
+      val res = skolemize( proof )
+      println( res )
       // this does not work correctly
-      //skolemize( proof ) must beEqual( proof_sk )
-      skolemize( proof ).root.getSequent.multisetEquals( proof_sk.root.getSequent) must beEqual( true )
+      //res must beEqual( proof_sk )
+      res.root.getSequent.multisetEquals( proof_sk.root.getSequent) must beEqual( true )
     }
 
     "work for a cut-free proof" in {
