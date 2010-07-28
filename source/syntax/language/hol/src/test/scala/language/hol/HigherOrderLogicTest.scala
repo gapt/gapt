@@ -19,6 +19,7 @@ import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.types.Definitions._
 import ImplicitConverters._
 import Definitions._
+import at.logic.language.lambda.substitutions._
 
 class HigherOrderLogicTest extends SpecificationWithJUnit {
   "HigherOrderLogic" should {
@@ -103,4 +104,26 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       }
     }
   }
+  "Substitution" should {
+    "work correctly on some testcase involving free/bound vars" in {
+      val s0 = HOLConst(new ConstantStringSymbol("s_0"), i -> i)
+      val C = HOLConst(new ConstantStringSymbol("C"), i -> i)
+      val T = HOLConst(new ConstantStringSymbol("T"), i -> i)
+      val sCTn = Function(s0, Function( C, Function( T, HOLConst(new ConstantStringSymbol("n"), i)::Nil)::Nil)::Nil )
+      val u = HOLVar(new VariableStringSymbol("u"), i)
+      val v = HOLVar(new VariableStringSymbol("v"), i)
+      val P1 = Atom( "P", sCTn::u::Nil)
+      val P2 = Atom( "P", sCTn::v::Nil)
+      val q_form = AllVar(u, ExVar(v, Imp(P1, P2)))
+      q_form match {
+        case AllVar(x, f) => {
+          val a = HOLConst(new ConstantStringSymbol("a"), x.exptype)
+          val sub : Substitution[HOLExpression] = Substitution( x, a )
+          val P3 = Atom("P", sCTn::a::Nil)
+          sub( f ) must beEqual( ExVar(v, Imp(P3, P2)))
+        }
+      }
+    }
+  }
+
 }
