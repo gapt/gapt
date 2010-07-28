@@ -19,7 +19,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
   def debug(l:Int,s:String) = if (l<=debuglevel) println(striplatex(s))
 
   def printSubst(s:Substitution[FOLTerm]) = {
-    for (x <- s.map.toList.sort((x:(Var,FOLExpression), y:(Var,FOLExpression)) => x._1.toString < y._1.toString ) )
+    for (x <- s.map.toList.sortWith((x:(Var,FOLExpression), y:(Var,FOLExpression)) => x._1.toString < y._1.toString ) )
       debug(1,"$ "+x._1+" <- "+x._2+" $\\\\")
   }
 

@@ -140,7 +140,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
   def ac_unify(function: ConstantSymbolA, term1: FOLTerm, term2: FOLTerm): List[Substitution[FOLTerm]] = {
     debug(1, "=== unifying " + flatten(function, term1) + " with " + flatten(function, term2) + "===")
     val counted_symbols = countSymbols(nestedFunctions_toList(function, term1), nestedFunctions_toList(function, term2))
-    val (ts1, count1) = List unzip counted_symbols
+    val (ts1, count1) = counted_symbols.unzip
 
     val (lhs, rhs) = (counted_symbols partition (_._2 > 0)) // this works because countSymbols only returns values != 0
     val vlhs = Vector(lhs map (_._2))
@@ -157,7 +157,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
     } else if ((lhs == Nil) || (rhs == Nil)) {
       Nil
     } else {
-      val basis = LankfordSolver solve (vlhs, vrhs) sort Vector.lex_<
+      val basis = LankfordSolver solve (vlhs, vrhs) sortWith Vector.lex_<
       //val sums  = calculateSums_new(basis, vlhs, vrhs, unifiable_invariant)
       val sums = calculateSums_new_efficient(basis, vlhs, vrhs, unifiable_invariant)
       //debug(1,"difference :"+(sums-sums2)+ " and "+(sums2-sums))
@@ -186,7 +186,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
         varmap(b) = v
       }
 
-      for (s <- sums.toList.sort((x: (Vector, List[(Int, List[Vector])]), y: (Vector, List[(Int, List[Vector])])) => Vector.lex_<(x._1, y._1)))
+      for (s <- sums.toList.sortWith((x: (Vector, List[(Int, List[Vector])]), y: (Vector, List[(Int, List[Vector])])) => Vector.lex_<(x._1, y._1)))
         debug(1, "whole sums " + s)
 
 
@@ -257,7 +257,8 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
       for (u <- unifiers) {
         debug(2, "$" + u + "$")
         //val splitted : Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]] = (u.mapFOL.partition(term_context contains _._1)).asInstanceOf[Tuple2[List[(FOLVar,FOLTerm)], List[(FOLVar,FOLTerm)]]]
-        val umap = (u.map.elements.toList).asInstanceOf[List[(FOLVar, FOLTerm)]]
+//        val umap = (u.map.elements.toList).asInstanceOf[List[(FOLVar, FOLTerm)]]
+        val umap = u.map.toList.asInstanceOf[List[(FOLVar, FOLTerm)]] 
 
         val in_term = umap.filter((x: (FOLVar, FOLTerm)) => (term_context contains x._1))
         debug(3, "variables in term: " + in_term)
@@ -270,7 +271,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
         while (switch_candidates.length > 0) {
           val candidate = switch_candidates.head
           val subst = Substitution[FOLTerm]((candidate._2.asInstanceOf[FOLVar]), candidate._1)
-          renamed = (renamed - candidate) map ((x: (FOLVar, FOLTerm)) => (x._1, subst apply x._2))
+          renamed = (renamed filter (_ != candidate)) map ((x: (FOLVar, FOLTerm)) => (x._1, subst apply x._2))
           switch_candidates = renamed filter ((x: (FOLVar, FOLTerm)) => (base_variables contains x._2))
         }
 
@@ -305,7 +306,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
 
         for (candidate <- candidates) {
           val (weight, sum, vectors) = candidate
-          val entry: (Int, List[Vector]) = (weight, vectors sort Vector.lex_<)
+          val entry: (Int, List[Vector]) = (weight, vectors sortWith Vector.lex_<)
           val newest_entry: (Int, Vector, List[Vector]) = (weight, sum, entry._2)
 
           if (weight <= maxweight) { //drop any sum that is too large
@@ -518,7 +519,7 @@ object ACUtils {
       case FOLConst(_) => term
       case Function(fun, args) =>
         if (f == fun) {
-          Function(fun, ((args map ((x: FOLTerm) => stripFunctionSymbol(f, x))).reduceRight(_ ::: _) map ((x: FOLTerm) => flatten(f, x))) sort TermUtils.term_<)
+          Function(fun, ((args map ((x: FOLTerm) => stripFunctionSymbol(f, x))).reduceRight(_ ::: _) map ((x: FOLTerm) => flatten(f, x))) sortWith TermUtils.term_<)
         } else {
           Function(fun, args map ((x: FOLTerm) => flatten(f, x)))
         }
@@ -557,7 +558,7 @@ object ACUtils {
 
   def removeSubsumedVectors_new(arg: List[Vector], weight: Vector): List[Vector] = {
     var removed: List[Vector] = Nil
-    val sortedarg = arg sort (_ * weight < _ * weight)
+    val sortedarg = arg sortWith (_ * weight < _ * weight)
     debug(1, "sorted list by " + weight + " is " + sortedarg)
     for (v <- sortedarg) {
       if (!linearlydependent_on(v, removed)) {
