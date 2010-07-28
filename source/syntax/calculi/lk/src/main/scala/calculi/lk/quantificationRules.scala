@@ -79,7 +79,7 @@ package quantificationRules {
     }
 
     def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
-      assert( computeAux( main, term ) == aux_fo.formula )
+      assert( computeAux( main, term ) == aux_fo.formula, computeAux( main, term ) + " is not " + aux_fo.formula )
       val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
       new UnaryTree[SequentOccurrence](
           SequentOccurrence(createContext(s1.root.antecedent),
