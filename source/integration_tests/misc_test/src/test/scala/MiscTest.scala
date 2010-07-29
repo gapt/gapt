@@ -28,6 +28,7 @@ import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
 import at.logic.transformations.skolemization.skolemize
+import at.logic.transformations.ceres.projections.Projections
 
 class MiscTest extends SpecificationWithJUnit {
 
@@ -80,5 +81,16 @@ class MiscTest extends SpecificationWithJUnit {
       println(proof_sk)
     }
 */
+    "extract projections and clause set from a skolemized proof" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head
+      val projs = Projections( proof )
+      val s = StructCreators.extract( proof )
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+      val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
+      saveXML( projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Pair("cs", cs)::Nil, path )
+    }
   }
 }

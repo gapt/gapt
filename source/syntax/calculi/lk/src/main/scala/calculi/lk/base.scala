@@ -70,6 +70,8 @@ package base {
         antecedent.zipWithIndex.filter(x => !inds.contains(x._2)).map(x => x._1),
         succedent.zipWithIndex.filter(x => !inds.contains(x._2 + antecedent.size)).map(x => x._1)
       )
+
+    def toFormula = Or( antecedent.map( f => Neg( f ) ) ::: succedent )
   }
   object Sequent {
     def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)

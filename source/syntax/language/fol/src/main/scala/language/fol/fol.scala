@@ -236,3 +236,7 @@ object FOLFactory extends LambdaFactoryA {
       case ->(ta, tr) => ta == argType && checkType( tr, retType, argType )
   }
 }
+
+object getFreeVariablesFOL {
+  def apply( f: FOLFormula ) = f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]]
+}
