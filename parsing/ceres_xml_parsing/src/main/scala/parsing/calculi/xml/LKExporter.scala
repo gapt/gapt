@@ -104,15 +104,17 @@ trait LKExporter extends HOLTermExporter {
 }
 
 object saveXML {
-  def apply( sequentlists: List[Pair[String, List[Sequent]]], filename: String ) =
+  def apply( proofs: List[Pair[String, LKProof]], sequentlists: List[Pair[String, List[Sequent]]], filename: String ) =
   {
     val exporter = new LKExporter{}
-    val xmls = sequentlists.map( p => exporter.exportSequentList(p._1, p._2) )
+    val p_xmls = proofs.map( p => exporter.exportProof(p._1, p._2) )
+    val s_xmls = sequentlists.map( p => exporter.exportSequentList(p._1, p._2) )
     val output =
       <proofdatabase>
         <definitionlist/>
         <axiomset/>
-        { xmls }
+        { p_xmls }
+        { s_xmls }
         <variabledefinitions/>
       </proofdatabase>
     scala.xml.XML.saveFull(filename, output, "UTF-8", true,
