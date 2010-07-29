@@ -36,8 +36,8 @@ package struct {
       case Axiom(so) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
       so match {
         case lso : LabelledSequentOccurrence if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 => {
-          val left = lso.l_antecedent.toList.first
-          val right = lso.l_succedent.toList.first 
+          val left = lso.l_antecedent.toList.head
+          val right = lso.l_succedent.toList.head 
           val ant = if ( cut_occs.contains( left ) )
             Dual( A( new LabelledFormulaOccurrence( left.formula, Nil, right.label ) ) )::Nil
           else
