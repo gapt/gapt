@@ -54,7 +54,7 @@ object WeakeningLeftRule {
         def prin = prinFormula::Nil
       }
   }
-  def unapply(proof: LKProof) = if (proof.rule == WeakeningLeftRuleType) {
+  def unapply(proof: LKProof) = if (proof.rule == WeakeningLeftRuleType && proof.root.isInstanceOf[LabelledSequentOccurrence]) {
       val r = proof.asInstanceOf[UnaryLKProof with PrincipalFormulas]
       val (p1::Nil) = r.prin
       Some((r.uProof, r.root, p1.asInstanceOf[LabelledFormulaOccurrence]))
@@ -72,7 +72,7 @@ object WeakeningRightRule {
         def prin = prinFormula::Nil
       }
   }
-  def unapply(proof: LKProof) = if (proof.rule == WeakeningRightRuleType) {
+  def unapply(proof: LKProof) = if (proof.rule == WeakeningRightRuleType && proof.root.isInstanceOf[LabelledSequentOccurrence]) {
       val r = proof.asInstanceOf[UnaryLKProof with PrincipalFormulas]
       val (p1::Nil) = r.prin
       Some((r.uProof, r.root.asInstanceOf[LabelledSequentOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]))

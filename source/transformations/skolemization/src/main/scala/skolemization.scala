@@ -6,7 +6,7 @@ import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import at.logic.utils.logging.Logger
-import scala.collection.immutable.{Map,ListMap,HashSet}
+import scala.collection.immutable.{Map,HashMap,HashSet}
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._
@@ -26,7 +26,7 @@ object skolemize {
   def apply(p: LKProof) : LKProof = 
   {
     val fos = p.root.antecedent ++ p.root.succedent
-    val inst_map = fos.foldLeft(new ListMap[FormulaOccurrence, List[HOLExpression]]())( (m, fo) => m + (fo -> Nil))
+    val inst_map = fos.foldLeft(new HashMap[FormulaOccurrence, List[HOLExpression]]())( (m, fo) => m + (fo -> Nil))
 
     val sk_s = skolemize( p.root )
 
@@ -65,7 +65,7 @@ object skolemize {
         val succ = s.succedent.toList
         val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
         val ax = Axiom( new_seq )
-        var new_map = ant.zipWithIndex.foldLeft(new ListMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax._2._1( p._2 ) ))
+        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax._2._1( p._2 ) ))
         new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax._2._2( p._2 )))
         (ax._1, new_map)
       }
@@ -282,7 +282,7 @@ object skolemize {
         //println("applying sub: ")
         //println( sub )
         // invert the formula occurrence map.
-        val inv_map = sub_proof._2.foldLeft(new ListMap[FormulaOccurrence, FormulaOccurrence])((m, p) => m + (p._2 -> p._1) )
+        val inv_map = sub_proof._2.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])((m, p) => m + (p._2 -> p._1) )
         val new_symbol_map = copyMapToAncestor( symbol_map ).updated( a, sym_stream.tail )
         val new_inst_map = copyMapToAncestor( inst_map )
         val new_form_map = copyMapToAncestor( form_map )
@@ -291,7 +291,7 @@ object skolemize {
           inv_map.mapValues( new_inst_map ), inv_map.mapValues( new_form_map ),
           new_cut_ancs )
         // FIXME: sub_proof._2 is mutable map, so we have to construct a new immutable one.
-        val new_map = new ListMap() ++ ( sub_proof._2.mapValues( new_proof._2 ) )
+        val new_map = new HashMap() ++ ( sub_proof._2.mapValues( new_proof._2 ) )
         ( new_proof._1, copyMap( proof, new_proof._1, new_map ) )
     }
     else
@@ -305,13 +305,13 @@ object skolemize {
   }
 
   def copyMapToAncestor[A]( map: Map[FormulaOccurrence, A] ) =
-    map.foldLeft(new ListMap[FormulaOccurrence, A])( (m, p) => m ++ p._1.ancestors.map( a => (a, p._2) ) )
+    map.foldLeft(new HashMap[FormulaOccurrence, A])( (m, p) => m ++ p._1.ancestors.map( a => (a, p._2) ) )
  
   def copySetToAncestor( set: Set[FormulaOccurrence] ) = set.foldLeft( new HashSet[FormulaOccurrence] )( (s, fo) => s ++ fo.ancestors )
 
   def copyMapToDescendant( old_p: LKProof, new_p: LKProof, 
                            map: Map[FormulaOccurrence, FormulaOccurrence] ) =
-    map.foldLeft(new ListMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => {
+    map.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => {
         val desc = old_p.getDescendantInLowerSequent( p._1 )
         if (desc != None)
           m + (desc.get -> new_p.getDescendantInLowerSequent( p._2 ).get )
@@ -329,7 +329,7 @@ object skolemize {
   {
     var cur_stream = stream
     val fos = s.antecedent ++ s.succedent
-    val symbol_map = fos.foldLeft(new ListMap[FormulaOccurrence, Stream[ConstantStringSymbol]])( (m, fo) => {
+    val symbol_map = fos.foldLeft(new HashMap[FormulaOccurrence, Stream[ConstantStringSymbol]])( (m, fo) => {
         val s = even( cur_stream )
         cur_stream = odd( cur_stream )
         m + ( fo -> s )
@@ -380,6 +380,8 @@ object skolemize {
         //println( "skolemizing AllQ")
         val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
         //println( "substitution: " + sub )
+        //println( f )
+        //println( sub( f ) )
         // TODO: should not be necessary to cast here, Formula is closed under substitution
         val res = sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
         //println( "result of skolemization: " + res )

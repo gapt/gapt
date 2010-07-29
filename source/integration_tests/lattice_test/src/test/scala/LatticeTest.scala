@@ -61,7 +61,7 @@ class LatticeTest extends SpecificationWithJUnit {
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
       val cs_path = "target" + separator + "test-classes" + separator + "lattice-cs.xml"
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, cs_path )
+      saveXML( Nil, Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, cs_path )
       (new java.io.File( cs_path ) ).exists() must beEqual( true )
 */
     }
@@ -72,9 +72,11 @@ class LatticeTest extends SpecificationWithJUnit {
       val proof = proofdb.proofs.head
 
       val proof_sk = skolemize( proof )
-      println("skolemized proof: ")
-      println( proof_sk )
+      val s = StructCreators.extract( proof_sk )
+      val cs = StandardClauseSet.transformStructToClauseSet( s )
+      val path = "target" + separator + "test-classes" + separator + "lattice-sk.xml"
+      saveXML( Pair("lattice-sk", proof_sk)::Nil, Pair("cs", cs.map( so => so.getSequent ))::Nil, path )
+      (new java.io.File( path ) ).exists() must beEqual( true )
     }
-
   }
 }

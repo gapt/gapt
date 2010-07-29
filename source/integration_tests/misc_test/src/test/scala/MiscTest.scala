@@ -79,6 +79,6 @@ class MiscTest extends SpecificationWithJUnit {
       println("skolemized proof:")
       println(proof_sk)
     }
-  }
 */
+  }
 }
