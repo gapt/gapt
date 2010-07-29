@@ -167,7 +167,8 @@ package hol {
   }
 
   object Or {
-    def apply(left: HOLFormula, right: HOLFormula) = App(App(OrC,left),right).asInstanceOf[HOLFormula]
+    def apply(fs: List[HOLFormula]) : HOLFormula = fs.tail.foldLeft(fs.head)( (d, f) => Or(d, f) )
+    def apply(left: HOLFormula, right: HOLFormula) : HOLFormula = App(App(OrC,left),right).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
       case App(App(OrC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
       case _ => None

@@ -28,6 +28,8 @@ import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
 import at.logic.transformations.skolemization.skolemize
+import at.logic.transformations.ceres.projections.Projections
+import at.logic.parsing.language.tptp.TPTPFOLExporter
 
 class LatticeTest extends SpecificationWithJUnit {
 
@@ -45,7 +47,6 @@ class LatticeTest extends SpecificationWithJUnit {
     print("binary: " + stats.binary + "\n")
     print("cuts: " + stats.cuts + "\n")
   }
-
 
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
@@ -73,9 +74,16 @@ class LatticeTest extends SpecificationWithJUnit {
 
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+      val tptp = TPTPFOLExporter.tptp_problem( cs )
+      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "lattice-cs.tptp")
+      writer.write( tptp )
+      writer.flush
+      val projs = Projections( proof_sk )
       val path = "target" + separator + "test-classes" + separator + "lattice-sk.xml"
-      saveXML( Pair("lattice-sk", proof_sk)::Nil, Pair("cs", cs.map( so => so.getSequent ))::Nil, path )
+      saveXML( Pair("lattice-sk", proof_sk) ::
+        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Pair("cs", cs)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
   }

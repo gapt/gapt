@@ -103,8 +103,8 @@ object skolemize {
       case DefinitionRightRule( p, _, a, m ) => handleDefRule( proof, p, a, m, 0, DefinitionRightRule.apply )
       case EquationLeft1Rule( p1, p2, _, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, 1, EquationLeft1Rule.apply )
       case EquationLeft2Rule( p1, p2, _, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, 1, EquationLeft2Rule.apply )
-      case EquationRight1Rule( p1, p2, _, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, 1, EquationRight1Rule.apply )
-      case EquationRight2Rule( p1, p2, _, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, 1, EquationRight2Rule.apply )
+      case EquationRight1Rule( p1, p2, _, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, 0, EquationRight1Rule.apply )
+      case EquationRight2Rule( p1, p2, _, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, 0, EquationRight2Rule.apply )
       case CutRule( p1, p2, _, a1, a2 ) => {
         val new_symbol_map = copyMapToAncestor( symbol_map )
         val new_inst_map = copyMapToAncestor( inst_map )
