@@ -20,6 +20,7 @@ import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.lk.getCutAncestors
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.algorithms.lk.applySubstitution
+import scala.collection.immutable.Stream.Empty
 
 object skolemize {
 
@@ -41,8 +42,6 @@ object skolemize {
   leaving out the strong quantifier inferences).
 
   TODO: check whether proof is Skolemizable (or maybe just QFC)
-
-  TODO: have to distinguish cut-ancestors/ES-ancestors!
 
   TODO: maybe form_map not necessary: we can skolemize the auxiliary formulas on the fly (we should have all
     necessary information). This is done in Def, Eq-Rules anyways.
@@ -80,19 +79,21 @@ object skolemize {
       case ContractionLeftRule(p, _, a1, a2, _) => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply)
       case ContractionRightRule(p, _, a1, a2, _) => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply)
       case AndRightRule(p1, p2, _, a1, a2, m) => handleBinaryRule( proof, p1, p2, a1, a2, m, AndRightRule.computeLeftAux, AndRightRule.computeRightAux, AndRightRule.apply)
-      case AndLeft1Rule(p, _, a, m) => handleUnaryRule( proof, p, a, 
+      case AndLeft1Rule(p, _, a, m) => handleUnary1Rule( proof, p, a, 
         form_map( m ) match { case And(_, w) => w }, m, AndLeft1Rule.computeAux, AndLeft1Rule.apply)
       case AndLeft2Rule(p, _, a, m) => handleUnary2Rule( proof, p, a,
         form_map( m ) match { case And(w, _) => w }, m, AndLeft2Rule.computeAux, AndLeft2Rule.apply)
       case OrLeftRule(p1, p2, _, a1, a2, m) => handleBinaryRule( proof, p1, p2, a1, a2, m, OrLeftRule.computeLeftAux, OrLeftRule.computeRightAux, OrLeftRule.apply)
-      case OrRight1Rule(p, _, a, m) => handleUnaryRule( proof, p, a,
+      case OrRight1Rule(p, _, a, m) => handleUnary1Rule( proof, p, a,
         form_map( m ) match { case Or(_, w) => w }, m, OrRight1Rule.computeAux, OrRight1Rule.apply)
       case OrRight2Rule(p, _, a, m) => handleUnary2Rule( proof, p, a,
         form_map( m ) match { case Or(w, _) => w }, m, OrRight2Rule.computeAux, OrRight2Rule.apply)
       case ImpLeftRule(p1, p2, _, a1, a2, m) => handleBinaryRule( proof, p1, p2, a1, a2, m, ImpLeftRule.computeLeftAux, ImpLeftRule.computeRightAux, ImpLeftRule.apply)
       case ImpRightRule(p, _, a1, a2, m) => {
         val (na1, na2) = form_map(m) match { case Imp(l, r) => (l, r) }
-        val new_proof = skolemize( p, copyMapToAncestor(symbol_map), copyMapToAncestor(inst_map),
+        val new_proof = skolemize( p, 
+          copyMapToAncestor(symbol_map).updated(a1, even(symbol_map( m ))).updated(a2, odd(symbol_map( m ))),
+          copyMapToAncestor(inst_map),
           copyMapToAncestor(form_map).updated(a1, na1).updated(a2, na2), copySetToAncestor( cut_ancs ) )
         val ret = ImpRightRule( new_proof._1, new_proof._2( a1 ), new_proof._2( a2 ) )
         (ret, copyMapToDescendant( proof, ret, new_proof._2 ))
@@ -146,9 +147,9 @@ object skolemize {
       cut_ancs: Set[FormulaOccurrence]
 
     ) = {
-      //println("skolemizing def aux: " + a.formula)
+      //println("skolemizing def aux (pol: " + pol + "): " + a.formula.toStringSimple)
       val new_aux = if (!cut_ancs.contains( m ) ) sk( a.formula, pol, inst_map( m ), symbol_map( m ) ) else a.formula
-      //println("result: " + new_aux )
+      //println("result: " + new_aux.toStringSimple )
       val new_proof = skolemize( p, copyMapToAncestor(symbol_map), 
         copyMapToAncestor(inst_map), copyMapToAncestor(form_map).updated( a, new_aux ), copySetToAncestor( cut_ancs ) )
       val ret = constructor( new_proof._1, new_proof._2( a ), form_map( m ) )
@@ -173,20 +174,34 @@ object skolemize {
 
   def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
-      constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof)(implicit
+      constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof,
+      partition: Stream[ConstantStringSymbol] => Stream[ConstantStringSymbol])(implicit
       symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
 
     ) = {
-      val new_proof = skolemize( p, copyMapToAncestor(symbol_map), copyMapToAncestor(inst_map),
+      val new_proof = skolemize( p, 
+        copyMapToAncestor(symbol_map).updated( a, partition( symbol_map( m ) ) ), 
+        copyMapToAncestor(inst_map),
         copyMapToAncestor(form_map).updated(a, computeAux( form_map(m) ) ), copySetToAncestor( cut_ancs ) )
       val ret = constructor( new_proof._1, new_proof._2( a ), weak ) 
       (ret, copyMapToDescendant( proof, ret, new_proof._2 ))
   }
 
+  // give even partition function
+  def handleUnary1Rule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
+      computeAux: HOLFormula => HOLFormula,
+      constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof)(implicit
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      inst_map: Map[FormulaOccurrence, List[HOLExpression]],
+      form_map: Map[FormulaOccurrence, HOLFormula],
+      cut_ancs: Set[FormulaOccurrence]
+    ) = handleUnaryRule( proof, p, a, weak, m, computeAux, constructor, even)
+
   // switch the arguments of the constructor
+  // give odd partition function
   def handleUnary2Rule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, HOLFormula, FormulaOccurrence) => LKProof)(implicit
@@ -194,9 +209,8 @@ object skolemize {
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
-
     ) = handleUnaryRule( proof, p, a, weak, m, computeAux,
-      (p, fo, f) => constructor(p, f, fo) )( symbol_map, inst_map, form_map, cut_ancs )
+      (p, fo, f) => constructor(p, f, fo), odd )
 
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
       computeLeftAux: HOLFormula => HOLFormula, computeRightAux: HOLFormula => HOLFormula,
@@ -207,13 +221,14 @@ object skolemize {
       cut_ancs: Set[FormulaOccurrence]
 
     ) = {
-      val new_symbol_map = copyMapToAncestor(symbol_map)
+      val new_symbol_map_left = copyMapToAncestor(symbol_map).updated( a1, even( symbol_map( m ) ) )
+      val new_symbol_map_right = copyMapToAncestor(symbol_map).updated( a2, odd( symbol_map( m ) ) )
       val new_inst_map = copyMapToAncestor(inst_map)
       val new_form_map_left = copyMapToAncestor(form_map).updated(a1, computeLeftAux( form_map(m) ) )
       val new_form_map_right = copyMapToAncestor(form_map).updated(a2, computeRightAux( form_map(m) ) )
       val new_cut_ancs = copySetToAncestor( cut_ancs )
-      val new_p1 = skolemize( p1, new_symbol_map, new_inst_map, new_form_map_left, new_cut_ancs )
-      val new_p2 = skolemize( p2, new_symbol_map, new_inst_map, new_form_map_right, new_cut_ancs )
+      val new_p1 = skolemize( p1, new_symbol_map_left, new_inst_map, new_form_map_left, new_cut_ancs )
+      val new_p2 = skolemize( p2, new_symbol_map_right, new_inst_map, new_form_map_right, new_cut_ancs )
       val ret = constructor( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
       (ret, copyMapToDescendant( proof, ret, new_p1._2 ++ new_p2._2 ))
   }
@@ -245,6 +260,7 @@ object skolemize {
       val new_inst_map = copyMapToAncestor( inst_map ).updated( a, inst_list :+ t )
       val new_form_map = copyMapToAncestor( form_map ).updated( a, computeAux( form_map( m ), t ) )
       val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), new_inst_map, new_form_map, copySetToAncestor( cut_ancs ) )
+      //println("main formula for weak quant rule: " + form_map( m ).toStringSimple )
       val ret = constructor( new_proof._1, new_proof._2( a ), form_map( m ), t ) 
       ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
   }
@@ -279,16 +295,20 @@ object skolemize {
         val skolem_term = Function( sym, inst_map( m ), v.exptype )
         val sub = Substitution( v, skolem_term )
         val sub_proof = applySubstitution( p, sub )
-        //println("applying sub: ")
-        //println( sub )
+        //println("old es: " + p.root.getSequent.toStringSimple)
+        //println("sub: " + sub )
+        //println("after sub: " + sub_proof._1.root.getSequent.toStringSimple )
         // invert the formula occurrence map.
         val inv_map = sub_proof._2.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])((m, p) => m + (p._2 -> p._1) )
         val new_symbol_map = copyMapToAncestor( symbol_map ).updated( a, sym_stream.tail )
         val new_inst_map = copyMapToAncestor( inst_map )
-        val new_form_map = copyMapToAncestor( form_map )
+        val new_form_map = copyMapToAncestor( form_map ).updated( a, sub_proof._2( a ).formula )
         val new_cut_ancs = copySetToAncestor( cut_ancs ).foldLeft(new HashSet[FormulaOccurrence])( (s, fo) => if (sub_proof._2.isDefinedAt( fo ) ) s + sub_proof._2( fo ) else s )
+        //println("old aux: " + form_map( m ).toStringSimple )
+        //println("new aux: " + new_form_map( a ).toStringSimple )
         val new_proof = skolemize( sub_proof._1, inv_map.mapValues( new_symbol_map ), 
-          inv_map.mapValues( new_inst_map ), inv_map.mapValues( new_form_map ),
+          inv_map.mapValues( new_inst_map ),
+          inv_map.mapValues( new_form_map ),
           new_cut_ancs )
         // FIXME: sub_proof._2 is mutable map, so we have to construct a new immutable one.
         val new_map = new HashMap() ++ ( sub_proof._2.mapValues( new_proof._2 ) )
@@ -346,9 +366,12 @@ object skolemize {
 
   def skolem_symbol_stream = skolem_symbol_stream_from( 0 )
 
-  def even[A]( s: Stream[A] ) : Stream[A] = Stream.cons( s.head, even(s.tail.tail) )
+  def even[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Empty else
+    Stream.cons( s.head, even(s.tail.tail) )
 
-  def odd[A]( s: Stream[A] ) : Stream[A] = Stream.cons( s.tail.head, odd(s.tail.tail) )
+  def odd[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Empty
+    else if (s.tail.isEmpty) Empty
+    else Stream.cons( s.tail.head, odd(s.tail.tail) )
 
   def invert( pol: Int ) = 
     if (pol == 0)
@@ -368,6 +391,7 @@ object skolemize {
     case ExVar(x, f) =>
       if (pol == 1)
       {
+        assert( !f.getFreeAndBoundVariables._2.contains( x ) )
         val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
         // TODO: should not be necessary to cast here, Formula is closed under substitution
         sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
@@ -377,6 +401,7 @@ object skolemize {
     case AllVar(x, f) =>
       if (pol == 0)
       {
+        assert( !f.getFreeAndBoundVariables._2.contains( x ) )
         //println( "skolemizing AllQ")
         val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
         //println( "substitution: " + sub )

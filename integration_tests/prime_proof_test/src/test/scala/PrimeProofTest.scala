@@ -149,13 +149,12 @@ class PrimeProofTest extends SpecificationWithJUnit {
     }
 */
 
-// FIXME: this test fails!
-/*
-    "parse and skolemize the first-order prime proof, n=0" in {
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=0" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
       val proof = proofdb.proofs.head
 
+      //val proof_sk = skolemize( regularize( proof )._1 )
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
@@ -170,35 +169,45 @@ class PrimeProofTest extends SpecificationWithJUnit {
         Pair("cs", cs)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
-*/
-    /*"parse correctly the first-order prime proof, n=1" in {
-      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-1.xml.gz")))) with XMLProofDatabaseParser).getProofs()
-      proofs.size must beEqual(1)
-      val proof = proofs.first
-      val proof_sk = LKtoLKskc( proof )
-      val s = StructCreators.extract( proof_sk )
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
-      val dcs = deleteTautologies( cs )
-      val css = dcs.removeDuplicates
-      Console.println("css: " + css.size)
-      val cssv = sequentNormalize(css)
-      Console.println("cssv: " + cssv.size)
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css))::Pair("cssv", cssv)::Nil, "target" + separator + "test-classes" + separator + "prime1-1-cs.xml" )
-    }
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=1" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-1.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head
 
-    "parse correctly the first-order prime proof, n=2" in {
-      val proofs = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-2.xml.gz")))) with XMLProofDatabaseParser).getProofs()
-      proofs.size must beEqual(1)
-      val proof = proofs.first
-      val proof_sk = LKtoLKskc( proof )
+      //val proof_sk = skolemize( regularize( proof )._1 )
+      val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
-      val dcs = deleteTautologies( cs )
-      val css = dcs.removeDuplicates
-      Console.println("css: " + css.size)
-      val cssv = sequentNormalize(css)
-      Console.println("cssv: " + cssv.size)
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css))::Pair("cssv", cssv)::Nil, "target" + separator + "test-classes" + separator + "prime1-2-cs.xml" )
-    }*/
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+      val tptp = TPTPFOLExporter.tptp_problem( cs )
+      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-1-cs.tptp")
+      writer.write( tptp )
+      writer.flush
+      val projs = Projections( proof_sk )
+      val path = "target" + separator + "test-classes" + separator + "prime1-1-sk.xml"
+      saveXML( Pair("prime1-1-sk", proof_sk) ::
+        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Pair("cs", cs)::Nil, path )
+      (new java.io.File( path ) ).exists() must beEqual( true )
+    }
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=2" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-2.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head
+
+      //val proof_sk = skolemize( regularize( proof )._1 )
+      val proof_sk = skolemize( proof )
+      val s = StructCreators.extract( proof_sk )
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+      val tptp = TPTPFOLExporter.tptp_problem( cs )
+      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-2-cs.tptp")
+      writer.write( tptp )
+      writer.flush
+      val projs = Projections( proof_sk )
+      val path = "target" + separator + "test-classes" + separator + "prime1-2-sk.xml"
+      saveXML( Pair("prime1-2-sk", proof_sk) ::
+        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Pair("cs", cs)::Nil, path )
+      (new java.io.File( path ) ).exists() must beEqual( true )
+    }
   }
 }

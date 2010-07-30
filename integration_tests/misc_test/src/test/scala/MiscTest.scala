@@ -67,11 +67,6 @@ class MiscTest extends SpecificationWithJUnit {
       println(proof_sk)
     }
 
-    // The following test fails. This is due because in the skolemization algorithm, a substitution fails:
-    // we have a formula of the form \exists u F(u), we use ExVar(f, v) to match against it.
-    // Then we apply a substitution substituting the skolem term for u.
-    // But this substitution does not work because u is bound in F(u), which it should not be! BUG!?
-/*
     "skolemize a proof with a complex definition" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
@@ -80,7 +75,6 @@ class MiscTest extends SpecificationWithJUnit {
       println("skolemized proof:")
       println(proof_sk)
     }
-*/
     "extract projections and clause set from a skolemized proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)

@@ -132,7 +132,7 @@ package propositionalRules {
 
   object ContractionRightRule {
     def apply(s1: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
+      if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple + ", end-sequent: " + s1.root.getSequent.toStringSimple)
       else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
       else if (!s1.root.succedent.contains(term1) || !s1.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
