@@ -22,14 +22,20 @@ package substitutions {
     // the change of db indices is done automatically in the constructor of abs
     protected def applyWithChangeDBIndices(expression: T): T = expression match {
       case x:Var if x.isFree => {
-//        println("var " + x + " is free, substituting if necessary")
         map.get(x) match {
-          case Some(t) => t
-          case None => x.asInstanceOf[T]
+          case Some(t) => {
+            //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+            t
+          }
+          case None => {
+            //println(x + " is free, but we don't substitute for it")
+            x.asInstanceOf[T]
+          }
       }
     }
       case x:Var if !x.isFree => {
-//        println("var " + x + " is not free")
+        if (map.contains( x ) )
+          println("WARNING: trying to substitute for a bound variable, ignoring!") 
        expression 
       }
       case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T]), applyWithChangeDBIndices(n.asInstanceOf[T])).asInstanceOf[T]

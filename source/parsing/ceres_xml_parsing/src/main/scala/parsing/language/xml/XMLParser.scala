@@ -277,7 +277,7 @@ object XMLParser {
     def getSequent(n: Node) : Sequent =
       trim(n) match {
         case <sequent>{ns @ _*}</sequent> =>
-          Sequent(getFormulaList(ns.first), getFormulaList(ns.last))
+          Sequent(getFormulaList(ns.head), getFormulaList(ns.last))
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
  
@@ -330,7 +330,7 @@ object XMLParser {
     def getProofDatabase() : ProofDatabase = getProofDatabase( getInput() )
     def getProofDatabase( pdb : Node ) : ProofDatabase = 
       new ProofDatabase( (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getProof() ).toList,
-                         (new NodeReader( (pdb\"axiomset").first ) with XMLSequentParser).getAxiomSet() )
+                         (new NodeReader( (pdb\"axiomset").head ) with XMLSequentParser).getAxiomSet() )
   }
 
   /**
@@ -385,19 +385,19 @@ object XMLParser {
       trim(n) match {
         case <proof>{ ns @ _* }</proof> => {
           // TODO: read symbol, calculus
-          getProofRec( ns.first )
+          getProofRec( ns.head )
         }
         case <rule>{ ns @ _* }</rule> => {
-          val rt = n.attribute("type").get.first.text
-          val param = if ( n.attribute("param") == None ) None else Some( n.attribute("param").get.first.text )
-          val conc = ( new NodeReader(ns.first) with XMLSequentParser ).getSequent()
+          val rt = n.attribute("type").get.head.text
+          val param = if ( n.attribute("param") == None ) None else Some( n.attribute("param").get.head.text )
+          val conc = ( new NodeReader(ns.head) with XMLSequentParser ).getSequent()
           // TODO: according to DTD, there may be a "substitution" element here
           // but I think it's not actually used.
           val substnodes = ns.filter( n => n.label == "lambdasubstitution" ||
                                            n.label == "secondordervariable" ||
                                            n.label == "definedset" )
           val subst = if ( !substnodes.isEmpty )
-                        Some((new NodeReader( substnodes.first ) with XMLSetTermParser).getSetTerm)
+                        Some((new NodeReader( substnodes.head ) with XMLSetTermParser).getSetTerm)
                       else
                         None
           val recl = ns.filter( n => n.label == "rule" ).map( n => getProofRec( n ) ).toList
@@ -422,7 +422,7 @@ object XMLParser {
           triple
         }
         case <prooflink/> => {
-          //n.attribute("symbol").get.first.text
+          //n.attribute("symbol").get.head.text
           // TODO: create DAG Proof!?
           throw new ParsingException("Could not parse prooflink node (not supported yet): " + n.toString)
         }
@@ -465,7 +465,7 @@ object XMLParser {
         for ( i <- 0 until param.length )
           new_param.update( i, param.apply( i ) )
 
-        val pos = param.zip( param.indices ).filter( p => p._1 > 1 ).first._2
+        val pos = param.zip( param.indices ).filter( p => p._1 > 1 ).head._2
 
         new_param.update( pos, param.apply( pos ) - 1 )
         val auxf1 = side_chooser( l_perm, r_perm ).apply( pos )
@@ -496,70 +496,70 @@ object XMLParser {
           if ( param == None )
             throw new ParsingException("Rule type is permr, but param attribute is not present.")
           val param_s = param.get
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           ( prem, l_perm, permuteMap( XMLUtils.permStringToFun( param_s, prem.root.succedent.size ), r_perm ) )
         }
         case "perml" => {
           if ( param == None )
             throw new ParsingException("Rule type is perml, but param attribute is not present.")
           val param_s = param.get
-          val prem = prems.first
-          val r_perm = r_perms.first
-          val l_perm = l_perms.first
+          val prem = prems.head
+          val r_perm = r_perms.head
+          val l_perm = l_perms.head
           ( prem, permuteMap( XMLUtils.permStringToFun( param_s, prem.root.antecedent.size ), l_perm ), r_perm )
         }
         case "contrl" => {
           if ( param == None )
             throw new ParsingException("Rule type is contrl, but param attribute is not present.")
           val c_param = param.get.split(',').map( s => s.toInt ).toArray
-          val prem = prems.first
-          val r_perm = r_perms.first
-          val l_perm = l_perms.first
+          val prem = prems.head
+          val r_perm = r_perms.head
+          val l_perm = l_perms.head
           createStrongContractionLeft(prem, c_param, l_perm, r_perm)
         }
         case "contrr" => {
           if ( param == None )
             throw new ParsingException("Rule type is contrr, but param attribute is not present.")
           val c_param = param.get.split(',').map( s => s.toInt ).toArray
-          val prem = prems.first
-          val r_perm = r_perms.first
-          val l_perm = l_perms.first
+          val prem = prems.head
+          val r_perm = r_perms.head
+          val l_perm = l_perms.head
           createStrongContractionRight(prem, c_param, l_perm, r_perm)
         }
         case "weakl" => {
           // TODO: in principle, the calculus definition allows introduction of more than
           // one weak formula. Is this used in practice?
-          val prem = prems.first
-          val r_perm = r_perms.first
-          val l_perm = l_perms.first
-          val weakf = conc.antecedent.first
+          val prem = prems.head
+          val r_perm = r_perms.head
+          val l_perm = l_perms.head
+          val weakf = conc.antecedent.head
           val rule = WeakeningLeftRule( prem, weakf )
-          // TODO: prin.first is redundant, we know that WeakeningLeftRule has only one main formula
-          ( rule, (List( rule.prin.first ) ++ ( l_perm.map( mapToDesc( rule ) ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
+          // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
+          ( rule, (List( rule.prin.head ) ++ ( l_perm.map( mapToDesc( rule ) ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
         }
         case "weakr" => {
           // TODO: in principle, the calculus definition allows introduction of more than
           // one weak formula. Is this used in practice?
-          val prem = prems.first
-          val r_perm = r_perms.first
-          val l_perm = l_perms.first
+          val prem = prems.head
+          val r_perm = r_perms.head
+          val l_perm = l_perms.head
           val weakf = conc.succedent.last
           val rule = WeakeningRightRule( prem, weakf )
-          // TODO: prin.first is redundant, we know that WeakeningLeftRule has only one main formula
-          ( rule, l_perm.map( mapToDesc( rule ) ), ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.first ) ).toArray )
+          // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
+          ( rule, l_perm.map( mapToDesc( rule ) ), ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.head ) ).toArray )
         }
         case "cut" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          val l_perm_l = l_perms.first
-          val l_perm_r = r_perms.first
+          val l_perm_l = l_perms.head
+          val l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
           val l_p_s = l_prem.root.succedent.size
           val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.first
+          val auxf_r = r_perm_l.head
           val rule = CutRule( l_prem, r_prem, auxf_l, auxf_r )
           ( rule,
             ( (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
@@ -568,10 +568,10 @@ object XMLParser {
             r_perm_r.map( mapToDesc( rule ) ) ).toArray )
         }
         case "andr" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          def l_perm_l = l_perms.first
-          def l_perm_r = r_perms.first
+          def l_perm_l = l_perms.head
+          def l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
           val l_p_s = l_prem.root.succedent.size
@@ -585,70 +585,70 @@ object XMLParser {
             r_perm_r.map( mapToDesc( rule ) ) ).toArray )
         }
         case "orl" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          def l_perm_l = l_perms.first
-          def l_perm_r = r_perms.first
+          def l_perm_l = l_perms.head
+          def l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
-          val auxf_l = l_perm_l.first
-          val auxf_r = r_perm_l.first
+          val auxf_l = l_perm_l.head
+          val auxf_r = r_perm_l.head
           val rule = OrLeftRule( l_prem, r_prem, auxf_l, auxf_r )
           ( rule,
             l_perm_l.map( mapToDesc( rule ) ) ++ r_perm_l.drop( 1 ).map( mapToDesc( rule ) ),
             l_perm_r.map( mapToDesc( rule ) ) ++ r_perm_r.map( mapToDesc( rule ) ) )
         }
         case "impll" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          val l_perm_l = l_perms.first
-          val l_perm_r = r_perms.first
+          val l_perm_l = l_perms.head
+          val l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
           val l_p_s = l_prem.root.succedent.size
           val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.first
+          val auxf_r = r_perm_l.head
           val rule = ImpLeftRule( l_prem, r_prem, auxf_l, auxf_r )
-          // TODO: prin.first is redundant, we know that ImpLeftRule has only one main formula
+          // TODO: prin.head is redundant, we know that ImpLeftRule has only one main formula
           ( rule,
-            ( List( rule.prin.first ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
+            ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
             r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
             ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
             r_perm_r.map( mapToDesc( rule ) ) ).toArray )
         }
         case "implr" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf1 = l_perm.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf1 = l_perm.head
           val auxf2 = r_perm.last
           val rule = ImpRightRule( prem, auxf1, auxf2 )
           ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
         }
         case "negr" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
           val rule = NegRightRule( prem, auxf )
-          // TODO: prin.first is redundant, we know that NegRightRule has only one main formula
+          // TODO: prin.head is redundant, we know that NegRightRule has only one main formula
           ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-            ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.first ) ).toArray )
+            ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.head ) ).toArray )
         }
         case "negl" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val rule = NegLeftRule( prem, auxf )
-          // TODO: prin.first is redundant, we know that NegRightRule has only one main formula
-          ( rule, ( List( rule.prin.first ) ++ l_perm.map( mapToDesc( rule ) ) ).toArray, 
+          // TODO: prin.head is redundant, we know that NegRightRule has only one main formula
+          ( rule, ( List( rule.prin.head ) ++ l_perm.map( mapToDesc( rule ) ) ).toArray, 
             ( r_perm.take( r_perm.length - 1 ).map( mapToDesc( rule ) ) ).toArray )
         }
         case "orr1" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val mainf = conc.succedent.last
           val rule = mainf match {
@@ -658,9 +658,9 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "orr2" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val mainf = conc.succedent.last
           val rule = mainf match {
@@ -670,11 +670,11 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "andl1" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
-          val mainf = conc.antecedent.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
+          val mainf = conc.antecedent.head
           val rule = mainf match {
             case And(_, weakf) => AndLeft1Rule( prem, auxf, weakf )
             case _ => throw new ParsingException("Rule type is andl1, but main formula is not a conjunction.")
@@ -682,11 +682,11 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "andl2" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
-          val mainf = conc.antecedent.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
+          val mainf = conc.antecedent.head
           val rule = mainf match {
             case And(weakf, _) => AndLeft2Rule( prem, weakf, auxf )
             case _ => throw new ParsingException("Rule type is andl2, but main formula is not a conjunction.")
@@ -694,11 +694,11 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "foralll" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
-          val mainf = conc.antecedent.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
+          val mainf = conc.antecedent.head
           val rule = mainf match {
             case All(sub, _) => {
               sub match {
@@ -725,11 +725,11 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "foralll2" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
-          val mainf = conc.antecedent.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
+          val mainf = conc.antecedent.head
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
             case All(_, _) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
@@ -738,11 +738,11 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "existsl" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
-          val mainf = conc.antecedent.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
+          val mainf = conc.antecedent.head
           val rule = mainf match {
             case Ex(sub, _) => {
               sub match {
@@ -763,11 +763,11 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "existsl2" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
-          val mainf = conc.antecedent.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
+          val mainf = conc.antecedent.head
           val rule = mainf match {
             case Ex(sub, _) => {
               sub match {
@@ -788,9 +788,9 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "forallr" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val mainf = conc.succedent.last
           val rule = mainf match {
@@ -813,9 +813,9 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "forallr2" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val mainf = conc.succedent.last
           val rule = mainf match {
@@ -838,9 +838,9 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "existsr" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val mainf = conc.succedent.last
           val rule = mainf match {
@@ -862,9 +862,9 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "existsr2" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val mainf = conc.succedent.last
           val rule = mainf match {
@@ -875,19 +875,19 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "defl" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
-          val auxf = l_perm.first
-          val mainf = conc.antecedent.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
+          val auxf = l_perm.head
+          val mainf = conc.antecedent.head
           val rule = DefinitionLeftRule( prem, auxf.formula, mainf )
           // TODO: give auxf instead of auxf.formula
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "defr" => {
-          val prem = prems.first
-          val l_perm = l_perms.first
-          val r_perm = r_perms.first
+          val prem = prems.head
+          val l_perm = l_perms.head
+          val r_perm = r_perms.head
           val auxf = r_perm.last
           val mainf = conc.succedent.last
           val rule = DefinitionRightRule( prem, auxf.formula, mainf )
@@ -895,50 +895,50 @@ object XMLParser {
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
         case "eql1" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          def l_perm_l = l_perms.first
-          def l_perm_r = r_perms.first
+          def l_perm_l = l_perms.head
+          def l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
           val l_p_s = l_prem.root.succedent.size
           val r_p_s = r_prem.root.succedent.size 
           val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.first
-          val mainf = conc.antecedent.first
+          val auxf_r = r_perm_l.head
+          val mainf = conc.antecedent.head
           // TODO: parse and pass parameter
           val rule = EquationLeft1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
           ( rule,
-            ( List( rule.prin.first ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
+            ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
             r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
             ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
             r_perm_r.map( mapToDesc( rule ) ) ).toArray )
         }
         case "eql2" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          def l_perm_l = l_perms.first
-          def l_perm_r = r_perms.first
+          def l_perm_l = l_perms.head
+          def l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
           val l_p_s = l_prem.root.succedent.size
           val r_p_s = r_prem.root.succedent.size 
           val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.first
-          val mainf = conc.antecedent.first
+          val auxf_r = r_perm_l.head
+          val mainf = conc.antecedent.head
           // TODO: parse and pass parameter
           val rule = EquationLeft2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
           ( rule,
-            ( List( rule.prin.first ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
+            ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
             r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
             ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
             r_perm_r.map( mapToDesc( rule ) ) ).toArray )
         }
         case "eqr1" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          def l_perm_l = l_perms.first
-          def l_perm_r = r_perms.first
+          def l_perm_l = l_perms.head
+          def l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
           val l_p_s = l_prem.root.succedent.size
@@ -955,10 +955,10 @@ object XMLParser {
             r_perm_r.map( mapToDesc( rule ) ) ).toArray )
         }
         case "eqr2" => {
-          val l_prem = prems.first
+          val l_prem = prems.head
           val r_prem = prems.last
-          def l_perm_l = l_perms.first
-          def l_perm_r = r_perms.first
+          def l_perm_l = l_perms.head
+          def l_perm_r = r_perms.head
           def r_perm_l = l_perms.last
           def r_perm_r = r_perms.last
           val l_p_s = l_prem.root.succedent.size
@@ -1018,29 +1018,29 @@ object XMLParser {
     def getFormula(n : Node) : HOLFormula =
       trim(n) match {
         case <constantatomformula>{ ns @ _* }</constantatomformula>
-          => Atom(new ConstantStringSymbol( n.attribute("symbol").get.first.text ),
+          => Atom(new ConstantStringSymbol( n.attribute("symbol").get.head.text ),
                   XMLUtils.nodesToAbstractTerms(ns.toList))
         case <variableatomformula>{ ns @ _* }</variableatomformula>
-          => AppN( (new NodeReader( ns.first ) with XMLSetTermParser).getSetTerm(),
+          => AppN( (new NodeReader( ns.head ) with XMLSetTermParser).getSetTerm(),
                    XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[HOLFormula]
         case <definedsetformula>{ ns @ _* }</definedsetformula>
-          => AppN( (new NodeReader( ns.first ) with XMLSetTermParser).getSetTerm(),
+          => AppN( (new NodeReader( ns.head ) with XMLSetTermParser).getSetTerm(),
                    XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[HOLFormula]
         case <conjunctiveformula>{ ns @ _* }</conjunctiveformula> 
-          => createConjunctiveFormula(n.attribute("type").get.first.text,
+          => createConjunctiveFormula(n.attribute("type").get.head.text,
                                          XMLUtils.nodesToFormulas(ns.toList))
         case <quantifiedformula>{ ns @ _* }</quantifiedformula> =>
         {
-                  val variable = ( new NodeReader(ns.first) with XMLTermParser).getVariable()
+                  val variable = ( new NodeReader(ns.head) with XMLTermParser).getVariable()
                   val form = ( new NodeReader(ns.last) with XMLFormulaParser).getFormula() 
-                  createQuantifiedFormula( n.attribute("type").get.first.text,
+                  createQuantifiedFormula( n.attribute("type").get.head.text,
                                            variable, form )
         }
         case <secondorderquantifiedformula>{ ns @ _*}</secondorderquantifiedformula> =>
         {
-          val variable = ( new NodeReader(ns.first) with XMLSetTermParser).getSetTerm().asInstanceOf[HOLVar]
+          val variable = ( new NodeReader(ns.head) with XMLSetTermParser).getSetTerm().asInstanceOf[HOLVar]
           val form = ( new NodeReader(ns.last) with XMLFormulaParser).getFormula()
-          createQuantifiedFormula( n.attribute("type").get.first.text,
+          createQuantifiedFormula( n.attribute("type").get.head.text,
                                               variable, form )
 
         }
@@ -1050,10 +1050,10 @@ object XMLParser {
     private def createConjunctiveFormula(sym: String, formulas: List[HOLFormula]) : HOLFormula =
     {
       sym match {
-        case "and" => And(formulas.first, formulas.last)
-        case "or" => Or(formulas.first, formulas.last)
-        case "impl" => Imp(formulas.first, formulas.last)
-        case "neg" => Neg(formulas.first)
+        case "and" => And(formulas.head, formulas.last)
+        case "or" => Or(formulas.head, formulas.last)
+        case "impl" => Imp(formulas.head, formulas.last)
+        case "neg" => Neg(formulas.head)
         case _ => throw new ParsingException("Could not parse conjunctiveformula type: " + sym)
       }
     }
@@ -1151,9 +1151,9 @@ object XMLParser {
      */
     def getTerm(n: Node) : HOLExpression =
       trim(n) match {
-        case <variable/> => HOLVar(new VariableStringSymbol( n.attribute("symbol").get.first.text ), Ti() )
-        case <constant/> => HOLConst(new ConstantStringSymbol( n.attribute("symbol").get.first.text ), Ti() )
-        case <function>{ ns @ _* }</function> => createFunction(n.attribute("symbol").get.first.text,
+        case <variable/> => HOLVar(new VariableStringSymbol( n.attribute("symbol").get.head.text ), Ti() )
+        case <constant/> => HOLConst(new ConstantStringSymbol( n.attribute("symbol").get.head.text ), Ti() )
+        case <function>{ ns @ _* }</function> => createFunction(n.attribute("symbol").get.head.text,
                                                              XMLUtils.nodesToAbstractTerms(ns.toList))
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
@@ -1191,17 +1191,17 @@ object XMLParser {
         // provided here, so we assume for the moment that all second order
         // variables have type i -> o.
         case <secondordervariable/> => 
-          HOLVar(new VariableStringSymbol( n.attribute("symbol").get.first.text ),
+          HOLVar(new VariableStringSymbol( n.attribute("symbol").get.head.text ),
                    i -> o)
         case <lambdasubstitution>{ ns @ _* }</lambdasubstitution> => {
-          AbsN( (new NodeReader(ns.first) with XMLVariableListParser).getVariableList(),
+          AbsN( (new NodeReader(ns.head) with XMLVariableListParser).getVariableList(),
                 (new NodeReader(ns.last) with XMLFormulaParser).getFormula() )
         }
         // TODO: treat definitional aspect of definedset
         case <definedset>{ ns @ _* }</definedset> =>
         {
           val args = XMLUtils.nodesToAbstractTerms( ns.toList )
-          AppN( HOLConst(new ConstantStringSymbol( n.attribute("symbol").get.first.text ),
+          AppN( HOLConst(new ConstantStringSymbol( n.attribute("symbol").get.head.text ),
                          FunctionType( i -> o, args.map( t => t.exptype ) ) ),
                 args )
         }

@@ -27,7 +27,8 @@ object TPTPFOLExporter {
     reduceHolToFol(f, imap, iid )
   }
 
-  def tptp_problem( ss: List[Sequent] ) = ss.zipWithIndex.foldLeft("")( (s, p) => s + sequentToProblem( p._1, "sequent" + p._2 ) + "\n")
+  def tptp_problem( ss: List[Sequent] ) = 
+    ss.zipWithIndex.foldLeft("")( (s, p) => s + sequentToProblem( p._1, "sequent" + p._2 ) + "\n")
 
   def sequentToProblem( s: Sequent, n: String ) =
     "cnf( " + n + ",axiom," + export( s ) + ")."
@@ -51,15 +52,13 @@ object TPTPFOLExporter {
     case t: FOLTerm => tptp( t )
   }
 
+  // To be able to deal with theorem provers that implement only
+  // the parsing of clauses (i.e. they assume associativity of |
+  // and dislike parentheses), we only export clauses at the moment.
   def tptp( f: FOLFormula )(implicit s_map: Map[FOLVar, String]) : String = f match {
     case Atom(x, args) => handleAtom( x, args )
-    case And(x,y) => "(" + tptp( x ) + " & " + tptp( y ) + ")"
-    case Or(x,y) => "(" + tptp( x ) + " | " + tptp( y ) + ")"
-    case Imp(x,y) => "(" + tptp( x ) + " => " + tptp( y ) + ")"
-    case Neg(x) => "~ ( " + tptp( x ) + " ) "
-// TODO: need to rename bound variables
-//    case ExVar(x,f) => "( ? [ " + tptp( x )  + " ] : " + tptp( f ) + ")"
-//    case AllVar(x,f) => "( ! [ " + tptp( x )  + " ] : " + tptp( f ) + ")"
+    case Or(x,y) => tptp( x ) + " | " + tptp( y )
+    case Neg(x) => "~" + tptp( x )
   }
 
   def tptp( t: FOLTerm )(implicit s_map: Map[FOLVar, String]) : String = t match {

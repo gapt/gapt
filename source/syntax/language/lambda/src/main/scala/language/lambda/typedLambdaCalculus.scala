@@ -181,7 +181,10 @@ package typedLambdaCalculus {
   object Abs {
     def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression)
     def unapply(expression: LambdaExpression) = expression match {
-      case a: Abs => Some((a.variable, a.expression))
+      case a: Abs => {
+        assert( !a.expression.getFreeAndBoundVariables._2.contains( a.variable ) )
+        Some((a.variable, a.expression))
+      }
       case _ => None
     }
   }

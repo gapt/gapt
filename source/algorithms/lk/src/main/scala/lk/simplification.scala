@@ -39,13 +39,13 @@ package simplification {
     val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm[HOLExpression] {val matchAlg = at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm}
     def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
     private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x, el))) ls else (el::ls)
-    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el, x))
+    private def backward(el: Sequent, ls: List[Sequent]) = ls.filterNot(x => alg.subsumes(el, x))
   }
   object subsumedClausesRemoval {
     val alg = new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm[at.logic.language.fol.FOLExpression] {val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm}
     def apply(sequents: List[Sequent]): List[Sequent] = sequents.foldLeft(List[Sequent]())((ls, el) => forward(el, backward(el, ls)))
     private def forward(el: Sequent, ls: List[Sequent]) = if (ls.exists(x => alg.subsumes(x, el))) ls else (el::ls)
-    private def backward(el: Sequent, ls: List[Sequent]) = ls.remove(x => alg.subsumes(el, x))
+    private def backward(el: Sequent, ls: List[Sequent]) = ls.filterNot(x => alg.subsumes(el, x))
   }
 
   // for any positive unit clause, we try to match it with all negative "ground" literals of the other clauses, if there is a match we remove the literal.
@@ -78,10 +78,10 @@ package simplification {
           val map = Map[Var,Var]()
           def nextId = {id = id + 1; id}
           (Sequent(normalize(el.antecedent,map,nextId).asInstanceOf[List[HOLFormula]],normalize(el.succedent,map,nextId).asInstanceOf[List[HOLFormula]]))::ls
-        })).removeDuplicates
+        })).distinct
     }
     private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => Int): List[Formula] = 
-      ls.sort((t1,t2) => myToString(t1) < myToString(t2)).map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).removeDuplicates
+      ls.sortWith((t1,t2) => myToString(t1) < myToString(t2)).map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).distinct
     private def myToString(exp: at.logic.language.lambda.typedLambdaCalculus.LambdaExpression): String = exp match {
       case v@ Var(at.logic.language.lambda.symbols.VariableStringSymbol(_),_) => ""
       case v: Var => v.toString
