@@ -37,6 +37,8 @@ package typedLambdaCalculus {
         (mFBV._1, bound)
       }
     }
+    def noUnboundedBounded: Boolean = {val ret = noUnboundedBoundedRec(Set[Var]()); if (!ret) Console.println(toStringSimple); ret} // confirms there are no unbounded bounded variables in the term
+    protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean // the recursive call
     def variant(gen: => VariantGenerator): LambdaExpression
     /*def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var => (HashSet(v), new EmptySet)
@@ -108,6 +110,7 @@ package typedLambdaCalculus {
     def isFree = dbIndex == None
     def isBound = !isFree
     def variant(gen: => VariantGenerator) = if (isFree && name.isInstanceOf[VariableSymbolA]) gen(this) else this
+    protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean = isFree || binders.contains(this)
   }
   // TODO: remove!?!
   object LambdaVar {
@@ -150,7 +153,7 @@ package typedLambdaCalculus {
     def toString1(): String = "Abs(" + variableInScope.toString1 + "," + expressionInScope.toString1 + ")"
     def toStringSimple = "(λ" + variableInScope.toStringSimple + "." + expressionInScope.toStringSimple + ")"
     private def createDeBruijnIndex(vr: Var, exp: LambdaExpression, nextDBIndex: Int): LambdaExpression = exp match {
-      case v: Var if vr =^ v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) do to the Var equals method
+      case v: Var if vr =^ v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) due to the Var equals method
       case v: Var => v
       case v @ App(a, b) => App(createDeBruijnIndex(vr, a, nextDBIndex), createDeBruijnIndex(vr, b, nextDBIndex))
       /* In Abs we check if the nested abs does not have the same variable. As the creation of nested abs is inductive we might have
@@ -173,6 +176,7 @@ package typedLambdaCalculus {
       case AbsInScope(v,_) => v.dbIndex.get
       case _ => 0
     }
+    protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean = expressionInScope.noUnboundedBoundedRec(binders + variableInScope)
   }
 
   /*
@@ -225,6 +229,7 @@ package typedLambdaCalculus {
     override def toString() = "App(" + function + "," + argument + ")"
     def toString1(): String = "App(" + function.toString1+", "+argument.toString1+")"
     def toStringSimple() = "(" + function.toStringSimple + argument.toStringSimple + ")"
+    protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean = function.noUnboundedBoundedRec(binders) && argument.noUnboundedBoundedRec(binders)
   }
 
   object App {
