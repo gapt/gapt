@@ -11,7 +11,7 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.trees._
+import at.logic.utils.ds.acyclicGraphs._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 import base._
@@ -30,7 +30,7 @@ package equationalRules {
       if (!s1.root.succedent.contains(eqocc) || !s2.root.antecedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
-        new BinaryTree[SequentOccurrence](
+        new BinaryAGraph[SequentOccurrence](
             SequentOccurrence(createContext((s1.root.antecedent) ++ s2.root.antecedent - auxocc) + prinFormula,
                               createContext((s1.root.succedent - eqocc) ++ s2.root.succedent) ), s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -55,7 +55,7 @@ package equationalRules {
       if (!s1.root.succedent.contains(eqocc) || !s2.root.antecedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
-        new BinaryTree[SequentOccurrence](
+        new BinaryAGraph[SequentOccurrence](
             SequentOccurrence(createContext((s1.root.antecedent) ++ s2.root.antecedent - auxocc) + prinFormula,
                               createContext((s1.root.succedent - eqocc) ++ s2.root.succedent) ), s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -80,7 +80,7 @@ package equationalRules {
       if (!s1.root.succedent.contains(eqocc) || !s2.root.succedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
-        new BinaryTree[SequentOccurrence](
+        new BinaryAGraph[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent ++ s2.root.antecedent),
                               createContext((s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc)) + prinFormula ),
             s1, s2 )
@@ -106,7 +106,7 @@ package equationalRules {
       if (!s1.root.succedent.contains(eqocc) || !s2.root.succedent.contains(auxocc)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil)
-        new BinaryTree[SequentOccurrence](
+        new BinaryAGraph[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent ++ s2.root.antecedent),
                               createContext((s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc)) + prinFormula),
             s1, s2 )

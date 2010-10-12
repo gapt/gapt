@@ -22,6 +22,7 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.algorithms.lk.applySubstitution
 import scala.collection.immutable.Stream.Empty
 
+/*
 object skolemize {
 
   def apply(p: LKProof) : LKProof = 
@@ -417,14 +418,14 @@ object skolemize {
     case Atom(_,_) => f
   }
 }
-
+*/
 
 // THE FOLLOWING VERSION DOES NOT WORK - IT FAILS ON A UNIT TEST.
 // See stdout: The substitution is { y <- s_1(x) } is applied to
 // R(x,y), and the result is again R(x,y) because the occurrence
 // of y thinks it's bound!
 
-/*
+
 object skolemize {
 
   def apply(p: LKProof) : LKProof = 
@@ -811,4 +812,4 @@ object skolemize {
     case Atom(_,_) => f
   }
 }
-*/
+

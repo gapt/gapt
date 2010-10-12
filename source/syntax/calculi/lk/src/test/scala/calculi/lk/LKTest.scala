@@ -7,6 +7,7 @@
 
 package at.logic.calculi.lk
 
+import _root_.at.logic.language.lambda.substitutions.Substitution
 import org.specs._
 import org.specs.runner._
 
@@ -14,7 +15,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.Definitions._
-import at.logic.language.lambda.symbols._
+import at.logic.language.hol.logicSymbols._
 import propositionalRules._
 import base._
 import propositionalRules.ImplicitConverters._
@@ -481,4 +482,109 @@ class LKTest extends SpecificationWithJUnit {
       }
     }
   }
+
+  def skolem_symbol_stream_from(n: Int): Stream[ConstantStringSymbol] =
+    Stream.cons(ConstantStringSymbol( "s_" + n ), skolem_symbol_stream_from( n + 1 ) )
+
+  def skolem_symbol_stream = skolem_symbol_stream_from( 0 )
+
+  def even[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Stream.Empty else
+    Stream.cons( s.head, even(s.tail.tail) )
+
+  def odd[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Stream.Empty
+    else if (s.tail.isEmpty) Stream.Empty
+    else Stream.cons( s.tail.head, odd(s.tail.tail) )
+
+  def invert( pol: Int ) =
+    if (pol == 0)
+      1
+    else
+      0
+
+  def sk(f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[ConstantStringSymbol]) : HOLFormula = f match {
+    case And(l, r) => And( sk( l , pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case Or(l, r) => Or( sk( l , pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case Imp(l, r) => Imp( sk( l , invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case Neg(f) => Neg( sk( f, invert( pol ), terms, symbols ) )
+    case ExVar(x, f) =>
+      if (pol == 1)
+      {
+        println( "skolemizing ExQ")
+        val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
+        println( "substitution: " + sub )
+        println( "before: " + f )
+        println( "after: " + sub( f ) )
+        // TODO: should not be necessary to cast here, Formula is closed under substitution
+        sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
+      }
+      else // TODO: should not be necessary to cast! try to change it in hol.scala.
+        ExVar(x, sk( f, pol, terms :+ x.asInstanceOf[HOLVar], symbols ) )
+    case AllVar(x, f) =>
+      if (pol == 0)
+      {
+        //println( "skolemizing AllQ")
+        val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
+        //println( "substitution: " + sub )
+        //println( f )
+        //println( sub( f ) )
+        // TODO: should not be necessary to cast here, Formula is closed under substitution
+        val res = sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
+        //println( "result of skolemization: " + res )
+        res
+      }
+      else // TODO: should not be necessary to cast! try to change it in hol.scala.
+        AllVar(x, sk( f, pol, terms :+ x.asInstanceOf[HOLVar], symbols ) )
+    case Atom(_,_) => f
+  }
+
+  /*"A complex test for checking substitution in quantifiers" should {
+    "simulate skolemization" in {
+
+
+      val x = HOLVar("x", i)
+      val y = HOLVar("y", i)
+      val f = AllVar( x, Atom("P", x::Nil ) )
+      val s0 = new ConstantStringSymbol( "s_0" )
+      val s1 = new ConstantStringSymbol( "s_1" )
+      val s2 = new ConstantStringSymbol( "s_2" )
+      val s3 = new ConstantStringSymbol( "s_3" )
+      val a = HOLVar("a", i)
+      val b = HOLVar("b", i)
+      val Rab = Atom( "R", a::b::Nil )
+      val exyRay = ExVar( y, Atom( "R", a::y::Nil ) )
+      val allxexyRxy = AllVar( x, ExVar( y, Atom( "R", x::y::Nil ) ) )
+      //sk(allxexyRxy, 1, Nil, skolem_symbol_stream)
+      val exyRsy = Substitution
+      //sk(exyRay, 1, new HOLConst(skolem_symbol_stream.head, i)::Nil, skolem_symbol_stream.tail)
+
+      exyRay match { case ExVar(x, f) => {
+      println( "skolemizing ExQ")
+      val sub = Substitution(x, Function( skolem_symbol_stream.tail.head, new HOLConst(skolem_symbol_stream.head, i)::Nil, x.exptype ) )
+      println( "substitution: " + sub )
+      println( "before: " + f )
+      println( "after: " + sub( f ) )
+      // TODO: should not be necessary to cast here, Formula is closed under substitution
+      sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
+      }}
+
+      //val ax = Axiom( Sequent( Rab::Nil, Rab::Nil ) )
+      //val r1 = ExistsRightRule( ax._1, Rab, exyRay, b )
+      //val r2 = ExistsLeftRule( r1, Rab, exyRay, b )
+      //val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
+      //val proof = ForallRightRule( r3, exyRay, allxexyRxy, a )
+
+      //val fs0 = HOLConst( s0, i -> i )
+      //val cs1 = HOLConst( s1, i )
+      //val s0s1 = HOLApp( fs0, cs1 )
+      //val sR = Atom( "R", cs1::s0s1::Nil )
+      //val sax = Axiom( Sequent( sR::Nil, sR::Nil ) )
+      //val exyRs1y = ExVar( y, Atom( "R", cs1::y::Nil ) )
+      //val allxRxs0x = AllVar( x, Atom( "R", x::HOLApp( fs0, x )::Nil ) )
+
+      //val sr1 = ExistsRightRule( sax._1, sR, exyRs1y, s0s1 )
+      //val proof_sk = ForallLeftRule( sr1, sR, allxRxs0x, cs1 )
+
+      sk()
+    }
+  }*/
 }

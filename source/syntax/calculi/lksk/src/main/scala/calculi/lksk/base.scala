@@ -11,7 +11,6 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.immutable.{Map,HashMap}
 

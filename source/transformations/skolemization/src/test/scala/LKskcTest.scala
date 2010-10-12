@@ -60,6 +60,6 @@ class LKskcTest extends SpecificationWithJUnit {
       val r4 = ForallRightRule( r3, exyRay, allxexyRxy, a )
       val lkskc_proof = LKtoLKskc( r4, Set() )
       lkskc_proof.root.antecedent.toList.head must beLike{ case o : LabelledFormulaOccurrence => o.label == EmptyLabel() && o.formula == r4.root.getSequent.antecedent.head }
-    }
+    } 
   }
 }
