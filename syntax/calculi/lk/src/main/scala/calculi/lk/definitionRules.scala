@@ -10,15 +10,13 @@ package at.logic.calculi.lk
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.trees._
-import scala.collection.immutable.Set
-import scala.collection.mutable.HashMap
+import at.logic.utils.ds.acyclicGraphs._
 import base._
 
 package definitionRules {
+import at.logic.utils.ds.acyclicGraphs._
 
-  // Definition rules
+// Definition rules
   case object DefinitionLeftRuleType extends UnaryRuleTypeA
   case object DefinitionRightRuleType extends UnaryRuleTypeA
 
@@ -26,7 +24,7 @@ package definitionRules {
   object DefinitionLeftRule {
     def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula) = {
       val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-      new UnaryTree[SequentOccurrence](
+      new UnaryAGraph[SequentOccurrence](
           SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
                             createContext((s1.root.succedent))), s1 )
       with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -36,7 +34,7 @@ package definitionRules {
       }
     }
 
-    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
@@ -55,7 +53,7 @@ package definitionRules {
   object DefinitionRightRule {
     def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula) = {
       val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-      new UnaryTree[SequentOccurrence](
+      new UnaryAGraph[SequentOccurrence](
           SequentOccurrence(createContext(s1.root.antecedent),
                             createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
       with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -65,7 +63,7 @@ package definitionRules {
       }
     }
 
-    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")

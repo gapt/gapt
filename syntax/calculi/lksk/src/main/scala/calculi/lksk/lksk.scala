@@ -11,7 +11,7 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.trees._
+import at.logic.utils.ds.acyclicGraphs._
 import scala.collection.immutable.Set
 import scala.collection.mutable.{Map,HashMap}
 import base._
@@ -36,7 +36,7 @@ object Axiom {
     val right: List[LabelledFormulaOccurrence] = 
       seq.succedent.zip(maps._2).map( p => createOccurrence( p._1, p._2 ) )
     // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
-    (new LeafTree[SequentOccurrence](new LabelledSequentOccurrence(LKAxiom.toSet(left), LKAxiom.toSet(right) ) ) with LKProof {def rule = InitialRuleType}, (left,right))
+    (new LeafAGraph[SequentOccurrence](new LabelledSequentOccurrence(LKAxiom.toSet(left), LKAxiom.toSet(right) ) ) with LKProof {def rule = InitialRuleType}, (left,right))
   }
   def createOccurrence(f: HOLFormula, l: Label): LabelledFormulaOccurrence =
     LKskFOFactory.createInitialOccurrence(f, l)
@@ -47,7 +47,7 @@ object WeakeningLeftRule {
   def apply(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence(f, l)
     // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
-    new UnaryTree[SequentOccurrence](
+    new UnaryAGraph[SequentOccurrence](
       new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula, createContext(s1.root.succedent).asInstanceOf[Set[LabelledFormulaOccurrence]]), s1)
       with UnaryLKProof with PrincipalFormulas {
         def rule = WeakeningLeftRuleType
@@ -65,7 +65,7 @@ object WeakeningLeftRule {
 object WeakeningRightRule {
   def apply(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence(f, l)
-    new UnaryTree[SequentOccurrence](
+    new UnaryAGraph[SequentOccurrence](
       new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]], createContext(s1.root.succedent).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula), s1)
       with UnaryLKProof with PrincipalFormulas {
         def rule = WeakeningRightRuleType
@@ -103,7 +103,7 @@ object ForallSkLeftRule {
           throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term. Label: " + auxf.label.toString + ", substitution term: " + subst_t.toString)
         val prinFormula = 
           LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)
-        new UnaryTree[SequentOccurrence](
+        new UnaryAGraph[SequentOccurrence](
           new LabelledSequentOccurrence(createContext((s1.root.antecedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula, createContext((s1.root.succedent)).asInstanceOf[Set[LabelledFormulaOccurrence]]), s1 )
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ForallSkLeftRuleType
@@ -136,7 +136,7 @@ object ExistsSkRightRule {
           throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term.")
         val prinFormula = 
           LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)
-        new UnaryTree[SequentOccurrence](
+        new UnaryAGraph[SequentOccurrence](
           new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]], createContext((s1.root.succedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula), s1 )
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ExistsSkRightRuleType
@@ -166,7 +166,7 @@ object ForallSkRightRule {
         if (!s1.root.succedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
         val prinFormula = auxf.factory.createPrincipalFormulaOccurrence(main, auxf::Nil).asInstanceOf[LabelledFormulaOccurrence]
-        new UnaryTree[SequentOccurrence](
+        new UnaryAGraph[SequentOccurrence](
           new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]], createContext((s1.root.succedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula), s1 )
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ForallSkRightRuleType
@@ -196,7 +196,7 @@ object ExistsSkLeftRule {
         if (!s1.root.antecedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
         val prinFormula = auxf.factory.createPrincipalFormulaOccurrence(main, auxf::Nil).asInstanceOf[LabelledFormulaOccurrence]
-        new UnaryTree[SequentOccurrence](
+        new UnaryAGraph[SequentOccurrence](
           new LabelledSequentOccurrence(createContext((s1.root.antecedent - auxf)).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula, createContext((s1.root.succedent)).asInstanceOf[Set[LabelledFormulaOccurrence]]), s1 )
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
             def rule = ExistsSkLeftRuleType

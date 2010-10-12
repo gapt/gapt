@@ -11,14 +11,14 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.trees._
+import at.logic.utils.ds.acyclicGraphs.{UnaryAGraph, BinaryAGraph, AGraph}
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 
 
 package base {
 
-  private[lk] object LKFOFactory extends FOFactory {
+private[lk] object LKFOFactory extends FOFactory {
     def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
     def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
     def createOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = new FormulaOccurrence(formula, ancestors) {def factory = LKFOFactory}
@@ -91,7 +91,7 @@ package base {
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
-   trait LKProof extends Proof[SequentOccurrence] with Tree[SequentOccurrence] {
+   trait LKProof extends Proof[SequentOccurrence] with AGraph[SequentOccurrence] {
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
       (root.antecedent ++ root.succedent).filter(x => x.ancestors.contains(fo)).toList match {
         case x::Nil => Some(x)
@@ -100,10 +100,10 @@ package base {
       }
     }
   }
-  trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof with UnaryProof[SequentOccurrence] {
+  trait UnaryLKProof extends UnaryAGraph[SequentOccurrence] with LKProof with UnaryProof[SequentOccurrence] {
     override def uProof = t.asInstanceOf[LKProof]
   }
-  trait BinaryLKProof extends BinaryTree[SequentOccurrence] with LKProof with BinaryProof[SequentOccurrence] {
+  trait BinaryLKProof extends BinaryAGraph[SequentOccurrence] with LKProof with BinaryProof[SequentOccurrence] {
     override def uProof1 = t1.asInstanceOf[LKProof]
     override def uProof2 = t2.asInstanceOf[LKProof]
   }
