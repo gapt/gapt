@@ -107,9 +107,14 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
       if (mgus.isEmpty) {
         NoResolventReply
       } else {
-          val sub = mgus.head
-          ResolventReply(Resolution(c1,c2,i,j,sub))
-        //TODO: finitary unification
+        /* === unitary unification ===
+        val sub = mgus.head
+        ResolventReply(Resolution(c1,c2,i,j,sub)) */
+
+        //TODO: check finitary unification
+          val commands = mgus.map((s:Substitution[LambdaExpression]) => ResolventReply(Resolution(c1,c2,i,j,s)) :  ResolventReply)
+          AppendCommandsCom(commands)
+
       }
     }
     case (ApplyOnSecondSubtermCom((i,j),(s1,s2), pos, t), ParamodulateCom) => {
@@ -122,9 +127,11 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
         if (mgus.isEmpty) {
           NoParamodulantReply
         } else {
-          val sub = mgus.head
-          ParamodulantReply(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))
-        //TODO: finitary unification
+          //val sub = mgus.head
+          //ParamodulantReply(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub))
+          //TODO: check finitary unification
+          val commands = mgus.map((sub:Substitution[LambdaExpression]) => ParamodulantReply(Paramodulation(c1,c2,i,j,Replacement(pos, b.asInstanceOf[HOLExpression]).apply(c2.root(j)).asInstanceOf[HOLFormula], sub)) :  ParamodulantReply)
+          AppendCommandsCom(commands)
         }
 
       case _ => NoParamodulantReply
@@ -165,8 +172,10 @@ object RobinsonCommandsParser extends CommandsParser with at.logic.utils.logging
       mgus match {
         case Nil => Nil
         case List(sub2 : Substitution[T]) =>
-        val subst : Substitution[T] = (sub2 compose sub)
-        List( (x::usedIndices, subst) )
+          val subst : Substitution[T] = (sub2 compose sub)
+          List( (x::usedIndices, subst) )
+        case subs : List[Substitution[T]] =>
+          throw new Exception("finitary factorization not yet implemented")
         //todo: finitary unification
       }
     case x::ls => {
