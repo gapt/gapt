@@ -34,6 +34,7 @@ public class ProofViewer<V> {
     }
 
     public ProofViewer(at.logic.utils.ds.graphs.Graph s) {
+        /*
         JGraphModelAdapter adapter = new JGraphModelAdapter(s.getGraph());
         this.model = adapter;
         this.view = new GraphLayoutCache(model, new DefaultCellViewFactory());
@@ -43,6 +44,7 @@ public class ProofViewer<V> {
         frame = new JFrame();
         frame.getContentPane().add(new JScrollPane(graph));
         frame.pack();
+        */
     }
 
     /*
@@ -308,6 +310,7 @@ public class ProofViewer<V> {
     // --- main method for testing ----
     public static void main(String[] args) {
         try {
+            System.out.print("helo");
             /*
             ProofViewer v = new ProofViewer();
             v.insertLotsOfCells(1000);
