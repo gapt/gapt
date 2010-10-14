@@ -22,15 +22,20 @@ import at.logic.utils.ds.acyclicGraphs._
 
   // TODO: implement verification of the rule
   object DefinitionLeftRule {
-    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula) = {
-      val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-      new UnaryAGraph[SequentOccurrence](
-          SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
-                            createContext((s1.root.succedent))), s1 )
-      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-        def rule = DefinitionLeftRuleType
-        def aux = (aux_fo::Nil)::Nil
-        def prin = prinFormula::Nil
+    def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula) = {
+      val term1op = s1.root.antecedent.find(_ == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val aux_fo = term1op.get
+        val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.antecedent - aux_fo)
+        new UnaryAGraph[SequentOccurrence](
+            SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
+                              createContext((s1.root.succedent))), s1 )
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+          def rule = DefinitionLeftRuleType
+          def aux = (aux_fo::Nil)::Nil
+          def prin = prinFormula::Nil
+        }
       }
     }
 
@@ -51,15 +56,20 @@ import at.logic.utils.ds.acyclicGraphs._
 
   // TODO: implement verification of the rule
   object DefinitionRightRule {
-    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula) = {
-      val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-      new UnaryAGraph[SequentOccurrence](
-          SequentOccurrence(createContext(s1.root.antecedent),
-                            createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
-      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-        def rule = DefinitionRightRuleType
-        def aux = (aux_fo::Nil)::Nil
-        def prin = prinFormula::Nil
+    def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula) = {
+      val term1op = s1.root.succedent.find(_ == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val aux_fo = term1op.get
+        val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.succedent - aux_fo)
+        new UnaryAGraph[SequentOccurrence](
+            SequentOccurrence(createContext(s1.root.antecedent),
+                              createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+          def rule = DefinitionRightRuleType
+          def aux = (aux_fo::Nil)::Nil
+          def prin = prinFormula::Nil
+        }
       }
     }
 
