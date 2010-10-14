@@ -40,10 +40,14 @@ package quantificationRules {
       case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
     }
 
-    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
-      val aux_form = computeAux( main, term )
-      assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toStringSimple + " is not equal to the formula " + aux_fo.formula.toStringSimple + " at the given occurrence")
-        val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
+    def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val aux_fo = term1op.get
+        val aux_form = computeAux( main, term )
+        assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toStringSimple + " is not equal to the formula " + aux_fo.formula.toStringSimple + " at the given occurrence")
+        val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.antecedent - aux_fo)
         new UnaryAGraph[SequentOccurrence](
           SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
                             createContext((s1.root.succedent))), s1 )
@@ -53,6 +57,7 @@ package quantificationRules {
           def prin = prinFormula::Nil
           def subst = term
         }
+      }
     }
 
     def unapply(proof: LKProof) = if (proof.rule == ForallLeftRuleType) {
@@ -78,17 +83,22 @@ package quantificationRules {
       case _ => throw new LKRuleCreationException("Main formula of ExistsRightRule must have a universal quantifier as head symbol.")
     }
 
-    def apply(s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
-      assert( computeAux( main, term ) == aux_fo.formula, computeAux( main, term ).toStringSimple + " is not " + aux_fo.formula.toStringSimple )
-      val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-      new UnaryAGraph[SequentOccurrence](
-          SequentOccurrence(createContext(s1.root.antecedent),
-                            createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
-      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
-        def rule = ExistsRightRuleType
-        def aux = (aux_fo::Nil)::Nil
-        def prin = prinFormula::Nil
-        def subst = term
+    def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val aux_fo = term1op.get
+        assert( computeAux( main, term ) == aux_fo.formula, computeAux( main, term ).toStringSimple + " is not " + aux_fo.formula.toStringSimple )
+        val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.succedent - aux_fo)
+        new UnaryAGraph[SequentOccurrence](
+            SequentOccurrence(createContext(s1.root.antecedent),
+                              createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+          def rule = ExistsRightRuleType
+          def aux = (aux_fo::Nil)::Nil
+          def prin = prinFormula::Nil
+          def subst = term
+        }
       }
     }
 
@@ -108,27 +118,33 @@ package quantificationRules {
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 
-    def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof =
-      main match {
-        case All( sub, _ ) => {
-          // eigenvar condition
-          assert( ( s1.root.antecedent ++ (s1.root.succedent - aux_fo) ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
-            "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.root.getSequent.toStringSimple )
-          // correct auxiliary formula
-          assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
-              val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-              new UnaryAGraph[SequentOccurrence](
-                  SequentOccurrence(createContext(s1.root.antecedent),
-                                    createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
-                def rule = ForallRightRuleType
-                def aux = (aux_fo::Nil)::Nil
-                def prin = prinFormula::Nil
-                def eigenvar = eigen_var
-              }
+    def apply( s1: LKProof, term1oc: Occurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val aux_fo = term1op.get
+        main match {
+          case All( sub, _ ) => {
+            // eigenvar condition
+            assert( ( s1.root.antecedent ++ (s1.root.succedent - aux_fo) ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
+              "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.root.getSequent.toStringSimple )
+            // correct auxiliary formula
+            assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
+                val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.succedent - aux_fo)
+                new UnaryAGraph[SequentOccurrence](
+                    SequentOccurrence(createContext(s1.root.antecedent),
+                                      createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
+                with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
+                  def rule = ForallRightRuleType
+                  def aux = (aux_fo::Nil)::Nil
+                  def prin = prinFormula::Nil
+                  def eigenvar = eigen_var
+                }
+          }
+          case _ => throw new LKRuleCreationException("Main formula of ForallRightRule must have a universal quantifier as head symbol.")
         }
-        case _ => throw new LKRuleCreationException("Main formula of ForallRightRule must have a universal quantifier as head symbol.")
       }
+    }
 
     def unapply(proof: LKProof) = if (proof.rule == ForallRightRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable]
@@ -146,27 +162,33 @@ package quantificationRules {
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 
-    def apply( s1: LKProof, aux_fo: FormulaOccurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof =
-      main match {
-        case Ex( sub, _ ) => {
-          // eigenvar condition
-          assert( ( (s1.root.antecedent - aux_fo) ++ s1.root.succedent ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
-            "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.root.getSequent.toStringSimple )
-          // correct auxiliary formula
-          assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
-          val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil)
-          new UnaryAGraph[SequentOccurrence](
-              SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
-                                createContext((s1.root.succedent))), s1 )
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
-            def rule = ExistsLeftRuleType
-            def aux = (aux_fo::Nil)::Nil
-            def prin = prinFormula::Nil
-            def eigenvar = eigen_var
+    def apply( s1: LKProof, term1oc: Occurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val aux_fo = term1op.get
+        main match {
+          case Ex( sub, _ ) => {
+            // eigenvar condition
+            assert( ( (s1.root.antecedent - aux_fo) ++ s1.root.succedent ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
+              "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.root.getSequent.toStringSimple )
+            // correct auxiliary formula
+            assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
+            val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.antecedent - aux_fo)
+            new UnaryAGraph[SequentOccurrence](
+                SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
+                                  createContext((s1.root.succedent))), s1 )
+            with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
+              def rule = ExistsLeftRuleType
+              def aux = (aux_fo::Nil)::Nil
+              def prin = prinFormula::Nil
+              def eigenvar = eigen_var
+            }
           }
+          case _ => throw new LKRuleCreationException("Main formula of ExistsLeftRule must have an existential quantifier as head symbol.")
         }
-        case _ => throw new LKRuleCreationException("Main formula of ExistsLeftRule must have an existential quantifier as head symbol.")
       }
+    }
 
       def unapply(proof: LKProof) = if (proof.rule == ExistsLeftRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable]

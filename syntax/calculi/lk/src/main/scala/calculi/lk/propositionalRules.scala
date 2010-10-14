@@ -46,14 +46,15 @@ package propositionalRules {
 
   // actual rule extractor/factories
   // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
-  // It is used together with an implicit conversion between this pair into a proof so users who are not interested in this information will not see it.
+  // It is used together with an implicit conversion between this pair into a proof so users who are not interested in this information will not see it
+
   object Axiom {
-    def apply(seq: Sequent): Pair[LKProof, Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
-      val left: List[FormulaOccurrence] = seq.antecedent.map(createOccurrence)
-      val right: List[FormulaOccurrence] = seq.succedent.map(createOccurrence)
-      (new LeafAGraph[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with LKProof {def rule = InitialRuleType}, (left,right))
+    def apply[T](seq: Sequent)(implicit factory: FOFactory) = {
+      val left: Set[FormulaOccurrence] = seq.antecedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
+      val right: Set[FormulaOccurrence] = seq.succedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
+      new LeafAGraph[SequentOccurrence](SequentOccurrence(left, right)) with LKProof {def rule = InitialRuleType}
     }
-    def createOccurrence(f: HOLFormula): FormulaOccurrence = LKFOFactory.createOccurrence(f, Nil)
+    def createOccurrence(f: HOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
     def unapply(proof: LKProof) = if (proof.rule == InitialRuleType) Some((proof.root)) else None
     // should be optimized as it was done now just to save coding time
     def toSet[T](list: List[T]) = {
@@ -66,8 +67,8 @@ package propositionalRules {
   }
 
   object WeakeningLeftRule {
-    def apply(s1: LKProof, f: HOLFormula) = {
-      val prinFormula = LKFOFactory.createOccurrence(f, Nil)
+    def apply(s1: LKProof, f: HOLFormula)(implicit factory: FOFactory) = {
+      val prinFormula = factory.createPrincipalFormulaOccurrence(f, Nil, s1.root.antecedent)
       new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent)), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningLeftRuleType
@@ -83,8 +84,8 @@ package propositionalRules {
   }
 
   object WeakeningRightRule {
-    def apply(s1: LKProof, f: HOLFormula) = {
-      val prinFormula = LKFOFactory.createOccurrence(f, Nil)
+    def apply(s1: LKProof, f: HOLFormula)(implicit factory: FOFactory) = {
+      val prinFormula = factory.createPrincipalFormulaOccurrence(f, Nil, s1.root.succedent)
       new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
@@ -100,19 +101,25 @@ package propositionalRules {
   }
 
   object ContractionLeftRule {
-    def apply(s1: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
-      else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
-      else if (!s1.root.antecedent.contains(term1) || !s1.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      val term2op = s1.root.antecedent.find(x => x == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(term1.formula, term1::term2::Nil)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1 - term2) + prinFormula, createContext(s1.root.succedent)), s1)
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-            def rule = ContractionLeftRuleType
-            def aux = (term1::term2::Nil)::Nil
-            def prin = prinFormula::Nil
+        val term1 = term1op.get
+        val term2 = term2op.get
+        if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
+        else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
+        else {
+          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(term1.formula, term1::term2::Nil, s1.root.antecedent - term1 - term2)
+          new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1 - term2) + prinFormula, createContext(s1.root.succedent)), s1)
+            with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+              def rule = ContractionLeftRuleType
+              def aux = (term1::term2::Nil)::Nil
+              def prin = prinFormula::Nil
+            }
           }
-        }
+      }
     }
     // convenient method to choose the first two formulas
     def apply(s1: LKProof, term1: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
@@ -131,19 +138,25 @@ package propositionalRules {
   }
 
   object ContractionRightRule {
-    def apply(s1: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple + ", end-sequent: " + s1.root.getSequent.toStringSimple)
-      else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
-      else if (!s1.root.succedent.contains(term1) || !s1.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      val term2op = s1.root.succedent.find(x => x == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(term1.formula, term1::term2::Nil)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1 - term2) + prinFormula), s1)
-          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-            def rule = ContractionRightRuleType
-            def aux = (term1::term2::Nil)::Nil
-            def prin = prinFormula::Nil
-          }
+        val term1 = term1op.get
+        val term2 = term2op.get
+        if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple + ", end-sequent: " + s1.root.getSequent.toStringSimple)
+        else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
+        else {
+          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(term1.formula, term1::term2::Nil, s1.root.succedent - term1 - term2)
+          new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1 - term2) + prinFormula), s1)
+            with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+              def rule = ContractionRightRuleType
+              def aux = (term1::term2::Nil)::Nil
+              def prin = prinFormula::Nil
+            }
         }
+      }
     }
     // convenient method to choose the first two formulas
     def apply(s1: LKProof, term1: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
@@ -162,18 +175,24 @@ package propositionalRules {
   }
 
   object CutRule {
-    def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be cut are not identical")
-      else if (!s1.root.succedent.contains(term1) || !s2.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      val term2op = s2.root.antecedent.find(x => x == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        new BinaryAGraph[SequentOccurrence](SequentOccurrence(
-            createContext(s1.root.antecedent ++ (s2.root.antecedent - term2)),
-            createContext((s1.root.succedent - term1) ++ s2.root.succedent)
-          ), s1, s2)
-          with BinaryLKProof with AuxiliaryFormulas {
-              def rule = CutRuleType
-              def aux = (term1::Nil)::(term2::Nil)::Nil
-          }
+        val term1 = term1op.get
+        val term2 = term2op.get
+        if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be cut are not identical")
+        else {
+          new BinaryAGraph[SequentOccurrence](SequentOccurrence(
+              createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent - term2, s1.root.antecedent),
+              createContext(s1.root.succedent - term1) ++ createContext(s2.root.succedent, s1.root.succedent - term1))
+            , s1, s2)
+            with BinaryLKProof with AuxiliaryFormulas {
+                def rule = CutRuleType
+                def aux = (term1::Nil)::(term2::Nil)::Nil
+            }
+        }
       }
     }
     // convenient method to choose the first two formulas
@@ -196,13 +215,17 @@ package propositionalRules {
 
     def computeRightAux( main: HOLFormula ) = main match { case And(_, r) => r }
     
-    def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (!s1.root.succedent.contains(term1) || !s2.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      val term2op = s2.root.succedent.find(x => x == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2.formula), term1::term2::Nil)
+        val term1 = term1op.get
+        val term2 = term2op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2.formula), term1::term2::Nil, ((s1.root.succedent - term1) ++ (s2.root.succedent - term2)))
         new BinaryAGraph[SequentOccurrence](SequentOccurrence(
-            createContext(s1.root.antecedent ++ s2.root.antecedent),
-            createContext(((s1.root.succedent - term1) ++ (s2.root.succedent - term2))) + prinFormula
+            createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent, s1.root.antecedent),
+            createContext(s1.root.succedent - term1) ++ createContext(s2.root.succedent - term2, s1.root.succedent - term1) + prinFormula
           ), s1, s2)
           with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = AndRightRuleType
@@ -230,10 +253,12 @@ package propositionalRules {
   object AndLeft1Rule {
     def computeAux( main: HOLFormula ) = main match { case And(l, _) => l }
 
-    def apply(s1: LKProof, term1: FormulaOccurrence, term2: HOLFormula) = {
-      if (!s1.root.antecedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1oc: Occurrence, term2: HOLFormula) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2), term1::Nil)
+        val term1 = term1op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2), term1::Nil, s1.root.antecedent - term1)
         new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term1)) + prinFormula, createContext(s1.root.succedent)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = AndLeft1RuleType
@@ -261,10 +286,12 @@ package propositionalRules {
   object AndLeft2Rule {
     def computeAux( main: HOLFormula ) = main match { case And(_, r) => r }
 
-    def apply(s1: LKProof, term1: HOLFormula, term2: FormulaOccurrence) = {
-      if (!s1.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1: HOLFormula, term2oc: Occurrence) = {
+      val term2op = s1.root.antecedent.find(x => x == term2oc)
+      if (term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term2.factory.createPrincipalFormulaOccurrence(And(term1, term2.formula), term2::Nil)
+        val term2 = term2op.get
+        val prinFormula = term2.factory.createPrincipalFormulaOccurrence(And(term1, term2.formula), term2::Nil, s1.root.antecedent - term2)
         new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term2)) + prinFormula, createContext(s1.root.succedent)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = AndLeft2RuleType
@@ -294,13 +321,17 @@ package propositionalRules {
 
     def computeRightAux( main: HOLFormula ) = main match { case Or(_, r) => r }
 
-    def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (!s1.root.antecedent.contains(term1) || !s2.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      val term2op = s2.root.antecedent.find(x => x == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Or(term1.formula, term2.formula), term1::term2::Nil)
+        val term1 = term1op.get
+        val term2 = term2op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Or(term1.formula, term2.formula), term1::term2::Nil, (s1.root.antecedent - term1) ++ (s2.root.antecedent - term2))
         new BinaryAGraph[SequentOccurrence](SequentOccurrence(
-            ((createContext(s1.root.antecedent - term1) ++ createContext(s2.root.antecedent - term2))) + prinFormula,
-            createContext(s1.root.succedent ++ s2.root.succedent)
+            ((createContext(s1.root.antecedent - term1) ++ createContext(s2.root.antecedent - term2, s1.root.antecedent - term1))) + prinFormula,
+            createContext(s1.root.succedent) ++ createContext(s2.root.succedent, s1.root.succedent)
           ), s1, s2)
           with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = OrLeftRuleType
@@ -328,10 +359,12 @@ package propositionalRules {
   object OrRight1Rule {
     def computeAux( main: HOLFormula ) = main match { case Or(l, _) => l }
 
-    def apply(s1: LKProof, term1: FormulaOccurrence, term2: HOLFormula) = {
-      if (!s1.root.succedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1oc: Occurrence, term2: HOLFormula) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Or(term1.formula, term2), term1::Nil)
+        val term1 = term1op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Or(term1.formula, term2), term1::Nil, s1.root.succedent - term1)
         new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext((s1.root.succedent - term1)) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = OrRight1RuleType
@@ -359,10 +392,12 @@ package propositionalRules {
   object OrRight2Rule {
     def computeAux( main: HOLFormula ) = main match { case Or(_, r) => r }
 
-    def apply(s1: LKProof, term1: HOLFormula, term2: FormulaOccurrence) = {
-      if (!s1.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1: HOLFormula, term2oc: Occurrence) = {
+      val term2op = s1.root.succedent.find(x => x == term2oc)
+      if (term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term2.factory.createPrincipalFormulaOccurrence(Or(term1, term2.formula), term2::Nil)
+        val term2 = term2op.get
+        val prinFormula = term2.factory.createPrincipalFormulaOccurrence(Or(term1, term2.formula), term2::Nil, s1.root.succedent - term2)
         new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext((s1.root.succedent - term2)) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = OrRight2RuleType
@@ -392,13 +427,17 @@ package propositionalRules {
 
     def computeRightAux( main: HOLFormula ) = main match { case Imp(_, r) => r }
 
-    def apply(s1: LKProof, s2: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (!s1.root.succedent.contains(term1) || !s2.root.antecedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      val term2op = s2.root.antecedent.find(x => x == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Imp(term1.formula, term2.formula), term1::term2::Nil)
+        val term1 = term1op.get
+        val term2 = term2op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Imp(term1.formula, term2.formula), term1::term2::Nil, s1.root.antecedent  ++ (s2.root.antecedent - term2))
         new BinaryAGraph[SequentOccurrence](SequentOccurrence(
-            createContext(s1.root.antecedent  ++ (s2.root.antecedent - term2)) + prinFormula,
-            createContext((s1.root.succedent - term1) ++ s2.root.succedent)
+            createContext(s1.root.antecedent)  ++ createContext(s2.root.antecedent - term2, s1.root.antecedent) + prinFormula,
+            createContext(s1.root.succedent - term1) ++ createContext(s2.root.succedent, s1.root.succedent - term1)
           ), s1, s2)
           with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = ImpLeftRuleType
@@ -424,10 +463,14 @@ package propositionalRules {
   }
 
   object ImpRightRule {
-    def apply(s1: LKProof, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
-      if (!s1.root.antecedent.contains(term1) || !s1.root.succedent.contains(term2)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      val term2op = s1.root.succedent.find(x => x == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Imp(term1.formula, term2.formula), term1::term2::Nil)
+        val term1 = term1op.get
+        val term2 = term2op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Imp(term1.formula, term2.formula), term1::term2::Nil, s1.root.succedent - term2)
         new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1), createContext(s1.root.succedent - term2) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = ImpRightRuleType
@@ -454,10 +497,12 @@ package propositionalRules {
 
   object NegLeftRule {
     def computeAux( main: HOLFormula ) = main match { case Neg(s) => s }
-    def apply(s1: LKProof, term1: FormulaOccurrence) = {
-      if (!s1.root.succedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Neg(term1.formula), term1::Nil)
+        val term1 = term1op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Neg(term1.formula), term1::Nil, s1.root.antecedent)
         new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent - term1)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = NegLeftRuleType
@@ -484,10 +529,12 @@ package propositionalRules {
 
   object NegRightRule {
     def computeAux( main: HOLFormula ) = main match { case Neg(s) => s }
-    def apply(s1: LKProof, term1: FormulaOccurrence) = {
-      if (!s1.root.antecedent.contains(term1)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    def apply(s1: LKProof, term1oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Neg(term1.formula), term1::Nil)
+        val term1 = term1op.get
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Neg(term1.formula), term1::Nil, s1.root.succedent)
         new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1), createContext(s1.root.succedent) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = NegRightRuleType

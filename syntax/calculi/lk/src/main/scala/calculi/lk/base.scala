@@ -18,12 +18,6 @@ import scala.collection.mutable.HashMap
 
 package base {
 
-private[lk] object LKFOFactory extends FOFactory {
-    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
-    def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = createOccurrence(formula, ancestors)
-    def createOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = new FormulaOccurrence(formula, ancestors) {def factory = LKFOFactory}
-  }
-
   // List should be changed into multiset (I am not sure anymore as we need to map formula occurrences also in the original sequent.
   // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
   class Sequent(val antecedent: List[HOLFormula], val succedent: List[HOLFormula])
@@ -93,7 +87,7 @@ private[lk] object LKFOFactory extends FOFactory {
 
    trait LKProof extends Proof[SequentOccurrence] with AGraph[SequentOccurrence] {
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-      (root.antecedent ++ root.succedent).filter(x => x.ancestors.contains(fo)).toList match {
+      (root.antecedent.toList ++ root.succedent.toList).filter(x => x.ancestors.find(y => y =^ fo) != None) match {
         case x::Nil => Some(x)
         case Nil => None
         case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
@@ -125,7 +119,10 @@ private[lk] object LKFOFactory extends FOFactory {
 
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
-  object createContext { def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x::Nil)) }
+  object createContext {
+    def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x, x::Nil, set - x))
+    def apply(set: Set[FormulaOccurrence], binary: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x, x::Nil, set - x, binary))
+  }
 
   object SequentFormatter {
     //formats a lambda term to a readable string, dropping the types and printing binary function symbols infix
