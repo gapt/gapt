@@ -29,12 +29,18 @@ package base {
 
   class LabelledFormulaOccurrence (override val formula: HOLFormula,
                                    override val ancestors: List[LabelledFormulaOccurrence],
-                                   val label: Label) extends FormulaOccurrence( formula, ancestors ) {
+                                   labela: Label) extends FormulaOccurrence( formula, ancestors ) with Occurrence{
+    type T = Label // type of Labeled
+    def label = labela
     def factory: FOFactory = LKskFOFactory
     override def toString: String = formula.toString + " (label: " + label.toString + ")"
   }
 
   private[lksk] object LKskFOFactory extends FOFactory {
+    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence =
+      createPrincipalFormulaOccurrence(formula, ancestors)
+    def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence =
+      createContextFormulaOccurrence(formula, ancestors)
     def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
