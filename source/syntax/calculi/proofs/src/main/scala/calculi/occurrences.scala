@@ -17,15 +17,9 @@ import scala.collection.immutable.Set
  */
 package occurrences {
 
-  abstract class Occurrence extends Labeled[Int] with Ordered[Occurrence] {
-    override def equals(a: Any) = a match {
-      case s: Occurrence => label == s.label
-      case s: Int => label == s
-      case _ => false
-    }
-    override def hashCode = label.hashCode
-    def compare (that: Occurrence) = (label compare that.label)
-    override def toString = label.toString
+  class OccurrenceException(msg: String) extends Exception(msg)
+
+  trait Occurrence extends Labeled {
   }
 
   trait FOFactory {
@@ -76,24 +70,48 @@ package occurrences {
   }
               */
 
-
   object PositionsFOFactory extends FOFactory {
     // always add at the max+1 position
     def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence = {
-      val max = others.foldLeft(0)((prev, fo) => scala.math.max(prev, fo.label))
-      new FormulaOccurrence(formula, ancestors) {def factory = PositionsFOFactory; def label = max+1}
+      val othersCast = others.asInstanceOf[Set[IntOccurrence]]
+      val max = othersCast.foldLeft(0)((prev, fo) => scala.math.max(prev, fo.label))
+      new FormulaOccurrence(formula, ancestors) with IntOccurrence {def factory = PositionsFOFactory; def label = max+1}
     }
     // we check how many are before the position and then substract them if needed. binary_others is used to add as prefix the size of the set of the left upper rule
     def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence = {
-      val pos = others.filter(x => x.label < current.label).size + 1
-      new FormulaOccurrence(formula, ancestors) {def factory = PositionsFOFactory; def label = pos + binary_others.size}  
+      val othersCast = others.asInstanceOf[Set[IntOccurrence]]
+      val currentCast = current.asInstanceOf[IntOccurrence]
+      val pos = othersCast.filter(x => x< currentCast).size + 1
+      new FormulaOccurrence(formula, ancestors) with IntOccurrence {def factory = PositionsFOFactory; def label = pos + binary_others.size}
     }
 
   }
 
+  trait IntOccurrence extends Occurrence with Ordered[IntOccurrence] {
+    type T = Int // sets the type of Labeled
+    override def equals(a: Any) = a match {
+      case s: IntOccurrence => label == s.label
+      case s: Int => label == s
+      case _ => false
+    }
+    def compare (that: IntOccurrence) = label compare that.label
+  }
+  
   // user wanting to use positions should import the following object
   object positions {
     implicit val positionFactory = PositionsFOFactory
-    implicit def fromIntToPosition(s:Int):Occurrence = new Occurrence{def label = s}
+    implicit def fromIntToPosition(s:Int):IntOccurrence = new IntOccurrence{def label = s}
+  }
+
+  // another possible occurrences type is by object address, i.e. any two occurrences are different and you must use an existing one in order to refer to a specific occurrence
+  // (unike positions where you can also use any instance of a position)
+
+  trait PointerOccurrence extends Occurrence {
+    type T = Occurrence // sets the type of Labeled
+    def label = this
+    override def equals(a: Any) = a match {
+      case s: PointerOccurrence => label == s.label 
+      case _ => false
+    }
   }
 }
