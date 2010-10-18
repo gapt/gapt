@@ -6,8 +6,6 @@
 
 package at.logic.calculi
 
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.types._
 import at.logic.language.hol._
 import at.logic.utils.labeling._
 import scala.collection.immutable.Set
@@ -100,7 +98,10 @@ package occurrences {
   // user wanting to use positions should import the following object
   object positions {
     implicit val positionFactory = PositionsFOFactory
-    implicit def fromIntToPosition(s:Int):IntOccurrence = new IntOccurrence{def label = s}
+    implicit def fromIntToPosition(s:Int):IntOccurrence = Occ(s)
+    object Occ {
+      def apply(s: Int): IntOccurrence = new IntOccurrence{def label = s}
+    }
   }
 
   // another possible occurrences type is by object address, i.e. any two occurrences are different and you must use an existing one in order to refer to a specific occurrence
