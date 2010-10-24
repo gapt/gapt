@@ -4,7 +4,7 @@
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
  */
-
+   /*
 package at.logic.calculi.resolution
 
 import at.logic.calculi.occurrences._
@@ -174,4 +174,4 @@ package andrews {
         Some((pr.root, pr.uProof, pr.substitution))
     }
   }
-}
+}          */
