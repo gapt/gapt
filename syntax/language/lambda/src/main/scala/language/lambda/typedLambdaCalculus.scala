@@ -293,6 +293,17 @@ package typedLambdaCalculus {
       }
       v
     }
+    private var cnt = 1
+    def apply1(exptype: TA, disallowedVariables: Set[Var], dummy: LambdaExpression) :Var = {     //by Cvetan
+
+      var v = Var("#"+cnt, exptype,dummy.factory)
+      cnt += 1
+      while (disallowedVariables.contains(v)) {
+        cnt += 1
+        v = Var("#"+cnt, exptype,dummy.factory)
+      }
+      v
+    }
     def apply(exptype: TA, context: LambdaExpression, dummy: LambdaExpression) :Var = {
       val (cFV, cBV) = context.getFreeAndBoundVariables
       apply(exptype, cFV ++ cBV, dummy)
