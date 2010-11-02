@@ -35,8 +35,8 @@ class LKskTest extends SpecificationWithJUnit {
   val f2 = HOLAppFormula(c1,v1)
   val f3 = HOLVarFormula("e")
   val ax = Axiom(Sequent(f1::Nil, f1::Nil), Pair((EmptyLabel() + f2)::Nil, EmptyLabel()::Nil ))
-  val a1 = ax // Axiom return a pair of the proof and a mapping and we want only the proof here
-  val a2 = (Axiom(Sequent(f1::Nil, f1::Nil), Pair((EmptyLabel() + f2)::Nil, (EmptyLabel() + f3)::Nil) ) )
+  val a1 = ax._1 // Axiom return a pair of the proof and a mapping and we want only the proof here
+  val a2 = (Axiom(Sequent(f1::Nil, f1::Nil), Pair((EmptyLabel() + f2)::Nil, (EmptyLabel() + f3)::Nil) ) )._1
 
   "The factories/extractors for LKsk" should {
     "work for Axioms" in {
