@@ -7,7 +7,7 @@
 
 package at.logic.calculi.lk
 
-import _root_.at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.substitutions.Substitution
 import org.specs._
 import org.specs.runner._
 
