@@ -112,10 +112,13 @@ package occurrences {
     // we want here a ponters equality
   }
   class PointerFOFactory extends FOFactory {
+    // we dont need others in Pointer Occurrences
+    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]): FormulaOccurrence = {
+      createPrincipalFormulaOccurrence(formula, ancestors, Set[FormulaOccurrence]())
+    }
     def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence = {
       new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
     }
-    // we check how many are before the position and then substract them if needed. binary_others is used to add as prefix the size of the set of the left upper rule
     def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence = {
       new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
     }
