@@ -57,6 +57,37 @@ class LKTest extends SpecificationWithJUnit {
   val ap = Axiom(Sequent(f1::f1::Nil, Nil))
   val a4 = ap
 
+  "The factory createDefault" should {
+    "works correctly for Axioms" in {
+      val myax = Axiom.createDefault(Sequent(f1::f1::Nil, Nil))
+      "- Same formulas on the same side must become different occurrences" in {
+        val ant = myax.root.antecedent.toList
+        (ant.length) must beEqual(2)
+        (ant.head) must notBe(ant.last)
+      }
+      "- FormulaOccurrence mapping must be correct" in {
+        val map = myax._2._1
+        (map.head) must notBe(map.last)
+        (map.filter( o => o != map.head ) ).length must beEqual(1)
+      }
+    }
+    "Works correctly for WweakeningLeft" in {
+      val a = WeakeningLeftRule.createDefault(Axiom.createDefault(Sequent(f2::f3::Nil, f2::f3::Nil)), f1)
+      val (up1, SequentOccurrence(x,y), prin1) = WeakeningLeftRule.unapply(a).get
+      "- Formula occurrences in context must be different (if not empty)" in {
+        (x - prin1) must beDifferent ((up1.root.antecedent))
+        ((y)) must beDifferent ((up1.root.succedent))
+      }
+    }
+    "Works correctly for WweakeningRight" in {
+      val a = WeakeningLeftRule.createDefault(Axiom.createDefault(Sequent(f2::f3::Nil, f2::f3::Nil)), f1)
+      val (up1, SequentOccurrence(x,y), prin1) = WeakeningLeftRule.unapply(a).get
+      "- Formula occurrences in context must be different (if not empty)" in {
+        (y - prin1) must beDifferent ((up1.root.succedent))
+        ((x)) must beDifferent ((up1.root.antecedent))
+      }
+    }
+  }
   "The factories/extractors for LK" should {
 
     "work for Axioms" in {

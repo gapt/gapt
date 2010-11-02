@@ -54,6 +54,13 @@ package propositionalRules {
       val right: Set[FormulaOccurrence] = seq.succedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
       new LeafAGraph[SequentOccurrence](SequentOccurrence(left, right)) with LKProof {def rule = InitialRuleType}
     }
+    // this method is using a simple default factory (where occurrences have pointers equality) and return a map between positions in Sequent to formula occurrences
+    // we pass empty sets of formula occurrences as this information is ignored in the factory
+    def createDefault(seq: Sequent): Pair[LKProof, Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
+      val left: List[FormulaOccurrence] = seq.antecedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
+      val right: List[FormulaOccurrence] = seq.succedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
+      (new LeafAGraph[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with LKProof {def rule = InitialRuleType}, (left,right))
+    }
     def createOccurrence(f: HOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
     def unapply(proof: LKProof) = if (proof.rule == InitialRuleType) Some((proof.root)) else None
     // should be optimized as it was done now just to save coding time
@@ -75,6 +82,14 @@ package propositionalRules {
           def prin = prinFormula::Nil
         }
     }
+    def createDefault(s1: LKProof, f: HOLFormula) = {
+      val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil, Set[FormulaOccurrence]())
+      new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent)), s1)
+        with UnaryLKProof with PrincipalFormulas {
+          def rule = WeakeningLeftRuleType
+          def prin = prinFormula::Nil
+        }
+    }
     def unapply(proof: LKProof) = if (proof.rule == WeakeningLeftRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with PrincipalFormulas]
         val (p1::Nil) = r.prin
@@ -86,6 +101,14 @@ package propositionalRules {
   object WeakeningRightRule {
     def apply(s1: LKProof, f: HOLFormula)(implicit factory: FOFactory) = {
       val prinFormula = factory.createPrincipalFormulaOccurrence(f, Nil, s1.root.succedent)
+      new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
+        with UnaryLKProof with PrincipalFormulas {
+          def rule = WeakeningRightRuleType
+          def prin = prinFormula::Nil
+        }
+    }
+    def createDefault(s1: LKProof, f: HOLFormula) = {
+      val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil, Set[FormulaOccurrence]())
       new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
