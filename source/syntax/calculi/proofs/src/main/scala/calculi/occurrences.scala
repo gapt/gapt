@@ -82,7 +82,6 @@ package occurrences {
       val pos = othersCast.filter(x => x< currentCast).size + 1
       new FormulaOccurrence(formula, ancestors) with IntOccurrence {def factory = PositionsFOFactory; def label = pos + binary_others.size}
     }
-
   }
 
   trait IntOccurrence extends Occurrence with Ordered[IntOccurrence] {
@@ -108,11 +107,18 @@ package occurrences {
   // (unike positions where you can also use any instance of a position)
 
   trait PointerOccurrence extends Occurrence {
-    type T = Occurrence // sets the type of Labeled
-    def label = this
-    override def equals(a: Any) = a match {
-      case s: PointerOccurrence => label == s.label 
-      case _ => false
+    type T = Unit // sets the type of Labeled
+    def label = ()
+    // we want here a ponters equality
+  }
+  class PointerFOFactory extends FOFactory {
+    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence = {
+      new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
+    }
+    // we check how many are before the position and then substract them if needed. binary_others is used to add as prefix the size of the set of the left upper rule
+    def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence = {
+      new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
     }
   }
+  object PointerFOFactoryInstance extends PointerFOFactory // this is an instance of the pointersFactory
 }
