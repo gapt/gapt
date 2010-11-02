@@ -83,7 +83,7 @@ package propositionalRules {
         }
     }
     def createDefault(s1: LKProof, f: HOLFormula) = {
-      val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil, Set[FormulaOccurrence]())
+      val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil)
       new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent)), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningLeftRuleType
@@ -108,7 +108,7 @@ package propositionalRules {
         }
     }
     def createDefault(s1: LKProof, f: HOLFormula) = {
-      val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil, Set[FormulaOccurrence]())
+      val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil)
       new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
