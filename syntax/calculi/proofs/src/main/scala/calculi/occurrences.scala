@@ -119,6 +119,8 @@ package occurrences {
     def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence = {
       new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
     }
+    def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]): FormulaOccurrence =
+      createContextFormulaOccurrence(formula, null, ancestors, null ,null)
     def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence = {
       new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
     }
