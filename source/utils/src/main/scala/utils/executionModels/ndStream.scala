@@ -1,6 +1,7 @@
 package at.logic.utils.executionModels
 
 import collection.mutable.Queue
+import searchAlgorithms._
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,16 +16,14 @@ import collection.mutable.Queue
 package ndStream {
 
 
-trait Configuration {
+  trait Configuration {
     def result: Option[Any] // if None then it is a non-terminating node otherwise it is a terminating node
   }
 
-  abstract class NDStream(val initial: Configuration, val myFun: Configuration => List[Configuration]) {
+  abstract class NDStream(val initial: Configuration, val myFun: Configuration => List[Configuration]) extends SearchAlgorithm {
+    type T = Configuration
     private val results: Queue[Any] = new Queue[Any]()
-    protected def init = add(initial)
-
-    protected def add(conf: Configuration): Unit
-    protected def get: Option[Configuration]
+    protected def init: Unit = add(initial)
     
     def next: Option[Any] = {
       val res = results.headOption
@@ -41,17 +40,6 @@ trait Configuration {
           next
         }
       }
-    }
-  }
-
-  class BFSNDStream(initial: Configuration, myFun: Configuration => List[Configuration]) extends NDStream(initial, myFun) {
-    private val ds: Queue[Configuration] = new Queue[Configuration]()
-    init
-    protected def add(conf: Configuration): Unit = ds += conf
-    protected def get: Option[Configuration] = {
-      val res = ds.headOption
-      if (res != None) ds.dequeue
-      res
     }
   }
 }
