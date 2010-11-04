@@ -45,7 +45,7 @@ object LKtoLKskc {
     case LKAxiom(so) => {
       val ant = so.antecedent.toList
       val succ = so.succedent.toList
-      val a = Axiom( Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ),
+      val a = Axiom.createDefault( Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ),
                      Pair( ant.map( fo => subst_terms.apply( fo ) ), 
                            succ.map( fo => subst_terms.apply( fo ) ) ) )
       //assert( a._1.root.isInstanceOf[LabelledSequentOccurrence] )
@@ -72,7 +72,7 @@ object LKtoLKskc {
         val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
         val r = rec( p, new_label_map, cut_occs )
         val newaux = r._2(a)
-        val args = newaux.label.toList
+        val args = newaux.skolem_label.toList
         m.formula match {
           case All(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
@@ -105,7 +105,7 @@ object LKtoLKskc {
         val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
         val r = rec( p, new_label_map, cut_occs )
         val newaux = r._2(a)
-        val args = newaux.label.toList
+        val args = newaux.skolem_label.toList
         m.formula match {
           case Ex(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
@@ -244,7 +244,7 @@ object LKtoLKskc {
     case LKWeakeningLeftRule(p, s, m) => {
       val new_label_map = copyMapFromAncestor( (s.antecedent - m) ++ s.succedent, subst_terms )
       val r = rec( p, new_label_map, cut_occs )
-      val sk_proof = WeakeningLeftRule( r._1, m.formula, subst_terms.apply( m ) )
+      val sk_proof = WeakeningLeftRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
                  Pair( m, sk_proof.prin.head ) )
@@ -252,7 +252,7 @@ object LKtoLKskc {
     case LKWeakeningRightRule(p, s, m) => {
       val new_label_map = copyMapFromAncestor( s.antecedent ++ (s.succedent - m), subst_terms )
       val r = rec( p, new_label_map, cut_occs )
-      val sk_proof = WeakeningRightRule( r._1, m.formula, subst_terms.apply( m ) )
+      val sk_proof = WeakeningRightRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequentOccurrence] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
                  Pair( m, sk_proof.prin.head ) )

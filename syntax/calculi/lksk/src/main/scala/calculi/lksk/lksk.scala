@@ -17,7 +17,7 @@ import scala.collection.mutable.{Map,HashMap}
 import base._
 import base.TypeSynonyms._
 
-import at.logic.calculi.lk.base.{LKFOFactory,Sequent,AuxiliaryFormulas,PrincipalFormulas, SubstitutionTerm}
+import at.logic.calculi.lk.base.{Sequent,AuxiliaryFormulas,PrincipalFormulas, SubstitutionTerm}
 import at.logic.calculi.lk.propositionalRules.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType}
 import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
 import at.logic.calculi.lk.quantificationRules._
@@ -30,7 +30,7 @@ import at.logic.calculi.occurrences._
 // actual rule extractor/factories
 // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
 object Axiom {
-  def apply(seq: Sequent, maps: Pair[List[Label], List[Label]]): Pair[LKProof, Pair[List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence]]] = {
+  def createDefault(seq: Sequent, maps: Pair[List[Label], List[Label]]): Pair[LKProof, Pair[List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence]]] = {
     val left: List[LabelledFormulaOccurrence] =
       seq.antecedent.zip(maps._1).map( p => createOccurrence( p._1, p._2 ) )
     val right: List[LabelledFormulaOccurrence] = 
@@ -44,7 +44,7 @@ object Axiom {
 }
 
 object WeakeningLeftRule {
-  def apply(s1: LKProof, f: HOLFormula, l: Label) = {
+  def createDefault(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence(f, l)
     // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
     new UnaryAGraph[SequentOccurrence](
@@ -63,7 +63,7 @@ object WeakeningLeftRule {
 }
 
 object WeakeningRightRule {
-  def apply(s1: LKProof, f: HOLFormula, l: Label) = {
+  def createDefault(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence(f, l)
     new UnaryAGraph[SequentOccurrence](
       new LabelledSequentOccurrence(createContext(s1.root.antecedent).asInstanceOf[Set[LabelledFormulaOccurrence]], createContext(s1.root.succedent).asInstanceOf[Set[LabelledFormulaOccurrence]] + prinFormula), s1)
@@ -99,8 +99,8 @@ object ForallSkLeftRule {
         //assert( betaNormalize( App( sub, subst_t ) ) == aux )
         if ( !s1.root.antecedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
-        if ( !auxf.label.contains( subst_t ) )
-          throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term. Label: " + auxf.label.toString + ", substitution term: " + subst_t.toString)
+        if ( !auxf.skolem_label.contains( subst_t ) )
+          throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term. Label: " + auxf.skolem_label.toString + ", substitution term: " + subst_t.toString)
         val prinFormula = 
           LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)
         new UnaryAGraph[SequentOccurrence](
@@ -132,7 +132,7 @@ object ExistsSkRightRule {
         //assert( betaNormalize( App( sub, subst_t ) ) == aux )
         if ( !s1.root.succedent.contains( auxf ) )
           throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
-        if ( !auxf.label.contains( subst_t ) )
+        if ( !auxf.skolem_label.contains( subst_t ) )
           throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term.")
         val prinFormula = 
           LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)

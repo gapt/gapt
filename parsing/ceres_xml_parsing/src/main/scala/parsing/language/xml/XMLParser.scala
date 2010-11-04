@@ -27,7 +27,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 
 import scala.collection.immutable.Set
@@ -486,497 +486,500 @@ object XMLParser {
     private def createRule( rt : String, conc: Sequent, prems: List[LKProof],
       l_perms: List[Array[FormulaOccurrence]], r_perms : List[Array[FormulaOccurrence]],
       param : Option[String], subst: Option[LambdaExpression] ) : 
-      (LKProof, Array[FormulaOccurrence], Array[FormulaOccurrence]) = rt match {
-        case "axiom" => {
-          val a = Axiom(conc) // The Axiom factory provides the axiom and the initial map from 
-                              // our lists of formulas to lists of formula occurrences
-          ( a._1, a._2._1.toArray, a._2._2.toArray )
-        }
-        case "permr" => {
-          if ( param == None )
-            throw new ParsingException("Rule type is permr, but param attribute is not present.")
-          val param_s = param.get
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          ( prem, l_perm, permuteMap( XMLUtils.permStringToFun( param_s, prem.root.succedent.size ), r_perm ) )
-        }
-        case "perml" => {
-          if ( param == None )
-            throw new ParsingException("Rule type is perml, but param attribute is not present.")
-          val param_s = param.get
-          val prem = prems.head
-          val r_perm = r_perms.head
-          val l_perm = l_perms.head
-          ( prem, permuteMap( XMLUtils.permStringToFun( param_s, prem.root.antecedent.size ), l_perm ), r_perm )
-        }
-        case "contrl" => {
-          if ( param == None )
-            throw new ParsingException("Rule type is contrl, but param attribute is not present.")
-          val c_param = param.get.split(',').map( s => s.toInt ).toArray
-          val prem = prems.head
-          val r_perm = r_perms.head
-          val l_perm = l_perms.head
-          createStrongContractionLeft(prem, c_param, l_perm, r_perm)
-        }
-        case "contrr" => {
-          if ( param == None )
-            throw new ParsingException("Rule type is contrr, but param attribute is not present.")
-          val c_param = param.get.split(',').map( s => s.toInt ).toArray
-          val prem = prems.head
-          val r_perm = r_perms.head
-          val l_perm = l_perms.head
-          createStrongContractionRight(prem, c_param, l_perm, r_perm)
-        }
-        case "weakl" => {
-          // TODO: in principle, the calculus definition allows introduction of more than
-          // one weak formula. Is this used in practice?
-          val prem = prems.head
-          val r_perm = r_perms.head
-          val l_perm = l_perms.head
-          val weakf = conc.antecedent.head
-          val rule = WeakeningLeftRule( prem, weakf )
-          // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
-          ( rule, (List( rule.prin.head ) ++ ( l_perm.map( mapToDesc( rule ) ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "weakr" => {
-          // TODO: in principle, the calculus definition allows introduction of more than
-          // one weak formula. Is this used in practice?
-          val prem = prems.head
-          val r_perm = r_perms.head
-          val l_perm = l_perms.head
-          val weakf = conc.succedent.last
-          val rule = WeakeningRightRule( prem, weakf )
-          // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
-          ( rule, l_perm.map( mapToDesc( rule ) ), ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.head ) ).toArray )
-        }
-        case "cut" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          val l_perm_l = l_perms.head
-          val l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val l_p_s = l_prem.root.succedent.size
-          val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.head
-          val rule = CutRule( l_prem, r_prem, auxf_l, auxf_r )
-          ( rule,
-            ( (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
-            r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-            ( l_perm_r.take( l_perm_r.size - 1 ).map( mapToDesc( rule ) ) ++ 
-            r_perm_r.map( mapToDesc( rule ) ) ).toArray )
-        }
-        case "andr" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          def l_perm_l = l_perms.head
-          def l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val l_p_s = l_prem.root.succedent.size
-          val r_p_s = r_prem.root.succedent.size 
-          val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_r.last
-          val rule = AndRightRule( l_prem, r_prem, auxf_l, auxf_r )
-          ( rule,
-            l_perm_l.map( mapToDesc( rule ) ) ++ r_perm_l.map( mapToDesc( rule ) ),
-            ( l_perm_r.take( l_perm_r.size - 1 ).map( mapToDesc( rule ) ) ++ 
-            r_perm_r.map( mapToDesc( rule ) ) ).toArray )
-        }
-        case "orl" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          def l_perm_l = l_perms.head
-          def l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val auxf_l = l_perm_l.head
-          val auxf_r = r_perm_l.head
-          val rule = OrLeftRule( l_prem, r_prem, auxf_l, auxf_r )
-          ( rule,
-            l_perm_l.map( mapToDesc( rule ) ) ++ r_perm_l.drop( 1 ).map( mapToDesc( rule ) ),
-            l_perm_r.map( mapToDesc( rule ) ) ++ r_perm_r.map( mapToDesc( rule ) ) )
-        }
-        case "impll" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          val l_perm_l = l_perms.head
-          val l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val l_p_s = l_prem.root.succedent.size
-          val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.head
-          val rule = ImpLeftRule( l_prem, r_prem, auxf_l, auxf_r )
-          // TODO: prin.head is redundant, we know that ImpLeftRule has only one main formula
-          ( rule,
-            ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
-            r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-            ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
-            r_perm_r.map( mapToDesc( rule ) ) ).toArray )
-        }
-        case "implr" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf1 = l_perm.head
-          val auxf2 = r_perm.last
-          val rule = ImpRightRule( prem, auxf1, auxf2 )
-          ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "negr" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val rule = NegRightRule( prem, auxf )
-          // TODO: prin.head is redundant, we know that NegRightRule has only one main formula
-          ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-            ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.head ) ).toArray )
-        }
-        case "negl" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val rule = NegLeftRule( prem, auxf )
-          // TODO: prin.head is redundant, we know that NegRightRule has only one main formula
-          ( rule, ( List( rule.prin.head ) ++ l_perm.map( mapToDesc( rule ) ) ).toArray, 
-            ( r_perm.take( r_perm.length - 1 ).map( mapToDesc( rule ) ) ).toArray )
-        }
-        case "orr1" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val mainf = conc.succedent.last
-          val rule = mainf match {
-            case Or(_, weakf) => OrRight1Rule( prem, auxf, weakf )
-            case _ => throw new ParsingException("Rule type is orr1, but main formula is not a disjunction.")
+      (LKProof, Array[FormulaOccurrence], Array[FormulaOccurrence]) = {
+        implicit val factory = PointerFOFactoryInstance
+        rt match {
+          case "axiom" => {
+            val a = Axiom.createDefault(conc) // The Axiom factory provides the axiom and the initial map from 
+                                // our lists of formulas to lists of formula occurrences
+            ( a._1, a._2._1.toArray, a._2._2.toArray )
           }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "orr2" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val mainf = conc.succedent.last
-          val rule = mainf match {
-            case Or(weakf, _) => OrRight2Rule( prem, weakf, auxf )
-            case _ => throw new ParsingException("Rule type is orr2, but main formula is not a disjunction.")
+          case "permr" => {
+            if ( param == None )
+              throw new ParsingException("Rule type is permr, but param attribute is not present.")
+            val param_s = param.get
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            ( prem, l_perm, permuteMap( XMLUtils.permStringToFun( param_s, prem.root.succedent.size ), r_perm ) )
           }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "andl1" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val mainf = conc.antecedent.head
-          val rule = mainf match {
-            case And(_, weakf) => AndLeft1Rule( prem, auxf, weakf )
-            case _ => throw new ParsingException("Rule type is andl1, but main formula is not a conjunction.")
+          case "perml" => {
+            if ( param == None )
+              throw new ParsingException("Rule type is perml, but param attribute is not present.")
+            val param_s = param.get
+            val prem = prems.head
+            val r_perm = r_perms.head
+            val l_perm = l_perms.head
+            ( prem, permuteMap( XMLUtils.permStringToFun( param_s, prem.root.antecedent.size ), l_perm ), r_perm )
           }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "andl2" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val mainf = conc.antecedent.head
-          val rule = mainf match {
-            case And(weakf, _) => AndLeft2Rule( prem, weakf, auxf )
-            case _ => throw new ParsingException("Rule type is andl2, but main formula is not a conjunction.")
+          case "contrl" => {
+            if ( param == None )
+              throw new ParsingException("Rule type is contrl, but param attribute is not present.")
+            val c_param = param.get.split(',').map( s => s.toInt ).toArray
+            val prem = prems.head
+            val r_perm = r_perms.head
+            val l_perm = l_perms.head
+            createStrongContractionLeft(prem, c_param, l_perm, r_perm)
           }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "foralll" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val mainf = conc.antecedent.head
-          val rule = mainf match {
-            case All(sub, _) => {
-              sub match {
-                case HOLAbs(v, subsub) => {
-                  val subst = Match( subsub, auxf.formula )
-                  assert ( subst != None, "Couldn't match\n" + subsub.toStringSimple + "\nagainst\n" + auxf.formula.toStringSimple )
-                  val subst_ = subst.get
-                  assert( subst_.map.size == 1 )
-                  assert( subst_.map.contains( v ) )
-                  // TODO: give auxf instead of auxf.formula
-//                  println( "in foralll: ")
-//                  println( "mainf: " + mainf.toStringSimple )
-//                  println( "auxf.formula: " + auxf.formula.toStringSimple )
-//                  println( "subst_: " + subst_ )
-//                  println( "v: " + v )
-//                  println( "subst_(v): " + subst_(v) )
-//                  println( "subst_.map(v): " + subst_.map(v) )
-                  ForallLeftRule( prem, auxf.formula, mainf, subst_(v) )
+          case "contrr" => {
+            if ( param == None )
+              throw new ParsingException("Rule type is contrr, but param attribute is not present.")
+            val c_param = param.get.split(',').map( s => s.toInt ).toArray
+            val prem = prems.head
+            val r_perm = r_perms.head
+            val l_perm = l_perms.head
+            createStrongContractionRight(prem, c_param, l_perm, r_perm)
+          }
+          case "weakl" => {
+            // TODO: in principle, the calculus definition allows introduction of more than
+            // one weak formula. Is this used in practice?
+            val prem = prems.head
+            val r_perm = r_perms.head
+            val l_perm = l_perms.head
+            val weakf = conc.antecedent.head
+            val rule = WeakeningLeftRule.createDefault( prem, weakf )
+            // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
+            ( rule, (List( rule.prin.head ) ++ ( l_perm.map( mapToDesc( rule ) ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "weakr" => {
+            // TODO: in principle, the calculus definition allows introduction of more than
+            // one weak formula. Is this used in practice?
+            val prem = prems.head
+            val r_perm = r_perms.head
+            val l_perm = l_perms.head
+            val weakf = conc.succedent.last
+            val rule = WeakeningRightRule.createDefault( prem, weakf )
+            // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
+            ( rule, l_perm.map( mapToDesc( rule ) ), ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.head ) ).toArray )
+          }
+          case "cut" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            val l_perm_l = l_perms.head
+            val l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val l_p_s = l_prem.root.succedent.size
+            val auxf_l = l_perm_r.last
+            val auxf_r = r_perm_l.head
+            val rule = CutRule( l_prem, r_prem, auxf_l, auxf_r )
+            ( rule,
+              ( (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
+              r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
+              ( l_perm_r.take( l_perm_r.size - 1 ).map( mapToDesc( rule ) ) ++ 
+              r_perm_r.map( mapToDesc( rule ) ) ).toArray )
+          }
+          case "andr" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            def l_perm_l = l_perms.head
+            def l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val l_p_s = l_prem.root.succedent.size
+            val r_p_s = r_prem.root.succedent.size 
+            val auxf_l = l_perm_r.last
+            val auxf_r = r_perm_r.last
+            val rule = AndRightRule( l_prem, r_prem, auxf_l, auxf_r )
+            ( rule,
+              l_perm_l.map( mapToDesc( rule ) ) ++ r_perm_l.map( mapToDesc( rule ) ),
+              ( l_perm_r.take( l_perm_r.size - 1 ).map( mapToDesc( rule ) ) ++ 
+              r_perm_r.map( mapToDesc( rule ) ) ).toArray )
+          }
+          case "orl" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            def l_perm_l = l_perms.head
+            def l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val auxf_l = l_perm_l.head
+            val auxf_r = r_perm_l.head
+            val rule = OrLeftRule( l_prem, r_prem, auxf_l, auxf_r )
+            ( rule,
+              l_perm_l.map( mapToDesc( rule ) ) ++ r_perm_l.drop( 1 ).map( mapToDesc( rule ) ),
+              l_perm_r.map( mapToDesc( rule ) ) ++ r_perm_r.map( mapToDesc( rule ) ) )
+          }
+          case "impll" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            val l_perm_l = l_perms.head
+            val l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val l_p_s = l_prem.root.succedent.size
+            val auxf_l = l_perm_r.last
+            val auxf_r = r_perm_l.head
+            val rule = ImpLeftRule( l_prem, r_prem, auxf_l, auxf_r )
+            // TODO: prin.head is redundant, we know that ImpLeftRule has only one main formula
+            ( rule,
+              ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
+              r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
+              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              r_perm_r.map( mapToDesc( rule ) ) ).toArray )
+          }
+          case "implr" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf1 = l_perm.head
+            val auxf2 = r_perm.last
+            val rule = ImpRightRule( prem, auxf1, auxf2 )
+            ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "negr" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val rule = NegRightRule( prem, auxf )
+            // TODO: prin.head is redundant, we know that NegRightRule has only one main formula
+            ( rule, ( l_perm.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
+              ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.head ) ).toArray )
+          }
+          case "negl" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val rule = NegLeftRule( prem, auxf )
+            // TODO: prin.head is redundant, we know that NegRightRule has only one main formula
+            ( rule, ( List( rule.prin.head ) ++ l_perm.map( mapToDesc( rule ) ) ).toArray, 
+              ( r_perm.take( r_perm.length - 1 ).map( mapToDesc( rule ) ) ).toArray )
+          }
+          case "orr1" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val mainf = conc.succedent.last
+            val rule = mainf match {
+              case Or(_, weakf) => OrRight1Rule( prem, auxf, weakf )
+              case _ => throw new ParsingException("Rule type is orr1, but main formula is not a disjunction.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "orr2" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val mainf = conc.succedent.last
+            val rule = mainf match {
+              case Or(weakf, _) => OrRight2Rule( prem, weakf, auxf )
+              case _ => throw new ParsingException("Rule type is orr2, but main formula is not a disjunction.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "andl1" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val mainf = conc.antecedent.head
+            val rule = mainf match {
+              case And(_, weakf) => AndLeft1Rule( prem, auxf, weakf )
+              case _ => throw new ParsingException("Rule type is andl1, but main formula is not a conjunction.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "andl2" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val mainf = conc.antecedent.head
+            val rule = mainf match {
+              case And(weakf, _) => AndLeft2Rule( prem, weakf, auxf )
+              case _ => throw new ParsingException("Rule type is andl2, but main formula is not a conjunction.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "foralll" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val mainf = conc.antecedent.head
+            val rule = mainf match {
+              case All(sub, _) => {
+                sub match {
+                  case HOLAbs(v, subsub) => {
+                    val subst = Match( subsub, auxf.formula )
+                    assert ( subst != None, "Couldn't match\n" + subsub.toStringSimple + "\nagainst\n" + auxf.formula.toStringSimple )
+                    val subst_ = subst.get
+                    assert( subst_.map.size == 1 )
+                    assert( subst_.map.contains( v ) )
+                    // TODO: give auxf instead of auxf.formula
+  //                  println( "in foralll: ")
+  //                  println( "mainf: " + mainf.toStringSimple )
+  //                  println( "auxf.formula: " + auxf.formula.toStringSimple )
+  //                  println( "subst_: " + subst_ )
+  //                  println( "v: " + v )
+  //                  println( "subst_(v): " + subst_(v) )
+  //                  println( "subst_.map(v): " + subst_.map(v) )
+                    ForallLeftRule( prem, auxf.formula, mainf, subst_(v) )
+                  }
                 }
               }
+              case _ => throw new ParsingException("Rule type is foralll, but main formula is not all-quantified.")
             }
-            case _ => throw new ParsingException("Rule type is foralll, but main formula is not all-quantified.")
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
           }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "foralll2" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val mainf = conc.antecedent.head
-          val rule = mainf match {
+          case "foralll2" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val mainf = conc.antecedent.head
+            val rule = mainf match {
+              // TODO: give auxf instead of auxf.formula
+              case All(_, _) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
+              case _ => throw new ParsingException("Rule type is foralll2, but main formula is not all-quantified.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "existsl" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val mainf = conc.antecedent.head
+            val rule = mainf match {
+              case Ex(sub, _) => {
+                sub match {
+                  case HOLAbs(v, subsub) => {
+                    val subst = Match( subsub, auxf.formula )
+                    assert( subst != None )
+                    val subst_ = subst.get
+                    assert( subst_.map.size == 1 )
+                    assert( subst_.map.contains( v ) )
+                    assert( subst_(v).isInstanceOf[HOLVar] )
+                    // TODO: give auxf instead of auxf.formula
+                    ExistsLeftRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
+                  }
+                }
+              }
+              case _ => throw new ParsingException("Rule type is existsl, but main formula is not ex-quantified.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "existsl2" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val mainf = conc.antecedent.head
+            val rule = mainf match {
+              case Ex(sub, _) => {
+                sub match {
+                  case HOLAbs(v, subsub) => {
+                    val subst = Match( subsub, auxf.formula )
+                    assert( subst != None )
+                    val subst_ = subst.get
+                    assert( subst_.map.size == 1 )
+                    assert( subst_.map.contains( v ) )
+                    assert( subst_(v).isInstanceOf[HOLVar] )
+                    // TODO: give auxf instead of auxf.formula
+                    ExistsLeftRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
+                  }
+                }
+              }
+              case _ => throw new ParsingException("Rule type is existsl, but main formula is not ex-quantified.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "forallr" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val mainf = conc.succedent.last
+            val rule = mainf match {
+              case All(sub, _) => {
+                sub match {
+                  case HOLAbs(v, subsub) => {
+                    val subst = Match( subsub, auxf.formula )
+                    assert( subst != None )
+                    val subst_ = subst.get
+                    assert( subst_.map.size == 1 )
+                    assert( subst_.map.contains( v ) )
+                    assert( subst_(v).isInstanceOf[HOLVar] )
+                    // TODO: give auxf instead of auxf.formula
+                    ForallRightRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
+                  }
+                }
+              }
+              case _ => throw new ParsingException("Rule type is forallr, but main formula is not all-quantified.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "forallr2" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val mainf = conc.succedent.last
+            val rule = mainf match {
+              case All(sub, _) => {
+                sub match {
+                  case HOLAbs(v, subsub) => {
+                    val subst = Match( subsub, auxf.formula )
+                    assert( subst != None, "matching failed for " + subsub.toStringSimple + " and " + auxf.formula.toStringSimple )
+                    val subst_ = subst.get
+                    assert( subst_.map.size == 1 )
+                    assert( subst_.map.contains( v ) )
+                    assert( subst_(v).isInstanceOf[HOLVar] )
+                    // TODO: give auxf instead of auxf.formula
+                    ForallRightRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
+                  }
+                }
+              }
+              case _ => throw new ParsingException("Rule type is forallr, but main formula is not all-quantified.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "existsr" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val mainf = conc.succedent.last
+            val rule = mainf match {
+              case Ex(sub, _) => {
+                sub match {
+                  case HOLAbs(v, subsub) => {
+                    val subst = Match( subsub, auxf.formula )
+                    assert ( subst != None )
+                    val subst_ = subst.get
+                    assert( subst_.map.size == 1 )
+                    assert( subst_.map.contains( v ) )
+                    // TODO: give auxf instead of auxf.formula
+                    ExistsRightRule( prem, auxf.formula, mainf, subst_(v) )
+                  }
+                }
+              }
+              case _ => throw new ParsingException("Rule type is existsr, but main formula is not ex-quantified.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "existsr2" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val mainf = conc.succedent.last
+            val rule = mainf match {
+              // TODO: give auxf instead of auxf.formula
+              case Ex(_, _) => ExistsRightRule( prem, auxf.formula, mainf, subst.get )
+              case _ => throw new ParsingException("Rule type is existsr, but main formula is not ex-quantified.")
+            }
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
+          }
+          case "defl" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = l_perm.head
+            val mainf = conc.antecedent.head
+            val rule = DefinitionLeftRule( prem, auxf.formula, mainf )
             // TODO: give auxf instead of auxf.formula
-            case All(_, _) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
-            case _ => throw new ParsingException("Rule type is foralll2, but main formula is not all-quantified.")
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
           }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "existsl" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val mainf = conc.antecedent.head
-          val rule = mainf match {
-            case Ex(sub, _) => {
-              sub match {
-                case HOLAbs(v, subsub) => {
-                  val subst = Match( subsub, auxf.formula )
-                  assert( subst != None )
-                  val subst_ = subst.get
-                  assert( subst_.map.size == 1 )
-                  assert( subst_.map.contains( v ) )
-                  assert( subst_(v).isInstanceOf[HOLVar] )
-                  // TODO: give auxf instead of auxf.formula
-                  ExistsLeftRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
-                }
-              }
-            }
-            case _ => throw new ParsingException("Rule type is existsl, but main formula is not ex-quantified.")
-          }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "existsl2" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val mainf = conc.antecedent.head
-          val rule = mainf match {
-            case Ex(sub, _) => {
-              sub match {
-                case HOLAbs(v, subsub) => {
-                  val subst = Match( subsub, auxf.formula )
-                  assert( subst != None )
-                  val subst_ = subst.get
-                  assert( subst_.map.size == 1 )
-                  assert( subst_.map.contains( v ) )
-                  assert( subst_(v).isInstanceOf[HOLVar] )
-                  // TODO: give auxf instead of auxf.formula
-                  ExistsLeftRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
-                }
-              }
-            }
-            case _ => throw new ParsingException("Rule type is existsl, but main formula is not ex-quantified.")
-          }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "forallr" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val mainf = conc.succedent.last
-          val rule = mainf match {
-            case All(sub, _) => {
-              sub match {
-                case HOLAbs(v, subsub) => {
-                  val subst = Match( subsub, auxf.formula )
-                  assert( subst != None )
-                  val subst_ = subst.get
-                  assert( subst_.map.size == 1 )
-                  assert( subst_.map.contains( v ) )
-                  assert( subst_(v).isInstanceOf[HOLVar] )
-                  // TODO: give auxf instead of auxf.formula
-                  ForallRightRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
-                }
-              }
-            }
-            case _ => throw new ParsingException("Rule type is forallr, but main formula is not all-quantified.")
-          }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "forallr2" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val mainf = conc.succedent.last
-          val rule = mainf match {
-            case All(sub, _) => {
-              sub match {
-                case HOLAbs(v, subsub) => {
-                  val subst = Match( subsub, auxf.formula )
-                  assert( subst != None, "matching failed for " + subsub.toStringSimple + " and " + auxf.formula.toStringSimple )
-                  val subst_ = subst.get
-                  assert( subst_.map.size == 1 )
-                  assert( subst_.map.contains( v ) )
-                  assert( subst_(v).isInstanceOf[HOLVar] )
-                  // TODO: give auxf instead of auxf.formula
-                  ForallRightRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
-                }
-              }
-            }
-            case _ => throw new ParsingException("Rule type is forallr, but main formula is not all-quantified.")
-          }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "existsr" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val mainf = conc.succedent.last
-          val rule = mainf match {
-            case Ex(sub, _) => {
-              sub match {
-                case HOLAbs(v, subsub) => {
-                  val subst = Match( subsub, auxf.formula )
-                  assert ( subst != None )
-                  val subst_ = subst.get
-                  assert( subst_.map.size == 1 )
-                  assert( subst_.map.contains( v ) )
-                  // TODO: give auxf instead of auxf.formula
-                  ExistsRightRule( prem, auxf.formula, mainf, subst_(v) )
-                }
-              }
-            }
-            case _ => throw new ParsingException("Rule type is existsr, but main formula is not ex-quantified.")
-          }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "existsr2" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val mainf = conc.succedent.last
-          val rule = mainf match {
+          case "defr" => {
+            val prem = prems.head
+            val l_perm = l_perms.head
+            val r_perm = r_perms.head
+            val auxf = r_perm.last
+            val mainf = conc.succedent.last
+            val rule = DefinitionRightRule( prem, auxf.formula, mainf )
             // TODO: give auxf instead of auxf.formula
-            case Ex(_, _) => ExistsRightRule( prem, auxf.formula, mainf, subst.get )
-            case _ => throw new ParsingException("Rule type is existsr, but main formula is not ex-quantified.")
+            ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
           }
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "defl" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = l_perm.head
-          val mainf = conc.antecedent.head
-          val rule = DefinitionLeftRule( prem, auxf.formula, mainf )
-          // TODO: give auxf instead of auxf.formula
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "defr" => {
-          val prem = prems.head
-          val l_perm = l_perms.head
-          val r_perm = r_perms.head
-          val auxf = r_perm.last
-          val mainf = conc.succedent.last
-          val rule = DefinitionRightRule( prem, auxf.formula, mainf )
-          // TODO: give auxf instead of auxf.formula
-          ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
-        }
-        case "eql1" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          def l_perm_l = l_perms.head
-          def l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val l_p_s = l_prem.root.succedent.size
-          val r_p_s = r_prem.root.succedent.size 
-          val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.head
-          val mainf = conc.antecedent.head
-          // TODO: parse and pass parameter
-          val rule = EquationLeft1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
-          ( rule,
-            ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
-            r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-            ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
-            r_perm_r.map( mapToDesc( rule ) ) ).toArray )
-        }
-        case "eql2" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          def l_perm_l = l_perms.head
-          def l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val l_p_s = l_prem.root.succedent.size
-          val r_p_s = r_prem.root.succedent.size 
-          val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_l.head
-          val mainf = conc.antecedent.head
-          // TODO: parse and pass parameter
-          val rule = EquationLeft2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
-          ( rule,
-            ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
-            r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-            ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
-            r_perm_r.map( mapToDesc( rule ) ) ).toArray )
-        }
-        case "eqr1" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          def l_perm_l = l_perms.head
-          def l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val l_p_s = l_prem.root.succedent.size
-          val r_p_s = r_prem.root.succedent.size 
-          val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_r.last
-          val mainf = conc.succedent.last
-          // TODO: parse and pass parameter
-          val rule = EquationRight1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
-          ( rule,
-            ( l_perm_l.map( mapToDesc( rule ) ) ++ 
-            r_perm_l.map( mapToDesc( rule ) ) ).toArray,
-            ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
-            r_perm_r.map( mapToDesc( rule ) ) ).toArray )
-        }
-        case "eqr2" => {
-          val l_prem = prems.head
-          val r_prem = prems.last
-          def l_perm_l = l_perms.head
-          def l_perm_r = r_perms.head
-          def r_perm_l = l_perms.last
-          def r_perm_r = r_perms.last
-          val l_p_s = l_prem.root.succedent.size
-          val r_p_s = r_prem.root.succedent.size 
-          val auxf_l = l_perm_r.last
-          val auxf_r = r_perm_r.last
-          val mainf = conc.succedent.last
-          // TODO: parse and pass parameter
-          val rule = EquationRight2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
-          ( rule,
-            ( l_perm_l.map( mapToDesc( rule ) ) ++ 
-            r_perm_l.map( mapToDesc( rule ) ) ).toArray,
-            ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
-            r_perm_r.map( mapToDesc( rule ) ) ).toArray )
-        }
-        case _ => throw new ParsingException("Unknown rule type: " + rt)
+          case "eql1" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            def l_perm_l = l_perms.head
+            def l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val l_p_s = l_prem.root.succedent.size
+            val r_p_s = r_prem.root.succedent.size 
+            val auxf_l = l_perm_r.last
+            val auxf_r = r_perm_l.head
+            val mainf = conc.antecedent.head
+            // TODO: parse and pass parameter
+            val rule = EquationLeft1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            ( rule,
+              ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
+              r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
+              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              r_perm_r.map( mapToDesc( rule ) ) ).toArray )
+          }
+          case "eql2" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            def l_perm_l = l_perms.head
+            def l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val l_p_s = l_prem.root.succedent.size
+            val r_p_s = r_prem.root.succedent.size 
+            val auxf_l = l_perm_r.last
+            val auxf_r = r_perm_l.head
+            val mainf = conc.antecedent.head
+            // TODO: parse and pass parameter
+            val rule = EquationLeft2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            ( rule,
+              ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
+              r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
+              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              r_perm_r.map( mapToDesc( rule ) ) ).toArray )
+          }
+          case "eqr1" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            def l_perm_l = l_perms.head
+            def l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val l_p_s = l_prem.root.succedent.size
+            val r_p_s = r_prem.root.succedent.size 
+            val auxf_l = l_perm_r.last
+            val auxf_r = r_perm_r.last
+            val mainf = conc.succedent.last
+            // TODO: parse and pass parameter
+            val rule = EquationRight1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            ( rule,
+              ( l_perm_l.map( mapToDesc( rule ) ) ++ 
+              r_perm_l.map( mapToDesc( rule ) ) ).toArray,
+              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              r_perm_r.map( mapToDesc( rule ) ) ).toArray )
+          }
+          case "eqr2" => {
+            val l_prem = prems.head
+            val r_prem = prems.last
+            def l_perm_l = l_perms.head
+            def l_perm_r = r_perms.head
+            def r_perm_l = l_perms.last
+            def r_perm_r = r_perms.last
+            val l_p_s = l_prem.root.succedent.size
+            val r_p_s = r_prem.root.succedent.size 
+            val auxf_l = l_perm_r.last
+            val auxf_r = r_perm_r.last
+            val mainf = conc.succedent.last
+            // TODO: parse and pass parameter
+            val rule = EquationRight2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            ( rule,
+              ( l_perm_l.map( mapToDesc( rule ) ) ++ 
+              r_perm_l.map( mapToDesc( rule ) ) ).toArray,
+              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              r_perm_r.map( mapToDesc( rule ) ) ).toArray )
+          }
+          case _ => throw new ParsingException("Unknown rule type: " + rt)
       }
     }
+  }
   /*
   trait XMLDefinitionParser extends XMLNodeParser {
     def getDefinition() = getDefinition( getInput() )

@@ -67,14 +67,18 @@ object TPTPFOLExporter {
     case Function(x, args) => handleAtom( x, args )
   }
 
+  // todo: introduce special constant for equality and use it here!
   def handleAtom( x: ConstantSymbolA, args: List[FOLTerm] )(implicit s_map: Map[FOLVar, String]) =
-    single_quote( x.toString ) + (
-    if (args.size == 0)
-      ""
+    if ( x.toString.equals("=") )
+      tptp( args.head ) + " = " + tptp( args.last )
     else
-      "(" + tptp( args.head ) + 
-      args.tail.foldLeft("")((s,a) => s + ", " + tptp( a ) )
-      + ")" )
+      single_quote( x.toString ) + (
+      if (args.size == 0)
+        ""
+      else
+        "(" + tptp( args.head ) + 
+        args.tail.foldLeft("")((s,a) => s + ", " + tptp( a ) )
+        + ")" )
 
   def single_quote( s: String ) = "'" + s + "'"
 }

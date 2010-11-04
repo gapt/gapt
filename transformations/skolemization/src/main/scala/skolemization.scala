@@ -425,7 +425,6 @@ object skolemize {
 // R(x,y), and the result is again R(x,y) because the occurrence
 // of y thinks it's bound!
 
-
 object skolemize {
 
   def apply(p: LKProof) : LKProof = 
@@ -462,6 +461,7 @@ object skolemize {
     implicit val s_map = symbol_map
     implicit val i_map = inst_map
     implicit val c_ancs = cut_ancs
+    implicit val factory = PointerFOFactoryInstance
 
     proof match
     {
@@ -469,7 +469,7 @@ object skolemize {
         val ant = s.antecedent.toList
         val succ = s.succedent.toList
         val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
-        val ax = Axiom( new_seq )
+        val ax = Axiom.createDefault( new_seq )
         var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax._2._1( p._2 ) ))
         new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax._2._2( p._2 )))
         (ax._1, new_map)
@@ -480,8 +480,8 @@ object skolemize {
         ForallLeftRule.apply)
       case ExistsRightRule(p, _, a, m, t) => handleWeakQuantRule( proof, p, a, m, t, 0, ExistsRightRule.computeAux,
         ExistsRightRule.apply)
-      case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, 1, WeakeningLeftRule.apply)
-      case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, 0, WeakeningRightRule.apply)
+      case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, 1, WeakeningLeftRule.createDefault)
+      case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, 0, WeakeningRightRule.createDefault)
       case ContractionLeftRule(p, _, a1, a2, _) => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply)
       case ContractionRightRule(p, _, a1, a2, _) => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply)
       case AndRightRule(p1, p2, _, a1, a2, m) => handleBinaryRule( proof, p1, p2, a1, a2, m, AndRightRule.computeLeftAux, AndRightRule.computeRightAux, AndRightRule.apply)
@@ -666,11 +666,13 @@ object skolemize {
       cut_ancs: Set[FormulaOccurrence]
 
     ) = {
+      println("entering weak quant rule")
       val new_main = if (cut_ancs.contains( m )) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
       //println("before: " + m.formula.toStringSimple)
       //println("after: " + new_main.toStringSimple)
       val inst_list = inst_map( m )
       val new_inst_map = copyMapToAncestor( inst_map ).updated( a, inst_list :+ t )
+      println("recursive call in weak quant rule")
       val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), new_inst_map, copySetToAncestor( cut_ancs ) )
       val ret = constructor( new_proof._1, new_proof._2( a ), new_main, t ) 
       ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
@@ -698,6 +700,7 @@ object skolemize {
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
     ) = {
+      println("entering strong quant rule")
       if (!cut_ancs.contains( m ) )
       {
         val sym_stream = symbol_map( m )
@@ -725,6 +728,7 @@ object skolemize {
     }
     else
     {
+      println("recursive call in strong quant rule")
       val new_proof = skolemize( p, copyMapToAncestor(symbol_map), copyMapToAncestor(inst_map),
         copySetToAncestor( cut_ancs ) )
       val ret = constructor( new_proof._1, new_proof._2( a ), m.formula, v )

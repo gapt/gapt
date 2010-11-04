@@ -24,9 +24,9 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val x = HOLVar( "x", i )
       val Px = Atom( "P", x::Nil )
       val s = Sequent( Px::Nil, Px::Nil )
-      val ax1 = Axiom( s )._1
-      val ax2 = Axiom( s )._1
-      val proof = CutRule( ax1, ax2, ax1.root.succedent.toList.first, ax2.root.antecedent.toList.first )
+      val ax1 = Axiom.createDefault( s )._1
+      val ax2 = Axiom.createDefault( s )._1
+      val proof = CutRule( ax1, ax2, ax1.root.succedent.toList.head, ax2.root.antecedent.toList.head )
       val a = HOLConst( new ConstantStringSymbol( "a" ), i )
       val f = HOLConst( new ConstantStringSymbol( "f" ), i -> i )
       val fa = HOLApp( f, a )

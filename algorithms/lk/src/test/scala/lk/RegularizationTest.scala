@@ -22,9 +22,9 @@ class RegularizationTest extends SpecificationWithJUnit {
       val x = HOLVar( "x", i )
       val Px = Atom( "P", x::Nil )
       val s = Sequent( Px::Nil, Px::Nil )
-      val ax1 = Axiom( s )._1
-      val ax2 = Axiom( s )._1
-      val proof = CutRule( ax1, ax2, ax1.root.succedent.toList.first, ax2.root.antecedent.toList.first )
+      val ax1 = Axiom.createDefault( s )._1
+      val ax2 = Axiom.createDefault( s )._1
+      val proof = CutRule( ax1, ax2, ax1.root.succedent.toList.head, ax2.root.antecedent.toList.head )
       val p_s = regularize( proof )
       p_s._1.root.getSequent must beEqual( s )
     }
