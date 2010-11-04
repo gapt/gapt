@@ -125,6 +125,23 @@ package typedLambdaCalculus {
     }
   }
 
+  object doesNotContainFreeBound {
+    def apply( e: LambdaExpression ) : Boolean = {
+      val ret = doesNotContainFreeBound( e, new HashSet[Var] )
+//      if (!ret)
+//        println(e + " contains a free bound variable!")
+      //ret
+      // always return true
+      true
+      }
+
+    def apply( e: LambdaExpression, bvs: Set[Var] ) : Boolean = e match {
+      case v: Var => v.isFree || bvs.contains( v )
+      case Abs(x, s) => apply( s, bvs + x )
+      case App(x, y) => apply( x, bvs ) && apply( y, bvs )
+    }
+  }
+
   /*
    * There are two ways to view an abstraction with db indices. The physical way of the concatenataion of a variable and an expression
    * and the theoretical way of bindind the variable within the expression. In practice we need both versions:
@@ -135,7 +152,7 @@ package typedLambdaCalculus {
    * the non-default methods will have the suffix InScope.
    */
    class Abs protected[typedLambdaCalculus](val variable: Var, val expression: LambdaExpression ) extends LambdaExpression  {
-     require (variable.isFree)
+     require (variable.isFree && doesNotContainFreeBound( expression ) )
     val expressionInScope = createDeBruijnIndex(variable, expression, computeMaxDBIndex(expression)+1)
     val variableInScope = variable.factory.createVar(variable.name, variable.exptype, Some(computeMaxDBIndex(expression)+1))  // set bounded variable index for given variable, must be done only after the index was alrewady set as otherwise the new var will be bound and the old ones not
     def exptype: TA = ->(variable.exptype,expression.exptype)

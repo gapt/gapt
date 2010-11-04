@@ -29,23 +29,24 @@ package base {
 
   class LabelledFormulaOccurrence (override val formula: HOLFormula,
                                    override val ancestors: List[LabelledFormulaOccurrence],
-                                   val label: Label) extends FormulaOccurrence( formula, ancestors ) {
-    def factory: FOFactory = LKskFOFactory
-    override def toString: String = formula.toString + " (label: " + label.toString + ")"
+                                   val skolem_label: Label) extends FormulaOccurrence( formula, ancestors ) with PointerOccurrence {
+    def factory = LKskFOFactory
+    override def toString: String = formula.toString + " (label: " + skolem_label.toString + ")"
   }
 
-  private[lksk] object LKskFOFactory extends FOFactory {
-    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = {
+  //private[lksk] 
+  object LKskFOFactory extends PointerFOFactory {
+    override def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]) = {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
-    def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]) = {
+    override def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]) = {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
     def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) = {
-      val l = ancestors.head.label
-      assert( ancestors.forall( a => a.label == l ) )
+      val l = ancestors.head.skolem_label
+      assert( ancestors.forall( a => a.skolem_label == l ) )
       new LabelledFormulaOccurrence(formula, ancestors, l)
     }
     // when creating a main formula for a weak quantifier inference in LKsk, we may choose
@@ -54,8 +55,8 @@ package base {
     def createWeakQuantMain(formula: HOLFormula, ancestor: LabelledFormulaOccurrence, term: Option[HOLExpression]) =
     {
       val newlabel = term match {
-        case None => ancestor.label
-        case Some(x) => ancestor.label - x
+        case None => ancestor.skolem_label
+        case Some(x) => ancestor.skolem_label - x
       }
       new LabelledFormulaOccurrence(formula, ancestor::Nil, newlabel )
     }

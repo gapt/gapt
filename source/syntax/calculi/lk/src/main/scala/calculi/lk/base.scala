@@ -19,7 +19,7 @@ import scala.collection.mutable.HashMap
 package base {
 
   // List should be changed into multiset (I am not sure anymore as we need to map formula occurrences also in the original sequent.
-  // For eaxmple when duplicating a branch we want to be able to know which formula is mapped to which)
+  // For example when duplicating a branch we want to be able to know which formula is mapped to which)
   class Sequent(val antecedent: List[HOLFormula], val succedent: List[HOLFormula])
   {
     val ant = antecedent.sortWith((x1,x2) => x1.toString < x2.toString)
@@ -66,6 +66,9 @@ package base {
       )
 
     def toFormula = Or( antecedent.map( f => Neg( f ) ) ::: succedent )
+
+    // checks whether this sequent is of the form F :- F
+    def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head == succedent.head
   }
   object Sequent {
     def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)

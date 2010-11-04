@@ -170,7 +170,7 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
     getOutput.write("""$\left<""")
     exportTerm(fo.formula)
     getOutput.write("""\right>^{""")
-    fo.label.foreach( t => {
+    fo.skolem_label.foreach( t => {
       exportTerm( t )
       getOutput.write(", ")
     } )

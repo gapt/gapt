@@ -39,11 +39,11 @@ package struct {
           val left = lso.l_antecedent.toList.head
           val right = lso.l_succedent.toList.head 
           val ant = if ( cut_occs.contains( left ) )
-            Dual( A( new LabelledFormulaOccurrence( left.formula, Nil, right.label ) ) )::Nil
+            Dual( A( new LabelledFormulaOccurrence( left.formula, Nil, right.skolem_label ) ) )::Nil
           else
             Nil
           val suc = if ( cut_occs.contains( right ) )
-            A( new LabelledFormulaOccurrence( right.formula, Nil, left.label ) )::Nil
+            A( new LabelledFormulaOccurrence( right.formula, Nil, left.skolem_label ) )::Nil
           else
             Nil
           makeTimesJunction( ant:::suc )

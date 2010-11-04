@@ -8,12 +8,13 @@
 package at.logic.algorithms.fol
 
 import at.logic.language.fol._
-import at.logic.language.hol.{HOLExpression, HOLVar, HOLConst, Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom}
+import at.logic.language.hol.{HOLExpression, HOLVar, HOLConst, Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom, HOLFormula}
 import at.logic.language.hol.{ExVar => HOLExVar, AllVar => HOLAllVar}
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
+import at.logic.calculi.lk.base.Sequent
 import scala.collection.mutable.Map
 
 package hol2fol {
@@ -21,7 +22,7 @@ package hol2fol {
    */
   object reduceHolToFol {
     // scope and id are used to give the same names for new functions and constants between different calls of this method
-    def apply(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = term match {
+    def apply_(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = term match {
       case HOLNeg(n) => Neg(reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
       case HOLAnd(n1,n2) => And(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
       case HOLOr(n1,n2) => Or(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
@@ -35,12 +36,22 @@ package hol2fol {
       // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant use the same symbol
       case a @ AbsInScope(v, exp) => {
           val sym = scope.getOrElseUpdate(a.variant(new VariantGenerator(new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName")), ConstantStringSymbol("q_{" + id.nextId + "}"))
-          val freeVarList = exp.getFreeAndBoundVariables._1.toList.sort((x,y) => x.toString < y.toString).map(x => apply(x.asInstanceOf[HOLExpression],scope,id))
+          val freeVarList = exp.getFreeAndBoundVariables._1.toList.sortWith((x,y) => x.toString < y.toString).map(x => apply(x.asInstanceOf[HOLExpression],scope,id))
           if (freeVarList.isEmpty) FOLConst(sym) else Function(sym, freeVarList.asInstanceOf[List[FOLTerm]])
       }
       case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions
     }
-  }
+
+    def apply(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}) = 
+      apply_( term, scope, id )
+
+    def apply(formula: HOLFormula, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLFormula =
+      apply_( formula, scope, id ).asInstanceOf[FOLFormula]
+
+    // TODO: should return FOLSequent
+    def apply(s: Sequent, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): Sequent = 
+      new Sequent( s.antecedent.map( f => apply(f, scope, id ) ), s.succedent.map( f => apply(f, scope, id ) ) )
+    }
   // TODO - support generated function symbols by checking the arity from le and add the variables to the returned term. Right now only constants are supported
   object createExampleFOLConstant {
     def apply(le: LambdaExpression, css: ConstantStringSymbol) = FOLConst(css)

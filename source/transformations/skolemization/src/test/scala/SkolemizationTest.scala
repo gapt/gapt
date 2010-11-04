@@ -20,6 +20,7 @@ import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import scala.collection.immutable._
 import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.propositionalRules.{AndRightRule, Axiom}
 import at.logic.calculi.lk.quantificationRules._
@@ -28,6 +29,9 @@ import at.logic.language.hol.logicSymbols._
 import skolemize._
 
 class SkolemizationTest extends SpecificationWithJUnit {
+
+   implicit val factory = PointerFOFactoryInstance
+
   "Skolemization" should {
       val x = HOLVar("x", i)
       val y = HOLVar("y", i)
@@ -63,6 +67,7 @@ class SkolemizationTest extends SpecificationWithJUnit {
     }
 
     "handle a binary formula correctly" in {
+      println("handle a binary formula correctly")
       val y = HOLVar(new VariableStringSymbol("y"), i)
       val rxy = Atom( "R", x::y::Nil )
       val f2 = Imp(f, AllVar( x, ExVar( y, rxy ) ) )
@@ -74,6 +79,13 @@ class SkolemizationTest extends SpecificationWithJUnit {
 
       val skf = Imp( skf1, AllVar( x, skf2 ) )
       skolemize( f2, 1, skolem_symbol_stream ) must beEqual( skf )
+
+      // now we skolemize the skolemize formula, with opposite polarity
+      val skfun2 = HOLConst( skolem_symbol_stream.tail.tail.head, i )
+      val skfun3 = Function( skolem_symbol_stream.tail.head, skfun2::Nil, i )
+      val skf3 = Atom( "R", skfun2::skfun3::Nil )
+      val skf4 = Imp( skf1, skf3 )
+      skolemize( skolemize( f2, 1, skolem_symbol_stream ), 0, skolem_symbol_stream.tail ) must beEqual( skf4 )
     }
 
     "handle a simple proof correctly" in {
@@ -83,10 +95,10 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val Ps0 = Atom( "P", cs1::Nil )
       val allxPx = AllVar( x, Atom( "P", x::Nil ) )
       val ax = Axiom( Sequent( Palpha::Nil, Palpha::Nil ) )
-      val proof = ForallRightRule( ForallLeftRule( ax._1, Palpha, allxPx, alpha ), Palpha, allxPx, alpha )
+      val proof = ForallRightRule( ForallLeftRule( ax, Palpha, allxPx, alpha ), Palpha, allxPx, alpha )
 
       val ax_sk = Axiom( Sequent( Ps0::Nil, Ps0::Nil ) )
-      val proof_sk = ForallLeftRule( ax_sk._1, Ps0, allxPx, cs1 )
+      val proof_sk = ForallLeftRule( ax_sk, Ps0, allxPx, cs1 )
 
       val res = skolemize( proof )
       println( res )
