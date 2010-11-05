@@ -10,14 +10,15 @@ import searchAlgorithms._
  * Time: 10:46:25 AM
  * To change this template use File | Settings | File Templates.
  *
- * Defines an interface for non-deterministic execution model represented as an infinite stream.
+ * Defines an interface for non-deterministic execution model represented as an infinite stream of objects Option[S] where S is some class.
  */
 
 package ndStream {
 
 
-  trait Configuration[T] {
-    def result: Option[T] // if None then it is a non-terminating node otherwise it is a terminating node
+  trait Configuration[S] {
+    def result: Option[S]
+    def isTerminal: Boolean // terminal nodes are not added to the configuration queue
   }
 
   abstract class NDStream[S /*result type*/](val initial: Configuration[S], val myFun: Configuration[S] => List[Configuration[S]]) extends SearchAlgorithm {
@@ -36,7 +37,7 @@ package ndStream {
         if (conf == None) None
         else {
           val confs: List[Configuration[S]] = myFun(conf.get)
-          confs.foreach(x => if (x.result == None) add(x) else results.enqueue(x.result.get))
+          confs.foreach(x => {if (x.result != None) results.enqueue(x.result.get); if (!x.isTerminal) add(x)})
           next
         }
       }

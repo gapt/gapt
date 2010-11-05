@@ -9,6 +9,7 @@ import searchAlgorithms._
 class NDStreamTest extends SpecificationWithJUnit {
   class MyConfiguration(val n: Int) extends Configuration[Int] {
     def result = if (n < 1) Some(n) else None
+    def isTerminal = result != None
   }
   
   "BFSNDStream" should {
