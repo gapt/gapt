@@ -26,7 +26,7 @@ package etaExpansion {
             case FunctionType(_, lsArgs ) => {
               val binders: List[Var] = lsArgs.map(z => {
                 val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
-                println("\n\n"+disAllowedVars.toString)
+//                println("\n\n"+disAllowedVars.toString)
                 val fv = freshVar(z, dv, x); disAllowedVars += fv; fv
               })
               AbsN(binders, AppN(term, binders.map((z => apply(z)))))
@@ -40,7 +40,7 @@ package etaExpansion {
             case FunctionType(to, lsArgs) => {
               val binders: List[Var] = lsArgs.map(z => {
                 val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
-                println("\n\n"+disAllowedVars.toString)
+//                println("\n\n"+disAllowedVars.toString)
                 val fv = freshVar(z, dv, term); disAllowedVars+=fv;
                 fv
               })
