@@ -16,16 +16,16 @@ import searchAlgorithms._
 package ndStream {
 
 
-  trait Configuration {
-    def result: Option[Any] // if None then it is a non-terminating node otherwise it is a terminating node
+  trait Configuration[T] {
+    def result: Option[T] // if None then it is a non-terminating node otherwise it is a terminating node
   }
 
-  abstract class NDStream(val initial: Configuration, val myFun: Configuration => List[Configuration]) extends SearchAlgorithm {
-    type T = Configuration
-    private val results: Queue[Any] = new Queue[Any]()
+  abstract class NDStream[S /*result type*/](val initial: Configuration[S], val myFun: Configuration[S] => List[Configuration[S]]) extends SearchAlgorithm {
+    type T = Configuration[S]
+    private val results: Queue[S] = new Queue[S]()
     protected def init: Unit = add(initial)
     
-    def next: Option[Any] = {
+    def next: Option[S] = {
       val res = results.headOption
       if (res != None) {
         results.dequeue
@@ -35,7 +35,7 @@ package ndStream {
         val conf = get
         if (conf == None) None
         else {
-          val confs: List[Configuration] = myFun(conf.get)
+          val confs: List[Configuration[S]] = myFun(conf.get)
           confs.foreach(x => if (x.result == None) add(x) else results.enqueue(x.result.get))
           next
         }
