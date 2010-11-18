@@ -18,7 +18,7 @@ import org.jgrapht.graph.DefaultEdge
 class TreesTest extends SpecificationWithJUnit {
   "Tree" should {
     "pattern match as graphs and recursively" in {
-      val lt = ArbitraryTree("y", LeafTree("a"), LeafTree("b"), LeafTree("c"))
+      val lt = BinaryTree("y", LeafTree("a"), LeafTree("b"))
       ((lt) match {
           case EmptyGraph() => false
           case UnionGraph(x1, x2) => false

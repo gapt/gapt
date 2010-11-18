@@ -8,13 +8,13 @@
 package at.logic.calculi.lk
 
 import at.logic.calculi.occurrences._
+import at.logic.calculi.treeProofs._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
-import at.logic.utils.ds.acyclicGraphs._
+import at.logic.utils.ds.trees._
 import base._
 
 package definitionRules {
-import at.logic.utils.ds.acyclicGraphs._
 
 // Definition rules
   case object DefinitionLeftRuleType extends UnaryRuleTypeA
@@ -28,7 +28,7 @@ import at.logic.utils.ds.acyclicGraphs._
       else {
         val aux_fo = term1op.get
         val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.antecedent - aux_fo)
-        new UnaryAGraph[SequentOccurrence](
+        new UnaryTree[SequentOccurrence](
             SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
                               createContext((s1.root.succedent))), s1 )
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -39,7 +39,7 @@ import at.logic.utils.ds.acyclicGraphs._
       }
     }
 
-    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
@@ -62,7 +62,7 @@ import at.logic.utils.ds.acyclicGraphs._
       else {
         val aux_fo = term1op.get
         val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.succedent - aux_fo)
-        new UnaryAGraph[SequentOccurrence](
+        new UnaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent),
                               createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -73,7 +73,7 @@ import at.logic.utils.ds.acyclicGraphs._
       }
     }
 
-    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")

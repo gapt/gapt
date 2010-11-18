@@ -11,7 +11,7 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.acyclicGraphs._
+import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 import base._
@@ -34,7 +34,7 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, (s1.root.antecedent) ++ s2.root.antecedent - auxocc)
-        new BinaryAGraph[SequentOccurrence](
+        new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent - auxocc, s1.root.antecedent) + prinFormula,
                               createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent, s1.root.succedent - eqocc) ), s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -64,7 +64,7 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, s1.root.antecedent ++ s2.root.antecedent - auxocc)
-        new BinaryAGraph[SequentOccurrence](
+        new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent - auxocc, s1.root.antecedent) + prinFormula,
                               createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent, s1.root.succedent - eqocc) ), s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -94,7 +94,7 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, (s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc))
-        new BinaryAGraph[SequentOccurrence](
+        new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent, s1.root.antecedent),
                               createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent - auxocc, s1.root.succedent - eqocc) + prinFormula ),
             s1, s2 )
@@ -125,7 +125,7 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, (s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc))
-        new BinaryAGraph[SequentOccurrence](
+        new BinaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent, s1.root.antecedent),
                               createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent - auxocc, s1.root.succedent - eqocc) + prinFormula),
             s1, s2 )

@@ -8,10 +8,11 @@
 package at.logic.calculi.lk
 
 import at.logic.calculi.occurrences._
+import at.logic.calculi.treeProofs._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.acyclicGraphs.{UnaryAGraph, BinaryAGraph, AGraph}
+import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 
@@ -88,7 +89,7 @@ package base {
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
-   trait LKProof extends Proof[SequentOccurrence] with AGraph[SequentOccurrence] {
+   trait LKProof extends TreeProof[SequentOccurrence] with Tree[SequentOccurrence] {
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
       (root.antecedent.toList ++ root.succedent.toList).filter(x => x.ancestors.find(y => y =^ fo) != None) match {
         case x::Nil => Some(x)
@@ -97,10 +98,10 @@ package base {
       }
     }
   }
-  trait UnaryLKProof extends UnaryAGraph[SequentOccurrence] with LKProof with UnaryProof[SequentOccurrence] {
+  trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof with UnaryTreeProof[SequentOccurrence] {
     override def uProof = t.asInstanceOf[LKProof]
   }
-  trait BinaryLKProof extends BinaryAGraph[SequentOccurrence] with LKProof with BinaryProof[SequentOccurrence] {
+  trait BinaryLKProof extends BinaryTree[SequentOccurrence] with LKProof with BinaryTreeProof[SequentOccurrence] {
     override def uProof1 = t1.asInstanceOf[LKProof]
     override def uProof2 = t2.asInstanceOf[LKProof]
   }
