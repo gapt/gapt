@@ -14,7 +14,7 @@ import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.acyclicGraphs._
+import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 import base._
@@ -48,7 +48,7 @@ package quantificationRules {
         val aux_form = computeAux( main, term )
         assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toStringSimple + " is not equal to the formula " + aux_fo.formula.toStringSimple + " at the given occurrence")
         val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.antecedent - aux_fo)
-        new UnaryAGraph[SequentOccurrence](
+        new UnaryTree[SequentOccurrence](
           SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
                             createContext((s1.root.succedent))), s1 )
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
@@ -90,7 +90,7 @@ package quantificationRules {
         val aux_fo = term1op.get
         assert( computeAux( main, term ) == aux_fo.formula, computeAux( main, term ).toStringSimple + " is not " + aux_fo.formula.toStringSimple )
         val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.succedent - aux_fo)
-        new UnaryAGraph[SequentOccurrence](
+        new UnaryTree[SequentOccurrence](
             SequentOccurrence(createContext(s1.root.antecedent),
                               createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
@@ -131,7 +131,7 @@ package quantificationRules {
             // correct auxiliary formula
             assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
                 val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.succedent - aux_fo)
-                new UnaryAGraph[SequentOccurrence](
+                new UnaryTree[SequentOccurrence](
                     SequentOccurrence(createContext(s1.root.antecedent),
                                       createContext((s1.root.succedent - aux_fo)) + prinFormula), s1 )
                 with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
@@ -175,7 +175,7 @@ package quantificationRules {
             // correct auxiliary formula
             assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
             val prinFormula = aux_fo.factory.createPrincipalFormulaOccurrence(main, aux_fo::Nil, s1.root.antecedent - aux_fo)
-            new UnaryAGraph[SequentOccurrence](
+            new UnaryTree[SequentOccurrence](
                 SequentOccurrence(createContext((s1.root.antecedent - aux_fo)) + prinFormula,
                                   createContext((s1.root.succedent))), s1 )
             with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {

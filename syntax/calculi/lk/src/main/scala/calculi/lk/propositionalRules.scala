@@ -11,7 +11,7 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.utils.ds.acyclicGraphs._
+import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 import base._
@@ -52,14 +52,14 @@ package propositionalRules {
     def apply[T](seq: Sequent)(implicit factory: FOFactory) = {
       val left: Set[FormulaOccurrence] = seq.antecedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
       val right: Set[FormulaOccurrence] = seq.succedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
-      new LeafAGraph[SequentOccurrence](SequentOccurrence(left, right)) with LKProof {def rule = InitialRuleType}
+      new LeafTree[SequentOccurrence](SequentOccurrence(left, right)) with LKProof {def rule = InitialRuleType}
     }
     // this method is using a simple default factory (where occurrences have pointers equality) and return a map between positions in Sequent to formula occurrences
     // we pass empty sets of formula occurrences as this information is ignored in the factory
     def createDefault(seq: Sequent): Pair[LKProof, Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
       val left: List[FormulaOccurrence] = seq.antecedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
       val right: List[FormulaOccurrence] = seq.succedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
-      (new LeafAGraph[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with LKProof {def rule = InitialRuleType}, (left,right))
+      (new LeafTree[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with LKProof {def rule = InitialRuleType}, (left,right))
     }
     def createOccurrence(f: HOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
     def unapply(proof: LKProof) = if (proof.rule == InitialRuleType) Some((proof.root)) else None
@@ -76,7 +76,7 @@ package propositionalRules {
   object WeakeningLeftRule {
     def apply(s1: LKProof, f: HOLFormula)(implicit factory: FOFactory) = {
       val prinFormula = factory.createPrincipalFormulaOccurrence(f, Nil, s1.root.antecedent)
-      new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent)), s1)
+      new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent)), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningLeftRuleType
           def prin = prinFormula::Nil
@@ -84,7 +84,7 @@ package propositionalRules {
     }
     def createDefault(s1: LKProof, f: HOLFormula) = {
       val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil)
-      new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent)), s1)
+      new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent)), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningLeftRuleType
           def prin = prinFormula::Nil
@@ -101,7 +101,7 @@ package propositionalRules {
   object WeakeningRightRule {
     def apply(s1: LKProof, f: HOLFormula)(implicit factory: FOFactory) = {
       val prinFormula = factory.createPrincipalFormulaOccurrence(f, Nil, s1.root.succedent)
-      new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
+      new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
           def prin = prinFormula::Nil
@@ -109,7 +109,7 @@ package propositionalRules {
     }
     def createDefault(s1: LKProof, f: HOLFormula) = {
       val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f, Nil)
-      new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
+      new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent) + prinFormula), s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
           def prin = prinFormula::Nil
@@ -135,7 +135,7 @@ package propositionalRules {
         else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
         else {
           val prinFormula = term1.factory.createPrincipalFormulaOccurrence(term1.formula, term1::term2::Nil, s1.root.antecedent - term1 - term2)
-          new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1 - term2) + prinFormula, createContext(s1.root.succedent)), s1)
+          new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1 - term2) + prinFormula, createContext(s1.root.succedent)), s1)
             with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
               def rule = ContractionLeftRuleType
               def aux = (term1::term2::Nil)::Nil
@@ -145,7 +145,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, term1: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -172,7 +172,7 @@ package propositionalRules {
         else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
         else {
           val prinFormula = term1.factory.createPrincipalFormulaOccurrence(term1.formula, term1::term2::Nil, s1.root.succedent - term1 - term2)
-          new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1 - term2) + prinFormula), s1)
+          new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1 - term2) + prinFormula), s1)
             with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
               def rule = ContractionRightRuleType
               def aux = (term1::term2::Nil)::Nil
@@ -182,7 +182,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, term1: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.succedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -207,7 +207,7 @@ package propositionalRules {
         val term2 = term2op.get
         if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be cut are not identical")
         else {
-          new BinaryAGraph[SequentOccurrence](SequentOccurrence(
+          new BinaryTree[SequentOccurrence](SequentOccurrence(
               createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent - term2, s1.root.antecedent),
               createContext(s1.root.succedent - term1) ++ createContext(s2.root.succedent, s1.root.succedent - term1))
             , s1, s2)
@@ -219,7 +219,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula): BinaryAGraph[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas  = {
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas  = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term1)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -246,7 +246,7 @@ package propositionalRules {
         val term1 = term1op.get
         val term2 = term2op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2.formula), term1::term2::Nil, ((s1.root.succedent - term1) ++ (s2.root.succedent - term2)))
-        new BinaryAGraph[SequentOccurrence](SequentOccurrence(
+        new BinaryTree[SequentOccurrence](SequentOccurrence(
             createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent, s1.root.antecedent),
             createContext(s1.root.succedent - term1) ++ createContext(s2.root.succedent - term2, s1.root.succedent - term1) + prinFormula
           ), s1, s2)
@@ -282,7 +282,7 @@ package propositionalRules {
       else {
         val term1 = term1op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2), term1::Nil, s1.root.antecedent - term1)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term1)) + prinFormula, createContext(s1.root.succedent)), s1)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term1)) + prinFormula, createContext(s1.root.succedent)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = AndLeft1RuleType
             def aux = ((term1)::Nil)::Nil
@@ -291,7 +291,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first  formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x, term2)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -315,7 +315,7 @@ package propositionalRules {
       else {
         val term2 = term2op.get
         val prinFormula = term2.factory.createPrincipalFormulaOccurrence(And(term1, term2.formula), term2::Nil, s1.root.antecedent - term2)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term2)) + prinFormula, createContext(s1.root.succedent)), s1)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term2)) + prinFormula, createContext(s1.root.succedent)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = AndLeft2RuleType
             def aux = ((term2)::Nil)::Nil
@@ -324,7 +324,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first  formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.antecedent.filter(x => x.formula == term2)).toList match {
         case (x::_) => apply(s1, term1, x)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -352,7 +352,7 @@ package propositionalRules {
         val term1 = term1op.get
         val term2 = term2op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Or(term1.formula, term2.formula), term1::term2::Nil, (s1.root.antecedent - term1) ++ (s2.root.antecedent - term2))
-        new BinaryAGraph[SequentOccurrence](SequentOccurrence(
+        new BinaryTree[SequentOccurrence](SequentOccurrence(
             ((createContext(s1.root.antecedent - term1) ++ createContext(s2.root.antecedent - term2, s1.root.antecedent - term1))) + prinFormula,
             createContext(s1.root.succedent) ++ createContext(s2.root.succedent, s1.root.succedent)
           ), s1, s2)
@@ -364,7 +364,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryAGraph[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -388,7 +388,7 @@ package propositionalRules {
       else {
         val term1 = term1op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Or(term1.formula, term2), term1::Nil, s1.root.succedent - term1)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext((s1.root.succedent - term1)) + prinFormula), s1)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext((s1.root.succedent - term1)) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = OrRight1RuleType
             def aux = ((term1)::Nil)::Nil
@@ -397,7 +397,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first  formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.succedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x, term2)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -421,7 +421,7 @@ package propositionalRules {
       else {
         val term2 = term2op.get
         val prinFormula = term2.factory.createPrincipalFormulaOccurrence(Or(term1, term2.formula), term2::Nil, s1.root.succedent - term2)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext((s1.root.succedent - term2)) + prinFormula), s1)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext((s1.root.succedent - term2)) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = OrRight2RuleType
             def aux = ((term2)::Nil)::Nil
@@ -430,7 +430,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.succedent.filter(x => x.formula == term2)).toList match {
         case (x::_) => apply(s1, term1, x)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -458,7 +458,7 @@ package propositionalRules {
         val term1 = term1op.get
         val term2 = term2op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Imp(term1.formula, term2.formula), term1::term2::Nil, s1.root.antecedent  ++ (s2.root.antecedent - term2))
-        new BinaryAGraph[SequentOccurrence](SequentOccurrence(
+        new BinaryTree[SequentOccurrence](SequentOccurrence(
             createContext(s1.root.antecedent)  ++ createContext(s2.root.antecedent - term2, s1.root.antecedent) + prinFormula,
             createContext(s1.root.succedent - term1) ++ createContext(s2.root.succedent, s1.root.succedent - term1)
           ), s1, s2)
@@ -470,7 +470,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryAGraph[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -494,7 +494,7 @@ package propositionalRules {
         val term1 = term1op.get
         val term2 = term2op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Imp(term1.formula, term2.formula), term1::term2::Nil, s1.root.succedent - term2)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1), createContext(s1.root.succedent - term2) + prinFormula), s1)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1), createContext(s1.root.succedent - term2) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = ImpRightRuleType
             def aux = (term1::term2::Nil)::Nil
@@ -503,7 +503,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s1.root.succedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -526,7 +526,7 @@ package propositionalRules {
       else {
         val term1 = term1op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Neg(term1.formula), term1::Nil, s1.root.antecedent)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent - term1)), s1)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prinFormula, createContext(s1.root.succedent - term1)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = NegLeftRuleType
             def aux = (term1::Nil)::Nil
@@ -535,7 +535,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.succedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -558,7 +558,7 @@ package propositionalRules {
       else {
         val term1 = term1op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(Neg(term1.formula), term1::Nil, s1.root.succedent)
-        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1), createContext(s1.root.succedent) + prinFormula), s1)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1), createContext(s1.root.succedent) + prinFormula), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
             def rule = NegRightRuleType
             def aux = (term1::Nil)::Nil
@@ -567,7 +567,7 @@ package propositionalRules {
       }
     }
     // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula): UnaryAGraph[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
