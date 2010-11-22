@@ -94,7 +94,7 @@ class FormulaLabel  extends Label {
   //private var text : String = ""
   //var size = new Rectangle2D.Double(0,0,0,0)
 
-  /*
+/*
     def this(s : String) = {
       this()
       text_= s
@@ -113,7 +113,7 @@ class FormulaLabel  extends Label {
 
       //self = new FormulaLabel
     }
-
+  
     def createStringAnnotations(g:Graphics)  = {
       if (g != null) {
         val fontfactory = new FontFactory(g)
@@ -140,7 +140,7 @@ class FormulaLabel  extends Label {
 
     }
 
-    override def paint(g:Graphics ) = {
+    override def paint(g:scala.swing.Graphics2D ) = {
       /*
       g setColor(new Color(200,50,180))
       g fillRect(r x , r y, r width, r height)
@@ -183,12 +183,12 @@ class FormulaLabel  extends Label {
       
     }
 
-
   override def visible_=(b:Boolean) = {
     super.visible_=(b)                   
     if (b)
       createStringAnnotations(self.getGraphics)
   }
+
     
 }
 

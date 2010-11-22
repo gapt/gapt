@@ -12,8 +12,7 @@
   </parent>
 
   <modules>
-    <!-- 2010-11-04 commented out by daniel since it did not compile -->
-    <!-- <module>prooftool</module> -->
+    <module>prooftool</module>
     <module>javaviewer</module>
   </modules>
 
@@ -22,7 +21,7 @@
       <dependency>
           <groupId>org.scala-lang</groupId>
           <artifactId>scala-swing</artifactId>
-          <version>2.7.7</version>
+          <version>${scala.version}</version>
       </dependency>
       <dependency>
           <groupId>jgraph</groupId>
