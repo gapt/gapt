@@ -15,6 +15,30 @@ object ACUnification {
     algorithms(f).unify(term1, term2)
   }
 
+   def unify(f:ConstantSymbolA, terms : List[FOLTerm]) : Seq[Substitution[FOLTerm]] = {
+    /* this is very inefficient */
+    terms match {
+      case Nil => Seq(Substitution())
+      case _::Nil => Seq(Substitution())
+      case x::y::rest =>
+        val subst_rest      : Seq[Substitution[FOLTerm]] = unify(f, y::rest)
+        val alternatives    : Seq[FOLTerm] = subst_rest map (_.apply(y))
+        val possible_substs : Seq[Seq[Substitution[FOLTerm]]] = (alternatives map (unify(f,x,_)))
+        val without_nonunifiables : Seq[(Substitution[FOLTerm], Seq[Substitution[FOLTerm]])] = (subst_rest zip possible_substs) filter (! _._2.isEmpty)
+
+        /* this is nonfunctional, but probably easier to understand */
+        var result : List[Substitution[FOLTerm]] = List[Substitution[FOLTerm]]()
+        for ( pair <- without_nonunifiables ) {
+          val sigma = pair._1
+          for (tau <- pair._2)
+              result = (sigma compose tau) :: result
+        }
+
+        result
+    }
+
+  }
+
   val debuglevel = 0 // 0... no output, 1 ... show unifiers after unification 2--- also before unification 3... maximum
 
   def debug(level: Int, msg: String) = if (debuglevel >= level) println("DEBUG: " + msg + " \\\\")

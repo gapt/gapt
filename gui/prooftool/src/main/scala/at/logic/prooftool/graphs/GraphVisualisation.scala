@@ -35,14 +35,15 @@ object VisualisationUtils {
     //TODO: A Proof is no Graph anymore -> will fix
     def main(args: Array[String]) {
 
+      println("This is package at.logic.prooftool.graphs.VisualsationUtils main method!")
       val reader = (new XMLReader(new InputStreamReader(new GZIPInputStream(
                         new FileInputStream(args(0))))) with XMLProofDatabaseParser)
       val proofs = reader.getProofDatabase.proofs
       //TODO: the scala infer the inheritance of LKProof from Graph - hotfix: giving tpe by hand
         val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first
-        var pv = new ProofViewer[SequentOccurrence](proof)
+        //var pv = new ProofViewer[SequentOccurrence](proof)
         //pv.doTreePlacement()
-        pv.run()
+        //pv.run()
     }
     /* */
 
@@ -56,16 +57,19 @@ object VisualisationUtils {
             var label2 = "r"+label
             var tree1 = createTree(label1, depth-1)
             var tree2 = createTree(label2, depth-1)
-
+/*
             var g : graphs.Graph[String] = graphs.VertexGraph(label,graphs.UnionGraph(tree1,tree2))
             g = graphs.EdgeGraph[String](label,label1,g )
             g = graphs.EdgeGraph[String](label,label2,g )
             g
+*/
+            graphs.VertexGraph[String](label, graphs.EmptyGraph[String])
         }
     }
 
 
     // formats a graph to dot format (http://graphviz.org)
+  /*
     def toDotFormat(g : graphs.Graph[SequentOccurrence]) : String = {
         var sb = new scala.StringBuilder()
         var m = new scala.collection.mutable.HashMap[SequentOccurrence,Int]()
@@ -127,6 +131,6 @@ object VisualisationUtils {
 
         sb.toString
     }
-
+   */
 
 }

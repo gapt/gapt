@@ -33,8 +33,8 @@ public class ProofViewer<V> {
         frame.pack();
     }
 
+    /* --- removed with jgrapht support
     public ProofViewer(at.logic.utils.ds.graphs.Graph s) {
-        /*
         JGraphModelAdapter adapter = new JGraphModelAdapter(s.getGraph());
         this.model = adapter;
         this.view = new GraphLayoutCache(model, new DefaultCellViewFactory());
@@ -44,8 +44,9 @@ public class ProofViewer<V> {
         frame = new JFrame();
         frame.getContentPane().add(new JScrollPane(graph));
         frame.pack();
-        */
+
     }
+    */
 
     /*
     public void insertLotsOfCells(int number) {

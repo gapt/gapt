@@ -36,6 +36,7 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
       ()
     }
 
+  /*
      "Showing Formulas works" in {
         val reader = (new XMLReader(new InputStreamReader(new GZIPInputStream(
                         new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser)
@@ -66,7 +67,10 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
           //pThread.sleep(500000)
         ()
       }
+*/      
 
+
+  /*
     "Passing of scala graph to JavaViewer works" in {
         val g1: EmptyGraph[String] = ( )
         val g2: VertexGraph[String] = ("a", g1)
@@ -84,7 +88,9 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
         //Thread.sleep(150000)
         ()
     }
+    */
 
+  /*
     //skip("this takes a lot of time")
     "Passing of prime proof to JavaViewer works" in {
         val reader = (new XMLReader(new InputStreamReader(new GZIPInputStream(
@@ -112,4 +118,5 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
         }
         ()
     }
+    */
 }

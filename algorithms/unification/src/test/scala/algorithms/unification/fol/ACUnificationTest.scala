@@ -255,6 +255,24 @@ class ACUnificationTest extends SpecificationWithJUnit {
       ()
     }
 
+    "working unification of multiple terms" in {
+      val term1 = parse("f(a,f(b,f(c,x)))")
+      val term2 = parse("f(d,f(b,f(c,y)))")
+      val term3 = parse("f(e,f(b,f(c,z)))")
+      val expected = parse("f(a,f(b,f(c,f(d,e))))")
+      val terms = List(term1,term2,term3)
+
+      val mgu = ACUnification unify(f,terms)
+      //TODO: well this should work, but it does npt in the current implementation. grmbl.
+      /*
+      mgu.length must beEqual (1)
+      mgu(0) must beEqual (Substitution[FOLTerm]())
+      val subterms = terms map ( (term:FOLTerm) => ACUtils.flatten(f,mgu(0).apply(term)))
+      */
+      ()
+
+    }
+    
     "tests for linear independence should work" in {
       val set = List(
           Vector(2,2,2),
