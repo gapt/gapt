@@ -1,5 +1,5 @@
 package at.logic.prooftool
-
+  /*
 import scala.util.parsing.combinator._
 import at.logic.calculi.lk.base._
 import java.awt.{Graphics, Font}
@@ -226,3 +226,5 @@ object FormulaParser extends RegexParsers {
 
 
 }
+
+*/

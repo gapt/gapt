@@ -1,5 +1,5 @@
 package at.logic.prooftool.graphs
-
+   /*
 import org.specs._
 import org.specs.runner._
 
@@ -120,3 +120,4 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
     }
     */
 }
+*/
