@@ -40,7 +40,7 @@ class TapeTest extends SpecificationWithJUnit {
     "parse correctly the tape proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
 
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )
@@ -55,7 +55,7 @@ class TapeTest extends SpecificationWithJUnit {
     "parse and skolemize the tape proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
 
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )

@@ -40,7 +40,10 @@ object VisualisationUtils {
                         new FileInputStream(args(0))))) with XMLProofDatabaseParser)
       val proofs = reader.getProofDatabase.proofs
       //TODO: the scala infer the inheritance of LKProof from Graph - hotfix: giving tpe by hand
-        val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first
+      // remark by daniel: changed proofs.first to proofs.first._2
+      //                   proofs.first._1 contains the name of the proof
+      // end remark
+        val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first._2
         //var pv = new ProofViewer[SequentOccurrence](proof)
         //pv.doTreePlacement()
         //pv.run()

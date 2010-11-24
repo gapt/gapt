@@ -32,7 +32,7 @@ import at.logic.calculi.lk.base._
 
 import scala.collection.immutable.Set
 
-class ProofDatabase( val proofs: List[LKProof], val axioms: List[Sequent] );
+class ProofDatabase( val proofs: List[Pair[String,LKProof]], val axioms: List[Sequent] );
 
 
 // performs the matching necessary to compute substitution terms/eigenvars
@@ -329,7 +329,7 @@ object XMLParser {
   trait XMLProofDatabaseParser extends XMLNodeParser {
     def getProofDatabase() : ProofDatabase = getProofDatabase( getInput() )
     def getProofDatabase( pdb : Node ) : ProofDatabase = 
-      new ProofDatabase( (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getProof() ).toList,
+      new ProofDatabase( (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getNamedProof() ).toList,
                          (new NodeReader( (pdb\"axiomset").head ) with XMLSequentParser).getAxiomSet() )
   }
 
@@ -340,6 +340,17 @@ object XMLParser {
    * TODO: prooflink parsing is not supported yet! 
    */
   trait XMLProofParser extends XMLNodeParser {
+    /**
+     * If the Node provided by XMLNodeParser is a &lt;proof&gt; element,
+     * a pair of (1) the name of the proof and (2) an LKProof object
+     * corresponding to the Node is returned. 
+     *
+     * @see getProof()
+     * @return A pair of name and LKProof corresponding to the Node provided by getInput().
+     * @throws ParsingException If the Node provided by getInput() is not a &lt;proof&gt;,
+     * &lt;rule&gt; or &lt;prooflink&gt; Node.
+     */
+    def getNamedProof() : (String, LKProof) = getNamedProof( getInput() )
     /**
      * If the Node provided by XMLNodeParser is a &lt;proof&gt;, &lt;rule&gt; or
      * &lt;prooflink&gt; element,
@@ -372,6 +383,8 @@ object XMLParser {
      * Node.
      */
     def getProof( n : Node ) : LKProof = getProofRec( n )._1
+
+    def getNamedProof( n : Node ) : (String, LKProof) = (n.attribute("symbol").get.head.text, getProof( n ) )
 
     // we parse the XML format to our LK
     // the difference is: our LK works on sequents which are defined as pairs of sets of formula occurrences

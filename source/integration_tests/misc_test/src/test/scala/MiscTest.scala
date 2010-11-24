@@ -52,7 +52,7 @@ class MiscTest extends SpecificationWithJUnit {
     "skolemize a simple proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
       println("skolemized proof:")
       println(proof_sk)
@@ -61,7 +61,7 @@ class MiscTest extends SpecificationWithJUnit {
     "skolemize a proof with a simple definition" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
       println("skolemized proof:")
       println(proof_sk)
@@ -70,7 +70,7 @@ class MiscTest extends SpecificationWithJUnit {
     "skolemize a proof with a complex definition" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
       println("skolemized proof:")
       println(proof_sk)
@@ -78,7 +78,7 @@ class MiscTest extends SpecificationWithJUnit {
     "extract projections and clause set from a skolemized proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
       val s = StructCreators.extract( proof )
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
