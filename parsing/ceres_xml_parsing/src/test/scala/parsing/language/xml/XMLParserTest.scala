@@ -422,7 +422,7 @@ class XMLParserTest extends SpecificationWithJUnit {
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
       val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test3.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqual(1)
-      proofs.first.root.getSequent must beMultisetEqual(
+      proofs.first._2.root.getSequent must beMultisetEqual(
         Sequent(Nil, pc("A")::pc("C")::pc("F")::
                      And(pc("B"), pc("E"))::
                      Or(pc("D"), pc("G"))::Nil))
@@ -430,7 +430,7 @@ class XMLParserTest extends SpecificationWithJUnit {
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
       val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test2.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqual(1)
-      proofs.first.root.getSequent must beMultisetEqual(
+      proofs.first._2.root.getSequent must beMultisetEqual(
                         Sequent(Nil, Or(pc("A"),
                            pc("C"))::
                         Or(pc("B"),
@@ -450,7 +450,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                     ExVar( x, And( Atom( Rs, x::s::Nil ), Neg( Atom( Rs, x::HOLApp( f, s )::Nil ) ) ) ) )
 
       proofs.size must beEqual(1)
-      proofs.first.root.getSequent must beMultisetEqual( Sequent( f1::Nil, f2::Nil ) )
+      proofs.first._2.root.getSequent must beMultisetEqual( Sequent( f1::Nil, f2::Nil ) )
     }
   }
 }

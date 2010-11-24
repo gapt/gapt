@@ -19,9 +19,9 @@ object FileParser {
 
   def fileReader(f: String): String = try {
     proofdb = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
-    proofNames = proofdb.proofs.map( x => x.name)
+    proofNames = proofdb.proofs.map( x => x._1)
     proofDbChanged.publish(new ValueChanged(new Label("New DB is loaded")))
-    displayProof(proofdb.proofs.head, 0)
+    displayProof(proofdb.proofs.head._2, 0)
   } catch {
       case e: Exception =>
         import Dialog._

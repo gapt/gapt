@@ -152,7 +152,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
     "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=0" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
 
       //val proof_sk = skolemize( regularize( proof )._1 )
       val proof_sk = skolemize( proof )
@@ -172,7 +172,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
     "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=1" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-1.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
 
       //val proof_sk = skolemize( regularize( proof )._1 )
       val proof_sk = skolemize( proof )
@@ -192,7 +192,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
     "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=2" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-2.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
 
       //val proof_sk = skolemize( regularize( proof )._1 )
       val proof_sk = skolemize( proof )

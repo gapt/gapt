@@ -52,7 +52,7 @@ class LatticeTest extends SpecificationWithJUnit {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
       printStats( proof )
 
       val proof_sk = LKtoLKskc( proof )
@@ -70,7 +70,7 @@ class LatticeTest extends SpecificationWithJUnit {
     "parse and skolemize the lattice proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head
+      val proof = proofdb.proofs.head._2
 
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
