@@ -311,7 +311,6 @@ public class ProofViewer<V> {
     // --- main method for testing ----
     public static void main(String[] args) {
         try {
-            System.out.print("helo");
             /*
             ProofViewer v = new ProofViewer();
             v.insertLotsOfCells(1000);

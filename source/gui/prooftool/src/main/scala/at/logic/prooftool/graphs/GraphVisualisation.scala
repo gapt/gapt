@@ -1,5 +1,5 @@
 package at.logic.prooftool.graphs
-
+  /*
 import at.logic.utils.ds._
 
 import org.jgraph.JGraph
@@ -134,3 +134,4 @@ object VisualisationUtils {
    */
 
 }
+*/
