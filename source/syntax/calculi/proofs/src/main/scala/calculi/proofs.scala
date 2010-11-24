@@ -28,6 +28,9 @@ package proofs {
     def rule: RuleTypeA
     override def toString = rule + "(" + root.toString + ")"
   }
+  trait NullaryProof[+V] extends LeafAGraph[V] with Proof[V] {
+    override def toString = rule + "(" + root.toString + ")"          
+  }
   trait UnaryProof[+V] extends UnaryAGraph[V] with Proof[V] {
     def uProof = t.asInstanceOf[Proof[V]]
     override def toString = rule + "(" + root.toString + ", " + uProof.toString + ")"

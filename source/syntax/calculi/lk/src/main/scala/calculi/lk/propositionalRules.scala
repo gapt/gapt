@@ -52,14 +52,14 @@ package propositionalRules {
     def apply[T](seq: Sequent)(implicit factory: FOFactory) = {
       val left: Set[FormulaOccurrence] = seq.antecedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
       val right: Set[FormulaOccurrence] = seq.succedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
-      new LeafTree[SequentOccurrence](SequentOccurrence(left, right)) with LKProof {def rule = InitialRuleType}
+      new LeafTree[SequentOccurrence](SequentOccurrence(left, right)) with NullaryLKProof {def rule = InitialRuleType}
     }
     // this method is using a simple default factory (where occurrences have pointers equality) and return a map between positions in Sequent to formula occurrences
     // we pass empty sets of formula occurrences as this information is ignored in the factory
     def createDefault(seq: Sequent): Pair[LKProof, Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
       val left: List[FormulaOccurrence] = seq.antecedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
       val right: List[FormulaOccurrence] = seq.succedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
-      (new LeafTree[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with LKProof {def rule = InitialRuleType}, (left,right))
+      (new LeafTree[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with NullaryLKProof {def rule = InitialRuleType}, (left,right))
     }
     def createOccurrence(f: HOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
     def unapply(proof: LKProof) = if (proof.rule == InitialRuleType) Some((proof.root)) else None

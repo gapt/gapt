@@ -98,6 +98,7 @@ package base {
       }
     }
   }
+  trait NullaryLKProof extends LeafTree[SequentOccurrence] with LKProof with NullaryTreeProof[SequentOccurrence]
   trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof with UnaryTreeProof[SequentOccurrence] {
     override def uProof = t.asInstanceOf[LKProof]
   }

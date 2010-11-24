@@ -16,6 +16,7 @@ import proofs._
 package treeProofs {
 
   trait TreeProof[+V] extends Tree[V] with Proof[V]
-  trait UnaryTreeProof[+V] extends UnaryTree[V] with UnaryProof[V]
-  trait BinaryTreeProof[+V] extends BinaryTree[V] with BinaryProof[V] 
+  trait NullaryTreeProof[+V] extends LeafTree[V] with NullaryProof[V] with TreeProof[V]
+  trait UnaryTreeProof[+V] extends UnaryTree[V] with UnaryProof[V] with TreeProof[V]
+  trait BinaryTreeProof[+V] extends BinaryTree[V] with BinaryProof[V] with TreeProof[V] 
 }

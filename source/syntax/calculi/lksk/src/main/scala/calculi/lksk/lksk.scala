@@ -21,7 +21,7 @@ import at.logic.calculi.lk.base.{Sequent,AuxiliaryFormulas,PrincipalFormulas, Su
 import at.logic.calculi.lk.propositionalRules.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType}
 import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.base.{LKProof,SequentOccurrence,createContext,UnaryLKProof,LKRuleCreationException}
+import at.logic.calculi.lk.base.{NullaryLKProof, LKProof,SequentOccurrence,createContext,UnaryLKProof,LKRuleCreationException}
 import at.logic.calculi.occurrences._
 
 // lksk proofs
@@ -36,7 +36,7 @@ object Axiom {
     val right: List[LabelledFormulaOccurrence] = 
       seq.succedent.zip(maps._2).map( p => createOccurrence( p._1, p._2 ) )
     // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
-    (new LeafTree[SequentOccurrence](new LabelledSequentOccurrence(LKAxiom.toSet(left), LKAxiom.toSet(right) ) ) with LKProof {def rule = InitialRuleType}, (left,right))
+    (new LeafTree[SequentOccurrence](new LabelledSequentOccurrence(LKAxiom.toSet(left), LKAxiom.toSet(right) ) ) with NullaryLKProof {def rule = InitialRuleType}, (left,right))
   }
   def createOccurrence(f: HOLFormula, l: Label): LabelledFormulaOccurrence =
     LKskFOFactory.createInitialOccurrence(f, l)
