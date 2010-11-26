@@ -721,16 +721,17 @@ object XMLParser {
                     val subst = Match( subsub, auxf.formula )
                     assert ( subst != None, "Couldn't match\n" + subsub.toStringSimple + "\nagainst\n" + auxf.formula.toStringSimple )
                     val subst_ = subst.get
-                    assert( subst_.map.size == 1 )
-                    assert( subst_.map.contains( v ) )
+//                    println( subst_ )
+//                    println( "in foralll: ")
+//                    println( "mainf: " + mainf.toStringSimple )
+//                    println( "auxf.formula: " + auxf.formula.toStringSimple )
+//                    println( "subst_: " + subst_ )
+//                    println( "v: " + v )
+//                    println( "subst_(v): " + subst_(v) )
+//                    println( "subst_.map(v): " + subst_.map(v) )
+                    assert( subst_.map.size <= 1 )
+                    assert( subst_.map.contains( v ) || subst_.map.size == 0 )
                     // TODO: give auxf instead of auxf.formula
-  //                  println( "in foralll: ")
-  //                  println( "mainf: " + mainf.toStringSimple )
-  //                  println( "auxf.formula: " + auxf.formula.toStringSimple )
-  //                  println( "subst_: " + subst_ )
-  //                  println( "v: " + v )
-  //                  println( "subst_(v): " + subst_(v) )
-  //                  println( "subst_.map(v): " + subst_.map(v) )
                     ForallLeftRule( prem, auxf.formula, mainf, subst_(v) )
                   }
                 }
@@ -765,8 +766,8 @@ object XMLParser {
                     val subst = Match( subsub, auxf.formula )
                     assert( subst != None )
                     val subst_ = subst.get
-                    assert( subst_.map.size == 1 )
-                    assert( subst_.map.contains( v ) )
+                    assert( subst_.map.size <= 1 )
+                    assert( subst_.map.contains( v ) || subst_.map.size == 0 )
                     assert( subst_(v).isInstanceOf[HOLVar] )
                     // TODO: give auxf instead of auxf.formula
                     ExistsLeftRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
@@ -790,8 +791,8 @@ object XMLParser {
                     val subst = Match( subsub, auxf.formula )
                     assert( subst != None )
                     val subst_ = subst.get
-                    assert( subst_.map.size == 1 )
-                    assert( subst_.map.contains( v ) )
+                    assert( subst_.map.size <= 1 )
+                    assert( subst_.map.contains( v ) || subst_.map.size == 0 )
                     assert( subst_(v).isInstanceOf[HOLVar] )
                     // TODO: give auxf instead of auxf.formula
                     ExistsLeftRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
@@ -815,8 +816,8 @@ object XMLParser {
                     val subst = Match( subsub, auxf.formula )
                     assert( subst != None )
                     val subst_ = subst.get
-                    assert( subst_.map.size == 1 )
-                    assert( subst_.map.contains( v ) )
+                    assert( subst_.map.size <= 1 )
+                    assert( subst_.map.contains( v ) || subst_.map.size == 0 )
                     assert( subst_(v).isInstanceOf[HOLVar] )
                     // TODO: give auxf instead of auxf.formula
                     ForallRightRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
@@ -840,8 +841,8 @@ object XMLParser {
                     val subst = Match( subsub, auxf.formula )
                     assert( subst != None, "matching failed for " + subsub.toStringSimple + " and " + auxf.formula.toStringSimple )
                     val subst_ = subst.get
-                    assert( subst_.map.size == 1 )
-                    assert( subst_.map.contains( v ) )
+                    assert( subst_.map.size <= 1 )
+                    assert( subst_.map.contains( v ) || subst_.map.size == 0 )
                     assert( subst_(v).isInstanceOf[HOLVar] )
                     // TODO: give auxf instead of auxf.formula
                     ForallRightRule( prem, auxf.formula, mainf, subst_(v).asInstanceOf[HOLVar] )
@@ -865,8 +866,8 @@ object XMLParser {
                     val subst = Match( subsub, auxf.formula )
                     assert ( subst != None )
                     val subst_ = subst.get
-                    assert( subst_.map.size == 1 )
-                    assert( subst_.map.contains( v ) )
+                    assert( subst_.map.size <= 1 )
+                    assert( subst_.map.contains( v ) || subst_.map.size == 0 )
                     // TODO: give auxf instead of auxf.formula
                     ExistsRightRule( prem, auxf.formula, mainf, subst_(v) )
                   }
