@@ -29,6 +29,8 @@ import java.io.File.separator
 
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
+import at.logic.transformations.ceres.clauseSets.profile._
+
 
 class MiscTest extends SpecificationWithJUnit {
 
@@ -86,5 +88,13 @@ class MiscTest extends SpecificationWithJUnit {
       saveXML( projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
         Pair("cs", cs)::Nil, path )
     }
+//    "label a formula occurrences in a proof" in {
+//      println("\n\n\n")
+//      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+////      proofdb.proofs.size must beEqual(1)
+//      val proof = proofdb.proofs.head._2
+//      val lproof = toLabeledProof(proof)
+//      println("\n\nseq = "+proof.root.getSequent.toString)
+//    }
   }
 }
