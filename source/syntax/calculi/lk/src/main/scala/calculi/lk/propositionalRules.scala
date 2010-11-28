@@ -71,6 +71,7 @@ package propositionalRules {
       }
       traverse(list)(Set[T]())
     }
+//    def copyWithNewFactory(factory: FOFactory) = Axiom()
   }
 
   object WeakeningLeftRule {
@@ -278,7 +279,7 @@ package propositionalRules {
 
     def apply(s1: LKProof, term1oc: Occurrence, term2: HOLFormula) = {
       val term1op = s1.root.antecedent.find(x => x == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
       else {
         val term1 = term1op.get
         val prinFormula = term1.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2), term1::Nil, s1.root.antecedent - term1)
@@ -311,7 +312,7 @@ package propositionalRules {
 
     def apply(s1: LKProof, term1: HOLFormula, term2oc: Occurrence) = {
       val term2op = s1.root.antecedent.find(x => x == term2oc)
-      if (term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
       else {
         val term2 = term2op.get
         val prinFormula = term2.factory.createPrincipalFormulaOccurrence(And(term1, term2.formula), term2::Nil, s1.root.antecedent - term2)
@@ -338,6 +339,43 @@ package propositionalRules {
       }
       else None
   }
+
+  object AndLeftRule {
+   def computeAux( main: HOLFormula ) = main match { case And(l, r) => (l,r) }
+
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      val term2op = s1.root.antecedent.find(x => x == term2oc)
+      if (term2op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
+      else {
+        val term1 = term1op.get
+        val term2 = term2op.get
+        val prinFormula = term2.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2.formula), term1::term2::Nil, s1.root.antecedent - term1 - term2)
+        new UnaryTree[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term1 - term2)) + prinFormula, createContext(s1.root.succedent)), s1)
+          with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+            def rule = AndLeft2RuleType
+            def aux = ((term2)::Nil)::Nil
+            def prin = prinFormula::Nil
+          }
+      }
+    }
+    // convenient method to choose the first  formula
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      (s1.root.antecedent.filter(x => x.formula == term1)).toList.zip(s1.root.antecedent.filter(x => x.formula == term2)) match {
+        case ((x1,x2)::_) => apply(s1, x1, x2)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+//    def unapply(proof: LKProof) = if (proof.rule == AndLeft2RuleType) {
+//        val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+//        val ((a1::Nil)::Nil) = r.aux
+//        val (p1::Nil) = r.prin
+//        Some((r.uProof, r.root, a1, p1))
+//      }
+//      else None
+  }
+
+
 
   object OrLeftRule {
     def computeLeftAux( main: HOLFormula ) = main match { case Or(l, _) => l }
