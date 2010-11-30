@@ -76,12 +76,16 @@ package base {
     def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
   }
   // List should be changed into set
-  case class SequentOccurrence(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence])
+  class SequentOccurrence(val antecedent: Set[FormulaOccurrence], val succedent: Set[FormulaOccurrence])
   {
     def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
     def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
     //def multisetEquals( o: SequentOccurrence ) = (((antecedent.toList.map(x => x.formula)) == o.antecedent.toList.map(x => x.formula)) && ((succedent.toList.map(x => x.formula)) == o.succedent.toList.map(x => x.formula)))
     override def toString : String = SequentFormatter.sequentOccurenceToString(this)
+  }
+  object SequentOccurrence {
+    def apply(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence]) = new SequentOccurrence(antecedent, succedent)
+    def unapply(so: SequentOccurrence) = (so.antecedent, so.succedent)
   }
 
   // exceptions
