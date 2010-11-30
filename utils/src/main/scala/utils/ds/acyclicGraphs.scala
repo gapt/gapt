@@ -1,7 +1,8 @@
 /*
  * acyclicGraphs.scala
  *
- * Inductive definition of acyclic graphs, this is essentially AGraphs where the parents can contain the same elements
+ * Inductive definition of acyclic graphs, this is essentially trees where the parents can contain the same elements. It is based on graph and like
+ * the graph it is a connected acyclic graph
  */
 
 package at.logic.utils.ds

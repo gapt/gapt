@@ -2,8 +2,9 @@
  * Graphs.scala
  *
  * Inductive (and unintuitive) definition of graphs.
- * We use this definition in order to haev uniformity of presentation in the system as both global (intuitive) graphs
- * and trees (which are inductive) can be based on inductive graphs
+ * We use this definition in order to have uniformity of presentation in the system as both global (intuitive) graphs
+ * and trees (which are inductive) can be based on inductive graphs. The graphs defined are connected graphs. i.e. a new graph 
+ * can be defined inductively by conneting a new edge or a vertex to the existing graph.
  */
 
 package at.logic.utils.ds
