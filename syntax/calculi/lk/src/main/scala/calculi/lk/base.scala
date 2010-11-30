@@ -85,7 +85,7 @@ package base {
   }
   object SequentOccurrence {
     def apply(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence]) = new SequentOccurrence(antecedent, succedent)
-    def unapply(so: SequentOccurrence) = (so.antecedent, so.succedent)
+    def unapply(so: SequentOccurrence) = Some(so.antecedent, so.succedent)
   }
 
   // exceptions
