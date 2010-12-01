@@ -96,14 +96,21 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
   }
 
   "extract free and bound variables correctly" in {
-    val x = LambdaVar(VariableStringSymbol("X"), i -> o )
-    val y = LambdaVar(VariableStringSymbol("y"), i )
-    val z = LambdaVar(VariableStringSymbol("Z"), i -> o )
-    val r = LambdaVar(VariableStringSymbol("R"), (i -> o) -> (i -> ((i -> o) -> o)))
-    val a = AppN(r, x::y::z::Nil)
-    val qa = Abs( x, a )
-
-    println( qa.getFreeAndBoundVariables._1 )
-    qa.getFreeAndBoundVariables._1 must notContain( x )
+      val x = LambdaVar(VariableStringSymbol("X"), i -> o )
+      val y = LambdaVar(VariableStringSymbol("y"), i )
+      val z = LambdaVar(VariableStringSymbol("Z"), i -> o )
+      val r = LambdaVar(VariableStringSymbol("R"), (i -> o) -> (i -> ((i -> o) -> o)))
+      val a = AppN(r, x::y::z::Nil)
+      val qa = Abs( x, a )
+      val free = qa.getFreeAndBoundVariables._1
+      val bound = qa.getFreeAndBoundVariables._2
+      free must notExist(_ =^ x )
+      free must exist(_ =^ y )
+      free must exist(_ =^ z )
+      free must exist(_ =^ r )
+      bound must exist (_ =^ x)
+      bound must notExist (_ =^ y)
+      bound must notExist (_ =^ z)
+      bound must notExist (_ =^ r)
   }
 }
