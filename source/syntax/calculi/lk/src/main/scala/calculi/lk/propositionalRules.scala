@@ -40,6 +40,8 @@ package propositionalRules {
   case object ImpLeftRuleType extends BinaryRuleTypeA
   case object NegLeftRuleType extends UnaryRuleTypeA
   case object NegRightRuleType extends UnaryRuleTypeA
+  case object AndLeftRuleType extends UnaryRuleTypeA //by Cvetan
+
 
   // lk proofs
   // rules are extracted in the form (UpperSequent(s), LowerSequent, AuxialiaryFormula(s), PrincipalFormula(s))
@@ -353,8 +355,8 @@ package propositionalRules {
         val prinFormula = term2.factory.createPrincipalFormulaOccurrence(And(term1.formula, term2.formula), term1::term2::Nil, s1.root.antecedent - term1 - term2)
         new UnaryTree[SequentOccurrence](SequentOccurrence(createContext((s1.root.antecedent - term1 - term2)) + prinFormula, createContext(s1.root.succedent)), s1)
           with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-            def rule = AndLeft2RuleType
-            def aux = ((term2)::Nil)::Nil
+            def rule = AndLeftRuleType
+            def aux = (term1::Nil)::(term2::Nil)::Nil
             def prin = prinFormula::Nil
           }
       }
@@ -366,13 +368,13 @@ package propositionalRules {
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
-//    def unapply(proof: LKProof) = if (proof.rule == AndLeft2RuleType) {
-//        val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
-//        val ((a1::Nil)::Nil) = r.aux
-//        val (p1::Nil) = r.prin
-//        Some((r.uProof, r.root, a1, p1))
-//      }
-//      else None
+    def unapply(proof: LKProof) = if (proof.rule == AndLeftRuleType) {
+        val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+        val (a1::Nil)::(a2::Nil)::Nil = r.aux
+        val (p1::Nil) = r.prin
+        Some((r.uProof, r.root, a1, a2, p1))
+      }
+      else None
   }
 
 
