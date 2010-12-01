@@ -1,9 +1,9 @@
 package at.logic.algorithms.lk
 
+import _root_.at.logic.calculi.lk.propositionalRules._
 import scala.collection.immutable.Set
 import scala.collection.mutable.{Map, HashMap}
 
-import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
@@ -24,6 +24,7 @@ object getCutAncestors {
       case CutRule(p1, p2, _, a1, a2) => getCutAncestors( p1 ) ++ getCutAncestors( p2 ) ++ 
                                          Axiom.toSet( getAncestors( a1 ) ) ++ Axiom.toSet( getAncestors( a2 ) )
       case UnaryLKProof(_,p,_,_,_) => getCutAncestors( p )
+      case AndLeftRule(p,_,_,_,_) => getCutAncestors( p )
       case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutAncestors( p1 ) ++ getCutAncestors( p2 )
       case Axiom(so) => Set[FormulaOccurrence]()
       // support LKsk
@@ -127,6 +128,7 @@ object regularize {
                                       new_parent._3( a2 ) )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
+
       case NegLeftRule(p, s, a, m) => {
         val new_parent = rec( p, vars )
         val new_proof = NegLeftRule( new_parent._1, new_parent._3( a ) )
