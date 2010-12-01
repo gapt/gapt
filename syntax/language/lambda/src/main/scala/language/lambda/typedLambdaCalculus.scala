@@ -31,7 +31,7 @@ package typedLambdaCalculus {
         val nFBV = arg.getFreeAndBoundVariables()
         (mFBV._1 ++ nFBV._1, mFBV._2 ++ nFBV._2)
       }
-      case Abs(v, exp) => {
+      case AbsInScope(v, exp) => {
         val mFBV = exp.getFreeAndBoundVariables()
         val bound = mFBV._2 + v
         (mFBV._1, bound)
