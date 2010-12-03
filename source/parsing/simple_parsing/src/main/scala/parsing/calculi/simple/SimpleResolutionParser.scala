@@ -19,8 +19,9 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.resolution.base._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.resolution.robinson._
+//import at.logic.calculi.resolution.robinson._
 
+/*
 /*
  * In order to allow a complex inheritence structure where the resolutionParser trait is mixed
  * with HOL or FOL parsers and must override a method there on the same time we have created these
@@ -56,3 +57,4 @@ trait SimpleResolutionParser[V <: Sequent] extends ResolutionParser[V] {
     case _ => f
   }
 }
+*/

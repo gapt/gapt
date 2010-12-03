@@ -20,6 +20,9 @@ import at.logic.language.lambda.types.Definitions._
 import ImplicitConverters._
 import Definitions._
 import at.logic.language.lambda.substitutions._
+import skolemSymbols._
+import at.logic.language.lambda.BetaReduction._
+import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 
 class HigherOrderLogicTest extends SpecificationWithJUnit {
   "HigherOrderLogic" should {
@@ -74,7 +77,22 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
         case _ => true
       }
     }
+    "substitute and normalize correctly when Substitution is applied" in {
+      val x = HOLVar(VariableStringSymbol("X"), i -> o )
+      val f = HOLVar(VariableStringSymbol("f"), (i -> o) -> i )
+      val xfx = HOLApp(x, HOLApp( f, x ) )
+
+      val z = HOLVar(VariableStringSymbol("z"), i)
+      val p = HOLVar(VariableStringSymbol("P"), i -> o)
+      val Pz = HOLApp( p, z )
+      val t = HOLAbs( z, Pz )
+
+      val sigma = Substitution[HOLExpression]( x, t )
+
+      betaNormalize( sigma.apply( xfx ) ) must beEqual( HOLApp( p, HOLApp( f, t ) ) )
+    }
   }
+
   "Exists quantifier" should {
     val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
     val v1 = HOLVar(new VariableStringSymbol("x"), i)
@@ -106,7 +124,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
   }
   "Substitution" should {
     "work correctly on some testcase involving free/bound vars" in {
-      val s0 = HOLConst(new ConstantStringSymbol("s_0"), i -> i)
+      val s0 = HOLConst(new ConstantStringSymbol("s_{0}"), i -> i)
       val C = HOLConst(new ConstantStringSymbol("C"), i -> i)
       val T = HOLConst(new ConstantStringSymbol("T"), i -> i)
       val sCTn = Function(s0, Function( C, Function( T, HOLConst(new ConstantStringSymbol("n"), i)::Nil)::Nil)::Nil )
@@ -126,4 +144,23 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
     }
   }
 
+  "SkolemSymbolFactory" should {
+      val x = HOLVar(new VariableStringSymbol("x"), i)
+      val y = HOLVar(new VariableStringSymbol("y"), i)
+      val f = AllVar( x, Atom("P", x::Nil ) )
+      val s0 = new ConstantStringSymbol( "s_{0}" )
+      val s1 = new ConstantStringSymbol( "s_{2}" )
+      val s2 = new ConstantStringSymbol( "s_{4}" )
+      val s3 = new ConstantStringSymbol( "s_{6}" )
+
+      SkolemSymbolFactory.reset
+      val stream = SkolemSymbolFactory.getSkolemSymbols
+
+    "return a correct stream of Skolem symbols" in {
+      stream.head must beEqual( s0 )
+      stream.tail.head must beEqual( s1 )
+      stream.tail.tail.head must beEqual( s2 )
+    }
+
+  }
 }

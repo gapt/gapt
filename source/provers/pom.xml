@@ -12,7 +12,8 @@
   </parent>
 
   <modules>
-    <module>atp</module>
+    <!-- <module>atp</module> --> <!-- commented out since
+                                       resolution was changed -->
   </modules>
 
   <packaging>pom</packaging>

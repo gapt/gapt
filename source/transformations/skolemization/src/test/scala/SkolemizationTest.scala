@@ -9,6 +9,7 @@ package at.logic.transformations.skolemization
 
 import org.specs._
 import org.specs.runner._
+import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -26,6 +27,7 @@ import at.logic.calculi.lk.propositionalRules.{AndRightRule, Axiom}
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lksk.base.TypeSynonyms._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import skolemize._
 
 class SkolemizationTest extends SpecificationWithJUnit {
@@ -36,75 +38,61 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val x = HOLVar("x", i)
       val y = HOLVar("y", i)
       val f = AllVar( x, Atom("P", x::Nil ) )
-      val s0 = new ConstantStringSymbol( "s_0" )
-      val s1 = new ConstantStringSymbol( "s_1" )
-      val s2 = new ConstantStringSymbol( "s_2" )
-      val s3 = new ConstantStringSymbol( "s_3" )
+      val s0 = new ConstantStringSymbol( "s_{0}" )
+      val s1 = new ConstantStringSymbol( "s_{2}" )
+      val s2 = new ConstantStringSymbol( "s_{4}" )
+      val s3 = new ConstantStringSymbol( "s_{6}" )
+      SkolemSymbolFactory.reset
+      val stream = SkolemSymbolFactory.getSkolemSymbols
 
-    "have a correct stream of Skolem symbols" in {
-      skolem_symbol_stream.head must beEqual( s0 )
-      skolem_symbol_stream.tail.head must beEqual( s1 )
-      skolem_symbol_stream.tail.tail.head must beEqual( s2 )
-    }
-
-    "have a correct even/odd function" in {
-      val s_even = even(skolem_symbol_stream)
-      val s_odd = odd(skolem_symbol_stream)
-      s_even.head must beEqual( s0 )
-      s_odd.head must beEqual( s1 )
-      s_even.tail.head must beEqual( s2 )
-      s_odd.tail.head must beEqual( s3 )
-    }   
-    
     "leave a formula with only weak quantifiers untouched" in {
-      skolemize( f, 1, skolem_symbol_stream ) must beEqual( f )
+      skolemize( f, 1, stream ) must beEqual( f )
     }
 
     "introduce correctly a Skolem constant" in {
-      val skfun = HOLConst( skolem_symbol_stream.head, i )
+      val skfun = HOLConst( stream.head, i )
       val skf = Atom( "P", skfun::Nil )
-      skolemize( f, 0, skolem_symbol_stream ) must beEqual( skf )
+      skolemize( f, 0, stream ) must beEqual( skf )
     }
 
     "handle a binary formula correctly" in {
-      println("handle a binary formula correctly")
       val y = HOLVar(new VariableStringSymbol("y"), i)
       val rxy = Atom( "R", x::y::Nil )
       val f2 = Imp(f, AllVar( x, ExVar( y, rxy ) ) )
 
-      val skfun0 = HOLConst( skolem_symbol_stream.head, i )
-      val skfun1 = Function( skolem_symbol_stream.tail.head, x::Nil, i )
+      val skfun0 = HOLConst( stream.head, i )
+      val skfun1 = Function( stream.tail.head, x::Nil, i )
       val skf1 = Atom( "P", skfun0::Nil )
       val skf2 = Atom( "R", x::skfun1::Nil )
 
       val skf = Imp( skf1, AllVar( x, skf2 ) )
-      skolemize( f2, 1, skolem_symbol_stream ) must beEqual( skf )
+      skolemize( f2, 1, stream ) must beEqual( skf )
 
       // now we skolemize the skolemize formula, with opposite polarity
-      val skfun2 = HOLConst( skolem_symbol_stream.tail.tail.head, i )
-      val skfun3 = Function( skolem_symbol_stream.tail.head, skfun2::Nil, i )
+      val skfun2 = HOLConst( stream.tail.tail.head, i )
+      val skfun3 = Function( stream.tail.head, skfun2::Nil, i )
       val skf3 = Atom( "R", skfun2::skfun3::Nil )
       val skf4 = Imp( skf1, skf3 )
-      skolemize( skolemize( f2, 1, skolem_symbol_stream ), 0, skolem_symbol_stream.tail ) must beEqual( skf4 )
+      skolemize( skolemize( f2, 1, stream ), 0, stream.tail ) must beEqual( skf4 )
     }
 
     "handle a simple proof correctly" in {
-      val cs1 = HOLConst( s1, i )
+      val s5 = new ConstantStringSymbol( "s_{5}" )
+      val cs5 = HOLConst( s5, i )
       val alpha = HOLVar( new VariableStringSymbol( "α" ), i )
       val Palpha = Atom( "P", alpha::Nil )
-      val Ps0 = Atom( "P", cs1::Nil )
+      val Ps0 = Atom( "P", cs5::Nil )
       val allxPx = AllVar( x, Atom( "P", x::Nil ) )
       val ax = Axiom( Sequent( Palpha::Nil, Palpha::Nil ) )
       val proof = ForallRightRule( ForallLeftRule( ax, Palpha, allxPx, alpha ), Palpha, allxPx, alpha )
 
       val ax_sk = Axiom( Sequent( Ps0::Nil, Ps0::Nil ) )
-      val proof_sk = ForallLeftRule( ax_sk, Ps0, allxPx, cs1 )
+      val proof_sk = ForallLeftRule( ax_sk, Ps0, allxPx, cs5 )
 
       val res = skolemize( proof )
-      println( res )
       // this does not work correctly
       //res must beEqual( proof_sk )
-      res.root.getSequent.multisetEquals( proof_sk.root.getSequent) must beEqual( true )
+      res.root.getSequent must beMultisetEqual( proof_sk.root.getSequent )
     }
 
     /*"work for a cut-free proof" in {

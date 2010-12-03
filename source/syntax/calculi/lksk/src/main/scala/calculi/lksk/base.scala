@@ -11,6 +11,7 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.substitutions._
 import scala.collection.immutable.Set
 import scala.collection.immutable.{Map,HashMap}
 
@@ -44,6 +45,15 @@ package base {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
     }
+
+    def createContextFormulaOccurrenceWithSubst(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence], sub: Substitution[HOLExpression]) = {
+      assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
+      val l_ancestors = ancestors.map( _.asInstanceOf[LabelledFormulaOccurrence] )
+      val l = l_ancestors.head.skolem_label
+      assert( l_ancestors.forall( a => a.skolem_label == l ) )
+      new LabelledFormulaOccurrence(sub(formula).asInstanceOf[HOLFormula], l_ancestors, l.map( sub(_) ) )
+    }
+
     def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) = {
       val l = ancestors.head.skolem_label
       assert( ancestors.forall( a => a.skolem_label == l ) )
@@ -60,6 +70,7 @@ package base {
       }
       new LabelledFormulaOccurrence(formula, ancestor::Nil, newlabel )
     }
+ 
     def createInitialOccurrence(formula: HOLFormula, label: Label) =
       new LabelledFormulaOccurrence( formula, Nil, label )
   }
