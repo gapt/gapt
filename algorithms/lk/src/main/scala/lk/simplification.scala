@@ -16,6 +16,9 @@ package simplification {
   {
     def apply(sequents: List[Sequent]) : List[Sequent] =
       sequents.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
+
+    def apply(sequents: List[SequentOccurrence]) : List[SequentOccurrence] =
+      sequents.filter( s => !s.antecedent.exists( f => s.succedent.exists( _.formula == f.formula ) ) )
   }
 
   object setNormalize
