@@ -10,6 +10,8 @@ package at.logic.calculi.resolution
 import org.specs._
 import org.specs.runner._
 
+import at.logic.language.lambda.substitutions._
+import at.logic.calculi.occurrences._
 import at.logic.language.hol._
 import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -20,10 +22,14 @@ import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import base._
-import robinson._
+import at.logic.calculi.lk.base._
+//import robinson._
+import andrews._
 import at.logic.language.hol.Definitions._
+import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 
 class ResolutionTest extends SpecificationWithJUnit {
+/*
   val pa = Atom(ConstantStringSymbol("p"),Var(ConstantStringSymbol("a"), i, hol)::Nil)
   val pfx = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"), Var(VariableStringSymbol("x"), i, hol)::Nil,i)::Nil)
   val px = Atom(ConstantStringSymbol("p"),Var(VariableStringSymbol("x"), i, hol)::Nil)
@@ -39,6 +45,66 @@ class ResolutionTest extends SpecificationWithJUnit {
       val var1 = Variant(ax2)
       (var1.root.negative.head) must beEqual (pxeq)
       (var1.root.positive.head) must beEqual (pfxeq)
+    }
+  }
+*/
+
+  "Andrews Resolution" should {
+    implicit val factory = PointerFOFactoryInstance
+
+    "refute 'not (A or not A)'" in {
+      val a = Atom(ConstantStringSymbol("p"), Nil)
+      val s = Sequent(Nil, Neg(Or(a, Neg(a)))::Nil)
+      val p0 = InitialSequent[SequentOccurrence](s)
+      val p1 = NotT( p0, p0.root.succedent.head )
+      val p2 = OrFL( p1, p1.root.antecedent.head )
+      val p3 = OrFR( p1, p1.root.antecedent.head )
+      val p4 = NotF( p3, p3.root.antecedent.head )
+      val p5 = Cut( p4, p2, p4.root.succedent.head, p2.root.antecedent.head )
+      p5.root.getSequent must beEqual(Sequent(Nil, Nil))
+    }
+
+    "handle strong quantifiers correctly" in {
+      val x = HOLVar(VariableStringSymbol("X"), i -> o )
+      val y = HOLVar(VariableStringSymbol("y"), i )
+      val z = HOLVar(VariableStringSymbol("Z"), i -> o )
+      val a = Atom(ConstantStringSymbol("R"), x::y::z::Nil)
+      val qa = AllVar( x, a )
+
+      qa.getFreeAndBoundVariables._1 must notContain( x )
+
+      val sk = SkolemSymbolFactory.getSkolemSymbol
+
+      // We do not care about the order of arguments. Do we?
+      val skt1 = Function( sk, y::z::Nil, i -> o)
+      val skt2 = Function( sk, z::y::Nil, i -> o)
+      val ska1 = Atom(ConstantStringSymbol("R"), skt1::y::z::Nil )
+      val ska2 = Atom(ConstantStringSymbol("R"), skt2::y::z::Nil )
+
+      val p0 = InitialSequent[SequentOccurrence]( Sequent( qa::Nil, Nil ) )
+      val p1 = ForallF( p0, p0.root.antecedent.head, sk )
+
+      ska1::ska2::Nil must contain( p1.root.getSequent.antecedent.head )
+    }
+
+    "handle weak quantifiers and substitution correctly" in {
+      val x = HOLVar(VariableStringSymbol("X"), i -> o )
+      val f = HOLConst(ConstantStringSymbol("f"), (i -> o) -> i )
+      val xfx = HOLApp(x, HOLApp( f, x ) ).asInstanceOf[HOLFormula]
+      val m = AllVar( x, xfx )
+
+      val z = HOLVar(VariableStringSymbol("z"), i)
+      val Pz = Atom( ConstantStringSymbol("P"), z::Nil )
+      val form = Or(Pz, Neg(Pz))
+      val t = HOLAbs( z, form )
+
+      val p0 = InitialSequent[SequentOccurrence]( Sequent( Nil, m::Nil ) )
+      val p1 = ForallT( p0, p0.root.succedent.head, x )
+      val p2 = Sub( p1, Substitution( x, t ) )
+
+      val newa = Atom( ConstantStringSymbol("P"), HOLApp( f, t )::Nil )
+      p2.root.getSequent.succedent.head must beEqual( 
+        Or( newa, Neg( newa ) ) )
     }
   }
 }

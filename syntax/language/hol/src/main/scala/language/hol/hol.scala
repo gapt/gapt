@@ -38,6 +38,7 @@ package hol {
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
       case AbsInScope(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
+      case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
   }
   trait HOLFormula extends HOLExpression with Formula {

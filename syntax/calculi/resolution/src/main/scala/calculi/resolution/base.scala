@@ -27,11 +27,12 @@ package base {
 
   /* Resolution proofs are graphs by definition. TODO: enforce them to by acyclic
    */
-  trait ResolutionProof[V <: Sequent] extends Proof[V]
-  trait UnaryResolutionProof[V <: Sequent] extends UnaryAGraph[V] with ResolutionProof[V] with UnaryProof[V] {
+  trait ResolutionProof[V <: SequentOccurrence] extends Proof[V]
+  trait NullaryResolutionProof[V <: SequentOccurrence] extends LeafAGraph[V] with ResolutionProof[V] with NullaryProof[V]
+  trait UnaryResolutionProof[V <: SequentOccurrence] extends UnaryAGraph[V] with ResolutionProof[V] with UnaryProof[V] {
     override def uProof = t.asInstanceOf[ResolutionProof[V]]
   }
-  trait BinaryResolutionProof[V <: Sequent] extends BinaryAGraph[V] with ResolutionProof[V] with BinaryProof[V] {
+  trait BinaryResolutionProof[V <: SequentOccurrence] extends BinaryAGraph[V] with ResolutionProof[V] with BinaryProof[V] {
     override def uProof1 = t1.asInstanceOf[ResolutionProof[V]]
     override def uProof2 = t2.asInstanceOf[ResolutionProof[V]]
   }
@@ -58,15 +59,24 @@ package base {
   }
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
-  object createContext { def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x, x::Nil, Set[FormulaOccurrence]())) }
+  //object createContext { def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x, x::Nil, Set[FormulaOccurrence]())) }
 
-  case object InitiaType extends NullaryRuleTypeA
+  case object InitialType extends NullaryRuleTypeA
 
   object InitialSequent {
-    def apply[V <: Sequent](cl: V): ResolutionProof[V] = {
-      new LeafAGraph[V](cl) with ResolutionProof[V] {def rule = InitiaType}
+    def apply[V <: SequentOccurrence](seq: Sequent)(implicit factory: FOFactory) = {
+      val left: Set[FormulaOccurrence] = seq.antecedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
+      val right: Set[FormulaOccurrence] = seq.succedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form, st, factory))
+      new LeafAGraph[SequentOccurrence](SequentOccurrence(left, right)) with NullaryResolutionProof[V] {def rule = InitialType}
     }
-    def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == InitiaType) Some((proof.root)) else None
+
+    def createOccurrence(f: HOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == InitialType) Some((proof.root)) else None
     // should be optimized as it was done now just to save coding time
   }
+
+  // exceptions
+  class ResolutionRuleException(msg: String) extends RuleException(msg)
+  class ResolutionRuleCreationException(msg: String) extends ResolutionRuleException(msg)
 }

@@ -29,7 +29,7 @@ import java.io.File.separator
 
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
-import at.logic.transformations.ceres.clauseSets.profile._
+//import at.logic.transformations.ceres.clauseSets.profile._
 
 
 class MiscTest extends SpecificationWithJUnit {

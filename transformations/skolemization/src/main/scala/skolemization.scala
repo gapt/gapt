@@ -18,8 +18,10 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda._
 import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.lk.getCutAncestors
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.hol.logicSymbols.ConstantSymbolA
 import at.logic.algorithms.lk.applySubstitution
+import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
+import at.logic.utils.ds.streams.Definitions._
 import scala.collection.immutable.Stream.Empty
 
 /*
@@ -48,7 +50,7 @@ object skolemize {
     necessary information). This is done in Def, Eq-Rules anyways.
   */
   def skolemize(proof: LKProof, 
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]) :
@@ -113,8 +115,8 @@ object skolemize {
         val new_form_map = copyMapToAncestor( form_map )
         val new_cut_ancs = copySetToAncestor( cut_ancs )
         // TODO: in principle, don't have to add stuff to symbol_map, inst_map because we don't care
-        val new_p1 = skolemize( p1, new_symbol_map + (a1 -> Stream.Empty), new_inst_map + (a1 -> Nil), new_form_map + (a1 -> a1.formula), new_cut_ancs + a1 )
-        val new_p2 = skolemize( p2, new_symbol_map + (a2 -> Stream.Empty), new_inst_map + (a2 -> Nil), new_form_map + (a2 -> a2.formula), new_cut_ancs + a2 )
+        val new_p1 = skolemize( p1, new_symbol_map + (a1 -> Empty), new_inst_map + (a1 -> Nil), new_form_map + (a1 -> a1.formula), new_cut_ancs + a1 )
+        val new_p2 = skolemize( p2, new_symbol_map + (a2 -> Empty), new_inst_map + (a2 -> Nil), new_form_map + (a2 -> a2.formula), new_cut_ancs + a2 )
         val ret = CutRule( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
         (ret, copyMapToDescendant( proof, ret, new_p1._2 ++ new_p2._2))
       }
@@ -123,7 +125,7 @@ object skolemize {
 
   def handleEqRule( proof: LKProof, p1: LKProof, p2: LKProof, e: FormulaOccurrence, a: FormulaOccurrence, m: FormulaOccurrence,
     pol: Int, constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -142,7 +144,7 @@ object skolemize {
 
   def handleDefRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, pol: Int,
       constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -161,7 +163,7 @@ object skolemize {
   def handleNegRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -176,8 +178,8 @@ object skolemize {
   def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof,
-      partition: Stream[ConstantStringSymbol] => Stream[ConstantStringSymbol])(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      partition: Stream[ConstantSymbolA] => Stream[ConstantSymbolA])(implicit
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -195,7 +197,7 @@ object skolemize {
   def handleUnary1Rule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -206,7 +208,7 @@ object skolemize {
   def handleUnary2Rule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, HOLFormula, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -216,7 +218,7 @@ object skolemize {
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
       computeLeftAux: HOLFormula => HOLFormula, computeRightAux: HOLFormula => HOLFormula,
       constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -237,7 +239,7 @@ object skolemize {
 
   def handleContractionRule( proof: LKProof, p: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
       constructor: (LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -251,7 +253,7 @@ object skolemize {
   def handleWeakQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, t: HOLExpression,
       computeAux: (HOLFormula, HOLExpression) => HOLFormula,
       constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLExpression) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -269,7 +271,7 @@ object skolemize {
 
   def handleWeakeningRule( proof: LKProof, p: LKProof, m: FormulaOccurrence,
       constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -283,7 +285,7 @@ object skolemize {
 
   def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: HOLVar,
       constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLVar) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       form_map: Map[FormulaOccurrence, HOLFormula],
       cut_ancs: Set[FormulaOccurrence]
@@ -344,13 +346,13 @@ object skolemize {
     map.map( p => (old_p.getDescendantInLowerSequent( p._1 ).get,
       p._2 ) )
 
-  def skolemize(s: SequentOccurrence) : (Sequent, Map[FormulaOccurrence, Stream[ConstantStringSymbol]], Map[FormulaOccurrence, HOLFormula]) = skolemize( s, skolem_symbol_stream )
+  def skolemize(s: SequentOccurrence) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) = skolemize( s, SkolemSymbolFactory.getSkolemSymbols )
 
-  def skolemize(s: SequentOccurrence, stream: Stream[ConstantStringSymbol]) : (Sequent, Map[FormulaOccurrence, Stream[ConstantStringSymbol]], Map[FormulaOccurrence, HOLFormula]) =
+  def skolemize(s: SequentOccurrence, stream: Stream[ConstantSymbolA]) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) =
   {
     var cur_stream = stream
     val fos = s.antecedent ++ s.succedent
-    val symbol_map = fos.foldLeft(new HashMap[FormulaOccurrence, Stream[ConstantStringSymbol]])( (m, fo) => {
+    val symbol_map = fos.foldLeft(new HashMap[FormulaOccurrence, Stream[ConstantSymbolA]])( (m, fo) => {
         val s = even( cur_stream )
         cur_stream = odd( cur_stream )
         m + ( fo -> s )
@@ -362,29 +364,17 @@ object skolemize {
     (Sequent(sk_ant.map(_._2).toList, sk_succ.map(_._2).toList), symbol_map, sk_ant.toMap ++ sk_succ.toMap)
   }
 
-  def skolem_symbol_stream_from(n: Int): Stream[ConstantStringSymbol] =
-    Stream.cons(ConstantStringSymbol( "s_" + n ), skolem_symbol_stream_from( n + 1 ) )
-
-  def skolem_symbol_stream = skolem_symbol_stream_from( 0 )
-
-  def even[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Empty else
-    Stream.cons( s.head, even(s.tail.tail) )
-
-  def odd[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Empty
-    else if (s.tail.isEmpty) Empty
-    else Stream.cons( s.tail.head, odd(s.tail.tail) )
-
   def invert( pol: Int ) = 
     if (pol == 0)
       1
     else
       0
 
-  def apply(f: HOLFormula, pol: Int, symbols: Stream[ConstantStringSymbol]) = skolemize( f, pol, symbols )
+  def apply(f: HOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) = skolemize( f, pol, symbols )
 
-  def skolemize(f: HOLFormula, pol: Int, symbols: Stream[ConstantStringSymbol]) = sk( f, pol, Nil, symbols )
+  def skolemize(f: HOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) = sk( f, pol, Nil, symbols )
 
-  def sk(f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[ConstantStringSymbol]) : HOLFormula = f match {
+  def sk(f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[ConstantSymbolA]) : HOLFormula = f match {
     case And(l, r) => And( sk( l , pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
     case Or(l, r) => Or( sk( l , pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
     case Imp(l, r) => Imp( sk( l , invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
@@ -433,8 +423,8 @@ object skolemize {
     val inst_map = fos.foldLeft(new HashMap[FormulaOccurrence, List[HOLExpression]]())( (m, fo) => m + (fo -> Nil))
 
     // TODO: make this a parameter?
-    var cur_stream = skolem_symbol_stream
-    val symbol_map = fos.foldLeft(new HashMap[FormulaOccurrence, Stream[ConstantStringSymbol]])( (m, fo) => {
+    var cur_stream = SkolemSymbolFactory.getSkolemSymbols
+    val symbol_map = fos.foldLeft(new HashMap[FormulaOccurrence, Stream[ConstantSymbolA]])( (m, fo) => {
         val s = even( cur_stream )
         cur_stream = odd( cur_stream )
         m + ( fo -> s )
@@ -454,7 +444,7 @@ object skolemize {
   TODO: check whether proof is Skolemizable (or maybe just QFC)
   */
   def skolemize(proof: LKProof, 
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]) :
       (LKProof, Map[FormulaOccurrence, FormulaOccurrence]) = {
@@ -524,7 +514,7 @@ object skolemize {
 
   def handleEqRule( proof: LKProof, p1: LKProof, p2: LKProof, e: FormulaOccurrence, a: FormulaOccurrence, m: FormulaOccurrence,
     pol: Int, constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
     ) = {
@@ -543,7 +533,7 @@ object skolemize {
 
   def handleDefRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, pol: Int,
       constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
 
@@ -564,7 +554,7 @@ object skolemize {
   def handleNegRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
 
@@ -578,8 +568,8 @@ object skolemize {
   def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof,
-      partition: Stream[ConstantStringSymbol] => Stream[ConstantStringSymbol])(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      partition: Stream[ConstantSymbolA] => Stream[ConstantSymbolA])(implicit
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
 
@@ -599,7 +589,7 @@ object skolemize {
       mainConn: LambdaExpression => Option[(HOLFormula, HOLFormula)],
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, FormulaOccurrence, HOLFormula) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
     ) = {
@@ -616,7 +606,7 @@ object skolemize {
       mainConn: LambdaExpression => Option[(HOLFormula, HOLFormula)],
       computeAux: HOLFormula => HOLFormula,
       constructor: (LKProof, HOLFormula, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
     ) = {
@@ -629,7 +619,7 @@ object skolemize {
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
       computeLeftAux: HOLFormula => HOLFormula, computeRightAux: HOLFormula => HOLFormula,
       constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
 
@@ -647,7 +637,7 @@ object skolemize {
 
   def handleContractionRule( proof: LKProof, p: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
       constructor: (LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
 
@@ -661,18 +651,18 @@ object skolemize {
       pol: Int,
       computeAux: (HOLFormula, HOLExpression) => HOLFormula,
       constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLExpression) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
 
     ) = {
-      println("entering weak quant rule")
+      //println("entering weak quant rule")
       val new_main = if (cut_ancs.contains( m )) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
       //println("before: " + m.formula.toStringSimple)
       //println("after: " + new_main.toStringSimple)
       val inst_list = inst_map( m )
       val new_inst_map = copyMapToAncestor( inst_map ).updated( a, inst_list :+ t )
-      println("recursive call in weak quant rule")
+      //println("recursive call in weak quant rule")
       val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), new_inst_map, copySetToAncestor( cut_ancs ) )
       val ret = constructor( new_proof._1, new_proof._2( a ), new_main, t ) 
       ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
@@ -682,7 +672,7 @@ object skolemize {
   def handleWeakeningRule( proof: LKProof, p: LKProof, m: FormulaOccurrence,
       pol: Int,
       constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
     ) = {
@@ -696,11 +686,11 @@ object skolemize {
 
   def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: HOLVar,
       constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLVar) => LKProof)(implicit
-      symbol_map: Map[FormulaOccurrence, Stream[ConstantStringSymbol]],
+      symbol_map: Map[FormulaOccurrence, Stream[ConstantSymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
     ) = {
-      println("entering strong quant rule")
+      //println("entering strong quant rule")
       if (!cut_ancs.contains( m ) )
       {
         val sym_stream = symbol_map( m )
@@ -728,7 +718,7 @@ object skolemize {
     }
     else
     {
-      println("recursive call in strong quant rule")
+      //println("recursive call in strong quant rule")
       val new_proof = skolemize( p, copyMapToAncestor(symbol_map), copyMapToAncestor(inst_map),
         copySetToAncestor( cut_ancs ) )
       val ret = constructor( new_proof._1, new_proof._2( a ), m.formula, v )
@@ -756,31 +746,19 @@ object skolemize {
     map.map( p => (old_p.getDescendantInLowerSequent( p._1 ).get,
       p._2 ) )
 
-  def skolem_symbol_stream_from(n: Int): Stream[ConstantStringSymbol] =
-    Stream.cons(ConstantStringSymbol( "s_" + n ), skolem_symbol_stream_from( n + 1 ) )
-
-  def skolem_symbol_stream = skolem_symbol_stream_from( 0 )
-
-  def even[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Empty else
-    Stream.cons( s.head, even(s.tail.tail) )
-
-  def odd[A]( s: Stream[A] ) : Stream[A] = if (s.isEmpty) Empty
-    else if (s.tail.isEmpty) Empty
-    else Stream.cons( s.tail.head, odd(s.tail.tail) )
-
   def invert( pol: Int ) = 
     if (pol == 0)
       1
     else
       0
 
-  def apply(f: HOLFormula, pol: Int) : HOLFormula = apply( f, pol, skolem_symbol_stream )
+  def apply(f: HOLFormula, pol: Int) : HOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
 
-  def apply(f: HOLFormula, pol: Int, symbols: Stream[ConstantStringSymbol]) : HOLFormula = skolemize( f, pol, symbols )
+  def apply(f: HOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) : HOLFormula = skolemize( f, pol, symbols )
 
-  def skolemize(f: HOLFormula, pol: Int, symbols: Stream[ConstantStringSymbol]) = sk( f, pol, Nil, symbols )
+  def skolemize(f: HOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) = sk( f, pol, Nil, symbols )
 
-  def sk(f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[ConstantStringSymbol]) : HOLFormula = f match {
+  def sk(f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[ConstantSymbolA]) : HOLFormula = f match {
     case And(l, r) => And( sk( l , pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
     case Or(l, r) => Or( sk( l , pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
     case Imp(l, r) => Imp( sk( l , invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
@@ -788,11 +766,11 @@ object skolemize {
     case ExVar(x, f) =>
       if (pol == 1)
       {
-        println( "skolemizing ExQ")
+        //println( "skolemizing ExQ")
         val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
-        println( "substitution: " + sub )
-        println( "before: " + f )
-        println( "after: " + sub( f ) )
+        //println( "substitution: " + sub )
+        //println( "before: " + f )
+        //println( "after: " + sub( f ) )
         // TODO: should not be necessary to cast here, Formula is closed under substitution
         sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
       }

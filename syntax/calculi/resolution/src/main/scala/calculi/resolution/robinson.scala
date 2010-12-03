@@ -3,7 +3,7 @@
  *
  * Traditional resolution calculus with factors and para modulation. Using clauses
  */
-
+/*
 package at.logic.calculi.resolution
 
 import at.logic.calculi.occurrences._
@@ -136,3 +136,4 @@ package robinson {
       else None
   }
 }
+*/

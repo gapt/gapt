@@ -22,8 +22,8 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.parsing.readers.StringReader
 import at.logic.calculi.resolution.base._
-import at.logic.calculi.resolution.robinson._
-
+//import at.logic.calculi.resolution.robinson._
+/*
 class SimpleResolutionParserTest extends SpecificationWithJUnit {
   private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserHOL
   private class MyParser2(input: String) extends StringReader(input) with SimpleResolutionParserFOL
@@ -76,3 +76,4 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
     }
   }
 }
+*/
