@@ -243,6 +243,21 @@ class LKTest extends SpecificationWithJUnit {
       }
     }
 
+    "work for AndLeftRule" in {
+      val a = AndLeftRule(a2, f1, f2)
+      "- Principal formula is created correctly" in {
+        (a.prin.head.formula) must beEqual (And(f1,f2))
+      }
+      "- Principal formula must be contained in the right part of the sequent" in {
+        (a.root.antecedent) must contain(a.prin.head)
+        (a.root.getSequent.antecedent) must contain(And(f1,f2))
+      }
+      "- Lower sequent must not contain the auxiliary formulas" in {
+        (a.root.getSequent.antecedent) must notContain(f1)
+        (a.root.getSequent.antecedent) must notContain(f2)
+      }
+    }
+
     "work for OrLeftRule" in {
       val a = OrLeftRule(a1, a2, f1, f2)
       val (up1, up2, SequentOccurrence(x,y), aux1, aux2, prin1) = OrLeftRule.unapply(a).get
