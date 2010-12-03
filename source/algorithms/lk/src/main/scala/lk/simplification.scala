@@ -2,7 +2,7 @@ package at.logic.algorithms.lk
 
 import scala.collection.immutable.Set
 import at.logic.algorithms.subsumption.VariantsDeletion
-import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.base.{Sequent,SequentOccurrence}
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
@@ -17,7 +17,7 @@ package simplification {
     def apply(sequents: List[Sequent]) : List[Sequent] =
       sequents.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
 
-    def apply(sequents: List[SequentOccurrence]) : List[SequentOccurrence] =
+    def applyOccs(sequents: List[SequentOccurrence]) : List[SequentOccurrence] =
       sequents.filter( s => !s.antecedent.exists( f => s.succedent.exists( _.formula == f.formula ) ) )
   }
 
