@@ -18,6 +18,8 @@ import typedLambdaCalculus._
 import substitutions._
 import types.Definitions._
 import substitutions.ImplicitConverters._
+import BetaReduction._
+import ImplicitStandardStrategy._
 
 class SubstitutionsTest extends SpecificationWithJUnit {
   level = Info  // sets the printing of extra information (level can be: Debug, Info, Warning, Error)
@@ -32,7 +34,7 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       val sub1 = Substitution(x,e1)
       val sub2 = Substitution(x,e2)
       val sub = sub1 compose sub2
-      println("\n\n\n"+sub.toString+"\n\n\n")
+      //println("\n\n\n"+sub.toString+"\n\n\n")
       sub must beEqual (sub2)
     }
 
@@ -104,6 +106,22 @@ class SubstitutionsTest extends SpecificationWithJUnit {
                 val isDifferent = !(exp2==exp3)
                 ( isDifferent ) must beEqual ( true )
             }*/
+
+    "substitute and normalize correctly when Substitution is applied" in {
+      val x = LambdaVar(VariableStringSymbol("X"), i -> o )
+      val f = LambdaVar(VariableStringSymbol("f"), (i -> o) -> i )
+      val xfx = App(x, App( f, x ) )
+
+      val z = LambdaVar(VariableStringSymbol("z"), i)
+      val p = LambdaVar(VariableStringSymbol("P"), i -> o)
+      val Pz = App( p, z )
+      val t = Abs( z, Pz )
+
+      val sigma = Substitution[LambdaExpression]( x, t )
+
+      betaNormalize( sigma.apply( xfx ) ) must beEqual( App( p, App( f, t ) ) )
+    }
+
     "concatenate/compose 2 Substitutions correctly" in {
       val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
       val e = App(f, x)
