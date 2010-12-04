@@ -24,7 +24,6 @@ object getCutAncestors {
       case CutRule(p1, p2, _, a1, a2) => getCutAncestors( p1 ) ++ getCutAncestors( p2 ) ++ 
                                          Axiom.toSet( getAncestors( a1 ) ) ++ Axiom.toSet( getAncestors( a2 ) )
       case UnaryLKProof(_,p,_,_,_) => getCutAncestors( p )
-      case AndLeftRule(p,_,_,_,_) => getCutAncestors( p )
       case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutAncestors( p1 ) ++ getCutAncestors( p2 )
       case Axiom(so) => Set[FormulaOccurrence]()
       // support LKsk
