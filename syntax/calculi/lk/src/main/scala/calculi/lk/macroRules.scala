@@ -25,10 +25,11 @@ package macroRules {
 
     // convenient method to choose the first formula
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      s1.root.antecedent.filter(x => x.formula == term1).toList.zip(s1.root.antecedent.filter(x => x.formula == term2)) match {
-        case ((x1,x2)::_) => apply(s1, x1, x2)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+      val x1 = s1.root.antecedent.find( _.formula == term1 )
+      val x2 = s1.root.antecedent.find( x => x.formula == term2 && x != x1 )
+      if (x1 == None || x2 == None )
+        throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      apply(s1, x1.get, x2.get)
     }
   }
 }

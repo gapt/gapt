@@ -26,6 +26,7 @@ import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import scala.collection.immutable._
 import at.logic.language.lambda.symbols.VariableStringSymbol
+import macroRules._
 
 /**
  * The following properties of each rule are tested:
@@ -244,17 +245,17 @@ class LKTest extends SpecificationWithJUnit {
     }
 
     "work for AndLeftRule" in {
-      val a = AndLeftRule(a2, f1, f2)
+      val a = AndLeftRule(a2, f1, f3)
       "- Principal formula is created correctly" in {
-        (a.prin.head.formula) must beEqual (And(f1,f2))
+        (a.prin.head.formula) must beEqual (And(f1,f3))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (a.root.antecedent) must contain(a.prin.head)
-        (a.root.getSequent.antecedent) must contain(And(f1,f2))
+        (a.root.getSequent.antecedent) must contain(And(f1,f3))
       }
       "- Lower sequent must not contain the auxiliary formulas" in {
         (a.root.getSequent.antecedent) must notContain(f1)
-        (a.root.getSequent.antecedent) must notContain(f2)
+        (a.root.getSequent.antecedent) must notContain(f3)
       }
     }
 
