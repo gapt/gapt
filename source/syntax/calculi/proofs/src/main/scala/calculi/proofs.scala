@@ -23,7 +23,7 @@ package proofs {
   abstract class UnaryRuleTypeA extends RuleTypeA
   abstract class BinaryRuleTypeA extends RuleTypeA
 
-  trait Proof[+V] extends AGraph[V] {
+  trait Proof[+V] extends AGraph[V] { //change AGraph to tree
     def root = vertex
     def rule: RuleTypeA
     override def toString = rule + "(" + root.toString + ")"

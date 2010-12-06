@@ -72,6 +72,7 @@ package struct {
       case Nil => EmptyTimesJunction()
       case s1::Nil => s1
       case s1::tail => Times(s1, makeTimesJunction(tail))
+//      case s1::tail => new Times() with Labeled {type T = LKProof, def label: LKProof =  }
     }
   }
 }

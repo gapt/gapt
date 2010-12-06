@@ -3,6 +3,7 @@
 **/
 package at.logic.integration_tests
 
+import _root_.at.logic.transformations.ceres.clauseSets.profile. {printStruct, proofProfile}
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
@@ -59,6 +60,18 @@ class TapeTest extends SpecificationWithJUnit {
 
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
+
+
+      val sp = at.logic.transformations.ceres.clauseSets.profile.StructCreators.extract( proof_sk )
+//      (new proofProfile(proof_sk)).transformStructToProfile(sp)
+//      val prf = printStruct(new proofProfile(proof_sk).normalize(sp)))
+      println("\n\nsp = "+printStruct(sp))
+      //println("\n\ns = " +printStruct(s))
+      val normprf = (new proofProfile(proof_sk)).normalize(sp)
+      val prf = (new proofProfile(proof_sk)).clausify(normprf).map( so => so.getSequent )
+      println("\n\npfl = "+printStruct(normprf))
+
+
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "tape-cs.tptp")
@@ -68,7 +81,7 @@ class TapeTest extends SpecificationWithJUnit {
       val path = "target" + separator + "test-classes" + separator + "tape-sk.xml"
       saveXML( Pair("tape-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Nil, path )
+        Pair("cs", cs)::Pair("prf", prf)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
   }
