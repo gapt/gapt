@@ -27,8 +27,12 @@ object TPTPFOLExporter {
     reduceHolToFol(f, imap, iid )
   }
 
+  // TODO: have to give a different name because of erasure :-(
+  def tptp_problem_named( ss: List[Pair[String, Sequent]] ) =
+    ss.foldLeft("")( (s, p) => s + sequentToProblem( p._2, p._1 ) + "\n")
+
   def tptp_problem( ss: List[Sequent] ) = 
-    ss.zipWithIndex.foldLeft("")( (s, p) => s + sequentToProblem( p._1, "sequent" + p._2 ) + "\n")
+    tptp_problem_named( ss.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ) )
 
   def sequentToProblem( s: Sequent, n: String ) =
     "cnf( " + n + ",axiom," + export( s ) + ")."
