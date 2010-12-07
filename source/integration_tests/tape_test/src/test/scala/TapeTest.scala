@@ -34,7 +34,7 @@ import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.fol._
 
-
+import at.logic.provers.prover9._
 
 class TapeTest extends SpecificationWithJUnit {
   "The system" should {
@@ -71,12 +71,18 @@ class TapeTest extends SpecificationWithJUnit {
       val prf = (new proofProfile(proof_sk)).clausify(normprf).map( so => so.getSequent )
       println("\n\npfl = "+printStruct(normprf))
 
-
+      // construct the characteristic clause set
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+
+      // output it in TPTP format
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "tape-cs.tptp")
       writer.write( tptp )
       writer.flush
+
+      // refute it with prover9
+      Prover9.refute( cs ) must beEqual( true )
+
       val projs = Projections( proof_sk )
       val path = "target" + separator + "test-classes" + separator + "tape-sk.xml"
       saveXML( Pair("tape-sk", proof_sk) ::

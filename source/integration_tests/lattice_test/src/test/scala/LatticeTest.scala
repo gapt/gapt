@@ -32,6 +32,8 @@ import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 
+import at.logic.provers.prover9._
+
 class LatticeTest extends SpecificationWithJUnit {
 
   def sequentToString( s: Sequent ) = {
@@ -81,12 +83,23 @@ class LatticeTest extends SpecificationWithJUnit {
       val normprf = (new proofProfile(proof_sk).normalize(sp))
       val prf = removeTautologies((new proofProfile(proof_sk)).clausify(normprf).map( so => so.getSequent ))
       println("\n\npfl = "+printStruct(normprf))
+      val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
+      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "lattice-prf.tptp")
+      writer_prf.write( tptp_prf )
+      writer_prf.flush
 
+      // construct the characteristic clause set
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+
+      // output it in TPTP format
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "lattice-cs.tptp")
       writer.write( tptp )
       writer.flush
+
+      // refute it with prover9
+      Prover9.refute( cs ) must beEqual( true )
+
       val projs = Projections( proof_sk )
       val path = "target" + separator + "test-classes" + separator + "lattice-sk.xml"
       saveXML( Pair("lattice-sk", proof_sk) ::
