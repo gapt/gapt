@@ -1,8 +1,8 @@
 /*
  * andrews.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * This is Andrews resolution calculus from his 1971 paper, with additional rules
+ * for additional connectives.
  */
 package at.logic.calculi.resolution
 
@@ -49,14 +49,29 @@ package andrews {
   }
 */
 
+  object Definitions {
+    def computeSkolemTerm( sk: SkolemSymbol, t: TA, sub: HOLExpression ) =
+      Function(sk, sub.getFreeAndBoundVariables._1.asInstanceOf[Set[HOLVar]].toList, t) //TODO: cast!?
+  }
+
+  import Definitions._
+
   // inferences
   case object NotTType extends UnaryRuleTypeA
   case object NotFType extends UnaryRuleTypeA
   case object OrTType extends UnaryRuleTypeA
   case object OrFLType extends UnaryRuleTypeA
   case object OrFRType extends UnaryRuleTypeA
+  case object AndFType extends UnaryRuleTypeA
+  case object AndTLType extends UnaryRuleTypeA
+  case object AndTRType extends UnaryRuleTypeA 
+  case object ImplTType extends UnaryRuleTypeA
+  case object ImplFLType extends UnaryRuleTypeA
+  case object ImplFRType extends UnaryRuleTypeA
   case object AllTType extends UnaryRuleTypeA
   case object AllFType extends UnaryRuleTypeA
+  case object ExTType extends UnaryRuleTypeA
+  case object ExFType extends UnaryRuleTypeA
   case object SubType extends UnaryRuleTypeA
   case object CutType extends BinaryRuleTypeA
 
@@ -217,6 +232,159 @@ package andrews {
     }  
   }
 
+  object AndF {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val (sub1, sub2) = term1.formula match { case And(x, y) => (x, y) }
+        val prin1 = term1.factory.createPrincipalFormulaOccurrence(sub1, term1::Nil, s1.root.antecedent)
+        val prin2 = term1.factory.createPrincipalFormulaOccurrence(sub2, term1::Nil, s1.root.antecedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1) + prin1 + prin2, createContext(s1.root.succedent)), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
+            def rule = AndFType
+            def aux = (term1::Nil)::Nil
+            def prin = prin1::prin2::Nil
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == AndFType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p1::p2::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p1, p2))
+    }  
+  }
+
+  object AndTL {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val sub = term1.formula match { case And(x, y) => x }
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub, term1::Nil, s1.root.succedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1) + prinFormula), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
+            def rule = AndTLType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == AndTLType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p))
+    }
+  }
+
+  object AndTR {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val sub = term1.formula match { case And(x, y) => y }
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub, term1::Nil, s1.root.succedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1) + prinFormula), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
+            def rule = AndTRType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == AndTRType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p))
+    }  
+  }
+
+  object ImplT {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val (sub1, sub2) = term1.formula match { case Imp(x, y) => (x, y) }
+        val prin1 = term1.factory.createPrincipalFormulaOccurrence(sub1, term1::Nil, s1.root.succedent)
+        val prin2 = term1.factory.createPrincipalFormulaOccurrence(sub2, term1::Nil, s1.root.succedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent) + prin1, createContext(s1.root.succedent - term1) + prin2), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
+            def rule = ImplTType
+            def aux = (term1::Nil)::Nil
+            def prin = prin1::prin2::Nil
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == ImplTType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p1::p2::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p1, p2))
+    }  
+  }
+
+  object ImplFL {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val sub = term1.formula match { case Imp(x, y) => x }
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub, term1::Nil, s1.root.antecedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1), createContext(s1.root.succedent) + prinFormula), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
+            def rule = ImplFLType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == ImplFLType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p))
+    }
+  }
+
+  object ImplFR {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val sub = term1.formula match { case Imp(x, y) => y }
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub, term1::Nil, s1.root.antecedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1) + prinFormula, createContext(s1.root.succedent)), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
+            def rule = ImplFRType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == ImplFRType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p))
+    }  
+  }
+
+
   object ForallT {
     def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence, v: HOLVar ) = {
       val term1op = s1.root.succedent.find(x => x == term1oc)
@@ -264,10 +432,61 @@ package andrews {
       }
     }
 
-    def computeSkolemTerm( sk: SkolemSymbol, t: TA, sub: HOLExpression ) =
-      Function(sk, sub.getFreeAndBoundVariables._1.asInstanceOf[Set[HOLVar]].toList, t) //TODO: cast!?
-
     def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == AllFType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p, pr.subst))
+    }  
+  }
+
+  object ExistsF {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence, v: HOLVar ) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val sub = term1.formula match { case Ex(sub, _) => sub }
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence( betaNormalize( App( sub, v ) ).asInstanceOf[HOLFormula], term1::Nil, s1.root.antecedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent - term1) + prinFormula, createContext(s1.root.succedent)), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+            def rule = ExFType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+            def subst = v
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == ExFType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root, a, p, pr.subst))
+    }
+  }
+
+  object ExistsT {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: Occurrence, sk: SkolemSymbol ) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        // TODO: improve second match in next line
+        val (sub, t) = term1.formula match { case Ex(sub, t) => (sub, t match { case ( (t -> To()) -> To() ) => t } ) }
+        val skt = computeSkolemTerm( sk, t, sub.asInstanceOf[HOLExpression] ) //TODO: cast!?
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence( betaNormalize( App( sub, skt ) ).asInstanceOf[HOLFormula], term1::Nil, s1.root.succedent)
+        new UnaryAGraph[SequentOccurrence](SequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1) + prinFormula), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+            def rule = ExTType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+            def subst = skt
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == ExTType) {
         val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
         val ((a::Nil)::Nil) = pr.aux
         val (p::Nil) = pr.prin

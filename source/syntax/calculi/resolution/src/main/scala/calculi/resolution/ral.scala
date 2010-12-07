@@ -31,6 +31,9 @@ package ral {
   // inferences
   case object AllTRalType extends UnaryRuleTypeA
   case object AllFRalType extends UnaryRuleTypeA
+  case object ExTRalType extends UnaryRuleTypeA
+  case object ExFRalType extends UnaryRuleTypeA
+
   case object CutRalType extends UnaryRuleTypeA
 
 
@@ -38,6 +41,9 @@ package ral {
     // TODO: maybe move these two to LKsk?
     def createContext(set: Set[FormulaOccurrence]): Set[LabelledFormulaOccurrence] = lkCreateContext( set ).asInstanceOf[Set[LabelledFormulaOccurrence]]
     def createContext(set: Set[FormulaOccurrence], binary: Set[FormulaOccurrence]): Set[LabelledFormulaOccurrence] = lkCreateContext( set, binary ).asInstanceOf[Set[LabelledFormulaOccurrence]]
+
+    def computeSkolemTerm( sk: SkolemSymbol, t: TA, label: Label ) =
+      Function(sk, label.toList, t)
   }
 
   import Definitions._
@@ -119,10 +125,61 @@ package ral {
       }
     }
 
-    def computeSkolemTerm( sk: SkolemSymbol, t: TA, label: Label ) =
-      Function(sk, label.toList, t)
-
     def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == AllFRalType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root.asInstanceOf[LabelledSequentOccurrence], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    }  
+  }
+
+  object ExistsF {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: LabelledFormulaOccurrence, v: HOLVar ) = {
+      val term1op = s1.root.antecedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get.asInstanceOf[LabelledFormulaOccurrence]
+        val sub = term1.formula match { case Ex(sub, _) => sub }
+        val prinFormula = new LabelledFormulaOccurrence(betaNormalize( App( sub, v ) ).asInstanceOf[HOLFormula], term1::Nil, term1.skolem_label + v )
+        new UnaryAGraph[SequentOccurrence](new LabelledSequentOccurrence(createContext(s1.root.antecedent - term1) + prinFormula, createContext(s1.root.succedent)), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+            def rule = ExFRalType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+            def subst = v
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == ExFRalType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+        val ((a::Nil)::Nil) = pr.aux
+        val (p::Nil) = pr.prin
+        Some((pr.uProof, pr.root.asInstanceOf[LabelledSequentOccurrence], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    }
+  }
+
+  object ExistsT {
+    def apply[V <: SequentOccurrence](s1: ResolutionProof[V], term1oc: LabelledFormulaOccurrence, sk: SkolemSymbol ) = {
+      val term1op = s1.root.succedent.find(x => x == term1oc)
+      if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get.asInstanceOf[LabelledFormulaOccurrence]
+        // TODO: improve second match in next line
+        val (sub, t) = term1.formula match { case Ex(sub, t) => (sub, t match { case ( (t -> To()) -> To() ) => t } ) }
+        val skt = computeSkolemTerm( sk, t, term1.skolem_label ) //TODO: cast!?
+        val prinFormula = term1.factory.createPrincipalFormulaOccurrence( betaNormalize( App( sub, skt ) ).asInstanceOf[HOLFormula], term1::Nil, s1.root.succedent)
+        new UnaryAGraph[SequentOccurrence](new LabelledSequentOccurrence(createContext(s1.root.antecedent), createContext(s1.root.succedent - term1) + prinFormula), s1)
+          with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+            def rule = ExTRalType
+            def aux = (term1::Nil)::Nil
+            def prin = prinFormula::Nil
+            def subst = skt
+          }
+      }
+    }
+
+    def unapply[V <: SequentOccurrence](proof: ResolutionProof[V]) = if (proof.rule == ExTRalType) {
         val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
         val ((a::Nil)::Nil) = pr.aux
         val (p::Nil) = pr.prin
