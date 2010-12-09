@@ -12,7 +12,7 @@ import logicSymbols._
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
-import at.logic.transformations.ceres.clauseSets.profile. {printStruct, proofProfile}
+import at.logic.transformations.ceres.clauseSets.profile. {preNormalize, printStruct, proofProfile}
 
 //import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
@@ -58,47 +58,47 @@ class MiscTest extends SpecificationWithJUnit {
 //      (new java.io.File( cs_path ) ).exists() must beEqual( true )
 //    }
 //    */
-//
-//    "skolemize a simple proooccurrencesf" in {
-//      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-//      proofdb.proofs.size must beEqual(1)
-//      val proof = proofdb.proofs.head._2
-//      val proof_sk = skolemize( proof )
-//      println("skolemized proof:")
-//      println(proof_sk)
-//    }
-//
-//    "skolemize a proof with a simple definition" in {
-//      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-//      proofdb.proofs.size must beEqual(1)
-//      val proof = proofdb.proofs.head._2
-//      val proof_sk = skolemize( proof )
-//      println("skolemized proof:")
-//      println(proof_sk)
-//    }
-//
-//    "skolemize a proof with a complex definition" in {
-//      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-//      proofdb.proofs.size must beEqual(1)
-//      val proof = proofdb.proofs.head._2
-//      val proof_sk = skolemize( proof )
-//      println("skolemized proof:")
-//      println(proof_sk)
-//    }
-//    "extract projections and clause set from a skolemized proof" in {
-//      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-//      proofdb.proofs.size must beEqual(1)
-//      val proof = proofdb.proofs.head._2
-//      val projs = Projections( proof )
-//      val s = StructCreators.extract( proof )
-//      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
-//      val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
-//      saveXML( projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-//        Pair("cs", cs)::Nil, path )
-//    }
+
+    "skolemize a simple proooccurrencesf" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head._2
+      val proof_sk = skolemize( proof )
+      println("skolemized proof:")
+      println(proof_sk)
+    }
+
+    "skolemize a proof with a simple definition" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head._2
+      val proof_sk = skolemize( proof )
+      println("skolemized proof:")
+      println(proof_sk)
+    }
+
+    "skolemize a proof with a complex definition" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head._2
+      val proof_sk = skolemize( proof )
+      println("skolemized proof:")
+      println(proof_sk)
+    }
+    "extract projections and clause set from a skolemized proof" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      proofdb.proofs.size must beEqual(1)
+      val proof = proofdb.proofs.head._2
+      val projs = Projections( proof )
+      val s = at.logic.transformations.ceres.struct.StructCreators.extract( proof )
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+      val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
+      saveXML( projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Pair("cs", cs)::Nil, path )
+    }
 
     //Cvetan
-    "label a formula occurrences in a proof" in {
+    "extract the profile of Bruno's thesis" in {
       println("\n\n\n")
 //      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
 //      proofdb.proofs.size must beEqual(1)
@@ -117,13 +117,13 @@ class MiscTest extends SpecificationWithJUnit {
       val ax3 = Axiom(Sequent(B::Nil, B::Nil))(PointerFOFactoryInstance)
       val ax4 = Axiom(Sequent(A::Nil, A::Nil))(PointerFOFactoryInstance)
       val ax5 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)
-      val ax6 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)
+//      val ax6 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)
       val r1 = AndRightRule(ax1,ax2,A,B)//.asInstanceOf[LKProof]
       var r2 = AndLeftRule(r1,A,B)
       val r3 = AndRightRule(ax3,ax4,B,A)
       var r4 = AndLeftRule(r3,A,B)
       val r5 = CutRule(r2,r4, And(A,B))
-      val r6 = CutRule(ax5,ax6, C)
+      val r6 = ax5//CutRule(ax5,ax6, C)
       val proof = OrLeftRule(r5,r6, And(A,B), C)
 
 //                   toLabeledProof(proof)
@@ -143,7 +143,10 @@ class MiscTest extends SpecificationWithJUnit {
       val sp = at.logic.transformations.ceres.clauseSets.profile.StructCreators.extract( proof )
 //      (new proofProfile(proof_sk)).transformStructToProfile(sp)
 //      val prf = printStruct(new proofProfile(proof_sk).normalize(sp)))
-      val normprf = (new proofProfile(proof).normalize(sp))
+
+      println("\n\nstruct  = "+printStruct(sp))
+
+      val normprf = (new proofProfile(proof)).normalize(sp)
       val prf = (new proofProfile(proof)).clausify(normprf).map( so => so.getSequent )
       println("\n\npfl = "+printStruct(normprf))
 //      printProfile(proof)
