@@ -21,7 +21,9 @@ import scala.collection.immutable.Set
 package struct {
   trait Struct
 
-  case class Times(left: Struct, right: Struct) extends Struct
+  // The times operator stores the auxiliary formulas of the 
+  // inference which induces it.
+  case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends Struct
   case class Plus(left: Struct, right: Struct) extends Struct
   case class Dual(sub: Struct) extends Struct
   case class A(formula: FormulaOccurrence) extends Struct // Atomic Struct
@@ -46,32 +48,34 @@ package struct {
             A( new LabelledFormulaOccurrence( right.formula, Nil, left.skolem_label ) )::Nil
           else
             Nil
-          makeTimesJunction( ant:::suc )
+          makeTimesJunction( ant:::suc, Nil )
         }
         case _ => {
           val cutAncInAntecedent = so.antecedent.toList.filter(x => cut_occs.contains(x)).map(x => Dual(A(x)))   //
           val cutAncInSuccedent = so.succedent.toList.filter(x => cut_occs.contains(x)).map(x => A(x))
-          makeTimesJunction(cutAncInAntecedent:::cutAncInSuccedent)
+          makeTimesJunction(cutAncInAntecedent:::cutAncInSuccedent, Nil)
         }
       }
       case UnaryLKProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
-      case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux, _, _) => 
-        handleBinary( upperProofLeft, upperProofRight, aux, cut_occs )
+      case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux1, aux2, _) => 
+        handleBinary( upperProofLeft, upperProofRight, aux1::aux2::Nil, cut_occs )
       case UnaryLKskProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
     }
 
     def handleUnary( upperProof: LKProof, cut_occs: Set[FormulaOccurrence] ) =
       extract(upperProof, cut_occs)
-    def handleBinary( upperProofLeft: LKProof, upperProofRight: LKProof, aux: FormulaOccurrence,
-                      cut_occs: Set[FormulaOccurrence] ) = {
-      if (cut_occs.contains(aux)) Plus(extract(upperProofLeft, cut_occs), extract(upperProofRight, cut_occs))
-      else Times(extract(upperProofLeft, cut_occs), extract(upperProofRight, cut_occs))
+
+    def handleBinary( upperProofLeft: LKProof, upperProofRight: LKProof, l: List[FormulaOccurrence], cut_occs: Set[FormulaOccurrence] ) = {
+      if (cut_occs.contains(l.head))
+        Plus(extract(upperProofLeft, cut_occs), extract(upperProofRight, cut_occs))
+      else
+        Times(extract(upperProofLeft, cut_occs), extract(upperProofRight, cut_occs), l)
     }
 
-    def makeTimesJunction(structs: List[Struct]):Struct = structs match {
+    def makeTimesJunction(structs: List[Struct], aux: List[FormulaOccurrence]):Struct = structs match {
       case Nil => EmptyTimesJunction()
       case s1::Nil => s1
-      case s1::tail => Times(s1, makeTimesJunction(tail))
+      case s1::tail => Times(s1, makeTimesJunction(tail, aux), aux)
 //      case s1::tail => new Times() with Labeled {type T = LKProof, def label: LKProof =  }
     }
   }
