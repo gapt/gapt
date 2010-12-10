@@ -23,7 +23,7 @@ import at.logic.calculi.lk.lkExtractors. {BinaryLKProof, UnaryLKProof}
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 import scala.collection.immutable._
-
+import profile. {getAllAxioms}
 
 //import at.logic.transformations.ceres.struct._
 import at.logic.language.hol._
@@ -37,83 +37,6 @@ import at.logic.calculi.lk.quantificationRules._
 //  }
 
 
-//  object toLabeledProof {
-//    var cnt = 0;
-//    def fact = new LabeledFOFactory(cnt)
-//    def apply(p: LKProof): LKProof = p match {
-//      case Axiom(so) => {
-//        println("\ncnt = "+cnt+"   "+so.getSequent.toString)
-//        cnt = cnt+1
-//        Axiom(so.getSequent)(new LabeledFOFactory(cnt))// should not cause a problem because factories are not used in binary rules
-//      }
-//      //unary rules
-//      case NegRightRule(up, r, a, p) => NegRightRule(apply(up),a)
-//      case NegLeftRule(up, r, a, p) => NegLeftRule(apply(up),a)
-//      case OrRight1Rule(up, r, a, p) => {
-//        val (_, newf) = Or.unapply(p.formula).get
-//        OrRight1Rule(apply(up), a, newf)
-//      }
-//      case OrRight2Rule(up, r, a, p) => {
-//        val (newf, _) = Or.unapply(p.formula).get
-//        OrRight2Rule(apply(up),newf,a)
-//      }
-//      case AndLeft1Rule(up, r, a, p) => {
-//        val (_,newf) = And.unapply(p.formula).get
-//        AndLeft1Rule(apply(up),a, newf)
-//      }
-//      case AndLeft2Rule(up, r, a, p) => {
-//        val (newf, _) = And.unapply(p.formula).get
-//        AndLeft2Rule(apply(up),newf, a)
-//      }
-//      case ImpRightRule(up, r, a1, a2, p) => ImpRightRule(apply(up),a1,a2)
-//      case DefinitionLeftRule(up, r, a, p) => DefinitionLeftRule(apply(up),a, p.formula)
-//      case DefinitionRightRule(up, r, a, p) => DefinitionRightRule(apply(up),a,p.formula)
-//      case ExistsLeftRule(up, r, a, p, ev) => ExistsLeftRule(apply(up), a, p.formula, ev)
-//      case ForallRightRule(up, r, a, p, ev) => ForallRightRule(apply(up), a, p.formula, ev)
-//      case ForallLeftRule(up, r, a, p, ev) => ForallLeftRule(apply(up), a, p.formula, ev)
-//      case ExistsRightRule(up, r, a, p, ev) => ExistsRightRule(apply(up), a, p.formula, ev)
-//      case WeakeningLeftRule(up, r, p1) => WeakeningLeftRule(apply(up), p1.formula)(fact)
-//      case WeakeningRightRule(up, r, p1) => WeakeningRightRule(apply(up), p1.formula)(fact)
-//      case ContractionLeftRule(up, r, a1, a2, p1) => ContractionLeftRule(apply(up), a1, a2)
-//      case ContractionRightRule(up, r, a1, a2, p1) => ContractionRightRule(apply(up), a1, a2)
-//
-//      //binary rules
-//      case CutRule(up1, up2, r, a1, a2) => CutRule(apply(up1), apply(up2), a1, a2)
-//      case AndRightRule(up1, up2, r, a1, a2, p) => {
-//        println("\nandR"+"  "+up1.toString+"    "+up2.toString  +"   "+a1.formula+"   "+a2.formula)
-//        AndRightRule(apply(up1), apply(up2), a1.formula, a2.formula)
-//      }
-//      case OrLeftRule(up1, up2, r, a1, a2, p) => OrLeftRule(apply(up1), apply(up2), a1, a2)
-//      case ImpLeftRule(up1, up2, r, a1, a2, p) => ImpLeftRule(apply(up1), apply(up2), a1, a2)
-//      case EquationLeft1Rule(up1, up2, r, a1, a2, p) => EquationLeft1Rule(apply(up1), apply(up2), a1, a2, p.formula)
-//      case EquationLeft2Rule(up1, up2, r, a1, a2, p) => EquationLeft2Rule(apply(up1), apply(up2), a1, a2, p.formula)
-//      case EquationRight1Rule(up1, up2, r, a1, a2, p) => EquationRight1Rule(apply(up1), apply(up2), a1, a2,p.formula)
-//      case EquationRight2Rule(up1, up2, r, a1, a2, p) => EquationRight2Rule(apply(up1), apply(up2), a1, a2, p.formula)
-//    }
-//  }
-
-///*private[profile]*/ class LabeledFOFactory(cnt: Int) extends PointerFOFactory {
-//    override def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence = {
-//      val othersCast = others.asInstanceOf[Set[IntOccurrence]]
-//      val max = othersCast.foldLeft(0)((prev, fo) => scala.math.max(prev, fo.label))
-//      new FormulaOccurrence(formula, ancestors) with IntOccurrence with IntSetLabeledFormulaOcc {
-//        def factory = LabeledFOFactory.this;
-//        def label = max+1;
-//        def labelMark = if(ancestors.isEmpty) Set[Int](cnt) else ancestors.foldLeft(Set[Int]())((x,y) => x.++(y.asInstanceOf[IntSetLabeledFormulaOcc].labelMark))
-//      }
-//    }
-//    // we check how many are before the position and then substract them if needed. binary_others is used to add as prefix the size of the set of the left upper rule
-//    override def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence = {
-//      val othersCast = others.asInstanceOf[Set[IntOccurrence]]
-//      val currentCast = current.asInstanceOf[IntOccurrence]
-//      val pos = othersCast.filter(x => x< currentCast).size + 1
-//      new FormulaOccurrence(formula, ancestors) with IntOccurrence with IntSetLabeledFormulaOcc {
-//        def factory = LabeledFOFactory.this;
-//        def label = pos + binary_others.size;
-//        def labelMark = ancestors.foldLeft(Set[Int]())((x,y) => x.++(y.asInstanceOf[IntSetLabeledFormulaOcc].labelMark))
-//      }
-//    }
-//  }
 
   object printProfile {
     def printSeqOcc(s: SequentOccurrence) = {
@@ -190,32 +113,35 @@ import at.logic.calculi.lk.quantificationRules._
       case Dual(sub) => apply(sub)
       case e: EmptyTimesJunction =>  List[FormulaOccurrence]()
       case e: EmptyPlusJunction =>  List[FormulaOccurrence]()
-      case _ => {println("\n\nERROR");List()}
+      case _ => {println("\n\nERROR in getListOfFOccsInStruct");List()}
     }
   }
 
   object printStruct {
     def apply(s: Struct): String = s match {
-      case Plus(s1,s2) => "( "+apply(s1)+" + "+apply(s2)+" )"
-      case Times(s1,s2,_) => "( "+apply(s1)+" x "+apply(s2)+" )"
+      case Plus(s1,s2) => " < "+apply(s1)+"    +    "+apply(s2)+" > "
+      case Times(s1,s2,_) => "{ [ "+apply(s1)+" ]  x  [ "+apply(s2)+" ] }"
       case A(fo) => fo.formula.toStringSimple// + "    id="+fo.id.toString
       case Dual(s) => "~"+apply(s)
-      case e: EmptyTimesJunction =>  "ET"
-      case e: EmptyPlusJunction =>  "EP"
+      case EmptyTimesJunction() =>  "ET"
+      case EmptyPlusJunction() =>  "EP"
+      case _ =>  "Nothing to print"
     }
   }
 
-           //gets the axioms formula occurrences which are ancestors of fo
+           //gets from the axioms those formula occurrences which are ancestors of fo
   object getAncAx {
-    def apply(fo: FormulaOccurrence): List[FormulaOccurrence] = fo.ancestors match {
-      case List() => fo::Nil
-      case _ => fo.ancestors.foldLeft(List[FormulaOccurrence]())((x,y) => x:::apply(y))
+    def apply(fo: FormulaOccurrence, p: LKProof): List[FormulaOccurrence] = fo.ancestors match {
+      case List() if getAllAxioms.isFOccInAxiom(fo, getAllAxioms.apply(p)) => fo::Nil
+      case _ => fo.ancestors.foldLeft(List[FormulaOccurrence]())((x,y) => x:::apply(y,p))
     }
   }
+
 
 
   class proofProfile(val proof: LKProof) {
 
+    var step = 1
 //    def endSeqAuxFOccsLabels(p: LKProof): Set[Int] = {
 //      Set()
 //    }
@@ -232,23 +158,65 @@ import at.logic.calculi.lk.quantificationRules._
 //    }
 
 
-    def normalize(struct:Struct):Struct = struct match {
-      case Plus(s1,s2) => Plus(normalize(s1),normalize(s2))
-      case Times(s1,s2,auxFOccs) => {
 
-        val (str1,str2) = (normalize(s1), normalize(s2))
-//        println("\n\nThe struct x : ")
-//        printStruct(struct)
-//        println("\n\nstr1 : ")
-//        printStruct(str1)
-//        println("\n\nstr2 : ")
-//        printStruct(str2)
-        merge(str1, str2, auxFOccs)
+    def normalize(struct:Struct):Struct = struct match {
+        case Plus(s1,s2) => {
+          print("\n                  +  \n")
+          val (s11,s22) = (normalize(s1),normalize(s2))
+
+//          val emp1 = s11 match {
+//          case e1: EmptyPlusJunction => {println("\n\nEMPTY1\n\n"); true}
+//          case e2: EmptyTimesJunction => {println("\n\nEMPTY2\n\n"); true}
+//          case _ => false
+//        }
+//        val emp2 = s22 match {
+//          case e1: EmptyPlusJunction => {println("\n\nEMPTY3\n\n"); true}
+//          case e2: EmptyTimesJunction => {println("\n\nEMPTY4\n\n"); true}
+//          case _ => false
+//        }
+//        if(emp1 && emp2)
+//          return EmptyPlusJunction()
+//        if(emp1)
+//          return s22
+//        if(emp2)
+//          return s11
+
+        Plus(s11,s22)
+//        Plus(normalize(s1),normalize(s2))
       }
-      case s: A => s
-      case Dual(sub) => Dual(normalize(sub))
-      case e: EmptyTimesJunction => e
-      case e: EmptyPlusJunction => e
+      case Times(s1,s2,auxFOccs) => {
+                          print("\n                  x  \n")
+        val (str1,str2) = (normalize(s1), normalize(s2))
+//        print("\n\nimmediately Times:  "+printStruct(str1)+"  x  "+printStruct(str2))
+
+//        val emp1 = str1 match {
+//        case EmptyPlusJunction() => {println("\n\nEMPTY5\n\n"); true}
+//        case EmptyTimesJunction() => {println("\n\nEMPTY6\n\n"); true}
+//        case _ => false
+//        }
+//        val emp2 = str2 match {
+//          case EmptyPlusJunction() => {println("\n\nEMPTY7\n\n"); true}
+//          case EmptyTimesJunction() => {println("\n\nEMPTY8\n\n"); true}
+//          case _ => false
+//        }
+//        if(emp1 && emp2)
+//          return {print("\n emp1 && emp2\n");EmptyTimesJunction()}
+//        if(emp1)
+//          return {print("\n emp1 is empty \n");str2}
+//        if(emp2)
+//          return {print("\n  emp2 is empty\n");str1}
+  //        println("\n\nThe struct x : ")
+  //        printStruct(struct)
+  //        println("\n\nstr1 : ")
+  //        printStruct(str1)
+  //        println("\n\nstr2 : ")
+  //        printStruct(str2)
+          merge(str1, str2, auxFOccs)
+      }
+      case s: A => {print("\n                 3  \n");s}
+      case Dual(sub) => {print("\n                   4  \n");Dual(normalize(sub))}
+      case e: EmptyTimesJunction => {print("\n          5  \n");e}
+      case e: EmptyPlusJunction => {print("\n           6  \n");e}
     }
 
     def transformStructToProfile(struct:Struct) = clausify(normalize(struct))
@@ -259,57 +227,151 @@ import at.logic.calculi.lk.quantificationRules._
     private def transformProfiledCartesianProductToStruct(cp: List[Pair[Struct,Struct]]): Struct = cp match {
       case Pair(i,j)::Nil => Times(i, j, List[FormulaOccurrence]())
       case Pair(i,j)::rest => Plus(Times(i,j, List[FormulaOccurrence]()),transformProfiledCartesianProductToStruct(rest))
-      case Nil => EmptyPlusJunction()
+      //case Nil => { /*println("\nERROR in transformProfiledCartesianProductToStruct");*/EmptyPlusJunction()  }
     }
 //      def transformNotProfiledCartesianProductToStruct(cp: List[Struct]): Struct = cp.foldLeft(EmptyPlusJunction())((x,y)=>Plus(x,y))
     private def transformNotProfiledCartesianProductToStruct(cp: List[Struct]): Struct = cp match {
       case i::Nil => i
       case i::rest => Plus(i,transformNotProfiledCartesianProductToStruct(rest))
-      case Nil => EmptyPlusJunction()
+     // case Nil => { /*println("\nERROR in transformNotProfiledCartesianProductToStruct");*/EmptyPlusJunction()  }
     }
 
 
 
+    def isRedStruct(s: Struct, anc_OfauxFOccs: List[FormulaOccurrence]): Boolean = !(getListOfFOccsInStruct(s).intersect(anc_OfauxFOccs)).isEmpty
+
+
+
     private def merge(s1:Struct, s2:Struct, auxFOccs: List[FormulaOccurrence]):Struct = {
+
       val (list1,list2) = (getTimesJunctions(s1),getTimesJunctions(s2))
+
+      if(list1.size==0 || list2.size==0)
+        println("ERROR, sizes = 0")
+
+
+
       if(list1.size==1 && list2.size==1)
         return Times(s1,s2,auxFOccs)
 //      println("\n\n\n\n\n\nlist1.head : "+ printStruct(list1.head))
 //      println("\n\nlist2.head : "+ printStruct(list2.head))
 
 //      def correspFOccs = getAllAxioms.getAllCorrFOccs(auxFOccs.foldLeft(List[FormulaOccurrence]())((x,y) => x:::getAncAx(y)), proof)
-      def correspFOccs = getAllAxioms.getAllCorrFOccs(auxFOccs.foldLeft(List[FormulaOccurrence]())((x,y) => x ::: getAncAx(y)), proof)
 
-      println("\n\n\n\n\n1\ns1 : "+ printStruct(s1))
-      println("\n\ns2 : "+ printStruct(s2))
+      def ancOfAuxFOccs = getAllAxioms.getAllCorrFOccs(auxFOccs.foldLeft(List[FormulaOccurrence]())((x,y) => x ::: getAncAx(y, proof)), proof)
 
-      println("\n2\n\n\nauxFOccs = "+auxFOccs.map(x => {print(", "+x.id);x.formula}).toString)
+      val black_list1 = list1.filter(s => !isRedStruct(s, ancOfAuxFOccs))
+      val red_list1 = list1.filter(s => isRedStruct(s, ancOfAuxFOccs))
+      val black_list2 = list2.filter(s => !isRedStruct(s, ancOfAuxFOccs))
+      val red_list2 = list2.filter(s => isRedStruct(s, ancOfAuxFOccs))
+
+//      println("\n\n\n\n\n1\ns1 : "+ printStruct(s1))
+//      println("\n\ns2 : "+ printStruct(s2))
+
+//      println("\n2\n\n\nauxFOccs = "+auxFOccs.map(x => {print(", "+x.id);x.formula}).toString)
 
 //      println("\ngetListOfFOccsInStruct(i) = "+getListOfFOccsInStruct(list1.head))
 
 //      val profiledCartesianProduct = for (i <- list1; j <- list2; if !(getListOfFOccsInStruct(i).intersect(correspFOccs)).isEmpty && !(getListOfFOccsInStruct(j).intersect(correspFOccs)).isEmpty) yield (i,j)
-      val profiledCartesianProduct = for (i <- list1; j <- list2; if !(getListOfFOccsInStruct(i).intersect(correspFOccs)).isEmpty && !(getListOfFOccsInStruct(j).intersect(correspFOccs)).isEmpty) yield (i,j)
-      println("\n\nprofiledCartesianProduct = "+profiledCartesianProduct.toString + "    "+profiledCartesianProduct.size)
+//      val profiledCartesianProduct = for (i <- list1; j <- list2; if !(getListOfFOccsInStruct(i).intersect(ancOfAuxFOccs)).isEmpty && !(getListOfFOccsInStruct(j).intersect(ancOfAuxFOccs)).isEmpty) yield (i,j)
 
-      val notProfiledCartesianProduct = for (i <- list1++list2; if !(profiledCartesianProduct.map(x => x._1).contains(i)) && !(profiledCartesianProduct.map(x => x._2).contains(i))) yield i
-      println("\n\nnotProfiledCartesianProduct = "+notProfiledCartesianProduct.toString + "    "+notProfiledCartesianProduct.size)
+      val profiledCartesianProduct = for (i <- red_list1; j <- red_list2) yield (i,j)
+      val notProfiledCartesianProduct = black_list1 ::: black_list2
+//      println("\n\nprofiledCartesianProduct = "+profiledCartesianProduct.toString + "    "+profiledCartesianProduct.size)
+
+//      println("\n\n-----------------merge:")
+//      println("\n (list1,list2) = "+list1.size+"     size = "+list2.size)
+      println("\nmerge : \n"+printStruct(Times(s1,s2,List())) + "\n auxFOccs = ")
+      auxFOccs.foreach(x => {print("  "+x.formula.toStringSimple)+" ; "})
+
+      println("\n\nCorresp. axioms:\n")
+      ancOfAuxFOccs.foreach(fo => {println();getAncAx(fo,proof).foreach( axocc => print(axocc.formula.toStringSimple+" ; "))})
+
+      println("\n\nRED,  size = "+profiledCartesianProduct.size)
+      profiledCartesianProduct.foreach(x => {print(printStruct(x._1)+" x "+printStruct(x._2))})
+
+//      val notProfiledCartesianProduct = for (i <- list1++list2; if !(profiledCartesianProduct.map(x => x._1).contains(i)) && !(profiledCartesianProduct.map(x => x._2).contains(i))) yield i
+      println("\n\nBLACK,  size = "+notProfiledCartesianProduct.size)
+      notProfiledCartesianProduct.foreach(x => {print(printStruct(x)+"  +  ") })
+
+//      println("\n\nnotProfiledCartesianProduct = "+notProfiledCartesianProduct.toString + "    "+notProfiledCartesianProduct.size)
 
 //      val profiledCartesianProduct = for (i <- list1; j <- list2; if !(getLabelsOfStruct(i).intersect(endSeqAuxFOccsLabels(proof))).isEmpty && !(getLabelsOfStruct(j).intersect(endSeqAuxFOccsLabels(proof))).isEmpty) yield (i,j)
 //      val notProfiledCartesianProduct = for (i <- list1++list2; if !(profiledCartesianProduct.map(x => x._1).contains(i)) && !(profiledCartesianProduct.map(x => x._2).contains(i))) yield i
 
-      val str1 = transformNotProfiledCartesianProductToStruct(notProfiledCartesianProduct)
-      val str2 = transformProfiledCartesianProductToStruct(profiledCartesianProduct)
-      println("\n\nmerge = "+printStruct(str1))
-      Plus(str1, str2)
+      if (profiledCartesianProduct.size > 0 ) // rewrite
+      {
+        val str2 = transformProfiledCartesianProductToStruct(profiledCartesianProduct)
+//      println("\n\nstr2 = "+printStruct(str2))
+        if (notProfiledCartesianProduct.size > 0)
+        {
+          val str1 = transformNotProfiledCartesianProductToStruct(notProfiledCartesianProduct)
+//      println("\n\nstr1 = "+printStruct(str1))
+
+
+//      if(notProfiledCartesianProduct.size == 0 || profiledCartesianProduct.size == 0)
+//        return Times(s1 , s2 , auxFOccs)
+
+//      val b1 = str1 match{
+//        case e: EmptyPlusJunction => true
+//        case e: EmptyTimesJunction => true
+//        case _=> false
+//      }
+//
+//      val b2 = str2 match{
+//        case e: EmptyPlusJunction => true
+//        case e: EmptyTimesJunction => true
+//        case _ => false
+//      }
+//
+//      if(b1)
+//        return s2
+//      else
+//        if(b2)
+//          return s1
+//        else
+//        println("\n\nERROR in merge")
+//      println("\n\nmerge = "+printStruct(str2))
+//      println("\n\n--------------end merge---")
+          println("\n\nwe return " + printStruct(Plus(str1, str2)))
+          Plus(str1, str2)
+        } else {
+          println("\n\nwe return " + printStruct(str2))
+          str2
+        }
+      } else {
+        println("we return " + printStruct(Times(s1, s2, auxFOccs)))
+        Times(s1, s2, auxFOccs)
+      }
     }
+
+  // Defines the "big plus" used in Bruno's thesis
+   object PlusN {
+     def apply( ss: List[Struct] ) : Struct = ss match {
+       case x::Nil => x
+       case x::l => Plus( x, apply( l ) )
+       case Nil => EmptyPlusJunction()
+     }
+
+     def unapply(s: Struct) = s match {
+       case Plus(l, r) => Some( rec(s) )
+       case _ => None
+     }
+
+     private def rec(s: Struct) : List[Struct] = s match {
+       case Plus( l, r ) => rec(l):::rec(r)
+       case _ => s::Nil
+     }
+   }
 
     private def getTimesJunctions(struct: Struct):List[Struct] = struct match {
       case s: Times => s::Nil
       case s: EmptyTimesJunction => s::Nil
       case s: A => s::Nil
       case s: Dual => s::Nil
-      case s: EmptyPlusJunction => Nil
+      //case s: EmptyPlusJunction => Nil
       case Plus(s1,s2) => getTimesJunctions(s1):::getTimesJunctions(s2)
+//      case Plus(s1,s2) => s1::s2::Nil
     }
 
     private def getLiterals(struct:Struct):List[Struct] = struct match {
@@ -346,13 +408,13 @@ import at.logic.calculi.lk.quantificationRules._
 
   object removeTautologies {
     def apply(l: List[Sequent]): List[Sequent] = {
-      println("\n\nAPPLY\n")
+//      println("\n\nAPPLY\n")
       l.filter(socc => {
         if(socc.antecedent.size == socc.succedent.size) {
           val ant = socc.antecedent//.map(fo => fo.formula)
           val suc = socc.succedent//.map(fo => fo.formula)
           val b = ant.intersect(suc).isEmpty
-          println("\n\nb = "+b+ "    so="+socc.toString)
+//          println("\n\nb = "+b+ "    so="+socc.toString)
           b
         }
         else
@@ -371,21 +433,47 @@ import at.logic.calculi.lk.quantificationRules._
       // support LKsk
 //      case UnaryLKskProof(_,p,_,_,_) => apply( p )
     }
-
-
-    def getCorrespondingFOcc(fo: FormulaOccurrence, from: List[SequentOccurrence]): FormulaOccurrence = from match {
-      case so::rest if so.antecedent.contains(fo) => { if(so.succedent.size==1) so.succedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
-      case so::rest if so.succedent.contains(fo) =>  { if(so.antecedent.size==1) so.antecedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
-      case so::rest => getCorrespondingFOcc(fo, rest)
-      case List() => new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}
+//
+//    def getCorrespondingFOccs(fo: FormulaOccurrence, from: List[SequentOccurrence]): FormulaOccurrence = from match {
+//      case so::rest if so.antecedent.contains(fo) => { if(so.succedent.size==1) so.succedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
+//      case so::rest if so.succedent.contains(fo) =>  { if(so.antecedent.size==1) so.antecedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
+//      case so::rest => getCorrespondingFOccs(fo, rest)
+//      case List() => new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}
+//    }
+//
+//    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[SequentOccurrence]): List[FormulaOccurrence] = lFOcc.map(x => getCorrespondingFOccs(x,from))
+//
+//    def getAllCorrFOccs(lFOcc: List[FormulaOccurrence], p: LKProof) =   getAllCorrespondingFOccs(lFOcc, apply(p))
+//    ancOfAuxFOccs = getAllAxioms.getAllCorrFOccs(auxFOccs.foldLeft(List[FormulaOccurrence]())((x,y) => x ::: getAncAx(y)), proof)
+//     !(getListOfFOccsInStruct(i).intersect(ancOfAuxFOccs)).isEmpty
+    def isFOccInAxiom(fo: FormulaOccurrence, from: List[SequentOccurrence]): Boolean = from match {
+      case so::rest if so.antecedent.contains(fo) || so.succedent.contains(fo) => true
+      case so::rest => isFOccInAxiom(fo, rest)
+      case _ => false
     }
 
-    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[SequentOccurrence]): List[FormulaOccurrence] = lFOcc.map(x => getCorrespondingFOcc(x,from))
+    def printCorrespSequent(fo: FormulaOccurrence, from: List[SequentOccurrence]) = from match {
+      case so::rest if so.antecedent.contains(fo) || so.succedent.contains(fo) => { so.antecedent.toList.map(x => {print(x.formula)});print("  |-  "); so.succedent.toList.map(x => {print(x.formula)})}
+      case so::rest => getPartnerFOccs(fo, rest)
+//      case _ => List()
+    }
+
+    def getPartnerFOccs(fo: FormulaOccurrence, from: List[SequentOccurrence]): List[FormulaOccurrence] = from match {
+      case so::rest if so.antecedent.contains(fo) || so.succedent.contains(fo) => so.antecedent.toList ::: so.succedent.toList
+      case so::rest => getPartnerFOccs(fo, rest)
+      case _ => List()
+    }
+
+    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[SequentOccurrence]): List[FormulaOccurrence] = lFOcc.map(x => getPartnerFOccs(x,from)).foldLeft(List[FormulaOccurrence]())((x,y) => x:::y)
 
     def getAllCorrFOccs(lFOcc: List[FormulaOccurrence], p: LKProof) =   getAllCorrespondingFOccs(lFOcc, apply(p))
   }
 
-
+  object printCutAncs {
+    def apply(p: LKProof) = {
+      getCutAncestors( p ).foreach(fo => println(fo.formula.toStringSimple))
+    }
+  }
 
 /////////////////////////////////////////////   Struct for the profile   ////////////////////////////////////
   trait Struct
