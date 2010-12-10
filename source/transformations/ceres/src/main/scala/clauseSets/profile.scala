@@ -167,7 +167,8 @@ import at.logic.calculi.lk.quantificationRules._
         if (notProfiledCartesianProduct.size > 0)
         {
           val str1 = transformNotProfiledCartesianProductToStruct(notProfiledCartesianProduct)
-          Plus(str1, str2)
+          // rewrite again --- maybe we have created a new redex.
+          rewrite( Plus(str1, str2) )
         } else {
           str2
         }
