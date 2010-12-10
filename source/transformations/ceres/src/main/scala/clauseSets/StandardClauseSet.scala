@@ -18,7 +18,7 @@ import at.logic.language.hol.HOLFormula
 object StandardClauseSet {
   def normalize(struct:Struct):Struct = struct match {
     case Plus(s1,s2) => Plus(normalize(s1), normalize(s2))
-    case Times(s1,s2) => merge(normalize(s1), normalize(s2))
+    case Times(s1,s2,aux) => merge(normalize(s1), normalize(s2),aux)
     case s: A => s
     case s: Dual => s
     case e: EmptyTimesJunction => e
@@ -30,12 +30,12 @@ object StandardClauseSet {
   def transformStructToLabelledClauseSet(struct:Struct) =
     transformStructToClauseSet(struct).map( so => sequentOccurrenceToLabelledSequentOccurrence( so ) )
 
-  private def merge(s1:Struct, s2:Struct):Struct = {
+  private def merge(s1:Struct, s2:Struct, aux: List[FormulaOccurrence]):Struct = {
     val (list1,list2) = (getTimesJunctions(s1),getTimesJunctions(s2))
     val cartesianProduct = for (i <- list1; j <- list2) yield (i,j)
     def transformCartesianProductToStruct(cp: List[Pair[Struct,Struct]]): Struct = cp match {
-      case (i,j)::Nil => Times(i, j)
-      case (i,j)::rest => Plus(Times(i,j),transformCartesianProductToStruct(rest))
+      case (i,j)::Nil => Times(i, j, aux)
+      case (i,j)::rest => Plus(Times(i,j, aux),transformCartesianProductToStruct(rest))
       case Nil => EmptyPlusJunction()
     }
     transformCartesianProductToStruct(cartesianProduct)
@@ -56,7 +56,7 @@ object StandardClauseSet {
     case s: EmptyTimesJunction => Nil
     case s: EmptyPlusJunction => Nil
     case Plus(s1,s2) => getLiterals(s1):::getLiterals(s2)
-    case Times(s1,s2) => getLiterals(s1):::getLiterals(s2)
+    case Times(s1,s2,_) => getLiterals(s1):::getLiterals(s2)
   }
 
   private def clausifyTimesJunctions(struct: Struct): SequentOccurrence = {

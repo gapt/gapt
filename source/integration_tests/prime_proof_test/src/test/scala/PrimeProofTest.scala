@@ -159,17 +159,16 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val sp = at.logic.transformations.ceres.clauseSets.profile.StructCreators.extract( proof_sk )
-//      println("\n\npfl = "+(printStruct(new proofProfile(proof_sk).normalize(s))))
-      val normprf = (new proofProfile(proof_sk)).normalize(sp)
-      val prf = removeTautologies((new proofProfile(proof_sk)).clausify(normprf).map( so => so.getSequent ))
-      println("\n\npfl = "+printStruct(normprf))
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
 
-      println("\n\ncutAnc = ")
-      printCutAncs(proof_sk)
+      val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
+      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-0-prf.tptp")
+      writer_prf.write( tptp_prf )
+      writer_prf.flush
 
 
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-0-cs.tptp")
       writer.write( tptp )
