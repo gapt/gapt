@@ -10,6 +10,7 @@ import org.specs.matcher.Matcher
 
 import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import  at.logic.transformations.ceres.clauseSets.profile
 
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
@@ -78,24 +79,23 @@ class LatticeTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val sp = at.logic.transformations.ceres.clauseSets.profile.StructCreators.extract( proof_sk )
-//      println("\n\npfl = "+(printStruct(new proofProfile(proof_sk).normalize(s))))
-      val normprf = (new proofProfile(proof_sk).normalize(sp))
-      val prf = removeTautologies((new proofProfile(proof_sk)).clausify(normprf).map( so => so.getSequent ))
-      println("\n\npfl = "+printStruct(normprf))
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
+
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "lattice-prf.tptp")
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
-      // construct the characteristic clause set
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
 
-      // output it in TPTP format
+
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "lattice-cs.tptp")
       writer.write( tptp )
       writer.flush
+
+      val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
+
 
       // refute it with prover9
       Prover9.refute( cs ) must beEqual( true )
@@ -104,7 +104,7 @@ class LatticeTest extends SpecificationWithJUnit {
       val path = "target" + separator + "test-classes" + separator + "lattice-sk.xml"
       saveXML( Pair("lattice-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf",prf)::Nil, path )
+        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
   }
