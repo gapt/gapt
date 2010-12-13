@@ -12,12 +12,11 @@ import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.acyclicGraphs._
-import scala.collection.immutable.Set
-import scala.collection.mutable.Map
+import scala.collection.immutable._
 import at.logic.language.lambda.substitutions._
 import at.logic.calculi.lk.base._
 import base._
-import at.logic.algorithms.unification.fol._
+//import at.logic.algorithms.unification.fol._
 
 package robinson {
 
@@ -95,13 +94,14 @@ package robinson {
         }
       }
     }
-
+/*
     def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence ): ResolutionProof[ClauseOccurrence] = {
       val unifiers = FOLUnificationAlgorithm.unify( a1.formula.asInstanceOf[FOLExpression], a2.formula.asInstanceOf[FOLExpression] )
       if ( unifiers.isEmpty )
         throw new LKRuleCreationException("Auxiliary formulas " + a1.formula + " and " + a2.formula + " are not unifiable!")
       apply( p1, p2, a1, a2, unifiers.head.asInstanceOf[Substitution[FOLFormula]] )
     }
+*/
   }
 /*
   // TODO: here we need information on where to put the newLiteral
@@ -136,10 +136,13 @@ package robinson {
           with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula] {def rule = VariantType; def substitution = sub}
     }
 
+    /* TODO: does not compile!
     def apply(p: ResolutionProof[ClauseOccurrence]): ResolutionProof[ClauseOccurrence] = {
-      val vars = p.root.getSequent.foldLeft( HashMap[FOLVar]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
-      apply( p, Substitution( vars.map( v => (v, FreshVariableSymbolFactory.getVariableSymbol) ) ) )
+      // TODO: refactor the following into Sequent.getFreeAndBoundVariables
+      val vars = (p.root.getSequent.antecedent ++ p.root.getSequent.succedent).foldLeft( HashSet[FOLVar]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
+      apply( p, Substitution( vars.map( v => (v, fol.createVar( FreshVariableSymbolFactory.getVariableSymbol) ) ).toMap ) )
     }
+    */
 
     def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]) = if (proof.rule == VariantType) {
         val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]]
