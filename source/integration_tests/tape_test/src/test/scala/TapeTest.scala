@@ -34,6 +34,7 @@ import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.fol._
 import at.logic.transformations.ceres.clauseSets.profile.proofProfile
+import at.logic.provers.prover9._
 
 
 class TapeTest extends SpecificationWithJUnit {
@@ -77,6 +78,9 @@ class TapeTest extends SpecificationWithJUnit {
       val path = "target" + separator + "test-classes" + separator + "type-sk.xml"
 
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
+
+      Prover9.refute( cs ) must beEqual( true )
+
 
       saveXML( Pair("tape-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
