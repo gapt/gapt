@@ -10,6 +10,7 @@ import at.logic.calculi.proofs._
 //import at.logic.language.hol._
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
+import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.acyclicGraphs._
 import scala.collection.immutable._
@@ -136,13 +137,12 @@ package robinson {
           with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula] {def rule = VariantType; def substitution = sub}
     }
 
-    /* TODO: does not compile!
     def apply(p: ResolutionProof[ClauseOccurrence]): ResolutionProof[ClauseOccurrence] = {
       // TODO: refactor the following into Sequent.getFreeAndBoundVariables
-      val vars = (p.root.getSequent.antecedent ++ p.root.getSequent.succedent).foldLeft( HashSet[FOLVar]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
-      apply( p, Substitution( vars.map( v => (v, fol.createVar( FreshVariableSymbolFactory.getVariableSymbol) ) ).toMap ) )
+      val vars = (p.root.getSequent.antecedent ++ p.root.getSequent.succedent).foldLeft( HashSet[Var]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
+      // TODO: should not be necessary to pass argument Ti() here.
+      apply( p, Substitution( vars.map( v => (v, v.factory.createVar( FreshVariableSymbolFactory.getVariableSymbol, Ti()) ) ).toMap ).asInstanceOf[Substitution[FOLFormula]] )
     }
-    */
 
     def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]) = if (proof.rule == VariantType) {
         val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]]
