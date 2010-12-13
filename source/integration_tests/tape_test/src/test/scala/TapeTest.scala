@@ -1,9 +1,9 @@
-/** 
- * Description: 
+/**
+ * Description:
 **/
 package at.logic.integration_tests
 
-import _root_.at.logic.transformations.ceres.clauseSets.profile. {printStruct, proofProfile}
+
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
@@ -33,8 +33,8 @@ import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.fol._
+import at.logic.transformations.ceres.clauseSets.profile.proofProfile
 
-import at.logic.provers.prover9._
 
 class TapeTest extends SpecificationWithJUnit {
   "The system" should {
@@ -53,7 +53,7 @@ class TapeTest extends SpecificationWithJUnit {
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "tape-cs.xml" )
       */
     }
-    "parse and skolemize the tape proof" in {
+    "parse, skolemize and extract the profile of the tape proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
       val proof = proofdb.proofs.head._2
@@ -61,33 +61,26 @@ class TapeTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
 
-      val sp = at.logic.transformations.ceres.clauseSets.profile.StructCreators.extract( proof_sk )
-//      (new proofProfile(proof_sk)).transformStructToProfile(sp)
-//      val prf = printStruct(new proofProfile(proof_sk).normalize(sp)))
-      println("\n\nsp = "+printStruct(sp))
-      //println("\n\ns = " +printStruct(s))
-      val normprf = (new proofProfile(proof_sk)).normalize(sp)
-      val prf = (new proofProfile(proof_sk)).clausify(normprf).map( so => so.getSequent )
-      println("\n\npfl = "+printStruct(normprf))
+      val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
+      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "tape-prf.tptp")
+      writer_prf.write( tptp_prf )
+      writer_prf.flush
 
-      // construct the characteristic clause set
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
-
-      // output it in TPTP format
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "tape-cs.tptp")
       writer.write( tptp )
       writer.flush
-
-      // refute it with prover9
-      Prover9.refute( cs ) must beEqual( true )
-
       val projs = Projections( proof_sk )
-      val path = "target" + separator + "test-classes" + separator + "tape-sk.xml"
+      val path = "target" + separator + "test-classes" + separator + "type-sk.xml"
+
+      val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
+
       saveXML( Pair("tape-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf", prf)::Nil, path )
+        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
   }
