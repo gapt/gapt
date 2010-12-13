@@ -48,6 +48,9 @@ import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 
+import at.logic.provers.prover9._
+
+
 class PrimeProofTest extends SpecificationWithJUnit {
 
   def sequentToString( s: Sequent ) = {
@@ -177,6 +180,10 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val path = "target" + separator + "test-classes" + separator + "prime1-0-sk.xml"
 
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
+
+
+      Prover9.refute( cs ) must beEqual( true )
+
 
       saveXML( Pair("prime1-0-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
