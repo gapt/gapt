@@ -15,6 +15,7 @@ import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types.ImplicitConverters._
 
+object Definitions { def fol = FOLFactory }
 
 trait FOL extends HOL
 {
@@ -108,6 +109,7 @@ object Function {
   }
 }
 
+case object BottomC extends HOLConst(BottomSymbol, "o") with FOL with FOLFormula
 case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
 case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))") with FOL
@@ -210,6 +212,8 @@ object FOLFactory extends LambdaFactoryA {
       }
     }
   }
+
+  def createVar( name: SymbolA ) : Var = createVar( name, Ti() )
 
   def createApp( fun: LambdaExpression, arg: LambdaExpression ) : App =
     if (HOLFactory.isFormulaWhenApplied(fun.exptype)) new HOLAppFormula(fun, arg) with FOLFormula

@@ -111,6 +111,7 @@ package hol {
     }
   }
 
+  case object BottomC extends HOLConst(BottomSymbol, "o")
   case object NegC extends HOLConst(NegSymbol, "(o -> o)")
   case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))")
   case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))")

@@ -1,4 +1,4 @@
-  /*
+ /*
  * base.scala
  *
  * To change this template, choose Tools | Template Manager
@@ -20,10 +20,12 @@ import at.logic.calculi.lk.base._
 
 package base {
 
+/*
   object RunningId {
     var id = 0
     def nextId = {id = id + 1; id}
   }
+*/
 
   /* Resolution proofs are graphs by definition. TODO: enforce them to by acyclic
    */
@@ -37,6 +39,7 @@ package base {
     override def uProof2 = t2.asInstanceOf[ResolutionProof[V]]
   }
 
+/*
   trait LiteralId {
     def literalId: Int
   }
@@ -50,6 +53,7 @@ package base {
     def literalIdsLeft: List[Int]
     def literalIdsRight: List[Int]
   }
+*/
 
   trait InstantiatedVariable {
     def term: HOLExpression
