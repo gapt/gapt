@@ -183,7 +183,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
 
       Prover9.refute( cs ) must beEqual( true )
-
+      Prover9.refute( prf ) must beEqual( true )
 
       saveXML( Pair("prime1-0-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
