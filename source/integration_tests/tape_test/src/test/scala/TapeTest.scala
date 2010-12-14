@@ -80,6 +80,7 @@ class TapeTest extends SpecificationWithJUnit {
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
       Prover9.refute( cs ) must beEqual( true )
+      Prover9.refute( prf ) must beEqual( true )
 
 
       saveXML( Pair("tape-sk", proof_sk) ::
