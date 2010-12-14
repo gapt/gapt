@@ -17,7 +17,6 @@ import scala.collection.immutable._
 import at.logic.language.lambda.substitutions._
 import at.logic.calculi.lk.base._
 import base._
-//import at.logic.algorithms.unification.fol._
 
 package robinson {
 
@@ -65,6 +64,12 @@ package robinson {
       val left: Set[FormulaOccurrence] = seq.antecedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form.asInstanceOf[FOLFormula], st, factory))
       val right: Set[FormulaOccurrence] = seq.succedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form.asInstanceOf[FOLFormula], st, factory))
       new LeafAGraph[ClauseOccurrence](ClauseOccurrence(left, right)) with NullaryResolutionProof[ClauseOccurrence] {def rule = InitialType}
+    }
+
+    def createDefault(seq: Sequent): Pair[LeafAGraph[ClauseOccurrence] with NullaryResolutionProof[ClauseOccurrence], Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
+      val left: List[FormulaOccurrence] = seq.antecedent.map(f => createOccurrence(f.asInstanceOf[FOLFormula], Set[FormulaOccurrence](), PointerFOFactoryInstance))
+      val right: List[FormulaOccurrence] = seq.succedent.map(f => createOccurrence(f.asInstanceOf[FOLFormula], Set[FormulaOccurrence](), PointerFOFactoryInstance))
+      (new LeafAGraph[ClauseOccurrence](ClauseOccurrence(left.toSet, right.toSet)) with NullaryResolutionProof[ClauseOccurrence] {def rule = InitialType}, (left,right))
     }
 
     def createOccurrence(f: FOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
