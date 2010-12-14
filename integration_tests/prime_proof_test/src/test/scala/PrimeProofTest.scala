@@ -20,9 +20,11 @@ import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
+/* comment out untill atp works again
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands._
 import at.logic.provers.atp.refinements.UnitRefinement
+*/
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
