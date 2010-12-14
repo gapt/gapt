@@ -98,6 +98,8 @@ class LatticeTest extends SpecificationWithJUnit {
 
 
       // refute it with prover9
+      Prover9.refute( cs ) must beEqual( true )
+
       Prover9.refute( prf ) must beEqual( true )
 
       val projs = Projections( proof_sk )
