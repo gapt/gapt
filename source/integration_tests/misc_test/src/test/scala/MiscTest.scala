@@ -12,9 +12,8 @@ import logicSymbols._
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
-import at.logic.transformations.ceres.clauseSets.profile. {preNormalize, printStruct, proofProfile}
 
-//import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
 import at.logic.parsing.language.xml.XMLParser._
@@ -36,7 +35,7 @@ import java.io.File.separator
 
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
-//import at.logic.transformations.ceres.clauseSets.profile._
+import at.logic.transformations.ceres.clauseSets.profile._
 import at.logic.calculi.occurrences._
 import propositionalRules._
 
@@ -59,7 +58,7 @@ class MiscTest extends SpecificationWithJUnit {
 //    }
 //    */
 
-    "skolemize a simple proooccurrencesf" in {
+    "skolemize a simple proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
       val proof = proofdb.proofs.head._2
@@ -92,21 +91,15 @@ class MiscTest extends SpecificationWithJUnit {
       val projs = Projections( proof )
       val s = at.logic.transformations.ceres.struct.StructCreators.extract( proof )
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+      val prf = deleteTautologies(proofProfile(s, proof).map( so => so.getSequent ))
       val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
       saveXML( projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Nil, path )
+        Pair("cs", cs)::Pair("prf", prf)::Nil, path )
     }
 
     //Cvetan
     "extract the profile of Bruno's thesis" in {
       println("\n\n\n")
-//      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-//      proofdb.proofs.size must beEqual(1)
-//      val proof = proofdb.proofs.head._2
-//      val lproof = toLabeledProof(proof)
-//      printProfile(lproof)
-//      println("\n\nseq = "+proof.root.getSequent.toString)
-
       val A: HOLFormula = Atom(new ConstantStringSymbol("A"), List())
       val B: HOLFormula = Atom(new ConstantStringSymbol("B"), List())
       val C: HOLFormula = Atom(new ConstantStringSymbol("C"), List())
@@ -126,42 +119,11 @@ class MiscTest extends SpecificationWithJUnit {
       val r6 = ax5//CutRule(ax5,ax6, C)
       val proof = OrLeftRule(r5,r6, And(A,B), C)
 
-//                   toLabeledProof(proof)
-
-
-
-
-//
-//      val struct = StructCreators.extract(proof)
-//      println("\n\n"+at.logic.transformations.ceres.clauseSets.profile.printStruct(struct))
-//      println("\n\nstruct = "+struct)//pfl.toString)
-////      println("\n\nccl = "+StandardClauseSet.transformStructToClauseSet(struct.asInstanceOf[at.logic.transformations.ceres.struct.Struct]))
-//      println("\n\npfl = "+printStruct(new proofProfile(proof).normalize(struct)))
-//
-//
-
-      val sp = at.logic.transformations.ceres.clauseSets.profile.StructCreators.extract( proof )
-//      (new proofProfile(proof_sk)).transformStructToProfile(sp)
-//      val prf = printStruct(new proofProfile(proof_sk).normalize(sp)))
-
-      println("\n\nstruct  = "+printStruct(sp))
-
-      val normprf = (new proofProfile(proof)).normalize(sp)
-      val prf = (new proofProfile(proof)).clausify(normprf).map( so => so.getSequent )
-      println("\n\npfl = "+printStruct(normprf))
-//      printProfile(proof)
-      val s =   at.logic.transformations.ceres.struct.StructCreators.extract( proof )
+      val s = StructCreators.extract( proof )
+      val prf = deleteTautologies(proofProfile(s, proof).map( so => so.getSequent ))
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
 
-      val tptp = TPTPFOLExporter.tptp_problem( cs )
-      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "tape-cs.tptp")
-      writer.write( tptp )
-      writer.flush
-//      val projs = Projections( proof )
-      val path = "target" + separator + "test-classes" + separator + "output.xml"
-      saveXML( Pair("output", proof)::Nil,// :: projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf", prf)::Nil, path )
-      (new java.io.File( path ) ).exists() must beEqual( true )
+      // TODO: check if profile is really as expected.
     }
   }
 }
