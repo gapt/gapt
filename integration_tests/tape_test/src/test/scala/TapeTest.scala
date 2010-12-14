@@ -75,7 +75,7 @@ class TapeTest extends SpecificationWithJUnit {
       writer.write( tptp )
       writer.flush
       val projs = Projections( proof_sk )
-      val path = "target" + separator + "test-classes" + separator + "type-sk.xml"
+      val path = "target" + separator + "test-classes" + separator + "tape-sk.xml"
 
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
