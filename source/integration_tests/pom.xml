@@ -45,11 +45,12 @@
       <artifactId>utils</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
+      <!-- dependency on atp is dropped until it works again
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>atp</artifactId>
       <version>1.0-SNAPSHOT</version>
-      </dependency>
+      </dependency>  -->
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>prover9</artifactId>
