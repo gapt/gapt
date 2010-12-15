@@ -80,6 +80,7 @@ package base {
   {
     def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
     def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
+    def multisetEquals( o: Sequent ) = getSequent.multisetEquals(o)
     //def multisetEquals( o: SequentOccurrence ) = (((antecedent.toList.map(x => x.formula)) == o.antecedent.toList.map(x => x.formula)) && ((succedent.toList.map(x => x.formula)) == o.succedent.toList.map(x => x.formula)))
     override def toString : String = SequentFormatter.sequentOccurenceToString(this)
   }
