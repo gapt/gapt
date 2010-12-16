@@ -61,11 +61,10 @@ package base {
       else antecedent.foldLeft("")((s,a) => s+a.toString)) + ":-" +
       (if (succedent.size > 1) succedent.head.toString + succedent.tail.foldLeft("")((s,a) => s+", "+a.toString)
       else succedent.foldLeft("")((s,a) => s+a.toString))
-    def removeFormulasAtIndices(inds: List[Int]): Sequent = Sequent(
+    def removeFormulasAtIndices(inds: Seq[Int]): Sequent = Sequent(
         antecedent.zipWithIndex.filter(x => !inds.contains(x._2)).map(x => x._1),
         succedent.zipWithIndex.filter(x => !inds.contains(x._2 + antecedent.size)).map(x => x._1)
       )
-
     def toFormula = Or( antecedent.map( f => Neg( f ) ) ::: succedent )
 
     // checks whether this sequent is of the form F :- F
@@ -81,8 +80,14 @@ package base {
     def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
     def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
     def multisetEquals( o: Sequent ) = getSequent.multisetEquals(o)
+    def setEquals(o: SequentOccurrence ) = getSequent.setEquals(o.getSequent)
+    def setEquals( o: Sequent ) = getSequent.setEquals(o)
     //def multisetEquals( o: SequentOccurrence ) = (((antecedent.toList.map(x => x.formula)) == o.antecedent.toList.map(x => x.formula)) && ((succedent.toList.map(x => x.formula)) == o.succedent.toList.map(x => x.formula)))
     override def toString : String = SequentFormatter.sequentOccurenceToString(this)
+    def removeFormulasAtOccurrences(occs: Seq[FormulaOccurrence]): SequentOccurrence = SequentOccurrence(
+        antecedent.filterNot(x => occs.contains(x)),
+        succedent.filterNot(x => occs.contains(x))
+      )
   }
   object SequentOccurrence {
     def apply(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence]) = new SequentOccurrence(antecedent, succedent)
