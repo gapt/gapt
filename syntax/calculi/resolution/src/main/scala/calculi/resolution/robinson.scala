@@ -19,8 +19,9 @@ import at.logic.calculi.lk.base._
 import base._
 
 package robinson {
+import _root_.at.logic.language.hol.HOLFormula
 
-  trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {case Atom(_,_) => true; case _ => false}))}
+trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {case Atom(_,_) => true; case _ => false}))}
 
   class Clause(neg: List[FOLFormula], pos: List[FOLFormula]) extends Sequent(neg, pos) with CNF {
     def negative = antecedent.asInstanceOf[List[FOLFormula]]
@@ -49,10 +50,10 @@ package robinson {
   }
 
   object createContext {
-    def apply(set: Set[FormulaOccurrence], sub: Substitution[FOLFormula]): Set[FormulaOccurrence] = 
-      set.map(x => x.factory.createContextFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]), x, x::Nil, set - x))
-    def apply(set: Set[FormulaOccurrence], binary: Set[FormulaOccurrence], sub: Substitution[FOLFormula]): Set[FormulaOccurrence] = 
-      set.map(x => x.factory.createContextFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]), x, x::Nil, set - x, binary))
+    def apply(set: Set[FormulaOccurrence], sub: Substitution[FOLExpression]): Set[FormulaOccurrence] =
+      set.map(x => x.factory.createContextFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula], x, x::Nil, set - x))
+    def apply(set: Set[FormulaOccurrence], binary: Set[FormulaOccurrence], sub: Substitution[FOLExpression]): Set[FormulaOccurrence] =
+      set.map(x => x.factory.createContextFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula], x, x::Nil, set - x, binary))
   }
 
   case object VariantType extends UnaryRuleTypeA
@@ -79,7 +80,7 @@ package robinson {
 
   // left side is always resolved on positive literal and right on negative
   object Resolution {
-    def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence, sub: Substitution[FOLFormula]): ResolutionProof[ClauseOccurrence] = {
+    def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence, sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
       val term1op = p1.root.succedent.find(x => x == a1)
       val term2op = p2.root.antecedent.find(x => x == a2)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
@@ -92,7 +93,7 @@ package robinson {
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent - term2, p1.root.antecedent, sub),
               createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent, p1.root.succedent - term1, sub))
             , p1, p2)
-            with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula] with AuxiliaryFormulas {
+            with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
                 def rule = ResolutionType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
@@ -101,7 +102,7 @@ package robinson {
       }
     }
    def unapply(proof: ResolutionProof[ClauseOccurrence]) = if (proof.rule == VariantType) {
-        val pr = proof.asInstanceOf[BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula] with AuxiliaryFormulas]
+        val pr = proof.asInstanceOf[BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas]
         Some((pr.root, pr.uProof1, pr.uProof1, pr.aux.head.head, pr.aux.tail.head.head, pr.substitution))
       }
       else None
@@ -140,22 +141,22 @@ package robinson {
 */
 
   object Variant {
-    def apply(p: ResolutionProof[ClauseOccurrence], sub: Substitution[FOLFormula]): ResolutionProof[ClauseOccurrence] = {
+    def apply(p: ResolutionProof[ClauseOccurrence], sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
       require( sub.isRenaming )
       val newCl = ClauseOccurrence( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
       new UnaryAGraph[ClauseOccurrence](newCl, p)
-          with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula] {def rule = VariantType; def substitution = sub}
+          with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] {def rule = VariantType; def substitution = sub}
     }
 
     def apply(p: ResolutionProof[ClauseOccurrence]): ResolutionProof[ClauseOccurrence] = {
       // TODO: refactor the following into Sequent.getFreeAndBoundVariables
       val vars = (p.root.getSequent.antecedent ++ p.root.getSequent.succedent).foldLeft( HashSet[Var]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
       // TODO: should not be necessary to pass argument Ti() here.
-      apply( p, Substitution( vars.map( v => (v, v.factory.createVar( FreshVariableSymbolFactory.getVariableSymbol, Ti()) ) ).toMap ).asInstanceOf[Substitution[FOLFormula]] )
+      apply( p, Substitution( vars.map( v => (v, v.factory.createVar( FreshVariableSymbolFactory.getVariableSymbol, Ti()) ) ).toMap ).asInstanceOf[Substitution[FOLExpression]] )
     }
 
-    def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]) = if (proof.rule == VariantType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]]
+    def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]) = if (proof.rule == VariantType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]]
         Some((pr.root, pr.uProof, pr.substitution))
       }
       else None
@@ -166,14 +167,14 @@ package robinson {
   // with substitution y -> x and x -> a. but as we combine the substitutions we cannot remove the substitution generated by the first step. This is not important as we apply
   // the same resolution step and therefore this substitution should be anyway generated.
   object Factor {
-    def apply(p: ResolutionProof[ClauseOccurrence], occurrencesToRemove: Seq[FormulaOccurrence], sub: Substitution[FOLFormula]): ResolutionProof[ClauseOccurrence] = {
+    def apply(p: ResolutionProof[ClauseOccurrence], occurrencesToRemove: Seq[FormulaOccurrence], sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
       val r = p.root.removeFormulasAtOccurrences(occurrencesToRemove)
       val newCl = ClauseOccurrence( createContext( r.antecedent, sub ), createContext( r.succedent, sub ))
       new UnaryAGraph[ClauseOccurrence](newCl, p)
-        with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula] {def rule = FactorType; def substitution = sub}
+        with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] {def rule = FactorType; def substitution = sub}
     }
-    def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]) = if (proof.rule == FactorType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula]]
+    def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]) = if (proof.rule == FactorType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]]
         Some((pr.root, pr.uProof, pr.substitution))
       }
       else None
