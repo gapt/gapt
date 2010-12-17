@@ -4,7 +4,7 @@
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
  */
-
+/*
 package at.logic.provers.atp.commandsParsers
 
 import org.specs._
@@ -64,3 +64,4 @@ class CommandsParserTest extends SpecificationWithJUnit {
   }
   //def functionToString(fun: LambdaExpression => LambdaExpression, terms: List[LambdaExpression])  = terms.map(x => x.toString + "->" + fun(x).toString)
 }
+*/

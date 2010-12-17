@@ -39,4 +39,14 @@ class OccurrenceTest extends SpecificationWithJUnit {
       PositionsFOFactory.createPrincipalFormulaOccurrence(f2, Nil, Set(fo1)) must beEqual(Occ(2))
     }
   }
+  "Pointers" should {
+    "be compared correctly" in {
+      val c1 = HOLVar("a", i->o)
+      val v1 = HOLVar("x", i)
+      val f1 = HOLAppFormula(c1,v1)
+      val p1 = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f1, Nil, Set[FormulaOccurrence]())
+      val p2 = PointerFOFactoryInstance.createPrincipalFormulaOccurrence(f1, Nil, Set[FormulaOccurrence]())
+      p1 mustNot beEqual (p2)
+    }
+  }
 }
