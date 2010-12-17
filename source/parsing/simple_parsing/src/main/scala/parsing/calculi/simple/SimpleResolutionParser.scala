@@ -7,35 +7,31 @@
 
 package at.logic.parsing.calculi.simple
 
-import scala.util.parsing.combinator._
-import scala.util.matching.Regex
+import at.logic.language.fol.FOLFormula
+import at.logic.language.hol.{Neg, HOLFormula}
+import at.logic.calculi.resolution.robinson.Clause
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.language.hol._
-import at.logic.language.lambda.types._
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.calculi.resolution.base._
-import at.logic.calculi.lk.base._
-//import at.logic.calculi.resolution.robinson._
 
-/*
+import at.logic.calculi.lk.base._
+
+
+
 /*
  * In order to allow a complex inheritence structure where the resolutionParser trait is mixed
  * with HOL or FOL parsers and must override a method there on the same time we have created these
  * two helper classes.
  */
-trait SimpleResolutionParserHOL extends SimpleResolutionParser[Clause] with SimpleHOLParser {
+/*trait SimpleResolutionParserHOL extends SimpleResolutionParser[Clause] with SimpleFOLParser {
   override def formula = formula2
   override def neg = neg2
   def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas).map(stripNeg),ls.filter(x => !filterPosFormulas(x)))}
-}
+}  */
 trait SimpleResolutionParserFOL extends SimpleResolutionParser[Clause] with SimpleFOLParser {
   override def formula = formula2
   override def neg = neg2
-  def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas).map(stripNeg),ls.filter(x => !filterPosFormulas(x)))}
+  def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas).map(stripNeg).asInstanceOf[List[FOLFormula]],ls.filter(x => !filterPosFormulas(x)).asInstanceOf[List[FOLFormula]])}
 }
 
 trait SimpleResolutionParser[V <: Sequent] extends ResolutionParser[V] {
@@ -57,4 +53,4 @@ trait SimpleResolutionParser[V <: Sequent] extends ResolutionParser[V] {
     case _ => f
   }
 }
-*/
+

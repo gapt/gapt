@@ -4,33 +4,59 @@
 
 package at.logic.provers.atp
 
+import at.logic.utils.executionModels.ndStream.{Configuration, NDStream}
+import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
 import at.logic.calculi.resolution.base._
 import at.logic.calculi.lk.base._
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.substitutions._
-import at.logic.language.hol._
-import at.logic.parsing.calculi.ResolutionParser
-import at.logic.algorithms.subsumption.{StillmanSubsumptionAlgorithm, SubsumptionAlgorithm} // to enable configuration
-import refinements._
-import commands._
-import commandsParsers._
-import ui._
-import java.util.Calendar
-import at.logic.utils.ds.PublishingBuffer
-import at.logic.algorithms.subsumption.managers.SubsumptionManager
+import collection.mutable.HashMap
+import at.logic.provers.atp.commands.base._
 
-/**
- * A generic prover for resolution calculus. Not thread safe!
- */
-object Main {
-  def main(args: Array[String]) {
-    val prover = new Prover[at.logic.calculi.resolution.robinson.Clause]{val panel = RobinsonCommandLinePanel}
-    prover.recExec(Stream(InteractCom))
-  }
+object Definitions {
+  type State = HashMap[String, Any]
 }
 
-trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
+import Definitions._
 
+trait Prover[V <: SequentOccurrence] extends at.logic.utils.logging.Logger {
+  
+  def refute(commands: Stream[Command[V]]) : NDStream[ResolutionProof[V]] = {
+    new NDStream(new MyConfiguration(new State(), commands, ()), myFun) with BFSAlgorithm
+  }
+  
+  private[Prover] class MyConfiguration(val state: State, val commands: Stream[Command[V]], val data: Any, val result: Option[ResolutionProof[V]]) extends Configuration[ResolutionProof[V]] {
+    def this(state: State, commands: Stream[Command[V]], data: Any) = this(state, commands, data, None)
+    def isTerminal = result != None
+  }
+
+  private[Prover] def myFun(c: Configuration[ResolutionProof[V]]): Iterable[Configuration[ResolutionProof[V]]] = {
+    val conf = c.asInstanceOf[MyConfiguration]
+    if (conf.commands.isEmpty) List()
+    else {
+      conf.commands.head match {
+        case com: InitialCommand[_] => com(conf.state).map(x => new MyConfiguration(x._1, conf.commands.tail, x._2))
+        case com: DataCommand[_] => {
+          val res = com(conf.state, conf.data)
+          if (res.isEmpty) List(new MyConfiguration(conf.state, skipNonInit(conf.commands.tail), ()))
+          else res.map(x => new MyConfiguration(x._1, conf.commands.tail, x._2))
+        }
+        case com: ResultCommand[_] => List(new MyConfiguration(conf.state, conf.commands.tail, conf.data, com(conf.state, conf.data)))
+        case com: MacroCommand[_] => {
+          val res = com(conf.state)
+          res._1.map(x => new MyConfiguration(x._1, conf.commands.tail, conf.data, x._2)) ++
+          (if (res._2) List(new MyConfiguration(conf.state, conf.commands.tail, conf.data)) else List())
+        }
+      }
+    }
+  }
+
+  private[Prover] def skipNonInit(stream: Stream[Command[V]]): Stream[Command[V]] = stream.head match {
+    case com: InitialCommand[_] => stream
+    case _ => skipNonInit(stream.tail)
+  }
+}
+      // group the replies according to groups (subsumption, resolvent, etc.) and have different traits somehow deal with them
+
+  /*
   // for executing repeatedly (can be broken only with interactiveness (scala.actors.Actor.self.exit))
   def recExec(commands: Stream[Command]): Stream[ResolutionProof[V]] = {
     val st = refute(commands) 
@@ -78,7 +104,7 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
     else
     (composedCommand, newCommand) match {
       // interactiveness
-      case (com, InteractCom) => {val c = panel.getNextCommand(com, if (pb != None) Some(pb.get.iterator) else None); /*Console.println("interactive com: " + c);*/ c}
+      case (com, ic: InteractCom) => {val c = panel.getNextCommand(com, if (pb != None) Some(pb.get.iterator) else None); /*Console.println("interactive com: " + c);*/ c}
       case (EmptyCom, SetTimeLimit(n)) => timeLimit = n; EmptyCom
       case (EmptyCom, SetClausesCom(clauseList)) => pb = Some(new at.logic.utils.ds.PublishingBuffer[V]); pb.get.insertAll(0,clauseList.asInstanceOf[List[V]]); EmptyCom
       // ensures the clauses are loaded
@@ -129,4 +155,6 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
   var pb: Option[PublishingBuffer[V]] = None
   var subsumpMng: Option[SubsumptionManager] = None
   val panel: UIPanel[V]
+
 }
+ */

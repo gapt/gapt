@@ -66,7 +66,6 @@ package base {
         succedent.zipWithIndex.filter(x => !inds.contains(x._2 + antecedent.size)).map(x => x._1)
       )
     def toFormula = Or( antecedent.map( f => Neg( f ) ) ::: succedent )
-
     // checks whether this sequent is of the form F :- F
     def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head == succedent.head
   }
@@ -88,6 +87,7 @@ package base {
         antecedent.filterNot(x => occs.contains(x)),
         succedent.filterNot(x => occs.contains(x))
       )
+    def getChildOf(fo: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
   }
   object SequentOccurrence {
     def apply(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence]) = new SequentOccurrence(antecedent, succedent)

@@ -109,7 +109,7 @@ package occurrences {
   trait PointerOccurrence extends Occurrence {
     type T = Unit // sets the type of Labeled
     def label = ()
-    // we want here a ponters equality
+    // we want here a pointers equality
   }
   class PointerFOFactory extends FOFactory {
     // we dont need others in Pointer Occurrences
