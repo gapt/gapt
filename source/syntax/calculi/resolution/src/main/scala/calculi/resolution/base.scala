@@ -27,9 +27,9 @@ package base {
   }
 */
 
-  /* Resolution proofs are graphs by definition. TODO: enforce them to by acyclic
-   */
-  trait ResolutionProof[V <: SequentOccurrence] extends Proof[V]
+  trait ResolutionProof[V <: SequentOccurrence] extends Proof[V] with SequentLike {
+    def getSequent = root.getSequent
+  }
   trait NullaryResolutionProof[V <: SequentOccurrence] extends LeafAGraph[V] with ResolutionProof[V] with NullaryProof[V]
   trait UnaryResolutionProof[V <: SequentOccurrence] extends UnaryAGraph[V] with ResolutionProof[V] with UnaryProof[V] {
     override def uProof = t.asInstanceOf[ResolutionProof[V]]

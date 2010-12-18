@@ -19,9 +19,15 @@ import scala.collection.mutable.HashMap
 
 package base {
 
+  // a trait for all objects that have a sequent (or its descendant) component (like Sequent, SequentOccurrence
+  // the root of a proof, etc.) It can be used in algorithms that expect a sequent
+  trait SequentLike  {
+    def getSequent: Sequent
+  }
+
   // List should be changed into multiset (I am not sure anymore as we need to map formula occurrences also in the original sequent.
   // For example when duplicating a branch we want to be able to know which formula is mapped to which)
-  class Sequent(val antecedent: List[HOLFormula], val succedent: List[HOLFormula])
+  class Sequent(val antecedent: List[HOLFormula], val succedent: List[HOLFormula]) extends SequentLike
   {
     val ant = antecedent.sortWith((x1,x2) => x1.toString < x2.toString)
     val suc = succedent.sortWith((x1,x2) => x1.toString < x2.toString)
@@ -30,6 +36,7 @@ package base {
       case os : Sequent => ant == os.ant && suc == os.suc
       case _ => false
     }
+    def getSequent = this
     // TODO: use multisets in implementation!
     def multisetEquals( o: Sequent ) = {
       def updater( f: Formula, mt: HashMap[Formula, Int]) =
@@ -74,7 +81,7 @@ package base {
     def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
   }
   // List should be changed into set
-  class SequentOccurrence(val antecedent: Set[FormulaOccurrence], val succedent: Set[FormulaOccurrence])
+  class SequentOccurrence(val antecedent: Set[FormulaOccurrence], val succedent: Set[FormulaOccurrence]) extends SequentLike
   {
     def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
     def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
@@ -99,7 +106,7 @@ package base {
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
-  trait LKProof extends TreeProof[SequentOccurrence] with Tree[SequentOccurrence] {
+  trait LKProof extends TreeProof[SequentOccurrence] with Tree[SequentOccurrence] with SequentLike {
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
       (root.antecedent.toList ++ root.succedent.toList).filter(x => x.ancestors.find(y => y =^ fo) != None) match {
         case x::Nil => Some(x)
@@ -107,6 +114,7 @@ package base {
         case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
       }
     }
+    def getSequent = root.getSequent
   }
   trait NullaryLKProof extends LeafTree[SequentOccurrence] with LKProof with NullaryTreeProof[SequentOccurrence]
   trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof with UnaryTreeProof[SequentOccurrence] {
