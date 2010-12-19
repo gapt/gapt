@@ -27,7 +27,7 @@ import at.logic.language.fol._
 
 
 
-class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
+class gFeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
 
   "tree.scala" should {
     "create correctly a tree" in {
@@ -85,20 +85,20 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
       val pffb = Atom(new ConstantStringSymbol("p"),ffb::Nil)
       val pX = Atom(new ConstantStringSymbol("p"),X::Nil)
 
-      val seq11 = Sequent(Nil, pa::pfa::Nil)
-      val seq21 = Sequent(pb::Nil, pa::Nil)
-      val seq31 = Sequent(pa::Nil, pb::Nil)
-      val seq41 = Sequent(Nil,pX::pffb::Nil)
+      val seq11 = Sequent(Nil, pa::pfa::Nil).asInstanceOf[SequentLike]
+      val seq21 = Sequent(pb::Nil, pa::Nil).asInstanceOf[SequentLike]
+      val seq31 = Sequent(pa::Nil, pb::Nil).asInstanceOf[SequentLike]
+      val seq41 = Sequent(Nil,pX::pffb::Nil).asInstanceOf[SequentLike]
 
-      val subsumedSeq = Sequent(Nil,pX::pa::Nil)
+      val subsumedSeq = Sequent(Nil,pX::pa::Nil).asInstanceOf[SequentLike]
 
 
       var l = seq11::seq21::seq31::seq41::Nil
     //  val root = new TreeNode[String](seq1::Nil)
-      var root = new TreeNode[Sequent](l)
-      val f1: (Sequent) => Int = { x => x.toStringSimple.split("p").size - 1}
+      var root = new TreeNode[SequentLike](l)
+      val f1: (SequentLike) => Int = { x => x.getSequent.toStringSimple.split("p").size - 1}
 
-      val t = new MyTree[Sequent](root, f1::Nil)
+      val t = new MyTree[SequentLike](root, f1::Nil)
       t.createTree(root)
       t.print
       val manager = new VectorTreeManager with StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm; var tree = t }
@@ -110,7 +110,7 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
 //      if(manager.forwardSubsumption1(t.root, f1::Nil, "abca"))
       println("\n\n\n-----Forward subsumption-----\n\n\n")
       println("\n\nfeature vector subsumedSeq = "+f1(subsumedSeq))
-      println("\nfeature vector subsumedSeq = "+subsumedSeq.toStringSimple+"\n")
+      println("\nfeature vector subsumedSeq = "+subsumedSeq.getSequent.toStringSimple+"\n")
 
 //      if(manager.subsumes(subsumedSeq, seq21))
 //        println("\n\n\nSubsumed\n\n\n")

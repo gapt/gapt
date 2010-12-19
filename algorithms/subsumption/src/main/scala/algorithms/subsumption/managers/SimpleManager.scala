@@ -11,13 +11,13 @@ import at.logic.algorithms.subsumption._
 import at.logic.calculi.lk.base._
 import at.logic.utils.ds.PublishingBuffer
 
-class SimpleManager(pb: PublishingBuffer[Sequent], alg: SubsumptionAlgorithm) extends SubsumptionManager {
+class SimpleManager(pb: PublishingBuffer[SequentLike], alg: SubsumptionAlgorithm) extends SubsumptionManager {
   val sequents = pb
   val sbsmpAlg = alg
   init
-  protected def addSequent(s: Sequent) = ()
-  protected def removeSequent(s: Sequent) = ()
+  protected def addSequent(s: SequentLike) = ()
+  protected def removeSequent(s: SequentLike) = ()
 
-  def forwardSubsumption(s: Sequent) = sequents.exists(s2 => sbsmpAlg.subsumes(s2, s))
-  def backwardSubsumption(s: Sequent) = sequents.toList.foreach(s2 => if (sbsmpAlg.subsumes(s, s2)) sequents -= s2)
+  def forwardSubsumption(s: SequentLike) = sequents.exists(s2 => sbsmpAlg.subsumes(s2.getSequent, s.getSequent))
+  def backwardSubsumption(s: SequentLike) = sequents.toList.foreach(s2 => if (sbsmpAlg.subsumes(s.getSequent, s2.getSequent)) sequents -= s2)
 }

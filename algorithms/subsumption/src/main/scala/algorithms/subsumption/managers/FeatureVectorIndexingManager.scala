@@ -18,17 +18,17 @@ import at.logic.algorithms.subsumption._
 trait VectorTreeManager extends SubsumptionAlgorithm  {
 //  val seqList: List[Sequent]
 //  val tree = Tree[Sequent](seqList)
-  val seqList: List[Sequent] = List()
-  var tree: MyTree[Sequent]
+  val seqList: List[SequentLike] = List()
+  var tree: MyTree[SequentLike]
 
  
 
-  def forwardSubsumption1(vert: TreeNode[Sequent], features: List[Sequent=>Int], subsumedSeq: Sequent): Boolean = {
+  def forwardSubsumption1(vert: TreeNode[SequentLike], features: List[SequentLike=>Int], subsumedSeq: SequentLike): Boolean = {
     
 //    if(tree.isLeaf(vert)) {
     if(features.isEmpty) {     
       println("\n\nLeaf:  "+subsumedSeq+"   <--->   ");vert.print
-      vert.seqList.exists(seq => {val x = subsumes(subsumedSeq, seq); if (x) Console.println(x); x})
+      vert.seqList.exists(seq => {val x = subsumes(subsumedSeq.getSequent, seq.getSequent); if (x) Console.println(x); x})
 //      for(seq <- vert.seqList) {
 //        if(subsumes(subsumedSeq, seq)) {
 //          println("The clause  is subsumed ! \n\n")

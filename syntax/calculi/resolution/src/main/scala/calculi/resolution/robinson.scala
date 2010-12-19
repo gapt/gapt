@@ -114,7 +114,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
     }
 */
   }
-/*
+
   // TODO: here we need information on where to put the newLiteral
   object Paramodulation {
     def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence, newLiteral: FOLFormula, sub: Substitution[FOLFormula]): ResolutionProof[ClauseOccurrence] = {
@@ -137,7 +137,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
       }
     }
   }
-*/
+
 
   object Variant {
     def apply(p: ResolutionProof[ClauseOccurrence], sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {

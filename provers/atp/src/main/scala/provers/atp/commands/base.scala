@@ -40,4 +40,7 @@ package base {
     // should correspond to the possibility of having more clauses to resolve on. If using refinements then it corresponds if all pairs were matched already.
     def isRepeat(state: State): Boolean
   }
+
+
+  case class BranchCommand[V <: SequentOccurrence](commands: Iterable[Stream[Command[V]]]) extends Command[V]
 }

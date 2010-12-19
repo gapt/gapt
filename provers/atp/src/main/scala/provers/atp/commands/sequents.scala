@@ -11,12 +11,12 @@ package at.logic.provers.atp.commands
 package sequents {
 import _root_.at.logic.algorithms.subsumption.managers.{SimpleManager, SubsumptionManager}
 import _root_.at.logic.algorithms.subsumption.SubsumptionAlgorithm
+import _root_.at.logic.calculi.lk.base.{SequentLike, SequentOccurrence, Sequent}
 import _root_.at.logic.language.fol.FOLExpression
 import _root_.at.logic.utils.ds.{Add, Remove, PublishingBufferEvent, PublishingBuffer}
 import at.logic.provers.atp.commands.refinements.base.{Refinement, RefinementID}
 import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand, MacroCommand, InitialCommand}
   import at.logic.calculi.resolution.base.ResolutionProof
-  import at.logic.calculi.lk.base.{SequentOccurrence, Sequent}
   import at.logic.provers.atp.Definitions._
 
   abstract class SetSequentsCommand[V <: SequentOccurrence](val clauses: Iterable[Sequent]) extends DataCommand[V]
@@ -41,6 +41,15 @@ import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand, MacroComm
     }
   }
 
+  // deterministically trying to match all indices (it is deterministic as it does not change the state of the different cases)
+  case class ApplyOnAllPolarizedLiteralPairsCommand[V <: SequentOccurrence]() extends DataCommand[V] {
+    def apply(state: State, data: Any) = {
+      val p = data.asInstanceOf[Tuple2[ResolutionProof[V],ResolutionProof[V]]]
+      (for (i <- p._1.root.antecedent; j <- p._2.root.succedent) yield (state, ((p._2,p._1), (j, i))))  ++
+      (for (i <- p._1.root.succedent; j <- p._2.root.antecedent) yield (state, (p, (i,j))))
+    }
+  }
+
   case class RefutationReachedCommand[V <: SequentOccurrence]() extends ResultCommand[V] {
     def apply(state: State, data: Any) = {
       val target = state("targetClause").asInstanceOf[Sequent]
@@ -62,6 +71,37 @@ import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand, MacroComm
       val buffer = state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]]
       val res = data.asInstanceOf[ResolutionProof[V]]
       if (!buffer.exists(x => x.root == res.root)) List((state,data)) else List()
+    }
+  }
+
+  case class SimpleForwardSubsumptionCommand[V <: SequentOccurrence](alg: SubsumptionAlgorithm) extends DataCommand[V] {
+    def apply(state: State, data: Any) = {
+      // create a manager if not existing
+      val manager: SubsumptionManager = if (state.isDefinedAt("simpleSubsumManager")) state("simpleSubsumManager").asInstanceOf[SubsumptionManager]
+        else {
+        val buffer = state("clauses").asInstanceOf[PublishingBuffer[SequentLike]]
+        val man = new SimpleManager(buffer, alg)
+        state("simpleSubsumManager") = man
+        man
+      }
+      val res = data.asInstanceOf[SequentLike]
+      if (manager.forwardSubsumption(res)) List() else List((state,data))
+    }
+  }
+
+  case class SimpleBackwardSubsumptionCommand[V <: SequentOccurrence](alg: SubsumptionAlgorithm) extends DataCommand[V] {
+    def apply(state: State, data: Any) = {
+      // create a manager if not existing
+      val manager: SubsumptionManager = if (state.isDefinedAt("simpleSubsumManager")) state("simpleSubsumManager").asInstanceOf[SubsumptionManager]
+        else {
+        val buffer = state("clauses").asInstanceOf[PublishingBuffer[SequentLike]]
+        val man = new SimpleManager(buffer, alg)
+        state("simpleSubsumManager") = man
+        man
+      }
+      val res = data.asInstanceOf[SequentLike]
+      manager.backwardSubsumption(res)
+      List((state,data))
     }
   }
 }
