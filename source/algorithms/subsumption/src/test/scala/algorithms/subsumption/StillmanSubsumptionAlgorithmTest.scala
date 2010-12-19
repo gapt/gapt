@@ -6,7 +6,7 @@
  */
 
 package at.logic.algorithms.subsumption
-/*
+
 import org.specs._
 import org.specs.runner._
 import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
@@ -15,13 +15,13 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-import at.logic.parsing.calculi.simple.SimpleResolutionParserHOL
+//import at.logic.parsing.calculi.simple.SimpleResolutionParserHOL
 import at.logic.calculi.lk.base._
 import at.logic.language.fol._
 import at.logic.language.hol._
 
 private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserFOL
-private class MyParserHOL(input: String) extends StringReader(input) with SimpleResolutionParserHOL
+//private class MyParserHOL(input: String) extends StringReader(input) with SimpleResolutionParserHOL
 private object MyAlg extends StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}
 private object MyAlgHOL extends StillmanSubsumptionAlgorithm[HOLExpression] {val matchAlg = NaiveIncompleteMatchingAlgorithm} // incomplete matching algorithm
 
@@ -46,7 +46,10 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
       "P(x,x) | P(x,a) and P(a,a)" in {
         MyAlg.subsumes(new MyParser("P(x,x) | P(x,a).").getClauseList.head, new MyParser("P(a,a).").getClauseList.head) must beEqual (true)
       }
-      "P(x:i,x:i) | P(x:i,a:i) and P(a:i,a:i)" in {
+      /*"P(x) | Q(x,y) and P(a) | Q(a,y) | R(x)" in {
+        MyAlg.subsumes(new MyParser("P(x) | Q(x,y).").getClauseList.head, new MyParser("P(a) | Q(a,y) | R(x).").getClauseList.head) must beEqual (true)
+      } */
+      /*"P(x:i,x:i) | P(x:i,a:i) and P(a:i,a:i)" in {
         MyAlgHOL.subsumes(new MyParserHOL("P(x:i,x:i) | P(x:i,a:i).").getClauseList.head, new MyParserHOL("P(a:i,a:i).").getClauseList.head) must beEqual (true)
       }
       "P(x:i,x:i) and P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i)" in {
@@ -63,7 +66,7 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
       }
       "P(x:i) and P(a:i) | Q(x:i)" in {
         MyAlgHOL.subsumes(new MyParserHOL("P(x:i).").getClauseList.head, new MyParserHOL("P(a:i) | Q(x:i).").getClauseList.head) must beEqual (true)
-      }
+      }*/
     }
     "return false on the following clauses" in {
       "P(x) | P(f(x)) and P(f(a)) | P(f(b))" in {
@@ -85,7 +88,11 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
         val cl2 = new MyParser("P(y) | -P(z).").getClauseList.head
         MyAlg.subsumes(cl1, cl2) must beEqual (false)
       }
+      /*"P(x) and P(a) | P(y)" in {
+        val cl1 = new MyParser("P(x).").getClauseList.head
+        val cl2 = new MyParser("P(a) | P(y).").getClauseList.head
+        MyAlg.subsumes(cl1, cl2) must beEqual (false)
+      } */
     }
   }
 }
-*/

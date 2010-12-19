@@ -3,6 +3,7 @@
 
 package at.logic.provers.atp
 
+import _root_.at.logic.language.fol.FOLExpression
 import at.logic.provers.atp.commands.base.{Command}
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.provers.atp.commands.refinements.simple._
@@ -13,16 +14,29 @@ import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.readers.StringReader
 import at.logic.calculi.resolution.base._
 import at.logic.calculi.resolution.robinson._
+import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
+import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
 private object MyProver extends Prover[ClauseOccurrence]
 
 class ProverTest extends SpecificationWithJUnit {
-  def stream1: Stream[Command[ClauseOccurrence]] = Stream.cons(SequentsMacroCommand[ClauseOccurrence](
+  /*def stream1: Stream[Command[ClauseOccurrence]] = Stream.cons(SequentsMacroCommand[ClauseOccurrence](
     SimpleRefinementGetCommand[ClauseOccurrence],
     List(VariantsCommand,ApplyOnAllPolarizedLiteralPairsCommand, ResolveCommand(FOLUnificationAlgorithm),FactorCommand(FOLUnificationAlgorithm),
-      IfNotExistCommand[ClauseOccurrence], InsertResolventCommand[ClauseOccurrence]),
-    RefutationReachedCommand[ClauseOccurrence]), stream1)
+      SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      InsertResolventCommand[ClauseOccurrence]),
+    RefutationReachedCommand[ClauseOccurrence]), stream1) */
+  def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(SimpleRefinementGetCommand[ClauseOccurrence],
+    Stream.cons(VariantsCommand,
+    Stream.cons(ApplyOnAllPolarizedLiteralPairsCommand,
+    Stream.cons(ResolveCommand(FOLUnificationAlgorithm),
+    Stream.cons(FactorCommand(FOLUnificationAlgorithm),
+    Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(InsertResolventCommand[ClauseOccurrence],
+    Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))))
   def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
   def getRefutation(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), stream)).next must beLike {
       case Some(a) if a.asInstanceOf[ResolutionProof[ClauseOccurrence]].root.getClause setEquals Clause(List(),List()) => true
@@ -49,11 +63,11 @@ class ProverTest extends SpecificationWithJUnit {
       "p(a). -p(x) | p(f(x)). -p(f(f(a)))" in {
         getRefutation("P(a). -P(x) | P(f(x)). -P(f(f(a))).") must beTrue
       }
-      /*"requiring factoring" in {
+      "requiring factoring" in {
         "p(a). -p(y) | -p(x) | p(f(y)) | p(f(x)). -p(f(f(a)))" in {
           getRefutation("P(a). -P(y) | -P(x) | P(f(y)) | P(f(x)). -P(f(f(a))).") must beTrue
         }
-      } */
+      }
       "requiring non-terminal factoring" in {
         "P(a). -P(x) | P(f(x)) | P(f(y)). -P(f(f(a))). -P(f(f(b)))." in {
           getRefutation("P(a). -P(x) | P(f(x)) | P(f(y)). -P(f(f(a))). -P(f(f(b))).") must beTrue
