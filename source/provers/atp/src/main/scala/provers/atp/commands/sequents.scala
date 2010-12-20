@@ -12,12 +12,10 @@ package sequents {
 import _root_.at.logic.algorithms.subsumption.managers.{SimpleManager, SubsumptionManager}
 import _root_.at.logic.algorithms.subsumption.SubsumptionAlgorithm
 import _root_.at.logic.calculi.lk.base.{SequentLike, SequentOccurrence, Sequent}
-import _root_.at.logic.language.fol.FOLExpression
-import _root_.at.logic.utils.ds.{Add, Remove, PublishingBufferEvent, PublishingBuffer}
-import at.logic.provers.atp.commands.refinements.base.{Refinement, RefinementID}
-import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand, MacroCommand, InitialCommand}
-  import at.logic.calculi.resolution.base.ResolutionProof
-  import at.logic.provers.atp.Definitions._
+import _root_.at.logic.utils.ds.{PublishingBuffer}
+import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand}
+import at.logic.calculi.resolution.base.ResolutionProof
+import at.logic.provers.atp.Definitions._
 
   abstract class SetSequentsCommand[V <: SequentOccurrence](val clauses: Iterable[Sequent]) extends DataCommand[V]
 
@@ -56,13 +54,6 @@ import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand, MacroComm
       val d = data.asInstanceOf[ResolutionProof[V]]
       if (d.root setEquals target) Some(d)
       else None
-    }
-  }
-
-  case class SequentsMacroCommand [V <: SequentOccurrence](init: InitialCommand[V], datas: Iterable[DataCommand[V]], result: ResultCommand[V])
-          extends MacroCommand[V](init, datas, result) {
-    def isRepeat(state: State): Boolean = {
-      !state(RefinementID()).asInstanceOf[Refinement[V]].isEmpty
     }
   }
 

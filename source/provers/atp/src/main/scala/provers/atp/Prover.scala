@@ -4,6 +4,7 @@
 
 package at.logic.provers.atp
 
+import _root_.at.logic.provers.atp.commands.logical.DeterministicMacroCommand
 import at.logic.utils.executionModels.ndStream.{Configuration, NDStream}
 import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
 import at.logic.calculi.resolution.base._
@@ -16,6 +17,37 @@ object Definitions {
 }
 
 import Definitions._
+
+object Main {
+  import commands.base._
+  import commands.ui._
+  import commands.sequents._
+  import commands.robinson._
+  import _root_.at.logic.provers.atp.commands.logical.DeterministicAndCommand
+  import at.logic.calculi.resolution.robinson.ClauseOccurrence
+  import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
+  import at.logic.calculi.resolution.robinson.Clause
+  import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
+  import at.logic.language.fol.FOLExpression
+  import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+  import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
+  import at.logic.parsing.readers.FileReader
+
+  def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(getTwoClausesFromUICommand[ClauseOccurrence](PromptTerminal.GetTwoClauses),
+    Stream.cons(VariantsCommand,
+    Stream.cons(DeterministicAndCommand[ClauseOccurrence]((
+      List(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+      List(ParamodulationCommand(FOLUnificationAlgorithm)))),
+    Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(InsertResolventCommand[ClauseOccurrence],
+    Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))
+  def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
+  def main(args: Array[String]) {
+    val prover = new Prover[at.logic.calculi.resolution.robinson.ClauseOccurrence]{}
+    prover.refute(Stream.cons(SetClausesCommand((new FileReader(args(0)) with SimpleResolutionParserFOL).getClauseList), stream)).next
+  }
+}
 
 trait Prover[V <: SequentOccurrence] extends at.logic.utils.logging.Logger {
   
@@ -30,6 +62,7 @@ trait Prover[V <: SequentOccurrence] extends at.logic.utils.logging.Logger {
 
   private[Prover] def myFun(c: Configuration[ResolutionProof[V]]): Iterable[Configuration[ResolutionProof[V]]] = {
     val conf = c.asInstanceOf[MyConfiguration]
+    //Console.println("debug -- command: " + conf.commands.head.getClass + ", data: " + conf.data + ", next Command: " + conf.commands.tail.head.getClass)
     if (conf.commands.isEmpty) List()
     else {
       conf.commands.head match {
@@ -40,7 +73,7 @@ trait Prover[V <: SequentOccurrence] extends at.logic.utils.logging.Logger {
           else res.map(x => new MyConfiguration(x._1, conf.commands.tail, x._2))
         }
         case com: ResultCommand[_] => List(new MyConfiguration(conf.state, conf.commands.tail, conf.data, com(conf.state, conf.data)))
-        case com: MacroCommand[_] => {
+        case com: DeterministicMacroCommand[_] => {
           val res = com(conf.state)
           res._1.map(x => new MyConfiguration(x._1, conf.commands.tail, conf.data, x._2)) ++
           (if (res._2) List(new MyConfiguration(conf.state, conf.commands.tail, conf.data)) else List())
