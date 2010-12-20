@@ -41,9 +41,14 @@ import java.io.File.separator
 import scala.collection.mutable.Map
 
 package GAPScalaInteractiveShellLibrary {
+import _root_.at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
+import _root_.at.logic.calculi.resolution.robinson.{Clause, ClauseOccurrence}
+import _root_.at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import _root_.at.logic.language.fol.{FOLExpression, FOLTerm}
+import _root_.at.logic.calculi.resolution.base.ResolutionProof
+import _root_.at.logic.provers.atp.commands.refinements.simple.SimpleRefinementGetCommand
+import _root_.at.logic.provers.atp.Prover
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.language.fol.FOLTerm
-
 object loadProofs {
     def apply(file: String) = 
       try {
@@ -151,6 +156,49 @@ object loadProofs {
     }
   }
 
+  // atp support
+  object refuteFOL {
+    import at.logic.provers.atp.commands.base._
+    import at.logic.provers.atp.commands.ui._
+    import at.logic.provers.atp.commands.sequents._
+    import at.logic.provers.atp.commands.robinson._
+    import at.logic.provers.atp.commands.logical.DeterministicAndCommand
+    def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(SimpleRefinementGetCommand[ClauseOccurrence],
+      Stream.cons(VariantsCommand,
+      Stream.cons(DeterministicAndCommand[ClauseOccurrence]((
+        List(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+        List(ParamodulationCommand(FOLUnificationAlgorithm)))),
+      Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(InsertResolventCommand[ClauseOccurrence],
+      Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))
+    def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
+
+    def apply(clauses: Seq[Clause]): Option[ResolutionProof[ClauseOccurrence]] =
+      new Prover[at.logic.calculi.resolution.robinson.ClauseOccurrence]{}.
+        refute(Stream.cons(SetClausesCommand(clauses), stream)).next
+  }
+  object refuteFOLI {
+    import at.logic.provers.atp.commands.base._
+    import at.logic.provers.atp.commands.ui._
+    import at.logic.provers.atp.commands.sequents._
+    import at.logic.provers.atp.commands.robinson._
+    import at.logic.provers.atp.commands.logical.DeterministicAndCommand
+    def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(getTwoClausesFromUICommand[ClauseOccurrence](PromptTerminal.GetTwoClauses),
+      Stream.cons(VariantsCommand,
+      Stream.cons(DeterministicAndCommand[ClauseOccurrence]((
+        List(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+        List(ParamodulationCommand(FOLUnificationAlgorithm)))),
+      Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(InsertResolventCommand[ClauseOccurrence],
+      Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))
+    def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
+
+    def apply(clauses: Seq[Clause]): Option[ResolutionProof[ClauseOccurrence]] =
+      new Prover[at.logic.calculi.resolution.robinson.ClauseOccurrence]{}.
+        refute(Stream.cons(SetClausesCommand(clauses), stream)).next
+  }
 
   object ceres {
     def help = ceresHelp.apply
@@ -176,6 +224,8 @@ object loadProofs {
       println("parse fol: String => FOLTerm")
       println("parse hol: String => HOLExpression")
       println("exportXML: List[Proof], List[String], String => Unit")
+      println("refuteFOL: Seq[Clause] => Option[ResolutionProof[ClauseOccurrence]]")
+      println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[ClauseOccurrence]] - simple interactive refutation")
     }
   }
 }

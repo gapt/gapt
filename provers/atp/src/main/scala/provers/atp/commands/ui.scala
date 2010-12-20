@@ -1,0 +1,36 @@
+package at.logic.provers.atp.commands
+
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: shaolin
+ * Date: Dec 20, 2010
+ * Time: 4:14:33 PM
+ * To change this template use File | Settings | File Templates.
+ */
+
+package ui {
+import _root_.at.logic.calculi.lk.base.{SequentLike, SequentOccurrence}
+import _root_.at.logic.provers.atp.commands.base.InitialCommand
+import at.logic.provers.atp.Definitions._
+
+  case class getTwoClausesFromUICommand[V <: SequentOccurrence](ui: Seq[SequentLike] => Tuple2[Int,Int]) extends InitialCommand[V] {
+    def apply(state: State) = {
+      val clauses = state("clauses").asInstanceOf[Seq[SequentLike]]
+      val reply = ui(clauses)
+      List((state, (clauses(reply._1), clauses(reply._2))))
+    }
+  }
+
+  object PromptTerminal {
+    object GetTwoClauses extends Function1[Seq[SequentLike], Tuple2[Int,Int]] {
+      def apply(seq: Seq[SequentLike]): Tuple2[Int,Int] = {
+        Console.println("List of clauses in set:")
+        seq.zipWithIndex.foreach(x => Console.println(x._2 + ") " + x._1.getSequent))
+        Console.print("Enter index of first clause: " ); val ind1 = Console.readInt
+        Console.print("Enter index of second clause: " ); val ind2 = Console.readInt
+        (ind1, ind2)
+      }
+    }
+  }
+}

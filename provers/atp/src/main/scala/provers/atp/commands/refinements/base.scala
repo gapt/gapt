@@ -9,10 +9,13 @@ package at.logic.provers.atp.commands.refinements
  */
 
 package base {
+import _root_.at.logic.provers.atp.commands.base.{InitialCommand, DataCommand, ResultCommand}
+import _root_.at.logic.provers.atp.commands.logical.DeterministicMacroCommand
 import at.logic.calculi.lk.base.SequentOccurrence
 import at.logic.calculi.resolution.base.ResolutionProof
 import at.logic.utils.ds.{PublishingBuffer, PublishingBufferEvent, Remove, Add}
-
+import at.logic.provers.atp.Definitions._
+  
   object RefinementID {
     def apply() = "Refinement"
   }
@@ -26,5 +29,12 @@ import at.logic.utils.ds.{PublishingBuffer, PublishingBufferEvent, Remove, Add}
     def isEmpty: Boolean
     protected def addClause(s: ResolutionProof[V]): Unit
     protected def removeClause(s: ResolutionProof[V]): Unit
+  }
+
+  case class SequentsMacroCommand [V <: SequentOccurrence](init: InitialCommand[V], datas: Iterable[DataCommand[V]], result: ResultCommand[V])
+          extends DeterministicMacroCommand[V](init, datas, result) {
+    def isRepeat(state: State): Boolean = {
+      !state(RefinementID()).asInstanceOf[Refinement[V]].isEmpty
+    }
   }
 }
