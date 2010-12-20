@@ -13,6 +13,9 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.fol.{FOLExpression, Atom}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.substitutions.Substitution
+import at.logic.calculi.resolution.robinson.Paramodulation
+import at.logic.language.fol.FOLFormula
+import at.logic.language.hol.replacements.{getAllPositions, Replacement}
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,8 +26,6 @@ import at.logic.language.lambda.substitutions.Substitution
  */
 
 package robinson {
-
-import _root_.at.logic.language.hol.Formula
 
 // adds to the state the initial set of resolution proofs, made from the input clauses
   case class SetClausesCommand(override val clauses: Iterable[Clause]) extends SetSequentsCommand[ClauseOccurrence](clauses) {
@@ -100,21 +101,53 @@ import _root_.at.logic.language.hol.Formula
       }
   }
 
-  /*case class ParamodulationCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[ClauseOccurrence] {
+  case class ParamodulationCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[ClauseOccurrence] {
     def apply(state: State, data: Any) = {
       val (p1,p2) = data.asInstanceOf[Tuple2[ResolutionProof[ClauseOccurrence],ResolutionProof[ClauseOccurrence]]]
-      val ls = (for {
+      ((for {
           l1 <- p1.root.succedent
           l2 <- p2.root.antecedent ++ p2.root.succedent
-          if (isEquality(l1.formula))
-        } yield (l1.formula,l2)) ++
+          subTerm <- getAllPositions(l2.formula) // except var positions
+        } yield l1.formula match {
+            case Atom(ConstantStringSymbol("="), a::b::Nil) => {
+              val mgus1 = alg.unify(a, subTerm._2.asInstanceOf[FOLExpression])
+              require(mgus1.size < 2)
+              val mgus2 = alg.unify(b, subTerm._2.asInstanceOf[FOLExpression])
+              require(mgus2.size < 2)
+
+              if (!mgus1.isEmpty)
+                if (!mgus2.isEmpty)
+                  List(Paramodulation(p1, p2, l1, l2, Replacement(subTerm._1, b).apply(l2.formula).asInstanceOf[FOLFormula], mgus1.head),
+                    Paramodulation(p1, p2, l1, l2, Replacement(subTerm._1, a).apply(l2.formula).asInstanceOf[FOLFormula], mgus2.head))
+                else List(Paramodulation(p1, p2, l1, l2, Replacement(subTerm._1, b).apply(l2.formula).asInstanceOf[FOLFormula], mgus1.head))
+              else if (!mgus2.isEmpty)
+                List(Paramodulation(p1, p2, l1, l2, Replacement(subTerm._1, a).apply(l2.formula).asInstanceOf[FOLFormula], mgus2.head))
+              else List()
+            }
+            case _ => List()
+        }) ++
         (for {
           l1 <- p2.root.succedent
           l2 <- p1.root.antecedent ++ p1.root.succedent
-          if (isEquality(l1.formula))
-        } yield (l1.formula,l2))
+          subTerm <- getAllPositions(l2.formula) // except variable positions
+        } yield l1.formula match {
+            case Atom(ConstantStringSymbol("="), a::b::Nil) => {
+              val mgus1 = alg.unify(a, subTerm._2.asInstanceOf[FOLExpression])
+              require(mgus1.size < 2)
+              val mgus2 = alg.unify(b, subTerm._2.asInstanceOf[FOLExpression])
+              require(mgus2.size < 2)
 
+              if (!mgus1.isEmpty)
+                if (!mgus2.isEmpty)
+                  List(Paramodulation(p2, p1, l1, l2, Replacement(subTerm._1, b).apply(l2.formula).asInstanceOf[FOLFormula], mgus1.head),
+                    Paramodulation(p2, p1, l1, l2, Replacement(subTerm._1, a).apply(l2.formula).asInstanceOf[FOLFormula], mgus2.head))
+                else List(Paramodulation(p2, p1, l1, l2, Replacement(subTerm._1, b).apply(l2.formula).asInstanceOf[FOLFormula], mgus1.head))
+              else if (!mgus2.isEmpty)
+                List(Paramodulation(p2, p1, l1, l2, Replacement(subTerm._1, a).apply(l2.formula).asInstanceOf[FOLFormula], mgus2.head))
+              else List()
+            }
+            case _ => List()
+        })).flatMap((x => x.map(y => (state, y))))
     }
-    def isEquality(f: Formula): Boolean = f.formula match {case Atom(ConstantStringSymbol("="), _::_::Nil) => true; _ => false}
-  }  */
+  }
 }
