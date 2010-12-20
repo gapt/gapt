@@ -4,7 +4,7 @@
 package at.logic.provers.atp
 
 import _root_.at.logic.language.fol.FOLExpression
-import at.logic.provers.atp.commands.base.{Command}
+import _root_.at.logic.provers.atp.commands.base.{BranchCommand, Command}
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.provers.atp.commands.refinements.simple._
 import at.logic.provers.atp.commands.sequents._
@@ -30,13 +30,13 @@ class ProverTest extends SpecificationWithJUnit {
     RefutationReachedCommand[ClauseOccurrence]), stream1) */
   def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(SimpleRefinementGetCommand[ClauseOccurrence],
     Stream.cons(VariantsCommand,
-    Stream.cons(ApplyOnAllPolarizedLiteralPairsCommand,
-    Stream.cons(ResolveCommand(FOLUnificationAlgorithm),
-    Stream.cons(FactorCommand(FOLUnificationAlgorithm),
+    Stream.cons(BranchCommand[ClauseOccurrence](List(
+      Stream(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+      Stream(ParamodulationCommand(FOLUnificationAlgorithm)))),
     Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[ClauseOccurrence],
-    Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))))
+    Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))
   def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
   def getRefutation(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), stream)).next must beLike {
       case Some(a) if a.asInstanceOf[ResolutionProof[ClauseOccurrence]].root.getClause setEquals Clause(List(),List()) => true
@@ -73,11 +73,11 @@ class ProverTest extends SpecificationWithJUnit {
           getRefutation("P(a). -P(x) | P(f(x)) | P(f(y)). -P(f(f(a))). -P(f(f(b))).") must beTrue
         }
       }
-     /*"requiring paramodulation" in {
+     "requiring paramodulation" in {
         "P(a). -P(b). =(a,b)." in {
           getRefutation("P(a). -P(b). =(a,b).") must beTrue
         }
-      }  */
+      }
     }
     /*"When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {
       "ex1"

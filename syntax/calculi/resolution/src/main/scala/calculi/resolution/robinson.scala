@@ -115,25 +115,40 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
 */
   }
 
-  // TODO: here we need information on where to put the newLiteral
   object Paramodulation {
-    def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence, newLiteral: FOLFormula, sub: Substitution[FOLFormula]): ResolutionProof[ClauseOccurrence] = {
+    def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence, newLiteral: FOLFormula, sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
       val term1op = p1.root.succedent.find(x => x == a1)
-      val term2op = p2.root.antecedent.find(x => x == a2)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      val term2opAnt = p2.root.antecedent.find(x => x == a2)
+      val term2opSuc = p2.root.succedent.find(x => x == a2)
+      if (term1op == None || (term2opAnt == None && term2opSuc == None)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
-        val term2 = term2op.get
-        val prinFormula = term1.factory.createPrincipalFormulaOccurrence(newLiteral, term1::term2::Nil, ((s1.root.succedent - term1) ++ (s2.root.succedent - term2)))
-        new BinaryAGraph[ClauseOccurrence](ClauseOccurrence(
-            createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent - term2, p1.root.antecedent, sub),
-            createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent, p1.root.succedent - term1, sub))
-          , p1, p2)
-          with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLFormula] with AuxiliaryFormulas {
-              def rule = ResolutionType
-              def aux = (term1::Nil)::(term2::Nil)::Nil
-              def substitution = sub
-          }
+        if (term2opAnt != None) {
+          val term2 = term2opAnt.get
+          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil, ((p1.root.succedent - term1) ++ (p2.root.succedent)))
+          new BinaryAGraph[ClauseOccurrence](ClauseOccurrence(
+              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent - term2, p1.root.antecedent, sub) + prinFormula,
+              createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent, p1.root.succedent - term1, sub))
+            , p1, p2)
+            with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
+                def rule = ResolutionType
+                def aux = (term1::Nil)::(term2::Nil)::Nil
+                def substitution = sub
+            }
+        }
+        else {
+          val term2 = term2opSuc.get
+          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(newLiteral, term1::term2::Nil, ((p1.root.succedent - term1) ++ (p2.root.succedent - term2)))
+          new BinaryAGraph[ClauseOccurrence](ClauseOccurrence(
+              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, p1.root.antecedent, sub),
+              createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent  - term2, p1.root.succedent - term1, sub)  + prinFormula)
+            , p1, p2)
+            with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
+                def rule = ResolutionType
+                def aux = (term1::Nil)::(term2::Nil)::Nil
+                def substitution = sub
+            }
+        }
       }
     }
   }
