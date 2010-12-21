@@ -142,16 +142,21 @@ object loadProofs {
     private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
 
     def fol(string:String) = {
-       (new CLIParserFOL(string)).getTerm.asInstanceOf[FOLTerm]
+       new CLIParserFOL(string).getTerm.asInstanceOf[FOLFormula]
+    }
+
+    def folterm(string:String) = {
+       new CLIParserFOL(string).getTerm.asInstanceOf[FOLTerm]
     }
 
     //this is redundant
     def hol(string:String) = {
-       (new CLIParserHOL(string)) getTerm
+       new CLIParserHOL(string) getTerm
     }
 
     def help() = {
-      println("fol: String => FOLTerm")
+      println("folterm: String => FOLFormula")
+      println("folterm: String => FOLTerm")
       println("hol: String => HOLExpression")
     }
   }
