@@ -32,7 +32,7 @@ import at.logic.calculi.lk.base._
 
 import scala.collection.immutable.Set
 
-class ProofDatabase( val proofs: List[Pair[String,LKProof]], val axioms: List[Sequent] );
+class ProofDatabase( val proofs: List[Pair[String,LKProof]], val axioms: List[Sequent], val sequentLists: List[Pair[String,List[Sequent]]] );
 
 
 // performs the matching necessary to compute substitution terms/eigenvars
@@ -249,6 +249,10 @@ object XMLParser {
      */
     def getSequentList() : List[Sequent] = getSequentList( getInput() )
 
+    def getNamedSequentList( n : Node ) : (String, List[Sequent]) = (n.attribute("symbol").get.head.text, getSequentList( n ) )
+
+    def getNamedSequentList() : (String, List[Sequent]) = getNamedSequentList( getInput() )
+
     /**
      * If the Node provided by XMLNodeParser is an &lt;axiomset&gt; element,
      * a List of Sequent objects corresponding to the Node is returned.
@@ -330,7 +334,9 @@ object XMLParser {
     def getProofDatabase() : ProofDatabase = getProofDatabase( getInput() )
     def getProofDatabase( pdb : Node ) : ProofDatabase = 
       new ProofDatabase( (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getNamedProof() ).toList,
-                         (new NodeReader( (pdb\"axiomset").head ) with XMLSequentParser).getAxiomSet() )
+                         (new NodeReader( (pdb\"axiomset").head ) with XMLSequentParser).getAxiomSet(),
+                         (pdb\"sequentlist").map( n => ( new NodeReader( n ) with XMLSequentParser ).getNamedSequentList() ).toList
+                       )
   }
 
   /**
