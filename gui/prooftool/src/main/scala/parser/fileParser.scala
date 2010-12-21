@@ -15,22 +15,21 @@ import at.logic.parsing.readers.XMLReaders._
 import at.logic.calculi.lk.base._
 import at.logic.parsing.language.xml.ProofDatabase
 
-object FileParser {
+class FileParser {
 
-  def fileReader(f: String): String = try {
+  def fileReader(f: String): LKProof = try {
     proofdb = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
     proofNames = proofdb.proofs.map( x => x._1)
     proofDbChanged.publish(new ValueChanged(new Label("New DB is loaded")))
-    displayProof(proofdb.proofs.head._2, 0)
+    proofdb.proofs.head._2
   } catch {
-      case e: Exception =>
+      case e: AnyRef =>
         import Dialog._
         val t = e.toString
-        showMessage(new Label(t),"Couldn't load file: "+f+"!")
-        proofNames = Nil
+        showMessage(new Label(t),"Couldn't load file: "+f+"!\n\n"+t.replaceAll(",","\n"))
         proofDbChanged.publish(new ValueChanged(new Label("New DB can't be loaded")))
-        t
-  } 
+        proofdb.proofs.head._2
+  }
 
   def displayProof(f: LKProof, step: Int): String = f match {
     case p: UnaryLKProof => p.root.toString+"\n "+p.rule+step+": \n"+displayProof(p.uProof, step+1)
@@ -43,5 +42,6 @@ object FileParser {
 
   private var proofdb =  new ProofDatabase(Nil,Nil)
   private var proofNames: List[String] = Nil
-  object proofDbChanged extends Publisher
 }
+
+object proofDbChanged extends Publisher
