@@ -27,6 +27,7 @@ import at.logic.calculi.lk.base._
 
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
+import java.util.zip.GZIPInputStream
 
 case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
   def apply(v: => Array[T]) = ( v.deepEquals(a), "successful deepEquals", v.deepToString + " not deepEquals " + a.deepToString )
@@ -451,6 +452,12 @@ class XMLParserTest extends SpecificationWithJUnit {
 
       proofs.size must beEqual(1)
       proofs.first._2.root.getSequent must beMultisetEqual( Sequent( f1::Nil, f2::Nil ) )
+    }
+
+    "parse correctly a sequentlist from a gzipped file" in {
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "xml" + separator + "slist.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+     
+      proofdb.sequentLists.size must beEqual(1)
     }
   }
 }
