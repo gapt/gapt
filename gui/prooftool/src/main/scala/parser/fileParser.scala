@@ -40,7 +40,7 @@ class FileParser {
   def getDB = proofdb
   def getProofNames = proofNames
 
-  private var proofdb =  new ProofDatabase(Nil,Nil)
+  private var proofdb =  new ProofDatabase(Nil,Nil,Nil)
   private var proofNames: List[String] = Nil
 }
 
