@@ -12,21 +12,23 @@ import at.logic.calculi.lk.base._
 import at.logic.algorithms.subsumption._
 
 
-  
+
 
 //val a = new VectorTreeManager with StillmabAlgorithm {val seqList = }
 trait VectorTreeManager extends SubsumptionAlgorithm  {
 //  val seqList: List[Sequent]
 //  val tree = Tree[Sequent](seqList)
-  val seqList: List[SequentLike] = List()
-  var tree: MyTree[SequentLike]
 
- 
+  val seqList: List[Sequent] = List()
+  var tree: Trie[Sequent]
+
+
+
 
   def forwardSubsumption1(vert: TreeNode[SequentLike], features: List[SequentLike=>Int], subsumedSeq: SequentLike): Boolean = {
-    
+
 //    if(tree.isLeaf(vert)) {
-    if(features.isEmpty) {     
+    if(features.isEmpty) {
       println("\n\nLeaf:  "+subsumedSeq+"   <--->   ");vert.print
       vert.seqList.exists(seq => {val x = subsumes(subsumedSeq.getSequent, seq.getSequent); if (x) Console.println(x); x})
 //      for(seq <- vert.seqList) {

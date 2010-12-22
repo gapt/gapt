@@ -37,8 +37,8 @@ class gFeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
       val seq3 = "-p(a)|p(b)"
       val seq4 = "p(X)|p(f(f(b)))"
       //var l = seq1::seq2::seq3::seq4::Nil
-     
-      
+
+
 //      val a = FOLConst(new ConstantStringSymbol("a"))
 //      val b = HOLConst(new ConstantStringSymbol("b"), Ti())
 //      val p = HOLConst(new ConstantStringSymbol("p"), Ti()->To())
@@ -95,31 +95,54 @@ class gFeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
 
       var l = seq11::seq21::seq31::seq41::Nil
     //  val root = new TreeNode[String](seq1::Nil)
-      var root = new TreeNode[SequentLike](l)
-      val f1: (SequentLike) => Int = { x => x.getSequent.toStringSimple.split("p").size - 1}
 
-      val t = new MyTree[SequentLike](root, f1::Nil)
-      t.createTree(root)
-      t.print
-      val manager = new VectorTreeManager with StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm; var tree = t }
+//      var root = new TreeNode[Sequent](l)
+//      val f1: (Sequent) => Int = { x => x.toStringSimple.split("p").size - 1}
+//
+//      val t = new Trie[Sequent](root, f1::Nil)
+//      t.createTree(root)
+//      t.print
+//      val manager = new VectorTreeManager with StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm; var tree = t }
+////      if(manager.forwardSubsumption1(t.root, f1::Nil, "abca"))
+////          println("\n\n\nWORKS\n\n\n")
+//
+////      0 must beEqual (0)
+//
+////      if(manager.forwardSubsumption1(t.root, f1::Nil, "abca"))
+//      println("\n\n\n-----Forward subsumption-----\n\n\n")
+//      println("\n\nfeature vector subsumedSeq = "+f1(subsumedSeq))
+//      println("\nfeature vector subsumedSeq = "+subsumedSeq.toStringSimple+"\n")
+//
+////      if(manager.subsumes(subsumedSeq, seq21))
+////        println("\n\n\nSubsumed\n\n\n")
+////      else
+////        println("\n\n\nNOT subsumed\n\n\n")
+//      if(manager.forwardSubsumption1(t.root, f1::Nil, subsumedSeq))
+
+//      var root = new TreeNode[SequentLike](l)
+//      val f1: (SequentLike) => Int = { x => x.getSequent.toStringSimple.split("p").size - 1}
+//
+//      val t = new MyTree[SequentLike](root, f1::Nil)
+//      t.createTree(root)
+//      t.print
+//      val manager = new VectorTreeManager with StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm; var tree = t }
 //      if(manager.forwardSubsumption1(t.root, f1::Nil, "abca"))
+
 //          println("\n\n\nWORKS\n\n\n")
+
 
 //      0 must beEqual (0)
 
 //      if(manager.forwardSubsumption1(t.root, f1::Nil, "abca"))
-      println("\n\n\n-----Forward subsumption-----\n\n\n")
-      println("\n\nfeature vector subsumedSeq = "+f1(subsumedSeq))
-      println("\nfeature vector subsumedSeq = "+subsumedSeq.getSequent.toStringSimple+"\n")
+//      println("\n\n\n-----Forward subsumption-----\n\n\n")
+//      println("\n\nfeature vector subsumedSeq = "+f1(subsumedSeq))
+//      println("\nfeature vector subsumedSeq = "+subsumedSeq.getSequent.toStringSimple+"\n")
 
 //      if(manager.subsumes(subsumedSeq, seq21))
 //        println("\n\n\nSubsumed\n\n\n")
+
 //      else
-//        println("\n\n\nNOT subsumed\n\n\n")
-      if(manager.forwardSubsumption1(t.root, f1::Nil, subsumedSeq))
-          println("\n\n\nWORKS\n\n\n")
-      else
-          println("\n\n\nDoes NOT work\n\n\n")
+//          println("\n\n\nDoes NOT work\n\n\n")
 
       0 must beEqual (0)
 
