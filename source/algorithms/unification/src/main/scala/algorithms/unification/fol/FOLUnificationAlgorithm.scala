@@ -11,14 +11,20 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.fol._
 import at.logic.language.lambda.substitutions.Substitution
+import at.logic.calculi.lk.base.{Sequent, SequentOccurrence}
 
 object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
-  def unify(term1: FOLExpression, term2: FOLExpression) = {
+
+  def unify(seq1: Sequent, seq2: Sequent) : List[Substitution[FOLExpression]] = {
+    require( (seq1.antecedent ++ seq1.succedent ++ seq2.antecedent ++ seq2.succedent).forall( _.isInstanceOf[FOLFormula] ) )
+    unify( seq1.getOrderedSequent.toFormula.asInstanceOf[FOLFormula], seq2.getOrderedSequent.toFormula.asInstanceOf[FOLFormula] )
+  }
+
+  def unify(term1: FOLExpression, term2: FOLExpression) : List[Substitution[FOLExpression]] =
     unifySetOfTuples(Tuple2(term1.asInstanceOf[FOLExpression],term2.asInstanceOf[FOLExpression])::Nil,Nil) match {
       case Some((Nil,ls)) => List(Substitution[FOLExpression](ls.map(x => (x._1.asInstanceOf[FOLVar],x._2))))
       case _ => Nil
     }
-  }
 
   def applySubToListOfPairs(l : List[Tuple2[FOLExpression, FOLExpression]], s : Substitution[FOLExpression]) : List[Tuple2[FOLExpression, FOLExpression]] = {
   //  l.foldLeft(Nil)((Tuple2(x,v))=> (Tuple2(s.applyFOL(x),s.applyFOL(v))))
@@ -30,9 +36,9 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
         if(getVars(term).contains(x))
             false
       true
-
   }
 
+  // TODO: use getFreeAndBoundVariables from FOLExpression?
   def getVars(f: FOLExpression): List[FOLVar] = f match {
       case (FOLConst(c)) => Nil
       case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil
@@ -43,24 +49,33 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
     case (((a1,a2)::s), s2) if a1 == a2 => unifySetOfTuples(s, s2)
 
     case ((FOLConst (name1),FOLConst (name2))::s,s2) if name1 != name2 => None
-    case (((Function(f1,args1), Function(f2, args2)):: (s)), s2)
-      if args1.length == args2.length && f1==f2  => {
-          return unifySetOfTuples(args1.zip(args2) ::: s, s2)
-      }
-    case (((Atom(f1,args1), Atom(f2, args2)):: (s)), s2)
-      if args1.length == args2.length && f1==f2  => {
-          return unifySetOfTuples(args1.zip(args2) ::: s, s2)
-      }
 
-    case (((x : FOLVar,v)::s), s2) if !getVars(v).contains(x) =>
-      //  x does not occur in v && x is not in solved form =>
-   //   print(applySubToListOfPairs(s,Substitution(x,v)).toString+"\n")
-        unifySetOfTuples(applySubToListOfPairs(s,Substitution[FOLExpression](x,v)), (x,v)::applySubToListOfPairs(s2,Substitution[FOLExpression](x,v)))
+    case (((Function(f1,args1), Function(f2, args2))::s), s2)
+      if args1.length == args2.length && f1==f2  => unifySetOfTuples(args1.zip(args2) ::: s, s2)
 
+    case (((Atom(f1,args1), Atom(f2, args2))::s), s2)
+      if args1.length == args2.length && f1==f2  => unifySetOfTuples(args1.zip(args2) ::: s, s2)
 
-    case (((v, x : FOLVar)::s), s2) if !getVars(v).contains(x) =>
-        unifySetOfTuples(applySubToListOfPairs(s,Substitution[FOLExpression](x,v)), (x,v)::applySubToListOfPairs(s2,Substitution[FOLExpression](x,v)))
+    case (((Neg(f1), Neg(f2))::s), s2) => unifySetOfTuples((f1, f2)::s, s2)
+
+    case (((x : FOLVar,v)::s), s2) if !getVars(v).contains(x) => {
+      val sub = Substitution(x,v)
+      unifySetOfTuples(applySubToListOfPairs(s,sub), (x,v)::applySubToListOfPairs(s2,sub))
+    }
+
+    case (((v, x : FOLVar)::s), s2) if !getVars(v).contains(x) =>{ 
+      val sub = Substitution(x,v)
+      unifySetOfTuples(applySubToListOfPairs(s,sub), (x,v)::applySubToListOfPairs(s2,sub))
+    }
     case (Nil, s2) => Some((Nil, s2))
-    case _ => None
+
+    // FIXME: this nested match is only necessary because of a scala bug:
+    // if the case is put in the parent match, then the compiler refuses to
+    // compile since the generated java code is too big!
+    case _ => { (s1, s2) match {
+      case (((BinaryLogicSymbol(s1, l1, r1), BinaryLogicSymbol(s2, l2, r2))::s), set2) if s1 == s2 => unifySetOfTuples((l1, l2)::(r1, r2)::s, set2)
+      case _ => None
+    }
+    }
   }
 }

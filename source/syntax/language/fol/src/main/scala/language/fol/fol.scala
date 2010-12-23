@@ -38,6 +38,22 @@ trait FOLExpression extends HOLExpression with FOL {
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
     }
+
+    // this function outputs the string which creates
+    // an object like this. can be used to create
+    // tests based on bugs.
+    def toCode : String = this match {
+      case FOLVar(x) => "FOLVar( " + x.toCode + " )"
+      case FOLConst(x) => "FOLConst( " + x.toCode + " )"
+      case Atom(x, args) => "Atom( " + x.toCode + ", " + args.foldLeft( "Nil" )( (s, a) => a.toCode + "::" + s ) + ")"
+      case Function(x, args) => "Function( " + x.toCode + ", " + args.foldLeft( "Nil" )( (s, a) => a.toCode + "::" + s ) + ")"
+      case And(x,y) => "And(" + x.toCode + ", " + y.toCode + ")"
+      case Or(x,y) => "Or(" + x.toCode + ", " + y.toCode + ")"
+      case Imp(x,y) => "Imp(" + x.toCode + ", " + y.toCode + ")"
+      case Neg(x) => "Neg(" + x.toCode + ")"
+      case ExVar(x,f) => "ExVar(" + x.toCode + ", " + f.toCode + ")"
+      case AllVar(x,f) => "AllVar(" + x.toCode + ", " + f.toCode + ")"
+    }
   }
 trait FOLFormula extends FOLExpression with HOLFormula
 //trait FOLFormula extends HOLFormula with FOL
@@ -189,6 +205,15 @@ object AllVar {
   def apply(variable: FOLVar, sub: FOLFormula) = All(FOLAbs(variable, sub))
   def unapply(expression: LambdaExpression) = expression match {
     case All(Abs(variable: FOLVar, sub: FOLFormula), _) => Some( (variable, sub) )
+    case _ => None
+  }
+}
+
+object BinaryLogicSymbol {
+  def unapply(expression: LambdaExpression) = expression match {
+    case And(l, r) => Some( (AndC, l, r) )
+    case Or(l, r) => Some( (OrC, l, r) )
+    case Imp(l, r) => Some( (ImpC, l, r) )
     case _ => None
   }
 }

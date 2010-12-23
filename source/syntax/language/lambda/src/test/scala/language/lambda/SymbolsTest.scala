@@ -15,9 +15,6 @@ import symbols._
 
 class SymbolsTest extends SpecificationWithJUnit {
   "Equality between symbols" should {
-    "return true if it is the same class" in {
-      (new VariableSymbolA {}) must beEqual (new VariableSymbolA {})
-    }
     "return true if it is the same class and mixed with the same string" in {
       (new VariableStringSymbol("a")) must beEqual (new VariableStringSymbol("a"))
     }
