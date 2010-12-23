@@ -17,7 +17,7 @@ package typedLambdaCalculus {
     def factory : LambdaFactoryA = LambdaFactory
   }
 
-  trait LambdaExpression extends LambdaFactoryProvider {
+  trait LambdaExpression extends LambdaFactoryProvider with Ordered[LambdaExpression] {
     def exptype: TA
     def toString1(): String
     def syntaxEquals(e: LambdaExpression): Boolean
@@ -111,6 +111,22 @@ package typedLambdaCalculus {
     def isBound = !isFree
     def variant(gen: => VariantGenerator) = if (isFree && name.isInstanceOf[VariableSymbolA]) gen(this) else this
     protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean = isFree || binders.contains(this)
+
+    // for trait Ordered
+    def compare(that: LambdaExpression) = that match {
+      case Var( n, _ ) => {
+        val v = that.asInstanceOf[Var] //TODO: cast!?
+        if (isFree && v.isFree)
+          name.compare( n ) //TODO: should we also compare the type if the symbols are equal?
+        else if (!isFree && !v.isFree)
+          dbIndex.get - v.dbIndex.get
+        else if (isFree && !v.isFree)
+          -1
+        else
+          1
+      }
+      case _ => -1 // in all other cases, we are smaller.
+    }
   }
   // TODO: remove!?!
   object LambdaVar {
@@ -194,6 +210,11 @@ package typedLambdaCalculus {
       case _ => 0
     }
     protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean = expressionInScope.noUnboundedBoundedRec(binders + variableInScope)
+    // for trait Ordered
+    def compare(that: LambdaExpression) = that match {
+      case AbsInScope( v, e ) => expressionInScope.compare( e )
+      case _ => 1
+    }
   }
 
   /*
@@ -247,10 +268,26 @@ package typedLambdaCalculus {
     def toString1(): String = "App(" + function.toString1+", "+argument.toString1+")"
     def toStringSimple() = "(" + function.toStringSimple + argument.toStringSimple + ")"
     protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean = function.noUnboundedBoundedRec(binders) && argument.noUnboundedBoundedRec(binders)
+
+    // for trait Ordered
+    def compare(that: LambdaExpression) = that match {
+      case App( l, r ) => {
+        val c = function.compare( l )
+        if (c == 0)
+          argument.compare( r ) 
+        else
+          c
+      }
+      case Var(_, _) => 1
+      case Abs(_, _) => -1
+    }
   }
 
   object App {
-    def apply(function: LambdaExpression, argument: LambdaExpression) = function.factory.createApp( function, argument )
+    // TODO: we use the factory of the argument. this is an arbitrary choice.
+    // maybe we should compare the factories, and use the more specific one (in terms
+    // of inheritance)
+    def apply(function: LambdaExpression, argument: LambdaExpression) = argument.factory.createApp( function, argument )
     def unapply(expression: LambdaExpression) = expression match {
       case a: App => Some((a.function, a.argument))
       case _ => None

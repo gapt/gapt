@@ -15,6 +15,7 @@ import symbols._
 import symbols.ImplicitConverters._
 import typedLambdaCalculus._
 import types.Definitions._
+import scala.math.signum
 
 class LambdaCalculusTest extends SpecificationWithJUnit {
   private case class MyVar(nm: String) extends Var(VariableStringSymbol(nm), Ti())
@@ -112,5 +113,44 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
       bound must notExist (_ =^ y)
       bound must notExist (_ =^ z)
       bound must notExist (_ =^ r)
+  }
+
+  "correctly order expressions" in {
+    val x = LambdaVar(VariableStringSymbol("x"), i )
+    val y = LambdaVar(VariableStringSymbol("y"), i )
+
+    val xx = Abs( x, x )
+    val yy = Abs( y, y )
+    val xy = Abs( x, y )
+
+    xx.compare( yy ) must beEqual( 0 )
+    xx.compare( xy ) mustNot beEqual( 0 )
+    yy.compare( xy ) mustNot beEqual( 0 )
+    xy.compare( xx ) mustNot beEqual( 0 )
+    xy.compare( yy ) mustNot beEqual( 0 )
+    signum( xx.compare( xy ) ) * signum( xy.compare( xx ) ) must beEqual ( -1 )
+
+    val f = LambdaVar(VariableStringSymbol("f"), i -> i)
+    val g = LambdaVar(VariableStringSymbol("g"), i -> i)
+    val fx = App( f, x )
+    val gx = App( g, x )
+    val fy = App( f, y )
+
+    fx.compare( gx ) must beEqual( -1 )
+    gx.compare( fx ) must beEqual( 1 )
+    fx.compare( fy ) must beEqual( -1 )
+    fy.compare( fx ) must beEqual( 1 )
+
+    fx.compare( xx ) mustNot beEqual ( 0 )
+    fx.compare( xx ) * xx.compare( fx ) must beEqual ( -1 )
+    fx.compare( yy ) * yy.compare( fx ) must beEqual ( -1 )
+
+    val xfx = Abs( x, fx )
+    val yfx = Abs( y, fx )
+    val yfy = Abs( y, fy )
+
+    xfx.compare( yfy ) must beEqual( 0 )
+    xfx.compare( yfx ) mustNot beEqual( 0 )
+    xfx.compare( yfx ) * yfx.compare( xfx ) must beEqual( -1 )
   }
 }

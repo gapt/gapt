@@ -12,10 +12,10 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types.Definitions._
-import at.logic.language.hol._
+//import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 //import at.logic.language.hol.propositions._
-import at.logic.language.hol._
+//import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.language.simple._
@@ -35,66 +35,63 @@ class UnificationTest extends SpecificationWithJUnit {
 
       }
     }
-  }
-  /*
-  val alg = new FOLUnification {}
-  "Unification" should {
-    "return None if terms are not unifiable" in
+    "return Nil if terms are not unifiable" in
     {
       "- both are constants" in
       {
         val a = FOLConst(ConstantStringSymbol("a"))
         val b = FOLConst(ConstantStringSymbol("b"))
-        (alg.unify(a,b)) must beEqual (None)
+        (FOLUnificationAlgorithm.unify(a,b)) must beEqual (Nil)
       }
       "- both are functions" in {
         val a = Function(ConstantStringSymbol("f"), FOLConst(ConstantStringSymbol("a"))::Nil)
         val b = Function(ConstantStringSymbol("g"), FOLConst(ConstantStringSymbol("a"))::Nil)
-        (alg.unify(a,b)) must beEqual (None)
+        (FOLUnificationAlgorithm.unify(a,b)) must beEqual (Nil)
       }
     }
     "return Empty substitution if both terms are" in {
       "constants" in {
         val a = FOLConst(ConstantStringSymbol("a"))
         val b = FOLConst(ConstantStringSymbol("a"))
-        (alg.unify(a,b)) must beEqual (Some(Substitution(Nil)))
+        (FOLUnificationAlgorithm.unify(a,b)) must beEqual (Substitution(Nil)::Nil)
       }
       "functions" in {
         val a = Function(ConstantStringSymbol("f"), FOLConst(ConstantStringSymbol("a"))::Nil)
         val b = Function(ConstantStringSymbol("f"), FOLConst(ConstantStringSymbol("a"))::Nil)
-        (alg.unify(a,b)) must beEqual (Some(Substitution(Nil)))
+        (FOLUnificationAlgorithm.unify(a,b)) must beEqual (Substitution(Nil)::Nil)
       }
     }
     "returns the substitution {x->a} where a is a constant, x is a variable" in {
         val x = FOLVar(VariableStringSymbol("x"))
         val a = FOLConst(ConstantStringSymbol("a"))
-        (alg.unify(x, a)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil)))
+        (FOLUnificationAlgorithm.unify(x, a)) must beEqual (Substitution( FOLVar(VariableStringSymbol("x")), FOLConst(ConstantStringSymbol("a")))::Nil)
     }
+    /*
     "returns a list of all variables (i.e. x::y::Nil) in the term  f(g(x,a),y,b), where a and b are constants " in {
         val t3 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t4 = Function(ConstantStringSymbol("f"), t3::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
-        (alg.getVars(t4)) must beEqual (FOLVar(VariableStringSymbol("x"))::FOLVar(VariableStringSymbol("y"))::Nil)
-    }
-    "returns a unifier for the pair <z,f(g(x,a),y,b)>, where x,y,z are vars, a and b are consts" in {
+        (FOLUnificationAlgorithm.getVars(t4)) must beEqual (FOLVar(VariableStringSymbol("x"))::FOLVar(VariableStringSymbol("y"))::Nil)
+    } */
+    "return a unifier for the pair <z,f(g(x,a),y,b)>, where x,y,z are vars, a and b are consts" in {
         val z = FOLVar(VariableStringSymbol("z"))
         val t5 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t6 = Function(ConstantStringSymbol("f"), t5::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
-        (alg.unify(z, t6)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("z")).asInstanceOf[Var], t6)::Nil)))
+        (FOLUnificationAlgorithm.unify(z, t6)) must beEqual (Substitution( FOLVar(VariableStringSymbol("z")), t6)::Nil)
     }
-    "returns the None for the pair <a,f(g(x,a),y,b)>, where x,y are vars, a and b are consts" in {
+    "return Nil for the pair <a,f(g(x,a),y,b)>, where x,y are vars, a and b are consts" in {
         val a = FOLConst(ConstantStringSymbol("a"))
         val t7 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t8 = Function(ConstantStringSymbol("f"), t7::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
-        (alg.unify(a, t8)) must beEqual (None)//(Some(Substitution( Nil)))
+        (FOLUnificationAlgorithm.unify(a, t8)) must beEqual (Nil)
     }
-    "returns the None for the pair <x,f(g(x,a),y,b)>, where x,y are vars, a and b are consts" in {
+    "return Nil for the pair <x,f(g(x,a),y,b)>, where x,y are vars, a and b are consts" in {
         val x = FOLVar(VariableStringSymbol("x"))
         val t7 = Function(ConstantStringSymbol("g"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t8 = Function(ConstantStringSymbol("f"), t7::FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
-        (alg.unify(x, t8)) must beEqual (None)//(Some(Substitution( Nil)))
+        (FOLUnificationAlgorithm.unify(x, t8)) must beEqual (Nil)
     }
-    
-    "return None for the pair <f(g(c),y), f(y,g(b))> where x,y are vars, a,c are consts" in {
+
+    "return Nil for the pair <f(g(c),y), f(y,g(b))> where x,y are vars, a,c are consts" in {
         val x = FOLVar(VariableStringSymbol("x"))
         val y = FOLVar(VariableStringSymbol("y"))
         val b = FOLConst(ConstantStringSymbol("b"))
@@ -104,10 +101,10 @@ class UnificationTest extends SpecificationWithJUnit {
         val gc = Function(ConstantStringSymbol("g"),c::Nil)
         val f_gc_y = Function(ConstantStringSymbol("f"), gc::y::Nil)
         val t_y_gb = Function(ConstantStringSymbol("f"), y::gb::Nil)
-       (alg.unify(f_gc_y, t_y_gb)) must beEqual (None)
+       (FOLUnificationAlgorithm.unify(f_gc_y, t_y_gb)) must beEqual (Nil)
     }
 
-    "returns the unifier {y->g(b), x->b} for the pair <f(g(x),y), f(y,g(b))> where x,y are vars, a and b are consts" in {
+    "return the unifier {y->g(b), x->b} for the pair <f(g(x),y), f(y,g(b))> where x,y are vars, a and b are consts" in {
         val x = FOLVar(VariableStringSymbol("x"))
         val y = FOLVar(VariableStringSymbol("y"))
         val b = FOLConst(ConstantStringSymbol("b"))
@@ -117,17 +114,29 @@ class UnificationTest extends SpecificationWithJUnit {
         val gc = Function(ConstantStringSymbol("g"),c::Nil)
         val t9 = Function(ConstantStringSymbol("f"), gx::y::Nil)
         val t10 = Function(ConstantStringSymbol("f"), y::gb::Nil)
-   //     alg.printSubst(alg.unify(t9,t10).get)
-        (alg.unify(t9,t10)) must beEqual (Some(Substitution(SingleSubstitution(y,gb) :: SingleSubstitution(x,b) :: Nil)))
+        (FOLUnificationAlgorithm.unify(t9,t10)) must beEqual (Substitution( (y,gb)::(x,b)::Nil )::Nil)
     }
 
     "return the substitution {x->a,y->b} where a and b are constants, x and y are variables" in {
         val t1 = Function(ConstantStringSymbol("f"), FOLVar(VariableStringSymbol("x"))::FOLConst(ConstantStringSymbol("b"))::Nil)
         val t2 = Function(ConstantStringSymbol("f"), FOLConst(ConstantStringSymbol("a"))::FOLVar(VariableStringSymbol("y"))::Nil)
-     //   alg.printSubst(alg.removeRedundanceFromSubst(alg.unify(t1, t2).get))
-        (alg.unify(t1, t2)) must beEqual (Some(Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("x")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("a")).asInstanceOf[LambdaExpression])::Nil):::Substitution( SingleSubstitution(FOLVar(VariableStringSymbol("y")).asInstanceOf[Var], FOLConst(ConstantStringSymbol("b")).asInstanceOf[LambdaExpression])::Nil)))
+        (FOLUnificationAlgorithm.unify(t1, t2)) must beEqual (Substitution( (FOLVar(VariableStringSymbol("x")), FOLConst(ConstantStringSymbol("a")) )::(FOLVar(VariableStringSymbol("y")), FOLConst(ConstantStringSymbol("b")))::Nil)::Nil)
     }
-    
+
+    // the following test was automatically generated using the toCode function
+    "unify two formulas from a real-world example" in {
+      val t1 = Or(Neg(Atom( ConstantStringSymbol( "=" ), FOLConst( ConstantStringSymbol( "ladr1" ) )::Function( ConstantStringSymbol( "ladr3" ), Function( ConstantStringSymbol( "ladr2" ), FOLVar( VariableStringSymbol( "B" ) )::FOLVar( VariableStringSymbol( "A" ) )::Nil)::Nil)::Nil)), Atom( ConstantStringSymbol( "=" ), FOLConst( ConstantStringSymbol( "ladr0" ) )::Function( ConstantStringSymbol( "ladr3" ), Function( ConstantStringSymbol( "ladr2" ), Function( ConstantStringSymbol( "ladr2" ), FOLConst( ConstantStringSymbol( "ladr0" ) )::Function( ConstantStringSymbol( "ladr2" ), FOLVar( VariableStringSymbol( "B" ) )::FOLVar( VariableStringSymbol( "A" ) )::Nil)::Nil)::FOLVar( VariableStringSymbol( "C" ) )::Nil)::Nil)::Nil))
+
+      val t2 = Or(Neg(Atom( ConstantStringSymbol( "=" ), FOLConst( ConstantStringSymbol( "ladr1" ) )::Function( ConstantStringSymbol( "ladr3" ), Function( ConstantStringSymbol( "ladr2" ), FOLVar( VariableStringSymbol( "x_{3}" ) )::FOLVar( VariableStringSymbol( "x_{2}" ) )::Nil)::Nil)::Nil)), Atom( ConstantStringSymbol( "=" ), FOLConst( ConstantStringSymbol( "ladr0" ) )::Function( ConstantStringSymbol( "ladr3" ), Function( ConstantStringSymbol( "ladr2" ), Function( ConstantStringSymbol( "ladr2" ), FOLConst( ConstantStringSymbol( "ladr0" ) )::Function( ConstantStringSymbol( "ladr2" ), FOLVar( VariableStringSymbol( "x_{3}" ) )::FOLVar( VariableStringSymbol( "x_{2}" ) )::Nil)::Nil)::FOLVar( VariableStringSymbol( "x_{4}" ) )::Nil)::Nil)::Nil))
+
+      (FOLUnificationAlgorithm.unify(t1, t2)) must beEqual (Substitution( (FOLVar( VariableStringSymbol( "B" ) ), FOLVar( VariableStringSymbol( "x_{3}" ) ))::(FOLVar( VariableStringSymbol( "A" ) ), FOLVar( VariableStringSymbol( "x_{2}" ) ))
+                                                                        ::(FOLVar( VariableStringSymbol( "C" ) ), FOLVar( VariableStringSymbol( "x_{4}" ) ))::Nil)::Nil)
+    }
+
+  }
+  /*
+  val FOLUnificationAlgorithm = new FOLUnification {}
+  "Unification" should {        
     "applies the substitution {x->b} to the substitution {y->f(g(x),c),z->f(c,b)}" in {
         val x = FOLVar(VariableStringSymbol("x"))
         val y = FOLVar(VariableStringSymbol("y"))
@@ -144,8 +153,8 @@ class UnificationTest extends SpecificationWithJUnit {
         var s1 = Substitution(SingleSubstitution(y,f_gx_c) :: SingleSubstitution(z,f_c_b) :: Nil)
         var s2 = Substitution(SingleSubstitution(x,b) :: Nil)
         var s3 = Substitution(SingleSubstitution(y,f_gb_c) :: SingleSubstitution(z,f_c_b) :: Nil)      
-        //alg.printSubst(alg.applySub(s1, s2))
-        (alg.applySub(s1, s2)) must beEqual (s3)
+        //FOLUnificationAlgorithm.printSubst(FOLUnificationAlgorithm.applySub(s1, s2))
+        (FOLUnificationAlgorithm.applySub(s1, s2)) must beEqual (s3)
       //  (0) must beEqual (0)
     }
 
@@ -155,8 +164,8 @@ class UnificationTest extends SpecificationWithJUnit {
         val gx = Function(ConstantStringSymbol("g"),x::Nil)
         val f_x_y = Function(ConstantStringSymbol("f"), x::y::Nil)
         val f_y_gx = Function(ConstantStringSymbol("f"), y::gx::Nil)
- //       alg.printSubst(alg.unify(f_x_y, f_y_gx))
-        (alg.unify(f_x_y, f_y_gx)) must beEqual (None)
+ //       FOLUnificationAlgorithm.printSubst(FOLUnificationAlgorithm.unify(f_x_y, f_y_gx))
+        (FOLUnificationAlgorithm.unify(f_x_y, f_y_gx)) must beEqual (None)
       //  (0) must beEqual (0)
     }
   }*/
