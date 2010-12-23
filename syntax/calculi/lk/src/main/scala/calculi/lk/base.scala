@@ -15,7 +15,8 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
-
+import scala.util.Sorting.quickSort
+import scala.math.Ordering._
 
 package base {
 
@@ -75,6 +76,15 @@ package base {
     def toFormula = Or( antecedent.map( f => Neg( f ) ) ::: succedent )
     // checks whether this sequent is of the form F :- F
     def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head == succedent.head
+
+    def getOrderedSequent = {
+      val ant = antecedent.toArray
+      val succ = succedent.toArray
+      // TODO: quicksort does not work without the cast???
+      quickSort[LambdaExpression]( ant.asInstanceOf[Array[LambdaExpression]] )
+      quickSort[LambdaExpression]( succ.asInstanceOf[Array[LambdaExpression]] )
+      Sequent( ant.toList, succ.toList )
+    }
   }
   object Sequent {
     def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)
@@ -84,6 +94,7 @@ package base {
   class SequentOccurrence(val antecedent: Set[FormulaOccurrence], val succedent: Set[FormulaOccurrence]) extends SequentLike
   {
     def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
+
     def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
     def multisetEquals( o: Sequent ) = getSequent.multisetEquals(o)
     def setEquals(o: SequentOccurrence ) = getSequent.setEquals(o.getSequent)
