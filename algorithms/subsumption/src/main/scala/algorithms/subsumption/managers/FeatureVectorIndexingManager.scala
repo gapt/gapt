@@ -16,21 +16,25 @@ import at.logic.algorithms.subsumption._
 
 //val a = new VectorTreeManager with StillmabAlgorithm {val seqList = }
 trait VectorTreeManager extends SubsumptionAlgorithm  {
-//  val seqList: List[Sequent]
-//  val tree = Tree[Sequent](seqList)
 
-  val seqList: List[Sequent] = List()
+  var seqList: List[Sequent]
+  var features: List[Sequent=>Int]
   var tree: Trie[Sequent]
 
 
+  def forwardSubsumption
 
-
-  def forwardSubsumption1(vert: TreeNode[SequentLike], features: List[SequentLike=>Int], subsumedSeq: SequentLike): Boolean = {
+  def forwardSubsumptionRec(vert: TreeNode[Sequent], features: List[Sequent=>Int], subsumedSeq: Sequent): Boolean = {
 
 //    if(tree.isLeaf(vert)) {
     if(features.isEmpty) {
-      println("\n\nLeaf:  "+subsumedSeq+"   <--->   ");vert.print
-      vert.seqList.exists(seq => {val x = subsumes(subsumedSeq.getSequent, seq.getSequent); if (x) Console.println(x); x})
+      println("\n\nLeaf:  "+subsumedSeq+"   <--->   ");
+      vert.print
+      vert.seqList.exists(seq => {
+        val x = subsumes(subsumedSeq, seq);
+        if (x) Console.println(x);
+        x;
+      })
 //      for(seq <- vert.seqList) {
 //        if(subsumes(subsumedSeq, seq)) {
 //          println("The clause  is subsumed ! \n\n")
@@ -42,9 +46,9 @@ trait VectorTreeManager extends SubsumptionAlgorithm  {
     {
     println("\nvert = ")
     vert.print
-    println("\n\nfeature vector subsumedSeq = "+features.head(subsumedSeq))
+    println("\n\nfeature vector of the subsumedSeq = "+features.head(subsumedSeq))
 
-    vert.children.exists(child => child._1 <= features.head(subsumedSeq) && forwardSubsumption1(child._2, features.tail, subsumedSeq))
+    vert.children.exists(child => child._1 <= features.head(subsumedSeq) && forwardSubsumptionRec(child._2, features.tail, subsumedSeq))
 
 //    for (child <- vert.children)
 //    {
