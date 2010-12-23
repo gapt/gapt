@@ -7,6 +7,10 @@
 
 package at.logic.algorithms.subsumption.managers
 
+import at.logic.language.hol.HOLExpression
+import at.logic.algorithms.matching.MatchingAlgorithm
+import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.language.lambda
 import org.specs._
 import org.specs.runner._
 
@@ -27,7 +31,7 @@ import at.logic.language.fol._
 
 
 
-class gFeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
+class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
 
   "tree.scala" should {
     "create correctly a tree" in {
@@ -85,19 +89,28 @@ class gFeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
       val pffb = Atom(new ConstantStringSymbol("p"),ffb::Nil)
       val pX = Atom(new ConstantStringSymbol("p"),X::Nil)
 
-      val seq11 = Sequent(Nil, pa::pfa::Nil).asInstanceOf[SequentLike]
-      val seq21 = Sequent(pb::Nil, pa::Nil).asInstanceOf[SequentLike]
-      val seq31 = Sequent(pa::Nil, pb::Nil).asInstanceOf[SequentLike]
-      val seq41 = Sequent(Nil,pX::pffb::Nil).asInstanceOf[SequentLike]
+      val seq11 = Sequent(Nil, pa::pfa::Nil)
+      val seq21 = Sequent(pb::Nil, pa::Nil)
+      val seq31 = Sequent(pa::Nil, pb::Nil)
+      val seq41 = Sequent(Nil,pX::pffb::Nil)
 
-      val subsumedSeq = Sequent(Nil,pX::pa::Nil).asInstanceOf[SequentLike]
-
+      val subsumedSeq = Sequent(Nil,pX::pa::Nil)
 
       var l = seq11::seq21::seq31::seq41::Nil
-    //  val root = new TreeNode[String](seq1::Nil)
 
-//      var root = new TreeNode[Sequent](l)
-//      val f1: (Sequent) => Int = { x => x.toStringSimple.split("p").size - 1}
+
+      var root = new TreeNode[Sequent](l)
+      val f1: (Sequent) => Int = { x => x.toStringSimple.split("p").size - 1}
+      val featureList = f1::Nil
+      var subsumpMNGR = new VectorTreeManager with StillmanSubsumptionAlgorithm[LambdaExpression] {
+        var seqList = l;
+        var tree = new Trie(l, featureList);
+        var features = featureList;
+        def forwardSubsumption = forwardSubsumptionRec(root, features, subsumedSeq)
+        val matchAlg = NaiveIncompleteMatchingAlgorithm.asInstanceOf[MatchingAlgorithm[LambdaExpression]]
+      }
+      subsumpMNGR.forwardSubsumption
+
 //
 //      val t = new Trie[Sequent](root, f1::Nil)
 //      t.createTree(root)
