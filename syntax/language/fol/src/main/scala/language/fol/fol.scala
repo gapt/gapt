@@ -7,9 +7,9 @@
 package at.logic.language.fol
 
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.hol.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp}
+import at.logic.language.hol.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp, Atom => HOLAtom, Function => HOLFunction}
 import at.logic.language.hol.{HOLExpression, HOL, HOLFormula, HOLVar, HOLConst, HOLApp, HOLAbs, HOLConstFormula, HOLFactory, HOLAppFormula}
-import at.logic.language.hol.{AllQ => HOLAllQ, ExQ => HOLExQ}
+import at.logic.language.hol.{AllQ => HOLAllQ, ExQ => HOLExQ, ExVar => HOLExVar, AllVar => HOLAllVar}
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
@@ -57,10 +57,32 @@ trait FOLExpression extends HOLExpression with FOL {
   }
 trait FOLFormula extends FOLExpression with HOLFormula
 //trait FOLFormula extends HOLFormula with FOL
+// the companion object converts HOL formulas into fol if the hol version has fol type
+object FOLFormula {
+ def apply(f: HOLFormula): FOLFormula = f match {
+   case HOLNeg(x) => Neg(FOLFormula(x))
+   case HOLOr(x,y) => Or(FOLFormula(x), FOLFormula(y))
+   case HOLAnd(x,y) => And(FOLFormula(x), FOLFormula(y))
+   case HOLImp(x,y) => Imp(FOLFormula(x), FOLFormula(y))
+   case HOLAtom(nm: ConstantSymbolA, ls) if ls.forall(_.isInstanceOf[HOLExpression]) => Atom(nm, ls.map(x => FOLTerm(x.asInstanceOf[HOLExpression])))
+   case HOLExVar(HOLVar(n,t),s) if (t == Ti()) => ExVar(FOLVar(n), FOLFormula(s))
+   case HOLAllVar(HOLVar(n,t),s) if (t == Ti()) => AllVar(FOLVar(n), FOLFormula(s))
+   case _ => throw new IllegalArgumentException("Cannot extract FOLFormula from higher order epxression: " + f.toString)
+ }
+}
+
 trait FOLTerm extends FOLExpression
 // trait FOLTerm extends HOLExpression with FOL
 {
   require( exptype == Ti() )
+}
+object FOLTerm {
+  def apply(t: HOLExpression): FOLTerm = t match {
+    case HOLVar(n,t) if (t == Ti()) => FOLVar(n)
+    case HOLConst(n,t) if (t == Ti()) => FOLConst(n)
+    case HOLFunction(name: ConstantSymbolA, ls, t) if (ls.forall(_.isInstanceOf[HOLExpression])) => Function(name, ls.map(x => FOLTerm(x.asInstanceOf[HOLExpression])))
+    case _ => throw new IllegalArgumentException("Cannot extract FOLTerm from higher order epxression: " + t.toString)
+  }
 }
 
 // individual variable
