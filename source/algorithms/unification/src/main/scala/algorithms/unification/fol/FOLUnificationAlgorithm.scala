@@ -41,8 +41,11 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
   // TODO: use getFreeAndBoundVariables from FOLExpression?
   def getVars(f: FOLExpression): List[FOLVar] = f match {
       case (FOLConst(c)) => Nil
-      case (t1 @ FOLVar(x)) => t1.asInstanceOf[FOLVar]::Nil
-      case (function @ Function(_, args @ _)) => args.flatMap( a => getVars(a) )
+      case FOLVar(x) => f.asInstanceOf[FOLVar]::Nil
+      case Function(_, args) => args.flatMap( a => getVars(a) )
+      case Atom(_, args) => args.flatMap( a => getVars(a) )
+      case Neg(f) => getVars(f)
+      case BinaryLogicSymbol(_, l, r) => getVars( l ) ++ getVars( r )
   }
 
   def unifySetOfTuples(s1: List[Tuple2[FOLExpression, FOLExpression]], s2 : List[Tuple2[FOLExpression, FOLExpression]]) : Option[(List[Tuple2[FOLExpression, FOLExpression]], List[Tuple2[FOLExpression, FOLExpression]])] = (s1,s2) match {
