@@ -37,6 +37,7 @@ trait FOLExpression extends HOLExpression with FOL {
       case Neg(x) => NegSymbol + x.toString
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
+      case _ => throw new Exception("Unknown FOL expression: " + super.toString)
     }
 
     // this function outputs the string which creates
@@ -128,8 +129,7 @@ object Atom {
   def unapply( expression: LambdaExpression ) = expression match {
     case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
     case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
-    case AppN( Var( name: ConstantSymbolA, t ), args )
-      if t == FunctionType( To(), args.map( a => Ti() ) ) => Some( ( name, args.asInstanceOf[List[FOLTerm]] ) )
+    case AppN( Var( name: ConstantSymbolA, t ), args ) if t == FunctionType( To(), args.map( a => Ti() ) ) => Some( ( name, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
 }
@@ -141,8 +141,7 @@ object Function {
     AppN( f, args ).asInstanceOf[FOLTerm]
   }
   def unapply( expression: LambdaExpression ) = expression match {
-    case AppN( Var( name: ConstantSymbolA, t), args )
-      if t == FunctionType( Ti(), args.map( a => Ti() ) ) => Some( (name, args.asInstanceOf[List[FOLTerm]] ) )
+    case AppN( Var( name: ConstantSymbolA, t), args ) if t == FunctionType( Ti(), args.map( a => Ti() ) ) => Some( (name, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
 }

@@ -27,11 +27,11 @@ package replacements {
         case (1::rest, AllVar(v,m)) => AllVar(v, replace(rest, m).asInstanceOf[HOLFormula])
         case (n::rest, app@ Atom(p,args)) => {
           val (firstArgs, arg::remainingArgs) = args.splitAt(n-1)
-          Atom(app.asInstanceOf[App].function.asInstanceOf[Var], firstArgs.asInstanceOf[List[HOLExpression]]:::(replace(rest, arg.asInstanceOf[HOLExpression])::remainingArgs.asInstanceOf[List[HOLExpression]]))
+          Atom(p, firstArgs.asInstanceOf[List[HOLExpression]]:::(replace(rest, arg.asInstanceOf[HOLExpression])::remainingArgs.asInstanceOf[List[HOLExpression]]))
         }
-        case (n::rest, app@ Function(p,args,_)) => {
+        case (n::rest, app@ Function(p,args,t)) => {
           val (firstArgs, arg::remainingArgs) = args.splitAt(n-1)
-          Function(app.asInstanceOf[App].function.asInstanceOf[Var], firstArgs.asInstanceOf[List[HOLExpression]]:::(replace(rest, arg.asInstanceOf[HOLExpression])::remainingArgs.asInstanceOf[List[HOLExpression]]))
+          Function(p, firstArgs.asInstanceOf[List[HOLExpression]]:::(replace(rest, arg.asInstanceOf[HOLExpression])::remainingArgs.asInstanceOf[List[HOLExpression]]),t)
         }
         case (n::rest, AppN(f,args)) => {
           val (firstArgs, arg::remainingArgs) = args.splitAt(n-1)

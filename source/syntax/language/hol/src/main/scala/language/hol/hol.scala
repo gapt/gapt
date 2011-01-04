@@ -205,8 +205,7 @@ package hol {
     def unapply( expression: LambdaExpression ) = expression match {
       case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
       case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case AppN( Var( name, t ), args )
-        if t != FunctionType( To(), args.map( a => a.exptype ) ) => Some( ( name, args, t ) )
+      case AppN( Var( name, t ), args ) if (expression.exptype != To()) => Some( ( name, args, expression.exptype ) )
       case _ => None
     }
   }
@@ -222,8 +221,7 @@ package hol {
     def unapply( expression: LambdaExpression ) = expression match {
       case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
       case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case AppN( Var( name, t ), args )
-        if t == FunctionType( To(), args.map( a => a.exptype ) ) => Some( ( name, args ) )
+      case AppN( Var( name, t ), args ) if (expression.exptype == To()) => Some( ( name, args ) )
       case _ => None
     }
   }
