@@ -77,8 +77,8 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
               ev
             })
 
-
-            val term = AppN(Var(sym, returnType,funcVar.factory), appzHlist)
+            val headType = FunctionType(returnType, args2.map(arg => arg.exptype))      //before returnType was the type of the head
+            val term = AppN(Var(sym, headType,funcVar.factory), appzHlist)
             println("\n555   "  + term.toString1+ " \n")
             val part_bind_t = AbsN(newVarList, term ).asInstanceOf[HOLExpression]
             println("\n666 binding = "+ part_bind_t.toString1 +" \n")
