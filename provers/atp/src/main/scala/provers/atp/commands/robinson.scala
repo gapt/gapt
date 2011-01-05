@@ -107,14 +107,13 @@ package robinson {
       ((for {
           l1 <- p1.root.succedent
           l2 <- p2.root.antecedent ++ p2.root.succedent
-          subTerm <- getAllPositions(l2.formula) // except var positions
+          subTerm <- getAllPositions(l2.formula) // except var positions and only on positions of the same type as a or b
         } yield l1.formula match {
             case Atom(ConstantStringSymbol("="), a::b::Nil) => {
-              val mgus1 = alg.unify(a, subTerm._2.asInstanceOf[FOLExpression])
+              val mgus1 = if (a.exptype == subTerm._2.exptype) alg.unify(a, subTerm._2.asInstanceOf[FOLExpression]) else Nil
               require(mgus1.size < 2)
-              val mgus2 = alg.unify(b, subTerm._2.asInstanceOf[FOLExpression])
+              val mgus2 = if (b.exptype == subTerm._2.exptype) alg.unify(b, subTerm._2.asInstanceOf[FOLExpression]) else Nil
               require(mgus2.size < 2)
-
               if (!mgus1.isEmpty)
                 if (!mgus2.isEmpty)
                   List(Paramodulation(p1, p2, l1, l2, Replacement(subTerm._1, b).apply(l2.formula).asInstanceOf[FOLFormula], mgus1.head),
@@ -132,9 +131,9 @@ package robinson {
           subTerm <- getAllPositions(l2.formula) // except variable positions
         } yield l1.formula match {
             case Atom(ConstantStringSymbol("="), a::b::Nil) => {
-              val mgus1 = alg.unify(a, subTerm._2.asInstanceOf[FOLExpression])
+              val mgus1 = if (a.exptype == subTerm._2.exptype) alg.unify(a, subTerm._2.asInstanceOf[FOLExpression]) else Nil
               require(mgus1.size < 2)
-              val mgus2 = alg.unify(b, subTerm._2.asInstanceOf[FOLExpression])
+              val mgus2 = if (b.exptype == subTerm._2.exptype) alg.unify(b, subTerm._2.asInstanceOf[FOLExpression]) else Nil
               require(mgus2.size < 2)
 
               if (!mgus1.isEmpty)

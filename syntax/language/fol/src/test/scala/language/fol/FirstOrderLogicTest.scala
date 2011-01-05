@@ -7,6 +7,7 @@
 
 package at.logic.language.fol
 
+import _root_.at.logic.language.hol.replacements.Replacement
 import org.specs._
 import org.specs.runner._
 
@@ -50,6 +51,9 @@ class FirstOrderLogicTest extends SpecificationWithJUnit {
       val atom1 = Atom(new ConstantStringSymbol("A"),var1::var2::const1::Nil)
       val all1 = AllVar(var1, atom1)
       true
+    }
+    "Replacement on first order terms" in {
+        Replacement(List(),Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{0}" ) )::FOLVar( VariableStringSymbol( "x_{0}" ) )::Nil)).apply(Atom( ConstantStringSymbol( "=" ), Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{2}" ) )::FOLVar( VariableStringSymbol( "x_{1}" ) )::Nil)::Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{1}" ) )::FOLVar( VariableStringSymbol( "x_{2}" ) )::Nil)::Nil)) must beEqual (Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{0}" ) )::FOLVar( VariableStringSymbol( "x_{0}" ) )::Nil))
     }
   }
 }
