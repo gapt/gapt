@@ -22,6 +22,8 @@ trait FOL extends HOL
   override def factory : LambdaFactoryA = FOLFactory
 }
 
+// right now FOLExpression refers to both valid FOL terms and formulas and components of such valid terms and formulas, so for example, the head symbol of an atom is also a fol expression although it has a complex type.
+// we need to separate fol expression into FOLExpression which refers only to valid fol expressions and to FOLComponent which contains the fol factory but refers to possibly invlaid fol expressions.
 trait FOLExpression extends HOLExpression with FOL {
     override def toString = this match {
       case Var(x,_) => x.toString
@@ -94,13 +96,13 @@ class FOLVar (name: VariableSymbolA, dbInd: Option[Int])
 class FOLConst (name: ConstantSymbolA)
   extends HOLConst(name, Ti()) with FOLTerm
 
-class FOLApp(function: LambdaExpression, argument: LambdaExpression)
+private[fol] class FOLApp(function: LambdaExpression, argument: LambdaExpression)
   extends HOLApp(function, argument) with FOLExpression
 
-class FOLAbs(variable: FOLVar, expression: LambdaExpression)
+private[fol] class FOLAbs(variable: FOLVar, expression: LambdaExpression)
   extends HOLAbs(variable, expression) with FOLExpression
 
-object FOLAbs {
+private[fol] object FOLAbs {
   def apply(variable: FOLVar, expression: LambdaExpression) = new FOLAbs(variable, expression)
 }
 
@@ -198,7 +200,7 @@ object Imp {
   }
 }
 
-object Ex {
+private[fol] object Ex {
   def apply(sub: LambdaExpression) = App(new ExQ(sub.exptype),sub).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(ExQ(t),sub) => Some( (sub, t) )
@@ -206,7 +208,7 @@ object Ex {
   }
 }
 
-object All {
+private[fol] object All {
   def apply(sub: LambdaExpression) = App(new AllQ(sub.exptype),sub).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(AllQ(t),sub) => Some( (sub, t) )
