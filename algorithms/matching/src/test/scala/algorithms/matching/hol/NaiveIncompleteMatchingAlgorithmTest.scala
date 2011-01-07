@@ -51,21 +51,21 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
 //    println("\n\n"+subst1.toString)
     subst must beEqual (Some(subst1))
     }
-  
+
     "match correctly the HOL expressions P(z,x) and P(f(b),f(b))" in {
-    val P = HOLConst(new ConstantStringSymbol("P"), i->(i->o))   
+    val P = HOLConst(new ConstantStringSymbol("P"), i->(i->o))
     val b = HOLConst(new ConstantStringSymbol("b"), i)
     val x = HOLVar(new VariableStringSymbol("x"), i)
     val z = HOLVar(new VariableStringSymbol("z"), i)
     val Pz = App(P,z)
-    
+
     val Pzx = App(Pz,x).asInstanceOf[HOLExpression]
     val f = HOLConst(new ConstantStringSymbol("f"), i->i)
     val fb= App(f,b)
     val Pfb = App(P,fb).asInstanceOf[HOLExpression]
     val Pfbfb = App(Pfb,fb).asInstanceOf[HOLExpression]
     val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbfb,Pfbfb.getFreeAndBoundVariables._1.toList)
-    val subst1 = Substitution(x,fb):::Substitution(z,fb)    
+    val subst1 = Substitution(x,fb):::Substitution(z,fb)
 //    println("\n\n"+Pzx.toString1)
 //    println("\n\n"+Pfbfb.toString1)
 //    println("\n\n"+subst.toString)
@@ -94,7 +94,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     subst must beEqual (subst) // wrong !!!
     }
 
-}
+  }
 }
 
 
