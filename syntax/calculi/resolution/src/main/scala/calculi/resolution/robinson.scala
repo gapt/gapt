@@ -144,7 +144,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
         }
         else {
           val term2 = term2opSuc.get
-          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(newLiteral, term1::term2::Nil, ((p1.root.succedent - term1) ++ (p2.root.succedent - term2)))
+          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil, ((p1.root.succedent - term1) ++ (p2.root.succedent - term2)))
           new BinaryAGraph[ClauseOccurrence](ClauseOccurrence(
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, p1.root.antecedent, sub),
               createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent  - term2, p1.root.succedent - term1, sub)  + prinFormula)
