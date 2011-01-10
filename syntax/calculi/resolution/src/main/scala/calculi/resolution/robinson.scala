@@ -58,6 +58,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
   case object VariantType extends UnaryRuleTypeA
   case object FactorType extends UnaryRuleTypeA
   case object ResolutionType extends BinaryRuleTypeA
+  case object ParamodulationType extends BinaryRuleTypeA
 
   object InitialClause {
     def apply(seq: Sequent)(implicit factory: FOFactory) = {
@@ -69,7 +70,10 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
     def createDefault(seq: Sequent): Pair[LeafAGraph[ClauseOccurrence] with NullaryResolutionProof[ClauseOccurrence], Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
       val left: List[FormulaOccurrence] = seq.antecedent.map(f => createOccurrence(f.asInstanceOf[FOLFormula], Set[FormulaOccurrence](), PointerFOFactoryInstance))
       val right: List[FormulaOccurrence] = seq.succedent.map(f => createOccurrence(f.asInstanceOf[FOLFormula], Set[FormulaOccurrence](), PointerFOFactoryInstance))
-      (new LeafAGraph[ClauseOccurrence](ClauseOccurrence(left.toSet, right.toSet)) with NullaryResolutionProof[ClauseOccurrence] {def rule = InitialType}, (left,right))
+      (new LeafAGraph[ClauseOccurrence](ClauseOccurrence(left.toSet, right.toSet)) with NullaryResolutionProof[ClauseOccurrence] {
+          def rule = InitialType
+          override def toString = "Ax(" + root.getSequent.toString + ")"
+        }, (left,right))
     }
 
     def createOccurrence(f: FOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
@@ -96,6 +100,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
                 def rule = ResolutionType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
+                override def toString = "Res(" + root.getSequent.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
             }
         }
       }
@@ -131,9 +136,10 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
               createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent, p1.root.succedent - term1, sub))
             , p1, p2)
             with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
-                def rule = ResolutionType
+                def rule = ParamodulationType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
+                override def toString = "Para(" + root.getSequent.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
             }
         }
         else {
@@ -144,7 +150,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
               createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent  - term2, p1.root.succedent - term1, sub)  + prinFormula)
             , p1, p2)
             with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
-                def rule = ResolutionType
+                def rule = ParamodulationType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
             }
@@ -159,7 +165,11 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
       require( sub.isRenaming )
       val newCl = ClauseOccurrence( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
       new UnaryAGraph[ClauseOccurrence](newCl, p)
-          with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] {def rule = VariantType; def substitution = sub}
+          with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] {
+            def rule = VariantType
+            def substitution = sub
+            override def toString = "Var(" + root.getSequent.toString + ", " + p.toString + ", " + substitution.toString + ")"
+          }
     }
 
     def apply(p: ResolutionProof[ClauseOccurrence]): ResolutionProof[ClauseOccurrence] = {
@@ -187,8 +197,12 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
       val r = p.root.removeFormulasAtOccurrences(occurrencesToRemove)
       val newCl = ClauseOccurrence( createContext( r.antecedent, sub ), createContext( r.succedent, sub ))
       new UnaryAGraph[ClauseOccurrence](newCl, p)
-        with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas
-          {def rule = FactorType; def substitution = sub; def aux = (a::Nil)::Nil}
+        with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
+          def rule = FactorType
+          def substitution = sub
+          def aux = (a::Nil)::Nil
+          override def toString = "Fac(" + root.getSequent + ", " + p.toString + ", " + substitution.toString + ")"
+        }
     }
     def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]) = if (proof.rule == FactorType) {
         val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas]
