@@ -7,12 +7,14 @@
 
 package at.logic.calculi.resolution
 
+import _root_.at.logic.calculi.resolution.robinson.{Paramodulation, InitialClause}
 import org.specs._
 import org.specs.runner._
 
 import at.logic.language.lambda.substitutions._
 import at.logic.calculi.occurrences._
 import at.logic.language.hol._
+import at.logic.language.fol.{FOLExpression, FOLVar, FOLConst, FOLFormula, Function => FOLFunction, Atom => FOLAtom}
 import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
@@ -48,7 +50,16 @@ class ResolutionTest extends SpecificationWithJUnit {
     }
   }
 */
-
+  "Paramodulation rule in Robinson Resolution" should {
+    "be created correctly" in {
+      import positions._
+      val cl1 = InitialClause(Sequent(Nil, FOLAtom(ConstantStringSymbol("="), FOLFunction(ConstantStringSymbol("+"), FOLVar(VariableStringSymbol("x"))::FOLVar(VariableStringSymbol("x"))::Nil)::FOLVar(VariableStringSymbol("x"))::Nil)::Nil))(PositionsFOFactory)
+      val cl2 = InitialClause(Sequent(Nil, FOLAtom(ConstantStringSymbol("="), FOLFunction(ConstantStringSymbol("+"), FOLVar(VariableStringSymbol("y"))::FOLVar(VariableStringSymbol("y"))::Nil)::FOLVar(VariableStringSymbol("y"))::Nil)::Nil))(PositionsFOFactory)
+      val param = Paramodulation(cl1, cl2, cl1.root.succedent.find(_ == 1).get, cl2.root.succedent.find(_ == 1).get, FOLAtom(ConstantStringSymbol("="), FOLVar(VariableStringSymbol("y"))::FOLVar(VariableStringSymbol("x"))::Nil), Substitution[FOLExpression]((FOLVar(VariableStringSymbol("x")), FOLVar(VariableStringSymbol("y")))))
+      val sq = Sequent(Nil, FOLAtom(ConstantStringSymbol("="), FOLVar(VariableStringSymbol("y"))::FOLVar(VariableStringSymbol("y"))::Nil)::Nil)
+      param.root.getSequent must beEqual (sq)
+    }
+  }
   "Andrews Resolution" should {
     implicit val factory = PointerFOFactoryInstance
 
