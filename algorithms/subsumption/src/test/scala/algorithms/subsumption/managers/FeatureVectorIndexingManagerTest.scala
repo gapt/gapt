@@ -96,20 +96,44 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
 
       val subsumedSeq = Sequent(Nil,pX::pa::Nil)
 
-      var l = seq11::seq21::seq31::seq41::Nil
+      val l = seq11::seq21::seq31::seq41::Nil
+
+      def termDepth(exp: FOLExpression): Int = exp match {
+        case FOLVar(_) => 0
+        case FOLConst(_) => 0
+        case Atom(_,args) => args.map(x => termDepth(x)).foldLeft(0)((x,y) => 1+math.max(x, y))
+        case Function(_,args) => args.map(x => termDepth(x)).foldLeft(0)((x,y) => 1+math.max(x, y))
+      }
+
+      def depth: (Sequent) => Int = {
+        seq => {
+          val a = seq.antecedent.map(x =>  termDepth(x.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))  //  foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
+          val b = seq.succedent.map(x =>  termDepth(x.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))   //seq.succedent.foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
+          math.max(a,b)
+        }
+      }
+
+      println("\n"+seq11.toString + "   " + depth(seq11))
+      println("\n"+seq21.toString + "   " + depth(seq21))
+      println("\n"+seq31.toString + "   " + depth(seq31))
+      println("\n"+seq41.toString + "   " + depth(seq41))
 
 
       var root = new TreeNode[Sequent](l)
       val f1: (Sequent) => Int = { x => x.toStringSimple.split("p").size - 1}
-      val featureList = f1::Nil
+      val f2: (Sequent) => Int = { x => x.toStringSimple.split("a").size - 1}
+      val featureList = depth::Nil
       var subsumpMNGR = new VectorTreeManager with StillmanSubsumptionAlgorithm[LambdaExpression] {
         var seqList = l;
         var tree = new Trie(l, featureList);
+        tree.createTree
+        tree.print
         var features = featureList;
-        def forwardSubsumption = forwardSubsumptionRec(root, features, subsumedSeq)
-        val matchAlg = NaiveIncompleteMatchingAlgorithm.asInstanceOf[MatchingAlgorithm[LambdaExpression]]
+        def forwardSubsumption = forwardSubsumptionRec(tree.root, features, subsumedSeq)
+        val matchAlg = FOLMatchingAlgorithm.asInstanceOf[MatchingAlgorithm[LambdaExpression]] //NaiveIncompleteMatchingAlgorithm.asInstanceOf[MatchingAlgorithm[LambdaExpression]]
       }
       subsumpMNGR.forwardSubsumption
+      println("\n\n\n")
 
 //
 //      val t = new Trie[Sequent](root, f1::Nil)

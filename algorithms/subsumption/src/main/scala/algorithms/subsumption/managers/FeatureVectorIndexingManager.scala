@@ -28,11 +28,12 @@ trait VectorTreeManager extends SubsumptionAlgorithm  {
 
 //    if(tree.isLeaf(vert)) {
     if(features.isEmpty) {
-      println("\n\nLeaf:  "+subsumedSeq+"   <--->   ");
+      println("\n\nLeaf:");
       vert.print
       vert.seqList.exists(seq => {
         val x = subsumes(subsumedSeq, seq);
-        if (x) Console.println(x);
+        println("subsuming seq = "+seq)
+        if (x) println("\nsubsumes "+x);
         x;
       })
 //      for(seq <- vert.seqList) {
@@ -47,8 +48,13 @@ trait VectorTreeManager extends SubsumptionAlgorithm  {
     println("\nvert = ")
     vert.print
     println("\n\nfeature vector of the subsumedSeq = "+features.head(subsumedSeq))
+    println("\n\n\n\n")
+//    vert.children.exists(child => (child._1 <= features.head(subsumedSeq)) && forwardSubsumptionRec(child._2, features.tail, subsumedSeq))
+    vert.children.foreach(child => if (child._1 <= features.head(subsumedSeq) && forwardSubsumptionRec(child._2, features.tail, subsumedSeq)) return true)
+    return false
 
-    vert.children.exists(child => child._1 <= features.head(subsumedSeq) && forwardSubsumptionRec(child._2, features.tail, subsumedSeq))
+
+
 
 //    for (child <- vert.children)
 //    {
