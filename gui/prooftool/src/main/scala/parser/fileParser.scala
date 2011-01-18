@@ -17,18 +17,19 @@ import at.logic.parsing.language.xml.ProofDatabase
 
 class FileParser {
 
-  def fileReader(f: String): LKProof = try {
+  def fileReader(f: String): Option[(String, AnyRef)] = try {
     proofdb = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
     proofNames = proofdb.proofs.map( x => x._1)
+    clListNames = proofdb.sequentLists.map( x => x._1)
     proofDbChanged.publish(new ValueChanged(new Label("New DB is loaded")))
-    proofdb.proofs.head._2
+    Option(proofdb.proofs.head)
   } catch {
       case e: AnyRef =>
         import Dialog._
         val t = e.toString
         showMessage(new Label(t),"Couldn't load file: "+f+"!\n\n"+t.replaceAll(",","\n"))
         proofDbChanged.publish(new ValueChanged(new Label("New DB can't be loaded")))
-        proofdb.proofs.head._2
+        Option(proofdb.proofs.head)
   }
 
   def displayProof(f: LKProof, step: Int): String = f match {
@@ -39,9 +40,11 @@ class FileParser {
 
   def getDB = proofdb
   def getProofNames = proofNames
+  def getClListNames = clListNames
 
   private var proofdb =  new ProofDatabase(Nil,Nil,Nil)
   private var proofNames: List[String] = Nil
+  private var clListNames: List[String] = Nil
 }
 
 object proofDbChanged extends Publisher

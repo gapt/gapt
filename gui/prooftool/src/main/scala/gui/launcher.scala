@@ -8,6 +8,7 @@ package at.logic.gui.prooftool.gui
  */
 
 import scala.swing._
+import GridBagPanel._
 import BorderPanel._
 import java.awt.Font._
 import java.awt.{RenderingHints, BasicStroke}
@@ -19,6 +20,8 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
+import ProoftoolSequentFormatter._
+import javax.swing.border.TitledBorder
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -26,23 +29,54 @@ class MyScrollPane extends ScrollPane {
   def getContent: Launcher = contents.last.asInstanceOf[Launcher]
 }
 
-class Launcher(private val proofLK: LKProof, private val fSize: Int) extends GridBagPanel {
-  import GridBagPanel._
-
+class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel {
   val c = new Constraints
   c.fill = Fill.Horizontal
   c.grid = (0,0)
-  layout(new DrawProof(proofLK, fSize)) = c
+  option.get._2 match {
+    case proof: LKProof        => layout(new DrawProof(proof, fSize)) = c
+    case clList: List[Sequent] => layout(new DrawClList(clList, fSize)) = c
+    case _ => layout(new Label(option.toString)) = c
+  }
 
   background = new Color(255,255,255)
-  border = Swing.EmptyBorder(10)
+  private val bd: TitledBorder = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 2), " "+option.get._1+" ")
+  bd.setTitleFont(new Font(SANS_SERIF, BOLD, 16))
+  border = bd
 
   def fontSize = fSize
-  def proof = proofLK
+  def getData = option
+}
+
+class DrawClList(private var clList: List[Sequent], val fontSize: Int) extends GridBagPanel {
+  background = new Color(255,255,255)
+
+  val c = new Constraints
+  c.fill = Fill.Horizontal
+  private var y = 0
+  private val ft = new Font(SANS_SERIF, PLAIN, fontSize)
+  c.grid = (0,y)
+  layout(new Label("{") { font = ft}) = c
+  private var first = true
+  for (x <- clList)
+    if (first) {
+      first = false
+      y += 1
+      c.grid = (1,y)
+      layout(new Label(sequentToString(x)) { font = ft }) = c
+    } else {
+      y += 1
+      c.grid = (1,y)
+      layout(new Label(";")  { font = ft }) = c
+      y += 1
+      c.grid = (1,y)
+      layout(new Label(sequentToString(x))  { font = ft }) = c
+    }
+  c.grid = (2,y+1)
+  layout(new Label("}")  { font = ft }) = c
 }
 
 class DrawProof(private val proof: LKProof, private val fSize: Int) extends BorderPanel {
-  import ProoftoolSequentFormatter._
   background = new Color(255,255,255)
   opaque = false
   val bd = Swing.MatteBorder(0,0,0,0, new Color(0,0,0))
@@ -57,7 +91,11 @@ class DrawProof(private val proof: LKProof, private val fSize: Int) extends Bord
     case p: BinaryLKProof =>
       border = Swing.EmptyBorder(0,0,0, fSize * 4)
       layout(new DrawProof(p.uProof1, fSize)) = Position.West
-      layout(new Label("       ") { font = labelFont }) = Position.Center
+      layout(new Label("       ") {
+        opaque = false
+        font = labelFont
+        verticalAlignment = Alignment.Bottom
+      }) = Position.Center
       layout(new DrawProof(p.uProof2, fSize)) = Position.East
       layout(new Label(sequentOccurenceToString(p.root)) { border = bd; font = ft }) = Position.South
     case _ => layout(new Label(sequentOccurenceToString(proof.root)) { font = ft }) = Position.South

@@ -11,7 +11,7 @@ import scala.swing._
 import event._
 import at.logic.gui.prooftool.parser._
 import BorderPanel._
-import at.logic.calculi.lk.base.LKProof
+import at.logic.calculi.lk.base.{Sequent, LKProof}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -37,7 +37,7 @@ object Main extends SimpleSwingApplication {
     val content = body.getContent
     content.fontSize * 3 / 2 match {
       case j: Int if j > 200 =>
-      case j: Int => loadProof(content.proof,j)
+      case j: Int => load(content.getData,j)
     }
   }
 
@@ -45,7 +45,7 @@ object Main extends SimpleSwingApplication {
     val content = body.getContent
     content.fontSize / 3 * 2 match {
       case j: Int if j < 10 =>
-      case j: Int => loadProof(content.proof,j)
+      case j: Int => load(content.getData,j)
     }
   }
 
@@ -62,14 +62,7 @@ object Main extends SimpleSwingApplication {
   def loadProof(proofName: String): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof = db.getDB.proofs.find(x => x._1 == proofName)
-    body.contents = new Launcher(proof.get._2, 12)
-    body.cursor = java.awt.Cursor.getDefaultCursor
-  }
-
-  // Used for Zooming
-  def loadProof(proof: LKProof, fontSize: Int): Unit = {
-    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(proof, fontSize)
+    body.contents = new Launcher(proof, 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -78,6 +71,21 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof = db.fileReader(path)
     body.contents = new Launcher(proof, fontSize)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  // Used by Show Clause List menu
+  def loadClauseSet(clListName: String): Unit = {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val clList = db.getDB.sequentLists.find(x => x._1 == clListName)
+    body.contents = new Launcher(clList, 12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  // Used for Zooming
+  def load(option: Option[(String, AnyRef)], fontSize: Int): Unit = {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.contents = new Launcher(option, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -122,9 +130,16 @@ object Main extends SimpleSwingApplication {
             for (i <- l) contents += new MenuItem(Action(i) { loadProof(i) }) { border = customBorder }
         }
       }
-      contents += new MenuItem(Action("Show Clause Set") {}) {
+      contents += new Menu("Show Clause List") {
         mnemonic = Key.C
         border = customBorder
+        listenTo(proofDbChanged)
+        reactions += {
+          case e: ValueChanged  =>
+            val l = db.getClListNames
+            contents.clear
+            for (i <- l) contents += new MenuItem(Action(i) { loadClauseSet(i) }) { border = customBorder }
+        }
       }
     }
     contents += new Menu("Help") {
