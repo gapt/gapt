@@ -22,14 +22,15 @@ package at.logic.utils.ds.mutable
 //    def printElem: Unit = { for (x <- elem) }
     def print: Unit = { println("\n\nTreeNode:\nseqList  = "+seqList.toString); printMap }
     def printMap: Unit = {
-      println("children = { ")
-      for (x <- children) {
-        println("\n("+x._1)
-        for(s <- x._2.seqList){
-          println("    "+s.toString)
-        }
-        println(")")
-      }
+      Console.print("children = { ")
+      children.foreach(child => println(child._1.toString+"  -->  "+child._2.toString))
+//      for (x <- children) {
+//        println("\n("+x._1)
+//        for(s <- x._2.seqList){
+//          println("    "+s.toString)
+//        }
+//        println(")")
+
      
      
       println("}")
@@ -40,22 +41,33 @@ package at.logic.utils.ds.mutable
 
   class Trie[V](val seqSet: List[V], val features: List[V=>Int]) {
 
+    var root = new TreeNode(seqSet)
+    def print = printTrie(root)
 
+    def printTrie(vert: TreeNode[V]): Unit = vert.children.size match{
+      case 0 => {println("\nleaf = "+vert.seqList.toString)}
+      case _ => {
+        println("\nnode = "+vert.seqList.toString)
+        vert.children.foreach(x => println("\n"+x._1+"   ->   "+x._2.seqList.toString))
+        vert.children.foreach(x => printTrie(x._2))
+      }
+    }
 
     def isLeaf(vert: TreeNode[V]): Boolean = {
       vert.children.isEmpty
     }
 
-    def createTree = createTreeRec(new TreeNode(seqSet), features)
+    def createTree = createTreeRec(root, features)
 
     private def createTreeRec(vert: TreeNode[V], features: List[V=>Int]): Unit = features match {
 //      println("\n createTreeRec\n")
-      case List() => return
-     //     println("\nrec bottom\n")
+      case List() => {
+        println("\nrec bottom\n")
+        return }
       case _ => {
      //   val f: (String) => Int = { x => x.split("a").size}
   //      println(vert.seqList)
-
+        println("\nrec part\n")
         vert.seqList.foreach(seq => {
           val key = features.head(seq)
           vert.children.get(key) match {
