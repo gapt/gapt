@@ -8,6 +8,8 @@
 package at.logic.transformations.ceres
 
 import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.hol._
+import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
@@ -15,20 +17,60 @@ import at.logic.calculi.lk.lkExtractors._
 import at.logic.calculi.lksk.lkskExtractors._
 import at.logic.calculi.lksk.base._
 import at.logic.algorithms.lk.getCutAncestors
+import at.logic.utils.ds.trees._
+import at.logic.language.lambda.types.ImplicitConverters._
 
 import scala.collection.immutable.Set
 
 package struct {
-  trait Struct
+  trait Struct extends Tree[HOLExpression]
+
+  // We define some symbols that represent the operations of the struct
+
+  case object TimesSymbol extends LogicalSymbolsA {
+    override def unique = "TimesSymbol"
+    override def toString = "⊗"
+    def toCode = "TimesSymbol"
+  }
+
+  case object PlusSymbol extends LogicalSymbolsA {
+    override def unique = "PlusSymbol"
+    override def toString = "⊕"
+    def toCode = "PlusSymbol"
+  }
+
+  case object DualSymbol extends LogicalSymbolsA {
+    override def unique = "DualSymbol"
+    override def toString = "∼"
+    def toCode = "DualSymbol"
+  }
+
+  case object EmptyTimesSymbol extends LogicalSymbolsA {
+    override def unique = "EmptyTimesSymbol"
+    override def toString = "ε_⊗"
+    def toCode = "EmptyTimesSymbol"
+  }
+
+  case object EmptyPlusSymbol extends LogicalSymbolsA {
+    override def unique = "EmptyPlusSymbol"
+    override def toString = "ε_⊕"
+    def toCode = "EmptyPlusSymbol"
+  }
+
+  case object TimesC extends HOLConst(TimesSymbol, "( o -> (o -> o) )")
+  case object PlusC extends HOLConst(PlusSymbol, "( o -> (o -> o) )")
+  case object DualC extends HOLConst(DualSymbol, "(o -> o)")
+  case object EmptyTimesC extends HOLConst(EmptyTimesSymbol, "o")
+  case object EmptyPlusC extends HOLConst(EmptyPlusSymbol, "o")
 
   // The times operator stores the auxiliary formulas of the 
   // inference which induces it.
-  case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends Struct
-  case class Plus(left: Struct, right: Struct) extends Struct
-  case class Dual(sub: Struct) extends Struct
-  case class A(formula: FormulaOccurrence) extends Struct // Atomic Struct
-  case class EmptyTimesJunction() extends Struct
-  case class EmptyPlusJunction() extends Struct
+  case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends BinaryTree[HOLExpression](TimesC, left, right) with Struct
+  case class Plus(left: Struct, right: Struct) extends BinaryTree[HOLExpression](PlusC, left, right) with Struct
+  case class Dual(sub: Struct) extends UnaryTree[HOLExpression](DualC, sub) with Struct
+  case class A(formula: FormulaOccurrence) extends LeafTree[HOLExpression](formula.formula) with Struct // Atomic Struct
+  case class EmptyTimesJunction() extends LeafTree[HOLExpression](EmptyTimesC) with Struct
+  case class EmptyPlusJunction() extends LeafTree[HOLExpression](EmptyPlusC) with Struct
 
   object StructCreators {
 
