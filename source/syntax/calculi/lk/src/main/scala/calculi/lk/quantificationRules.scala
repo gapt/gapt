@@ -56,6 +56,7 @@ package quantificationRules {
           def aux = (aux_fo::Nil)::Nil
           def prin = prinFormula::Nil
           def subst = term
+          override def name = "\u2200:l"
         }
       }
     }
@@ -98,6 +99,7 @@ package quantificationRules {
           def aux = (aux_fo::Nil)::Nil
           def prin = prinFormula::Nil
           def subst = term
+          override def name = "\u2203:r"
         }
       }
     }
@@ -139,6 +141,7 @@ package quantificationRules {
                   def aux = (aux_fo::Nil)::Nil
                   def prin = prinFormula::Nil
                   def eigenvar = eigen_var
+                  override def name = "\u2200:l"
                 }
           }
           case _ => throw new LKRuleCreationException("Main formula of ForallRightRule must have a universal quantifier as head symbol.")
@@ -183,6 +186,7 @@ package quantificationRules {
               def aux = (aux_fo::Nil)::Nil
               def prin = prinFormula::Nil
               def eigenvar = eigen_var
+              override def name = "\u2203:l"
             }
           }
           case _ => throw new LKRuleCreationException("Main formula of ExistsLeftRule must have an existential quantifier as head symbol.")

@@ -41,6 +41,7 @@ package equationalRules {
           def rule = EquationLeft1RuleType
           def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "e:l1"
         }
       }
     }
@@ -71,6 +72,7 @@ package equationalRules {
           def rule = EquationLeft1RuleType
           def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "e:l2"
         }
       }
     }
@@ -102,6 +104,7 @@ package equationalRules {
           def rule = EquationRight1RuleType
           def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "e:r1"
         }
       }
     }
@@ -133,6 +136,7 @@ package equationalRules {
           def rule = EquationRight1RuleType
           def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "e:r2"
         }
       }
     }

@@ -60,7 +60,7 @@ package propositionalRules {
     def createDefault(seq: Sequent): Pair[LKProof, Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
       val left: List[FormulaOccurrence] = seq.antecedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
       val right: List[FormulaOccurrence] = seq.succedent.map(f => createOccurrence(f, Set[FormulaOccurrence](), PointerFOFactoryInstance))
-      (new LeafTree[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with NullaryLKProof {def rule = InitialRuleType}, (left,right))
+      (new LeafTree[SequentOccurrence](SequentOccurrence(toSet(left), toSet(right))) with NullaryLKProof {def rule = InitialRuleType; override def name = ""}, (left,right))
     }
     def createOccurrence(f: HOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
     def unapply(proof: LKProof) = if (proof.rule == InitialRuleType) Some((proof.root)) else None
@@ -82,6 +82,7 @@ package propositionalRules {
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningLeftRuleType
           def prin = prinFormula::Nil
+          override def name = "w:l"
         }
     }
     def createDefault(s1: LKProof, f: HOLFormula) = {
@@ -90,6 +91,7 @@ package propositionalRules {
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningLeftRuleType
           def prin = prinFormula::Nil
+          override def name = "w:l"
         }
     }
     def unapply(proof: LKProof) = if (proof.rule == WeakeningLeftRuleType) {
@@ -107,6 +109,7 @@ package propositionalRules {
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
           def prin = prinFormula::Nil
+          override def name = "w:r"
         }
     }
     def createDefault(s1: LKProof, f: HOLFormula) = {
@@ -115,6 +118,7 @@ package propositionalRules {
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
           def prin = prinFormula::Nil
+          override def name = "w:r"
         }
     }
     def unapply(proof: LKProof) = if (proof.rule == WeakeningRightRuleType) {
@@ -142,6 +146,7 @@ package propositionalRules {
               def rule = ContractionLeftRuleType
               def aux = (term1::term2::Nil)::Nil
               def prin = prinFormula::Nil
+              override def name = "c:l"
             }
           }
       }
@@ -179,6 +184,7 @@ package propositionalRules {
               def rule = ContractionRightRuleType
               def aux = (term1::term2::Nil)::Nil
               def prin = prinFormula::Nil
+              override def name = "c:r"
             }
         }
       }
@@ -216,6 +222,7 @@ package propositionalRules {
             with BinaryLKProof with AuxiliaryFormulas {
                 def rule = CutRuleType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
+                override def name = "cut"
             }
         }
       }
@@ -256,6 +263,7 @@ package propositionalRules {
             def rule = AndRightRuleType
             def aux = ((term1)::Nil)::(term2::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2227:r"
           }
       }
     }
@@ -289,6 +297,7 @@ package propositionalRules {
             def rule = AndLeft1RuleType
             def aux = (term1::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2227:l1"
           }
       }
     }
@@ -322,6 +331,7 @@ package propositionalRules {
             def rule = AndLeft2RuleType
             def aux = (term2::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2227:l2"                        
           }
       }
     }
@@ -362,6 +372,7 @@ package propositionalRules {
             def rule = OrLeftRuleType
             def aux = ((term1)::Nil)::(term2::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2228:l"
           }
       }
     }
@@ -395,6 +406,7 @@ package propositionalRules {
             def rule = OrRight1RuleType
             def aux = ((term1)::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2228:r1"
           }
       }
     }
@@ -428,6 +440,7 @@ package propositionalRules {
             def rule = OrRight2RuleType
             def aux = ((term2)::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2228:r2"
           }
       }
     }
@@ -468,6 +481,7 @@ package propositionalRules {
             def rule = ImpLeftRuleType
             def aux = (term1::Nil)::(term2::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2283:l"
           }
       }
     }
@@ -501,6 +515,7 @@ package propositionalRules {
             def rule = ImpRightRuleType
             def aux = (term1::term2::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u2283:r"
           }
       }
     }
@@ -533,6 +548,7 @@ package propositionalRules {
             def rule = NegLeftRuleType
             def aux = (term1::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u00ac:l"
           }
       }
     }
@@ -565,6 +581,7 @@ package propositionalRules {
             def rule = NegRightRuleType
             def aux = (term1::Nil)::Nil
             def prin = prinFormula::Nil
+            override def name = "\u00ac:r"
           }
       }
     }

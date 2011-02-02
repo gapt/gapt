@@ -35,6 +35,7 @@ package definitionRules {
           def rule = DefinitionLeftRuleType
           def aux = (aux_fo::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "d:l"
         }
       }
     }
@@ -69,6 +70,7 @@ package definitionRules {
           def rule = DefinitionRightRuleType
           def aux = (aux_fo::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "d:r"
         }
       }
     }
