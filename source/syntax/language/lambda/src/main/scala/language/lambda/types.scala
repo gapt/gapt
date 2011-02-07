@@ -15,11 +15,13 @@ package types {
   abstract class TComplexA extends TA
   object TAtomicA {
     def unapply(ta: TA) = ta match {
+      case Tindex() => Some(ta)
       case Ti() => Some(ta)
       case To() => Some(ta)
       case _ => None
     }
   }
+  case class Tindex() extends TAtomicA {override def toString = "ind"}//for indexed propositions. Look at schemata.
   case class Ti() extends TAtomicA {override def toString = "i"}
   case class To() extends TAtomicA {override def toString = "o"}
   case class ->(in:TA, out:TA) extends TComplexA {override def toString = "(" + in.toString + "->" + out.toString + ")"}
@@ -27,6 +29,7 @@ package types {
   object Definitions {
     def i = Ti()
     def o = To()
+    def ind = Tindex()
   }
 
   // convenience factory to create function types
