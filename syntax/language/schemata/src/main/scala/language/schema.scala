@@ -12,10 +12,11 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.schemata.logicSymbols._
+import at.logic.language.hol.HOLFactory
 
 
 trait Schema extends HOL {
-//  override def factory: LambdaFactoryA = FOLSchemataFactory
+  override def factory: LambdaFactoryA = IntegerTermFactory//FOLSchemataFactory
 }
 
 trait SchemataExpression extends HOLExpression with Schema {}
@@ -31,46 +32,54 @@ trait IntegerTermExpression extends SchemataExpression with Schema {
 
 class IntVar (name: VariableSymbolA) extends HOLVar(name, Tindex(), None) with IntegerTermExpression {}
 case object IntVar {
-  def apply(name: VariableSymbolA) = IntegerTermFactory.createVar(name)
+  def apply(name: VariableSymbolA) = IntegerTermFactory.createVar(name).asInstanceOf[IntegerTermExpression]//IntegerTermFactory.createVar(name)
 }
 
 
-class IntConst  extends HOLConst(ConstantStringSymbol("0"), Tindex()) with IntegerTermExpression {}
-case object IntConst {
-  def apply = IntegerTermFactory.createVar(ConstantStringSymbol("0"))
+class IntConst  extends HOLConst(ConstantStringSymbol("0"), Tindex()) with IntegerTermExpression {
+  override def toString = "0:"+exptype
   def toInt: Int = 0
 }
 
-case object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex()))
-case object PlusC extends HOLConst(new ConstantStringSymbol("+"), ->(Tindex(), ->(Tindex(), Tindex())))
-case object TimesC extends HOLConst(new ConstantStringSymbol("×"), ->(Tindex(), ->(Tindex(), Tindex())))
+object IntConst {
+  def apply() = IntegerTermFactory.createVar(ConstantStringSymbol("0")).asInstanceOf[IntegerTermExpression]
+}
 
-
-class Succ {
-  def apply(t: IntegerTermExpression): IntegerTermExpression  = IntegerTermFactory.createSucc(t)
+case object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex())) {
+  override def toString = this match {
+    case App(Succ, t) => "s("+t.toString+")"
+    case _ => "ERROR in PlusC"
+  }
+  def apply(t: LambdaExpression): App  = IntegerTermFactory.createSucc(t)
   def unapply(p: IntegerTermExpression) = p match {
     case App(Succ, t) => Some(t)
     case _ => None
   }
 }
 
-class Plus {}
-object Plus {
+case object PlusC extends HOLConst(new ConstantStringSymbol("+"), ->(Tindex(), ->(Tindex(), Tindex()))){
   def apply(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = IntegerTermFactory.createPlus(t1,t2)
 }
 
-class Times  {}
-object Times {
+case object TimesC extends HOLConst(new ConstantStringSymbol("×"), ->(Tindex(), ->(Tindex(), Tindex()))) {
   def apply(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = IntegerTermFactory.createTimes(t1,t2)
 }
 
-object IntegerTermFactory /*extends LambdaFactoryA*/ {
+
+
+
+object IntegerTermFactory extends LambdaFactoryA {
 //  def toInt(exp: IntegerTermExpression): Int = exp match {
-  def createVar( name: SymbolA): Var = name match {
-    case a: ConstantSymbolA => IntConst.asInstanceOf[Var]
-    case a: VariableSymbolA => IntVar(a)
+  def createVar( name: SymbolA): Var = createVar(name, Tindex(), None)
+
+  def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var = name match {
+    case a: ConstantSymbolA => new IntConst
+    case a: VariableSymbolA => new IntVar(a)
   }
-  def createSucc(t: IntegerTermExpression): IntegerTermExpression =  App(Succ, t).asInstanceOf[IntegerTermExpression]
+
+  def createAbs( variable: Var, exp: LambdaExpression ): Abs = HOLFactory.createAbs(variable, exp )
+  def createApp( fun: LambdaExpression, arg: LambdaExpression ): App = HOLFactory.createApp(fun, arg)
+  def createSucc(t: LambdaExpression): App =  createApp(Succ, t)//.asInstanceOf[IntegerTermExpression]
   def createPlus(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(PlusC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]
   def createTimes(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(TimesC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]
 }
@@ -151,6 +160,11 @@ case object BigOrC extends HOLConst(BigOrSymbol, ->(Tindex(), (->(Tindex(), (->(
 
 
 
-object FOLSchemataFactory  {
+object FOLSchemataFactory extends LambdaFactoryA  {
   def createVar(s: VariableSymbolA, indexTerms: List[IntegerTermExpression], tp: TA): SchemataExpression = new IndexedPredicateVar(s, indexTerms, tp)
+
+  def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var = HOLVar(new VariableStringSymbol("dummy"), To())
+
+  def createAbs( variable: Var, exp: LambdaExpression ): Abs = HOLFactory.createAbs(variable, exp )
+  def createApp( fun: LambdaExpression, arg: LambdaExpression ): App = HOLFactory.createApp(fun, arg)
 }
