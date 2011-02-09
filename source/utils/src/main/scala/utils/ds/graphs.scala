@@ -15,6 +15,7 @@ import scala.collection.JavaConversions._
 import org.jgrapht.graph.DefaultEdge
 import at.logic.utils.logging.Logger
 
+// it should be called conntected graphs as it always generates connected components
 trait Graph[+V] {
   // this value is computed when needed from the structure of the inductive graph
   //def graph: org.jgrapht.DirectedGraph[V,DefaultEdge]

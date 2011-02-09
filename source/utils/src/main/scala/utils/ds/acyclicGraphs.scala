@@ -10,6 +10,7 @@ package at.logic.utils.ds
 import at.logic.utils.ds.graphs._
 import at.logic.utils.logging.Logger
 
+// it should be called conntected acyclic graphs as it always generates connected components
 package acyclicGraphs {
   trait AGraph[+V] extends Graph[V] {
     val vertex: V
