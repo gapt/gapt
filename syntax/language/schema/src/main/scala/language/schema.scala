@@ -12,6 +12,7 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.schemata.logicSymbols._
+import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.hol.HOLFactory
 
 // propositiopnal
@@ -22,7 +23,7 @@ trait Schema extends HOL {
 trait SchemaExpression extends HOLExpression with Schema
 
 
-trait IntegerTerm extends SchemaExpression with Schema {
+trait IntegerTerm extends SchemaExpression {
   require( exptype == Tindex() )
 //  def exptype = Tindex()
 //  def isPredecessorOf(i: IntegerTermExpression): Boolean = i match {
@@ -38,21 +39,21 @@ case object IntVar {
 }
 
 
-class IntZero  extends HOLConst(ConstantStringSymbol("0"), Tindex()) with IntegerTerm {
-  override def toString = "0:"+exptype
-  def toInt: Int = 0
+class IntConst(name: ConstantStringSymbolA) extends HOLConst(name, Tindex()) with IntegerTerm {
+  //override def toString = "0:"+exptype
+  //def toInt: Int = 0
 }
 
 object IntZero {
   def apply() = SchemaFactory.createVar(ConstantStringSymbol("0")).asInstanceOf[IntegerTerm]
 }
 
-case object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex())) with IntegerTerm {
+object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex())) with IntegerTerm {
   override def toString = this match {
     case App(Succ, t) => "s("+t.toString+")"
     case _ => "ERROR in Succ"
   }
-  def apply(t: LambdaExpression): App  = SchemaFactory.createApp(Succ, t)
+  def apply(t: IntegerTerm): App  = SchemaFactory.createApp(Succ, t)
   def unapply(p: IntegerTerm) = p match {
     case App(Succ, t) => Some(t)
     case _ => None
@@ -71,6 +72,9 @@ case object TimesC extends HOLConst(new ConstantStringSymbol("×"), ->(Tindex(),
 
 private[schema] class SchemaApp(function: LambdaExpression, argument: LambdaExpression)
   extends HOLApp(function, argument) with SchemaExpression
+
+private[schema] class SchemaAbs (variable: Var, expression: LambdaExpression)
+  extends HOLAbs(variable, expression) with SchemaExpression
 
 //------------------------------------------------------------------------------------------------
 
@@ -97,6 +101,7 @@ object IndexedPredicate {
 //-------------------------------------------------------------------------------------------------
 
 trait SchemaFormula extends SchemaExpression {
+  require(exptype == To())
 //  def and(that: SchemataFormula) =  And(this, that)
 //  def or(that: SchemataFormula) = Or(this, that)
 //  def imp(that: SchemataFormula) = Imp(this, that)
@@ -104,7 +109,7 @@ trait SchemaFormula extends SchemaExpression {
 //  def bigOr(begin: IntegerTermExpression, end: IntegerTermExpression, v: IndexedPredicateVar) =  BigOr(begin, end, v)
 }
 
-object SNeg {
+object Neg {
   def apply(sub: SchemaFormula) = HOLApp(NegC,sub).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(NegC,sub) => Some( (sub.asInstanceOf[SchemaFormula]) )
@@ -112,7 +117,7 @@ object SNeg {
   }
 }
 
-object SAnd {
+object And {
   def apply(left: SchemaFormula, right: SchemaFormula) = (SchemaFactory.createApp(SchemaFactory.createApp(AndC,left),right)).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(AndC,left),right) => Some( (left.asInstanceOf[SchemaFormula],right.asInstanceOf[SchemaFormula]) )
@@ -120,7 +125,7 @@ object SAnd {
   }
 }
 
-object SOr {
+object Or {
   def apply(left: SchemaFormula, right: SchemaFormula) = (SchemaFactory.createApp(SchemaFactory.createApp(OrC,left),right)).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(OrC,left),right) => Some( (left.asInstanceOf[SchemaFormula],right.asInstanceOf[SchemaFormula]) )
@@ -128,7 +133,7 @@ object SOr {
   }
 }
 
-object SImp {
+object Imp {
   def apply(left: SchemaFormula, right: SchemaFormula) = (SchemaFactory.createApp(SchemaFactory.createApp(ImpC,left),right)).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
       case App(App(ImpC,left),right) => Some( (left.asInstanceOf[SchemaFormula],right.asInstanceOf[SchemaFormula]) )
@@ -137,35 +142,36 @@ object SImp {
 }
 
 object BigAnd {
-  def apply(iter: IntVar, init: IntegerTerm , end: IntegerTerm, sf : SchemaFormula) =
-    AppN(BigAndC, iter::init::end::sf::Nil).asInstanceOf[SchemaFormula]
+  def apply(iter: SchemaAbs, init: IntegerTerm , end: IntegerTerm) =
+    AppN(BigAndC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
 }
 
 object BigOr {
-  def apply(iter: IntVar, init: IntegerTerm, end: IntegerTerm, sf : SchemaFormula) =
-    AppN(BigOrC, iter::init::end::sf::Nil).asInstanceOf[SchemaFormula]
+  def apply(iter: SchemaAbs, init: IntegerTerm, end: IntegerTerm) =
+    AppN(BigOrC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
 }
 
 case object BottomC extends HOLConst(BottomSymbol, To()) with SchemaFormula
-case object NegC extends HOLConst(NegSymbol, ->(To(), To())) with SchemaFormula
-case object AndC extends HOLConst(AndSymbol, ->(To(), ->(To(), To()))) with SchemaFormula
-case object OrC extends HOLConst(OrSymbol, ->(To(), ->(To(), To()))) with SchemaFormula
-case object ImpC extends HOLConst(ImpSymbol, ->(To(), ->(To(), To()))) with SchemaFormula
-case object BigAndC extends HOLConst(BigAndSymbol, ->(Tindex(), (->(Tindex(), (->(Tindex(), ->(->(Tindex(), To()), To())))) ))) with SchemaFormula
-case object BigOrC extends HOLConst(BigOrSymbol, ->(Tindex(), (->(Tindex(), (->(Tindex(), ->(->(Tindex(), To()), To())))) ))) with SchemaFormula
+case object NegC extends HOLConst(NegSymbol, ->(To(), To())) with Schema
+case object AndC extends HOLConst(AndSymbol, ->(To(), ->(To(), To()))) with Schema
+case object OrC extends HOLConst(OrSymbol, ->(To(), ->(To(), To()))) with Schema
+case object ImpC extends HOLConst(ImpSymbol, ->(To(), ->(To(), To()))) with Schema
+case object BigAndC extends HOLConst(BigAndSymbol, "( ( e -> o ) -> ( e -> ( e -> o ) ) )") with Schema
+case object BigOrC extends HOLConst(BigOrSymbol, "( ( e -> o ) -> ( e -> ( e -> o ) ) )") with Schema
 
 
 object SchemaFactory extends LambdaFactoryA {
   def createVar( name: SymbolA): Var = createVar(name, Tindex(), None)
   def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var = name match {
-    case a: ConstantSymbolA if exptype == Tindex()=> new IntZero
+    case a: ConstantSymbolA if exptype == Tindex()=> new IntConst(a)
     case a: VariableSymbolA if exptype == Tindex() => new IntVar(a)
     case a: ConstantSymbolA => new HOLConstFormula(a) with SchemaFormula
   }
-  def createAbs( variable: Var, exp: LambdaExpression ): Abs = throw new AbstractMethodError //HOLFactory.createAbs(variable, exp )
+  def createAbs( variable: Var, exp: LambdaExpression ): Abs = new SchemaAbs( variable, exp )
   def createApp( fun: LambdaExpression, arg: LambdaExpression ): App = arg match {
     case a: IntegerTerm if fun == Succ => new SchemaApp(Succ, a) with IntegerTerm
-    case a: IntegerTerm => new SchemaApp(Succ, a) with SchemaFormula
+    // TODO: the next line is only correct for symbols expecting exactly one index
+    case a: IntegerTerm => new SchemaApp(fun, a) with SchemaFormula
     case _ => throw new IllegalArgumentException("Creating applications which are not integer terms or IndexedPredicate")
   }
   //private  def createPlus(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(PlusC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]

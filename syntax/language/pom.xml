@@ -15,7 +15,7 @@
     <module>lambda</module>
     <module>hol</module>
     <module>fol</module>
-    <module>schemata</module>
+    <module>schema</module>
   </modules>
   
 </project>

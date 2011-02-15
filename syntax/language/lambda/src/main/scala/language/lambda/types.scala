@@ -75,6 +75,7 @@ package types {
     def Type: Parser[TA] = (arrowType | iType | oType)
     def iType: Parser[TA] = "i" ^^ {x => Ti()}
     def oType: Parser[TA] = "o" ^^ {x => To()}
+    def indexType: Parser[TA] = "e" ^^ {x => Tindex()}
     def arrowType: Parser[TA] = "("~> Type~"->"~Type <~")" ^^ {case in ~ "->" ~ out => ->(in,out)}
   }
 

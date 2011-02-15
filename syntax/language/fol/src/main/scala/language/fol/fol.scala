@@ -148,7 +148,7 @@ object Function {
   }
 }
 
-case object BottomC extends HOLConst(BottomSymbol, "o") with FOL with FOLFormula
+case object BottomC extends HOLConst(BottomSymbol, "o") with FOLFormula
 case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
 case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))") with FOL
