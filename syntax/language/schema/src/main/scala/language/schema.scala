@@ -141,10 +141,8 @@ object BigAnd {
     AppN(BigAndC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
   
   def unapply(exp : LambdaExpression) = exp match {
-    case AppN(BigAndC, (it @ iter)::init::end::Nil) => it match {
-      case Abs(v, formula) => Some(v, formula, init, end)
-      case _ => None
-    }
+    case AppN(BigAndC, Abs(v, formula)::init::end::Nil) =>
+      Some(v, formula, init, end)
     case _ => None
   }
 }
@@ -157,10 +155,8 @@ object BigOr {
     AppN(BigOrC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
 
   def unapply(exp : LambdaExpression) = exp match {
-    case AppN(BigOrC, (it @ iter)::init::end::Nil) => it match {
-      case Abs(v, formula) => Some(v, formula, init, end)
-      case _ => None
-    }
+    case AppN(BigOrC, Abs(v, formula)::init::end::Nil) =>
+      Some(v, formula, init, end)
     case _ => None
   }
 }
