@@ -39,7 +39,7 @@ case object IntVar {
 }
 
 
-class IntConst(name: ConstantStringSymbolA) extends HOLConst(name, Tindex()) with IntegerTerm {
+class IntConst(name: ConstantSymbolA) extends HOLConst(name, Tindex()) with IntegerTerm {
   //override def toString = "0:"+exptype
   //def toInt: Int = 0
 }
