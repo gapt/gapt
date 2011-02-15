@@ -31,7 +31,7 @@ trait IntegerTerm extends SchemaExpression {
 //  }
 }
 
-class IntVar (name: VariableSymbolA) extends HOLVar(name, Tindex(), None) with IntegerTerm {
+class IntVar (name: VariableSymbolA, dbInd: Option[Int]) extends HOLVar(name, Tindex(), dbInd) with IntegerTerm {
   override def toString = name.toString+":"+exptype.toString
 }
 case object IntVar {
@@ -178,7 +178,7 @@ object SchemaFactory extends LambdaFactoryA {
   def createVar( name: SymbolA): Var = createVar(name, Tindex(), None)
   def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var = name match {
     case a: ConstantSymbolA if exptype == Tindex()=> new IntConst(a)
-    case a: VariableSymbolA if exptype == Tindex() => new IntVar(a)
+    case a: VariableSymbolA if exptype == Tindex() => new IntVar(a, dbInd)
     case a: ConstantSymbolA => new HOLConst(a, exptype) with Schema
   }
   def createAbs( variable: Var, exp: LambdaExpression ): Abs = new SchemaAbs( variable, exp )

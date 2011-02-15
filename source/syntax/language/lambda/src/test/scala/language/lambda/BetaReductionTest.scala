@@ -115,5 +115,17 @@ class BetaReductionTest extends SpecificationWithJUnit {
         (betaReduce(e)(Outermost, Leftmost)) must beEqual (Abs(y, App(f, y)))
       }
     }
+    "betaNormalize correctly with Abs terms built from variables obtained by the Abs extractor" in {
+      val x = LambdaVar("x", i)
+      val y = LambdaVar("", i)
+      val p = LambdaVar("p", i -> o)
+      val px = App( p, x )
+      val py = App( p, y )
+      val xpx = Abs(x, px)
+      val res = xpx match {
+        case Abs(v, t) => App(Abs(v, t), y)
+      }
+      betaNormalize( res )(Innermost) must beEqual( py )
+    }
   }
 }

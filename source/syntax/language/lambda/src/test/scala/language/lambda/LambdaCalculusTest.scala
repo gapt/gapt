@@ -153,4 +153,17 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
     xfx.compare( yfx ) mustNot beEqual( 0 )
     xfx.compare( yfx ) * yfx.compare( xfx ) must beEqual( -1 )
   }
+
+  "deal correctly with bound variables in the Abs extractor" in {
+    val x = LambdaVar(VariableStringSymbol("x"), i)
+    val p = LambdaVar(VariableStringSymbol("p"), i -> o)
+    val px = App(p, x)
+    val xpx = Abs(x, px)
+
+    val res = xpx match {
+      case Abs(v, t) => Abs(v, t)
+    }
+
+    res must beEqual( xpx )
+  }
 }
