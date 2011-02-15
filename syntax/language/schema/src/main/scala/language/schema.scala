@@ -144,12 +144,27 @@ object Imp {
 object BigAnd {
   def apply(iter: SchemaAbs, init: IntegerTerm , end: IntegerTerm) =
     AppN(BigAndC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
+  def unapply(exp : LambdaExpression) = exp match {
+    case AppN(BigAndC, (it @ iter)::init::end::Nil) => it match {
+      case Abs(v, formula) => Some(formula, init, end)
+      case _ => None
+    }
+    case _ => None
+  }
 }
 
 object BigOr {
   def apply(iter: SchemaAbs, init: IntegerTerm, end: IntegerTerm) =
     AppN(BigOrC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
+  def unapply(exp : LambdaExpression) = exp match {
+    case AppN(BigOrC, (it @ iter)::init::end::Nil) => it match {
+      case Abs(v, formula) => Some(formula, init, end)
+      case _ => None
+    }
+    case _ => None
+  }
 }
+
 
 case object BottomC extends HOLConst(BottomSymbol, To()) with SchemaFormula
 case object NegC extends HOLConst(NegSymbol, ->(To(), To())) with Schema
