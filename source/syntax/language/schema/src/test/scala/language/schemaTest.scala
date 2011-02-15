@@ -1,27 +1,28 @@
 package at.logic.language.schema
 
-import at.logic.language.lambda.typedLambdaCalculus.App
-import at.logic.language.lambda.types._
-import at.logic.language.lambda.symbols._
-import org.specs._
-import org.specs.runner._
+import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
+import org.specs.SpecificationWithJUnit
 
-import at.logic.language.schema._
+class SchemaTest extends SpecificationWithJUnit {
+  "Schema" should {
+    val i = IntVar(new VariableStringSymbol("i"))
+    val one = Succ(IntZero())
+    val two = Succ(Succ(IntZero()))
+    val p = new ConstantStringSymbol("P")
+    val p1 = IndexedPredicate(p, one::Nil)
+    val p2 = IndexedPredicate(p, two::Nil)
 
-class schemaTest extends SpecificationWithJUnit {
+    "create IndexedPredicate correctly (1)" in {
+      (p1) must beLike {case f: SchemaFormula => true}
+    }
+    "create IndexedPredicate correctly (2)" in {
+      (p2) must beLike {case f: SchemaFormula => true}
+    }
 
-
-  println("\n\n\n\n")
-
-  val v = IntVar((new VariableStringSymbol("a")).asInstanceOf[VariableSymbolA])
-  val c  = IntConst() // equivalent to calling IntConst.apply() (on the object)
-  val sch = Succ(Succ(c))
-  println("\n"+sch.toString)
-  val iv1 = IndexedPredicate((new VariableStringSymbol("P1")).asInstanceOf[VariableSymbolA], c, To())
-  val iv2 = IndexedPredicate((new VariableStringSymbol("P2")).asInstanceOf[VariableSymbolA], sch, To())
-  val and12 = SAnd(iv1.asInstanceOf[SchemaFormula], iv2.asInstanceOf[SchemaFormula])
-  println("\n"+and12.toString)
-  println("\n\n\n\n")
-  0 must beEqual (0)
-
+    "create SchemaFormula correctly" in {
+      val and = And(p1, p2)
+      (and) must beLike {case f: SchemaFormula => true}
+    }
+  }
 }
