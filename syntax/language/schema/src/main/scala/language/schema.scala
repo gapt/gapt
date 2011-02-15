@@ -142,7 +142,7 @@ object BigAnd {
   
   def unapply(exp : LambdaExpression) = exp match {
     case AppN(BigAndC, (it @ iter)::init::end::Nil) => it match {
-      case Abs(v, formula) => Some(formula, init, end)
+      case Abs(v, formula) => Some(v, formula, init, end)
       case _ => None
     }
     case _ => None
@@ -158,7 +158,7 @@ object BigOr {
 
   def unapply(exp : LambdaExpression) = exp match {
     case AppN(BigOrC, (it @ iter)::init::end::Nil) => it match {
-      case Abs(v, formula) => Some(formula, init, end)
+      case Abs(v, formula) => Some(v, formula, init, end)
       case _ => None
     }
     case _ => None
