@@ -48,12 +48,12 @@ object IntZero {
   def apply() = SchemaFactory.createVar(ConstantStringSymbol("0")).asInstanceOf[IntegerTerm]
 }
 
-object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex())) with IntegerTerm {
+object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex())) {
   override def toString = this match {
     case App(Succ, t) => "s("+t.toString+")"
     case _ => "ERROR in Succ"
   }
-  def apply(t: IntegerTerm): App  = SchemaFactory.createApp(Succ, t)
+  def apply(t: IntegerTerm): IntegerTerm  = SchemaFactory.createApp(Succ, t).asInstanceOf[IntegerTerm]
   def unapply(p: IntegerTerm) = p match {
     case App(Succ, t) => Some(t)
     case _ => None
@@ -88,7 +88,7 @@ private[schema] class SchemaAbs (variable: Var, expression: LambdaExpression)
 
 object IndexedPredicate {
   def apply(sym: ConstantSymbolA, indexTerms: List[IntegerTerm]): SchemaFormula = {
-    val pred : Var = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.map( a => Tindex() ) ) )
+    val pred = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.map( a => Tindex() ) ) )
     AppN(pred, indexTerms).asInstanceOf[SchemaFormula]
   }
   /*def apply(s: ConstantSymbolA, indexTerm: LambdaExpression, tp: TA): LambdaExpression = {
@@ -180,14 +180,15 @@ object SchemaFactory extends LambdaFactoryA {
   def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var = name match {
     case a: ConstantSymbolA if exptype == Tindex()=> new IntConst(a)
     case a: VariableSymbolA if exptype == Tindex() => new IntVar(a)
-    case a: ConstantSymbolA => new HOLConstFormula(a) with SchemaFormula
+    case a: ConstantSymbolA => new HOLConst(a, exptype) with Schema
   }
   def createAbs( variable: Var, exp: LambdaExpression ): Abs = new SchemaAbs( variable, exp )
   def createApp( fun: LambdaExpression, arg: LambdaExpression ): App = arg match {
     case a: IntegerTerm if fun == Succ => new SchemaApp(Succ, a) with IntegerTerm
     // TODO: the next line is only correct for symbols expecting exactly one index
-    case a: IntegerTerm => new SchemaApp(fun, a) with SchemaFormula
-    case _ => throw new IllegalArgumentException("Creating applications which are not integer terms or IndexedPredicate")
+    //case a: IntegerTerm => new SchemaApp(fun, a) with SchemaFormula
+    case _ => if (HOLFactory.isFormulaWhenApplied(fun.exptype)) new SchemaApp(fun, arg) with SchemaFormula
+      else new SchemaApp(fun, arg)
   }
   //private  def createPlus(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(PlusC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]
  // private def createTimes(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(TimesC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]
