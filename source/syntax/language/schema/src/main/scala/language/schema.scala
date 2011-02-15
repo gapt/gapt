@@ -44,7 +44,7 @@ class IntConst(name: ConstantSymbolA) extends HOLConst(name, Tindex()) with Inte
 }
 
 object IntZero {
-  def apply() = SchemaFactory.createVar(ConstantStringSymbol("0")).asInstanceOf[IntegerTerm]
+  def apply() = SchemaFactory.createVar(ConstantStringSymbol("0")).asInstanceOf[IntConst]
 }
 
 object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex())) {

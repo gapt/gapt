@@ -5,7 +5,7 @@ import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
-
+import at.logic.language.lambda.typedLambdaCalculus._
 import org.specs.SpecificationWithJUnit
 
 class SchemaTest extends SpecificationWithJUnit {
@@ -46,6 +46,15 @@ class SchemaTest extends SpecificationWithJUnit {
         case BigAnd(v, f, ub, lb) => App(Abs(v, f), ub)
       }
       betaNormalize( res ) must beEqual( p0 )
+    }
+
+    "perform the unapply function in BigAnd correctly" in {
+       val iformula = new SchemaAbs(i.asInstanceOf[Var], p1)
+       val bigConj = BigAnd(iformula, one, two)
+       (BigAnd.unapply(bigConj).get._1 must beEqual (i)) &&
+       (BigAnd.unapply(bigConj).get._2 must beEqual (p1)) &&
+       (BigAnd.unapply(bigConj).get._3 must beEqual (one)) &&
+       (BigAnd.unapply(bigConj).get._4 must beEqual (two))
     }
   }
 }
