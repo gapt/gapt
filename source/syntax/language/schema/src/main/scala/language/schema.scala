@@ -54,7 +54,7 @@ object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex(
   }
   def apply(t: IntegerTerm): IntegerTerm  = SchemaFactory.createApp(Succ, t).asInstanceOf[IntegerTerm]
   def unapply(p: IntegerTerm) = p match {
-    case App(Succ, t) => Some(t)
+    case App(Succ, t : IntegerTerm) => Some(t)
     case _ => None
   }
 }
@@ -74,6 +74,13 @@ private[schema] class SchemaApp(function: LambdaExpression, argument: LambdaExpr
 
 private[schema] class SchemaAbs (variable: Var, expression: LambdaExpression)
   extends HOLAbs(variable, expression) with SchemaExpression
+
+object SchemaAbs {
+  def unapply(e: LambdaExpression) = e match {
+    case Abs(v : IntVar, f: SchemaFormula) => Some(v, f)
+    case _ => None
+  }
+}
 
 //------------------------------------------------------------------------------------------------
 
@@ -141,7 +148,7 @@ object BigAnd {
     AppN(BigAndC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
   
   def unapply(exp : LambdaExpression) = exp match {
-    case AppN(BigAndC, Abs(v, formula)::init::end::Nil) =>
+    case AppN(BigAndC, SchemaAbs(v, formula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
       Some(v, formula, init, end)
     case _ => None
   }
@@ -155,7 +162,7 @@ object BigOr {
     AppN(BigOrC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
 
   def unapply(exp : LambdaExpression) = exp match {
-    case AppN(BigOrC, Abs(v, formula)::init::end::Nil) =>
+    case AppN(BigOrC, SchemaAbs(v, formula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
       Some(v, formula, init, end)
     case _ => None
   }
