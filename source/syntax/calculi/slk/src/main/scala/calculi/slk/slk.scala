@@ -61,7 +61,7 @@ object AndEquivalenceRule1 {
               createContext(s)
           new UnaryTree[SequentOccurrence]( new SequentOccurrence( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
             with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-              def rule = AndEquivalenceRule3Type
+              def rule = AndEquivalenceRule1Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
             }
@@ -92,7 +92,7 @@ object AndEquivalenceRule2 {
               createContext(s)
           new UnaryTree[SequentOccurrence]( new SequentOccurrence( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
             with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-              def rule = AndEquivalenceRule3Type
+              def rule = AndEquivalenceRule2Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
             }
