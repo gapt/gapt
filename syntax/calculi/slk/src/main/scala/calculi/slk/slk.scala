@@ -9,12 +9,22 @@ import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 
-import scala.collection.immutable.HashSet
-
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
 case object AndEquivalenceRule2Type extends UnaryRuleTypeA
 case object AndEquivalenceRule3Type extends UnaryRuleTypeA
 case object SchemaProofLinkRuleType extends NullaryRuleTypeA
+
+// The following two classes are used to keep a global directory
+// of proof schemata. Their definition is somewhat ad-hoc.
+
+class SchemaProof(val name: String, val vars: List[IntVar], val base: LKProof, val rec: LKProof)
+
+object SchemaProofDB {
+  val proofs = new scala.collection.mutable.HashMap[String, SchemaProof]
+
+  def get(name: String) = proofs(name)
+  def put(proof: SchemaProof) = proofs.put(proof.name, proof)
+}
 
 trait SchemaProofLink {
   def link: String
@@ -22,9 +32,9 @@ trait SchemaProofLink {
 }
 
 object SchemaProofLinkRule {
-  def apply(name: String, indices : List[IntegerTerm]) = {
-    // TODO: should we compute the correct end-sequent here?
-    new LeafTree[SequentOccurrence]( new SequentOccurrence( new HashSet, new HashSet ) ) with NullaryLKProof with SchemaProofLink {
+  def apply(seq: Sequent, name: String, indices : List[IntegerTerm])(implicit factory: FOFactory) = {
+    def createSide(side : List[SchemaFormula]) = side.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + factory.createPrincipalFormulaOccurrence(form, Nil, st))
+    new LeafTree[SequentOccurrence]( SequentOccurrence(createSide(seq.antecedent.asInstanceOf[List[SchemaFormula]]), createSide(seq.succedent.asInstanceOf[List[SchemaFormula]]) ) ) with NullaryLKProof with SchemaProofLink {
       def rule = SchemaProofLinkRuleType
       def link = name
       def indices = indices
@@ -33,7 +43,7 @@ object SchemaProofLinkRule {
 
   def unapply( proof: LKProof ) = if (proof.rule == SchemaProofLinkRuleType) {
     val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
-    Some(r.name, r.indices)
+    Some(r.root, r.name, r.indices)
   }
   else None
 }
@@ -130,3 +140,13 @@ object AndEquivalenceRule3 {
     }
     else None
 }
+
+ // convenient extractors
+  object UnarySchemaProof {
+    def unapply(proof: LKProof) = proof match {
+      case AndEquivalenceRule1(up, r, a, p) => Some((AndEquivalenceRule1Type, up, r, a::Nil, p))
+      case AndEquivalenceRule2(up, r, a, p) => Some((AndEquivalenceRule2Type, up, r, a::Nil, p))
+      case AndEquivalenceRule3(up, r, a, p) => Some((AndEquivalenceRule3Type, up, r, a::Nil, p))
+      case _ => None
+    }
+  }
