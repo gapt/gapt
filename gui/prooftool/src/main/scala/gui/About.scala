@@ -13,7 +13,7 @@ import event._
 object About {
   private val d = new Dialog
 
-  def open = {
+  def apply() = {
     d.resizable = false
     d.setLocationRelativeTo(Main.mBar)
     d.title = "About Prooftool"
@@ -38,24 +38,25 @@ object About {
       border = Swing.EmptyBorder(10, 10, 10, 10)
       val c = new Constraints
       c.fill = Fill.Horizontal
+      c.insets.set(0, 5, 0, 15)
+      c.gridheight = 3
+      c.ipady = 0
+      c.grid = (0,0)
+      layout(new Label { icon = img  }) = c
+      c.gridheight = 1
+      c.insets.set(7, 5, 3, 5)
+      c.ipady = 5
       c.grid = (1,0)
-      layout(new Label("    ")) = c
-      c.ipady = 10
-      c.grid = (3,0)
-      layout(new Label(" ")) = c
-      c.grid = (4,3)
-      layout(new Label(" ")) = c
-      c.grid = (2,0)
       layout(new Label("Version:") { horizontalAlignment = Alignment.Right }) = c
-      c.grid = (2,1)
+      c.grid = (1,1)
       layout(new Label("Author:") { horizontalAlignment = Alignment.Right }) = c
-      c.grid = (2,2)
+      c.grid = (1,2)
       layout(new Label("Vendor:") { horizontalAlignment = Alignment.Right }) = c
-      c.grid = (4,0)
+      c.grid = (2,0)
       layout(new Label("1.0 beta") { horizontalAlignment = Alignment.Left }) = c
-      c.grid = (4,1)
+      c.grid = (2,1)
       layout(new Label("Mikheil Rukhaia") { horizontalAlignment = Alignment.Left }) = c
-      c.grid = (4,2)
+      c.grid = (2,2)
       layout(new Label("<html><a href='"+uri+"'>GAPT Framework</a></html>") {
         horizontalAlignment = Alignment.Left
         listenTo(mouse.clicks, mouse.moves)
@@ -67,8 +68,9 @@ object About {
             d.close
         }
       }) = c
-      c.grid = (4,4)
-      c.ipady = 5
+      c.grid = (2,3)
+      c.ipady = 3
+      c.insets.set(15, 5, 5, 5)
       layout(new Button(Action("OK") { d.close }) {
       //  border = Swing.MatteBorder(0,140,0,0, background)
         listenTo(keys)
@@ -76,10 +78,6 @@ object About {
           case e: KeyPressed if e.key == Key.Enter => this.doClick
         }
       }) = c
-      c.gridheight = 4
-      c.ipady = 0
-      c.grid = (0,0)
-      layout(new Label { icon = img }) = c
     }
     d.open
   }
