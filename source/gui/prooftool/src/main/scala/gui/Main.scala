@@ -8,10 +8,10 @@ package at.logic.gui.prooftool.gui
  */
 
 import scala.swing._
-import event._
-import at.logic.gui.prooftool.parser._
 import BorderPanel._
-import at.logic.calculi.lk.base.{Sequent, LKProof}
+import event.Key
+import at.logic.gui.prooftool.parser._
+import at.logic.calculi.lk.base.{SequentOccurrence, Sequent, LKProof}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -24,9 +24,8 @@ object Main extends SimpleSwingApplication {
   }
 
   def fOpen: Unit = {
-    import FileChooser._
     val e = chooser.showOpenDialog(mBar) match {
-      case Result.Cancel =>
+      case FileChooser.Result.Cancel =>
       case _ => loadProof(chooser.selectedFile.getPath,12)
     }
   }
@@ -69,8 +68,10 @@ object Main extends SimpleSwingApplication {
   // Used by startup and open dialog
   def loadProof(path: String, fontSize: Int): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val proof = db.fileReader(path)
-    body.contents = new Launcher(proof, fontSize)
+    db.fileReader(path)
+    val proofs = db.getDB.proofs
+    if (proofs.size > 0) body.contents = new Launcher(Some(proofs.head), fontSize)
+    else body.contents = new Launcher(None, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -108,6 +109,19 @@ object Main extends SimpleSwingApplication {
         border = customBorder
       }
     }
+    contents += new Menu("Edit") {
+      mnemonic = Key.E
+      enabled = false
+      listenTo(ProofToolPublisher)
+      reactions += {
+        case ProofLoaded => this.enabled = true
+        case ProofUnLoaded => this.enabled = false
+      }
+
+      contents += new MenuItem(Action("Compute ClList") { computeClList }) { border = customBorder }
+      contents += new MenuItem(Action("TestRefutation") { testRefutation }) { border = customBorder }
+      contents += new MenuItem(Action("ShowStruct") { showStruct }) { border = customBorder }
+    }
     contents += new Menu("View") {
       mnemonic = Key.V
       contents += new MenuItem(Action("Zoom In") { zoomIn }) {
@@ -122,9 +136,9 @@ object Main extends SimpleSwingApplication {
       contents += new Menu("Show Proof") {
         mnemonic = Key.P
         border = customBorder
-        listenTo(proofDbChanged)
+        listenTo(ProofToolPublisher)
         reactions += {
-          case e: ValueChanged  =>
+          case ProofDbChanged =>
             val l = db.getProofNames
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i) { loadProof(i) }) { border = customBorder }
@@ -133,9 +147,9 @@ object Main extends SimpleSwingApplication {
       contents += new Menu("Show Clause List") {
         mnemonic = Key.C
         border = customBorder
-        listenTo(proofDbChanged)
+        listenTo(ProofToolPublisher)
         reactions += {
-          case e: ValueChanged  =>
+          case ProofDbChanged =>
             val l = db.getClListNames
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i) { loadClauseSet(i) }) { border = customBorder }
@@ -144,11 +158,58 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Help") {
       mnemonic = Key.H
-      contents += new MenuItem(Action("About") { About.open }) {
+      contents += new MenuItem(Action("About") { About() }) {
         mnemonic = Key.A
         border = customBorder
       }
     }
+  }
+
+  def computeClList = try {
+    import at.logic.transformations.skolemization.lksk.LKtoLKskc
+    import at.logic.transformations.ceres.struct.StructCreators
+    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+
+    val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+    val s = StructCreators.extract( proof_sk )
+    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s).map(_.getSequent)
+    body.contents = new Launcher(Some("cllist",csPre),16)
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(new Label(t),"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+  }
+
+  def showStruct = try {
+    import at.logic.transformations.skolemization.lksk.LKtoLKskc
+    import at.logic.transformations.ceres.struct.StructCreators
+
+    val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+    val s = StructCreators.extract( proof_sk )
+    body.contents = new Launcher(Some("Struct",s),12)
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(new Label(t),"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+  }
+
+  def testRefutation = {
+    import at.logic.calculi.resolution.andrews._
+    import at.logic.calculi.resolution.base.InitialSequent
+    import at.logic.language.hol._
+    import logicSymbols.ConstantStringSymbol
+    import at.logic.calculi.occurrences.PointerFOFactoryInstance
+
+    implicit val factory = PointerFOFactoryInstance
+      val a = Atom(ConstantStringSymbol("p"), Nil)
+      val s = Sequent(Nil, Neg(Or(a, Neg(a)))::Nil)
+      val p0 = InitialSequent[SequentOccurrence](s)
+      val p1 = NotT( p0, p0.root.succedent.head )
+      val p2 = OrFL( p1, p1.root.antecedent.head )
+      val p3 = OrFR( p1, p1.root.antecedent.head )
+      val p4 = NotF( p3, p3.root.antecedent.head )
+      val p5 = Cut( p4, p2, p4.root.succedent.head, p2.root.antecedent.head )
+    body.contents = new Launcher(Some("resolution refutation",p5),16)
   }
 
   val body = new MyScrollPane
