@@ -29,6 +29,11 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
+      <artifactId>schema</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
       <artifactId>proofs</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -40,6 +45,11 @@
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>lksk</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>slk</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
