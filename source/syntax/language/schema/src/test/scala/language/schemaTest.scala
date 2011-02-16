@@ -14,19 +14,34 @@ class SchemaTest extends SpecificationWithJUnit {
     val one = Succ(IntZero())
     val two = Succ(Succ(IntZero()))
     val p = new ConstantStringSymbol("P")
+    val pi = IndexedPredicate(p, i::Nil)
     val p1 = IndexedPredicate(p, one::Nil)
     val p2 = IndexedPredicate(p, two::Nil)
+    val bigAnd = BigAnd(new SchemaAbs(i, pi), one, two)
+    val bigOr = BigOr(i, pi, one, two)
+    val and = And(p1, p2)
+    val or = Or(bigAnd, bigOr)
+    val neg = Neg(or)
+    val imp = Imp(neg, and)
+
 
     "create IndexedPredicate correctly (1)" in {
       (p1) must beLike {case f: SchemaFormula => true}
     }
     "create IndexedPredicate correctly (2)" in {
-      (p2) must beLike {case f: SchemaFormula => true}
+      (pi) must beLike {case f: SchemaFormula => true}
     }
-
-    "create SchemaFormula correctly" in {
-      val and = And(p1, p2)
+    "create SchemaFormula correctly (1)" in {
       (and) must beLike {case f: SchemaFormula => true}
+    }
+    "create SchemaFormula correctly (2)" in {
+      (bigAnd) must beLike {case f: SchemaFormula => true}
+    }
+    "create SchemaFormula correctly (3)" in {
+      (bigOr) must beLike {case f: SchemaFormula => true}
+    }
+    "create SchemaFormula correctly (4)" in {
+      (imp) must beLike {case f: SchemaFormula => true}
     }
     "correctly deal with bound variables in the BigAnd extractor (2)" in {
       val i = IntVar(new VariableStringSymbol("i"))
@@ -47,7 +62,6 @@ class SchemaTest extends SpecificationWithJUnit {
       }
       betaNormalize( res ) must beEqual( p0 )
     }
-
     "perform the unapply function in BigAnd correctly" in {
        val iformula = new SchemaAbs(i.asInstanceOf[Var], p1)
        val bigConj = BigAnd(iformula, one, two)
