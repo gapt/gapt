@@ -17,6 +17,7 @@
     <module>misc_test</module>
     <module>lattice_test</module>
     <module>lnp_test</module>
+    <module>simple_schema_test</module>
   </modules>
 
   <packaging>pom</packaging>

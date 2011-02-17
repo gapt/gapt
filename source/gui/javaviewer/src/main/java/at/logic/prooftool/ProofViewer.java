@@ -1,5 +1,7 @@
 package at.logic.prooftool;
 
+ /*
+import org.jgrapht.graph.ListenableDirectedGraph;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.*;
@@ -11,7 +13,6 @@ import org.jgraph.graph.*;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.ListenableDirectedGraph;
 
 public class ProofViewer<V> {
 
@@ -76,7 +77,7 @@ public class ProofViewer<V> {
         model.beginUpdate();
         model.insert(morecells, null, cs, null, null);
         model.endUpdate();
-    } */
+    }
 
     public void run() {
         /*
@@ -89,7 +90,7 @@ public class ProofViewer<V> {
 
         }
         }
-        })*/
+        })
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.frame.setVisible(true);
     }
@@ -200,7 +201,7 @@ public class ProofViewer<V> {
     }
 
     public void doTreePlacement() {
-        /* assumption: edges are directed to the root */
+        /* assumption: edges are directed to the root
         model.beginUpdate();
         //System.err.println("point 1");
 
@@ -249,7 +250,7 @@ public class ProofViewer<V> {
         int ysize = 20;
         int ystep = 50;
         int xstep = 100;
-        */
+
         int xsize = 260;
         int ysize = 20;
         int ystep = 70;
@@ -316,10 +317,11 @@ public class ProofViewer<V> {
             v.insertLotsOfCells(1000);
             v.doTreePlacement();
             v.run();
-            //Thread.sleep(15000);*/
+            //Thread.sleep(15000);
         } catch (Exception e) {
             //do nothing
             e.printStackTrace();
         }
     }
 }
+*/
