@@ -19,11 +19,12 @@ case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 
 class SchemaProof(val name: String, val vars: List[IntVar], val base: LKProof, val rec: LKProof)
 
-object SchemaProofDB {
+object SchemaProofDB extends Iterable[(String, SchemaProof)] {
   val proofs = new scala.collection.mutable.HashMap[String, SchemaProof]
 
   def get(name: String) = proofs(name)
   def put(proof: SchemaProof) = proofs.put(proof.name, proof)
+  def iterator = proofs.iterator
 }
 
 trait SchemaProofLink {
