@@ -59,6 +59,21 @@ object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex(
   }
 }
 
+object Pred {
+  override def toString = this match {
+    case App(Succ, t) => "s("+t.toString+")"
+    case _ => "ERROR in Succ"
+  }
+  def apply(t: IntegerTerm): IntegerTerm  = t match {
+    case Succ(t1) => t1
+    case _ => "ERROR in Predecessor"
+  }
+  def unapply(p: IntegerTerm) = p match {
+    case App(Succ, t : IntegerTerm) => Some(t)
+    case _ => None
+  }
+}
+
 /*     not yet defined
 case object PlusC extends HOLConst(new ConstantStringSymbol("+"), ->(Tindex(), ->(Tindex(), Tindex()))){
   def apply(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = IntegerTermFactory.createPlus(t1,t2)
