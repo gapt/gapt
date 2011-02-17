@@ -168,6 +168,12 @@ object BigOr {
   }
 }
 
+// This factory creates a formula that
+// is true iff param = 0
+object isZero {
+  def apply(param: IntegerTerm) =
+    BigAnd( IntVar(new VariableStringSymbol("i")), BottomC, Succ(IntZero()), param )
+}
 
 case object BottomC extends HOLConst(BottomSymbol, To()) with SchemaFormula
 case object NegC extends HOLConst(NegSymbol, ->(To(), To())) with Schema

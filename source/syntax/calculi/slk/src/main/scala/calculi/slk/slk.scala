@@ -22,7 +22,7 @@ case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 
 class SchemaProof(val name: String, val vars: List[IntVar], val base: LKProof, val rec: LKProof)
 
-object SchemaProofDB extends Iterable[(String, SchemaProof)] {
+object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnce[(String, SchemaProof)] {
   val proofs = new scala.collection.mutable.HashMap[String, SchemaProof]
 
   def get(name: String) = proofs(name)
