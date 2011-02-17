@@ -12,6 +12,9 @@ import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
 case object AndEquivalenceRule2Type extends UnaryRuleTypeA
 case object AndEquivalenceRule3Type extends UnaryRuleTypeA
+case object OrEquivalenceRule1Type extends UnaryRuleTypeA
+case object OrEquivalenceRule2Type extends UnaryRuleTypeA
+case object OrEquivalenceRule3Type extends UnaryRuleTypeA
 case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 
 // The following two classes are used to keep a global directory
@@ -144,6 +147,121 @@ object AndEquivalenceRule3 {
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of AndEquivalenceRule3 must have a BigAnd as head symbol.")
+    }
+  }
+
+  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule3 with the given formula")
+    }
+  }
+
+  def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule3Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      Some((r.uProof, r.root, a1, p1))
+    }
+    else None
+}
+
+
+object OrEquivalenceRule1 {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+    main match {
+      case BigOr(v, f, ub, Succ(lb)) => {
+          require( Or( BigOr( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
+          val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence( main, auxf::Nil )
+          def createSide( s : Set[FormulaOccurrence] ) =
+            if ( s.contains( auxf ) )
+              createContext(s - auxf) + prinFormula
+            else
+              createContext(s)
+          new UnaryTree[SequentOccurrence]( new SequentOccurrence( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+            with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+              def rule = OrEquivalenceRule1Type
+              def aux = (auxf::Nil)::Nil
+              def prin = prinFormula::Nil
+            }
+      }
+      case _ => throw new LKRuleCreationException("Main formula of OrEquivalenceRule1 must have a BigOr as head symbol.")
+    }
+  }
+
+  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the OrEquivalenceRule1 with the given formula")
+    }
+  }
+
+  def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule1Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      Some((r.uProof, r.root, a1, p1))
+    }
+    else None
+}
+
+object OrEquivalenceRule2 {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+    main match {
+      case BigOr(v, f, ub, lb) => {
+          require( Or( BigOr( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
+          val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence( main, auxf::Nil )
+          def createSide( s : Set[FormulaOccurrence] ) =
+            if ( s.contains( auxf ) )
+              createContext(s - auxf) + prinFormula
+            else
+              createContext(s)
+          new UnaryTree[SequentOccurrence]( new SequentOccurrence( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+            with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+              def rule = OrEquivalenceRule2Type
+              def aux = (auxf::Nil)::Nil
+              def prin = prinFormula::Nil
+            }
+      }
+      case _ => throw new LKRuleCreationException("Main formula of OrEquivalenceRule2 must have a BigOr as head symbol.")
+    }
+  }
+
+  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the OrEquivalenceRule2 with the given formula")
+    }
+  }
+
+  def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule2Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      Some((r.uProof, r.root, a1, p1))
+    }
+    else None
+}
+
+object OrEquivalenceRule3 {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+    main match {
+      case BigOr(v, f, ub, lb) if ub == lb => {
+          require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
+          val prinFormula = PointerFOFactoryInstance.createPrincipalFormulaOccurrence( main, auxf::Nil )
+          def createSide( s : Set[FormulaOccurrence] ) =
+            if ( s.contains( auxf ) )
+              createContext(s - auxf) + prinFormula
+            else
+              createContext(s)
+          new UnaryTree[SequentOccurrence]( new SequentOccurrence( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+            with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+              def rule = OrEquivalenceRule3Type
+              def aux = (auxf::Nil)::Nil
+              def prin = prinFormula::Nil
+            }
+      }
+      case _ => throw new LKRuleCreationException("Main formula of OREquivalenceRule3 must have a BigOr as head symbol.")
     }
   }
 

@@ -9,6 +9,14 @@
 
   <artifactId>simple_schema_test</artifactId>
   <packaging>jar</packaging>
-  <name>Testing the extraction of cls of predicate schema proofs</name>
+  <name>Testing Schema Proofs</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>at.logic</groupId>
+            <artifactId>slk</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
 </project>
