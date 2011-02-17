@@ -70,6 +70,13 @@ object AndEquivalenceRule1 {
     }
   }
 
+  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule1 with the given formula")
+    }
+  }
+
   def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule1Type) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
       val ((a1::Nil)::Nil) = r.aux
@@ -101,7 +108,14 @@ object AndEquivalenceRule2 {
     }
   }
 
-  def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule1Type) {
+  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule2 with the given formula")
+    }
+  }
+
+  def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule2Type) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
@@ -129,6 +143,13 @@ object AndEquivalenceRule3 {
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of AndEquivalenceRule3 must have a BigAnd as head symbol.")
+    }
+  }
+
+  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule3 with the given formula")
     }
   }
 
