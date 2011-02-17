@@ -1,7 +1,7 @@
 package at.logic.algorithms.lk
 
 import _root_.at.logic.calculi.lk.propositionalRules._
-import scala.collection.immutable.Set
+import scala.collection.immutable.{HashSet, Set}
 import scala.collection.mutable.{Map, HashMap}
 
 import at.logic.calculi.lk.equationalRules._
@@ -29,8 +29,14 @@ object getCutAncestors {
       // support LKsk
       case UnaryLKskProof(_,p,_,_,_) => getCutAncestors( p )
     }
-  def getAncestors( o: FormulaOccurrence ) : List[FormulaOccurrence] =
+}
+
+object getAncestors {
+  def apply( o: FormulaOccurrence ) : List[FormulaOccurrence] =
     o.ancestors.flatMap( a => getAncestors( a ) ) ::: List( o )
+
+  def apply( o: Set[FormulaOccurrence] ) : Set[FormulaOccurrence] =
+    o.foldLeft( new HashSet[FormulaOccurrence] )( (res, o) => res ++ apply( o ) )
 }
 
 object regularize {

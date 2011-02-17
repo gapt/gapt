@@ -16,7 +16,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkExtractors._
 import at.logic.calculi.lksk.lkskExtractors._
 import at.logic.calculi.lksk.base._
-import at.logic.algorithms.lk.getCutAncestors
+import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
 import at.logic.utils.ds.trees._
 import at.logic.language.lambda.types.ImplicitConverters._
 
@@ -26,7 +26,7 @@ import at.logic.language.schema._
 import at.logic.language.lambda.symbols._
 import at.logic.utils.ds.Multisets._
 
-import scala.collection.immutable.Set
+import scala.collection.immutable.{HashSet, Set}
 
 package struct {
   trait Struct extends Tree[HOLExpression]
@@ -78,10 +78,35 @@ package struct {
   case class EmptyTimesJunction() extends LeafTree[HOLExpression](EmptyTimesC) with Struct
   case class EmptyPlusJunction() extends LeafTree[HOLExpression](EmptyPlusC) with Struct
 
+  // some stuff for schemata
+
+  // cut configurations: one using multisets of formulas (to relate different proof definitions)
+  // and one using FormulaOccurrences (if we are only considering a single proof definition)
+  object TypeSynonyms {
+    type CutConfiguration = (Multiset[SchemaFormula], Multiset[SchemaFormula])
+    type CutOccurrenceConfiguration = Set[FormulaOccurrence]
+  }
+
+  import TypeSynonyms._
+
+  object cutOccConfigToCutConfig {
+    def apply( so: SequentOccurrence, cc: CutOccurrenceConfiguration ) =
+      cc.foldLeft( (HashMultiset[SchemaFormula](), HashMultiset[SchemaFormula]() ) )( (res, fo) => {
+        val cca = res._1
+        val ccs = res._2
+        if (so.antecedent.contains( fo ))
+          (cca + fo.formula.asInstanceOf[SchemaFormula], ccs)
+        else if (so.succedent.contains( fo ))
+          (cca, ccs + fo.formula.asInstanceOf[SchemaFormula])
+        else
+          throw new Exception
+      })
+  }
+
   // In the construction of schematized clause sets, we use symbols
   // that contain a name and a cut-configuration. This class represents
   // such symbols.
-  class ClauseSetSymbol(val name: String, val cut_occs: Multiset[SchemaFormula]) extends ConstantSymbolA {
+  class ClauseSetSymbol(val name: String, val cut_occs: CutConfiguration) extends ConstantSymbolA {
     def compare( that: SymbolA ) : Int =
       // TODO: implement
       throw new Exception
@@ -92,6 +117,62 @@ package struct {
   }
 
   object StructCreators {
+
+    // this is for proof schemata: it extracts the characteristic
+    // clause set for the proof called "name"
+    // TODO: should return just a Struct
+    // set should be interpreted as Plus
+    def extract(name: String) : Set[Struct] = {
+
+      // TODO: refactor --- this method should be somewhere else
+      // some combinatorics: return the set of all sets
+      // that can be obtained by drawing at most n elements
+      // from a given set
+
+      def combinations[A]( n: Int, m: Set[A] ) : Set[Set[A]] = n match {
+        case 0 => HashSet() + HashSet()
+        case _ => m.foldLeft( HashSet[Set[A]]() )( (res, elem) => {
+          val s = combinations( n - 1, m - elem )
+          res ++ s ++ s.map( m => m + elem )
+        } )
+      }
+
+      // create the set of all possible cut-configurations
+      // for p
+      /*
+      def toFormulaMultiset( s: Set[FormulaOccurrence] ) = s.foldLeft( HashMultiset() )( (res, o) => res + o.formula )
+      def cutConfigurations( s: Set[FormulaOccurrence] ) = combinations( s.size, toMultiset( s ) )
+      def cutConfigurations( p: LKProof ) = {
+        val ca = cutConfigurations( p.root.antecedent )
+        val cs = cutConfigurations( p.root.succedent )
+        ca.foldLeft( new HashSet[CutConfiguration] )( (res, cc) =>
+          res ++ cs.foldLeft( new HashSet[CutConfiguration] )( (res2, cc2) => res2 + (cc, cc2) ) )
+      } */
+
+      def cutConfigurations( p: LKProof ) = {
+        val occs = p.root.antecedent ++ p.root.succedent
+        combinations( occs.size, occs )
+      }
+
+      SchemaProofDB.foldLeft( new HashSet[Struct] )( (set, ps) => {
+        val n = ps._1
+        val schema = ps._2
+        // first, compute for base case
+        val ccs = cutConfigurations( schema.base )
+        val cut_ancs = getCutAncestors( schema.base )
+        set ++ ccs.foldLeft( new HashSet[Struct] )( (set2, cc) =>
+        {
+          val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.base.root, cc ) ), IntZero()::Nil )
+          set2 + Times(Dual(A(toOccurrence(pred, schema.base.root))), extract( schema.base, getAncestors( cc ) ++ cut_ancs ), Nil )
+        } )
+      } )
+    }
+
+    def toOccurrence( f: HOLFormula, so: SequentOccurrence ) =
+    {
+      val others = so.antecedent ++ so.succedent
+      others.head.factory.createPrincipalFormulaOccurrence(f, Nil, others)
+    }
 
     def extract(p: LKProof) : Struct = extract( p, getCutAncestors( p ) )
 
@@ -110,11 +191,10 @@ package struct {
       case SchemaProofLinkRule(so, name, indices) => handleSchemaProofLink( so, name, indices, cut_occs )
     }
 
-    def handleSchemaProofLink( so: SequentOccurrence, name: String, indices: List[IntegerTerm], cut_occs: Set[FormulaOccurrence]) = {
-      val sym = new ClauseSetSymbol( name, cut_occs.foldLeft(HashMultiset[SchemaFormula])( (s,o) => s + o.formula.asInstanceOf[SchemaFormula] ) )
+    def handleSchemaProofLink( so: SequentOccurrence, name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
+      val sym = new ClauseSetSymbol( name, cutOccConfigToCutConfig( so, cut_occs ) )
       val atom = IndexedPredicate( sym, indices )
-      val others = so.antecedent ++ so.succedent
-      A( others.head.factory.createPrincipalFormulaOccurrence(atom, Nil, others) )
+      A( toOccurrence( atom, so ) )
     }
 
     def handleLabelledAxiom( lso: LabelledSequentOccurrence, cut_occs: Set[FormulaOccurrence] ) = {
