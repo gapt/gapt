@@ -1,13 +1,14 @@
 package at.logic.simple_schema_test
 
+import at.logic.calculi.lk.macroRules.AndLeftRule
 import at.logic.calculi.lk.base._
-import org.specs.SpecificationWithJUnit
 import at.logic.language.schema._
 import at.logic.calculi.slk._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.occurrences.positions._
+import org.specs.SpecificationWithJUnit
 
 class SchemaClauseSetTest extends SpecificationWithJUnit {
   "SchemaClauseSetTest" should {
@@ -28,8 +29,26 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
 
     "construct correct LKS proof" in {
       varPhi_n must beLike {case x : LKProof => true}
-      println(varPhi_n.toString)
+    //  println(varPhi_n.toString)
     }
+   /*
+    val a1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(IntZero())::Nil)
+    val a_sn = IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil)
+    val xi_1 = NegLeftRule(Axiom(Sequent(a1::Nil, a1::Nil)), a1)
 
+    //-- Some subproofs of xi_sn proof
+    val x1 = NegLeftRule(Axiom(Sequent(a_sn::Nil, a_sn::Nil)), a_sn)
+    val x2 = SchemaProofLinkRule(Sequent(and_1_n_ai::Nil, or_1_n_not_ai::Nil), "xi_n", n::Nil)
+    val x3 = OrLeftRule(x2, x1, or_1_n_not_ai, Neg(a_sn))
+    val x4 = OrEquivalenceRule1(x3, x3.prin.head, or_1_sn_not_ai)
+    val x5 = AndLeftRule(x4, and_1_n_ai, a_sn)
+    // end of subproofs of xi_sn proof --//
+
+   // val xi_sn = AndEquivalenceRule1(x5, x5.prin.head, and_1_sn_ai)
+
+    "construct correct LKS proof" in {
+      x5 must beLike {case x : LKProof => true}
+  //    println(xi_sn.toString)
+    }*/
   }
 }
