@@ -7,12 +7,12 @@
 
 package at.logic.utils.ds
 
-import scala.collection.immutable.HashMap
+import scala.collection.immutable.{HashMap, HashSet}
 
 object Multisets {
 
 //    trait Multiset[+A] extends Iterable[A]{
-    trait Multiset[A] {
+    trait Multiset[A] extends Iterable[A] {
       def + (elem: A) : Multiset[A]
       def - (elem: A) : Multiset[A]
     }
@@ -28,10 +28,35 @@ object Multisets {
       else
         throw new Exception // element not contained in the multiset
       )
+
+      def iterator = map.keys.iterator
+
+      override def equals( that: Any ) = that match {
+        case x : HashMultiset[A] => {
+          map.equals( x.map )
+        }
+        case _ => false
+      }
+
+      override def hashCode = map.hashCode
+
+      override def toString = map.toString
     }
 
   object HashMultiset {
     def apply[A]() = new HashMultiset(new HashMap[A,Int])
+  }
+
+  // some combinatorics: return the set of all multisets
+  // that can be obtained by drawing at most n elements
+  // from a given multiset
+
+  def combinations[A]( n: Int, m: Multiset[A] ) : Set[Multiset[A]] = n match {
+    case 0 => HashSet() + HashMultiset()
+    case _ => m.foldLeft( HashSet[Multiset[A]]() )( (res, elem) => {
+      val s = combinations( n - 1, m - elem )
+      res ++ s ++ s.map( m => m + elem )
+    } )
   }
 }
 
