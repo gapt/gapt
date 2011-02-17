@@ -16,32 +16,43 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
   "SchemaClauseSetTest" should {
      implicit val factory = PointerFOFactoryInstance
     //--  Create LKS proof (Alex's example) --//
+
+    //-- Some formula definitions
     val i = IntVar(new VariableStringSymbol("i"))
     val n = IntVar(new VariableStringSymbol("n"))
     val ai = IndexedPredicate(new ConstantStringSymbol("A"), i::Nil)
+    val a1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(IntZero())::Nil)
+    val a_sn = IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil)
     val and_1_n_ai = BigAnd(i, ai,Succ(IntZero()), n)
     val and_1_sn_ai = BigAnd(i, ai,Succ(IntZero()), Succ(n))
     val or_1_n_not_ai = BigOr(i, Neg(ai), Succ(IntZero()), n)
     val or_1_sn_not_ai = BigOr(i, Neg(ai), Succ(IntZero()), Succ(n))
+    // end of formula definitions --//
 
+     //-- Some subproofs of varPhi_n proof
     val psi = SchemaProofLinkRule(Sequent(and_1_n_ai::Or(or_1_n_not_ai,
       IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil))::Nil, and_1_sn_ai::Nil), "psi", Succ(n)::Nil)
     val xi = SchemaProofLinkRule(Sequent(and_1_sn_ai::or_1_sn_not_ai::Nil, Nil), "xi", Succ(n)::Nil)
     val p = NegRightRule(xi, or_1_sn_not_ai)
+    // end of subproofs of varPhi_n proof --//
+
     val varPhi_n = CutRule(psi, p, and_1_sn_ai)
 
     "construct correct LKS proof" in {
       varPhi_n must beLike {case x : LKProof => true}
-      println(varPhi_n.toString)
+    }
+    "check that it has correct end-sequent" in {
+      varPhi_n.root.getSequent must beEqual(
+        Sequent(and_1_n_ai::Or(or_1_n_not_ai, a_sn)::Nil, Neg(or_1_sn_not_ai)::Nil) )
     }
 
-    val a1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(IntZero())::Nil)
-    val a_sn = IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil)
     val xi_1 = NegLeftRule(Axiom(Sequent(a1::Nil, a1::Nil)), a1)
 
     "construct correct LKS proof" in {
       xi_1 must beLike {case x : LKProof => true}
-      println(xi_1.toString)
+    }
+    "check that it has correct end-sequent" in {
+      xi_1.root.getSequent must beEqual( Sequent(a1::Neg(a1)::Nil, Nil) )
     }
 
     //-- Some subproofs of xi_sn proof
@@ -56,7 +67,52 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
 
     "construct correct LKS proof" in {
       xi_sn must beLike {case x : LKProof => true}
-      println(xi_sn.toString)
+    }
+    "check that it has correct end-sequent" in {
+      xi_sn.root.getSequent must beEqual( Sequent(and_1_sn_ai::or_1_sn_not_ai::Nil, Nil) )
+    }
+
+    val phi_1 = Axiom(Sequent(a1::Nil, a1::Nil))
+
+    "construct correct LKS proof" in {
+      phi_1 must beLike {case x : LKProof => true}
+    }
+    "check that it has correct end-sequent" in {
+      phi_1.root.getSequent must beEqual( Sequent(a1::Nil, a1::Nil) )
+    }
+
+    //-- Some subproofs of phi_sn proof
+    val y1 = AndRightRule(SchemaProofLinkRule(Sequent(and_1_n_ai::Nil, and_1_n_ai::Nil), "phi", n::Nil),
+      Axiom(Sequent(a_sn::Nil, a_sn::Nil)), and_1_n_ai, a_sn)
+    val y2 = AndEquivalenceRule1(y1, y1.prin.head, and_1_sn_ai)
+    val y3 = AndLeftRule(y2, and_1_n_ai, a_sn)
+    // end of subproofs of phi_sn proof --//
+
+    val phi_sn = AndEquivalenceRule1(y3, y3.prin.head, and_1_sn_ai)
+
+    "construct correct LKS proof" in {
+      phi_sn must beLike {case x : LKProof => true}
+    }
+    "check that it has correct end-sequent" in {
+      phi_sn.root.getSequent must beEqual(
+        Sequent(and_1_sn_ai::Nil, and_1_sn_ai::Nil) )
+    }
+
+    //-- Some subproofs of psi_sn proof
+    val z1 = OrLeftRule(x2, Axiom(Sequent(a_sn::Nil, a_sn::Nil)), or_1_n_not_ai, a_sn)
+    val z2 = AndRightRule(SchemaProofLinkRule(Sequent(and_1_n_ai::Nil, and_1_n_ai::Nil), "phi", n::Nil),
+      z1, and_1_n_ai, a_sn)
+    val z3 = AndEquivalenceRule1(z2, z2.prin.head, and_1_sn_ai)
+    // end of subproofs of psi_sn proof --//
+
+    val psi_sn = ContractionLeftRule(z3, and_1_n_ai)
+
+    "construct correct LKS proof" in {
+      psi_sn must beLike {case x : LKProof => true}
+    }
+    "check that it has correct end-sequent" in {
+      psi_sn.root.getSequent must beEqual(
+        Sequent(and_1_n_ai::Or(or_1_n_not_ai, a_sn)::Nil, and_1_sn_ai::Nil) )
     }
   }
 
