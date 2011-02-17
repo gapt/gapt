@@ -8,6 +8,8 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.occurrences._
+import at.logic.transformations.ceres.struct._
+
 import org.specs.SpecificationWithJUnit
 
 class SchemaClauseSetTest extends SpecificationWithJUnit {
@@ -56,5 +58,26 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       xi_sn must beLike {case x : LKProof => true}
       println(xi_sn.toString)
     }
+  }
+
+  "extract a schema clause set from a simple proof" in {
+    val i = IntVar(new VariableStringSymbol("i"))
+    val n = IntVar(new VariableStringSymbol("n"))
+    val p0 = IndexedPredicate(new ConstantStringSymbol("p"), IntZero()::Nil)
+    val pi = IndexedPredicate(new ConstantStringSymbol("p"), i::Nil)
+
+    // base
+    val ax = Axiom( Sequent(p0::Nil, p0::Nil) )
+    val base = AndEquivalenceRule3(ax, p0, BigAnd(i, pi, IntZero(), IntZero() ) )
+
+    // step
+    val psn = IndexedPredicate(new ConstantStringSymbol("p"), Succ(n)::Nil)
+    val f1 = And( BigAnd( i, pi, IntZero(), n ), psn )
+    val link = SchemaProofLinkRule(Sequent( f1::Nil, p0::Nil ), "varphi", n::Nil )
+    val f2 = BigAnd( i, pi, IntZero(), Succ(n) )
+    val step = AndEquivalenceRule1( link, f1, f2 )
+
+    SchemaProofDB.put( new SchemaProof( "varphi", n::Nil, base, step ) )
+    //println( StructCreators.extract( "varphi" ) )
   }
 }

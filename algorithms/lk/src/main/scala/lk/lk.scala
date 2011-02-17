@@ -1,6 +1,6 @@
 package at.logic.algorithms.lk
 
-import _root_.at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk.propositionalRules._
 import scala.collection.immutable.{HashSet, Set}
 import scala.collection.mutable.{Map, HashMap}
 
@@ -10,7 +10,11 @@ import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
+
 import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
+
+import at.logic.calculi.slk._
+
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
 import at.logic.language.lambda.substitutions
@@ -28,6 +32,8 @@ object getCutAncestors {
       case Axiom(so) => Set[FormulaOccurrence]()
       // support LKsk
       case UnaryLKskProof(_,p,_,_,_) => getCutAncestors( p )
+      // support SLK
+      case UnarySchemaProof(_,p,_,_,_) => getCutAncestors( p )
     }
 }
 
