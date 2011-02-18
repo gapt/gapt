@@ -28,6 +28,9 @@ import at.logic.utils.ds.Multisets._
 
 import scala.collection.immutable.{HashSet, Set}
 
+// for debugging
+import clauseSets.StandardClauseSet._
+
 package struct {
 //  trait Struct extends Tree[HOLExpression]
   trait Struct
@@ -126,13 +129,23 @@ package struct {
     def toCode() : String =
       // TODO: implement
       throw new Exception
+
+    override def toString() =
+      "CL^{(" + cutConfToString(cut_occs) + ")," + name +"}"
+
+    private def cutConfToString( cc : CutConfiguration ) = {
+      def str( m : Multiset[SchemaFormula] ) = m.foldLeft( "" )( (s, f) => s + f )
+      str( cc._1 ) + "|" + str( cc._2 )
+    }
   }
 
   object StructCreators {
 
     // this is for proof schemata: it extracts the characteristic
     // clause set for the proof called "name"
-    def extract(name: String) : Struct = {
+    // fresh_param should be fresh
+    def extract(name: String, fresh_param: IntVar) : Struct = {
+      println("extracting clause set for proof" + name)
 
       // TODO: refactor --- this method should be somewhere else
       // some combinatorics: return the set of all sets
@@ -165,31 +178,45 @@ package struct {
       }
 
       // first, compute for base case (i.e. CS_0)
+      println("compute for base cases")
       val cs_0 = SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() )( (struct, ps) => {
         val n = ps._1
         val schema = ps._2
         val ccs = cutConfigurations( schema.base )
         val cut_ancs = getCutAncestors( schema.base )
-        Plus(struct, ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
+        println("first compute for proof " + n)
+        val res = Plus(struct, ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
         {
+          println("cut configuration: " + cc)
           val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.base.root, cc ) ), IntZero()::Nil )
-          Plus(struct2, Times(Dual(A(toOccurrence(pred, schema.base.root))), extract( schema.base, getAncestors( cc ) ++ cut_ancs ), Nil ))
+          val res = Times(Dual(A(toOccurrence(pred, schema.base.root))), extract( schema.base, getAncestors( cc ) ++ cut_ancs ), Nil )
+          println("obtained struct from cc: " + transformStructToClauseSet(res))
+          Plus(struct2, res)
         }))
+        println("obtained struct from base case:" + transformStructToClauseSet(res ))
+        res
       })
 
+      println("compute for step cases")
       // second, compute for the step case (i.e. CS_1)
       val cs_1 = SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() ) ( (struct, ps) => {
         val n = ps._1
         val schema = ps._2
+        println("computing cut configurations")
         val ccs = cutConfigurations( schema.rec )
+        println("computing cut ancestors")
         val cut_ancs = getCutAncestors( schema.rec )
+        println("first compute for proof " + n)
         // TODO: due to schema.vars.head in the next line, we only support
         // proofs with a single integer parameter. To support more,
         // the definition of ClauseSetSymbol needs to be extended.
-        val param = schema.vars.head
-        Plus( struct, Times(A(toOccurrence(isZero(param), schema.rec.root)),
+        val param = Succ(schema.vars.head)
+        val precond = Times(A(toOccurrence(isZero(param), schema.rec.root)), A(toOccurrence(isBiggerThan(param, fresh_param), schema.rec.root)), Nil)
+
+        Plus( struct, Times(precond,
                             ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
         {
+          println("cut configuration: " + cc)
           val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.rec.root, cc ) ), param::Nil )
           Plus(struct2, Times(Dual(A(toOccurrence(pred, schema.rec.root))), extract( schema.rec, getAncestors( cc ) ++ cut_ancs ), Nil ))
         }), Nil))
@@ -197,7 +224,7 @@ package struct {
 
       val schema = SchemaProofDB.get(name)
       val pred = IndexedPredicate( new ClauseSetSymbol( name, (HashMultiset[SchemaFormula], HashMultiset[SchemaFormula]) ), 
-                                   schema.vars )
+                                   fresh_param::Nil )
       Plus( A(toOccurrence(pred, schema.base.root)), Plus( cs_0, cs_1 ) )
     }
 
@@ -225,7 +252,8 @@ package struct {
     }
 
     def handleSchemaProofLink( so: SequentOccurrence, name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
-      val sym = new ClauseSetSymbol( name, cutOccConfigToCutConfig( so, cut_occs ) )
+      val sym = new ClauseSetSymbol( name,
+        cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)) ) )
       val atom = IndexedPredicate( sym, indices )
       A( toOccurrence( atom, so ) )
     }

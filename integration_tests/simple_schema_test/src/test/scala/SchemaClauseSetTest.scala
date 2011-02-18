@@ -1,5 +1,8 @@
 package at.logic.simple_schema_test
 
+import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
+import at.logic.parsing.writers.FileWriter
 import at.logic.calculi.lk.macroRules.AndLeftRule
 import at.logic.calculi.lk.base._
 import at.logic.language.schema._
@@ -9,6 +12,9 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.occurrences._
 import at.logic.transformations.ceres.struct._
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+
+import java.io.File.separator
 
 import org.specs.SpecificationWithJUnit
 
@@ -124,14 +130,21 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       val base = AndEquivalenceRule3(ax, p0, BigAnd(i, pi, IntZero(), IntZero() ) )
 
       // step
+      val f0 = BigAnd( i, pi, IntZero(), n )
       val psn = IndexedPredicate(new ConstantStringSymbol("p"), Succ(n)::Nil)
-      val f1 = And( BigAnd( i, pi, IntZero(), n ), psn )
-      val link = SchemaProofLinkRule(Sequent( f1::Nil, p0::Nil ), "varphi", n::Nil )
+      val f1 = And( f0, psn )
+      val link = SchemaProofLinkRule(Sequent( f0::Nil, p0::Nil ), "\\varphi", n::Nil )
+      val p1 = AndLeft1Rule(link, f0, psn)
       val f2 = BigAnd( i, pi, IntZero(), Succ(n) )
-      val step = AndEquivalenceRule1( link, f1, f2 )
+      val step = AndEquivalenceRule1( p1, f1, f2 )
 
-      SchemaProofDB.put( new SchemaProof( "varphi", n::Nil, base, step ) )
-      //println( StructCreators.extract( "varphi" ) )
+      SchemaProofDB.put( new SchemaProof( "\\varphi", n::Nil,
+        new Sequent(f0::Nil, p0::Nil),
+        base, step ) )
+      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( "\\varphi", IntVar(new VariableStringSymbol("x") ) ) )
+      println( cs )
+      (new FileWriter("target" + separator + "test-classes" + separator + "cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+        .exportSequentList(cs.map(so => so.getSequent), Nil).close
     }
   }
 }

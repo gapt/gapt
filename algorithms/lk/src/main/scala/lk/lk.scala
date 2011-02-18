@@ -25,15 +25,16 @@ import substitutions.Substitution
 object getCutAncestors {
   def apply( p: LKProof )
     : Set[FormulaOccurrence] = p match {
-      case CutRule(p1, p2, _, a1, a2) => getCutAncestors( p1 ) ++ getCutAncestors( p2 ) ++ 
+      case CutRule(p1, p2, _, a1, a2) => getCutAncestors( p1 ) ++ getCutAncestors( p2 ) ++
                                          Axiom.toSet( getAncestors( a1 ) ) ++ Axiom.toSet( getAncestors( a2 ) )
       case UnaryLKProof(_,p,_,_,_) => getCutAncestors( p )
       case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutAncestors( p1 ) ++ getCutAncestors( p2 )
-      case Axiom(so) => Set[FormulaOccurrence]()
+      case Axiom(_) => Set[FormulaOccurrence]()
       // support LKsk
       case UnaryLKskProof(_,p,_,_,_) => getCutAncestors( p )
       // support SLK
       case UnarySchemaProof(_,p,_,_,_) => getCutAncestors( p )
+      case SchemaProofLinkRule(_, _, _) => Set[FormulaOccurrence]()
     }
 }
 

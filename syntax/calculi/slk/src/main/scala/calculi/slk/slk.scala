@@ -1,5 +1,7 @@
 package at.logic.calculi.slk
 
+import at.logic.language.hol.HOLExpression
+import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.calculi.lk.base._
@@ -20,12 +22,36 @@ case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 // The following two classes are used to keep a global directory
 // of proof schemata. Their definition is somewhat ad-hoc.
 
-class SchemaProof(val name: String, val vars: List[IntVar], val base: LKProof, val rec: LKProof)
+// base should have end-sequent seq where vars <- 0
+// rec should have end-sequent seq where vars <- vars + 1
+class SchemaProof(val name: String, val vars: List[IntVar], val seq: Sequent, val base: LKProof, val rec: LKProof)
+{
+  require( {
+    // FIXME: why are these casts needed?
+    val b_sub = Substitution(vars.map( v => (v,IntZero().asInstanceOf[HOLExpression])))
+    val r_sub = Substitution(vars.map( v => (v,Succ(v).asInstanceOf[HOLExpression])))
+    base.root.getSequent == substitute(b_sub, seq) && rec.root.getSequent == substitute(r_sub, seq)
+  })
+}
 
 object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnce[(String, SchemaProof)] {
   val proofs = new scala.collection.mutable.HashMap[String, SchemaProof]
 
   def get(name: String) = proofs(name)
+
+  // Compute a map between sets of FOs from
+  // SchemaProofLinkRules and end-sequents of proof.base, proof.rec
+  // and CutConfigurations, such that the CutConfigurations are
+  // compatible between the different LKS-proofs.
+  // Should only be called once all relevant proofs are
+  // included (so that every SchemaProofLinkRule can be resolved).
+  //
+  // TODO: maybe put this somewhere else, seems to fit better with
+  // the code that compute the characteristic clause set.
+  def computeCutConfigs() = {
+    // TODO: implement
+  }
+
   def put(proof: SchemaProof) = proofs.put(proof.name, proof)
   def iterator = proofs.iterator
 }
@@ -36,21 +62,22 @@ trait SchemaProofLink {
 }
 
 object SchemaProofLinkRule {
-  def apply(seq: Sequent, name: String, indices : List[IntegerTerm])(implicit factory: FOFactory) = {
+  def apply(seq: Sequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {
     def createSide(side : List[SchemaFormula]) = side.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + factory.createPrincipalFormulaOccurrence(form, Nil, st))
     new LeafTree[SequentOccurrence]( SequentOccurrence(createSide(seq.antecedent.asInstanceOf[List[SchemaFormula]]), createSide(seq.succedent.asInstanceOf[List[SchemaFormula]]) ) ) with NullaryLKProof with SchemaProofLink {
       def rule = SchemaProofLinkRuleType
-      def link = name
-      def indices = indices
+      def link = link_name
+      def indices = indices_
     }
   }
 
-  def unapply( proof: LKProof ) = if (proof.rule == SchemaProofLinkRuleType) {
-    val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
-    Some(r.root, r.name, r.indices)
+  def unapply( proof: LKProof ) =
+    if (proof.rule == SchemaProofLinkRuleType) {
+      val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
+      Some((r.root, r.link, r.indices))
+    }
+    else None
   }
-  else None
-}
 
 object AndEquivalenceRule1 {
   def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {

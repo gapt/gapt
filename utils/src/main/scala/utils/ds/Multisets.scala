@@ -29,7 +29,35 @@ object Multisets {
         throw new Exception // element not contained in the multiset
       )
 
-      def iterator = map.keys.iterator
+    // produces duplicates, i.e. if the multiset contains
+    // 3x A, then the iterator will produce A, A, A.
+      def iterator = {
+        val mmap = map // needed because of name clash in Iterator trait
+        new Iterator[A] {
+          val it = mmap.keys.iterator
+          var cur : Option[A] = if (it.hasNext) Some(it.next) else None
+          var cnt = cur match {
+            case None => 0
+            case Some(e) => mmap(e)
+          }
+
+          def hasNext = cnt > 0
+
+          def next = {
+            val res = cur.get
+            if (cnt > 1)
+              cnt -= 1
+            else if (it.hasNext) {
+              cur = Some(it.next)
+              cnt = mmap(cur.get)
+            } else {
+              cur = None
+              cnt = 0
+            }
+            res
+          }
+        }
+      }
 
       override def equals( that: Any ) = that match {
         case x : HashMultiset[A] => {
