@@ -59,20 +59,19 @@ object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex(
   }
 }
 
+/*  Predecessor, the inverse of successor Succ
 object Pred {
-  override def toString = this match {
-    case App(Succ, t) => "s("+t.toString+")"
-    case _ => "ERROR in Succ"
-  }
   def apply(t: IntegerTerm): IntegerTerm  = t match {
     case Succ(t1) => t1
-    case _ => "ERROR in Predecessor"
+    case _ => throw new Exception("ERROR in Predecessor")
   }
   def unapply(p: IntegerTerm) = p match {
     case App(Succ, t : IntegerTerm) => Some(t)
     case _ => None
   }
-}
+}*/
+
+
 
 /*     not yet defined
 case object PlusC extends HOLConst(new ConstantStringSymbol("+"), ->(Tindex(), ->(Tindex(), Tindex()))){
