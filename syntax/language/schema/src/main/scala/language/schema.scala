@@ -111,9 +111,7 @@ object IndexedPredicate {
     val pred = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.map( a => Tindex() ) ) )
     AppN(pred, indexTerms).asInstanceOf[SchemaFormula]
   }
-  /*def apply(s: ConstantSymbolA, indexTerm: LambdaExpression, tp: TA): LambdaExpression = {
-    FOLSchemataFactory.createVar(s, indexTerm::Nil, tp).asInstanceOf[SchemataFormula]
-  } */
+  def apply(sym: ConstantSymbolA, indexTerm: IntegerTerm): SchemaFormula = apply(sym, indexTerm::Nil)
 }
 
 
