@@ -114,26 +114,24 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       psi_sn.root.getSequent must beEqual(
         Sequent(and_1_n_ai::Or(or_1_n_not_ai, a_sn)::Nil, and_1_sn_ai::Nil) )
     }
-  }
 
-  "extract a schema clause set from a simple proof" in {
-    val i = IntVar(new VariableStringSymbol("i"))
-    val n = IntVar(new VariableStringSymbol("n"))
-    val p0 = IndexedPredicate(new ConstantStringSymbol("p"), IntZero()::Nil)
-    val pi = IndexedPredicate(new ConstantStringSymbol("p"), i::Nil)
+    "extract a schema clause set from a simple proof" in {
+      val p0 = IndexedPredicate(new ConstantStringSymbol("p"), IntZero()::Nil)
+      val pi = IndexedPredicate(new ConstantStringSymbol("p"), i::Nil)
 
-    // base
-    val ax = Axiom( Sequent(p0::Nil, p0::Nil) )
-    val base = AndEquivalenceRule3(ax, p0, BigAnd(i, pi, IntZero(), IntZero() ) )
+      // base
+      val ax = Axiom( Sequent(p0::Nil, p0::Nil) )
+      val base = AndEquivalenceRule3(ax, p0, BigAnd(i, pi, IntZero(), IntZero() ) )
 
-    // step
-    val psn = IndexedPredicate(new ConstantStringSymbol("p"), Succ(n)::Nil)
-    val f1 = And( BigAnd( i, pi, IntZero(), n ), psn )
-    val link = SchemaProofLinkRule(Sequent( f1::Nil, p0::Nil ), "varphi", n::Nil )
-    val f2 = BigAnd( i, pi, IntZero(), Succ(n) )
-    val step = AndEquivalenceRule1( link, f1, f2 )
+      // step
+      val psn = IndexedPredicate(new ConstantStringSymbol("p"), Succ(n)::Nil)
+      val f1 = And( BigAnd( i, pi, IntZero(), n ), psn )
+      val link = SchemaProofLinkRule(Sequent( f1::Nil, p0::Nil ), "varphi", n::Nil )
+      val f2 = BigAnd( i, pi, IntZero(), Succ(n) )
+      val step = AndEquivalenceRule1( link, f1, f2 )
 
-    SchemaProofDB.put( new SchemaProof( "varphi", n::Nil, base, step ) )
-    //println( StructCreators.extract( "varphi" ) )
+      SchemaProofDB.put( new SchemaProof( "varphi", n::Nil, base, step ) )
+      //println( StructCreators.extract( "varphi" ) )
+    }
   }
 }
