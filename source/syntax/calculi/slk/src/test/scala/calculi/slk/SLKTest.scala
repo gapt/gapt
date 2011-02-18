@@ -52,6 +52,20 @@ class SLKTest extends SpecificationWithJUnit {
       val proof = OrEquivalenceRule1(ax, ax.root.antecedent.head, or_1_sn_ai)
       proof.root.getSequent must beEqual( Sequent(or_1_sn_ai::Nil, a_sn::Nil ) )
     }
+    /*
+    // TODO: fix this test!
+    "have a correct SchemaProofLinkRule extractor" in {
+      val p0 = IndexedPredicate(new ConstantStringSymbol("p"), IntZero()::Nil)
+      val link = SchemaProofLinkRule(Sequent( p0::Nil, p0::Nil ), "varphi", Nil )
+      link must beLike {
+        case SchemaProofLinkRule(s, n, i) => {
+          val a = s match { case Sequent(x::Nil, y::Nil) if (x == p0 && y == p0) => true }
+          val b = n == "varphi"
+          val c = i == IntZero()
+          a && b && c
+        }
+      }
+    } */
   /*  // the following test fails because the position occurrences
       // do not distinguish left/right side of the sequent, only
       // the position inside the antecedent/succedent!

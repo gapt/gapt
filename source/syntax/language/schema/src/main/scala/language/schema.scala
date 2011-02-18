@@ -187,6 +187,13 @@ object isZero {
     BigAnd( IntVar(new VariableStringSymbol("i")), BottomC, Succ(IntZero()), param )
 }
 
+// This factory creates a formula that
+// is true iff x > y
+object isBiggerThan {
+  def apply(x: IntegerTerm, y: IntegerTerm) =
+    BigAnd( IntVar(new VariableStringSymbol("i")), BottomC, x, y )
+}
+
 case object BottomC extends HOLConst(BottomSymbol, To()) with SchemaFormula
 case object NegC extends HOLConst(NegSymbol, ->(To(), To())) with Schema
 case object AndC extends HOLConst(AndSymbol, ->(To(), ->(To(), To()))) with Schema

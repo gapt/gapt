@@ -17,10 +17,11 @@ import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 import scala.util.Sorting.quickSort
 import scala.math.Ordering._
+import at.logic.language.lambda.substitutions.Substitution
 
 package base {
 
-  // a trait for all objects that have a sequent (or its descendant) component (like Sequent, SequentOccurrence
+// a trait for all objects that have a sequent (or its descendant) component (like Sequent, SequentOccurrence
   // the root of a proof, etc.) It can be used in algorithms that expect a sequent
   trait SequentLike  {
     def getSequent: Sequent
@@ -90,6 +91,14 @@ package base {
     def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)
     def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
   }
+
+  object substitute {
+    // TODO: write a substitution function that knows that
+    // HOLFormula is closed under substitution
+    def apply(sub: Substitution[HOLExpression], seq: Sequent) =
+      Sequent( seq.antecedent.map(f => sub(f).asInstanceOf[HOLFormula]), seq.succedent.map(f => sub(f).asInstanceOf[HOLFormula]) )
+  }
+
   // List should be changed into set
   class SequentOccurrence(val antecedent: Set[FormulaOccurrence], val succedent: Set[FormulaOccurrence]) extends SequentLike
   {
