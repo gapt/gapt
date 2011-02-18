@@ -29,7 +29,8 @@ import at.logic.utils.ds.Multisets._
 import scala.collection.immutable.{HashSet, Set}
 
 package struct {
-  trait Struct extends Tree[HOLExpression]
+//  trait Struct extends Tree[HOLExpression]
+  trait Struct
 
   // We define some symbols that represent the operations of the struct
 
@@ -69,14 +70,25 @@ package struct {
   case object EmptyTimesC extends HOLConst(EmptyTimesSymbol, "o")
   case object EmptyPlusC extends HOLConst(EmptyPlusSymbol, "o")
 
+  // FIXME: Struct should inherit from Tree, but if it does, integration
+  // tests fail.
+
   // The times operator stores the auxiliary formulas of the 
   // inference which induces it.
-  case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends BinaryTree[HOLExpression](TimesC, left, right) with Struct
-  case class Plus(left: Struct, right: Struct) extends BinaryTree[HOLExpression](PlusC, left, right) with Struct
-  case class Dual(sub: Struct) extends UnaryTree[HOLExpression](DualC, sub) with Struct
-  case class A(formula: FormulaOccurrence) extends LeafTree[HOLExpression](formula.formula) with Struct // Atomic Struct
-  case class EmptyTimesJunction() extends LeafTree[HOLExpression](EmptyTimesC) with Struct
-  case class EmptyPlusJunction() extends LeafTree[HOLExpression](EmptyPlusC) with Struct
+  //case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends BinaryTree[HOLExpression](TimesC, left, right) with Struct
+  //case class Plus(left: Struct, right: Struct) extends BinaryTree[HOLExpression](PlusC, left, right) with Struct
+  //case class Dual(sub: Struct) extends UnaryTree[HOLExpression](DualC, sub) with Struct
+  //case class A(formula: FormulaOccurrence) extends LeafTree[HOLExpression](formula.formula) with Struct // Atomic Struct
+  //case class EmptyTimesJunction() extends LeafTree[HOLExpression](EmptyTimesC) with Struct
+  //case class EmptyPlusJunction() extends LeafTree[HOLExpression](EmptyPlusC) with Struct
+
+  case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends  Struct
+  case class Plus(left: Struct, right: Struct) extends Struct
+  case class Dual(sub: Struct) extends Struct
+  case class A(formula: FormulaOccurrence) extends Struct // Atomic Struct
+  case class EmptyTimesJunction() extends Struct
+  case class EmptyPlusJunction() extends Struct
+
 
   // some stuff for schemata
 
