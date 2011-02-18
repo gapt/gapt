@@ -70,7 +70,7 @@ object SchemaProofLinkRule {
       def indices = indices_
     }
   }
-
+  def apply(seq: Sequent, name: String, ind : IntegerTerm)(implicit factory: FOFactory) : LeafTree[SequentOccurrence] with NullaryLKProof with SchemaProofLink= this.apply(seq, name, ind::Nil)
   def unapply( proof: LKProof ) =
     if (proof.rule == SchemaProofLinkRuleType) {
       val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
