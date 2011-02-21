@@ -44,7 +44,6 @@ class SchemaTest extends SpecificationWithJUnit {
       (imp) must beLike {case f: SchemaFormula => true}
     }
     "correctly deal with bound variables in the BigAnd extractor (2)" in {
-      val i = IntVar(new VariableStringSymbol("i"))
       val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
       val f = BigAnd(i, pi, IntZero(), IntZero())
       val res = f match {
@@ -53,7 +52,6 @@ class SchemaTest extends SpecificationWithJUnit {
       res must beEqual( Abs(i, pi) )
     }
     "correctly deal with bound variables in the BigAnd extractor (1)" in {
-      val i = IntVar(new VariableStringSymbol("i"))
       val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
       val p0 = IndexedPredicate(ConstantStringSymbol("p"), IntZero()::Nil)
       val f = BigAnd(i, pi, IntZero(), IntZero())
@@ -69,6 +67,12 @@ class SchemaTest extends SpecificationWithJUnit {
        (BigAnd.unapply(bigConj).get._2 must beEqual (p1)) &&
        (BigAnd.unapply(bigConj).get._3 must beEqual (one)) &&
        (BigAnd.unapply(bigConj).get._4 must beEqual (two))
+    }
+    "have correct BiggerThan constructor" in {
+      val bt1 = BiggerThan(i, one)
+      val bt2 = BiggerThan(two, one)
+      val bt3 = BiggerThan(one, two)
+      val bt4 = BiggerThan(two, i)
     }
   }
 }
