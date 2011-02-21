@@ -55,7 +55,11 @@ package logicSymbols {
     override def toString = "⊥"
     def toCode = "BottomSymbol"
   }
-
+  case object TopSymbol extends LogicalSymbolsA {
+    override def unique = "TopSymbol"
+    override def toString = "⊤"
+    def toCode = "TopSymbol"
+  }
 
 
   case class ConstantStringSymbol( val string : String ) extends ConstantSymbolA with StringSymbol
