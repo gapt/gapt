@@ -8,7 +8,8 @@
 package at.logic.transformations.ceres
 
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.hol._
+import at.logic.language.lambda.substitutions._
+import at.logic.language.hol.{HOLConst, HOLFormula}
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
@@ -85,7 +86,23 @@ package struct {
   //case class EmptyTimesJunction() extends LeafTree[HOLExpression](EmptyTimesC) with Struct
   //case class EmptyPlusJunction() extends LeafTree[HOLExpression](EmptyPlusC) with Struct
 
-  case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends  Struct
+  // Times is done as an object instead of a case class since
+  // it has a convenience constructor (with empty auxFOccs)
+  object Times
+  {
+    def apply(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) : Times =
+      new Times(left, right, auxFOccs)
+   
+    def apply(left: Struct, right: Struct) : Times =
+      apply(left, right, Nil)
+
+    def unapply(s: Struct) = s match {
+      case t : Times => Some((t.left, t.right, t.auxFOccs))
+      case _ => None
+    }
+  }
+
+  class Times(val left: Struct, val right: Struct, val auxFOccs: List[FormulaOccurrence]) extends Struct
   case class Plus(left: Struct, right: Struct) extends Struct
   case class Dual(sub: Struct) extends Struct
   case class A(formula: FormulaOccurrence) extends Struct // Atomic Struct
@@ -104,18 +121,36 @@ package struct {
 
   import TypeSynonyms._
 
+  // Takes a CutOccurrenceConfiguration and creates a CutConfiguration cc
+  // by, for each o in cc, taking the element f from seq such that
+  // f, where param goes to term, is equal to o.formula.
   object cutOccConfigToCutConfig {
-    def apply( so: SequentOccurrence, cc: CutOccurrenceConfiguration ) =
+    def apply( so: SequentOccurrence, cc: CutOccurrenceConfiguration, seq: Sequent, params: List[IntVar], terms: List[IntegerTerm]) =
       cc.foldLeft( (HashMultiset[SchemaFormula](), HashMultiset[SchemaFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
         if (so.antecedent.contains( fo ))
-          (cca + fo.formula.asInstanceOf[SchemaFormula], ccs)
+          (cca + getFormulaForCC( fo, seq.antecedent.asInstanceOf[List[SchemaFormula]], params, terms ), ccs)
         else if (so.succedent.contains( fo ))
-          (cca, ccs + fo.formula.asInstanceOf[SchemaFormula])
+          (cca, ccs + getFormulaForCC( fo, seq.succedent.asInstanceOf[List[SchemaFormula]], params, terms ))
         else
           throw new Exception
       })
+
+    def getFormulaForCC( fo: FormulaOccurrence, fs: List[SchemaFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
+    {
+      println("in getFormulaForCC")
+      println("fo.formula = " + fo.formula)
+      val sub = Substitution[SchemaExpression](params.zip(terms))
+      println("sub = " + sub)
+      fs.filter( f => {
+        println( "sub(f) = " + sub(f) )
+        sub(f) == fo.formula
+      }) match {
+        case Nil => throw new Exception("Could not find a formula to construct the cut-configuration!")
+        case x::_ => x
+      }
+    }
   }
 
   // In the construction of schematized clause sets, we use symbols
@@ -134,7 +169,7 @@ package struct {
       "CL^{(" + cutConfToString(cut_occs) + ")," + name +"}"
 
     private def cutConfToString( cc : CutConfiguration ) = {
-      def str( m : Multiset[SchemaFormula] ) = m.foldLeft( "" )( (s, f) => s + f )
+      def str( m : Multiset[SchemaFormula] ) = m.foldLeft( "" )( (s, f) => s + f.toStringSimple )
       str( cc._1 ) + "|" + str( cc._2 )
     }
   }
@@ -144,21 +179,124 @@ package struct {
     // this is for proof schemata: it extracts the characteristic
     // clause set for the proof called "name"
     // fresh_param should be fresh
-    def extract(name: String, fresh_param: IntVar) : Struct = {
-      println("extracting clause set for proof" + name)
 
-      // TODO: refactor --- this method should be somewhere else
-      // some combinatorics: return the set of all sets
-      // that can be obtained by drawing at most n elements
-      // from a given set
+    def extractFormula(name: String, fresh_param: IntVar) : SchemaFormula =
+    {
+      val cs_0_f = SchemaProofDB.foldLeft[SchemaFormula](TopC)((f, ps) => 
+        And(cutConfigurations( ps._2.base ).foldLeft[SchemaFormula](TopC)((f2, cc) =>
+          And(Imp(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero()::Nil ) ), 
+                                   IntZero()::Nil ),
+                  toFormula(extractBaseWithCutConfig(ps._2, cc))), f2)),
+            f) )
 
-      def combinations[A]( n: Int, m: Set[A] ) : Set[Set[A]] = n match {
-        case 0 => HashSet() + HashSet()
-        case _ => m.foldLeft( HashSet[Set[A]]() )( (res, elem) => {
-          val s = combinations( n - 1, m - elem )
-          res ++ s ++ s.map( m => m + elem )
-        } )
-      }
+      // assumption: all proofs in the SchemaProofDB have the
+      // same running variable "k".
+      val k = IntVar(new VariableStringSymbol("k") )
+      val cs_1_f = SchemaProofDB.foldLeft[SchemaFormula](TopC)((f, ps) => 
+        And(cutConfigurations( ps._2.rec ).foldLeft[SchemaFormula](TopC)((f2, cc) => 
+          And(Imp(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ(k)::Nil ) ), 
+                                   Succ(k)::Nil ),
+                  toFormula(extractStepWithCutConfig(ps._2, cc))), f2)
+              ),
+            f) )
+
+      val cl_n = IndexedPredicate( new ClauseSetSymbol(name, (HashMultiset[SchemaFormula], HashMultiset[SchemaFormula]) ), 
+                                   fresh_param::Nil )
+      And(cl_n, And( cs_0_f , BigAnd( k, cs_1_f, IntZero(), fresh_param )))
+    }
+
+    def toFormula(s: Struct) : SchemaFormula =
+      transformStructToClauseSet( s ).foldLeft[SchemaFormula](TopC)((f, c) => 
+        And(f, toFormula(c.getSequent)))
+
+    // FIXME: this method should not exist.
+    // it's a workaround necessary since so far, the logical
+    // constants are not created by the factories, and hence
+    // do not work across language-levels, but the constants
+    // are neede to transform a sequent to a formula in general.
+    def toFormula( s: Sequent ) : SchemaFormula =
+      Or( s.antecedent.map( f => Neg( f.asInstanceOf[SchemaFormula] ) ) ::: s.succedent.asInstanceOf[List[SchemaFormula]] )
+
+    def extractStruct(name: String, fresh_param: IntVar) : Struct =
+    {
+      val cs_0 = SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) => 
+        Plus(cutConfigurations( ps._2.base ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
+          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero()::Nil ) ), IntZero()::Nil ), ps._2.base.root ) ) ), extractBaseWithCutConfig(ps._2, cc)), s2)),
+            s) )
+
+      // assumption: all proofs in the SchemaProofDB have the
+      // same running variable "k".
+      val k = IntVar(new VariableStringSymbol("k") )
+      val schema = SchemaProofDB.get( name )
+      val precond = Times(A(toOccurrence(BiggerThan(IntZero(),k), schema.rec.root)),
+                          A(toOccurrence(BiggerThan(k, fresh_param), schema.rec.root)))
+      val cs_1 = Times(precond, SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) => 
+        Plus(cutConfigurations( ps._2.rec ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) => 
+          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ(k)::Nil ) ), Succ(k)::Nil ), ps._2.rec.root ) ) ), extractStepWithCutConfig(ps._2, cc), Nil), s2)
+              ),
+            s) ))
+
+      val cl_n = IndexedPredicate( new ClauseSetSymbol(name, (HashMultiset[SchemaFormula], HashMultiset[SchemaFormula]) ), 
+                                   fresh_param::Nil )
+      Plus(A(toOccurrence(cl_n, schema.rec.root)), Plus( cs_0 ,cs_1) )
+    }
+
+    // TODO: refactor --- this method should be somewhere else
+    // some combinatorics: return the set of all sets
+    // that can be obtained by drawing at most n elements
+    // from a given set
+
+    def combinations[A]( n: Int, m: Set[A] ) : Set[Set[A]] = n match {
+      case 0 => HashSet() + HashSet()
+      case _ => m.foldLeft( HashSet[Set[A]]() )( (res, elem) => {
+        val s = combinations( n - 1, m - elem )
+        res ++ s ++ s.map( m => m + elem )
+      } )
+    }
+
+    def cutConfigurations( p: LKProof ) = {
+      val occs = p.root.antecedent ++ p.root.succedent
+      combinations( occs.size, occs )
+    }
+
+    def extractStepWithCutConfig( schema: SchemaProof, cc: CutOccurrenceConfiguration ) =
+    {
+      extract( schema.rec, getAncestors( cc ) ++ getCutAncestors( schema.rec ) )
+    }
+/*
+    def extractSteps(fresh_param: IntVar) = {
+      println("extracting step clause sets")
+
+      // compute for the step case (i.e. CS_1)
+      SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() ) ( (struct, ps) => {
+        val n = ps._1
+        val schema = ps._2
+        println("computing cut configurations")
+        val ccs = cutConfigurations( schema.rec )
+        println("computing cut ancestors")
+        val cut_ancs = getCutAncestors( schema.rec )
+        println("first compute for proof " + n)
+        // TODO: due to schema.vars.head in the next line, we only support
+        // proofs with a single integer parameter. To support more,
+        // the definition of ClauseSetSymbol needs to be extended.
+        val k = schema.vars.head
+
+        Times( precond, Plus( struct, ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
+        {
+          println("cut configuration: " + cc)
+          val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.rec.root, cc ) ), Succ(k)::Nil )
+          Plus(struct2, Times(Dual(A(toOccurrence(pred, schema.rec.root))), extractStepWithCutConfig(schema, cc), Nil ))
+        }), Nil))
+      })
+    }
+*/
+    def extractBaseWithCutConfig( schema: SchemaProof, cc: CutOccurrenceConfiguration ) =
+    {
+      extract( schema.base, getAncestors( cc ) ++ getCutAncestors( schema.base ) )
+    }
+/*
+    def extractBases : Struct = {
+      println("extracting base clause sets")
 
       // create the set of all possible cut-configurations
       // for p
@@ -172,14 +310,9 @@ package struct {
           res ++ cs.foldLeft( new HashSet[CutConfiguration] )( (res2, cc2) => res2 + (cc, cc2) ) )
       } */
 
-      def cutConfigurations( p: LKProof ) = {
-        val occs = p.root.antecedent ++ p.root.succedent
-        combinations( occs.size, occs )
-      }
 
-      // first, compute for base case (i.e. CS_0)
-      println("compute for base cases")
-      val cs_0 = SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() )( (struct, ps) => {
+      // compute for base case (i.e. CS_0)
+      SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() )( (struct, ps) => {
         val n = ps._1
         val schema = ps._2
         val ccs = cutConfigurations( schema.base )
@@ -189,45 +322,15 @@ package struct {
         {
           println("cut configuration: " + cc)
           val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.base.root, cc ) ), IntZero()::Nil )
-          val res = Times(Dual(A(toOccurrence(pred, schema.base.root))), extract( schema.base, getAncestors( cc ) ++ cut_ancs ), Nil )
+          val res = Times(Dual(A(toOccurrence(pred, schema.base.root))), extractBaseWithCutConfig( schema, cc ), Nil )
           println("obtained struct from cc: " + transformStructToClauseSet(res))
           Plus(struct2, res)
         }))
         println("obtained struct from base case:" + transformStructToClauseSet(res ))
         res
       })
-
-      println("compute for step cases")
-      // second, compute for the step case (i.e. CS_1)
-      val cs_1 = SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() ) ( (struct, ps) => {
-        val n = ps._1
-        val schema = ps._2
-        println("computing cut configurations")
-        val ccs = cutConfigurations( schema.rec )
-        println("computing cut ancestors")
-        val cut_ancs = getCutAncestors( schema.rec )
-        println("first compute for proof " + n)
-        // TODO: due to schema.vars.head in the next line, we only support
-        // proofs with a single integer parameter. To support more,
-        // the definition of ClauseSetSymbol needs to be extended.
-        val param = Succ(schema.vars.head)
-        val precond = Times(A(toOccurrence(isZero(param), schema.rec.root)), A(toOccurrence(isBiggerThan(param, fresh_param), schema.rec.root)), Nil)
-
-        Plus( struct, Times(precond,
-                            ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
-        {
-          println("cut configuration: " + cc)
-          val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.rec.root, cc ) ), param::Nil )
-          Plus(struct2, Times(Dual(A(toOccurrence(pred, schema.rec.root))), extract( schema.rec, getAncestors( cc ) ++ cut_ancs ), Nil ))
-        }), Nil))
-      })
-
-      val schema = SchemaProofDB.get(name)
-      val pred = IndexedPredicate( new ClauseSetSymbol( name, (HashMultiset[SchemaFormula], HashMultiset[SchemaFormula]) ), 
-                                   fresh_param::Nil )
-      Plus( A(toOccurrence(pred, schema.base.root)), Plus( cs_0, cs_1 ) )
     }
-
+*/
     def toOccurrence( f: HOLFormula, so: SequentOccurrence ) =
     {
       val others = so.antecedent ++ so.succedent
@@ -252,8 +355,10 @@ package struct {
     }
 
     def handleSchemaProofLink( so: SequentOccurrence, name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
+      val schema = SchemaProofDB.get( name )
       val sym = new ClauseSetSymbol( name,
-        cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)) ) )
+        cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)),
+                                 schema.seq, schema.vars, indices) )
       val atom = IndexedPredicate( sym, indices )
       A( toOccurrence( atom, so ) )
     }

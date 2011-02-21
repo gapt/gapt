@@ -122,6 +122,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
     }
 
     "extract a schema clause set from a simple proof" in {
+      val k = IntVar(new VariableStringSymbol("k"))
       val p0 = IndexedPredicate(new ConstantStringSymbol("p"), IntZero()::Nil)
       val pi = IndexedPredicate(new ConstantStringSymbol("p"), i::Nil)
 
@@ -130,21 +131,23 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       val base = AndEquivalenceRule3(ax, p0, BigAnd(i, pi, IntZero(), IntZero() ) )
 
       // step
-      val f0 = BigAnd( i, pi, IntZero(), n )
-      val psn = IndexedPredicate(new ConstantStringSymbol("p"), Succ(n)::Nil)
-      val f1 = And( f0, psn )
-      val link = SchemaProofLinkRule(Sequent( f0::Nil, p0::Nil ), "\\varphi", n::Nil )
-      val p1 = AndLeft1Rule(link, f0, psn)
-      val f2 = BigAnd( i, pi, IntZero(), Succ(n) )
+      val f0 = BigAnd( i, pi, IntZero(), k )
+      val psk = IndexedPredicate(new ConstantStringSymbol("p"), Succ(k)::Nil)
+      val f1 = And( f0, psk )
+      val link = SchemaProofLinkRule(Sequent( f0::Nil, p0::Nil ), "\\varphi", k::Nil )
+      val p1 = AndLeft1Rule(link, f0, psk)
+      val f2 = BigAnd( i, pi, IntZero(), Succ(k) )
       val step = AndEquivalenceRule1( p1, f1, f2 )
 
-      SchemaProofDB.put( new SchemaProof( "\\varphi", n::Nil,
+      SchemaProofDB.put( new SchemaProof( "\\varphi", k::Nil,
         new Sequent(f0::Nil, p0::Nil),
         base, step ) )
-      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( "\\varphi", IntVar(new VariableStringSymbol("x") ) ) )
-      println( cs )
+      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", n ) )
       (new FileWriter("target" + separator + "test-classes" + separator + "cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
         .exportSequentList(cs.map(so => so.getSequent), Nil).close
+
+      val f = StructCreators.extractFormula("\\varphi", n)
+      (new FileWriter("target" + separator + "test-classes" + separator + "formula.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(Sequent(Nil, f::Nil)::Nil, Nil).close
     }
   }
 }
