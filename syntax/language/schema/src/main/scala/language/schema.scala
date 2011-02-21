@@ -7,7 +7,6 @@ package at.logic.language.schema
 
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
@@ -120,8 +119,17 @@ object IndexedPredicate {
 
 trait SchemaFormula extends SchemaExpression with HOLFormula
 
+object BiggerThan {
+  def apply(l: IntegerTerm, r: IntegerTerm) = Atom(BiggerThanC, l::r::Nil)
+
+  def unapply(e: LambdaExpression) = e match {
+    case AppN(BiggerThanC, l::r::Nil) => Some((l.asInstanceOf[SchemaFormula], r.asInstanceOf[SchemaFormula]))
+    case _ => None
+  }
+}
+
 object Neg {
-  def apply(sub: SchemaFormula) = HOLApp(NegC,sub).asInstanceOf[SchemaFormula]
+  def apply(sub: SchemaFormula) = App(NegC,sub).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(NegC,sub) => Some( (sub.asInstanceOf[SchemaFormula]) )
     case _ => None
@@ -138,6 +146,12 @@ object And {
 
 object Or {
   def apply(left: SchemaFormula, right: SchemaFormula) = (SchemaFactory.createApp(SchemaFactory.createApp(OrC,left),right)).asInstanceOf[SchemaFormula]
+
+  def apply(fs: List[SchemaFormula]) : SchemaFormula = fs match {
+    case Nil => BottomC
+    case f::fs => fs.foldLeft(f)( (d, f) => Or(d, f) )
+  }
+
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(OrC,left),right) => Some( (left.asInstanceOf[SchemaFormula],right.asInstanceOf[SchemaFormula]) )
     case _ => None
@@ -195,16 +209,30 @@ object isBiggerThan {
 }
 
 case object BottomC extends HOLConst(BottomSymbol, To()) with SchemaFormula
+case object TopC extends HOLConst(BottomSymbol, To()) with SchemaFormula
 case object NegC extends HOLConst(NegSymbol, ->(To(), To())) with Schema
 case object AndC extends HOLConst(AndSymbol, ->(To(), ->(To(), To()))) with Schema
 case object OrC extends HOLConst(OrSymbol, ->(To(), ->(To(), To()))) with Schema
 case object ImpC extends HOLConst(ImpSymbol, ->(To(), ->(To(), To()))) with Schema
+
+// Schema-specific objects
 // FIXME: parser cannot parse the type written in the next line
 //case object BigAndC extends HOLConst(BigAndSymbol, "( ( e -> o ) -> ( e -> ( e -> o ) ) )") with Schema
 case object BigAndC extends HOLConst(BigAndSymbol, ->(->(Tindex(), To()), ->(Tindex(), ->(Tindex(), To())))) with Schema
 //case object BigOrC extends HOLConst(BigOrSymbol, "( ( e -> o ) -> ( e -> ( e -> o ) ) )") with Schema
 case object BigOrC extends HOLConst(BigOrSymbol, ->(->(Tindex(), To()), ->(Tindex(), ->(Tindex(), To())))) with Schema
 
+// Helpers to represent preconditions in construction of characteristic clause
+// set
+// TODO: determine what these mean in the official language of "A Resolution
+// Calculus for Propositional Schemata"
+case object BiggerThanSymbol extends LogicalSymbolsA {
+  override def unique = "BiggerThanSymbol"
+  override def toString = ">"
+  def toCode = "BiggerThanSymbol"
+}
+
+case object BiggerThanC extends HOLConst(BiggerThanSymbol, ->(Tindex(), ->(Tindex(), To()))) with Schema
 
 object SchemaFactory extends LambdaFactoryA {
   def createVar( name: SymbolA): Var = createVar(name, Tindex(), None)
