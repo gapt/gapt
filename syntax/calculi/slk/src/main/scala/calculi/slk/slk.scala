@@ -193,6 +193,40 @@ object AndEquivalenceRule3 {
     else None
 }
 
+//the next 2 rules specify in which side of the |- should be applied the AndEquvalence3 rule
+object AndRightEquivalenceRule3 {
+   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => AndEquivalenceRule3.apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the AndRightEquivalenceRule3 with the given formula")
+    }
+  }
+  def unapply(proof: LKProof) = if (proof.rule == AndEquivalenceRule3Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      if (r.root.succedent.contains(p1))
+        Some((r.uProof, r.root, a1, p1))
+    }
+    None
+}
+
+object AndLeftEquivalenceRule3 {
+   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
+      case (x::_) => AndEquivalenceRule3.apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found in the left side for application of the AndLeftEquivalenceRule3 with the given formula")
+    }
+  }
+  def unapply(proof: LKProof) = if (proof.rule == AndEquivalenceRule3Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      if (r.root.antecedent.contains(p1))
+        Some((r.uProof, r.root, a1, p1))
+    }
+    None
+}
 
 object OrEquivalenceRule1 {
   def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
