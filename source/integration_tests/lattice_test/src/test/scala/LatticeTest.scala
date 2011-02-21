@@ -26,7 +26,6 @@ import at.logic.algorithms.lk._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
-import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
 import at.logic.transformations.skolemization.skolemize
@@ -34,8 +33,12 @@ import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 
 import at.logic.provers.prover9._
+import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
 
 class LatticeTest extends SpecificationWithJUnit {
+  val box = List()
+  def checkForProverOrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
+
 
   def sequentToString( s: Sequent ) = {
     var ret = ""
@@ -72,6 +75,8 @@ class LatticeTest extends SpecificationWithJUnit {
     }
 
     "parse and skolemize the lattice proof" in {
+      checkForProverOrSkip
+
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
       val proof = proofdb.proofs.head._2

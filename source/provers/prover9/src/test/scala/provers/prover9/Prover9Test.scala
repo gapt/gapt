@@ -21,6 +21,8 @@ class Prover9Test extends SpecificationWithJUnit {
   def parse(str:String) : FOLFormula = (new StringReader(str) with SimpleFOLParser getTerm).asInstanceOf[FOLFormula]
 
   val box = List()
+  def checkForProver9OrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
+
 
   "The Prover9 interface" should {
     "refute { :- P; P :- }" in {

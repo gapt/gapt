@@ -25,7 +25,6 @@ import at.logic.algorithms.lk._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
-import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 
 import at.logic.transformations.skolemization.skolemize
@@ -35,9 +34,14 @@ import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.fol._
 import at.logic.transformations.ceres.clauseSets.profile.proofProfile
 import at.logic.provers.prover9._
+import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
 
 
 class TapeTest extends SpecificationWithJUnit {
+  val box = List()
+  def checkForProverOrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
+
+
   "The system" should {
     "parse correctly the tape proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
@@ -55,6 +59,8 @@ class TapeTest extends SpecificationWithJUnit {
       */
     }
     "parse, skolemize and extract the profile of the tape proof" in {
+      checkForProverOrSkip
+
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
       val proof = proofdb.proofs.head._2
