@@ -111,7 +111,8 @@ package hol {
     }
   }
 
-  case object BottomC extends HOLConst(BottomSymbol, "o")
+  case object BottomC extends HOLConst(BottomSymbol, "o") with HOLFormula
+  case object TopC extends HOLConst(TopSymbol, "o") with HOLFormula
   case object NegC extends HOLConst(NegSymbol, "(o -> o)")
   case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))")
   case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))")
@@ -169,7 +170,10 @@ package hol {
   }
 
   object Or {
-    def apply(fs: List[HOLFormula]) : HOLFormula = fs.tail.foldLeft(fs.head)( (d, f) => Or(d, f) )
+    def apply(fs: List[HOLFormula]) : HOLFormula = fs match {
+      case Nil => BottomC
+      case f::fs => fs.foldLeft(f)( (d, f) => Or(d, f) )
+    }
     def apply(left: HOLFormula, right: HOLFormula) : HOLFormula = App(App(OrC,left),right).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
       case App(App(OrC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
