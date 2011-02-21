@@ -116,4 +116,5 @@ object Prover9 {
     out_file.delete
     ret
   }
+
 }
