@@ -139,12 +139,12 @@ package struct {
 
     def getFormulaForCC( fo: FormulaOccurrence, fs: List[SchemaFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
-      println("in getFormulaForCC")
-      println("fo.formula = " + fo.formula)
+      //println("in getFormulaForCC")
+      //println("fo.formula = " + fo.formula)
       val sub = Substitution[SchemaExpression](params.zip(terms))
-      println("sub = " + sub)
+      //println("sub = " + sub)
       fs.filter( f => {
-        println( "sub(f) = " + sub(f) )
+        //println( "sub(f) = " + sub(f) )
         sub(f) == fo.formula
       }) match {
         case Nil => throw new Exception("Could not find a formula to construct the cut-configuration!")
@@ -317,16 +317,16 @@ package struct {
         val schema = ps._2
         val ccs = cutConfigurations( schema.base )
         val cut_ancs = getCutAncestors( schema.base )
-        println("first compute for proof " + n)
+        //println("first compute for proof " + n)
         val res = Plus(struct, ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
         {
-          println("cut configuration: " + cc)
+          //println("cut configuration: " + cc)
           val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.base.root, cc ) ), IntZero()::Nil )
           val res = Times(Dual(A(toOccurrence(pred, schema.base.root))), extractBaseWithCutConfig( schema, cc ), Nil )
-          println("obtained struct from cc: " + transformStructToClauseSet(res))
+          //println("obtained struct from cc: " + transformStructToClauseSet(res))
           Plus(struct2, res)
         }))
-        println("obtained struct from base case:" + transformStructToClauseSet(res ))
+        //println("obtained struct from base case:" + transformStructToClauseSet(res ))
         res
       })
     }
