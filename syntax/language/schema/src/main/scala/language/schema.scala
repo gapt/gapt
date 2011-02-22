@@ -111,6 +111,11 @@ object IndexedPredicate {
     AppN(pred, indexTerms).asInstanceOf[SchemaFormula]
   }
   def apply(sym: ConstantSymbolA, indexTerm: IntegerTerm): SchemaFormula = apply(sym, indexTerm::Nil)
+
+  def unapply(e: LambdaExpression) = e match {
+    case AppN(f : HOLConst with Schema, ts) if ts.forall( t => t.exptype == Tindex() ) && e.exptype == To() => Some((f, ts))
+    case _ => None
+  }
 }
 
 
