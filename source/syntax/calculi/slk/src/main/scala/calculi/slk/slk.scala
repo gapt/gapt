@@ -26,12 +26,15 @@ case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 // rec should have end-sequent seq where vars <- vars + 1
 class SchemaProof(val name: String, val vars: List[IntVar], val seq: Sequent, val base: LKProof, val rec: LKProof)
 {
-  require( {
+  {
     // FIXME: why are these casts needed?
-    val b_sub = Substitution(vars.map( v => (v,IntZero().asInstanceOf[HOLExpression])))
     val r_sub = Substitution(vars.map( v => (v,Succ(v).asInstanceOf[HOLExpression])))
-    base.root.getSequent == substitute(b_sub, seq) && rec.root.getSequent == substitute(r_sub, seq)
-  })
+    val b_sub = Substitution(vars.map( v => (v,IntZero().asInstanceOf[HOLExpression])))
+    val r_res = substitute(r_sub, seq)
+    val b_res = substitute(b_sub, seq)
+    require( rec.root.getSequent == r_res, rec.root.getSequent + " != " + r_res )
+    require( base.root.getSequent == b_res, base.root.getSequent + " != " + b_res )
+  }
 }
 
 object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnce[(String, SchemaProof)] {

@@ -37,6 +37,7 @@ import at.logic.language.schema._
 import at.logic.transformations.ceres.struct._
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
+import at.logic.utils.ds.Multisets._
 
 import org.specs.runner._
 import org.specs.matcher.Matcher
@@ -95,29 +96,32 @@ class SchemaTest extends SpecificationWithJUnit {
 //  val A = SchemaFactory.createVar( sym, ->(Tindex(), To()))
 
 
-  // phi_k
+
+  // phi_{k+1}
+
+  val seq_phi = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, Ask::Nil)
 
   val negAiOrAsi = Or(Neg(Ai), Asi)
 
-  val psi_k = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil), "\\psi", k::Nil)
+  val psi_k1 = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, BigAnd(i, Ai, IntZero(), Succ(Succ(k)))::Nil), "\\psi", Succ(k)::Nil)
 //  val psi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, BigAnd(i, Ai, IntZero(), Succ(Succ(k)))::Nil), "psi", Succ(k)::Nil)
 
-  val ax3 = Axiom(Sequent(Ask::Nil, Ask::Nil))
+  val ax3 = Axiom(Sequent(Assk::Nil, Assk::Nil))
 
-  val weaklrule = WeakeningLeftRule(ax3, BigAnd(i, Ai, IntZero(), k))
+//  val weaklrule = WeakeningLeftRule(ax3, BigAnd(i, Ai, IntZero(), k))
 
-  val andlrule = AndLeftRule(weaklrule, BigAnd(i, Ai, IntZero(), k), Ask)
+  val andlrule = AndLeft2Rule(ax3, BigAnd(i, Ai, IntZero(), Succ(k)), Assk)
 
-  val eq1rule = AndEquivalenceRule1(andlrule, And(BigAnd(i, Ai, IntZero(), k), Ask), BigAnd(i, Ai, IntZero(), Succ(k)))
+  val eq1rule = AndEquivalenceRule1(andlrule, And(BigAnd(i, Ai, IntZero(), Succ(k)), Assk), BigAnd(i, Ai, IntZero(), Succ(Succ(k))))
 
-  val cutrule = CutRule(psi_k, eq1rule, BigAnd(i, Ai, IntZero(), Succ(k)))
+  val phi_step = CutRule(psi_k1, eq1rule, BigAnd(i, Ai, IntZero(), Succ(Succ(k))))
 
 //  println("\n\n phi_k = "+cutrule.root.getSequent.toStringSimple)
 
-  val phi_k : LKProof = SchemaProofLinkRule(cutrule.root.getSequent, "\\varphi", k)
-  val phi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, Assk::Nil), "\\varphi", Succ(k))
+//  val phi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, Assk::Nil), "\\varphi", Succ(k))
 
 
+  val seq_psi = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil)
 
   // psi_0
 
@@ -144,9 +148,13 @@ class SchemaTest extends SpecificationWithJUnit {
 
   val orlrule = OrLeftRule(neglrule1, ax4, Neg(Ask), Assk)
 
+  val psi_k = SchemaProofLinkRule(seq_psi, "\\psi", k::Nil)
+
   val andrrule1 = AndRightRule(psi_k, orlrule, BigAnd(i, Ai, IntZero(), Succ(k)), Assk)
 
   val equiv1rule = AndEquivalenceRule1(andrrule1, And(BigAnd(i, Ai, IntZero(), Succ(k)), Assk), BigAnd(i, Ai, IntZero(), Succ(Succ(k))))
+
+  val phi_k = SchemaProofLinkRule(seq_phi, "\\varphi", k)
 
   val cutrule2 = CutRule(phi_k, equiv1rule, Ask)
 
@@ -161,17 +169,31 @@ class SchemaTest extends SpecificationWithJUnit {
 
   //------------------------------------------------------------------------------------------------
 
-  val seq = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, Ask::Nil)
 
-  SchemaProofDB.put( new SchemaProof( "\\varphi", k::Nil, seq, phi_0, phi_step ))
-
-  val seq2 = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil)
-
-  SchemaProofDB.put( new SchemaProof( "\\psi", k::Nil, seq2, psi_0, psi_kplus1) )
+  SchemaProofDB.put( new SchemaProof( "\\varphi", k::Nil, seq_phi, phi_0, phi_step ))
 
 
-  val cs = StandardClauseSet.transformStructToClauseSet(StructCreators.extractStruct( "\\varphi", k))
-  (new FileWriter("target" + separator + "test-classes" + separator + "cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
+  SchemaProofDB.put( new SchemaProof( "\\psi", k::Nil, seq_psi, psi_0, psi_kplus1) )
 
 
+  val n = IntVar(new VariableStringSymbol("n"))
+  val cs = StandardClauseSet.transformStructToClauseSet(StructCreators.extractStruct( "\\varphi", n))
+
+  (new FileWriter("target" + separator + "test-classes" + separator + "cs-varphi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close 
+
+  // prune the clause set as in "Computing the characteristic clause set (Nov. 29, 2010)
+  val m_empty = HashMultiset[SchemaFormula]()
+  val cc0 = (m_empty, m_empty)
+  val cc1varphi = (m_empty, m_empty + Ask)
+  val cc1psi = (m_empty, m_empty + BigAnd(i, Ai, IntZero(), Succ(k)))
+  
+  val cs_pruned = cs.filter( s => !(s.antecedent ++ s.succedent).exists( fo => fo.formula match {
+    case IndexedPredicate(pred, _) => pred.name match {
+      case sym : ClauseSetSymbol => sym.cut_occs != cc1varphi && sym.cut_occs != cc1psi && sym.cut_occs != cc0
+      case _ => false
+    }
+    case _ => false
+  } ) )
+
+  (new FileWriter("target" + separator + "test-classes" + separator + "cs-varphi-pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs_pruned.map(so => so.getSequent), Nil).close
 }
