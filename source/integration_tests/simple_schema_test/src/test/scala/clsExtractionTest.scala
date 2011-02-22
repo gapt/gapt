@@ -99,7 +99,7 @@ class SchemaTest extends SpecificationWithJUnit {
 
   val negAiOrAsi = Or(Neg(Ai), Asi)
 
-  val psi_k = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil), "varpsi", k::Nil)
+  val psi_k = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil), "\\psi", k::Nil)
 //  val psi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, BigAnd(i, Ai, IntZero(), Succ(Succ(k)))::Nil), "psi", Succ(k)::Nil)
 
   val ax3 = Axiom(Sequent(Ask::Nil, Ask::Nil))
@@ -114,8 +114,8 @@ class SchemaTest extends SpecificationWithJUnit {
 
 //  println("\n\n phi_k = "+cutrule.root.getSequent.toStringSimple)
 
-  val phi_k : LKProof = SchemaProofLinkRule(cutrule.root.getSequent, "varphi", k)
-  val phi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, Assk::Nil), "varphi", Succ(k))
+  val phi_k : LKProof = SchemaProofLinkRule(cutrule.root.getSequent, "\\varphi", k)
+  val phi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, Assk::Nil), "\\varphi", Succ(k))
 
 
 
@@ -163,14 +163,14 @@ class SchemaTest extends SpecificationWithJUnit {
 
   val seq = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, Ask::Nil)
 
-  SchemaProofDB.put( new SchemaProof( "varphi", k::Nil, seq, phi_0, phi_step ))
+  SchemaProofDB.put( new SchemaProof( "\\varphi", k::Nil, seq, phi_0, phi_step ))
 
   val seq2 = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil)
 
-  SchemaProofDB.put( new SchemaProof( "varpsi", k::Nil, seq2, psi_0, psi_kplus1) )
+  SchemaProofDB.put( new SchemaProof( "\\psi", k::Nil, seq2, psi_0, psi_kplus1) )
 
 
-  val cs = StandardClauseSet.transformStructToClauseSet(StructCreators.extractStruct( "varphi", k))
+  val cs = StandardClauseSet.transformStructToClauseSet(StructCreators.extractStruct( "\\varphi", k))
   (new FileWriter("target" + separator + "test-classes" + separator + "cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
 
 
