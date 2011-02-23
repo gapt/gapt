@@ -104,6 +104,9 @@
         <executions>
 	  <execution>
 	    <configuration>
+              <jvmArgs>
+                <jvmArg>-Xss2m</jvmArg>
+              </jvmArgs>
 	      <args>
             <arg>-unchecked</arg>
    	        <arg>-deprecation</arg>
