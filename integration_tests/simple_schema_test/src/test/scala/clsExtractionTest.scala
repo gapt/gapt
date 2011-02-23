@@ -169,7 +169,7 @@ class SchemaTest extends SpecificationWithJUnit {
 
   //------------------------------------------------------------------------------------------------
 
-
+  SchemaProofDB.clear
   SchemaProofDB.put( new SchemaProof( "\\varphi", k::Nil, seq_phi, phi_0, phi_step ))
 
 
@@ -196,4 +196,5 @@ class SchemaTest extends SpecificationWithJUnit {
   } ) )
 
   (new FileWriter("target" + separator + "test-classes" + separator + "cs-varphi-pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs_pruned.map(so => so.getSequent), Nil).close
+
 }

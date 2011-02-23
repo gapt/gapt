@@ -40,6 +40,8 @@ class SchemaProof(val name: String, val vars: List[IntVar], val seq: Sequent, va
 object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnce[(String, SchemaProof)] {
   val proofs = new scala.collection.mutable.HashMap[String, SchemaProof]
 
+  def clear = proofs.clear
+
   def get(name: String) = proofs(name)
 
   // Compute a map between sets of FOs from
@@ -488,11 +490,11 @@ object OrEquivalenceRule1 {
     def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[SequentOccurrence] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => apply(s1, x, main)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule3 with the given formula")
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the OrEquivalenceRule3 with the given formula")
       }
     }
 
-    def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule3Type) {
+    def unapply(proof: LKProof) =  if (proof.rule == OrEquivalenceRule3Type) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
         val ((a1::Nil)::Nil) = r.aux
         val (p1::Nil) = r.prin
