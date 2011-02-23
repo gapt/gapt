@@ -544,6 +544,9 @@ object OrEquivalenceRule1 {
       case AndEquivalenceRule1(up, r, a, p) => Some((AndEquivalenceRule1Type, up, r, a::Nil, p))
       case AndEquivalenceRule2(up, r, a, p) => Some((AndEquivalenceRule2Type, up, r, a::Nil, p))
       case AndEquivalenceRule3(up, r, a, p) => Some((AndEquivalenceRule3Type, up, r, a::Nil, p))
+      case OrEquivalenceRule1(up, r, a, p) => Some((OrEquivalenceRule1Type, up, r, a::Nil, p))
+      case OrEquivalenceRule2(up, r, a, p) => Some((OrEquivalenceRule2Type, up, r, a::Nil, p))
+      case OrEquivalenceRule3(up, r, a, p) => Some((OrEquivalenceRule3Type, up, r, a::Nil, p))
       case _ => None
     }
   }
