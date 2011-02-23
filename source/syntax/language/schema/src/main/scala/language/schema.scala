@@ -178,9 +178,15 @@ object BigAnd {
   def apply(iter: SchemaAbs, init: IntegerTerm , end: IntegerTerm) : SchemaFormula =
     AppN(BigAndC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
   
+//  def unapply(exp : LambdaExpression) = exp match {
+//    case AppN(BigAndC, SchemaAbs(v, formula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
+//      Some(v, formula, init, end)
+//    case _ => None
+//  }
+
   def unapply(exp : LambdaExpression) = exp match {
-    case AppN(BigAndC, SchemaAbs(v, formula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
-      Some(v, formula, init, end)
+    case AppN(BigAndC, i::(formula:SchemaFormula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
+      Some(i, formula, init, end)
     case _ => None
   }
 }
@@ -192,9 +198,15 @@ object BigOr {
   def apply(iter: SchemaAbs, init: IntegerTerm, end: IntegerTerm) : SchemaFormula =
     AppN(BigOrC, iter::init::end::Nil).asInstanceOf[SchemaFormula]
 
+//  def unapply(exp : LambdaExpression) = exp match {
+//    case AppN(BigOrC, SchemaAbs(v, formula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
+//      Some(v, formula, init, end)
+//    case _ => None
+//  }
+
   def unapply(exp : LambdaExpression) = exp match {
-    case AppN(BigOrC, SchemaAbs(v, formula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
-      Some(v, formula, init, end)
+    case AppN(BigOrC, i::(formula:SchemaFormula)::(init : IntegerTerm)::(end : IntegerTerm)::Nil) =>
+      Some(i, formula, init, end)
     case _ => None
   }
 }
