@@ -14,7 +14,7 @@ import at.logic.parsing.OutputExporter
 import at.logic.language.lambda.typedLambdaCalculus._
 
 // for schemas
-import at.logic.language.schema.{BiggerThanSymbol, TopC, BottomC, BigAnd, SchemaFormula}
+import at.logic.language.schema.{BiggerThanSymbol, TopC, BottomC, BigAnd, BigOr, SchemaFormula}
 
 // FIXME: bad import, we don't want to import
 // something from transformations here.
@@ -38,6 +38,12 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
       getOutput.write("("); getOutput.write("""\bigwedge_{"""); exportTerm(v); 
                                 getOutput.write(" = "); exportTerm(s) ; getOutput.write("}^{"); exportTerm(e);
                                 getOutput.write("}"); exportTerm(f); getOutput.write(")")}
+    // FIXME: SCALA BUG!
+    case _ => t match {
+    case BigOr(v, f, s, e) => {
+      getOutput.write("("); getOutput.write("""\bigvee_{"""); exportTerm(v); 
+                                getOutput.write(" = "); exportTerm(s) ; getOutput.write("}^{"); exportTerm(e);
+                                getOutput.write("}"); exportTerm(f); getOutput.write(")")}
 
 
     case Function(name, args, _) => {
@@ -54,6 +60,7 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
       if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
       getOutput.write(")")
     }
+  }
   }}
 
   def exportSymbol(sym: SymbolA): Unit = sym match {
