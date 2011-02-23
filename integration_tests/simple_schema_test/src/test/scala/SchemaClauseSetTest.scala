@@ -46,7 +46,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
 
      //-- Some subproofs of varPhi_0 proof
     val psi0 = SchemaProofLinkRule(Sequent(and_0_0_ai::Or(or_0_0_not_ai, a1)::Nil, and_0_1_ai::Nil),
-        "\\psi", Succ(IntZero())::Nil)
+        "\\psi", IntZero()::Nil)
     val xi0 = SchemaProofLinkRule(Sequent(and_0_1_ai::or_0_1_not_ai::Nil, Nil), "\\xi", Succ(IntZero())::Nil)
     val p0 = NegRightRule(xi0, or_0_1_not_ai)
     // end of subproofs of varPhi_0 proof --//
@@ -199,9 +199,9 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       checkProofLinks( varPhi_0 )
       checkProofLinks( varPhi_sn )
 
-/*      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
+      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
       (new FileWriter("target" + separator + "test-classes" + separator + "cs_ex1.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
-        .exportSequentList(cs.map(so => so.getSequent), Nil).close*/
+        .exportSequentList(cs.map(so => so.getSequent), Nil).close
     }
 
     "extract a schema clause set from a simple proof" in {
