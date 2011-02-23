@@ -5,6 +5,8 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.calculi.lk.base._
+import at.logic.calculi.lk.propositionalRules.Axiom
+import at.logic.calculi.lk.lkExtractors._
 import at.logic.language.schema._
 import at.logic.utils.ds.trees._
 import at.logic.language.lambda.BetaReduction._
@@ -345,7 +347,7 @@ object OrEquivalenceRule1 {
     }
   }
 
-  def unapply(proof: LKProof) =  if (proof.rule == AndEquivalenceRule1Type) {
+  def unapply(proof: LKProof) =  if (proof.rule == OrEquivalenceRule1Type) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
@@ -550,5 +552,24 @@ object OrEquivalenceRule1 {
       case OrEquivalenceRule2(up, r, a, p) => Some((OrEquivalenceRule2Type, up, r, a::Nil, p))
       case OrEquivalenceRule3(up, r, a, p) => Some((OrEquivalenceRule3Type, up, r, a::Nil, p))
       case _ => None
+    }
+  }
+
+  // TODO: refactor somewhere else
+  // checks whether the SchemaProofLink calls are correct
+  // w.r.t. the SchemaProofDB, if not throws an Exception
+  object checkProofLinks {
+    def apply(p: LKProof):Unit = p match {
+      case Axiom(so) => {}
+      case UnaryLKProof(_,upperProof,_,_,_) => checkProofLinks( upperProof )
+      case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux1, aux2, _) => 
+        checkProofLinks( upperProofLeft ); checkProofLinks( upperProofRight )
+      case UnarySchemaProof(_,upperProof,_,_,_) => checkProofLinks( upperProof )
+      case SchemaProofLinkRule(so, name, indices) => {
+        val ps = SchemaProofDB.get( name )
+        // FIXME: cast needed???
+        val sub = Substitution(ps.vars.zip(indices.asInstanceOf[List[HOLExpression]]))
+        require( substitute(sub, ps.seq) == so.getSequent, "Proof Link to proof " + name + "(" + indices + ") with sequent " + so.getSequent + " incorrect!")
+      }
     }
   }

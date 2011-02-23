@@ -143,11 +143,19 @@ package struct {
       //println("fo.formula = " + fo.formula)
       val sub = Substitution[SchemaExpression](params.zip(terms))
       //println("sub = " + sub)
-      fs.filter( f => {
+      val list = fs.filter( f => {
+        //println("f = " + f )
         //println( "sub(f) = " + sub(f) )
+        //println( sub(f) == fo.formula )
         sub(f) == fo.formula
-      }) match {
-        case Nil => throw new Exception("Could not find a formula to construct the cut-configuration!")
+      }) 
+      //println("list.size = " + list.size)
+      list match {
+        case Nil => {
+          //println("list is Nil!?")
+          //println(list)
+          throw new Exception("Could not find a formula to construct the cut-configuration!")
+        }
         case x::_ => x
       }
     }

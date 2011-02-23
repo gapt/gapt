@@ -189,9 +189,19 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       SchemaProofDB.put( new SchemaProof( "\\varphi", n::Nil,
         new Sequent(and_0_n_ai::Or(or_0_n_not_ai, a_sn)::Nil, Neg(or_0_sn_not_ai)::Nil),
         varPhi_0, varPhi_sn ) )
-      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
+
+      checkProofLinks( xi_0 )
+      checkProofLinks( xi_sn )
+      checkProofLinks( phi_0 )
+      checkProofLinks( phi_sn )
+      checkProofLinks( psi_0 )
+      checkProofLinks( psi_sn )
+      checkProofLinks( varPhi_0 )
+      checkProofLinks( varPhi_sn )
+
+/*      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
       (new FileWriter("target" + separator + "test-classes" + separator + "cs_ex1.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
-        .exportSequentList(cs.map(so => so.getSequent), Nil).close
+        .exportSequentList(cs.map(so => so.getSequent), Nil).close*/
     }
 
     "extract a schema clause set from a simple proof" in {
@@ -210,10 +220,16 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       val p1 = AndLeft1Rule(link, f0, psk)
       val f2 = BigAnd( i, pi, IntZero(), Succ(n) )
       val step = AndEquivalenceRule1( p1, f1, f2 )
+
       SchemaProofDB.clear
       SchemaProofDB.put( new SchemaProof( "\\varphi", n::Nil,
         new Sequent(f0::Nil, p0::Nil),
         base, step ) )
+
+
+      checkProofLinks( base )
+      checkProofLinks( step )
+
       val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
       (new FileWriter("target" + separator + "test-classes" + separator + "cs_simple.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
         .exportSequentList(cs.map(so => so.getSequent), Nil).close
