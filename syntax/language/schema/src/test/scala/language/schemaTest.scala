@@ -1,6 +1,7 @@
 package at.logic.language.schema
 
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.hol.Atom
 import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
@@ -73,6 +74,10 @@ class SchemaTest extends SpecificationWithJUnit {
       val bt2 = BiggerThan(two, one)
       val bt3 = BiggerThan(one, two)
       val bt4 = BiggerThan(two, i)
+      bt1 must beLike {
+        case Atom(BiggerThanSymbol, x::y::Nil) => true
+        case _ => false
+      }
     }
   }
 }
