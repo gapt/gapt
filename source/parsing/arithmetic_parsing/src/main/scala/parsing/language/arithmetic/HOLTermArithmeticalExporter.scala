@@ -64,12 +64,25 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
     case Atom(sym, args) => {
       var b = true
       sym match {
-        case cs : ClauseSetSymbol => { getOutput.write("CL^{("); writeCutConf(cs.cut_occs); getOutput.write("),"); getOutput.write(cs.name);getOutput.write("_{"); getOutput.write("{"+"""\"""+"color{red}"); b=false;}
+        case cs : ClauseSetSymbol => {
+          getOutput.write("CL^{(");
+
+          writeCutConf(cs.cut_occs);
+          getOutput.write("),");
+          getOutput.write(cs.name);
+          getOutput.write("}_{");
+          getOutput.write("{"+"""\"""+"color{red}");
+          b=false;
+//          if (args.size > 0) exportTerm(args.head)
+//          if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
+//          getOutput.write("}");
+
+        }
         case _ => getOutput.write(sym.toString)
       }
       if(b) {
         getOutput.write("(")
-         getOutput.write("{"+"""\"""+"color{blue}")
+        getOutput.write("{"+"""\"""+"color{blue}")
       }
 
       if (args.size > 0) exportTerm(args.head)
@@ -79,7 +92,7 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
         getOutput.write(")}")
       }
       else
-        getOutput.write("}}}")
+        getOutput.write("}}")
     }
   }
   }}
