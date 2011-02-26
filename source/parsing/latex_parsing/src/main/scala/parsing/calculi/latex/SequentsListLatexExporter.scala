@@ -39,6 +39,9 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 
     getOutput.write("""\documentclass[10pt, a4paper]{article}""")
     getOutput.write("\n")
+    getOutput.write("""\""")
+    getOutput.write("""usepackage{color}""")
+    getOutput.write("\n")
     getOutput.write("""\setlength{\topmargin}{-1.5cm}""")
     getOutput.write("\n")
     getOutput.write("""\setlength{\headheight}{0cm}""")
