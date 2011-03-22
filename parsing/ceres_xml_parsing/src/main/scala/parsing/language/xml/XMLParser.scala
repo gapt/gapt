@@ -11,7 +11,7 @@
 
 package at.logic.parsing.language.xml
 
-import _root_.at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.substitutions.Substitution
 import scala.xml._
 import scala.xml.Utility.trim
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -403,7 +403,7 @@ object XMLParser {
     private def getProofRec( n : Node ) : (LKProof, Array[FormulaOccurrence], Array[FormulaOccurrence]) =
       trim(n) match {
         case <proof>{ ns @ _* }</proof> => {
-          // TODO: read symbol, calculus
+          // TODO: read calculus
           getProofRec( ns.head )
         }
         case <rule>{ ns @ _* }</rule> => {
