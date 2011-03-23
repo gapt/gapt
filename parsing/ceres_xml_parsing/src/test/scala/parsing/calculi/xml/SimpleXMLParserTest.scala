@@ -45,5 +45,7 @@ class SimpleXMLParserTest extends SpecificationWithJUnit {
         </proof>
       ) with SimpleXMLProofParser).getNamedTree()
       name must beEqual("\\pi")
+      tree.vertex must beLike{ case x : String if x == """\/_i=1..n P_i""" => true
+                               case _ => false }
     }
 }
