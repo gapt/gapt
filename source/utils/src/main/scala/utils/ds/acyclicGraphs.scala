@@ -11,6 +11,10 @@ import at.logic.utils.ds.graphs._
 import at.logic.utils.logging.Logger
 
 // it should be called conntected acyclic graphs as it always generates connected components
+// important note! The current equality between trees always refer to pointers equality and ignore the vertex. Two notes about it:
+// 1) the pointer equality does not need to be implemented recursively up the agraph as we deal with immutable objects and the equality of of the roots imply the equality of all sub-agraphs. So always only
+// roots should be compared and the object equals behave as expected (no need to override it)
+// 2) in case a different behavior is expected, the different agraphs should be extended and the equals method be override, but again, as we deal with immutable objects, only the roots should be compared.
 package acyclicGraphs {
   trait AGraph[+V] extends Graph[V] {
     val vertex: V
@@ -18,10 +22,6 @@ package acyclicGraphs {
   }
 
   class LeafAGraph[+V](val vertex: V) extends VertexGraph[V](vertex, EmptyGraph[V]) with AGraph[V] {
-    override def equals(a: Any) = a match {
-      case LeafAGraph(v) => vertex == v
-      case _ => false
-    }
     override def hashCode = vertex.hashCode
     override def toString = vertex.toString
     def name = "Leaf"
@@ -34,10 +34,6 @@ package acyclicGraphs {
     }
   }
   class UnaryAGraph[+V](val vertex: V, val t: AGraph[V]) extends EdgeGraph[V](t.vertex, vertex, VertexGraph[V](vertex, t)) with AGraph[V] {
-    override def equals(a: Any) = a match {
-      case UnaryAGraph(v,up) => vertex == v && t == up
-      case _ => false
-    }
     override def hashCode = vertex.hashCode + t.hashCode
     override def toString = vertex.toString + " (" + t.toString + ")"
     def name = "Unary"
@@ -51,10 +47,6 @@ package acyclicGraphs {
     }
   }
   class BinaryAGraph[+V](val vertex: V, val t1: AGraph[V], val t2: AGraph[V]) extends EdgeGraph[V](t2.vertex, vertex, UnionGraph[V](EdgeGraph[V](t1.vertex, vertex, VertexGraph[V](vertex, t1)), t2)) with AGraph[V] {
-    override def equals(a: Any) = a match {
-      case BinaryAGraph(v,up1,up2) => vertex == v && t1 == up1 && t2 == up2
-      case _ => false
-    }
     override def hashCode = vertex.hashCode + t1.hashCode + t2.hashCode
     override def toString = vertex.toString + " (" + t1.toString + ", " + t2.toString + ")"
     def name = "Binary"
@@ -67,10 +59,6 @@ package acyclicGraphs {
     }
   }
   class ArbitraryAGraph[+V] protected (val vertex: V, val lastParent: AGraph[V], val restParents: List[AGraph[V]], graph: Graph[V]) extends EdgeGraph[V](lastParent.vertex, vertex, UnionGraph[V](graph, lastParent)) with AGraph[V] {
-    override def equals(a: Any) = a match {
-      case ArbitraryAGraph(v,ls) => vertex == v && ls == lastParent::restParents
-      case _ => false
-    }
     override def hashCode = vertex.hashCode + (lastParent::restParents).hashCode
     override def toString = vertex.toString + " (" + (lastParent::restParents) + ")"
     def name = "Arbitrary"
