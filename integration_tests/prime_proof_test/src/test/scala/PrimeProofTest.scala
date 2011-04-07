@@ -8,7 +8,7 @@ import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
 
-import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
 import at.logic.parsing.language.xml.XMLParser._
@@ -168,6 +168,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
       //val proof_sk = skolemize( regularize( proof )._1 )
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
+
+      // convert struct DAG to tree
+      structToExpressionTree( s )
 
       val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
 

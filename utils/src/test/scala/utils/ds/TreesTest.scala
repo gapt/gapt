@@ -35,13 +35,17 @@ class TreesTest extends SpecificationWithJUnit {
         val t3 = BinaryTree("5", t1,t2)
         (BinaryTree("-1", t3,t1)) must throwA[IllegalArgumentException]
       }
-      "2" in {
-        val t1 = UnaryTree("3", UnaryTree("2", "1"))
-        val t2 = UnaryTree("4", "0")
-        val t3 = BinaryTree("5", t1,t2)
-        val t4 = LeafTree("1")
-        (BinaryTree("-1", t3,t4)) must throwA[IllegalArgumentException]
-      }
+// commented out since the test should fail with our current semantics
+// on trees: vertices (i.e. labels) may be equal even though the nodes
+// themselves are different.
+//
+//      "2" in {
+//        val t1 = UnaryTree("3", UnaryTree("2", "1"))
+//        val t2 = UnaryTree("4", "0")
+//        val t3 = BinaryTree("5", t1,t2)
+//        val t4 = LeafTree("1")
+//        (BinaryTree("-1", t3,t4)) must throwA[IllegalArgumentException]
+//      }
       "3 (pointers equality)" in {
         val t1 = UnaryTree(new AnyRef{}, UnaryTree(new AnyRef{}, new AnyRef{}))
         val t2 = UnaryTree(new AnyRef{}, new AnyRef{})
