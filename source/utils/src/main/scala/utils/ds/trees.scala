@@ -12,6 +12,7 @@ import at.logic.utils.logging.Logger
 import acyclicGraphs._
 import graphs._
 import scala.collection.JavaConversions._
+import scala.collection.immutable.{Set,HashSet}
 
 package trees {
   /**
@@ -19,17 +20,20 @@ package trees {
    *
    */
 
-  trait Tree[+V] extends AGraph[V] {
+  trait Tree[V] extends AGraph[V] {
     require {isTree} // important, read remark above
     private[trees] def isTree: Boolean // TODO optimize isTree (in binaryTree)
     val vertex: V
     def name: String // used to contain more information about the tree, like rule names in LK
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T
+
+    def leaves: Set[LeafTree[V]]
   }
 
-  class LeafTree[+V](override val vertex: V) extends LeafAGraph[V](vertex) with Tree[V] {
+  class LeafTree[V](override val vertex: V) extends LeafAGraph[V](vertex) with Tree[V] {
     private[trees] def isTree: Boolean = true // any leaf is a tree
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = leafF(vertex)
+    def leaves = new HashSet() + this
   }
   object LeafTree {
     def apply[V](vertex: V) = new LeafTree[V](vertex)
@@ -39,9 +43,10 @@ package trees {
     }
   }
 
-  class UnaryTree[+V](override val vertex: V, override val t: Tree[V]) extends UnaryAGraph[V](vertex, t) with Tree[V] {
+  class UnaryTree[V](override val vertex: V, override val t: Tree[V]) extends UnaryAGraph[V](vertex, t) with Tree[V] {
     private[trees] def isTree: Boolean = true // any unary tree is a tree if its child component is a tree, therefore, as we accept a valid tree as argument, nothing should be done here.
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = unaryF(t.fold(leafF)(unaryF)(binaryF), vertex)
+    def leaves = t.leaves
   }
   object UnaryTree {
     def apply[V](vertex: V, t: Tree[V]) = new UnaryTree[V](vertex, t)
@@ -50,14 +55,15 @@ package trees {
       case t: Tree[_] => None
     }
   }
-  class BinaryTree[+V](override val vertex: V, override val t1: Tree[V], override val t2: Tree[V]) extends BinaryAGraph[V](vertex,t1,t2) with Tree[V] {
-    private[trees] def isTree: Boolean = {
-      // we must check that no subtree in one sub component is equal to a subtree in the other component
-      // it is enough to check leaves only
-      val axs: Set[V] = t2.fold(v => Set(v))((s,_) => s)((s1,s2,_) => s1++s2) // create a set of all elements in leafs in the second tree
-      !t1.fold(v => axs.contains(v))((b,_) => b)((b1,b2,_) => b1 | b2)
-    }
+  class BinaryTree[V](override val vertex: V, override val t1: Tree[V], override val t2: Tree[V]) extends BinaryAGraph[V](vertex,t1,t2) with Tree[V] {
+
+    // we must check that no subtree in one sub component is equal to a subtree in the other component
+    // it is enough to check leaves only
+    private[trees] def isTree: Boolean =
+      (t1.leaves & t2.leaves).isEmpty
+
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = binaryF(t1.fold(leafF)(unaryF)(binaryF), t2.fold(leafF)(unaryF)(binaryF), vertex)
+    def leaves = t1.leaves ++ t2.leaves
   }
   object BinaryTree {
     def apply[V](vertex: V, t1: Tree[V], t2: Tree[V]) = new BinaryTree[V](vertex, t1, t2)

@@ -9,7 +9,7 @@ package at.logic.transformations.ceres
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.{HOLConst, HOLFormula}
+import at.logic.language.hol.{HOLConst, HOLFormula,HOLExpression}
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
@@ -33,58 +33,7 @@ import scala.collection.immutable.{HashSet, Set}
 import clauseSets.StandardClauseSet._
 
 package struct {
-//  trait Struct extends Tree[HOLExpression]
   trait Struct
-
-  // We define some symbols that represent the operations of the struct
-
-  case object TimesSymbol extends LogicalSymbolsA {
-    override def unique = "TimesSymbol"
-    override def toString = "⊗"
-    def toCode = "TimesSymbol"
-  }
-
-  case object PlusSymbol extends LogicalSymbolsA {
-    override def unique = "PlusSymbol"
-    override def toString = "⊕"
-    def toCode = "PlusSymbol"
-  }
-
-  case object DualSymbol extends LogicalSymbolsA {
-    override def unique = "DualSymbol"
-    override def toString = "∼"
-    def toCode = "DualSymbol"
-  }
-
-  case object EmptyTimesSymbol extends LogicalSymbolsA {
-    override def unique = "EmptyTimesSymbol"
-    override def toString = "ε_⊗"
-    def toCode = "EmptyTimesSymbol"
-  }
-
-  case object EmptyPlusSymbol extends LogicalSymbolsA {
-    override def unique = "EmptyPlusSymbol"
-    override def toString = "ε_⊕"
-    def toCode = "EmptyPlusSymbol"
-  }
-
-  case object TimesC extends HOLConst(TimesSymbol, "( o -> (o -> o) )")
-  case object PlusC extends HOLConst(PlusSymbol, "( o -> (o -> o) )")
-  case object DualC extends HOLConst(DualSymbol, "(o -> o)")
-  case object EmptyTimesC extends HOLConst(EmptyTimesSymbol, "o")
-  case object EmptyPlusC extends HOLConst(EmptyPlusSymbol, "o")
-
-  // FIXME: Struct should inherit from Tree, but if it does, integration
-  // tests fail.
-
-  // The times operator stores the auxiliary formulas of the 
-  // inference which induces it.
-  //case class Times(left: Struct, right: Struct, auxFOccs: List[FormulaOccurrence]) extends BinaryTree[HOLExpression](TimesC, left, right) with Struct
-  //case class Plus(left: Struct, right: Struct) extends BinaryTree[HOLExpression](PlusC, left, right) with Struct
-  //case class Dual(sub: Struct) extends UnaryTree[HOLExpression](DualC, sub) with Struct
-  //case class A(formula: FormulaOccurrence) extends LeafTree[HOLExpression](formula.formula) with Struct // Atomic Struct
-  //case class EmptyTimesJunction() extends LeafTree[HOLExpression](EmptyTimesC) with Struct
-  //case class EmptyPlusJunction() extends LeafTree[HOLExpression](EmptyPlusC) with Struct
 
   // Times is done as an object instead of a case class since
   // it has a convenience constructor (with empty auxFOccs)
@@ -109,6 +58,58 @@ package struct {
   case class EmptyTimesJunction() extends Struct
   case class EmptyPlusJunction() extends Struct
 
+  // since case classes may be DAGs, we give a method to convert to a tree
+  // (for, e.g. displaying purposes)
+
+  object structToExpressionTree {
+    def apply(s: Struct) : Tree[HOLExpression] = s match
+    {
+      case A(f) => LeafTree(f.formula)
+      case Dual(sub) => UnaryTree(DualC, apply(sub))
+      case Times(left, right, _) => BinaryTree(TimesC, apply(left), apply(right))
+      case Plus(left, right) => BinaryTree(PlusC, apply(left), apply(right))
+      case EmptyTimesJunction() => LeafTree(EmptyTimesC)
+      case EmptyPlusJunction() => LeafTree(EmptyPlusC)
+    }
+
+    // We define some symbols that represent the operations of the struct
+
+    case object TimesSymbol extends LogicalSymbolsA {
+      override def unique = "TimesSymbol"
+      override def toString = "⊗"
+      def toCode = "TimesSymbol"
+    }
+
+    case object PlusSymbol extends LogicalSymbolsA {
+      override def unique = "PlusSymbol"
+      override def toString = "⊕"
+      def toCode = "PlusSymbol"
+    }
+
+    case object DualSymbol extends LogicalSymbolsA {
+      override def unique = "DualSymbol"
+      override def toString = "∼"
+      def toCode = "DualSymbol"
+    }
+
+    case object EmptyTimesSymbol extends LogicalSymbolsA {
+      override def unique = "EmptyTimesSymbol"
+      override def toString = "ε_⊗"
+      def toCode = "EmptyTimesSymbol"
+    }
+
+    case object EmptyPlusSymbol extends LogicalSymbolsA {
+      override def unique = "EmptyPlusSymbol"
+      override def toString = "ε_⊕"
+      def toCode = "EmptyPlusSymbol"
+    }
+
+    case object TimesC extends HOLConst(TimesSymbol, "( o -> (o -> o) )")
+    case object PlusC extends HOLConst(PlusSymbol, "( o -> (o -> o) )")
+    case object DualC extends HOLConst(DualSymbol, "(o -> o)")
+    case object EmptyTimesC extends HOLConst(EmptyTimesSymbol, "o")
+    case object EmptyPlusC extends HOLConst(EmptyPlusSymbol, "o")
+  }
 
   // some stuff for schemata
 
