@@ -30,6 +30,28 @@ private class MyParser(input: String) extends StringReader(input) with SimpleFOL
 
 class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck {
     "HuetAlgorithm" should {
+    "find all solutions of <Fa,x>, <Ffa,g(fx,fx)>"  in {
+      import at.logic.parsing.readers.StringReader
+      import at.logic.parsing.language.simple._
+
+      class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
+
+      val term1a = new MyParser("F(a:i):i").getTerm()
+      val term1b = new MyParser("x:i").getTerm()
+
+      val term2a = new MyParser("F(f(a:i):i):i").getTerm()
+      val term2b = new MyParser("g(f(x:i):i,f(x:i):i):i").getTerm()
+
+      val termb = new MyParser("g(f(F(a:i):i):i,f(F(a:i):i):i):i").getTerm()
+
+      val st = HuetAlgorithm.unify1(term2a, termb)
+
+      println("\n\n"+st.next.get.toString + " ; "+ st.next.get.toString)
+      println("\n\n")
+
+      0 must beEqual(0)
+
+    }
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
       val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
       val v1 = HOLVar("x", i)
