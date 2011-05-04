@@ -30,7 +30,7 @@
                 </descriptorRefs>
                 <archive>
                   <manifest>
-                    <mainClass>at.logic.cli.CommandLine</mainClass>
+                    <mainClass>at.logic.cli.CLIMain</mainClass>
                   </manifest>
                 </archive>
               </configuration>
@@ -41,6 +41,11 @@
   </build>
 
   <dependencies>
+<dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>syntax_dependency</artifactId>
