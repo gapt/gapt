@@ -31,7 +31,7 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
 
 
 //  override def toString = "( "+uproblems.toString+" ; "+subList.toString+" )"
-  override def toString = "( "+uproblems.map(x => (x._1.toStringSimple, x._2.toStringSimple))+" ; "+subList.toString+" )"
+  override def toString = "( "+uproblems.map(x => (x._1.toStringSimple, x._2.toStringSimple))+" ; "+subList.map(x=> Pair(x._1.toString, x._2.toString)).toString+" )"
 
   def isTerminal: Boolean = uproblems match {
     case List() => true
@@ -58,7 +58,7 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
   def transformation4a(uprobl : List[Pair[HOLExpression, HOLExpression]])(implicit disAllowedVars: Set[Var] ) :  ConfigurationNode = {
     uprobl match {
       case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), AbsN(varList2, Function(sym : ConstantStringSymbol, args2, returnType)))::s => {
-            println("\nrule (4'a)\n")
+//            println("\nrule (4'a)\n")
             val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
   //                println("\n\n"+disAllowedVars.toString)
   //                val fv = freshVar(z, dv, x); disAllowedVars += fv; fv
@@ -95,9 +95,15 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
 
 //            new ConfigurationNode(HuetAlgorithm.applySubToListOfPairs(uprobl.tail,sigma), (funcVar,part_bind_t)::HuetAlgorithm.applySubToListOfPairs(subList,sigma))
 
-            val newConfNode = new ConfigurationNode((HuetAlgorithm.applySubToListOfPairs((uprobl.head._1,uprobl.head._2)::uprobl.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
+//            val newConfNode = new ConfigurationNode((HuetAlgorithm.applySubToListOfPairs((uprobl.head._1,uprobl.head._2)::uprobl.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
+//              (funcVar,part_bind_t)::HuetAlgorithm.applySubToListOfPairs(subList,sigma))
+
+            val newConfNode = new ConfigurationNode((HuetAlgorithm.applySubToListOfPairs(uprobl, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
               (funcVar,part_bind_t)::HuetAlgorithm.applySubToListOfPairs(subList,sigma))
-//            println("\nl:+  "+l:+(new ConfigurationNode(Tuple2(HuetAlgorithm.applySubToListOfPairs(conf.currentConf._1.tail,sigma), (funcVar,part_bind_t)::HuetAlgorithm.applySubToListOfPairs(conf.currentConf._2,sigma))))).toString()
+
+
+//            println("\nl:+  "+(new ConfigurationNode(Tuple2(HuetAlgorithm.applySubToListOfPairs(conf.currentConf._1.tail,sigma), (funcVar,part_bind_t)::HuetAlgorithm.applySubToListOfPairs(conf.currentConf._2,sigma))))).toString()
+//            println("\n 4a, newConfNode = "+newConfNode.toString)
             newConfNode
 //            println("\nrule 4a,  l:+ = "+l.toString)
           }
@@ -110,7 +116,7 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
     uprobl match {
         case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), AbsN(varList2, AppN(funcVar2: HOLConst, args2)))::s => {
          val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
-         println("\nrule (4'b)\n")
+//         println("\nrule (4'b)\n")
          val newVarList = args1.map(x => {val fv = freshVar.apply1(x.exptype, dv, funcVar).asInstanceOf[HOLVar]; disAllowedVars+=fv; fv.asInstanceOf[HOLVar]} )
 //         println("\nnewVarList.size  =  "+newVarList.size)
          val generalFlexibleTermListOfList: List[List[HOLVar]] = newVarList.map(x => {
@@ -166,10 +172,11 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
          val llist = listOfSubstPartBindPair.map(x => Tuple2(HuetAlgorithm.applySubToListOfPairs(s,x._1), x._2))
          val newl = llist.map(x => {
             val sigma = Substitution[HOLExpression](funcVar, x._2);
-            new ConfigurationNode(HuetAlgorithm.applySubToListOfPairs( uprobl.tail, sigma), Pair(funcVar, x._2)::HuetAlgorithm.applySubToListOfPairs( subList, sigma))
+//            new ConfigurationNode(HuetAlgorithm.applySubToListOfPairs( uprobl.tail, sigma), Pair(funcVar, x._2)::HuetAlgorithm.applySubToListOfPairs( subList, sigma))
+            new ConfigurationNode(HuetAlgorithm.applySubToListOfPairs( uprobl, sigma), Pair(funcVar, x._2)::HuetAlgorithm.applySubToListOfPairs( subList, sigma))
 //            println("L:+  "+(l:+(new ConfigurationNode(Pair(HuetAlgorithm.applySubToListOfPairs( conf.currentConf._1.tail, sigma), Pair(funcVar, x._2)::HuetAlgorithm.applySubToListOfPairs( conf.currentConf._2, sigma))))).toString)
            })
-          println("\nnewl = "+newl.toString)
+//          println("\nnewl = "+newl.toString)
          return newl
 
 
@@ -248,15 +255,15 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
     def myFun1(conf1: Configuration[Substitution[HOLExpression]])(implicit disAllowedVars: Set[Var] ): List[Configuration[Substitution[HOLExpression]]] = {
       val conf = conf1.asInstanceOf[ConfigurationNode]
       val uproblems = conf.uproblems
-      println("\n\ncurrent configuration = " + conf1.toString+ "\n\n")
-      println("\n\nmyFun1; current configuration uproblems : \n"+uproblems+"\n\n")
+//      println("\n\ncurrent configuration = " + conf1.toString+ "\n\n")
+      println("\n\nunification problems list: \n\n"+uproblems.map(x => Pair(x._1.toStringSimple, x._2.toStringSimple))+"\n")
       uproblems match {
         case (t1,t2)::s if t1 == t2 => conf.transformation1::Nil // (1)
         case (AbsN(varList1, Function(sym1 : ConstantStringSymbol, args1, returnType1)),AbsN(varList2, Function(sym2 : ConstantStringSymbol, args2, returnType2)))::s
           if sym1 == sym2 && varList1.size == varList2.size && returnType1 == returnType2 => conf.transformation2::Nil //2
 
         case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), AbsN(varList2, Function(sym : ConstantStringSymbol, args2, returnType)))::s if varList1==varList2 =>{
-          println("\nmyFyn case 4ab => \n");
+//          println("\nmyFyn case 4ab => \n");
 //          println("\nREZ : "+(conf.transformation4a(uproblems) :: conf.transformation4b(uproblems)).toString)
           val cl = conf.transformation4a(uproblems) :: conf.transformation4b(uproblems)
 //          cl.foreach(co => println("\nco = "+co.toString))
@@ -264,24 +271,27 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
         }
 
         case (AbsN(varList2, Function(sym : ConstantStringSymbol, args2, returnType)), AbsN(varList1, AppN(funcVar: HOLVar, args1)))::s if varList1==varList2 => {
-          println("\nmyFyn case 4ab1 => \n");
+//          println("\nmyFyn case 4ab1 => \n");
           val cl = conf.transformation4a(Pair(AbsN(varList1, AppN(funcVar, args1)), AbsN(varList2, Function(sym, args2.asInstanceOf[List[HOLExpression]], returnType))).asInstanceOf[Pair[HOLExpression,HOLExpression]] :: uproblems.tail) :: conf.transformation4b(Pair(AbsN(varList1, AppN(funcVar, args1)), AbsN(varList2, Function(sym, args2.asInstanceOf[List[HOLExpression]], returnType))).asInstanceOf[Pair[HOLExpression,HOLExpression]] :: uproblems.tail)
 //          cl.foreach(co => println("\nco = "+co.toString))
           cl
         }
 //        case (AppN(funcVar: HOLVar, args1), Function(sym : ConstantStringSymbol, args2, returnType))::s  => {
         case (AppN(funcVar: HOLVar, args1), AppN(funcVar2: HOLConst, args2))::s  => {
-          println("\nmyFyn case 4ab2 => \n");
+//          println("\nmyFyn case 4ab2 => \n");
           val cl = conf.transformation4a(Pair(AppN(funcVar, args1), AppN(funcVar2: HOLConst, args2)).asInstanceOf[Pair[HOLExpression,HOLExpression]] :: uproblems.tail) :: conf.transformation4b(Pair(AppN(funcVar, args1), AppN(funcVar2: HOLConst, args2)).asInstanceOf[Pair[HOLExpression,HOLExpression]] :: uproblems.tail)
 //          cl.foreach(co => println("\nco = "+co.toString))
           cl
         }
 
         case _ => {
-          println("\nmyFyn case _ => \n")
+          println("\nNo unifier! ")
 //          println("\nmyFyn unapply : "+uproblems.head._1+"            "+HOLVar.unapply(uproblems.head._1).get)
 //          conf1.isTerminal = true
-          List[Configuration[Substitution[HOLExpression]]]()
+
+
+//          List[Configuration[Substitution[HOLExpression]]]()
+          conf1::List[Configuration[Substitution[HOLExpression]]]()
         }
       }
     }
@@ -308,7 +318,8 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
     def applySubToListOfPairs(l : List[Tuple2[HOLExpression, HOLExpression]], s : Substitution[HOLExpression]) : List[Tuple2[HOLExpression, HOLExpression]] =
     {
     //  l.foldLeft(Nil)((Tuple2(x,v))=> (Tuple2(s.applyFOL(x),s.applyFOL(v))))
-      return l.map(a => (BetaReduction.betaNormalize(s.apply(a._1))(Outermost).asInstanceOf[HOLExpression], s.apply(a._2)))
+//      return l.map(a => (BetaReduction.betaNormalize(s.apply(a._1))(Outermost).asInstanceOf[HOLExpression], s.apply(a._2)))
+        return l.map(a => (BetaReduction.betaNormalize(s.apply(a._1))(Outermost).asInstanceOf[HOLExpression], BetaReduction.betaNormalize(s.apply(a._2))(Outermost).asInstanceOf[HOLExpression]))
     }
 
 
@@ -362,7 +373,7 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
         case ((AbsN(varList1, AppN(funcVar: HOLVar, args1)), AbsN(varList2, Function(sym : ConstantStringSymbol, args2, returnType)))::s, s2)
           if varList1==varList2 =>
           {
-            println("\nrule (4'a)\n")
+//            println("\nrule (4'a)\n")
             val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
 //                println("\n\n"+disAllowedVars.toString)
 //                val fv = freshVar(z, dv, x); disAllowedVars += fv; fv
@@ -408,7 +419,7 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
           if varList1==varList2 => //&& varList2.contains(funcVar2)=>
           {
             val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
-            println("\nrule (4'b)\n")
+//            println("\nrule (4'b)\n")
             val newVarList = args1.map(x => {val fv = freshVar.apply1(x.exptype, dv, funcVar).asInstanceOf[HOLVar]; disAllowedVars+=fv; fv.asInstanceOf[HOLVar]} )
 //            println("\nnewVarList.size  =  "+newVarList.size)
             val generalFlexibleTermListOfList: List[List[HOLVar]] = newVarList.map(x => {
@@ -505,7 +516,7 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
                      disAllowedVars.+(fv);
                      disAllowedVars.union(fv.getFreeAndBoundVariables._1)
                      disAllowedVars.union(fv.getFreeAndBoundVariables._2)
-        println("\n"+fv.toString+"\n")
+//        println("\n"+fv.toString+"\n")
 //                     return fv::Nil
                       return l1
       }
@@ -519,7 +530,7 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
           fv.asInstanceOf[HOLVar]
         })
 //        println("\n getListOfZs END\n")
-        println("\n"+ls.toString+"\n")
+//        println("\n"+ls.toString+"\n")
         ls
       }
       case _ => { println("\n ERROR in getListOfZs \n"); l1}
@@ -544,7 +555,6 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
   }
 
 }
-
 
 
 
