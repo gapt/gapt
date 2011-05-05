@@ -32,7 +32,7 @@ import StrategyOuterInner._
 import StrategyLeftRight._
 
 
-private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
+//private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
 
 class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck {
     "HuetAlgorithm" should {
@@ -46,9 +46,12 @@ class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck
       val F = HOLVar("F", i->i)
       val f = HOLConst(new ConstantStringSymbol("f"), i->i)
       val g = HOLConst(new ConstantStringSymbol("g"), i->(i->i))
+      val Fa = HOLApp(F,a)
       val Ffa = HOLApp(F,HOLApp(f,a))
       val fFa = HOLApp(f,HOLApp(F,a))
       val gfFafFa = HOLApp(HOLApp(g, fFa), fFa)
+      val gFaFa = HOLApp(HOLApp(g, Fa), Fa)
+      val gaa = HOLApp(HOLApp(g, a), a)
 
 
 
@@ -75,15 +78,21 @@ class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck
 
 //      (((λ#1:i.g(#3(#1:i):i, #5(#1:i):i):i))(f(a:i):i),g(f(g(#3(a:i):i, #5(a:i):i):i):i, f(((λ#1:i.g(#3(#1:i):i, #5(#1:i):i):i))(a:i)):i):i)
 //     (F:(i->i),(λ#1:i.g(#3(#1:i):i, #5(#1:i):i):i)))
-
-      val termb = new MyParser("g(f(F(a:i):i):i,f(F(a:i):i):i):i").getTerm()
-      println("\n\n<"+term2a.toStringSimple+" , "+termb.toStringSimple+">\n\n")
+//
+//      val termb = new MyParser("g(f(F(a:i):i):i,f(F(a:i):i):i):i").getTerm()
+//      println("\n\n<"+term2a.toStringSimple+" , "+termb.toStringSimple+">\n\n")
 
 
 //      val st = HuetAlgorithm.unify1(term2a, termb)
-      val st = HuetAlgorithm.unify1(Ffa, gfFafFa)
-
-      println("\n\n"+st.next.get.toString + " ; "+ st.next.get.toString + " ; "+ st.next.get.toString + " ; "+ st.next.get.toString)
+      //val st = HuetAlgorithm.unify1(Ffa, gfFafFa)
+//      val st = HuetAlgorithm.unify1(new MyParser("x(f(a:i):i):i").getTerm(),new MyParser("f(x(a:i):i):i").getTerm())
+//      val st = HuetAlgorithm.unify1(Ffa, gfFafFa)
+//      val st = HuetAlgorithm.unify1(Fa, gFaFa)
+      val st = HuetAlgorithm.unify1(Fa, gaa)
+      println("\n\nnext : "+st.next.get.toString)
+//      println("\n\nnext : "+st.next.get.toString)
+//      println("\n\nnext : "+st.next.get.toString)
+//      println("\n\nnext : "+st.next.get.toString)
       println("\n\n")
 
       0 must beEqual(0)
