@@ -13,6 +13,7 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.occurrences._
 import at.logic.transformations.ceres.struct._
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.utils.ds.Multisets._
 
 import java.io.File.separator
 
@@ -47,7 +48,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
      //-- Some subproofs of varPhi_0 proof
     val psi0 = SchemaProofLinkRule(Sequent(and_0_0_ai::Or(or_0_0_not_ai, a1)::Nil, and_0_1_ai::Nil),
         "\\psi", IntZero()::Nil)
-    val xi0 = SchemaProofLinkRule(Sequent(and_0_1_ai::or_0_1_not_ai::Nil, Nil), "\\xi", Succ(IntZero())::Nil)
+    val xi0 = SchemaProofLinkRule(Sequent(and_0_1_ai::or_0_1_not_ai::Nil, Nil), "\\chi", Succ(IntZero())::Nil)
     val p0 = NegRightRule(xi0, or_0_1_not_ai)
     // end of subproofs of varPhi_0 proof --//
 
@@ -64,7 +65,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
      //-- Some subproofs of varPhi_n proof
     val psi = SchemaProofLinkRule(Sequent(and_0_sn_ai::Or(or_0_sn_not_ai, a_ssn)::Nil, and_0_ssn_ai::Nil),
         "\\psi", Succ(n)::Nil)
-    val xi = SchemaProofLinkRule(Sequent(and_0_ssn_ai::or_0_ssn_not_ai::Nil, Nil), "\\xi", Succ(Succ(n))::Nil)
+    val xi = SchemaProofLinkRule(Sequent(and_0_ssn_ai::or_0_ssn_not_ai::Nil, Nil), "\\chi", Succ(Succ(n))::Nil)
     val p = NegRightRule(xi, or_0_ssn_not_ai)
     // end of subproofs of varPhi_n proof --//
 
@@ -94,7 +95,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
 
     //-- Some subproofs of xi_sn proof
     val x1 = NegLeftRule(Axiom(Sequent(a_sn::Nil, a_sn::Nil)), a_sn)
-    val x2 = SchemaProofLinkRule(Sequent(and_0_n_ai::or_0_n_not_ai::Nil, Nil), "\\xi", n::Nil)
+    val x2 = SchemaProofLinkRule(Sequent(and_0_n_ai::or_0_n_not_ai::Nil, Nil), "\\chi", n::Nil)
     val x3 = OrLeftRule(x2, x1, or_0_n_not_ai, Neg(a_sn))
     val x4 = OrEquivalenceRule1(x3, x3.prin.head, or_0_sn_not_ai)
     val x5 = AndLeftRule(x4, and_0_n_ai, a_sn)
@@ -140,7 +141,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
     }
 
     //-- Some subproofs of psi_0 proof
-    val z01 = OrLeftRule(SchemaProofLinkRule(Sequent(and_0_0_ai::or_0_0_not_ai::Nil, Nil), "\\xi", IntZero()::Nil),
+    val z01 = OrLeftRule(SchemaProofLinkRule(Sequent(and_0_0_ai::or_0_0_not_ai::Nil, Nil), "\\chi", IntZero()::Nil),
       Axiom(Sequent(a1::Nil, a1::Nil)), or_0_0_not_ai, a1)
     val z02 = AndRightRule(SchemaProofLinkRule(Sequent(and_0_0_ai::Nil, and_0_0_ai::Nil), "\\phi", IntZero()::Nil),
       z01, and_0_0_ai, a1)
@@ -158,7 +159,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
     }
 
     //-- Some subproofs of psi_sn proof
-    val z1 = OrLeftRule(SchemaProofLinkRule(Sequent(and_0_sn_ai::or_0_sn_not_ai::Nil, Nil), "\\xi", Succ(n)::Nil),
+    val z1 = OrLeftRule(SchemaProofLinkRule(Sequent(and_0_sn_ai::or_0_sn_not_ai::Nil, Nil), "\\chi", Succ(n)::Nil),
       Axiom(Sequent(a_ssn::Nil, a_ssn::Nil)), or_0_sn_not_ai, a_ssn)
     val z2 = AndRightRule(SchemaProofLinkRule(Sequent(and_0_sn_ai::Nil, and_0_sn_ai::Nil), "\\phi", Succ(n)::Nil),
       z1, and_0_sn_ai, a_ssn)
@@ -177,7 +178,7 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
 
     "extract a schema clause set from varPhi_n" in {
       SchemaProofDB.clear
-      SchemaProofDB.put( new SchemaProof( "\\xi", n::Nil,
+      SchemaProofDB.put( new SchemaProof( "\\chi", n::Nil,
         new Sequent(and_0_n_ai::or_0_n_not_ai::Nil, Nil),
         xi_0, xi_sn ) )
       SchemaProofDB.put( new SchemaProof( "\\phi", n::Nil,
@@ -202,6 +203,25 @@ class SchemaClauseSetTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
       (new FileWriter("target" + separator + "test-classes" + separator + "cs_ex1.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
         .exportSequentList(cs.map(so => so.getSequent), Nil).close
+
+      // prune the clause set
+      // TODO: this pruned clause set is unsatisfiable ????
+      val m_empty = HashMultiset[SchemaFormula]()
+      val cc0 = (m_empty, m_empty)
+      val cc0psi = (m_empty, m_empty + BigAnd(i, ai, IntZero(), Succ(IntZero())))
+      val cc1phi = (m_empty, m_empty + BigAnd(i, ai, IntZero(), Succ(n)))
+      val cc1xi  = (m_empty + BigAnd(i, ai, IntZero(), Succ(n)), m_empty)
+
+      val cs_pruned = cs.filter( s => !(s.antecedent ++ s.succedent).exists( fo => fo.formula match {
+        case IndexedPredicate(pred, _) => pred.name match {
+          case sym : ClauseSetSymbol => sym.cut_occs != cc1xi && sym.cut_occs != cc1phi && sym.cut_occs != cc0psi && sym.cut_occs != cc0
+          case _ => false
+        }
+        case _ => false
+      } ) )
+
+      (new FileWriter("target" + separator + "test-classes" + separator + "cs-ex1-pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+        .exportSequentList(cs_pruned.map(so => so.getSequent), Nil).close
     }
 
     "extract a schema clause set from a simple proof" in {
