@@ -12,6 +12,7 @@ import BorderPanel._
 import java.awt.Font._
 import java.awt.{RenderingHints, BasicStroke}
 import at.logic.calculi.treeProofs.{BinaryTreeProof, UnaryTreeProof, TreeProof}
+import at.logic.calculi.slk.SchemaProofLinkRule
 
 /*import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
@@ -24,26 +25,25 @@ import ProoftoolSequentFormatter._
 class DrawProof(private val proof: TreeProof[SequentOccurrence], private val fSize: Int) extends BorderPanel {
   background = new Color(255,255,255)
   opaque = false
-  val bd = Swing.MatteBorder(0,0,0,0, new Color(0,0,0))
+  val bd = Swing.EmptyBorder(0,fSize*3,0,fSize*3)
   val ft = new Font(SANS_SERIF, PLAIN, fSize)
-  val labelFont = new Font(MONOSPACED, ITALIC, fSize-1)
+  val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
 
   proof match {
     case p: UnaryTreeProof[SequentOccurrence] =>
-      border = Swing.EmptyBorder(0,0,0, fSize * 4)
+      border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[SequentOccurrence]], fSize)) = Position.Center
-      layout(new Label(sequentOccurenceToString(p.root)) { border = bd; font = ft }) = Position.South
+      layout(new Label(sequentOccurenceToString(p.root)) { font = ft }) = Position.South
     case p: BinaryTreeProof[SequentOccurrence] =>
-      border = Swing.EmptyBorder(0,0,0, fSize * 4)
+      border = bd
       layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[SequentOccurrence]], fSize)) = Position.West
-      layout(new Label("       ") {
-        opaque = false
-        font = labelFont
-        verticalAlignment = Alignment.Bottom
-      }) = Position.Center
       layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[SequentOccurrence]], fSize)) = Position.East
-      layout(new Label(sequentOccurenceToString(p.root)) { border = bd; font = ft }) = Position.South
-    case _ => layout(new Label(sequentOccurenceToString(proof.root)) { font = ft }) = Position.South
+      layout(new Label(sequentOccurenceToString(p.root)) { font = ft }) = Position.South
+    case _ =>
+      layout(new Label(sequentOccurenceToString(proof.root)) {
+        border = Swing.EmptyBorder(0,fSize,0,fSize)
+        font = ft
+      }) = Position.South
   }
 
 /*  def ruleName(rule: RuleTypeA) = rule match {
@@ -92,36 +92,37 @@ class DrawProof(private val proof: TreeProof[SequentOccurrence], private val fSi
 
     super.paintComponent(g)
 
-    val metrics = g.getFontMetrics(labelFont)
+    val metrics = g.getFontMetrics(ft)
     val lineHeight = metrics.getHeight
-    val space = metrics.charWidth('w')
 
     g.setFont(labelFont)
-    // g.setStroke(new BasicStroke(space / 5))
+    // g.setStroke(new BasicStroke(fSize / 25))
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
 
     proof match {
       case p: UnaryTreeProof[SequentOccurrence] => {
         val center = this.layout.find(x => x._2 == Position.Center).get._1
-        val width = center.size.width
+        val width = center.size.width + fSize*6
         val height = center.size.height
-        val seqLength = max(metrics.stringWidth(p.uProof.root.toString), metrics.stringWidth(p.root.toString))
+        val seqLength = max(metrics.stringWidth(sequentOccurenceToString(p.uProof.root)),
+          metrics.stringWidth(sequentOccurenceToString(p.root)))
 
-        g.drawLine((width - seqLength - fSize * 4) / 2, height, (width + seqLength) / 2, height)
-        g.drawString(p.name, (space + width + seqLength) / 2, height + metrics.getMaxDescent)
+        g.drawLine((width - seqLength) / 2, height, (width + seqLength) / 2, height)
+        g.drawString(p.name, (fSize / 4 + width + seqLength) / 2, height + metrics.getMaxDescent)
       }
       case p: BinaryTreeProof[SequentOccurrence] => {
         val left = this.layout.find(x => x._2 == Position.West).get._1
+        val leftWidth = left.size.width + fSize*6
         val right = this.layout.find(x => x._2 == Position.East).get._1
-        val leftWidth = left.size.width
-        val rightWidth = right.size.width
+        val rightWidth = right.size.width + fSize*6
         val height = max(left.size.height, right.size.height)
         val leftSeqLength = metrics.stringWidth(sequentOccurenceToString(p.uProof1.root))
         val rightSeqLength = metrics.stringWidth(sequentOccurenceToString(p.uProof2.root))
-        val seqLength = leftWidth + space * 7 + (rightWidth + rightSeqLength) / 2
 
-        g.drawLine((leftWidth - leftSeqLength - fSize * 4) / 2, height, seqLength, height)
-        g.drawString(p.name, seqLength + space/2, height + metrics.getMaxDescent)
+        val lineLength = leftWidth - fSize*6 + (rightWidth + rightSeqLength) / 2
+
+        g.drawLine((leftWidth - leftSeqLength) / 2, height, lineLength, height)
+        g.drawString(p.name, lineLength + fSize / 4, height + metrics.getMaxDescent)
       }
       case _ =>
     }

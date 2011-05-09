@@ -7,29 +7,21 @@ package at.logic.gui.prooftool.gui
  * Time: 4:25 PM
  */
 
-import at.logic.language.lambda.typedLambdaCalculus.{Abs, Var, App, LambdaExpression}
-import at.logic.language.lambda.types.{To, ->, Ti}
 import at.logic.calculi.lk.base.{SequentOccurrence, Sequent}
+import at.logic.language.lambda.types.{To, ->, Ti}
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.schema._
+import at.logic.language.fol._
+import at.logic.language.hol._
+import at.logic.language.hol.logicSymbols._
 
 object ProoftoolSequentFormatter {
-  //formats a lambda term to a readable string, distinguishing function and logical symbols
+ //formats a lambda term to a readable string, distinguishing function and logical symbols
   def formulaToString(f:LambdaExpression) : String = f match {
     case App(x,y) => x match {
       case App(Var(name,tp),z) =>
         if (name.toString.matches("""[\w\p{InGreek}]*""")) name.toString+"("+formulaToString(z)+","+formulaToString(y)+")"
         else "("+formulaToString(z)+" "+name.toString()+" "+formulaToString(y)+")"
-/*    this code does not produce nice output for prime proof
-      tp match {
-        case ->(Ti(),->(Ti(),To())) =>
-          if (name.toString.contains("<") || name.toString.contains("=") || name.toString.contains(">"))
-            "("+formulaToString(z)+" "+name.toString()+" "+formulaToString(y)+")"
-          else name.toString+"("+formulaToString(z)+","+formulaToString(y)+")"
-        case ->(To(),->(To(),To())) => "("+formulaToString(z)+" "+name.toString()+" "+formulaToString(y)+")"
-        case _ =>
-          if (name.toString.contains("+") || name.toString.contains("*"))
-            "("+formulaToString(z)+" "+name.toString()+" "+formulaToString(y)+")"
-          else name.toString+"("+formulaToString(z)+","+formulaToString(y)+")"
-      } */
       case Var(name,tp) => tp match {
         case ->(To(), To()) => name.toString+formulaToString(y)
         case _ => y match {
@@ -43,6 +35,15 @@ object ProoftoolSequentFormatter {
     case Abs(x,y) => formulaToString(y)
     case  x : Any    => "(unmatched class: "+x.getClass() + ")"
   }
+ /*
+  def formulaToString(f:SchemaExpression) : String = f match {
+    case AppN(BigAndC, SchemaAbs(i, formula)::lower::upper::Nil) => BigAndC.name + "<sub>" + formulaToString(i) + " = " + formulaToString(lower) + "</sub>" +
+      "<sup>" + formulaToString(upper) + "</sup>" + formulaToString(formula)
+    case AppN(BigOrC, SchemaAbs(i, formula)::lower::upper::Nil) => BigAndC.name + "<sub>" + formulaToString(i) + " = " + formulaToString(lower) + "</sub>" +
+      "<sup>" + formulaToString(upper) + "</sup>" + formulaToString(formula)
+    case AppN(pred, indexTerms) => formulaToString(pred)+"<sub>"+indexTerms.map( x => formulaToString(x)).mkString+"</sub>"
+  }*/
+
 
   // formats a sequent to a readable string
   def sequentToString(s : Sequent) : String = {

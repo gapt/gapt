@@ -10,10 +10,8 @@ package at.logic.gui.prooftool.gui
 import scala.swing._
 import java.awt.Font._
 import javax.swing.border.TitledBorder
-import at.logic.calculi.proofs.Proof
 import at.logic.calculi.lk.base.{Sequent, SequentOccurrence}
 import at.logic.gui.prooftool.parser.{ProofUnLoaded, ProofLoaded, ProofToolPublisher}
-import at.logic.language.hol.HOLExpression
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 
@@ -33,7 +31,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
         case proof: TreeProof[SequentOccurrence] =>
           layout(new DrawProof(proof, fSize)) = c
           ProofToolPublisher.publish(ProofLoaded)
-        case struct: Tree[HOLExpression] =>
+        case struct: Tree[_] =>
           layout(new DrawTree(struct, fSize)) = c
           ProofToolPublisher.publish(ProofUnLoaded)
         case clList: List[Sequent] =>
