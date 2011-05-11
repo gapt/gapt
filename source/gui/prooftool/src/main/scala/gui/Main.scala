@@ -15,13 +15,25 @@ import at.logic.calculi.lk.base.{SequentOccurrence, Sequent, LKProof}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
+    showFrame
+    if (args.length >= 1) loadProof(args(0),12)
+    else test
+  }
+
+  def showFrame: Unit = {
     val t = top
     t.pack
     t.location = new Point(100,50)
     t.size = new Dimension(700,500)
     t.visible = true
-    if (args.length >= 1) loadProof(args(0),12)
-    else test
+  }
+
+  // Used for displaying things directly from Scala shell
+  def display(name: String, obj: AnyRef): Unit = {
+    showFrame
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.contents = new Launcher(Some(name, obj), 12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def fOpen: Unit = {
