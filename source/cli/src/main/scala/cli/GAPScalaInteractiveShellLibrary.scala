@@ -218,6 +218,25 @@ object loadProofs {
     def help = ceresHelp.apply
   }
 
+  object huet {
+    import at.logic.parsing.readers.StringReader
+    import at.logic.parsing.language.simple._
+    class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
+
+    def apply(s1: String, s2: String) =  HuetAlgorithm.unify1(new MyParser(s1).getTerm(), new MyParser(s2).getTerm())
+  }
+
+  object normalizeSub{
+    import at.logic.language.lambda.substitutions._
+    import at.logic.language.lambda.BetaReduction
+    import at.logic.language.lambda.BetaReduction._
+    import StrategyOuterInner._
+    import StrategyLeftRight._
+    def apply(sub : Substitution[HOLExpression]):Unit = {
+      sub.map.foreach(x => println("\n<"+(BetaReduction.betaNormalize(x._1)(Outermost)).toStringSimple+" -> "+(BetaReduction.betaNormalize(x._2)(Outermost)).toStringSimple+">"))
+    }
+  }
+
   object ceresHelp {
     def apply() = {
       println("Available commands:")
