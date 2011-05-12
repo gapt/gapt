@@ -11,7 +11,7 @@ import scala.swing._
 import java.awt.Font._
 import javax.swing.border.TitledBorder
 import at.logic.calculi.lk.base.{Sequent, SequentOccurrence}
-import at.logic.gui.prooftool.parser.{ProofUnLoaded, ProofLoaded, ProofToolPublisher}
+import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 
@@ -30,16 +30,20 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       obj match {
         case proof: TreeProof[SequentOccurrence] =>
           layout(new DrawProof(proof, fSize)) = c
-          ProofToolPublisher.publish(ProofLoaded)
+          ProofToolPublisher.publish(Loaded)
+          StructPublisher.publish(UnLoaded)
         case struct: Tree[_] =>
           layout(new DrawTree(struct, fSize)) = c
-          ProofToolPublisher.publish(ProofUnLoaded)
+          ProofToolPublisher.publish(UnLoaded)
+          StructPublisher.publish(Loaded)
         case clList: List[Sequent] =>
           layout(new DrawClList(clList, fSize)) = c
-          ProofToolPublisher.publish(ProofUnLoaded)
+          ProofToolPublisher.publish(UnLoaded)
+          StructPublisher.publish(UnLoaded)
         case _ =>
           layout(new Label("Can't match case: "+option.get._2.getClass.toString)) = c
-          ProofToolPublisher.publish(ProofUnLoaded)
+          ProofToolPublisher.publish(UnLoaded)
+          StructPublisher.publish(UnLoaded)
       }
       val bd: TitledBorder = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 2), " "+name+" ")
       bd.setTitleFont(new Font(SANS_SERIF, BOLD, 16))
