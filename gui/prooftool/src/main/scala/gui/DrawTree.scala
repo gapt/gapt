@@ -8,29 +8,104 @@ package at.logic.gui.prooftool.gui
  */
 
 import scala.swing._
+import event._
 import BorderPanel._
 import java.awt.Font._
 import java.awt.{RenderingHints, BasicStroke}
 import at.logic.utils.ds.trees._
 import at.logic.language.hol.HOLExpression
 import ProoftoolSequentFormatter._
+import at.logic.gui.prooftool.parser.{StructPublisher, ShowLeaf, HideLeaf}
+import at.logic.transformations.ceres.struct.structToExpressionTree.{TimesC, PlusC, EmptyTimesC, EmptyPlusC}
 
 class DrawTree(private val struct: Tree[_], private val fSize: Int) extends BorderPanel {
   background = new Color(255,255,255)
   opaque = false
   val ft = new Font(SANS_SERIF, PLAIN, fSize)
   val bd = Swing.EmptyBorder(0,fSize,0,fSize)
+  private val tx = formulaToString(struct.vertex.asInstanceOf[HOLExpression])
 
   struct match {
     case tree: UnaryTree[_] =>
-      layout(new Label(formulaToString(tree.vertex.asInstanceOf[HOLExpression])) {border = bd; font = ft }) = Position.North
-      layout(new DrawTree(tree.t, fSize)) = Position.Center
+      val label = new Label(tx) {
+        border = bd
+        font = ft
+        listenTo(mouse.clicks, StructPublisher)
+        reactions += {
+          case ShowLeaf => text = tx
+          case e: MouseClicked =>
+            if (text == "x") {
+              text = tx
+              publish(ShowLeaf)
+            }
+            else {
+              text = "x"
+              publish(HideLeaf)
+            }
+        }
+      }
+      layout(label) = Position.North
+      layout(new DrawTree(tree.t, fSize) {
+        listenTo(label, StructPublisher)
+        reactions += {
+          case ShowLeaf => visible = true
+          case HideLeaf => visible = false
+        }
+      }) = Position.Center
     case tree: BinaryTree[_] =>
-      layout(new Label(formulaToString(tree.vertex.asInstanceOf[HOLExpression])) {border = bd; font = ft }) = Position.North
-      layout(new DrawTree(tree.t1, fSize)) = Position.West
-      layout(new DrawTree(tree.t2, fSize)) = Position.East
+      val label = new Label(tx) {
+        tree.vertex match {
+          case TimesC => foreground = new Color(255,0,0)
+          case PlusC => foreground = new Color(0,0,255)
+          case _ =>
+        }
+        border = bd
+        font = ft
+        listenTo(mouse.clicks, StructPublisher)
+        reactions += {
+          case ShowLeaf => text = tx
+          case e: MouseClicked =>
+            if (text == "x") {
+              text = tx
+              publish(ShowLeaf)
+            }
+            else {
+              text = "x"
+              publish(HideLeaf)
+            }
+        }
+      }
+      layout(label) = Position.North
+      layout(new DrawTree(tree.t1, fSize) {
+        listenTo(label, StructPublisher)
+        reactions += {
+          case ShowLeaf => visible = true
+          case HideLeaf => visible = false
+        }
+      }) = Position.West
+      layout(new DrawTree(tree.t2, fSize) {
+        listenTo(label, StructPublisher)
+        reactions += {
+          case ShowLeaf => visible = true
+          case HideLeaf => visible = false
+        }
+      }) = Position.East
     case tree: LeafTree[_] =>
-      layout(new Label(formulaToString(struct.vertex.asInstanceOf[HOLExpression])) {border = bd; font = ft }) = Position.North
+      layout(new Label("x") {
+        tree.vertex match {
+          case EmptyTimesC | EmptyPlusC => foreground = new Color(0,255,0)
+          case _ =>
+        }
+        border = bd
+        font = ft
+        listenTo(mouse.clicks, StructPublisher)
+        reactions += {
+          case ShowLeaf => text = tx
+          case e: MouseClicked =>
+            if (text == "x") text = tx
+            else text = "x"
+        }
+      }) = Position.North
   }
 
   override def paintComponent(g: Graphics2D) = {

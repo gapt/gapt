@@ -11,7 +11,10 @@ import scala.swing.Publisher
 import scala.swing.event.Event
 
 object ProofToolPublisher extends Publisher
+object StructPublisher extends Publisher
 
 case object ProofDbChanged extends Event
-case object ProofLoaded extends Event
-case object ProofUnLoaded extends Event
+case object Loaded extends Event
+case object UnLoaded extends Event
+case object ShowLeaf extends Event
+case object HideLeaf extends Event

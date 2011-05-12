@@ -124,24 +124,26 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       mnemonic = Key.E
+      contents += new MenuItem(Action("ShowLeaves") { StructPublisher.publish(ShowLeaf) }) {
+        border = customBorder
+        enabled = false
+        listenTo(StructPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new Separator
       contents += new MenuItem(Action("Compute ClList") { computeClList }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
         reactions += {
-          case ProofLoaded => this.enabled = true
-          case ProofUnLoaded => this.enabled = false
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
         }
       }
-      contents += new MenuItem(Action("ShowStruct") { showStruct }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case ProofLoaded => this.enabled = true
-          case ProofUnLoaded => this.enabled = false
-        }
-      }
+      contents += new Separator
       contents += new MenuItem(Action("TestRefutation") { testRefutation }) { border = customBorder }
       contents += new MenuItem(Action("test") { test }) { border = customBorder }
     }
@@ -176,6 +178,15 @@ object Main extends SimpleSwingApplication {
             val l = db.getClListNames
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i) { loadClauseSet(i) }) { border = customBorder }
+        }
+      }
+      contents += new MenuItem(Action("Show Struct") { showStruct }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
         }
       }
     }
