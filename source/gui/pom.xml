@@ -23,6 +23,7 @@
           <artifactId>scala-swing</artifactId>
           <version>${scala.version}</version>
       </dependency>
+      <!--
       <dependency>
           <groupId>jgraph</groupId>
           <artifactId>jgraph</artifactId>
@@ -33,6 +34,7 @@
   		<artifactId>jgrapht</artifactId>
   		<version>0.7.3</version>
   	</dependency>
+     -->
      <dependency>
       <groupId>at.logic</groupId>
       <artifactId>fol</artifactId>
