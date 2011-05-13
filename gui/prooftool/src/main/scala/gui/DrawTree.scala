@@ -24,6 +24,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
   val ft = new Font(SANS_SERIF, PLAIN, fSize)
   val bd = Swing.EmptyBorder(0,fSize,0,fSize)
   private val tx = formulaToString(struct.vertex.asInstanceOf[HOLExpression])
+  private var drawLines = true
 
   struct match {
     case tree: UnaryTree[_] =>
@@ -36,10 +37,12 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
           case e: MouseClicked =>
             if (text == "x") {
               text = tx
+              drawLines = true
               publish(ShowLeaf)
             }
             else {
               text = "x"
+              drawLines = false
               publish(HideLeaf)
             }
         }
@@ -67,10 +70,12 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
           case e: MouseClicked =>
             if (text == "x") {
               text = tx
+              drawLines = true
               publish(ShowLeaf)
             }
             else {
               text = "x"
+              drawLines = false
               publish(HideLeaf)
             }
         }
@@ -114,7 +119,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
     g.setStroke(new BasicStroke(fSize / 25, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND))
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
 
-    struct match {
+    if (drawLines) struct match {
       case p: UnaryTree[_] => {
         val north = this.layout.find(x => x._2 == Position.North).get._1
         val north_width = north.size.width
