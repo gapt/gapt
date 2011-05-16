@@ -48,4 +48,27 @@ class SimpleXMLParserTest extends SpecificationWithJUnit {
       tree.vertex must beLike{ case x : String if x == """\/_i=1..n P_i""" => true
                                case _ => false }
     }
+
+    "parse correctly a simple document" in {
+      // use trivial string parser
+      implicit val Parser : String => String = (x => x)
+
+      val trees = (new NodeReader(
+        <prooftrees>
+          <proof symbol="\pi" calculus="LKS">
+            <rule type="or">
+              <conclusion>\/_i=1..n P_i</conclusion>
+              <rule type="axiom">
+                <conclusion>\/_i=2..n P_i \/ P_1</conclusion>
+              </rule>
+            </rule>
+          </proof>
+        </prooftrees>
+      ) with SimpleXMLProofParser).getNamedTrees()
+      trees.size must beEqual(1)
+      val (name, tree) = trees.head
+      name must beEqual("\\pi")
+      tree.vertex must beLike{ case x : String if x == """\/_i=1..n P_i""" => true
+                               case _ => false }
+    }
 }
