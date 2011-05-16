@@ -12,8 +12,8 @@
   </parent>
 
   <modules>
-    <!-- <module>atp</module> --> <!-- commented out since
-				       resolution was changed -->
+    <module>atp</module>
+				   
     <module>prover9</module>
   </modules>
 
