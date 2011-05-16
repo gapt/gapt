@@ -40,16 +40,20 @@ import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 import scala.collection.mutable.Map
 
-package GAPScalaInteractiveShellLibrary {
-import _root_.at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-import _root_.at.logic.calculi.resolution.robinson.{Clause, ClauseOccurrence}
-import _root_.at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import _root_.at.logic.language.fol.{FOLExpression, FOLTerm}
-import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.provers.atp.commands.refinements.base.SequentsMacroCommand
-import _root_.at.logic.provers.atp.commands.refinements.simple.SimpleRefinementGetCommand
-import _root_.at.logic.provers.atp.Prover
+import at.logic.algorithms.unification.hol._
+
+import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
+import at.logic.calculi.resolution.robinson.{Clause, ClauseOccurrence}
+import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.language.fol.{FOLExpression, FOLTerm}
+import at.logic.calculi.resolution.base.ResolutionProof
+import at.logic.provers.atp.commands.refinements.base.SequentsMacroCommand
+import at.logic.provers.atp.commands.refinements.simple.SimpleRefinementGetCommand
+import at.logic.provers.atp.Prover
 import at.logic.parsing.language.simple.SimpleFOLParser
+
+package GAPScalaInteractiveShellLibrary {
+
 object loadProofs {
     def apply(file: String) = 
       try {
