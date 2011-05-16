@@ -12,6 +12,18 @@ import scala.xml.Utility.trim
 import scala.xml._
 
 trait SimpleXMLProofParser extends XMLNodeParser {
+
+  def getNamedTrees[V]()(implicit parser: (String => V) ) : List[(String, Tree[V])] =
+    getNamedTrees( getInput() )
+
+  def getNamedTrees[V](n : Node )(implicit parser: (String => V) ) : List[(String, Tree[V])] =
+    trim(n) match {
+      case <prooftrees>{ns @ _* }</prooftrees> => {
+        ns.toList.map( getNamedTree(_) )
+      }
+      case _ => throw new ParsingException("Could not parse XML: " + n.toString)
+    }
+
   def getNamedTree[V]()(implicit parser: (String => V) ) : (String, Tree[V]) = getNamedTree( getInput() )
 
   def getNamedTree[V]( n : Node )(implicit parser: (String => V) ) : (String, Tree[V]) = 
