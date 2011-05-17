@@ -35,10 +35,10 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
 
   def isTerminal: Boolean = uproblems match {
     case List() => true
-    case _ => return {
-//      println("\nAreAllPairsFlexFlex = "+AreAllPairsFlexFlex(uproblems))
-      AreAllPairsFlexFlex(uproblems)
-    }
+    case _ =>
+      println("\nExistPairOf2DiffConsts = "+ExistPairOf2DiffConsts(uproblems))
+      (AreAllPairsFlexFlex(uproblems) || ExistPairOf2DiffConsts(uproblems))
+
 //    case _ => false
 
   }
@@ -50,6 +50,23 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
           AreAllPairsFlexFlex(uproblemsList.tail)
         case _ => false
       }
+  }
+
+  def ExistPairOf2DiffConsts(uproblemsList : List[Pair[HOLExpression, HOLExpression]]): Boolean = {
+//    println("\nExistPairOf2DiffConsts")
+    uproblemsList match {
+      case List() => false
+      case a::rest => a match {
+        case (c1 @ HOLConst(n1,t1), c2 @ HOLConst(n2,t2)) => {
+          if (c1 != c2 || t1 != t2)
+            true
+          else
+            ExistPairOf2DiffConsts(uproblemsList.tail)
+//        case _ => false
+        }
+      }
+      case _ =>  ExistPairOf2DiffConsts(uproblemsList.tail)
+    }
   }
 
 //  def result: Option[Substitution[HOLExpression]] = uproblems match {
@@ -68,7 +85,7 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
     new ConfigurationNode(uproblems.tail, subList)
   }
 
-  def transformation2:  ConfigurationNode = {
+  def transformation2: ConfigurationNode = {
 //    println("\nrule (2)\n")
     uproblems match {
       case (AbsN(varList1, Function(sym1 : ConstantStringSymbol, args1, returnType1)),AbsN(varList2, Function(sym2 : ConstantStringSymbol, args2, returnType2)))::s => {
@@ -76,8 +93,37 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
 //          println("\n\ntransformation2 return configuration = " + newconf.toString+ "\n\n")
           newconf
       }
+      case _ => exit(2)
     }
   }
+
+
+  //3
+  def transformation3: ConfigurationNode = {
+    uproblems match {
+    case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), v@ AbsN(varList2, v1))::s //3
+          if  doesNotContainFreeBound(v1, (funcVar::Nil).toSet) && varList1.size == varList2.size => {
+            val sigma = Substitution[HOLExpression](funcVar, v)
+            new ConfigurationNode(
+              (HuetAlgorithm.applySubToListOfPairs(uproblems.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
+              (funcVar,v)::HuetAlgorithm.applySubToListOfPairs(subList,sigma).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]))
+          }
+
+    case (v@ AbsN(varList2, v1), AbsN(varList1, AppN(funcVar: HOLVar, args1)))::s //3
+          if  doesNotContainFreeBound(v1, (funcVar::Nil).toSet) && varList1.size == varList2.size => {
+            val sigma = Substitution[HOLExpression](funcVar, v)
+            new ConfigurationNode(
+              (HuetAlgorithm.applySubToListOfPairs(uproblems.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
+              (funcVar,v)::HuetAlgorithm.applySubToListOfPairs(subList,sigma).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]))
+          }
+      case _ => exit(3)
+    }
+  }
+
+
+
+
+
 // 4 a
   def transformation4a(uprobl : List[Pair[HOLExpression, HOLExpression]])(implicit disAllowedVars: Set[Var] ) :  ConfigurationNode = {
     uprobl match {
@@ -294,11 +340,15 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
 //          exit(3)
         }
 
-//        case (AppN(funcVar: HOLVar, args1), term2 : Function(sym2 : ConstantStringSymbol, args2, returnType2))::s//
-//          if  doesNotContainFreeBound(term2, (funcVar::Nil).toSet) => {
-//
-//            conf.transformation3(uproblems)::Nil
-//          }
+        case (AppN(funcVar: HOLVar, args1), term2 @ Function(sym2 : ConstantStringSymbol, args2, returnType2))::s //3
+          if  doesNotContainFreeBound(term2, (funcVar::Nil).toSet) => {
+            conf.transformation3::Nil
+          }
+
+        case (term2 @ Function(sym2 : ConstantStringSymbol, args2, returnType2), AppN(funcVar: HOLVar, args1))::s //3 symmetric case
+          if  doesNotContainFreeBound(term2, (funcVar::Nil).toSet) => {
+            conf.transformation3::Nil
+          }
 
 //        case (AbsN(varList1, AppN(funcVar: HOLVar, args1)),AbsN(varList2, Function(sym2 : ConstantStringSymbol, args2, returnType2)))::s//
 //          if varList1.size == varList2.size =>
