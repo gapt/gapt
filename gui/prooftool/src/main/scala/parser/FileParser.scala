@@ -12,6 +12,8 @@ import java.io.{FileInputStream, InputStreamReader}
 import at.logic.parsing.language.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.language.xml.ProofDatabase
+import at.logic.parsing.calculi.xml.SimpleXMLProofParser
+import at.logic.calculi.treeProofs.TreeProof
 
 class FileParser {
 
@@ -27,11 +29,21 @@ class FileParser {
         ProofToolPublisher.publish(ProofDbChanged)
   }
 
+  def StabFileReader(f: String) = try {
+    trees = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with SimpleXMLProofParser).getNamedTrees()
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(new Label(t),"Couldn't load file: "+f+"!\n\n"+t.replaceAll(",","\n"))
+  }
+
   def getDB = proofdb
   def getProofNames = proofNames
   def getClListNames = clListNames
+  def getTrees = trees
 
   private var proofdb =  new ProofDatabase(Nil,Nil,Nil)
   private var proofNames: List[String] = Nil
   private var clListNames: List[String] = Nil
+  private var trees: List[(String, TreeProof[_])] = Nil
 }

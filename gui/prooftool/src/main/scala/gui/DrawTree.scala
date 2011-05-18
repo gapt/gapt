@@ -22,8 +22,11 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
   background = new Color(255,255,255)
   opaque = false
   val ft = new Font(SANS_SERIF, PLAIN, fSize)
-  val bd = Swing.EmptyBorder(0,fSize,0,fSize)
-  private val tx = formulaToString(struct.vertex.asInstanceOf[HOLExpression])
+  val bd = Swing.EmptyBorder(fSize / 2)
+  private val tx = struct.vertex match {
+    case he: HOLExpression => formulaToString(he)
+    case _ => struct.vertex.toString
+  }
   private var drawLines = true
 
   struct match {
@@ -33,7 +36,9 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
         font = ft
         listenTo(mouse.clicks, StructPublisher)
         reactions += {
-          case ShowLeaf => text = tx
+          case ShowLeaf =>
+            text = tx
+            drawLines = true
           case e: MouseClicked =>
             if (text == "x") {
               text = tx
@@ -66,7 +71,9 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
         font = ft
         listenTo(mouse.clicks, StructPublisher)
         reactions += {
-          case ShowLeaf => text = tx
+          case ShowLeaf =>
+            text = tx
+            drawLines = true
           case e: MouseClicked =>
             if (text == "x") {
               text = tx
@@ -126,9 +133,8 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
         val north_height = north.size.height
         val center = this.layout.find(x => x._2 == Position.Center).get._1
         val center_width = center.size.width
-        val center_height = center.size.height
 
-        g.drawLine(north_width / 2, north_height - fSize / 4, center_width / 2, north_height + fSize / 6)
+        g.drawLine(north_width / 2, north_height - fSize/2, center_width / 2, north_height + fSize/2)
       }
       case p: BinaryTree[_] => {
         val north = this.layout.find(x => x._2 == Position.North).get._1
@@ -136,13 +142,11 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
         val northHeight = north.size.height
         val left = this.layout.find(x => x._2 == Position.West).get._1
         val leftWidth = left.size.width
-        val leftHeight = left.size.height
         val right = this.layout.find(x => x._2 == Position.East).get._1
         val rightWidth = right.size.width
-        val rightHeight = right.size.height
 
-        g.drawLine(northWidth / 2, northHeight - fSize / 4, leftWidth / 2, northHeight + fSize / 6)
-        g.drawLine(northWidth / 2, northHeight - fSize / 4, leftWidth + rightWidth / 2, northHeight + fSize / 6)
+        g.drawLine(northWidth / 2, northHeight - fSize /2, left.location.x + leftWidth / 2, northHeight + fSize /2)
+        g.drawLine(northWidth / 2, northHeight - fSize /2, right.location.x + rightWidth / 2, northHeight + fSize /2)
       }
       case _ =>
     }
