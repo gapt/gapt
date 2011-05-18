@@ -17,7 +17,6 @@ object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
     showFrame
     if (args.length >= 1) loadProof(args(0),12)
-    else test
   }
 
   def showFrame: Unit = {
@@ -73,7 +72,7 @@ object Main extends SimpleSwingApplication {
   // Used for ShowProof menu
   def loadProof(proofName: String): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val proof = db.getDB.proofs.find(x => x._1 == proofName)
+    val proof = db.getProofs.find(x => x._1 == proofName)
     body.contents = new Launcher(proof, 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -81,8 +80,8 @@ object Main extends SimpleSwingApplication {
   // Used by startup and open dialog
   def loadProof(path: String, fontSize: Int): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    db.fileReader(path)
-    val proofs = db.getDB.proofs
+    db.parseFile(path)
+    val proofs = db.getProofs
     if (proofs.size > 0) body.contents = new Launcher(Some(proofs.head), fontSize)
     else body.contents = new Launcher(None, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -91,7 +90,7 @@ object Main extends SimpleSwingApplication {
   // Used by Show Clause List menu
   def loadClauseSet(clListName: String): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val clList = db.getDB.sequentLists.find(x => x._1 == clListName)
+    val clList = db.getSequentLists.find(x => x._1 == clListName)
     body.contents = new Launcher(clList, 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -114,18 +113,6 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Open...") { fOpen }) {
         mnemonic = Key.O
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
-        border = customBorder
-      }
-      contents += new MenuItem(Action("Open STAB file") {
-        val e = chooser.showOpenDialog(mBar) match {
-          case FileChooser.Result.Cancel =>
-          case _ =>
-            db.StabFileReader(chooser.selectedFile.getPath)
-            body.contents = new Launcher(Some(db.getTrees.head),12)
-        }
-      }) {
-        //mnemonic = Key.O
-        //this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
         border = customBorder
       }
       contents += new Separator
@@ -187,7 +174,7 @@ object Main extends SimpleSwingApplication {
         listenTo(ProofToolPublisher)
         reactions += {
           case ProofDbChanged =>
-            val l = db.getClListNames
+            val l = db.getSequentListNames
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i) { loadClauseSet(i) }) { border = customBorder }
         }
@@ -259,18 +246,18 @@ object Main extends SimpleSwingApplication {
   }
 
   def test = {
-import at.logic.calculi.lk.macroRules.AndLeftRule
-import at.logic.calculi.lk.base._
-import at.logic.language.schema._
-import at.logic.calculi.slk._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.calculi.occurrences._
-import at.logic.transformations.ceres.struct._
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+    import at.logic.calculi.lk.macroRules.AndLeftRule
+    import at.logic.calculi.lk.base._
+    import at.logic.language.schema._
+    import at.logic.calculi.slk._
+    import at.logic.calculi.lk.propositionalRules._
+    import at.logic.language.lambda.symbols.VariableStringSymbol
+    import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+    import at.logic.calculi.occurrences._
+    import at.logic.transformations.ceres.struct._
+    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
-     implicit val factory = PointerFOFactoryInstance
+    implicit val factory = PointerFOFactoryInstance
     //--  Create LKS proof (Alex's example) --//
 
     //-- Some formula definitions
@@ -294,7 +281,7 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
     val or_0_ssn_not_ai = BigOr(i, Neg(ai), IntZero(), Succ(Succ(n)))
     // end of formula definitions --//
 
-     //-- Some subproofs of varPhi_0 proof
+    //-- Some subproofs of varPhi_0 proof
     val psi0 = SchemaProofLinkRule(Sequent(and_0_0_ai::Or(or_0_0_not_ai, a1)::Nil, and_0_1_ai::Nil),
         "\\psi", IntZero()::Nil)
     val xi0 = SchemaProofLinkRule(Sequent(and_0_1_ai::or_0_1_not_ai::Nil, Nil), "\\xi", Succ(IntZero())::Nil)
@@ -370,32 +357,32 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
     val psi_sn = ContractionLeftRule(z3, and_0_sn_ai)
 
 
-          SchemaProofDB.clear
-      SchemaProofDB.put( new SchemaProof( "\\xi", n::Nil,
+    SchemaProofDB.clear
+    SchemaProofDB.put( new SchemaProof( "\\xi", n::Nil,
         new Sequent(and_0_n_ai::or_0_n_not_ai::Nil, Nil),
         xi_0, xi_sn ) )
-      SchemaProofDB.put( new SchemaProof( "\\phi", n::Nil,
+    SchemaProofDB.put( new SchemaProof( "\\phi", n::Nil,
         new Sequent(and_0_n_ai::Nil, and_0_n_ai::Nil),
         phi_0, phi_sn ) )
-      SchemaProofDB.put( new SchemaProof( "\\psi", n::Nil,
+    SchemaProofDB.put( new SchemaProof( "\\psi", n::Nil,
         new Sequent(and_0_n_ai::Or(or_0_n_not_ai, a_sn)::Nil, and_0_sn_ai::Nil),
         psi_0, psi_sn ))
-      SchemaProofDB.put( new SchemaProof( "\\varphi", n::Nil,
+    SchemaProofDB.put( new SchemaProof( "\\varphi", n::Nil,
         new Sequent(and_0_n_ai::Or(or_0_n_not_ai, a_sn)::Nil, Neg(or_0_sn_not_ai)::Nil),
         varPhi_0, varPhi_sn ) )
 
-      checkProofLinks( xi_0 )
-      checkProofLinks( xi_sn )
-      checkProofLinks( phi_0 )
-      checkProofLinks( phi_sn )
-      checkProofLinks( psi_0 )
-      checkProofLinks( psi_sn )
-      checkProofLinks( varPhi_0 )
-      checkProofLinks( varPhi_sn )
+    checkProofLinks( xi_0 )
+    checkProofLinks( xi_sn )
+    checkProofLinks( phi_0 )
+    checkProofLinks( phi_sn )
+    checkProofLinks( psi_0 )
+    checkProofLinks( psi_sn )
+    checkProofLinks( varPhi_0 )
+    checkProofLinks( varPhi_sn )
 
-      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
- //   body.contents = new Launcher(Some("Schema CL List", cs.map(x => x.getSequent)), 16)
-    body.contents = new Launcher(Some("Schema varphi_sn", varPhi_sn), 16)
+    val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
+    body.contents = new Launcher(Some("Schema CL List", cs.map(x => x.getSequent)), 16)
+   // body.contents = new Launcher(Some("Schema varphi_sn", varPhi_sn), 16)
   }
 
   val body = new MyScrollPane
