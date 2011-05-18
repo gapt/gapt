@@ -13,37 +13,47 @@ import at.logic.parsing.language.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.parsing.calculi.xml.SimpleXMLProofParser
+import at.logic.parsing.ParsingException
 import at.logic.calculi.treeProofs.TreeProof
 
 class FileParser {
 
-  def fileReader(f: String): Unit = try {
+  def fileReader(f: String): Unit = {
     proofdb = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
+    proofs = proofdb.proofs
     proofNames = proofdb.proofs.map( x => x._1)
-    clListNames = proofdb.sequentLists.map( x => x._1)
+    sequentListNames = proofdb.sequentLists.map( x => x._1)
+  }
+
+  def StabFileReader(f: String) = {
+    proofs = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with SimpleXMLProofParser).getNamedTrees()
+    proofNames = proofs.map( x => x._1)
+    sequentListNames = Nil
+  }
+
+  def parseFile(path: String) = try {
+    fileReader(path)
     ProofToolPublisher.publish(ProofDbChanged)
   } catch {
-      case e: AnyRef =>
-        val t = e.toString
-        Dialog.showMessage(new Label(t),"Couldn't load file: "+f+"!\n\n"+t.replaceAll(",","\n"))
-        ProofToolPublisher.publish(ProofDbChanged)
+    case pe: ParsingException => try {
+      StabFileReader(path)
+      ProofToolPublisher.publish(ProofDbChanged)
+    } catch {
+      case e: AnyRef => errorMessage(e.toString, path)
+    }
+    case e: AnyRef => errorMessage(e.toString, path)
   }
 
-  def StabFileReader(f: String) = try {
-    trees = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with SimpleXMLProofParser).getNamedTrees()
-  } catch {
-      case e: AnyRef =>
-        val t = e.toString
-        Dialog.showMessage(new Label(t),"Couldn't load file: "+f+"!\n\n"+t.replaceAll(",","\n"))
-  }
+  def errorMessage(err: String, path: String) =
+        Dialog.showMessage(new Label(err),"Couldn't load file: "+path+"!\n\n"+err.replaceAll(",","\n"))
 
-  def getDB = proofdb
+  def getSequentLists = proofdb.sequentLists
+  def getSequentListNames = sequentListNames
+  def getProofs = proofs
   def getProofNames = proofNames
-  def getClListNames = clListNames
-  def getTrees = trees
 
-  private var proofdb =  new ProofDatabase(Nil,Nil,Nil)
+  private var proofdb = new ProofDatabase(Nil,Nil,Nil)
+  private var proofs: List[(String, TreeProof[_])] = Nil
   private var proofNames: List[String] = Nil
-  private var clListNames: List[String] = Nil
-  private var trees: List[(String, TreeProof[_])] = Nil
+  private var sequentListNames: List[String] = Nil
 }
