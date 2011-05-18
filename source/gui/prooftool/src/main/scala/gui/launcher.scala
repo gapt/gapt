@@ -14,6 +14,7 @@ import at.logic.calculi.lk.base.{Sequent, SequentOccurrence}
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
+import at.logic.language.hol.HOLExpression
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -28,12 +29,12 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       c.grid = (0,0)
       c.insets.set(15, 15, 15, 15)
       obj match {
-        case proof: TreeProof[SequentOccurrence] =>
+        case proof: TreeProof[_] =>
           layout(new DrawProof(proof, fSize)) = c
           ProofToolPublisher.publish(Loaded)
           StructPublisher.publish(UnLoaded)
-        case struct: Tree[_] =>
-          layout(new DrawTree(struct, fSize)) = c
+        case tree: Tree[_] =>
+          layout(new DrawTree(tree, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(Loaded)
         case clList: List[Sequent] =>

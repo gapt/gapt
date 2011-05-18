@@ -116,6 +116,18 @@ object Main extends SimpleSwingApplication {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
         border = customBorder
       }
+      contents += new MenuItem(Action("Open STAB file") {
+        val e = chooser.showOpenDialog(mBar) match {
+          case FileChooser.Result.Cancel =>
+          case _ =>
+            db.StabFileReader(chooser.selectedFile.getPath)
+            body.contents = new Launcher(Some(db.getTrees.head),12)
+        }
+      }) {
+        //mnemonic = Key.O
+        //this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
       contents += new Separator
       contents += new MenuItem(Action("Exit") { fExit }) {
         mnemonic = Key.E

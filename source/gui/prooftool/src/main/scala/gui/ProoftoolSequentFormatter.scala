@@ -44,7 +44,6 @@ object ProoftoolSequentFormatter {
     case AppN(pred, indexTerms) => formulaToString(pred)+"<sub>"+indexTerms.map( x => formulaToString(x)).mkString+"</sub>"
   }*/
 
-
   // formats a sequent to a readable string
   def sequentToString(s : Sequent) : String = {
     var sb = new scala.StringBuilder()
