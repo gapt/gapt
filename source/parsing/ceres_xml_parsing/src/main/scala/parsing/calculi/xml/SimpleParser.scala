@@ -45,7 +45,8 @@ trait SimpleXMLProofParser extends XMLNodeParser {
           getTreeRec( ns.head )
         }
         case <rule><conclusion>{ c @ _ }</conclusion>{ ns @ _* }</rule> => {
-          val prems = ns.filter( n => n.label == "rule" ).map( n => getTreeRec( n ) ).toList
+ //         val prems = ns.filter( n => n.label == "rule" ).map( n => getTreeRec( n ) ).toList
+          val prems = ns.map( n => getTreeRec( n ) ).toList
           val conc = parser(c.head.text)
           if ( prems.size == 0 )
             new LeafTree[V]( conc ) with NullaryTreeProof[V] {
@@ -54,18 +55,25 @@ trait SimpleXMLProofParser extends XMLNodeParser {
           else if ( prems.size == 1 )
             new UnaryTree[V]( conc, prems.head ) with UnaryTreeProof[V] {
               def rule = UnaryRuleType
+              override def name = (n \ "@type").text
             }
           else if ( prems.size == 2 )
             new BinaryTree[V]( conc, prems.head, prems.tail.head ) with BinaryTreeProof[V] {
               def rule = BinaryRuleType
+              override def name = (n \ "@type").text
             }
           else
             throw new ParsingException( "Do not support " + prems.size + "-ary trees!" )
         }
-        case <prooflink/> => {
+        case <prooflink /> => {
+          //Simple implementation of prooflink, should be changed later!
+          val conc = parser((n \ "@symbol").text)
+          new LeafTree[V]( conc ) with NullaryTreeProof[V] {
+            def rule = NullaryRuleType
+          }
           //n.attribute("symbol").get.head.text
           // TODO: create DAG!?
-          throw new ParsingException("Could not parse prooflink node (not supported yet): " + n.toString)
+          //throw new ParsingException("Could not parse prooflink node (not supported yet): " + n.toString)
         }
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
