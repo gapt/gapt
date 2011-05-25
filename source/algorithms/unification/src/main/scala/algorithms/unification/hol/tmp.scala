@@ -13,6 +13,8 @@ package huet {
 
 import at.logic.algorithms.unification.hol._
 
+import at.logic.language.lambda.etaExpansion._
+
 import scala.collection.immutable.{Map, HashMap}
 import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
 import at.logic.language.lambda.types. {->, Ti, TA, FunctionType}
@@ -47,11 +49,10 @@ import at.logic.language.lambda.BetaReduction
         throw new IllegalArgumentException("Types of pairs do not match")
       else {
 //        implicit val disAllowedVars = Set[Var]()
-        new NDStream[Substitution[HOLExpression]](new MyConfiguration(uproblems, None, false), MyFun) with BFSAlgorithm
+        new NDStream[Substitution[HOLExpression]](new MyConfiguration(etaBetaNormalization(uproblems), None, false), MyFun) with BFSAlgorithm
       }
 
     def apply(e1 : HOLExpression, e2 : HOLExpression): NDStream[Substitution[HOLExpression]] = apply((e1,e2)::Nil)
-
 
 
 
@@ -220,6 +221,10 @@ import at.logic.language.lambda.BetaReduction
     def isHOLVar(f: HOLExpression): Boolean = f match {
       case HOLVar(n,t) => true
       case _ => false
+    }
+
+    def etaBetaNormalization(uprobl : List[Pair[HOLExpression, HOLExpression]]) : List[Pair[HOLExpression, HOLExpression]] = {
+      uprobl.map(x => Tuple2(BetaReduction.betaNormalize(EtaNormalize(x._1)(Set[Var]()))(Outermost) , BetaReduction.betaNormalize(EtaNormalize(x._2)(Set[Var]()))(Outermost))).asInstanceOf[List[Pair[HOLExpression, HOLExpression]]]
     }
 
 
