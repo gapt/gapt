@@ -35,39 +35,15 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
 
   def isTerminal: Boolean = uproblems match {
     case List() => true
-    case _ =>
-      println("\nExistPairOf2DiffConsts = "+ExistPairOf2DiffConsts(uproblems))
-      (AreAllPairsFlexFlex(uproblems) || ExistPairOf2DiffConsts(uproblems))
+//    case _ =>
+//      println("\nExistPairOf2DiffConsts = "+ExistPairOf2DiffConsts(uproblems))
+      //AreAllPairsFlexFlex(uproblems)// || ExistPairOf2DiffConsts(uproblems))
 
-//    case _ => false
+    case _ => false
 
   }
 
-  def AreAllPairsFlexFlex(uproblemsList : List[Pair[HOLExpression, HOLExpression]]): Boolean = uproblemsList match {
-      case List() => true
-      case a::rest => a match {
-        case (HOLVar(n1,t1), HOLVar(n2,t2)) if t1 == t2 =>
-          AreAllPairsFlexFlex(uproblemsList.tail)
-        case _ => false
-      }
-  }
 
-  def ExistPairOf2DiffConsts(uproblemsList : List[Pair[HOLExpression, HOLExpression]]): Boolean = {
-//    println("\nExistPairOf2DiffConsts")
-    uproblemsList match {
-      case List() => false
-      case a::rest => a match {
-        case (c1 @ HOLConst(n1,t1), c2 @ HOLConst(n2,t2)) => {
-          if (c1 != c2 || t1 != t2)
-            true
-          else
-            ExistPairOf2DiffConsts(uproblemsList.tail)
-//        case _ => false
-        }
-      }
-      case _ =>  ExistPairOf2DiffConsts(uproblemsList.tail)
-    }
-  }
 
 //  def result: Option[Substitution[HOLExpression]] = uproblems match {
 //    case List() => Some(Substitution[HOLExpression](subList.map( x => (x._1.asInstanceOf[HOLVar],x._2) )))
@@ -75,10 +51,11 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
 //  }
   def result: Option[Substitution[HOLExpression]] = uproblems match {
     case List() => Some(Substitution[HOLExpression](subList.map( x => (x._1.asInstanceOf[HOLVar],x._2) )))
-    case _ => if (AreAllPairsFlexFlex(uproblems))
-                Some(Substitution[HOLExpression](subList.map( x => (x._1.asInstanceOf[HOLVar],x._2) )))
-              else
-                None
+//    case _ => if (AreAllPairsFlexFlex(uproblems))
+//                Some(Substitution[HOLExpression](subList.map( x => (x._1.asInstanceOf[HOLVar],x._2) )))
+//              else
+//                None
+        case _ => None
   }
 
   def transformation1: ConfigurationNode = {
@@ -99,26 +76,26 @@ class ConfigurationNode(val uproblems : List[Pair[HOLExpression, HOLExpression]]
 
 
   //3
-  def transformation3: ConfigurationNode = {
-    uproblems match {
-    case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), v@ AbsN(varList2, v1))::s //3
-          if  doesNotContainFreeBound(v1, (funcVar::Nil).toSet) && varList1.size == varList2.size => {
-            val sigma = Substitution[HOLExpression](funcVar, v)
-            new ConfigurationNode(
-              (HuetAlgorithm.applySubToListOfPairs(uproblems.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
-              (funcVar,v)::HuetAlgorithm.applySubToListOfPairs(subList,sigma).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]))
-          }
-
-    case (v@ AbsN(varList2, v1), AbsN(varList1, AppN(funcVar: HOLVar, args1)))::s //3
-          if  doesNotContainFreeBound(v1, (funcVar::Nil).toSet) && varList1.size == varList2.size => {
-            val sigma = Substitution[HOLExpression](funcVar, v)
-            new ConfigurationNode(
-              (HuetAlgorithm.applySubToListOfPairs(uproblems.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
-              (funcVar,v)::HuetAlgorithm.applySubToListOfPairs(subList,sigma).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]))
-          }
-      case _ => exit(3)
-    }
-  }
+//  def transformation3: ConfigurationNode = {
+////    uproblems match {
+////    case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), v@ AbsN(varList2, v1))::s //3
+////          if  doesNotContainFreeBound(v1, (funcVar::Nil).toSet) && varList1.size == varList2.size => {
+////            val sigma = Substitution[HOLExpression](funcVar, v)
+////            new ConfigurationNode(
+////              (HuetAlgorithm.applySubToListOfPairs(uproblems.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
+////              (funcVar,v)::HuetAlgorithm.applySubToListOfPairs(subList,sigma).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]))
+////          }
+////
+////    case (v@ AbsN(varList2, v1), AbsN(varList1, AppN(funcVar: HOLVar, args1)))::s //3
+////          if  doesNotContainFreeBound(v1, (funcVar::Nil).toSet) && varList1.size == varList2.size => {
+////            val sigma = Substitution[HOLExpression](funcVar, v)
+////            new ConfigurationNode(
+////              (HuetAlgorithm.applySubToListOfPairs(uproblems.tail, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) ,
+////              (funcVar,v)::HuetAlgorithm.applySubToListOfPairs(subList,sigma).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]))
+////          }
+////      case _ => exit(3)
+////    }
+//  }
 
 
 
@@ -323,6 +300,33 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
 //      def isTerminal = result != None
 //    }
 
+    def AreAllPairsFlexFlex(uproblemsList : List[Pair[HOLExpression, HOLExpression]]): Boolean = uproblemsList match {
+          case List() => true
+          case a::rest => a match {
+            case (HOLVar(n1,t1), HOLVar(n2,t2)) if t1 == t2 =>
+              AreAllPairsFlexFlex(uproblemsList.tail)
+            case _ => false
+          }
+    }
+
+
+//    def ExistPairOf2DiffConsts(uproblemsList : List[Pair[HOLExpression, HOLExpression]]): Boolean = {
+//  //    println("\nExistPairOf2DiffConsts")
+//      uproblemsList match {
+//        case List() => false
+//        case a::rest => a match {
+//          case (c1 @ HOLConst(n1,t1), c2 @ HOLConst(n2,t2)) => {
+//            if (c1 != c2 || t1 != t2)
+//              true
+//            else
+//              ExistPairOf2DiffConsts(uproblemsList.tail)
+//  //        case _ => false
+//          }
+//        }
+//        case _ =>  ExistPairOf2DiffConsts(uproblemsList.tail)
+//      }
+//    }
+
     def myFun1(conf1: Configuration[Substitution[HOLExpression]])(implicit disAllowedVars: Set[Var] ): List[Configuration[Substitution[HOLExpression]]] = {
       val conf = conf1.asInstanceOf[ConfigurationNode]
       val uproblems = conf.uproblems
@@ -334,21 +338,17 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
         case (AbsN(varList1, Function(sym1 : ConstantStringSymbol, args1, returnType1)),AbsN(varList2, Function(sym2 : ConstantStringSymbol, args2, returnType2)))::s
           if sym1 == sym2 && varList1.size == varList2.size && returnType1 == returnType2 => conf.transformation2::Nil //2
 
-        case (HOLVar(n1,t1), HOLVar(n2,t2))::s  if  t1 == t2 => { // (flex,flex)
-//          println("\nmyFyn case  => (flex,flex)\n");
-          conf1::List[Configuration[Substitution[HOLExpression]]]()
-//          exit(3)
-        }
 
-        case (AppN(funcVar: HOLVar, args1), term2 @ Function(sym2 : ConstantStringSymbol, args2, returnType2))::s //3
-          if  doesNotContainFreeBound(term2, (funcVar::Nil).toSet) => {
-            conf.transformation3::Nil
-          }
-
-        case (term2 @ Function(sym2 : ConstantStringSymbol, args2, returnType2), AppN(funcVar: HOLVar, args1))::s //3 symmetric case
-          if  doesNotContainFreeBound(term2, (funcVar::Nil).toSet) => {
-            conf.transformation3::Nil
-          }
+//
+//        case (AppN(funcVar: HOLVar, args1), term2 @ Function(sym2 : ConstantStringSymbol, args2, returnType2))::s //3
+//          if  doesNotContainFreeBound(term2, (funcVar::Nil).toSet) => {
+//            conf.transformation3::Nil
+//          }
+//
+//        case (term2 @ Function(sym2 : ConstantStringSymbol, args2, returnType2), AppN(funcVar: HOLVar, args1))::s //3 symmetric case
+//          if  doesNotContainFreeBound(term2, (funcVar::Nil).toSet) => {
+//            conf.transformation3::Nil
+//          }
 
 //        case (AbsN(varList1, AppN(funcVar: HOLVar, args1)),AbsN(varList2, Function(sym2 : ConstantStringSymbol, args2, returnType2)))::s//
 //          if varList1.size == varList2.size =>
@@ -376,14 +376,25 @@ object HuetAlgorithm extends UnificationAlgorithm[HOLExpression]
           cl
         }
 
+
+
+        //(flex,flex)
+        case (HOLVar(n1,t1), HOLVar(n2,t2))::s if t1 == t2 && n1 != n2 =>  {
+          if(AreAllPairsFlexFlex(uproblems))
+          {
+             (new ConfigurationNode(List[Pair[HOLExpression, HOLExpression]](), conf.subList ::: uproblems))::Nil
+          }
+          (new ConfigurationNode(uproblems.tail ::: (uproblems.head::Nil), conf.subList ::: uproblems))::Nil
+        }
+
         case _ => {
           println("\nNo unifier! ")
 //          println("\nmyFyn unapply : "+uproblems.head._1+"            "+HOLVar.unapply(uproblems.head._1).get)
 //          conf1.isTerminal = true
 
 
-//          List[Configuration[Substitution[HOLExpression]]]()
-          conf1::List[Configuration[Substitution[HOLExpression]]]()
+          List[Configuration[Substitution[HOLExpression]]]()
+//          conf1::List[Configuration[Substitution[HOLExpression]]]()
         }
       }
     }
