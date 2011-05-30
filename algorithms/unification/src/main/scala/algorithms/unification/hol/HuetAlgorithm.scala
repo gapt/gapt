@@ -10,7 +10,6 @@ package algorithms.unification.hol
 
 package huet {
 
-import at.logic.algorithms.unification.hol._
 import at.logic.language.lambda.etaExpansion._
 import scala.collection.immutable.{Map, HashMap}
 import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
@@ -98,7 +97,7 @@ import at.logic.language.lambda.BetaReduction
           // (4ab)
           case (t1 @ AbsN(args1,AppN1(f,ls1)), t2 @ AbsN(args2,AppN1(a,ls2)))::rest if isHOLVar(f.asInstanceOf[HOLExpression]) && (isFreeVarIn(a.asInstanceOf[HOLExpression], t2) || isFunctionConstantSymbol(a.asInstanceOf[HOLExpression]) )=> {// (4)
                 //4a
-                val imitation = pairPartialBindingImitation((t1, t2)::rest)._2
+                val imitation = pairPartialBindingImitation(Tuple2(t1, t2)::rest)._2
 
                 ( //4b
                   if (isFunctionConstantSymbol(a.asInstanceOf[HOLExpression]) || args2.contains(a)) {
@@ -299,7 +298,7 @@ import at.logic.language.lambda.BetaReduction
             val term = AppN(Var(sym, headType,funcVar.factory), appzHlist)
             val part_bind_t = AbsN(newVarList, term ).asInstanceOf[HOLExpression]
             val sigma = Substitution[HOLExpression](funcVar, part_bind_t)
-            val newConfNode = (new MyConfiguration((HuetAlgorithm.applySubToListOfPairs(uprobl, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) :::((funcVar,part_bind_t) ::Nil), None, false))
+            val newConfNode = (new MyConfiguration((applySubToListOfPairs(uprobl, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) :::((funcVar,part_bind_t) ::Nil), None, false))
             Pair(part_bind_t, newConfNode::Nil)
           }
       case _ => println("\nError in 4a\n") ; exit(0)
@@ -346,10 +345,10 @@ import at.logic.language.lambda.BetaReduction
            }
          })
          val listOfSubstPartBindPair = (listOfPartBindings.map(x => Substitution[HOLExpression](funcVar, x))).zip(listOfPartBindings)
-         val llist = listOfSubstPartBindPair.map(x => Tuple2(HuetAlgorithm.applySubToListOfPairs(s,x._1), x._2))
+         val llist = listOfSubstPartBindPair.map(x => Tuple2(applySubToListOfPairs(s,x._1), x._2))
          val newl = llist.map(x => {
            val sigma = Substitution[HOLExpression](funcVar, x._2);
-           new MyConfiguration(HuetAlgorithm.applySubToListOfPairs( uprobl, sigma) :::( Pair(funcVar, x._2)::Nil))
+           new MyConfiguration(applySubToListOfPairs( uprobl, sigma) :::( Pair(funcVar, x._2)::Nil))
            })
          return newl
         }
