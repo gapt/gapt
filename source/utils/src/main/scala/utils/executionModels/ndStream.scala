@@ -21,7 +21,7 @@ package ndStream {
     def isTerminal: Boolean // terminal nodes are not added to the configuration queue
   }
 
-  abstract class NDStream[S /*result type*/](val initial: Configuration[S], val myFun: Configuration[S] => Iterable[Configuration[S]]) extends SearchAlgorithm {
+  abstract class NDStream[S /*result type*/](val initial: Configuration[S], val myFun: Function1[Configuration[S], List[Configuration[S]]]) extends SearchAlgorithm {
     type T = Configuration[S]
     private val results: Queue[S] = new Queue[S]()
     protected def init: Unit = add(initial)
