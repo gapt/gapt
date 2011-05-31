@@ -18,8 +18,7 @@
     <module>dependencies</module>
     <module>algorithms</module>
     <module>gui</module>
-    <!-- <module>cli</module> //needed to remove this because it depends on atp -->
-    <!--<module>ui</module>-->
+    <module>cli</module>
     <module>parsing</module>
     <module>integration_tests</module>
   </modules>
