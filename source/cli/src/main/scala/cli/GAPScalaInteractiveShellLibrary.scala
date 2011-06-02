@@ -227,7 +227,8 @@ object loadProofs {
     import at.logic.parsing.language.simple._
     class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
 
-    def apply(s1: String, s2: String) =  HuetAlgorithm.unify1(new MyParser(s1).getTerm(), new MyParser(s2).getTerm())
+    def apply(l: List[Tuple2[String, String]]) = Huet(Tuple2(new MyParser(s1).getTerm(), new MyParser(s2).getTerm())::Nil)	
+ def apply(s1: String, s2: String) = apply(Tuple2(s1,s2)::Nil) 
   }
 
   object normalizeSub{
