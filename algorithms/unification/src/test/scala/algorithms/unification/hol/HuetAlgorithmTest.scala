@@ -8,7 +8,7 @@
 package at.logic.algorithms.unification.hol
 
 
-import algorithms.unification.hol.huet._
+import at.logic.algorithms.unification.hol.huet._
 import at.logic.language.lambda.BetaReduction
 import at.logic.language.lambda.BetaReduction._
 import scala.collection.immutable.{Map, HashMap}

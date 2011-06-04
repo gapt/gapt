@@ -263,7 +263,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val terms = List(term1,term2,term3)
 
       val mgu = ACUnification unify(f,terms)
-      //TODO: well this should work, but it does npt in the current implementation. grmbl.
+      //TODO: well this should work, but it does not in the current implementation. grmbl.
       /*
       mgu.length must beEqual (1)
       mgu(0) must beEqual (Substitution[FOLTerm]())
@@ -271,6 +271,20 @@ class ACUnificationTest extends SpecificationWithJUnit {
       */
       ()
 
+    }
+
+    "handle n-ary non-ac function symbols" in {
+      skip ("does not work")
+      val term1 = parse("g( f(a,x), f(b,y), f(c,z) )")
+      val term2 = parse("g(u,u,u)")
+      println(term1)
+      println(term2)
+
+      val mgu = ACUnification unify(f,term1, term2)
+
+      true must beEqual (mgu.length>0)
+      checkResult(mgu,term1,term2)
+      ()
     }
     
     "tests for linear independence should work" in {

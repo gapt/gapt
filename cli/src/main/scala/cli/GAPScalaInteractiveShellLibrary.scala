@@ -51,6 +51,7 @@ import at.logic.provers.atp.commands.refinements.base.SequentsMacroCommand
 import at.logic.provers.atp.commands.refinements.simple.SimpleRefinementGetCommand
 import at.logic.provers.atp.Prover
 import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.language.lambda.substitutions.Substitution
 
 package GAPScalaInteractiveShellLibrary {
 
@@ -225,10 +226,19 @@ object loadProofs {
   object huet {
     import at.logic.parsing.readers.StringReader
     import at.logic.parsing.language.simple._
+    import at.logic.algorithms.unification.hol.huet._
+    import at.logic.utils.executionModels.ndStream.{NDStream, Configuration}
+
     class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
 
-    def apply(l: List[Tuple2[String, String]]) = Huet(Tuple2(new MyParser(s1).getTerm(), new MyParser(s2).getTerm())::Nil)	
- def apply(s1: String, s2: String) = apply(Tuple2(s1,s2)::Nil) 
+    def apply(l: List[Tuple2[String, String]]) : NDStream[Substitution[HOLExpression]] = {
+      val termargs : List[Tuple2[HOLExpression,HOLExpression]] = l map (
+          (arg : Tuple2[String,String]) =>
+          (parse hol arg._1, parse hol arg._2)
+        )
+      Huet(termargs)
+    }
+    def apply(s1: String, s2: String) : NDStream[Substitution[HOLExpression]] = apply(Tuple2(s1,s2)::Nil)
   }
 
   object normalizeSub{

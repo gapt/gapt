@@ -1,4 +1,4 @@
-package algorithms.unification.hol
+package at.logic.algorithms.unification.hol
 
 /**
  * Created by IntelliJ IDEA.
