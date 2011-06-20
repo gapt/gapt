@@ -158,10 +158,10 @@ class PrimeProofTest extends SpecificationWithJUnit {
 //    }
 
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=0" in {
+    def prime1(n: Int, refute: Boolean) = {
       checkForProverOrSkip
 
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-" + n + ".xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
       val proof = proofdb.proofs.head._2
 
@@ -175,7 +175,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
-      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-0-prf.tptp")
+      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-" + n + "-prf.tptp")
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
@@ -183,28 +183,32 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
       val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
-      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-0-cs.tptp")
+      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-" + n + "-cs.tptp")
       writer.write( tptp )
       writer.flush
       val projs = Projections( proof_sk )
-      val path = "target" + separator + "test-classes" + separator + "prime1-0-sk.xml"
+      val path = "target" + separator + "test-classes" + separator + "prime1-" + n + "-sk.xml"
 
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
 
-      Prover9.refute( cs ) must beEqual( true )
-      Prover9.refute( prf ) must beEqual( true )
+      if (refute)
+      {
+        Prover9.refute( cs ) must beEqual( true )
+        Prover9.refute( prf ) must beEqual( true )
+      }
 
-      saveXML( Pair("prime1-0-sk", proof_sk) ::
+      saveXML( Pair("prime1-" + n + "-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
         Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=1" in {
+
+    def euclid(n: Int) = {
       checkForProverOrSkip
 
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-1.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "euclid-" + n + ".xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqual(1)
       val proof = proofdb.proofs.head._2
 
@@ -212,10 +216,13 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
+      // convert struct DAG to tree
+      structToExpressionTree( s )
+
       val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
-      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-1-prf.tptp")
+      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "euclid-" + n + "-prf.tptp")
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
@@ -223,63 +230,34 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
       val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
-      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-1-cs.tptp")
+      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "euclid-" + n + "-cs.tptp")
       writer.write( tptp )
       writer.flush
       val projs = Projections( proof_sk )
-      val path = "target" + separator + "test-classes" + separator + "prime1-1-sk.xml"
+      val path = "target" + separator + "test-classes" + separator + "euclid-" + n + "-sk.xml"
 
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
 
-//      Prover9.refute( cs ) must beEqual( true )
-//      Prover9.refute( prf ) must beEqual( true )
+      //Prover9.refute( cs ) must beEqual( true )
+      //Prover9.refute( prf ) must beEqual( true )
 
-      saveXML( Pair("prime1-1-sk", proof_sk) ::
+      saveXML( Pair("euclid-" + n + "-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
         Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=2" in {
-      checkForProverOrSkip
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=0" in euclid(0)
 
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-2.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
-      proofdb.proofs.size must beEqual(1)
-      val proof = proofdb.proofs.head._2
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=1" in euclid(1)
 
-      //val proof_sk = skolemize( regularize( proof )._1 )
-      val proof_sk = skolemize( proof )
-      val s = StructCreators.extract( proof_sk )
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=2" in euclid(2)
 
-      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=0" in prime1(0, true)
 
-      val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
-      val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-2-prf.tptp")
-      writer_prf.write( tptp_prf )
-      writer_prf.flush
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=1" in prime1(1, false)
 
-
-
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
-      val tptp = TPTPFOLExporter.tptp_problem( cs )
-      val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-2-cs.tptp")
-      writer.write( tptp )
-      writer.flush
-      val projs = Projections( proof_sk )
-      val path = "target" + separator + "test-classes" + separator + "prime1-2-sk.xml"
-
-      val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
-
-
-//      Prover9.refute( cs ) must beEqual( true )
-//      Prover9.refute( prf ) must beEqual( true )
-
-      saveXML( Pair("prime1-2-sk", proof_sk) ::
-        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
-      (new java.io.File( path ) ).exists() must beEqual( true )
-    }
-
-  }
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=1" in prime1(2, false)
+     }
 }
