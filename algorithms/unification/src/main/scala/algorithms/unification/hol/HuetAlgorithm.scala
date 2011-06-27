@@ -204,7 +204,7 @@ import at.logic.language.lambda.BetaReduction
           case _ => x + ((y._2.asInstanceOf[Var], y._1.asInstanceOf[HOLExpression]))
         }
       })
-      new Substitution(new_map)
+      Substitution(new_map)
     }
 
 
@@ -301,7 +301,7 @@ import at.logic.language.lambda.BetaReduction
             val newConfNode = (new MyConfiguration((applySubToListOfPairs(uprobl, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[HOLExpression, HOLExpression]]) :::((funcVar,part_bind_t) ::Nil), None, false))
             Pair(part_bind_t, newConfNode::Nil)
           }
-      case _ => println("\nError in 4a\n") ; exit(0)
+      case _ => println("\nError in 4a\n") ; sys.exit(0)
         }
     }
 
@@ -352,7 +352,7 @@ import at.logic.language.lambda.BetaReduction
            })
          return newl
         }
-      case _ =>  println("\nError in 4b\n");exit(1)
+      case _ =>  println("\nError in 4b\n"); sys.exit(1)
       }
     }
   }

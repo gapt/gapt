@@ -39,13 +39,13 @@ class FileParser {
       StabFileReader(path)
       ProofToolPublisher.publish(ProofDbChanged)
     } catch {
-      case e: AnyRef => errorMessage(e.toString, path)
+      case e: AnyRef => errorMessage(pe.toString + "\n\n" + e.toString, path)
     }
     case e: AnyRef => errorMessage(e.toString, path)
   }
 
   def errorMessage(err: String, path: String) =
-        Dialog.showMessage(new Label(err),"Couldn't load file: "+path+"!\n\n"+err.replaceAll(",","\n"))
+        Dialog.showMessage(new Label(err),"Couldn't load file: "+path+"!\n\n"+err.replaceAll(",","\n").replaceAll(">",">\n"))
 
   def getSequentLists = proofdb.sequentLists
   def getSequentListNames = sequentListNames
