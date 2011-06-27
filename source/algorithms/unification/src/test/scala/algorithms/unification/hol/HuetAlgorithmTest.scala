@@ -110,15 +110,15 @@ class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck
       }
 
       "return an empty substitution on two identical constants" in {
-        Huet(c,c).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()))
+        Huet(c,c).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()))
       }
 
       "return an empty substitution {x->c} on <x,c>" in {
-        Huet(x,c).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,c)))
+        Huet(x,c).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,c)))
       }
 
       "return an empty substitution {x->c} on <c,x>" in {
-        Huet(c,x).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,c)))
+        Huet(c,x).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,c)))
       }
 
       "fail on <fa,fb>" in {
@@ -130,11 +130,11 @@ class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck
       }
 
       "return a sub. on <fz, fa>" in {
-        Huet(fz,fa).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(z,a)))
+        Huet(fz,fa).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(z,a)))
       }
 
       "return a sub. on <fa, fz>" in {
-        Huet(fa,fz).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(z,a)))
+        Huet(fa,fz).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(z,a)))
       }
 
 //       "fail on <F: i->i, gaa : i> because of different types" in {
@@ -143,24 +143,24 @@ class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck
 
 
       "return a subst. {y->fz} on <y, fz>" in {
-        Huet(y,fz).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(y,fz)))
+        Huet(y,fz).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(y,fz)))
       }
 
       "return a subst. {x->y} on <x,y>" in {
-        Huet(x,y).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,y)))
+        Huet(x,y).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,y)))
       }
 
 
       "return a subst. {x->a} on <fgaa,fgax>" in {
-        Huet(fgax,fgaa).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)))
+        Huet(fgax,fgaa).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)))
       }
 
       "return a subst. {x->a} on <gfafx,gfafa>" in {
-        Huet(gfafx,gfafa).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)))
+        Huet(gfafx,gfafa).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)))
       }
 
       "return a subst. {x->a} on <gfafa,gfafx>" in {
-        Huet(gfafa,gfafx).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)))
+        Huet(gfafa,gfafx).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)))
       }
 
       "fail on <gfafa,gfbfx>" in {
@@ -168,11 +168,11 @@ class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs.ScalaCheck
       }
 
       "return a subst. on <gfbfa,gfyfx>" in {
-        Huet(gfbfa,gfYfX).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)+Pair(y,b)))
+        Huet(gfbfa,gfYfX).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)+Pair(y,b)))
       }
 
       "return a subst. on <gfyfx, gfbfa>" in {
-        Huet(gfYfX, gfbfa).next.get must beEqual (new Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)+Pair(y,b)))
+        Huet(gfYfX, gfbfa).next.get must beEqual (Substitution[HOLExpression](new HashMap[Var, HOLExpression]()+Pair(x,a)+Pair(y,b)))
       }
 
       "return a sub. on <fFa,Ffa>" in {

@@ -18,8 +18,11 @@ import scala.collection.mutable.HashMap
 import scala.util.Sorting.quickSort
 import scala.math.Ordering._
 import at.logic.language.lambda.substitutions.Substitution
+import java.util.Comparator
 
 package base {
+
+import java.util.Comparator
 
 // a trait for all objects that have a sequent (or its descendant) component (like Sequent, SequentOccurrence
   // the root of a proof, etc.) It can be used in algorithms that expect a sequent
@@ -82,8 +85,18 @@ package base {
       val ant = antecedent.toArray
       val succ = succedent.toArray
       // TODO: quicksort does not work without the cast???
-      quickSort[LambdaExpression]( ant.asInstanceOf[Array[LambdaExpression]] )
-      quickSort[LambdaExpression]( succ.asInstanceOf[Array[LambdaExpression]] )
+
+      object LambdaComparator extends Comparator[LambdaExpression] {
+        override def compare(exp1 : LambdaExpression, exp2: LambdaExpression) : Int = {
+          val s1 : String = exp1.toString
+          val s2 : String = exp2.toString
+          s1.compare(s2)
+        }
+
+      }
+
+      quickSort[LambdaExpression]( ant.asInstanceOf[Array[LambdaExpression]] ) (comparatorToOrdering(LambdaComparator))
+      quickSort[LambdaExpression]( succ.asInstanceOf[Array[LambdaExpression]] ) (comparatorToOrdering(LambdaComparator))
       Sequent( ant.toList, succ.toList )
     }
   }

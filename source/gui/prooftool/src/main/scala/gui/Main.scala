@@ -143,8 +143,10 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
+      contents += new MenuItem(Action("Gentzen Method") { gentzen }) { border = customBorder }
+      contents += new Separator
       contents += new MenuItem(Action("TestRefutation") { testRefutation }) { border = customBorder }
-      contents += new MenuItem(Action("test") { test }) { border = customBorder }
+      contents += new MenuItem(Action("TestSchemata") { testSchemata }) { border = customBorder }
     }
     contents += new Menu("View") {
       mnemonic = Key.V
@@ -226,6 +228,22 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(new Label(t),"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   }
 
+  def gentzen ={}/* try {
+    import at.logic.transformations.ReductiveCutElim._
+    import at.logic.calculi.lk.propositionalRules._
+
+    val proof = cutElim(body.getContent.getData.get._2.asInstanceOf[LKProof])
+/*    val proof = proof1 match {
+      case CutRule(up1, up2, _, a1, a2) => reduceCut(up1, up2, a1.formula, a2.formula)
+      case _ => throw new Exception(proof1.rule.toString)
+    }  */
+    body.contents = new Launcher(Some("Gentzen Result", proof),14)
+  } catch {
+    case e: Exception =>
+        val t = e.toString
+        Dialog.showMessage(new Label(t), t + "\n\n" + e.getStackTraceString)
+  }              */
+
   def testRefutation = {
     import at.logic.calculi.resolution.andrews._
     import at.logic.calculi.resolution.base.InitialSequent
@@ -245,7 +263,7 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("resolution refutation",p5),16)
   }
 
-  def test = {
+  def testSchemata = {
     import at.logic.calculi.lk.macroRules.AndLeftRule
     import at.logic.calculi.lk.base._
     import at.logic.language.schema._
