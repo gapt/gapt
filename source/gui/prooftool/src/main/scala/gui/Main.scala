@@ -12,6 +12,8 @@ import BorderPanel._
 import event.Key
 import at.logic.gui.prooftool.parser._
 import at.logic.calculi.lk.base.{SequentOccurrence, Sequent, LKProof}
+    import at.logic.transformations.ReductiveCutElim._
+import at.logic.transformations.ReductiveCutElim
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -67,6 +69,13 @@ object Main extends SimpleSwingApplication {
      // layout(toolbar) = Position.North
       layout(body) = Position.Center
     }
+  }
+
+  // Used for ShowProof menu, loads proof directly
+  def loadProof(proof: LKProof): Unit = {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.contents = new Launcher(Some("proof",proof), 14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used for ShowProof menu
@@ -168,6 +177,10 @@ object Main extends SimpleSwingApplication {
             val l = db.getProofNames
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i) { loadProof(i) }) { border = customBorder }
+          case Loaded =>
+            val l = ReductiveCutElim.proofs
+            contents.clear
+            for (i <- l) contents += new MenuItem(Action(i.name) { loadProof(i) }) { border = customBorder }
         }
       }
       contents += new Menu("Show Clause List") {
@@ -228,11 +241,10 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(new Label(t),"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   }
 
-  def gentzen ={}/* try {
-    import at.logic.transformations.ReductiveCutElim._
+  def gentzen = try {
     import at.logic.calculi.lk.propositionalRules._
 
-    val proof = cutElim(body.getContent.getData.get._2.asInstanceOf[LKProof])
+    val proof = ReductiveCutElim(body.getContent.getData.get._2.asInstanceOf[LKProof])
 /*    val proof = proof1 match {
       case CutRule(up1, up2, _, a1, a2) => reduceCut(up1, up2, a1.formula, a2.formula)
       case _ => throw new Exception(proof1.rule.toString)
@@ -242,7 +254,7 @@ object Main extends SimpleSwingApplication {
     case e: Exception =>
         val t = e.toString
         Dialog.showMessage(new Label(t), t + "\n\n" + e.getStackTraceString)
-  }              */
+  } finally ProofToolPublisher.publish(Loaded)
 
   def testRefutation = {
     import at.logic.calculi.resolution.andrews._

@@ -11,4 +11,11 @@
   <packaging>jar</packaging>  
   <name>Gentzen's Cut-Elimination</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>lkalgorithms</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
 </project>
