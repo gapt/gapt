@@ -177,7 +177,8 @@ object regularize {
         val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
         {
           // FIXME: casts!?
-          val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], v ).asInstanceOf[HOLVar]
+          val new_var_name = v.name.toString.head + "_"
+          val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], (x => new_var_name + x.toString), v ).asInstanceOf[HOLVar]
           val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
           val new_map = new_parent._3.clone
           new_map.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
@@ -192,7 +193,8 @@ object regularize {
         val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
         {
           // FIXME: casts!?
-          val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], v ).asInstanceOf[HOLVar]
+          val new_var_name = v.name.toString.head + "_"
+          val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], (x => new_var_name + x.toString), v ).asInstanceOf[HOLVar]
           val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
           val new_map = new_parent._3.clone
           new_map.transform( (k, v) => new_new_parent._2( v ) ) // compose maps

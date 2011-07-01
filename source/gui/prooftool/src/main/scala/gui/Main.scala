@@ -252,8 +252,10 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("Gentzen Result", proof),14)
   } catch {
     case e: Exception =>
-        val t = e.toString
-        Dialog.showMessage(new Label(t), t + "\n\n" + e.getStackTraceString)
+        val t = e.toString + "\n\n" + e.getStackTraceString
+        var k = 0
+        val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
+        Dialog.showMessage(new Label(t), t.dropRight(t.size - index - 1))
   } finally ProofToolPublisher.publish(Loaded)
 
   def testRefutation = {
