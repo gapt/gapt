@@ -141,7 +141,7 @@ package quantificationRules {
                   def aux = (aux_fo::Nil)::Nil
                   def prin = prinFormula::Nil
                   def eigenvar = eigen_var
-                  override def name = "\u2200:l"
+                  override def name = "\u2200:r"
                 }
           }
           case _ => throw new LKRuleCreationException("Main formula of ForallRightRule must have a universal quantifier as head symbol.")

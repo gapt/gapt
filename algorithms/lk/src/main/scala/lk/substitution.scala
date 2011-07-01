@@ -12,6 +12,8 @@ import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
+import at.logic.language.lambda.BetaReduction._
+import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 
 object applySubstitution {
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
@@ -69,7 +71,8 @@ object applySubstitution {
       case Axiom(so) => {
         val ant_occs = so.antecedent.toList
         val succ_occs = so.succedent.toList
-        val a = Axiom.createDefault(Sequent(ant_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ), succ_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ) ) )
+        val a = Axiom.createDefault(Sequent(ant_occs.map( fo => betaNormalize( subst(fo.formula) ).asInstanceOf[HOLFormula] ),
+          succ_occs.map( fo => betaNormalize( subst(fo.formula) ).asInstanceOf[HOLFormula] ) ) )
         val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
         a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
         a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )

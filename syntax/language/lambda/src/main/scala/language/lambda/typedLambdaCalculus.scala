@@ -347,6 +347,17 @@ package typedLambdaCalculus {
       }
       v
     }
+
+    def apply(exptype: TA, disallowedVariables: Set[Var], namer: Int => String, dummy: LambdaExpression) :Var = {
+     var counter = 1
+     var v = Var(namer(counter), exptype,dummy.factory)
+     while (disallowedVariables.contains(v)) {
+       counter += 1
+       v = Var(namer(counter), exptype,dummy.factory)
+     }
+     v
+   }
+
     private var cnt = 1
     def apply1(exptype: TA, disallowedVariables: Set[Var], dummy: LambdaExpression) :Var = {     //by Cvetan
 
