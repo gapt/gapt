@@ -32,12 +32,12 @@ object ReductiveCutElim {
     pr
   }
 
-  private def cutElim(proof: LKProof): LKProof = {
+ /* private def cutElim(proof: LKProof): LKProof = {
     proofList = proofList:::(proof::Nil)
     cutElim1(proof)
-  }
+  }*/
 
-  private def cutElim1(proof: LKProof): LKProof = proof match {
+  private def cutElim(proof: LKProof): LKProof = proof match {
     case Axiom(_) => proof
     case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule.createDefault(cutElim(up), pf.formula)
     case WeakeningRightRule(up, _, pf) => WeakeningRightRule.createDefault(cutElim(up), pf.formula)
@@ -72,7 +72,6 @@ object ReductiveCutElim {
 
   private def reduceCut(left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula): LKProof =
     reduceGrade(left, right, cutFormula1, cutFormula2)
-
 
     // Grade reduction rules:
   private def reduceGrade(left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula): LKProof =
@@ -131,17 +130,7 @@ object ReductiveCutElim {
     (left, right) match {
     case (Axiom(_), proof: LKProof) => proof
     case (proof: LKProof, Axiom(_)) => proof
-    case (WeakeningRightRule(up, _, prin), proof: LKProof) =>  //TODO: can't match this, why???
-      if (prin.formula == cutFormula1) {
-        var tmp: LKProof = up
-        var alreadySeen = false
-        for (i <- proof.root.antecedent)
-          if (i.formula != cutFormula2 || alreadySeen) tmp = WeakeningLeftRule.createDefault(tmp, i.formula)
-          else alreadySeen = true
-        for (i <- proof.root.succedent) tmp = WeakeningRightRule.createDefault(tmp, i.formula)
-        tmp
-      }
-      else WeakeningRightRule.createDefault(CutRule(up, proof, cutFormula1), prin.formula)
+ //   case (WeakeningRightRule(up, _, prin), proof: LKProof) =>  //TODO: can't match this, why???
     case (proof: LKProof, WeakeningLeftRule(up, _, prin)) =>
       if (prin.formula == cutFormula2) {
         var tmp: LKProof = up
@@ -153,18 +142,7 @@ object ReductiveCutElim {
         tmp
       }
       else WeakeningLeftRule.createDefault(CutRule(proof, up, cutFormula2), prin.formula)
-    case (ContractionRightRule(up, _, aux1, aux2, prin), proof: LKProof) => //TODO: can't match this, why???
-      if (prin.formula == cutFormula1) {
-        val proof1 = regularize(proof)._1
-        var tmp: LKProof = CutRule(CutRule(up, proof, aux1.formula), proof1, aux2.formula)
-        var alreadySeen = false
-        for (i <- proof.root.antecedent)
-          if (i.formula != cutFormula2 || alreadySeen) tmp = ContractionLeftRule(tmp, i.formula)
-          else alreadySeen = true
-        for (i <- proof.root.succedent) tmp = ContractionRightRule(tmp, i.formula)
-        regularize(tmp)._1
-      }
-      else ContractionRightRule(CutRule(up, proof, cutFormula1), aux1.formula)
+ //   case (ContractionRightRule(up, _, aux1, aux2, prin), proof: LKProof) => //TODO: can't match this, why???
     case (proof: LKProof, ContractionLeftRule(up, _, aux1, aux2, prin)) =>
       if (prin.formula == cutFormula2) {
         val proof1 = regularize(proof)._1
@@ -178,10 +156,44 @@ object ReductiveCutElim {
       }
       else ContractionLeftRule(CutRule(proof, up, cutFormula2), aux1.formula)
     case (unary: UnaryLKProof, proof: LKProof) =>
-      if (unary.rule == ContractionRightRuleType || unary.rule == WeakeningRightRuleType)
-        throw new ReductiveCutElimException("Can't match case: \n cut left premice is: " + unary.toString.replaceAll(",", "\n") +
-          "\n\n cut right premice is: " + proof.toString.replaceAll(",", "\n"))
-      reduceUnaryLeft(unary, proof, cutFormula1)
+      if (unary.rule == WeakeningRightRuleType) {
+        val unap = WeakeningRightRule.unapply(unary)
+        if (unap == None)
+          throw new ReductiveCutElimException("Can't match case: \n cut left premice is: " + unary.toString.replaceAll(",", "\n") +
+            "\n\n cut right premice is: " + proof.toString.replaceAll(",", "\n"))
+        val up = unap.get._1
+        val prin =  unap.get._3
+        if (prin.formula == cutFormula1) {
+          var tmp: LKProof = up
+          var alreadySeen = false
+          for (i <- proof.root.antecedent)
+            if (i.formula != cutFormula2 || alreadySeen) tmp = WeakeningLeftRule.createDefault(tmp, i.formula)
+            else alreadySeen = true
+          for (i <- proof.root.succedent) tmp = WeakeningRightRule.createDefault(tmp, i.formula)
+          tmp
+        }
+        else WeakeningRightRule.createDefault(CutRule(up, proof, cutFormula1), prin.formula)
+      } else if (unary.rule == ContractionRightRuleType) {
+        val unap = ContractionRightRule.unapply(unary)
+        if (unap == None)
+          throw new ReductiveCutElimException("Can't match case: \n cut left premice is: " + unary.toString.replaceAll(",", "\n") +
+            "\n\n cut right premice is: " + proof.toString.replaceAll(",", "\n"))
+        val up = unap.get._1
+        val aux1 = unap.get._3
+        val aux2 = unap.get._4
+        val prin = unap.get._5
+        if (prin.formula == cutFormula1) {
+          val proof1 = regularize(proof)._1
+          var tmp: LKProof = CutRule(CutRule(up, proof, aux1.formula), proof1, aux2.formula)
+          var alreadySeen = false
+          for (i <- proof.root.antecedent)
+            if (i.formula != cutFormula2 || alreadySeen) tmp = ContractionLeftRule(tmp, i.formula)
+            else alreadySeen = true
+          for (i <- proof.root.succedent) tmp = ContractionRightRule(tmp, i.formula)
+          regularize(tmp)._1
+        }
+        else ContractionRightRule(CutRule(up, proof, cutFormula1), aux1.formula)
+      } else reduceUnaryLeft(unary, proof, cutFormula1)
     case (binary: BinaryLKProof, proof: LKProof) => reduceBinaryLeft(binary, proof, cutFormula1)
     case _ =>
       throw new ReductiveCutElimException("Can't match the case: Cut(" + left.rule.toString + ", " + right.rule.toString + ")")
