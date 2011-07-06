@@ -96,13 +96,13 @@ class FOLVar (name: VariableSymbolA, dbInd: Option[Int])
 class FOLConst (name: ConstantSymbolA)
   extends HOLConst(name, Ti()) with FOLTerm
 
-private[fol] class FOLApp(function: LambdaExpression, argument: LambdaExpression)
+protected[fol] class FOLApp(function: LambdaExpression, argument: LambdaExpression)
   extends HOLApp(function, argument) with FOLExpression
 
-private[fol] class FOLAbs(variable: FOLVar, expression: LambdaExpression)
+protected[fol] class FOLAbs(variable: FOLVar, expression: LambdaExpression)
   extends HOLAbs(variable, expression) with FOLExpression
 
-private[fol] object FOLAbs {
+protected[fol] object FOLAbs {
   def apply(variable: FOLVar, expression: LambdaExpression) = new FOLAbs(variable, expression)
 }
 
