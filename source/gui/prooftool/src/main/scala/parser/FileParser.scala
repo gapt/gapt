@@ -8,7 +8,8 @@ package at.logic.gui.prooftool.parser
  */
 
 import scala.swing.{Dialog, Label}
-import java.io.{FileInputStream, InputStreamReader}
+import java.io.{FileInputStream, InputStreamReader, IOException}
+import java.util.zip.GZIPInputStream
 import at.logic.parsing.language.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.language.xml.ProofDatabase
@@ -19,7 +20,12 @@ import at.logic.calculi.treeProofs.TreeProof
 class FileParser {
 
   def fileReader(f: String): Unit = {
-    proofdb = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
+    proofdb = try {
+      (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(f)))) with XMLProofDatabaseParser).getProofDatabase()
+    } catch {
+      case e: IOException => // maybe input not gzipped, try again!
+        (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
+    }
     proofs = proofdb.proofs
     proofNames = proofdb.proofs.map( x => x._1)
     sequentListNames = proofdb.sequentLists.map( x => x._1)
