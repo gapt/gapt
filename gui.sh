@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 # searches the actual $PATH, local directory and its development subpath for 
-# the CLI jar package and runs the scala interpreter
+# the prooftool jar package and runs the scala interpreter
 # (preference is given to the development version)
 
-export JARNAME="cli-1.0-SNAPSHOT-jar-with-dependencies.jar"
+export JARNAME="prooftool-1.0-SNAPSHOT-jar-with-dependencies.jar"
 export SCP=""
 export POSSIBLE_PATHS=`echo $PATH | sed s/:/\\ /g`
 
@@ -17,9 +17,9 @@ for I in ${POSSIBLE_PATHS} .; do
 done
 
 for I in ${POSSIBLE_PATHS} .; do
-    if test -f $I/cli/target/${JARNAME};
+    if test -f $I/gui/prooftool/target/${JARNAME};
     then
-	export SCP="$I/cli/target"
+	export SCP="$I/gui/prooftool/target"
 	break
     fi
 done
