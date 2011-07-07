@@ -22,22 +22,24 @@ class ReductiveCutElimException(msg: String) extends Exception(msg)
 
 object ReductiveCutElim {
   private var proofList: List[LKProof] = Nil
+  private var steps = false
 
   def proofs = proofList
 
-  def apply(proof: LKProof): LKProof = {
-    proofList = Nil
-    val pr = cutElim(regularize(proof)._1)
+  def apply(proof: LKProof, b: Boolean): LKProof = {
+    steps = b
+    proofList = proof::Nil
+    val pr = cutElim1(regularize(proof)._1)
     proofList = proofList:::(pr::Nil)
     pr
   }
 
- /* private def cutElim(proof: LKProof): LKProof = {
-    proofList = proofList:::(proof::Nil)
+  private def cutElim(proof: LKProof): LKProof = {
+    if (steps) proofList = proofList:::(proof::Nil)
     cutElim1(proof)
-  }*/
+  }
 
-  private def cutElim(proof: LKProof): LKProof = proof match {
+  private def cutElim1(proof: LKProof): LKProof = proof match {
     case Axiom(_) => proof
     case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule.createDefault(cutElim(up), pf.formula)
     case WeakeningRightRule(up, _, pf) => WeakeningRightRule.createDefault(cutElim(up), pf.formula)
