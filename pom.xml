@@ -31,14 +31,19 @@
       <name>Scala-Tools Maven2 Repository</name>
       <url>http://scala-tools.org/repo-releases</url>
     </repository>
+      <repository>
+        <id>net.sf.alxa</id>
+        <name>Alxa Repository</name>
+        <url>http://alxa.sourceforge.net/m2</url>
+      </repository>
   </repositories>
 
   <pluginRepositories>
-    <pluginRepository>
-      <id>scala-tools.org</id>
-      <name>Scala-Tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </pluginRepository>
+      <pluginRepository>
+        <id>scala-tools.org</id>
+        <name>Scala-Tools Maven2 Repository</name>
+        <url>http://scala-tools.org/repo-releases</url>
+      </pluginRepository>
   </pluginRepositories>
   
   <dependencies>
