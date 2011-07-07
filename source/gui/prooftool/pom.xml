@@ -67,6 +67,11 @@
         <artifactId>scala-swing</artifactId>
         <version>${scala.version}</version>
       </dependency>
-   
+      <dependency>
+        <groupId>net.sf.alxa</groupId>
+        <artifactId>jlatexmath</artifactId>
+        <version>0.9.3-SNAPSHOT</version>
+      </dependency>
+
   </dependencies>
 </project>
