@@ -12,8 +12,10 @@ import BorderPanel._
 import event.Key
 import at.logic.gui.prooftool.parser._
 import at.logic.calculi.lk.base.{SequentOccurrence, Sequent, LKProof}
-    import at.logic.transformations.ReductiveCutElim._
 import at.logic.transformations.ReductiveCutElim
+import javax.swing.filechooser.FileFilter
+import java.io.File
+import swing.Dialog.Message
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -225,7 +227,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(new Label(t),"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   }
 
   def showStruct = try {
@@ -238,12 +240,17 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(new Label(t),"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   }
 
   def gentzen = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val proof = ReductiveCutElim(body.getContent.getData.get._2.asInstanceOf[LKProof])
+    val steps = Dialog.showConfirmation(body, "Do you want to see intermediary steps?",
+      "ProofTool", Dialog.Options.YesNo, Message.Question) match {
+      case Dialog.Result.Yes => true
+      case _ => false
+    }
+    val proof = ReductiveCutElim(body.getContent.getData.get._2.asInstanceOf[LKProof], steps)
     body.contents = new Launcher(Some("Gentzen Result", proof),14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
@@ -251,7 +258,7 @@ object Main extends SimpleSwingApplication {
         val t = e.toString + "\n\n" + e.getStackTraceString
         var k = 0
         val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
-        Dialog.showMessage(new Label(t), t.dropRight(t.size - index - 1))
+        Dialog.showMessage(body, t.dropRight(t.size - index - 1))
   } finally ProofToolPublisher.publish(GentzenLoaded)
 
   def testRefutation = {
@@ -274,7 +281,27 @@ object Main extends SimpleSwingApplication {
   }
 
   def testSchemata = {
-    import at.logic.calculi.lk.macroRules.AndLeftRule
+    import org.scilab.forge.jlatexmath._
+    import java.awt.image.BufferedImage
+    import java.awt.Color
+
+    val string = "A_{1}"
+    val formula = new TeXFormula(string)
+
+    val icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, 20);
+	  icon.setInsets(new Insets(5, 5, 5, 5));
+
+    val image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    val g2 = image.createGraphics();
+	  g2.setColor(Color.white);
+	  g2.fillRect(0,0,icon.getIconWidth(),icon.getIconHeight());
+	  val jl = new Label();
+	  jl.foreground = new Color(0, 0, 0);
+	  icon.paintIcon(jl.peer, g2, 0, 0);
+
+
+
+  /*  import at.logic.calculi.lk.macroRules.AndLeftRule
     import at.logic.calculi.lk.base._
     import at.logic.language.schema._
     import at.logic.calculi.slk._
@@ -410,12 +437,21 @@ object Main extends SimpleSwingApplication {
 
     val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\varphi", k ) )
     body.contents = new Launcher(Some("Schema CL List", cs.map(x => x.getSequent)), 16)
-   // body.contents = new Launcher(Some("Schema varphi_sn", varPhi_sn), 16)
+   // body.contents = new Launcher(Some("Schema varphi_sn", varPhi_sn), 16)    */
   }
 
   val body = new MyScrollPane
   val db = new FileParser
-  private val chooser = new FileChooser
+  private val chooser = new FileChooser {
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".xml") || f.getName.endsWith(".xml.gz") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".xml and .gz"
+    }
+  }
 
   /*
   val toolbar = new BoxPanel(Orientation.Horizontal) {
