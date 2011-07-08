@@ -244,12 +244,12 @@ object Main extends SimpleSwingApplication {
   }
 
   def gentzen = try {
-    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val steps = Dialog.showConfirmation(body, "Do you want to see intermediary steps?",
       "ProofTool", Dialog.Options.YesNo, Message.Question) match {
       case Dialog.Result.Yes => true
       case _ => false
     }
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof = ReductiveCutElim(body.getContent.getData.get._2.asInstanceOf[LKProof], steps)
     body.contents = new Launcher(Some("Gentzen Result", proof),14)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -285,19 +285,21 @@ object Main extends SimpleSwingApplication {
     import java.awt.image.BufferedImage
     import java.awt.Color
 
-    val string = "A_{1}"
+    val string = "\\bigwedge_{i=0}^{n} A_{i} \\vdash \\bigvee_{i=0}^n A_{i}"
     val formula = new TeXFormula(string)
 
-    val icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, 20);
-	  icon.setInsets(new Insets(5, 5, 5, 5));
+    val icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, 30)
+	  icon.setInsets(new Insets(5, 5, 5, 5))
 
-    val image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    val g2 = image.createGraphics();
-	  g2.setColor(Color.white);
-	  g2.fillRect(0,0,icon.getIconWidth(),icon.getIconHeight());
-	  val jl = new Label();
-	  jl.foreground = new Color(0, 0, 0);
-	  icon.paintIcon(jl.peer, g2, 0, 0);
+    val image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB)
+    val g2 = image.createGraphics()
+	  g2.setColor(Color.white)
+	  g2.fillRect(0,0,icon.getIconWidth(),icon.getIconHeight())
+	  val jl = new Label
+	  jl.foreground = new Color(0, 0, 0)
+	  icon.paintIcon(jl.peer, g2, 0, 0)
+    jl.icon = icon
+    body.viewportView = jl
 
 
 
