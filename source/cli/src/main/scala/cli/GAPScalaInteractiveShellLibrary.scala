@@ -66,7 +66,7 @@ object loadProofs {
           (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase().proofs
       }
   }
-  object printPoofStats {
+  object printProofStats {
     def apply(p: LKProof) = {val stats = getStatistics( p ); println("unary: " + stats.unary); println("binary: " + stats.binary); println("cuts: " + stats.cuts)}
   }
   object lkTolksk {
@@ -255,8 +255,8 @@ object loadProofs {
   object ceresHelp {
     def apply() = {
       println("Available commands:")
-      println("loadProofs: String => LKProof")
-      println("printPoofStats: LKProof => Unit")
+      println("loadProofs: String => List[(String, LKProof)]")
+      println("printProofStats: LKProof => Unit")
       println("lkTolksk: LKProof => LKProof")
       println("extractStruct: LKProof => Struct")
       println("structToClausesList: Struct => List[SequentOccurrence]")
