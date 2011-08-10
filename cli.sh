@@ -31,4 +31,6 @@ else
     export JAVA_OPTS="-Xss2m -Xmx2g"
     #scala -classpath ${SCP}/${JARNAME} -i cli-script.scala
     java -jar ${SCP}/${JARNAME}
+    # workaround because jline somehow mixes up the terminal
+    reset
 fi
