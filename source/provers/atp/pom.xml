@@ -63,5 +63,11 @@
       <artifactId>scalax</artifactId>
       <version>0.1</version>
     </dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>jline</artifactId>
+        <version>${scala.version}</version>
+      </dependency>
+
   </dependencies>
 </project>

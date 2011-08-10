@@ -24,9 +24,9 @@ class EquationsTest extends SpecificationWithJUnit {
       val g = Function(equals,List(leftassoc , rightassoc ))
       val p = Atom(pred,List(leftassoc , rightassoc ))
 
-      println("leftassoc:"+leftassoc)
-      println("rightassoc:"+rightassoc)
-      println("fun:"+f+"  " +f.exptype)
+      //println("leftassoc:"+leftassoc)
+      //println("rightassoc:"+rightassoc)
+      //println("fun:"+f+"  " +f.exptype)
 
       "x+(y+z) = (x+y)+z is an equation" in {
         val equation : Equation = Equation(f)

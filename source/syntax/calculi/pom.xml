@@ -17,6 +17,7 @@
     <module>proofs</module>
     <module>resolution</module>
     <module>slk</module>
+    <module>lk_modulo</module>
   </modules>
   
   <dependencies>

@@ -52,6 +52,19 @@ class FirstOrderLogicTest extends SpecificationWithJUnit {
       val all1 = AllVar(var1, atom1)
       true
     }
+
+    "the de bruijn indices ensure that ∀x.∀x.P(x) is equal to ∀y.∀y.P(y)" in {
+      val x = FOLVar(new VariableStringSymbol("x"))
+      val y = FOLVar(new VariableStringSymbol("y"))
+      val p = new ConstantStringSymbol("P")
+      val px = Atom(p,List(x))
+      val py = Atom(p,List(y))
+      val allall_px = AllVar(x, AllVar(x, px))
+      val allall_py = AllVar(y, AllVar(y, py))
+
+      allall_px must beEqualTo (allall_py)
+    }
+
     "Replacement on first order terms" in {
         Replacement(List(),Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{0}" ) )::FOLVar( VariableStringSymbol( "x_{0}" ) )::Nil)).apply(Atom( ConstantStringSymbol( "=" ), Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{2}" ) )::FOLVar( VariableStringSymbol( "x_{1}" ) )::Nil)::Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{1}" ) )::FOLVar( VariableStringSymbol( "x_{2}" ) )::Nil)::Nil)) must beEqual (Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{0}" ) )::FOLVar( VariableStringSymbol( "x_{0}" ) )::Nil))
     }
