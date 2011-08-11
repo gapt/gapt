@@ -5,6 +5,7 @@ import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.calculi.lk.propositionalRules.{Axiom, CutRule}
 import at.logic.language.lambda.types.TA
 import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
 
 import scala.collection.mutable.Map
 
@@ -32,6 +33,7 @@ package statistics {
       case CutRule( p1, p2, _, _, _ ) => merge( getStatistics( p1 ), getStatistics( p2 ) ).incBinary.incCuts
       case BinaryLKProof(_, p1, p2, _, _, _, _) => merge( getStatistics( p1 ), getStatistics( p2 ) ).incBinary
       case UnaryLKProof(_, p, _, _, _) => getStatistics( p ).incUnary
+      case UnaryLKskProof(_, p, _, _, _) => getStatistics( p ).incUnary
       case Axiom(so) => new LKStats(0, 0, 0)
     }
 

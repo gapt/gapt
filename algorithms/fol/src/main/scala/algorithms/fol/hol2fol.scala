@@ -18,7 +18,8 @@ import at.logic.calculi.lk.base.Sequent
 import scala.collection.mutable.Map
 
 package hol2fol {
-  /* Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are replaced by constants. Open labda expressions are changed by functions.
+  /* Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
+   *replaced by constants. Open lambda expressions are changed by functions.
    */
   object reduceHolToFol {
     // scope and id are used to give the same names for new functions and constants between different calls of this method
