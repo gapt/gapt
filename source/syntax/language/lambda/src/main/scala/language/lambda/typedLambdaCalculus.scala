@@ -92,7 +92,7 @@ package typedLambdaCalculus {
   class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA,  dbInd: Option[Int]) extends LambdaExpression {
     private[lambda] val dbIndex: Option[Int] = dbInd // represents a bound variable and its de Bruijn index
     def this(name: SymbolA, exptype: TA) = this(name, exptype, None)
-    // alpha equlas as ignores bound variable names
+    // alpha equals as ignores bound variable names
     override def equals(a: Any) = (a,dbIndex) match {
       case (s: Var, None) if s.isFree => (s.name == name && s.exptype == exptype) // a free variable can only be equal to another free variable
       case (s: Var, Some(dbi)) if s.isBound => (dbi == s.dbIndex.get && s.exptype == exptype) // a bound variable can only be equal to another bound variable

@@ -152,7 +152,7 @@ package hol {
     implicit def listLambdaToListHOL(l: List[LambdaExpression]): List[HOLExpression] = l.asInstanceOf[List[HOLExpression]]
   }
 
-  // We do in all of them additional casting into Formula as Formula is a static type and the only way to deynamically express it is via casting.
+  // We do in all of them additional casting into Formula as Formula is a static type and the only way to dynamically express it is via casting.
   object Neg {
     def apply(sub: HOLFormula) = App(NegC,sub).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
