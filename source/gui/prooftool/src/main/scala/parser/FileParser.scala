@@ -27,14 +27,10 @@ class FileParser {
         (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
     }
     proofs = proofdb.proofs
-    proofNames = proofdb.proofs.map( x => x._1)
-    sequentListNames = proofdb.sequentLists.map( x => x._1)
   }
 
   def StabFileReader(f: String) = {
     proofs = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with SimpleXMLProofParser).getNamedTrees()
-    proofNames = proofs.map( x => x._1)
-    sequentListNames = Nil
   }
 
   def parseFile(path: String) = try {
@@ -54,12 +50,8 @@ class FileParser {
         Dialog.showMessage(new Label(err),"Couldn't load file: "+path+"!\n\n"+err.replaceAll(",","\n").replaceAll(">",">\n"))
 
   def getSequentLists = proofdb.sequentLists
-  def getSequentListNames = sequentListNames
   def getProofs = proofs
-  def getProofNames = proofNames
 
   private var proofdb = new ProofDatabase(Nil,Nil,Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil
-  private var proofNames: List[String] = Nil
-  private var sequentListNames: List[String] = Nil
 }
