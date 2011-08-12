@@ -10,11 +10,10 @@ package at.logic.gui.prooftool.gui
 import scala.swing._
 import java.awt.Font._
 import javax.swing.border.TitledBorder
-import at.logic.calculi.lk.base.{Sequent, SequentOccurrence}
+import at.logic.calculi.lk.base.Sequent
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
-import at.logic.language.hol.HOLExpression
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)

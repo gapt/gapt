@@ -7,7 +7,6 @@
 
 package at.logic.transformations
 
-
 import java.lang.Exception
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
@@ -29,17 +28,24 @@ object ReductiveCutElim {
   def apply(proof: LKProof, b: Boolean): LKProof = {
     steps = b
     proofList = proof::Nil
-    val pr = cutElim1(regularize(proof)._1)
-    proofList = proofList:::(pr::Nil)
+    var pr = regularize(proof)._1
+    while (! isCutFree(pr)) {
+      pr = cutElim(pr)
+      if (steps) proofList = proofList:::(pr::Nil)
+    }
+    if (! steps) proofList = proofList:::(pr::Nil)
     pr
   }
 
-  private def cutElim(proof: LKProof): LKProof = {
-    if (steps) proofList = proofList:::(proof::Nil)
-    cutElim1(proof)
+  def isCutFree(proof: LKProof): Boolean = proof match {
+    case Axiom(_) => true
+    case p: UnaryLKProof => isCutFree(p.uProof)
+    case p: BinaryLKProof =>
+      if (p.rule == CutRuleType) false
+      else isCutFree(p.uProof1) && isCutFree(p.uProof2)
   }
 
-  private def cutElim1(proof: LKProof): LKProof = proof match {
+  private def cutElim(proof: LKProof): LKProof = proof match {
     case Axiom(_) => proof
     case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule.createDefault(cutElim(up), pf.formula)
     case WeakeningRightRule(up, _, pf) => WeakeningRightRule.createDefault(cutElim(up), pf.formula)
@@ -69,7 +75,17 @@ object ReductiveCutElim {
     case ExistsRightRule(up, _, aux, prin, term) => ExistsRightRule(cutElim(up), aux.formula, prin.formula, term)
     case DefinitionLeftRule(up, _, aux, prin) => DefinitionLeftRule(cutElim(up), aux.formula, prin.formula)
     case DefinitionRightRule(up, _, aux, prin) => DefinitionRightRule(cutElim(up), aux.formula, prin.formula)
-    case CutRule(up1, up2, _, a1, a2) => cutElim(reduceCut(up1, up2, a1.formula, a2.formula))
+    case CutRule(up1, up2, _, a1, a2) =>
+      val isCutFree1 = isCutFree(up1)
+      val isCutFree2 = isCutFree(up2)
+      if (isCutFree1 && isCutFree2) {
+        if (steps) proofList = proofList:::(proof::Nil)
+        val p = reduceCut(up1, up2, a1.formula, a2.formula)
+        if (steps) proofList = proofList:::(p::Nil)
+        cutElim(p)
+      }
+      else if (isCutFree1) CutRule(up1, cutElim(up2), a1.formula)
+      else CutRule(cutElim(up1), up2, a1.formula)
   }
 
   private def reduceCut(left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula): LKProof =
@@ -132,7 +148,7 @@ object ReductiveCutElim {
     (left, right) match {
     case (Axiom(_), proof: LKProof) => proof
     case (proof: LKProof, Axiom(_)) => proof
- //   case (WeakeningRightRule(up, _, prin), proof: LKProof) =>  //TODO: can't match this, why???
+  //case (WeakeningRightRule(up, _, prin), proof: LKProof) => //Can't match this, why??? Fixed: moved as a subcase of UnaryLKProof
     case (proof: LKProof, WeakeningLeftRule(up, _, prin)) =>
       if (prin.formula == cutFormula2) {
         var tmp: LKProof = up
@@ -144,7 +160,7 @@ object ReductiveCutElim {
         tmp
       }
       else WeakeningLeftRule.createDefault(CutRule(proof, up, cutFormula2), prin.formula)
- //   case (ContractionRightRule(up, _, aux1, aux2, prin), proof: LKProof) => //TODO: can't match this, why???
+  //case (ContractionRightRule(up, _, aux1, aux2, prin), proof: LKProof) => //Can't match this, why??? Fixed: moved as a subcase of UnaryLKProof
     case (proof: LKProof, ContractionLeftRule(up, _, aux1, aux2, prin)) =>
       if (prin.formula == cutFormula2) {
         val proof1 = regularize(proof)._1
@@ -302,7 +318,8 @@ object ReductiveCutElim {
       else if (up2.root.succedent.exists(x => x.formula == cutFormula))
         ImpLeftRule(up1, CutRule(up2, proof, cutFormula), aux1.formula, aux2.formula)
       else throw new ReductiveCutElimException("Can't find cut-formula!")
-    case CutRule(up1, up2, _, a1, a2) => CutRule(reduceCut(up1, up2, a1.formula, a2.formula), proof, cutFormula)
+    //Following line is redundant when eliminating uppermost cut
+    //case CutRule(up1, up2, _, a1, a2) => CutRule(reduceCut(up1, up2, a1.formula, a2.formula), proof, cutFormula)
     case _ => proof match {
       case p: UnaryLKProof => reduceUnaryRight(binary, p, cutFormula)
       case p: BinaryLKProof => reduceBinaryRight(binary, p, cutFormula)
@@ -332,7 +349,8 @@ object ReductiveCutElim {
         (aux2.formula == cutFormula && up2.root.antecedent.find(x => x.formula == cutFormula).size > 1))
         ImpLeftRule(up1, CutRule(proof, up2, cutFormula), aux1.formula, aux2.formula)
       else throw new ReductiveCutElimException("Can't find cut-formula!")
-    case CutRule(up1, up2, _, a1, a2) => CutRule(proof, reduceCut(up1, up2, a1.formula, a2.formula), cutFormula)
+    //Following line is redundant when eliminating uppermost cut
+    //case CutRule(up1, up2, _, a1, a2) => CutRule(proof, reduceCut(up1, up2, a1.formula, a2.formula), cutFormula)
     case _ =>
       throw new ReductiveCutElimException("Can't match the case: Cut(" + proof.rule.toString + ", " + binary.rule.toString + ")")
   }

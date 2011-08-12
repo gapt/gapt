@@ -12,6 +12,7 @@ import BorderPanel._
 import event.Key
 import at.logic.gui.prooftool.parser._
 import at.logic.calculi.lk.base.{SequentOccurrence, Sequent, LKProof}
+import at.logic.calculi.treeProofs.TreeProof
 import at.logic.transformations.ReductiveCutElim
 import javax.swing.filechooser.FileFilter
 import java.io.File
@@ -76,15 +77,14 @@ object Main extends SimpleSwingApplication {
   // Used for ShowProof menu, loads proof directly
   def loadProof(proof: LKProof): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(Some("proof",proof), 14)
+    body.contents = new Launcher(Some(proof.name, proof), 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used for ShowProof menu
-  def loadProof(proofName: String): Unit = {
+  def loadProof(proof: (String, TreeProof[_])): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val proof = db.getProofs.find(x => x._1 == proofName)
-    body.contents = new Launcher(proof, 12)
+    body.contents = new Launcher(Some(proof), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -99,10 +99,9 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used by Show Clause List menu
-  def loadClauseSet(clListName: String): Unit = {
+  def loadClauseSet(clList: (String, List[Sequent])): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val clList = db.getSequentLists.find(x => x._1 == clListName)
-    body.contents = new Launcher(clList, 12)
+    body.contents = new Launcher(Some(clList), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -176,9 +175,9 @@ object Main extends SimpleSwingApplication {
         listenTo(ProofToolPublisher)
         reactions += {
           case ProofDbChanged =>
-            val l = db.getProofNames
+            val l = db.getProofs
             contents.clear
-            for (i <- l) contents += new MenuItem(Action(i) { loadProof(i) }) { border = customBorder }
+            for (i <- l) contents += new MenuItem(Action(i._1) { loadProof(i) }) { border = customBorder }
           case GentzenLoaded =>
             val l = ReductiveCutElim.proofs
             contents.clear
@@ -191,9 +190,11 @@ object Main extends SimpleSwingApplication {
         listenTo(ProofToolPublisher)
         reactions += {
           case ProofDbChanged =>
-            val l = db.getSequentListNames
+            val l = db.getSequentLists
             contents.clear
-            for (i <- l) contents += new MenuItem(Action(i) { loadClauseSet(i) }) { border = customBorder }
+            for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
+          case GentzenLoaded =>
+            contents.clear
         }
       }
       contents += new MenuItem(Action("Show Struct") { showStruct }) {
