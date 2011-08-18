@@ -63,9 +63,11 @@ import java.util.Comparator
       succedent.forall(a => o.succedent.contains(a)) &&
       o.antecedent.forall(a => antecedent.contains(a)) &&
       o.succedent.forall(a => succedent.contains(a))
+
     //override def toString : String = antecedent.toString + " :- " + succedent.toString
     def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
+
     // returns the n literal of the sequent considering that the literals are ordered antecedent ++ succedent
     def apply(n: Int) = if (n < antecedent.size) antecedent(n) else succedent(n - antecedent.size)
     override def toString =
@@ -84,7 +86,8 @@ import java.util.Comparator
     def getOrderedSequent = {
       val ant = antecedent.toArray
       val succ = succedent.toArray
-      // TODO: quicksort does not work without the cast???
+      // TODO: quicksort does not work without the cast??? No... quicksort is defined for Arrays and apparently Lists
+      // and Arrays are not related (scala.Array and scala.collection.immutable.List)
 
       object LambdaComparator extends Comparator[LambdaExpression] {
         override def compare(exp1 : LambdaExpression, exp2: LambdaExpression) : Int = {
@@ -100,6 +103,7 @@ import java.util.Comparator
       Sequent( ant.toList, succ.toList )
     }
   }
+
   object Sequent {
     def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)
     def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
@@ -129,6 +133,7 @@ import java.util.Comparator
       )
     def getChildOf(fo: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
   }
+
   object SequentOccurrence {
     def apply(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence]) = new SequentOccurrence(antecedent, succedent)
     def unapply(so: SequentOccurrence) = Some(so.antecedent, so.succedent)

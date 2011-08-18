@@ -19,48 +19,68 @@ package logicSymbols {
       case LogicalSymbolsA( s ) => unique.compare( s )
     }
   }
+
   object LogicalSymbolsA {def unapply(s: SymbolA): Option[String] = s match {case ls: LogicalSymbolsA => Some(ls.unique); case _ => None}}
+
   case object NegSymbol extends LogicalSymbolsA {
     override def unique = "NegSymbol"
     override def toString = "¬"
     def toCode = "NegSymbol"
   }
+
   case object AndSymbol extends LogicalSymbolsA {
     override def unique = "AndSymbol"
     override def toString = "∧"
     def toCode = "AndSymbol"
   }
+
   case object OrSymbol extends LogicalSymbolsA {
     override def unique = "OrSymbol"
     override def toString = "∨"
     def toCode = "OrSymbol"
   }
+
   case object ImpSymbol extends LogicalSymbolsA {
     override def unique = "ImpSymbol"
     override def toString = "⊃"
     def toCode = "ImpSymbol"
   }
+
   case object ExistsSymbol extends LogicalSymbolsA {
     override def unique = "ExistsSymbol"
     override def toString = "∃"
     def toCode = "ExistsSymbol"
   }
+
   case object ForallSymbol extends LogicalSymbolsA {
     override def unique = "ForallSymbol"
     override def toString = "∀"
     def toCode = "ForallSymbol"
   }
+
   case object BottomSymbol extends LogicalSymbolsA {
     override def unique = "BottomSymbol"
     override def toString = "⊥"
     def toCode = "BottomSymbol"
   }
+
   case object TopSymbol extends LogicalSymbolsA {
     override def unique = "TopSymbol"
     override def toString = "⊤"
     def toCode = "TopSymbol"
   }
 
+  // Symbols for a Herbrand array.
+  case object HArraySymbolL extends LogicalSymbolsA {
+    override def unique = "HArraySymbolL"
+    override def toString = "〈"
+    def toCode = "HArraySymbolL"
+  }
+  case object HArraySymbolR extends LogicalSymbolsA {
+    override def unique = "HArraySymbolR"
+    override def toString = "〉"
+    def toCode = "HArraySymbolR"
+  }
 
   case class ConstantStringSymbol( val string : String ) extends ConstantSymbolA with StringSymbol
   {

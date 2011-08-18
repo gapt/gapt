@@ -37,6 +37,7 @@ trait FOLExpression extends HOLExpression with FOL {
       case Or(x,y) => "(" + x.toString + OrSymbol + y.toString + ")"
       case Imp(x,y) => "(" + x.toString + ImpSymbol + y.toString + ")"
       case Neg(x) => NegSymbol + x.toString
+      case HArray(x) => HArraySymbolR + x.toString + HArraySymbolR
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
       case _ => throw new Exception("Unknown FOL expression: " + super.toString)
@@ -148,13 +149,18 @@ object Function {
   }
 }
 
+
+
 case object BottomC extends HOLConst(BottomSymbol, "o") with FOLFormula
 case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
 case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))") with FOL
 case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))") with FOL
+case object HArrayC extends HOLConst(HArraySymbol, "List o -> o") with FOL
 class ExQ(e:TA) extends HOLExQ(e) with FOL
 class AllQ(e:TA) extends HOLAllQ(e) with FOL
+
+
 object ExQ {
   def unapply(v: Var) = v match {
     case vo: ExQ => Some(vo.exptype)
@@ -197,6 +203,15 @@ object Imp {
   def unapply(expression: LambdaExpression) = expression match {
       case App(App(ImpC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
       case _ => None
+  }
+}
+
+// Herbrand array definition.
+object HArray {
+  def apply(lst: List[FOLFormula]) = App(HArrayC, lst).asInstanceOf[FOLFormula]
+  def unapply(expression: LambdaExpression) = expression match {
+    case App(HArrayC, lst) => Some(lst.asInstanceOf[FOLFormula])
+    case _ => None
   }
 }
 

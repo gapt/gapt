@@ -16,6 +16,7 @@
     <module>gentzen-cutelim</module>
     <module>skolemization</module>
     <module>misc</module>
+    <module>herbrand_extraction</module>
   </modules>
 
   <packaging>pom</packaging>
