@@ -37,9 +37,9 @@ trait FOLExpression extends HOLExpression with FOL {
       case Or(x,y) => "(" + x.toString + OrSymbol + y.toString + ")"
       case Imp(x,y) => "(" + x.toString + ImpSymbol + y.toString + ")"
       case Neg(x) => NegSymbol + x.toString
-      case HArray(x) => HArraySymbolR + x.toString + HArraySymbolR
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
+//      case HArray(_, flst) => HArraySymbolR + flst.toString + HArraySymbolR
       case _ => throw new Exception("Unknown FOL expression: " + super.toString)
     }
 
@@ -57,6 +57,7 @@ trait FOLExpression extends HOLExpression with FOL {
       case Neg(x) => "Neg(" + x.toCode + ")"
       case ExVar(x,f) => "ExVar(" + x.toCode + ", " + f.toCode + ")"
       case AllVar(x,f) => "AllVar(" + x.toCode + ", " + f.toCode + ")"
+//      case HArray(origf, flst) => "HArray[" + origf + "](" + flst.toString + ")"
     }
   }
 trait FOLFormula extends FOLExpression with HOLFormula
@@ -149,14 +150,13 @@ object Function {
   }
 }
 
-
-
 case object BottomC extends HOLConst(BottomSymbol, "o") with FOLFormula
 case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
 case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))") with FOL
 case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))") with FOL
-case object HArrayC extends HOLConst(HArraySymbol, "List o -> o") with FOL
+// This type is actually not correct...
+//case object HArrayC extends HOLConst(HArraySymbol, "o -> List o -> o") with FOL
 class ExQ(e:TA) extends HOLExQ(e) with FOL
 class AllQ(e:TA) extends HOLAllQ(e) with FOL
 
@@ -207,13 +207,15 @@ object Imp {
 }
 
 // Herbrand array definition.
-object HArray {
-  def apply(lst: List[FOLFormula]) = App(HArrayC, lst).asInstanceOf[FOLFormula]
+// f is the quantified formula that originated the instances in lst.
+/*object HArray {
+  def apply(f : FOLFormula, lst: List[FOLFormula]) = HArrayC(f, lst).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case App(HArrayC, lst) => Some(lst.asInstanceOf[FOLFormula])
+    case HArrayC(f, lst) => Some(f, lst)
     case _ => None
   }
 }
+*/
 
 private[fol] object Ex {
   def apply(sub: LambdaExpression) = App(new ExQ(sub.exptype),sub).asInstanceOf[FOLFormula]
