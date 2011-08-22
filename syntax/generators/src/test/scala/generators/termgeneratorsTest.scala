@@ -8,7 +8,6 @@ import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.Definitions._
-import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 
 import org.specs._
@@ -19,21 +18,23 @@ import org.scalacheck.Prop._
 import org.specs.matcher._
 
 import at.logic.utils.testing.PropMatcher.bePassed
-/*
+
 class termgeneratorTest extends SpecificationWithJUnit {
     "The generator" should {
         "be able to convert between tuples and langauges" in {
             //import Language.languageFromTuple
             //import Language.tupleFromLanguage
 
-            val prop = forAll( (seed:Int, nv:Int, nc:Int, nf:Int) => {
+            val prop = forAll( (seed:Int, nv0:Int, nc0:Int, nf0:Int) => {
+              val nv = nv0 % 100
+              val nc = nc0 % 100
+              val nf = nf0 % 100
+
                 var generator = new FOLtermGenerator(seed)
-                
-                val s  : (List[(VariableSymbolA,Int)], List[(ConstantSymbolA,Int)],List[(ConstantSymbolA,Int)]) = generator.generateSymbols(nv,nv,nf,7)
+                val s  : (List[(VariableSymbolA,Int)], List[(ConstantSymbolA,Int)],List[(ConstantSymbolA,Int)]) = generator.generateSymbols(nv,nc,nf,7)
                 val l  : Language = s
                 val s2 : (List[(VariableSymbolA,Int)], List[(ConstantSymbolA,Int)],List[(ConstantSymbolA,Int)]) = l
                 val l2 : Language = s2
-
                 s == s2 && l == l2
             })
 
@@ -43,7 +44,10 @@ class termgeneratorTest extends SpecificationWithJUnit {
         val seed = 123
         "generate languages of a given size" in {
             var generator = new FOLtermGenerator(seed)
-            var prop = forAll( (nv:Int, nc:Int, nf:Int) => {
+            var prop = forAll( (nv0:Int, nc0:Int, nf0:Int) => {
+              val nv = nv0 % 100
+              val nc = nc0 % 100
+              val nf = nf0 % 100
                     var v = if (nv<0) 0 else nv
                     var c = if (nc<0) 0 else nc
                     var f = if (nf<0) 0 else nf
@@ -71,6 +75,7 @@ class termgeneratorTest extends SpecificationWithJUnit {
             prop must bePassed
         }
 
+      /*
         "generate first order variables" in {
             var generator = new FOLtermGenerator(seed)
             val l = generator.generateSymbols(10,5,6,5)
@@ -82,7 +87,7 @@ class termgeneratorTest extends SpecificationWithJUnit {
             }
 
 
-        }
+        }*/
 
         "generate first order functions" in {
             //symbol names must be in the language
@@ -115,4 +120,4 @@ class termgeneratorTest extends SpecificationWithJUnit {
 
         }
     }
-}*/
+}
