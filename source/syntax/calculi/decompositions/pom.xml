@@ -9,13 +9,6 @@
 
   <artifactId>decompositions</artifactId>
   <packaging>jar</packaging>
-  <name>Sequent calculus</name>
+  <name>Decomposition calculus</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>proofs</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-  </dependencies>
 </project>
