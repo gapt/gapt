@@ -21,8 +21,9 @@ import at.logic.transformations.ceres.struct.structToExpressionTree.{TimesC, Plu
 class DrawTree(private val struct: Tree[_], private val fSize: Int) extends BorderPanel {
   background = new Color(255,255,255)
   opaque = false
-  val ft = new Font(SANS_SERIF, PLAIN, fSize)
-  val bd = Swing.EmptyBorder(fSize / 2)
+
+  private val ft = new Font(SANS_SERIF, PLAIN, fSize)
+  private val bd = Swing.EmptyBorder(fSize / 2)
   private val tx = struct.vertex match {
     case he: HOLExpression => formulaToString(he)
     case _ => struct.vertex.toString

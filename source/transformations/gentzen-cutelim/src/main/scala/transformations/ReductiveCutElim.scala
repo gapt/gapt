@@ -11,6 +11,7 @@ import java.lang.Exception
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
+import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base._
 import at.logic.language.hol._
 import at.logic.calculi.occurrences._
@@ -24,6 +25,7 @@ object ReductiveCutElim {
   private var steps = false
 
   def proofs = proofList
+  def proofs_=(plist: List[LKProof]) = proofList = plist
 
   def apply(proof: LKProof, b: Boolean): LKProof = {
     steps = b
@@ -75,6 +77,14 @@ object ReductiveCutElim {
     case ExistsRightRule(up, _, aux, prin, term) => ExistsRightRule(cutElim(up), aux.formula, prin.formula, term)
     case DefinitionLeftRule(up, _, aux, prin) => DefinitionLeftRule(cutElim(up), aux.formula, prin.formula)
     case DefinitionRightRule(up, _, aux, prin) => DefinitionRightRule(cutElim(up), aux.formula, prin.formula)
+    case EquationLeft1Rule(up1, up2, _, aux1, aux2, prin) =>
+      EquationLeft1Rule(cutElim(up1), cutElim(up2), aux1.formula, aux2.formula, prin.formula)
+    case EquationLeft2Rule(up1, up2, _, aux1, aux2, prin) =>
+      EquationLeft2Rule(cutElim(up1), cutElim(up2), aux1.formula, aux2.formula, prin.formula)
+    case EquationRight1Rule(up1, up2, _, aux1, aux2, prin) =>
+      EquationRight1Rule(cutElim(up1), cutElim(up2), aux1.formula, aux2.formula, prin.formula)
+    case EquationRight2Rule(up1, up2, _, aux1, aux2, prin) =>
+      EquationRight2Rule(cutElim(up1), cutElim(up2), aux1.formula, aux2.formula, prin.formula)
     case CutRule(up1, up2, _, a1, a2) =>
       val isCutFree1 = isCutFree(up1)
       val isCutFree2 = isCutFree(up2)

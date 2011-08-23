@@ -8,12 +8,14 @@ package at.logic.gui.prooftool.gui
  */
 
 import scala.swing._
+import event.MouseDragged
 import java.awt.Font._
 import javax.swing.border.TitledBorder
 import at.logic.calculi.lk.base.Sequent
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
+import java.awt.event.{MouseEvent, MouseMotionListener}
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -21,7 +23,8 @@ class MyScrollPane extends ScrollPane {
   def getContent: Launcher = contents.last.asInstanceOf[Launcher]
 }
 
-class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel {
+class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel
+with MouseMotionListener with javax.swing.Scrollable {
   option match {
     case Some((name: String, obj: AnyRef)) =>
       val c = new Constraints
@@ -55,4 +58,29 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
 
   def fontSize = fSize
   def getData = option
+
+  // From here starts test code, trying to scroll normally.
+	def getPreferredScrollableViewportSize = preferredSize
+
+	def getScrollableTracksViewportHeight: Boolean = false
+	def getScrollableTracksViewportWidth: Boolean = false
+
+	def getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
+    3 * getScrollableUnitIncrement(visibleRect, orientation, direction)
+	  // scrollablePeer.getScrollableBlockIncrement(visibleRect, orientation.id, direction)
+
+	def getScrollableUnitIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int = 10 * fSize
+    // scrollablePeer.getScrollableUnitIncrement(visibleRect, orientation.id, direction)
+
+  this.peer.setAutoscrolls(true)
+  this.peer.addMouseMotionListener(this)
+
+  def mouseMoved(e: MouseEvent) {}
+  def mouseDragged(e: MouseEvent) {
+    //The user is dragging us, so scroll!
+    val r = new Rectangle(e.getX(), e.getY(), 1, 1);
+    this.peer.scrollRectToVisible(r);
+  }
+
+
 }

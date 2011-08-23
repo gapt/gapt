@@ -17,6 +17,7 @@ import at.logic.transformations.ReductiveCutElim
 import javax.swing.filechooser.FileFilter
 import java.io.File
 import swing.Dialog.Message
+import at.logic.algorithms.lk.replaceSubproof
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -301,8 +302,6 @@ object Main extends SimpleSwingApplication {
 	  icon.paintIcon(jl.peer, g2, 0, 0)
     jl.icon = icon
     body.viewportView = jl
-
-
 
   /*  import at.logic.calculi.lk.macroRules.AndLeftRule
     import at.logic.calculi.lk.base._

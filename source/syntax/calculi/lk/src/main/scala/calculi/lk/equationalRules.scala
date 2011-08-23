@@ -46,6 +46,14 @@ package equationalRules {
       }
     }
 
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+
     def unapply(proof: LKProof) = if (proof.rule == EquationLeft1RuleType) {
         val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
         val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
@@ -74,6 +82,14 @@ package equationalRules {
           def prin = prinFormula::Nil
           override def name = "e:l2"
         }
+      }
+    }
+
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
 
@@ -109,6 +125,14 @@ package equationalRules {
       }
     }
 
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+
     def unapply(proof: LKProof) = if (proof.rule == EquationRight1RuleType) {
         val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
         val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
@@ -138,6 +162,14 @@ package equationalRules {
           def prin = prinFormula::Nil
           override def name = "e:r2"
         }
+      }
+    }
+
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
 

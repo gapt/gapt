@@ -9,44 +9,71 @@ package at.logic.gui.prooftool.gui
 
 import scala.swing._
 import BorderPanel._
+import event._
 import java.awt.Font._
 import java.awt.{RenderingHints, BasicStroke}
 import at.logic.calculi.treeProofs._
-import at.logic.calculi.slk.SchemaProofLinkRule
-
-/*import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.definitionRules._
-import at.logic.calculi.lk.equationalRules._ */
 import at.logic.calculi.lk.base.SequentOccurrence
-import at.logic.calculi.proofs.{BinaryProof, UnaryProof, Proof, RuleTypeA}
 import ProoftoolSequentFormatter._
+import java.awt.event.{MouseMotionListener, MouseEvent}
 
-class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends BorderPanel {
+class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends BorderPanel with MouseMotionListener {
   background = new Color(255,255,255)
   opaque = false
-  val bd = Swing.EmptyBorder(0,fSize*3,0,fSize*3)
-  val ft = new Font(SANS_SERIF, PLAIN, fSize)
-  val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
+  private val blue = new Color(0,0,255)
+  private val black = new Color(0,0,0)
+  private val bd = Swing.EmptyBorder(0,fSize*3,0,fSize*3)
+  private val ft = new Font(SANS_SERIF, PLAIN, fSize)
+  private val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
   private val tx = proof.root match {
     case so: SequentOccurrence => sequentOccurenceToString(so)
     case _ => proof.root.toString
+  }
+
+  listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+  reactions += {
+    case e: MouseDragged =>
+      Main.body.cursor = new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR)
+    case e: MouseReleased =>
+      Main.body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize)) = Position.Center
-      layout(new Label(tx) { font = ft }) = Position.South
+      layout(new Label(tx) {
+        font = ft
+        listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+        reactions += {
+          case e: MouseEntered => foreground = blue
+          case e: MouseExited => foreground = black
+          case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
+        }
+      }) = Position.South
     case p: BinaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize)) = Position.West
       layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize)) = Position.East
-      layout(new Label(tx) { font = ft }) = Position.South
+      layout(new Label(tx) {
+        font = ft
+        listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+        reactions += {
+          case e: MouseEntered => foreground = blue
+          case e: MouseExited => foreground = black
+          case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
+        }
+      }) = Position.South
     case p: NullaryTreeProof[_] =>
       layout(new Label(tx) {
         border = Swing.EmptyBorder(0,fSize,0,fSize)
         font = ft
+        listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+        reactions += {
+          case e: MouseEntered => foreground = blue
+          case e: MouseExited => foreground = black
+          case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
+        }
       }) = Position.South
   }
 
@@ -56,7 +83,6 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
     super.paintComponent(g)
 
     val metrics = g.getFontMetrics(ft)
-    val lineHeight = metrics.getHeight
 
     g.setFont(labelFont)
     // g.setStroke(new BasicStroke(fSize / 25))
@@ -103,45 +129,13 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
     }
   }
 
-/*  def ruleName(rule: RuleTypeA) = rule match {
-    // structural rules
-    case WeakeningLeftRuleType    => "w:l"
-    case WeakeningRightRuleType   => "w:r"
-    case ContractionLeftRuleType  => "c:l"
-    case ContractionRightRuleType => "c:r"
-    case CutRuleType => "cut"
+  this.peer.setAutoscrolls(true)
+  this.peer.addMouseMotionListener(this)
 
-    // Propositional rules
-    case AndRightRuleType => "\u2227:r"
-    case AndLeft1RuleType => "\u2227:l1"
-    case AndLeft2RuleType => "\u2227:l2"
-    case OrRight1RuleType => "\u2228:r1"
-    case OrRight2RuleType => "\u2228:r2"
-    case OrLeftRuleType   => "\u2228:l"
-    case ImpRightRuleType => "\u2283:r"
-    case ImpLeftRuleType  => "\u2283:l"
-    case NegLeftRuleType  => "\u00ac:l"
-    case NegRightRuleType => "\u00ac:r"
-
-    // Quanitifier rules
-    case ForallLeftRuleType  => "\u2200:l"
-    case ForallRightRuleType => "\u2200:r"
-    case ExistsLeftRuleType  => "\u2203:l"
-    case ExistsRightRuleType => "\u2203:r"
-
-    // Definition rules
-    case DefinitionLeftRuleType  => "d:l"
-    case DefinitionRightRuleType => "d:r"
-
-    // Equation rules
-    case EquationLeft1RuleType  => "e:l1"
-    case EquationLeft2RuleType  => "e:l2"
-    case EquationRight1RuleType => "e:r1"
-    case EquationRight2RuleType => "e:r2"
-
-    // axioms
-    case InitialRuleType => ""
-    case _ => "unmatched rule type"
-  } */
-
+  def mouseMoved(e: MouseEvent) {}
+  def mouseDragged(e: MouseEvent) {
+    //The user is dragging us, so scroll!
+    val r = new Rectangle(e.getX(), e.getY(), 1, 1);
+    this.peer.scrollRectToVisible(r);
+  }
 }

@@ -19,12 +19,14 @@ package acyclicGraphs {
   trait AGraph[+V] extends Graph[V] {
     val vertex: V
     def name: String // used to contain more information about the AGraph, like rule names in LK
+    def contains[T >: AGraph[V]](sub: T): Boolean
   }
 
   class LeafAGraph[+V](val vertex: V) extends VertexGraph[V](vertex, EmptyGraph[V]) with AGraph[V] {
     override def hashCode = vertex.hashCode
     override def toString = vertex.toString
     def name = "Leaf"
+    def contains[T >: AGraph[V]](sub: T) = this == sub
   }
   object LeafAGraph {
     def apply[V](vertex: V) = new LeafAGraph[V](vertex)
@@ -38,6 +40,7 @@ package acyclicGraphs {
     override def toString = vertex.toString + " (" + t.toString + ")"
     def name = "Unary"
     def latexQAGraph = "[{." + vertex.toString + "} ({" + name + ")}"
+    def contains[T >: AGraph[V]](sub: T) = (this == sub) || t.contains(sub)
   }
   object UnaryAGraph {
     def apply[V](vertex: V, t: AGraph[V]) = new UnaryAGraph[V](vertex, t)
@@ -50,6 +53,7 @@ package acyclicGraphs {
     override def hashCode = vertex.hashCode + t1.hashCode + t2.hashCode
     override def toString = vertex.toString + " (" + t1.toString + ", " + t2.toString + ")"
     def name = "Binary"
+    def contains[T >: AGraph[V]](sub: T) = (this == sub) || t1.contains(sub) || t2.contains(sub)
   }
   object BinaryAGraph {
     def apply[V](vertex: V, t1: AGraph[V], t2: AGraph[V]) = new BinaryAGraph[V](vertex, t1, t2)
@@ -62,6 +66,7 @@ package acyclicGraphs {
     override def hashCode = vertex.hashCode + (lastParent::restParents).hashCode
     override def toString = vertex.toString + " (" + (lastParent::restParents) + ")"
     def name = "Arbitrary"
+    def contains[T >: AGraph[V]](sub: T) = this == sub || lastParent.contains(sub) || restParents.exists(x => x.contains(sub))
   }
 
   object ArbitraryAGraph extends Logger {
