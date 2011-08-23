@@ -19,6 +19,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
 import at.logic.language.lambda.substitutions
 import substitutions.Substitution
+import org.scalacheck.Prop.Proof
 
 // TODO: we use the toSet method from axiom here to convert a list to a set,
 // perhaps refactor this method out of axiom - it seems useful in general
@@ -257,4 +258,93 @@ object regularize {
     map
   }
 
+}
+
+object replaceSubproof {
+  // This function works on object equality of two proofs, checking that "proof" contains "subproof" in object level.
+  def apply(proof: LKProof, subproof: LKProof, newSubproof: LKProof) : LKProof = {
+    if (! proof.contains(subproof)) throw new Exception("There is no such subproof to replace")
+    else if (subproof == newSubproof) proof
+    else replace(proof, subproof, newSubproof)
+  }
+
+  def replace(proof: LKProof, subproof: LKProof, newSubproof: LKProof) : LKProof = {
+    if (proof == subproof) newSubproof
+    else proof match {
+      case Axiom(_) => proof
+      case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule.createDefault(replace(up, subproof, newSubproof), pf.formula)
+      case WeakeningRightRule(up, _, pf) => WeakeningRightRule.createDefault(replace(up, subproof, newSubproof), pf.formula)
+      case ContractionLeftRule(up, _, aux, _, _) => ContractionLeftRule(replace(up, subproof, newSubproof), aux.formula)
+      case ContractionRightRule(up, _, aux, _, _) => ContractionRightRule(replace(up, subproof, newSubproof), aux.formula)
+      case AndRightRule(up1, up2, _, aux1, aux2, _) =>
+        if (up1.contains(subproof)) AndRightRule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula)
+        else AndRightRule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        AndRightRule(p1, p2, aux1.formula, aux2.formula)*/
+      case AndLeft1Rule(up, _, aux, prin) => prin.formula match {
+        case And(aux.formula, f) => AndLeft1Rule(replace(up, subproof, newSubproof), aux.formula, f)
+      }
+      case AndLeft2Rule(up, _, aux, prin) => prin.formula match {
+        case And(f, aux.formula) => AndLeft2Rule(replace(up, subproof, newSubproof), f, aux.formula)
+      }
+      case OrLeftRule(up1, up2, _, aux1, aux2, _) =>
+        if (up1.contains(subproof)) OrLeftRule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula)
+        else OrLeftRule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        OrLeftRule(p1, p2, aux1.formula, aux2.formula)*/
+      case OrRight1Rule(up, _, aux, prin) => prin.formula match {
+        case Or(aux.formula, f) => OrRight1Rule(replace(up, subproof, newSubproof), aux.formula, f)
+      }
+      case OrRight2Rule(up, _, aux, prin) => prin.formula match {
+        case Or(f, aux.formula) => OrRight2Rule(replace(up, subproof, newSubproof), f, aux.formula)
+      }
+      case ImpLeftRule(up1, up2, _, aux1, aux2, _) =>
+        if (up1.contains(subproof)) ImpLeftRule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula)
+        else ImpLeftRule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        ImpLeftRule(p1, p2, aux1.formula, aux2.formula)*/
+      case ImpRightRule(up, _, aux1, aux2, _) => ImpRightRule(replace(up, subproof, newSubproof), aux1.formula, aux2.formula)
+      case NegLeftRule(up, _, aux, _) => NegLeftRule(replace(up, subproof, newSubproof), aux.formula)
+      case NegRightRule(up, _, aux, _) => NegRightRule(replace(up, subproof, newSubproof), aux.formula)
+      case ForallLeftRule(up, _, aux, prin, term) => ForallLeftRule(replace(up, subproof, newSubproof), aux.formula, prin.formula, term)
+      case ForallRightRule(up, _, aux, prin, eigenVar) => ForallRightRule(replace(up, subproof, newSubproof), aux.formula, prin.formula, eigenVar)
+      case ExistsLeftRule(up, _, aux, prin, eigenVar) => ExistsLeftRule(replace(up, subproof, newSubproof), aux.formula, prin.formula, eigenVar)
+      case ExistsRightRule(up, _, aux, prin, term) => ExistsRightRule(replace(up, subproof, newSubproof), aux.formula, prin.formula, term)
+      case DefinitionLeftRule(up, _, aux, prin) => DefinitionLeftRule(replace(up, subproof, newSubproof), aux.formula, prin.formula)
+      case DefinitionRightRule(up, _, aux, prin) => DefinitionRightRule(replace(up, subproof, newSubproof), aux.formula, prin.formula)
+      case EquationLeft1Rule(up1, up2, _, aux1, aux2, prin) =>
+        if (up1.contains(subproof)) EquationLeft1Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationLeft1Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        EquationLeft1Rule(p1, p2, aux1.formula, aux2.formula, prin.formula)*/
+      case EquationLeft2Rule(up1, up2, _, aux1, aux2, prin) =>
+        if (up1.contains(subproof)) EquationLeft2Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationLeft2Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        EquationLeft2Rule(p1, p2, aux1.formula, aux2.formula, prin.formula)*/
+      case EquationRight1Rule(up1, up2, _, aux1, aux2, prin) =>
+        if (up1.contains(subproof)) EquationRight1Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationRight1Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        EquationRight1Rule(p1, p2, aux1.formula, aux2.formula, prin.formula)*/
+      case EquationRight2Rule(up1, up2, _, aux1, aux2, prin) =>
+        if (up1.contains(subproof)) EquationRight2Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationRight2Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        EquationRight2Rule(p1, p2, aux1.formula, aux2.formula, prin.formula)*/
+      case CutRule(up1, up2, _, aux1, aux2) =>
+        if (up1.contains(subproof)) CutRule(replace(up1, subproof, newSubproof), up2, aux1.formula)
+        else CutRule(up1, replace(up2, subproof, newSubproof), aux1.formula)
+ /*       val p1 = replace(up1, subproof, newSubproof)
+        val p2 = replace(up2, subproof, newSubproof)
+        CutRule(p1, p2, aux1.formula)*/
+    }
+  }
 }
