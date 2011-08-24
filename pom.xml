@@ -11,7 +11,7 @@
   <name>General Architecture for Proofs</name>
 
   <modules>
-    <module>utils</module>
+    <module>tils</module>
     <module>syntax</module>
     <module>provers</module>
     <module>transformations</module>
