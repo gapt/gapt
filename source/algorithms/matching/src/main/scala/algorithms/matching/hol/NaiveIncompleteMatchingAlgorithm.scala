@@ -14,23 +14,19 @@ import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 
-// should use the restricted domain instead of grounding the second term
 object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression] {
-  def matchTerm(term: HOLExpression, posInstance: HOLExpression, restrictedDomain: List[Var]): Option[Substitution[HOLExpression]] = holMatch(term.asInstanceOf[HOLExpression], ground(posInstance).asInstanceOf[HOLExpression])
 
-   // in all instances of the algorithm we ground the second term by replacing all free variables by constants
-  private def ground(e: LambdaExpression): LambdaExpression = e match {
-    case v @ Var(VariableStringSymbol(s),ta) if v.asInstanceOf[Var].isFree => v.factory.createVar(ConstantStringSymbol(s), ta)
-    case v: Var => v
-    case App(a,b) => App(ground(a), ground(b))
-    case abs: Abs => Abs(abs.variable, ground(abs.expressionInScope))
-  }
-  
-  def holMatch( s: HOLExpression, t: HOLExpression ) : Option[Substitution[HOLExpression]] =
+  def matchTerm(term: HOLExpression, posInstance: HOLExpression): Option[Substitution[HOLExpression]] =
+    matchTerm(term, posInstance, posInstance.getFreeAndBoundVariables._1.toList)
+
+  // restrictedDomain: variables to be treated as constants.
+  def matchTerm(term: HOLExpression, posInstance: HOLExpression, restrictedDomain: List[Var]): Option[Substitution[HOLExpression]] = 
+    holMatch(term, posInstance)(restrictedDomain)
+
+  def holMatch( s: HOLExpression, t: HOLExpression )(implicit restrictedDomain: List[Var]) : Option[Substitution[HOLExpression]] =
     (s, t) match {
       case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( holMatch(s_1, t_1), holMatch(s_2, t_2) )
-      // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
-      case ( HOLVar(_, _), _ ) if !getVars(t).contains(s.asInstanceOf[HOLVar]) => Some(Substitution[HOLExpression]( s.asInstanceOf[HOLVar], t  ) )
+      case ( s : HOLVar, _ ) if !restrictedDomain.contains(s) => Some(Substitution[HOLExpression]( s, t  ) )
       case ( v1 @ HOLVar(_,_), v2 @ HOLVar(_,_) ) if v1 == v2 => Some(Substitution[HOLExpression]())
       case ( v1 @ HOLVar(_,_), v2 @ HOLVar(_,_) ) if v1 != v2 =>  {
         None
@@ -55,13 +51,5 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression]
     }
     case (None, _) => None
     case (_, None) => None
-  }
-
-  def getVars( t: HOLExpression ) : Set[HOLVar] = t match {
-    case HOLApp(t_1, t_2) => getVars( t_1 ) ++ getVars( t_2 )
-    // FIXME: we should be able to get a HOLVar object from the case, so that casting is not necessary...
-    case HOLVar(_,_) => (Set[HOLVar]()) + t.asInstanceOf[HOLVar]
-    case HOLAbs(_, sub) => getVars( sub )
-    case _ => Set[HOLVar]()
   }
 }

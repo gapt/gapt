@@ -43,7 +43,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     val f = HOLConst(new ConstantStringSymbol("f"), i->i)
     val fb= App(f,b)
     val Pafb = App(Pa,fb).asInstanceOf[HOLExpression]
-    val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pax,Pafb,Pafb.getFreeAndBoundVariables._1.toList)
+    val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pax,Pafb)
     val subst1 = Substitution(x,fb)
 //    println("\n\n"+subst.toString)
 //    println("\n\n"+Pax.toString1)
@@ -64,7 +64,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     val fb= App(f,b)
     val Pfb = App(P,fb).asInstanceOf[HOLExpression]
     val Pfbfb = App(Pfb,fb).asInstanceOf[HOLExpression]
-    val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbfb,Pfbfb.getFreeAndBoundVariables._1.toList)
+    val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbfb)
     val subst1 = Substitution(x,fb):::Substitution(z,fb)
 //    println("\n\n"+Pzx.toString1)
 //    println("\n\n"+Pfbfb.toString1)
@@ -84,14 +84,13 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     val fb= App(f,b).asInstanceOf[HOLExpression]
     val Pfb = App(P,fb).asInstanceOf[HOLExpression]
     val Pfbz = App(Pfb,z).asInstanceOf[HOLExpression]
-    val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbz,Pfbz.getFreeAndBoundVariables._1.toList)
+    val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbz)
     val subst1 = Substitution[HOLExpression](z,fb):::Substitution[HOLExpression](x,z)
-    println("\n\n"+Pzx.toString1)
-    println("\n\n"+Pfbz.toString1)
-    println("\n\nsubst = "+subst.toString+"\n")
+//    println("\n\n"+Pzx.toString1)
+//    println("\n\n"+Pfbz.toString1)
+//    println("\n\nsubst = "+subst.toString+"\n")
 
-//  subst must beEqual (None)         // correct !!!
-    subst must beEqual (subst) // wrong !!!
+    subst must beEqual (None)         // correct !!!
     }
 
   }
