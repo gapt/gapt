@@ -85,22 +85,23 @@ class SimplificationTest extends SpecificationWithJUnit {
       implicit def listterm2listformula(x: List[HOLFormula]): List[HOLFormula] = x.map(y => y.asInstanceOf[HOLFormula])
       implicit def formula2list(x: HOLFormula): List[HOLFormula] = List(x)
       implicit def term2list(x: HOLExpression): List[HOLFormula] = List(x.asInstanceOf[HOLFormula])
+
+      val seq1f = Sequent(Nil,new MyParserF("<(a, p(x))").getTerm())
+      val seq2f = Sequent(new MyParserF("=(x,s)").getTerm(),new MyParserF("<(a, p(x))").getTerm())
+      val seq3f = Sequent(Nil,new MyParserF("=(a,a)").getTerm())
+      val seq4f = Sequent(Nil,List(new MyParserF("=(x,x)").getTerm(),new MyParserF("=(x,a)").getTerm()))
+
       "FOL" in {
         "1" in {
           val ls = List(s9,s10)
           val ret = subsumedClausesRemovalHOL( ls )
           ret.size must beEqual( 1 )
         }
-        /* pending issue 157
         "2" in {
-          val seq1f = Sequent(Nil,new MyParserF("<(a, p(x))").getTerm())
-          val seq2f = Sequent(new MyParserF("=(x,s)").getTerm(),new MyParserF("<(a, p(x))").getTerm())
-          val seq3f = Sequent(Nil,new MyParserF("=(a,a)").getTerm())
-          val seq4f = Sequent(Nil,List(new MyParserF("=(x,x)").getTerm(),new MyParserF("=(x,a)").getTerm()))
           val ls = List(seq1f,seq2f,seq3f,seq4f)
           val ret = subsumedClausesRemoval( ls )
-          ret.toSet must beEqual( Set(seq1f,seq3f,seq4f) )
-        } */
+          ret.toSet must beEqual( Set(seq1f,seq4f) )
+        }
       }
       "HOL" in {
        "1" in {
@@ -108,14 +109,11 @@ class SimplificationTest extends SpecificationWithJUnit {
           val ret = subsumedClausesRemovalHOL( ls )
           ret.size must beEqual( 1 )
         }
-        /* pending issue 157 and 158
         "2" in {
-          val ls = List(seq1,seq2,seq3,seq4)
-          println("FAILING TEST START")
+          val ls = List(seq1f,seq2f,seq3f,seq4f)
           val ret = subsumedClausesRemovalHOL( ls )
-          println("FAILING TEST END")
-          ret.toSet must beEqual( Set(seq1,seq3,seq4) )
-        } */
+          ret.toSet must beEqual( Set(seq1f,seq4f) )
+        }
       }
     }
   }
