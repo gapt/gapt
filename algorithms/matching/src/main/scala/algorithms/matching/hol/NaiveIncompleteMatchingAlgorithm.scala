@@ -21,17 +21,23 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression]
 
   // restrictedDomain: variables to be treated as constants.
   def matchTerm(term: HOLExpression, posInstance: HOLExpression, restrictedDomain: List[Var]): Option[Substitution[HOLExpression]] = 
-    holMatch(term, posInstance)(restrictedDomain)
+    {
+      val res = holMatch(term, posInstance)(restrictedDomain)
+      res match {
+        case None => println(term.toStringSimple + " did not match " + posInstance.toStringSimple)
+        case Some(_) => println(term.toStringSimple + " matches " + posInstance.toStringSimple)
+
+      }
+      res 
+    }
 
   def holMatch( s: HOLExpression, t: HOLExpression )(implicit restrictedDomain: List[Var]) : Option[Substitution[HOLExpression]] =
     (s, t) match {
       case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( holMatch(s_1, t_1), holMatch(s_2, t_2) )
       case ( s : HOLVar, _ ) if !restrictedDomain.contains(s) => Some(Substitution[HOLExpression]( s, t  ) )
-      case ( v1 @ HOLVar(_,_), v2 @ HOLVar(_,_) ) if v1 == v2 => Some(Substitution[HOLExpression]())
-      case ( v1 @ HOLVar(_,_), v2 @ HOLVar(_,_) ) if v1 != v2 =>  {
-        None
-      }
-      case ( c1 @ HOLConst(_,_), c2 @ HOLConst(_,_) ) if c1 == c2 => Some(Substitution[HOLExpression]())
+      case ( v1 : HOLVar, v2 : HOLVar ) if v1 == v2 => Some(Substitution[HOLExpression]())
+      case ( v1 : HOLVar, v2 : HOLVar ) if v1 != v2 =>  None
+      case ( c1 : HOLConst, c2 : HOLConst ) if c1 == c2 => Some(Substitution[HOLExpression]())
       case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 == v2 => holMatch( e1, e2 )
       case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 != v2 => None
       case _ => None
