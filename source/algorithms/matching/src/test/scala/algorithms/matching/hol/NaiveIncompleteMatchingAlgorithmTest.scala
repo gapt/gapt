@@ -24,12 +24,16 @@ import at.logic.language.hol.logicSymbols._
 //import quantifiers._
 import at.logic.language.lambda.types.Definitions._
 
+import at.logic.parsing.language.simple.{SimpleFOLParser, SimpleHOLParser}
+
 
 //import at.logic.language.hol.substitutions._
 import at.logic.language.lambda.substitutions._
 
 
+// FIXME: this is also defined in SimplificationTest.scala
 private class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
+private class MyParserF(input: String) extends StringReader(input) with SimpleFOLParser
 
 class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
   "NaiveIncompleteMatchingAlgorithm " should {
@@ -93,6 +97,19 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
     subst must beEqual (None)         // correct !!!
     }
 
+    "match correctly the HOL expression a < p(x) with itself" in {
+      val at = new MyParserF("<(a, p(x))").getTerm()
+      val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(at, at)
+      subst must beEqual (Some(Substitution[HOLExpression]()))
+    }
+
+    "match correctly the HOL expression a < p(x) with another copy of itself" in {
+      val at = new MyParserF("<(a, p(x))").getTerm()
+      val at2 = new MyParserF("<(a, p(x))").getTerm()
+
+      val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(at, at2)
+      subst must beEqual (Some(Substitution[HOLExpression]()))
+    }
   }
 }
 

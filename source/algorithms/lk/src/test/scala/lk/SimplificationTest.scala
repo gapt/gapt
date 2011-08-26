@@ -111,9 +111,11 @@ class SimplificationTest extends SpecificationWithJUnit {
         /* pending issue 157 and 158
         "2" in {
           val ls = List(seq1,seq2,seq3,seq4)
+          println("FAILING TEST START")
           val ret = subsumedClausesRemovalHOL( ls )
+          println("FAILING TEST END")
           ret.toSet must beEqual( Set(seq1,seq3,seq4) )
-        }   */
+        } */
       }
     }
   }
