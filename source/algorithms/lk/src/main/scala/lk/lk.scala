@@ -19,7 +19,6 @@ import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
 import at.logic.language.lambda.substitutions
 import substitutions.Substitution
-import org.scalacheck.Prop.Proof
 
 // TODO: we use the toSet method from axiom here to convert a list to a set,
 // perhaps refactor this method out of axiom - it seems useful in general
