@@ -17,12 +17,14 @@ import at.logic.calculi.lk.base.SequentOccurrence
 import ProoftoolSequentFormatter._
 import java.awt.event.{MouseMotionListener, MouseEvent}
 import at.logic.calculi.slk.SchemaProofLinkRule
+import at.logic.calculi.lk.propositionalRules.Axiom
 
 class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends BorderPanel with MouseMotionListener {
-  background = new Color(255,255,255)
+  background = white
   opaque = false
   private val blue = new Color(0,0,255)
   private val black = new Color(0,0,0)
+  private val white = new Color(255,255,255)
   private val bd = Swing.EmptyBorder(0,fSize*3,0,fSize*3)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
@@ -40,13 +42,6 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
   }
 
   proof match {
-//    case SchemaProofLinkRule(_, link, indices) =>
-//      layout(new Label("(" + link + ", " + indices.toString + ")") {
-//          font = ft
-//        }) = Position.Center
-//      layout(new Label(tx) {
-//          font = ft
-//        }) = Position.South
     case p: UnaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize)) = Position.Center
@@ -72,17 +67,31 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
           case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
         }
       }) = Position.South
-    case p: NullaryTreeProof[_] =>
-      layout(new Label(tx) {
-        border = Swing.EmptyBorder(0,fSize,0,fSize)
-        font = ft
-        listenTo(mouse.moves, mouse.clicks, mouse.wheel)
-        reactions += {
-          case e: MouseEntered => foreground = blue
-          case e: MouseExited => foreground = black
-          case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
-        }
-      }) = Position.South
+    case p: NullaryTreeProof[_] => p match {
+      case Axiom(_) =>
+        layout(new Label(tx) {
+          border = Swing.EmptyBorder(0,fSize,0,fSize)
+          font = ft
+          listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+          reactions += {
+            case e: MouseEntered => foreground = blue
+            case e: MouseExited => foreground = black
+            case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
+          }
+        }) = Position.South
+      case SchemaProofLinkRule(_, link, indices) =>
+        layout(new BoxPanel(Orientation.Vertical) {
+          background = white
+          contents += new Label("(" + link + ", " + formulaToString(indices.head) + ")") {
+            font = ft
+            xLayoutAlignment = 0.5
+          }
+          contents += new Label(tx) {
+            font = ft
+            xLayoutAlignment = 0.5
+          }
+        }) = Position.South
+    }
   }
 
   override def paintComponent(g: Graphics2D) = {
