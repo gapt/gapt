@@ -18,6 +18,14 @@ import at.logic.language.hol.logicSymbols._
 object ProoftoolSequentFormatter {
  //formats a lambda term to a readable string, distinguishing function and logical symbols
   def formulaToString(f:LambdaExpression) : String = f match {
+
+    // pretty print schemata
+    case BigAnd(v, formula, init, end) => 
+      "⋀" + formulaToString(v) + "=(" + formulaToString(init) + ".." + formulaToString(end) + ")(" + formulaToString(formula) + ")"
+    case BigOr(v, formula, init, end) => 
+      "⋁" + formulaToString(v) + "=(" + formulaToString(init) + ".." + formulaToString(end) + ")(" + formulaToString(formula) + ")"
+    case t : IntegerTerm  => parseIntegerTerm(t, 0)
+
     case App(x,y) => x match {
       case App(Var(name,tp),z) =>
         if (name.toString.matches("""[\w\p{InGreek}]*""")) name.toString+"("+formulaToString(z)+","+formulaToString(y)+")"
@@ -35,6 +43,19 @@ object ProoftoolSequentFormatter {
     case Abs(x,y) => formulaToString(y)
     case  x : Any    => "(unmatched class: "+x.getClass() + ")"
   }
+
+  def parseIntegerTerm( t: IntegerTerm, n: Int) : String = t match {
+    // FIXME: in the first case, we implicitely assume
+    // that all IntConsts are 0!
+    // this is just done for convenience, and should be changed ASAP
+    case z : IntConst => n.toString
+    case v : IntVar => if (n > 0)
+        v.toStringSimple + "+" + n.toString
+      else
+        v.toStringSimple
+    case Succ(t) => parseIntegerTerm( t, n + 1 )
+  }
+
  /*
   def formulaToString(f:SchemaExpression) : String = f match {
     case AppN(BigAndC, SchemaAbs(i, formula)::lower::upper::Nil) => BigAndC.name + "<sub>" + formulaToString(i) + " = " + formulaToString(lower) + "</sub>" +

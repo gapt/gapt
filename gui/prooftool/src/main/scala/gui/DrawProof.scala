@@ -16,6 +16,7 @@ import at.logic.calculi.treeProofs._
 import at.logic.calculi.lk.base.SequentOccurrence
 import ProoftoolSequentFormatter._
 import java.awt.event.{MouseMotionListener, MouseEvent}
+import at.logic.calculi.slk.SchemaProofLinkRule
 
 class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends BorderPanel with MouseMotionListener {
   background = new Color(255,255,255)
@@ -39,6 +40,13 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
   }
 
   proof match {
+//    case SchemaProofLinkRule(_, link, indices) =>
+//      layout(new Label("(" + link + ", " + indices.toString + ")") {
+//          font = ft
+//        }) = Position.Center
+//      layout(new Label(tx) {
+//          font = ft
+//        }) = Position.South
     case p: UnaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize)) = Position.Center
