@@ -53,6 +53,8 @@ import at.logic.provers.atp.Prover
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.language.lambda.substitutions.Substitution
 
+import at.logic.gui.prooftool.gui.Main
+
 package GAPScalaInteractiveShellLibrary {
 
 object loadProofs {
@@ -252,6 +254,10 @@ object loadProofs {
     }
   }
 
+  object prooftool {
+    def apply(p: LKProof) = Main.display("proof", p)
+  }
+
   object ceresHelp {
     def apply() = {
       println("Available commands:")
@@ -274,6 +280,7 @@ object loadProofs {
       println("exportXML: List[Proof], List[String], String => Unit")
       println("refuteFOL: Seq[Clause] => Option[ResolutionProof[ClauseOccurrence]]")
       println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[ClauseOccurrence]] - simple interactive refutation")
+      println("prooftool: LKProof => Unit - visualize proof in prooftool")
     }
   }
 }
