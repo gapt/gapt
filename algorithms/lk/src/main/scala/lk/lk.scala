@@ -21,7 +21,8 @@ import at.logic.language.lambda.substitutions
 import substitutions.Substitution
 
 // TODO: we use the toSet method from axiom here to convert a list to a set,
-// perhaps refactor this method out of axiom - it seems useful in general
+// and this is horrible...
+// should refactor this method out of axiom - it seems useful in general
 object getCutAncestors {
   def apply( p: LKProof )
     : Set[FormulaOccurrence] = p match {
@@ -34,6 +35,23 @@ object getCutAncestors {
       case UnaryLKskProof(_,p,_,_,_) => getCutAncestors( p )
       // support SLK
       case UnarySchemaProof(_,p,_,_,_) => getCutAncestors( p )
+      case SchemaProofLinkRule(_, _, _) => Set[FormulaOccurrence]()
+    }
+  // This method returns only ancestors of cut-formulas that satisfy a given predicate.
+  def apply( p: LKProof, predicate : HOLFormula => Boolean )
+    : Set[FormulaOccurrence] = p match {
+      case CutRule(p1, p2, _, a1, a2) => if (predicate(a1.formula)) {
+          getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate ) ++ Axiom.toSet( getAncestors( a1 ) ) ++ Axiom.toSet( getAncestors( a2 ) )
+        } else {
+          getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate )
+        }
+      case UnaryLKProof(_,p,_,_,_) => getCutAncestors( p, predicate )
+      case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate )
+      case Axiom(_) => Set[FormulaOccurrence]()
+      // support LKsk
+      case UnaryLKskProof(_,p,_,_,_) => getCutAncestors( p, predicate )
+      // support SLK
+      case UnarySchemaProof(_,p,_,_,_) => getCutAncestors( p, predicate )
       case SchemaProofLinkRule(_, _, _) => Set[FormulaOccurrence]()
     }
 }
