@@ -152,6 +152,15 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
+      contents += new MenuItem(Action("Compute ClList (Only Quantified Cuts)") { computeClListOnlyQuantifiedCuts }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
       contents += new Separator
       contents += new MenuItem(Action("Gentzen Method") { gentzen }) { border = customBorder }
       contents += new Separator
@@ -206,6 +215,15 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => enabled = false
         }
       }
+      contents += new MenuItem(Action("Show Struct (OnlyQuantifiedCuts)") { showStructOnlyQuantifiedCuts }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
+      }
     }
     contents += new Menu("Help") {
       mnemonic = Key.H
@@ -230,6 +248,21 @@ object Main extends SimpleSwingApplication {
         val t = e.toString
         Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   }
+  def computeClListOnlyQuantifiedCuts = try {
+    import at.logic.transformations.skolemization.lksk.LKtoLKskc
+    import at.logic.transformations.ceres.struct.StructCreators
+    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+
+    val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+    val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
+    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s).map(_.getSequent)
+    body.contents = new Launcher(Some("cllist",csPre),16)
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+  }
+
 
   def showStruct = try {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
@@ -237,6 +270,20 @@ object Main extends SimpleSwingApplication {
 
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = structToExpressionTree( StructCreators.extract( proof_sk ) )
+    body.contents = new Launcher(Some("Struct",s),12)
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+  }
+
+  // Computes the struct, ignoring propositional cuts
+  def showStructOnlyQuantifiedCuts = try {
+    import at.logic.transformations.skolemization.lksk.LKtoLKskc
+    import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
+
+    val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
     body.contents = new Launcher(Some("Struct",s),12)
   } catch {
       case e: AnyRef =>
