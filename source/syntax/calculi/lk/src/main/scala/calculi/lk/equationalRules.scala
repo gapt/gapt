@@ -15,6 +15,7 @@ import at.logic.utils.ds.trees._
 import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 import base._
+import at.logic.utils.traits.Occurrence
 
 package equationalRules {
 
@@ -27,16 +28,16 @@ package equationalRules {
   // TODO: implement verification of the rule
   object EquationLeft1Rule {
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
-      val term1op = s1.root.succedent.find(x => x == term1oc)
-      val term2op = s2.root.antecedent.find(x => x == term2oc)
+      val term1op = s1.root.succedent.find(_ == term1oc)
+      val term2op = s2.root.antecedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val eqocc = term1op.get
         val auxocc = term2op.get
-        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, (s1.root.antecedent) ++ s2.root.antecedent - auxocc)
-        new BinaryTree[SequentOccurrence](
-            SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent - auxocc, s1.root.antecedent) + prinFormula,
-                              createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent, s1.root.succedent - eqocc) ), s1, s2 )
+        val prinFormula = FormulaOccurrence(main, eqocc::auxocc::Nil)
+        new BinaryTree[Sequent](
+            Sequent(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent.filterNot(_ == auxocc)) :+ prinFormula,
+                              createContext(s1.root.succedent.filterNot(_ == eqocc)) ++ createContext(s2.root.succedent) ), s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = EquationLeft1RuleType
           def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
@@ -47,7 +48,7 @@ package equationalRules {
     }
 
     // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -66,16 +67,16 @@ package equationalRules {
   // TODO: implement verification of the rule
   object EquationLeft2Rule {
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
-      val term1op = s1.root.succedent.find(x => x == term1oc)
-      val term2op = s2.root.antecedent.find(x => x == term2oc)
+      val term1op = s1.root.succedent.find(_ == term1oc)
+      val term2op = s2.root.antecedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val eqocc = term1op.get
         val auxocc = term2op.get
-        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, s1.root.antecedent ++ s2.root.antecedent - auxocc)
-        new BinaryTree[SequentOccurrence](
-            SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent - auxocc, s1.root.antecedent) + prinFormula,
-                              createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent, s1.root.succedent - eqocc) ), s1, s2 )
+        val prinFormula = FormulaOccurrence(main, eqocc::auxocc::Nil)
+        new BinaryTree[Sequent](
+            Sequent(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent.filterNot(_ == auxocc)) :+ prinFormula,
+                              createContext(s1.root.succedent.filterNot(_ == eqocc)) ++ createContext(s2.root.succedent) ), s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = EquationLeft1RuleType
           def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
@@ -86,7 +87,7 @@ package equationalRules {
     }
 
     // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -105,16 +106,16 @@ package equationalRules {
   // TODO: implement verification of the rule
   object EquationRight1Rule {
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
-      val term1op = s1.root.succedent.find(x => x == term1oc)
-      val term2op = s2.root.succedent.find(x => x == term2oc)
+      val term1op = s1.root.succedent.find(_ == term1oc)
+      val term2op = s2.root.succedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val eqocc = term1op.get
         val auxocc = term2op.get
-        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, (s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc))
-        new BinaryTree[SequentOccurrence](
-            SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent, s1.root.antecedent),
-                              createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent - auxocc, s1.root.succedent - eqocc) + prinFormula ),
+        val prinFormula = FormulaOccurrence(main, eqocc::auxocc::Nil)
+        new BinaryTree[Sequent](
+            Sequent(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent),
+                              createContext(s1.root.succedent.filterNot(_ == eqocc)) ++ createContext(s2.root.succedent.filterNot(_ == auxocc)) :+ prinFormula ),
             s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = EquationRight1RuleType
@@ -126,7 +127,7 @@ package equationalRules {
     }
 
     // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
@@ -145,16 +146,16 @@ package equationalRules {
   // TODO: implement verification of the rule
   object EquationRight2Rule {
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
-      val term1op = s1.root.succedent.find(x => x == term1oc)
-      val term2op = s2.root.succedent.find(x => x == term2oc)
+      val term1op = s1.root.succedent.find(_ == term1oc)
+      val term2op = s2.root.succedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val eqocc = term1op.get
         val auxocc = term2op.get
-        val prinFormula = eqocc.factory.createPrincipalFormulaOccurrence(main, eqocc::auxocc::Nil, (s1.root.succedent - eqocc) ++ (s2.root.succedent - auxocc))
-        new BinaryTree[SequentOccurrence](
-            SequentOccurrence(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent, s1.root.antecedent),
-                              createContext(s1.root.succedent - eqocc) ++ createContext(s2.root.succedent - auxocc, s1.root.succedent - eqocc) + prinFormula),
+        val prinFormula = FormulaOccurrence(main, eqocc::auxocc::Nil)
+        new BinaryTree[Sequent](
+            Sequent(createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent),
+                              createContext(s1.root.succedent.filterNot(_ == eqocc)) ++ createContext(s2.root.succedent.filterNot(_ == auxocc)) :+ prinFormula),
             s1, s2 )
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = EquationRight1RuleType
@@ -166,7 +167,7 @@ package equationalRules {
     }
 
     // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[SequentOccurrence] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")

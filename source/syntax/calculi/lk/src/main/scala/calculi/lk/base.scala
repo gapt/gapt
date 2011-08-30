@@ -13,15 +13,12 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
-import scala.collection.immutable.Set
-import scala.collection.mutable.HashMap
-import scala.util.Sorting.quickSort
-import scala.math.Ordering._
-import at.logic.language.lambda.substitutions.Substitution
-import java.util.Comparator
 
 package base {
 
+import collection.immutable.Seq
+
+/*
 import java.util.Comparator
 
 // a trait for all objects that have a sequent (or its descendant) component (like Sequent, SequentOccurrence
@@ -115,28 +112,33 @@ import java.util.Comparator
     def apply(sub: Substitution[HOLExpression], seq: Sequent) =
       Sequent( seq.antecedent.map(f => sub(f).asInstanceOf[HOLFormula]), seq.succedent.map(f => sub(f).asInstanceOf[HOLFormula]) )
   }
+  */
 
-  // List should be changed into set
-  class SequentOccurrence(val antecedent: Set[FormulaOccurrence], val succedent: Set[FormulaOccurrence]) extends SequentLike
+  class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[FormulaOccurrence])
   {
-    def getSequent = Sequent( antecedent.toList.map( fo => fo.formula ), succedent.toList.map( fo => fo.formula ) )
-
-    def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
-    def multisetEquals( o: Sequent ) = getSequent.multisetEquals(o)
-    def setEquals(o: SequentOccurrence ) = getSequent.setEquals(o.getSequent)
-    def setEquals( o: Sequent ) = getSequent.setEquals(o)
-    //def multisetEquals( o: SequentOccurrence ) = (((antecedent.toList.map(x => x.formula)) == o.antecedent.toList.map(x => x.formula)) && ((succedent.toList.map(x => x.formula)) == o.succedent.toList.map(x => x.formula)))
-    override def toString : String = SequentFormatter.sequentOccurenceToString(this)
-    def removeFormulasAtOccurrences(occs: Seq[FormulaOccurrence]): SequentOccurrence = SequentOccurrence(
+    //TODO improve both equals methods
+    def multisetEquals( o: Sequent ) = o.antecedent.diff(antecedent).isEmpty &&
+                                       o.succedent.diff(succedent).isEmpty &&
+                                       antecedent.diff(o.antecedent).isEmpty &&
+                                       succedent.diff(o.succedent).isEmpty
+    def setEquals(o: Sequent ) = antecedent.forall(a => o.antecedent.contains(a)) &&
+                                 succedent.forall(a => o.succedent.contains(a)) &&
+                                 o.antecedent.forall(a => antecedent.contains(a)) &&
+                                 o.succedent.forall(a => succedent.contains(a))
+    override def toString : String = SequentFormatter.sequentToString(this)
+    def removeFormulasAtOccurrences(occs: Seq[FormulaOccurrence]): Sequent = Sequent(
         antecedent.filterNot(x => occs.contains(x)),
         succedent.filterNot(x => occs.contains(x))
       )
     def getChildOf(fo: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
+    //override def toString : String = antecedent.toString + " :- " + succedent.toString
+    def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
+                                  succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
   }
 
-  object SequentOccurrence {
-    def apply(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence]) = new SequentOccurrence(antecedent, succedent)
-    def unapply(so: SequentOccurrence) = Some(so.antecedent, so.succedent)
+  object Sequent {
+    def apply(antecedent: Seq[FormulaOccurrence], succedent: Seq[FormulaOccurrence]) = new Sequent(antecedent, succedent)
+    def unapply(so: Sequent) = Some(so.antecedent, so.succedent)
   }
 
   // exceptions
@@ -144,21 +146,20 @@ import java.util.Comparator
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
-  trait LKProof extends TreeProof[SequentOccurrence] with Tree[SequentOccurrence] with SequentLike {
+  trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {
     def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-      (root.antecedent.toList ++ root.succedent.toList).filter(x => x.ancestors.find(y => y =^ fo) != None) match {
+      (root.antecedent ++ root.succedent).filter(x => x.ancestors.find(y => y =^ fo) != None) match {
         case x::Nil => Some(x)
         case Nil => None
         case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
       }
     }
-    def getSequent = root.getSequent
   }
-  trait NullaryLKProof extends LeafTree[SequentOccurrence] with LKProof with NullaryTreeProof[SequentOccurrence]
-  trait UnaryLKProof extends UnaryTree[SequentOccurrence] with LKProof with UnaryTreeProof[SequentOccurrence] {
+  trait NullaryLKProof extends LeafTree[Sequent] with LKProof with NullaryTreeProof[Sequent]
+  trait UnaryLKProof extends UnaryTree[Sequent] with LKProof with UnaryTreeProof[Sequent] {
     override def uProof = t.asInstanceOf[LKProof]
   }
-  trait BinaryLKProof extends BinaryTree[SequentOccurrence] with LKProof with BinaryTreeProof[SequentOccurrence] {
+  trait BinaryLKProof extends BinaryTree[Sequent] with LKProof with BinaryTreeProof[Sequent] {
     override def uProof1 = t1.asInstanceOf[LKProof]
     override def uProof2 = t2.asInstanceOf[LKProof]
   }
@@ -181,8 +182,7 @@ import java.util.Comparator
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
   object createContext {
-    def apply(set: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x, x::Nil, set - x))
-    def apply(set: Set[FormulaOccurrence], binary: Set[FormulaOccurrence]): Set[FormulaOccurrence] = set.map(x => x.factory.createContextFormulaOccurrence(x.formula, x, x::Nil, set - x, binary))
+    def apply(set: Seq[FormulaOccurrence]): Seq[FormulaOccurrence] = set.map(x => FormulaOccurrence(x,x::Nil))
   }
 
   object SequentFormatter {
@@ -218,9 +218,6 @@ import java.util.Comparator
         }
         sb.toString
     }
-
-    def sequentOccurenceToString(s: SequentOccurrence) : String = sequentToString(s.getSequent)
-
   }
 
 }
