@@ -16,6 +16,7 @@ import at.logic.utils.ds.trees._
 
 package base {
 
+import _root_.at.logic.utils.traits.Occurrence
 import collection.immutable.Seq
 
 /*
@@ -126,11 +127,11 @@ import java.util.Comparator
                                  o.antecedent.forall(a => antecedent.contains(a)) &&
                                  o.succedent.forall(a => succedent.contains(a))
     override def toString : String = SequentFormatter.sequentToString(this)
-    def removeFormulasAtOccurrences(occs: Seq[FormulaOccurrence]): Sequent = Sequent(
+    def removeFormulasAtOccurrences(occs: Seq[Occurrence]): Sequent = Sequent(
         antecedent.filterNot(x => occs.contains(x)),
         succedent.filterNot(x => occs.contains(x))
       )
-    def getChildOf(fo: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
+    def getChildOf(fo: Occurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
     //override def toString : String = antecedent.toString + " :- " + succedent.toString
     def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
@@ -147,7 +148,7 @@ import java.util.Comparator
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
   trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {
-    def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
+    def getDescendantInLowerSequent(fo: Occurrence): Option[FormulaOccurrence] = {
       (root.antecedent ++ root.succedent).filter(x => x.ancestors.find(y => y =^ fo) != None) match {
         case x::Nil => Some(x)
         case Nil => None

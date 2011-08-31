@@ -13,7 +13,9 @@ import types._
 
 package typedLambdaCalculus {
 
-  trait LambdaFactoryProvider {
+import io.BytePickle.Def
+
+trait LambdaFactoryProvider {
     def factory : LambdaFactoryA = LambdaFactory
   }
 
@@ -57,6 +59,7 @@ package typedLambdaCalculus {
       }
     }*/
     def toStringSimple: String
+    def cloneTerm: LambdaExpression
   }
 
   // Var must have as symbol VariableStringSymbol (if new symbols are added the definition of how to
@@ -127,6 +130,8 @@ package typedLambdaCalculus {
       }
       case _ => -1 // in all other cases, we are smaller.
     }
+    // cloning for vars ignore the db indices
+    def cloneTerm: LambdaExpression = factory.createVar(name, exptype)
   }
   // TODO: remove!?!
   object LambdaVar {
@@ -215,6 +220,7 @@ package typedLambdaCalculus {
       case AbsInScope( v, e ) => expressionInScope.compare( e )
       case _ => 1
     }
+    def cloneTerm: LambdaExpression = factory.createAbs(variable,expression)
   }
 
   /*
@@ -281,6 +287,7 @@ package typedLambdaCalculus {
       case Var(_, _) => 1
       case Abs(_, _) => -1
     }
+    def cloneTerm: LambdaExpression = factory.createApp(function,argument)
   }
 
   object App {
