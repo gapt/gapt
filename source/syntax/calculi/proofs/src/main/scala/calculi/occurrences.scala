@@ -21,10 +21,15 @@ trait HasAncestors {
     val ancestors: Seq[Occurrence]
   }
 
-  class FormulaOccurrence(val formula: Formula,  override val ancestors: Seq[FormulaOccurrence]) extends Occurrence with HasAncestors
+  class FormulaOccurrence(val formula: Formula,  override val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) extends Occurrence with HasAncestors
   implicit def focc2f(fo: FormulaOccurrence): Formula = fo.formula
-  object FormulaOccurrence {
-    def apply(f: Formula, ancestors: Seq[FormulaOccurrence]) = new FormulaOccurrence(f, ancestors)
-    def unapply(fo: FormulaOccurrence) = Some(fo.formula, fo.ancestors)
+  
+  trait FOFactory {
+    def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence
+  }
+
+  object defaultFormulaOccurenceFactory extends FOFactory {
+    def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence = 
+    new FormulaOccurrence(formula, ancestors, this)
   }
 }
