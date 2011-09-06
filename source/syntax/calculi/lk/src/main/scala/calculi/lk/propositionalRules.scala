@@ -60,8 +60,9 @@ import collection.immutable.Seq
 
   object WeakeningLeftRule {
     def apply(s1: LKProof, f: HOLFormula) (implicit factory: FOFactory) = {
-      val prinFormula = factory.createFormulaOccurrence(f, Nil)
-      new UnaryTree[Sequent](Sequent(createContext(s1.root.antecedent) :+ prinFormula, createContext(s1.root.succedent)), s1)
+      val prinFormula = getPrinFormula(f)
+      val sequent = getSequent(s1.root, prinFormula)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningLeftRuleType
           def prin = prinFormula::Nil
@@ -69,7 +70,13 @@ import collection.immutable.Seq
         }
     }
     def apply(s1 : Sequent, f : HOLFormula)(implicit factory : FOFactory) = {
-      val prinFormula = factory.createFormulaOccurrence(f, Nil)
+      val prinFormula = getPrinFormula(f)
+      getSequent(s1, prinFormula)
+    }
+    private def getPrinFormula(f: HOLFormula) = {
+      factory.createFormulaOccurrence(f, Nil)
+    }
+    private def getSequent(s1: Sequent, prinFormula: FormulaOccurrence) = {
       Sequent(createContext(s1.antecedent) :+ prinFormula, createContext(s1.succedent))
     }
     def unapply(proof: LKProof) = if (proof.rule == WeakeningLeftRuleType) {
@@ -82,9 +89,10 @@ import collection.immutable.Seq
 
   object WeakeningRightRule {
     def apply(s1: LKProof, f: HOLFormula) (implicit factory: FOFactory) = {
-      val prinFormula = factory.createFormulaOccurrence(f, Nil)
-
-      new UnaryTree[Sequent](Sequent(createContext(s1.root.antecedent), createContext(s1.root.succedent) :+ prinFormula), s1)
+      val prinFormula = getPrinFormula(f)
+      val sequent = getSequent(s1.root, prinFormula)
+ 
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with PrincipalFormulas {
           def rule = WeakeningRightRuleType
           def prin = prinFormula::Nil
@@ -92,7 +100,13 @@ import collection.immutable.Seq
         }
     }
     def apply(s1 : Sequent, f : HOLFormula)(implicit factory : FOFactory) = {
-      val prinFormula = factory.createFormulaOccurrence(f, Nil)
+      val prinFormula = getPrinFormula(f)
+      getSequent(s1, prinFormula)
+    }
+    private def getPrinFormula(f: HOLFormula) = {
+      factory.createFormulaOccurrence(f, Nil)
+    }
+    private def getSequent(s1: Sequent, prinFormula: FormulaOccurrence) = {
       Sequent(createContext(s1.antecedent), createContext(s1.succedent) :+ prinFormula)
     }
     def unapply(proof: LKProof) = if (proof.rule == WeakeningRightRuleType) {
@@ -106,14 +120,10 @@ import collection.immutable.Seq
   object ContractionLeftRule {
     def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1.root, term1oc, term2oc)
-      val holterm1 = term1.asInstanceOf[HOLFormula]
-      val prinFormula = term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, term1, term2, prinFormula)
 
-      val ant1 = createContext(s1.root.antecedent.filterNot(x => x == term1 || x == term2))
-      val antecedent = ant1 :+ prinFormula
-      val succedent = createContext(s1.root.succedent)
-
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = ContractionLeftRuleType
           def aux = (term1::term2::Nil)::Nil
@@ -123,14 +133,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1, term1oc, term2oc)
-      val holterm1 = term1.asInstanceOf[HOLFormula]
-      val prinFormula = term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
-
-      val ant1 = createContext(s1.antecedent.filterNot(x => x == term1 || x == term2))
-      val antecedent = ant1 :+ prinFormula
-      val succedent = createContext(s1.succedent)
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
+        case (x::y::_) => apply(s1, x, y)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ =^ term1oc)
@@ -146,12 +157,15 @@ import collection.immutable.Seq
         }      
       }
     }
-    // convenient method to choose the first two formulas
-    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
-        case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val ant1 = createContext(s1.antecedent.filterNot(x => x == term1 || x == term2))
+      val antecedent = ant1 :+ prinFormula
+      val succedent = createContext(s1.succedent)
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == ContractionLeftRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -165,31 +179,28 @@ import collection.immutable.Seq
   object ContractionRightRule {
     def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1.root, term1oc, term2oc)
-      val holterm1 = term1.asInstanceOf[HOLFormula]
-      val prinFormula = term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
-      
-      val antecedent = createContext(s1.root.antecedent)
-      val suc1 = createContext(s1.root.succedent.filterNot(x =>  x == term1 || x == term2))
-      val succedent = suc1 :+ prinFormula
+      val prinFormula = getPrinFormula(term1, term2) 
+      val sequent = getSequent(s1.root, term1, term2, prinFormula)
 
-       new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
-         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-           def rule = ContractionRightRuleType
-           def aux = (term1::term2::Nil)::Nil
-           def prin = prinFormula::Nil
-           override def name = "c:r"
-         }
+      new UnaryTree[Sequent](sequent, s1)
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+          def rule = ContractionRightRuleType
+          def aux = (term1::term2::Nil)::Nil
+          def prin = prinFormula::Nil
+          override def name = "c:r"
+        }
     }
     def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1, term1oc, term2oc)
-      val holterm1 = term1.asInstanceOf[HOLFormula]
-      val prinFormula = term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
-
-      val antecedent = createContext(s1.antecedent)
-      val suc1 = createContext(s1.succedent.filterNot(x =>  x == term1 || x == term2))
-      val succedent = suc1 :+ prinFormula
-      
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2) 
+      getSequent(s1, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      (s1.root.succedent.filter(x => x.formula == term1)).toList match {
+        case (x::y::_) => apply(s1, x, y)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence) = { 
       val term1op = s1.succedent.find(_ =^ term1oc)
@@ -205,12 +216,15 @@ import collection.immutable.Seq
         }
       }
     }
-    // convenient method to choose the first two formulas
-    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      (s1.root.succedent.filter(x => x.formula == term1)).toList match {
-        case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent)
+      val suc1 = createContext(s1.succedent.filterNot(x =>  x == term1 || x == term2))
+      val succedent = suc1 :+ prinFormula
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == ContractionRightRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -224,15 +238,9 @@ import collection.immutable.Seq
   object CutRule {
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc)
+      val sequent = getSequent(s1.root, s2.root, term1, term2)
 
-      val ant1 = createContext(s1.root.antecedent)
-      val ant2 = createContext(s2.root.antecedent.filterNot(_ == term2))
-      val antecedent = ant1 ++ ant2
-      val suc1 = createContext(s1.root.succedent.filterNot(_ == term1))
-      val suc2 = createContext(s2.root.succedent)
-      val succedent = suc1 ++ suc2
-
-      new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+      new BinaryTree[Sequent](sequent, s1, s2)
         with BinaryLKProof with AuxiliaryFormulas {
             def rule = CutRuleType
             def aux = (term1::Nil)::(term2::Nil)::Nil
@@ -241,15 +249,14 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1, s2, term1oc, term2oc)
-
-      val ant1 = createContext(s1.antecedent)
-      val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
-      val antecedent = ant1 ++ ant2
-      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
-      val suc2 = createContext(s2.succedent)
-      val succedent = suc1 ++ suc2
-
-      Sequent(antecedent, succedent)
+      getSequent(s1, s2, term1, term2)
+    }
+     // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas  = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term1)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
@@ -264,12 +271,14 @@ import collection.immutable.Seq
         }
       }
     } 
-     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas  = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term1)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getSequent(s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val ant1 = createContext(s1.antecedent)
+      val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
+      val antecedent = ant1 ++ ant2
+      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
+      val suc2 = createContext(s2.succedent)
+      val succedent = suc1 ++ suc2
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == CutRuleType) {
         val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas]
@@ -286,19 +295,10 @@ import collection.immutable.Seq
     
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = And(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, s2.root, term1, term2, prinFormula)
 
-      val ant1 = createContext(s1.root.antecedent)
-      val ant2 = createContext(s2.root.antecedent)
-      val antecedent = ant1 ++ ant2
-      val suc1 = createContext(s1.root.succedent.filterNot(_ == term1))
-      val suc2 = createContext(s2.root.succedent.filterNot(_ == term2))
-      val succedent = suc1 ++ suc2 :+ prinFormula
-
-      new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+      new BinaryTree[Sequent](sequent, s1, s2)
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = AndRightRuleType
           def aux = ((term1)::Nil)::(term2::Nil)::Nil
@@ -308,19 +308,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1, s2, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = And(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
-
-      val ant1 = createContext(s1.antecedent)
-      val ant2 = createContext(s2.antecedent)
-      val antecedent = ant1 ++ ant2
-      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
-      val suc2 = createContext(s2.succedent.filterNot(_ == term2))
-      val succedent = suc1 ++ suc2 :+ prinFormula
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, s2, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryLKProof with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
@@ -332,12 +328,20 @@ import collection.immutable.Seq
         (term1, term2)
       }
     }
-    // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryLKProof with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
+      val form = And(holterm1, holterm2)
+      term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val ant1 = createContext(s1.antecedent)
+      val ant2 = createContext(s2.antecedent)
+      val antecedent = ant1 ++ ant2
+      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
+      val suc2 = createContext(s2.succedent.filterNot(_ == term2))
+      val succedent = suc1 ++ suc2 :+ prinFormula
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == AndRightRuleType) {
         val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -353,32 +357,28 @@ import collection.immutable.Seq
 
     def apply(s1: LKProof, term1oc: Occurrence, term2: HOLFormula) = {
       val term1 = getTerms(s1.root, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = And(holterm1, term2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, term1, prinFormula)
 
-      val antecedent = createContext(s1.root.antecedent.filterNot(_ == term1)) :+ prinFormula
-      val succedent = createContext(s1.root.succedent)
-
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = AndLeft1RuleType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
           override def name = "\u2227:l1"
         }
-     
     }
     def apply(s1: Sequent, term1oc: Occurrence, term2: HOLFormula) = {
       val term1 = getTerms(s1, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = And(holterm1, term2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
-
-      val antecedent = createContext(s1.antecedent.filterNot(_ == term1)) :+ prinFormula
-      val succedent = createContext(s1.succedent)
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, term1, prinFormula)
+    }
+    // convenient method to choose the first  formula
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
+        case (x::_) => apply(s1, x, term2)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
@@ -388,12 +388,15 @@ import collection.immutable.Seq
         term1
       }
     }
-    // convenient method to choose the first  formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
-        case (x::_) => apply(s1, x, term2)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: HOLFormula) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val form = And(holterm1, term2)
+      term1.factory.createFormulaOccurrence(form, term1::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent.filterNot(_ == term1)) :+ prinFormula
+      val succedent = createContext(s1.succedent)
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == AndLeft1RuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -409,14 +412,10 @@ import collection.immutable.Seq
 
     def apply(s1: LKProof, term1: HOLFormula, term2oc: Occurrence) = {
       val term2 = getTerms(s1.root, term2oc)
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = And(term1, holterm2)
-      val prinFormula = term2.factory.createFormulaOccurrence(form, term2::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, term2, prinFormula)
 
-      val antecedent = createContext(s1.root.antecedent.filterNot(_ == term2)) :+ prinFormula
-      val succedent = createContext(s1.root.succedent)
-
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = AndLeft2RuleType
           def aux = (term2::Nil)::Nil
@@ -426,14 +425,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, term1: HOLFormula, term2oc: Occurrence) = {
       val term2 = getTerms(s1, term2oc)
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = And(term1, holterm2)
-      val prinFormula = term2.factory.createFormulaOccurrence(form, term2::Nil)
-
-      val antecedent = createContext(s1.antecedent.filterNot(_ == term2)) :+ prinFormula
-      val succedent = createContext(s1.succedent)
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, term2, prinFormula)
+    }
+    // convenient method to choose the first  formula
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      (s1.root.antecedent.filter(x => x.formula == term2)).toList match {
+        case (x::_) => apply(s1, term1, x)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term2oc: Occurrence) = {
       val term2op = s1.antecedent.find(_ == term2oc)
@@ -443,13 +443,15 @@ import collection.immutable.Seq
         term2
       }
     }
- 
-     // convenient method to choose the first  formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      (s1.root.antecedent.filter(x => x.formula == term2)).toList match {
-        case (x::_) => apply(s1, term1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: HOLFormula, term2: FormulaOccurrence) = {
+      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
+      val form = And(term1, holterm2)
+      term2.factory.createFormulaOccurrence(form, term2::Nil)
+    }
+    private def getSequent(s1: Sequent, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent.filterNot(_ == term2)) :+ prinFormula
+      val succedent = createContext(s1.succedent)
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == AndLeft2RuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -467,17 +469,10 @@ import collection.immutable.Seq
 
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = Or(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, s2.root, term1, term2, prinFormula)
       
-      val ant1 = createContext(s1.root.antecedent.filterNot(_ == term1))
-      val ant2 = createContext(s2.root.antecedent.filterNot(_ == term2))
-      val antecedent = ant1 ++ ant2 :+ prinFormula
-      val succedent = createContext(s1.root.succedent) ++ createContext(s1.root.succedent)
-      
-      new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+      new BinaryTree[Sequent](sequent, s1, s2)
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = OrLeftRuleType
           def aux = ((term1)::Nil)::(term2::Nil)::Nil
@@ -487,17 +482,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1, s2, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = Or(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
-
-      val ant1 = createContext(s1.antecedent.filterNot(_ == term1))
-      val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
-      val antecedent = ant1 ++ ant2 :+ prinFormula
-      val succedent = createContext(s1.succedent) ++ createContext(s1.succedent)
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, s2, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
@@ -509,12 +502,18 @@ import collection.immutable.Seq
         (term1, term2)
       }
     } 
-    // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
+      val form = Or(holterm1, holterm2)
+      term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val ant1 = createContext(s1.antecedent.filterNot(_ == term1))
+      val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
+      val antecedent = ant1 ++ ant2 :+ prinFormula
+      val succedent = createContext(s1.succedent) ++ createContext(s2.succedent)
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == OrLeftRuleType) {
         val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -530,15 +529,10 @@ import collection.immutable.Seq
 
     def apply(s1: LKProof, term1oc: Occurrence, term2: HOLFormula) = {
       val term1 = getTerms(s1.root, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = Or(holterm1, term2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, term1, prinFormula) 
       
-      val antecedent = createContext(s1.root.antecedent)
-      val suc1 = createContext(s1.root.succedent.filterNot(_ == term1))
-      val succedent = suc1 :+ prinFormula
-      
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = OrRight1RuleType
           def aux = ((term1)::Nil)::Nil
@@ -548,15 +542,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, term1oc: Occurrence, term2: HOLFormula) = {
       val term1 = getTerms(s1, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = Or(holterm1, term2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
-
-      val antecedent = createContext(s1.antecedent)
-      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
-      val succedent = suc1 :+ prinFormula
-
-      Sequent(antecedent, succedent)      
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, term1, prinFormula) 
+    }
+    // convenient method to choose the first  formula
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      (s1.root.succedent.filter(x => x.formula == term1)).toList match {
+        case (x::_) => apply(s1, x, term2)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
@@ -566,12 +560,16 @@ import collection.immutable.Seq
         term1
       }
     }
-    // convenient method to choose the first  formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      (s1.root.succedent.filter(x => x.formula == term1)).toList match {
-        case (x::_) => apply(s1, x, term2)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: HOLFormula) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val form = Or(holterm1, term2)
+      term1.factory.createFormulaOccurrence(form, term1::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent)
+      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
+      val succedent = suc1 :+ prinFormula
+      Sequent(antecedent, succedent)      
     }
     def unapply(proof: LKProof) = if (proof.rule == OrRight1RuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -587,15 +585,10 @@ import collection.immutable.Seq
 
     def apply(s1: LKProof, term1: HOLFormula, term2oc: Occurrence) = {
       val term2 = getTerms(s1.root, term2oc)
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]    
-      val form = Or(term1, holterm2)
-      val prinFormula = term2.factory.createFormulaOccurrence(form, term2::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, term2, prinFormula)
       
-      val antecedent = createContext(s1.root.antecedent)
-      val suc1 = createContext(s1.root.succedent.filterNot(_ == term2))
-      val succedent = suc1 :+ prinFormula
-        
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = OrRight2RuleType
           def aux = ((term2)::Nil)::Nil
@@ -605,15 +598,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, term1: HOLFormula, term2oc: Occurrence) = {
       val term2 = getTerms(s1, term2oc)
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = Or(term1, holterm2)
-      val prinFormula = term2.factory.createFormulaOccurrence(form, term2::Nil)
-      
-      val antecedent = createContext(s1.antecedent)
-      val suc1 = createContext(s1.succedent.filterNot(_ == term2))
-      val succedent = suc1 :+ prinFormula
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2) 
+      getSequent(s1, term2, prinFormula)
+    }
+    // convenient method to choose the first formula
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      (s1.root.succedent.filter(x => x.formula == term2)).toList match {
+        case (x::_) => apply(s1, term1, x)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term2oc: Occurrence) = {
       val term2op = s1.succedent.find(_ == term2oc)
@@ -623,12 +616,16 @@ import collection.immutable.Seq
         term2
       }
     }
-    // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      (s1.root.succedent.filter(x => x.formula == term2)).toList match {
-        case (x::_) => apply(s1, term1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: HOLFormula, term2: FormulaOccurrence) = {
+      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
+      val form = Or(term1, holterm2)
+      term2.factory.createFormulaOccurrence(form, term2::Nil)
+    }
+    private def getSequent(s1: Sequent, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent)
+      val suc1 = createContext(s1.succedent.filterNot(_ == term2))
+      val succedent = suc1 :+ prinFormula
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == OrRight2RuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -646,19 +643,10 @@ import collection.immutable.Seq
 
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = Imp(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, s2.root, term1, term2, prinFormula)
       
-      val ant1 = createContext(s1.root.antecedent)
-      val ant2 = createContext(s2.root.antecedent.filterNot(_ == term2))
-      val antecedent = ant1 ++ ant2 :+ prinFormula
-      val suc1 = createContext(s1.root.succedent.filterNot(_ == term1))
-      val suc2 = createContext(s2.root.succedent)
-      val succedent = suc1 ++ suc2
-      
-      new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+      new BinaryTree[Sequent](sequent, s1, s2)
         with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = ImpLeftRuleType
           def aux = (term1::Nil)::(term2::Nil)::Nil
@@ -668,19 +656,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1, s2, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = Imp(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
-      
-      val ant1 = createContext(s1.antecedent)
-      val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
-      val antecedent = ant1 ++ ant2 :+ prinFormula
-      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
-      val suc2 = createContext(s2.succedent)
-      val succedent = suc1 ++ suc2
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, s2, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
@@ -692,12 +676,20 @@ import collection.immutable.Seq
         (term1, term2)
       }
     }
-    // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
+      val form = Imp(holterm1, holterm2)
+      term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val ant1 = createContext(s1.antecedent)
+      val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
+      val antecedent = ant1 ++ ant2 :+ prinFormula
+      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
+      val suc2 = createContext(s2.succedent)
+      val succedent = suc1 ++ suc2
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == ImpLeftRuleType) {
         val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -711,16 +703,10 @@ import collection.immutable.Seq
   object ImpRightRule {
     def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1.root, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = Imp(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+      val prinFormula = getPrinFormula(term1, term2) 
+      val sequent = getSequent(s1.root, term1, term2, prinFormula)
 
-      val antecedent = createContext(s1.root.antecedent.filterNot(_ == term1))
-      val suc1 = createContext(s1.root.succedent.filterNot(_ == term2))
-      val succedent = suc1 :+ prinFormula
-
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = ImpRightRuleType
           def aux = (term1::term2::Nil)::Nil
@@ -730,16 +716,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val (term1, term2) = getTerms(s1, term1oc, term2oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
-      val form = Imp(holterm1, holterm2)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
-
-      val antecedent = createContext(s1.antecedent.filterNot(_ == term1))
-      val suc1 = createContext(s1.succedent.filterNot(_ == term2))
-      val succedent = suc1 :+ prinFormula
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first formula
+    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s1.root.succedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, x, y)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
@@ -751,12 +736,17 @@ import collection.immutable.Seq
         (term1, term2)
       }    
     }
-    // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s1.root.succedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val holterm2 = term2.formula.asInstanceOf[HOLFormula]
+      val form = Imp(holterm1, holterm2)
+      term1.factory.createFormulaOccurrence(form, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent.filterNot(_ == term1))
+      val suc1 = createContext(s1.succedent.filterNot(_ == term2))
+      val succedent = suc1 :+ prinFormula
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == ImpRightRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -771,14 +761,10 @@ import collection.immutable.Seq
     def computeAux( main: HOLFormula ) = main match { case Neg(s) => s }
     def apply(s1: LKProof, term1oc: Occurrence) = {
       val term1 = getTerms(s1.root, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = Neg(holterm1)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
-
-      val antecedent = createContext(s1.root.antecedent) :+ prinFormula
-      val succedent = createContext(s1.root.succedent.filterNot(_ == term1))
-    
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      val prinFormula = getPrinFormula(term1)
+      val sequent = getSequent(s1.root, term1, prinFormula)
+      
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = NegLeftRuleType
           def aux = (term1::Nil)::Nil
@@ -788,14 +774,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, term1oc: Occurrence) = {
       val term1 = getTerms(s1, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = Neg(holterm1)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
-
-      val antecedent = createContext(s1.antecedent) :+ prinFormula
-      val succedent = createContext(s1.succedent.filterNot(_ == term1))
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1)
+      getSequent(s1, term1, prinFormula)
+    }
+    // convenient method to choose the first formula
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      (s1.root.succedent.filter(x => x.formula == term1)).toList match {
+        case (x::_) => apply(s1, x)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
@@ -805,12 +792,15 @@ import collection.immutable.Seq
         term1
       }
     }
-    // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      (s1.root.succedent.filter(x => x.formula == term1)).toList match {
-        case (x::_) => apply(s1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val form = Neg(holterm1)
+      term1.factory.createFormulaOccurrence(form, term1::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent) :+ prinFormula
+      val succedent = createContext(s1.succedent.filterNot(_ == term1))
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == NegLeftRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
@@ -825,14 +815,10 @@ import collection.immutable.Seq
     def computeAux( main: HOLFormula ) = main match { case Neg(s) => s }
     def apply(s1: LKProof, term1oc: Occurrence) = {
       val term1 = getTerms(s1.root, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = Neg(holterm1)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
+      val prinFormula = getPrinFormula(term1) 
+      val sequent = getSequent(s1.root, term1, prinFormula)
 
-      val antecedent = createContext(s1.root.antecedent.filterNot(_ == term1))
-      val succedent = createContext(s1.root.succedent) :+ prinFormula
-      
-      new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
+      new UnaryTree[Sequent](sequent, s1)
         with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
           def rule = NegRightRuleType
           def aux = (term1::Nil)::Nil
@@ -842,14 +828,15 @@ import collection.immutable.Seq
     }
     def apply(s1: Sequent, term1oc: Occurrence) = {
       val term1 = getTerms(s1, term1oc)
-      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
-      val form = Neg(holterm1)
-      val prinFormula = term1.factory.createFormulaOccurrence(form, term1::Nil)
-
-      val antecedent = createContext(s1.antecedent.filterNot(_ == term1))
-      val succedent = createContext(s1.succedent) :+ prinFormula
-
-      Sequent(antecedent, succedent)
+      val prinFormula = getPrinFormula(term1)
+      getSequent(s1, term1, prinFormula)
+    }
+    // convenient method to choose the first formula
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
+        case (x::_) => apply(s1, x)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)   
@@ -859,12 +846,15 @@ import collection.immutable.Seq
         term1
       }
     }
-    // convenient method to choose the first formula
-    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
-        case (x::_) => apply(s1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-      }
+    private def getPrinFormula(term1: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      val form = Neg(holterm1)
+      term1.factory.createFormulaOccurrence(form, term1::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent.filterNot(_ == term1))
+      val succedent = createContext(s1.succedent) :+ prinFormula
+      Sequent(antecedent, succedent)
     }
     def unapply(proof: LKProof) = if (proof.rule == NegRightRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]

@@ -28,8 +28,11 @@ trait HasAncestors {
     def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence
   }
 
-  object defaultFormulaOccurenceFactory extends FOFactory {
+  object defaultFormulaOccurrenceFactory extends FOFactory {
     def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence = 
     new FormulaOccurrence(formula, ancestors, this)
   }
+  
+  implicit val factory = defaultFormulaOccurrenceFactory
+
 }
