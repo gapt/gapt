@@ -249,6 +249,22 @@ object AllVar {
   }
 }
 
+object ExVarInScope {
+  def apply(variable: FOLVar, sub: FOLFormula) = Ex(FOLAbs(variable, sub))
+  def unapply(expression: LambdaExpression) = expression match {
+    case Ex(AbsInScope(variable: FOLVar, sub: FOLFormula), _) => Some( (variable, sub) )
+    case _ => None
+  }
+}
+
+object AllVarInScope {
+  def apply(variable: FOLVar, sub: FOLFormula) = All(FOLAbs(variable, sub))
+  def unapply(expression: LambdaExpression) = expression match {
+    case All(AbsInScope(variable: FOLVar, sub: FOLFormula), _) => Some( (variable, sub) )
+    case _ => None
+  }
+}
+
 object BinaryLogicSymbol {
   def unapply(expression: LambdaExpression) = expression match {
     case And(l, r) => Some( (AndC, l, r) )
