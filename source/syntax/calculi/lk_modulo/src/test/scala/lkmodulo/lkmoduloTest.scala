@@ -1,6 +1,6 @@
 package at.logic.calculi.lkmodulo
 
-import _root_.at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression}
+import _root_.at.logic.language.lambda.typedLambdaCalculus.{App, Var, LambdaExpression}
 import org.specs.SpecificationWithJUnit
 import org.scalatest.matchers.MustMatchers
 
@@ -36,7 +36,7 @@ class LKModuloTest extends SpecificationWithJUnit {
       val f1b = Atom(ps, List(FOLVar(zs),FOLVar(xs),FOLVar(ys)))
       val eq = new TestEEquality()
 
-      eq.canonical_renaming_of(f1) match {
+      Renaming.canonical_renaming_of(f1) match {
         case Atom(_, List(e1,e2,e3)) =>
           e1 mustNotEq e2
           e1 mustNotEq e3
@@ -47,11 +47,11 @@ class LKModuloTest extends SpecificationWithJUnit {
         case _ => "canonical renaming of an atom formula must stay an atom formula" must beEqual ("")
       }
 
-      eq.canonical_renaming_of(f1).toString() must beEqual (eq.canonical_renaming_of(f1b).toString())
+      Renaming.canonical_renaming_of(f1).toString() must beEqual (Renaming.canonical_renaming_of(f1b).toString())
     }
 
   "have proper normalization (2)" in {
-    val ps = new ConstantStringSymbol("P")
+    val ps = new ConstantStringSymbol("R")
     val xs = new VariableStringSymbol("x")
     val ys = new VariableStringSymbol("y")
     val zs = new VariableStringSymbol("z")
@@ -62,8 +62,16 @@ class LKModuloTest extends SpecificationWithJUnit {
                 AllVar(FOLVar(zs), (AllVar(FOLVar(ys),
                   Atom(ps, List(FOLVar(ys)))))))
     val eq = new TestEEquality()
+    println(FOLUtils.ispredicatetype(Atom(ps, List(FOLVar(xs), FOLVar(ys))).exptype))
 
-    eq.canonical_renaming_of(f2) match {
+    Atom(ps, List(FOLVar(xs), FOLVar(ys))).asInstanceOf[LambdaExpression] match {
+      case App(exp1, exp2) =>
+        println("bla "+exp1.exptype)
+        println("bli "+exp2.exptype)
+    }
+
+
+    Renaming.canonical_renaming_of(f2) match {
       case And(Neg(Atom(ps,List(FOLVar(e1)))),
                 AllVar(FOLVar(e2), (AllVar(FOLVar(e3),
                   Atom(p, List(FOLVar(e4))))))) =>
@@ -75,7 +83,23 @@ class LKModuloTest extends SpecificationWithJUnit {
 
       case _ => "the structure of a formula must stay the same during canonical renaming" must beEqual ("")
     }
-    eq.canonical_renaming_of(f2).toString() must beEqual (eq.canonical_renaming_of(f2b).toString())
+    Renaming.canonical_renaming_of(f2).toString() must beEqual (Renaming.canonical_renaming_of(f2b).toString())
+
+    println (Renaming.canonical_renaming_of(f2.asInstanceOf[LambdaExpression]))
+    println (Renaming.fol_as_tptp(f2))
+    println (TPTP((List(f2,f2b))))
+  }
+
+  "have proper tptp export" in {
+    val ps = new ConstantStringSymbol("R")
+    val as = FOLConst(new ConstantStringSymbol("a"))
+    val bs = FOLConst(new ConstantStringSymbol("b"))
+    val xs = FOLVar(new VariableStringSymbol("x"))
+    val ys = FOLVar(new VariableStringSymbol("y"))
+    val zs = FOLVar(new VariableStringSymbol("z") )
+    val f1 = Atom(ps, List(as,bs))
+    val f2 = And(Atom(ps,List(as,as)), AllVar(xs,AllVar(ys,Imp(Atom(ps,List(xs,ys)), Atom(ps,List(xs,xs))) )))
+    println(TPTP(List(f1), List(f2)))
   }
 
 }

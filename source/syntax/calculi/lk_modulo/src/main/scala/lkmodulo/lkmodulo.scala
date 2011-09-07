@@ -3,14 +3,17 @@ package at.logic.calculi.lkmodulo
 import _root_.at.logic.calculi.proofs.UnaryRuleTypeA
 import _root_.at.logic.language.fol._
 import _root_.at.logic.language.fol.equations.Equation
-import _root_.at.logic.language.hol.logicSymbols.ConstantSymbolA
+import _root_.at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
+import _root_.at.logic.language.hol.{Formula, HOLFormula, HOLExpression}
 import _root_.at.logic.language.lambda.substitutions.Substitution
-import _root_.at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
-import _root_.at.logic.language.lambda.typedLambdaCalculus.{App, AbsInScope, Var, LambdaExpression}
-import _root_.at.logic.language.lambda.types.->
+import _root_.at.logic.language.lambda.symbols.{SymbolA, VariableSymbolA, VariableStringSymbol}
+import _root_.at.logic.language.lambda.typedLambdaCalculus._
+import _root_.at.logic.language.lambda.types.{To, Ti, TA, ->}
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lk._
-import collection.immutable.HashSet
+import collection.immutable.{HashMap, HashSet}
+import collection.mutable.StringBuilder
+import math.Ordering.String
 
 trait LKModuloRule
 
@@ -25,76 +28,46 @@ abstract class REequalityA {
   def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean;
 }
 
-abstract class EequalityA extends REequalityA {
-  /* the set of rewrite rules is empty in a pure equational theory */
-  override val rewrite_rules = Set[Tuple2[FOLFormula, FOLFormula]]()
-  override def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean = reequal_to_(s,t)
-
+object FOLUtils {
   def universal_closure_of(f : FOLFormula) : FOLFormula = {
     val free_vars = getFreeVariablesFOL(f)
     free_vars.foldRight(f)((v : FOLVar, f : FOLFormula) => AllVar(v,f))
   }
 
   // this is nearly the same as LambdaExpression.getFreeAndBoundVariables, but returns the variabes in the order encountered
-  def getOrderedFreeAndBoundVariables(expression: LambdaExpression):Tuple2[List[Var],List[Var]] = expression match {
-    case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (List(v), List())
-    case v: Var if v.name.isInstanceOf[VariableSymbolA] => (List(), List(v))
-    case v: Var => (List(), List())// not variables (constants in this case)
+  def freevars_boundvars_constants_of(expression: LambdaExpression):Tuple3[List[Var],List[Var],List[Var]] = expression match {
+    case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (List(v), List(), List())
+    case v: Var if v.name.isInstanceOf[VariableSymbolA] => (List(), List(v), List())
+    case v: Var if v.name.isInstanceOf[ConstantSymbolA] => (List(), List(), List(v))
+    case v: Var => (List(), List(), List())// not variables (constants in this case)
     case App(exp, arg) => {
-      val mFBV = getOrderedFreeAndBoundVariables(exp)
-      val nFBV = getOrderedFreeAndBoundVariables(arg)
-      (removeDoubles(mFBV._1 ::: nFBV._1), removeDoubles(mFBV._2 ::: nFBV._2))
+      val mFBV = freevars_boundvars_constants_of(exp)
+      val nFBV = freevars_boundvars_constants_of(arg)
+      (removeDoubles(mFBV._1 ::: nFBV._1), removeDoubles(mFBV._2 ::: nFBV._2), removeDoubles(mFBV._3 ::: nFBV._3))
     }
     case AbsInScope(v, exp) => {
-      val mFBV = getOrderedFreeAndBoundVariables(exp)
+      val mFBV = freevars_boundvars_constants_of(exp)
       val bound = removeDoubles(mFBV._2 ::: List(v))
-      (mFBV._1, bound)
+      (mFBV._1, bound, mFBV._3)
     }
   }
 
-
-  def canonical_renaming_of(f: LambdaExpression) : LambdaExpression = {
-    // TODO: canonical_renaming_of should be generalized to lambda expressions
-    /*
-    val freeandbound = f.getFreeAndBoundVariables()
-    val free_vars = freeandbound._1
-    val bound_vars = freeandbound._2
-
-    val prefix = "x_"
-    val pairs = free_vars.zip(between(0, free_vars.size)).map( (el : (Var, Int)) => (el._1.asInstanceOf[FOLVar], FOLVar(new VariableStringSymbol(prefix+el._2))) )
-    val subs = Substitution(pairs.toList)
-
-    //val subs = Substitution(free_vars.foldLeft() (f : Var) => (f.asInstanceOf[FOLVar], FOLVar(new VariableStringSymbol(prefix+ (counter++))))  ))
-
-
-
-
-
-
-    subs.apply(f)*/
-    f
-  }
-
-  private def removeDoubles[T](l : List[T]) : List[T] = {
-    removeDoubles_(l.reverse).reverse
-  }
-
-  private def removeDoubles_[T](l : List[T]) : List[T] = {
-    l match {
-      case head :: tail =>
-        if (tail.contains(head))
-          removeDoubles(tail)
-        else
-          head :: removeDoubles(tail)
-      case Nil => Nil
+  def isfunctiontype(exptype : TA) : Boolean = {
+    exptype match {
+      case Ti() => true
+      case To() => false
+      case Ti() -> t2 => (isfunctiontype(t2))
+      case _ => false
     }
   }
 
-  private def between(lower :Int, upper : Int) : List[Int] = {
-    if (lower > upper)
-      List()
-    else
-      lower :: between (lower+1, upper)
+  def ispredicatetype(exptype : TA) : Boolean = {
+    exptype match {
+      case Ti() => false
+      case To() => true
+      case Ti() -> t2 => (ispredicatetype(t2))
+      case _ => false
+    }
   }
 
   def replaceLeftmostBoundOccurenceOf(variable : FOLVar, by : FOLVar, formula : FOLFormula) :
@@ -131,7 +104,7 @@ abstract class EequalityA extends REequalityA {
 
       case AllVar(v, f)  =>
         if ((v =^ variable) && (v != variable)) {
-          println("Warning: comparing two variables, which are syntactically the equal but not completely equal (probably different binding context)")
+          println("Warning: comparing two variables, which have the same sytactic representatio but differ on other things (probably different binding context)")
         }
 
         if (v == variable) {
@@ -147,6 +120,12 @@ abstract class EequalityA extends REequalityA {
     }
   }
 
+
+/*  def replaceFreeOccurenceOf(variable : FOLVar, by : FOLVar, formula : FOLFormula) : FOLFormula = {
+    val s = Substitution[FOLExpression](variable, by)
+    val r = s(formula)
+
+  }*/
 
   def replaceFreeOccurenceOf(variable : FOLVar, by : FOLVar, formula : FOLFormula) : FOLFormula = {
     formula match {
@@ -182,10 +161,175 @@ abstract class EequalityA extends REequalityA {
     }
   }
 
+  def removeDoubles[T](l : List[T]) : List[T] = {
+    removeDoubles_(l.reverse).reverse
+  }
+
+  private def removeDoubles_[T](l : List[T]) : List[T] = {
+    l match {
+      case head :: tail =>
+        if (tail.contains(head))
+          removeDoubles(tail)
+        else
+          head :: removeDoubles(tail)
+      case Nil => Nil
+    }
+  }
+
+  def between(lower :Int, upper : Int) : List[Int] = {
+    if (lower > upper)
+      List()
+    else
+      lower :: between (lower+1, upper)
+  }
+
+
+}
+
+class TPTP(val axioms : Seq[FOLFormula], val conjectures : Seq[FOLFormula]) {
+
+  override def toString() = {
+    val builder = new StringBuilder()
+
+    var count = 0
+    for (formula <- axioms) {
+      builder append ("fof(axiom")
+      builder append (count)
+      builder append (", axiom, ")
+      builder append (Renaming.fol_as_tptp(formula) )
+      builder append (").\n\n")
+
+      count = count + 1
+    }
+
+    for (formula <- conjectures) {
+      builder append ("fof(formula")
+      builder append (count)
+      builder append (", conjecture, ")
+      builder append (Renaming.fol_as_tptp(formula) )
+      builder append (").\n\n")
+
+      count = count + 1
+    }
+    builder.toString()
+  }
+
+}
+
+object TPTP {
+  def apply(conjectures: Seq[FOLFormula]) = new TPTP(Nil, conjectures)
+  def apply(axioms : Seq[FOLFormula], conjectures: Seq[FOLFormula]) = new TPTP(axioms, conjectures)
+}
+
+object Renaming {
+  import at.logic.calculi.lkmodulo.FOLUtils._
+
+
+  def fol_as_tptp(f: FOLFormula) = fol_as_tptp_(tptp_renaming_of(f).asInstanceOf[FOLFormula])
+
+  private def fol_as_tptp_(f: FOLFormula) : String = {
+    f match {
+      case Atom(_,_) => f.toString()
+      case Neg(f1) => "~(" + fol_as_tptp_(f1) +")"
+      case And(f1,f2) => "(" + fol_as_tptp_(f1) + ") & (" + fol_as_tptp_(f2) +")"
+      case Or(f1,f2)  => "(" + fol_as_tptp_(f1) + ") | (" + fol_as_tptp_(f2) +")"
+      case Imp(f1,f2) => "(" + fol_as_tptp_(f1) + ") => (" + fol_as_tptp_(f2) + ")"
+      case ExVar(v,f1)  => "?[" + v + "] : (" + fol_as_tptp_(f1) +")"
+      case AllVar(v,f1) => "![" + v + "] : (" + fol_as_tptp_(f1) +")"
+      case _ => println("unhandled case!"); "(???)"
+    }
+  }
+
+
+  def createAlphanormalizationSymbol(v : Var, n : Int) = {
+    if (v.name.isInstanceOf[ConstantSymbolA]) {
+      //constants
+      if (ispredicatetype(v.exptype))
+        new ConstantStringSymbol("P_"+n)
+      else if (isfunctiontype(v.exptype))
+        new ConstantStringSymbol("f_"+n)
+      else new ConstantStringSymbol("s_"+n)
+    } else {
+      //everything else => variables
+      if (ispredicatetype(v.exptype))
+        new VariableStringSymbol("X_"+n)
+      else if (isfunctiontype(v.exptype))
+        new VariableStringSymbol("x_"+n)
+      else
+        new VariableStringSymbol("t_"+n)
+    }
+  }
+
+  def createTPTPExportSymbol(v : Var, n : Int) = {
+    if (v.name.isInstanceOf[ConstantSymbolA]) {
+      //constants
+      if (ispredicatetype(v.exptype))
+        //new ConstantStringSymbol("p_"+n)
+        new ConstantStringSymbol("p_" + v.name)
+      else if (isfunctiontype(v.exptype))
+//        new ConstantStringSymbol("f_"+n)
+        new ConstantStringSymbol("f_" + v.name)
+      else
+        throw new Exception("in fol, we can only rename if a symbol is of function or predicate type")
+    } else {
+      //everything else => variables
+      if (ispredicatetype(v.exptype))
+        throw new Exception("in fol, we should not have predicate variables")
+      else if (isfunctiontype(v.exptype))
+        new VariableStringSymbol("X_"+n)
+      else
+        throw new Exception("in fol, we can only rename if a symbol is of function or predicate type")
+    }
+  }
+
+  def define_normalization_function(normalization_fun : ((Var, Int) => SymbolA), f : LambdaExpression) = {
+    val freeandbound = freevars_boundvars_constants_of(f)
+
+    val allvars = freeandbound._1 ++ freeandbound._2 ++ freeandbound._3.filter((v:Var) => ispredicatetype(v.exptype) || isfunctiontype(v.exptype) )
+    //TODO: this is only applicable to variablestringsymbol and constantstringsymbol
+
+
+    var count = 0
+    val assignednames : List[Var] = allvars map ((v:Var) => { count=count+1; v.factory.createVar(normalization_fun(v, count), v.exptype) })
+    val map  = HashMap() ++ (allvars zip assignednames)
+//    println("formula: "+ f+ " map: " + map)
+
+    val fun = (v:Var) => if (! map.contains(v)) { /* println("warning: ecnountered "+v+" which is not in the map!"); */ v } else map(v)
+    fun
+  }
+
+
+  def canonical_renaming_of(f: LambdaExpression) : LambdaExpression = {
+    replaceAll(define_normalization_function(createAlphanormalizationSymbol, f), f)
+  }
+
+  def tptp_renaming_of(f: LambdaExpression) : LambdaExpression = {
+    replaceAll(define_normalization_function(createTPTPExportSymbol, f), f)
+  }
+
+
+  private def replaceAll(exchange : (Var => Var), f : LambdaExpression) : LambdaExpression = {
+    f match {
+      case v : Var =>
+        exchange(v)
+      case App(fun, arg) =>
+        fun.factory.createApp(replaceAll(exchange,fun), replaceAll(exchange, arg))
+      case AbsInScope(lambdavar, exp) =>
+        //println("replacing "+lambdavar+" by "+exchange(lambdavar))
+        lambdavar.factory.createAbs(exchange(lambdavar), replaceAll(exchange, exp))
+      //case Abs(lambdavar, exp) =>
+      //    lambdavar.factory.createAbs(exchange(lambdavar), replaceAll(exchange, exp))
+
+      case _ => throw new Exception("replaceAll encountered something else than Var, App, Abs (InScope) during deconstruction of a lambda expression")
+    }
+
+  }
+
+
 
 
   def canonical_renaming_of(f: FOLFormula) : FOLFormula = {
-    val boundandfree = getOrderedFreeAndBoundVariables(f)
+    val boundandfree = freevars_boundvars_constants_of(f)
     val free_variables : List[Var] = boundandfree._1.toList
     val bound_variables : List[Var] = boundandfree._2.toList.map(
       (x : Var) => x match { case Var(symbol, exptype) =>  (x.factory.createVar(symbol,exptype)) }
@@ -214,6 +358,15 @@ abstract class EequalityA extends REequalityA {
    private def canonical_renaming_of(f: FOLFormula, index : Int) : (FOLFormula, Int) = {
      (f,index)
    }
+
+}
+
+
+abstract class EequalityA extends REequalityA {
+  /* the set of rewrite rules is empty in a pure equational theory */
+  override val rewrite_rules = Set[Tuple2[FOLFormula, FOLFormula]]()
+  override def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean = reequal_to_(s,t)
+
 
 
   private def reequal_to_(s : FOLFormula, t : FOLFormula) : Boolean = {
