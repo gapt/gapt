@@ -42,7 +42,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
 
   object createContext {
     def apply(set: Seq[FormulaOccurrence], sub: Substitution[FOLExpression]): Seq[FormulaOccurrence] =
-      set.map(x => FormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[Formula], x::Nil))
+      set.map(x => x.factory.createFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula], x::Nil))
   }
 
   case object VariantType extends UnaryRuleTypeA
@@ -51,9 +51,9 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
   case object ParamodulationType extends BinaryRuleTypeA
 
   object InitialClause {
-    def apply(ant: Seq[Formula], suc: Seq[Formula]) = {
-      val left: Seq[FormulaOccurrence] = ant.map(FormulaOccurrence(_,Nil))
-      val right: Seq[FormulaOccurrence] = suc.map(FormulaOccurrence(_,Nil))
+    def apply(ant: Seq[HOLFormula], suc: Seq[HOLFormula]) (implicit factory: FOFactory) = {
+      val left: Seq[FormulaOccurrence] = ant.map(factory.createFormulaOccurrence(_,Nil))
+      val right: Seq[FormulaOccurrence] = suc.map(factory.createFormulaOccurrence(_,Nil))
       new LeafAGraph[Clause](Clause(left, right)) with NullaryResolutionProof[Clause] {def rule = InitialType; override def name = ""}
     }
 
@@ -110,7 +110,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
         val term1 = term1op.get
         if (term2opAnt != None) {
           val term2 = term2opAnt.get
-          val prinFormula = FormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
+          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
           new BinaryAGraph[Clause](Clause(
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub) :+ prinFormula,
               createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent, sub))
@@ -125,7 +125,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
         }
         else {
           val term2 = term2opSuc.get
-          val prinFormula = FormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
+          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
           new BinaryAGraph[Clause](Clause(
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, sub),
               createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent.filterNot(_ == term2), sub)  :+ prinFormula)

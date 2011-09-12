@@ -65,9 +65,9 @@ import collection.immutable.Seq
   case object InitialType extends NullaryRuleTypeA
 
   object InitialSequent {
-    def apply[V <: Sequent](ant: Seq[Formula], suc: Seq[Formula]) = {
-      val left: Seq[FormulaOccurrence] = ant.map(FormulaOccurrence(_,Nil))
-      val right: Seq[FormulaOccurrence] = suc.map(FormulaOccurrence(_,Nil))
+    def apply[V <: Sequent](ant: Seq[HOLFormula], suc: Seq[HOLFormula]) (implicit factory: FOFactory) = {
+      val left: Seq[FormulaOccurrence] = ant.map(factory.createFormulaOccurrence(_,Nil))
+      val right: Seq[FormulaOccurrence] = suc.map(factory.createFormulaOccurrence(_,Nil))
       new LeafAGraph[Sequent](Sequent(left, right)) with NullaryResolutionProof[V] {def rule = InitialType}
     }
 
