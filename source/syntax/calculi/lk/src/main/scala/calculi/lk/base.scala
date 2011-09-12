@@ -183,8 +183,8 @@ import java.util.Comparator
   // method for creating the context of the lower sequent. Essentially creating nre occurrences
   // create new formula occurrences in the new context
   object createContext {
-    def apply(set: Seq[FormulaOccurrence]): Seq[FormulaOccurrence] = set.map(x
-    => x.factory.createFormulaOccurrence(x.formula.asInstanceOf[HOLFormula],x::Nil))
+    def apply(set: Seq[FormulaOccurrence]): Seq[FormulaOccurrence] = 
+    set.map(x => x.factory.createFormulaOccurrence(x.formula.asInstanceOf[HOLFormula], x::Nil))
   }
 
   object SequentFormatter {
