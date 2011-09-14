@@ -17,6 +17,7 @@ import scala.collection.immutable.Set
 import scala.collection.mutable.Map
 import at.logic.language.lambda.substitutions._
 import at.logic.calculi.lk.base._
+import at.logic.utils.traits.Occurrence
 
 package base {
 

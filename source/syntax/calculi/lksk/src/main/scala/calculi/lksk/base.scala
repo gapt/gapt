@@ -52,7 +52,7 @@ package base {
         throw new Exception("ancestors not labelled")
     }
 
-    def createContextFormulaOccurrenceWithSubst(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence], sub: Substitution[HOLExpression]) = {
+    def createContextFormulaOccurrenceWithSubst(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], sub: Substitution[HOLExpression]) = {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       val l_ancestors = ancestors.map( _.asInstanceOf[LabelledFormulaOccurrence] )
       val l = l_ancestors.head.skolem_label
