@@ -18,7 +18,7 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.base.{LKProof,Sequent,SequentOccurrence,PrincipalFormulas}
+import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
 
 object Projections {
   
@@ -29,19 +29,18 @@ object Projections {
 
   def apply( proof: LKProof, cut_ancs: Set[FormulaOccurrence] ) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
     implicit val c_ancs = cut_ancs
-    implicit val factory = PointerFOFactoryInstance
+    implicit val factory = defaultFormulaOccurrenceFactory
 
     proof match {
      case Axiom(s) => {
       // TODO: this is also used in the skolemization algorithm. refactor into Axiom.copy( proof )?
       val ant = s.antecedent.toList
       val succ = s.succedent.toList
-      val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
-      val ax = Axiom.createDefault( new_seq )
-      var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax._2._1( p._2 ) ))
-      new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax._2._2( p._2 )))
+      val ax = Axiom( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
+      var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ant( p._2 ) ))
+      new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> succ( p._2 )))
 
-      new HashSet[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] + Pair(ax._1, new_map)
+      new HashSet[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] + Pair(ax, new_map)
     }
       case ForallRightRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply )
       case ExistsLeftRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a, m, v, ExistsLeftRule.apply )
@@ -72,8 +71,8 @@ object Projections {
             (new_p, copyMapToDescendant( proof, new_p, pm._2) )
         } )
       }
-      case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, WeakeningLeftRule.createDefault )
-      case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, WeakeningRightRule.createDefault )
+      case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, WeakeningLeftRule.apply )
+      case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, WeakeningRightRule.apply  )
       case DefinitionLeftRule( p, _, a, m ) => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply )
       case DefinitionRightRule( p, _, a, m ) => handleDefRule( proof, p, a, m, DefinitionRightRule.apply )
       case EquationLeft1Rule( p1, p2, _, e, a, m ) => handleEqRule( proof.asInstanceOf[LKProof with AuxiliaryFormulas], p1, p2, e, a, m, EquationLeft1Rule.apply )
@@ -105,8 +104,8 @@ object Projections {
   }
 
   def getESAncs( proof: LKProof, cut_ancs: Set[FormulaOccurrence] ) =
-    Pair( proof.root.antecedent.filter( fo => !cut_ancs.contains( fo ) ),
-          proof.root.succedent.filter( fo => !cut_ancs.contains( fo ) ) )
+    Pair( proof.root.antecedent.filter( fo => !cut_ancs.contains( fo ) ).foldLeft(Set.empty[FormulaOccurrence])((s,fo) => s + fo),
+          proof.root.succedent.filter( fo => !cut_ancs.contains( fo ) ).foldLeft(Set.empty[FormulaOccurrence])((s,fo) => s + fo) )
 
   // Handles the case of a binary rule operating on a cut-ancestor.
   def handleBinaryCutAnc( proof: LKProof, p1: LKProof, p2: LKProof,
@@ -122,13 +121,13 @@ object Projections {
     s: Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] ) = {
     val wl = s.map( p =>
       esancs._1.foldLeft( p )( (p, fo) => {
-      val w = WeakeningLeftRule.createDefault( p._1, fo.formula )
+      val w = WeakeningLeftRule( p._1, fo.formula )
       val m = copyMapsToDescRight( w, p._2 ) + ( fo -> w.prin.head )
       (w, m)
     } ) )
     wl.map( p =>
       esancs._2.foldLeft( p )( (p, fo) => {
-      val w = WeakeningRightRule.createDefault( p._1, fo.formula )
+      val w = WeakeningRightRule( p._1, fo.formula )
       val m = copyMapsToDescRight( w, p._2 ) + ( fo -> w.prin.head )
       (w, m)
     } ) )

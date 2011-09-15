@@ -126,7 +126,7 @@ package struct {
   // by, for each o in cc, taking the element f from seq such that
   // f, where param goes to term, is equal to o.formula.
   object cutOccConfigToCutConfig {
-    def apply( so: SequentOccurrence, cc: CutOccurrenceConfiguration, seq: Sequent, params: List[IntVar], terms: List[IntegerTerm]) =
+    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: Sequent, params: List[IntVar], terms: List[IntegerTerm]) =
       cc.foldLeft( (HashMultiset[SchemaFormula](), HashMultiset[SchemaFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
@@ -216,7 +216,7 @@ package struct {
 
     def toFormula(s: Struct) : SchemaFormula =
       transformStructToClauseSet( s ).foldLeft[SchemaFormula](TopC)((f, c) => 
-        And(f, toFormula(c.getSequent)))
+        And(f, toFormula(c)))
 
     // FIXME: this method should not exist.
     // it's a workaround necessary since so far, the logical
@@ -224,7 +224,7 @@ package struct {
     // do not work across language-levels, but the constants
     // are neede to transform a sequent to a formula in general.
     def toFormula( s: Sequent ) : SchemaFormula =
-      Or( s.antecedent.map( f => Neg( f.asInstanceOf[SchemaFormula] ) ) ::: s.succedent.asInstanceOf[List[SchemaFormula]] )
+      Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[SchemaFormula] ) ).toList ::: s.succedent.asInstanceOf[List[SchemaFormula]] )
 
     def extractStruct(name: String, fresh_param: IntVar) : Struct =
     {
@@ -265,7 +265,7 @@ package struct {
 
     def cutConfigurations( p: LKProof ) = {
       val occs = p.root.antecedent ++ p.root.succedent
-      combinations( occs.size, occs )
+      combinations( occs.size, occs.toSet )
     }
 
     def extractStepWithCutConfig( schema: SchemaProof, cc: CutOccurrenceConfiguration ) =
@@ -340,19 +340,20 @@ package struct {
       })
     }
 */
-    def toOccurrence( f: HOLFormula, so: SequentOccurrence ) =
+    def toOccurrence( f: HOLFormula, so: Sequent ) =
     {
-      val others = so.antecedent ++ so.succedent
-      others.head.factory.createPrincipalFormulaOccurrence(f, Nil, others)
+//      val others = so.antecedent ++ so.succedent
+//      others.head.factory.createPrincipalFormulaOccurrence(f, Nil, others)
+      defaultFormulaOccurrenceFactory.createFormulaOccurrence(f, Nil)
     }
 
     def extract(p: LKProof) : Struct = extract( p, getCutAncestors( p ) )
-    def extract(p: LKProof, predicate: HOLFormula => Boolean) : Struct = extract( p, getCutAncestors( p, predicate ) )
+    //def extract(p: LKProof, predicate: HOLFormula => Boolean) : Struct = extract( p, getCutAncestors( p, predicate ) )
 
     def extract(p: LKProof, cut_occs: Set[FormulaOccurrence]):Struct = p match {
       case Axiom(so) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
       so match {
-        case lso : LabelledSequentOccurrence if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 =>
+        case lso : LabelledSequent  if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 =>
           handleLabelledAxiom( lso, cut_occs )
         case _ => handleAxiom( so, cut_occs )
       }
@@ -364,7 +365,7 @@ package struct {
       case SchemaProofLinkRule(so, name, indices) => handleSchemaProofLink( so, name, indices, cut_occs )
     }
 
-    def handleSchemaProofLink( so: SequentOccurrence, name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
+    def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
       val schema = SchemaProofDB.get( name )
       val sym = new ClauseSetSymbol( name,
         cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)),
@@ -373,7 +374,7 @@ package struct {
       A( toOccurrence( atom, so ) )
     }
 
-    def handleLabelledAxiom( lso: LabelledSequentOccurrence, cut_occs: Set[FormulaOccurrence] ) = {
+    def handleLabelledAxiom( lso: LabelledSequent , cut_occs: Set[FormulaOccurrence] ) = {
       val left = lso.l_antecedent.toList.head
       val right = lso.l_succedent.toList.head
       val ant = if ( cut_occs.contains( left ) )
@@ -387,7 +388,7 @@ package struct {
       makeTimesJunction( ant:::suc, Nil )
     }
 
-    def handleAxiom( so: SequentOccurrence, cut_occs: Set[FormulaOccurrence] ) = {
+    def handleAxiom( so: Sequent , cut_occs: Set[FormulaOccurrence] ) = {
       val cutAncInAntecedent = so.antecedent.toList.filter(x => cut_occs.contains(x)).map(x => Dual(A(x)))   //
       val cutAncInSuccedent = so.succedent.toList.filter(x => cut_occs.contains(x)).map(x => A(x))
       makeTimesJunction(cutAncInAntecedent:::cutAncInSuccedent, Nil)
