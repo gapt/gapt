@@ -32,8 +32,8 @@ case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 //creates a siquent wich is not in a proof tree, i.e. it has not ancestor relation involved
 object SingleSequent {
   def apply(ant: Seq[SchemaFormula], succ: Seq[SchemaFormula]) = {
-      val new_ant = ant.map(f => defaultFormulaOccurrenceFactory.createFormulaOccurrence(f, Nil))
-      val new_succ = succ.map(f => defaultFormulaOccurrenceFactory.createFormulaOccurrence(f, Nil))
+      val new_ant = ant.map(f => factory.createFormulaOccurrence(f, Nil))
+      val new_succ = succ.map(f => factory.createFormulaOccurrence(f, Nil))
       Sequent(new_ant, new_succ)
   }
 }
@@ -91,7 +91,7 @@ trait SchemaProofLink {
 object SchemaProofLinkRule {
   def apply(seq: Sequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {
     def createSide(side : Seq[SchemaFormula]) = {
-      side.foldLeft(Seq.empty[FormulaOccurrence])((st, form) =>  defaultFormulaOccurrenceFactory.createFormulaOccurrence(form, Nil) +: st)
+      side.map(f =>factory.createFormulaOccurrence(f,Nil))
     }
     new LeafTree[Sequent]( Sequent(createSide(seq.antecedent.map(fo => fo.formula.asInstanceOf[SchemaFormula])), createSide(seq.succedent.map(fo => fo.formula.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
       def rule = SchemaProofLinkRuleType
@@ -116,7 +116,7 @@ object AndEquivalenceRule1 {
     main match {
       case BigAnd(v, f, ub, Succ(lb)) => {
           require( And( BigAnd( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-          val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
           def createSide( s : Seq[FormulaOccurrence] ) =
             if ( ! s.filter(_ == auxf).isEmpty )
               createContext(prinFormula +: (s.filter(_ != auxf) ))
@@ -193,7 +193,7 @@ object AndEquivalenceRule2 {
     main match {
       case BigAnd(v, f, ub, lb) => {
           require( And( BigAnd( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-          val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
           def createSide( s :  Seq[FormulaOccurrence] ) =
             if ( ! s.filter(_ == auxf).isEmpty )
               createContext(prinFormula +: (s.filter(_ != auxf) ))
@@ -269,7 +269,7 @@ object AndEquivalenceRule3 {
     main match {
       case BigAnd(v, f, ub, lb) if ub == lb => {
           require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
-          val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
           def createSide( s : Seq[FormulaOccurrence] ) =
             if ( ! s.filter(_ == auxf).isEmpty )
               createContext(prinFormula +: (s.filter(_ != auxf) ))
@@ -347,7 +347,7 @@ object OrEquivalenceRule1 {
     main match {
       case BigOr(v, f, ub, Succ(lb)) => {
           require( Or( BigOr( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-          val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
           def createSide( s : Seq[FormulaOccurrence] ) =
               if ( ! s.filter(_ == auxf).isEmpty )
                 createContext(prinFormula +: (s.filter(_ != auxf) ))
@@ -421,7 +421,7 @@ object OrEquivalenceRule1 {
       main match {
         case BigOr(v, f, ub, lb) => {
             require( Or( BigOr( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-            val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
+            val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
             def createSide( s : Seq[FormulaOccurrence] ) =
               if ( ! s.filter(_ == auxf).isEmpty )
                 createContext(prinFormula +: (s.filter(_ != auxf) ))
@@ -498,7 +498,7 @@ object OrEquivalenceRule1 {
       main match {
         case BigOr(v, f, ub, lb) if ub == lb => {
             require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
-            val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
+            val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
             def createSide( s : Seq[FormulaOccurrence] ) =
               if ( ! s.filter(_ == auxf).isEmpty )
                 createContext(prinFormula +: (s.filter(_ != auxf) ))
