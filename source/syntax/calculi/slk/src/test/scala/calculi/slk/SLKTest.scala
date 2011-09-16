@@ -29,9 +29,7 @@ class SLKTest extends SpecificationWithJUnit {
       val f = BigAnd(i, pi, IntZero(), IntZero())
       val ax = Axiom(p0 +: Seq.empty[SchemaFormula], Seq.empty[SchemaFormula])
       val proof = AndEquivalenceRule3(ax, ax.root.antecedent.head, f)
-      proof.root.antecedent.map(fo => fo.formula.asInstanceOf[SchemaFormula]) must beEqual( f +: Seq.empty[SchemaFormula])
-      proof.root.succedent.map(fo => fo.formula.asInstanceOf[SchemaFormula]) must beEqual( Seq.empty[SchemaFormula])
-
+      proof.root.sequentToPairOfSeqsOfHOLFormulas must beEqual ( f +: Seq.empty[SchemaFormula], Seq.empty[SchemaFormula])
     }
 
     "work for AndEquivalenceRule1" in {
@@ -43,9 +41,7 @@ class SLKTest extends SpecificationWithJUnit {
       val and_1_sn_ai = BigAnd(i, ai,Succ(IntZero()), Succ(n))
       val ax = Axiom(And(and_1_n_ai, a_sn) +: scala.collection.immutable.Seq.empty[SchemaFormula], a_sn +: scala.collection.immutable.Seq.empty[SchemaFormula])
       val proof = AndEquivalenceRule1(ax, ax.root.antecedent.head, and_1_sn_ai)
-    //  proof.root must beEqual( Sequent(and_1_sn_ai +: scala.collection.immutable.Seq.empty[SchemaFormula], a_sn +: scala.collection.immutable.Seq.empty[SchemaFormula] ) )
-      proof.root.antecedent.map(fo => fo.formula.asInstanceOf[SchemaFormula]) must beEqual( and_1_sn_ai +: Seq.empty[SchemaFormula])
-      proof.root.succedent.map(fo => fo.formula.asInstanceOf[SchemaFormula]) must beEqual( a_sn +: Seq.empty[SchemaFormula])
+      proof.root.sequentToPairOfSeqsOfHOLFormulas must beEqual ( and_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula])
 
     }
     "work for OrEquivalenceRule1" in {
@@ -57,10 +53,7 @@ class SLKTest extends SpecificationWithJUnit {
       val or_1_sn_ai = BigOr(i, ai, Succ(IntZero()), Succ(n))
       val ax = Axiom(Or(or_1_n_ai, a_sn) +: scala.collection.immutable.Seq.empty[SchemaFormula], a_sn +: scala.collection.immutable.Seq.empty[SchemaFormula] )
       val proof = OrEquivalenceRule1(ax, ax.root.antecedent.head, or_1_sn_ai)
- //     proof.root must beEqual( Sequent(or_1_sn_ai::Nil, a_sn::Nil ) )
-      proof.root.antecedent.map(fo => fo.formula.asInstanceOf[SchemaFormula]) must beEqual( or_1_sn_ai +: Seq.empty[SchemaFormula])
-      proof.root.succedent.map(fo => fo.formula.asInstanceOf[SchemaFormula]) must beEqual( a_sn +: Seq.empty[SchemaFormula])
-
+      proof.root.sequentToPairOfSeqsOfHOLFormulas must beEqual ( or_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula])
 
     }
 
