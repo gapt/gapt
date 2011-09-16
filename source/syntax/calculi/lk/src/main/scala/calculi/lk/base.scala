@@ -128,6 +128,15 @@ import java.util.Comparator
                                  o.antecedent.forall(a => antecedent.contains(a)) &&
                                  o.succedent.forall(a => succedent.contains(a))
     override def toString : String = SequentFormatter.sequentToString(this)
+    override def equals(o: Any) = o match {
+      case s: Sequent => multisetEquals(s)
+      case _ => false
+    }
+    // compares the multiset of formulas
+    def syntacticEquals(o: Sequent ) = o.antecedent.map(_.formula).diff(antecedent.map(_.formula)).isEmpty &&
+                                       o.succedent.map(_.formula).diff(succedent.map(_.formula)).isEmpty &&
+                                       antecedent.map(_.formula).diff(o.antecedent.map(_.formula)).isEmpty &&
+                                       succedent.map(_.formula).diff(o.succedent.map(_.formula)).isEmpty
     def removeFormulasAtOccurrences(occs: Seq[Occurrence]): Sequent = Sequent(
         antecedent.filterNot(x => occs.contains(x)),
         succedent.filterNot(x => occs.contains(x))
