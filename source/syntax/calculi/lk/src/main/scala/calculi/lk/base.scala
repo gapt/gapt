@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.calculi
+package at.logic.calculi.lk
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.treeProofs._
@@ -109,9 +109,11 @@ import java.util.Comparator
   }
        */
 
-  object lk {
+  object types {
+    type FSequent = Pair[Seq[HOLFormula],Seq[HOLFormula]]
+  }
 
-  type FSequent = Pair[Seq[HOLFormula],Seq[HOLFormula]]
+  import types._
 
   object substitute {
     // TODO: write a substitution function that knows that
@@ -240,6 +242,5 @@ import java.util.Comparator
         }
         sb.toString
     }
-  }
   }
 }
