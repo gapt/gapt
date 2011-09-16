@@ -29,7 +29,7 @@ import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
-
+import at.logic.calculi.lk.base.types._
 
 class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
 
@@ -89,18 +89,12 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
       val pffb = Atom(new ConstantStringSymbol("p"),ffb::Nil)
       val pX = Atom(new ConstantStringSymbol("p"),X::Nil)
   
-      val pa_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pa, Nil)
-      val pfa_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pfa, Nil)
-      val pb_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pb, Nil)
-      val pX_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pX, Nil)
-      val pffb_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pffb, Nil)
+      val seq11 = new FSequent(Nil, pa::pfa::Nil)
+      val seq21 = new FSequent(pb::Nil, pa::Nil)
+      val seq31 = new FSequent(pa::Nil, pb::Nil)
+      val seq41 = new FSequent(Nil, pX::pffb::Nil)
 
-      val seq11 = Sequent(Nil, pa_occ::pfa_occ::Nil)
-      val seq21 = Sequent(pb_occ::Nil, pa_occ::Nil)
-      val seq31 = Sequent(pa_occ::Nil, pb_occ::Nil)
-      val seq41 = Sequent(Nil, pX_occ::pffb_occ::Nil)
-
-      val subsumedSeq = Sequent(Nil, pX_occ::pa_occ::Nil)
+      val subsumedSeq = new FSequent(Nil, pX::pa::Nil)
 
       val l = seq11::seq21::seq31::seq41::Nil
 
@@ -111,10 +105,10 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
         case Function(_,args) => args.map(x => termDepth(x)).foldLeft(0)((x,y) => 1+math.max(x, y))
       }
 
-      def depth: (Sequent) => Int = {
+      def depth: (FSequent) => Int = {
         seq => {
-          val a = seq.antecedent.map(x =>  termDepth(x.formula.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))  //  foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
-          val b = seq.succedent.map(x =>  termDepth(x.formula.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))   //seq.succedent.foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
+          val a = seq._1.map(x =>  termDepth(x.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))  //  foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
+          val b = seq._2.map(x =>  termDepth(x.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))   //seq.succedent.foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
           math.max(a,b)
         }
       }
@@ -125,9 +119,11 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
       println("\n"+seq41.toString + "   " + depth(seq41))
 
 
-      var root = new TreeNode[Sequent](l)
-      val f1: (Sequent) => Int = { x => x.toStringSimple.split("p").size - 1}
-      val f2: (Sequent) => Int = { x => x.toStringSimple.split("a").size - 1}
+      var root = new TreeNode[FSequent](l)
+      // The method toStringSimple is not defined for FSequent, but these variables are not used anyway...
+      // Commenting out.
+      //val f1: (FSequent) => Int = { x => x.toStringSimple.split("p").size - 1}
+      //val f2: (FSequent) => Int = { x => x.toStringSimple.split("a").size - 1}
       val featureList = depth::Nil
       var subsumpMNGR = new VectorTreeManager with StillmanSubsumptionAlgorithm[LambdaExpression] {
         var seqList = l;

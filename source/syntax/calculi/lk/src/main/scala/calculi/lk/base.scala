@@ -20,6 +20,9 @@ import _root_.at.logic.utils.traits.Occurrence
 import collection.immutable.Seq
 import at.logic.language.lambda.substitutions.Substitution
 
+import java.util.Comparator
+import scala.math.Ordering._
+
 /*
 import java.util.Comparator
 
@@ -153,7 +156,7 @@ import java.util.Comparator
     //override def toString : String = antecedent.toString + " :- " + succedent.toString
     def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
-    def sequentToPairOfSeqsOfHOLFormulas() : FSequent = {
+    def toFSequent() : FSequent = {
       Pair(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
     }
   }

@@ -19,7 +19,7 @@ import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions.Substitution
-
+import at.logic.calculi.lk.base.types._
 
 class SubstitutionTest extends SpecificationWithJUnit {
   "Substitutions" should {
@@ -32,7 +32,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
     val exyRay = ExVar(y, Atom("R", a::y::Nil ))
     val allxexy = AllVar(x, ExVar( y, Atom( "R", x::y::Nil ) ) )
 
-    val ax = Axiom.createDefault(Sequent(Rafa::Nil, Rafa::Nil), Pair( (EmptyLabel() + a)::Nil , EmptyLabel()::Nil ) )
+    val ax = Axiom.createDefault(new FSequent(Rafa::Nil, Rafa::Nil), Pair( (EmptyLabel() + a)::Nil , EmptyLabel()::Nil ) )
     val r1 = ExistsSkLeftRule(ax._1, ax._2._1.head, exyRay, fa)
     val r2 = ForallSkLeftRule(r1, r1.prin.head, allxexy, a, true)
     r2.root.antecedent.toList.head must beLike {case o: LabelledFormulaOccurrence => true}
@@ -43,7 +43,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val c : HOLExpression = HOLConst(new ConstantStringSymbol("c"), i)
       val Pc = Atom("P", c::Nil)
 
-      val a = Axiom.createDefault( Sequent( Px::Nil, Px::Nil ), Pair( (EmptyLabel() + x)::Nil, (EmptyLabel() + y)::Nil ) )
+      val a = Axiom.createDefault(new FSequent( Px::Nil, Px::Nil ), Pair( (EmptyLabel() + x)::Nil, (EmptyLabel() + y)::Nil ) )
       val subst = Substitution(x, c)
       val r = applySubstitution(a._1, subst)
       r._1.root.succedent.toList.head must beLike {case o : LabelledFormulaOccurrence => o.skolem_label == (EmptyLabel() + y) && o.formula == Pc }

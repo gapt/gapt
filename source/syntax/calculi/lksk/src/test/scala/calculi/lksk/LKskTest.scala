@@ -28,6 +28,7 @@ import at.logic.calculi.lk.quantificationRules._
 import base.TypeSynonyms._
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.occurrences.FOFactory
+import at.logic.calculi.lk.base.types._
 
 class LKskTest extends SpecificationWithJUnit {
   val c1 = HOLVar("a", i->o)
@@ -37,9 +38,11 @@ class LKskTest extends SpecificationWithJUnit {
   val v2 = HOLVar("c", i)
   val f2 = HOLAppFormula(c1,v1)
   val f3 = HOLVarFormula("e")
-  val ax = Axiom.createDefault(Sequent(List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() )), List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() ))), Pair((EmptyLabel() + f2)::Nil, EmptyLabel()::Nil ))
+  //val ax = Axiom.createDefault(Sequent(List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() )), List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() ))), Pair((EmptyLabel() + f2)::Nil, EmptyLabel()::Nil ))
+  val ax = Axiom.createDefault(new FSequent(f1::Nil, f1::Nil), Pair((EmptyLabel() + f2)::Nil, EmptyLabel()::Nil ))
   val a1 = ax._1 // Axiom return a pair of the proof and a mapping and we want only the proof here
-  val a2 = (Axiom.createDefault(Sequent(List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() )), List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() ))), Pair((EmptyLabel() + f2)::Nil, (EmptyLabel() + f3)::Nil) ) )._1
+  //val a2 = (Axiom.createDefault(Sequent(List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() )), List(new LabelledFormulaOccurrence(f1, Nil, EmptyLabel() ))), Pair((EmptyLabel() + f2)::Nil, (EmptyLabel() + f3)::Nil) ) )._1
+  val a2 = (Axiom.createDefault(new FSequent(f1::Nil, f1::Nil), Pair((EmptyLabel() + f2)::Nil, (EmptyLabel() + f3)::Nil) ) )._1
 
 
   "The factories/extractors for LKsk" should {

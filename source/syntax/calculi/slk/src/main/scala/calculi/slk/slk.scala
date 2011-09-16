@@ -44,14 +44,14 @@ class SchemaProof(val name: String, val vars: List[IntVar], val seq: Sequent, va
     // FIXME: why are these casts needed?
     val r_sub = Substitution(vars.map( v => (v,Succ(v).asInstanceOf[HOLExpression])))
     val b_sub = Substitution(vars.map( v => (v,IntZero().asInstanceOf[HOLExpression])))
-    val r_res = substitute(r_sub, seq.sequentToPairOfSeqsOfHOLFormulas())
-    val b_res = substitute(b_sub, seq.sequentToPairOfSeqsOfHOLFormulas())
+    val r_res = substitute(r_sub, seq.toFSequent())
+    val b_res = substitute(b_sub, seq.toFSequent())
 
 //    require( rec.root == r_res, rec.root + " != " + r_res )
 //    require( base.root == b_res, base.root + " != " + b_res )
 
-    require(rec.root.sequentToPairOfSeqsOfHOLFormulas() == r_res)
-    require(base.root.sequentToPairOfSeqsOfHOLFormulas() == b_res)
+    require(rec.root.toFSequent() == r_res)
+    require(base.root.toFSequent() == b_res)
 //    require( rec.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => r_sub(fo.formula)).toSet)
 //    require( rec.root.succedent.map(fo => fo.formula).toSet == seq.succedent.map(fo => r_sub(fo.formula)).toSet)
 //    require( base.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => b_sub(fo.formula)).toSet)
@@ -600,7 +600,7 @@ object OrEquivalenceRule1 {
 
 //        require( ps.seq.antecedent.map(fo => fo.formula).toSet == so.antecedent.map(fo => sub(fo.formula)).toSet)
 //        require( ps.seq.succedent.map(fo => fo.formula).toSet == so.succedent.map(fo => sub(fo.formula)).toSet)
-        require(ps.seq.sequentToPairOfSeqsOfHOLFormulas() == substitute(sub , so.sequentToPairOfSeqsOfHOLFormulas()) )
+        require(ps.seq.toFSequent() == substitute(sub , so.toFSequent()) )
 
       }
     }

@@ -12,20 +12,21 @@ import at.logic.utils.patterns.listeners._
 import at.logic.algorithms.subsumption._
 import at.logic.calculi.lk.base._
 import at.logic.utils.ds.{Add, Remove, PublishingBuffer, PublishingBufferEvent}
+import at.logic.calculi.lk.base.types._
 
 trait SubsumptionManager {
-  val sequents: PublishingBuffer[Sequent]
+  val sequents: PublishingBuffer[FSequent]
   val sbsmpAlg: SubsumptionAlgorithm
-  protected def init = sequents.addListener((x:PublishingBufferEvent[Sequent])=> x.ar match {
+  protected def init = sequents.addListener((x:PublishingBufferEvent[FSequent])=> x.ar match {
       case Add => addSequent(x.elem)
       case Remove => removeSequent(x.elem)
   })
 
   // checks if s is being subsumed by any of the sequents managed by the manager
-  def forwardSubsumption(s: Sequent): Boolean
+  def forwardSubsumption(s: FSequent): Boolean
   // removes any sequent that is subsumed by s
-  def backwardSubsumption(s: Sequent): Unit
+  def backwardSubsumption(s: FSequent): Unit
 
-  protected def addSequent(s: Sequent): Unit
-  protected def removeSequent(s: Sequent): Unit
+  protected def addSequent(s: FSequent): Unit
+  protected def removeSequent(s: FSequent): Unit
 }

@@ -1,6 +1,6 @@
 package at.logic.provers.atp.commands.refinements
 
-import at.logic.calculi.lk.base.SequentOccurrence
+import at.logic.calculi.lk.base.Sequent
 import at.logic.provers.atp.commands.base.InitialCommand
 import at.logic.provers.atp.Definitions._
 import at.logic.calculi.resolution.base.ResolutionProof
@@ -19,7 +19,7 @@ import at.logic.provers.atp.commands.refinements.base.{Refinement,RefinementID}
 package simple {
 
   // the command
-  case class SimpleRefinementGetCommand[V <: SequentOccurrence]() extends InitialCommand[V] {
+  case class SimpleRefinementGetCommand[V <: Sequent]() extends InitialCommand[V] {
     def apply(state: State) = {
       val refinement =
         if (state.isDefinedAt(RefinementID())) state(RefinementID()).asInstanceOf[SimpleRefinement[V]]
@@ -35,7 +35,7 @@ package simple {
     }
   }
 
-  private[refinements] class SimpleRefinement[V <: SequentOccurrence](clauses: PublishingBuffer[ResolutionProof[V]]) extends Refinement[V](clauses) {
+  private[refinements] class SimpleRefinement[V <: Sequent](clauses: PublishingBuffer[ResolutionProof[V]]) extends Refinement[V](clauses) {
     val pairs = new ListBuffer[Tuple2[ResolutionProof[V],ResolutionProof[V]]] // all pairs of possible two clauses
     insertClauses
     def getNext: Option[Tuple2[ResolutionProof[V],ResolutionProof[V]]] = if (isEmpty) None else Some(pairs.remove(0))

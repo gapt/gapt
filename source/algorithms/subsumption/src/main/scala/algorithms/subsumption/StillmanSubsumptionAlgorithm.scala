@@ -16,14 +16,15 @@ import at.logic.language.hol._
 import at.logic.language.fol.{Neg => FOLNeg, FOLFormula}
 import at.logic.calculi.lk.base._
 import collection.immutable.Seq
+import at.logic.calculi.lk.base.types._
 
 trait StillmanSubsumptionAlgorithm[T <: LambdaExpression] extends SubsumptionAlgorithm {
   val matchAlg: MatchingAlgorithm[T]
-  def subsumes(s1: Sequent, s2: Sequent): Boolean =
-    ST(s1.antecedent.map(x => neg(x.formula)) ++ s1.succedent.map(x => x.formula),
-      s2.antecedent.map(x => neg(x.formula)) ++ s2.succedent.map(x => x.formula), 
+  def subsumes(s1: FSequent, s2: FSequent): Boolean =
+    ST(s1._1.map(x => neg(x)) ++ s1._2.map(x => x),
+      s2._1.map(x => neg(x)) ++ s2._2.map(x => x), 
       Substitution(), 
-      (s2.antecedent.flatMap(x => x.getFreeAndBoundVariables._1) ++ s2.succedent.flatMap(x => x.getFreeAndBoundVariables._1)).toList)
+      (s2._1.flatMap(x => x.getFreeAndBoundVariables._1) ++ s2._2.flatMap(x => x.getFreeAndBoundVariables._1)).toList)
 
   def ST(ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: T => T, restrictedDomain: List[Var]): Boolean = ls1 match {
     case Nil => true // first list is exhausted

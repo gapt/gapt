@@ -18,6 +18,7 @@ import scala.collection.mutable.{Map,HashMap}
 import base._
 import base.LabelledFormulaOccurence.lfo2fo
 import base.TypeSynonyms._
+import at.logic.calculi.lk.base.types._
 
 import at.logic.calculi.lk.base.{Sequent,AuxiliaryFormulas,PrincipalFormulas, SubstitutionTerm}
 import at.logic.calculi.lk.propositionalRules.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType}
@@ -35,11 +36,11 @@ import at.logic.calculi.occurrences.{focc2f, FormulaOccurrence}
 object Axiom {
   import at.logic.calculi.occurrences.focc2f
 
-  def createDefault(seq: Sequent, maps: Pair[List[Label], List[Label]]): Pair[LKProof, Pair[List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence]]] = {
+  def createDefault(seq: FSequent, maps: Pair[List[Label], List[Label]]): Pair[LKProof, Pair[List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence]]] = {
     val left: Seq[LabelledFormulaOccurrence] =
-      seq.antecedent.zip(maps._1).map( p => createOccurrence( p._1.formula , p._2 ) )
+      seq._1.zip(maps._1).map( p => createOccurrence( p._1 , p._2 ) )
     val right: Seq[LabelledFormulaOccurrence] =
-      seq.succedent.zip(maps._2).map( p => createOccurrence( p._1.formula, p._2 ) )
+      seq._2.zip(maps._2).map( p => createOccurrence( p._1, p._2 ) )
     // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
     (new LeafTree[Sequent](new LabelledSequent(left, right ) ) with NullaryLKProof {def rule = InitialRuleType}, (left.toList,right.toList))
   }

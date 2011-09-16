@@ -14,6 +14,7 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types.ImplicitConverters._
+import collection.immutable.Seq
 
 object Definitions { def fol = FOLFactory }
 
@@ -191,6 +192,10 @@ object And {
 }
 
 object Or {
+    def apply(fs: Seq[FOLFormula]) : FOLFormula = fs match {
+      case Nil => BottomC
+      case f::fs => fs.foldLeft(f)( (d, f) => Or(d, f) )
+    }
   def apply(left: FOLFormula, right: FOLFormula) = App(App(OrC,left),right).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(OrC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )

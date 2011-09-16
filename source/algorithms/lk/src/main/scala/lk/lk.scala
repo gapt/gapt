@@ -72,7 +72,6 @@ object regularize {
     //implicit val factory = PointerFOFactoryInstance
     proof match
     {
-      // FIXME: cast!?!
       case r @ CutRule( p1, p2, _, a1, a2 ) => {
         // first left, then right
         val rec1 = rec( p1, vars )
