@@ -5,6 +5,7 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.calculi.lk.base._
+import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.propositionalRules.Axiom
 import at.logic.calculi.lk.lkExtractors._
 import at.logic.language.schema._
@@ -89,17 +90,17 @@ trait SchemaProofLink {
 }
 
 object SchemaProofLinkRule {
-  def apply(seq: Sequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {
+  def apply(seq: FSequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {
     def createSide(side : Seq[SchemaFormula]) = {
       side.map(f =>factory.createFormulaOccurrence(f,Nil))
     }
-    new LeafTree[Sequent]( Sequent(createSide(seq.antecedent.map(fo => fo.formula.asInstanceOf[SchemaFormula])), createSide(seq.succedent.map(fo => fo.formula.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
+    new LeafTree[Sequent]( Sequent(createSide(seq._1.map(f => f.asInstanceOf[SchemaFormula])), createSide(seq._1.map(f => f.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
       def rule = SchemaProofLinkRuleType
       def link = link_name
       def indices = indices_
     }
   }
-  def apply(seq: Sequent, name: String, ind : IntegerTerm)(implicit factory: FOFactory) : LeafTree[Sequent] with NullaryLKProof with SchemaProofLink= this.apply(seq, name, ind::Nil)
+  def apply(seq: FSequent, name: String, ind : IntegerTerm)(implicit factory: FOFactory) : LeafTree[Sequent] with NullaryLKProof with SchemaProofLink= this.apply(seq, name, ind::Nil)
   def unapply( proof: LKProof ) =
     if (proof.rule == SchemaProofLinkRuleType) {
       val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
