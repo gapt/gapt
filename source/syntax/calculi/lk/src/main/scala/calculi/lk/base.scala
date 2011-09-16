@@ -138,11 +138,12 @@ import java.util.Comparator
       case _ => false
     }
     // compares the multiset of formulas
-    def syntacticEquals(o: Sequent ) = o.antecedent.map(_.formula).diff(antecedent.map(_.formula)).isEmpty &&
+    def syntacticMultisetEquals(o: Sequent ) = o.antecedent.map(_.formula).diff(antecedent.map(_.formula)).isEmpty &&
                                        o.succedent.map(_.formula).diff(succedent.map(_.formula)).isEmpty &&
                                        antecedent.map(_.formula).diff(o.antecedent.map(_.formula)).isEmpty &&
                                        succedent.map(_.formula).diff(o.succedent.map(_.formula)).isEmpty
-    def removeFormulasAtOccurrences(occs: Seq[Occurrence]): Sequent = Sequent(
+   def =^(o: Sequent): Boolean = syntacticMultisetEquals(o) 
+   def removeFormulasAtOccurrences(occs: Seq[Occurrence]): Sequent = Sequent(
         antecedent.filterNot(x => occs.contains(x)),
         succedent.filterNot(x => occs.contains(x))
       )
