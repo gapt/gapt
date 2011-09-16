@@ -102,7 +102,7 @@ object loadProofs {
     def apply(ls: List[Sequent]) = sequentNormalize(ls)
   }
   object writeLabelledSequentListLatex {
-    def apply(ls: List[LabelledSequentOccurrence], outputFile: String) = {
+    def apply(ls: List[LabelledSequent], outputFile: String) = {
       // maps original types and definitions of abstractions
       val sections = ("Types", getTypeInformation(ls.map( so => so.getSequent )).toList.sort((x,y) => x.toString < y.toString))::Nil
       (new FileWriter(outputFile) with LabelledSequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls,sections).close
@@ -265,8 +265,8 @@ object loadProofs {
       println("printProofStats: LKProof => Unit")
       println("lkTolksk: LKProof => LKProof")
       println("extractStruct: LKProof => Struct")
-      println("structToClausesList: Struct => List[SequentOccurrence]")
-      println("structToLabelledClausesList: Struct => List[LabelledSequentOccurrence]")
+      println("structToClausesList: Struct => List[Sequent]")
+      println("structToLabelledClausesList: Struct => List[LabelledSequent]")
       println("createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
       println("deleteTautologies: List[Sequent] => List[Sequent]")
       println("removeDuplicates: List[Sequent] => List[Sequent]")
@@ -274,7 +274,7 @@ object loadProofs {
       println("removeSubsumed: List[Sequent] => List[Sequent]")
       println("normalizeClauses: List[Sequent] => List[Sequent]")
       println("writeLatex: List[Sequent], String => Unit")
-      println("writeLabelledSequentListLatex: List[LabelledSequentOccurrence], String => Unit")
+      println("writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
       println("parse fol: String => FOLTerm")
       println("parse hol: String => HOLExpression")
       println("exportXML: List[Proof], List[String], String => Unit")

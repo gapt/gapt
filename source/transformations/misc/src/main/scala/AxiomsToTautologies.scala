@@ -10,7 +10,7 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.base.{LKProof,Sequent,SequentOccurrence,PrincipalFormulas}
+import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._

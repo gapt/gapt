@@ -103,7 +103,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = "\n\n"
   val mdskip = "\n\n"+ """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
-  private def exportSequent(seq: LabelledSequentOccurrence) = {
+  private def exportSequent(seq: LabelledSequent) = {
     val ant = seq.l_antecedent.toList
     val suc = seq.l_succedent.toList
     if (ant.size > 0) exportLabelledFormulaOccurrence(ant.first)
@@ -113,7 +113,7 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
     if (suc.size > 1) suc.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportLabelledFormulaOccurrence(x)})
   }
   
-  def exportSequentList(ls: List[LabelledSequentOccurrence], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
+  def exportSequentList(ls: List[LabelledSequent], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 

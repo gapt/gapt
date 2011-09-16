@@ -13,8 +13,10 @@ import at.logic.calculi.resolution.robinson.Clause
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 import at.logic.calculi.lk.base._
+import collection.immutable.Seq
 
 import at.logic.calculi.occurrences.{factory => defaultFactory}
 

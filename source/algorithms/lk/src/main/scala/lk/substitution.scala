@@ -55,7 +55,7 @@ object applySubstitution {
     old_proof: LKProof,
     new_p1: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
     new_p2: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
-    s: SequentOccurrence,
+    s: Sequent,
     a1: FormulaOccurrence,
     a2: FormulaOccurrence,
     m: HOLFormula ) = {
@@ -66,17 +66,19 @@ object applySubstitution {
 
   def handleRule( proof: LKProof, new_parents: List[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])],
                   subst: Substitution[HOLExpression] ) : (LKProof, Map[FormulaOccurrence, FormulaOccurrence]) = {
-    implicit val factory = PointerFOFactoryInstance
+    //implicit val factory = PointerFOFactoryInstance
     proof match {
       case Axiom(so) => {
-        val ant_occs = so.antecedent.toList
-        val succ_occs = so.succedent.toList
-        val a = Axiom.createDefault(Sequent(ant_occs.map( fo => betaNormalize( subst(fo.formula) ).asInstanceOf[HOLFormula] ),
-          succ_occs.map( fo => betaNormalize( subst(fo.formula) ).asInstanceOf[HOLFormula] ) ) )
+        val ant_occs = so.antecedent
+        val succ_occs = so.succedent
+        val a = Axiom(ant_occs.map( fo => betaNormalize( subst(fo.formula)).asInstanceOf[HOLFormula]) ,
+          succ_occs.map( fo => betaNormalize( subst(fo.formula) ).asInstanceOf[HOLFormula] ) ) 
         val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
-        a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
-        a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
-        (a._1, map)
+        //a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
+        a.root.antecedent.zip(ant_occs).foreach(p => map.update( p._2, p._1))
+        //a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
+        a.root.succedent.zip(succ_occs).foreach(p => map.update( p._2, p._1))
+        (a, map)
       }
       case WeakeningLeftRule(p, s, m) => handleWeakening( new_parents.head, subst, p, proof, WeakeningLeftRule.apply, m )
       case WeakeningRightRule(p, s, m) => handleWeakening( new_parents.head, subst, p, proof, WeakeningRightRule.apply, m )
@@ -87,7 +89,8 @@ object applySubstitution {
         val new_p2 = new_parents.last
         val new_proof = CutRule( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
         ( new_proof, computeMap( 
-          p1.root.antecedent ++ (p1.root.succedent - a1) ++ (p2.root.antecedent - a2) ++ p2.root.succedent,
+          p1.root.antecedent ++ (p1.root.succedent.filter(_ != a1)) ++
+          (p2.root.antecedent.filter(_ != a2)) ++ p2.root.succedent,
           proof, new_proof, new_p1._2 ++ new_p2._2 ) )
       }
       case AndRightRule(p1, p2, s, a1, a2, m) => handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, AndRightRule.apply )
@@ -201,7 +204,7 @@ object applySubstitution {
     }
 
   // TODO: a very similar method is used in LKtoLKskc, refactor!?
-  def computeMap( occs: Set[FormulaOccurrence], old_proof: LKProof, 
+  def computeMap( occs: Seq[FormulaOccurrence], old_proof: LKProof, 
                   new_proof: LKProof, old_map : Map[FormulaOccurrence, FormulaOccurrence]) =
   {
     val map = new HashMap[FormulaOccurrence, FormulaOccurrence]

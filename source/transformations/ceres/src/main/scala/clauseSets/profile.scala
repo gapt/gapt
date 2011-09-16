@@ -206,14 +206,14 @@ import at.logic.calculi.lk.quantificationRules._
 //      case UnaryLKskProof(_,p,_,_,_) => apply( p )
     }
 //
-//    def getCorrespondingFOccs(fo: FormulaOccurrence, from: List[SequentOccurrence]): FormulaOccurrence = from match {
+//    def getCorrespondingFOccs(fo: FormulaOccurrence, from: List[Sequent]): FormulaOccurrence = from match {
 //      case so::rest if so.antecedent.contains(fo) => { if(so.succedent.size==1) so.succedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
 //      case so::rest if so.succedent.contains(fo) =>  { if(so.antecedent.size==1) so.antecedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
 //      case so::rest => getCorrespondingFOccs(fo, rest)
 //      case List() => new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}
 //    }
 //
-//    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[SequentOccurrence]): List[FormulaOccurrence] = lFOcc.map(x => getCorrespondingFOccs(x,from))
+//    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[Sequent]): List[FormulaOccurrence] = lFOcc.map(x => getCorrespondingFOccs(x,from))
 //
 //    def getAllCorrFOccs(lFOcc: List[FormulaOccurrence], p: LKProof) =   getAllCorrespondingFOccs(lFOcc, apply(p))
 //    ancOfAuxFOccs = getAllAxioms.getAllCorrFOccs(auxFOccs.foldLeft(List[FormulaOccurrence]())((x,y) => x ::: getAncAx(y)), proof)

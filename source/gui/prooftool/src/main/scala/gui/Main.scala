@@ -11,7 +11,7 @@ import scala.swing._
 import BorderPanel._
 import event.Key
 import at.logic.gui.prooftool.parser._
-import at.logic.calculi.lk.base.{SequentOccurrence, Sequent, LKProof}
+import at.logic.calculi.lk.base.{Sequent, LKProof}
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.transformations.ReductiveCutElim
 import javax.swing.filechooser.FileFilter
@@ -319,7 +319,7 @@ object Main extends SimpleSwingApplication {
     implicit val factory = PointerFOFactoryInstance
       val a = Atom(ConstantStringSymbol("p"), Nil)
       val s = Sequent(Nil, Neg(Or(a, Neg(a)))::Nil)
-      val p0 = InitialSequent[SequentOccurrence](s)
+      val p0 = InitialSequent[Sequent](s)
       val p1 = NotT( p0, p0.root.succedent.head )
       val p2 = OrFL( p1, p1.root.antecedent.head )
       val p3 = OrFR( p1, p1.root.antecedent.head )

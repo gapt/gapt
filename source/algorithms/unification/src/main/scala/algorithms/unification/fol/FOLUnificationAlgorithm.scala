@@ -11,7 +11,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.fol._
 import at.logic.language.lambda.substitutions.Substitution
-import at.logic.calculi.lk.base.{Sequent, SequentOccurrence}
+import at.logic.calculi.lk.base.Sequent
 
 object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
 

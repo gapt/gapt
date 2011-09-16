@@ -12,7 +12,7 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.base.{LKProof,Sequent,SequentOccurrence,PrincipalFormulas}
+import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
@@ -346,9 +346,9 @@ object skolemize {
     map.map( p => (old_p.getDescendantInLowerSequent( p._1 ).get,
       p._2 ) )
 
-  def skolemize(s: SequentOccurrence) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) = skolemize( s, SkolemSymbolFactory.getSkolemSymbols )
+  def skolemize(s: Sequent) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) = skolemize( s, SkolemSymbolFactory.getSkolemSymbols )
 
-  def skolemize(s: SequentOccurrence, stream: Stream[ConstantSymbolA]) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) =
+  def skolemize(s: Sequent, stream: Stream[ConstantSymbolA]) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) =
   {
     var cur_stream = stream
     val fos = s.antecedent ++ s.succedent

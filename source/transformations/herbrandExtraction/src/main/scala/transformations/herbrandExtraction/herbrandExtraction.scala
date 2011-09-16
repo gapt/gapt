@@ -32,7 +32,7 @@ object herbrandExtraction {
     s2(i)
   }
 
-  private def getTheOtherForm(prin: FOLFormula, aux: FOLFormula) = prin match {
+  private def getTheOtherForm(prin: HOLFormula, aux: HOLFormula) = prin match {
     case And(f1, f2) if (f2 == aux) => f1
     case And(f1, f2) if (f1 == aux) => f2
     case Or(f1, f2) if (f2 == aux) => f1
@@ -208,8 +208,8 @@ object herbrandExtraction {
       throw new HerbrandExtractionException("ERROR: Found strong quantifier rule while extracting Herbrand sequent.")
 
     // Assuming that the formulas in a1 and a2 are the same
-    case CutRule(up1, up2, _, a1, a2) => a1.formula match {
-      case ExQ(_) | AllQ(_) => throw new HerbrandExtractionException("ERROR: Found cut with quantifier.")
+    case CutRule(up1, up2, _, a1, a2) => a1.formula.containsQuantifier match {
+      case true => throw new HerbrandExtractionException("ERROR: Found cut with quantifier.")
       case _ =>
         val hs1 = buildHerbrand(up1)
         val hs2 = buildHerbrand(up2)

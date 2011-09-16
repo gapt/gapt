@@ -261,7 +261,14 @@ import collection.immutable.Seq
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.antecedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None || term2op == None) {
+        val s1str = s1.succedent.head.toString()
+        val s2str = s2.antecedent.head.toString()
+        val t1str = term1oc.asInstanceOf[FormulaOccurrence].formula.toString()
+        val t2str = term2oc.asInstanceOf[FormulaOccurrence].formula.toString()
+        val str = "s1: " + s1str + "\ns2: " + s2str + "\nt1: " + t1str + "\nt2: " + t2str + "\n"
+        throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent\n" + str)
+      }
       else {
         val term1 = term1op.get
         val term2 = term2op.get
@@ -271,7 +278,7 @@ import collection.immutable.Seq
         }
       }
     } 
-    private def getSequent(s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+    private def getSequent(s1: Sequent, s2: Sequent, term1: Occurrence, term2: Occurrence) = {
       val ant1 = createContext(s1.antecedent)
       val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
       val antecedent = ant1 ++ ant2

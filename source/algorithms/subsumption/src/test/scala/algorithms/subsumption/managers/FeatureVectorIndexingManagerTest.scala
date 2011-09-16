@@ -28,7 +28,7 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.fol._
-
+import at.logic.calculi.occurrences._
 
 
 class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
@@ -88,13 +88,19 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
       val pffa = Atom(new ConstantStringSymbol("p"),ffa::Nil)
       val pffb = Atom(new ConstantStringSymbol("p"),ffb::Nil)
       val pX = Atom(new ConstantStringSymbol("p"),X::Nil)
+  
+      val pa_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pa, Nil)
+      val pfa_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pfa, Nil)
+      val pb_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pb, Nil)
+      val pX_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pX, Nil)
+      val pffb_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(pffb, Nil)
 
-      val seq11 = Sequent(Nil, pa::pfa::Nil)
-      val seq21 = Sequent(pb::Nil, pa::Nil)
-      val seq31 = Sequent(pa::Nil, pb::Nil)
-      val seq41 = Sequent(Nil,pX::pffb::Nil)
+      val seq11 = Sequent(Nil, pa_occ::pfa_occ::Nil)
+      val seq21 = Sequent(pb_occ::Nil, pa_occ::Nil)
+      val seq31 = Sequent(pa_occ::Nil, pb_occ::Nil)
+      val seq41 = Sequent(Nil, pX_occ::pffb_occ::Nil)
 
-      val subsumedSeq = Sequent(Nil,pX::pa::Nil)
+      val subsumedSeq = Sequent(Nil, pX_occ::pa_occ::Nil)
 
       val l = seq11::seq21::seq31::seq41::Nil
 
@@ -107,8 +113,8 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
 
       def depth: (Sequent) => Int = {
         seq => {
-          val a = seq.antecedent.map(x =>  termDepth(x.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))  //  foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
-          val b = seq.succedent.map(x =>  termDepth(x.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))   //seq.succedent.foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
+          val a = seq.antecedent.map(x =>  termDepth(x.formula.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))  //  foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
+          val b = seq.succedent.map(x =>  termDepth(x.formula.asInstanceOf[FOLExpression])).foldLeft(0)((x,y) => math.max(x, y))   //seq.succedent.foldLeft(0)((x,y) => x+termDepth(y.asInstanceOf[FOLExpression]))
           math.max(a,b)
         }
       }

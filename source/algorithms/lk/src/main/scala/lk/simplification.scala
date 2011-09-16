@@ -1,14 +1,16 @@
 package at.logic.algorithms.lk
 
 import scala.collection.immutable.Set
+import scala.collection.immutable.Seq
 import at.logic.algorithms.subsumption.VariantsDeletion
-import at.logic.calculi.lk.base.{Sequent,SequentOccurrence}
+import at.logic.calculi.lk.base.Sequent
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
 import scala.collection.mutable.Map
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.algorithms.normalization.TermNormalizer
+import at.logic.calculi.occurrences._
 
 package simplification {
 
@@ -16,9 +18,6 @@ package simplification {
   {
     def apply(sequents: List[Sequent]) : List[Sequent] =
       sequents.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
-
-    def applyOccs(sequents: List[SequentOccurrence]) : List[SequentOccurrence] =
-      sequents.filter( s => !s.antecedent.exists( f => s.succedent.exists( _.formula == f.formula ) ) )
   }
 
   object setNormalize
@@ -60,7 +59,7 @@ package simplification {
     }
     private def matchPos(posUnit: List[Sequent], s: Sequent): Sequent = {
       val restDomain = (s.antecedent.flatMap(x => x.getFreeAndBoundVariables._1) ++ s.succedent.flatMap(x => x.getFreeAndBoundVariables._1)).toList
-      val newAnt = s.antecedent.filter(x => posUnit.forall(y => alg.matchTerm(y.succedent.head, x, restDomain) == None))
+      val newAnt = s.antecedent.filter(x => posUnit.forall(y => alg.matchTerm(y.succedent.head.formula, x.formula, restDomain) == None))
       if (newAnt.size == s.antecedent.size) s else Sequent(newAnt, s.succedent)
     }
     // no need to check for groundness as the matching algorithm does not return a substitution which can affect the instance
@@ -80,11 +79,14 @@ package simplification {
           var id = 0
           val map = Map[Var,Var]()
           def nextId = {id = id + 1; id}
-          (Sequent(normalize(el.antecedent,map,nextId).asInstanceOf[List[HOLFormula]],normalize(el.succedent,map,nextId).asInstanceOf[List[HOLFormula]]))::ls
+          (Sequent(normalize(el.antecedent,map,nextId), 
+            normalize(el.succedent,map,nextId)))::ls
         })).distinct
     }
-    private def normalize(ls: List[Formula], map: Map[Var,Var], nextId: => Int): List[Formula] = 
-      ls.sortWith((t1,t2) => myToString(t1) < myToString(t2)).map(x => TermNormalizer(x,map,nextId).asInstanceOf[Formula]).distinct
+    private def normalize(ls: Seq[FormulaOccurrence], map: Map[Var,Var], nextId: => Int): Seq[FormulaOccurrence] = 
+      ls.sortWith((t1,t2) => myToString(t1) < myToString(t2)).map(x => 
+        x.factory.createFormulaOccurrence(TermNormalizer(x.formula, map,
+        nextId).asInstanceOf[HOLFormula], Nil)).distinct
     private def myToString(exp: at.logic.language.lambda.typedLambdaCalculus.LambdaExpression): String = exp match {
       case v@ Var(at.logic.language.lambda.symbols.VariableStringSymbol(_),_) => ""
       case v: Var => v.toString

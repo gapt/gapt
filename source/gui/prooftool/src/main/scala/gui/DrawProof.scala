@@ -13,7 +13,7 @@ import event._
 import java.awt.Font._
 import java.awt.{RenderingHints, BasicStroke}
 import at.logic.calculi.treeProofs._
-import at.logic.calculi.lk.base.SequentOccurrence
+import at.logic.calculi.lk.base.Sequent
 import ProoftoolSequentFormatter._
 import java.awt.event.{MouseMotionListener, MouseEvent}
 import at.logic.calculi.slk.SchemaProofLinkRule
@@ -29,7 +29,7 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
   private val tx = proof.root match {
-    case so: SequentOccurrence => sequentOccurenceToString(so)
+    case so: Sequent => sequentToString(so)
     case _ => proof.root.toString
   }
 
@@ -111,9 +111,9 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
         val width = center.size.width + fSize*6
         val height = center.size.height
         val seqLength = p.root match {
-          case so: SequentOccurrence =>
-            max(metrics.stringWidth(sequentOccurenceToString(p.uProof.root.asInstanceOf[SequentOccurrence])),
-              metrics.stringWidth(sequentOccurenceToString(so)))
+          case so: Sequent =>
+            max(metrics.stringWidth(sequentToString(p.uProof.root.asInstanceOf[Sequent])),
+              metrics.stringWidth(sequentToString(so)))
           case _ =>
             max(metrics.stringWidth(p.uProof.root.toString),
               metrics.stringWidth(p.root.toString))
@@ -129,11 +129,11 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
         val rightWidth = right.size.width
         val height = max(left.size.height, right.size.height)
         val leftSeqLength = p.uProof1.root match {
-          case so: SequentOccurrence => metrics.stringWidth(sequentOccurenceToString(so))
+          case so: Sequent => metrics.stringWidth(sequentToString(so))
           case _ =>  metrics.stringWidth(p.uProof1.root.toString)
         }
         val rightSeqLength = p.uProof2.root match {
-          case so: SequentOccurrence => metrics.stringWidth(sequentOccurenceToString(so))
+          case so: Sequent => metrics.stringWidth(sequentToString(so))
           case _ =>  metrics.stringWidth(p.uProof2.root.toString)
         }
 

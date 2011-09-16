@@ -44,7 +44,7 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
         val proofs = reader.getProofDatabase.proofs
 
         //TODO: scala does not infer the inheritance of LKProof from Graph - hotfix: giving type by hand
-        val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first
+        val proof : at.logic.utils.ds.graphs.Graph[Sequent] = proofs.first
          val f = new Frame
          val scrollpane = new ScrollPane
          val panel = new BoxPanel( Orientation.Vertical )
@@ -99,7 +99,7 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
         val proofs = reader.getProofDatabase.proofs
 
         //TODO: scala does not infer the inheritance of LKProof from Graph - hotfix: giving type by hand
-        val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first
+        val proof : at.logic.utils.ds.graphs.Graph[Sequent] = proofs.first
         /*
         // --- output graph to dot format, works but commented out, because it creates additional files in the project
         val writer = new PrintWriter(new java.io.File("primeproof.dot"))
@@ -110,7 +110,7 @@ class GraphVisualisationTest extends SpecificationWithJUnit {
        // println(VisualisationUtils.toDotFormat(proof))
 
 
-        var pv = new ProofViewer[SequentOccurrence](proof)
+        var pv = new ProofViewer[Sequent](proof)
         pv.doTreePlacement()
         if (showWindow) {
           pv.run()

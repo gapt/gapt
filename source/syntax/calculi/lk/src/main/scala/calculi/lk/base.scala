@@ -22,7 +22,7 @@ import collection.immutable.Seq
 /*
 import java.util.Comparator
 
-// a trait for all objects that have a sequent (or its descendant) component (like Sequent, SequentOccurrence
+// a trait for all objects that have a sequent (or its descendant) component (like Sequent
   // the root of a proof, etc.) It can be used in algorithms that expect a sequent
   trait SequentLike  {
     def getSequent: Sequent
@@ -184,7 +184,8 @@ import java.util.Comparator
   // create new formula occurrences in the new context
   object createContext {
     def apply(set: Seq[FormulaOccurrence]): Seq[FormulaOccurrence] = 
-    set.map(x => x.factory.createFormulaOccurrence(x.formula.asInstanceOf[HOLFormula], x::Nil))
+    set.map(x =>
+    x.factory.createFormulaOccurrence(x.formula.asInstanceOf[HOLFormula], x::Nil))
   }
 
   object SequentFormatter {

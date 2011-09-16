@@ -40,7 +40,7 @@ object Axiom {
       seq.antecedent.zip(maps._1).map( p => createOccurrence( p._1.formula , p._2 ) )
     val right: Seq[LabelledFormulaOccurrence] =
       seq.succedent.zip(maps._2).map( p => createOccurrence( p._1.formula, p._2 ) )
-    // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
+    // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
     (new LeafTree[Sequent](new LabelledSequent(left, right ) ) with NullaryLKProof {def rule = InitialRuleType}, (left.toList,right.toList))
   }
   def createOccurrence(f: HOLFormula, l: Label): LabelledFormulaOccurrence =
@@ -51,7 +51,7 @@ object Axiom {
 object WeakeningLeftRule {
   def createDefault(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula : LabelledFormulaOccurrence = LKskFOFactory.createInitialOccurrence(f, l)
-    // I think we want LeafTree[LabelledSequentOccurrence] here, but it's incompatible with LKProof
+    // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
     new UnaryTree[Sequent](
       new LabelledSequent( createContext(s1.root.antecedent).asInstanceOf[Seq[LabelledFormulaOccurrence]] :+ prinFormula, createContext(s1.root.succedent).asInstanceOf[Seq[LabelledFormulaOccurrence]]), s1)
       with UnaryLKProof with PrincipalFormulas {

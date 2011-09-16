@@ -17,6 +17,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
 import at.logic.calculi.lk.base.Sequent
 import at.logic.parsing.readers.StringReader
+import at.logic.calculi.occurrences._
 
 private class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
 private class MyParserF(input: String) extends StringReader(input) with SimpleFOLParser
@@ -25,10 +26,12 @@ class SimplificationTest extends SpecificationWithJUnit {
   "Simplifications" should {
       val a = HOLVarFormula( "a" )
       val b = HOLVarFormula( "b" )
-      val s1 = Sequent( a::Nil, a::Nil )
-      val s2 = Sequent( b::a::b::Nil, b::b::b::a::b::Nil )
-      val s3 = Sequent( a::Nil, b::Nil )
-      val s4 = Sequent( b::Nil, a::Nil )
+      val a_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(a, Nil)
+      val b_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(a, Nil)
+      val s1 = Sequent( a_occ::Nil, a_occ::Nil )
+      val s2 = Sequent( b_occ::a_occ::b_occ::Nil, b_occ::b_occ::b_occ::a_occ::b_occ::Nil )
+      val s3 = Sequent( a_occ::Nil, b_occ::Nil )
+      val s4 = Sequent( b_occ::Nil, a_occ::Nil )
       
       val f1a = new MyParser("And P(z:(i->i)) Q(b:(i->i))").getTerm().asInstanceOf[HOLFormula]
       val f2a = new MyParser("And P(f(x:i, y:i, a:i):(i->i), z:(i->i)) Q(Neg T(x:i, a:i, b:(i->i), g(x:i):i), Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x: i, c1: (i -> i)))").getTerm().asInstanceOf[HOLFormula]
@@ -42,10 +45,20 @@ class SimplificationTest extends SpecificationWithJUnit {
       val f1d = new MyParser("And P(z:(i->i)) Q(b:(i->i))").getTerm().asInstanceOf[HOLFormula]
       val f2d = new MyParser("And P(f(x:i, y:i, a:i):(i->i), z:(i->i)) Q(Neg T(x:i, a:i, b:(i->i), g(x:i):i), Forall x2: (i -> (i -> i)) a(x2: (i -> (i -> i)), x: i, c1: (i -> i)))").getTerm().asInstanceOf[HOLFormula]
 
-      val s5 = Sequent( f1a::Nil, f2a::Nil )
-      val s6 = Sequent( f1b::Nil, f2b::Nil )
-      val s7 = Sequent( f1c::Nil, f2c::Nil )
-      val s8 = Sequent( f1d::Nil, f2d::Nil )
+      val f1a_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f1a, Nil)
+      val f2a_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f2a, Nil)
+      val f1b_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f1b, Nil)
+      val f2b_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f2b, Nil)
+      val f1c_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f1c, Nil)
+      val f2c_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f2c, Nil)
+      val f1d_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f1d, Nil)
+      val f2d_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f2d, Nil)
+
+
+      val s5 = Sequent( f1a_occ::Nil, f2a_occ::Nil )
+      val s6 = Sequent( f1b_occ::Nil, f2b_occ::Nil )
+      val s7 = Sequent( f1c_occ::Nil, f2c_occ::Nil )
+      val s8 = Sequent( f1d_occ::Nil, f2d_occ::Nil )
       
       val a1 = new MyParser("P(x:i)").getTerm().asInstanceOf[HOLFormula]
       val a2 = new MyParser("P(f(x:i,y:i):i)").getTerm().asInstanceOf[HOLFormula]
@@ -53,14 +66,34 @@ class SimplificationTest extends SpecificationWithJUnit {
       val a4 = new MyParser("P(b:i)").getTerm().asInstanceOf[HOLFormula]
       val a5 = new MyParser("P(f(b:i,a:i):i)").getTerm().asInstanceOf[HOLFormula]
       
-      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
-      val seq2 = Sequent(Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLConst(ConstantStringSymbol("s"), Ti())::Nil))::Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)::Nil)
+      val a1_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(a1, Nil)
+      val a2_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(a2, Nil)
+      val a3_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(a3, Nil)
+      val a4_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(a4, Nil)
+      val a5_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(a5, Nil)
 
-      val s9 = Sequent(Nil, a1::a2::Nil)
-      val s10 = Sequent(f1a::f1b::Nil, a3::a4::a5::Nil)
+      val f1 = Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Atom(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)
+      val f2 = Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLConst(ConstantStringSymbol("s"), Ti())::Nil))
 
-      val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLConst(ConstantStringSymbol("1"), Ti())::(HOLConst(ConstantStringSymbol("1"), Ti())::Nil))::Nil)
-      val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLConst(ConstantStringSymbol("1"), Ti())::Nil))::Nil)
+      val f1_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f1, Nil)
+      val f2_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f2, Nil)
+
+      val seq1 = Sequent(Nil, f1_occ::Nil)
+      val seq2 = Sequent(f2_occ::Nil, f1_occ::Nil)
+
+      val s9 = Sequent(Nil, a1_occ::a2_occ::Nil)
+      val s10 = Sequent(f1a_occ::f1b_occ::Nil, a3_occ::a4_occ::a5_occ::Nil)
+
+      val f3 = Atom(ConstantStringSymbol("="), HOLConst(ConstantStringSymbol("1"), Ti())::(HOLConst(ConstantStringSymbol("1"), Ti())::Nil))
+      val f4 = Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))
+      val f5 = Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLConst(ConstantStringSymbol("1"), Ti())::Nil))
+
+      val f3_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f3, Nil)
+      val f4_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f4, Nil)
+      val f5_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f5, Nil)
+
+      val seq3 = Sequent(Nil, f3_occ::Nil)
+      val seq4 = Sequent(Nil, f4_occ::f5_occ::Nil)
 
     "correctly delete tautologous sequents" in {
       val list = s1::s2::s3::s4::s1::Nil
@@ -86,10 +119,22 @@ class SimplificationTest extends SpecificationWithJUnit {
       implicit def formula2list(x: HOLFormula): List[HOLFormula] = List(x)
       implicit def term2list(x: HOLExpression): List[HOLFormula] = List(x.asInstanceOf[HOLFormula])
 
-      val seq1f = Sequent(Nil,new MyParserF("<(a, p(x))").getTerm())
-      val seq2f = Sequent(new MyParserF("=(x,s)").getTerm(),new MyParserF("<(a, p(x))").getTerm())
-      val seq3f = Sequent(Nil,new MyParserF("=(a,a)").getTerm())
-      val seq4f = Sequent(Nil,List(new MyParserF("=(x,x)").getTerm(),new MyParserF("=(x,a)").getTerm()))
+      val f1 = new MyParserF("<(a, p(x))").getTerm()
+      val f2 = new MyParserF("=(x,s)").getTerm()
+      val f3 = new MyParserF("=(a,a)").getTerm()
+      val f4 = new MyParserF("=(x,x)").getTerm()
+      val f5 = new MyParserF("=(x,a)").getTerm()
+      
+      val f1_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f1, Nil)
+      val f2_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f2, Nil)
+      val f3_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f3, Nil)
+      val f4_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f4, Nil)
+      val f5_occ = defaultFormulaOccurrenceFactory.createFormulaOccurrence(f5, Nil)
+
+      val seq1f = Sequent(Nil, f1_occ::Nil)
+      val seq2f = Sequent(f2_occ::Nil, f1_occ::Nil)
+      val seq3f = Sequent(Nil, f3_occ::Nil)
+      val seq4f = Sequent(Nil, f4_occ::f5_occ::Nil)
 
       "FOL" in {
         "1" in {
