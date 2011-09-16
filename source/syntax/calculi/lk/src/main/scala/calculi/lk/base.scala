@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.calculi.lk
+package at.logic.calculi
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.treeProofs._
@@ -108,10 +108,15 @@ import java.util.Comparator
     def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
   }
        */
+
+  object lk {
+
+  type FSequent = Pair[Seq[HOLFormula],Seq[HOLFormula]]
+
   object substitute {
     // TODO: write a substitution function that knows that
     // HOLFormula is closed under substitution
-    def apply(sub: Substitution[HOLExpression], pair: Pair[Seq[HOLFormula],Seq[HOLFormula]]) =
+    def apply(sub: Substitution[HOLExpression], pair: FSequent) =
       Pair( pair._1.map(f => sub(f)), pair._2.map(f => sub(f) ))
   }
 
@@ -145,7 +150,7 @@ import java.util.Comparator
     //override def toString : String = antecedent.toString + " :- " + succedent.toString
     def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
-    def sequentToPairOfSeqsOfHOLFormulas() : Pair[Seq[HOLFormula],Seq[HOLFormula]] = {
+    def sequentToPairOfSeqsOfHOLFormulas() : FSequent = {
       Pair(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
     }
   }
@@ -235,5 +240,5 @@ import java.util.Comparator
         sb.toString
     }
   }
-
+  }
 }
