@@ -18,6 +18,7 @@ package base {
 
 import _root_.at.logic.utils.traits.Occurrence
 import collection.immutable.Seq
+import at.logic.language.lambda.substitutions.Substitution
 
 /*
 import java.util.Comparator
@@ -106,14 +107,14 @@ import java.util.Comparator
     def apply(antecedent: List[HOLFormula], succedent: List[HOLFormula]) = new Sequent(antecedent, succedent)
     def unapply(s: Sequent) = Some(s.antecedent, s.succedent)
   }
-
+       */
   object substitute {
     // TODO: write a substitution function that knows that
     // HOLFormula is closed under substitution
-    def apply(sub: Substitution[HOLExpression], seq: Sequent) =
-      Sequent( seq.antecedent.map(f => sub(f).asInstanceOf[HOLFormula]), seq.succedent.map(f => sub(f).asInstanceOf[HOLFormula]) )
+    def apply(sub: Substitution[HOLExpression], pair: Pair[Seq[HOLFormula],Seq[HOLFormula]]) =
+      Pair( pair._1.map(f => sub(f)), pair._2.map(f => sub(f) ))
   }
-  */
+
 
   class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[FormulaOccurrence])
   {
@@ -135,6 +136,9 @@ import java.util.Comparator
     //override def toString : String = antecedent.toString + " :- " + succedent.toString
     def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
                                   succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
+    def sequentToPairOfSeqsOfHOLFormulas() : Pair[Seq[HOLFormula],Seq[HOLFormula]] = {
+      Pair(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
+    }
   }
 
   object Sequent {

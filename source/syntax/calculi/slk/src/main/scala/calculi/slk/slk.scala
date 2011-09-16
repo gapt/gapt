@@ -12,9 +12,7 @@ import at.logic.utils.ds.trees._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
-import collection.immutable.Seq
-import scala.collection.immutable.Set
-
+import scala.collection.immutable.Seq
 
 
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
@@ -46,16 +44,18 @@ class SchemaProof(val name: String, val vars: List[IntVar], val seq: Sequent, va
     // FIXME: why are these casts needed?
     val r_sub = Substitution(vars.map( v => (v,Succ(v).asInstanceOf[HOLExpression])))
     val b_sub = Substitution(vars.map( v => (v,IntZero().asInstanceOf[HOLExpression])))
-//    val r_res = substitute(r_sub, seq)
-//    val b_res = substitute(b_sub, seq)
+    val r_res = substitute(r_sub, seq.sequentToPairOfSeqsOfHOLFormulas())
+    val b_res = substitute(b_sub, seq.sequentToPairOfSeqsOfHOLFormulas())
 
 //    require( rec.root == r_res, rec.root + " != " + r_res )
 //    require( base.root == b_res, base.root + " != " + b_res )
 
-    require( rec.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => r_sub(fo.formula)).toSet)
-    require( rec.root.succedent.map(fo => fo.formula).toSet == seq.succedent.map(fo => r_sub(fo.formula)).toSet)
-    require( base.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => b_sub(fo.formula)).toSet)
-    require( base.root.succedent.map(fo => fo.formula).toSet == seq.succedent.map(fo => b_sub(fo.formula)).toSet)
+    require(rec.root.sequentToPairOfSeqsOfHOLFormulas() == r_res)
+    require(base.root.sequentToPairOfSeqsOfHOLFormulas() == b_res)
+//    require( rec.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => r_sub(fo.formula)).toSet)
+//    require( rec.root.succedent.map(fo => fo.formula).toSet == seq.succedent.map(fo => r_sub(fo.formula)).toSet)
+//    require( base.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => b_sub(fo.formula)).toSet)
+//    require( base.root.succedent.map(fo => fo.formula).toSet == seq.succedent.map(fo => b_sub(fo.formula)).toSet)
   }
 }
 
@@ -91,7 +91,7 @@ trait SchemaProofLink {
 object SchemaProofLinkRule {
   def apply(seq: Sequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {
     def createSide(side : Seq[SchemaFormula]) = {
-      side.foldLeft(scala.collection.immutable.Seq.empty[FormulaOccurrence])((st, form) =>  defaultFormulaOccurrenceFactory.createFormulaOccurrence(form, Nil) +: st)
+      side.foldLeft(Seq.empty[FormulaOccurrence])((st, form) =>  defaultFormulaOccurrenceFactory.createFormulaOccurrence(form, Nil) +: st)
     }
     new LeafTree[Sequent]( Sequent(createSide(seq.antecedent.map(fo => fo.formula.asInstanceOf[SchemaFormula])), createSide(seq.succedent.map(fo => fo.formula.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
       def rule = SchemaProofLinkRuleType
@@ -117,7 +117,7 @@ object AndEquivalenceRule1 {
       case BigAnd(v, f, ub, Succ(lb)) => {
           require( And( BigAnd( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
           val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
-          def createSide( s : scala.collection.immutable.Seq[FormulaOccurrence] ) =
+          def createSide( s : Seq[FormulaOccurrence] ) =
             if ( ! s.filter(_ == auxf).isEmpty )
               createContext(prinFormula +: (s.filter(_ != auxf) ))
             else
@@ -194,7 +194,7 @@ object AndEquivalenceRule2 {
       case BigAnd(v, f, ub, lb) => {
           require( And( BigAnd( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
           val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
-          def createSide( s : scala.collection.immutable.Seq[FormulaOccurrence] ) =
+          def createSide( s :  Seq[FormulaOccurrence] ) =
             if ( ! s.filter(_ == auxf).isEmpty )
               createContext(prinFormula +: (s.filter(_ != auxf) ))
             else
@@ -270,7 +270,7 @@ object AndEquivalenceRule3 {
       case BigAnd(v, f, ub, lb) if ub == lb => {
           require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
           val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
-          def createSide( s : scala.collection.immutable.Seq[FormulaOccurrence] ) =
+          def createSide( s : Seq[FormulaOccurrence] ) =
             if ( ! s.filter(_ == auxf).isEmpty )
               createContext(prinFormula +: (s.filter(_ != auxf) ))
             else
@@ -348,7 +348,7 @@ object OrEquivalenceRule1 {
       case BigOr(v, f, ub, Succ(lb)) => {
           require( Or( BigOr( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
           val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
-          def createSide( s : scala.collection.immutable.Seq[FormulaOccurrence] ) =
+          def createSide( s : Seq[FormulaOccurrence] ) =
               if ( ! s.filter(_ == auxf).isEmpty )
                 createContext(prinFormula +: (s.filter(_ != auxf) ))
               else
@@ -422,7 +422,7 @@ object OrEquivalenceRule1 {
         case BigOr(v, f, ub, lb) => {
             require( Or( BigOr( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
             val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
-            def createSide( s : scala.collection.immutable.Seq[FormulaOccurrence] ) =
+            def createSide( s : Seq[FormulaOccurrence] ) =
               if ( ! s.filter(_ == auxf).isEmpty )
                 createContext(prinFormula +: (s.filter(_ != auxf) ))
               else
@@ -499,7 +499,7 @@ object OrEquivalenceRule1 {
         case BigOr(v, f, ub, lb) if ub == lb => {
             require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
             val prinFormula = defaultFormulaOccurrenceFactory.createFormulaOccurrence( main, auxf::Nil )
-            def createSide( s : scala.collection.immutable.Seq[FormulaOccurrence] ) =
+            def createSide( s : Seq[FormulaOccurrence] ) =
               if ( ! s.filter(_ == auxf).isEmpty )
                 createContext(prinFormula +: (s.filter(_ != auxf) ))
               else
@@ -598,8 +598,9 @@ object OrEquivalenceRule1 {
         val sub = Substitution(ps.vars.zip(indices.asInstanceOf[List[HOLExpression]]))
      //   require( substitute(sub, ps.seq) == so.getSequent, "Proof Link to proof " + name + "(" + indices + ") with sequent " + so.getSequent + " incorrect!")
 
-        require( ps.seq.antecedent.map(fo => fo.formula).toSet == so.antecedent.map(fo => sub(fo.formula)).toSet)
-        require( ps.seq.succedent.map(fo => fo.formula).toSet == so.succedent.map(fo => sub(fo.formula)).toSet)
+//        require( ps.seq.antecedent.map(fo => fo.formula).toSet == so.antecedent.map(fo => sub(fo.formula)).toSet)
+//        require( ps.seq.succedent.map(fo => fo.formula).toSet == so.succedent.map(fo => sub(fo.formula)).toSet)
+        require(ps.seq.sequentToPairOfSeqsOfHOLFormulas() == substitute(sub , so.sequentToPairOfSeqsOfHOLFormulas()) )
 
       }
     }
