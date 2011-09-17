@@ -39,14 +39,14 @@ object SingleSequent {
   }
 }
 
-class SchemaProof(val name: String, val vars: List[IntVar], val seq: Sequent, val base: LKProof, val rec: LKProof)
+class SchemaProof(val name: String, val vars: List[IntVar], val seq: FSequent, val base: LKProof, val rec: LKProof)
 {
   {
     // FIXME: why are these casts needed?
     val r_sub = Substitution(vars.map( v => (v,Succ(v).asInstanceOf[HOLExpression])))
     val b_sub = Substitution(vars.map( v => (v,IntZero().asInstanceOf[HOLExpression])))
-    val r_res = substitute(r_sub, seq.toFSequent())
-    val b_res = substitute(b_sub, seq.toFSequent())
+    val r_res = substitute(r_sub, seq)
+    val b_res = substitute(b_sub, seq)
 
 //    require( rec.root == r_res, rec.root + " != " + r_res )
 //    require( base.root == b_res, base.root + " != " + b_res )
@@ -637,7 +637,7 @@ object OrEquivalenceRule1 {
 
 //        require( ps.seq.antecedent.map(fo => fo.formula).toSet == so.antecedent.map(fo => sub(fo.formula)).toSet)
 //        require( ps.seq.succedent.map(fo => fo.formula).toSet == so.succedent.map(fo => sub(fo.formula)).toSet)
-        require(ps.seq.toFSequent() == substitute(sub , so.toFSequent()) )
+        require(ps.seq == substitute(sub , so.toFSequent()) )
 
       }
     }
