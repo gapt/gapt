@@ -164,8 +164,11 @@ object AndRightEquivalenceRule1 {
       val (p1::Nil) = r.prin
       if (r.root.succedent.contains(p1))
         Some((r.uProof, r.root, a1, p1))
+      else
+        None
     }
-    None
+    else
+      None
 }
 
 object AndLeftEquivalenceRule1 {
@@ -181,8 +184,11 @@ object AndLeftEquivalenceRule1 {
       val (p1::Nil) = r.prin
       if (r.root.antecedent.contains(p1))
         Some((r.uProof, r.root, a1, p1))
+      else
+        None
     }
-    None
+    else
+      None
 }
 
 
@@ -241,8 +247,11 @@ object AndRightEquivalenceRule2 {
       val (p1::Nil) = r.prin
       if (r.root.succedent.contains(p1))
         Some((r.uProof, r.root, a1, p1))
+      else
+        None
     }
-    None
+    else
+      None
 }
 
 object AndLeftEquivalenceRule2 {
@@ -258,8 +267,11 @@ object AndLeftEquivalenceRule2 {
       val (p1::Nil) = r.prin
       if (r.root.antecedent.contains(p1))
         Some((r.uProof, r.root, a1, p1))
+      else
+        None
     }
-    None
+    else
+      None
 }
 
 // ---------------------------- And Equivalence 3 ---------------------------------------
@@ -319,8 +331,11 @@ object AndRightEquivalenceRule3 {
       val (p1::Nil) = r.prin
       if (r.root.succedent.contains(p1))
         Some((r.uProof, r.root, a1, p1))
+      else
+        None
     }
-    None
+    else
+      None
 }
 
 object AndLeftEquivalenceRule3 {
@@ -336,8 +351,11 @@ object AndLeftEquivalenceRule3 {
       val (p1::Nil) = r.prin
       if (r.root.antecedent.contains(p1))
         Some((r.uProof, r.root, a1, p1))
+      else
+          None
     }
-    None
+    else
+      None
 }
 
 
@@ -394,8 +412,11 @@ object OrEquivalenceRule1 {
         val (p1::Nil) = r.prin
         if (r.root.succedent.contains(p1))
           Some((r.uProof, r.root, a1, p1))
+        else
+          None
       }
-      None
+      else
+        None
   }
 
   object OrLeftEquivalenceRule1 {
@@ -411,8 +432,11 @@ object OrEquivalenceRule1 {
         val (p1::Nil) = r.prin
         if (r.root.antecedent.contains(p1))
           Some((r.uProof, r.root, a1, p1))
+        else
+          None
       }
-      None
+      else
+        None
   }
 
 // ---------------------------- Or Equivalence 2 ---------------------------------------
@@ -470,8 +494,11 @@ object OrEquivalenceRule1 {
         val (p1::Nil) = r.prin
         if (r.root.succedent.contains(p1))
           Some((r.uProof, r.root, a1, p1))
+        else
+          None
       }
-      None
+      else
+        None
   }
 
   object OrLeftEquivalenceRule2 {
@@ -487,8 +514,11 @@ object OrEquivalenceRule1 {
         val (p1::Nil) = r.prin
         if (r.root.antecedent.contains(p1))
           Some((r.uProof, r.root, a1, p1))
+        else
+          None
       }
-      None
+      else
+        None
   }
 
 
@@ -547,8 +577,11 @@ object OrEquivalenceRule1 {
         val (p1::Nil) = r.prin
         if (r.root.succedent.contains(p1))
           Some((r.uProof, r.root, a1, p1))
+        else
+          None
       }
-      None
+      else
+        None
   }
 
   object OrLeftEquivalenceRule3 {
@@ -564,8 +597,11 @@ object OrEquivalenceRule1 {
         val (p1::Nil) = r.prin
         if (r.root.antecedent.contains(p1))
           Some((r.uProof, r.root, a1, p1))
+        else
+          None
       }
-      None
+      else
+        None
   }
 
 //-------------------------------------------------------------------------------------------------
