@@ -28,6 +28,7 @@ import at.logic.language.lambda.symbols._
 import at.logic.utils.ds.Multisets._
 
 import scala.collection.immutable.{HashSet, Set}
+import at.logic.calculi.lk.base.types.FSequent
 
 // for debugging
 import clauseSets.StandardClauseSet._
@@ -126,14 +127,14 @@ package struct {
   // by, for each o in cc, taking the element f from seq such that
   // f, where param goes to term, is equal to o.formula.
   object cutOccConfigToCutConfig {
-    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: Sequent, params: List[IntVar], terms: List[IntegerTerm]) =
+    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]) =
       cc.foldLeft( (HashMultiset[SchemaFormula](), HashMultiset[SchemaFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
         if (so.antecedent.contains( fo ))
-          (cca + getFormulaForCC( fo, seq.antecedent.asInstanceOf[List[SchemaFormula]], params, terms ), ccs)
+          (cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[SchemaFormula]], params, terms ), ccs)
         else if (so.succedent.contains( fo ))
-          (cca, ccs + getFormulaForCC( fo, seq.succedent.asInstanceOf[List[SchemaFormula]], params, terms ))
+          (cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[SchemaFormula]], params, terms ))
         else
           throw new Exception
       })
