@@ -9,16 +9,19 @@ package at.logic.provers.atp.commands
  */
 
 package sequents {
-import _root_.at.logic.algorithms.subsumption.managers.{SimpleManager, SubsumptionManager}
+
+import _root_.at.logic.algorithms.subsumption.managers._
 import _root_.at.logic.algorithms.subsumption.SubsumptionAlgorithm
 import _root_.at.logic.calculi.lk.base.Sequent
-import _root_.at.logic.utils.ds.{PublishingBuffer}
+import _root_.at.logic.calculi.resolution.base.ResolutionProof
+import _root_.at.logic.language.lambda.types.->
+import _root_.at.logic.utils.ds.{Add, Remove, PublishingBufferEvent, PublishingBuffer}
+import _root_.at.logic.utils.patterns.listeners.ListenerManager
 import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand}
-import at.logic.calculi.resolution.base.ResolutionProof
 import at.logic.provers.atp.Definitions._
 import at.logic.calculi.lk.base.types._
 
-  abstract class SetSequentsCommand[V <: Sequent](val clauses: Iterable[Sequent]) extends DataCommand[V]
+abstract class SetSequentsCommand[V <: Sequent](val clauses: Iterable[Sequent]) extends DataCommand[V]
 
   // set the target clause, i.e. the empty clause normally
   case class SetTargetClause[V <: Sequent](val clause: Sequent) extends DataCommand[V] {
@@ -66,34 +69,37 @@ import at.logic.calculi.lk.base.types._
     }
   }
 
-  case class SimpleForwardSubsumptionCommand[V <: Sequent](alg: SubsumptionAlgorithm) extends DataCommand[V] {
-    def apply(state: State, data: Any) = {
-      // create a manager if not existing
-      val manager: SubsumptionManager = if (state.isDefinedAt("simpleSubsumManager")) state("simpleSubsumManager").asInstanceOf[SubsumptionManager]
+  abstract class SimpleSubsumptionCommand[V <: Sequent](val alg: SubsumptionAlgorithm) extends DataCommand[V] {
+    protected def getManager(state: State): SubsumptionManager =
+        if (state.isDefinedAt("simpleSubsumManager")) state("simpleSubsumManager").asInstanceOf[SubsumptionManager]
         else {
-        val buffer = state("clauses").asInstanceOf[PublishingBuffer[FSequent]]
-        val man = new SimpleManager(buffer, alg)
-        state("simpleSubsumManager") = man
-        man
-      }
-      val res = data.asInstanceOf[Sequent]
-      val res1 = res.toFSequent()
+          val buffer = state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]]
+          // set a listener that will listen to the buffer and fire an event (to the subsumption manager) when sequents are added or removed
+          val lis = new ListenerManager[SubsumptionDSEvent] {
+            buffer.addListener((x: PublishingBufferEvent[ResolutionProof[V]])=> x.ar match {
+              case Add => fireEvent(SubsumptionDSEvent(SAdd, x.elem.root.toFSequent))
+              case Remove => fireEvent(SubsumptionDSEvent(SRemove, x.elem.root.toFSequent))
+            })
+          }
+          val man = new SimpleManager(lis, alg, () => buffer.iterator.map(_.root.toFSequent), f => buffer.exists(p => f(p.root.toFSequent)) , s => {buffer.filterNot(_.root.toFSequent == s); ()})
+          state("simpleSubsumManager") = man
+          man
+    }
+  }
+  case class SimpleForwardSubsumptionCommand[V <: Sequent](a: SubsumptionAlgorithm) extends SimpleSubsumptionCommand[V](a) {
+
+    def apply(state: State, data: Any) = {
+      val manager = getManager(state)
+      val res = data.asInstanceOf[ResolutionProof[V]]
+      val res1 = res.root.toFSequent()
       if (manager.forwardSubsumption(res1)) List() else List((state,data))
     }
   }
-
-  case class SimpleBackwardSubsumptionCommand[V <: Sequent](alg: SubsumptionAlgorithm) extends DataCommand[V] {
+  case class SimpleBackwardSubsumptionCommand[V <: Sequent](a: SubsumptionAlgorithm) extends SimpleSubsumptionCommand[V](a) {
     def apply(state: State, data: Any) = {
-      // create a manager if not existing
-      val manager: SubsumptionManager = if (state.isDefinedAt("simpleSubsumManager")) state("simpleSubsumManager").asInstanceOf[SubsumptionManager]
-        else {
-        val buffer = state("clauses").asInstanceOf[PublishingBuffer[FSequent]]
-        val man = new SimpleManager(buffer, alg)
-        state("simpleSubsumManager") = man
-        man
-      }
-      val res = data.asInstanceOf[Sequent]
-      val res1 = res.toFSequent()
+      val manager = getManager(state)
+      val res = data.asInstanceOf[ResolutionProof[V]]
+      val res1 = res.root.toFSequent()
       manager.backwardSubsumption(res1)
       List((state,data))
     }
