@@ -159,6 +159,9 @@ import java.util.Comparator
     def toFSequent() : FSequent = {
       Pair(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
     }
+    def toFormula = Or( antecedent.toList.map( f => Neg( f.formula ) ) ++ succedent.map(_.formula) )
+    // checks whether this sequent is of the form F :- F
+    def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head.formula == succedent.head.formula
   }
 
   object Sequent {
