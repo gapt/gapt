@@ -12,6 +12,8 @@ import org.specs.mock.Mockito
 import org.mockito.Matchers._
 import java.io.IOException
 
+import at.logic.calculi.occurrences.factory
+
 // to use matchers like anyInt()
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
@@ -22,6 +24,8 @@ class Prover9Test extends SpecificationWithJUnit {
 
   val box = List()
   def checkForProver9OrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
+
+  implicit def fo2occ(f:FOLFormula) = factory.createFormulaOccurrence(f, Nil)
 
 
   "The Prover9 interface" should {
