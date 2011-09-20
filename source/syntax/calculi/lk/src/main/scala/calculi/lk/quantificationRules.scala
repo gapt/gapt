@@ -63,7 +63,16 @@ import _root_.at.logic.utils.traits.Occurrence
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
       val term1op = s1.antecedent.find(_ == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None) {
+        println("=====================")
+        def o2s(occ:FormulaOccurrence) = occ +" formula="+occ.formula+ " ancestors="+occ.ancestors
+        println(o2s(term1oc.asInstanceOf[FormulaOccurrence]))
+        //s1.antecedent.head.ancestors foreach ( (x:FormulaOccurrence) => println(o2s(x)))
+        println(o2s(s1.antecedent.head))
+        println(main)
+        println(term)
+        throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      }
       else {
         val aux_fo = term1op.get
         val aux_form = computeAux(main, term)

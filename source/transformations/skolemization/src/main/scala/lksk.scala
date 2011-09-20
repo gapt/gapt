@@ -21,8 +21,14 @@ import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.lk.getCutAncestors
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.occurrences.factory
+
 
 object LKtoLKskc {
+  implicit def sequent2fsequent(fs : Sequent) : FSequent = (fs.antecedent map (_.formula), fs.succedent map (_.formula))
+  def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Nil)
+
   def logInfo( msg: String ) = (new Logger{}).info( msg )
 
   def apply(proof: LKProof) : LKProof = apply( proof, getCutAncestors( proof ) )
@@ -43,11 +49,17 @@ object LKtoLKskc {
   // and the handleEquationalRule method below!
   def rec(proof: LKProof, subst_terms: Map[FormulaOccurrence, Label], cut_occs: Set[FormulaOccurrence]) : (LKProof, Map[FormulaOccurrence,LabelledFormulaOccurrence]) = proof match {
     case LKAxiom(so) => {
-      val ant = so.antecedent.toList
-      val succ = so.succedent.toList
+      val ant = so.antecedent
+      val succ = so.succedent
+/*
       val a = Axiom.createDefault( Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ),
                      Pair( ant.map( fo => subst_terms.apply( fo ) ), 
                            succ.map( fo => subst_terms.apply( fo ) ) ) )
+                           */
+
+      val a = Axiom.createDefault( Sequent( ant, succ ),
+                     Pair( ant.map( fo => subst_terms.apply( fo ) ).toList,
+                           succ.map( fo => subst_terms.apply( fo ) ).toList ) )
       //assert( a._1.root.isInstanceOf[LabelledSequent] )
       val map = new HashMap[FormulaOccurrence, LabelledFormulaOccurrence]
       a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant( p._2 ), p._1 ) )
@@ -56,13 +68,13 @@ object LKtoLKskc {
     }
     case ForallLeftRule(p, s, a, m, t) => 
       if (!cut_occs.contains(m))
-        transformWeakQuantRule( proof, subst_terms, p, a, m, t, (s.antecedent - m) ++ s.succedent,
+        transformWeakQuantRule( proof, subst_terms, p, a, m, t, (s.antecedent filterNot(_ == m)) ++ s.succedent,
                                 cut_occs, ForallSkLeftRule.apply )
       else
         copyWeakQuantRule( proof, subst_terms, p, a, m, t, s, cut_occs, ForallLeftRule.apply )
     case ExistsRightRule(p, s, a, m, t) => 
       if (!cut_occs.contains(m))
-        transformWeakQuantRule( proof, subst_terms, p, a, m, t, s.antecedent ++ (s.succedent - m), 
+        transformWeakQuantRule( proof, subst_terms, p, a, m, t, s.antecedent ++ (s.succedent filterNot(_ == m)),
                                 cut_occs, ExistsSkRightRule.apply )
       else
         copyWeakQuantRule( proof, subst_terms, p, a, m, t, s, cut_occs, ExistsRightRule.apply )
@@ -85,8 +97,8 @@ object LKtoLKskc {
             // TODO: casts are only due to Set/Map not being covariant!?
             val composed_map = r._2.clone
             composed_map.transform( (k, v) => new_parent._2( v ) )
-            (new_proof, computeMap( p.root.antecedent.asInstanceOf[Set[FormulaOccurrence]] ++
-                                    p.root.succedent.asInstanceOf[Set[FormulaOccurrence]], 
+            (new_proof, computeMap( p.root.antecedent ++
+                                    p.root.succedent,
                                     proof, new_proof, composed_map ) )
           }
         }
@@ -118,8 +130,8 @@ object LKtoLKskc {
             // TODO: casts are only due to Set/Map not being covariant!?
             val composed_map = r._2.clone
             composed_map.transform( (k, v) => new_parent._2( v ) )
-            (new_proof, computeMap( p.root.antecedent.asInstanceOf[Set[FormulaOccurrence]] ++
-                                    p.root.succedent.asInstanceOf[Set[FormulaOccurrence]], 
+            (new_proof, computeMap( p.root.antecedent ++
+                                    p.root.succedent,
                                     proof, new_proof, composed_map ) )
           }
         }
@@ -242,7 +254,7 @@ object LKtoLKskc {
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
     case LKWeakeningLeftRule(p, s, m) => {
-      val new_label_map = copyMapFromAncestor( (s.antecedent - m) ++ s.succedent, subst_terms )
+      val new_label_map = copyMapFromAncestor( (s.antecedent filterNot(_ == m)) ++ s.succedent, subst_terms )
       val r = rec( p, new_label_map, cut_occs )
       val sk_proof = WeakeningLeftRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
@@ -250,7 +262,7 @@ object LKtoLKskc {
                  Pair( m, sk_proof.prin.head ) )
     }
     case LKWeakeningRightRule(p, s, m) => {
-      val new_label_map = copyMapFromAncestor( s.antecedent ++ (s.succedent - m), subst_terms )
+      val new_label_map = copyMapFromAncestor( s.antecedent ++ (s.succedent filterNot(_ == m)), subst_terms )
       val r = rec( p, new_label_map, cut_occs )
       val sk_proof = WeakeningRightRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
@@ -278,8 +290,8 @@ object LKtoLKskc {
       val r2 = rec( p2, new_label_map, cut_occs )
       val sk_proof = CutRule( r1._1, r2._1, r1._2( a1 ), r2._2( a2 ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
-      (sk_proof, computeMap( p1.root.antecedent ++ (p1.root.succedent - a1), proof, sk_proof, r1._2 ) ++
-                 computeMap( (p2.root.antecedent - a2) ++ p2.root.succedent, proof, sk_proof, r2._2 ) )
+      (sk_proof, computeMap( p1.root.antecedent ++ (p1.root.succedent filterNot(_ == a1)), proof, sk_proof, r1._2 ) ++
+                 computeMap( (p2.root.antecedent filterNot(_ == a2)) ++ p2.root.succedent, proof, sk_proof, r2._2 ) )
 
     }
     case DefinitionRightRule( p, s, a, m ) =>
@@ -333,6 +345,7 @@ object LKtoLKskc {
                  computeMap( p2.root.antecedent ++ p2.root.succedent, old_proof, sk_proof, r2._2 ) )
   }
 
+  /*
   def computeMap( occs: Set[FormulaOccurrence], old_proof: LKProof, 
                   new_proof: LKProof, old_map : Map[FormulaOccurrence, LabelledFormulaOccurrence]) =
   {
@@ -340,7 +353,17 @@ object LKtoLKskc {
     occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get, 
       new_proof.getDescendantInLowerSequent( old_map(fo) ).get.asInstanceOf[LabelledFormulaOccurrence] ) )
     map
+  } */
+
+  def computeMap( occs: Seq[FormulaOccurrence], old_proof: LKProof,
+                  new_proof: LKProof, old_map : Map[FormulaOccurrence, LabelledFormulaOccurrence]) =
+  {
+    val map = new HashMap[FormulaOccurrence, LabelledFormulaOccurrence]
+    occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get,
+      new_proof.getDescendantInLowerSequent( old_map(fo) ).get.asInstanceOf[LabelledFormulaOccurrence] ) )
+    map
   }
+
 
   def copyWeakQuantRule( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label],
                          parent: LKProof, aux: FormulaOccurrence, main: FormulaOccurrence,
@@ -355,7 +378,7 @@ object LKtoLKskc {
 
   def transformWeakQuantRule( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label],
                               parent: LKProof, aux: FormulaOccurrence, main: FormulaOccurrence,
-                              term: HOLExpression, context: Set[FormulaOccurrence], cut_occs: Set[FormulaOccurrence],
+                              term: HOLExpression, context: Seq[FormulaOccurrence], cut_occs: Set[FormulaOccurrence],
                               constructor: (LKProof, LabelledFormulaOccurrence, HOLFormula, HOLExpression, Boolean) => LKProof )
   = {
       val new_label_map = copyMapFromAncestor( context, subst_terms ) + Pair(aux, subst_terms(main) + term)
@@ -363,11 +386,13 @@ object LKtoLKskc {
       val sk_proof = constructor( r._1, r._2(aux), main.formula, term,
                                 !subst_terms(main).contains(term) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
-      (sk_proof, computeMap( parent.root.antecedent ++ parent.root.succedent, proof, sk_proof, r._2 ) )
+    val antecedent : Seq[FormulaOccurrence] = parent.root.antecedent
+    val succedent : Seq[FormulaOccurrence] = parent.root.succedent
+      (sk_proof, computeMap( antecedent ++ succedent, proof, sk_proof, r._2 ) )
     }
 
 
-  def copyMapFromAncestor( fos: Set[FormulaOccurrence], map: Map[FormulaOccurrence, Label] ) : 
+  def copyMapFromAncestor( fos: Seq[FormulaOccurrence], map: Map[FormulaOccurrence, Label] ) :
     Map[FormulaOccurrence, Label] = map ++ 
                                     fos.map( fo => Pair(fo.ancestors.head, map( fo ) ) ) ++ 
                                     fos.map( fo => Pair(fo.ancestors.last, map( fo ) ) )

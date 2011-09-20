@@ -29,8 +29,6 @@ import at.logic.language.hol.logicSymbols._
 
 class LKskcTest extends SpecificationWithJUnit {
 
-   implicit val factory = PointerFOFactoryInstance
-
   "Transformation from LK to LKskc" should {
     val x = HOLVar("x", i)
     val y = HOLVar("y", i)
@@ -44,11 +42,15 @@ class LKskcTest extends SpecificationWithJUnit {
       val allyallxRyx = AllVar( y, AllVar( x, Ryx ) )
       val proof = ForallLeftRule( 
                     ForallLeftRule( 
-                      LKAxiom( Sequent( Rcc::Nil, Nil ) ),
+                      LKAxiom( Rcc::Nil, Nil ),
                     Rcc, allxRcx, c ),
                   allxRcx, allyallxRyx, c )
       val lkskc_proof = LKtoLKskc( proof, Set())
-      lkskc_proof.root.antecedent.toList.head must beLike {case o : LabelledFormulaOccurrence => o.skolem_label == EmptyLabel() && o.formula == proof.root.getSequent.antecedent.head }
+
+      lkskc_proof.root.antecedent.toList.head must beLike {
+        case o : LabelledFormulaOccurrence =>
+          o.skolem_label == EmptyLabel() && o.formula == proof.root.antecedent.head.formula
+      }
     }
 
     "work for a cut-free proof" in {
@@ -57,13 +59,16 @@ class LKskcTest extends SpecificationWithJUnit {
       val Rab = Atom( "R", a::b::Nil )
       val exyRay = ExVar( y, Atom( "R", a::y::Nil ) )
       val allxexyRxy = AllVar( x, ExVar( y, Atom( "R", x::y::Nil ) ) )
-      val ax = LKAxiom( Sequent( Rab::Nil, Rab::Nil ) )
+      val ax = LKAxiom( Rab::Nil, Rab::Nil  )
       val r1 = ExistsRightRule( ax, Rab, exyRay, b )
       val r2 = ExistsLeftRule( r1, Rab, exyRay, b )
       val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
       val r4 = ForallRightRule( r3, exyRay, allxexyRxy, a )
       val lkskc_proof = LKtoLKskc( r4, Set() )
-      lkskc_proof.root.antecedent.toList.head must beLike{ case o : LabelledFormulaOccurrence => o.skolem_label == EmptyLabel() && o.formula == r4.root.getSequent.antecedent.head }
+      lkskc_proof.root.antecedent.toList.head must beLike{
+        case o : LabelledFormulaOccurrence =>
+          o.skolem_label == EmptyLabel() && o.formula == r4.root.antecedent.head.formula
+      }
     } 
   }
 }
