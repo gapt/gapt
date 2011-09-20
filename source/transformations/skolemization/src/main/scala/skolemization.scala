@@ -460,8 +460,8 @@ object skolemize {
 /*        val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ) */
         val new_seq = ( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
         val ax = Axiom( new_seq._1, new_seq._2 )
-        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ant( p._2 ) ))
-        new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> succ( p._2 )))
+        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
+        new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
         (ax, new_map)
       }
       case ForallRightRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply )
