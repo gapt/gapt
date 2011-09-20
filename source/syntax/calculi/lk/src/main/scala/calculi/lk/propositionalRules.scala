@@ -16,7 +16,6 @@ import base._
 
 package propositionalRules {
 
-import _root_.at.logic.language.lambda.types.->
 import collection.immutable.Seq
 
 // axioms
@@ -144,8 +143,8 @@ import collection.immutable.Seq
       }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
-      val term1op = s1.antecedent.find(_ =^ term1oc)
-      val term2op = s1.antecedent.find(_ =^ term2oc)
+      val term1op = s1.antecedent.find(_ == term1oc)
+      val term2op = s1.antecedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
@@ -203,8 +202,8 @@ import collection.immutable.Seq
       }
     }
     private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence) = { 
-      val term1op = s1.succedent.find(_ =^ term1oc)
-      val term2op = s1.succedent.find(_ =^ term2oc)
+      val term1op = s1.succedent.find(_ == term1oc)
+      val term2op = s1.succedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get

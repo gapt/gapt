@@ -176,7 +176,7 @@ import java.util.Comparator
 
   trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {
     def getDescendantInLowerSequent(fo: Occurrence): Option[FormulaOccurrence] = {
-      (root.antecedent ++ root.succedent).filter(x => x.ancestors.find(y => y =^ fo) != None) match {
+      (root.antecedent ++ root.succedent).filter(x => x.ancestors.find(y => y == fo) != None) match {
         case x::Nil => Some(x)
         case Nil => None
         case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
