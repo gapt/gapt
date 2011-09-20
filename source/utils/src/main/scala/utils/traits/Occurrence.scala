@@ -10,5 +10,10 @@ package at.logic.utils.traits
 
 //objects mixed with occurrence are always pointerwise equal
 trait Occurrence {
-  def =^(o: Occurrence) = this == o //  should be address equal
+  override def equals(a: Any): Boolean = a match {
+    case o: Occurrence => this eq o
+    case _ => false
+  }
+  // hashcode does not need to be overriden as equals now means the two points to the same
+  // address and therefore has the same hashcode.
 }
