@@ -14,6 +14,8 @@ import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.Seq
+import at.logic.language.hol.{HOLFormula}
+
 
 
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
@@ -33,8 +35,8 @@ case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 //creates a siquent wich is not in a proof tree, i.e. it has not ancestor relation involved
 object SingleSequent {
   def apply(ant: Seq[SchemaFormula], succ: Seq[SchemaFormula]) = {
-      val new_ant = ant.map(f => factory.createFormulaOccurrence(f, Nil))
-      val new_succ = succ.map(f => factory.createFormulaOccurrence(f, Nil))
+      val new_ant = ant.map(f => factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence]))
+      val new_succ = succ.map(f => factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence]))
       Sequent(new_ant, new_succ)
   }
 }
@@ -50,9 +52,26 @@ class SchemaProof(val name: String, val vars: List[IntVar], val seq: FSequent, v
 
 //    require( rec.root == r_res, rec.root + " != " + r_res )
 //    require( base.root == b_res, base.root + " != " + b_res )
-
-    require(rec.root.toFSequent() == r_res)
-    require(base.root.toFSequent() == b_res)
+//
+//    println("rec:")
+//    rec.root.toFSequent()._1.foreach(f => println("\n"+f.toStringSimple))
+//    print("|-")
+//    rec.root.toFSequent()._2.foreach(f => println("\n"+f.toStringSimple))
+//    println("r_res:")
+//    r_res._1.foreach(f => println("\n"+f.toStringSimple))
+//    print("|-")
+//    r_res._2.foreach(f => println("\n"+f.toStringSimple))
+//
+//    require(rec.root.toFSequent() == r_res)
+//    println("base:")
+//    base.root.toFSequent()._1.foreach(f => println("\n"+f.toStringSimple))
+//    print("|-")
+//    base.root.toFSequent()._2.foreach(f => println("\n"+f.toStringSimple))
+//    println("b_res:")
+//    b_res._1.foreach(f => println("\n"+f.toStringSimple))
+//    print("|-")
+//    b_res._2.foreach(f => println("\n"+f.toStringSimple))
+//    require(base.root.toFSequent() == b_res)
 //    require( rec.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => r_sub(fo.formula)).toSet)
 //    require( rec.root.succedent.map(fo => fo.formula).toSet == seq.succedent.map(fo => r_sub(fo.formula)).toSet)
 //    require( base.root.antecedent.map(fo => fo.formula).toSet == seq.antecedent.map(fo => b_sub(fo.formula)).toSet)
@@ -92,9 +111,9 @@ trait SchemaProofLink {
 object SchemaProofLinkRule {
   def apply(seq: FSequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {
     def createSide(side : Seq[SchemaFormula]) = {
-      side.map(f =>factory.createFormulaOccurrence(f,Nil))
+      side.map(f =>factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence]))
     }
-    new LeafTree[Sequent]( Sequent(createSide(seq._1.map(f => f.asInstanceOf[SchemaFormula])), createSide(seq._1.map(f => f.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
+    new LeafTree[Sequent]( Sequent(createSide(seq._1.map(f => f.asInstanceOf[SchemaFormula])), createSide(seq._2.map(f => f.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
       def rule = SchemaProofLinkRuleType
       def link = link_name
       def indices = indices_
@@ -116,11 +135,13 @@ object AndEquivalenceRule1 {
   def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
     main match {
       case BigAnd(v, f, ub, Succ(lb)) => {
-          require( And( BigAnd( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
+          require( And( BigAnd( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
+                   And( betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula], BigAnd( v, f, ub, lb )  ) == auxf.formula
+                 )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s : Seq[FormulaOccurrence] ) =
-            if ( ! s.filter(_ == auxf).isEmpty )
-              createContext(prinFormula +: (s.filter(_ != auxf) ))
+            if ( s.contains(auxf) )
+              prinFormula +: createContext( s.filter(_ != auxf) )
             else
               createContext(s)
           new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
@@ -180,8 +201,8 @@ object AndLeftEquivalenceRule1 {
   }
   def unapply(proof: LKProof) = if (proof.rule == AndEquivalenceRule1Type) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
-      val ((a1::Nil)::Nil) = r.aux
-      val (p1::Nil) = r.prin
+      val a1 = r.aux.head.head
+      val p1 = r.prin.head
       if (r.root.antecedent.contains(p1))
         Some((r.uProof, r.root, a1, p1))
       else
@@ -199,11 +220,13 @@ object AndEquivalenceRule2 {
   def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
     main match {
       case BigAnd(v, f, ub, lb) => {
-          require( And( BigAnd( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
+          require( And( BigAnd( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
+                   And( betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula], BigAnd( v, f, Succ(ub), lb ) ) == auxf.formula
+                  )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s :  Seq[FormulaOccurrence] ) =
-            if ( ! s.filter(_ == auxf).isEmpty )
-              createContext(prinFormula +: (s.filter(_ != auxf) ))
+            if ( s.contains(auxf) )
+              prinFormula +: createContext( s.filter(_ != auxf) )
             else
               createContext(s)
 
@@ -282,10 +305,10 @@ object AndEquivalenceRule3 {
     main match {
       case BigAnd(v, f, ub, lb) if ub == lb => {
           require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
-          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s : Seq[FormulaOccurrence] ) =
-            if ( ! s.filter(_ == auxf).isEmpty )
-              createContext(prinFormula +: (s.filter(_ != auxf) ))
+            if ( s.contains(auxf) )
+              prinFormula +: createContext( s.filter(_ != auxf) )
             else
               createContext(s)
 
@@ -365,13 +388,15 @@ object OrEquivalenceRule1 {
   def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
     main match {
       case BigOr(v, f, ub, Succ(lb)) => {
-          require( Or( BigOr( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-          val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
+          require( Or( BigOr( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
+                    Or( betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula], BigOr( v, f, ub, lb ) ) == auxf.formula
+                 )
+          val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s : Seq[FormulaOccurrence] ) =
-              if ( ! s.filter(_ == auxf).isEmpty )
-                createContext(prinFormula +: (s.filter(_ != auxf) ))
-              else
-                createContext(s)
+            if ( s.contains(auxf) )
+              prinFormula +: createContext( s.filter(_ != auxf) )
+            else
+              createContext(s)
 
           new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
             with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
@@ -445,11 +470,13 @@ object OrEquivalenceRule1 {
     def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
       main match {
         case BigOr(v, f, ub, lb) => {
-            require( Or( BigOr( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula )
-            val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
+            require( Or( BigOr( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
+                     Or( betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula], BigOr( v, f, Succ(ub), lb ) ) == auxf.formula
+                   )
+            val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
             def createSide( s : Seq[FormulaOccurrence] ) =
-              if ( ! s.filter(_ == auxf).isEmpty )
-                createContext(prinFormula +: (s.filter(_ != auxf) ))
+              if ( s.contains(auxf) )
+                prinFormula +: createContext( s.filter(_ != auxf) )
               else
                 createContext(s)
 
@@ -529,10 +556,10 @@ object OrEquivalenceRule1 {
       main match {
         case BigOr(v, f, ub, lb) if ub == lb => {
             require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
-            val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil )
+            val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
             def createSide( s : Seq[FormulaOccurrence] ) =
-              if ( ! s.filter(_ == auxf).isEmpty )
-                createContext(prinFormula +: (s.filter(_ != auxf) ))
+              if ( s.contains(auxf) )
+                prinFormula +: createContext( s.filter(_ != auxf) )
               else
                 createContext(s)
 

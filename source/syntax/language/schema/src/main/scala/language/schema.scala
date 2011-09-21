@@ -13,6 +13,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.schemata.logicSymbols._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.hol.HOLFactory
+import at.logic.language.lambda.substitutions.Substitution
 
 // propositiopnal
 trait Schema extends HOL {
@@ -42,9 +43,12 @@ class IntConst(name: ConstantSymbolA) extends HOLConst(name, Tindex()) with Inte
   //def toInt: Int = 0
 }
 
-object IntZero {
-  def apply() = SchemaFactory.createVar(ConstantStringSymbol("0")).asInstanceOf[IntConst]
-}
+
+case class IntZero() extends HOLConst(ConstantStringSymbol("0"), Tindex()) with IntegerTerm
+
+//object IntZero {
+//  def apply() = SchemaFactory.createVar(ConstantStringSymbol("0")).asInstanceOf[IntConst]
+//}
 
 object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex())) {
   override def toString = this match {
@@ -58,17 +62,17 @@ object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex(
   }
 }
 
-/*  Predecessor, the inverse of successor Succ
+//  Predecessor, the inverse of successor Succ
 object Pred {
   def apply(t: IntegerTerm): IntegerTerm  = t match {
     case Succ(t1) => t1
     case _ => throw new Exception("ERROR in Predecessor")
   }
-  def unapply(p: IntegerTerm) = p match {
+  /*def unapply(p: IntegerTerm) = p match {
     case App(Succ, t : IntegerTerm) => Some(t)
     case _ => None
-  }
-}*/
+  } */
+}
 
 
 
@@ -256,4 +260,30 @@ object SchemaFactory extends LambdaFactoryA {
   }
   //private  def createPlus(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(PlusC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]
  // private def createTimes(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(TimesC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]
+}
+
+//this substitution is works for InVar Only. It gives an instance of a schema.
+class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map[Var, T]) extends Substitution[T](map) {
+  override def applyWithChangeDBIndices(expression: T): T = expression match {
+      case x:IntVar if x.isFree => {
+          map.get(x) match {
+            case Some(t) => {
+              //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+              t
+            }
+            case None => {
+              //println(x + " is free, but we don't substitute for it")
+              x.asInstanceOf[T]
+            }
+        }
+      }
+      case x:IntVar if !x.isFree => {
+        if (map.contains( x ) )
+          println("WARNING: trying to substitute for a bound variable, ignoring!")
+       expression
+      }
+      case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T]), applyWithChangeDBIndices(n.asInstanceOf[T])).asInstanceOf[T]
+      case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope.asInstanceOf[T])).asInstanceOf[T]
+      case _ => expression
+  }
 }
