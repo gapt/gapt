@@ -17,12 +17,13 @@ import collection.immutable.List._
 
 object TPTPFOLExporter {
   // FIXME: this should not be here!
-  def hol2fol(f: HOLFormula) = 
+  def hol2fol(f: HOLFormula) : FOLFormula = 
   {
     val imap = scala.collection.mutable.Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
     val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
     reduceHolToFol(f, imap, iid )
-  }
+  } 
+
   def toFormula(s: FSequent): HOLFormula =  HOLOR( s._1.toList.map( f => HOLNEG( f ) ) ++ s._2 )
 
   // TODO: have to give a different name because of erasure :-(
@@ -38,7 +39,7 @@ object TPTPFOLExporter {
   // TODO: would like to have FOLSequent here --- instead, we convert
   // we export it as a disjunction
   def export( s: FSequent ) = {
-    val f = hol2fol(toFormula(s)).asInstanceOf[FOLFormula]
+    val f = hol2fol(toFormula(s))
     val map = getFreeVarRenaming( f )
     tptp( f )( map )
   }
