@@ -924,9 +924,9 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
      //        printSchemaProof( step )
 
 
-         val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
+         val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, two)
          val subst = new SchemaSubstitution1[HOLExpression](new_map)
-         val psi1 = applySchemaSubstitution(chi, subst)
+         val psi1 = applySchemaSubstitution(psi, subst)
     //     Main.display("psi1", applySchemaSubstitution(psi, subst)) ; while(true) {}
    //     saveXML( ("psi1", psi1)::Nil, List(), "ceco.xml" )
 
