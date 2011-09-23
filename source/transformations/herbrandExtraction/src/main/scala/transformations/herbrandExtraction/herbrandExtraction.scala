@@ -6,25 +6,53 @@
  * is maintained and can be discovered.
  */
 
-//package transformations.herbrand_extraction
-
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
-import at.logic.language.fol._
+import at.logic.language.hol._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable._
+import at.logic.calculi.lk.base.types._
 
 class HerbrandExtractionException(msg: String) extends Exception(msg)
 
 object herbrandExtraction {
-  
-  // List that stores all the terms used in substitutions.
-  var terms = Nil
 
-  def apply(proof: LKProof) : Sequent = {
-    buildHerbrand(proof)
+  // key: Formula quantified
+  // value: terms
+  // NOTE: Assuming that all variables were renamed (though this is not
+  // implemented).
+  var terms = new HashMap[Formula, List[HOLExpression]]
+
+  def apply(proof: LKProof) : (FSequent, HashMap[Formula, List[HOLExpression]]) = {
+    val hs = buildHerbrand(proof)
+    val exphs = expandArrays(hs)
+    (exphs, terms)
+  }
+
+  private def expandArrays(seq: Sequent) : FSequent = {
+    val newant = seq.antecedent.foldLeft (Seq[HOLFormula]()) ((acc, f) => (expand (f.formula)) ++ acc)
+    val newsucc = seq.succedent.foldLeft (Seq[HOLFormula]()) ((acc, f) => (expand (f.formula)) ++ acc)
+    (newant, newsucc)
+  }
+
+  private def expand(f: HOLFormula) : Seq[HOLFormula] = f match {
+    case And(a, b) => 
+      val left = expand(a) 
+      val right = expand(b)
+      for(fa <- left; fb <- right) yield { And(a, b) }
+    case Or(a, b) =>
+      val left = expand(a) 
+      val right = expand(b)
+      for(fa <- left; fb <- right) yield { Or(a, b) }
+    case Imp(a, b) =>
+      val left = expand(a) 
+      val right = expand(b)
+      for(fa <- left; fb <- right) yield { Imp(a, b) }
+    case Neg(a) => expand(a).map(x => Neg(x))
+    case HArray(a, b) => expand(a) ++ expand(b)
+    case Atom(_, _) => f::Nil 
   }
 
   private def getOccSamePosition(s1: Seq[FormulaOccurrence], f: FormulaOccurrence, s2: Seq[FormulaOccurrence]) = {
@@ -44,17 +72,16 @@ object herbrandExtraction {
 
     /* AXIOM */
     // The Herbrand sequent is the axiom itself
-    case Axiom(s) =>
-      s.getSequent
+    case Axiom(s) => s
 
     /* WEAKENING RULES */
     // Put the weakened formula back in the sequent
     case WeakeningLeftRule(up, _, pf) =>
       val hs = buildHerbrand(up)
-      WeakeningLeftRule(hs, pf)
+      WeakeningLeftRule(hs, pf.formula)
     case WeakeningRightRule(up, _, pf) =>
       val hs = buildHerbrand(up)
-      WeakeningRightRule(hs, pf)
+      WeakeningRightRule(hs, pf.formula)
 
     /* CONTRACTION RULES */
     // Find the contracted formulas (aux1, aux2) on the sequent returned from the recursive call
@@ -69,12 +96,13 @@ object herbrandExtraction {
       // If these formulas are different, they are instantiations of a
       // quantified formula. So, join them in a herbrand array op.
       if(aux1hs.formula != aux2hs.formula){
-        val ha = HArray(aux1hs, aux2hs)
-        aux1hs.formula = ha
-        aux2hs.formula = ha
+        val ha = HArray(aux1hs.formula, aux2hs.formula)
+        val f1 = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors)
+        val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
+        ContractionLeftRule(hs, f1, f2)
       }
       // Pass these occurrences to the apply method of ContractionLeftRule
-      ContractionLeftRule(hs, aux1hs, aux2hs)
+      else ContractionLeftRule(hs, aux1hs, aux2hs)
     case ContractionRightRule(up, _, aux1, aux2, prin) =>
       val hs = buildHerbrand(up)
       // Find the corresponding formulas in hs
@@ -83,12 +111,13 @@ object herbrandExtraction {
       // If these formulas are different, they are instantiations of a
       // quantified formula. So, join them in a herbrand array op.
       if(aux1hs.formula != aux2hs.formula){
-        val ha = HArray(aux1hs, aux2hs)
-        aux1hs.formula = ha
-        aux2hs.formula = ha
+        val ha = HArray(aux1hs.formula, aux2hs.formula)
+        val f1 = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors)
+        val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
+        ContractionRightRule(hs, f1, f2)
       }
       // Pass these occurrences to the apply method of ContractionLeftRule
-      ContractionRightRule(hs, aux1hs, aux2hs)
+      else ContractionRightRule(hs, aux1hs, aux2hs)
 
     /* RIGHT CONJUNCTION RULE */
     // Find the formulas A and B from (A ^ B) on the two sequents returned from the recursive calls
@@ -108,14 +137,14 @@ object herbrandExtraction {
     case AndLeft1Rule(up, _, aux, prin) =>
       val hs = buildHerbrand(up)
       val auxhs = getOccSamePosition(up.root.antecedent, aux, hs.antecedent)
-      val other = getTheOtherForm(prin, aux.formula)
+      val other = getTheOtherForm(prin.formula, aux.formula)
       AndLeft1Rule(hs, auxhs, other)
     // newHS = {hs.ant \ {B}} U {A ^ B} |- hs.succ
     case AndLeft2Rule(up, _, aux, prin) =>
       val hs = buildHerbrand(up)
       val auxhs = getOccSamePosition(up.root.antecedent, aux, hs.antecedent)
-      val other = getTheOtherForm(prin, aux.formula)
-      AndLeft2Rule(hs, auxhs, other)
+      val other = getTheOtherForm(prin.formula, aux.formula)
+      AndLeft2Rule(hs, other, auxhs)
 
     /* LEFT DISJUNCTION RULE */
     // Find the formulas A and B from (A v B) on the two sequents returned from the recursive calls
@@ -135,14 +164,14 @@ object herbrandExtraction {
     case OrRight1Rule(up, _, aux, prin) =>
       val hs = buildHerbrand(up)
       val auxhs = getOccSamePosition(up.root.succedent, aux, hs.succedent)
-      val other = getTheOtherForm(prin, aux.formula)
+      val other = getTheOtherForm(prin.formula, aux.formula)
       OrRight1Rule(hs, auxhs, other)
     // newHS = hs.ant |- {hs.succ \ {B}} U {A v B}
     case OrRight2Rule(up, _, aux, prin) =>
       val hs = buildHerbrand(up)
       val auxhs = getOccSamePosition(up.root.succedent, aux, hs.succedent)
-      val other = getTheOtherForm(prin, aux.formula)
-      OrRight2Rule(hs, auxhs, other)
+      val other = getTheOtherForm(prin.formula, aux.formula)
+      OrRight2Rule(hs, other, auxhs)
 
     /* LEFT IMPLICATION RULE */
     // Find the formula A and B from (A -> B) on the sequents returned from the recursive calls
@@ -180,27 +209,38 @@ object herbrandExtraction {
       NegRightRule(hs, auxhs)
 
     /* WEAK QUANTIFIER RULES */
+    // NOTE: Check if the behaviour for non-prenex formulas is what we need
+    // after the cut-introduction procedure is developed for them.
     case ForallLeftRule(up, _, aux, prin, term) =>
       // Save the term used for substitution
-      terms = term :: terms
+      val key = prin.formula
+      if(terms.contains(key)){
+        val lst = terms(key)
+        terms -= key
+        terms += (key -> (term :: lst))
+      }
+      else {
+        terms += (key -> (term::Nil))
+      }
       // Return the same Herbrand sequent. We are not applying quantifier rules, 
       // we want the instantiated terms.
       buildHerbrand(up)
     case ExistsRightRule(up, _, aux, prin, term) =>
       // Save the term used for substitution
-      terms = term :: terms
+      val key = prin.formula
+      if(terms.contains(key)){
+        val lst = terms(key)
+        terms -= key
+        terms += (key -> (term :: lst))
+      }
+      else {
+        terms += (key -> (term::Nil))
+      }
       // Return the same Herbrand sequent. We are not applying quantifier rules, 
       // we want the instantiated terms.
       buildHerbrand(up)
 
-    /* DEFINITION RULES */
-    // TODO: find out what they are.
-    // Since Bruno is implementing an algorithm to eliminate definition rules, and that issue
-    // is blocking the extraction of Herbrand sequents, I have a strong feeling that I will
-    // not need to deal with this case.
-    //case DefinitionLeftRule(up, _, aux, prin) =>
-    // TODO
-    //case DefinitionRightRule(up, _, aux, prin) =>
+    // TODO: equalities
 
     /* STRONG QUANTIFIER RULES */
     // Should not occur
