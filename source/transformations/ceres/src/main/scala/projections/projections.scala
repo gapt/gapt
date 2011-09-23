@@ -366,8 +366,8 @@ object Projections {
       val ant = s.antecedent
       val succ = s.succedent
       val ax = Axiom( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
-      var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ant( p._2 ) ))
-      new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> succ( p._2 )))
+      var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
+      new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
 
       new HashSet[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] + Pair(ax, new_map)
       }
@@ -383,10 +383,19 @@ object Projections {
         val r:HashMultiset[SchemaFormula] = root.succedent.map(fo => fo.formula).filter(f => cut_ancs.map(fo => fo.formula).contains(f)).foldLeft(HashMultiset[SchemaFormula])((hs,f) => hs + f.asInstanceOf[SchemaFormula])
         val cl_n = IndexedPredicate( new ClauseSetSymbol(link, (l,r) ), fresh_param::Nil )
     //    println("new_seq = "+printSchemaProof.sequentToString(new_seq))
-        val ax = SchemaProofLinkRule(Pair(ant.map(fo => fo.formula) ++: (cl_n +: Seq.empty[SchemaFormula]), succ.map(fo => fo.formula)), link, indices)
-    //    println("ant.size = "+ant.size+"\n"+"succ.size = "+succ.size)
-        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ant( p._2 ) ))
-        new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> succ( p._2 )))
+        val pair = Pair(ant.map(fo => fo.formula) ++: (cl_n +: Seq.empty[SchemaFormula]), succ.map(fo => fo.formula))
+        pair._1.foreach(f => println(printSchemaProof.formulaToString(f)))
+        println("|-")
+        pair._2.foreach(f => println(printSchemaProof.formulaToString(f)))
+//        println("ant.size = "+pair._1.foreach(f => )+"\n"+"succ.size = "+succ.size)
+        val ax = SchemaProofLinkRule(pair, link, indices)
+
+        println("cut_anc = " + cut_ancs.size)
+        cut_ancs.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
+        new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
+        println("new_map = " + new_map.size)
+        new_map.foreach(p => println(printSchemaProof.formulaToString(p._1.formula) + " -> "+printSchemaProof.formulaToString(new_map(p._1).formula)))
         new HashSet[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] + Pair(ax, new_map)
       }
 
@@ -466,28 +475,10 @@ object Projections {
   }
 
 
-  def handleEquivalenceSchemaRule12( proof: LKProof, p: LKProof, la: List[FormulaOccurrence], m: FormulaOccurrence, constructor: (LKProof, SchemaFormula, SchemaFormula, SchemaFormula) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
-  {
-    val s = apply( p, copySetToAncestor( cut_ancs ) )
-  //  println("\nRule = "+proof.rule)
-
-    if (cut_ancs.contains( m ) )
-      handleUnaryCutAnc( proof, s )
-    else
-      s.map( pm => {
-   //   println("\nla:")
-     // la.foreach(o => println("\n"+o.formula + "   ;   "+pm._2(o).formula))
-      ///  println("\nauxf12 = "+pm._2( la.head ).formula + "   ;   "+pm._2( la.tail.head ).formula)
-      //  printSchemaProof(pm._1)
-        val new_p = constructor( pm._1, pm._2( la.head ).formula.asInstanceOf[SchemaFormula], pm._2( la.tail.head ).formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula] )
-        (new_p, copyMapToDescendant( proof, new_p, pm._2) )
-    } )
-  }
-
   def handleEquivalenceSchemaRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, constructor: (LKProof, FormulaOccurrence, SchemaFormula) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
-  //  println("\nRule = "+proof.rule)
+    println("\nRule = "+proof.rule)
 
     if (cut_ancs.contains( m ) )
       handleUnaryCutAnc( proof, s )
@@ -603,6 +594,7 @@ object Projections {
     cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ) )
+      println("handleContractionRule")
       if (cut_ancs.contains( m ) )
         handleUnaryCutAnc( proof, s )
       else
@@ -617,6 +609,7 @@ object Projections {
     cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
+    println("handleUnaryRule")
     if (cut_ancs.contains( m ) )
       handleUnaryCutAnc( proof, s )
     else
@@ -635,14 +628,20 @@ object Projections {
     constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas)(implicit
     cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
   {
-    val s = apply( p, copySetToAncestor( cut_ancs ) )
-    if (cut_ancs.contains( m ) )
-      handleUnaryCutAnc( proof, s )
-    else
-      s.map( pm => {
-        val new_p = constructor( pm._1, m.formula )
-        (new_p, copyMapToDescendant( proof, new_p, pm._2) + ( m -> new_p.prin.head ) )
-    } )
+      val s = apply( p, copySetToAncestor( cut_ancs ) )
+      println("handleWeakeningRule, s.size = "+s.size)
+      cut_ancs.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+      if (cut_ancs.contains( m ) )
+        handleUnaryCutAnc( proof, s )
+      else
+        s.map( pm => {
+          val new_p = constructor( pm._1, m.formula )
+             val new_map = copyMapToDescendant( proof, new_p, pm._2) + ( m -> new_p.prin.head )
+             println("new_map = " + new_map.size)
+             new_map.foreach(p => println(printSchemaProof.formulaToString(p._1.formula) + " -> "+printSchemaProof.formulaToString(new_map(p._1).formula)))
+//          (new_p, copyMapToDescendant( proof, new_p, pm._2) + ( m -> new_p.prin.head ) )
+          (new_p, new_map )
+      } )
   }
 
   def handleDefRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
@@ -664,6 +663,7 @@ object Projections {
     cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
+    println("handleNegRule")
     if (cut_ancs.contains( m ) )
       handleUnaryCutAnc( proof, s )
     else
@@ -697,8 +697,9 @@ object Projections {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs )
     val s2 = apply( p2, new_cut_ancs )
+    println("handleBinaryRule")
 
-   // println("\nPrinting cut_anc and m in "+proof.rule+" : ")
+   println("\nPrinting cut_anc and m in "+proof.rule+" : ")
     cut_ancs.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
     print("\nm = "+m.formula)
    // printSchemaProof.formulaToString(m.formula)
@@ -755,6 +756,11 @@ object Projections {
                            map: Map[FormulaOccurrence, FormulaOccurrence] ) =
     map.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => {
         val desc = old_p.getDescendantInLowerSequent( p._1 )
+      println("old_p.getDescendantInLowerSequent( p._1 ) "+printSchemaProof.formulaToString(p._1.formula))
+       println("desc.get "+printSchemaProof.formulaToString(desc.get.formula))
+       println("old_proof : " + printSchemaProof.sequentToString(old_p.root))
+      println("new_p : " + printSchemaProof.sequentToString(new_p.root))
+      println("p_2 = "+printSchemaProof.formulaToString(p._2.formula))
         if (desc != None)
           m + (desc.get -> new_p.getDescendantInLowerSequent( p._2 ).get )
         else

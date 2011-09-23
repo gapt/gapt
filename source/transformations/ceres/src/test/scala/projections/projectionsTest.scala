@@ -924,7 +924,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
      //        printSchemaProof( step )
 
 
-         val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, two)
+         val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
          val subst = new SchemaSubstitution1[HOLExpression](new_map)
          val psi1 = applySchemaSubstitution(psi, subst)
     //     Main.display("psi1", applySchemaSubstitution(psi, subst)) ; while(true) {}
@@ -951,8 +951,8 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
 
 
       //     val f = step.root.succedent.toList.head
-      //     val projs = Projections(step, s).toList
-      //     projs.foreach(p => { println("\nNext projection:\n");printSchemaProof( p._1 )})
+         val projs = Projections(step, s).toList
+         projs.foreach(p => { println("\nNext projection:\n");printSchemaProof( p._1 )})
       //     Main.display("Projection", projs.tail.head._1); while(true) {}
 
 
