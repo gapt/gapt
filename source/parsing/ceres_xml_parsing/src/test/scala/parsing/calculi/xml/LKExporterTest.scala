@@ -7,6 +7,7 @@
 
 package at.logic.parsing.calculus.xml
 
+import _root_.at.logic.language.fol.{Atom, FOLConst, FOLFormula}
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
@@ -35,12 +36,15 @@ import at.logic.calculi.lk.lkExtractors._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.parsing.language.xml.HOLTermExporter
+import at.logic.calculi.occurrences.factory
 
 class LkExporterTest extends SpecificationWithJUnit {
 
+  implicit def fo2occ(f:FOLFormula) = factory.createFormulaOccurrence(f, Nil)
+
   val exporter = new LKExporter{}
 // helper to create 0-ary predicate constants
-  def pc( sym: String ) = HOLConstFormula( new ConstantStringSymbol( sym ) )
+  def pc( sym: String ) = fo2occ(Atom( new ConstantStringSymbol( sym ), List() ))
   
   "LKExporter" should {
     "export correctly a sequent A, B :- C, D" in {

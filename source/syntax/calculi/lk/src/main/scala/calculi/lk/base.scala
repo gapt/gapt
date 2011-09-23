@@ -22,6 +22,8 @@ import at.logic.language.lambda.substitutions.Substitution
 
 import java.util.Comparator
 import scala.math.Ordering._
+import tools.nsc.settings.FscSettings
+import base.types._
 
 /*
 import java.util.Comparator
@@ -117,7 +119,16 @@ import java.util.Comparator
   }
 
   object FSequent {
-    def apply(ant: Seq[HOLFormula], succ: Seq[HOLFormula]) = Pair(ant, succ)
+    def apply(ant: Seq[HOLFormula], succ: Seq[HOLFormula]) : types.FSequent = Pair(ant, succ)
+    def apply(seq : Sequent) : types.FSequent = FSequent(seq.antecedent map (_.formula), seq.succedent map (_.formula))
+
+    def toStringSimple(l : Seq[HOLFormula]) = l.foldLeft ("")((s: String, formula:HOLFormula) => (s + ", " + formula.toStringSimple))
+    def seqToStringSimple(f : FSequent) = "([" + toStringSimple(f._1) + "], ["  + toStringSimple(f._2) + "])"
+
+    def multiSetEquals(f : FSequent, g : FSequent) : Boolean =
+          f._1.diff(g._1).isEmpty && f._2.diff(g._2).isEmpty &&
+          g._1.diff(f._1).isEmpty && g._2.diff(f._2).isEmpty
+
   }
 
   import types._

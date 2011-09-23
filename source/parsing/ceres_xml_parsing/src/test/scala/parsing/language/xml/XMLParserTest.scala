@@ -24,6 +24,7 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.calculi.lk.base._
+import at.logic.calculi.occurrences.factory
 
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
@@ -35,8 +36,10 @@ case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
 
 class XMLParserTest extends SpecificationWithJUnit {
 
+  implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Nil)
   // helper to create 0-ary predicate constants
-  def pc( sym: String ) = HOLConstFormula( new ConstantStringSymbol( sym ) )
+  def pc( sym: String ) = fo2occ(pcf(sym))
+  def pcf( sym: String ) = Atom( new ConstantStringSymbol( sym ), List() )
 
   "XMLParser" should {
     "parse correctly a constant c" in {
@@ -100,7 +103,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                         <constantatomformula symbol="P"/>
                         <constantatomformula symbol="Q"/>
                       </conjunctiveformula>) with XMLFormulaParser).getFormula() must beEqual(
-                    And(pc("P"), pc("Q")))
+                    And(pcf("P"), pcf("Q")))
     }
     "parse correctly a quantified formula (exists x) x = x" in {
       (new NodeReader(<quantifiedformula type="exists">
@@ -252,8 +255,8 @@ class XMLParserTest extends SpecificationWithJUnit {
                         </rule>
                       </proof>) with XMLProofParser).getProof() must
                       beLike{ case Axiom( conc )
-                               if conc.getSequent.multisetEquals( Sequent( pc("P")::Nil,
-                                                                           pc("P")::Nil ))
+                               if conc.multisetEquals( Sequent( pc("P")::Nil,
+                                                                pc("P")::Nil ))
                               => true }
     }
     "parse a permutation parameter (1 2)" in {
@@ -298,7 +301,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                     beLike{ case Axiom( conc ) => true }
     }
     "parse a simple contraction rule" in {
-      (new NodeReader(<rule type="contrl" param="2">
+      ((new NodeReader(<rule type="contrl" param="2">
                         <sequent>
                           <formulalist>
                             <constantatomformula symbol="A"/>
@@ -314,7 +317,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                             <formulalist/>
                           </sequent>
                         </rule>
-                      </rule>) with XMLProofParser).getProof().root.getSequent must beMultisetEqual(
+                      </rule>) with XMLProofParser).getProof().root) must beMultisetEqual(
                       Sequent(pc("A")::Nil, Nil))
     }
     "parse an involved contraction rule" in {
@@ -343,7 +346,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                             <formulalist/>
                           </sequent>
                         </rule>
-                      </rule>) with XMLProofParser).getProof().root.getSequent must beMultisetEqual(
+                      </rule>) with XMLProofParser).getProof().root must beMultisetEqual(
                       Sequent(pc("A")::pc("B")::pc("C")::pc("C")::pc("D")::Nil, Nil))
     }
     "parse correctly a proof of A, A :- A and A" in {
@@ -382,8 +385,8 @@ class XMLParserTest extends SpecificationWithJUnit {
                             </sequent>
                           </rule>
                         </rule>
-                      </proof>) with XMLProofParser).getProof().root.getSequent must beMultisetEqual(
-                      Sequent(pc("A")::pc("A")::Nil, And(pc("A"), pc("A"))::Nil))
+                      </proof>) with XMLProofParser).getProof().root must beMultisetEqual(
+                      Sequent(pc("A")::pc("A")::Nil, fo2occ(And(pcf("A"), pcf("A")))::Nil))
     }
     "parse correctly a proof with one orr1 rule and one permr rule" in {
       (new NodeReader(<proof symbol="p" calculus="LK">
@@ -417,25 +420,23 @@ class XMLParserTest extends SpecificationWithJUnit {
                             </rule>
                           </rule>
                         </rule>
-                      </proof>) with XMLProofParser).getProof().root.getSequent must beMultisetEqual(
-                    Sequent(Nil, pc("B")::Or(pc("A"), pc("C"))::Nil))
+                      </proof>) with XMLProofParser).getProof().root must beMultisetEqual(
+                    Sequent(Nil, pc("B")::fo2occ(Or(pcf("A"), pcf("C")))::Nil))
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
       val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test3.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqual(1)
-      proofs.first._2.root.getSequent must beMultisetEqual(
+      proofs.head._2.root must beMultisetEqual(
         Sequent(Nil, pc("A")::pc("C")::pc("F")::
-                     And(pc("B"), pc("E"))::
-                     Or(pc("D"), pc("G"))::Nil))
+                     fo2occ(And(pcf("B"), pcf("E")))::
+                     fo2occ(Or(pcf("D"), pcf("G")))::Nil))
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
       val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test2.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqual(1)
-      proofs.first._2.root.getSequent must beMultisetEqual(
-                        Sequent(Nil, Or(pc("A"),
-                           pc("C"))::
-                        Or(pc("B"),
-                           pc("D"))::Nil))
+      proofs.head._2.root must beMultisetEqual(
+                        Sequent(Nil, fo2occ(Or(pcf("A"), pcf("C")))::
+                        fo2occ(Or(pcf("B"), pcf("D")))::Nil))
     }
     "parse correctly an involved proof from a file" in {
       val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test1.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
@@ -451,7 +452,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                     ExVar( x, And( Atom( Rs, x::s::Nil ), Neg( Atom( Rs, x::HOLApp( f, s )::Nil ) ) ) ) )
 
       proofs.size must beEqual(1)
-      proofs.first._2.root.getSequent must beMultisetEqual( Sequent( f1::Nil, f2::Nil ) )
+      proofs.head._2.root must beMultisetEqual( Sequent( f1::Nil, f2::Nil ) )
     }
 
     "parse correctly a sequentlist from a gzipped file" in {
