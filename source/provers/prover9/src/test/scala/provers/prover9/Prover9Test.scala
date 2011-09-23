@@ -34,8 +34,8 @@ class Prover9Test extends SpecificationWithJUnit {
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
 
       val p = Atom(new ConstantStringSymbol("P"), Nil)
-      val s1 = Sequent(Nil, p::Nil)
-      val s2 = Sequent(p::Nil, Nil)
+      val s1 = FSequent(Nil, p::Nil)
+      val s2 = FSequent(p::Nil, Nil)
       val result : Boolean = Prover9.refute( s1::s2::Nil )
       result must beEqual( true )
     }
@@ -51,10 +51,10 @@ class Prover9Test extends SpecificationWithJUnit {
       val k = parse("=(f(f(c,x),y), x)")
       val skk_i = parse("=(f(f(f(b,c),c),x), f(a,x))")
 
-      val s1 = Sequent(Nil, List(i))
-      val s2 = Sequent(Nil, List(k))
-      val s3 = Sequent(Nil, List(s))
-      val t1 = Sequent(List(skk_i),Nil)
+      val s1 = FSequent(Nil, List(i))
+      val s2 = FSequent(Nil, List(k))
+      val s3 = FSequent(Nil, List(s))
+      val t1 = FSequent(List(skk_i),Nil)
       val result : Boolean = Prover9.refute( List(s1,s2,s3,t1) )
       result must beEqual( true )
     }
@@ -65,8 +65,8 @@ class Prover9Test extends SpecificationWithJUnit {
       //checks, if the execution of prover9 works, o.w. skip test
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
 
-      val s1 = Sequent(Nil, List(parse("P")))
-      val t1 = Sequent(List(parse("Q")),Nil)
+      val s1 = FSequent(Nil, List(parse("P")))
+      val t1 = FSequent(List(parse("Q")),Nil)
       val result : Boolean = Prover9.refute( List(s1,t1) )
       result must beEqual( false )
     }

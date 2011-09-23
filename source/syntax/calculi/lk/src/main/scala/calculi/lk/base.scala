@@ -116,6 +116,10 @@ import java.util.Comparator
     type FSequent = Pair[Seq[HOLFormula],Seq[HOLFormula]]
   }
 
+  object FSequent {
+    def apply(ant: Seq[HOLFormula], succ: Seq[HOLFormula]) = Pair(ant, succ)
+  }
+
   import types._
 
   object substitute {

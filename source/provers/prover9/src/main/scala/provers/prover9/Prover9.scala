@@ -16,12 +16,13 @@ import java.io._
 import scala.io.Source
 import scala.util.matching.Regex
 import scala.collection.immutable.HashMap
+import at.logic.calculi.lk.base.types.FSequent
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
 object Prover9 {
 
-  def writeProblem( named_sequents: List[Pair[String, Sequent]], file: File ) = 
+  def writeProblem( named_sequents: List[Pair[String, FSequent]], file: File ) = 
   {
     val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
     //println("created tptp input: " + tptp)
@@ -66,7 +67,7 @@ object Prover9 {
     ret._1
   }
 
-  def refuteNamed( named_sequents : List[Pair[String, Sequent]], input_file: String, output_file: String ) : Boolean = 
+  def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Boolean = 
   {
     val tmp_file = File.createTempFile( "gapt-prover9", ".tptp", null )
     writeProblem( named_sequents, tmp_file )
@@ -105,10 +106,10 @@ object Prover9 {
     }
   }
 
-  def refute( sequents: List[Sequent], input_file: String, output_file: String ) : Boolean = 
+  def refute( sequents: List[FSequent], input_file: String, output_file: String ) : Boolean = 
     refuteNamed( sequents.zipWithIndex.map( p => ("sequent" + p._2, p._1) ), input_file, output_file )
 
-  def refute( sequents: List[Sequent] ) : Boolean = {
+  def refute( sequents: List[FSequent] ) : Boolean = {
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
     val ret = refute( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath )
