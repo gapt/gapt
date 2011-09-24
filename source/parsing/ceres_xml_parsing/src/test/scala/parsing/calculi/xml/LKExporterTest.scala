@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.parsing.calculus.xml
+package at.logic.parsing.calculi.xml
 
 import _root_.at.logic.language.fol.{Atom, FOLConst, FOLFormula}
 import org.specs._

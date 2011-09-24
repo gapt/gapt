@@ -39,10 +39,10 @@ trait LKExporter extends HOLTermExporter {
   def exportSequent(seq: Sequent) =
     <sequent>
       <formulalist>
-        {seq.antecedent.map(x => exportTerm(x.asInstanceOf[HOLFormula]))}
+        {seq.antecedent.map(x => exportTerm(x.formula.asInstanceOf[HOLFormula]))}
       </formulalist>
       <formulalist>
-        {seq.succedent.map(x => exportTerm(x.asInstanceOf[HOLFormula]))}
+        {seq.succedent.map(x => exportTerm(x.formula.asInstanceOf[HOLFormula]))}
       </formulalist>
     </sequent>
 

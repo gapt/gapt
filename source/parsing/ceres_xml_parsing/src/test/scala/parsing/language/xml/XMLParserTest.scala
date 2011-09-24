@@ -31,7 +31,7 @@ import java.io.File.separator
 import java.util.zip.GZIPInputStream
 
 case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
-  def apply(v: => Array[T]) = ( v.deepEquals(a), "successful deepEquals", v.deepToString + " not deepEquals " + a.deepToString )
+  def apply(v: => Array[T]) = ( v.deep.equals(a.deep), "successful deepEquals", v.deep.toString + " not deepEquals " + a.deep.toString )
 }
 
 class XMLParserTest extends SpecificationWithJUnit {
