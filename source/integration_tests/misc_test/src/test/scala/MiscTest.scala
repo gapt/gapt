@@ -90,8 +90,8 @@ class MiscTest extends SpecificationWithJUnit {
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
       val s = at.logic.transformations.ceres.struct.StructCreators.extract( proof )
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
-      val prf = deleteTautologies(proofProfile(s, proof).map( so => so.getSequent ))
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
+      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
       val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
       saveXML( projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
         Pair("cs", cs)::Pair("prf", prf)::Nil, path )
@@ -105,11 +105,11 @@ class MiscTest extends SpecificationWithJUnit {
       val C: HOLFormula = Atom(new ConstantStringSymbol("C"), List())
 
 
-      val ax1 = Axiom(Sequent(A::Nil, A::Nil))(PointerFOFactoryInstance)
-      val ax2 = Axiom(Sequent(B::Nil, B::Nil))(PointerFOFactoryInstance)
-      val ax3 = Axiom(Sequent(B::Nil, B::Nil))(PointerFOFactoryInstance)
-      val ax4 = Axiom(Sequent(A::Nil, A::Nil))(PointerFOFactoryInstance)
-      val ax5 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)
+      val ax1 = Axiom(A::Nil, A::Nil)
+      val ax2 = Axiom(B::Nil, B::Nil)
+      val ax3 = Axiom(B::Nil, B::Nil)
+      val ax4 = Axiom(A::Nil, A::Nil)
+      val ax5 = Axiom(C::Nil, C::Nil)
 //      val ax6 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)
       val r1 = AndRightRule(ax1,ax2,A,B)//.asInstanceOf[LKProof]
       var r2 = AndLeftRule(r1,A,B)
@@ -120,8 +120,8 @@ class MiscTest extends SpecificationWithJUnit {
       val proof = OrLeftRule(r5,r6, And(A,B), C)
 
       val s = StructCreators.extract( proof )
-      val prf = deleteTautologies(proofProfile(s, proof).map( so => so.getSequent ))
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent )
+      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
 
       // TODO: check if profile is really as expected.
     }
