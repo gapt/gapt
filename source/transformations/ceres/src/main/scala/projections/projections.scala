@@ -349,10 +349,13 @@ object Projections {
   // to those of the projections.
   //def apply( proof: LKProof ) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = apply( proof, new HashSet[FormulaOccurrence] )
 
+  def apply( proof: LKProof ) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = apply( proof, new HashSet[FormulaOccurrence])
+
   def apply( proof: LKProof, omega: (Multiset[SchemaFormula], Multiset[SchemaFormula]) ): Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = apply(proof, getOmegaFOccFromEndSeq(proof, omega))
 
   var cut_anc_formulas: Set[FormulaOccurrence] = Set[FormulaOccurrence]()
   var i: Int = 0
+
 
   def apply( proof: LKProof, cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
     implicit val c_ancs = cut_ancs

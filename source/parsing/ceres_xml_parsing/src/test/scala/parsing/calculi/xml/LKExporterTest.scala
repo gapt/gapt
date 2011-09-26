@@ -40,15 +40,14 @@ import at.logic.calculi.occurrences.factory
 
 class LkExporterTest extends SpecificationWithJUnit {
 
-  implicit def fo2occ(f:FOLFormula) = factory.createFormulaOccurrence(f, Nil)
 
   val exporter = new LKExporter{}
 // helper to create 0-ary predicate constants
-  def pc( sym: String ) = fo2occ(Atom( new ConstantStringSymbol( sym ), List() ))
+  def pc( sym: String ) = Atom( new ConstantStringSymbol( sym ), List() )
   
   "LKExporter" should {
     "export correctly a sequent A, B :- C, D" in {
-      trim(exporter.exportSequent(Sequent(pc("A")::pc("B")::Nil, pc("C")::pc("D")::Nil))) must beEqual (trim(
+      trim(exporter.exportSequent( (List("A","B") map (pc), List("C","D") map (pc)))) must beEqual (trim(
         <sequent>
           <formulalist>
             <constantatomformula symbol="A"/>
@@ -63,7 +62,8 @@ class LkExporterTest extends SpecificationWithJUnit {
     }
   }
   "export correctly a sequent list {A1, B1 :- C1, D1, A2, B2 :- C2, D2}" in {
-    trim(exporter.exportSequentList( "testlist", Sequent(pc("A1")::pc("B1")::Nil, pc("C1")::pc("D1")::Nil)::Sequent(pc("A2")::pc("B2")::Nil, pc("C2")::pc("D2")::Nil)::Nil)) must beEqual (trim(
+    trim(exporter.exportSequentList( "testlist",List((List("A1","B1") map (pc), List("C1","D1") map (pc)),
+                                                     (List("A2","B2") map (pc), List("C2","D2") map (pc))))) must beEqual (trim(
         <sequentlist symbol="testlist">
           <sequent>
             <formulalist>

@@ -35,18 +35,19 @@ import at.logic.calculi.lk.base.FSequent
 
 trait LKExporter extends HOLTermExporter {
   //def exportSequent(seq : Sequent) = exportSequent(FSequent(seq))
+  implicit def seq2fseq(s:Sequent) =s.toFSequent
 
-  def exportSequent(seq: Sequent) =
+  def exportSequent(seq: FSequent) =
     <sequent>
       <formulalist>
-        {seq.antecedent.map(x => exportTerm(x.formula.asInstanceOf[HOLFormula]))}
+        {seq._1.map(exportTerm)}
       </formulalist>
       <formulalist>
-        {seq.succedent.map(x => exportTerm(x.formula.asInstanceOf[HOLFormula]))}
+        {seq._2.map(exportTerm)}
       </formulalist>
     </sequent>
 
-  def exportSequentList(name: String, ls: List[Sequent]) =
+  def exportSequentList(name: String, ls: List[FSequent]) =
     <sequentlist symbol={name}>
       {ls.map(x => exportSequent(x))}
     </sequentlist>
@@ -108,7 +109,7 @@ trait LKExporter extends HOLTermExporter {
 }
 
 object saveXML {
-  def apply( proofs: List[Pair[String, LKProof]], sequentlists: List[Pair[String, List[Sequent]]], filename: String ) =
+  def apply( proofs: List[Pair[String, LKProof]], sequentlists: List[Pair[String, List[FSequent]]], filename: String ) =
   {
     val exporter = new LKExporter{}
     val p_xmls = proofs.map( p => exporter.exportProof(p._1, p._2) )
