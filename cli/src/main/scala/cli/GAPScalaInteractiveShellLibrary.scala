@@ -26,6 +26,8 @@ import at.logic.language.lambda.types._
 import at.logic.language.hol._
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol.logicSymbols._
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
@@ -43,7 +45,7 @@ import scala.collection.mutable.Map
 import at.logic.algorithms.unification.hol._
 
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-import at.logic.calculi.resolution.robinson.{Clause, ClauseOccurrence}
+import at.logic.calculi.resolution.robinson.{Clause}
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.language.fol.{FOLExpression, FOLTerm}
 import at.logic.calculi.resolution.base.ResolutionProof
@@ -87,46 +89,51 @@ object loadProofs {
     def apply(s: String) = (new StringReader(s) with SimpleHOLParser {}).getTerm()
   }
   object deleteTautologies {
-    def apply(ls: List[Sequent]) = at.logic.algorithms.lk.simplification.deleteTautologies( ls )
+    //def apply(ls: List[Sequent]) = at.logic.algorithms.lk.simplification.deleteTautologies( ls map (_.toFSequent) )
+    def apply(ls: List[FSequent]) = at.logic.algorithms.lk.simplification.deleteTautologies( ls )
   }
   object removeDuplicates {
-    def apply(ls: List[Sequent]) = ls.removeDuplicates
+    def apply[A](ls: List[A]) = ls.distinct
   }
   object unitResolve {
-    def apply(ls: List[Sequent]) = simpleUnitResolutionNormalization(ls)
+    //def apply(ls: List[Sequent]) = simpleUnitResolutionNormalization(ls map (_.toFSequent))
+    def apply(ls: List[FSequent]) = simpleUnitResolutionNormalization(ls)
   }
   object removeSubsumed {
-    def apply(ls: List[Sequent]) = subsumedClausesRemoval(ls)
+    //def apply(ls: List[Sequent]) = subsumedClausesRemoval(ls map (_.toFSequent))
+    def apply(ls: List[FSequent]) = subsumedClausesRemoval(ls)
   }
   object normalizeClauses {
-    def apply(ls: List[Sequent]) = sequentNormalize(ls)
+    //def apply(ls: List[Sequent]) = sequentNormalize(ls map (_.toFSequent))
+    def apply(ls: List[FSequent]) = sequentNormalize(ls)
   }
   object writeLabelledSequentListLatex {
-    def apply(ls: List[LabelledSequentOccurrence], outputFile: String) = {
+    def apply(ls: List[LabelledSequent], outputFile: String) = {
       // maps original types and definitions of abstractions
-      val sections = ("Types", getTypeInformation(ls.map( so => so.getSequent )).toList.sort((x,y) => x.toString < y.toString))::Nil
+      val sections = ("Types", getTypeInformation(ls).toList.sortWith((x,y) => x.toString < y.toString))::Nil
       (new FileWriter(outputFile) with LabelledSequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls,sections).close
     }
   }
   object writeLatex {
     def apply(ls: List[Sequent], outputFile: String) = {
       // maps original types and definitions of abstractions
-      val sectionsPre = ("Types", getTypeInformation(ls).toList.sort((x,y) => x.toString < y.toString))::Nil
+      val sectionsPre = ("Types", getTypeInformation(ls).toList.sortWith((x,y) => x.toString < y.toString))::Nil
       
       val sections = try {
         // convert to fol and obtain map of definitons
         val imap = Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
         val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
+        /*
         val cs = ls.map(x => Sequent(
             x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
             x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
-        ))
+        ))*/
         ("Definitions", imap.toList.map(x => (x._1, createExampleFOLConstant(x._1, x._2))))::sectionsPre
       }
       catch {
         case _ => sectionsPre
       }
-      (new FileWriter(outputFile) with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls,sections).close
+      (new FileWriter(outputFile) with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls map (_.toFSequent),sections).close
     }
   }
 
@@ -134,7 +141,7 @@ object loadProofs {
     def apply( ls: List[LKProof], names: List[String], outputFile: String ) = {
       val exporter = new LKExporter{}
       val pairs = ls.zip( names )
-      scala.xml.XML.saveFull( outputFile,
+      scala.xml.XML.save( outputFile,
         <proofdatabase>
           <definitionlist/>
           <axiomset/>
@@ -175,28 +182,28 @@ object loadProofs {
     import at.logic.provers.atp.commands.sequents._
     import at.logic.provers.atp.commands.robinson._
     import at.logic.provers.atp.commands.logical.DeterministicAndCommand
-    def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(SequentsMacroCommand[ClauseOccurrence](
-    SimpleRefinementGetCommand[ClauseOccurrence],
-    List(VariantsCommand, DeterministicAndCommand[ClauseOccurrence](
-        List(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+    def stream1:  Stream[Command[Clause]] = Stream.cons(SequentsMacroCommand[Clause](
+    SimpleRefinementGetCommand[Clause],
+    List(VariantsCommand, DeterministicAndCommand[Clause](
+        List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
         List(ParamodulationCommand(FOLUnificationAlgorithm))),
-      SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-      SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-      InsertResolventCommand[ClauseOccurrence]),
-    RefutationReachedCommand[ClauseOccurrence]), stream1)
-    /*def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(SimpleRefinementGetCommand[ClauseOccurrence],
+      SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      InsertResolventCommand[Clause]),
+    RefutationReachedCommand[Clause]), stream1)
+    /*def stream1:  Stream[Command[Clause]] = Stream.cons(SimpleRefinementGetCommand[Clause],
       Stream.cons(VariantsCommand,
-      Stream.cons(DeterministicAndCommand[ClauseOccurrence]((
-        List(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+      Stream.cons(DeterministicAndCommand[Clause]((
+        List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
         List(ParamodulationCommand(FOLUnificationAlgorithm)))),
-      Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-      Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-      Stream.cons(InsertResolventCommand[ClauseOccurrence],
-      Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))                                                                                  */
-    def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
+      Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(InsertResolventCommand[Clause],
+      Stream.cons(RefutationReachedCommand[Clause], stream1)))))))                                                                                  */
+    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
-    def apply(clauses: Seq[Clause]): Option[ResolutionProof[ClauseOccurrence]] =
-      new Prover[at.logic.calculi.resolution.robinson.ClauseOccurrence]{}.
+    def apply(clauses: Seq[Clause]): Option[ResolutionProof[Clause]] =
+      new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
         refute(Stream.cons(SetClausesCommand(clauses), stream)).next
   }
   object refuteFOLI {
@@ -205,19 +212,19 @@ object loadProofs {
     import at.logic.provers.atp.commands.sequents._
     import at.logic.provers.atp.commands.robinson._
     import at.logic.provers.atp.commands.logical.DeterministicAndCommand
-    def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(getTwoClausesFromUICommand[ClauseOccurrence](PromptTerminal.GetTwoClauses),
+    def stream1:  Stream[Command[Clause]] = Stream.cons(getTwoClausesFromUICommand[Clause](PromptTerminal.GetTwoClauses),
       Stream.cons(VariantsCommand,
-      Stream.cons(DeterministicAndCommand[ClauseOccurrence]((
-        List(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+      Stream.cons(DeterministicAndCommand[Clause]((
+        List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
         List(ParamodulationCommand(FOLUnificationAlgorithm)))),
-      Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-      Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-      Stream.cons(InsertResolventCommand[ClauseOccurrence],
-      Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))
-    def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
+      Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      Stream.cons(InsertResolventCommand[Clause],
+      Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
+    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
-    def apply(clauses: Seq[Clause]): Option[ResolutionProof[ClauseOccurrence]] =
-      new Prover[at.logic.calculi.resolution.robinson.ClauseOccurrence]{}.
+    def apply(clauses: Seq[Clause]): Option[ResolutionProof[Clause]] =
+      new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
         refute(Stream.cons(SetClausesCommand(clauses), stream)).next
   }
 
@@ -265,8 +272,8 @@ object loadProofs {
       println("printProofStats: LKProof => Unit")
       println("lkTolksk: LKProof => LKProof")
       println("extractStruct: LKProof => Struct")
-      println("structToClausesList: Struct => List[SequentOccurrence]")
-      println("structToLabelledClausesList: Struct => List[LabelledSequentOccurrence]")
+      println("structToClausesList: Struct => List[Sequent]")
+      println("structToLabelledClausesList: Struct => List[LabelledSequent]")
       println("createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
       println("deleteTautologies: List[Sequent] => List[Sequent]")
       println("removeDuplicates: List[Sequent] => List[Sequent]")
@@ -274,12 +281,12 @@ object loadProofs {
       println("removeSubsumed: List[Sequent] => List[Sequent]")
       println("normalizeClauses: List[Sequent] => List[Sequent]")
       println("writeLatex: List[Sequent], String => Unit")
-      println("writeLabelledSequentListLatex: List[LabelledSequentOccurrence], String => Unit")
+      println("writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
       println("parse fol: String => FOLTerm")
       println("parse hol: String => HOLExpression")
       println("exportXML: List[Proof], List[String], String => Unit")
-      println("refuteFOL: Seq[Clause] => Option[ResolutionProof[ClauseOccurrence]]")
-      println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[ClauseOccurrence]] - simple interactive refutation")
+      println("refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]")
+      println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
       println("prooftool: LKProof => Unit - visualize proof in prooftool")
     }
   }

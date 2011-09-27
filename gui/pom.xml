@@ -13,7 +13,7 @@
 
   <modules>
     <module>prooftool</module>
-    <module>javaviewer</module>
+<!--    <module>javaviewer</module> -->
   </modules>
 
   <packaging>pom</packaging>
@@ -85,6 +85,12 @@
       <artifactId>gentzen-cutelim</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>ceres_xml_parsing</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
 
   </dependencies>
 

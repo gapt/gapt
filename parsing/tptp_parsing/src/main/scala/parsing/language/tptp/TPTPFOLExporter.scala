@@ -7,40 +7,39 @@
 
 package at.logic.parsing.language.tptp
 
-import at.logic.language.hol.{HOLVar,HOLConst, HOLExpression, HOLFormula}
-import at.logic.language.fol._
-import at.logic.language.lambda.types._
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.symbols._
+import _root_.at.logic.language.fol._
+import at.logic.language.hol.{Neg => HOLNEG, HOLFormula, Or => HOLOR}
 import at.logic.language.hol.logicSymbols._
-import at.logic.calculi.lk.base.Sequent
-import scala.collection.immutable.{HashSet, HashMap}
-import at.logic.language.fol._
+import at.logic.calculi.lk.base.types.FSequent
+import scala.collection.immutable.HashMap
 import at.logic.algorithms.fol.hol2fol._
+import collection.immutable.List._
 
 object TPTPFOLExporter {
   // FIXME: this should not be here!
-  def hol2fol(f: HOLFormula) = 
+  def hol2fol(f: HOLFormula) : FOLFormula = 
   {
     val imap = scala.collection.mutable.Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
     val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
     reduceHolToFol(f, imap, iid )
-  }
+  } 
+
+  def toFormula(s: FSequent): HOLFormula =  HOLOR( s._1.toList.map( f => HOLNEG( f ) ) ++ s._2 )
 
   // TODO: have to give a different name because of erasure :-(
-  def tptp_problem_named( ss: List[Pair[String, Sequent]] ) =
+  def tptp_problem_named( ss: List[Pair[String, FSequent]] ) =
     ss.foldLeft("")( (s, p) => s + sequentToProblem( p._2, p._1 ) + "\n")
 
-  def tptp_problem( ss: List[Sequent] ) = 
+  def tptp_problem( ss: List[FSequent] ) =
     tptp_problem_named( ss.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ) )
 
-  def sequentToProblem( s: Sequent, n: String ) =
+  def sequentToProblem( s: FSequent, n: String ) =
     "cnf( " + n + ",axiom," + export( s ) + ")."
 
   // TODO: would like to have FOLSequent here --- instead, we convert
   // we export it as a disjunction
-  def export( s: Sequent ) = {
-    val f = hol2fol(s.toFormula).asInstanceOf[FOLFormula]
+  def export( s: FSequent ) = {
+    val f = hol2fol(toFormula(s))
     val map = getFreeVarRenaming( f )
     tptp( f )( map )
   }

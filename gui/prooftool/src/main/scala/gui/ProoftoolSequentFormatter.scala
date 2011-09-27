@@ -7,7 +7,7 @@ package at.logic.gui.prooftool.gui
  * Time: 4:25 PM
  */
 
-import at.logic.calculi.lk.base.{SequentOccurrence, Sequent}
+import at.logic.calculi.lk.base.Sequent
 import at.logic.language.lambda.types.{To, ->, Ti}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.schema._
@@ -83,6 +83,4 @@ object ProoftoolSequentFormatter {
     }
     sb.toString
   }
-
-  def sequentOccurenceToString(s: SequentOccurrence) : String = sequentToString(s.getSequent)
 }

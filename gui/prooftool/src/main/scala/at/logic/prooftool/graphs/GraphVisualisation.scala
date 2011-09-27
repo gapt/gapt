@@ -43,8 +43,8 @@ object VisualisationUtils {
       // remark by daniel: changed proofs.first to proofs.first._2
       //                   proofs.first._1 contains the name of the proof
       // end remark
-        val proof : at.logic.utils.ds.graphs.Graph[SequentOccurrence] = proofs.first._2
-        //var pv = new ProofViewer[SequentOccurrence](proof)
+        val proof : at.logic.utils.ds.graphs.Graph[Sequent] = proofs.first._2
+        //var pv = new ProofViewer[Sequent](proof)
         //pv.doTreePlacement()
         //pv.run()
     }
@@ -73,15 +73,15 @@ object VisualisationUtils {
 
     // formats a graph to dot format (http://graphviz.org)
   /*
-    def toDotFormat(g : graphs.Graph[SequentOccurrence]) : String = {
+    def toDotFormat(g : graphs.Graph[Sequent]) : String = {
         var sb = new scala.StringBuilder()
-        var m = new scala.collection.mutable.HashMap[SequentOccurrence,Int]()
+        var m = new scala.collection.mutable.HashMap[Sequent,Int]()
 
         sb.append("digraph g { \n")
         // output vertices
         val vs = g.graph.vertexSet()
         val it = vs.iterator
-        var v: SequentOccurrence = null
+        var v: Sequent = null
         var i = 0
             
         while (it.hasNext) {
@@ -96,7 +96,7 @@ object VisualisationUtils {
         // output edges
         val es = g.graph.edgeSet()
         val it2 = es.iterator
-        var e: DefaultEdge[SequentOccurrence] = null
+        var e: DefaultEdge[Sequent] = null
         i = 0
 
       var targetset = new HashSet[Int]

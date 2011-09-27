@@ -52,6 +52,7 @@ import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
 
+import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.lk.simplification._
@@ -64,7 +65,6 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 
 class SchemaTest extends SpecificationWithJUnit {
-  implicit val factory = new PointerFOFactory
 
   //phi_0
 
@@ -75,10 +75,10 @@ class SchemaTest extends SpecificationWithJUnit {
 
   val Ai = IndexedPredicate(new ConstantStringSymbol("A"), i)
 
-  val ax0 = Axiom(Sequent(A0::Nil, A0::Nil))
-  val ax00 = Axiom(Sequent(A0::Nil, A0::Nil))
-  val ax1 = Axiom(Sequent(A1::Nil, A1::Nil))
-  val ax11 = Axiom(Sequent(A1::Nil, A1::Nil))
+  val ax0 = Axiom(A0::Nil, A0::Nil)
+  val ax00 = Axiom(A0::Nil, A0::Nil)
+  val ax1 = Axiom(A1::Nil, A1::Nil)
+  val ax11 = Axiom(A1::Nil, A1::Nil)
 
   val neglrule = NegLeftRule(ax0, A0)
 
@@ -99,14 +99,14 @@ class SchemaTest extends SpecificationWithJUnit {
 
   // phi_{k+1}
 
-  val seq_phi = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, Ask::Nil)
+  val seq_phi = FSequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, Ask::Nil)
 
   val negAiOrAsi = Or(Neg(Ai), Asi)
 
-  val psi_k1 = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, BigAnd(i, Ai, IntZero(), Succ(Succ(k)))::Nil), "\\psi", Succ(k)::Nil)
+  val psi_k1 = SchemaProofLinkRule(FSequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, BigAnd(i, Ai, IntZero(), Succ(Succ(k)))::Nil), "\\psi", Succ(k)::Nil)
 //  val psi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, BigAnd(i, Ai, IntZero(), Succ(Succ(k)))::Nil), "psi", Succ(k)::Nil)
 
-  val ax3 = Axiom(Sequent(Assk::Nil, Assk::Nil))
+  val ax3 = Axiom(Assk::Nil, Assk::Nil)
 
 //  val weaklrule = WeakeningLeftRule(ax3, BigAnd(i, Ai, IntZero(), k))
 
@@ -121,7 +121,7 @@ class SchemaTest extends SpecificationWithJUnit {
 //  val phi_step = SchemaProofLinkRule(Sequent(A0::BigAnd(i, negAiOrAsi, IntZero(), Succ(k))::Nil, Assk::Nil), "\\varphi", Succ(k))
 
 
-  val seq_psi = Sequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil)
+  val seq_psi = FSequent( A0::BigAnd(i, Or(Neg(Ai), Asi), IntZero(), k)::Nil, BigAnd(i, Ai, IntZero(), Succ(k))::Nil)
 
   // psi_0
 
@@ -140,9 +140,9 @@ class SchemaTest extends SpecificationWithJUnit {
 
 
 
-  val ax4 = Axiom(Sequent(Assk::Nil, Assk::Nil))
+  val ax4 = Axiom(Assk::Nil, Assk::Nil)
 
-  val ax33 = Axiom(Sequent(Ask::Nil, Ask::Nil))
+  val ax33 = Axiom(Ask::Nil, Ask::Nil)
 
   val neglrule1 = NegLeftRule(ax33, Ask)
 
@@ -179,7 +179,7 @@ class SchemaTest extends SpecificationWithJUnit {
   val n = IntVar(new VariableStringSymbol("n"))
   val cs = StandardClauseSet.transformStructToClauseSet(StructCreators.extractStruct( "\\varphi", n))
 
-  (new FileWriter("target" + separator + "test-classes" + separator + "cs-varphi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close 
+  (new FileWriter("target" + separator + "test-classes" + separator + "cs-varphi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs map (_.toFSequent), Nil).close
 
   // prune the clause set as in "Computing the characteristic clause set (Nov. 29, 2010)
   val m_empty = HashMultiset[SchemaFormula]()
@@ -195,6 +195,6 @@ class SchemaTest extends SpecificationWithJUnit {
     case _ => false
   } ) )
 
-  (new FileWriter("target" + separator + "test-classes" + separator + "cs-varphi-pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs_pruned.map(so => so.getSequent), Nil).close
+  (new FileWriter("target" + separator + "test-classes" + separator + "cs-varphi-pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs_pruned map (_.toFSequent), Nil).close
 
 }

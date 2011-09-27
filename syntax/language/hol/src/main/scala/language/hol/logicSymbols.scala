@@ -71,15 +71,10 @@ package logicSymbols {
   }
 
   // Symbols for a Herbrand array.
-  case object HArraySymbolL extends LogicalSymbolsA {
-    override def unique = "HArraySymbolL"
+  case object HArraySymbol extends LogicalSymbolsA {
+    override def unique = "HArraySymbol"
     override def toString = "〈"
-    def toCode = "HArraySymbolL"
-  }
-  case object HArraySymbolR extends LogicalSymbolsA {
-    override def unique = "HArraySymbolR"
-    override def toString = "〉"
-    def toCode = "HArraySymbolR"
+    def toCode = "HArraySymbol"
   }
 
   case class ConstantStringSymbol( val string : String ) extends ConstantSymbolA with StringSymbol

@@ -7,123 +7,32 @@
 package at.logic.calculi
 
 import at.logic.language.hol._
-import at.logic.utils.labeling._
-import scala.collection.immutable.Set
 
 /**
  * The user can use abstract occurrences that mark different formulas or use positions as occurrences
  */
-package occurrences {
+object occurrences {
 
-  class OccurrenceException(msg: String) extends Exception(msg)
+import at.logic.utils.traits.Occurrence
+import collection.immutable.Seq
+import scala.Some
 
-  trait Occurrence extends Labeled {
+trait HasAncestors {
+    val ancestors: Seq[Occurrence]
   }
+
+  class FormulaOccurrence(val formula: HOLFormula,  override val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) extends Occurrence with HasAncestors
+  implicit def focc2f(fo: FormulaOccurrence): Formula = fo.formula
 
   trait FOFactory {
-    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence
-    def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence =
-       createContextFormulaOccurrence(formula, current, ancestors, others, Set.empty[FormulaOccurrence]) // the offset is used to tell there is a binary rule and the number of formulas in the
-    def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence
+    def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence
   }
 
-  // formula occurrences have also a specific id to compare without regard to the occurrence
-  object FOID {
-    var id: BigInt = 0 // this enumerates all formula occurrences used in the system. Please make sure their number does not exceed the max_int value
-  }
-  // equality is done by reference so each two generated formula occurrences are different
-  abstract class FormulaOccurrence(val formula: HOLFormula, val ancestors: List[FormulaOccurrence]) extends Occurrence {
-    def factory: FOFactory
-    val id = {FOID.id = FOID.id + 1; FOID.id}
-    def =^(a: FormulaOccurrence) = a.id == id // normal equality compares occurrences and not specific formula occurrences object, use this method to refer to specific instances
-  }
-   /*
-  // abstract occurrences
-  // Occurs are equal if they are syntactically equal or one contains the other
-  abstract class Occur {
-    def size: Int
-  }
-  case class BaseOccur(vl: Int) extends Occur {
-    def size = 1
-    override def equals(a: Any) = a match {
-      case b: BaseOccur => vl == b.vl
-      case b: CombinedOccur => b.equals(this)
-      case _ => false
-    }
-  }
-  case class CombinedOccur(vl1: Occur, vl2: Occur) extends Occur {
-    def size = vl1.size + vl2.size
-    override def equals(a: Any) = a match {
-      case b: BaseOccur => vl1.equals(b) || vl2.equals(b)
-      case b: CombinedOccur =>
-        if (size == b.size) (vl1.equals(b.vl1) && vl2.equals(b.vl2))
-        else if (size > b.size) (vl1.equals(b) || vl2.equals(b))
-        else (b.vl1.equals(this) || b.vl2.equals(this))
-      case _ => false
-    }
-  }
-  class AbstractOccurrence(occ: Occur) extends Occurrence[Occur] {
-    def merge(other: AbstractOccurrence): Occur = CombinedOccur(label, other.label)
-    def label = occ 
-  }
-              */
-
-  object PositionsFOFactory extends FOFactory {
-    // always add at the max+1 position
-    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence = {
-      val othersCast = others.asInstanceOf[Set[IntOccurrence]]
-      val max = othersCast.foldLeft(0)((prev, fo) => scala.math.max(prev, fo.label))
-      new FormulaOccurrence(formula, ancestors) with IntOccurrence {def factory = PositionsFOFactory; def label = max+1}
-    }
-    // we check how many are before the position and then substract them if needed. binary_others is used to add as prefix the size of the set of the left upper rule
-    def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence = {
-      val othersCast = others.asInstanceOf[Set[IntOccurrence]]
-      val currentCast = current.asInstanceOf[IntOccurrence]
-      val pos = othersCast.filter(x => x< currentCast).size + 1
-      new FormulaOccurrence(formula, ancestors) with IntOccurrence {def factory = PositionsFOFactory; def label = pos + binary_others.size}
-    }
-  }
-
-  trait IntOccurrence extends Occurrence with Ordered[IntOccurrence] {
-    type T = Int // sets the type of Labeled
-    override def equals(a: Any) = a match {
-      case s: IntOccurrence => label == s.label
-      case s: Int => label == s
-      case _ => false
-    }
-    def compare (that: IntOccurrence) = label compare that.label
+  object defaultFormulaOccurrenceFactory extends FOFactory {
+    def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence = 
+    new FormulaOccurrence(formula, ancestors, this)
   }
   
-  // user wanting to use positions should import the following object
-  object positions {
-    implicit val positionFactory = PositionsFOFactory
-    implicit def fromIntToPosition(s:Int):IntOccurrence = Occ(s)
-    object Occ {
-      def apply(s: Int): IntOccurrence = new IntOccurrence{def label = s}
-    }
-  }
+  implicit val factory = defaultFormulaOccurrenceFactory
 
-  // another possible occurrences type is by object address, i.e. any two occurrences are different and you must use an existing one in order to refer to a specific occurrence
-  // (unike positions where you can also use any instance of a position)
-
-  trait PointerOccurrence extends Occurrence {
-    type T = Unit // sets the type of Labeled
-    def label = ()
-    // we want here a pointers equality
-  }
-  class PointerFOFactory extends FOFactory {
-    // we dont need others in Pointer Occurrences
-    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]): FormulaOccurrence = {
-      createPrincipalFormulaOccurrence(formula, ancestors, Set[FormulaOccurrence]())
-    }
-    def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]): FormulaOccurrence = {
-      new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
-    }
-    def createContextFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence]): FormulaOccurrence =
-      createContextFormulaOccurrence(formula, null, ancestors, null ,null)
-    def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]): FormulaOccurrence = {
-      new FormulaOccurrence(formula, ancestors) with PointerOccurrence {def factory = PointerFOFactory.this}
-    }
-  }
-  object PointerFOFactoryInstance extends PointerFOFactory // this is an instance of the pointersFactory
 }

@@ -24,7 +24,7 @@ object Main {
   import commands.sequents._
   import commands.robinson._
   import _root_.at.logic.provers.atp.commands.logical.DeterministicAndCommand
-  import at.logic.calculi.resolution.robinson.ClauseOccurrence
+  import at.logic.calculi.resolution.robinson.Clause
   import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
   import at.logic.calculi.resolution.robinson.Clause
   import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
@@ -33,23 +33,23 @@ object Main {
   import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
   import at.logic.parsing.readers.FileReader
 
-  def stream1:  Stream[Command[ClauseOccurrence]] = Stream.cons(getTwoClausesFromUICommand[ClauseOccurrence](PromptTerminal.GetTwoClauses),
+  def stream1:  Stream[Command[Clause]] = Stream.cons(getTwoClausesFromUICommand[Clause](PromptTerminal.GetTwoClauses),
     Stream.cons(VariantsCommand,
-    Stream.cons(DeterministicAndCommand[ClauseOccurrence]((
-      List(ApplyOnAllPolarizedLiteralPairsCommand[ClauseOccurrence], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+    Stream.cons(DeterministicAndCommand[Clause]((
+      List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
       List(ParamodulationCommand(FOLUnificationAlgorithm)))),
-    Stream.cons(SimpleForwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-    Stream.cons(SimpleBackwardSubsumptionCommand[ClauseOccurrence](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-    Stream.cons(InsertResolventCommand[ClauseOccurrence],
-    Stream.cons(RefutationReachedCommand[ClauseOccurrence], stream1)))))))
-  def stream: Stream[Command[ClauseOccurrence]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[ClauseOccurrence], stream1))
+    Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(InsertResolventCommand[Clause],
+    Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
+  def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
   def main(args: Array[String]) {
-    val prover = new Prover[at.logic.calculi.resolution.robinson.ClauseOccurrence]{}
+    val prover = new Prover[at.logic.calculi.resolution.robinson.Clause]{}
     prover.refute(Stream.cons(SetClausesCommand((new FileReader(args(0)) with SimpleResolutionParserFOL).getClauseList), stream)).next
   }
 }
 
-trait Prover[V <: SequentOccurrence] extends at.logic.utils.logging.Logger {
+trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
   
   def refute(commands: Stream[Command[V]]) : NDStream[ResolutionProof[V]] = {
     new NDStream(new MyConfiguration(new State(), commands, ()), myFun) with BFSAlgorithm

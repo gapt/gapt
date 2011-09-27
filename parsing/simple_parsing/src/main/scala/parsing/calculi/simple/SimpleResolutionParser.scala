@@ -13,8 +13,12 @@ import at.logic.calculi.resolution.robinson.Clause
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 import at.logic.calculi.lk.base._
+import collection.immutable.Seq
+
+import at.logic.calculi.occurrences.{factory => defaultFactory}
 
 
 
@@ -31,7 +35,11 @@ import at.logic.calculi.lk.base._
 trait SimpleResolutionParserFOL extends SimpleResolutionParser[Clause] with SimpleFOLParser {
   override def formula = formula2
   override def neg = neg2
-  def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas).map(stripNeg).asInstanceOf[List[FOLFormula]],ls.filter(x => !filterPosFormulas(x)).asInstanceOf[List[FOLFormula]])}
+  def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {
+      case ls ~ "." => new Clause(
+            (ls.filter(filterPosFormulas).map(stripNeg)) map ((x : HOLFormula) => defaultFactory.createFormulaOccurrence(x, Nil)),
+            (ls.filter(x => !filterPosFormulas(x))) map ((x : HOLFormula) => defaultFactory.createFormulaOccurrence(x, Nil))
+       ) }
 }
 
 trait SimpleResolutionParser[V <: Sequent] extends ResolutionParser[V] {

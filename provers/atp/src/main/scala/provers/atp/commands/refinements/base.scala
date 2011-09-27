@@ -11,7 +11,7 @@ package at.logic.provers.atp.commands.refinements
 package base {
 import _root_.at.logic.provers.atp.commands.base.{InitialCommand, DataCommand, ResultCommand}
 import _root_.at.logic.provers.atp.commands.logical.DeterministicMacroCommand
-import at.logic.calculi.lk.base.SequentOccurrence
+import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.resolution.base.ResolutionProof
 import at.logic.utils.ds.{PublishingBuffer, PublishingBufferEvent, Remove, Add}
 import at.logic.provers.atp.Definitions._
@@ -20,7 +20,7 @@ import at.logic.provers.atp.Definitions._
     def apply() = "Refinement"
   }
 
-  abstract class Refinement[V <: SequentOccurrence](protected val clauses: PublishingBuffer[ResolutionProof[V]]) {
+  abstract class Refinement[V <: Sequent](protected val clauses: PublishingBuffer[ResolutionProof[V]]) {
     clauses.addListener((x: PublishingBufferEvent[ResolutionProof[V]])=> x.ar match {
       case Remove => removeClause(x.elem)
       case Add => addClause(x.elem)
@@ -31,7 +31,7 @@ import at.logic.provers.atp.Definitions._
     protected def removeClause(s: ResolutionProof[V]): Unit
   }
 
-  case class SequentsMacroCommand [V <: SequentOccurrence](init: InitialCommand[V], datas: Iterable[DataCommand[V]], result: ResultCommand[V])
+  case class SequentsMacroCommand [V <: Sequent](init: InitialCommand[V], datas: Iterable[DataCommand[V]], result: ResultCommand[V])
           extends DeterministicMacroCommand[V](init, datas, result) {
     def isRepeat(state: State): Boolean = {
       !state(RefinementID()).asInstanceOf[Refinement[V]].isEmpty

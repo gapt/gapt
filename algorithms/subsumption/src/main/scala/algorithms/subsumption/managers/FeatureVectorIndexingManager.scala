@@ -10,21 +10,19 @@ package at.logic.algorithms.subsumption.managers
 import at.logic.utils.ds.mutable.trees._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.subsumption._
-
-
-
+import at.logic.calculi.lk.base.types._
 
 //val a = new VectorTreeManager with StillmabAlgorithm {val seqList = }
 trait VectorTreeManager extends SubsumptionAlgorithm  {
 
-  var seqList: List[Sequent]
-  var features: List[Sequent=>Int]
-  var tree: Trie[Sequent]
+  var seqList: List[FSequent]
+  var features: List[FSequent=>Int]
+  var tree: Trie[FSequent]
 
 
   def forwardSubsumption
 
-  def forwardSubsumptionRec(vert: TreeNode[Sequent], features: List[Sequent=>Int], subsumedSeq: Sequent): Boolean = {
+  def forwardSubsumptionRec(vert: TreeNode[FSequent], features: List[FSequent=>Int], subsumedSeq: FSequent): Boolean = {
 
 //    if(tree.isLeaf(vert)) {
     if(features.isEmpty) {

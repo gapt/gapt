@@ -14,6 +14,7 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types.ImplicitConverters._
+import collection.immutable.Seq
 
 object Definitions { def fol = FOLFactory }
 
@@ -39,7 +40,6 @@ trait FOLExpression extends HOLExpression with FOL {
       case Neg(x) => NegSymbol + x.toString
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
-//      case HArray(_, flst) => HArraySymbolR + flst.toString + HArraySymbolR
       case _ => throw new Exception("Unknown FOL expression: " + super.toString)
     }
 
@@ -57,7 +57,7 @@ trait FOLExpression extends HOLExpression with FOL {
       case Neg(x) => "Neg(" + x.toCode + ")"
       case ExVar(x,f) => "ExVar(" + x.toCode + ", " + f.toCode + ")"
       case AllVar(x,f) => "AllVar(" + x.toCode + ", " + f.toCode + ")"
-//      case HArray(origf, flst) => "HArray[" + origf + "](" + flst.toString + ")"
+      //case HArray(f1, f2) => "HArray(" + f1.toCode + ", " + f2.toCode + ")"
     }
   }
 trait FOLFormula extends FOLExpression with HOLFormula
@@ -155,8 +155,6 @@ case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
 case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))") with FOL
 case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))") with FOL
-// This type is actually not correct...
-//case object HArrayC extends HOLConst(HArraySymbol, "o -> List o -> o") with FOL
 class ExQ(e:TA) extends HOLExQ(e) with FOL
 class AllQ(e:TA) extends HOLAllQ(e) with FOL
 
@@ -191,6 +189,10 @@ object And {
 }
 
 object Or {
+    def apply(fs: Seq[FOLFormula]) : FOLFormula = fs match {
+      case Nil => BottomC
+      case f::fs => fs.foldLeft(f)( (d, f) => Or(d, f) )
+    }
   def apply(left: FOLFormula, right: FOLFormula) = App(App(OrC,left),right).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(OrC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
@@ -205,17 +207,6 @@ object Imp {
       case _ => None
   }
 }
-
-// Herbrand array definition.
-// f is the quantified formula that originated the instances in lst.
-/*object HArray {
-  def apply(f : FOLFormula, lst: List[FOLFormula]) = HArrayC(f, lst).asInstanceOf[FOLFormula]
-  def unapply(expression: LambdaExpression) = expression match {
-    case HArrayC(f, lst) => Some(f, lst)
-    case _ => None
-  }
-}
-*/
 
 private[fol] object Ex {
   def apply(sub: LambdaExpression) = App(new ExQ(sub.exptype),sub).asInstanceOf[FOLFormula]

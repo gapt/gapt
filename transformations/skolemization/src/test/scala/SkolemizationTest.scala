@@ -32,7 +32,6 @@ import skolemize._
 
 class SkolemizationTest extends SpecificationWithJUnit {
 
-   implicit val factory = PointerFOFactoryInstance
 
   "Skolemization" should {
       val x = HOLVar("x", i)
@@ -83,16 +82,17 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val Palpha = Atom( "P", alpha::Nil )
       val Ps0 = Atom( "P", cs5::Nil )
       val allxPx = AllVar( x, Atom( "P", x::Nil ) )
-      val ax = Axiom( Sequent( Palpha::Nil, Palpha::Nil ) )
-      val proof = ForallRightRule( ForallLeftRule( ax, Palpha, allxPx, alpha ), Palpha, allxPx, alpha )
+      val ax = Axiom( Palpha::Nil, Palpha::Nil  )
+      val proof = ForallRightRule(
+                    ForallLeftRule( ax,
+                                    Palpha, allxPx, alpha ),
+                    Palpha, allxPx, alpha )
 
-      val ax_sk = Axiom( Sequent( Ps0::Nil, Ps0::Nil ) )
+      val ax_sk = Axiom(  Ps0::Nil, Ps0::Nil  )
       val proof_sk = ForallLeftRule( ax_sk, Ps0, allxPx, cs5 )
 
       val res = skolemize( proof )
-      // this does not work correctly
-      //res must beEqual( proof_sk )
-      res.root.getSequent must beMultisetEqual( proof_sk.root.getSequent )
+      res.root.toFSequent must beEqual (proof_sk.root.toFSequent)
     }
 
     /*"work for a cut-free proof" in {

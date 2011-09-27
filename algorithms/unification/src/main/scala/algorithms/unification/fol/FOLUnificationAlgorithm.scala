@@ -11,13 +11,23 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.fol._
 import at.logic.language.lambda.substitutions.Substitution
-import at.logic.calculi.lk.base.{Sequent, SequentOccurrence}
+import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.base.types._
+import collection.immutable.Seq
 
 object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
 
-  def unify(seq1: Sequent, seq2: Sequent) : List[Substitution[FOLExpression]] = {
-    require( (seq1.antecedent ++ seq1.succedent ++ seq2.antecedent ++ seq2.succedent).forall( _.isInstanceOf[FOLFormula] ) )
-    unify( seq1.getOrderedSequent.toFormula.asInstanceOf[FOLFormula], seq2.getOrderedSequent.toFormula.asInstanceOf[FOLFormula] )
+  def unify(seq1: FSequent, seq2: FSequent) : List[Substitution[FOLExpression]] = {
+    require( (seq1._1 ++ seq1._2 ++ seq2._1 ++ seq2._2).forall( _.isInstanceOf[FOLFormula] ) )
+
+    val seq1ord = new FSequent(seq1._1.sortBy(x => x.toString), seq1._2.sortBy(x => x.toString))
+    val seq2ord = new FSequent(seq2._1.sortBy(x => x.toString), seq2._2.sortBy(x => x.toString))
+
+    val formseq1 = Or(seq1._1.map(x => Neg(x.asInstanceOf[FOLFormula])) ++ seq1._2.map(x => x.asInstanceOf[FOLFormula]))
+    val formseq2 = Or(seq2._1.map(x => Neg(x.asInstanceOf[FOLFormula])) ++ seq2._2.map(x => x.asInstanceOf[FOLFormula]))
+
+    //unify( seq1.getOrderedSequent.toFormula.asInstanceOf[FOLFormula], seq2.getOrderedSequent.toFormula.asInstanceOf[FOLFormula] )
+    unify( formseq1.asInstanceOf[FOLFormula], formseq2.asInstanceOf[FOLFormula] )
   }
 
   def unify(term1: FOLExpression, term2: FOLExpression) : List[Substitution[FOLExpression]] =
