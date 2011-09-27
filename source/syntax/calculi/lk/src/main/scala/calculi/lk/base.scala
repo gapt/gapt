@@ -158,11 +158,25 @@ import java.util.Comparator
       case _ => false
     }
     // compares the multiset of formulas
-    def syntacticMultisetEquals(o: Sequent ) = o.antecedent.map(_.formula).diff(antecedent.map(_.formula)).isEmpty &&
-                                       o.succedent.map(_.formula).diff(succedent.map(_.formula)).isEmpty &&
-                                       antecedent.map(_.formula).diff(o.antecedent.map(_.formula)).isEmpty &&
-                                       succedent.map(_.formula).diff(o.succedent.map(_.formula)).isEmpty
-   def =^(o: Sequent): Boolean = syntacticMultisetEquals(o) 
+    def syntacticMultisetEquals(o: Sequent ) = {
+      val ta = this.antecedent.map (_.formula)
+      val ts = this.succedent.map (_.formula)
+      val oa = o.antecedent.map (_.formula)
+      val os = o.succedent.map (_.formula)
+
+      oa.diff(ta).isEmpty &&  os.diff(ts).isEmpty &&  ta.diff(oa).isEmpty && ts.diff(os).isEmpty
+    }
+
+    def syntacticMultisetEquals(o: FSequent ) = {
+      val ta = this.antecedent.map (_.formula)
+      val ts = this.succedent.map (_.formula)
+      val oa = o._1
+      val os = o._2
+
+      oa.diff(ta).isEmpty &&  os.diff(ts).isEmpty &&  ta.diff(oa).isEmpty && ts.diff(os).isEmpty
+    }
+
+   def =^(o: Sequent): Boolean = syntacticMultisetEquals(o)
    def removeFormulasAtOccurrences(occs: Seq[Occurrence]): Sequent = Sequent(
         antecedent.filterNot(x => occs.contains(x)),
         succedent.filterNot(x => occs.contains(x))

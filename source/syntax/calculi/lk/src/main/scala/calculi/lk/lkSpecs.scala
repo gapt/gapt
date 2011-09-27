@@ -5,7 +5,7 @@ import at.logic.calculi.lk.base.Sequent
 
 package lkSpecs {
 
-import base.FSequent
+import base.types.FSequent
 
 // A matcher which compares sequents using a multiset interpretation of the lists
   case class beMultisetEqual(s: Sequent) extends Matcher[Sequent]() {
