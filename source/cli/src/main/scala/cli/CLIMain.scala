@@ -15,7 +15,13 @@ import java.io._
 object CLIMain {
 
   val script = """import at.logic.cli.GAPScalaInteractiveShellLibrary._
+  import at.logic.language.hol._
   import at.logic.language.fol._
+  import at.logic.calculi.lk.base.types.FSequent
+  import at.logic.calculi.lk.base.FSequent
+  import at.logic.calculi.lk.base._
+  import at.logic.calculi.lksk.base._
+  import at.logic.language.hol.logicSymbols._
 
   println("Welcome to the GAPT shell!")
   println("See ceresHelp() for the commands.")"""
@@ -27,6 +33,6 @@ object CLIMain {
     w.write(script)
     w.close
     MainGenericRunner.main(Array("-usejavacp", "-i", f.getAbsolutePath))
-    exit(0)
+    sys.exit(0)
   }
 }
