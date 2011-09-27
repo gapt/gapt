@@ -20,39 +20,29 @@ import scala.collection.immutable.HashSet
 
 package robinson {
 
-trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {case Atom(_,_) => true; case _ => false}))}
+import collection.immutable.Seq
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.utils.traits.Occurrence
+import at.logic.language.hol.{Formula, HOLExpression}
 
-  class Clause(neg: List[FOLFormula], pos: List[FOLFormula]) extends Sequent(neg, pos) with CNF {
-    def negative = antecedent.asInstanceOf[List[FOLFormula]]
-    def positive = succedent.asInstanceOf[List[FOLFormula]]
+trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula match {case Atom(_,_) => true; case _ => false}))}
+
+  class Clause(neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence]) extends Sequent(neg, pos) with CNF {
+    def negative = antecedent
+    def positive = succedent
   }
 
   object Clause {
-    def apply(neg: List[FOLFormula], pos: List[FOLFormula]) = new Clause(neg,pos)
+    def apply(neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence]) = new Clause(neg,pos)
     def unapply(s: Sequent) = s match {
       case c: Clause => Some(c.negative, c.positive)
       case _ => None
     }
   }
 
-  class ClauseOccurrence(override val antecedent: Set[FormulaOccurrence], override val succedent: Set[FormulaOccurrence]) extends SequentOccurrence( antecedent, succedent )
-  {
-    def getClause = Clause( antecedent.toList.map( fo => fo.formula.asInstanceOf[FOLFormula] ), succedent.toList.map( fo => fo.formula.asInstanceOf[FOLFormula] ) )
-//    def multisetEquals( o: SequentOccurrence ) = getSequent.multisetEquals(o.getSequent)
-    //def multisetEquals( o: SequentOccurrence ) = (((antecedent.toList.map(x => x.formula)) == o.antecedent.toList.map(x => x.formula)) && ((succedent.toList.map(x => x.formula)) == o.succedent.toList.map(x => x.formula)))
-    //override def toString : String = SequentFormatter.sequentOccurenceToString(this)
-  }
-
-  object ClauseOccurrence {
-    def apply(antecedent: Set[FormulaOccurrence], succedent: Set[FormulaOccurrence]) = new ClauseOccurrence(antecedent, succedent)
-    def unapply(so: ClauseOccurrence) = Some(so.antecedent, so.succedent)
-  }
-
   object createContext {
-    def apply(set: Set[FormulaOccurrence], sub: Substitution[FOLExpression]): Set[FormulaOccurrence] =
-      set.map(x => x.factory.createContextFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula], x, x::Nil, set - x))
-    def apply(set: Set[FormulaOccurrence], binary: Set[FormulaOccurrence], sub: Substitution[FOLExpression]): Set[FormulaOccurrence] =
-      set.map(x => x.factory.createContextFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula], x, x::Nil, set - x, binary))
+    def apply(set: Seq[FormulaOccurrence], sub: Substitution[FOLExpression]): Seq[FormulaOccurrence] =
+      set.map(x => x.factory.createFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula], x::Nil))
   }
 
   case object VariantType extends UnaryRuleTypeA
@@ -61,58 +51,47 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
   case object ParamodulationType extends BinaryRuleTypeA
 
   object InitialClause {
-    def apply(seq: Sequent)(implicit factory: FOFactory) = {
-      val left: Set[FormulaOccurrence] = seq.antecedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form.asInstanceOf[FOLFormula], st, factory))
-      val right: Set[FormulaOccurrence] = seq.succedent.foldLeft(Set.empty[FormulaOccurrence])((st, form) => st + createOccurrence(form.asInstanceOf[FOLFormula], st, factory))
-      new LeafAGraph[ClauseOccurrence](ClauseOccurrence(left, right)) with NullaryResolutionProof[ClauseOccurrence] {def rule = InitialType; override def name = ""}
+    def apply(ant: Seq[HOLFormula], suc: Seq[HOLFormula]) (implicit factory: FOFactory) = {
+      val left: Seq[FormulaOccurrence] = ant.map(factory.createFormulaOccurrence(_,Nil))
+      val right: Seq[FormulaOccurrence] = suc.map(factory.createFormulaOccurrence(_,Nil))
+      new LeafAGraph[Clause](Clause(left, right)) with NullaryResolutionProof[Clause] {def rule = InitialType; override def name = ""}
     }
 
-    def createDefault(seq: Sequent): Pair[LeafAGraph[ClauseOccurrence] with NullaryResolutionProof[ClauseOccurrence], Pair[List[FormulaOccurrence],List[FormulaOccurrence]]] = {
-      val left: List[FormulaOccurrence] = seq.antecedent.map(f => createOccurrence(f.asInstanceOf[FOLFormula], Set[FormulaOccurrence](), PointerFOFactoryInstance))
-      val right: List[FormulaOccurrence] = seq.succedent.map(f => createOccurrence(f.asInstanceOf[FOLFormula], Set[FormulaOccurrence](), PointerFOFactoryInstance))
-      (new LeafAGraph[ClauseOccurrence](ClauseOccurrence(left.toSet, right.toSet)) with NullaryResolutionProof[ClauseOccurrence] {
-          def rule = InitialType
-          override def toString = "Ax(" + root.getSequent.toString + ")"
-        }, (left,right))
-    }
-
-    def createOccurrence(f: FOLFormula, others: Set[FormulaOccurrence], factory: FOFactory): FormulaOccurrence = factory.createPrincipalFormulaOccurrence(f, Nil, others)
-
-    def unapply(proof: ResolutionProof[ClauseOccurrence]) = if (proof.rule == InitialType) Some((proof.root)) else None
+    def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == InitialType) Some((proof.root)) else None
   }
 
   // left side is always resolved on positive literal and right on negative
   object Resolution {
-    def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence, sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
-      val term1op = p1.root.succedent.find(x => x == a1)
-      val term2op = p2.root.antecedent.find(x => x == a2)
+    def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], a1: Occurrence, a2: Occurrence, sub: Substitution[FOLExpression]): ResolutionProof[Clause] = {
+      val term1op = p1.root.succedent.find(_ == a1)
+      val term2op = p2.root.antecedent.find(_ == a2)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
         if (sub(term1.formula.asInstanceOf[FOLFormula]) != sub(term2.formula.asInstanceOf[FOLFormula])) throw new LKRuleCreationException("Formulas to be cut are not identical (modulo the given substitution)")
         else {
-          new BinaryAGraph[ClauseOccurrence](ClauseOccurrence(
-              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent - term2, p1.root.antecedent, sub),
-              createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent, p1.root.succedent - term1, sub))
+          new BinaryAGraph[Clause](Clause(
+              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub),
+              createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent, sub))
             , p1, p2)
-            with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
+            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
                 def rule = ResolutionType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
-                override def toString = "Res(" + root.getSequent.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
+                override def toString = "Res(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
                 override def name = "res"
             }
         }
       }
     }
-   def unapply(proof: ResolutionProof[ClauseOccurrence]) = if (proof.rule == ResolutionType) {
-        val pr = proof.asInstanceOf[BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas]
+   def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == ResolutionType) {
+        val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas]
         Some((pr.root, pr.uProof1, pr.uProof2, pr.aux.head.head, pr.aux.tail.head.head, pr.substitution))
       }
       else None
 /*
-    def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence ): ResolutionProof[ClauseOccurrence] = {
+    def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], a1: FormulaOccurrence, a2: FormulaOccurrence ): ResolutionProof[Clause] = {
       val unifiers = FOLUnificationAlgorithm.unify( a1.formula.asInstanceOf[FOLExpression], a2.formula.asInstanceOf[FOLExpression] )
       if ( unifiers.isEmpty )
         throw new LKRuleCreationException("Auxiliary formulas " + a1.formula + " and " + a2.formula + " are not unifiable!")
@@ -122,40 +101,40 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
   }
 
   object Paramodulation {
-    def apply(p1: ResolutionProof[ClauseOccurrence], p2: ResolutionProof[ClauseOccurrence], a1: FormulaOccurrence, a2: FormulaOccurrence, newLiteral: FOLFormula, sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
-      val term1op = p1.root.succedent.find(x => x == a1)
-      val term2opAnt = p2.root.antecedent.find(x => x == a2)
-      val term2opSuc = p2.root.succedent.find(x => x == a2)
+    def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], a1: Occurrence, a2: Occurrence, newLiteral: FOLFormula, sub: Substitution[FOLExpression]): ResolutionProof[Clause] = {
+      val term1op = p1.root.succedent.find(_ == a1)
+      val term2opAnt = p2.root.antecedent.find(_ == a2)
+      val term2opSuc = p2.root.succedent.find(_ == a2)
       if (term1op == None || (term2opAnt == None && term2opSuc == None)) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         if (term2opAnt != None) {
           val term2 = term2opAnt.get
-          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil, ((p1.root.succedent - term1) ++ (p2.root.succedent)))
-          new BinaryAGraph[ClauseOccurrence](ClauseOccurrence(
-              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent - term2, p1.root.antecedent, sub) + prinFormula,
-              createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent, p1.root.succedent - term1, sub))
+          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
+          new BinaryAGraph[Clause](Clause(
+              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub) :+ prinFormula,
+              createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent, sub))
             , p1, p2)
-            with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
+            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
                 def rule = ParamodulationType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
-                override def toString = "Para(" + root.getSequent.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
+                override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
                 override def name = "pmod"
             }
         }
         else {
           val term2 = term2opSuc.get
-          val prinFormula = term1.factory.createPrincipalFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil, ((p1.root.succedent - term1) ++ (p2.root.succedent - term2)))
-          new BinaryAGraph[ClauseOccurrence](ClauseOccurrence(
-              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, p1.root.antecedent, sub),
-              createContext(p1.root.succedent - term1, sub) ++ createContext(p2.root.succedent  - term2, p1.root.succedent - term1, sub)  + prinFormula)
+          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
+          new BinaryAGraph[Clause](Clause(
+              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, sub),
+              createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent.filterNot(_ == term2), sub)  :+ prinFormula)
             , p1, p2)
-            with BinaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
+            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
                 def rule = ParamodulationType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
-                override def toString = "Para(" + root.getSequent.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
+                override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
                 override def name = "pmod"
             }
         }
@@ -165,29 +144,29 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
 
 
   object Variant {
-    def apply(p: ResolutionProof[ClauseOccurrence], sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
+    def apply(p: ResolutionProof[Clause], sub: Substitution[FOLExpression]): ResolutionProof[Clause] = {
       require( sub.isRenaming )
-      val newCl = ClauseOccurrence( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
-      new UnaryAGraph[ClauseOccurrence](newCl, p)
-          with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] {
+      val newCl = Clause( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
+      new UnaryAGraph[Clause](newCl, p)
+          with UnaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] {
             def rule = VariantType
             def substitution = sub
-            override def toString = "Vr(" + root.getSequent.toString + ", " + p.toString + ", " + substitution.toString + ")"
+            override def toString = "Vr(" + root.toString + ", " + p.toString + ", " + substitution.toString + ")"
             override def name = "variant"
           }
     }
 
-    def apply(p: ResolutionProof[ClauseOccurrence]): ResolutionProof[ClauseOccurrence] = {
+    def apply(p: ResolutionProof[Clause]): ResolutionProof[Clause] = {
       // TODO: refactor the following into Sequent.getFreeAndBoundVariables
-      val vars = (p.root.getSequent.antecedent ++ p.root.getSequent.succedent).foldLeft( HashSet[Var]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
+      val vars = (p.root.antecedent ++ p.root.succedent).foldLeft( HashSet[Var]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
       // TODO: should not be necessary to pass argument Ti() here.
       // we return an actual variant only if there are free variables, otherwise we return the parent proof as it does not change
       if (vars.isEmpty) p
       else apply( p, Substitution( vars.map( v => (v, v.factory.createVar( FreshVariableSymbolFactory.getVariableSymbol, Ti()) ) ).toMap ).asInstanceOf[Substitution[FOLExpression]] )
     }
 
-    def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]) = if (proof.rule == VariantType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]]
+    def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution[FOLExpression]) = if (proof.rule == VariantType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression]]
         Some((pr.root, pr.uProof, pr.substitution))
       }
       else None
@@ -198,20 +177,20 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x match {
   // with substitution y -> x and x -> a. but as we combine the substitutions we cannot remove the substitution generated by the first step. This is not important as we apply
   // the same resolution step and therefore this substitution should be anyway generated.
   object Factor {
-    def apply(p: ResolutionProof[ClauseOccurrence], a: FormulaOccurrence, occurrencesToRemove: Seq[FormulaOccurrence], sub: Substitution[FOLExpression]): ResolutionProof[ClauseOccurrence] = {
+    def apply(p: ResolutionProof[Clause], a: Occurrence, occurrencesToRemove: Seq[Occurrence], sub: Substitution[FOLExpression]): ResolutionProof[Clause] = {
       val r = p.root.removeFormulasAtOccurrences(occurrencesToRemove)
-      val newCl = ClauseOccurrence( createContext( r.antecedent, sub ), createContext( r.succedent, sub ))
-      new UnaryAGraph[ClauseOccurrence](newCl, p)
-        with UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
+      val newCl = Clause( createContext( r.antecedent, sub ), createContext( r.succedent, sub ))
+      new UnaryAGraph[Clause](newCl, p)
+        with UnaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas {
           def rule = FactorType
           def substitution = sub
-          def aux = (a::Nil)::Nil
-          override def toString = "Fac(" + root.getSequent + ", " + p.toString + ", " + substitution.toString + ")"
+          def aux = (a.asInstanceOf[FormulaOccurrence]::Nil)::Nil
+          override def toString = "Fac(" + root + ", " + p.toString + ", " + substitution.toString + ")"
           override def name = "factor"
         }
     }
-    def unapply(proof: ResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression]) = if (proof.rule == FactorType) {
-        val pr = proof.asInstanceOf[UnaryResolutionProof[ClauseOccurrence] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas]
+    def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution[FOLExpression]) = if (proof.rule == FactorType) {
+        val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas]
         Some((pr.root, pr.uProof, pr.aux.head.head, pr.substitution))
       }
       else None

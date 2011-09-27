@@ -12,10 +12,10 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import scala.collection.immutable.Set
+import scala.collection.immutable.Seq
 import scala.collection.immutable.{Map,HashMap}
 
-import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent,SequentOccurrence}
+import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent}
 import at.logic.calculi.occurrences._
 
 package base {
@@ -30,23 +30,29 @@ package base {
 
   class LabelledFormulaOccurrence (override val formula: HOLFormula,
                                    override val ancestors: List[LabelledFormulaOccurrence],
-                                   val skolem_label: Label) extends FormulaOccurrence( formula, ancestors ) with PointerOccurrence {
-    def factory = LKskFOFactory
+                                   val skolem_label: Label) extends FormulaOccurrence( formula, ancestors, LKskFOFactory ) {
+    //override def factory = LKskFOFactory
     override def toString: String = formula.toString + " (label: " + skolem_label.toString + ")"
+
   }
 
+  object LabelledFormulaOccurence {
+    implicit def lfo2fo(s : LabelledFormulaOccurrence) : HOLFormula = s.formula
+  }
+
+
+
+
   //private[lksk] 
-  object LKskFOFactory extends PointerFOFactory {
-    override def createPrincipalFormulaOccurrence(formula: HOLFormula, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence]) = {
-      assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
-      createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
-    }
-    override def createContextFormulaOccurrence(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence]) = {
-      assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
-      createOccurrence(formula, ancestors.asInstanceOf[List[LabelledFormulaOccurrence]])
+  object LKskFOFactory extends FOFactory {
+    override def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence = {
+      if (ancestors.forall(_.isInstanceOf[LabelledFormulaOccurrence]))
+        createOccurrence(formula, (ancestors.asInstanceOf[Seq[LabelledFormulaOccurrence]]).toList )
+      else //TODO: we can not check if the label is unchanged in unlabelled ancestors
+        throw new Exception("ancestors not labelled")
     }
 
-    def createContextFormulaOccurrenceWithSubst(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], others: Set[FormulaOccurrence], binary_others: Set[FormulaOccurrence], sub: Substitution[HOLExpression]) = {
+    def createContextFormulaOccurrenceWithSubst(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], sub: Substitution[HOLExpression]) = {
       assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       val l_ancestors = ancestors.map( _.asInstanceOf[LabelledFormulaOccurrence] )
       val l = l_ancestors.head.skolem_label
@@ -54,11 +60,12 @@ package base {
       new LabelledFormulaOccurrence(sub(formula).asInstanceOf[HOLFormula], l_ancestors, l.map( sub(_) ) )
     }
 
-    def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) = {
+    def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence = {
       val l = ancestors.head.skolem_label
       assert( ancestors.forall( a => a.skolem_label == l ) )
       new LabelledFormulaOccurrence(formula, ancestors, l)
     }
+
     // when creating a main formula for a weak quantifier inference in LKsk, we may choose
     // whether to delete the term from the label, or not. If deletion is not desired,
     // term should be set to None.
@@ -70,22 +77,24 @@ package base {
       }
       new LabelledFormulaOccurrence(formula, ancestor::Nil, newlabel )
     }
- 
+
     def createInitialOccurrence(formula: HOLFormula, label: Label) =
       new LabelledFormulaOccurrence( formula, Nil, label )
-  }
+
+    }
 
   // TODO: instead of l_antecedent, use override val antecedent
   // does not work right now because Set is not covariant!
-  class LabelledSequentOccurrence(val l_antecedent: Set[LabelledFormulaOccurrence],
-                                  val l_succedent: Set[LabelledFormulaOccurrence])
-    extends SequentOccurrence( l_antecedent.asInstanceOf[Set[FormulaOccurrence]],
-                               l_succedent.asInstanceOf[Set[FormulaOccurrence]] ) {
+  class LabelledSequent(val l_antecedent: Seq[LabelledFormulaOccurrence],
+                                  val l_succedent: Seq[LabelledFormulaOccurrence])
+    extends Sequent( l_antecedent.asInstanceOf[Seq[FormulaOccurrence]],
+                               l_succedent.asInstanceOf[Seq[FormulaOccurrence]] ) {
     override def toString: String = l_antecedent.toString + " :- " + l_succedent.toString
   }
 
-  object sequentOccurrenceToLabelledSequentOccurrence {
-    def apply( s: SequentOccurrence ) = new LabelledSequentOccurrence( s.antecedent.asInstanceOf[Set[LabelledFormulaOccurrence]],
-                                                                       s.succedent.asInstanceOf[Set[LabelledFormulaOccurrence]] )
+
+  object sequentToLabelledSequent {
+    def apply( s: Sequent ) = new LabelledSequent( s.antecedent.asInstanceOf[Seq[LabelledFormulaOccurrence]],
+                                                   s.succedent.asInstanceOf[Seq[LabelledFormulaOccurrence]] )
   }
 }

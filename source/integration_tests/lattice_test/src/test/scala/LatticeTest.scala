@@ -84,7 +84,7 @@ class LatticeTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( _.toFSequent ))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "lattice-prf.tptp")
@@ -93,7 +93,7 @@ class LatticeTest extends SpecificationWithJUnit {
 
 
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "lattice-cs.tptp")
       writer.write( tptp )

@@ -27,7 +27,7 @@ object getCutAncestors {
   def apply( p: LKProof )
     : Set[FormulaOccurrence] = p match {
       case CutRule(p1, p2, _, a1, a2) => getCutAncestors( p1 ) ++ getCutAncestors( p2 ) ++
-                                         Axiom.toSet( getAncestors( a1 ) ) ++ Axiom.toSet( getAncestors( a2 ) )
+                                         getAncestors( a1 ) ++ getAncestors( a2 )
       case UnaryLKProof(_,p,_,_,_) => getCutAncestors( p )
       case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutAncestors( p1 ) ++ getCutAncestors( p2 )
       case Axiom(_) => Set[FormulaOccurrence]()
@@ -41,7 +41,7 @@ object getCutAncestors {
   def apply( p: LKProof, predicate : HOLFormula => Boolean )
     : Set[FormulaOccurrence] = p match {
       case CutRule(p1, p2, _, a1, a2) => if (predicate(a1.formula)) {
-          getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate ) ++ Axiom.toSet( getAncestors( a1 ) ) ++ Axiom.toSet( getAncestors( a2 ) )
+          getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate ) ++ getAncestors( a1 ) ++ getAncestors( a2 )
         } else {
           getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate )
         }
@@ -57,8 +57,8 @@ object getCutAncestors {
 }
 
 object getAncestors {
-  def apply( o: FormulaOccurrence ) : List[FormulaOccurrence] =
-    o.ancestors.flatMap( a => getAncestors( a ) ) ::: List( o )
+  def apply( o: FormulaOccurrence ) : Set[FormulaOccurrence] =
+    o.ancestors.flatMap( a => getAncestors( a ) ).toSet ++ Set( o )
 
   def apply( o: Set[FormulaOccurrence] ) : Set[FormulaOccurrence] =
     o.foldLeft( new HashSet[FormulaOccurrence] )( (res, o) => res ++ apply( o ) )
@@ -69,17 +69,17 @@ object regularize {
 
   def rec( proof: LKProof, vars: Set[HOLVar] ) : (LKProof, Set[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) = 
   {
-    implicit val factory = PointerFOFactoryInstance
+    //implicit val factory = PointerFOFactoryInstance
     proof match
     {
-      // FIXME: cast!?!
       case r @ CutRule( p1, p2, _, a1, a2 ) => {
         // first left, then right
         val rec1 = rec( p1, vars )
         val rec2 = rec( p2, vars ++ rec1._2 )
         val new_proof = CutRule( rec1._1, rec2._1, rec1._3( a1 ), rec2._3( a2 ) )
-        ( new_proof, rec2._2, computeMap( p1.root.antecedent ++ (p1.root.succedent - a1), r, new_proof, rec1._3 ) ++
-                     computeMap( (p2.root.antecedent - a2) ++ p2.root.succedent, r, new_proof, rec2._3 ) )
+        ( new_proof, rec2._2, computeMap( p1.root.antecedent ++
+        (p1.root.succedent.filter(_ != a1)), r, new_proof, rec1._3 ) ++
+                     computeMap( (p2.root.antecedent.filter(_ != a2)) ++ p2.root.succedent, r, new_proof, rec2._3 ) )
       }
       case r @ AndRightRule( p1, p2, _, a1, a2, _ ) => {
         handleBinaryProp( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, vars, AndRightRule.apply )
@@ -103,13 +103,15 @@ object regularize {
         handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationRight2Rule.apply )
       }
       case Axiom(so) => {
-        val ant_occs = so.antecedent.toList
-        val succ_occs = so.succedent.toList
-        val a = Axiom.createDefault(Sequent(ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula )) )
+        val ant_occs = so.antecedent
+        val succ_occs = so.succedent
+        val a = Axiom(ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ))
         val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
-        a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
-        a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
-        (a._1, vars, map)
+        //a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
+        a.root.antecedent.zip(ant_occs).foreach(p => map.update( p._2, p._1))
+        //a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
+        a.root.succedent.zip(succ_occs).foreach(p => map.update( p._2, p._1))
+        (a, vars, map)
       }
       case WeakeningLeftRule(p, s, m) => {
         val new_parent = rec( p, vars )
@@ -266,7 +268,7 @@ object regularize {
   }
 
   // FIXME: adapted from LKtoLKskc!
-  def computeMap( occs: Set[FormulaOccurrence], old_proof: LKProof, 
+  def computeMap( occs: Seq[FormulaOccurrence], old_proof: LKProof, 
                   new_proof: LKProof, old_map : Map[FormulaOccurrence, FormulaOccurrence]) =
   {
     val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
@@ -289,8 +291,8 @@ object replaceSubproof {
     if (proof == subproof) newSubproof
     else proof match {
       case Axiom(_) => proof
-      case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule.createDefault(replace(up, subproof, newSubproof), pf.formula)
-      case WeakeningRightRule(up, _, pf) => WeakeningRightRule.createDefault(replace(up, subproof, newSubproof), pf.formula)
+      case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule(replace(up, subproof, newSubproof), pf.formula)
+      case WeakeningRightRule(up, _, pf) => WeakeningRightRule(replace(up, subproof, newSubproof), pf.formula)
       case ContractionLeftRule(up, _, aux, _, _) => ContractionLeftRule(replace(up, subproof, newSubproof), aux.formula)
       case ContractionRightRule(up, _, aux, _, _) => ContractionRightRule(replace(up, subproof, newSubproof), aux.formula)
       case AndRightRule(up1, up2, _, aux1, aux2, _) =>

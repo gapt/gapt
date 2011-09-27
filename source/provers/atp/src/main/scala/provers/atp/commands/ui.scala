@@ -10,23 +10,23 @@ package at.logic.provers.atp.commands
  */
 
 package ui {
-import _root_.at.logic.calculi.lk.base.{SequentLike, SequentOccurrence}
+import _root_.at.logic.calculi.lk.base.Sequent
 import _root_.at.logic.provers.atp.commands.base.InitialCommand
 import at.logic.provers.atp.Definitions._
 
-  case class getTwoClausesFromUICommand[V <: SequentOccurrence](ui: Seq[SequentLike] => Tuple2[Int,Int]) extends InitialCommand[V] {
+  case class getTwoClausesFromUICommand[V <: Sequent](ui: Seq[Sequent] => Tuple2[Int,Int]) extends InitialCommand[V] {
     def apply(state: State) = {
-      val clauses = state("clauses").asInstanceOf[Seq[SequentLike]]
+      val clauses = state("clauses").asInstanceOf[Seq[Sequent]]
       val reply = ui(clauses)
       List((state, (clauses(reply._1), clauses(reply._2))))
     }
   }
 
   object PromptTerminal {
-    object GetTwoClauses extends Function1[Seq[SequentLike], Tuple2[Int,Int]] {
-      def apply(seq: Seq[SequentLike]): Tuple2[Int,Int] = {
+    object GetTwoClauses extends Function1[Seq[Sequent], Tuple2[Int,Int]] {
+      def apply(seq: Seq[Sequent]): Tuple2[Int,Int] = {
         Console.println("List of clauses in set:")
-        seq.zipWithIndex.foreach(x => Console.println(x._2 + ") " + x._1.getSequent))
+        seq.zipWithIndex.foreach(x => Console.println(x._2 + ") " + x._1))
         Console.print("Enter index of first clause: " ); val ind1 = Console.readInt
         Console.print("Enter index of second clause: " ); val ind2 = Console.readInt
         (ind1, ind2)

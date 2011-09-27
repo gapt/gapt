@@ -68,14 +68,14 @@ class TapeTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( _.toFSequent ))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "tape-prf.tptp")
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "tape-cs.tptp")
       writer.write( tptp )

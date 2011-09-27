@@ -172,7 +172,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       // convert struct DAG to tree
       structToExpressionTree( s )
 
-      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
+      val prf = deleteTautologies(proofProfile(s, proof_sk) map (_.toFSequent))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-" + n + "-prf.tptp")
@@ -181,7 +181,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
 
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-" + n + "-cs.tptp")
       writer.write( tptp )
@@ -219,7 +219,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       // convert struct DAG to tree
       structToExpressionTree( s )
 
-      val prf = deleteTautologies(proofProfile(s, proof_sk).map( so => so.getSequent ))
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( _.toFSequent ))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter("target" + separator + "test-classes" + separator + "euclid-" + n + "-prf.tptp")
@@ -228,7 +228,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
 
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( so => so.getSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "euclid-" + n + "-cs.tptp")
       writer.write( tptp )

@@ -1,8 +1,8 @@
 package at.logic.transformations.ceres.clauseSets
 
-import at.logic.calculi.lk.base. {SequentOccurrence, AuxiliaryFormulas, LKProof}
+import at.logic.calculi.lk.base. {Sequent , AuxiliaryFormulas, LKProof}
 //import at.logic.transformations.ceres.struct._
-import at.logic.calculi.occurrences. {IntOccurrence, FormulaOccurrence, FOFactory}
+import at.logic.calculi.occurrences. { FormulaOccurrence, FOFactory}
 import at.logic.language.hol.HOLFormula
 import at.logic.transformations.ceres.struct._
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet._
@@ -18,7 +18,7 @@ package profile {
 
 import at.logic.calculi.lksk.lkskExtractors.UnaryLKskProof
 import at.logic.algorithms.lk.getCutAncestors
-import at.logic.calculi.lksk.base. {LabelledSequentOccurrence, LabelledFormulaOccurrence}
+import at.logic.calculi.lksk.base. {LabelledSequent, LabelledFormulaOccurrence}
 import at.logic.calculi.lk.lkExtractors. {BinaryLKProof, UnaryLKProof}
 
 import at.logic.calculi.occurrences._
@@ -196,7 +196,7 @@ import at.logic.calculi.lk.quantificationRules._
   }
 
   object getAllAxioms {
-    def apply(p: LKProof): List[SequentOccurrence] = p match {
+    def apply(p: LKProof): List[Sequent] = p match {
       case CutRule(p1, p2, _, a1, a2) => apply( p1 ) ++ apply( p2 )
 
       case UnaryLKProof(_,p,_,_,_) => apply( p )
@@ -206,37 +206,37 @@ import at.logic.calculi.lk.quantificationRules._
 //      case UnaryLKskProof(_,p,_,_,_) => apply( p )
     }
 //
-//    def getCorrespondingFOccs(fo: FormulaOccurrence, from: List[SequentOccurrence]): FormulaOccurrence = from match {
+//    def getCorrespondingFOccs(fo: FormulaOccurrence, from: List[Sequent]): FormulaOccurrence = from match {
 //      case so::rest if so.antecedent.contains(fo) => { if(so.succedent.size==1) so.succedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
 //      case so::rest if so.succedent.contains(fo) =>  { if(so.antecedent.size==1) so.antecedent.head else new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}}
 //      case so::rest => getCorrespondingFOccs(fo, rest)
 //      case List() => new FormulaOccurrence(And(fo.formula,fo.formula), List())  with PointerOccurrence {def factory = fo.factory}
 //    }
 //
-//    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[SequentOccurrence]): List[FormulaOccurrence] = lFOcc.map(x => getCorrespondingFOccs(x,from))
+//    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[Sequent]): List[FormulaOccurrence] = lFOcc.map(x => getCorrespondingFOccs(x,from))
 //
 //    def getAllCorrFOccs(lFOcc: List[FormulaOccurrence], p: LKProof) =   getAllCorrespondingFOccs(lFOcc, apply(p))
 //    ancOfAuxFOccs = getAllAxioms.getAllCorrFOccs(auxFOccs.foldLeft(List[FormulaOccurrence]())((x,y) => x ::: getAncAx(y)), proof)
 //     !(getListOfFOccsInStruct(i).intersect(ancOfAuxFOccs)).isEmpty
-    def isFOccInAxiom(fo: FormulaOccurrence, from: List[SequentOccurrence]): Boolean = from match {
+    def isFOccInAxiom(fo: FormulaOccurrence, from: List[Sequent]): Boolean = from match {
       case so::rest if so.antecedent.contains(fo) || so.succedent.contains(fo) => true
       case so::rest => isFOccInAxiom(fo, rest)
       case _ => false
     }
 
-    def printCorrespSequent(fo: FormulaOccurrence, from: List[SequentOccurrence]) = from match {
+    def printCorrespSequent(fo: FormulaOccurrence, from: List[Sequent]) = from match {
       case so::rest if so.antecedent.contains(fo) || so.succedent.contains(fo) => { so.antecedent.toList.map(x => {print(x.formula)});print("  |-  "); so.succedent.toList.map(x => {print(x.formula)})}
       case so::rest => getPartnerFOccs(fo, rest)
 //      case _ => List()
     }
 
-    def getPartnerFOccs(fo: FormulaOccurrence, from: List[SequentOccurrence]): List[FormulaOccurrence] = from match {
+    def getPartnerFOccs(fo: FormulaOccurrence, from: List[Sequent]): List[FormulaOccurrence] = from match {
       case so::rest if so.antecedent.contains(fo) || so.succedent.contains(fo) => so.antecedent.toList ::: so.succedent.toList
       case so::rest => getPartnerFOccs(fo, rest)
       case _ => List()
     }
 
-    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[SequentOccurrence]): List[FormulaOccurrence] = lFOcc.map(x => getPartnerFOccs(x,from)).foldLeft(List[FormulaOccurrence]())((x,y) => x:::y)
+    def getAllCorrespondingFOccs(lFOcc: List[FormulaOccurrence], from: List[Sequent]): List[FormulaOccurrence] = lFOcc.map(x => getPartnerFOccs(x,from)).foldLeft(List[FormulaOccurrence]())((x,y) => x:::y)
 
     def getAllCorrFOccs(lFOcc: List[FormulaOccurrence], p: LKProof) =   getAllCorrespondingFOccs(lFOcc, apply(p))
   }

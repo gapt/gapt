@@ -11,14 +11,16 @@ import scala.swing._
 import BorderPanel._
 import event.Key
 import at.logic.gui.prooftool.parser._
-import at.logic.calculi.lk.base.{SequentOccurrence, Sequent, LKProof}
+import at.logic.calculi.lk.base.{Sequent, LKProof}
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.transformations.ReductiveCutElim
 import javax.swing.filechooser.FileFilter
 import java.io.File
 import swing.Dialog.Message
+import scala.collection.immutable.Seq
 
 object Main extends SimpleSwingApplication {
+
   override def startup(args: Array[String]) = {
     showFrame
     if (args.length >= 1) loadProof(args(0),12)
@@ -115,6 +117,7 @@ object Main extends SimpleSwingApplication {
   val mBar: MenuBar = new MenuBar() {
     import javax.swing.KeyStroke
     import java.awt.event.{KeyEvent, ActionEvent => JActionEvent}
+    import at.logic.language.hol.{HOLFormula}
 
     focusable = true
     val customBorder = Swing.EmptyBorder(5,3,5,3)
@@ -143,6 +146,7 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
+
       contents += new MenuItem(Action("Compute ClList") { computeClList }) {
         border = customBorder
         enabled = false
@@ -199,7 +203,12 @@ object Main extends SimpleSwingApplication {
         listenTo(ProofToolPublisher)
         reactions += {
           case ProofDbChanged =>
-            val l = db.getSequentLists
+            import at.logic.calculi.occurrences._
+            import at.logic.calculi.lk.base.types.FSequent
+            implicit val factory = defaultFormulaOccurrenceFactory
+            implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence])
+            implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
+            val l = db.getSequentLists.map(pair => Pair(pair._1, pair._2.map(fs => fseq2seq(fs))))
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
           case GentzenLoaded =>
@@ -233,15 +242,14 @@ object Main extends SimpleSwingApplication {
       }
     }
   }
-
-  def computeClList = try {
+   def computeClList = try {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
     import at.logic.transformations.ceres.struct.StructCreators
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
-    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s).map(_.getSequent)
+    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
     body.contents = new Launcher(Some("cllist",csPre),16)
   } catch {
       case e: AnyRef =>
@@ -254,8 +262,10 @@ object Main extends SimpleSwingApplication {
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
-    val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
-    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s).map(_.getSequent)
+    //commented by Cvetan
+//    val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
+    val s = StructCreators.extract( proof_sk)
+    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
     body.contents = new Launcher(Some("cllist",csPre),16)
   } catch {
       case e: AnyRef =>
@@ -283,7 +293,10 @@ object Main extends SimpleSwingApplication {
     import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
 
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
-    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
+//commented by Cvetan
+//    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
+    val s = StructCreators.extract( proof_sk)
+
     body.contents = new Launcher(Some("Struct",s),12)
   } catch {
       case e: AnyRef =>
@@ -309,24 +322,27 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body, t.dropRight(t.size - index - 1))
   } finally ProofToolPublisher.publish(GentzenLoaded)
 
-  def testRefutation = {
+
+                 //commendet by Cvetan
+  def testRefutation =  { /*
     import at.logic.calculi.resolution.andrews._
     import at.logic.calculi.resolution.base.InitialSequent
     import at.logic.language.hol._
     import logicSymbols.ConstantStringSymbol
-    import at.logic.calculi.occurrences.PointerFOFactoryInstance
+    import at.logic.calculi.occurrences._
 
-    implicit val factory = PointerFOFactoryInstance
+    implicit val factory = defaultFormulaOccurrenceFactory
       val a = Atom(ConstantStringSymbol("p"), Nil)
-      val s = Sequent(Nil, Neg(Or(a, Neg(a)))::Nil)
-      val p0 = InitialSequent[SequentOccurrence](s)
+      val s = Sequent(Seq.empty[FormulaOccurrence], factory.createFormulaOccurrence(Neg(Or(a, Neg(a))), Seq.empty[FormulaOccurrence]) +: Seq.empty[FormulaOccurrence])
+
+      val p0 = InitialSequent[Sequent](s)
       val p1 = NotT( p0, p0.root.succedent.head )
       val p2 = OrFL( p1, p1.root.antecedent.head )
       val p3 = OrFR( p1, p1.root.antecedent.head )
       val p4 = NotF( p3, p3.root.antecedent.head )
       val p5 = Cut( p4, p2, p4.root.succedent.head, p2.root.antecedent.head )
     body.contents = new Launcher(Some("resolution refutation",p5),16)
-  }
+*/  }
 
   def testSchemata = {
   /*  import org.scilab.forge.jlatexmath._
@@ -360,10 +376,10 @@ object Main extends SimpleSwingApplication {
     import at.logic.transformations.ceres.struct._
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
     import at.logic.parsing.writers.FileWriter
-    import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-    import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
+//    import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+    //import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 
-    implicit val factory = PointerFOFactoryInstance
+    implicit val factory = defaultFormulaOccurrenceFactory
     //--  Create LKS proof as in my presentation --//
 
     //-- Some formula definitions
@@ -382,15 +398,19 @@ object Main extends SimpleSwingApplication {
     val and_0_k_not_ai_lor_asi = BigAnd(i, Or(Neg(ai), asi), IntZero(), k)
     val and_0_sk_not_ai_lor_asi = BigAnd(i, Or(Neg(ai), asi), IntZero(), Succ(k))
     // end of formula definitions --//
+    import at.logic.language.hol.{HOLFormula}
 
     //-- Definition of psi_base
-    val orl0 = OrLeftRule(NegLeftRule( Axiom(Sequent(a0::Nil, a0::Nil)), a0 ), Axiom(Sequent(a1::Nil, a1::Nil)), Neg(a0), a1)
+    val orl0 = OrLeftRule(NegLeftRule( Axiom(a0 +: Seq.empty[HOLFormula], a0 +: Seq.empty[HOLFormula]), a0 ), Axiom( a1 +: Seq.empty[HOLFormula], a1 +: Seq.empty[HOLFormula]), Neg(a0), a1)
     val psi_0 = AndEquivalenceRule3(orl0, not_a0_lor_a1, and_0_0_not_ai_lor_asi)
     // end of definition of psi_base --//
+    import at.logic.calculi.lk.base.types.FSequent
+    implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence])
+    implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
 
     //-- Definition of psi_step
-    val psi_k = SchemaProofLinkRule(Sequent(a0::and_0_k_not_ai_lor_asi::Nil, ask::Nil), "\\psi", k::Nil)
-    val orlsk = OrLeftRule(NegLeftRule( Axiom(Sequent(ask::Nil, ask::Nil)), ask ), Axiom(Sequent(assk::Nil, assk::Nil)), Neg(ask), assk)
+    val psi_k = SchemaProofLinkRule(Pair(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]), "\\psi", k::Nil)
+    val orlsk = OrLeftRule(NegLeftRule( Axiom( ask +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]), ask ), Axiom( assk +: Seq.empty[HOLFormula], assk +: Seq.empty[HOLFormula]), Neg(ask), assk)
     val cut = CutRule(psi_k, orlsk, ask)
     val psi_sk = AndEquivalenceRule1(AndLeftRule(cut, and_0_k_not_ai_lor_asi, not_ask_lor_assk),
       And(and_0_k_not_ai_lor_asi, not_ask_lor_assk), and_0_sk_not_ai_lor_asi)
@@ -398,7 +418,7 @@ object Main extends SimpleSwingApplication {
 
     SchemaProofDB.clear
     SchemaProofDB.put( new SchemaProof( "\\psi", k::Nil,
-        new Sequent(a0::and_0_k_not_ai_lor_asi::Nil, ask::Nil),
+        Pair(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]),
         psi_0, psi_sk ))
 
     checkProofLinks( psi_0 )

@@ -19,21 +19,22 @@ import at.logic.calculi.lk.lkExtractors._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.parsing.language.latex.HOLTermLatexExporter
+import at.logic.calculi.lk.base.types.FSequent
 
 import scala.collection.mutable.Map
 
 trait SequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = "\n\n"
   val mdskip = "\n\n"+ """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
-  private def exportSequent(seq: Sequent) = {
-    if (seq.antecedent.size > 0) exportTerm1(seq.antecedent.head)
-    if (seq.antecedent.size > 1) seq.antecedent.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x)})
+  private def exportSequent(seq: FSequent) = {
+    if (seq._1.size > 0) exportTerm1(seq._1.head)
+    if (seq._1.size > 1) seq._1.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x)})
     getOutput.write(smskip); getOutput.write(""" $\vdash$ """); getOutput.write(smskip)
-    if (seq.succedent.size > 0) exportTerm1(seq.succedent.head)
-    if (seq.succedent.size > 1) seq.succedent.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x)})
+    if (seq._2.size > 0) exportTerm1(seq._2.head)
+    if (seq._2.size > 1) seq._2.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportTerm1(x)})
   }
   
-  def exportSequentList(ls: List[Sequent], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
+  def exportSequentList(ls: List[FSequent], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 
@@ -103,7 +104,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = "\n\n"
   val mdskip = "\n\n"+ """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
-  private def exportSequent(seq: LabelledSequentOccurrence) = {
+  private def exportSequent(seq: LabelledSequent) = {
     val ant = seq.l_antecedent.toList
     val suc = seq.l_succedent.toList
     if (ant.size > 0) exportLabelledFormulaOccurrence(ant.first)
@@ -113,7 +114,7 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
     if (suc.size > 1) suc.tail.foreach(x => {getOutput.write(smskip); /*getOutput.write(",");*/ exportLabelledFormulaOccurrence(x)})
   }
   
-  def exportSequentList(ls: List[LabelledSequentOccurrence], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
+  def exportSequentList(ls: List[LabelledSequent], sections: List[Tuple2[String,List[Tuple2[Any,Any]]]]): at.logic.parsing.OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 

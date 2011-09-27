@@ -28,7 +28,7 @@ object StandardClauseSet {
   def transformStructToClauseSet(struct:Struct) = clausify(normalize(struct))
 
   def transformStructToLabelledClauseSet(struct:Struct) =
-    transformStructToClauseSet(struct).map( so => sequentOccurrenceToLabelledSequentOccurrence( so ) )
+    transformStructToClauseSet(struct).map( so => sequentToLabelledSequent( so ) )
 
   private def merge(s1:Struct, s2:Struct, aux: List[FormulaOccurrence]):Struct = {
     val (list1,list2) = (getTimesJunctions(s1),getTimesJunctions(s2))
@@ -59,20 +59,20 @@ object StandardClauseSet {
     case Times(s1,s2,_) => getLiterals(s1):::getLiterals(s2)
   }
 
-  private def clausifyTimesJunctions(struct: Struct): SequentOccurrence = {
+  private def clausifyTimesJunctions(struct: Struct): Sequent = {
     def isDual(s:Struct):Boolean = s match {case x: Dual => true; case _ => false}
     val literals = getLiterals(struct)
     val (negative,positive) = literals.partition(x => isDual(x))
-    val negativeFO: List[FormulaOccurrence] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].formula) // extracting the formula occurrences from the negative literal structs
-    val positiveFO: List[FormulaOccurrence] = positive.map(x => x.asInstanceOf[A].formula)     // extracting the formula occurrences from the positive atomic struct
+    val negativeFO: Seq[FormulaOccurrence] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].formula) // extracting the formula occurrences from the negative literal structs
+    val positiveFO: Seq[FormulaOccurrence] = positive.map(x => x.asInstanceOf[A].formula)     // extracting the formula occurrences from the positive atomic struct
     def convertListToSet[T](list:List[T]):Set[T] = list match {
       case x::rest => convertListToSet(rest)+x
       case Nil => new HashSet[T]
     }
-    SequentOccurrence(negativeFO.toSet, positiveFO.toSet)
+    Sequent(negativeFO, positiveFO)
   }
 
-  def clausify(struct: Struct): List[SequentOccurrence] = {
+  def clausify(struct: Struct): List[Sequent] = {
     val timesJunctions = getTimesJunctions(struct)
     timesJunctions.map(x => clausifyTimesJunctions(x))
   }

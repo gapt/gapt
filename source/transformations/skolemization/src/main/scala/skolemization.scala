@@ -12,7 +12,7 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.base.{LKProof,Sequent,SequentOccurrence,PrincipalFormulas}
+import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
@@ -346,9 +346,9 @@ object skolemize {
     map.map( p => (old_p.getDescendantInLowerSequent( p._1 ).get,
       p._2 ) )
 
-  def skolemize(s: SequentOccurrence) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) = skolemize( s, SkolemSymbolFactory.getSkolemSymbols )
+  def skolemize(s: Sequent) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) = skolemize( s, SkolemSymbolFactory.getSkolemSymbols )
 
-  def skolemize(s: SequentOccurrence, stream: Stream[ConstantSymbolA]) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) =
+  def skolemize(s: Sequent, stream: Stream[ConstantSymbolA]) : (Sequent, Map[FormulaOccurrence, Stream[ConstantSymbolA]], Map[FormulaOccurrence, HOLFormula]) =
   {
     var cur_stream = stream
     val fos = s.antecedent ++ s.succedent
@@ -451,18 +451,18 @@ object skolemize {
     implicit val s_map = symbol_map
     implicit val i_map = inst_map
     implicit val c_ancs = cut_ancs
-    implicit val factory = PointerFOFactoryInstance
 
     proof match
     {
       case Axiom(s) => {
-        val ant = s.antecedent.toList
-        val succ = s.succedent.toList
-        val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
-        val ax = Axiom.createDefault( new_seq )
-        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax._2._1( p._2 ) ))
-        new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax._2._2( p._2 )))
-        (ax._1, new_map)
+        val ant = s.antecedent
+        val succ = s.succedent
+/*        val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ) */
+        val new_seq = ( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
+        val ax = Axiom( new_seq._1, new_seq._2 )
+        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
+        new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
+        (ax, new_map)
       }
       case ForallRightRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply )
       case ExistsLeftRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a, m, v, ExistsLeftRule.apply )
@@ -470,8 +470,8 @@ object skolemize {
         ForallLeftRule.apply)
       case ExistsRightRule(p, _, a, m, t) => handleWeakQuantRule( proof, p, a, m, t, 0, ExistsRightRule.computeAux,
         ExistsRightRule.apply)
-      case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, 1, WeakeningLeftRule.createDefault)
-      case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, 0, WeakeningRightRule.createDefault)
+      case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, 1, WeakeningLeftRule.apply)
+      case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, 0, WeakeningRightRule.apply)
       case ContractionLeftRule(p, _, a1, a2, _) => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply)
       case ContractionRightRule(p, _, a1, a2, _) => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply)
       case AndRightRule(p1, p2, _, a1, a2, m) => handleBinaryRule( proof, p1, p2, a1, a2, m, AndRightRule.computeLeftAux, AndRightRule.computeRightAux, AndRightRule.apply)
@@ -664,7 +664,12 @@ object skolemize {
       val new_inst_map = copyMapToAncestor( inst_map ).updated( a, inst_list :+ t )
       //println("recursive call in weak quant rule")
       val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), new_inst_map, copySetToAncestor( cut_ancs ) )
-      val ret = constructor( new_proof._1, new_proof._2( a ), new_main, t ) 
+    println("==========================")
+    println(new_proof._1)
+    println(new_proof._2(a).formula)
+    println(new_main)
+    println(t)
+      val ret = constructor( new_proof._1, new_proof._2( a ), new_main, t )
       ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
   }
 

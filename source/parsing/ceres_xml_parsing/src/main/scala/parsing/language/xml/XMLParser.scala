@@ -11,6 +11,7 @@
 
 package at.logic.parsing.language.xml
 
+import _root_.at.logic.calculi.lk.base._
 import at.logic.language.lambda.substitutions.Substitution
 import scala.xml._
 import scala.xml.Utility.trim
@@ -28,11 +29,11 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.base._
+import at.logic.calculi.lk.base.types.FSequent
 
 import scala.collection.immutable.Set
 
-class ProofDatabase( val proofs: List[Pair[String,LKProof]], val axioms: List[Sequent], val sequentLists: List[Pair[String,List[Sequent]]] );
+class ProofDatabase( val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );
 
 
 // performs the matching necessary to compute substitution terms/eigenvars
@@ -238,7 +239,7 @@ object XMLParser {
      * @return A Sequent object corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not a &lt;sequent&gt; Node.
      */
-    def getSequent() : Sequent = getSequent( getInput() )
+    def getSequent() : FSequent = getSequent( getInput() )
 
     /**
      * If the Node provided by XMLNodeParser is a &lt;sequentlist&gt; element,
@@ -247,11 +248,11 @@ object XMLParser {
      * @return A List of Sequent objects corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not a &lt;sequentlist&gt; Node.
      */
-    def getSequentList() : List[Sequent] = getSequentList( getInput() )
+    def getSequentList() : List[FSequent] = getSequentList( getInput() )
 
-    def getNamedSequentList( n : Node ) : (String, List[Sequent]) = (n.attribute("symbol").get.head.text, getSequentList( n ) )
+    def getNamedSequentList( n : Node ) : (String, List[FSequent]) = (n.attribute("symbol").get.head.text, getSequentList( n ) )
 
-    def getNamedSequentList() : (String, List[Sequent]) = getNamedSequentList( getInput() )
+    def getNamedSequentList() : (String, List[FSequent]) = getNamedSequentList( getInput() )
 
     /**
      * If the Node provided by XMLNodeParser is an &lt;axiomset&gt; element,
@@ -260,7 +261,7 @@ object XMLParser {
      * @return A List of Sequent objects corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not a &lt;axiomset&gt; Node.
      */
-    def getAxiomSet() : List[Sequent] = getAxiomSet( getInput() )
+    def getAxiomSet() : List[FSequent] = getAxiomSet( getInput() )
 
     /**
      * If the Node provided by XMLNodeParser is a &lt;formulalist&gt; element,
@@ -278,10 +279,10 @@ object XMLParser {
      * @return A Sequent object corresponding to n.
      * @throws ParsingException If n is not a &lt;sequent&gt; node.
      */   
-    def getSequent(n: Node) : Sequent =
+    def getSequent(n: Node) : FSequent =
       trim(n) match {
         case <sequent>{ns @ _*}</sequent> =>
-          Sequent(getFormulaList(ns.head), getFormulaList(ns.last))
+          (getFormulaList(ns.head), getFormulaList(ns.last))
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
  
@@ -410,6 +411,9 @@ object XMLParser {
           val rt = n.attribute("type").get.head.text
           val param = if ( n.attribute("param") == None ) None else Some( n.attribute("param").get.head.text )
           val conc = ( new NodeReader(ns.head) with XMLSequentParser ).getSequent()
+          val antecedent = conc._1
+          val succedent = conc._2
+
           // TODO: according to DTD, there may be a "substitution" element here
           // but I think it's not actually used.
           val substnodes = ns.filter( n => n.label == "lambdasubstitution" ||
@@ -424,20 +428,25 @@ object XMLParser {
           val l_perms = recl.map( p => p._2 )
           val r_perms = recl.map( p => p._3 )
           val triple = createRule( rt, conc, prems, l_perms, r_perms, param, subst )
+
+
+          val root : FSequent = (triple._1.root.antecedent map (_.formula), triple._1.root.succedent map (_.formula))
+
+
           // check whether conclusion has been correctly constructed
-          assert( triple._1.root.getSequent.multisetEquals( conc ), triple._1.root.getSequent.toStringSimple + " does not equal " + conc.toStringSimple + "(rule type " + rt + ")")
+          assert( FSequent.multiSetEquals( root, conc ), triple._1.root.toStringSimple + " does not equal " + FSequent.seqToStringSimple(conc) + "(rule type " + rt + ")")
           // check whether the permutation of the formula occurrences corresponds to the conclusion
-          def checkPerm( perm: Array[FormulaOccurrence], list: List[Formula] ) =
+          def checkPerm( perm: Array[FormulaOccurrence], list: Seq[Formula] ) =
             perm.zip( perm.indices ).foreach( p => assert( p._1.formula == list.apply( p._2 ),
               "formula at occurrence " + p._1.formula.toStringSimple +
               " is not equal to formula in list position " + p._2 + ": " +
               list.apply( p._2 ).toStringSimple + " after creating rule of type " + rt + ".\n" +
-              "Conclusion sequent: " + conc.toStringSimple + "\n" +
+              "Conclusion sequent: " + FSequent.seqToStringSimple(conc) + "\n" +
               { param match { case Some( s ) => "permutation parameter: " + s
                             case None => "" } }
           ) )
-          checkPerm( triple._2, conc.antecedent )
-          checkPerm( triple._3, conc.succedent )
+          checkPerm( triple._2, antecedent )
+          checkPerm( triple._3, succedent )
           triple
         }
         case <prooflink/> => {
@@ -502,16 +511,17 @@ object XMLParser {
       case None => throw new Exception("Expected to find formula occurrence descendant, but didn't!")
     }
 
-    private def createRule( rt : String, conc: Sequent, prems: List[LKProof],
+    private def createRule( rt : String, conc: FSequent, prems: List[LKProof],
       l_perms: List[Array[FormulaOccurrence]], r_perms : List[Array[FormulaOccurrence]],
       param : Option[String], subst: Option[LambdaExpression] ) : 
       (LKProof, Array[FormulaOccurrence], Array[FormulaOccurrence]) = {
-        implicit val factory = PointerFOFactoryInstance
+        val antecedent = conc._1
+        val succedent = conc._2
         rt match {
           case "axiom" => {
-            val a = Axiom.createDefault(conc) // The Axiom factory provides the axiom and the initial map from 
+            val a = Axiom(antecedent, succedent) // The Axiom factory provides the axiom and the initial map from
                                 // our lists of formulas to lists of formula occurrences
-            ( a._1, a._2._1.toArray, a._2._2.toArray )
+            ( a, a.root.antecedent.toArray, a.root.succedent.toArray )
           }
           case "permr" => {
             if ( param == None )
@@ -555,8 +565,8 @@ object XMLParser {
             val prem = prems.head
             val r_perm = r_perms.head
             val l_perm = l_perms.head
-            val weakf = conc.antecedent.head
-            val rule = WeakeningLeftRule.createDefault( prem, weakf )
+            val weakf = antecedent.head
+            val rule = WeakeningLeftRule( prem, weakf )
             // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
             ( rule, (List( rule.prin.head ) ++ ( l_perm.map( mapToDesc( rule ) ) ) ).toArray, r_perm.map( mapToDesc( rule ) ) )
           }
@@ -566,8 +576,8 @@ object XMLParser {
             val prem = prems.head
             val r_perm = r_perms.head
             val l_perm = l_perms.head
-            val weakf = conc.succedent.last
-            val rule = WeakeningRightRule.createDefault( prem, weakf )
+            val weakf = succedent.last
+            val rule = WeakeningRightRule( prem, weakf )
             // TODO: prin.head is redundant, we know that WeakeningLeftRule has only one main formula
             ( rule, l_perm.map( mapToDesc( rule ) ), ( r_perm.map( mapToDesc( rule ) ) ++ List( rule.prin.head ) ).toArray )
           }
@@ -671,7 +681,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = r_perm.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             val rule = mainf match {
               case Or(_, weakf) => OrRight1Rule( prem, auxf, weakf )
               case _ => throw new ParsingException("Rule type is orr1, but main formula is not a disjunction.")
@@ -683,7 +693,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = r_perm.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             val rule = mainf match {
               case Or(weakf, _) => OrRight2Rule( prem, weakf, auxf )
               case _ => throw new ParsingException("Rule type is orr2, but main formula is not a disjunction.")
@@ -695,7 +705,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = l_perm.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             val rule = mainf match {
               case And(_, weakf) => AndLeft1Rule( prem, auxf, weakf )
               case _ => throw new ParsingException("Rule type is andl1, but main formula is not a conjunction.")
@@ -707,7 +717,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = l_perm.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             val rule = mainf match {
               case And(weakf, _) => AndLeft2Rule( prem, weakf, auxf )
               case _ => throw new ParsingException("Rule type is andl2, but main formula is not a conjunction.")
@@ -719,7 +729,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = l_perm.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             val rule = mainf match {
               case All(sub, _) => {
                 sub match {
@@ -751,7 +761,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = l_perm.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             val rule = mainf match {
               // TODO: give auxf instead of auxf.formula
               case All(_, _) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
@@ -764,7 +774,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = l_perm.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             val rule = mainf match {
               case Ex(sub, _) => {
                 sub match {
@@ -789,7 +799,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = l_perm.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             val rule = mainf match {
               case Ex(sub, _) => {
                 sub match {
@@ -814,7 +824,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = r_perm.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             val rule = mainf match {
               case All(sub, _) => {
                 sub match {
@@ -839,7 +849,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = r_perm.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             val rule = mainf match {
               case All(sub, _) => {
                 sub match {
@@ -864,7 +874,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = r_perm.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             val rule = mainf match {
               case Ex(sub, _) => {
                 sub match {
@@ -888,7 +898,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = r_perm.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             val rule = mainf match {
               // TODO: give auxf instead of auxf.formula
               case Ex(_, _) => ExistsRightRule( prem, auxf.formula, mainf, subst.get )
@@ -901,7 +911,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = l_perm.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             val rule = DefinitionLeftRule( prem, auxf.formula, mainf )
             // TODO: give auxf instead of auxf.formula
             ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -911,7 +921,7 @@ object XMLParser {
             val l_perm = l_perms.head
             val r_perm = r_perms.head
             val auxf = r_perm.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             val rule = DefinitionRightRule( prem, auxf.formula, mainf )
             // TODO: give auxf instead of auxf.formula
             ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
@@ -927,7 +937,7 @@ object XMLParser {
             val r_p_s = r_prem.root.succedent.size 
             val auxf_l = l_perm_r.last
             val auxf_r = r_perm_l.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             // TODO: parse and pass parameter
             val rule = EquationLeft1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
@@ -947,7 +957,7 @@ object XMLParser {
             val r_p_s = r_prem.root.succedent.size 
             val auxf_l = l_perm_r.last
             val auxf_r = r_perm_l.head
-            val mainf = conc.antecedent.head
+            val mainf = antecedent.head
             // TODO: parse and pass parameter
             val rule = EquationLeft2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
@@ -967,7 +977,7 @@ object XMLParser {
             val r_p_s = r_prem.root.succedent.size 
             val auxf_l = l_perm_r.last
             val auxf_r = r_perm_r.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             // TODO: parse and pass parameter
             val rule = EquationRight1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
@@ -987,7 +997,7 @@ object XMLParser {
             val r_p_s = r_prem.root.succedent.size 
             val auxf_l = l_perm_r.last
             val auxf_r = r_perm_r.last
-            val mainf = conc.succedent.last
+            val mainf = succedent.last
             // TODO: parse and pass parameter
             val rule = EquationRight2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,

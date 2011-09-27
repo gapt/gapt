@@ -14,8 +14,8 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
-import at.logic.calculi.lk.base.Sequent
 import scala.collection.mutable.Map
+import at.logic.calculi.lk.base.types._
 
 package hol2fol {
   /* Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
@@ -50,8 +50,8 @@ package hol2fol {
       apply_( formula, scope, id ).asInstanceOf[FOLFormula]
 
     // TODO: should return FOLSequent
-    def apply(s: Sequent, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): Sequent = 
-      new Sequent( s.antecedent.map( f => apply(f, scope, id ) ), s.succedent.map( f => apply(f, scope, id ) ) )
+    def apply(s: FSequent, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FSequent = 
+      new FSequent( s._1.map( f => apply(f, scope, id ) ), s._2.map( f => apply(f, scope, id ) ) )
     }
   // TODO - support generated function symbols by checking the arity from le and add the variables to the returned term. Right now only constants are supported
   object createExampleFOLConstant {

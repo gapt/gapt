@@ -1,7 +1,6 @@
 /** 
  * Description: 
 **/
-/*
 package at.logic.integration_tests
 
 import org.specs._
@@ -19,7 +18,7 @@ import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.writers.FileWriter
-import at.logic.parsing.language.arithmetic.HOLExpressionArithmeticalExporter
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
@@ -51,24 +50,26 @@ class LNPProofTest extends SpecificationWithJUnit {
 
   "The system" should {
     "parse correctly the LNP proof" in {
-      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lnp.xml"))) with XMLProofDatabaseParser).getProofs()
+      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lnp.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqual(1)
-      val proof = proofs.first
+      val proof = proofs.head._2
       printStats( proof )
 
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
+      val cs = StandardClauseSet.transformStructToClauseSet( s ) map (_.toFSequent)
       val dcs = deleteTautologies( cs )
       Console.println("dcs size: " + dcs.size)
-      val css = dcs.removeDuplicates
+      val css = dcs.distinct
       Console.println("css size: " + css.size)
       val cssv = sequentNormalize(css)
       Console.println("cssv size: " + cssv.size)
-      (new FileWriter("target" + separator + "test-classes" + separator + "lnp-cs.tex") with SequentsListLatexExporter with HOLExpressionArithmeticalExporter).exportSequentList(cssv.sort((x,y) => x.toString < y.toString)).close
-      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css))::Pair("cssv", (cssv))::Nil, "target" + separator + "test-classes" + separator + "lnp-cs.xml" )
+      (new FileWriter("target" + separator + "test-classes" + separator + "lnp-cs.tex") with SequentsListLatexExporter
+        with HOLTermArithmeticalExporter).exportSequentList(cssv.sortWith((x,y) => x.toString < y.toString), List()).close
+      saveXML( List(),
+              List(("cs", cs), ("dcs", dcs), ("css", (css)), ("cssv", (cssv))),
+              "target" + separator + "test-classes" + separator + "lnp-cs.xml" )
     }
   }
 }
-*/
