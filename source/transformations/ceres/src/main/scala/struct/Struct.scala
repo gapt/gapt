@@ -225,7 +225,7 @@ package struct {
     // do not work across language-levels, but the constants
     // are neede to transform a sequent to a formula in general.
     def toFormula( s: Sequent ) : SchemaFormula =
-      Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[SchemaFormula] ) ).toList ::: s.succedent.asInstanceOf[List[SchemaFormula]] )
+      Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[SchemaFormula] )).toList ++ (s.succedent map (_.formula.asInstanceOf[SchemaFormula])) )
 
     def extractStruct(name: String, fresh_param: IntVar) : Struct =
     {
