@@ -76,5 +76,11 @@ class SimpleFOLParserTest extends SpecificationWithJUnit {
     "parse correctly a forall" in {
         (new MyParser("Forall x1 A(x1, x2, c1)").getTerm()) must beEqual (all1)
     }
+    "reject the empty string" in {
+      (new MyParser("").getTerm()) must throwAn[Exception]
+    }
+    "reject the string p(X)" in {
+      (new MyParser("p(X)").getTerm()) must throwAn[Exception]
+    }
   }
 }

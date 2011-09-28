@@ -90,7 +90,12 @@ trait LambdaFactoryProvider {
   /**
    * The De-Bruijn Index (dbIndex) is not exactly as De-Bruijns as db the definition of db is the number of nesting binders
    * over the variable used and our definition is the number of nested binders over the binding variable (i.e.
-   * \x.x + \y.y + x is {1}+({1}+{2}) in original notation and {2}+({1}+{2}) as it seems easier to compute and use.
+   * \x.x + (\y.y + x) is {1}+({1}+{2}) in original notation and {2}+({1}+{2}) as it seems easier to compute and use.
+   *
+   * Some further explanation: the example shows a drawback of the original de Bruijn Indices, because both occurences
+   * of x refer to the same binding variable, but they get different db-indices. the implementation now assigns the
+   * maximum of the db indices of all variables referring to the same binder. In the example, the first occurence then
+   * has index 2 instead of 1.
    */
   class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA,  dbInd: Option[Int]) extends LambdaExpression {
     private[lambda] val dbIndex: Option[Int] = dbInd // represents a bound variable and its de Bruijn index
