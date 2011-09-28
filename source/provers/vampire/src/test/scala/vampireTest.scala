@@ -23,13 +23,13 @@ class VampireTest extends SpecificationWithJUnit {
   def parse(str:String) : FOLFormula = (new StringReader(str) with SimpleFOLParser getTerm).asInstanceOf[FOLFormula]
 
   val box = List()
-  def checkForProver9OrSkip = Vampire.refute(box) must not(throwA[IOException]).orSkip
+  def checkForVampireOrSkip = Vampire.refute(box) must not(throwA[VampireException]).orSkip
 
 
   "The Vampire interface" should {
     "refute { :- P; P :- }" in {
-      //checks, if the execution of prover9 works, o.w. skip test
-      Vampire.refute(box ) must not(throwA[IOException]).orSkip
+      //checks, if the execution of vampire works, o.w. skip test
+      Vampire.refute(box ) must not(throwA[VampireException]).orSkip
 
       val p = Atom(new ConstantStringSymbol("P"), Nil)
       val s1 = FSequent(Nil, p::Nil)
@@ -41,8 +41,8 @@ class VampireTest extends SpecificationWithJUnit {
 
   "The Vampire interface" should {
     "prove SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
-      //checks, if the execution of prover9 works, o.w. skip test
-      Vampire.refute(box ) must not(throwA[IOException]).orSkip
+      //checks, if the execution of vampire works, o.w. skip test
+      Vampire.refute(box ) must not(throwA[VampireException]).orSkip
 
       val i = parse("=(f(a,x),x)")
       val s = parse("=(f(f(f(b,x),y),z), f(f(x,z), f(y,z)))")
@@ -60,8 +60,8 @@ class VampireTest extends SpecificationWithJUnit {
 
   "The Vampire interface" should {
     "not refute { :- P; Q :- }" in {
-      //checks, if the execution of prover9 works, o.w. skip test
-      Vampire.refute(box ) must not(throwA[IOException]).orSkip
+      //checks, if the execution of vampire works, o.w. skip test
+      Vampire.refute(box ) must not(throwA[VampireException]).orSkip
 
       val s1 = FSequent(Nil, List(parse("P")))
       val t1 = FSequent(List(parse("Q")),Nil)

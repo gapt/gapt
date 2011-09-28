@@ -22,11 +22,12 @@ class VampireException(msg: String) extends Exception(msg)
 
 object Vampire {
 
-  def writeProblem( named_sequents: List[Pair[String, FSequent]], file: File ) =
+  def writeProblem( named_sequents: List[Pair[String, FSequent]], file_name: String ) =
   {
+
     val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
     //println("created tptp input: " + tptp)
-    val writer = new FileWriter( file )
+    val writer = new FileWriter( file_name )
     writer.write( tptp )
     writer.flush
   }
@@ -34,25 +35,25 @@ object Vampire {
   // TODO: this does not really belong here, refactor?
   // executes "prog" and feeds the contents of the file at
   // path "in" to its standard input.
-  private def exec( prog: String, in: String ) =
+  private def exec( prog_alternatives: List[String], in: String ) : (Int, String) =
   {
-    val p = Runtime.getRuntime.exec( prog )
+    for (prog <- prog_alternatives) {
+      try {
+        val p = Runtime.getRuntime.exec( prog )
 
-    val out = new OutputStreamWriter( p.getOutputStream )
-    out.write( Source.fromInputStream( new FileInputStream( in ) ).mkString )
-    out.close
+        val out = new OutputStreamWriter( p.getOutputStream )
+        out.write( Source.fromInputStream( new FileInputStream( in ) ).mkString )
+        out.close
 
-    val str = Source.fromInputStream( p.getInputStream ).mkString
-    p.waitFor
-    ( p.exitValue, str )
-  }
+        val str = Source.fromInputStream( p.getInputStream ).mkString
+        p.waitFor
+        ( p.exitValue, str )
+      } catch {
+        case e : IOException => println("could not find binary "+prog+" in path!");
+      }
+    }
 
-  def tptpToLadr( tptp: String, ladr: String ) = {
-    val ret = exec("tptp_to_ladr", tptp)
-    //println( "writing ladr to: " + ladr )
-    val str_ladr = ret._2
-    writeToFile( str_ladr, ladr )
-    ret._1
+    throw new VampireException("Could not execute vampire binary!")
   }
 
   def writeToFile( str: String, file: String ) = {
@@ -62,47 +63,20 @@ object Vampire {
   }
 
   def refute( input_file: String, output_file: String ) : Int = {
-    val ret = exec("vampire", input_file )
+    //TODO: find correct binary (lin32, lin64, mac)
+    val ret = exec(List("vampire_lin64","vampire_lin32","vampire_macosx"), input_file )
     writeToFile( ret._2, output_file )
     ret._1
   }
 
   def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Boolean =
   {
-    val tmp_file = File.createTempFile( "gapt-vampire", ".tptp", null )
-    writeProblem( named_sequents, tmp_file )
-
-    tptpToLadr( tmp_file.getAbsolutePath, input_file )
-    tmp_file.delete
-    
-    // find out which symbols have been renamed
-    // this information should eventually be used when
-    // parsing the prover9 proof
-    val regexp = new Regex("""%\s*\(arity \d+\)\s*'(.*?)'\s*(ladr\d+)""")
-   
-    val str_ladr = Source.fromInputStream( new FileInputStream( input_file ) ).mkString
-
-    val map = str_ladr.split(System.getProperty("line.separator")).foldLeft(new HashMap[String, String])( (m, l) => 
-      l match {
-        case regexp( orig, repl ) => m.updated( orig, repl )
-        case _ => m
-    })
-
-    //println( "translation map: " )
-    //println( map )
+    writeProblem( named_sequents, input_file )
 
     val ret = refute( input_file, output_file )
     ret match {
       case 0 => true
-      case 1 => throw new VampireException("A fatal error occurred (user's syntax error or Prover9's bug).")
-      case 2 => false // Prover9 ran out of things to do (sos list exhausted).
-      case 3 => false // The max_megs (memory limit) parameter was exceeded. 
-      case 4 => false // The max_seconds parameter was exceeded.
-      case 5 => false // The max_given parameter was exceeded. 
-      case 6 => false // The max_kept parameter was exceeded. 
-      case 7 => false // A Prover9 action terminated the search.
-      case 101 => throw new VampireException("Prover9 received an interrupt signal.")
-      case 102 => throw new VampireException("Prover9 crashed, most probably due to a bug.")
+      case _ => throw new VampireException("The set was satisfiable or there was a problem executing vampire!")
     }
   }
 
@@ -110,7 +84,7 @@ object Vampire {
     refuteNamed( sequents.zipWithIndex.map( p => ("sequent" + p._2, p._1) ), input_file, output_file )
 
   def refute( sequents: List[FSequent] ) : Boolean = {
-    val in_file = File.createTempFile( "gapt-vampire", ".ladr", null )
+    val in_file = File.createTempFile( "gapt-vampire", ".tptp", null )
     val out_file = File.createTempFile( "gapt-vampire", "prover9", null )
     val ret = refute( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath )
     in_file.delete
