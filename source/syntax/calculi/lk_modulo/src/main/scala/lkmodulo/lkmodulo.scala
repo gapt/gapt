@@ -9,11 +9,13 @@ import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.language.lambda.symbols.{SymbolA, VariableSymbolA, VariableStringSymbol}
 import _root_.at.logic.language.lambda.typedLambdaCalculus._
 import _root_.at.logic.language.lambda.types.{To, Ti, TA, ->}
+import _root_.at.logic.parsing.readers.StringReader
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lk._
 import collection.immutable.{HashMap, HashSet}
 import collection.mutable.StringBuilder
 import math.Ordering.String
+import at.logic.parsing.language.simple.SimpleFOLParser
 
 trait LKModuloRule
 
@@ -22,8 +24,8 @@ case object ConversionRightRuleType extends UnaryRuleTypeA
 
 
 abstract class REequalityA {
-  val equational_rules : Set[Equation];
-  val rewrite_rules : Set[Tuple2[FOLFormula, FOLFormula]];
+  def equational_rules() : Set[Equation];
+  def rewrite_rules() : Set[Tuple2[FOLFormula, FOLFormula]];
 
   def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean;
 }
@@ -43,7 +45,7 @@ object FOLUtils {
     case App(exp, arg) => {
       val mFBV = freevars_boundvars_constants_of(exp)
       val nFBV = freevars_boundvars_constants_of(arg)
-      (removeDoubles(mFBV._1 ::: nFBV._1), removeDoubles(mFBV._2 ::: nFBV._2), removeDoubles(mFBV._3 ::: nFBV._3))
+      ((mFBV._1 ::: nFBV._1).distinct, (mFBV._2 ::: nFBV._2).distinct, (mFBV._3 ::: nFBV._3).distinct)
     }
     case AbsInScope(v, exp) => {
       val mFBV = freevars_boundvars_constants_of(exp)
@@ -120,12 +122,6 @@ object FOLUtils {
     }
   }
 
-
-/*  def replaceFreeOccurenceOf(variable : FOLVar, by : FOLVar, formula : FOLFormula) : FOLFormula = {
-    val s = Substitution[FOLExpression](variable, by)
-    val r = s(formula)
-
-  }*/
 
   def replaceFreeOccurenceOf(variable : FOLVar, by : FOLVar, formula : FOLFormula) : FOLFormula = {
     formula match {
@@ -364,10 +360,8 @@ object Renaming {
 
 abstract class EequalityA extends REequalityA {
   /* the set of rewrite rules is empty in a pure equational theory */
-  override val rewrite_rules = Set[Tuple2[FOLFormula, FOLFormula]]()
+  final override def rewrite_rules() = Set[Tuple2[FOLFormula, FOLFormula]]()
   override def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean = reequal_to_(s,t)
-
-
 
   private def reequal_to_(s : FOLFormula, t : FOLFormula) : Boolean = {
     def tuples_equals(el : Tuple2[FOLTerm, FOLTerm] ) : Boolean = (word_equalsto(el._1, el._2))
@@ -400,6 +394,36 @@ abstract class EequalityA extends REequalityA {
 
   def word_equalsto(s : FOLTerm, t : FOLTerm) : Boolean
   def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]]
+}
+
+class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : ConstantSymbolA) extends EequalityA {
+  private class Parser(input : String) extends StringReader(input) with SimpleFOLParser
+  private def parse(s:String) = (new Parser(s)).formula.asInstanceOf[FOLTerm]
+
+  val zero = FOLConst(zero_symbol)
+  def f(s:FOLTerm, t:FOLTerm) = Function(function_symbol, List(s,t))
+
+  override def equational_rules() : Set[Equation] = {
+    val x = FOLVar(new VariableStringSymbol("x"))
+    val y = FOLVar(new VariableStringSymbol("y"))
+    val z = FOLVar(new VariableStringSymbol("z"))
+
+    val assoc = Equation( f(x, f(y,z)), f(f(x,y),z))
+    val comm  = Equation( f(x, y), f(y, x))
+    val unit  = Equation( f(x, zero), x)
+
+    Set(assoc, comm, unit)
+  }
+
+  //todo: implementation
+  override def word_equalsto(s : FOLTerm, t : FOLTerm) : Boolean = {
+    true
+  }
+
+  //todo: implementation
+  override def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]] = None
+
+
 }
 
 
