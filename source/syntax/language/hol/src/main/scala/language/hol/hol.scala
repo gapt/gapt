@@ -135,7 +135,7 @@ package hol {
   case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))")
   case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))")
   // Synthetic connective to represent Herbrand Arrays
-  case object HArrayC extends HOLConst(HArraySymbol, "o -> o -> o")
+  case object HArrayC extends HOLConst(HArraySymbol, "(o -> (o -> o))")
   class ExQ protected[hol](e:TA) extends HOLConst(ExistsSymbol, ->(e,"o"))
   class AllQ protected[hol](e:TA) extends HOLConst(ForallSymbol, ->(e,"o"))
 
@@ -210,7 +210,9 @@ package hol {
 
   // Herbrand array definition
   object HArray {
-    def apply(left : HOLFormula, right: HOLFormula) = App(App(HArrayC, left), right).asInstanceOf[HOLFormula]
+    def apply(left : HOLFormula, right: HOLFormula) = {
+      App(App(HArrayC, left), right).asInstanceOf[HOLFormula]
+    }
     def unapply(expression: LambdaExpression) = expression match {
       case App(App(HArrayC, left), right) => Some(left.asInstanceOf[HOLFormula], right.asInstanceOf[HOLFormula])
       case _ => None

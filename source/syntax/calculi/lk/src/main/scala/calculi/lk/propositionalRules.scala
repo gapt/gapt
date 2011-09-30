@@ -777,6 +777,7 @@ import collection.immutable.Seq
           def prin = prinFormula::Nil
           override def name = "\u00ac:l"
         }
+      
     }
     def apply(s1: Sequent, term1oc: Occurrence) = {
       val term1 = getTerms(s1, term1oc)
@@ -831,6 +832,7 @@ import collection.immutable.Seq
           def prin = prinFormula::Nil
           override def name = "\u00ac:r"
         }
+      
     }
     def apply(s1: Sequent, term1oc: Occurrence) = {
       val term1 = getTerms(s1, term1oc)

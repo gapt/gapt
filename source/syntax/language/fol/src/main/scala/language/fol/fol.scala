@@ -208,6 +208,7 @@ object Imp {
   }
 }
 
+
 private[fol] object Ex {
   def apply(sub: LambdaExpression) = App(new ExQ(sub.exptype),sub).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {

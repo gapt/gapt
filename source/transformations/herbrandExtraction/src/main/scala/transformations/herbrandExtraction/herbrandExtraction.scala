@@ -15,6 +15,8 @@ import at.logic.calculi.occurrences._
 import scala.collection.immutable._
 import at.logic.calculi.lk.base.types._
 
+package herbrandExtraction {
+
 class HerbrandExtractionException(msg: String) extends Exception(msg)
 
 object herbrandExtraction {
@@ -34,22 +36,22 @@ object herbrandExtraction {
   private def expandArrays(seq: Sequent) : FSequent = {
     val newant = seq.antecedent.foldLeft (Seq[HOLFormula]()) ((acc, f) => (expand (f.formula)) ++ acc)
     val newsucc = seq.succedent.foldLeft (Seq[HOLFormula]()) ((acc, f) => (expand (f.formula)) ++ acc)
-    (newant, newsucc)
+    new FSequent(newant, newsucc)
   }
 
   private def expand(f: HOLFormula) : Seq[HOLFormula] = f match {
     case And(a, b) => 
       val left = expand(a) 
       val right = expand(b)
-      for(fa <- left; fb <- right) yield { And(a, b) }
+      for(fa <- left; fb <- right) yield { And(fa, fb) }
     case Or(a, b) =>
       val left = expand(a) 
       val right = expand(b)
-      for(fa <- left; fb <- right) yield { Or(a, b) }
+      for(fa <- left; fb <- right) yield { Or(fa, fb) }
     case Imp(a, b) =>
       val left = expand(a) 
       val right = expand(b)
-      for(fa <- left; fb <- right) yield { Imp(a, b) }
+      for(fa <- left; fb <- right) yield { Imp(fa, fb) }
     case Neg(a) => expand(a).map(x => Neg(x))
     case HArray(a, b) => expand(a) ++ expand(b)
     case Atom(_, _) => f::Nil 
@@ -90,6 +92,10 @@ object herbrandExtraction {
     // equal and should be joined in a herbrand array
     case ContractionLeftRule(up, _, aux1, aux2, prin) =>
       val hs = buildHerbrand(up)
+      // Get the indexes from the aux formulas.
+      // Find the formulas with these same indexes in hs
+      // Pass these occurrences to the apply method of ContractionLeftRule
+      // (overloaded)
       // Find the corresponding formulas in hs
       val aux1hs = getOccSamePosition(up.root.antecedent, aux1, hs.antecedent)
       val aux2hs = getOccSamePosition(up.root.antecedent, aux2, hs.antecedent)
@@ -97,9 +103,14 @@ object herbrandExtraction {
       // quantified formula. So, join them in a herbrand array op.
       if(aux1hs.formula != aux2hs.formula){
         val ha = HArray(aux1hs.formula, aux2hs.formula)
-        val f1 = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors)
-        val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
-        ContractionLeftRule(hs, f1, f2)
+        val haocc = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors ++ aux2hs.ancestors)
+        //val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
+        // Creating the sequent by hand (choosing this solution so that the code
+        // from propositionalRules is not polluted with ifs).
+        val ant1 = createContext(hs.antecedent.filterNot(x =>  x == aux1hs || x == aux2hs))
+        val antecedent = ant1 :+ haocc
+        val succedent = createContext(hs.succedent)
+        Sequent(antecedent, succedent)
       }
       // Pass these occurrences to the apply method of ContractionLeftRule
       else ContractionLeftRule(hs, aux1hs, aux2hs)
@@ -112,11 +123,16 @@ object herbrandExtraction {
       // quantified formula. So, join them in a herbrand array op.
       if(aux1hs.formula != aux2hs.formula){
         val ha = HArray(aux1hs.formula, aux2hs.formula)
-        val f1 = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors)
-        val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
-        ContractionRightRule(hs, f1, f2)
+        val haocc = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors ++ aux2hs.ancestors)
+        //val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
+        // Creating the sequent by hand (choosing this solution so that the code
+        // from propositionalRules is not polluted with ifs).
+        val antecedent = createContext(hs.antecedent)
+        val suc1 = createContext(hs.succedent.filterNot(x =>  x == aux1hs || x == aux2hs))
+        val succedent = suc1 :+ haocc
+        Sequent(antecedent, succedent)
       }
-      // Pass these occurrences to the apply method of ContractionLeftRule
+      // Pass these occurrences to the apply method of ContractionRightRule
       else ContractionRightRule(hs, aux1hs, aux2hs)
 
     /* RIGHT CONJUNCTION RULE */
@@ -258,4 +274,5 @@ object herbrandExtraction {
         CutRule(hs1, hs2, aux1hs, aux2hs)
     }
   }
+}
 }
