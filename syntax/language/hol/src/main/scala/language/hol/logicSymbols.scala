@@ -73,7 +73,7 @@ package logicSymbols {
   // Symbols for a Herbrand array.
   case object HArraySymbol extends LogicalSymbolsA {
     override def unique = "HArraySymbol"
-    override def toString = "〈"
+    override def toString = "HA"
     def toCode = "HArraySymbol"
   }
 

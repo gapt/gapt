@@ -255,8 +255,10 @@ trait LambdaFactoryProvider {
   class App protected[typedLambdaCalculus]( val function: LambdaExpression, val argument: LambdaExpression ) extends LambdaExpression {
     require({
       function.exptype match {
-        case ->(in,out) => {if (in == argument.exptype) true
-          else false}
+        case ->(in,out) => {
+          if (in == argument.exptype) true
+          else false
+          }
         case _          => false
       }
     })
