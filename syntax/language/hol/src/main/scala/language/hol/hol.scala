@@ -138,6 +138,7 @@ package hol {
   case object HArrayC extends HOLConst(HArraySymbol, "(o -> (o -> o))")
   class ExQ protected[hol](e:TA) extends HOLConst(ExistsSymbol, ->(e,"o"))
   class AllQ protected[hol](e:TA) extends HOLConst(ForallSymbol, ->(e,"o"))
+  case object EqC extends HOLConst(EqSymbol, "(i -> (i -> o))")
 
   object HOLFactory extends LambdaFactoryA {
     def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var =
@@ -204,6 +205,14 @@ package hol {
     def apply(left: HOLFormula, right: HOLFormula) = App(App(ImpC,left),right).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
         case App(App(ImpC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )
+        case _ => None
+    }
+  }
+
+  object Equation {
+    def apply(left: HOLExpression, right: HOLExpression) = Atom(EqC, left::right::Nil)
+    def unapply(expression: LambdaExpression) = expression match {
+        case Atom(eqC,left::right::Nil) => Some( left,right )
         case _ => None
     }
   }

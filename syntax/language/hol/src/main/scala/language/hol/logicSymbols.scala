@@ -20,6 +20,15 @@ package logicSymbols {
     }
   }
 
+  case object EqSymbol extends ConstantSymbolA {
+    override def unique = "EqSymbol"
+    override def toString = "="
+    def toCode = "EqSymbol"
+    def compare(that: SymbolA) = that match {
+      case a: ConstantSymbolA => unique.compare( a.unique )
+    }
+  }
+
   object LogicalSymbolsA {def unapply(s: SymbolA): Option[String] = s match {case ls: LogicalSymbolsA => Some(ls.unique); case _ => None}}
 
   case object NegSymbol extends LogicalSymbolsA {
