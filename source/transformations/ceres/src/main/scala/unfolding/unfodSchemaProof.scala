@@ -111,6 +111,10 @@ object applySchemaSubstitution {
       case CutRule(p1, p2, s, a1, a2) => {
         val new_p1 = new_parents.head
         val new_p2 = new_parents.last
+        println("Cut:")
+        println(printSchemaProof.sequentToString(new_p1.root))
+        println("aux = "+printSchemaProof.formulaToString(subst( a1.formula )))
+        println(printSchemaProof.sequentToString(new_p2.root))
         //val new_proof = CutRule( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
         val new_proof = CutRule( new_p1, new_p2, subst( a1.formula ).asInstanceOf[HOLFormula] )
     //    ( new_proof, computeMap(
@@ -177,7 +181,7 @@ object applySchemaSubstitution {
   }
 
   def apply( proof: LKProof, subst: SchemaSubstitution1[HOLExpression] ) : LKProof = {
- //   println("\n"+proof.rule+")")
+    println("\n"+proof.rule+")")
 
     proof match {
       case SchemaProofLinkRule( seq, link, ind::_ ) => {
@@ -311,6 +315,12 @@ import at.logic.language.hol._
             WeakeningLeftRule( new_p, m.formula )
         }
 
+        case WeakeningRightRule(p, _, m) => {
+            val new_p = apply(p)
+            implicit val factory = defaultFormulaOccurrenceFactory
+            WeakeningRightRule( new_p, m.formula )
+        }
+
         case CutRule( p1, p2, _, a1, a2 ) => {
             val new_p1 = apply(p1)
             val new_p2 = apply(p2)
@@ -352,6 +362,18 @@ import at.logic.language.hol._
             AndLeft2Rule( new_p, a2, a.formula )
         }
 
+        case OrRight1Rule(p, r, a, m) =>  {
+            val new_p = apply(p)
+            val a2 = m.formula  match { case Or(l, _) => l }
+            OrRight1Rule( new_p, a.formula, a2)
+        }
+
+        case OrRight2Rule(p, r, a, m) =>  {
+            val new_p = apply(p)
+            val a2 = m.formula  match { case Or(_, r) => r }
+            OrRight2Rule( new_p, a.formula, a2)
+        }
+
         case NegRightRule( p, _, a, m ) => {
             val new_p = apply(p)
             NegRightRule( new_p, a.formula )
@@ -361,7 +383,12 @@ import at.logic.language.hol._
             val new_p = apply(p)
             ContractionLeftRule( new_p, a1.formula )
         }
-        case _ => { println("ERROR in CloneLKProof !");throw new Exception("ERROR in unfolding: CloneLKProof") }
+
+        case ContractionRightRule(p, _, a1, a2, m) => {
+            val new_p = apply(p)
+            ContractionRightRule( new_p, a1.formula )
+        }
+        case _ => { println("ERROR in CloneLKProof : missing rule!");throw new Exception("ERROR in unfolding: CloneLKProof") }
     }}
 }
 
