@@ -114,6 +114,15 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       (HOLConst(new ConstantStringSymbol("P"), o)) must beLike {case Atom(ConstantStringSymbol("P"), Nil) => true}
     }
   }
+  "Equation" should {
+    "be of the right type" in {
+      val c1 = HOLConst(new ConstantStringSymbol("f1"), i -> i)
+      val c2 = HOLConst(new ConstantStringSymbol("f2"), i -> i)
+      val eq = Equation(c1,c2)
+      val App(App(t,_), _) = eq
+      t.exptype must beEqual ((i -> i) -> ((i -> i) -> o))
+    }
+  }
   "Complex AppN" should {
     "be extracted correctly" in {
       AppN( HOLConst( new ConstantStringSymbol("\\cap"),"((i -> o) -> ((i -> o) -> (i -> o)))"),

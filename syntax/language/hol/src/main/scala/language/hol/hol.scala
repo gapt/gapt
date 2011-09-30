@@ -16,7 +16,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 
 package hol {
 
-  trait Formula extends LambdaExpression {require(exptype == To())}
+trait Formula extends LambdaExpression {require(exptype == To())}
   trait Const
   trait HOL extends LambdaFactoryProvider {
     override def factory : LambdaFactoryA = HOLFactory
@@ -138,7 +138,7 @@ package hol {
   case object HArrayC extends HOLConst(HArraySymbol, "(o -> (o -> o))")
   class ExQ protected[hol](e:TA) extends HOLConst(ExistsSymbol, ->(e,"o"))
   class AllQ protected[hol](e:TA) extends HOLConst(ForallSymbol, ->(e,"o"))
-  case object EqC extends HOLConst(EqSymbol, "(i -> (i -> o))")
+  case class EqC(e:TA) extends HOLConst(EqSymbol, ->(e, ->(e,"o")))
 
   object HOLFactory extends LambdaFactoryA {
     def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var =
@@ -210,9 +210,12 @@ package hol {
   }
 
   object Equation {
-    def apply(left: HOLExpression, right: HOLExpression) = Atom(EqC, left::right::Nil)
+    def apply(left: HOLExpression, right: HOLExpression) = {
+      require(left.exptype == right.exptype)
+      App(App(EqC(left.exptype), left),right)
+    }
     def unapply(expression: LambdaExpression) = expression match {
-        case Atom(eqC,left::right::Nil) => Some( left,right )
+        case App(App(EqC(_),left),right) => Some( left,right )
         case _ => None
     }
   }
