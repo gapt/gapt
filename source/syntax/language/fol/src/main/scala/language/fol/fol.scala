@@ -127,7 +127,7 @@ object FOLConst {
 
 object Equation {
     def apply(left: FOLTerm, right: FOLTerm) = {
-      App(App(EqC, left),right)
+      App(App(EqC, left),right).asInstanceOf[FOLFormula]
     }
     def unapply(expression: LambdaExpression) = expression match {
         case App(App(EqC,left),right) => Some( left,right )

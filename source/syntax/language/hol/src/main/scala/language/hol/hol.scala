@@ -212,7 +212,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
   object Equation {
     def apply(left: HOLExpression, right: HOLExpression) = {
       require(left.exptype == right.exptype)
-      App(App(EqC(left.exptype), left),right)
+      App(App(EqC(left.exptype), left),right).asInstanceOf[HOLFormula]
     }
     def unapply(expression: LambdaExpression) = expression match {
         case App(App(EqC(_),left),right) => Some( left,right )
