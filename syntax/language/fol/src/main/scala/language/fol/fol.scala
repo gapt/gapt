@@ -6,6 +6,7 @@
  */
 package at.logic.language.fol
 
+import _root_.at.logic.language.hol.EqC._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp, Atom => HOLAtom, Function => HOLFunction}
 import at.logic.language.hol.{HOLExpression, HOL, HOLFormula, HOLVar, HOLConst, HOLApp, HOLAbs, HOLConstFormula, HOLFactory, HOLAppFormula}
@@ -124,6 +125,16 @@ object FOLConst {
   }
 }
 
+object Equation {
+    def apply(left: FOLTerm, right: FOLTerm) = {
+      App(App(EqC, left),right)
+    }
+    def unapply(expression: LambdaExpression) = expression match {
+        case App(App(EqC,left),right) => Some( left,right )
+        case _ => None
+    }
+  }
+
 // FOL atom of the form P(t_1,...,t_n)
 object Atom {
   def apply( sym: ConstantSymbolA, args: List[FOLTerm]) = {
@@ -155,6 +166,7 @@ case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
 case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))") with FOL
 case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))") with FOL
+case object EqC extends HOLConst(EqSymbol, "(i -> (i -> o))") with FOL
 class ExQ(e:TA) extends HOLExQ(e) with FOL
 class AllQ(e:TA) extends HOLAllQ(e) with FOL
 
