@@ -6,7 +6,6 @@ import org.scalatest.matchers.MustMatchers
 
 import _root_.at.logic.calculi.proofs.UnaryRuleTypeA
 import _root_.at.logic.language.fol._
-import _root_.at.logic.language.fol.equations.Equation
 import _root_.at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.language.lambda.symbols.VariableStringSymbol
@@ -14,6 +13,8 @@ import _root_.at.logic.language.lambda.types.->
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lk._
 import scala.None
+import types.Equation
+import at.logic.language.fol.{Utils => FOLUtils }
 
 
 class LKModuloTest extends SpecificationWithJUnit {
@@ -62,7 +63,7 @@ class LKModuloTest extends SpecificationWithJUnit {
                 AllVar(FOLVar(zs), (AllVar(FOLVar(ys),
                   Atom(ps, List(FOLVar(ys)))))))
     val eq = new TestEEquality()
-    println(FOLUtils.ispredicatetype(Atom(ps, List(FOLVar(xs), FOLVar(ys))).exptype))
+    println(FOLUtils.isPredicateType(Atom(ps, List(FOLVar(xs), FOLVar(ys))).exptype))
 
     Atom(ps, List(FOLVar(xs), FOLVar(ys))).asInstanceOf[LambdaExpression] match {
       case App(exp1, exp2) =>

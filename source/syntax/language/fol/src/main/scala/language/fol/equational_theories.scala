@@ -1,3 +1,4 @@
+/*
 package at.logic.language.fol.equations
 
 import _root_.at.logic.language.fol._
@@ -25,3 +26,4 @@ object Equation {
     }
   }
 }
+*/

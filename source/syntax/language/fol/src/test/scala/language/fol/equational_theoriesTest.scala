@@ -1,3 +1,4 @@
+/*
 package at.logic.language.fol.equations
 
 import org.specs._
@@ -48,5 +49,4 @@ class EquationsTest extends SpecificationWithJUnit {
   }
 
 }
-
-
+ */

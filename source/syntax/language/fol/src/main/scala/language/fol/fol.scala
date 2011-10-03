@@ -125,6 +125,7 @@ object FOLConst {
   }
 }
 
+
 object Equation {
     def apply(left: FOLTerm, right: FOLTerm) = {
       App(App(EqC, left),right).asInstanceOf[FOLFormula]
@@ -279,6 +280,7 @@ object BinaryLogicSymbol {
 }
 
 object FOLFactory extends LambdaFactoryA {
+  import at.logic.language.fol.Utils.{isFirstOrderType, isPredicateType }
   def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int] ) : Var = exptype match {
     case Ti() => name match {
       case a: ConstantSymbolA => FOLConst(a)
@@ -312,18 +314,6 @@ object FOLFactory extends LambdaFactoryA {
     case _ => false
   }
 
-  private def isFirstOrderType( exptype: TA ) = isFunctionType( exptype ) || isPredicateType( exptype )
-
-  private def isFunctionType( exptype: TA ) = checkType( exptype, Ti(), Ti() ) 
-
-  private def isPredicateType( exptype: TA ) = checkType( exptype, To(), Ti() )
-
-  private def checkType( toCheck: TA, retType : TA, argType: TA ) : Boolean =
-    toCheck match {
-      case t : Ti => t == retType
-      case t : To => t == retType
-      case ->(ta, tr) => ta == argType && checkType( tr, retType, argType )
-  }
 }
 
 object getFreeVariablesFOL {
