@@ -16,8 +16,6 @@ import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.Seq
 import at.logic.language.hol.{HOLFormula}
 
-
-
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
 case object AndEquivalenceRule2Type extends UnaryRuleTypeA
 case object AndEquivalenceRule3Type extends UnaryRuleTypeA
