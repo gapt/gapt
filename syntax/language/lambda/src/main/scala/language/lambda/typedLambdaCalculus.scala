@@ -110,7 +110,7 @@ trait LambdaFactoryProvider {
       case v: Var => (v.name == name && v.exptype == exptype)
       case _ => false
     }
-    override def hashCode() = exptype.hashCode + (if (isFree) name.hashCode else dbInd.hashCode)
+    override def hashCode() = (41 * exptype.hashCode) + (if (isFree) name.hashCode else dbInd.hashCode)
     override def toString() = "Var(" + toStringSimple() + "," + exptype + ")"
     def toString1(): String = name.toString
     // in curly brackets is the de bruijn index
@@ -190,7 +190,7 @@ trait LambdaFactoryProvider {
       case AbsInScope(v,exp) => (v =^ variableInScope && exp =^ expressionInScope && e.exptype == exptype)
       case _ => false
     }
-    override def hashCode() = variableInScope.hashCode + expressionInScope.hashCode
+    override def hashCode() = (41 * variableInScope.hashCode) + expressionInScope.hashCode
     override def toString() = "Abs(" + variableInScope + "," + expressionInScope + ")"
     def variant(gen: => VariantGenerator) = Abs(variable, expressionInScope.variant(gen))
     def toString1(): String = "Abs(" + variableInScope.toString1 + "," + expressionInScope.toString1 + ")"
@@ -276,7 +276,7 @@ trait LambdaFactoryProvider {
       case App(a,b) => (a =^ function && b =^ argument && e.exptype == exptype)
       case _ => false
     }
-    override def hashCode() = function.hashCode + argument.hashCode
+    override def hashCode() = (41 * function.hashCode) + argument.hashCode
     override def toString() = "App(" + function + "," + argument + ")"
     def toString1(): String = "App(" + function.toString1+", "+argument.toString1+")"
     def toStringSimple() = "(" + function.toStringSimple + argument.toStringSimple + ")"
