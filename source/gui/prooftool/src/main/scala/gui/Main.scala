@@ -20,7 +20,6 @@ import swing.Dialog.Message
 import scala.collection.immutable.Seq
 
 object Main extends SimpleSwingApplication {
-
   override def startup(args: Array[String]) = {
     showFrame
     if (args.length >= 1) loadProof(args(0),12)
@@ -146,7 +145,6 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
-
       contents += new MenuItem(Action("Compute ClList") { computeClList }) {
         border = customBorder
         enabled = false
@@ -242,7 +240,8 @@ object Main extends SimpleSwingApplication {
       }
     }
   }
-   def computeClList = try {
+
+  def computeClList = try {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
     import at.logic.transformations.ceres.struct.StructCreators
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
@@ -345,7 +344,7 @@ object Main extends SimpleSwingApplication {
 */  }
 
   def testSchemata = {
-  /*  import org.scilab.forge.jlatexmath._
+    import org.scilab.forge.jlatexmath._
     import java.awt.image.BufferedImage
     import java.awt.Color
 
@@ -363,8 +362,8 @@ object Main extends SimpleSwingApplication {
 	  jl.foreground = new Color(0, 0, 0)
 	  icon.paintIcon(jl.peer, g2, 0, 0)
     jl.icon = icon
-    body.viewportView = jl*/
-
+    body.viewportView = jl
+   /*
     import at.logic.calculi.lk.macroRules.AndLeftRule
     import at.logic.calculi.lk.base._
     import at.logic.language.schema._
@@ -424,10 +423,129 @@ object Main extends SimpleSwingApplication {
     checkProofLinks( psi_0 )
     checkProofLinks( psi_sk )
 
-    val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\psi", n ) )
-  //  (new FileWriter("cs-psi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
-   // body.contents = new Launcher(Some("Schema CL List", cs.map(x => x.getSequent)), 16)
-    body.contents = new Launcher(Some("Schema psi_sn", psi_sk), 16)
+    //---------------------------- NEW EXAMPLE -----------------------------//
+    val n1 = Succ(k)
+    val n2 = Succ(n1)
+    val n3 = Succ(n2)
+    val zero = IntZero()
+    val one = Succ(IntZero())
+    val two = Succ(Succ(IntZero()))
+    val A0 = IndexedPredicate(new ConstantStringSymbol("A"), zero)
+    val A1 = IndexedPredicate(new ConstantStringSymbol("A"), one)
+    val A2 = IndexedPredicate(new ConstantStringSymbol("A"), two)
+    val Ai = IndexedPredicate(new ConstantStringSymbol("A"), i)
+    val Ai1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(i))
+    val orneg = Or(Neg(Ai), Ai1)
+    val An1 = IndexedPredicate(new ConstantStringSymbol("A"), n1)
+    val An2 = IndexedPredicate(new ConstantStringSymbol("A"), n2)
+    val An3 = IndexedPredicate(new ConstantStringSymbol("A"), n3)
+
+    //-------- Definition of \psi_base
+
+    val ax1 = Axiom(Sequent(A0::Nil, A0::Nil))
+    val negl1 = NegLeftRule(ax1,A0)
+    val ax2 = Axiom(Sequent(A1::Nil, A1::Nil))
+    val orl1 = OrLeftRule(negl1, ax2, Neg(A0), A1)
+    val negl2 = NegLeftRule(orl1,A1)
+    val ax3 = Axiom(Sequent(A2::Nil, A2::Nil))
+    val orl2 = OrLeftRule(negl2, ax3, Neg(A1), A2)
+    val ax4 = Axiom(Sequent(A0::Nil, A0::Nil))
+    val negl3 = NegLeftRule(ax4,A0)
+    val ax5 = Axiom(Sequent(A1::Nil, A1::Nil))
+    val orl3 = OrLeftRule(negl3, ax5, Neg(A0), A1)
+    val ax6 = Axiom(Sequent(A0::Nil, A0::Nil))
+    val andEqR1 = AndRightEquivalenceRule3(ax6,A0, BigAnd(i,Ai,zero,zero))
+    val orl22 = AndRightRule(andEqR1, orl3, BigAnd(i,Ai,zero,zero), A1)
+    val contrl1 = ContractionLeftRule(orl22, A0)
+    val andEqR2 = AndRightEquivalenceRule1(contrl1, And(BigAnd(i,Ai,zero,zero), A1), BigAnd(i,Ai,zero,one))
+    val andr2 = AndRightRule(orl2, andEqR2, A2, BigAnd(i,Ai,zero,one))
+    val andr3 = AndRightEquivalenceRule1(andr2, And(A2, BigAnd(i,Ai,zero,one)), BigAnd(i,Ai,zero,two))
+    val contrl2 = ContractionLeftRule(andr3, A0)
+    val contrl3 = ContractionLeftRule(contrl2, Or(Neg(A0),A1))
+    val andleq3 = AndLeftEquivalenceRule3(contrl3, Or(Neg(A0),A1), BigAnd(i, Or(Neg(Ai),Ai1), zero, zero))
+    val andlb = AndLeftRule(andleq3, Or(Neg(A1),A2), BigAnd(i, Or(Neg(Ai),Ai1), zero, zero))
+    val base = AndLeftEquivalenceRule1(andlb, And(Or(Neg(A1),A2), BigAnd(i, Or(Neg(Ai),Ai1), zero, zero)), BigAnd(i, Or(Neg(Ai),Ai1), zero, one))
+
+    //----------- end of definition of \psi_base
+
+    //-------- Definition of \psi_step
+
+    val pl2 = SchemaProofLinkRule(Sequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
+    val wl2 = WeakeningLeftRule(pl2, Neg(An2))
+    val pl3 = SchemaProofLinkRule(Sequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
+    val wl3 = WeakeningLeftRule(pl3, An3)
+    val orl5 = OrLeftRule(wl2, wl3, Neg(An2), An3)
+    val cont1l = ContractionLeftRule(orl5, A0)
+    val cont2l = ContractionLeftRule(cont1l, BigAnd(i,orneg,zero,n1))
+    val pr2 = ContractionRightRule(cont2l, BigAnd(i,Ai,zero,n2))
+
+    val pl1 = SchemaProofLinkRule(Sequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
+    val ax66 = Axiom(Sequent(An2::Nil, An2::Nil))
+    val andl222 = AndLeft2Rule(ax66, BigAnd(i,Ai,zero,n1), An2)
+    val eq4 = AndLeftEquivalenceRule1(andl222, And(BigAnd(i,Ai,zero,n1), An2), BigAnd(i,Ai,zero,n2))
+    val cut1 = CutRule(pl1, eq4, BigAnd(i,Ai,zero,n2))
+    val neg4l = NegLeftRule(cut1, An2)
+    val ax7 = Axiom(Sequent(An3::Nil, An3::Nil))
+    val pr3 = OrLeftRule(neg4l, ax7, Neg(An2), An3)
+
+    val andr5 = AndRightRule(pr2, pr3, BigAnd(i,Ai,zero,n2), An3)
+    val equiv = AndRightEquivalenceRule1(andr5, And(BigAnd(i,Ai,zero,n2), An3), BigAnd(i,Ai,zero,n3))
+    val contr5 = ContractionLeftRule(equiv, A0)
+    val contr55 = ContractionLeftRule(contr5, BigAnd(i,orneg,zero,n1))
+    val contr555 = ContractionLeftRule(contr55, Or(Neg(An2), An3))
+    val andl555 = AndLeftRule(contr555, BigAnd(i,orneg,zero,n1), Or(Neg(An2), An3))
+    val eq33 = AndLeftEquivalenceRule1(andl555, And(BigAnd(i,orneg,zero,n1), Or(Neg(An2), An3)), BigAnd(i,orneg,zero,n2))
+    val negr33 = NegRightRule(eq33, A0)
+    val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,Ai,zero,n3))
+
+    val ax10 = Axiom(Sequent(A0::Nil, A0::Nil))
+    val nl6 = NegLeftRule(ax10, A0)
+    val khin3 = SchemaProofLinkRule(Sequent(BigAnd(i,Ai,zero,n3)::Nil, BigAnd(i,Ai,zero,n3)::Nil), "\\chi", n3)
+    val orl10 = OrLeftRule(nl6, khin3, Neg(A0), BigAnd(i,Ai,zero,n3))
+    val step = CutRule(pl13, orl10, Or(Neg(A0), BigAnd(i,Ai,zero,n3)))
+
+    //----------- end of definition of \psi_step
+
+    //----------- Definition of \chi_0
+
+    val chi0a = Axiom(Sequent(A0::Nil, A0::Nil))
+    val eqq1 = AndLeftEquivalenceRule3(chi0a, A0, BigAnd(i,Ai,zero,zero))
+    val chi0 = AndRightEquivalenceRule3(eqq1, A0, BigAnd(i,Ai,zero,zero))
+
+    //----------- end of definition of \chi_0
+
+    //----------- Definition of \chi_k+1
+
+    val prh = SchemaProofLinkRule(Sequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), "\\chi", k)
+    val ax8 = Axiom(Sequent(An1::Nil, An1::Nil))
+    val andr6 = AndRightRule(prh, ax8, BigAnd(i,Ai,zero,k), An1)
+    val eq44 = AndRightEquivalenceRule1(andr6, And(BigAnd(i,Ai,zero,k), An1), BigAnd(i,Ai,zero,n1))
+    val andlc = AndLeftRule(eq44, BigAnd(i,Ai,zero,k), An1)
+    val chin = AndLeftEquivalenceRule1(andlc, And(BigAnd(i,Ai,zero,k), An1), BigAnd(i,Ai,zero,n1))
+
+    //----------- end of definition of \chi_k+1
+
+    SchemaProofDB.clear
+    SchemaProofDB.put(new SchemaProof("\\chi", k::Nil, Sequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), chi0, chin))
+    SchemaProofDB.put(new SchemaProof("\\psi", k::Nil, Sequent(A0::BigAnd(i, orneg, zero, n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), base, step))
+
+    checkProofLinks( base )
+    checkProofLinks( step )
+    checkProofLinks( chi0 )
+    checkProofLinks( chin )
+
+    try {
+      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\psi", n ) )
+      (new FileWriter("cs-psi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
+      body.contents = new Launcher(Some("Schema CL List", cs.map(x => x.getSequent)), 16)
+    } catch {
+      case e: Exception =>
+        val t = e.toString + "\n\n" + e.getStackTraceString
+        var k = 0
+        val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
+        Dialog.showMessage(body, t.dropRight(t.size - index - 1))
+    }
+  //  body.contents = new Launcher(Some("Schema psi_sn", step), 16) */
   }
 
   val body = new MyScrollPane
