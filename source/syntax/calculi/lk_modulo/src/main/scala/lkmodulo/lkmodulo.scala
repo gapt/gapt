@@ -266,35 +266,6 @@ abstract class EequalityA extends REequalityA {
   def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]]
 }
 
-class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : ConstantSymbolA) extends EequalityA {
-  private class Parser(input : String) extends StringReader(input) with SimpleFOLParser
-  private def parse(s:String) = (new Parser(s)).formula.asInstanceOf[FOLTerm]
-
-  val zero = FOLConst(zero_symbol)
-  def f(s:FOLTerm, t:FOLTerm) = Function(function_symbol, List(s,t))
-
-  override def equational_rules() : Set[Equation] = {
-    val x = FOLVar(new VariableStringSymbol("x"))
-    val y = FOLVar(new VariableStringSymbol("y"))
-    val z = FOLVar(new VariableStringSymbol("z"))
-
-    val assoc = Equation( f(x, f(y,z)), f(f(x,y),z))
-    val comm  = Equation( f(x, y), f(y, x))
-    val unit  = Equation( f(x, zero), x)
-
-    Set(assoc, comm, unit)
-  }
-
-  //todo: implementation
-  override def word_equalsto(s : FOLTerm, t : FOLTerm) : Boolean = {
-    true
-  }
-
-  //todo: implementation
-  override def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]] = None
-
-
-}
 
 
 object ConversionRightRule {
