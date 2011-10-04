@@ -1,9 +1,15 @@
 package at.logic.algorithms.unification
 
+import _root_.at.logic.calculi.lkmodulo.EequalityA
+import _root_.at.logic.calculi.lkmodulo.types.Equation
+import _root_.at.logic.language.lambda.symbols.{VariableStringSymbol, VariableSymbolA}
+import _root_.at.logic.parsing.language.simple.SimpleFOLParser
+import _root_.at.logic.parsing.readers.StringReader
 import at.logic.algorithms.diophantine.{LankfordSolver, Vector}
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.fol._
-import at.logic.language.lambda.symbols.VariableSymbolA
+import at.logic.language.fol.{Equation => FOLEquation}
+import _root_.at.logic.calculi.lkmodulo.Equation
 import at.logic.language.lambda.substitutions.Substitution
 
 import collection.mutable.HashMap
@@ -623,3 +629,31 @@ object ACUtils {
   
 }
 
+class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : ConstantSymbolA) extends EequalityA {
+  import ACUtils.flatten
+  private class Parser(input : String) extends StringReader(input) with SimpleFOLParser
+  private def parse(s:String) = (new Parser(s)).formula.asInstanceOf[FOLTerm]
+
+  val zero = FOLConst(zero_symbol)
+  def f(s:FOLTerm, t:FOLTerm) = Function(function_symbol, List(s,t))
+
+  override def equational_rules() : Set[Equation] = {
+    val x = FOLVar(new VariableStringSymbol("x"))
+    val y = FOLVar(new VariableStringSymbol("y"))
+    val z = FOLVar(new VariableStringSymbol("z"))
+
+    val assoc = Equation( f(x, f(y,z)), f(f(x,y),z))
+    val comm  = Equation( f(x, y), f(y, x))
+    val unit  = Equation( f(x, zero), x)
+
+    Set(assoc, comm, unit)
+  }
+
+  //todo: implementation
+  override def word_equalsto(s : FOLTerm, t : FOLTerm) : Boolean = {
+    (flatten (function_symbol, s)) syntaxEquals (flatten (function_symbol, t))
+  }
+
+  //todo: implementation
+  override def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]] = None
+}
