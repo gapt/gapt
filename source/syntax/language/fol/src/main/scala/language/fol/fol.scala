@@ -132,7 +132,7 @@ object Equation {
       App(App(EqC, left),right).asInstanceOf[FOLFormula]
     }
     def unapply(expression: LambdaExpression) = expression match {
-        case App(App(EqC,left),right) => Some( left,right )
+        case App(App(EqC,left),right) => Some( left.asInstanceOf[FOLTerm],right.asInstanceOf[FOLTerm] )
         case _ => None
     }
   }

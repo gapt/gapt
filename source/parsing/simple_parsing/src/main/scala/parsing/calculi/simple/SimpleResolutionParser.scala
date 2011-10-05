@@ -14,7 +14,7 @@ import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.calculi.occurrences.FormulaOccurrence
-
+import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base._
 import collection.immutable.Seq
 
@@ -32,22 +32,22 @@ import at.logic.calculi.occurrences.{factory => defaultFactory}
   override def neg = neg2
   def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {case ls ~ "." => new Clause(ls.filter(filterPosFormulas).map(stripNeg),ls.filter(x => !filterPosFormulas(x)))}
 }  */
-trait SimpleResolutionParserFOL extends SimpleResolutionParser[Clause] with SimpleFOLParser {
+trait SimpleResolutionParserFOL extends SimpleResolutionParser with SimpleFOLParser {
   override def formula = formula2
   override def neg = neg2
-  def clause: Parser[Clause] = repsep(formula,"|") ~ "." ^^ {
-      case ls ~ "." => new Clause(
-            (ls.filter(filterPosFormulas).map(stripNeg)) map ((x : HOLFormula) => defaultFactory.createFormulaOccurrence(x, Nil)),
-            (ls.filter(x => !filterPosFormulas(x))) map ((x : HOLFormula) => defaultFactory.createFormulaOccurrence(x, Nil))
+  def clause: Parser[FSequent] = repsep(formula,"|") ~ "." ^^ {
+      case ls ~ "." => new Pair(
+            (ls.filter(filterPosFormulas).map(stripNeg)),
+            (ls.filter(x => !filterPosFormulas(x)))
        ) }
 }
 
-trait SimpleResolutionParser[V <: Sequent] extends ResolutionParser[V] {
+trait SimpleResolutionParser extends ResolutionParser {
   // used instead of inheritence so it can be combined with subclass of HOL (like FOL)
   this: SimpleHOLParser =>
   
-  def clauseList: Parser[List[V]] = rep(clause)
-  protected def clause: Parser[V]
+  def clauseList: Parser[List[FSequent]] = rep(clause)
+  protected def clause: Parser[FSequent]
 
   protected def formula2: Parser[HOLFormula] = (neg | atom)
   protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ {case "-" ~ x => Neg(x)}

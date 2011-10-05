@@ -32,6 +32,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
         (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
         else args.foldLeft("")((s,a) => s+a.toString)) + "):" + tpe.toString
       case And(x,y) => "(" + x.toString + AndSymbol + y.toString + ")"
+      case Equation(x,y) => "(" + x.toString + EqSymbol + y.toString + ")"
       case Or(x,y) => "(" + x.toString + OrSymbol + y.toString + ")"
       case Imp(x,y) => "(" + x.toString + ImpSymbol + y.toString + ")"
       case Neg(x) => NegSymbol + x.toString
@@ -48,6 +49,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case Atom(x, args) => false
       // case Function(x, args, tpe) => x.containsQuantifier || args.exists(y => y.asInstanceOf[HOLExpression].containsQuantifier)  // I think this case is not really necessary, because it is covered by the last case...
       case And(x,y) => x.containsQuantifier || y.containsQuantifier
+      case Equation(x,y) => x.containsQuantifier || y.containsQuantifier
       case Or(x,y) => x.containsQuantifier || y.containsQuantifier
       case Imp(x,y) => x.containsQuantifier || y.containsQuantifier
       case HArray(x,y) => x.containsQuantifier || y.containsQuantifier
@@ -215,7 +217,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       App(App(EqC(left.exptype), left),right).asInstanceOf[HOLFormula]
     }
     def unapply(expression: LambdaExpression) = expression match {
-        case App(App(EqC(_),left),right) => Some( left,right )
+        case App(App(EqC(_),left),right) => Some( left.asInstanceOf[HOLExpression],right.asInstanceOf[HOLExpression] )
         case _ => None
     }
   }
@@ -236,6 +238,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
         case And(left,right) => Some( (left,right) )
         case Or(left,right) => Some( (left,right) )
         case Imp(left,right) => Some( (left,right) )
+        case Equation(left,right) => Some( (left,right) )
         case _ => None
     }
   }
