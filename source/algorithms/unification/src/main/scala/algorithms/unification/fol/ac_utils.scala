@@ -15,18 +15,18 @@ object TermUtils {
     }
   }
 
-  /* defines a lexicographic recorsive term-ordering - since variables, conatnts and function symbol
-* only share their namespace by convention, an ordering on term type is also implemented: var < const < fun */
+  /* defines a lexicographic recursive term-ordering - since variables, constants and function symbols
+   * only share their namespace by convention, an ordering on term type is also implemented: const < var < fun */
   def term_<(term1: FOLTerm, term2: FOLTerm): Boolean = {
     //var < const < f; for equal terms: symbol name string less than, for function equal symbols recursive
     term1 match {
-      case FOLVar(v1) => term2 match {
-        case FOLVar(v2) => v1.toString < v2.toString;
-        case _ => true
-      }
       case FOLConst(c1) => term2 match {
         case FOLConst(c2) => c1.toString < c2.toString;
-        case FOLVar(v2) => false;
+        case _ => true
+      }
+      case FOLVar(v1) => term2 match {
+        case FOLVar(v2) => v1.toString < v2.toString;
+        case FOLConst(_) => false;
         case _ => true
       }
       case Function(f1, args1) => term2 match {
