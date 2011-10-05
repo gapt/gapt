@@ -13,6 +13,7 @@ import _root_.at.logic.calculi.lkmodulo.Equation
 import at.logic.language.lambda.substitutions.Substitution
 
 import collection.mutable.HashMap
+import collection.immutable.Stream.Cons
 
 object ACUnification {
   val algorithms  = new HashMap[ConstantSymbolA, FinitaryUnification[FOLTerm]]
@@ -539,6 +540,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
 
 object ACUtils {
   import ACUnification.debug
+  import TermUtils.term_<
 
   /* performs the rewrite rule f(s1, ... , f(t1, ... ,tm), ...sn) -> f(s1, ... ,t1, ... ,tm, ...sn) on the
    * given term (see also: Lincoln 89 "Adventures in Associative-Commutative Unification") and sorts the
@@ -549,12 +551,58 @@ object ACUtils {
       case FOLConst(_) => term
       case Function(fun, args) =>
         if (f == fun) {
-          Function(fun, ((args map ((x: FOLTerm) => stripFunctionSymbol(f, x))).reduceRight(_ ::: _) map ((x: FOLTerm) => flatten(f, x))) sortWith TermUtils.term_<)
+          Function(fun, ((args map ((x: FOLTerm) => stripFunctionSymbol(f, x))).reduceRight(_ ::: _) map ((x: FOLTerm) => flatten(f, x))) sortWith term_<)
         } else {
           Function(fun, args map ((x: FOLTerm) => flatten(f, x)))
         }
     }
   }
+
+  /* flatten but removes the neutral element, i.e. f(x) = x, f() = e*/
+  def flatten_andfiltersymbol(f: ConstantSymbolA, e:ConstantSymbolA, term: FOLTerm): FOLTerm = sortargsof_in(f, flatten_andfiltersymbol_withoutsorting(f,e,term)  )
+
+  def flatten_andfiltersymbol_withoutsorting(f: ConstantSymbolA, e:ConstantSymbolA, term: FOLTerm): FOLTerm = {
+    term match {
+      case FOLVar(_) => term
+      case FOLConst(_) => term
+      case Function(fun, args) =>
+        if (f == fun) {
+          val c = FOLConst(e)
+          val args_ = (((args map ((x: FOLTerm) => stripFunctionSymbol(f, x))).reduceRight(_ ::: _) map
+                        ((x: FOLTerm) => flatten_andfiltersymbol_withoutsorting(f, e, x)))
+                       sortWith term_<) filterNot (_ == c)
+
+          args_ match {
+            case Nil => FOLConst(e)
+            case List(t) => t
+            case _ => Function(fun,args_)
+          }
+        } else {
+          Function(fun, args map ((x: FOLTerm) => flatten_andfiltersymbol_withoutsorting (f, e, x)))
+        }
+    }
+  }
+
+  def sortargsof_in(f : ConstantSymbolA, t : FOLTerm) : FOLTerm = t match {
+    case Function(sym, args) =>
+      val args_ = args map (sortargsof_in(f,_))
+      if (f == sym)
+        Function(sym, args_ sortWith term_< )
+      else
+        Function(sym, args_)
+    case _ => t
+  }
+
+  def sortargsof_in(fs : List[ConstantSymbolA], t : FOLTerm) : FOLTerm = t match {
+    case Function(sym, args) =>
+      val args_ = args map (sortargsof_in(fs,_))
+      if (fs contains sym)
+        Function(sym, args_ sortWith term_< )
+      else
+        Function(sym, args_)
+    case _ => t
+  }
+
 
   /* removes the nesting of f in a term to a list - since the term f(g(f(x,y),z) should rewrite to
    * f(x,y,z) instead of f(f(x,y),z), it is preferred to use flatten */
@@ -649,7 +697,6 @@ class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : Const
     Set(assoc, comm, unit)
   }
 
-  //todo: implementation
   override def word_equalsto(s : FOLTerm, t : FOLTerm) : Boolean = {
     (flatten (function_symbol, s)) syntaxEquals (flatten (function_symbol, t))
   }
@@ -657,3 +704,20 @@ class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : Const
   //todo: implementation
   override def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]] = None
 }
+
+object ACUEquality {
+  import ACUtils.{flatten, flatten_andfiltersymbol_withoutsorting, sortargsof_in}
+
+  def fold_flatten(fs : List[ConstantSymbolA], s:FOLTerm) = fs.foldLeft(s)( (term : FOLTerm, f : ConstantSymbolA) => flatten(f, term) )
+
+  def fold_flatten_filter(fs : List[ConstantSymbolA], cs : List[ConstantSymbolA], s:FOLTerm) : FOLTerm =
+    sortargsof_in(fs, (fs zip cs).foldLeft(s)(
+      (term : FOLTerm, el : ( ConstantSymbolA, ConstantSymbolA) ) => flatten_andfiltersymbol_withoutsorting(el._1, el._2, term) )
+    )
+
+  def word_equalsto(fs : List[ConstantSymbolA], s:FOLTerm, t:FOLTerm) : Boolean =  fold_flatten(fs,s) syntaxEquals fold_flatten(fs,t)
+  def word_equalsto(fs : List[ConstantSymbolA], cs : List[ConstantSymbolA], s:FOLTerm, t:FOLTerm) : Boolean = fold_flatten_filter(fs,cs,s) syntaxEquals fold_flatten_filter(fs,cs,t)
+
+}
+
+

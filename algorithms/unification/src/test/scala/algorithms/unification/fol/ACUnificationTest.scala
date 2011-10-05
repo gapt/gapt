@@ -1,17 +1,19 @@
 package at.logic.algorithms.unification
 
 import _root_.at.logic.algorithms.diophantine.Vector
-import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import _root_.at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
 import org.specs.SpecificationWithJUnit
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus.Var
+import org.specs.matcher.Matcher
 
 class ACUnificationTest extends SpecificationWithJUnit {
   val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
   val f = new ConstantStringSymbol("f")
+  val g = new ConstantStringSymbol("g")
   val debuglevel = 0
   val latex = true
 
@@ -21,6 +23,18 @@ class ACUnificationTest extends SpecificationWithJUnit {
   def printSubst(s:Substitution[FOLTerm]) = {
     for (x <- s.map.toList.sortWith((x:(Var,FOLExpression), y:(Var,FOLExpression)) => x._1.toString < y._1.toString ) )
       debug(1,"$ "+x._1+" <- "+x._2+" $\\\\")
+  }
+
+  case class beSyntacticallyEqual(a: FOLTerm) extends Matcher[FOLTerm]() {
+    def apply(v: => FOLTerm) = (v syntaxEquals a, v.toString + " is syntactically equal " + a.toString, v.toString + " is not syntactically equal to " + a.toString)
+  }
+
+  case class beACWordEqual(theory_functions : List[ConstantSymbolA], a: FOLTerm ) extends Matcher[FOLTerm]() {
+    def apply(v: => FOLTerm) = (ACUEquality.word_equalsto(theory_functions, v,  a), v.toString + " is word equal " + a.toString, v.toString + " is not word equal to " + a.toString)
+  }
+
+  case class beACUWordEqual(theory_functions : List[ConstantSymbolA], theory_constants : List[ConstantSymbolA], a: FOLTerm ) extends Matcher[FOLTerm]() {
+    def apply(v: => FOLTerm) = (ACUEquality.word_equalsto(theory_functions, theory_constants, v,  a), v.toString + " is word equal " + a.toString, v.toString + " is not word equal to " + a.toString)
   }
 
   def checkResult(substs:Seq[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
@@ -325,6 +339,61 @@ class ACUnificationTest extends SpecificationWithJUnit {
       debug(1,z_1+z_2+z_6+z_7)
         */
 
+    }
+
+    "folded flattening should work on some simple examples" in {
+      val terms = List("f(f(x,y),f(x,y))",
+                       "f(g(x,y),f(x,y))",
+                       "f(f(a,y),f(b,y))",
+                       "f(f(a,f(s,y)),f(f(u,v),y))",
+                       "f(g(x,y),f(x,f(f(e0,e1),y)))",
+                       "f(g(e1,e0),f(e0,e0))",
+                       "f(g(e1,e1),f(e0,e0))"
+        ) map parse
+
+      val fterms = List("f(x,x,y,y)",
+                       "f(x,y,g(x,y))",
+                       "f(a,b,y,y)",
+                       "f(a,s,u,v,y,y)",
+                       "f(e1,x,y,g(x,y))",
+                       "e0",
+                       "e1"
+        ) map parse
+
+      val fs = List("f", "g", "h") map (new ConstantStringSymbol(_))
+      val cs = List("e0", "e1", "e2") map (new ConstantStringSymbol(_))
+
+      for (t <- terms zip fterms) {
+        ACUEquality.fold_flatten_filter(fs,cs,t._1) must beSyntacticallyEqual (t._2)
+      }
+
+    }
+
+    "word equality for multiple symbols should be decidable" in {
+      val fs = List("f", "g", "h") map (new ConstantStringSymbol(_))
+      val cs = List("e0", "e1", "e2") map (new ConstantStringSymbol(_))
+      val s = parse("f(x, f(f(g(a,e1),a), b))")
+      val t = parse("f(f(b, f(a,x)), a)")
+      val r = parse("f(a, b, g(a,e1), x)")
+      val u = parse("f(f(b, f(b,x)), a)")
+
+      //println(ACUEquality.fold_flatten_filter(fs,cs,r)  )
+      //println(ACUEquality.fold_flatten_filter(fs,cs,s)  )
+      //println(ACUEquality.fold_flatten_filter(fs,cs,t)  )
+      r must beACUWordEqual(fs,cs,r)
+      s must beACUWordEqual(fs,cs,s)
+      t must beACUWordEqual(fs,cs,t)
+
+      s must beACUWordEqual(fs,cs,t)
+      r must beACUWordEqual(fs,cs,t)
+      s must beACUWordEqual(fs,cs,r)
+
+      t must beACUWordEqual(fs,cs,s)
+      t must beACUWordEqual(fs,cs,r)
+      r must beACUWordEqual(fs,cs,s)
+
+      s mustNot beACUWordEqual(fs,cs,u)
+      t mustNot beACUWordEqual(fs,cs,u)
     }
 
 
