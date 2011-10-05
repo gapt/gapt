@@ -25,6 +25,8 @@ package replacements {
         case (1::rest, Neg(m)) => Neg(replace(rest, m).asInstanceOf[HOLFormula])
         case (1::rest, ExVar(v,m)) => ExVar(v, replace(rest, m).asInstanceOf[HOLFormula])
         case (1::rest, AllVar(v,m)) => AllVar(v, replace(rest, m).asInstanceOf[HOLFormula])
+        case (1::rest, Equation(m,n)) => Equation(replace(rest, m).asInstanceOf[HOLFormula], n)
+        case (2::rest, Equation(m,n)) => Equation(m, replace(rest, n).asInstanceOf[HOLFormula])
         case (n::rest, app@ Atom(p,args)) => {
           val (firstArgs, arg::remainingArgs) = args.splitAt(n-1)
           Atom(p, firstArgs.asInstanceOf[List[HOLExpression]]:::(replace(rest, arg.asInstanceOf[HOLExpression])::remainingArgs.asInstanceOf[List[HOLExpression]]))
@@ -56,6 +58,21 @@ package replacements {
         case Quantifier(_, _, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
         case Abs(_, exp) => (curPos, t)::recApply(exp.asInstanceOf[HOLExpression], curPos ::: List(1))
       }
+  }
+
+  object getAtPosition {
+    def apply(expression: HOLExpression, pos: List[Int]): HOLExpression = (expression, pos) match {
+      case (t, Nil) => t
+      case (HOLVar(_,_), n) => throw new IllegalArgumentException("trying to obtain a subterm of a variable at position: " + n)
+      case (HOLConst(_,_), n) => throw new IllegalArgumentException("trying to obtain a subterm of a constant at position: " + n)
+      case (Atom(_, args), n::rest) => getAtPosition(args(n).asInstanceOf[HOLExpression], rest)
+      case (Function(_, args, _), n::rest) => getAtPosition(args(n).asInstanceOf[HOLExpression], rest)
+      case (BinaryFormula(l,r), 1::rest) => getAtPosition(l, rest)
+      case (BinaryFormula(l,r), 2::rest) => getAtPosition(r, rest)
+      case (Quantifier(_, _, exp), 1::rest) => getAtPosition(exp, rest)
+      case (Abs(_, exp), 1::rest) => getAtPosition(exp.asInstanceOf[HOLExpression], rest)
+      case (_, n::rest) => throw new IllegalArgumentException("trying to obtain a subterm of " + expression + " at position: " + n)
+    }
   }
 
   object ImplicitConverters {

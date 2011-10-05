@@ -30,22 +30,22 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
   "StillmanSubsumptionAlgorithm" should {
     "return true on the following clauses" in {
       "P(x) | P(f(x,y)) and P(a) | P(b) | P(f(b,a))" in {
-        MyAlg.subsumes(new MyParser("P(x) | P(f(x,y)).").getClauseList.head.toFSequent, new MyParser("P(a) | P(b) | P(f(b,a)).").getClauseList.head.toFSequent) must beEqual (true)
+        MyAlg.subsumes(new MyParser("P(x) | P(f(x,y)).").getClauseList.head, new MyParser("P(a) | P(b) | P(f(b,a)).").getClauseList.head) must beEqual (true)
       }
       "Nil and P(a) | P(b) | P(f(b,a))" in {
-        MyAlg.subsumes(new FSequent(Nil,Nil), new MyParser("P(a) | P(b) | P(f(b,a)).").getClauseList.head.toFSequent) must beEqual (true)
+        MyAlg.subsumes(new FSequent(Nil,Nil), new MyParser("P(a) | P(b) | P(f(b,a)).").getClauseList.head) must beEqual (true)
       }
       "P(x) and P(x) | P(f(x,y))" in {
-        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head.toFSequent, new MyParser("P(x) | P(f(x,y)).").getClauseList.head.toFSequent) must beEqual (true)
+        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head, new MyParser("P(x) | P(f(x,y)).").getClauseList.head) must beEqual (true)
       }
       "P(x) and P(x)" in {
-        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head.toFSequent, new MyParser("P(x).").getClauseList.head.toFSequent) must beEqual (true)
+        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head, new MyParser("P(x).").getClauseList.head) must beEqual (true)
       }
       "P(x) and P(y)" in {
-        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head.toFSequent,new MyParser("P(y).").getClauseList.head.toFSequent) must beEqual (true)
+        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head,new MyParser("P(y).").getClauseList.head) must beEqual (true)
       }
       "P(x,x) | P(x,a) and P(a,a)" in {
-        MyAlg.subsumes(new MyParser("P(x,x) | P(x,a).").getClauseList.head.toFSequent, new MyParser("P(a,a).").getClauseList.head.toFSequent) must beEqual (true)
+        MyAlg.subsumes(new MyParser("P(x,x) | P(x,a).").getClauseList.head, new MyParser("P(a,a).").getClauseList.head) must beEqual (true)
       }
       /*"P(x) | Q(x,y) and P(a) | Q(a,y) | R(x)" in {
         MyAlg.subsumes(new MyParser("P(x) | Q(x,y).").getClauseList.head, new MyParser("P(a) | Q(a,y) | R(x).").getClauseList.head) must beEqual (true)
@@ -71,22 +71,22 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
     }
     "return false on the following clauses" in {
       "P(x) | P(f(x)) and P(f(a)) | P(f(b))" in {
-        MyAlg.subsumes(new MyParser("P(x) | P(f(x)).").getClauseList.head.toFSequent, new MyParser("P(f(a)) | P(f(b)).").getClauseList.head.toFSequent) must beEqual (false)
+        MyAlg.subsumes(new MyParser("P(x) | P(f(x)).").getClauseList.head, new MyParser("P(f(a)) | P(f(b)).").getClauseList.head) must beEqual (false)
       }
       "P(a,a) and P(x,x) | P(x,a)" in {
-        MyAlg.subsumes(new MyParser("P(a,a).").getClauseList.head.toFSequent, new MyParser("P(x,x) | P(x,a).").getClauseList.head.toFSequent) must beEqual (false)
+        MyAlg.subsumes(new MyParser("P(a,a).").getClauseList.head, new MyParser("P(x,x) | P(x,a).").getClauseList.head) must beEqual (false)
       }
       "P(x,x) | P(x,b) and P(b,a) | P(a,b)" in {
-        MyAlg.subsumes(new MyParser("P(x,x) | P(x,b).").getClauseList.head.toFSequent, new MyParser("P(b,a) | P(a,b).").getClauseList.head.toFSequent) must beEqual (false)
+        MyAlg.subsumes(new MyParser("P(x,x) | P(x,b).").getClauseList.head, new MyParser("P(b,a) | P(a,b).").getClauseList.head) must beEqual (false)
       }
       "P(x) | -P(x) and P(a) | -P(b)" in {
-        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head.toFSequent
-        val cl2 = new MyParser("P(a) | -P(b).").getClauseList.head.toFSequent
+        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head
+        val cl2 = new MyParser("P(a) | -P(b).").getClauseList.head
         MyAlg.subsumes(cl1, cl2) must beEqual (false)
       }
       "P(x) | -P(x) and P(y) | -P(z)" in {
-        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head.toFSequent
-        val cl2 = new MyParser("P(y) | -P(z).").getClauseList.head.toFSequent
+        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head
+        val cl2 = new MyParser("P(y) | -P(z).").getClauseList.head
         MyAlg.subsumes(cl1, cl2) must beEqual (false)
       }
       /*"P(x) and P(a) | P(y)" in {

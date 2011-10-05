@@ -34,7 +34,7 @@ trait SimpleFOLParser extends SimpleHOLParser {
   override def or: Parser[HOLFormula] = "Or" ~ formula ~ formula ^^ {case "Or" ~ x ~ y => Or(x.asInstanceOf[FOLFormula],y.asInstanceOf[FOLFormula])}
   override def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x.asInstanceOf[FOLFormula],y.asInstanceOf[FOLFormula])}
   override def neg: Parser[HOLFormula] = "Neg" ~ formula ^^ {case "Neg" ~ x => Neg(x.asInstanceOf[FOLFormula])}
-  override def atom: Parser[HOLFormula] = (var_atom | const_atom)
+  override def atom: Parser[HOLFormula] = (equality | var_atom | const_atom)
   override def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v.asInstanceOf[FOLVar],x.asInstanceOf[FOLFormula])}
   override def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v.asInstanceOf[FOLVar],x.asInstanceOf[FOLFormula])}
 }

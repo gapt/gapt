@@ -20,20 +20,55 @@ import scala.collection.immutable.HashSet
 
 package robinson {
 
+import _root_.at.logic.language.fol.Neg
 import collection.immutable.Seq
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.utils.traits.Occurrence
-import at.logic.language.hol.{Formula, HOLExpression}
+import at.logic.language.hol.{Formula, HOLExpression, Neg => HOLNeg}
 
 trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula match {case Atom(_,_) => true; case _ => false}))}
 
-  class Clause(neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence]) extends Sequent(neg, pos) with CNF {
+  object StripNeg {
+    def apply(formula: HOLFormula) = formula match {
+      case Neg(f) => f
+      case _ => formula
+    }
+  }
+
+  // a wrapper class for formula occurrences to allow to use the "same" occurrence for a formula which was stripped from the neg
+  private class StrippedFormulaOccurrenceWrapper(val fo: FormulaOccurrence) extends FormulaOccurrence(StripNeg(fo.formula), fo.ancestors, fo.factory) {
+    override def equals(a: Any): Boolean = a match {
+      case o: Occurrence => fo eq o
+      case _ => false
+    }
+  }
+   // a wrapper class for formula occurrences to allow to use the "same" occurrence for a formula which was gained negation,
+   // we use HOLNeg although it might be a fol expression as the factory is defined using the argument in app and not the function
+   // so the factory of the neg symbol will not be used
+  private class NegatedFormulaOccurrenceWrapper(val fo: FormulaOccurrence) extends FormulaOccurrence(HOLNeg(fo.formula), fo.ancestors, fo.factory) {
+    override def equals(a: Any): Boolean = a match {
+      case o: Occurrence => fo eq o
+      case _ => false
+    }
+
+  }
+
+  class Clause(val literals: Seq[FormulaOccurrence]) extends Sequent(
+    literals.filter(l => l.formula match {
+            case Neg(_) => true
+            case _ => false})
+          .map(l => new StrippedFormulaOccurrenceWrapper(l)),
+    literals.filter(l => l.formula match {
+            case Neg(_) => false
+            case _ => true})
+  ) with CNF {
     def negative = antecedent
     def positive = succedent
   }
 
   object Clause {
-    def apply(neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence]) = new Clause(neg,pos)
+    def apply(literals: Seq[FormulaOccurrence]) = new Clause(literals)
+    def apply(neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence]) = new Clause(neg.map(new NegatedFormulaOccurrenceWrapper(_)) ++ pos)
     def unapply(s: Sequent) = s match {
       case c: Clause => Some(c.negative, c.positive)
       case _ => None
