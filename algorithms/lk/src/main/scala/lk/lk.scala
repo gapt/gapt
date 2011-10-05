@@ -1,5 +1,7 @@
 package at.logic.algorithms.lk
 
+import _root_.at.logic.calculi.lksk.{ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, ForallSkRightRule}
+import _root_.at.logic.calculi.occurrences._
 import at.logic.calculi.lk.propositionalRules._
 import scala.collection.immutable.{HashSet, Set}
 import scala.collection.mutable.{Map, HashMap}
@@ -7,7 +9,6 @@ import scala.collection.mutable.{Map, HashMap}
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
-import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 
@@ -20,9 +21,7 @@ import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
 import at.logic.language.lambda.substitutions
 import substitutions.Substitution
 
-// TODO: we use the toSet method from axiom here to convert a list to a set,
-// and this is horrible...
-// should refactor this method out of axiom - it seems useful in general
+
 object getCutAncestors {
   def apply( p: LKProof )
     : Set[FormulaOccurrence] = p match {
@@ -62,6 +61,244 @@ object getAncestors {
 
   def apply( o: Set[FormulaOccurrence] ) : Set[FormulaOccurrence] =
     o.foldLeft( new HashSet[FormulaOccurrence] )( (res, o) => res ++ apply( o ) )
+}
+
+
+object eliminateDefinitionRules {
+
+  def apply( p: LKProof ) = rec( p )._1
+
+  def rec( proof: LKProof ) : (LKProof, Map[FormulaOccurrence, FormulaOccurrence])  =
+  {
+    proof match
+    {
+      // FIXME: cast!?!
+      case r @ CutRule( p1, p2, _, a1, a2 ) => {
+        // first left, then right
+        val rec1 = rec( p1 )
+        val rec2 = rec( p2 )
+        val new_proof = CutRule( rec1._1, rec2._1, rec1._2( a1 ), rec2._2( a2 ) )
+        return (new_proof,
+                     computeMap( p1.root.antecedent ++ p1.root.succedent.filter(_ != a1), r, new_proof, rec1._2 ) ++
+                     computeMap( p2.root.antecedent.filter(_ != a2) ++ p2.root.succedent, r, new_proof, rec2._2 ))
+      }
+      case r @ AndRightRule( p1, p2, _, a1, a2, _ ) => {
+        handleBinaryProp( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, AndRightRule.apply )
+      }
+      case r @ OrLeftRule( p1, p2, _, a1, a2, _ ) => {
+        handleBinaryProp( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, OrLeftRule.apply )
+      }
+      case r @ ImpLeftRule( p1, p2, _, a1, a2, _ ) => {
+        handleBinaryProp( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, ImpLeftRule.apply )
+      }
+      case r @ EquationLeft1Rule( p1, p2, _, a1, a2, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationLeft1Rule.apply )
+      }
+      case r @ EquationLeft2Rule( p1, p2, _, a1, a2, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationLeft2Rule.apply )
+      }
+      case r @ EquationRight1Rule( p1, p2, _, a1, a2, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationRight1Rule.apply )
+      }
+      case r @ EquationRight2Rule( p1, p2, _, a1, a2, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationRight2Rule.apply )
+      }
+      case Axiom(so) => {
+        val ant_occs = so.antecedent.toList
+        val succ_occs = so.succedent.toList
+        println("ant_occs: " + ant_occs)
+        println("succ_occs: " + succ_occs)
+        val a = Axiom(ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ))
+        println(" a : \n" + a)
+        val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
+        println("mapping antecedent formulas")
+        a.root.antecedent.zip(ant_occs).foreach(p => {println(p); map.update( p._2, p._1)})
+        println("mapping succedent formulas")
+        a.root.succedent.zip(succ_occs).foreach(p => {println(p); map.update( p._2, p._1)})
+
+        //a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
+        a.root.antecedent.zip(ant_occs).foreach(p => map.update( p._2, p._1))
+        //a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
+        a.root.succedent.zip(succ_occs).foreach(p => map.update( p._2, p._1))
+
+        println(a.root)
+        println("Axiom map: " + map)
+        (a, map)
+      }
+      case WeakeningLeftRule(p, s, m) => {
+        val new_parent = rec( p )
+        handleWeakening( ( new_parent._1, new_parent._2 ), p, proof, WeakeningLeftRule.apply, m )
+      }
+      case WeakeningRightRule(p, s, m) => {
+        val new_parent = rec( p )
+        handleWeakening( ( new_parent._1, new_parent._2 ), p, proof, WeakeningRightRule.apply, m )
+      }
+      case ContractionLeftRule(p, s, a1, a2, m) => {
+        val new_parent = rec( p )
+        handleContraction( ( new_parent._1, new_parent._2 ), p, proof, a1, a2, ContractionLeftRule.apply )
+      }
+      case ContractionRightRule(p, s, a1, a2, m) => {
+        val new_parent = rec( p )
+        handleContraction( ( new_parent._1, new_parent._2 ), p, proof, a1, a2, ContractionRightRule.apply )
+      }
+      case AndLeft1Rule(p, s, a, m) => {
+        val f = m.formula match { case And(_, w) => w }
+        val new_parent = rec( p )
+        val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), f )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case AndLeft2Rule(p, s, a, m) => {
+        val f = m.formula match { case And(w, _) => w }
+        val new_parent = rec( p )
+        val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._2( a ) )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case OrRight1Rule(p, s, a, m) => {
+        val f = m.formula match { case Or(_, w) => w }
+        val new_parent = rec( p )
+        val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), f )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case OrRight2Rule(p, s, a, m) => {
+        val f = m.formula match { case Or(w, _) => w }
+        val new_parent = rec( p )
+        val new_proof = OrRight2Rule( new_parent._1, f, new_parent._2( a ) )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case ImpRightRule(p, s, a1, a2, m) => {
+        val new_parent = rec( p )
+        val new_proof = ImpRightRule( new_parent._1,
+                                      new_parent._2( a1 ),
+                                      new_parent._2( a2 ) )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+
+      case NegLeftRule(p, s, a, m) => {
+        val new_parent = rec( p )
+        val new_proof = NegLeftRule( new_parent._1, new_parent._2( a ) )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case NegRightRule(p, s, a, m) => {
+        val new_parent = rec( p )
+        val new_proof = NegRightRule( new_parent._1, new_parent._2( a ) )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case r @ DefinitionRightRule( p, s, a, m ) => {
+        val new_parent = rec( p )
+        val newProof = new_parent._1
+        val premiseMap = new_parent._2
+        println("premiseMap: " + premiseMap)
+        println("newProof: " + newProof)
+        val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
+        r.root.antecedent.foreach( fo => map.update( fo , premiseMap(fo.ancestors.head) ) )
+        r.root.succedent.foreach( fo => map.update( fo , premiseMap(fo.ancestors.head) ) )
+        println("map")
+        map.foreach( pair => println(pair) )
+        return (newProof, map)// skipped DefinitionRule
+      }
+      case r @ DefinitionLeftRule( p, s, a, m ) => {
+//        val new_parent = rec( p )
+//        val newProof = new_parent._1
+//        val premiseMap = new_parent._2
+//        val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
+//        r.root.antecedent.foreach( fo => map.update( fo , premiseMap(fo.ancestors.head) ) )
+//        r.root.succedent.foreach( fo => map.update( fo , premiseMap(fo.ancestors.head) ) )
+//        return (new_parent._1, map)// skipped DefinitionRule
+          return rec(p)
+      }
+      case ForallLeftRule( p, s, a, m, t ) => {
+        val new_parent = rec( p )
+        val new_proof = ForallLeftRule( new_parent._1, new_parent._2( a ), m.formula, t )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case ExistsRightRule( p, s, a, m, t ) => {
+        val new_parent = rec( p )
+        val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a ), m.formula, t )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case ExistsLeftRule( p, s, a, m, v ) => {
+        val new_parent = rec( p )
+        val new_proof = ExistsLeftRule( new_parent._1, new_parent._2( a ), m.formula, v )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+      case ForallRightRule( p, s, a, m, v ) => {
+        println("forall")
+        val new_parent = rec( p )
+        println("new_parent: " + new_parent)
+        println(new_parent._2)
+        val new_proof = ForallRightRule( new_parent._1, new_parent._2( a ), m.formula, v )
+        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+      }
+//      case ForallSkRightRule( p, s, a, m, sub ) => {
+//        val new_parent = rec( p )
+//        val new_proof = ForallSkRightRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, sub )
+//        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+//      }
+//      case ExistsSkLeftRule( p, s, a, m, sub ) => {
+//        val new_parent = rec( p )
+//        val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, sub )
+//        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+//      }
+//      case ForallSkLeftRule( p, s, a, m, t ) => {
+//        val new_parent = rec( p )
+//        val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, t, true )  // ToDo: I have no idea whether the last parameter should be true or false
+//        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+//      }
+//      case ExistsSkRightRule( p, s, a, m, t ) => {
+//        val new_parent = rec( p )
+//        val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, t, true ) // ToDo: I have no idea whether the last parameter should be true or false
+//        ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+//      }
+    }
+  }
+  def handleWeakening( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
+                       old_parent: LKProof,
+                       old_proof: LKProof,
+                       constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
+                       m: FormulaOccurrence ) = {
+    val new_proof = constructor( new_parent._1, m.formula )
+    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )
+  }
+
+  def handleContraction( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
+                         old_parent: LKProof,
+                         old_proof: LKProof,
+                         a1: FormulaOccurrence,
+                         a2: FormulaOccurrence,
+                         constructor: (LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof) = {
+    val new_proof = constructor( new_parent._1, new_parent._2( a1 ), new_parent._2( a2 ) )
+    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
+  }
+
+  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m :HOLFormula,
+    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => BinaryLKProof with AuxiliaryFormulas ) = {
+       // first left, then right
+      val rec1 = rec( p1 )
+      val rec2 = rec( p2 )
+      val new_proof = constructor( rec1._1, rec2._1, rec1._2( a1 ), rec2._2( a2 ) , m )
+      ( new_proof, computeMap( p1.root.antecedent ++ p1.root.succedent, r, new_proof, rec1._2 ) ++
+                   computeMap( p2.root.antecedent ++ p2.root.succedent, r, new_proof, rec2._2 ) )
+  }
+
+  def handleBinaryProp( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
+    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence) => BinaryLKProof with AuxiliaryFormulas ) = {
+       // first left, then right
+      val rec1 = rec( p1 )
+      val rec2 = rec( p2 )
+      val new_proof = constructor( rec1._1, rec2._1, rec1._2( a1 ), rec2._2( a2 ) )
+      ( new_proof, computeMap( p1.root.antecedent ++ p1.root.succedent, r, new_proof, rec1._2 ) ++
+                   computeMap( p2.root.antecedent ++ p2.root.succedent, r, new_proof, rec2._2 ) )
+  }
+
+  // FIXME: adapted from LKtoLKskc!
+  def computeMap( occs: Seq[FormulaOccurrence], old_proof: LKProof,
+                  new_proof: LKProof, old_map : Map[FormulaOccurrence, FormulaOccurrence]) =
+  {
+    val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
+    occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get,
+      new_proof.getDescendantInLowerSequent( old_map(fo) ).get ) )
+    map
+  }
 }
 
 object regularize {

@@ -259,8 +259,9 @@ object Main extends SimpleSwingApplication {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
     import at.logic.transformations.ceres.struct.StructCreators
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+    import at.logic.algorithms.lk._
 
-    val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+    val proof_sk = eliminateDefinitionRules(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
     //commented by Cvetan
 //    val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
     val s = StructCreators.extract( proof_sk)
@@ -290,8 +291,9 @@ object Main extends SimpleSwingApplication {
   def showStructOnlyQuantifiedCuts = try {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
     import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
+    import at.logic.algorithms.lk._
 
-    val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+    val proof_sk = eliminateDefinitionRules( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
 //commented by Cvetan
 //    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
     val s = StructCreators.extract( proof_sk)
