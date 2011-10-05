@@ -21,9 +21,9 @@ import scala.collection.immutable.HashSet
 package robinson {
 
 import _root_.at.logic.language.fol.Neg
+import _root_.at.logic.utils.traits.{Occurrence, NestingOccurrence}
 import collection.immutable.Seq
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.utils.traits.Occurrence
 import at.logic.language.hol.{Formula, HOLExpression, Neg => HOLNeg}
 
 trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula match {case Atom(_,_) => true; case _ => false}))}
@@ -35,23 +35,15 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
     }
   }
 
+  // in this two wrappers we override equals of Occurrence such that it will use the nested Occurrence. We must make sure that
+  // a equals b <==> b equals a and if we wrap a, then as equals in Occurrence is using pointer equality, this will not hold.
   // a wrapper class for formula occurrences to allow to use the "same" occurrence for a formula which was stripped from the neg
-  private class StrippedFormulaOccurrenceWrapper(val fo: FormulaOccurrence) extends FormulaOccurrence(StripNeg(fo.formula), fo.ancestors, fo.factory) {
-    override def equals(a: Any): Boolean = a match {
-      case o: Occurrence => fo eq o
-      case _ => false
-    }
-  }
+  private class StrippedFormulaOccurrenceWrapper(val nestedOccurrence: FormulaOccurrence) extends FormulaOccurrence(StripNeg(nestedOccurrence.formula), nestedOccurrence.ancestors, nestedOccurrence.factory) with NestingOccurrence
+
    // a wrapper class for formula occurrences to allow to use the "same" occurrence for a formula which was gained negation,
    // we use HOLNeg although it might be a fol expression as the factory is defined using the argument in app and not the function
    // so the factory of the neg symbol will not be used
-  private class NegatedFormulaOccurrenceWrapper(val fo: FormulaOccurrence) extends FormulaOccurrence(HOLNeg(fo.formula), fo.ancestors, fo.factory) {
-    override def equals(a: Any): Boolean = a match {
-      case o: Occurrence => fo eq o
-      case _ => false
-    }
-
-  }
+  private class NegatedFormulaOccurrenceWrapper(val nestedOccurrence: FormulaOccurrence) extends FormulaOccurrence(HOLNeg(nestedOccurrence.formula), nestedOccurrence.ancestors, nestedOccurrence.factory)  with NestingOccurrence
 
   class Clause(val literals: Seq[FormulaOccurrence]) extends Sequent(
     literals.filter(l => l.formula match {
@@ -91,7 +83,10 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
       val right: Seq[FormulaOccurrence] = suc.map(factory.createFormulaOccurrence(_,Nil))
       new LeafAGraph[Clause](Clause(left, right)) with NullaryResolutionProof[Clause] {def rule = InitialType; override def name = ""}
     }
-
+    def apply(literals: Seq[HOLFormula]) (implicit factory: FOFactory) = {
+      val lits: Seq[FormulaOccurrence] = literals.map(factory.createFormulaOccurrence(_,Nil))
+      new LeafAGraph[Clause](Clause(lits)) with NullaryResolutionProof[Clause] {def rule = InitialType; override def name = ""}
+    }
     def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == InitialType) Some((proof.root)) else None
   }
 
