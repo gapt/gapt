@@ -52,10 +52,9 @@ package replacements {
     def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
         case HOLVar(_,_) => Nil // no need to paramodulate on variable positions
         case HOLConst(_,_) => (curPos, t)::Nil
+        case Quantifier(_, _, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
         case Atom(_, args) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
         case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
-        case BinaryFormula(l,r) => (curPos, t)::(recApply(l, curPos ::: List(1)):::recApply(r, curPos ::: List(2)))
-        case Quantifier(_, _, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
         case Abs(_, exp) => (curPos, t)::recApply(exp.asInstanceOf[HOLExpression], curPos ::: List(1))
       }
   }
@@ -65,11 +64,9 @@ package replacements {
       case (t, Nil) => t
       case (HOLVar(_,_), n) => throw new IllegalArgumentException("trying to obtain a subterm of a variable at position: " + n)
       case (HOLConst(_,_), n) => throw new IllegalArgumentException("trying to obtain a subterm of a constant at position: " + n)
-      case (Atom(_, args), n::rest) => getAtPosition(args(n).asInstanceOf[HOLExpression], rest)
-      case (Function(_, args, _), n::rest) => getAtPosition(args(n).asInstanceOf[HOLExpression], rest)
-      case (BinaryFormula(l,r), 1::rest) => getAtPosition(l, rest)
-      case (BinaryFormula(l,r), 2::rest) => getAtPosition(r, rest)
       case (Quantifier(_, _, exp), 1::rest) => getAtPosition(exp, rest)
+      case (Atom(_, args), n::rest) => getAtPosition(args(n-1).asInstanceOf[HOLExpression], rest)
+      case (Function(_, args, _), n::rest) => getAtPosition(args(n-1).asInstanceOf[HOLExpression], rest)
       case (Abs(_, exp), 1::rest) => getAtPosition(exp.asInstanceOf[HOLExpression], rest)
       case (_, n::rest) => throw new IllegalArgumentException("trying to obtain a subterm of " + expression + " at position: " + n)
     }
