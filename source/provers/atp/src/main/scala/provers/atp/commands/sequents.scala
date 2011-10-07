@@ -14,31 +14,38 @@ import _root_.at.logic.algorithms.subsumption.managers._
 import _root_.at.logic.algorithms.subsumption.SubsumptionAlgorithm
 import _root_.at.logic.calculi.lk.base.Sequent
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
+import _root_.at.logic.calculi.resolution.robinson.Clause
 import _root_.at.logic.language.lambda.types.->
 import _root_.at.logic.utils.ds.{Add, Remove, PublishingBufferEvent, PublishingBuffer}
 import _root_.at.logic.utils.patterns.listeners.ListenerManager
 import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand}
 import at.logic.provers.atp.Definitions._
-import at.logic.calculi.lk.base.types._
+import at.logic.calculi.lk.base.types.FSequent
 
-abstract class SetSequentsCommand[V <: Sequent](val clauses: Iterable[Sequent]) extends DataCommand[V]
+  abstract class SetSequentsCommand[V <: Sequent](val clauses: Iterable[FSequent]) extends DataCommand[V]
 
   // set the target clause, i.e. the empty clause normally
-  case class SetTargetClause[V <: Sequent](val clause: Sequent) extends DataCommand[V] {
+  case class SetTargetClause[V <: Sequent](val clause: FSequent) extends DataCommand[V] {
     def apply(state: State, data: Any) = List((state += new Tuple2("targetClause", clause), data))
   }
 
   // tests whether the clauses list contains the target clause
   case class SearchForEmptyClauseCommand[V <: Sequent]() extends ResultCommand[V] {
     def apply(state: State, data: Any) = {
-      val target = state("targetClause").asInstanceOf[Sequent]
-      state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]].find(x => x.root setEquals target)
+      val target = state("targetClause").asInstanceOf[FSequent]
+      state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]].find(x => x.root syntacticMultisetEquals target)
     }
   }
 
   case class InsertResolventCommand[V <: Sequent]() extends DataCommand[V] {
     def apply(state: State, data: Any) = {
-      state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]] += data.asInstanceOf[ResolutionProof[V]]
+      println("insert res: " + data.asInstanceOf[ResolutionProof[V]].root)
+      (if (state.isDefinedAt("clauses")) state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]]
+      else {
+        val pb = new PublishingBuffer[ResolutionProof[V]]
+        state += new Tuple2("clauses", pb)
+        pb
+      }) += data.asInstanceOf[ResolutionProof[V]]
       List((state,data))
     }
   }
@@ -47,16 +54,16 @@ abstract class SetSequentsCommand[V <: Sequent](val clauses: Iterable[Sequent]) 
   case class ApplyOnAllPolarizedLiteralPairsCommand[V <: Sequent]() extends DataCommand[V] {
     def apply(state: State, data: Any) = {
       val p = data.asInstanceOf[Tuple2[ResolutionProof[V],ResolutionProof[V]]]
-      (for (i <- p._1.root.antecedent; j <- p._2.root.succedent) yield (state, ((p._2,p._1), (j, i))))  ++
-      (for (i <- p._1.root.succedent; j <- p._2.root.antecedent) yield (state, (p, (i,j))))
+      (for (i <- p._1.root.antecedent; j <- p._2.root.succedent) yield (state, List((p._2,(j,true)), (p._1, (i,false)))))  ++
+      (for (i <- p._1.root.succedent; j <- p._2.root.antecedent) yield (state, List((p._1,(i,true)), (p._2,(j,false)))))
     }
   }
 
   case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] {
     def apply(state: State, data: Any) = {
-      val target = state("targetClause").asInstanceOf[Sequent]
+      val target = state("targetClause").asInstanceOf[FSequent]
       val d = data.asInstanceOf[ResolutionProof[V]]
-      if (d.root setEquals target) Some(d)
+      if (d.root syntacticMultisetEquals target) Some(d)
       else None
     }
   }

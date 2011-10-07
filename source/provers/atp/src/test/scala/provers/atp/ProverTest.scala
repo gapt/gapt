@@ -32,7 +32,7 @@ class ProverTest extends SpecificationWithJUnit {
       SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
       InsertResolventCommand[Clause]),
     RefutationReachedCommand[Clause]), stream1a)
-  def streama: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1a))
+  def streama: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1a))
 
   // stream based on normal stack usage using configurations normally - may explode stack if branching too fast
   def stream1b:  Stream[Command[Clause]] = Stream.cons(SimpleRefinementGetCommand[Clause],
@@ -44,7 +44,7 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1b)))))))
-  def streamb: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1b))
+  def streamb: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1b))
 
   // stream based on "deterministic and command" that allows branching in a sequential way, which can be used in user interfaces as the other commands might
   // ask for an input, put it in the stack and will not necessarily act on it immediately.
@@ -57,7 +57,7 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1c)))))))
-  def streamc: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1c))
+  def streamc: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1c))
 
   def getRefutation(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streamc)).next must beLike {
       case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => true

@@ -42,12 +42,14 @@ object Main {
     Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
-  def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
+  def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
   def main(args: Array[String]) {
     val prover = new Prover[at.logic.calculi.resolution.robinson.Clause]{}
     prover.refute(Stream.cons(SetClausesCommand((new FileReader(args(0)) with SimpleResolutionParserFOL).getClauseList), stream)).next
   }
 }
+
+class ProverException(msg: String) extends Exception(msg)
 
 trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
   
@@ -65,6 +67,7 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
     //Console.println("debug -- command: " + conf.commands.head.getClass + ", data: " + conf.data + ", next Command: " + conf.commands.tail.head.getClass)
     if (conf.commands.isEmpty) List()
     else {
+      //println(conf.commands.head.getClass)
       conf.commands.head match {
         case com: InitialCommand[_] => com(conf.state).map(x => new MyConfiguration(x._1, conf.commands.tail, x._2))
         case com: DataCommand[_] => {
@@ -79,6 +82,16 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
           (if (res._2) List(new MyConfiguration(conf.state, conf.commands.tail, conf.data)) else List())
         }
         case com: BranchCommand[_] => com.commands.map(x => new MyConfiguration(conf.state, x ++ conf.commands.tail, conf.data))
+        case com: PrependCommand[_] => List(new MyConfiguration(conf.state, (com.commands).foldRight(conf.commands.tail)((x,c) => x +: c), conf.data))
+        case com: PrependOnCondCommand[_] => if (com.cond(conf.state, conf.data)) List(new MyConfiguration(conf.state, (com.commands).foldRight(conf.commands.tail)((x,c) => x +: c), conf.data))
+          else List(new MyConfiguration(conf.state, conf.commands.tail, conf.data))
+        // this command should create a whole new subtree using different state and commands for replay of sub proofs
+        case com: SpawnCommand[_] =>  {
+          val state = new State() ++= conf.state += (("old_commands", conf.commands.tail)) += (("old_state", conf.state))
+          List(new MyConfiguration(state, conf.data.asInstanceOf[Stream[Command[V]]],conf.data))
+        }
+        case com: RestoreCommand[_] => List(new MyConfiguration(conf.state("old_state").asInstanceOf[State], (com.commands).foldRight(conf.state("old_commands").asInstanceOf[Stream[Command[V]]])((x,c) => x +: c), conf.data))
+        case com: SetStreamCommand[_] => List(new MyConfiguration(conf.state, conf.data.asInstanceOf[Stream[Command[V]]], conf.data))
       }
     }
   }
