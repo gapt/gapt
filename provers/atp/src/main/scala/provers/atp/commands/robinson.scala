@@ -10,12 +10,13 @@ import at.logic.utils.ds.PublishingBuffer
 import at.logic.calculi.resolution.robinson.{Resolution, Variant, Factor}
 import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.language.fol.{FOLExpression, Atom}
+import at.logic.language.fol.{FOLExpression, Equation}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.resolution.robinson.Paramodulation
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol.replacements.{getAllPositions, Replacement}
+import at.logic.calculi.lk.base.types.FSequent
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,14 +28,31 @@ import at.logic.language.hol.replacements.{getAllPositions, Replacement}
 
 package robinson {
 
+import _root_.at.logic.language.hol.replacements.getAtPosition
+import _root_.at.logic.provers.atp.ProverException
+
 // adds to the state the initial set of resolution proofs, made from the input clauses
-  case class SetClausesCommand(override val clauses: Iterable[Clause]) extends SetSequentsCommand[Clause](clauses) {
+  case class SetClausesCommand(override val clauses: Iterable[FSequent]) extends SetSequentsCommand[Clause](clauses) {
     def apply(state: State, data: Any) = {
       val pb = new PublishingBuffer[ResolutionProof[Clause]]
-      clauses.foreach(x => pb += InitialClause(x.negative.map(a => a.formula), x.positive.map(a => a.formula))(defaultFormulaOccurrenceFactory))
+      clauses.foreach(x => pb += InitialClause(x._1, x._2)(defaultFormulaOccurrenceFactory))
       List((state += new Tuple2("clauses", pb), data))
     }
   }
+
+  // this should also work with subsumption but as we replace the pb we need to remove subsumption managers if there are any in the state
+  case object SetClausesFromDataCommand extends DataCommand[Clause] {
+    def apply(state: State, data: Any) = {
+      state.remove("simpleSubsumManager")
+      // we need a better way to reset things that are connected to the pb such as a specific
+      // command which somehow does it without knowing the implementations
+      val pb = new PublishingBuffer[ResolutionProof[Clause]]
+      val clauses = data.asInstanceOf[Iterable[ResolutionProof[Clause]]]
+      clauses.foreach(x => pb += x)
+      List((state += new Tuple2("clauses", pb), data))
+    }
+  }
+
 
   // create variants to a pair of two clauses
   case object VariantsCommand extends DataCommand[Clause] {
@@ -44,12 +62,12 @@ package robinson {
     }
   }
 
-  case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
+case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val p = data.asInstanceOf[Tuple2[Tuple2[ResolutionProof[Clause],ResolutionProof[Clause]],Tuple2[FormulaOccurrence,FormulaOccurrence]]]
-      val mgus = alg.unify(p._2._1.formula.asInstanceOf[FOLExpression], p._2._2.formula.asInstanceOf[FOLExpression])
+      val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Pair[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean]]]].toList
+      val mgus = alg.unify(lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression])
       require(mgus.size < 2) // as it is first order it must have at most one mgu
-      mgus.map(x => (state, Resolution(p._1._1,p._1._2,p._2._1,p._2._2,x.asInstanceOf[Substitution[FOLExpression]])))
+      mgus.map(x => (state, Resolution(p1,p2,lit1,lit2,x.asInstanceOf[Substitution[FOLExpression]])))
     }
   }
 
@@ -72,7 +90,7 @@ package robinson {
             val factor2 = Factor(pr2, occ2, ls2, sub2.asInstanceOf[Substitution[FOLExpression]])
             (factor2, factor2.root.getChildOf(occ2).get)
           }
-          ((pr11,pr21),(occ11,occ21))
+          List((pr11,(occ11,true)),(pr21,(occ21,false)))
           //Resolution(pr11, pr21, occ11, occ21, sub)
         }
       ).flatMap(x => new ResolveCommand(alg).apply(state,x)))
@@ -109,7 +127,7 @@ package robinson {
           l2 <- p2.root.antecedent ++ p2.root.succedent
           subTerm <- getAllPositions(l2.formula) // except var positions and only on positions of the same type as a or b
         } yield l1.formula match {
-            case Atom(ConstantStringSymbol("="), a::b::Nil) => {
+          case Equation(a,b) => {
               val mgus1 = if (a.exptype == subTerm._2.exptype) alg.unify(a, subTerm._2.asInstanceOf[FOLExpression]) else Nil
               require(mgus1.size < 2)
               val mgus2 = if (b.exptype == subTerm._2.exptype) alg.unify(b, subTerm._2.asInstanceOf[FOLExpression]) else Nil
@@ -130,7 +148,7 @@ package robinson {
           l2 <- p1.root.antecedent ++ p1.root.succedent
           subTerm <- getAllPositions(l2.formula) // except variable positions
         } yield l1.formula match {
-            case Atom(ConstantStringSymbol("="), a::b::Nil) => {
+            case Equation(a,b) => {
               val mgus1 = if (a.exptype == subTerm._2.exptype) alg.unify(a, subTerm._2.asInstanceOf[FOLExpression]) else Nil
               require(mgus1.size < 2)
               val mgus2 = if (b.exptype == subTerm._2.exptype) alg.unify(b, subTerm._2.asInstanceOf[FOLExpression]) else Nil
@@ -147,6 +165,52 @@ package robinson {
             }
             case _ => List()
         })).flatMap((x => x.map(y => (state, y))))
+    }
+  }
+
+  // create variants to a pair of two clauses and propagate the literal and position information
+  case object VariantLiteralPositionCommand extends DataCommand[Clause] {
+    def apply(state: State, data: Any) = {
+      val ((p1,occ1,pos1)::(p2,occ2,pos2)::Nil) = data.asInstanceOf[Iterable[Tuple3[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
+      val v1 = Variant(p1)
+      val v2 = Variant(p2)
+      List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2),pos1),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2),pos2))))
+    }
+  }
+
+   // create variants to a pair of two clauses and propagate the literal information
+  case object VariantLiteralCommand extends DataCommand[Clause] {
+    def apply(state: State, data: Any) = {
+      val ((p1,occ1)::(p2,occ2)::Nil) = data.asInstanceOf[Iterable[Tuple2[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean]]]].toList
+      val v1 = Variant(p1)
+      val v2 = Variant(p2)
+      List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2)),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2)))))
+    }
+  }
+
+  // paramodulation where we get in addition to the two clauses, also the literals and the position in the literals
+  // lit1 must always be the equation
+  case class ParamodulationLiteralPositionCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
+    def apply(state: State, data: Any) = {
+      val ((p1,occ1,pos1s)::(p2,occ2,pos2s)::Nil) = data.asInstanceOf[Iterable[Tuple3[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
+      val pos1 = pos1s.head
+      val pos2 = pos2s.toList // because bad interface in syntax should be Iterable in Replacement
+      // we need to require that lit1 is an equation
+      val lit1 = occ1._1
+      val lit2 = occ2._1
+      val Equation(l,r) = lit1.formula
+      val subTerm = getAtPosition(lit2.formula, pos2)
+      if (pos1 == 1) {
+        val mgu = if (l.exptype == subTerm.exptype) alg.unify(l, subTerm.asInstanceOf[FOLExpression]) else throw new ProverException("Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types")
+        require(mgu.size < 2)
+        if (mgu.isEmpty) throw new ProverException("Paramodulation on " + lit1.formula + " at position " + pos1 + " and " + lit2.formula + " at position " + pos2 + " is not possible due to non-unifiable subterms")
+        List((state, Paramodulation(p1, p2, lit1, lit2, Replacement(pos2, r).apply(lit2.formula).asInstanceOf[FOLFormula], mgu.head)))
+      } else if (pos1 == 2) {
+        val mgu = if (r.exptype == subTerm.exptype) alg.unify(r, subTerm.asInstanceOf[FOLExpression]) else throw new ProverException("Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types")
+        require(mgu.size < 2)
+        if (mgu.isEmpty) throw new ProverException("Paramodulation on " + lit1.formula + " at position " + pos1 + " and " + lit2.formula + " at position " + pos2 + " is not possible due to non-unifiable subterms")
+        List((state, Paramodulation(p1, p2, lit1, lit2, Replacement(pos2, l).apply(lit2.formula).asInstanceOf[FOLFormula], mgu.head)))
+      } else throw new ProverException("Equation's position: " + pos1 + " is greater than 2 or smaller than 1")
     }
   }
 }
