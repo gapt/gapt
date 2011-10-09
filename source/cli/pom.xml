@@ -77,7 +77,12 @@
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>atp</artifactId>
-      <version>1.1-Alpha</version>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>prover9</artifactId>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>

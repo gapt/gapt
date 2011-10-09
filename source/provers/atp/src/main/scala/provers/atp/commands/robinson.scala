@@ -2,9 +2,8 @@ package at.logic.provers.atp.commands
 
 import at.logic.provers.atp.commands.base.DataCommand
 import at.logic.provers.atp.commands.sequents.SetSequentsCommand
-import at.logic.calculi.resolution.robinson.{InitialClause, Clause}
+import at.logic.calculi.resolution.robinson.{InitialClause, Clause,RobinsonResolutionProof}
 import at.logic.provers.atp.Definitions._
-import at.logic.calculi.resolution.base.ResolutionProof
 import at.logic.calculi.occurrences._
 import at.logic.utils.ds.PublishingBuffer
 import at.logic.calculi.resolution.robinson.{Resolution, Variant, Factor}
@@ -29,13 +28,17 @@ import at.logic.calculi.lk.base.types.FSequent
 package robinson {
 
 import _root_.at.logic.language.hol.replacements.getAtPosition
+import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.provers.atp.ProverException
+import scala.collection.immutable.Seq
+import collection.immutable.List._
+import scala.Some
 
 // adds to the state the initial set of resolution proofs, made from the input clauses
   case class SetClausesCommand(override val clauses: Iterable[FSequent]) extends SetSequentsCommand[Clause](clauses) {
     def apply(state: State, data: Any) = {
-      val pb = new PublishingBuffer[ResolutionProof[Clause]]
-      clauses.foreach(x => pb += InitialClause(x._1, x._2)(defaultFormulaOccurrenceFactory))
+      val pb = new PublishingBuffer[RobinsonResolutionProof]
+      clauses.foreach(x => pb += InitialClause(x._1.asInstanceOf[Seq[at.logic.language.fol.FOLFormula]], x._2.asInstanceOf[Seq[at.logic.language.fol.FOLFormula]])(defaultFormulaOccurrenceFactory))
       List((state += new Tuple2("clauses", pb), data))
     }
   }
@@ -46,8 +49,8 @@ import _root_.at.logic.provers.atp.ProverException
       state.remove("simpleSubsumManager")
       // we need a better way to reset things that are connected to the pb such as a specific
       // command which somehow does it without knowing the implementations
-      val pb = new PublishingBuffer[ResolutionProof[Clause]]
-      val clauses = data.asInstanceOf[Iterable[ResolutionProof[Clause]]]
+      val pb = new PublishingBuffer[RobinsonResolutionProof]
+      val clauses = data.asInstanceOf[Iterable[RobinsonResolutionProof]]
       clauses.foreach(x => pb += x)
       List((state += new Tuple2("clauses", pb), data))
     }
@@ -57,23 +60,67 @@ import _root_.at.logic.provers.atp.ProverException
   // create variants to a pair of two clauses
   case object VariantsCommand extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val p = data.asInstanceOf[Tuple2[ResolutionProof[Clause],ResolutionProof[Clause]]]
+      val p = data.asInstanceOf[Tuple2[RobinsonResolutionProof,RobinsonResolutionProof]]
       List((state, (Variant(p._1),Variant(p._2))))
     }
   }
 
 case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Pair[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean]]]].toList
+      val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
       val mgus = alg.unify(lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression])
       require(mgus.size < 2) // as it is first order it must have at most one mgu
-      mgus.map(x => (state, Resolution(p1,p2,lit1,lit2,x.asInstanceOf[Substitution[FOLExpression]])))
+      mgus.map(x => (state,  Resolution(p1,p2,lit1,lit2,x.asInstanceOf[Substitution[FOLExpression]])))
     }
   }
 
+  // this command should be used when the target clause is not the empty clause and should be called before Resolution is called
+  case class ClauseFactorCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
+    // computes all subsets
+    private def sb[T](ls:List[T]): List[List[T]] = ls match {
+      case Nil => Nil
+      case x::Nil => List(List(x),List())
+      case x::rs => sb(rs).flatMap(r => List(x::r, r))
+    }
+    private def unify(ls: List[FOLFormula], s: Substitution[FOLExpression]): Option[Substitution[FOLExpression]] = ls match {
+      case x::y::rs => unify(y::rs, s) match {
+        case Some(s2) => {
+          val mgu = alg.unify(s2(x), s2(y))
+          if (!mgu.isEmpty) Some(mgu.head compose s2) else None
+        }
+        case _ => None
+      }
+      case _ => Some(s)
+    }
+    // filter the subsets according to factorability to one of its elements
+    def factor(ls: Seq[FormulaOccurrence], s: Substitution[FOLExpression]): List[Pair[List[FormulaOccurrence],Substitution[FOLExpression]]] = {
+      val subs = sb(ls.toList).filter(_.size > 1)
+      subs.zip(subs.map(sub => unify(sub.map(_.formula.asInstanceOf[FOLFormula]),s))).filterNot(_._2 == None).map(p => (p._1,p._2.get))
+    }
+    def apply(state: State, data: Any) = {
+      val p = data.asInstanceOf[Tuple2[RobinsonResolutionProof,RobinsonResolutionProof]]
+      // we need to get factors for antecedent and for each+empty to try to get factors of succedent with a given sub
+      val fac1 = (factor(p._1.root.antecedent, Substitution[FOLExpression]()) :+ (List[FormulaOccurrence](), Substitution[FOLExpression]())).flatMap(v => factor(p._1.root.succedent, v._2).map(u => (v._1, u._1, u._2)))
+        .flatMap(t => (t._1,t._2) match {
+        case (Nil, t2) => for {b <-t2} yield (Factor(p._1, b, t2.filterNot(_ == b), t._3))
+        case (t2, Nil) => for {b <-t2} yield (Factor(p._1, b, t2.filterNot(_ == b), t._3))
+        case _ => for {a <- t._1; b <- t._2} yield (Factor(p._1, a, t._1.filterNot(_ == a), b, t._2.filterNot(_ == b), t._3))
+      }) :+ p._1
+      val fac2 = (factor(p._2.root.antecedent, Substitution[FOLExpression]()) :+ (List[FormulaOccurrence](), Substitution[FOLExpression]())).flatMap(v => factor(p._2.root.succedent, v._2).map(u => (v._1, u._1, u._2)))
+        .flatMap(t => (t._1,t._2) match {
+        case (Nil, t2) => for {b <-t2} yield (Factor(p._2, b, t2.filterNot(_ == b), t._3))
+        case (t2, Nil) => for {b <-t2} yield (Factor(p._2, b, t2.filterNot(_ == b), t._3))
+        case _ => for {a <- t._1; b <- t._2} yield (Factor(p._2, a, t._1.filterNot(_ == a), b, t._2.filterNot(_ == b), t._3))
+      }) :+ p._2
+      for {f1 <- fac1; f2 <- fac2} yield ((state, (f1,f2)))
+    }
+  }
+
+  // this command factorize only on the side of the resolving assuming on the way to the empty clause we will factorize also on the other side
+  // should be called after resolution is called
   case class FactorCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val res@ Resolution(cls, pr1, pr2, occ1, occ2, sub) = data.asInstanceOf[ResolutionProof[Clause]]
+      val res@ Resolution(cls, pr1, pr2, occ1, occ2, sub) = data.asInstanceOf[RobinsonResolutionProof]
       val factors1 = computeFactors(alg, pr1.root.succedent, pr1.root.succedent.filterNot(_ == occ1).toList, occ1, Substitution[FOLExpression]()/*sub.asInstanceOf[Substitution[FOLExpression]]*/, Nil)
       val factors2 = computeFactors(alg, pr2.root.antecedent, pr2.root.antecedent.filterNot(_ == occ2).toList, occ2, Substitution[FOLExpression]()/*sub.asInstanceOf[Substitution[FOLExpression]]*/, Nil)
       (state, res) :: ((for {
@@ -121,7 +168,7 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
 
   case class ParamodulationCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val (p1,p2) = data.asInstanceOf[Tuple2[ResolutionProof[Clause],ResolutionProof[Clause]]]
+      val (p1,p2) = data.asInstanceOf[Tuple2[RobinsonResolutionProof,RobinsonResolutionProof]]
       ((for {
           l1 <- p1.root.succedent
           l2 <- p2.root.antecedent ++ p2.root.succedent
@@ -171,7 +218,7 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
   // create variants to a pair of two clauses and propagate the literal and position information
   case object VariantLiteralPositionCommand extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val ((p1,occ1,pos1)::(p2,occ2,pos2)::Nil) = data.asInstanceOf[Iterable[Tuple3[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
+      val ((p1,occ1,pos1)::(p2,occ2,pos2)::Nil) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
       val v1 = Variant(p1)
       val v2 = Variant(p2)
       List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2),pos1),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2),pos2))))
@@ -181,7 +228,7 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
    // create variants to a pair of two clauses and propagate the literal information
   case object VariantLiteralCommand extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val ((p1,occ1)::(p2,occ2)::Nil) = data.asInstanceOf[Iterable[Tuple2[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean]]]].toList
+      val ((p1,occ1)::(p2,occ2)::Nil) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
       val v1 = Variant(p1)
       val v2 = Variant(p2)
       List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2)),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2)))))
@@ -192,7 +239,7 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
   // lit1 must always be the equation
   case class ParamodulationLiteralPositionCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      val ((p1,occ1,pos1s)::(p2,occ2,pos2s)::Nil) = data.asInstanceOf[Iterable[Tuple3[ResolutionProof[Clause],Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
+      val ((p1,occ1,pos1s)::(p2,occ2,pos2s)::Nil) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
       val pos1 = pos1s.head
       val pos2 = pos2s.toList // because bad interface in syntax should be Iterable in Replacement
       // we need to require that lit1 is an equation

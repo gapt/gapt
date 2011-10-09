@@ -14,19 +14,21 @@ import _root_.at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import _root_.at.logic.calculi.lk.base.types.FSequent
 import _root_.at.logic.calculi.occurrences.FormulaOccurrence
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.Clause
+import _root_.at.logic.calculi.resolution.robinson.{RobinsonResolutionProof, Clause}
 import _root_.at.logic.language.fol._
 import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import _root_.at.logic.language.hol.replacements.getAtPosition
-import _root_.at.logic.language.hol.{HOLExpression, HOLFormula}
+import _root_.at.logic.language.hol.{HOLVar, HOLExpression, HOLFormula}
+import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.language.lambda.symbols.VariableStringSymbol
 import _root_.at.logic.language.lambda.types.Ti
 import _root_.at.logic.parsing.language.tptp.TPTPFOLExporter
 import _root_.at.logic.provers.atp.commands.base._
-import _root_.at.logic.provers.atp.commands.guided.{GetGuidedClausesLiterals, GetGuidedClausesLiteralsPositions, AddGuidedResolventCommand, AddGuidedInitialClauseCommand}
-import _root_.at.logic.provers.atp.commands.replay.ReplayNoParamodulationCommand
+import _root_.at.logic.provers.atp.commands.guided.GetGuidedClausesCommand._
+import _root_.at.logic.provers.atp.commands.guided.{AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand}
+import _root_.at.logic.provers.atp.commands.replay.{ReplayOnlyParamodulationCommand, ReplayNoParamodulationCommand, ReplayCommand}
 import _root_.at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
-import _root_.at.logic.provers.atp.commands.sequents.{InsertResolventCommand, SetSequentsCommand}
+import _root_.at.logic.provers.atp.commands.sequents.{fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
 import _root_.at.logic.provers.atp.Definitions._
 import sys.process._
 import java.io._
@@ -36,6 +38,7 @@ import org.xml.sax.InputSource
 import javax.xml.parsers.SAXParserFactory
 import util.parsing.combinator.JavaTokenParsers
 import util.matching.Regex
+import collection.mutable.Map
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -102,6 +105,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
           val FactorRE = new Regex("""\[factor\((\d+\w*),(\w+),(\w+)\)\]\.""")
           val ResolveRE = new Regex("""\[resolve\((\d+\w*),(\w+),(\d+\w*),(\w+)\)\]\.""")
           val ParaRE = new Regex("""\[para\((\d+\w*)\((\w+),(\d+)\),(\d+\w*)\((\w+),(\d+( d+)*)\)\)\]\.""")
+          val CopyRE = new Regex("""\[copy\((\d+\w*)\).*\]\.""")
           (xml \\ "clause").foreach(e => {
             val cls = getLiterals(e)
             val id = (e\"@id").text
@@ -110,6 +114,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
               case FactorRE(parent, lit1, lit2) => factor(parent, lit1, lit2, id, cls)
               case ResolveRE(par1, lit1, par2, lit2) => resolve(par1, lit1, par2, lit2, id, cls)
               case ParaRE(fPar, fLit, fPos, tPar, tLit, tPos, _) => paramodulate(fPar, fLit, fPos.toInt, tPar, tLit, tPos.split("""\s""").map(_.toInt), id, cls)
+              case CopyRE(pid) => copy(pid, id)
               case _ => replay(getParents(e), id, cls)
             })
           })
@@ -150,21 +155,29 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
     private def assumption(id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
       List(AddGuidedInitialClauseCommand(id, cls), InsertResolventCommand[Clause])
     }
+    // here we just attach the parent to the new clause id as all other rules try to factorize the parents anyway
     private def factor(parentId: String, lit1: String, lit2: String, id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
-      throw new Exception("not implemented yet")
+      List(GetGuidedClausesCommand(List(parentId)),AddGuidedClausesCommand(List(id)))
     }
+    private def copy(parentId: String, id: String): TraversableOnce[Command[Clause]] = {
+      List(GetGuidedClausesCommand(List(parentId)),AddGuidedClausesCommand(List(id)))
+    }
+
+    // we apply replay here because the order of literals might change in our proof
     private def resolve(par1Id: String, lit1: String, par2Id: String, lit2: String, id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
       /*require(lit1.size == 1 && lit2.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
       List(GetGuidedClausesLiterals(List((par1Id, lit1.head.toInt - INT_CHAR), (par2Id, lit2.head.toInt - INT_CHAR))), VariantLiteralCommand, ResolveCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))
       */
-      replay(List(par1Id,par2Id), id, cls)
+      List(ReplayCommand(List(par1Id,par2Id), id, literals2FSequent(cls)), SpawnCommand())
     }
+    // we apply replay here because the order of literals might change in our proof
     private def paramodulate(fromParentId: String, fromLiteral: Seq[Char], fromPos: Int, toParentId: String, toLiteral: Seq[Char], toPos: Iterable[Int], id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
-      require(fromLiteral.size == 1 && toLiteral.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
-      List(GetGuidedClausesLiteralsPositions(List((fromParentId, fromLiteral.head.toInt - INT_CHAR, List(fromPos)), (toParentId, toLiteral.head.toInt - INT_CHAR, toPos))), VariantLiteralPositionCommand, ParamodulationLiteralPositionCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))
+      /*require(fromLiteral.size == 1 && toLiteral.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
+      List(GetGuidedClausesLiteralsPositions(List((fromParentId, fromLiteral.head.toInt - INT_CHAR, List(fromPos)), (toParentId, toLiteral.head.toInt - INT_CHAR, toPos))), VariantLiteralPositionCommand, ParamodulationLiteralPositionCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))*/
+      List(ReplayCommand(List(fromParentId,toParentId), id, literals2FSequent(cls)), SpawnCommand())
     }
     private def replay(parentIds: Iterable[String], id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
-      Stream(ReplayNoParamodulationCommand(parentIds, id, literals2FSequent(cls)), SpawnCommand())
+      List(ReplayCommand(parentIds, id, literals2FSequent(cls)), SpawnCommand())
     }
 
     object MyParser extends JavaTokenParsers {

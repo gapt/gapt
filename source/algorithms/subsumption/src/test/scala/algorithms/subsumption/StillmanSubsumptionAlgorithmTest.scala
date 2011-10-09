@@ -94,6 +94,11 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
         val cl2 = new MyParser("P(a) | P(y).").getClauseList.head
         MyAlg.subsumes(cl1, cl2) must beEqual (false)
       } */
+      "P(x) | -P(x) and P(y) | -P(z)" in {
+        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head
+        val cl2 = new MyParser("P(y) | -P(z).").getClauseList.head
+        MyAlg.subsumes(cl1, cl2) must beEqual (false)
+      }
     }
   }
 }
