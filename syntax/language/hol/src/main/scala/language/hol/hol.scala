@@ -16,6 +16,8 @@ import at.logic.language.lambda.typedLambdaCalculus._
 
 package hol {
 
+import collection.Seq
+
 trait Formula extends LambdaExpression {require(exptype == To())}
   trait Const
   trait HOL extends LambdaFactoryProvider {
@@ -59,7 +61,19 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case AbsInScope(v, exp) => exp.asInstanceOf[HOLExpression].containsQuantifier
       case App(l, r) => l.asInstanceOf[HOLExpression].containsQuantifier || r.asInstanceOf[HOLExpression].containsQuantifier
     }
+
+    def subTerms: Seq[HOLExpression] = this match {
+      case Var(_,_) => List(this)
+      case Atom(_, args) =>  this +: args.flatMap(_.subTerms)
+      case Function(_,args,_)  =>  this +: args.flatMap(_.subTerms)
+      case BinaryFormula(x,y) => this +: (x.subTerms ++ y.subTerms)
+      case Neg(x) => this +: x.subTerms
+      case Quantifier(_,_,x) => this +: x.subTerms
+      case HOLAbsInScope(_, x) => this +: x.subTerms
+      case HOLApp(x, y) => this +: (x.subTerms ++ y.subTerms)
+    }
   }
+
   trait HOLFormula extends HOLExpression with Formula {
     def and(that: HOLFormula) =  And(this, that)
     def or(that: HOLFormula) = Or(this, that)
@@ -254,7 +268,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
     def unapply( expression: LambdaExpression ) = expression match {
       case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
       case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case AppN( Var( name, t ), args ) if (expression.exptype != To()) => Some( ( name, args, expression.exptype ) )
+      case AppN( Var( name, t ), args ) if (expression.exptype != To()) => Some( ( name, args.asInstanceOf[List[HOLExpression]], expression.exptype ) )
       case _ => None
     }
   }
@@ -270,7 +284,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
     def unapply( expression: LambdaExpression ) = expression match {
       case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
       case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case AppN( Var( name, t ), args ) if (expression.exptype == To()) => Some( ( name, args ) )
+      case AppN( Var( name, t ), args ) if (expression.exptype == To()) => Some( ( name, args.asInstanceOf[List[HOLExpression]] ) )
       case _ => None
     }
   }

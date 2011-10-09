@@ -57,7 +57,13 @@ import at.logic.language.lambda.substitutions.Substitution
 
 import at.logic.gui.prooftool.gui.Main
 
+import  at.logic.calculi.lk.base.types._
+
 package GAPScalaInteractiveShellLibrary {
+import java.io.IOException
+import at.logic.provers.atp.commands.sequents.SetTargetClause
+import at.logic.provers.prover9.commands.Prover9InitCommand
+import at.logic.provers.atp.commands.base.SetStreamCommand
 
 object loadProofs {
     def apply(file: String) = 
@@ -200,9 +206,9 @@ object loadProofs {
       Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
       Stream.cons(InsertResolventCommand[Clause],
       Stream.cons(RefutationReachedCommand[Clause], stream1)))))))                                                                                  */
-    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
+    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
-    def apply(clauses: Seq[Clause]): Option[ResolutionProof[Clause]] =
+    def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
       new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
         refute(Stream.cons(SetClausesCommand(clauses), stream)).next
   }
@@ -221,13 +227,22 @@ object loadProofs {
       Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
       Stream.cons(InsertResolventCommand[Clause],
       Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
-    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(Clause(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
+    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
-    def apply(clauses: Seq[Clause]): Option[ResolutionProof[Clause]] =
+    def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
       new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
         refute(Stream.cons(SetClausesCommand(clauses), stream)).next
   }
 
+  object prover9 {
+    def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
+      try {
+         new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
+          refute(Stream(SetTargetClause((List(),List())), Prover9InitCommand(clauses), SetStreamCommand())).next
+      } catch {
+        case e: IOException => throw new IOException("Prover9 is not installed: " + e.getMessage())
+      }
+  }
   object ceres {
     def help = ceresHelp.apply
   }

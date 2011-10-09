@@ -31,6 +31,7 @@ import collection.immutable.Seq
 */
 
   trait ResolutionProof[V <: Sequent] extends Proof[V]
+
   trait NullaryResolutionProof[V <: Sequent] extends LeafAGraph[V] with ResolutionProof[V] with NullaryProof[V]
   trait UnaryResolutionProof[V <: Sequent] extends UnaryAGraph[V] with ResolutionProof[V] with UnaryProof[V] {
     override def uProof = t.asInstanceOf[ResolutionProof[V]]

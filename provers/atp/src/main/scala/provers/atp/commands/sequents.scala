@@ -15,6 +15,8 @@ import _root_.at.logic.algorithms.subsumption.SubsumptionAlgorithm
 import _root_.at.logic.calculi.lk.base.Sequent
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
 import _root_.at.logic.calculi.resolution.robinson.Clause
+import _root_.at.logic.language.hol.{HOLFormula, HOLExpression, HOLVar}
+import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.language.lambda.types.->
 import _root_.at.logic.utils.ds.{Add, Remove, PublishingBufferEvent, PublishingBuffer}
 import _root_.at.logic.utils.patterns.listeners.ListenerManager
@@ -26,6 +28,7 @@ import at.logic.calculi.lk.base.types.FSequent
 
   // set the target clause, i.e. the empty clause normally
   case class SetTargetClause[V <: Sequent](val clause: FSequent) extends DataCommand[V] {
+    //println("target: " + clause)
     def apply(state: State, data: Any) = List((state += new Tuple2("targetClause", clause), data))
   }
 
@@ -33,13 +36,12 @@ import at.logic.calculi.lk.base.types.FSequent
   case class SearchForEmptyClauseCommand[V <: Sequent]() extends ResultCommand[V] {
     def apply(state: State, data: Any) = {
       val target = state("targetClause").asInstanceOf[FSequent]
-      state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]].find(x => x.root syntacticMultisetEquals target)
+      state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]].find(x => fvarInvariantMSEquality(x.root, target))
     }
   }
 
   case class InsertResolventCommand[V <: Sequent]() extends DataCommand[V] {
     def apply(state: State, data: Any) = {
-      println("insert res: " + data.asInstanceOf[ResolutionProof[V]].root)
       (if (state.isDefinedAt("clauses")) state("clauses").asInstanceOf[PublishingBuffer[ResolutionProof[V]]]
       else {
         val pb = new PublishingBuffer[ResolutionProof[V]]
@@ -63,8 +65,26 @@ import at.logic.calculi.lk.base.types.FSequent
     def apply(state: State, data: Any) = {
       val target = state("targetClause").asInstanceOf[FSequent]
       val d = data.asInstanceOf[ResolutionProof[V]]
-      if (d.root syntacticMultisetEquals target) Some(d)
+      if (fvarInvariantMSEquality(d.root,target)) Some(d)
       else None
+    }
+  }
+
+  // tests for multiset equality while ignoring the names of the free variables
+  object fvarInvariantMSEquality {
+    def apply[V <: Sequent](c1: V, f2: FSequent): Boolean = {
+      val f1 = (c1.antecedent.map(_.formula), c1.succedent.map(_.formula))
+      //println("fvmseq: " + f1 + " - " + f2)
+      val (neg,pos) = f2
+      // we get all free variables from f2 and try to systematically replace those in f1
+      val set1 = (f1._1 ++ f1._2).flatMap(_.subTerms).filter(e => e match {case f: HOLVar => true; case _ => false}).toSet
+      val set2 = (f2._1 ++ f2._2).flatMap(_.subTerms).filter(e => e match {case f: HOLVar => true; case _ => false}).toSet
+      if (set1.size != set2.size) List[FSequent]() // they cannot be equal
+      // create all possible substitutions
+      (for (s <- set1.toList.permutations.map(_.zip(set2)).map(x => Substitution(x.asInstanceOf[List[Pair[HOLVar,HOLExpression]]])))
+        yield (f1._1.map(s(_).asInstanceOf[HOLFormula]), f1._2.map(s(_).asInstanceOf[HOLFormula]))).toList.exists(cls => {
+          neg.diff(cls._1).isEmpty && pos.diff(cls._2).isEmpty && cls._1.diff(neg).isEmpty && cls._2.diff(pos).isEmpty
+        })
     }
   }
 
