@@ -186,7 +186,7 @@ import _root_.at.logic.utils.traits.Occurrence
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, main: HOLFormula, eigen_var: HOLVar) = {
       val term1op = s1.succedent.find(_ == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val aux_fo = term1op.get
         main match {
@@ -195,6 +195,13 @@ import _root_.at.logic.utils.traits.Occurrence
             assert( ( s1.antecedent ++ (s1.succedent.filterNot(_ == aux_fo)) ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
               "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.toStringSimple )
             // correct auxiliary formula
+
+            println("ForallRightRule")
+            println(sub)
+            println(eigen_var)
+            println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
+            println("aux: " + aux_fo.formula)
+
             assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
             aux_fo 
           }

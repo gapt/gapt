@@ -165,6 +165,7 @@ object Main extends SimpleSwingApplication {
       }
       contents += new Separator
       contents += new MenuItem(Action("Gentzen Method") { gentzen }) { border = customBorder }
+      contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK }) { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("TestRefutation") { testRefutation }) { border = customBorder }
       contents += new MenuItem(Action("TestSchemata") { testSchemata }) { border = customBorder }
@@ -259,12 +260,10 @@ object Main extends SimpleSwingApplication {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
     import at.logic.transformations.ceres.struct.StructCreators
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-    import at.logic.algorithms.lk._
+    import at.logic.algorithms.lksk._
 
-    val proof_sk = eliminateDefinitionRules(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
-    //commented by Cvetan
-//    val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
-    val s = StructCreators.extract( proof_sk)
+    val proof_sk = eliminateDefinitions(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
+    val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
     body.contents = new Launcher(Some("cllist",csPre),16)
   } catch {
@@ -291,18 +290,42 @@ object Main extends SimpleSwingApplication {
   def showStructOnlyQuantifiedCuts = try {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
     import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
-    import at.logic.algorithms.lk._
+    import at.logic.algorithms.lksk._
 
-    val proof_sk = eliminateDefinitionRules( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
-//commented by Cvetan
-//    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
-    val s = StructCreators.extract( proof_sk)
+    val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
+    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
 
     body.contents = new Launcher(Some("Struct",s),12)
   } catch {
       case e: AnyRef =>
         val t = e.toString
         Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+  }
+
+  def eliminateDefsLK = try {
+    import at.logic.algorithms.lk._
+    //import at.logic.transformations.skolemization.lksk.LKtoLKskc
+
+    val new_proof = eliminateDefinitions( body.getContent.getData.get._2.asInstanceOf[LKProof]   )
+
+    body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
+  }
+
+  def eliminateDefsLKsk = try {
+    import at.logic.algorithms.lksk._
+    import at.logic.transformations.skolemization.lksk.LKtoLKskc
+
+    val new_proof = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )  )
+
+    body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
   }
 
   def gentzen = try {

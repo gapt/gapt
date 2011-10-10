@@ -58,6 +58,7 @@ object WeakeningLeftRule {
       with UnaryLKProof with PrincipalFormulas {
         def rule = WeakeningLeftRuleType
         def prin = prinFormula::Nil
+        override def name = "w:l (sk)"
       }
   }
   def unapply(proof: LKProof) = if (proof.rule == WeakeningLeftRuleType && proof.root.isInstanceOf[LabelledSequent]) {
@@ -76,6 +77,7 @@ object WeakeningRightRule {
       with UnaryLKProof with PrincipalFormulas {
         def rule = WeakeningRightRuleType
         def prin = prinFormula::Nil
+        override def name = "w:r (sk)"
       }
   }
   def unapply(proof: LKProof) = if (proof.rule == WeakeningRightRuleType && proof.root.isInstanceOf[LabelledSequent]) {
@@ -116,6 +118,7 @@ object ForallSkLeftRule {
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
             def subst = subst_t
+            override def name = "\u2200:l (sk)"
           }
       }
       case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
@@ -123,6 +126,7 @@ object ForallSkLeftRule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == ForallSkLeftRuleType) {
+      println("ForallSkLeftRule Unapply")
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
@@ -149,6 +153,7 @@ object ExistsSkRightRule {
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
             def subst = subst_t
+            override def name = "\u2203:r (sk)"
           }
       }
       case _ => throw new LKRuleCreationException("Main formula of ExistsSkRightRule must have a universal quantifier as head symbol.")
@@ -180,6 +185,7 @@ object ForallSkRightRule {
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
             def subst = skolem_term
+            override def name = "\u2200:r (sk)"
           }
         }
       case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
@@ -210,6 +216,7 @@ object ExistsSkLeftRule {
             def aux = (auxf::Nil)::Nil
             def prin = prinFormula::Nil
             def subst = skolem_term
+            override def name = "\u2203:l (sk)"
           }
         }
       case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
