@@ -68,6 +68,7 @@ import scala.Some
 case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
       val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
+      //println("resolving on: " + p1.root + " and " + p2.root)
       val mgus = alg.unify(lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression])
       require(mgus.size < 2) // as it is first order it must have at most one mgu
       mgus.map(x => (state,  Resolution(p1,p2,lit1,lit2,x.asInstanceOf[Substitution[FOLExpression]])))

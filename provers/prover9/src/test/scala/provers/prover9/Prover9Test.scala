@@ -94,6 +94,32 @@ class Prover9Test extends SpecificationWithJUnit {
       val s3 = (List(pffa),Nil)
       getRefutation(List(s1,s2,s3)) must beTrue
     }
+    "prove (with xx - 1) 0) :- p(a) , (1) z = z, p(x), p(y) :- p(f(x)), p(f(y)) , (2) p(f(f(a))) :- " in {
+      val pa = parse("P(a)")
+      val px = parse("P(x)")
+      val py = parse("P(y)")
+      val zz = parse("=(z,z)")
+      val pfx = parse("P(f(x))")
+      val pfy = parse("P(f(y))")
+      val pffa = parse("P(f(f(a)))")
+      val s1 = (Nil, List(pa))
+      val s2 = (List(zz,px,py),List(pfx,pfy))
+      val s3 = (List(pffa),Nil)
+      getRefutation(List(s1,s2,s3)) must beTrue
+    }
+    "prove (with xx - 2) P(f(a)). -=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a)))." in {
+      val pfa = parse("P(f(a))")
+      val px = parse("P(x)")
+      val py = parse("P(y)")
+      val zz = parse("=(z,z)")
+      val pfx = parse("P(f(x))")
+      val pfy = parse("P(f(y))")
+      val pffa = parse("P(f(f(a)))")
+      val s1 = (Nil, List(pfa))
+      val s2 = (List(zz,px,py),List(pfx,pfy))
+      val s3 = (List(pffa),Nil)
+      getRefutation(List(s1,s2,s3)) must beTrue
+    }
   }
 
   "The Prover9 interface" should {
