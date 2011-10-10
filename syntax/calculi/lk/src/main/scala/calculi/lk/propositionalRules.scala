@@ -49,6 +49,10 @@ import collection.immutable.Seq
   // It is used together with an implicit conversion between this pair into a proof so users who are not interested in this information will not see it
 
   object Axiom {
+    def apply(seq: Sequent) : LeafTree[Sequent] with NullaryLKProof = {
+      val fseq = seq.toFSequent
+      apply(fseq._1, fseq._2)
+    }
     def apply[T](ant: Seq[Formula], suc: Seq[Formula]) (implicit factory: FOFactory) = {
       val left: Seq[FormulaOccurrence] = ant.map(x => factory.createFormulaOccurrence(x.asInstanceOf[HOLFormula], Nil))
       val right: Seq[FormulaOccurrence] = suc.map(x => factory.createFormulaOccurrence(x.asInstanceOf[HOLFormula], Nil))
