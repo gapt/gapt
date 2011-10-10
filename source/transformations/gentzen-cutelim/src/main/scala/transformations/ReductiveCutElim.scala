@@ -156,8 +156,10 @@ object ReductiveCutElim {
     // Rank reduction rules:
   private def reduceRank(left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula): LKProof =
     (left, right) match {
-    case (Axiom(_), proof: LKProof) => proof
-    case (proof: LKProof, Axiom(_)) => proof
+    case (Axiom(seq), proof: LKProof) if (seq.isTaut) => proof
+    case (proof: LKProof, Axiom(seq)) if (seq.isTaut) => proof
+    // This is a case for nontautological axioms
+    case (ax1: NullaryLKProof, ax2: NullaryLKProof) => Axiom(CutRule(ax1, ax2, cutFormula1).root)
   //case (WeakeningRightRule(up, _, prin), proof: LKProof) => //Can't match this, why??? Fixed: moved as a subcase of UnaryLKProof
     case (proof: LKProof, WeakeningLeftRule(up, _, prin)) =>
       if (prin.formula == cutFormula2) {
@@ -183,6 +185,10 @@ object ReductiveCutElim {
         regularize(tmp)._1
       }
       else ContractionLeftRule(CutRule(proof, up, cutFormula2), aux1.formula)
+    // This is a case for nontautological axiom on the left
+    case (ax: NullaryLKProof, proof: LKProof) =>
+      if (proof.isInstanceOf[UnaryLKProof]) reduceUnaryRight(ax, proof.asInstanceOf[UnaryLKProof], cutFormula1)
+      else reduceBinaryRight(ax, proof.asInstanceOf[BinaryLKProof], cutFormula1)
     case (unary: UnaryLKProof, proof: LKProof) =>
       if (unary.rule == WeakeningRightRuleType) {
         val unap = WeakeningRightRule.unapply(unary)
@@ -323,7 +329,8 @@ object ReductiveCutElim {
         OrLeftRule(up1, CutRule(up2, proof, cutFormula), aux1.formula, aux2.formula)
       else throw new ReductiveCutElimException("Can't find cut-formula!")
     case ImpLeftRule(up1, up2, _, aux1, aux2, prin) =>
-      if (up1.root.succedent.exists(x => x.formula == cutFormula))
+      if ((aux1.formula != cutFormula && up1.root.succedent.exists(x => x.formula == cutFormula)) ||
+        (aux1.formula == cutFormula && up1.root.succedent.find(x => x.formula == cutFormula).size > 1))
         ImpLeftRule(CutRule(up1, proof, cutFormula), up2, aux1.formula, aux2.formula)
       else if (up2.root.succedent.exists(x => x.formula == cutFormula))
         ImpLeftRule(up1, CutRule(up2, proof, cutFormula), aux1.formula, aux2.formula)
@@ -352,9 +359,8 @@ object ReductiveCutElim {
         OrLeftRule(up1, CutRule(proof, up2, cutFormula), aux1.formula, aux2.formula)
       else throw new ReductiveCutElimException("Can't find cut-formula!")
     case ImpLeftRule(up1, up2, _, aux1, aux2, prin) if prin.formula != cutFormula =>
-      if ((aux1.formula != cutFormula && up1.root.antecedent.exists(x => x.formula == cutFormula)) ||
-        (aux1.formula == cutFormula && up1.root.antecedent.find(x => x.formula == cutFormula).size > 1))
-        ImpLeftRule(CutRule(proof, up2, cutFormula), up2, aux1.formula, aux2.formula)
+      if (up1.root.antecedent.exists(x => x.formula == cutFormula))
+        ImpLeftRule(CutRule(proof, up1, cutFormula), up2, aux1.formula, aux2.formula)
       else if ((aux2.formula != cutFormula && up2.root.antecedent.exists(x => x.formula == cutFormula)) ||
         (aux2.formula == cutFormula && up2.root.antecedent.find(x => x.formula == cutFormula).size > 1))
         ImpLeftRule(up1, CutRule(proof, up2, cutFormula), aux1.formula, aux2.formula)
