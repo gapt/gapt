@@ -109,14 +109,16 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
           (xml \\ "clause").foreach(e => {
             val cls = getLiterals(e)
             val id = (e\"@id").text
-            cmnds = cmnds ++ ((e\\"@jstring").text match {
-              case AssumptionRE(_) => assumption(id, cls)
-              case FactorRE(parent, lit1, lit2) => factor(parent, lit1, lit2, id, cls)
-              case ResolveRE(par1, lit1, par2, lit2) => resolve(par1, lit1, par2, lit2, id, cls)
-              case ParaRE(fPar, fLit, fPos, tPar, tLit, tPos, _) => paramodulate(fPar, fLit, fPos.toInt, tPar, tLit, tPos.split("""\s""").map(_.toInt), id, cls)
-              case CopyRE(pid) => copy(pid, id)
-              case _ => replay(getParents(e), id, cls)
-            })
+            cmnds = cmnds ++
+              assumption("0", List(MyParser.parseAll(MyParser.literal, "x=x").get)) ++ // to support the xx rules
+              ((e\\"@jstring").text match {
+                case AssumptionRE(_) => assumption(id, cls)
+                case FactorRE(parent, lit1, lit2) => factor(parent, lit1, lit2, id, cls)
+                case ResolveRE(par1, lit1, par2, lit2) => resolve(par1, lit1, par2, lit2, id, cls)
+                case ParaRE(fPar, fLit, fPos, tPar, tLit, tPos, _) => paramodulate(fPar, fLit, fPos.toInt, tPar, tLit, tPos.split("""\s""").map(_.toInt), id, cls)
+                case CopyRE(pid) => copy(pid, id)
+                case _ => replay(getParents(e), id, cls)
+              })
           })
         },
         stderr => {val err:String = scala.io.Source.fromInputStream(stderr).mkString; if (!err.isEmpty) throw new Prover9Exception(err)}
@@ -168,7 +170,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
       /*require(lit1.size == 1 && lit2.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
       List(GetGuidedClausesLiterals(List((par1Id, lit1.head.toInt - INT_CHAR), (par2Id, lit2.head.toInt - INT_CHAR))), VariantLiteralCommand, ResolveCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))
       */
-      List(ReplayCommand(List(par1Id,par2Id), id, literals2FSequent(cls)), SpawnCommand())
+      List(ReplayCommand(List(par1Id,par2Id,"0"), id, literals2FSequent(cls)), SpawnCommand())
     }
     // we apply replay here because the order of literals might change in our proof
     private def paramodulate(fromParentId: String, fromLiteral: Seq[Char], fromPos: Int, toParentId: String, toLiteral: Seq[Char], toPos: Iterable[Int], id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {

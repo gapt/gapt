@@ -48,6 +48,7 @@ import at.logic.calculi.lk.base.types.FSequent
         state += new Tuple2("clauses", pb)
         pb
       }) += data.asInstanceOf[ResolutionProof[V]]
+      //println("add res: " + data.asInstanceOf[ResolutionProof[V]].root)
       List((state,data))
     }
   }

@@ -74,6 +74,7 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(RefutationReachedCommand[Clause], stream1d)))))
   def streamd(f: FSequent): Stream[Command[Clause]] = Stream.cons(SetTargetClause(f), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1d))
 
+
   def getRefutation(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streamc)).next must beLike {
       case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => true
       case _ => false
@@ -130,6 +131,10 @@ class ProverTest extends SpecificationWithJUnit {
       "P(f(a)) from -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a)." in {
         val pfa = parse("P(f(a))")
         getRefutationd(" -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a).",(List(),List(pfa))) must beTrue
+      }
+      "-P(f(a)) from -=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x)." in {
+        val pfa = parse("P(f(a))")
+        getRefutationd("-=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x).",(List(pfa),List())) must beTrue
       }
     }
     /*"When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {
