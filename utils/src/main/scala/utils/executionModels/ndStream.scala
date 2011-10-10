@@ -25,22 +25,18 @@ package ndStream {
     type T = Configuration[S]
     private val results: Queue[S] = new Queue[S]()
     protected def init: Unit = add(initial)
-    
+
+    // this is a tail recursion but from some reason scala does not replace it by a loop. TODO: replace it explicitely.
     def next: Option[S] = {
-      val res = results.headOption
-      if (res != None) {
-        results.dequeue
-        res
-      }
-      else {
+      while (results.headOption == None) {
         val conf = get
-        if (conf == None) None
-        else {
-          val confs: Iterable[Configuration[S]] = myFun(conf.get)
-          confs.foreach(x => {if (x.result != None) results.enqueue(x.result.get); if (!x.isTerminal) add(x)})
-          next
-        }
+        if (conf == None) return None
+        else myFun(conf.get).foreach(x => {if (x.result != None) results.enqueue(x.result.get); if (!x.isTerminal) add(x)})
       }
+
+      val res = results.headOption
+      results.dequeue
+      res
     }
   }
 }
