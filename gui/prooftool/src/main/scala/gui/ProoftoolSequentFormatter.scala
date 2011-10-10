@@ -49,11 +49,14 @@ object ProoftoolSequentFormatter {
     // that all IntConsts are 0!
     // this is just done for convenience, and should be changed ASAP
     case z : IntConst => n.toString
+    case IntZero() => n.toString
+
     case v : IntVar => if (n > 0)
         v.toStringSimple + "+" + n.toString
       else
         v.toStringSimple
     case Succ(t) => parseIntegerTerm( t, n + 1 )
+    case _ => throw new Exception("Error in parseIntegerTerm(..) in gui")
   }
 
  /*
