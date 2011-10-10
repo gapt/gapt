@@ -349,7 +349,7 @@ package struct {
     }
 
     def extract(p: LKProof) : Struct = extract( p, getCutAncestors( p ) )
-    //def extract(p: LKProof, predicate: HOLFormula => Boolean) : Struct = extract( p, getCutAncestors( p, predicate ) )
+    def extract(p: LKProof, predicate: HOLFormula => Boolean) : Struct = extract( p, getCutAncestors( p, predicate ) )
 
     def extract(p: LKProof, cut_occs: Set[FormulaOccurrence]):Struct = p match {
       case Axiom(so) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
