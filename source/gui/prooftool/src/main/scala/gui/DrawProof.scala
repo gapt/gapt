@@ -13,13 +13,16 @@ import event._
 import java.awt.Font._
 import java.awt.{RenderingHints, BasicStroke}
 import at.logic.calculi.treeProofs._
-import at.logic.calculi.lk.base.Sequent
 import ProoftoolSequentFormatter._
 import java.awt.event.{MouseMotionListener, MouseEvent}
 import at.logic.calculi.slk.SchemaProofLinkRule
 import at.logic.calculi.lk.propositionalRules.Axiom
+import at.logic.calculi.lk.base.{LKProof, Sequent}
+import at.logic.calculi.occurrences.FormulaOccurrence
 
-class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends BorderPanel with MouseMotionListener {
+
+class DrawProof(private val proof: TreeProof[_], private val fSize: Int, private val cut_anc: Set[FormulaOccurrence])   //added by Cvetan
+  extends BorderPanel with MouseMotionListener {
   background = white
   opaque = false
   private val blue = new Color(0,0,255)
@@ -29,7 +32,7 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
   private val tx = proof.root match {
-    case so: Sequent => sequentToString(so)
+    case so: Sequent => sequentToStringCutAnc(so, cut_anc) //modified by Cvetan
     case _ => proof.root.toString
   }
 
@@ -44,7 +47,7 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
   proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize)) = Position.Center
+      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, cut_anc)) = Position.Center
       layout(new Label(tx) {
         font = ft
         listenTo(mouse.moves, mouse.clicks, mouse.wheel)
@@ -56,8 +59,8 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int) extends
       }) = Position.South
     case p: BinaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize)) = Position.West
-      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize)) = Position.East
+      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, cut_anc)) = Position.West
+      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, cut_anc)) = Position.East
       layout(new Label(tx) {
         font = ft
         listenTo(mouse.moves, mouse.clicks, mouse.wheel)

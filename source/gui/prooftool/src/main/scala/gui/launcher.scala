@@ -11,11 +11,13 @@ import scala.swing._
 import event.MouseDragged
 import java.awt.Font._
 import javax.swing.border.TitledBorder
-import at.logic.calculi.lk.base.Sequent
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 import java.awt.event.{MouseEvent, MouseMotionListener}
+import at.logic.algorithms.lk.getCutAncestors
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.lk.base.{LKProof, Sequent}
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -32,7 +34,8 @@ with MouseMotionListener with javax.swing.Scrollable {
       c.insets.set(15, 15, 15, 15)
       obj match {
         case proof: TreeProof[_] =>
-          layout(new DrawProof(proof, fSize)) = c
+          val cut_anc: Set[FormulaOccurrence] = getCutAncestors(proof.asInstanceOf[LKProof])   //added by Cvetan
+          layout(new DrawProof(proof, fSize, cut_anc)) = c
           ProofToolPublisher.publish(Loaded)
           StructPublisher.publish(UnLoaded)
         case tree: Tree[_] =>
