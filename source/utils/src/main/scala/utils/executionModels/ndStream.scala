@@ -15,8 +15,9 @@ import searchAlgorithms._
 
 package ndStream {
 
+import annotation.tailrec
 
-  trait Configuration[S] {
+trait Configuration[S] {
     def result: Option[S]
     def isTerminal: Boolean // terminal nodes are not added to the configuration queue
   }
@@ -25,18 +26,22 @@ package ndStream {
     type T = Configuration[S]
     private val results: Queue[S] = new Queue[S]()
     protected def init: Unit = add(initial)
-
-    // this is a tail recursion but from some reason scala does not replace it by a loop. TODO: replace it explicitely.
-    def next: Option[S] = {
-      while (results.headOption == None) {
-        val conf = get
-        if (conf == None) return None
-        else myFun(conf.get).foreach(x => {if (x.result != None) results.enqueue(x.result.get); if (!x.isTerminal) add(x)})
-      }
-
+    @tailrec
+    final def next: Option[S] = {
       val res = results.headOption
-      results.dequeue
-      res
+      if (res != None) {
+        results.dequeue
+        res
+      }
+      else {
+        val conf = get
+        if (conf == None) None
+        else {
+          val confs: Iterable[Configuration[S]] = myFun(conf.get)
+          confs.foreach(x => {if (x.result != None) results.enqueue(x.result.get); if (!x.isTerminal) add(x)})
+          next
+        }
+      }
     }
   }
 }
