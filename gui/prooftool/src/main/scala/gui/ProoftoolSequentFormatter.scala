@@ -14,6 +14,7 @@ import at.logic.language.schema._
 import at.logic.language.fol._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 object ProoftoolSequentFormatter {
  //formats a lambda term to a readable string, distinguishing function and logical symbols
@@ -43,6 +44,10 @@ object ProoftoolSequentFormatter {
     case Abs(x,y) => formulaToString(y)
     case  x : Any    => "(unmatched class: "+x.getClass() + ")"
   }
+
+
+  // exactly like the function above with only difference : adds a star which means that this formula is a cut-ancestor
+  def formulaToStringMarked(f:LambdaExpression) : String = formulaToString(f) + "*";
 
   def parseIntegerTerm( t: IntegerTerm, n: Int) : String = t match {
     // FIXME: in the first case, we implicitely assume
@@ -75,15 +80,38 @@ object ProoftoolSequentFormatter {
     for (f <- s.antecedent) {
       if (! first) sb.append(", ")
       else first = false
-      sb.append(formulaToString(f))
+        sb.append(formulaToString(f))
     }
     sb.append(" \u22a2 ")
     first =true
     for (f <- s.succedent) {
       if (! first) sb.append(", ")
       else first = false
-      sb.append(formulaToString(f))
+        sb.append(formulaToString(f))    }
+    sb.toString
+  }
+
+  // marks also the cut-ancestors
+  def sequentToStringCutAnc(s : Sequent, cut_anc: Set[FormulaOccurrence]) : String = {
+    var sb = new scala.StringBuilder()
+    var first = true
+    for (f <- s.antecedent) {
+      if (! first) sb.append(", ")
+      else first = false
+      if (cut_anc.contains(f))
+        sb.append(formulaToStringMarked(f))
+      else
+        sb.append(formulaToString(f))
     }
+    sb.append(" \u22a2 ")
+    first =true
+    for (f <- s.succedent) {
+      if (! first) sb.append(", ")
+      else first = false
+    if (cut_anc.contains(f))
+        sb.append(formulaToStringMarked(f))
+      else
+        sb.append(formulaToString(f))    }
     sb.toString
   }
 }
