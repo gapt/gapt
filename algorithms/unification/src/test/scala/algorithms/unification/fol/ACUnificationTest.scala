@@ -1,7 +1,11 @@
 package at.logic.algorithms.unification
 
 import _root_.at.logic.algorithms.diophantine.Vector
+import _root_.at.logic.calculi.lk.base.types.FSequent
+import _root_.at.logic.calculi.lk.base.{Sequent, FSequent}
+import _root_.at.logic.calculi.lkmodulo.EequalityA
 import _root_.at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
+import _root_.at.logic.language.hol.{HOL, HOLFormula}
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
 import org.specs.SpecificationWithJUnit
@@ -9,9 +13,11 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import org.specs.matcher.Matcher
+import scala.collection.immutable.Seq
 
 class ACUnificationTest extends SpecificationWithJUnit {
   val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
+  val parse_pred = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLFormula]
   val f = new ConstantStringSymbol("f")
   val g = new ConstantStringSymbol("g")
   val debuglevel = 0
@@ -29,12 +35,19 @@ class ACUnificationTest extends SpecificationWithJUnit {
     def apply(v: => FOLTerm) = (v syntaxEquals a, v.toString + " is syntactically equal " + a.toString, v.toString + " is not syntactically equal to " + a.toString)
   }
 
-  case class beACWordEqual(theory_functions : List[ConstantSymbolA], a: FOLTerm ) extends Matcher[FOLTerm]() {
-    def apply(v: => FOLTerm) = (ACUEquality.word_equalsto(theory_functions, v,  a), v.toString + " is word equal " + a.toString, v.toString + " is not word equal to " + a.toString)
+
+  case class beWordEqualModulo(theory : EequalityA, a: FOLTerm ) extends Matcher[FOLTerm]() {
+    def apply(v: => FOLTerm) = (theory.word_equalsto(v,  a), v.toString + " is word equal " + a.toString, v.toString + " is not word equal to " + a.toString)
   }
 
-  case class beACUWordEqual(theory_functions : List[ConstantSymbolA], theory_constants : List[ConstantSymbolA], a: FOLTerm ) extends Matcher[FOLTerm]() {
-    def apply(v: => FOLTerm) = (ACUEquality.word_equalsto(theory_functions, theory_constants, v,  a), v.toString + " is word equal " + a.toString, v.toString + " is not word equal to " + a.toString)
+  case class beACWordEqual(theory_functions : List[ConstantSymbolA], a: FOLTerm )
+    extends Matcher[FOLTerm] {
+     def apply(v: => FOLTerm) = (new beWordEqualModulo(new MulACEquality(theory_functions), a)).apply(v)
+  }
+
+  case class beACUWordEqual(theory_functions : List[ConstantSymbolA], theory_constants : List[ConstantSymbolA], a: FOLTerm )
+    extends Matcher[FOLTerm] {
+     def apply(v: => FOLTerm) = (new beWordEqualModulo(new MulACUEquality(theory_functions, theory_constants), a)).apply(v)
   }
 
   def checkResult(substs:Seq[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
@@ -394,6 +407,98 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
       s mustNot beACUWordEqual(fs,cs,u)
       t mustNot beACUWordEqual(fs,cs,u)
+    }
+
+    "do factorization modulo acu" in {
+      val theory = new MulACUEquality(List("f", "g", "h") map (new ConstantStringSymbol(_)), List("e0", "e1", "e2") map (new ConstantStringSymbol(_)))
+      val s = parse_pred("P(f(x, f(f(g(a,e1),a), b)))")
+      val t = parse_pred("P(f(f(b, f(a,x)), a))")
+      val r = parse_pred("P(f(a, b, g(a,e1), x))")
+      val u = parse_pred("P(f(f(b, f(b,x)), a))")
+
+      val factored = ACUEquality.factor_clause(theory, FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t))  )
+      factored._1.length must beEqual (2)
+      factored._2.length must beEqual (2)
+
+    }
+
+    "do tautology elimination modulo acu" in {
+      val theory = new MulACUEquality(List("f", "g", "h") map (new ConstantStringSymbol(_)), List("e0", "e1", "e2") map (new ConstantStringSymbol(_)))
+      val s = parse_pred("P(f(x, f(f(g(a,e1),a), b)))")
+      val t = parse_pred("P(f(f(b, f(a,x)), a))")
+      val r = parse_pred("P(f(a, b, g(a,e1), x))")
+      val u = parse_pred("P(f(f(b, f(b,x)), a))")
+
+      val eliminated = ACUEquality.tautology_removal(theory, List(
+        FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t)), //removed because s is on both sides
+        FSequent(Seq(r,t,u), Seq(s)), // removed because r reequal s
+        FSequent(Seq(s,s,s,t,u), Seq(u,u)), // removed because u is on both sides
+        FSequent(Seq(s,r,s,s,t), Seq(u,u,u)) //should remain
+                    )  )
+      eliminated must beEqual (List(FSequent(Seq(s,r,s,s,t), Seq(u,u,u))))
+    }
+
+    "do restricted subsumption modulo acu (1)" in {
+      //skip("not working!")
+      val theory = new MulACUEquality(List("f", "g", "h") map (new ConstantStringSymbol(_)), List("e0", "e1", "e2") map (new ConstantStringSymbol(_)))
+      val s = parse_pred("P(f(x, f(f(g(a,e1),a), b)))")
+      val t = parse_pred("P(f(f(b, f(a,x)), a))")
+      val r = parse_pred("P(f(a, b, g(a,e1), x))")
+      val u = parse_pred("P(f(f(b, f(b,x)), a))")
+      val v = parse_pred("Q")
+
+      val factored = List(
+        FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t)), //equivalent s,u,-u,-s
+        FSequent(Seq(r,t,u), Seq(s)) // equivalent s,s,u,-s
+                    ) map ( (s : FSequent) => ACUEquality.factor_clause(theory,  s))
+
+      ACUEquality.clause_restricted_subsumed_in2(theory, factored.head, factored.tail) must beTrue
+
+    }
+
+    "do restricted subsumption modulo acu (2)" in {
+      skip("not working!")
+      val theory = new MulACUEquality(List("f", "g", "h") map (new ConstantStringSymbol(_)), List("e0", "e1", "e2") map (new ConstantStringSymbol(_)))
+      val s = parse_pred("P(f(x, f(f(g(a,e1),a), b)))")
+      val t = parse_pred("P(f(f(b, f(a,x)), a))")
+      val r = parse_pred("P(f(a, b, g(a,e1), x))")
+      val u = parse_pred("P(f(f(b, f(b,x)), a))")
+
+      val factored = List(
+        FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t)), //equivalent s,u,-u,-s
+        FSequent(Seq(r,t,u), Seq(s)), // equivalent s,s,u,-s
+        FSequent(Seq(s,s,s,t,u), Seq(u,u)), //equivalent s,s,s,s,u,-u,-u
+        FSequent(Seq(s,r,s,s,t), Seq(u,u,u)) //equivalent s,s,s,s,s,-u,-u
+                    ) map ( (s : FSequent) => ACUEquality.factor_clause(theory,  s))
+
+
+      import at.logic.calculi.occurrences.factory
+      def flattenlist(s:Seq[HOLFormula]) = s map ( (x:HOLFormula) => theory.flatten(x.asInstanceOf[FOLFormula]) )
+      //def flattenlist(s:Seq[HOLFormula]) = flattenlist_(s) map (factory.createFormulaOccurrence(_, Nil))
+
+      def lst2string[T](fun:(T=>String), l:List[T]) : String = l match {
+        case Nil => ""
+        case List(x) => fun(x)
+        case x::xs => fun(x)  +", "+ lst2string(fun,xs)
+      }
+
+      def prin(f:FSequent) = {
+        print(lst2string((x:HOLFormula) => x.toString, f._1.toList))
+        print(" :- ")
+        println(lst2string((x:HOLFormula) => x.toString, f._2.toList))
+      }
+
+      println("==========================")
+      factored map ((x => prin(FSequent(flattenlist(x._1) , flattenlist(x._2)))))
+      println("==========================")
+
+      val eliminated = ACUEquality.restricted_subsumption(theory, factored)
+
+      println("==========================")
+      eliminated map ((x => prin(FSequent(flattenlist(x._1), flattenlist(x._2)))))
+      println("==========================")
+      eliminated.size must beEqual (1)
+
     }
 
 

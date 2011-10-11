@@ -229,9 +229,11 @@ object Renaming {
 
 
 abstract class EequalityA extends REequalityA {
+  import Renaming.canonical_renaming_of
+
   /* the set of rewrite rules is empty in a pure equational theory */
   final override def rewrite_rules() = Set[Tuple2[FOLFormula, FOLFormula]]()
-  override def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean = reequal_to_(s,t)
+  override def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean = reequal_to_(canonical_renaming_of(s), canonical_renaming_of(t))
 
   private def reequal_to_(s : FOLFormula, t : FOLFormula) : Boolean = {
     def tuples_equals(el : Tuple2[FOLTerm, FOLTerm] ) : Boolean = (word_equalsto(el._1, el._2))
