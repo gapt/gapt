@@ -147,6 +147,8 @@ object AndEquivalenceRule1 {
               def rule = AndEquivalenceRule1Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
+              override def name = "eq"
+
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of AndEquivalenceRule1 must have a BigAnd as head symbol.")
@@ -233,6 +235,7 @@ object AndEquivalenceRule2 {
               def rule = AndEquivalenceRule2Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
+              override def name = "eq"
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of AndEquivalenceRule2 must have a BigAnd as head symbol.")
@@ -315,6 +318,7 @@ object AndEquivalenceRule3 {
               def rule = AndEquivalenceRule3Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
+              override def name = "eq"
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of AndEquivalenceRule3 must have a BigAnd as head symbol.")
@@ -401,6 +405,7 @@ object OrEquivalenceRule1 {
               def rule = OrEquivalenceRule1Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
+              override def name = "eq"
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of OrEquivalenceRule1 must have a BigOr as head symbol.")
@@ -483,6 +488,7 @@ object OrEquivalenceRule1 {
                 def rule = OrEquivalenceRule2Type
                 def aux = (auxf::Nil)::Nil
                 def prin = prinFormula::Nil
+                override def name = "eq"
               }
         }
         case _ => throw new LKRuleCreationException("Main formula of OrEquivalenceRule2 must have a BigOr as head symbol.")
@@ -566,6 +572,7 @@ object OrEquivalenceRule1 {
                 def rule = OrEquivalenceRule3Type
                 def aux = (auxf::Nil)::Nil
                 def prin = prinFormula::Nil
+                override def name = "eq"
               }
         }
         case _ => throw new LKRuleCreationException("Main formula of OREquivalenceRule3 must have a BigOr as head symbol.")
