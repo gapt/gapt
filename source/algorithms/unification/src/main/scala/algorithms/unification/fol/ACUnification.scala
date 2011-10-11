@@ -1,7 +1,10 @@
 package at.logic.algorithms.unification
 
-import _root_.at.logic.calculi.lkmodulo.EequalityA
+import _root_.at.logic.calculi.lk.base.FSequent
+import _root_.at.logic.calculi.lk.base.types.FSequent
 import _root_.at.logic.calculi.lkmodulo.types.Equation
+import _root_.at.logic.calculi.lkmodulo.{EequalityA, Equation}
+import _root_.at.logic.language.hol.{HOLFormula}
 import _root_.at.logic.language.lambda.symbols.{VariableStringSymbol, VariableSymbolA}
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
@@ -9,8 +12,8 @@ import at.logic.algorithms.diophantine.{LankfordSolver, Vector}
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.fol._
 import at.logic.language.fol.{Equation => FOLEquation}
-import _root_.at.logic.calculi.lkmodulo.Equation
 import at.logic.language.lambda.substitutions.Substitution
+import scala.collection.immutable.Seq
 
 import collection.mutable.HashMap
 import collection.immutable.Stream.Cons
@@ -542,6 +545,35 @@ object ACUtils {
   import ACUnification.debug
   import TermUtils.term_<
 
+  def structural_fold(fun : (FOLTerm => FOLTerm), formula: FOLFormula): FOLFormula =
+    formula match {
+      case Atom(p, args) => Atom(p, args map ((x:FOLTerm) => fun(x)))
+      case Neg(l) => Neg(structural_fold(fun,l))
+      case AllVar(q,l) => AllVar(q,structural_fold(fun,l))
+      case ExVar(q,l) => ExVar(q,structural_fold(fun,l))
+      case And(l,r) => And(structural_fold(fun,l), structural_fold(fun,r))
+      case Or(l,r)  => Or(structural_fold(fun,l), structural_fold(fun,r))
+      case Imp(l,r) => Imp(structural_fold(fun,l), structural_fold(fun,r))
+      case _ => throw new Exception("Unkonwn operator during structrual folding of formula!")
+    }
+
+  //performs the flattening operation below on formulas
+  def flatten(f: ConstantSymbolA, formula: FOLFormula): FOLFormula = structural_fold((x:FOLTerm) => flatten(f,x), formula )
+
+  /*
+  def flatten(f: ConstantSymbolA, formula: FOLFormula): FOLFormula = {
+    formula match {
+      case Atom(p, args) => Atom(p, args map ((x:FOLTerm) => flatten(f,x)))
+      case Neg(l) => Neg(flatten(f,l))
+      case AllVar(q,l) => AllVar(q,flatten(f,l))
+      case ExVar(q,l) => ExVar(q,flatten(f,l))
+      case And(l,r) => And(flatten(f,l), flatten(f,r))
+      case Or(l,r) => Or(flatten(f,l), flatten(f,r))
+      case Imp(l,r) => Imp(flatten(f,l), flatten(f,r))
+      case _ => throw new Exception("Unkonwn operator during flattening of fomrula!")
+    }
+  } */
+
   /* performs the rewrite rule f(s1, ... , f(t1, ... ,tm), ...sn) -> f(s1, ... ,t1, ... ,tm, ...sn) on the
    * given term (see also: Lincoln 89 "Adventures in Associative-Commutative Unification") and sorts the
    * the argument list lexicographically*/
@@ -551,7 +583,8 @@ object ACUtils {
       case FOLConst(_) => term
       case Function(fun, args) =>
         if (f == fun) {
-          Function(fun, ((args map ((x: FOLTerm) => stripFunctionSymbol(f, x))).reduceRight(_ ::: _) map ((x: FOLTerm) => flatten(f, x))) sortWith term_<)
+          Function(fun, ((args map ((x: FOLTerm) => stripFunctionSymbol(f, x))).reduceRight(_ ::: _)
+                            map ((x: FOLTerm) => flatten(f, x))) sortWith term_<)
         } else {
           Function(fun, args map ((x: FOLTerm) => flatten(f, x)))
         }
@@ -559,7 +592,11 @@ object ACUtils {
   }
 
   /* flatten but removes the neutral element, i.e. f(x) = x, f() = e*/
-  def flatten_andfiltersymbol(f: ConstantSymbolA, e:ConstantSymbolA, term: FOLTerm): FOLTerm = sortargsof_in(f, flatten_andfiltersymbol_withoutsorting(f,e,term)  )
+  def flatten_andfiltersymbol(f: ConstantSymbolA, e:ConstantSymbolA, formula: FOLFormula): FOLFormula =
+    structural_fold((x:FOLTerm) => flatten_andfiltersymbol(f,e,x), formula )
+
+  def flatten_andfiltersymbol(f: ConstantSymbolA, e:ConstantSymbolA, term: FOLTerm): FOLTerm =
+    sortargsof_in(f, flatten_andfiltersymbol_withoutsorting(f,e,term)  )
 
   def flatten_andfiltersymbol_withoutsorting(f: ConstantSymbolA, e:ConstantSymbolA, term: FOLTerm): FOLTerm = {
     term match {
@@ -682,8 +719,8 @@ class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : Const
   private class Parser(input : String) extends StringReader(input) with SimpleFOLParser
   private def parse(s:String) = (new Parser(s)).formula.asInstanceOf[FOLTerm]
 
-  val zero = FOLConst(zero_symbol)
-  def f(s:FOLTerm, t:FOLTerm) = Function(function_symbol, List(s,t))
+  private val zero = FOLConst(zero_symbol)
+  private def f(s:FOLTerm, t:FOLTerm) = Function(function_symbol, List(s,t))
 
   override def equational_rules() : Set[Equation] = {
     val x = FOLVar(new VariableStringSymbol("x"))
@@ -705,6 +742,55 @@ class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : Const
   override def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]] = None
 }
 
+class MulACEquality(val function_symbols : List[ConstantSymbolA]) extends EequalityA {
+  import ACUEquality._
+  def f(sym:ConstantSymbolA, x:FOLTerm, y:FOLTerm) = Function(sym,List(x,y))
+
+  def flatten(f : FOLFormula) = function_symbols.foldLeft(f)( (formula : FOLFormula, sym:ConstantSymbolA) => ACUtils.flatten(sym, formula)  )
+
+  override def equational_rules() : Set[Equation] = {
+    val x = FOLVar(new VariableStringSymbol("x"))
+    val y = FOLVar(new VariableStringSymbol("y"))
+    val z = FOLVar(new VariableStringSymbol("z"))
+
+    val assoc = function_symbols map( fs => Equation( f(fs,x, f(fs,y,z)), f(fs,f(fs,x,y),z)))
+    val comm  = function_symbols map( fs => Equation( f(fs, x, y), f(fs, y, x)) )
+
+    (assoc ++ comm) toSet
+  }
+
+
+  override def word_equalsto(s:FOLTerm, t:FOLTerm) : Boolean =  fold_flatten(function_symbols,s) syntaxEquals fold_flatten(function_symbols,t)
+
+  //todo: implementation
+  override def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]] = None
+}
+
+class MulACUEquality(override val function_symbols : List[ConstantSymbolA], val zero_symbols : List[ConstantSymbolA]) extends MulACEquality(function_symbols) {
+  require { function_symbols.length == zero_symbols.length }
+  import ACUEquality._
+
+  val fzsymbols = function_symbols zip zero_symbols
+
+  override def equational_rules() : Set[Equation] = {
+    val x = FOLVar(new VariableStringSymbol("x"))
+
+    val acrules : Set[Equation] = super.equational_rules()
+    val urules = fzsymbols map ((i : (ConstantSymbolA, ConstantSymbolA)) => { Equation( f(i._1, x, FOLConst(i._2)), x)  })
+    acrules ++ urules.toSet
+  }
+
+  override def flatten(f : FOLFormula) = fzsymbols.foldLeft(f)( (formula : FOLFormula, sym:(ConstantSymbolA, ConstantSymbolA)) => ACUtils.flatten_andfiltersymbol(sym._1, sym._2, formula)  )
+
+  override def word_equalsto(s:FOLTerm, t:FOLTerm) : Boolean = fold_flatten_filter(function_symbols, zero_symbols, s) syntaxEquals fold_flatten_filter(function_symbols, zero_symbols, t)
+
+  //todo: implementation
+  override def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]] = None
+
+
+}
+
+
 object ACUEquality {
   import ACUtils.{flatten, flatten_andfiltersymbol_withoutsorting, sortargsof_in}
 
@@ -715,8 +801,69 @@ object ACUEquality {
       (term : FOLTerm, el : ( ConstantSymbolA, ConstantSymbolA) ) => flatten_andfiltersymbol_withoutsorting(el._1, el._2, term) )
     )
 
-  def word_equalsto(fs : List[ConstantSymbolA], s:FOLTerm, t:FOLTerm) : Boolean =  fold_flatten(fs,s) syntaxEquals fold_flatten(fs,t)
-  def word_equalsto(fs : List[ConstantSymbolA], cs : List[ConstantSymbolA], s:FOLTerm, t:FOLTerm) : Boolean = fold_flatten_filter(fs,cs,s) syntaxEquals fold_flatten_filter(fs,cs,t)
+
+  def factor_clause(e : EequalityA, clause : FSequent) : FSequent = {
+    var antecedent : Seq[FOLFormula] = clause._1.asInstanceOf[Seq[FOLFormula]]
+    var succedent  : Seq[FOLFormula] = clause._2.asInstanceOf[Seq[FOLFormula]]
+
+    var ant : Seq[FOLFormula] = Nil
+    while (antecedent.nonEmpty ) {
+      ant = ant.+:(antecedent.head)
+      antecedent = antecedent filterNot ((g:FOLFormula) => e.reequal_to(antecedent head,g))
+
+    }
+
+    var succ : Seq[FOLFormula] = Nil
+    while (succedent.nonEmpty ) {
+      succ = succ.+:(succedent.head)
+      succedent = succedent filterNot ((g:FOLFormula) => e.reequal_to(succedent head,g))
+    }
+
+    FSequent(ant, succ)
+  }
+
+  def tautology_removal(theory : EequalityA, clauses : List[FSequent]) : List[FSequent] = {
+    clauses.foldLeft (List[FSequent]()) ( (done : List[FSequent], s : FSequent) =>
+      if (s._1.exists( (pos : HOLFormula) => s._2.exists( (neg : HOLFormula) =>  theory.reequal_to(pos.asInstanceOf[FOLFormula], neg.asInstanceOf[FOLFormula]) )))
+        done
+      else
+        done.+:(s)
+
+    )
+  }
+
+  //private because this only works on factorized formulas
+  private def clause_restricted_subsumed_in(theory : EequalityA, clause : FSequent, list : List[FSequent]) = list.exists( (s : FSequent) =>
+    clause._1.length == s._1.length &&
+    clause._2.length == s._2.length &&
+    clause._1.forall((f:HOLFormula) => s._1.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
+    clause._2.forall((f:HOLFormula) => s._2.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) ))
+  )
+
+  //returns true if clause is reequal some element of list modulo the theory, where clause may be weakened (i.e. have additional literals)
+  def clause_restricted_subsumed_in2(theory : EequalityA, clause : FSequent, list : List[FSequent]) = list.exists( (s : FSequent) =>
+    ( {println("looking at: "+clause + " in "+list.size); true}) &&
+    s._1.forall((f:HOLFormula) => clause._1.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
+    s._2.forall((f:HOLFormula) => clause._2.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
+    ( {println("yes!"); true})
+  )
+
+  def restricted_subsumption(theory : EequalityA, clauses : List[FSequent]) : List[FSequent] = restricted_subsumption_(theory, Nil, clauses)
+
+  private def restricted_subsumption_(theory : EequalityA, clauses : List[FSequent], remaining : List[FSequent]) : List[FSequent] = {
+    remaining match {
+      case x::xs => if (clause_restricted_subsumed_in2(theory, x, clauses))
+          restricted_subsumption_(theory, clauses, xs)
+        else
+          restricted_subsumption_(theory, clauses.+:(x), xs)
+
+      case Nil=> clauses
+    }
+
+  }
+
+
+
 
 }
 
