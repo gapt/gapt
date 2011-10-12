@@ -24,7 +24,7 @@ class MyScrollPane extends ScrollPane {
   def getContent: Launcher = contents.last.asInstanceOf[Launcher]
 }
 
-class Launcher(val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel
+class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel
 with MouseMotionListener with javax.swing.Scrollable {
   option match {
     case Some((name: String, obj: AnyRef)) =>

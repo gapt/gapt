@@ -177,22 +177,7 @@ object Main extends SimpleSwingApplication {
         enabled = false
         listenTo(ProofToolPublisher)
         reactions += {
-          case Loaded =>
-            this.enabled = true
-
-            /*
-            val launcher = body.getContent
-            if (launcher == null) {
-              println("launcher == null!")
-            } else {
-            launcher.option match {
-               case Some((name, proof : LKProof) ) => this.enabled = true;
-               case Some((name, proof) ) => println(proof.getClass())
-               case Some(x) => println(x.getClass())
-               case _ => println(launcher.option.getClass())
-            }
-            }
-            */
+          case Loaded => this.enabled = true
           case UnLoaded => this.enabled = false
         }
       }
@@ -201,11 +186,11 @@ object Main extends SimpleSwingApplication {
     contents += new Menu("View") {
       mnemonic = Key.V
       contents += new MenuItem(Action("Zoom In") { zoomIn }) {
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, JActionEvent.ALT_MASK))
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP , JActionEvent.ALT_MASK))
         border = customBorder
       }
       contents += new MenuItem(Action("Zoom Out") { zoomOut }) {
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, JActionEvent.ALT_MASK))
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, JActionEvent.ALT_MASK))
         border = customBorder
       }
       contents += new Separator
@@ -375,20 +360,16 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(GentzenLoaded)
 
 
-  def markCutAncestors {
-    val launcher = body.getContent
-      for (widget <- launcher.layout.keys) {
-        widget match {
-          case dp : DrawProof =>
-            launcher.option match {
-              case Some((name, proof : LKProof) ) =>
-                dp.setColoredOccurrences(getCutAncestors(proof))
-                dp.repaint()
-              case _ => println("option does not contain an lk proof");
-            }
-          case _ => ;
-        }
+  def markCutAncestors = {
+    body.getContent.contents.head match {
+      case dp: DrawProof => body.getContent.getData match {
+        case Some((_, proof : LKProof) ) =>
+          dp.setColoredOccurrences(getCutAncestors(proof))
+          dp.revalidate
+        case _ => Dialog.showMessage(body, "This is not an LK proof!")
       }
+      case _ => Dialog.showMessage(body, "LK proof not found!")
+    }
   }
 
                  //commendet by Cvetan
