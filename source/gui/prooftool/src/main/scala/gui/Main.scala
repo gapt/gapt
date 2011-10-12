@@ -18,6 +18,8 @@ import javax.swing.filechooser.FileFilter
 import java.io.File
 import swing.Dialog.Message
 import scala.collection.immutable.Seq
+import at.logic.algorithms.lk.getCutAncestors
+
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -169,6 +171,32 @@ object Main extends SimpleSwingApplication {
       contents += new Separator
       contents += new MenuItem(Action("TestRefutation") { testRefutation }) { border = customBorder }
       contents += new MenuItem(Action("TestSchemata") { testSchemata }) { border = customBorder }
+      contents += new Separator
+      contents += new MenuItem(Action("Mark Cut-Ancestors") { markCutAncestors }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded =>
+            this.enabled = true
+
+            /*
+            val launcher = body.getContent
+            if (launcher == null) {
+              println("launcher == null!")
+            } else {
+            launcher.option match {
+               case Some((name, proof : LKProof) ) => this.enabled = true;
+               case Some((name, proof) ) => println(proof.getClass())
+               case Some(x) => println(x.getClass())
+               case _ => println(launcher.option.getClass())
+            }
+            }
+            */
+          case UnLoaded => this.enabled = false
+        }
+      }
+
     }
     contents += new Menu("View") {
       mnemonic = Key.V
@@ -346,6 +374,22 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body, t.dropRight(t.size - index - 1))
   } finally ProofToolPublisher.publish(GentzenLoaded)
 
+
+  def markCutAncestors {
+    val launcher = body.getContent
+      for (widget <- launcher.layout.keys) {
+        widget match {
+          case dp : DrawProof =>
+            launcher.option match {
+              case Some((name, proof : LKProof) ) =>
+                dp.setColoredOccurrences(getCutAncestors(proof))
+                dp.repaint()
+              case _ => println("option does not contain an lk proof");
+            }
+          case _ => ;
+        }
+      }
+  }
 
                  //commendet by Cvetan
   def testRefutation =  { /*

@@ -21,7 +21,7 @@ import at.logic.calculi.lk.base.{LKProof, Sequent}
 import at.logic.calculi.occurrences.FormulaOccurrence
 
 
-class DrawProof(private val proof: TreeProof[_], private val fSize: Int, private val cut_anc: Set[FormulaOccurrence])   //added by Cvetan
+class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence])
   extends BorderPanel with MouseMotionListener {
   background = white
   opaque = false
@@ -31,8 +31,8 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int, private
   private val bd = Swing.EmptyBorder(0,fSize*3,0,fSize*3)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
-  private val tx = proof.root match {
-    case so: Sequent => sequentToStringCutAnc(so, cut_anc) //modified by Cvetan
+  private def tx() : String = proof.root match {
+    case so: Sequent => sequentToStringCutAnc(so, colored_occurrences) //modified by Cvetan
     case _ => proof.root.toString
   }
 
@@ -44,10 +44,19 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int, private
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
+  initializeLabels()
+
+  // end of constructor
+  def setColoredOccurrences(s : Set[FormulaOccurrence]) {
+    colored_occurrences = s
+    initializeLabels()
+  }
+
+  def initializeLabels() = {
   proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, cut_anc)) = Position.Center
+      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.Center
       layout(new Label(tx) {
         font = ft
         listenTo(mouse.moves, mouse.clicks, mouse.wheel)
@@ -59,8 +68,8 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int, private
       }) = Position.South
     case p: BinaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, cut_anc)) = Position.West
-      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, cut_anc)) = Position.East
+      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.West
+      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.East
       layout(new Label(tx) {
         font = ft
         listenTo(mouse.moves, mouse.clicks, mouse.wheel)
@@ -95,7 +104,7 @@ class DrawProof(private val proof: TreeProof[_], private val fSize: Int, private
           }
         }) = Position.South
     }
-  }
+  }}
 
   override def paintComponent(g: Graphics2D) = {
     import scala.math.max

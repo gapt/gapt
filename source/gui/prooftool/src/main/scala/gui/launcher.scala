@@ -15,7 +15,6 @@ import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, Stru
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 import java.awt.event.{MouseEvent, MouseMotionListener}
-import at.logic.algorithms.lk.getCutAncestors
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base.{LKProof, Sequent}
 
@@ -25,7 +24,7 @@ class MyScrollPane extends ScrollPane {
   def getContent: Launcher = contents.last.asInstanceOf[Launcher]
 }
 
-class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel
+class Launcher(val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel
 with MouseMotionListener with javax.swing.Scrollable {
   option match {
     case Some((name: String, obj: AnyRef)) =>
@@ -34,8 +33,7 @@ with MouseMotionListener with javax.swing.Scrollable {
       c.insets.set(15, 15, 15, 15)
       obj match {
         case proof: TreeProof[_] =>
-          val cut_anc: Set[FormulaOccurrence] = getCutAncestors(proof.asInstanceOf[LKProof])   //added by Cvetan
-          layout(new DrawProof(proof, fSize, cut_anc)) = c
+          layout(new DrawProof(proof, fSize, Set())) = c
           ProofToolPublisher.publish(Loaded)
           StructPublisher.publish(UnLoaded)
         case tree: Tree[_] =>
