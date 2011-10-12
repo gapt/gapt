@@ -31,7 +31,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   private val bd = Swing.EmptyBorder(0,fSize*3,0,fSize*3)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
-  private def tx() : String = proof.root match {
+  private def tx : String = proof.root match {
     case so: Sequent => sequentToStringCutAnc(so, colored_occurrences) //modified by Cvetan
     case _ => proof.root.toString
   }
@@ -44,16 +44,15 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  initializeLabels()
+  initialize
 
   // end of constructor
   def setColoredOccurrences(s : Set[FormulaOccurrence]) {
     colored_occurrences = s
-    initializeLabels()
+    initialize
   }
 
-  def initializeLabels() = {
-  proof match {
+  def initialize = proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.Center
@@ -104,7 +103,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           }
         }) = Position.South
     }
-  }}
+  }
 
   override def paintComponent(g: Graphics2D) = {
     import scala.math.max
