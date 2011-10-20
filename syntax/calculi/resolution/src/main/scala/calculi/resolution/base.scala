@@ -21,7 +21,7 @@ import at.logic.utils.traits.Occurrence
 
 package base {
 
-import _root_.at.logic.calculi.agraphProofs._
+import at.logic.calculi.agraphProofs._
 import collection.immutable.Seq
 
 /*
