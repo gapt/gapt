@@ -277,7 +277,7 @@ object loadProofs {
   }
 
   object prooftool {
-    def apply(p: LKProof) = Main.display("proof", p)
+    def apply[V <: Sequent](p: at.logic.calculi.treeProofs.TreeProof[V]) = Main.display("proof", p)
   }
 
   object ceresHelp {

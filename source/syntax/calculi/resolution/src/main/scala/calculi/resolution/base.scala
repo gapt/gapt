@@ -21,6 +21,7 @@ import at.logic.utils.traits.Occurrence
 
 package base {
 
+import _root_.at.logic.calculi.agraphProofs._
 import collection.immutable.Seq
 
 /*
@@ -30,13 +31,13 @@ import collection.immutable.Seq
   }
 */
 
-  trait ResolutionProof[V <: Sequent] extends Proof[V]
+  trait ResolutionProof[V <: Sequent] extends AGraphProof[V]
 
-  trait NullaryResolutionProof[V <: Sequent] extends LeafAGraph[V] with ResolutionProof[V] with NullaryProof[V]
-  trait UnaryResolutionProof[V <: Sequent] extends UnaryAGraph[V] with ResolutionProof[V] with UnaryProof[V] {
+  trait NullaryResolutionProof[V <: Sequent] extends NullaryAGraphProof[V] with ResolutionProof[V] with NullaryProof[V]
+  trait UnaryResolutionProof[V <: Sequent] extends UnaryAGraphProof[V] with ResolutionProof[V] with UnaryProof[V] {
     override def uProof = t.asInstanceOf[ResolutionProof[V]]
   }
-  trait BinaryResolutionProof[V <: Sequent] extends BinaryAGraph[V] with ResolutionProof[V] with BinaryProof[V] {
+  trait BinaryResolutionProof[V <: Sequent] extends BinaryAGraphProof[V] with ResolutionProof[V] with BinaryProof[V] {
     override def uProof1 = t1.asInstanceOf[ResolutionProof[V]]
     override def uProof2 = t2.asInstanceOf[ResolutionProof[V]]
   }
