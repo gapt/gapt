@@ -6,6 +6,7 @@ package at.logic.provers.prover9
 
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
 import _root_.at.logic.calculi.resolution.robinson.Clause
+import _root_.at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
 import _root_.at.logic.provers.atp.commands.base.{SetStreamCommand, PrependCommand}
@@ -19,6 +20,7 @@ import org.mockito.Matchers._
 import java.io.IOException
 
 import at.logic.calculi.occurrences.factory
+private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
 
 // to use matchers like anyInt()
 import at.logic.language.fol._
@@ -39,6 +41,8 @@ class Prover9Test extends SpecificationWithJUnit {
       case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals (List(),List()) => true
       case _ => false
   }
+
+  def getRefutation2(ls: Iterable[FSequent]) = MyProver.refute(Stream(SetTargetClause((List(),List())), Prover9InitCommand(ls), SetStreamCommand())).next
 
   "Prover9 within ATP" should {
     "prove (with para) SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
@@ -118,8 +122,14 @@ class Prover9Test extends SpecificationWithJUnit {
       val s1 = (Nil, List(pfa))
       val s2 = (List(zz,px,py),List(pfx,pfy))
       val s3 = (List(pffa),Nil)
-      getRefutation(List(s1,s2,s3)) must beTrue
+      (getRefutation2(List(s1,s2,s3)) match {
+        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].toTreeProof.root syntacticMultisetEquals (List(),List()) => true
+        case _ => false
+      }) must beTrue
     }
+    /*"prove a non-trivial example" in {
+      getRefutation(new MyParser("Animal(x) | -Wolf(x). Animal(x) | -Fox(x). Animal(x) | -Bird(x). Animal(x) | -Caterpillar(x). Animal(x) | -Snail(x). Wolf(a_wolf). Fox(a_fox). Bird(a_bird). Caterpillar(a_caterpillar). Snail(a_snail). Grain(a_grain). Plant(x) | -Grain(x). Eats(x_animal,x_plant) | Eats(x_animal,x_small_animal) | -Animal(x_animal) | -Plant(x_plant) | -Animal(x_small_animal) | -Plant(x_other_plant) | -Much_smaller(x_small_animal,x_animal) | -Eats(x_small_animal,x_other_plant). Much_smaller(x_catapillar,x_bird) | -Caterpillar(x_catapillar) | -Bird(x_bird). Much_smaller(x_snail,x_bird) | -Snail(x_snail) | -Bird(x_bird). Much_smaller(x_bird,x_fox) | -Bird(x_bird) | -Fox(x_fox). Much_smaller(x_fox,x_wolf) | -Fox(x_fox) | -Wolf(x_wolf). -Wolf(x_wolf) | -Fox(x_fox) | -Eats(x_wolf,x_fox). -Wolf(x_wolf) | -Grain(x_grain) | -Eats(x_wolf,x_grain). Eats(x_bird,x_catapillar) | -Bird(x_bird) | -Caterpillar(x_catapillar). -Bird(x_bird) | -Snail(x_snail) | -Eats(x_bird,x_snail). Plant(caterpillar_food_of(x_catapillar)) | -Caterpillar(x_catapillar). Eats(x_catapillar,caterpillar_food_of(x_catapillar)) | -Caterpillar(x_catapillar). Plant(snail_food_of(x_snail)) | -Snail(x_snail). Eats(x_snail,snail_food_of(x_snail)) | -Snail(x_snail). -Animal(x_animal) | -Animal(x_grain_eater) | -Grain(x_grain) | -Eats(x_animal,x_grain_eater) | -Eats(x_grain_eater,x_grain).").getClauseList) must beTrue
+    } */
   }
 
   "The Prover9 interface" should {

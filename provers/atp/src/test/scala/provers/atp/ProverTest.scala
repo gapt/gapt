@@ -119,6 +119,9 @@ class ProverTest extends SpecificationWithJUnit {
           getRefutation("P(a). -P(b). =(a,b).") must beTrue
         }
       }
+      /*"non-trivial example" in {
+        getRefutation("Animal(x) | -Wolf(x). Animal(x) | -Fox(x). Animal(x) | -Bird(x). Animal(x) | -Caterpillar(x). Animal(x) | -Snail(x). Wolf(a_wolf). Fox(a_fox). Bird(a_bird). Caterpillar(a_caterpillar). Snail(a_snail). Grain(a_grain). Plant(x) | -Grain(x). Eats(animal,plant) | Eats(animal,small_animal) | -Animal(animal) | -Plant(plant) | -Animal(small_animal) | -Plant(other_plant) | -Much_smaller(small_animal,animal) | -Eats(small_animal,other_plant). Much_smaller(catapillar,bird) | -Caterpillar(catapillar) | -Bird(bird). Much_smaller(snail,bird) | -Snail(snail) | -Bird(bird). Much_smaller(bird,fox) | -Bird(bird) | -Fox(fox). Much_smaller(fox,wolf) | -Fox(fox) | -Wolf(wolf). -Wolf(wolf) | -Fox(fox) | -Eats(wolf,fox). -Wolf(wolf) | -Grain(grain) | -Eats(wolf,grain). Eats(bird,catapillar) | -Bird(bird) | -Caterpillar(catapillar). -Bird(bird) | -Snail(snail) | -Eats(bird,snail). Plant(caterpillar_food_of(catapillar)) | -Caterpillar(catapillar). Eats(catapillar,caterpillar_food_of(catapillar)) | -Caterpillar(catapillar). Plant(snail_food_of(snail)) | -Snail(snail). Eats(snail,snail_food_of(snail)) | -Snail(snail). -Animal(animal) | -Animal(grain_eater) | -Grain(grain) | -Eats(animal,grain_eater) | -Eats(grain_eater,grain).") must beTrue
+      } */
     }
     "obtain the conclusion from premises" in {
       "-P(x) | P(f(x)) from -P(x) | -P(y) | P(f(x)). P(x). " in {
