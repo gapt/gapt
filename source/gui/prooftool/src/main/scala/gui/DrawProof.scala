@@ -79,17 +79,6 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
         }
       }) = Position.South
     case p: NullaryTreeProof[_] => p match {
-      case Axiom(_) =>
-        layout(new Label(tx) {
-          border = Swing.EmptyBorder(0,fSize,0,fSize)
-          font = ft
-          listenTo(mouse.moves, mouse.clicks, mouse.wheel)
-          reactions += {
-            case e: MouseEntered => foreground = blue
-            case e: MouseExited => foreground = black
-            case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
-          }
-        }) = Position.South
       case SchemaProofLinkRule(_, link, indices) =>
         layout(new BoxPanel(Orientation.Vertical) {
           background = white
@@ -100,6 +89,17 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           contents += new Label(tx) {
             font = ft
             xLayoutAlignment = 0.5
+          }
+        }) = Position.South
+      case _ =>
+        layout(new Label(tx) {
+          border = Swing.EmptyBorder(0,fSize,0,fSize)
+          font = ft
+          listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+          reactions += {
+            case e: MouseEntered => foreground = blue
+            case e: MouseExited => foreground = black
+            case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
           }
         }) = Position.South
     }
