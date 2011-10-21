@@ -51,6 +51,7 @@ class FileParser {
 
   def getSequentLists = proofdb.sequentLists
   def getProofs = proofs
+  def getProofDB = proofdb
 
   private var proofdb = new ProofDatabase(Nil,Nil,Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil

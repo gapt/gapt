@@ -19,6 +19,7 @@ import java.io.File
 import swing.Dialog.Message
 import scala.collection.immutable.Seq
 import at.logic.algorithms.lk.getCutAncestors
+import at.logic.parsing.language.xml.XMLExporter
 
 
 object Main extends SimpleSwingApplication {
@@ -47,6 +48,25 @@ object Main extends SimpleSwingApplication {
     val e = chooser.showOpenDialog(mBar) match {
       case FileChooser.Result.Cancel =>
       case _ => loadProof(chooser.selectedFile.getPath,12)
+    }
+  }
+
+  def fSaveProof: Unit = {
+    val e = chooser.showSaveDialog(mBar) match {
+      case FileChooser.Result.Cancel =>
+      case _ =>
+        val data = body.getContent.getData.get._2
+        if (data.isInstanceOf[LKProof])
+          XMLExporter(chooser.selectedFile.getPath, "the-proof", data.asInstanceOf[LKProof])
+        else Dialog.showMessage(body,"This is not a proof, can't save it!")
+    }
+  }
+
+  def fSaveAll: Unit = {
+    val e = chooser.showSaveDialog(mBar) match {
+      case FileChooser.Result.Cancel =>
+      case _ => // TODO: pass all objects for writing, create new proofdb.
+        val path = chooser.selectedFile.getPath
     }
   }
 
@@ -127,6 +147,16 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Open...") { fOpen }) {
         mnemonic = Key.O
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
+      contents += new MenuItem(Action("Save Proof") { fSaveProof }) {
+        mnemonic = Key.P
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
+      contents += new MenuItem(Action("Save All") { fSaveAll }) {
+        mnemonic = Key.S
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, JActionEvent.CTRL_MASK))
         border = customBorder
       }
       contents += new Separator
