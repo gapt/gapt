@@ -4,7 +4,6 @@ import scala.xml._
 import dtd._
 import at.logic.parsing.ExportingException
 import at.logic.calculi.lk.base._
-import at.logic.calculi.proofs.RuleTypeA
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
@@ -154,7 +153,7 @@ object XMLExporter {
     case HOLConst(name, _) => <constant symbol={ name.toString } />
     case Function(name, args, _) =>
       <function symbol={ name.toString }>
-        { args.map(x => exportTerm( x.asInstanceOf[HOLFormula] )) }
+        { args.map(x => exportTerm( x )) }
       </function>
     case _ => throw new ExportingException("Can't match term: " + term.toString)
   }  }

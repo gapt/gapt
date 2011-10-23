@@ -16,8 +16,7 @@ import at.logic.calculi.treeProofs._
 import ProoftoolSequentFormatter._
 import java.awt.event.{MouseMotionListener, MouseEvent}
 import at.logic.calculi.slk.SchemaProofLinkRule
-import at.logic.calculi.lk.propositionalRules.Axiom
-import at.logic.calculi.lk.base.{LKProof, Sequent}
+import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.occurrences.FormulaOccurrence
 
 

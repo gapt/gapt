@@ -16,6 +16,8 @@ import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.parsing.calculi.xml.SimpleXMLProofParser
 import at.logic.parsing.ParsingException
 import at.logic.calculi.treeProofs.TreeProof
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.LKProof
 
 class FileParser {
 
@@ -26,7 +28,6 @@ class FileParser {
       case e: IOException => // maybe input not gzipped, try again!
         (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
     }
-    proofs = proofdb.proofs
   }
 
   def StabFileReader(f: String) = {
@@ -49,8 +50,20 @@ class FileParser {
   def errorMessage(err: String, path: String) =
         Dialog.showMessage(new Label(err),"Couldn't load file: "+path+"!\n\n"+err.replaceAll(",","\n").replaceAll(">",">\n"))
 
+  def addProofs(proofs : List[(String, LKProof)]) = {
+    proofdb = new ProofDatabase(proofdb.proofs:::proofs, proofdb.axioms, proofdb.sequentLists)
+  }
+
+  def addSeqList(seqList : List[FSequent]) = {
+    proofdb = new ProofDatabase(proofdb.proofs, proofdb.axioms,
+      ("sequentList "+proofdb.sequentLists.size.toString, seqList)::proofdb.sequentLists)
+  }
+
   def getSequentLists = proofdb.sequentLists
-  def getProofs = proofs
+  def getProofs = {
+    if (proofs.isEmpty) proofdb.proofs
+    else proofs:::proofdb.proofs
+  }
   def getProofDB = proofdb
 
   private var proofdb = new ProofDatabase(Nil,Nil,Nil)

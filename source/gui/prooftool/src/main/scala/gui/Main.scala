@@ -44,30 +44,23 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def fOpen: Unit = {
-    val e = chooser.showOpenDialog(mBar) match {
-      case FileChooser.Result.Cancel =>
-      case _ => loadProof(chooser.selectedFile.getPath,12)
-    }
+  def fOpen: Unit = chooser.showOpenDialog(mBar) match {
+    case FileChooser.Result.Cancel =>
+    case _ => loadProof(chooser.selectedFile.getPath,12)
   }
 
-  def fSaveProof: Unit = {
-    val e = chooser.showSaveDialog(mBar) match {
-      case FileChooser.Result.Cancel =>
-      case _ =>
-        val data = body.getContent.getData.get._2
-        if (data.isInstanceOf[LKProof])
-          XMLExporter(chooser.selectedFile.getPath, "the-proof", data.asInstanceOf[LKProof])
-        else Dialog.showMessage(body,"This is not a proof, can't save it!")
-    }
+  def fSaveProof: Unit = chooser.showSaveDialog(mBar) match {
+    case FileChooser.Result.Cancel =>
+    case _ =>
+      val data = body.getContent.getData.get._2
+      if (data.isInstanceOf[LKProof])
+        XMLExporter(chooser.selectedFile.getPath, "the-proof", data.asInstanceOf[LKProof])
+      else Dialog.showMessage(body,"This is not a proof, can't save it!")
   }
 
-  def fSaveAll: Unit = {
-    val e = chooser.showSaveDialog(mBar) match {
-      case FileChooser.Result.Cancel =>
-      case _ => // TODO: pass all objects for writing, create new proofdb.
-        val path = chooser.selectedFile.getPath
-    }
+  def fSaveAll: Unit = chooser.showSaveDialog(mBar) match {
+    case FileChooser.Result.Cancel =>
+    case _ => XMLExporter(chooser.selectedFile.getPath, db.getProofDB)
   }
 
   def fExit: Unit = System.exit(0)
@@ -225,6 +218,7 @@ object Main extends SimpleSwingApplication {
       }
       contents += new Separator
       contents += new Menu("Show Proof") {
+        MenuScroller.setScrollerFor(this.peer)
         mnemonic = Key.P
         border = customBorder
         listenTo(ProofToolPublisher)
@@ -233,13 +227,10 @@ object Main extends SimpleSwingApplication {
             val l = db.getProofs
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i._1) { loadProof(i) }) { border = customBorder }
-          case GentzenLoaded =>
-            val l = ReductiveCutElim.proofs
-            contents.clear
-            for (i <- l) contents += new MenuItem(Action(i.name) { loadProof(i) }) { border = customBorder }
         }
       }
       contents += new Menu("Show Clause List") {
+        MenuScroller.setScrollerFor(this.peer)
         mnemonic = Key.C
         border = customBorder
         listenTo(ProofToolPublisher)
@@ -253,8 +244,6 @@ object Main extends SimpleSwingApplication {
             val l = db.getSequentLists.map(pair => Pair(pair._1, pair._2.map(fs => fseq2seq(fs))))
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
-          case GentzenLoaded =>
-            contents.clear
         }
       }
       contents += new MenuItem(Action("Show Struct") { showStruct }) {
@@ -293,12 +282,15 @@ object Main extends SimpleSwingApplication {
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+    db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
+
   } catch {
       case e: AnyRef =>
         val t = e.toString
         Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
-  }
+  } finally ProofToolPublisher.publish(ProofDbChanged)
+
   def computeClListOnlyQuantifiedCuts = try {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
     import at.logic.transformations.ceres.struct.StructCreators
@@ -308,13 +300,13 @@ object Main extends SimpleSwingApplication {
     val proof_sk = eliminateDefinitions(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
     val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+    db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
   } catch {
       case e: AnyRef =>
         val t = e.toString
         Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
-  }
-
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def showStruct = try {
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
@@ -349,27 +341,29 @@ object Main extends SimpleSwingApplication {
     import at.logic.algorithms.lk._
     //import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
-    val new_proof = eliminateDefinitions( body.getContent.getData.get._2.asInstanceOf[LKProof]   )
-
+    val pair = body.getContent.getData.get
+    val new_proof = eliminateDefinitions( pair._2.asInstanceOf[LKProof]   )
+    db.addProofs((pair._1+" without def rules", new_proof)::Nil)
     body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
   } catch {
       case e: AnyRef =>
         val t = e.toString
         Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
-  }
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def eliminateDefsLKsk = try {
     import at.logic.algorithms.lksk._
     import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
-    val new_proof = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )  )
-
+    val pair = body.getContent.getData.get
+    val new_proof = eliminateDefinitions( LKtoLKskc( pair._2.asInstanceOf[LKProof] )  )
+    db.addProofs((pair._1+" without def rules", new_proof)::Nil)
     body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
   } catch {
       case e: AnyRef =>
         val t = e.toString
         Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
-  }
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def gentzen = try {
     val steps = Dialog.showConfirmation(body, "Do you want to see intermediary steps?",
@@ -379,6 +373,7 @@ object Main extends SimpleSwingApplication {
     }
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof = ReductiveCutElim(body.getContent.getData.get._2.asInstanceOf[LKProof], steps)
+    db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
     body.contents = new Launcher(Some("Gentzen Result", proof),14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
@@ -387,7 +382,7 @@ object Main extends SimpleSwingApplication {
         var k = 0
         val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
         Dialog.showMessage(body, t.dropRight(t.size - index - 1))
-  } finally ProofToolPublisher.publish(GentzenLoaded)
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 
 
   def markCutAncestors = {

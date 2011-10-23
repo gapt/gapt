@@ -22,10 +22,9 @@ object About {
       import javax.swing.ImageIcon
 
       val img = {
-        import java.io.File.separator
-        val path = separator+"icons"+separator+"tu.gif"
+        val path = "icons/tu.gif"
         try {
-          new ImageIcon(Main.resourceFromClassloader(path))
+          new ImageIcon(Main.getClass.getClassLoader.getResource(path))
         } catch {
           case e: Exception =>
             Dialog.showMessage(Main.mBar,"Couldn't load image: "+path+"\n \n"+e.toString+"\n")
