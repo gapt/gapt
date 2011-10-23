@@ -18,4 +18,3 @@ case object Loaded extends Event
 case object UnLoaded extends Event
 case object ShowLeaf extends Event
 case object HideLeaf extends Event
-case object GentzenLoaded extends Event

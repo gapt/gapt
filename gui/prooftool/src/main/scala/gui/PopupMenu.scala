@@ -14,9 +14,9 @@ import swing.Dialog.Message
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
 import at.logic.transformations.ReductiveCutElim
-import at.logic.gui.prooftool.parser.{GentzenLoaded, ProofToolPublisher}
+import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher}
 import at.logic.algorithms.lk.replaceSubproof
-import Main.body
+import Main.{body, db}
 
 
 class PopupMenu extends Component with Wrapper {
@@ -56,7 +56,8 @@ object PopupMenu {
     val newSubproof = ReductiveCutElim(proof.asInstanceOf[LKProof], steps)
     val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
     val newProof = replaceSubproof(oldProof, proof.asInstanceOf[LKProof], newSubproof)
-    ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (oldProof::newProof::Nil)
+    ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
+    db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
     body.contents = new Launcher(Some("Result:", newProof),14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
@@ -65,6 +66,6 @@ object PopupMenu {
         var k = 0
         val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
         Dialog.showMessage(body, t.dropRight(t.size - index - 1))
-  } finally ProofToolPublisher.publish(GentzenLoaded)
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 }
 
