@@ -68,5 +68,25 @@ class FirstOrderLogicTest extends SpecificationWithJUnit {
     "Replacement on first order terms" in {
         Replacement(List(),Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{0}" ) )::FOLVar( VariableStringSymbol( "x_{0}" ) )::Nil)).apply(Atom( ConstantStringSymbol( "=" ), Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{2}" ) )::FOLVar( VariableStringSymbol( "x_{1}" ) )::Nil)::Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{1}" ) )::FOLVar( VariableStringSymbol( "x_{2}" ) )::Nil)::Nil)) must beEqual (Function( ConstantStringSymbol( "∩" ), FOLVar( VariableStringSymbol( "x_{0}" ) )::FOLVar( VariableStringSymbol( "x_{0}" ) )::Nil))
     }
+
+
   }
+
+  "First Order Formula matching" should {
+    "not allow P and P match as an Atom " in {
+      val ps = new ConstantStringSymbol("P")
+      val f = And(Atom(ps,Nil), Atom(ps,Nil))
+
+      f must beLike {
+        case Atom(_,_) => false
+        case AllVar(_,_) => false
+        case ExVar(_,_) => false
+        case Or(_,_) => false
+        case Imp(_,_) => false
+        case And(_,_) => true
+        case _ => false
+      }
+    }
+  }
+
 }

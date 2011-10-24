@@ -447,57 +447,47 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val u = parse_pred("P(f(f(b, f(b,x)), a))")
       val v = parse_pred("Q")
 
-      val factored = List(
-        FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t)), //equivalent s,u,-u,-s
-        FSequent(Seq(r,t,u), Seq(s)) // equivalent s,s,u,-s
-                    ) map ( (s : FSequent) => ACUEquality.factor_clause(theory,  s))
+      val s1 = FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t)) //equivalent s,u,-u,-s
+      val s2 = FSequent(Seq(r,t,u), Seq(s)) // equivalent s,s,u,-s
+
+      val factored = List(s1,s2) map ( (s : FSequent) => ACUEquality.factor_clause(theory,  s))
 
       ACUEquality.clause_restricted_subsumed_in2(theory, factored.head, factored.tail) must beTrue
+      ACUEquality.clause_restricted_subsumed_in2(theory, s1, List(s2)) must beTrue
+      ACUEquality.clause_restricted_subsumed_in2(theory, s2, List(s1)) must beFalse
 
     }
 
     "do restricted subsumption modulo acu (2)" in {
-      skip("not working!")
+//      skip("not working!")
       val theory = new MulACUEquality(List("f", "g", "h") map (new ConstantStringSymbol(_)), List("e0", "e1", "e2") map (new ConstantStringSymbol(_)))
       val s = parse_pred("P(f(x, f(f(g(a,e1),a), b)))")
       val t = parse_pred("P(f(f(b, f(a,x)), a))")
       val r = parse_pred("P(f(a, b, g(a,e1), x))")
       val u = parse_pred("P(f(f(b, f(b,x)), a))")
 
-      val factored = List(
-        FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t)), //equivalent s,u,-u,-s
-        FSequent(Seq(r,t,u), Seq(s)), // equivalent s,s,u,-s
-        FSequent(Seq(s,s,s,t,u), Seq(u,u)), //equivalent s,s,s,s,u,-u,-u
-        FSequent(Seq(s,r,s,s,t), Seq(u,u,u)) //equivalent s,s,s,s,s,-u,-u
-                    ) map ( (s : FSequent) => ACUEquality.factor_clause(theory,  s))
+      val s1 = FSequent(Seq(s,r,s,s,t,u), Seq(u,s,t,u,u,t)) //equivalent -s,-u,u,s
+      val s2 = FSequent(Seq(r,t,u), Seq(s)) // equivalent -s,-s,-u,s
+      val s3 = FSequent(Seq(s,s,s,t,u), Seq(u,u)) //equivalent -s,-s,-s,-s,-u,u,u
+      val s4 = FSequent(Seq(s,r,s,s,t), Seq(u,u,u)) //equivalent -s,-s,-s,-s,-s,u,u
+
+      val factored = List(s1,s2,s3,s4) map ( (s : FSequent) => ACUEquality.factor_clause(theory,  s))
+
+      factored match {
+        case List(s1,s2,s3,s4) =>
+            ACUEquality.clause_restricted_subsumed_in2(theory, s1, List(s2,s3,s4)) must beTrue //because s1 is a weakened form of s2
+            ACUEquality.clause_restricted_subsumed_in2(theory, s2, List(s1,s3,s4)) must beFalse
+            ACUEquality.clause_restricted_subsumed_in2(theory, s3, List(s1,s2,s4)) must beTrue //because s3 is a weakened form of s4
+            ACUEquality.clause_restricted_subsumed_in2(theory, s4, List(s1,s2,s3)) must beFalse
+        case _ => ;
+      }
 
 
-      import at.logic.calculi.occurrences.factory
       def flattenlist(s:Seq[HOLFormula]) = s map ( (x:HOLFormula) => theory.flatten(x.asInstanceOf[FOLFormula]) )
-      //def flattenlist(s:Seq[HOLFormula]) = flattenlist_(s) map (factory.createFormulaOccurrence(_, Nil))
 
-      def lst2string[T](fun:(T=>String), l:List[T]) : String = l match {
-        case Nil => ""
-        case List(x) => fun(x)
-        case x::xs => fun(x)  +", "+ lst2string(fun,xs)
-      }
-
-      def prin(f:FSequent) = {
-        print(lst2string((x:HOLFormula) => x.toString, f._1.toList))
-        print(" :- ")
-        println(lst2string((x:HOLFormula) => x.toString, f._2.toList))
-      }
-
-      println("==========================")
-      factored map ((x => prin(FSequent(flattenlist(x._1) , flattenlist(x._2)))))
-      println("==========================")
 
       val eliminated = ACUEquality.restricted_subsumption(theory, factored)
-
-      println("==========================")
-      eliminated map ((x => prin(FSequent(flattenlist(x._1), flattenlist(x._2)))))
-      println("==========================")
-      eliminated.size must beEqual (1)
+      eliminated.size must beEqual (2)
 
     }
 

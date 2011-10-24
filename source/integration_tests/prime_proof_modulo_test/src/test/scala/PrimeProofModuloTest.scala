@@ -4,6 +4,10 @@
 
 package at.logic.integration_tests
 
+import _root_.at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
+import _root_.at.logic.algorithms.unification.{ACUEquality, MulACUEquality}
+import _root_.at.logic.language.fol.{FOLExpression, FOLFormula}
+import _root_.at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
@@ -31,8 +35,6 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.fol.FOLFormula
-
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.transformations.ceres.clauseSets.profile._
@@ -51,7 +53,12 @@ import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.algorithms.fol.hol2fol._
+
 import at.logic.provers.prover9._
+
+private object MyAlg extends StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}
 
 
 class PrimeProofTest extends SpecificationWithJUnit {
@@ -100,7 +107,26 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
 
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+      val cs_hol = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+
+      def is_folsequent(fs : FSequent) = fs._1.forall(_.isInstanceOf[FOLFormula]) && fs._2.forall(_.isInstanceOf[FOLFormula])
+
+      //val cs = cs_hol map ( (fs : FSequent) => FSequent(fs._1.map((x:HOLFormula) => reduceHolToFol(x)), fs._2.map((x:HOLFormula) => reduceHolToFol(x)) ) )
+      def iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
+      val cs = cs_hol map ( (fs : FSequent) => reduceHolToFol(fs, Map[LambdaExpression, ConstantStringSymbol](), iid) )
+      println("# of non FOL formulas in cs =" + cs.filterNot(is_folsequent).size )
+
+      val theory = new MulACUEquality(List("+", "*") map (new ConstantStringSymbol(_)), List("0", "1") map (new ConstantStringSymbol(_)))
+
+      val subsumed = ACUEquality.apply_subsumptionalgorithm_to( (clause : FSequent, list : List[FSequent]) => list.exists( (x:FSequent) => MyAlg.subsumes(x, clause)), cs )
+
+      val moduloclauses = ACUEquality.restricted_subsumption(theory, subsumed)
+
+
+
+      println("Subsumed size = " + subsumed.size)
+      println("Moduloclauses size = " + moduloclauses.size)
+
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "test-classes" + separator + "prime1-" + n + "-cs.tptp")
       writer.write( tptp )
