@@ -664,11 +664,13 @@ object skolemize {
       val new_inst_map = copyMapToAncestor( inst_map ).updated( a, inst_list :+ t )
       //println("recursive call in weak quant rule")
       val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), new_inst_map, copySetToAncestor( cut_ancs ) )
+/*
     println("==========================")
     println(new_proof._1)
     println(new_proof._2(a).formula)
     println(new_main)
     println(t)
+    */
       val ret = constructor( new_proof._1, new_proof._2( a ), new_main, t )
       ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
   }

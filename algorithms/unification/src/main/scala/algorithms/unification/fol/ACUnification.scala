@@ -842,25 +842,44 @@ object ACUEquality {
 
   //returns true if clause is reequal some element of list modulo the theory, where clause may be weakened (i.e. have additional literals)
   def clause_restricted_subsumed_in2(theory : EequalityA, clause : FSequent, list : List[FSequent]) = list.exists( (s : FSequent) =>
-    ( {println("looking at: "+clause + " in "+list.size); true}) &&
+    /* (  { println("looking at: "+clause + " in "+list.size);  true}) && */
     s._1.forall((f:HOLFormula) => clause._1.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
-    s._2.forall((f:HOLFormula) => clause._2.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
-    ( {println("yes!"); true})
+    s._2.forall((f:HOLFormula) => clause._2.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) ))
+      /* && (  {println("yes!"); true}) */
   )
 
-  def restricted_subsumption(theory : EequalityA, clauses : List[FSequent]) : List[FSequent] = restricted_subsumption_(theory, Nil, clauses)
+  def restricted_subsumption(theory : EequalityA, clauses : List[FSequent]) : List[FSequent] =
+    apply_subsumptionalgorithm_to( clause_restricted_subsumed_in2(theory,_,_), clauses )
 
-  private def restricted_subsumption_(theory : EequalityA, clauses : List[FSequent], remaining : List[FSequent]) : List[FSequent] = {
+  def apply_subsumptionalgorithm_to( subsumes : (FSequent, List[FSequent]) => Boolean, clauses : List[FSequent] )   =
+    apply_subsumptionalgorithm_to_(subsumes, Nil, clauses)
+
+
+  private def apply_subsumptionalgorithm_to_(subsumed_by : (FSequent, List[FSequent]) => Boolean, clauses : List[FSequent], remaining : List[FSequent]) : List[FSequent] = {
     remaining match {
-      case x::xs => if (clause_restricted_subsumed_in2(theory, x, clauses))
-          restricted_subsumption_(theory, clauses, xs)
+      case x::xs => if (subsumed_by(x, clauses))
+          apply_subsumptionalgorithm_to_(subsumed_by, clauses, xs)
         else
-          restricted_subsumption_(theory, clauses.+:(x), xs)
+          apply_subsumptionalgorithm_to_(subsumed_by, (clauses filterNot ((s:FSequent) => subsumed_by(s, List(x) )) ).+:(x), xs)
 
       case Nil=> clauses
     }
 
   }
+
+/*
+  private def restricted_subsumption_(theory : EequalityA, clauses : List[FSequent], remaining : List[FSequent]) : List[FSequent] = {
+    remaining match {
+      case x::xs => if (clause_restricted_subsumed_in2(theory, x, clauses))
+          restricted_subsumption_(theory, clauses, xs)
+        else
+          restricted_subsumption_(theory, (clauses filterNot ((s:FSequent) =>  clause_restricted_subsumed_in2(theory, s, List(x) )) ).+:(x), xs)
+
+      case Nil=> clauses
+    }
+
+  }
+  */
 
 
 

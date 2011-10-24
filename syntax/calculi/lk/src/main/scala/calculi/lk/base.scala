@@ -122,7 +122,15 @@ import java.util.Comparator
     def apply(ant: Seq[HOLFormula], succ: Seq[HOLFormula]) : types.FSequent = Pair(ant, succ)
     def apply(seq : Sequent) : types.FSequent = FSequent(seq.antecedent map (_.formula), seq.succedent map (_.formula))
 
-    def toStringSimple(l : Seq[HOLFormula]) = l.foldLeft ("")((s: String, formula:HOLFormula) => (s + ", " + formula.toStringSimple))
+    private def lst2string[T](fun:(T=>String), seperator: String, l:List[T]) : String = l match {
+      case Nil => ""
+      case List(x) => fun(x)
+      case x::xs => fun(x)  + seperator + lst2string(fun, seperator, xs)
+    }
+
+    def toStringSimple(formulas : Seq[HOLFormula]) = lst2string( (x:HOLFormula) => x.toStringSimple, ", ", formulas.toList )
+
+    //def toStringSimple(l : Seq[HOLFormula]) = l.foldLeft ("")((s: String, formula:HOLFormula) => (s + ", " + formula.toStringSimple))
     def seqToStringSimple(f : FSequent) = "([" + toStringSimple(f._1) + "], ["  + toStringSimple(f._2) + "])"
 
     def multiSetEquals(f : FSequent, g : FSequent) : Boolean =
