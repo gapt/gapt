@@ -266,8 +266,8 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       AppN(head, args).asInstanceOf[HOLExpression]
     }
     def unapply( expression: LambdaExpression ) = expression match {
-      case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
+      case App(Var(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
+      case App(App(Var(sym,_),_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
       case AppN( Var( name, t ), args ) if (expression.exptype != To()) => Some( ( name, args.asInstanceOf[List[HOLExpression]], expression.exptype ) )
       case _ => None
     }
@@ -282,8 +282,8 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       AppN(head, args).asInstanceOf[HOLFormula]
     }
     def unapply( expression: LambdaExpression ) = expression match {
-      case App(sym,_) if sym.isInstanceOf[LogicalSymbolsA] => None
-      case App(App(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
+      case App(Var(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
+      case App(App(Var(sym,_),_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
       case AppN( Var( name, t ), args ) if (expression.exptype == To()) => Some( ( name, args.asInstanceOf[List[HOLExpression]] ) )
       case _ => None
     }
