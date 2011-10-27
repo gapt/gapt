@@ -175,12 +175,12 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
 
   "Higher Order Formula matching" should {
     "not allow P and P match as an Atom " in {
-      true must beFalse.orSkip
       val ps = new ConstantStringSymbol("P")
       val f = And(Atom(ps,Nil), Atom(ps,Nil))
 
       f must beLike {
         case Atom(_,_) => false
+        case Function(_,_,_) => false
         case AllVar(_,_) => false
         case ExVar(_,_) => false
         case Or(_,_) => false

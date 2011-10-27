@@ -5,6 +5,7 @@ package at.logic.language.schema
  **/
 
 
+import _root_.at.logic.language.schema.BiggerThanSymbol
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
@@ -235,10 +236,14 @@ case object BigOrC extends HOLConst(BigOrSymbol, ->(->(Tindex(), To()), ->(Tinde
 // set
 // TODO: determine what these mean in the official language of "A Resolution
 // Calculus for Propositional Schemata"
-case object BiggerThanSymbol extends LogicalSymbolsA {
+case object BiggerThanSymbol extends ConstantSymbolA {
   override def unique = "BiggerThanSymbol"
   override def toString = ">"
   def toCode = "BiggerThanSymbol"
+
+  def compare(that: SymbolA) = that match {
+    case a: ConstantSymbolA => unique.compare( a.unique )
+  }
 }
 
 case object BiggerThanC extends HOLConst(BiggerThanSymbol, ->(Tindex(), ->(Tindex(), To()))) with Schema
