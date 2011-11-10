@@ -26,7 +26,7 @@ import _root_.at.logic.parsing.language.tptp.TPTPFOLExporter
 import _root_.at.logic.provers.atp.commands.base._
 import _root_.at.logic.provers.atp.commands.guided.GetGuidedClausesCommand._
 import _root_.at.logic.provers.atp.commands.guided.{AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand}
-import _root_.at.logic.provers.atp.commands.replay.{ReplayOnlyParamodulationCommand, ReplayNoParamodulationCommand, ReplayCommand}
+import _root_.at.logic.provers.atp.commands.replay.ReplayCommand
 import _root_.at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
 import _root_.at.logic.provers.atp.commands.sequents.{fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
 import _root_.at.logic.provers.atp.Definitions._
@@ -38,7 +38,7 @@ import org.xml.sax.InputSource
 import javax.xml.parsers.SAXParserFactory
 import util.parsing.combinator.JavaTokenParsers
 import util.matching.Regex
-import collection.mutable.Map
+import collection.mutable.{ListBuffer, Map}
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -106,20 +106,23 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
           val ResolveRE = new Regex("""\[resolve\((\d+\w*),(\w+),(\d+\w*),(\w+)\)\]\.""")
           val ParaRE = new Regex("""\[para\((\d+\w*)\((\w+),(\d+)\),(\d+\w*)\((\w+),(\d+( d+)*)\)\)\]\.""")
           val CopyRE = new Regex("""\[copy\((\d+\w*)\).*\]\.""")
+          cmnds = cmnds ++ assumption("0", List(MyParser.parseAll(MyParser.literal, "X=X").get)) // to support the xx rules
+          var lastParents = new ListBuffer[String]() // this is used to monitor if the last rule by prover9 triggers a replay or not. If not, we must call replay with the parents here.
           (xml \\ "clause").foreach(e => {
             val cls = getLiterals(e)
             val id = (e\"@id").text
+            lastParents = new ListBuffer[String]()
             cmnds = cmnds ++
-              assumption("0", List(MyParser.parseAll(MyParser.literal, "x=x").get)) ++ // to support the xx rules
               ((e\\"@jstring").text match {
-                case AssumptionRE(_) => assumption(id, cls)
-                case FactorRE(parent, lit1, lit2) => factor(parent, lit1, lit2, id, cls)
+                case AssumptionRE(_) => assumption(id, cls) // here no need to set the lastParents as there are none
+                case FactorRE(parent, lit1, lit2) => {lastParents += parent; factor(parent, lit1, lit2, id, cls)}
                 case ResolveRE(par1, lit1, par2, lit2) => resolve(par1, lit1, par2, lit2, id, cls)
                 case ParaRE(fPar, fLit, fPos, tPar, tLit, tPos, _) => paramodulate(fPar, fLit, fPos.toInt, tPar, tLit, tPos.split("""\s""").map(_.toInt), id, cls)
-                case CopyRE(pid) => copy(pid, id)
+                case CopyRE(pid) => {lastParents += pid; copy(pid, id)}
                 case _ => replay(getParents(e), id, cls)
               })
           })
+          if (!lastParents.isEmpty) cmnds = cmnds ++ replay(lastParents, "-1", List()) // try to obtain the empty clause if last rule in prover9 refutation does not initiate a replay
         },
         stderr => {val err:String = scala.io.Source.fromInputStream(stderr).mkString; if (!err.isEmpty) throw new Prover9Exception(err)}
       )

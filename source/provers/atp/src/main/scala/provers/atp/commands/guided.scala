@@ -18,7 +18,7 @@ import scala.collection.mutable.Map
   case class GetGuidedClausesCommand(parentIds: Iterable[String]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
       val guidedMap = state("gmap").asInstanceOf[Map[String,ResolutionProof[Clause]]]
-      println("gclauses: " + parentIds.map(guidedMap(_).root))
+      //println("gclauses: " + parentIds.map(guidedMap(_).root))
       List((state,parentIds.map(guidedMap(_))))
     }
   }
@@ -82,7 +82,7 @@ import scala.collection.mutable.Map
           ret
         })
       guidedMap += ((id, p))
-      println("res: " + id + " - " + p.root)
+      //println("res: " + id + " - " + p.root)
       List((state,p))
     }
   }
