@@ -27,7 +27,7 @@ import logical.DeterministicAndCommand
   // we dont have subsumption as it might prevent reaching the exact clause we look for
   case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("replay: " + parentIds + " - " + id + " - target: " + cls)
+      //println("replay: " + parentIds + " - " + id + " - target: " + cls)
       def stream1: Stream[Command[Clause]] =
         Stream.cons(SimpleRefinementGetCommand[Clause],
           Stream.cons(VariantsCommand,
@@ -46,46 +46,6 @@ import logical.DeterministicAndCommand
             } ,
               RestoreCommand[Clause](AddGuidedResolventCommand(id)::InsertResolventCommand[Clause]::RefutationReachedCommand[Clause]::Nil)::Nil),
           stream1))))))
-        )
-      List((state,Stream.cons(GetGuidedClausesCommand(parentIds), Stream.cons(SetClausesFromDataCommand, Stream.cons(SetTargetClause(cls), stream1)))))
-    }
-  }
-
-  // we dont have subsumption as it might prevent reaching the exact clause we look for
-  case class ReplayOnlyParamodulationCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
-    def apply(state: State, data: Any) = {
-      //println("replay: " + parentIds + " - " + id)
-      def stream1: Stream[Command[Clause]] =
-        Stream.cons(SimpleRefinementGetCommand[Clause],
-          Stream.cons(VariantsCommand,
-          Stream.cons(ParamodulationCommand(FOLUnificationAlgorithm),
-          Stream.cons(IsGuidedNotFoundCommand,
-          Stream.cons(InsertResolventCommand[Clause],
-          Stream.cons(PrependOnCondCommand[Clause](
-            (s: State,d: Any) => fvarInvariantMSEquality(d.asInstanceOf[RobinsonResolutionProof].root, s("targetClause").asInstanceOf[FSequent]) ,
-              SetGuidedFoundCommand::RestoreCommand[Clause](AddGuidedResolventCommand(id)::InsertResolventCommand[Clause]::RefutationReachedCommand[Clause]::Nil)::Nil),
-          stream1)))))
-        )
-      List((state,Stream.cons(GetGuidedClausesCommand(parentIds), Stream.cons(SetClausesFromDataCommand, Stream.cons(SetTargetClause(cls), stream1)))))
-    }
-  }
-
-  // we dont have subsumption as it might prevent reaching the exact clause we look for
-  case class ReplayNoParamodulationCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
-    def apply(state: State, data: Any) = {
-      //println("replay: " + parentIds + " - " + id)
-      def stream1: Stream[Command[Clause]] =
-        Stream.cons(SimpleRefinementGetCommand[Clause],
-          Stream.cons(VariantsCommand,
-          Stream.cons(ClauseFactorCommand(FOLUnificationAlgorithm),
-          Stream.cons(ApplyOnAllPolarizedLiteralPairsCommand[Clause],
-          Stream.cons(ResolveCommand(FOLUnificationAlgorithm),
-          Stream.cons(IsGuidedNotFoundCommand,
-          Stream.cons(InsertResolventCommand[Clause],
-          Stream.cons(PrependOnCondCommand[Clause](
-            (s: State,d: Any) => fvarInvariantMSEquality(d.asInstanceOf[RobinsonResolutionProof].root, s("targetClause").asInstanceOf[FSequent]) ,
-              SetGuidedFoundCommand::RestoreCommand[Clause](AddGuidedResolventCommand(id)::InsertResolventCommand[Clause]::RefutationReachedCommand[Clause]::Nil)::Nil),
-          stream1)))))))
         )
       List((state,Stream.cons(GetGuidedClausesCommand(parentIds), Stream.cons(SetClausesFromDataCommand, Stream.cons(SetTargetClause(cls), stream1)))))
     }

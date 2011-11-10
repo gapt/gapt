@@ -68,7 +68,6 @@ import scala.Some
 case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
       val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
-      //println("resolving on: " + p1.root + " and " + p2.root)
       val mgus = alg.unify(lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression])
       require(mgus.size < 2) // as it is first order it must have at most one mgu
       mgus.map(x => (state,  Resolution(p1,p2,lit1,lit2,x.asInstanceOf[Substitution[FOLExpression]])))
@@ -93,7 +92,10 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
       }
       case _ => Some(s)
     }
-    // filter the subsets according to factorability to one of its elements
+    /*
+      on the input of a set of literals (antecedents or succedents) it returns all possible subsets of literals which can be made equal with
+      the substitution that makes them equal.
+     */
     def factor(ls: Seq[FormulaOccurrence], s: Substitution[FOLExpression]): List[Pair[List[FormulaOccurrence],Substitution[FOLExpression]]] = {
       val subs = sb(ls.toList).filter(_.size > 1)
       subs.zip(subs.map(sub => unify(sub.map(_.formula.asInstanceOf[FOLFormula]),s))).filterNot(_._2 == None).map(p => (p._1,p._2.get))
@@ -101,13 +103,18 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
     def apply(state: State, data: Any) = {
       val p = data.asInstanceOf[Tuple2[RobinsonResolutionProof,RobinsonResolutionProof]]
       // we need to get factors for antecedent and for each+empty to try to get factors of succedent with a given sub
-      val fac1 = (factor(p._1.root.antecedent, Substitution[FOLExpression]()) :+ (List[FormulaOccurrence](), Substitution[FOLExpression]())).flatMap(v => factor(p._1.root.succedent, v._2).map(u => (v._1, u._1, u._2)))
+      // now we get all factors for antecedent and for each use the sub to compute the factors of the succedent
+      // we match on the subset of literals fro each side in order to build the right proof.
+      // for each suitable subset, we choose one literal to remain after the factorization.
+      val fac1 = (factor(p._1.root.antecedent, Substitution[FOLExpression]()) :+ (List[FormulaOccurrence](), Substitution[FOLExpression]()))
+        .flatMap(v => (factor(p._1.root.succedent, v._2) :+ (List[FormulaOccurrence](), v._2)).map(u => (v._1, u._1, u._2)))
         .flatMap(t => (t._1,t._2) match {
         case (Nil, t2) => for {b <-t2} yield (Factor(p._1, b, t2.filterNot(_ == b), t._3))
         case (t2, Nil) => for {b <-t2} yield (Factor(p._1, b, t2.filterNot(_ == b), t._3))
         case _ => for {a <- t._1; b <- t._2} yield (Factor(p._1, a, t._1.filterNot(_ == a), b, t._2.filterNot(_ == b), t._3))
       }) :+ p._1
-      val fac2 = (factor(p._2.root.antecedent, Substitution[FOLExpression]()) :+ (List[FormulaOccurrence](), Substitution[FOLExpression]())).flatMap(v => factor(p._2.root.succedent, v._2).map(u => (v._1, u._1, u._2)))
+      val fac2 = (factor(p._2.root.antecedent, Substitution[FOLExpression]()) :+ (List[FormulaOccurrence](), Substitution[FOLExpression]()))
+        .flatMap(v => (factor(p._2.root.succedent, v._2) :+ (List[FormulaOccurrence](), v._2)).map(u => (v._1, u._1, u._2)))
         .flatMap(t => (t._1,t._2) match {
         case (Nil, t2) => for {b <-t2} yield (Factor(p._2, b, t2.filterNot(_ == b), t._3))
         case (t2, Nil) => for {b <-t2} yield (Factor(p._2, b, t2.filterNot(_ == b), t._3))

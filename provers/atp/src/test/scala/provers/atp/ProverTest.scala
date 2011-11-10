@@ -73,7 +73,17 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1d)))))
   def streamd(f: FSequent): Stream[Command[Clause]] = Stream.cons(SetTargetClause(f), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1d))
-
+  def stream1e: Stream[Command[Clause]] =  Stream.cons(SimpleRefinementGetCommand[Clause],
+    Stream.cons(VariantsCommand,
+    Stream.cons(ClauseFactorCommand(FOLUnificationAlgorithm),
+    Stream.cons(DeterministicAndCommand[Clause]((
+      List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm)),
+      List(ParamodulationCommand(FOLUnificationAlgorithm)))),
+    Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(InsertResolventCommand[Clause],
+    Stream.cons(RefutationReachedCommand[Clause], stream1e))))))))
+  def streame: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1e))
 
   def getRefutation(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streamc)).next must beLike {
       case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => true
@@ -81,6 +91,10 @@ class ProverTest extends SpecificationWithJUnit {
     }
    def getRefutationd(str: String, f: FSequent): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streamd(f))).next must beLike {
       case Some(_) => true
+      case _ => false
+    }
+   def getRefutatione(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streame)).next must beLike {
+      case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => true
       case _ => false
     }
 
@@ -107,6 +121,16 @@ class ProverTest extends SpecificationWithJUnit {
       "requiring factoring" in {
         "p(a). -p(y) | -p(x) | p(f(y)) | p(f(x)). -p(f(f(a)))" in {
           getRefutation("P(a). -P(y) | -P(x) | P(f(y)) | P(f(x)). -P(f(f(a))).") must beTrue
+        }
+      }
+      "requiring factoring with inefficient factoring" in {
+        "=(x,x). -=(a,a) | -=(a,a)." in {
+          getRefutatione("=(x,x). -=(a,a) | -=(a,a).") must beTrue
+        }
+      }
+      "requiring factoring with inefficient factoring (2)" in {
+        "=(x,x). -=(x,x) | -=(x,x)." in {
+          getRefutatione("=(x,x). -=(x,x) | -=(x,x).") must beTrue
         }
       }
       "requiring non-terminal factoring" in {

@@ -28,7 +28,6 @@ import at.logic.calculi.lk.base.types.FSequent
 
   // set the target clause, i.e. the empty clause normally
   case class SetTargetClause[V <: Sequent](val clause: FSequent) extends DataCommand[V] {
-    //println("target: " + clause)
     def apply(state: State, data: Any) = List((state += new Tuple2("targetClause", clause), data))
   }
 
@@ -48,7 +47,6 @@ import at.logic.calculi.lk.base.types.FSequent
         state += new Tuple2("clauses", pb)
         pb
       }) += data.asInstanceOf[ResolutionProof[V]]
-      //println("add res: " + data.asInstanceOf[ResolutionProof[V]].root)
       List((state,data))
     }
   }
@@ -75,7 +73,6 @@ import at.logic.calculi.lk.base.types.FSequent
   object fvarInvariantMSEquality {
     def apply[V <: Sequent](c1: V, f2: FSequent): Boolean = {
       val f1 = (c1.antecedent.map(_.formula), c1.succedent.map(_.formula))
-      //println("fvmseq: " + f1 + " - " + f2)
       val (neg,pos) = f2
       // we get all free variables from f2 and try to systematically replace those in f1
       val set1 = (f1._1 ++ f1._2).flatMap(_.subTerms).filter(e => e match {case f: HOLVar => true; case _ => false}).toSet
