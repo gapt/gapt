@@ -15,6 +15,8 @@ import at.logic.language.fol._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.occurrences.FormulaOccurrence
+import java.awt.{Color, Font}
+import swing.{Label, FlowPanel}
 
 object ProoftoolSequentFormatter {
  //formats a lambda term to a readable string, distinguishing function and logical symbols
@@ -113,5 +115,61 @@ object ProoftoolSequentFormatter {
       else
         sb.append(formulaToString(f))    }
     sb.toString
+  }
+}
+
+
+object DrawSequent {
+
+  def apply(seq: Sequent, ft: Font) = new FlowPanel {
+    background = new Color(255,255,255)
+    opaque = false
+
+    private var first = true
+    for (f <- seq.antecedent) {
+      if (! first) contents += new Label(", ") {font = ft}
+      else first = false
+      contents += formulaToLabel(f.formula, ft)
+    }
+    contents += new Label(" \u22a2 ") {font = ft}
+    first =true
+    for (f <- seq.succedent) {
+      if (! first) contents += new Label(", ")  {font = ft}
+      else first = false
+      contents += formulaToLabel(f.formula, ft)
+    }
+  }
+
+  def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence]) = new FlowPanel {
+    background = new Color(255,255,255)
+    opaque = false
+
+    private var first = true
+    for (f <- seq.antecedent) {
+      if (! first) contents += new Label(", ") {font = ft}
+      else first = false
+      if (cut_anc.contains(f)) {
+        val fl = formulaToLabel(f.formula, ft)
+        fl.background = new Color(0,255,0)
+        contents += fl
+      } else contents += formulaToLabel(f.formula, ft)
+    }
+    contents += new Label(" \u22a2 ") {font = ft}
+    first =true
+    for (f <- seq.succedent) {
+      if (! first) contents += new Label(", ")  {font = ft}
+      else first = false
+      if (cut_anc.contains(f)) {
+        val fl = formulaToLabel(f.formula, ft)
+        fl.background = new Color(0,255,0)
+        contents += fl
+      } else contents += formulaToLabel(f.formula, ft)
+    }
+  }
+
+  def formulaToLabel(f: HOLFormula, ft: Font) = new Label(ProoftoolSequentFormatter.formulaToString(f)) {
+    background = new Color(255,255,255)
+    font = ft
+    opaque = true
   }
 }

@@ -12,7 +12,6 @@ import GridBagPanel._
 import java.awt.{Font, Color}
 import Font._
 import at.logic.calculi.lk.base.Sequent
-import ProoftoolSequentFormatter._
 
 
 class DrawClList(private var clList: List[Sequent], val fontSize: Int) extends GridBagPanel {
@@ -27,13 +26,13 @@ class DrawClList(private var clList: List[Sequent], val fontSize: Int) extends G
     if (first) {
       first = false
       c.grid = (0,y)
-      layout(new Label(sequentToString(x)) { font = ft }) = c
+      layout(DrawSequent(x, ft)) = c
     } else {
       y += 1
       c.grid = (0,y)
       layout(new Label(";")  { font = ft }) = c
       y += 1
       c.grid = (0,y)
-      layout(new Label(sequentToString(x))  { font = ft }) = c
+      layout(DrawSequent(x, ft)) = c
     }
 }
