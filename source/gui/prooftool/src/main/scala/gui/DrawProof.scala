@@ -30,9 +30,17 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   private val bd = Swing.EmptyBorder(0,fSize*3,0,fSize*3)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(MONOSPACED, ITALIC, fSize-2)
-  private def tx : String = proof.root match {
-    case so: Sequent => sequentToStringCutAnc(so, colored_occurrences) //modified by Cvetan
-    case _ => proof.root.toString
+  private val tx = proof.root match {
+    case so: Sequent => //sequentToStringCutAnc(so, colored_occurrences) //modified by Cvetan
+      val ds = DrawSequent(so, ft, colored_occurrences)
+      ds.listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+      ds.reactions += {
+        case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
+        case e: MouseExited => ds.contents.foreach(x => x.foreground = black)
+        case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
+      }
+      ds
+    case _ => new Label(proof.root.toString) { font = ft }
   }
 
   listenTo(mouse.moves, mouse.clicks, mouse.wheel)
@@ -55,7 +63,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     case p: UnaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.Center
-      layout(new Label(tx) {
+      layout(/*new Label(tx) {
         font = ft
         listenTo(mouse.moves, mouse.clicks, mouse.wheel)
         reactions += {
@@ -63,12 +71,12 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           case e: MouseExited => foreground = black
           case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
         }
-      }) = Position.South
+      }*/ tx) = Position.South
     case p: BinaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.West
       layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.East
-      layout(new Label(tx) {
+      layout(/*new Label(tx) {
         font = ft
         listenTo(mouse.moves, mouse.clicks, mouse.wheel)
         reactions += {
@@ -76,7 +84,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           case e: MouseExited => foreground = black
           case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
         }
-      }) = Position.South
+      }*/ tx) = Position.South
     case p: NullaryTreeProof[_] => p match {
       case SchemaProofLinkRule(_, link, indices) =>
         layout(new BoxPanel(Orientation.Vertical) {
@@ -85,13 +93,15 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
             font = ft
             xLayoutAlignment = 0.5
           }
-          contents += new Label(tx) {
+          tx.xLayoutAlignment = 0.5
+          contents += tx/*new Label(tx) {
             font = ft
             xLayoutAlignment = 0.5
-          }
+          }             */
         }) = Position.South
       case _ =>
-        layout(new Label(tx) {
+        tx.border = Swing.EmptyBorder(0,fSize,0,fSize)
+        layout(/*new Label(tx) {
           border = Swing.EmptyBorder(0,fSize,0,fSize)
           font = ft
           listenTo(mouse.moves, mouse.clicks, mouse.wheel)
@@ -100,8 +110,15 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
             case e: MouseExited => foreground = black
             case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
           }
-        }) = Position.South
+        }*/ tx) = Position.South
     }
+  }
+
+  def getSequentWidth = {
+    var width = 0
+    if (tx.isInstanceOf[Label]) width = tx.size.width
+    else tx.asInstanceOf[FlowPanel].contents.foreach(x => width = width + x.size.width + 5)
+    width
   }
 
   override def paintComponent(g: Graphics2D) = {
@@ -117,35 +134,39 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
 
     proof match {
       case p: UnaryTreeProof[_] => {
-        val center = this.layout.find(x => x._2 == Position.Center).get._1
+        val center = this.layout.find(x => x._2 == Position.Center).get._1.asInstanceOf[DrawProof]
         val width = center.size.width + fSize*6
         val height = center.size.height
-        val seqLength = p.root match {
+        val seqLength = max(center.getSequentWidth, getSequentWidth)
+
+        /*p.root match {
           case so: Sequent =>
             max(metrics.stringWidth(sequentToString(p.uProof.root.asInstanceOf[Sequent])),
               metrics.stringWidth(sequentToString(so)))
           case _ =>
             max(metrics.stringWidth(p.uProof.root.toString),
               metrics.stringWidth(p.root.toString))
-        }
+        }*/
 
         g.drawLine((width - seqLength) / 2, height, (width + seqLength) / 2, height)
         g.drawString(p.name, (fSize / 4 + width + seqLength) / 2, height + metrics.getMaxDescent)
       }
       case p: BinaryTreeProof[_] => {
-        val left = this.layout.find(x => x._2 == Position.West).get._1
+        val left = this.layout.find(x => x._2 == Position.West).get._1.asInstanceOf[DrawProof]
         val leftWidth = left.size.width + fSize*6
-        val right = this.layout.find(x => x._2 == Position.East).get._1
+        val right = this.layout.find(x => x._2 == Position.East).get._1.asInstanceOf[DrawProof]
         val rightWidth = right.size.width
         val height = max(left.size.height, right.size.height)
-        val leftSeqLength = p.uProof1.root match {
+        val leftSeqLength = left.getSequentWidth
+         /*p.uProof1.root match {
           case so: Sequent => metrics.stringWidth(sequentToString(so))
           case _ =>  metrics.stringWidth(p.uProof1.root.toString)
-        }
-        val rightSeqLength = p.uProof2.root match {
+        }                     */
+        val rightSeqLength = right.getSequentWidth
+        /*p.uProof2.root match {
           case so: Sequent => metrics.stringWidth(sequentToString(so))
           case _ =>  metrics.stringWidth(p.uProof2.root.toString)
-        }
+        }                      */
 
         val lineLength = right.location.x + (rightWidth + rightSeqLength) / 2
 

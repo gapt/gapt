@@ -1,5 +1,8 @@
 package at.logic.parsing.language.xml
 
+import _root_.at.logic.language.lambda.BetaReduction
+import _root_.at.logic.language.lambda.symbols.VariableSymbolA
+import _root_.at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression}
 import scala.xml._
 import dtd._
 import at.logic.parsing.ExportingException
@@ -11,6 +14,7 @@ import at.logic.calculi.lk.equationalRules._
 import at.logic.language.hol._
 import at.logic.language.fol.{Atom => FOLAtom}
 import at.logic.language.lambda.types.Ti
+import logicSymbols.ConstantSymbolA
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,9 +59,12 @@ object XMLExporter {
 
   def exportRule(proof: LKProof): Node = proof match {
     case p: UnaryLKProof =>
-      <rule symbol={ p.name } type={ getRuleType( p ) }>
+      val ruleType = getRuleType( p )
+      <rule symbol={ p.name } type={ ruleType }>
       { exportSequent( p.root ) }
       { exportRule( p.uProof ) }
+      { if (ruleType == "foralll2") exportLambdaSubstitution( ForallLeftRule.unapply(proof).get._5 ) }
+      { if (ruleType == "existsr2") exportLambdaSubstitution( ExistsRightRule.unapply(proof).get._5 ) }
       </rule>
     case p: BinaryLKProof =>
       <rule symbol={ p.name } type={ getRuleType( p ) }>
@@ -79,14 +86,7 @@ object XMLExporter {
       <formulalist> { fs._2.map(x => exportFormula( x )) } </formulalist>
     </sequent>
 
-  def exportFormula(formula: HOLFormula) : Node = {
-    println(formula.toString)
-    formula match {
-    case FOLAtom(name, args) =>  println("FOLAtom: "+name.toString)
-      if (args.isEmpty) <constantatomformula symbol={ name.toString }/>
-      else <constantatomformula symbol={ name.toString }>
-        { args.map(x => exportTerm( x )) }
-      </constantatomformula>
+  def exportFormula(formula: HOLFormula) : Node = formula match {
     case Equation(term1, term2) => println("Equation: "+term1.toString+", "+term2.toString)
       <constantatomformula type="or">
         { exportTerm(term1) }
@@ -114,38 +114,41 @@ object XMLExporter {
     case ExVar(x, f) => x.exptype match {
       case Ti() =>
         <quantifiedformula type="exists">
-          <variable symbol={ x.toString } />
+          <variable symbol={ x.name.toString } />
           { exportFormula(f) }
         </quantifiedformula>
       case _ =>
         <secondorderquantifiedformula type="exists2">
-          <secondordervariable symbol={ x.toString } />
+          <secondordervariable symbol={ x.name.toString } />
           { exportFormula(f) }
         </secondorderquantifiedformula>
     }
     case AllVar(x, f) => x.exptype match {
       case Ti() =>
         <quantifiedformula type="all">
-          <variable symbol={ x.toString } />
+          <variable symbol={ x.name.toString } />
           { exportFormula(f) }
         </quantifiedformula>
       case _ =>
         <secondorderquantifiedformula type="all2">
-          <secondordervariable symbol={ x.toString } />
+          <secondordervariable symbol={ x.name.toString } />
           { exportFormula(f) }
         </secondorderquantifiedformula>
     }
-    case Atom(name, args) => println("Atom: "+name.toString)
+    case Atom(name : ConstantSymbolA, args) => println("FOLAtom: "+name.toString)
+      if (args.isEmpty) <constantatomformula symbol={ name.toString }/>
+      else <constantatomformula symbol={ name.toString }>
+        { args.map(x => exportTerm( x )) }
+      </constantatomformula>
+    case Atom(name : VariableSymbolA, args) => println("Atom: "+name.toString)
       <variableatomformula>
         <secondordervariable symbol={ name.toString } />
         { args.map(x => exportTerm( x )) }
       </variableatomformula>
     case _ => throw new ExportingException("Can't match formula: " + formula.toString)
-  }}
+  }
 
-  def exportTerm(term: HOLExpression) : Node =
-     { println("Term: "+term.toString)
-    term match {
+  def exportTerm(term: HOLExpression) : Node = term match {
     case HOLVar(name, t) => t match {
       case Ti() => <variable symbol={ name.toString } />
       case _ => <secondordervariable symbol={ name.toString } />
@@ -156,7 +159,18 @@ object XMLExporter {
         { args.map(x => exportTerm( x )) }
       </function>
     case _ => throw new ExportingException("Can't match term: " + term.toString)
-  }  }
+  }
+
+  def exportLambdaSubstitution(subst: HOLExpression) =
+    <lambdasubstitution>
+      { exportVariableList( subst.getFreeAndBoundVariables._2 ) }
+      { exportFormula( subst.subTerms(1).asInstanceOf[HOLFormula] ) /*TODO: this line is hack, should be improved */ }
+    </lambdasubstitution>
+
+  def exportVariableList( vl : Set[Var]) =
+    <variablelist>
+      { vl.map(x => <variable symbol={ x.name.toString } />) }
+    </variablelist>
 
   def getRuleType(proof: LKProof) = proof.rule match {
     case WeakeningLeftRuleType => "weakl"
@@ -176,25 +190,25 @@ object XMLExporter {
     case NegLeftRuleType => "negl"
     case NegRightRuleType => "negr"
 
-    case ForallLeftRuleType => ForallLeftRule.unapply(proof).get._4 match {
+    case ForallLeftRuleType => ForallLeftRule.unapply(proof).get._4.formula match {
       case AllVar(x, f) => x.exptype match {
         case Ti() => "foralll"
         case _ => "foralll2"
       }
     }
-    case ForallRightRuleType => ForallRightRule.unapply(proof).get._4 match {
+    case ForallRightRuleType => ForallRightRule.unapply(proof).get._4.formula match {
       case AllVar(x, f) => x.exptype match {
         case Ti() => "forallr"
         case _ => "forallr2"
       }
     }
-    case ExistsLeftRuleType => ExistsLeftRule.unapply(proof).get._4 match {
+    case ExistsLeftRuleType => ExistsLeftRule.unapply(proof).get._4.formula match {
       case ExVar(x, f) => x.exptype match {
         case Ti() => "existsl"
         case _ => "existsl2"
       }
     }
-    case ExistsRightRuleType =>ExistsRightRule.unapply(proof).get._4 match {
+    case ExistsRightRuleType =>ExistsRightRule.unapply(proof).get._4.formula match {
       case ExVar(x, f) => x.exptype match {
         case Ti() => "existsr"
         case _ => "existsr2"
