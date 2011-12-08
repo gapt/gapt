@@ -10,13 +10,17 @@ package at.logic.gui.prooftool.gui
 import at.logic.calculi.lk.base.Sequent
 import at.logic.language.lambda.types.{To, ->, Ti}
 import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.schema._
-import at.logic.language.fol._
 import at.logic.language.hol._
+import at.logic.language.schema.{BigAnd, BigOr, IntegerTerm, IntConst, IntZero, IntVar, Succ}
+import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
+import java.awt.{Insets, Color, Font}
+import java.awt.image.BufferedImage
+
+//import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.occurrences.FormulaOccurrence
-import java.awt.{Color, Font}
 import swing.{Label, FlowPanel}
+
 
 object ProoftoolSequentFormatter {
  //formats a lambda term to a readable string, distinguishing function and logical symbols
@@ -167,9 +171,38 @@ object DrawSequent {
     }
   }
 
-  def formulaToLabel(f: HOLFormula, ft: Font) = new Label(ProoftoolSequentFormatter.formulaToString(f)) {
+  def formulaToLabel(f: HOLFormula, ft: Font) = new Label {
     background = new Color(255,255,255)
+    foreground = new Color(0,0,0)
     font = ft
     opaque = true
+
+    val formula = new TeXFormula(formulaToLatexString(f))
+    val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, ft.getSize)
+    val myimage = new BufferedImage(myicon.getIconWidth(), myicon.getIconHeight(), BufferedImage.TYPE_INT_ARGB)
+    val g2 = myimage.createGraphics()
+	  g2.setColor(Color.white)
+	  g2.fillRect(0,0,myicon.getIconWidth(),myicon.getIconHeight())
+	  myicon.paintIcon(peer, g2, 0, 0)
+
+    icon = myicon
+  }
+
+  def formulaToLatexString(t: LambdaExpression): String = t match {
+    case Neg(f) => """\neg """ + formulaToLatexString(f)
+    case And(f1,f2) => "(" + formulaToLatexString(f1) + """ \wedge """ + formulaToLatexString(f2) + ")"
+    case Or(f1,f2) => "(" + formulaToLatexString(f1) + """ \vee """ + formulaToLatexString(f2) + ")"
+    case Imp(f1,f2) => "(" + formulaToLatexString(f1) + """ \supset """ + formulaToLatexString(f2) + ")"
+    case ExVar(v, f) => "(" + """\exists """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+    case AllVar(v, f) => "(" + """\forall """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+    case BigAnd(v, formula, init, end) =>
+      "⋀_{" + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
+    case BigOr(v, formula, init, end) =>
+      "⋁_{" + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
+    case t : IntegerTerm  => ProoftoolSequentFormatter.parseIntegerTerm(t, 0)
+    case Atom(name, args) => name.toString + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
+    case Var(name, _) => name.toString
+    case Function(name, args, _) => name.toString + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
+    case Abs(v, t) => "(" + """\lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(t) + ")"
   }
 }
