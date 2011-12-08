@@ -419,11 +419,11 @@ object Main extends SimpleSwingApplication {
 */  }
 
   def testSchemata = {
-    import org.scilab.forge.jlatexmath._
+  /*  import org.scilab.forge.jlatexmath._
     import java.awt.image.BufferedImage
     import java.awt.Color
 
-    val string = "\\bigwedge_{i=0}^{n} A_{i} \\vdash \\bigvee_{i=0}^n A_{i}"
+    val string = """\bigwedge_{i=0}^{n} A_{i} \vdash \bigvee_{i=0}^n A_{i} \supset B_{i}"""
     val formula = new TeXFormula(string)
 
     val icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, 30)
@@ -438,8 +438,8 @@ object Main extends SimpleSwingApplication {
 	  icon.paintIcon(jl.peer, g2, 0, 0)
     jl.icon = icon
     body.viewportView = jl
-   /*
-    import at.logic.calculi.lk.macroRules.AndLeftRule
+   */
+    import at.logic.calculi.lk.macroRules._
     import at.logic.calculi.lk.base._
     import at.logic.language.schema._
     import at.logic.calculi.slk._
@@ -545,16 +545,16 @@ object Main extends SimpleSwingApplication {
 
     //-------- Definition of \psi_step
 
-    val pl2 = SchemaProofLinkRule(Sequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
+    val pl2 = SchemaProofLinkRule(FSequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
     val wl2 = WeakeningLeftRule(pl2, Neg(An2))
-    val pl3 = SchemaProofLinkRule(Sequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
+    val pl3 = SchemaProofLinkRule(FSequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
     val wl3 = WeakeningLeftRule(pl3, An3)
     val orl5 = OrLeftRule(wl2, wl3, Neg(An2), An3)
     val cont1l = ContractionLeftRule(orl5, A0)
     val cont2l = ContractionLeftRule(cont1l, BigAnd(i,orneg,zero,n1))
     val pr2 = ContractionRightRule(cont2l, BigAnd(i,Ai,zero,n2))
 
-    val pl1 = SchemaProofLinkRule(Sequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
+    val pl1 = SchemaProofLinkRule(FSequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
     val ax66 = Axiom(Sequent(An2::Nil, An2::Nil))
     val andl222 = AndLeft2Rule(ax66, BigAnd(i,Ai,zero,n1), An2)
     val eq4 = AndLeftEquivalenceRule1(andl222, And(BigAnd(i,Ai,zero,n1), An2), BigAnd(i,Ai,zero,n2))
@@ -575,7 +575,7 @@ object Main extends SimpleSwingApplication {
 
     val ax10 = Axiom(Sequent(A0::Nil, A0::Nil))
     val nl6 = NegLeftRule(ax10, A0)
-    val khin3 = SchemaProofLinkRule(Sequent(BigAnd(i,Ai,zero,n3)::Nil, BigAnd(i,Ai,zero,n3)::Nil), "\\chi", n3)
+    val khin3 = SchemaProofLinkRule(FSequent(BigAnd(i,Ai,zero,n3)::Nil, BigAnd(i,Ai,zero,n3)::Nil), "\\chi", n3)
     val orl10 = OrLeftRule(nl6, khin3, Neg(A0), BigAnd(i,Ai,zero,n3))
     val step = CutRule(pl13, orl10, Or(Neg(A0), BigAnd(i,Ai,zero,n3)))
 
@@ -591,7 +591,7 @@ object Main extends SimpleSwingApplication {
 
     //----------- Definition of \chi_k+1
 
-    val prh = SchemaProofLinkRule(Sequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), "\\chi", k)
+    val prh = SchemaProofLinkRule(FSequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), "\\chi", k)
     val ax8 = Axiom(Sequent(An1::Nil, An1::Nil))
     val andr6 = AndRightRule(prh, ax8, BigAnd(i,Ai,zero,k), An1)
     val eq44 = AndRightEquivalenceRule1(andr6, And(BigAnd(i,Ai,zero,k), An1), BigAnd(i,Ai,zero,n1))
@@ -601,15 +601,15 @@ object Main extends SimpleSwingApplication {
     //----------- end of definition of \chi_k+1
 
     SchemaProofDB.clear
-    SchemaProofDB.put(new SchemaProof("\\chi", k::Nil, Sequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), chi0, chin))
-    SchemaProofDB.put(new SchemaProof("\\psi", k::Nil, Sequent(A0::BigAnd(i, orneg, zero, n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), base, step))
+    SchemaProofDB.put(new SchemaProof("\\chi", k::Nil, FSequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), chi0, chin))
+    SchemaProofDB.put(new SchemaProof("\\psi", k::Nil, FSequent(A0::BigAnd(i, orneg, zero, n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), base, step))
 
-    checkProofLinks( base )
-    checkProofLinks( step )
-    checkProofLinks( chi0 )
-    checkProofLinks( chin )
+  //  checkProofLinks( base )
+  //  checkProofLinks( step )
+  //  checkProofLinks( chi0 )
+  //  checkProofLinks( chin )
 
-    try {
+  /*  try {
       val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\psi", n ) )
       (new FileWriter("cs-psi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
       body.contents = new Launcher(Some("Schema CL List", cs.map(x => x.getSequent)), 16)
@@ -619,8 +619,8 @@ object Main extends SimpleSwingApplication {
         var k = 0
         val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
         Dialog.showMessage(body, t.dropRight(t.size - index - 1))
-    }
-  //  body.contents = new Launcher(Some("Schema psi_sn", step), 16) */
+    }  */
+    body.contents = new Launcher(Some("Schema psi_sn", step), 16)
   }
 
   val body = new MyScrollPane

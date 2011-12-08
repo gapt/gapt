@@ -147,7 +147,7 @@ object AndEquivalenceRule1 {
               def rule = AndEquivalenceRule1Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
-              override def name = "eq"
+              override def name = "\u2261:1"
 
             }
       }
@@ -235,7 +235,7 @@ object AndEquivalenceRule2 {
               def rule = AndEquivalenceRule2Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
-              override def name = "eq"
+              override def name = "\u2261:2"
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of AndEquivalenceRule2 must have a BigAnd as head symbol.")
@@ -318,7 +318,7 @@ object AndEquivalenceRule3 {
               def rule = AndEquivalenceRule3Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
-              override def name = "eq"
+              override def name = "\u2261:3"
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of AndEquivalenceRule3 must have a BigAnd as head symbol.")
