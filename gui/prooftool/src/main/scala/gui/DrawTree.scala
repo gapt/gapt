@@ -14,8 +14,8 @@ import java.awt.Font._
 import java.awt.{RenderingHints, BasicStroke}
 import at.logic.utils.ds.trees._
 import at.logic.language.hol.HOLExpression
-import ProoftoolSequentFormatter._
-import at.logic.gui.prooftool.parser.{StructPublisher, ShowLeaf, HideLeaf}
+import DrawSequent._
+import at.logic.gui.prooftool.parser.{StructPublisher, ShowLeaf, HideLeaf, HideTree}
 import at.logic.transformations.ceres.struct.structToExpressionTree.{TimesC, PlusC, EmptyTimesC, EmptyPlusC}
 
 class DrawTree(private val struct: Tree[_], private val fSize: Int) extends BorderPanel {
@@ -25,7 +25,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val bd = Swing.EmptyBorder(fSize / 2)
   private val tx = struct.vertex match {
-    case he: HOLExpression => formulaToString(he)
+    case he: HOLExpression => formulaToLatexString(he)
     case _ => struct.vertex.toString
   }
   private var drawLines = true
@@ -49,7 +49,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
             else {
               text = "x"
               drawLines = false
-              publish(HideLeaf)
+              publish(HideTree)
             }
         }
       }
@@ -58,7 +58,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
         listenTo(label, StructPublisher)
         reactions += {
           case ShowLeaf => visible = true
-          case HideLeaf => visible = false
+          case HideTree => visible = false
         }
       }) = Position.Center
     case tree: BinaryTree[_] =>
@@ -84,7 +84,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
             else {
               text = "x"
               drawLines = false
-              publish(HideLeaf)
+              publish(HideTree)
             }
         }
       }
@@ -93,32 +93,43 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
         listenTo(label, StructPublisher)
         reactions += {
           case ShowLeaf => visible = true
-          case HideLeaf => visible = false
+          case HideTree => visible = false
         }
       }) = Position.West
       layout(new DrawTree(tree.t2, fSize) {
         listenTo(label, StructPublisher)
         reactions += {
           case ShowLeaf => visible = true
-          case HideLeaf => visible = false
+          case HideTree => visible = false
         }
       }) = Position.East
     case tree: LeafTree[_] =>
-      layout(new Label("x") {
-        tree.vertex match {
-          case EmptyTimesC | EmptyPlusC => foreground = new Color(0,255,0)
-          case _ =>
-        }
-        border = bd
-        font = ft
-        listenTo(mouse.clicks, StructPublisher)
-        reactions += {
-          case ShowLeaf => text = tx
-          case e: MouseClicked =>
-            if (text == "x") text = tx
-            else text = "x"
-        }
-      }) = Position.North
+      val mylabel = latexToLabel(tx, ft)
+      mylabel.opaque = false
+      tree.vertex match {
+        case EmptyTimesC | EmptyPlusC => mylabel.foreground = new Color(0,255,0)
+        case _ =>
+      }
+      mylabel.border = bd
+      mylabel.listenTo(mouse.clicks, StructPublisher)
+      mylabel.reactions += {
+        case ShowLeaf =>
+          mylabel.icon = mylabel.myicon
+          mylabel.text = ""
+        case HideLeaf =>
+          mylabel.text = "x"
+          mylabel.icon = null
+        case e: MouseClicked =>
+          if (mylabel.text == "") {
+            mylabel.text = "x"
+            mylabel.icon = null
+          }
+          else {
+            mylabel.icon = mylabel.myicon
+            mylabel.text = ""
+          }
+      }
+      layout(mylabel) = Position.North
   }
 
   override def paintComponent(g: Graphics2D) = {

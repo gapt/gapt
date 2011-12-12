@@ -169,6 +169,15 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
+      contents += new MenuItem(Action("HideLeaves") { StructPublisher.publish(HideLeaf) }) {
+        border = customBorder
+        enabled = false
+        listenTo(StructPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
       contents += new Separator
       contents += new MenuItem(Action("Compute ClList") { computeClList }) {
         border = customBorder
