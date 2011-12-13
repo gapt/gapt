@@ -11,13 +11,12 @@ import scala.swing._
 import BorderPanel._
 import event._
 import java.awt.Font._
-import java.awt.{RenderingHints, BasicStroke}
 import at.logic.calculi.treeProofs._
 import java.awt.event.{MouseMotionListener, MouseEvent}
 import at.logic.calculi.slk.SchemaProofLinkRule
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.occurrences.FormulaOccurrence
-
+import java.awt.{RenderingHints, BasicStroke}
 
 class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence])
   extends BorderPanel with MouseMotionListener {
@@ -87,11 +86,9 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     }
   }
 
-  def getSequentWidth = {
-    var width = 0
-    if (tx.isInstanceOf[Label]) width = tx.size.width
-    else tx.asInstanceOf[FlowPanel].contents.foreach(x => width = width + x.size.width + 5)
-    width
+  def getSequentWidth(g: Graphics2D) = tx match {
+    case label: Label => g.getFontMetrics(ft).stringWidth(label.text)
+    case fPanel: FlowPanel => fPanel.contents.foldLeft(0)((width, x) => width + x.size.width + 5)
   }
 
   override def paintComponent(g: Graphics2D) = {
@@ -110,16 +107,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
         val center = this.layout.find(x => x._2 == Position.Center).get._1.asInstanceOf[DrawProof]
         val width = center.size.width + fSize*4
         val height = center.size.height
-        val seqLength = max(center.getSequentWidth, getSequentWidth)
-
-        /*p.root match {
-          case so: Sequent =>
-            max(metrics.stringWidth(sequentToString(p.uProof.root.asInstanceOf[Sequent])),
-              metrics.stringWidth(sequentToString(so)))
-          case _ =>
-            max(metrics.stringWidth(p.uProof.root.toString),
-              metrics.stringWidth(p.root.toString))
-        }*/
+        val seqLength = max(center.getSequentWidth(g), getSequentWidth(g))
 
         g.drawLine((width - seqLength) / 2, height, (width + seqLength) / 2, height)
         g.drawString(p.name, (fSize / 4 + width + seqLength) / 2, height + metrics.getMaxDescent)
@@ -130,17 +118,8 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
         val right = this.layout.find(x => x._2 == Position.East).get._1.asInstanceOf[DrawProof]
         val rightWidth = right.size.width
         val height = max(left.size.height, right.size.height)
-        val leftSeqLength = left.getSequentWidth
-         /*p.uProof1.root match {
-          case so: Sequent => metrics.stringWidth(sequentToString(so))
-          case _ =>  metrics.stringWidth(p.uProof1.root.toString)
-        }                     */
-        val rightSeqLength = right.getSequentWidth
-        /*p.uProof2.root match {
-          case so: Sequent => metrics.stringWidth(sequentToString(so))
-          case _ =>  metrics.stringWidth(p.uProof2.root.toString)
-        }                      */
-
+        val leftSeqLength = left.getSequentWidth(g)
+        val rightSeqLength = right.getSequentWidth(g)
         val lineLength = right.location.x + (rightWidth + rightSeqLength) / 2
 
         g.drawLine((leftWidth - leftSeqLength) / 2, height, lineLength, height)
