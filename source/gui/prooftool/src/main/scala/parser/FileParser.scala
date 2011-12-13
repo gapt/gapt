@@ -22,6 +22,7 @@ import at.logic.calculi.lk.base.LKProof
 class FileParser {
 
   def fileReader(f: String): Unit = {
+    proofs = Nil
     proofdb = try {
       (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(f)))) with XMLProofDatabaseParser).getProofDatabase()
     } catch {
@@ -31,6 +32,7 @@ class FileParser {
   }
 
   def StabFileReader(f: String) = {
+    proofdb = new ProofDatabase(Nil, Nil, Nil)
     proofs = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with SimpleXMLProofParser).getNamedTrees()
   }
 
@@ -60,10 +62,7 @@ class FileParser {
   }
 
   def getSequentLists = proofdb.sequentLists
-  def getProofs = {
-    if (proofs.isEmpty) proofdb.proofs
-    else proofs:::proofdb.proofs
-  }
+  def getProofs = proofdb.proofs:::proofs
   def getProofDB = proofdb
 
   private var proofdb = new ProofDatabase(Nil,Nil,Nil)
