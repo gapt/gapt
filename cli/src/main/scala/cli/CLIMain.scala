@@ -22,9 +22,12 @@ object CLIMain {
   import at.logic.calculi.lk.base._
   import at.logic.calculi.lksk.base._
   import at.logic.language.hol.logicSymbols._
+  import at.logic.transformations.skolemization.skolemize
+  import at.logic.algorithms.lk.regularize
+  import ceresHelp.{apply => ceresHelp}
 
   println("Welcome to the GAPT shell!")
-  println("See ceresHelp() for the commands.")"""
+  println("See ceresHelp for the commands.")"""
 
   def main(args: Array[String]) {
     val f = File.createTempFile("cli-script", ".scala")

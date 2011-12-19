@@ -867,6 +867,20 @@ object ACUEquality {
 
   }
 
+  def tautology_deletion(seqs : List[FSequent], e: EequalityA) = {
+    import at.logic.language.hol._
+    seqs.filter(_ match {
+      case (_, succedent) => succedent.exists(
+        (f: HOLFormula) =>
+          f match {
+            case Atom(ConstantStringSymbol("="), List(x,y)) =>  e.word_equalsto(x.asInstanceOf[FOLTerm],y.asInstanceOf[FOLTerm])
+            case _ => false
+          }
+      )
+      case _ => true
+    } )
+  }
+
 /*
   private def restricted_subsumption_(theory : EequalityA, clauses : List[FSequent], remaining : List[FSequent]) : List[FSequent] = {
     remaining match {
