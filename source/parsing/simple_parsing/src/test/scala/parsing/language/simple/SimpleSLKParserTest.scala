@@ -1,0 +1,74 @@
+/*
+ * SimpleHOLParser.scala
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
+package at.logic.parsing.language.simple
+
+import at.logic.language.schema._
+import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.propositionalRules.{OrLeftRule, NegLeftRule, Axiom}
+import _root_.at.logic.calculi.lksk.Axiom
+import _root_.at.logic.parsing.readers.StringReader
+import org.specs._
+import org.specs.runner._
+import at.logic.language.hol._
+import at.logic.language.hol.Definitions._
+import at.logic.language.hol.ImplicitConverters._
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.types.ImplicitConverters._
+import at.logic.language.lambda.types.Definitions._
+import at.logic.language.lambda.types._
+import at.logic.language.lambda.symbols.ImplicitConverters._
+import at.logic.parsing.readers.StringReader
+
+
+class SimpleSLKParserTest extends SpecificationWithJUnit {
+  private class MyParser extends StringReader("")
+    "SimpleSLKParser" should {
+
+        "parse correctly an LK-proof" in {
+          val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
+          val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
+          val ax1  = at.logic.calculi.lk.propositionalRules.Axiom(var3::Nil, var3::Nil)
+          val ax2  = at.logic.calculi.lk.propositionalRules.Axiom(var4::Nil, var4::Nil)
+          val negl = NegLeftRule(ax1, var3)
+          val proof  = OrLeftRule(negl, ax2, var3, var4)
+
+//          SHLK.parseProof( "1 : ax(x3: o |- x3: o)  " +
+//                            "2 : negL( 1 , x3:o)" +
+//                            "3 : ax(x4: o |- x4: o)" +
+//                            "4 : orL(2, 3, x3:o, x4:o)", "4").toString must beEqual (proof.toString)
+
+          val A0 = IndexedPredicate(new ConstantStringSymbol("A"), IntZero())
+          val i = IntVar(new VariableStringSymbol("i"))
+          val Ai2 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(Succ(i)))
+          val Ai = IndexedPredicate(new ConstantStringSymbol("A"), Succ(i))
+          val f1 = at.logic.language.schema.And(A0, BigAnd(i,Ai,IntZero(),Succ(i)))
+          val ax11 = at.logic.calculi.lk.propositionalRules.Axiom(A0::Nil, A0::Nil)
+//          println("\n\n"+ax11.root.toString)
+
+//          SHLK.parseProof( "1 : ax(A(i+2) |- And A(0) BigAnd(i,0,s(i),A(i)))" +
+//                           "2 : negR(1,A(i+2))","2").root.toString
+
+//          SHLK.parseProof( "1 : pLink((psi,k+1) , A(0) |- A(0))","1").root.toString
+//          println("\n\n")
+
+
+          val p = SHLK.parseProof(  "1 : pLink((psi,k), A(0), BigAnd(i, 0, k, Or Neg A(i) A(i+1)) |- A(k+1))" +
+                                    "2 : ax(A(k+1) |- A(k+1))" +
+                                    "3 : negL(2, A(k+1))" +
+                                    "4 : ax(A(k+2) |- A(k+2))" +
+                                    "5 : orL(3, 4, Neg A(k+1), A(k+2))" +
+                                    "6 : cut(1, 5, A(k+1))" +
+                                    "7 : andL(6, BigAnd(i, 0, k, Or Neg A(i) A(i+1)), Or Neg A(k+1) A(k+2))", "7")
+          println("\n\np = "+  p.root.toString())
+          p.root.toString must beEqual ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
+
+        }
+    }
+}
