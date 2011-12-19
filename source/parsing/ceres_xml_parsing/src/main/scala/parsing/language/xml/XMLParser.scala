@@ -35,6 +35,8 @@ import scala.collection.immutable.Set
 
 class ProofDatabase( val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );
 
+class TestException(val formulas : (HOLExpression, HOLFormula)) extends Exception
+
 
 // performs the matching necessary to compute substitution terms/eigenvars
 object Match {
@@ -735,6 +737,9 @@ object XMLParser {
                 sub match {
                   case HOLAbs(v, subsub) => {
                     val subst = Match( subsub, auxf.formula )
+                    if (subst == None) {
+                      throw new TestException((subsub, auxf.formula))
+                    } 
                     assert ( subst != None, "Couldn't match\n" + subsub.toStringSimple + "\nagainst\n" + auxf.formula.toStringSimple )
                     val subst_ = subst.get
 //                    println( subst_ )

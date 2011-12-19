@@ -38,7 +38,7 @@ import at.logic.transformations.ceres.struct._
 import at.logic.algorithms.fol.hol2fol._
 
 import java.util.zip.GZIPInputStream
-import java.io.{FileReader, FileInputStream, InputStreamReader}
+import java.io.{FileReader, FileInputStream, InputStreamReader, FileWriter => JFileWriter, BufferedWriter=>JBufferedWriter}
 import java.io.File.separator
 import scala.collection.mutable.Map
 
@@ -55,6 +55,8 @@ import at.logic.provers.atp.Prover
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.language.lambda.substitutions.Substitution
 
+
+
 import at.logic.gui.prooftool.gui.Main
 
 import  at.logic.calculi.lk.base.types._
@@ -64,6 +66,14 @@ import java.io.IOException
 import at.logic.provers.atp.commands.sequents.SetTargetClause
 import at.logic.provers.prover9.commands.Prover9InitCommand
 import at.logic.provers.atp.commands.base.SetStreamCommand
+import base.FSequent
+import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
+import at.logic.transformations.skolemization.skolemize
+import at.logic.algorithms.unification.{MulACEquality, MulACUEquality}
+import at.logic.calculi.lkmodulo.EequalityA
+import at.logic.algorithms.fol.hol2fol.reduceHolToFol
+import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
+
 
 object loadProofs {
     def apply(file: String) = 
@@ -98,6 +108,40 @@ object loadProofs {
     //def apply(ls: List[Sequent]) = at.logic.algorithms.lk.simplification.deleteTautologies( ls map (_.toFSequent) )
     def apply(ls: List[FSequent]) = at.logic.algorithms.lk.simplification.deleteTautologies( ls )
   }
+
+  object deleteEquationalTautologies {
+    private val counter = new {private var state = 0; def nextId = { state = state +1; state}}
+    private val emptymap = Map[LambdaExpression, ConstantStringSymbol]()
+
+    def apply(ls : List[FSequent]) = ls.filterNot(_._2 exists ((f:HOLFormula) =>
+     f match {
+       case Atom(ConstantStringSymbol(sym), List(x,y)) => sym == "=" && x == y
+       case _ => false
+     } ))
+    
+    def isEquationalTautology( e: EequalityA, f: HOLFormula) = f match {
+      case Atom(ConstantStringSymbol(sym), List(x,y)) =>
+        val s : FOLTerm = reduceHolToFol(x, emptymap, counter ).asInstanceOf[FOLTerm]
+        val t : FOLTerm = reduceHolToFol(y, emptymap, counter ).asInstanceOf[FOLTerm]
+        sym == "=" && e.word_equalsto (s,t )
+      case _ => false
+    }
+
+    def isEquationalSequentTautology(e : EequalityA, s:FSequent) = {
+      s._1 exists ((f: HOLFormula) =>
+        s._2 exists  ((g: HOLFormula) =>
+          e.reequal_to( reduceHolToFol(f, emptymap, counter), reduceHolToFol(g,emptymap, counter))
+          ))
+    }
+
+    def apply(e : EequalityA ,ls : List[FSequent]) = (ls.filterNot( _._2 exists ((f:HOLFormula) => isEquationalTautology(e,f) ))) filterNot (isEquationalSequentTautology(e,_))
+  }
+
+  object fsequent2sequent {
+    def f2focc(f:HOLFormula) = new FormulaOccurrence(f, Nil, defaultFormulaOccurrenceFactory)
+    def apply(s : FSequent) = Sequent(s._1 map f2focc , s._2 map f2focc )
+  }
+
   object removeDuplicates {
     def apply[A](ls: List[A]) = ls.distinct
   }
@@ -143,6 +187,7 @@ object loadProofs {
     }
   }
 
+
   object exportXML {
     def apply( ls: List[LKProof], names: List[String], outputFile: String ) = {
       val exporter = new LKExporter{}
@@ -156,6 +201,35 @@ object loadProofs {
         </proofdatabase>, "UTF-8", true,
         scala.xml.dtd.DocType( "proofdatabase", scala.xml.dtd.SystemID( "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd" ) , Nil ) )
     }
+  }
+
+  object exportTPTP {
+    def apply( ls : List[FSequent], filename : String) = {
+      val file = new JBufferedWriter(new JFileWriter(filename))
+      file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(ls))
+      file.close
+    }
+  }
+
+  object loadPrime {
+    def apply(i : Int) = {
+      val p2   = loadProofs("prime1-"+i+".xml").head._2
+      val p2_  = regularize(skolemize(p2))._1
+      val cs2  = structToClausesList(extractStruct(p2_))
+      val cs2_ = removeDuplicates(deleteEquationalTautologies(deleteTautologies(cs2 map ((x:Sequent) => x.toFSequent))))
+      writeLatex(cs2_ map (fsequent2sequent.apply), "cs"+i+".tex")
+      exportTPTP(cs2_, "cs"+i+".p")
+      (p2,p2_,cs2,cs2_)
+    }
+
+  }
+  
+  object createEquality {
+    def apply(fs : List[String], cs : List[String]) =
+      new MulACUEquality(fs map (new ConstantStringSymbol(_)), cs map (new ConstantStringSymbol(_)))
+
+    def apply(fs : List[String]) =
+      new MulACEquality(fs map (new ConstantStringSymbol(_)))
   }
 
   object parse {
@@ -290,16 +364,20 @@ object loadProofs {
       println("structToClausesList: Struct => List[Sequent]")
       println("structToLabelledClausesList: Struct => List[LabelledSequent]")
       println("createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
-      println("deleteTautologies: List[Sequent] => List[Sequent]")
-      println("removeDuplicates: List[Sequent] => List[Sequent]")
-      println("unitResolve: List[Sequent] => List[Sequent]")
-      println("removeSubsumed: List[Sequent] => List[Sequent]")
-      println("normalizeClauses: List[Sequent] => List[Sequent]")
-      println("writeLatex: List[Sequent], String => Unit")
+      println("regularize: LKProof => LKProof")
+      println("skolemize: LKProof => LKProof")
+      println("fsequent2sequent: FSequent => Sequent")
+      println("deleteTautologies: List[FSequent] => List[FSequent]")
+      println("removeDuplicates: List[FSequent] => List[FSequent]")
+      println("unitResolve: List[FSequent] => List[FSequent]")
+      println("removeSubsumed: List[FSequent] => List[FSequent]")
+      println("normalizeClauses: List[FSequent] => List[FSequent]")
+      println("writeLatex: List[FSequent], String => Unit")
       println("writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
       println("parse fol: String => FOLTerm")
       println("parse hol: String => HOLExpression")
       println("exportXML: List[Proof], List[String], String => Unit")
+      println("exportTPTP: List[Proof], List[String], String => Unit")
       println("refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]")
       println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
       println("prooftool: LKProof => Unit - visualize proof in prooftool")
