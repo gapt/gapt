@@ -59,15 +59,16 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
 //          println("\n\n")
 
 
-          val p = SHLK.parseProof(  "1 : pLink((psi,k), A(0), BigAnd(i, 0, k, Or Neg A(i) A(i+1)) |- A(k+1))" +
+
+          val p = SHLK.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \\/ A(i+1) ) ) |- A(k+1))" +
                                     "2 : ax(A(k+1) |- A(k+1))" +
                                     "3 : negL(2, A(k+1))" +
                                     "4 : ax(A(k+2) |- A(k+2))" +
-                                    "5 : orL(3, 4, Neg A(k+1), A(k+2))" +
+                                    "5 : orL(3, 4, ~A(k+1), A(k+2))" +
                                     "6 : cut(1, 5, A(k+1))" +
-                                    "7 : andL(6, BigAnd(i, 0, k, Or Neg A(i) A(i+1)), Or Neg A(k+1) A(k+2))", "7")
+                                    "root : andL(6, BigAnd(i=0..k , ( ~A(i) \\/ A(i+1) ) ), (~A(k+1) \\/ A(k+2) ) )", "root")
           println("\n\np = "+  p.root.toString())
-          p.root.toString must beEqual ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
+//          p.root.toString must beEqual ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
 
         }
     }
