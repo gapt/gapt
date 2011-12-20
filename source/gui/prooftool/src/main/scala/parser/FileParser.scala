@@ -18,39 +18,50 @@ import at.logic.parsing.ParsingException
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
+import io.Source
+import at.logic.parsing.language.simple.SHLK
 
 class FileParser {
 
-  def fileReader(f: String): Unit = {
+  def xmlFileStreamReader(f: String) = new InputStreamReader(new FileInputStream(f), "UTF8")
+
+  def gzFileStreamReader(f: String) = new InputStreamReader(new GZIPInputStream(new FileInputStream(f)), "UTF8")
+
+  def ceresFileReader(input: InputStreamReader) = {
     proofs = Nil
-    proofdb = try {
-      (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(f)))) with XMLProofDatabaseParser).getProofDatabase()
-    } catch {
-      case e: IOException => // maybe input not gzipped, try again!
-        (new XMLReader(new InputStreamReader(new FileInputStream(f))) with XMLProofDatabaseParser).getProofDatabase()
-    }
+    proofdb = (new XMLReader(input) with XMLProofDatabaseParser).getProofDatabase()
   }
 
-  def StabFileReader(f: String) = {
+  def stabFileReader(input: InputStreamReader) = {
     proofdb = new ProofDatabase(Nil, Nil, Nil)
-    proofs = (new XMLReader(new InputStreamReader(new FileInputStream(f))) with SimpleXMLProofParser).getNamedTrees()
+    proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
+  }
+
+  def lksFileReader(f: String) = {
+    proofs = Nil
+    proofdb = new ProofDatabase(SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
   }
 
   def parseFile(path: String) = try {
-    fileReader(path)
+    if (path.endsWith(".lks")) lksFileReader(path)
+    else if (path.endsWith(".xml")) try {
+      ceresFileReader(xmlFileStreamReader(path))
+    } catch {
+      case pe: ParsingException => stabFileReader(xmlFileStreamReader(path))
+    }
+    else if (path.endsWith(".gz")) try {
+      ceresFileReader(gzFileStreamReader(path))
+    } catch {
+      case pe: ParsingException => stabFileReader(gzFileStreamReader(path))
+    }
+    else throw new Exception("Can not recognize file extension!")
     ProofToolPublisher.publish(ProofDbChanged)
   } catch {
-    case pe: ParsingException => try {
-      StabFileReader(path)
-      ProofToolPublisher.publish(ProofDbChanged)
-    } catch {
-      case e: AnyRef => errorMessage(pe.toString + "\n\n" + e.toString, path)
-    }
     case e: AnyRef => errorMessage(e.toString, path)
   }
 
   def errorMessage(err: String, path: String) =
-        Dialog.showMessage(new Label(err),"Couldn't load file: "+path+"!\n\n"+err.replaceAll(",","\n").replaceAll(">",">\n"))
+        Dialog.showMessage(new Label(err),"Could not load file: "+path+"!\n\n"+err.replaceAll(",",",\n").replaceAll(">",">\n"))
 
   def addProofs(proofs : List[(String, LKProof)]) = {
     proofdb = new ProofDatabase(proofdb.proofs:::proofs, proofdb.axioms, proofdb.sequentLists)

@@ -637,6 +637,15 @@ object Main extends SimpleSwingApplication {
   private val chooser = new FileChooser {
     fileFilter = new FileFilter {
       def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".lks") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".lks"
+    }
+
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
         if (f.getName.endsWith(".xml") || f.getName.endsWith(".xml.gz") || f.isDirectory) true
         else false
       }

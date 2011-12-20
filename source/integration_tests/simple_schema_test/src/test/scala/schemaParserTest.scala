@@ -83,7 +83,7 @@ class schemaParserTest extends SpecificationWithJUnit {
 //          println("\n\n"+p.root.toString)
 
           import scala.io._
-          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/target/input.txt").toList.foldLeft("")((ch,res) => ch + res)
+          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input.lks").toList.foldLeft("")((ch,res) => ch + res)
           println("\n\ns = "+s)
 
 //          val p = SHLK.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \/ A(i+1) ) ) |- A(k+1))" +
