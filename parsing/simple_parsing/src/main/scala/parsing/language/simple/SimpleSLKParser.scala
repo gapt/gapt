@@ -19,8 +19,11 @@ import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 
-
 object SHLK {
+  // This function is needed for prooftool and added my Mikheil.
+  //TODO: this function should be able to parse many proofs from one file, i.e. call parseProof recursively.
+  def parseProofs(input: String): List[(String, LKProof)] = ("p",parseProof(input, "root"))::Nil
+
   //plabel should return the proof corresponding to this label
   def parseProof(txt: String, plabel: String): LKProof = {
     val map = Map.empty[String, LKProof]
