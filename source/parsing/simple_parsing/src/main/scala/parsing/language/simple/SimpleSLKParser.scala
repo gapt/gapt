@@ -24,9 +24,23 @@ object SHLK {
   //plabel should return the proof corresponding to this label
   def parseProof(txt: String, plabel: String): LKProof = {
     val map = Map.empty[String, LKProof]
+    var list = List[String]()
+    var error_buffer = ""
+//    lazy val sp2 = new ParserTxt
+//    sp2.parseAll(sp2.line, txt)
     lazy val sp = new SimpleSLKParser
     sp.parseAll(sp.line, txt)
 
+//    class ParserTxt extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
+//
+//      def line: Parser[List[Unit]] = repsep(mapping,"\n")
+//
+//      def mapping: Parser[Unit] = """*""".r ^^ {
+//        case t => {
+//          list = t :: list
+//        }
+//      }
+//    }
 
     class SimpleSLKParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
 
@@ -34,16 +48,17 @@ object SHLK {
 
       def mapping: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {
-          println("\nl = "+l)
+          error_buffer = l
           map(l) = p
         }
       }
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR2 | negL | negR | cut | pLink | andL
-      def label: String = """[0-9]*"""
+
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR2 | negL | negR | cut | pLink | andL | weakL | weakR
+      def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = (non_formula | formula)
-      def formula: Parser[HOLFormula] = (neg | bigAnd | bigOr | indPred | and | or | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
+      def formula: Parser[HOLFormula] = (neg | bigAnd | bigOr | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
 
       def intTerm: Parser[HOLExpression] = (index | schemaFormula)
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
@@ -71,8 +86,8 @@ object SHLK {
         case x ~ "(" ~ index ~ ")" => { println("\n\nIndexedPredicate"); IndexedPredicate(new ConstantStringSymbol(x), index) }
       }
 
-      def bigAnd : Parser[HOLFormula] = "BigAnd" ~ "(" ~ intVar ~ "," ~ index ~ "," ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
-        case "BigAnd" ~ "(" ~ intVar1 ~ "," ~ ind1 ~ "," ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
+      def bigAnd : Parser[HOLFormula] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
+        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
           println("\n\nBigAnd\n\n")
           BigAnd(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
         }
@@ -88,11 +103,11 @@ object SHLK {
       def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)
       def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), ind->ind).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
-      def and: Parser[HOLFormula] = "And" ~ formula ~ formula ^^ {case "And" ~ x ~ y => And(x,y)}
-      def or: Parser[HOLFormula] = "Or" ~ formula ~ formula ^^ {case "Or" ~ x ~ y => Or(x,y)}
+      def and: Parser[HOLFormula] = "(" ~ formula ~ "/\\" ~ formula ~ ")" ^^ {case "(" ~ x ~ str ~ y ~ ")"  => And(x,y)}
+      def or: Parser[HOLFormula]  = "(" ~ formula ~ """\/""" ~ formula ~ ")" ^^ {case "(" ~ x ~ str ~ y ~ ")" => Or(x,y)}
       def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}
       def abs: Parser[HOLExpression] = "Abs" ~ variable ~ term ^^ {case "Abs" ~ v ~ x => Abs(v,x).asInstanceOf[HOLExpression]}
-      def neg: Parser[HOLFormula] = "Neg" ~ formula ^^ {case "Neg" ~ x => Neg(x)}
+      def neg: Parser[HOLFormula] = "~" ~ formula ^^ {case "~" ~ x => Neg(x)}
       def atom: Parser[HOLFormula] = (equality | var_atom | const_atom)
       def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
       def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
@@ -137,12 +152,11 @@ object SHLK {
 
       def proof_name : Parser[String] = "psi".r
 
-      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")" ~ "," ~ sequent ~ ")" ^^ {
-        case                       "pLink(" ~ "(" ~ name ~ "," ~  v  ~ ")" ~ "," ~ sequent ~ ")" => {
+      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
+        case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
           println("\n\nPROOF-LINK")
           SchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
         }
-        case _ => {println("ERROR 33");Axiom(List(), List())}
       }
 
       def orR1: Parser[LKProof] = "orR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
@@ -185,6 +199,19 @@ object SHLK {
         }
       }
 
+      def weakR: Parser[LKProof] = "weakR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
+        case "weakR(" ~ label ~ "," ~ formula ~ ")" => {
+          println("\n\nweakR")
+          WeakeningRightRule(map.get(label).get, formula)
+        }
+      }
+
+      def weakL: Parser[LKProof] = "weakL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
+        case "weakL(" ~ label ~ "," ~ formula ~ ")" => {
+          println("\n\nweakL")
+          WeakeningLeftRule(map.get(label).get, formula)
+        }
+      }
 //      def eqAnd1: Parser[LKProof] = "eqAnd1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
 //        case "eqAnd1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
 //          AndEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
@@ -227,6 +254,8 @@ object SHLK {
 
     }
     println("\n\n\nsize = "+map.size)
+    println("\n\n\nlist = "+list)
+    if (!map.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
     val m = map.get(plabel).get
 //    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
     m
@@ -235,6 +264,7 @@ object SHLK {
 }
 
 
+//                    This copy has types. This is why it is kept !
 //
 //object SHLK {
 //  //plabel should return the proof corresponding to this label
