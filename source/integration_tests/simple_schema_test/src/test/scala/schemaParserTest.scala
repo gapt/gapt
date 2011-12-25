@@ -96,7 +96,7 @@ class schemaParserTest extends SpecificationWithJUnit {
           val p = SHLK.parseProof(s,"root")
           println("\n\np = "+  p.root.toString()  )
           printSchemaProof(p)
-          Main.display("Proof", p) ; while(true){}
+          //Main.display("Proof", p) ; while(true){}
 
         }
     }

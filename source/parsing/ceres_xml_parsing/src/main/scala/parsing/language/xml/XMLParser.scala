@@ -1056,8 +1056,17 @@ object XMLParser {
     def getFormula(n : Node) : HOLFormula =
       trim(n) match {
         case <constantatomformula>{ ns @ _* }</constantatomformula>
-          => Atom(new ConstantStringSymbol( n.attribute("symbol").get.head.text ),
+          =>  n.attribute("definition") match {
+          case Some(seq) =>
+             println(seq.head.text)
+
+             Atom(new ConstantStringSymbol( n.attribute("symbol").get.head.text ),
+               XMLUtils.nodesToAbstractTerms(ns.toList))
+
+          case _ =>
+              Atom(new ConstantStringSymbol( n.attribute("symbol").get.head.text ),
                   XMLUtils.nodesToAbstractTerms(ns.toList))
+            }
         case <variableatomformula>{ ns @ _* }</variableatomformula>
           => AppN( (new NodeReader( ns.head ) with XMLSetTermParser).getSetTerm(),
                    XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[HOLFormula]
