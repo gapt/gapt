@@ -113,7 +113,7 @@ class schemaParserTest extends SpecificationWithJUnit {
 //            Main.display(pair._1, pair._2._1.get("root").get) ;
 //            Main.display(pair._1, pair._2._2.get("root").get) ;//while(true){}
           })
-          while(true){}
+//          while(true){}
 //          Main.display("Proof", p) ; while(true){}
 //
 //          val p = SHLK.parseProof(s,"root")
