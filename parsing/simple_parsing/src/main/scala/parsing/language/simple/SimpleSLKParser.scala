@@ -19,20 +19,31 @@ import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 
+
 object SHLK {
   // This function is needed for prooftool and added my Mikheil.
   //TODO: this function should be able to parse many proofs from one file, i.e. call parseProof recursively.
-  def parseProofs(input: String): List[(String, LKProof)] = ("p",parseProof(input, "root"))::Nil
+  def parseProofs(input: String): List[(String, LKProof)] = {
+//    ("p",parseProof(input, "root"))::Nil
+    val m = SHLK.parseProof(input)
+    m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1+"_base", pair._2._1.get(pair._1).get) :: (pair._1+"_step", pair._2._2.get(pair._1).get) :: res)
+  }
 
   //plabel should return the proof corresponding to this label
-  def parseProof(txt: String, plabel: String): LKProof = {
-    val map = Map.empty[String, LKProof]
+  def parseProof(txt: String): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
+    var map = Map.empty[String, LKProof]
+    var mapStep = Map.empty[String, LKProof]
     var list = List[String]()
     var error_buffer = ""
 //    lazy val sp2 = new ParserTxt
 //    sp2.parseAll(sp2.line, txt)
+    val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
     lazy val sp = new SimpleSLKParser
-    sp.parseAll(sp.line, txt)
+
+//    var proofName = ""
+//    sp.parseAll(sp.line, txt)
+    sp.parseAll(sp.slkProofs, txt)
+
 
 //    class ParserTxt extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
 //
@@ -52,9 +63,31 @@ object SHLK {
       def mapping: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {
           error_buffer = l
-          map(l) = p
+          map.put(l,p)
         }
       }
+
+      def mappingStep: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
+        case l ~ ":" ~ p => {
+          error_buffer = l
+          mapStep.put(l,p)
+        }
+      }
+
+      def name = """[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
+
+      def slkProof: Parser[Unit] = "proof" ~ name ~ "base" ~ "{" ~ line ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}"  ^^ {
+        case                       "proof" ~  str ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~ line2 ~ "}" => {
+//          proofName = str
+          bigMap.put(str, Pair(map, mapStep))
+          map = Map.empty[String, LKProof]
+          mapStep = Map.empty[String, LKProof]
+          println("\n\nSUCCESSFUL : "+str)
+//          List.empty[Unit]
+        }
+      }
+
+      def slkProofs: Parser[List[Unit]] = rep(slkProof)
 
 
       def proof: Parser[LKProof] = ax | orL | orR1 | orR2 | negL | negR | cut | pLink | andL | weakL | weakR
@@ -258,10 +291,11 @@ object SHLK {
     }
     println("\n\n\nsize = "+map.size)
     println("\n\n\nlist = "+list)
-    if (!map.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
-    val m = map.get(plabel).get
-//    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
-    m
+//    if (!bigMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
+//    val m = bigMap.get("chi").get._2.get(plabel).get
+////    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
+//    m
+    bigMap
 
   }
 }
