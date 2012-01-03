@@ -83,7 +83,9 @@ class schemaParserTest extends SpecificationWithJUnit {
 //          println("\n\n"+p.root.toString)
 
           import scala.io._
-          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input.lks").toList.foldLeft("")((ch,res) => ch + res)
+//          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input1.lks").toList.foldLeft("")((ch,res) => ch + res)
+
           println("\n\ns = "+s)
 
 //          val p = SHLK.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \/ A(i+1) ) ) |- A(k+1))" +
@@ -93,10 +95,31 @@ class schemaParserTest extends SpecificationWithJUnit {
 //                                              "5 : orL(3, 4, ~A(k+1), A(k+2))" +
 //                                              "6 : cut(1, 5, A(k+1))" +
 //                                              "7 : andL(6, BigAnd(i=0..k , ( ~A(i) \/ A(i+1) ) ), (~A(k+1) \/ A(k+2) ) )", "7")
-          val p = SHLK.parseProof(s,"root")
-          println("\n\np = "+  p.root.toString()  )
-          printSchemaProof(p)
-          //Main.display("Proof", p) ; while(true){}
+
+          val map = SHLK.parseProof(s)
+//          val p = map.get("chi").get._2.get("root").get
+          println("\n\npsi_b = "+  map.get("psi").get._1.get("root").get.root.toString()  )
+          println("\n\npsi_s = "+  map.get("psi").get._2.get("root").get.root.toString()  )
+          println("\n\nchi_b = "+  map.get("chi").get._1.get("root").get.root.toString()  )
+          println("\n\nchi_s = "+  map.get("chi").get._2.get("root").get.root.toString()  )
+          println("\n\nphi_b = "+  map.get("phi").get._1.get("root").get.root.toString()  )
+          println("\n\nphi_s = "+  map.get("phi").get._2.get("root").get.root.toString()  )
+//          Main.display("Proof", map.head._2._1) ; while(true){}
+
+//          Main.display("psi", map.get("psi").get._1.get("root").get) ;
+
+          println("map.size = "+map.size)
+          map.foreach(pair => {
+//            Main.display(pair._1, pair._2._1.get("root").get) ;
+//            Main.display(pair._1, pair._2._2.get("root").get) ;//while(true){}
+          })
+          while(true){}
+//          Main.display("Proof", p) ; while(true){}
+//
+//          val p = SHLK.parseProof(s,"root")
+//          println("\n\np = "+  p.root.toString()  )
+//          printSchemaProof(p)
+//          Main.display("Proof", p) ; while(true){}
 
         }
     }
