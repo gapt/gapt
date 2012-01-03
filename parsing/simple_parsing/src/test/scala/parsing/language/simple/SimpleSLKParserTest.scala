@@ -25,13 +25,15 @@ import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.parsing.readers.StringReader
+import scala.io._
+import java.io.File.separator
 
 
 class SimpleSLKParserTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
     "SimpleSLKParser" should {
 
-        "parse correctly an LK-proof" in {
+        "parse correctly a SLK-proof" in {
           val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
           val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
           val ax1  = at.logic.calculi.lk.propositionalRules.Axiom(var3::Nil, var3::Nil)
@@ -60,16 +62,31 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
 
 
 
-          val p = SHLK.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \\/ A(i+1) ) ) |- A(k+1))" +
-                                    "2 : ax(A(k+1) |- A(k+1))" +
-                                    "3 : negL(2, A(k+1))" +
-                                    "4 : ax(A(k+2) |- A(k+2))" +
-                                    "5 : orL(3, 4, ~A(k+1), A(k+2))" +
-                                    "6 : cut(1, 5, A(k+1))" +
-                                    "root : andL(6, BigAnd(i=0..k , ( ~A(i) \\/ A(i+1) ) ), (~A(k+1) \\/ A(k+2) ) )", "root")
-          println("\n\np = "+  p.root.toString())
+//          val p = SHLK.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \\/ A(i+1) ) ) |- A(k+1))" +
+//                                    "2 : ax(A(k+1) |- A(k+1))" +
+//                                    "3 : negL(2, A(k+1))" +
+//                                    "4 : ax(A(k+2) |- A(k+2))" +
+//                                    "5 : orL(3, 4, ~A(k+1), A(k+2))" +
+//                                    "6 : cut(1, 5, A(k+1))" +
+//                                    "root : andL(6, BigAnd(i=0..k , ( ~A(i) \\/ A(i+1) ) ), (~A(k+1) \\/ A(k+2) ) )", "root")
+//          println("\n\np = "+  p.root.toString())
 //          p.root.toString must beEqual ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
+//          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input1.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val map = SHLK.parseProof(s)
+//          println("\n\np = "+  map.get("chi").get._2.get("root").get.root.toString()  )
+          val p = map.get("chi").get._2.get("root").get
+//          println("\n\npsi_b = "+  map.get("psi").get._1.get("root").get.root.toString()  )
+//          println("\n\npsi_s = "+  map.get("psi").get._2.get("root").get.root.toString()  )
+//          println("\n\nchi_b = "+  map.get("chi").get._1.get("root").get.root.toString()  )
+//          println("\n\nchi_s = "+  map.get("chi").get._2.get("root").get.root.toString()  )
+//          println("\n\nphi_b = "+  map.get("phi").get._1.get("root").get.root.toString()  )
+//          println("\n\nphi_s = "+  map.get("phi").get._2.get("root").get.root.toString()  )
+//          Main.display("Proof", map.head._2._1) ; while(true){}
 
+//          Main.display("phi", map.get("phi").get._2.get("root").get) ;
+
+          println("map.size = "+map.size)
         }
     }
 }
