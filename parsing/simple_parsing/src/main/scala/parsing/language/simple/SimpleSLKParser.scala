@@ -26,7 +26,7 @@ object SHLK {
   def parseProofs(input: String): List[(String, LKProof)] = {
 //    ("p",parseProof(input, "root"))::Nil
     val m = SHLK.parseProof(input)
-    m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1+"_base", pair._2._1.get(pair._1).get) :: (pair._1+"_step", pair._2._2.get(pair._1).get) :: res)
+    m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1+"_base", pair._2._1.get("root").get) :: (pair._1+"_step", pair._2._2.get("root").get) :: res)
   }
 
   //plabel should return the proof corresponding to this label
