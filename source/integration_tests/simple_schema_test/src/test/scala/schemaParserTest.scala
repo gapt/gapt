@@ -84,7 +84,8 @@ class schemaParserTest extends SpecificationWithJUnit {
 
           import scala.io._
 //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
-          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input1.lks").toList.foldLeft("")((ch,res) => ch + res)
+//          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input1.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
 
           println("\n\ns = "+s)
 
@@ -98,16 +99,17 @@ class schemaParserTest extends SpecificationWithJUnit {
 
           val map = SHLK.parseProof(s)
 //          val p = map.get("chi").get._2.get("root").get
-          println("\n\npsi_b = "+  map.get("psi").get._1.get("root").get.root.toString()  )
-          println("\n\npsi_s = "+  map.get("psi").get._2.get("root").get.root.toString()  )
-          println("\n\nchi_b = "+  map.get("chi").get._1.get("root").get.root.toString()  )
-          println("\n\nchi_s = "+  map.get("chi").get._2.get("root").get.root.toString()  )
-          println("\n\nphi_b = "+  map.get("phi").get._1.get("root").get.root.toString()  )
-          println("\n\nphi_s = "+  map.get("phi").get._2.get("root").get.root.toString()  )
+//          println("\n\npsi_b = "+  map.get("psi").get._1.get("root").get.root.toString()  )
+//          println("\n\npsi_s = "+  map.get("psi").get._2.get("root").get.root.toString()  )
+//          println("\n\nchi_b = "+  map.get("chi").get._1.get("root").get.root.toString()  )
+//          println("\n\nchi_s = "+  map.get("chi").get._2.get("root").get.root.toString()  )
+//          println("\n\nphi_b = "+  map.get("phi").get._1.get("root").get.root.toString()  )
+//          println("\n\nphi_s = "+  map.get("phi").get._2.get("root").get.root.toString()  )
 //          Main.display("Proof", map.head._2._1) ; while(true){}
 
 //          Main.display("psi", map.get("psi").get._1.get("root").get) ;
-
+          Main.display("chi", map.get("chi").get._1.get("root").get) ;
+                             while(true){}
           println("map.size = "+map.size)
           map.foreach(pair => {
 //            Main.display(pair._1, pair._2._1.get("root").get) ;
@@ -120,6 +122,8 @@ class schemaParserTest extends SpecificationWithJUnit {
 //          println("\n\np = "+  p.root.toString()  )
 //          printSchemaProof(p)
 //          Main.display("Proof", p) ; while(true){}
+
+
 
         }
     }
