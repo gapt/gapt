@@ -21,8 +21,7 @@ import at.logic.language.lambda.types._
 
 
 object SHLK {
-  // This function is needed for prooftool and added my Mikheil.
-  //TODO: this function should be able to parse many proofs from one file, i.e. call parseProof recursively.
+
   def parseProofs(input: String): List[(String, LKProof)] = {
 //    ("p",parseProof(input, "root"))::Nil
     val m = SHLK.parseProof(input)
@@ -94,7 +93,7 @@ object SHLK {
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = (non_formula | formula)
-      def formula: Parser[HOLFormula] = (neg | bigAnd | bigOr | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
+      def formula: Parser[HOLFormula] = (neg | big /*| bigAnd | bigOr*/ | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
 
       def intTerm: Parser[HOLExpression] = (index | schemaFormula)
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
@@ -118,23 +117,57 @@ object SHLK {
         case "s(" ~ intTerm ~ ")" => Succ(intTerm.asInstanceOf[IntegerTerm])
       }
       def schemaFormula = formula
-      def indPred : Parser[HOLFormula] = regex(new Regex("[A-Z0-9]")) ~ "(" ~ index ~ ")" ^^ {
-        case x ~ "(" ~ index ~ ")" => { println("\n\nIndexedPredicate"); IndexedPredicate(new ConstantStringSymbol(x), index) }
+
+      def indPred : Parser[HOLFormula] = regex(new Regex("[A-Z0-9]")) ~ "(" ~ repsep(index,",") ~ ")" ^^ {
+        case x ~ "(" ~ l ~ ")" => { println("\n\nIndexedPredicate"); IndexedPredicate(new ConstantStringSymbol(x), l) }
       }
 
-      def bigAnd : Parser[HOLFormula] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
-        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
-          println("\n\nBigAnd\n\n")
-          BigAnd(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+//      def bigAnd : Parser[HOLFormula] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
+//        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
+//          println("\n\nBigAnd\n\n")
+//          BigAnd(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+//        }
+//      }
+
+     // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
+      def prefix : Parser[Tuple3[IntVar, IntegerTerm, IntegerTerm]] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
+        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
+          println("\n\nprefix\n\n")
+          Tuple3(intVar1, ind1, ind2 )
+        }
+      }
+      def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
+        case l ~ schemaFormula  => {
+          println("Works?")
+          l.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => BigAnd(triple._1, res, triple._2, triple._3))
+//          BigAnd(l.tail.head._1, schemaFormula.asInstanceOf[SchemaFormula], l.tail.head._2, l.tail.head._3)
+
+//          throw new Exception("ERROR in big connective symbol")
+//          l.head match {
+//            case str ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")" => {
+//              if(str == "BigAnd") {
+//                println("\n\nBigAnd\n\n")
+//                BigAnd(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+//              }
+//              else if (str == "BigOr") {
+//                println("\n\nBigOr\n\n")
+//                BigOr(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+//              }
+//              else {
+//                println("\n\nERROR in big connective symbol\n\n")
+//                throw new Exception("ERROR in big connective symbol")
+//              }
+//            }
+//          }
         }
       }
 
-      def bigOr : Parser[HOLFormula] = "BigOr" ~ "(" ~ intVar ~ "," ~ index ~ "," ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
-        case "BigOr" ~ "(" ~ intVar ~ "," ~ ind1 ~ "," ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
-          println("\n\nBigOr\n\n")
-          BigOr(intVar, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
-        }
-      }
+//      def bigOr : Parser[HOLFormula] = "BigOr" ~ "(" ~ intVar ~ "," ~ index ~ "," ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
+//        case "BigOr" ~ "(" ~ intVar ~ "," ~ ind1 ~ "," ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
+//          println("\n\nBigOr\n\n")
+//          BigOr(intVar, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+//        }
+//      }
 
       def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)
       def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), ind->ind).asInstanceOf[HOLVar]}
@@ -289,8 +322,8 @@ object SHLK {
 
 
     }
-    println("\n\n\nsize = "+map.size)
-    println("\n\n\nlist = "+list)
+    println("\n\n\nnumber of SLK-proof = "+bigMap.size)
+//    println("\n\n\nlist = "+list)
 //    if (!bigMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
 //    val m = bigMap.get("chi").get._2.get(plabel).get
 ////    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
