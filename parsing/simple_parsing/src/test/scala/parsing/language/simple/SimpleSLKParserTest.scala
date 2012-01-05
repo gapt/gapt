@@ -10,8 +10,8 @@ package at.logic.parsing.language.simple
 import at.logic.language.schema._
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.propositionalRules.{OrLeftRule, NegLeftRule, Axiom}
-import _root_.at.logic.calculi.lksk.Axiom
-import _root_.at.logic.parsing.readers.StringReader
+import at.logic.calculi.lksk.Axiom
+import at.logic.parsing.readers.StringReader
 import org.specs._
 import org.specs.runner._
 import at.logic.language.hol._
@@ -27,6 +27,7 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.parsing.readers.StringReader
 import scala.io._
 import java.io.File.separator
+
 
 
 class SimpleSLKParserTest extends SpecificationWithJUnit {
@@ -72,9 +73,9 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
 //          println("\n\np = "+  p.root.toString())
 //          p.root.toString must beEqual ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
 //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
-          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input1.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
           val map = SHLK.parseProof(s)
-//          println("\n\np = "+  map.get("chi").get._2.get("root").get.root.toString()  )
+          println("\n\np = "+  map.get("chi").get._1.get("root").get.root.toString()  )
           val p = map.get("chi").get._2.get("root").get
 //          println("\n\npsi_b = "+  map.get("psi").get._1.get("root").get.root.toString()  )
 //          println("\n\npsi_s = "+  map.get("psi").get._2.get("root").get.root.toString()  )
@@ -86,7 +87,8 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
 
 //          Main.display("phi", map.get("phi").get._2.get("root").get) ;
 
-          println("map.size = "+map.size)
+
+
         }
     }
 }
