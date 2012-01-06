@@ -108,8 +108,8 @@ class schemaParserTest extends SpecificationWithJUnit {
 //          Main.display("Proof", map.head._2._1) ; while(true){}
 
 //          Main.display("psi", map.get("psi").get._1.get("root").get) ;
-          Main.display("chi", map.get("chi").get._1.get("root").get) ;
-                             while(true){}
+//          Main.display("chi", map.get("chi").get._1.get("root").get) ;
+//                             while(true){}
           println("map.size = "+map.size)
           map.foreach(pair => {
 //            Main.display(pair._1, pair._2._1.get("root").get) ;
