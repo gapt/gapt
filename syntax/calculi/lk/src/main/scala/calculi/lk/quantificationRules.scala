@@ -196,11 +196,11 @@ import _root_.at.logic.utils.traits.Occurrence
               "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.toStringSimple )
             // correct auxiliary formula
 
-            println("ForallRightRule")
-            println(sub)
-            println(eigen_var)
-            println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
-            println("aux: " + aux_fo.formula)
+            //println("ForallRightRule")
+            //println(sub)
+            //println(eigen_var)
+            //println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
+            //println("aux: " + aux_fo.formula)
 
             assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
             aux_fo 

@@ -1058,7 +1058,7 @@ object XMLParser {
         case <constantatomformula>{ ns @ _* }</constantatomformula>
           =>  n.attribute("definition") match {
           case Some(seq) =>
-             println(seq.head.text)
+             //println(seq.head.text)
 
              Atom(new ConstantStringSymbol( n.attribute("symbol").get.head.text ),
                XMLUtils.nodesToAbstractTerms(ns.toList))
