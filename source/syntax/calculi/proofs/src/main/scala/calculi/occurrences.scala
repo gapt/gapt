@@ -26,6 +26,7 @@ trait HasAncestors {
   }
   implicit def focc2f(fo: FormulaOccurrence): Formula = fo.formula
 
+  //FO = FormulaOccurrence
   trait FOFactory {
     def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence
   }

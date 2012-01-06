@@ -15,19 +15,29 @@ import java.io._
 object CLIMain {
 
   val script = """import at.logic.cli.GAPScalaInteractiveShellLibrary._
+  import at.logic.language.lambda.types._
+  import at.logic.language.lambda.typedLambdaCalculus._
   import at.logic.language.hol._
   import at.logic.language.fol._
   import at.logic.calculi.lk.base.types.FSequent
   import at.logic.calculi.lk.base.FSequent
   import at.logic.calculi.lk.base._
   import at.logic.calculi.lksk.base._
+  import at.logic.language.lambda.symbols._
   import at.logic.language.hol.logicSymbols._
   import at.logic.transformations.skolemization.skolemize
   import at.logic.algorithms.lk.regularize
+  import at.logic.calculi.occurrences.FormulaOccurrence
+
   import ceresHelp.{apply => ceresHelp}
 
-  println("Welcome to the GAPT shell!")
-  println("See ceresHelp for the commands.")"""
+  println()
+  println("    *************************************")
+  println("    *    Welcome to the GAPT shell!     *")
+  println("    *  See ceresHelp for the commands.  *")
+  println("    *************************************")
+  println()
+  """
 
   def main(args: Array[String]) {
     val f = File.createTempFile("cli-script", ".scala")
