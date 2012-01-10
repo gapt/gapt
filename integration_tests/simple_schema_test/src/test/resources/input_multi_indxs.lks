@@ -1,9 +1,9 @@
  proof chi
     base {
-	        root : pLink((psi,k)  A(2), BigAnd(i=0..k) BigAnd(j=1..k) (~A(i,j) \/ A(i+1,j+2)) |- A(k+1))
+	        root : pLink((psi,k)  A(2,3), BigAnd(i=0..k) BigAnd(j=1..k) (~A(i,j) \/ A(i+1,j+2)) |- A(k+1,1))
          }
 
     step {
-            root : ax(A(k+2, k+3, k+1) |- A(k+2))
+            root : ax(A(k+2, k+3) |- A(k+2,1))
          }
 
