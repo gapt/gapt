@@ -37,6 +37,7 @@ object SHLK {
 //    lazy val sp2 = new ParserTxt
 //    sp2.parseAll(sp2.line, txt)
     val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
+    val mapPredicateToArity = Map.empty[String, Int]
     lazy val sp = new SimpleSLKParser
 
 //    var proofName = ""
@@ -119,7 +120,16 @@ object SHLK {
       def schemaFormula = formula
 
       def indPred : Parser[HOLFormula] = regex(new Regex("[A-Z0-9]")) ~ "(" ~ repsep(index,",") ~ ")" ^^ {
-        case x ~ "(" ~ l ~ ")" => { println("\n\nIndexedPredicate"); IndexedPredicate(new ConstantStringSymbol(x), l) }
+        case x ~ "(" ~ l ~ ")" => {
+          if (! mapPredicateToArity.isDefinedAt(x.toString) )
+            mapPredicateToArity.put(x.toString, l.size)
+          else if (mapPredicateToArity.get(x.toString).get != l.size ) {
+            println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n\n")
+            throw new Exception("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n")
+          }
+          println("\n\nIndexedPredicate");
+          IndexedPredicate(new ConstantStringSymbol(x), l)
+        }
       }
 
 //      def bigAnd : Parser[HOLFormula] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
@@ -139,7 +149,7 @@ object SHLK {
       def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
         case l ~ schemaFormula  => {
           println("Works?")
-          l.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => BigAnd(triple._1, res, triple._2, triple._3))
+          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => BigAnd(triple._1, res, triple._2, triple._3))
 //          BigAnd(l.tail.head._1, schemaFormula.asInstanceOf[SchemaFormula], l.tail.head._2, l.tail.head._3)
 
 //          throw new Exception("ERROR in big connective symbol")
