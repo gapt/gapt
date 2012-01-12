@@ -14,7 +14,7 @@ import java.io._
 
 object CLIMain {
 
-  val script = """import at.logic.cli.GAPScalaInteractiveShellLibrary._
+  val script = """  import at.logic.cli.GAPScalaInteractiveShellLibrary._
   import at.logic.language.lambda.types._
   import at.logic.language.lambda.typedLambdaCalculus._
   import at.logic.language.hol._
@@ -45,7 +45,7 @@ object CLIMain {
     val w = new BufferedWriter( new FileWriter(f) )
     w.write(script)
     w.close
-    MainGenericRunner.main(Array("-usejavacp", "-i", f.getAbsolutePath))
+    MainGenericRunner.main(Array("-usejavacp","-i",f.getCanonicalPath, "-Yrepl-sync"))
     sys.exit(0)
   }
 }

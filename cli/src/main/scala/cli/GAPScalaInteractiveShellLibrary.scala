@@ -391,6 +391,22 @@ object loadProofDB {
     }
   }
 
+
+  class ElimEx(val uproofs : List[LKProof], val aux : List[FormulaOccurrence], val prim : HOLFormula, val defs : Option[collection.immutable.Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
+    override def getMessage() = {
+      var s = ("proofs:\n\n")
+      for (p <- uproofs)
+        s = s + p.toString() + "\n"
+      s = s + "\nauxiliary formulas:\n\n"
+      for (p <- aux)
+        s = s + p.toString() + "\n"
+      s = s + "\nprimary formula:\n"+ prim +"\n"
+
+      s
+    }
+  }
+
+
   object definitions {
     import collection.immutable.Map
     import collection.immutable.Seq
@@ -536,7 +552,7 @@ object loadProofDB {
       (correspondences,  dproof)
     }
 
-    /*
+
     def handleEquationalRule(defs: definitions.DefinitionsMap, uproof1: LKProof, uproof2: LKProof,
                                 root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
                                 prin : FormulaOccurrence,
@@ -547,9 +563,9 @@ object loadProofDB {
       val correspondences1 = calculateCorrespondences(defs, emptymap, root, duproof1)
       val correspondences2 = calculateCorrespondences(defs, correspondences1, root, duproof2)
 
-      val dproof = createRule(duproof1, duproof2, dmap1(aux1), dmap2(aux2)  )
+      val dproof = createRule(duproof1, duproof2, dmap1(aux1), dmap2(aux2) , correspondences2(prin).formula )
       (correspondences2,  dproof)
-    } */
+    }
 
     def handleDefinitionRule(defs: definitions.DefinitionsMap, uproof: LKProof, root: Sequent,
                               aux: FormulaOccurrence, prin : FormulaOccurrence,
@@ -562,9 +578,25 @@ object loadProofDB {
         println("eliminating: "+prin)
         (dmap, duproof)
       } else {
-        val dproof = DefinitionLeftRule(duproof, dmap(aux), elim_prin)
-        (correspondences,  dproof)
+        println("not eliminating:" + prin)
+        println("trying with: "+duproof.vertex + " ::: " + dmap(aux) +" / " +aux + " ::: " + elim_prin  )
+        try {
+          val dproof = createRule(duproof, aux, elim_prin)
+          (correspondences,  dproof)
+        } catch {
+          case _ =>
+            throw new ElimEx(List(duproof), List(aux,dmap(aux)), elim_prin, None)
+        }
       }
+    }
+
+    def check_map(map : collection.immutable.Map[FormulaOccurrence, FormulaOccurrence], proof: LKProof) = {
+      val ant = proof.root.antecedent
+      val succ = proof.root.succedent
+      for (el <- map.values)
+        if ((! ant.contains(el)) && (! succ.contains(el)))
+          throw new ElimEx(proof::Nil, el::Nil, el.formula, Some(map))
+      true
     }
 
 
@@ -579,8 +611,10 @@ object loadProofDB {
           val antd  = recursive_elimination_from(defs,antecedent.map((x:FormulaOccurrence) => x.formula))
           val succd = recursive_elimination_from(defs,succedent.map((x:FormulaOccurrence) => x.formula))
           val sequent = fsequent2sequent.apply( (antd,succd) )
-          val correspondences = (antecedent ++ succedent) zip (sequent.antecedent ++ sequent.succedent)
-          (emptymap ++ correspondences, Axiom(sequent))
+          val correspondences = emptymap ++ ((antecedent ++ succedent) zip (sequent.antecedent ++ sequent.succedent))
+          val duproof = Axiom(sequent)
+          check_map(correspondences, duproof)
+          (correspondences, duproof)
 
         /* in the following part, dmap[1,2] holds the old correspondences of the upper subproof(s), needed to map the auxiliary formulas to the
          * ones with removed definitions; correspondences holds the new mapping. */
@@ -650,9 +684,15 @@ object loadProofDB {
         case ExistsRightRule(uproof, root, aux, prim, substituted_term) =>
           handleQuantifierRule(defs, uproof, root, aux, prim, substituted_term, ExistsRightRule.apply)
 
-        //TODO: equational rules
-        //case EquationLeft1Rule(uproof1, uproof2, root, eqocc, aux, prim) =>
-        //  handleEquationalRule(defs, uproof1, uproof2, root, aux1, aux2, prim)
+        //equational rules
+        case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+          handleEquationalRule(defs, uproof1, uproof2, root, aux1, aux2, prim, EquationLeft1Rule.apply)
+        case EquationLeft2Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+          handleEquationalRule(defs, uproof1, uproof2, root, aux1, aux2, prim, EquationLeft2Rule.apply)
+        case EquationRight1Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+          handleEquationalRule(defs, uproof1, uproof2, root, aux1, aux2, prim, EquationRight1Rule.apply)
+        case EquationRight2Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+          handleEquationalRule(defs, uproof1, uproof2, root, aux1, aux2, prim, EquationRight2Rule.apply)
 
         //definition rules
         case DefinitionLeftRule(uproof, root, aux, prin) =>
@@ -716,6 +756,18 @@ object loadProofDB {
     def switchargs[A,B,C,D](f : (A, B, C) => D) : ((A, C ,B) => D) = ((a:A, c:C ,b:B) => f(a,b,c))
 
     
+  }
+
+  object sequent {
+      def find(p:LKProof, pred : (LKProof => Boolean)) : List[LKProof] = p match {
+        case p:NullaryLKProof => if (pred(p)) p::Nil else List();
+        case p:UnaryLKProof =>
+          val rec = find(p.uProof,pred);
+          if (pred(p)) p::rec else rec
+        case p:BinaryLKProof =>
+          val rec = find(p.uProof1,pred) ++ find(p.uProof2,pred)
+          if (pred(p)) p::rec else rec
+      }
   }
 
   object ceresHelp {
