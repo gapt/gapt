@@ -193,13 +193,13 @@ class PrimeProofTest extends SpecificationWithJUnit {
       (new java.io.File( path ) ).exists() must beEqual( true )
     }
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=0" in euclid(0)
+    //"parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=0" in euclid(0)
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=1" in euclid(1)
+    //"parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=1" in euclid(1)
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=2" in euclid(2)
+    //"parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=2" in euclid(2)
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=0" in prime1(0, true)
+    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=0" in prime1(0, false)
 
     "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=1" in prime1(1, false)
 
