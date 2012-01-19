@@ -32,6 +32,7 @@ object SHLK {
   def parseProof(txt: String): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
     var map = Map.empty[String, LKProof]
     var mapStep = Map.empty[String, LKProof]
+    var defMap = Map.empty[SchemaFormula, SchemaFormula]
     var list = List[String]()
     var error_buffer = ""
 //    lazy val sp2 = new ParserTxt
@@ -87,10 +88,20 @@ object SHLK {
         }
       }
 
-      def slkProofs: Parser[List[Unit]] = rep(slkProof)
+      def abbreviation: Parser[Unit] = define/* ^^ {
+        case s ~ d => {
+          List.empty[Unit]
+        }
+      }                                                         */
+      def slkProofs: Parser[List[Unit]] =  rep(slkProof)//define  ~ slkProof ^^ {
+//         case a ~ s  => {
+//          println("\n\n\nslkProofs : number of SLK-proofs = "+bigMap.size)
+//          List.empty[Unit]
+//        }
+//      }
+//                                              */
 
-
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR2 | negL | negR | cut | pLink | andL | weakL | weakR
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andL1 | andL2 | weakL | weakR
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = (non_formula | formula)
@@ -119,7 +130,7 @@ object SHLK {
       }
       def schemaFormula = formula
 
-      def indPred : Parser[HOLFormula] = regex(new Regex("[A-Z0-9]")) ~ "(" ~ repsep(index,",") ~ ")" ^^ {
+      def indPred : Parser[HOLFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
         case x ~ "(" ~ l ~ ")" => {
           if (! mapPredicateToArity.isDefinedAt(x.toString) )
             mapPredicateToArity.put(x.toString, l.size)
@@ -131,6 +142,13 @@ object SHLK {
           IndexedPredicate(new ConstantStringSymbol(x), l)
         }
       }
+
+      def define: Parser[Unit]  = indPred ~ ":=" ~ schemaFormula ^^ {
+        case indpred ~ ":=" ~ f => {
+          defMap.put(indpred.asInstanceOf[SchemaFormula], f.asInstanceOf[SchemaFormula])
+        }
+      }
+
 
 //      def bigAnd : Parser[HOLFormula] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
 //        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
@@ -246,6 +264,10 @@ object SHLK {
         case "orR2(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => OrRight2Rule(map.get(label).get, f1, f2)
       }
 
+      def orR: Parser[LKProof] = "orR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "orR2(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => OrRightRule(map.get(label).get, f1, f2)
+      }
+
       def orL: Parser[LKProof] = "orL(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orL(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
           println("\n\nOR-Left")
@@ -296,43 +318,92 @@ object SHLK {
 //          AndEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
 //        }
 //      }
-//
+
+      def andL1: Parser[LKProof] = "andL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndLeft1Rule(map.get(l).get, f1, f2)
+        }
+      }
+
+      def andL2: Parser[LKProof] = "andL2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andL2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndLeft2Rule(map.get(l).get, f1, f2)
+        }
+      }
+
       def andL: Parser[LKProof] = "andL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
           println("\n\nandL")
           val p = AndLeftRule(map.get(l).get, f1, f2)
-
-          val and = And(f1,f2)
-          val aux = p.root.antecedent.tail.head.formula
-          println("\np   = "+aux)
-          println("\nand = "+and)
-          println("\n\n"+aux.syntaxEquals(and))
-          println("\nf1 = "+f1)
-          var res = p
-          f1 match {
-            case BigAnd(ind,f,lb,ub) => {
-              println("ERROR 5")
-//              sys.exit(1)
-              res = AndEquivalenceRule1(p, and.asInstanceOf[SchemaFormula], BigAnd(ind,f,lb,Succ(ub)).asInstanceOf[SchemaFormula])
-              println("\n\nres = "+res.root.antecedent.head.formula)
-//              return res
-              res
-            }
-            case _ => {
-              println("ERROR 3")
-//              sys.exit(1)
-              res
-            }
-          }
-          println("ERROR 2")
-          res
+              p
+//          val and = And(f1,f2)
+//          val aux = p.root.antecedent.tail.head.formula
+//          println("\np   = "+aux)
+//          println("\nand = "+and)
+//          println("\n\n"+aux.syntaxEquals(and))
+//          println("\nf1 = "+f1)
+//          var res = p
+//          f1 match {
+//            case BigAnd(ind,f,lb,ub) => {
+//              println("ERROR 5")
+////              sys.exit(1)
+//              res = AndEquivalenceRule1(p, and.asInstanceOf[SchemaFormula], BigAnd(ind,f,lb,Succ(ub)).asInstanceOf[SchemaFormula])
+//              println("\n\nres = "+res.root.antecedent.head.formula)
+////              return res
+//              res
+//            }
+//            case _ => {
+//              println("ERROR 3")
+////              sys.exit(1)
+//              res
+//            }
+//          }
+//          println("ERROR 2")
+//          res
 //              sys.exit(1)
         }
       }
 
+      def andEqR1: Parser[LKProof] = "andEqR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andEqR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndRightEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+        }
+      }
+
+      def andEqR2: Parser[LKProof] = "andEqR2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andEqR2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndLeftEquivalenceRule2(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+        }
+      }
+
+      def andEqR3: Parser[LKProof] = "andEqR3(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andEqR3(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndLeftEquivalenceRule3(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+        }
+      }
+
+      def andEqL1: Parser[LKProof] = "andEqL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andEqL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndLeftEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+        }
+      }
+
+      def andEqL2: Parser[LKProof] = "andEqL2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andEqL2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndRightEquivalenceRule2(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+        }
+      }
+
+      def andEqL3: Parser[LKProof] = "andEqL3(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andEqL3(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          AndRightEquivalenceRule3(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+        }
+      }
 
     }
     println("\n\n\nnumber of SLK-proof = "+bigMap.size)
+    println("\n\n\ndefMapr size = "+defMap.size)
+
 //    println("\n\n\nlist = "+list)
 //    if (!bigMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
 //    val m = bigMap.get("chi").get._2.get(plabel).get
