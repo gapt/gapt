@@ -101,7 +101,7 @@ object SHLK {
 //      }
 //                                              */
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andL1 | andL2 | weakL | weakR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = (non_formula | formula)
@@ -436,14 +436,14 @@ object SHLK {
         }
       }
 
-      def ContrL: Parser[LKProof] = "ContrL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "ContrL(" ~ l ~ "," ~ f ~ ")" => {
+      def contrL: Parser[LKProof] = "contrL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
+        case "contrL(" ~ l ~ "," ~ f ~ ")" => {
           ContractionLeftRule(map.get(l).get, f)
         }
       }
 
-      def ContrR: Parser[LKProof] = "ContrR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "ContrR(" ~ l ~ "," ~ f ~ ")" => {
+      def contrR: Parser[LKProof] = "contrR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
+        case "contrR(" ~ l ~ "," ~ f ~ ")" => {
           ContractionRightRule(map.get(l).get, f)
         }
       }
