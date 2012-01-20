@@ -1,6 +1,6 @@
 proof psi
 base {
-	1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \/ A(i+1)) ) |- A(k+1))
+	1 : pLink((psi,k)  A(0), BigAnd(i=0..k) (~A(i) \/ A(i+1)) |- A(k+1))
 
 	2 : ax(A(k+1) |- A(k+1))
 
@@ -12,18 +12,18 @@ base {
 
 	6 : cut(1, 5, A(k+1))
 
-	root : andL(6, BigAnd(i=0..k , ( ~A(i) \/ A(i+1) ) ), (~A(k+1) \/ A(k+2) ) )
+	root : andL(6, BigAnd(i=0..k) ( ~A(i) \/ A(i+1) ), (~A(k+1) \/ A(k+2) ) )
      }
 
 step {
 	root : ax(A(k) |- A(k))
      }
-    
 
 
-proof chi 
+
+proof chi
 base {
-	root : pLink((psi,k)  A(2), BigAnd(i=0..k , (~A(i) \/ A(i+1)) ) |- A(k+1))
+	root : pLink((psi,k)  A(2), BigAnd(i=0..k) (~A(i) \/ A(i)) |- A(k+1))
      }
 
 step {
