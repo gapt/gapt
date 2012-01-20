@@ -1,5 +1,6 @@
 package at.logic.parsing.language.simple
 
+import at.logic.language.schema.IndexedPredicate._
 import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.slk._
 import at.logic.language.schema.{SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
@@ -14,10 +15,10 @@ import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.types.TA
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
+import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 
 
 object SHLK {
@@ -32,7 +33,7 @@ object SHLK {
   def parseProof(txt: String): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
     var map = Map.empty[String, LKProof]
     var mapStep = Map.empty[String, LKProof]
-    var defMap = Map.empty[SchemaFormula, SchemaFormula]
+    var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     var list = List[String]()
     var error_buffer = ""
 //    lazy val sp2 = new ParserTxt
@@ -84,28 +85,22 @@ object SHLK {
           map = Map.empty[String, LKProof]
           mapStep = Map.empty[String, LKProof]
           println("\n\nSUCCESSFUL : "+str)
-//          List.empty[Unit]
         }
       }
 
-      def abbreviation: Parser[Unit] = define/* ^^ {
-        case s ~ d => {
+
+      def slkProofs: Parser[List[Unit]] =  rep(define) ~ rep(slkProof) ^^ {
+         case a ~ s  => {
+          println("\n\n\nslkProofs : number of SLK-proofs = "+bigMap.size)
           List.empty[Unit]
         }
-      }                                                         */
-      def slkProofs: Parser[List[Unit]] =  rep(slkProof)//define  ~ slkProof ^^ {
-//         case a ~ s  => {
-//          println("\n\n\nslkProofs : number of SLK-proofs = "+bigMap.size)
-//          List.empty[Unit]
-//        }
-//      }
-//                                              */
+      }
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3
       def label: String = """[0-9]*[root]*"""
 
-      def term: Parser[HOLExpression] = (non_formula | formula)
-      def formula: Parser[HOLFormula] = (neg | big /*| bigAnd | bigOr*/ | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
+      def term: Parser[HOLExpression] = ( non_formula | formula)
+      def formula: Parser[HOLFormula] = (neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
 
       def intTerm: Parser[HOLExpression] = (index | schemaFormula)
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
@@ -139,13 +134,24 @@ object SHLK {
             throw new Exception("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n")
           }
           println("\n\nIndexedPredicate");
+
+//          val map: scala.collection.immutable.Map[Var, T])
+//          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
+//          val new_ind = subst(ind)
+//          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
+//          val new_subst = new SchemaSubstitution1(new_map)
+
           IndexedPredicate(new ConstantStringSymbol(x), l)
         }
       }
 
       def define: Parser[Unit]  = indPred ~ ":=" ~ schemaFormula ^^ {
-        case indpred ~ ":=" ~ f => {
-          defMap.put(indpred.asInstanceOf[SchemaFormula], f.asInstanceOf[SchemaFormula])
+        case indpred ~ ":=" ~ sf => {
+          indpred match {
+            case IndexedPredicate(f,ls) => {
+              defMap.put(f, Tuple2(ls.asInstanceOf[List[IntegerTerm]],sf.asInstanceOf[SchemaFormula]))
+            }
+          }
         }
       }
 
@@ -200,8 +206,8 @@ object SHLK {
       def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)
       def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), ind->ind).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
-      def and: Parser[HOLFormula] = "(" ~ formula ~ "/\\" ~ formula ~ ")" ^^ {case "(" ~ x ~ str ~ y ~ ")"  => And(x,y)}
-      def or: Parser[HOLFormula]  = "(" ~ formula ~ """\/""" ~ formula ~ ")" ^^ {case "(" ~ x ~ str ~ y ~ ")" => Or(x,y)}
+      def and: Parser[HOLFormula] = "(" ~ repsep(formula, "/\\") ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => And(f, res)) } }
+      def or: Parser[HOLFormula]  = "(" ~ repsep(formula, """\/""" ) ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => Or(f, res)) } }
       def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}
       def abs: Parser[HOLExpression] = "Abs" ~ variable ~ term ^^ {case "Abs" ~ v ~ x => Abs(v,x).asInstanceOf[HOLExpression]}
       def neg: Parser[HOLFormula] = "~" ~ formula ^^ {case "~" ~ x => Neg(x)}
@@ -272,6 +278,13 @@ object SHLK {
         case "orL(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
           println("\n\nOR-Left")
           OrLeftRule(map.get(l1).get, map.get(l2).get, f1, f2)
+        }
+      }
+
+      def andR: Parser[LKProof] = "andR(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "andR(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          println("\n\nAND-Right")
+          AndRightRule(map.get(l1).get, map.get(l2).get, f1, f2)
         }
       }
 
@@ -449,8 +462,8 @@ object SHLK {
       }
 
     }
-    println("\n\n\nnumber of SLK-proof = "+bigMap.size)
-    println("\n\n\ndefMapr size = "+defMap.size)
+    println("\n\nnumber of SLK-proof = "+bigMap.size)
+    println("\ndefMapr size = "+defMap.size)
 
 //    println("\n\n\nlist = "+list)
 //    if (!bigMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
@@ -461,6 +474,35 @@ object SHLK {
 
   }
 }
+
+class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
+  import at.logic.language.schema._
+
+  def apply(expression: T): T = expression match {
+      case x:IntVar => {
+          map.get(x) match {
+            case Some(t) => {
+              //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+              t
+            }
+            case _ => {
+              //println(x + " Error in schema subst 1")
+              x.asInstanceOf[T]
+            }
+          }
+      }
+      case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+      case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+      case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+      case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+      case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+      case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+      case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+
+      case _ => expression
+    }
+}
+
 
 
 //                    This copy has types. This is why it is kept !
