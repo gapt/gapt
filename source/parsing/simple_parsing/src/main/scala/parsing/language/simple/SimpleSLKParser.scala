@@ -31,8 +31,11 @@ object SHLK {
 
   //plabel should return the proof corresponding to this label
   def parseProof(txt: String): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
-    var map = Map.empty[String, LKProof]
+    var mapBase = Map.empty[String, LKProof]
     var mapStep = Map.empty[String, LKProof]
+    var map  = Map.empty[String, LKProof]
+    var baseORstep: Int = 1
+
     var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     var list = List[String]()
     var error_buffer = ""
@@ -44,7 +47,10 @@ object SHLK {
 
 //    var proofName = ""
 //    sp.parseAll(sp.line, txt)
-    sp.parseAll(sp.slkProofs, txt)
+    sp.parseAll(sp.slkProofs, txt) match {
+      case sp.Success(result, input) => println("\n\nSUCCESS parse :) \n")
+      case _ => { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
+    }
 
 
 //    class ParserTxt extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
@@ -60,19 +66,30 @@ object SHLK {
 
     class SimpleSLKParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
 
-      def line: Parser[List[Unit]] = rep(mapping)
+      def line: Parser[List[Unit]] = rep(mappingBase)
 
-      def mapping: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
+      def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {
           error_buffer = l
+          if (baseORstep == 2) {
+            map = Map.empty[String, LKProof]
+            baseORstep = 1
+          }
           map.put(l,p)
+          mapBase = map
         }
       }
 
       def mappingStep: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {
           error_buffer = l
-          mapStep.put(l,p)
+//          mapStep.put(l,p)
+          if (baseORstep == 1) {
+            map = Map.empty[String, LKProof]
+            baseORstep = 2
+          }
+          map.put(l,p)
+          mapStep = map
         }
       }
 
@@ -81,17 +98,16 @@ object SHLK {
       def slkProof: Parser[Unit] = "proof" ~ name ~ "base" ~ "{" ~ line ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}"  ^^ {
         case                       "proof" ~  str ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~ line2 ~ "}" => {
 //          proofName = str
-          bigMap.put(str, Pair(map, mapStep))
-          map = Map.empty[String, LKProof]
+          bigMap.put(str, Pair(mapBase, mapStep))
+          mapBase = Map.empty[String, LKProof]
           mapStep = Map.empty[String, LKProof]
-          println("\n\nSUCCESSFUL : "+str)
+//          println("\n\nParsing is SUCCESSFUL : "+str)
         }
       }
 
 
       def slkProofs: Parser[List[Unit]] =  rep(define) ~ rep(slkProof) ^^ {
          case a ~ s  => {
-          println("\n\n\nslkProofs : number of SLK-proofs = "+bigMap.size)
           List.empty[Unit]
         }
       }
@@ -105,20 +121,20 @@ object SHLK {
       def intTerm: Parser[HOLExpression] = (index | schemaFormula)
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
       def intConst: Parser[IntegerTerm] = (intZero | intOne | intTwo | intThree)
-      def intOne :  Parser[IntegerTerm] = "1".r ^^ { case x => { println("\n\nintZero");Succ(IntZero())}}
-      def intTwo :  Parser[IntegerTerm] = "2".r ^^ { case x => { println("\n\nintZero");Succ(Succ(IntZero()))}}
-      def intThree: Parser[IntegerTerm] = "3".r ^^ { case x => { println("\n\nintZero");Succ(Succ(Succ(IntZero())))}}
-      def intZero:  Parser[IntegerTerm] = "0".r ^^ { case x => { println("\n\nintZero");IntZero()}
+      def intOne :  Parser[IntegerTerm] = "1".r ^^ { case x => {  Succ(IntZero())}}
+      def intTwo :  Parser[IntegerTerm] = "2".r ^^ { case x => {  Succ(Succ(IntZero()))}}
+      def intThree: Parser[IntegerTerm] = "3".r ^^ { case x => {  Succ(Succ(Succ(IntZero())))}}
+      def intZero:  Parser[IntegerTerm] = "0".r ^^ { case x => {  IntZero()}
       }
       def sum : Parser[IntegerTerm] = intVar ~ "+" ~ intConst ^^ {case indV ~ "+" ~ indC => {
-        println("\n\nsum")
+//        println("\n\nsum")
         indC match {
           case Succ(IntZero()) => Succ(indV)
           case Succ(Succ(IntZero())) => Succ(Succ(indV))
           case Succ(Succ(Succ(IntZero()))) => Succ(Succ(Succ(indV)))
       }}}
       def intVar: Parser[IntVar] = "[i,j,m,n,k]".r ^^ {
-        case x => { println("\n\nintVar"); IntVar(new VariableStringSymbol(x))}
+        case x => { /*println("\n\nintVar");*/ IntVar(new VariableStringSymbol(x))}
       }
       def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
         case "s(" ~ intTerm ~ ")" => Succ(intTerm.asInstanceOf[IntegerTerm])
@@ -133,7 +149,7 @@ object SHLK {
             println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n\n")
             throw new Exception("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n")
           }
-          println("\n\nIndexedPredicate");
+//          println("\n\nIndexedPredicate");
 
 //          val map: scala.collection.immutable.Map[Var, T])
 //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
@@ -166,13 +182,13 @@ object SHLK {
      // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
       def prefix : Parser[Tuple3[IntVar, IntegerTerm, IntegerTerm]] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
         case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
-          println("\n\nprefix\n\n")
+//          println("\n\nprefix\n\n")
           Tuple3(intVar1, ind1, ind2 )
         }
       }
       def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
         case l ~ schemaFormula  => {
-          println("Works?")
+//          println("Works?")
           l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => BigAnd(triple._1, res, triple._2, triple._3))
 //          BigAnd(l.tail.head._1, schemaFormula.asInstanceOf[SchemaFormula], l.tail.head._2, l.tail.head._3)
 
@@ -240,7 +256,7 @@ object SHLK {
 
 //      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
       def sequent: Parser[Sequent] = repsep(formula,",") ~ "|-" ~ repsep(formula,",") ^^ { case lfs ~ "|-" ~ rfs => {
-          println("\n\nSEQUENT")
+//          println("\n\nSEQUENT")
           Axiom(lfs, rfs).root
         }
       }
@@ -253,51 +269,70 @@ object SHLK {
         case _ => {println("ERROR");Axiom(List(), List())}
       }
 
-      def proof_name : Parser[String] = "psi".r
+      def proof_name : Parser[String] = """[a-z]*[0-9]*""".r
 
       def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
-          println("\n\nPROOF-LINK")
+          println("\n\npLink")
           SchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
         }
       }
 
       def orR1: Parser[LKProof] = "orR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-        case "orR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => OrRight1Rule(map.get(l).get, f1, f2)
+        case "orR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          println("\n\norR1")
+          OrRight1Rule(map.get(l).get, f1, f2)
+        }
       }
 
       def orR2: Parser[LKProof] = "orR2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-        case "orR2(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => OrRight2Rule(map.get(label).get, f1, f2)
+        case "orR2(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          println("\n\norR2")
+          OrRight2Rule(map.get(label).get, f1, f2)
+        }
       }
 
       def orR: Parser[LKProof] = "orR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-        case "orR2(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => OrRightRule(map.get(label).get, f1, f2)
+        case "orR(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          println("\n\norR")
+          OrRightRule(map.get(label).get, f1, f2)
+        }
       }
 
       def orL: Parser[LKProof] = "orL(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orL(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          println("\n\nOR-Left")
+          println("\n\norL")
           OrLeftRule(map.get(l1).get, map.get(l2).get, f1, f2)
         }
       }
 
       def andR: Parser[LKProof] = "andR(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andR(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          println("\n\nAND-Right")
-          AndRightRule(map.get(l1).get, map.get(l2).get, f1, f2)
+          println("\n\nandR")
+//          println("\nerror_buffer = "+error_buffer)
+//          println("\n"+map.get(l).get.root.toString)
+//          println(map.get(l1).get.root)
+//          println("\n\n")
+//          println(map.get(l2).get.root)
+//          println("\n\n")
+          val p = AndRightRule(map.get(l1).get, map.get(l2).get, f1, f2)
+//          println(p.root)
+          p
         }
       }
 
       def cut: Parser[LKProof] = "cut(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "cut(" ~ l1 ~ "," ~ l2 ~ "," ~ f ~ ")" => {
           println("\n\ncut")
+//          println("\nerror_buffer = "+error_buffer)
+
           CutRule(map.get(l1).get, map.get(l2).get, f)
         }
       }
 
       def negL: Parser[LKProof] = "negL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "negL(" ~ label ~ "," ~ formula ~ ")" => {
-          println("\n\nNEG-Left")
+          println("\n\nnegL")
           NegLeftRule(map.get(label).get, formula)
         }
         case _ => {
@@ -308,7 +343,8 @@ object SHLK {
 
       def negR: Parser[LKProof] = "negR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "negR(" ~ label ~ "," ~ formula ~ ")" => {
-          println("\n\nnegL")
+//          println("\n\n"+map.get(label).get.root.toString)
+          println("\n\nnegR")
           NegRightRule(map.get(label).get, formula)
         }
       }
@@ -334,12 +370,14 @@ object SHLK {
 
       def andL1: Parser[LKProof] = "andL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          println("\n\nandL1")
           AndLeft1Rule(map.get(l).get, f1, f2)
         }
       }
 
       def andL2: Parser[LKProof] = "andL2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          println("\n\nandL2")
           AndLeft2Rule(map.get(l).get, f1, f2)
         }
       }
@@ -347,6 +385,8 @@ object SHLK {
       def andL: Parser[LKProof] = "andL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
           println("\n\nandL")
+//          println("\nerror_buffer = "+error_buffer)
+//          println("\n"+map.get(l).get.root.toString)
           val p = AndLeftRule(map.get(l).get, f1, f2)
               p
 //          val and = And(f1,f2)
@@ -451,18 +491,20 @@ object SHLK {
 
       def contrL: Parser[LKProof] = "contrL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "contrL(" ~ l ~ "," ~ f ~ ")" => {
+          println("\n\ncontrL")
           ContractionLeftRule(map.get(l).get, f)
         }
       }
 
       def contrR: Parser[LKProof] = "contrR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "contrR(" ~ l ~ "," ~ f ~ ")" => {
+          println("\n\ncontrR")
           ContractionRightRule(map.get(l).get, f)
         }
       }
 
     }
-    println("\n\nnumber of SLK-proof = "+bigMap.size)
+    println("\n\nnumber of SLK-proofs = "+bigMap.size)
     println("\ndefMapr size = "+defMap.size)
 
 //    println("\n\n\nlist = "+list)
