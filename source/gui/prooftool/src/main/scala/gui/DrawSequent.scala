@@ -10,12 +10,13 @@ package at.logic.gui.prooftool.gui
 import at.logic.calculi.lk.base.Sequent
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol._
-import at.logic.language.schema.{BigAnd, BigOr, IntegerTerm, IntConst, IntZero, IntVar, Succ, IndexedPredicate}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.{Color, Font}
 import java.awt.image.BufferedImage
 import swing.{Label, FlowPanel}
+import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, IntegerTerm, IntVar, IntConst, IntZero, Succ}
+import at.logic.transformations.ceres.struct.ClauseSetSymbol
 
 
 object DrawSequent {
@@ -96,7 +97,13 @@ object DrawSequent {
       "⋀_{" + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
     case BigOr(v, formula, init, end) =>
       "⋁_{" + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
-    case IndexedPredicate(constant, indices) => nameToLatexString(constant.name.toString) + {if (indices.isEmpty) "" else indices.map(x => formulaToLatexString(x)).mkString("_{",",","}")}
+    case IndexedPredicate(constant, indices) if (constant != BiggerThanC) =>
+      {if (constant.name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
+        val cl = constant.name.asInstanceOf[ClauseSetSymbol]
+        "cl^{(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
+          cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")," + cl.name +"}"
+      }
+      else nameToLatexString(constant.name.toString)} + {if (indices.isEmpty) "" else indices.map(x => formulaToLatexString(x)).mkString("_{",",","}")}
     case t : IntegerTerm  => parseIntegerTerm(t, 0)
     case Atom(name, args) =>
       if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
