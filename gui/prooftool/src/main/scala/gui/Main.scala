@@ -20,6 +20,7 @@ import swing.Dialog.Message
 import scala.collection.immutable.Seq
 import at.logic.algorithms.lk.getCutAncestors
 import at.logic.parsing.language.xml.XMLExporter
+import at.logic.calculi.resolution.robinson.Clause
 
 
 object Main extends SimpleSwingApplication {
@@ -160,7 +161,7 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       mnemonic = Key.E
-      contents += new MenuItem(Action("ShowLeaves") { StructPublisher.publish(ShowLeaf) }) {
+      contents += new MenuItem(Action("Show Leaves") { StructPublisher.publish(ShowLeaf) }) {
         border = customBorder
         enabled = false
         listenTo(StructPublisher)
@@ -169,10 +170,28 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
-      contents += new MenuItem(Action("HideLeaves") { StructPublisher.publish(HideLeaf) }) {
+      contents += new MenuItem(Action("Hide Leaves") { StructPublisher.publish(HideLeaf) }) {
         border = customBorder
         enabled = false
         listenTo(StructPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new MenuItem(Action("Hide Structural Rules") { ProofToolPublisher.publish(HideStructuralRules) }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new MenuItem(Action("Show All Rules") { ProofToolPublisher.publish(ShowAllRules) }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
         reactions += {
           case Loaded => this.enabled = true
           case UnLoaded => this.enabled = false
@@ -180,6 +199,15 @@ object Main extends SimpleSwingApplication {
       }
       contents += new Separator
       contents += new MenuItem(Action("Compute ClList") { computeClList }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new MenuItem(Action("Compute Schematic Clause Set") { computeSchematicClauseSet }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -290,6 +318,24 @@ object Main extends SimpleSwingApplication {
 
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
+    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+    db.addSeqList(csPre.map(x => x.toFSequent))
+    body.contents = new Launcher(Some("cllist",csPre),16)
+
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+  } finally ProofToolPublisher.publish(ProofDbChanged)
+
+  def computeSchematicClauseSet = try {
+    import at.logic.transformations.ceres.struct.StructCreators
+    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+    import at.logic.language.schema.IntVar
+    import at.logic.language.lambda.symbols.VariableStringSymbol
+
+    val n = IntVar(new VariableStringSymbol("n"))
+    val s = StructCreators.extractStruct( body.getContent.getData.get._1, n )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
     db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
@@ -620,8 +666,8 @@ object Main extends SimpleSwingApplication {
 
   /*  try {
       val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\psi", n ) )
-      (new FileWriter("cs-psi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
-      body.contents = new Launcher(Some("Schema CL List", cs.map(x => x.getSequent)), 16)
+     // (new FileWriter("cs-psi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
+      body.contents = new Launcher(Some(("Schema CL List", cs)), 16)
     } catch {
       case e: Exception =>
         val t = e.toString + "\n\n" + e.getStackTraceString
@@ -629,7 +675,7 @@ object Main extends SimpleSwingApplication {
         val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
         Dialog.showMessage(body, t.dropRight(t.size - index - 1))
     }  */
-    body.contents = new Launcher(Some("Schema psi_sn", step), 16)
+    body.contents = new Launcher(Some("\\psi", step), 16)
   }
 
   val body = new MyScrollPane
