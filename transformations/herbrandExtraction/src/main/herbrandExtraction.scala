@@ -22,7 +22,7 @@ class HerbrandExtractionException(msg: String) extends Exception(msg)
 object herbrandExtraction {
 
   // key: Formula quantified
-  // value: terms
+  // value: terms that instantiate the quantified variables
   // NOTE: Assuming that all variables were renamed (though this is not
   // implemented).
   var terms = new HashMap[Formula, List[HOLExpression]]
