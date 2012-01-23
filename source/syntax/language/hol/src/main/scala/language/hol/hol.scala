@@ -45,6 +45,49 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
 
+    //outer pretty printing, has no parenthesis around
+    //TODO: introduce binding priorities and skip more parens
+    def toPrettyString : String = this match {
+      case Var(x,tpe) => x.toString
+      case Atom(x, args) => x + "(" +
+        (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
+        else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
+      case Function(x, args, tpe) => x + "(" +
+        (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
+        else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
+      case And(x,y) => x.toPrettyString_ + AndSymbol + y.toPrettyString_
+      case Equation(x,y) => x.toPrettyString_ + EqSymbol + y.toPrettyString_
+      case Or(x,y) => x.toPrettyString_ + OrSymbol + y.toPrettyString_
+      case Imp(x,y) => x.toPrettyString_ + ImpSymbol + y.toPrettyString_
+      case Neg(x) => NegSymbol + x.toPrettyString_
+      case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
+      case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
+      case HArray(f1, f2) =>  f1.toPrettyString_ + HArraySymbol + f2.toPrettyString_
+      case AbsInScope(v, exp) => "λ" + v.toString + "." + exp.toString
+      case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
+    }
+
+    //inner pretty printing, has parenthesis around
+    def toPrettyString_ : String = this match {
+      case Var(x,tpe) => x.toString
+      case Atom(x, args) => x + "(" +
+        (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
+        else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
+      case Function(x, args, tpe) => x + "(" +
+        (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
+        else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
+      case And(x,y) => "(" + x.toPrettyString_ + AndSymbol + y.toPrettyString_ + ")"
+      case Equation(x,y) => "(" + x.toPrettyString_ + EqSymbol + y.toPrettyString_ + ")"
+      case Or(x,y) => "(" + x.toPrettyString_ + OrSymbol + y.toPrettyString_ + ")"
+      case Imp(x,y) => "(" + x.toPrettyString_ + ImpSymbol + y.toPrettyString_ + ")"
+      case Neg(x) => NegSymbol + x.toPrettyString_
+      case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
+      case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
+      case HArray(f1, f2) => "(" + f1.toPrettyString_ + HArraySymbol + f2.toPrettyString_ + ")"
+      case AbsInScope(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
+      case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
+    }
+
     // ToDo: not sure if this is the best place for this method...
     def containsQuantifier : Boolean = this match {
       case Var(x,tpe) => false

@@ -50,8 +50,12 @@ import collection.immutable.Seq
 
   object Axiom {
     def apply(seq: Sequent) : LeafTree[Sequent] with NullaryLKProof = {
-      val fseq = seq.toFSequent
-      apply(fseq._1, fseq._2)
+      if (seq.antecedent.exists((fo:FormulaOccurrence) => (fo.ancestors.size > 0) ))
+        throw new LKRuleCreationException("Ancestor of an occurence in antecedent of Axiom rule is nonempty!")
+      if (seq.succedent.exists((fo:FormulaOccurrence) => (fo.ancestors.size > 0) ))
+        throw new LKRuleCreationException("Ancestor of an occurence in succedent of Axiom rule is nonempty!")
+
+      new LeafTree[Sequent](seq) with NullaryLKProof {def rule = InitialRuleType}
     }
     def apply[T](ant: Seq[Formula], suc: Seq[Formula]) (implicit factory: FOFactory) = {
       val left: Seq[FormulaOccurrence] = ant.map(x => factory.createFormulaOccurrence(x.asInstanceOf[HOLFormula], Nil))
