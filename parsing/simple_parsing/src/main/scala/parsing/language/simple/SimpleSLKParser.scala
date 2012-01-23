@@ -35,7 +35,7 @@ object SHLK {
     var mapStep = Map.empty[String, LKProof]
     var map  = Map.empty[String, LKProof]
     var baseORstep: Int = 1
-
+    SchemaProofDB.clear
     var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     var list = List[String]()
     var error_buffer = ""
@@ -95,10 +95,11 @@ object SHLK {
 
       def name = """[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
 
-      def slkProof: Parser[Unit] = "proof" ~ name ~ "base" ~ "{" ~ line ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}"  ^^ {
-        case                       "proof" ~  str ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~ line2 ~ "}" => {
+      def slkProof: Parser[Unit] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}"  ^^ {
+        case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" => {
 //          proofName = str
           bigMap.put(str, Pair(mapBase, mapStep))
+          SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("n"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
           mapBase = Map.empty[String, LKProof]
           mapStep = Map.empty[String, LKProof]
 //          println("\n\nParsing is SUCCESSFUL : "+str)
@@ -512,6 +513,7 @@ object SHLK {
 //    val m = bigMap.get("chi").get._2.get(plabel).get
 ////    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
 //    m
+    println("\nSchemaProofDB.size = "+SchemaProofDB.size)
     bigMap
 
   }

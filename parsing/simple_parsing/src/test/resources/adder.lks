@@ -1,4 +1,15 @@
-proof psi
+proof psi  proves
+(BigAnd(i=0..n) ( (~S(i) \/ ((((A(i) /\ ~B(i)) /\ ~C(i)) \/ ((~A(i) /\ B(i)) /\ ~C(i))) \/ ((~A(i) /\ ~B(i)) /\ C(i)))) /\ (~((((A(i) /\ ~B(i)) /\ ~C(i)) \/ ((~A(i) /\ B(i)) /\ ~C(i))) \/ ((~A(i) /\ ~B(i)) /\ C(i))) \/ S(i)) )
+	/\
+	(BigAnd(i=0..n) ( (~C(i+1) \/ (((A(i) /\ B(i)) \/ (C(i) /\ A(i))) \/ (C(i) /\ B(i)))) /\ (~(((A(i) /\ B(i)) \/ (C(i) /\ A(i))) \/ (C(i) /\ B(i))) \/ C(i+1)) )
+	/\
+	 ~C(0)
+	)),
+	(BigAnd(i=0..n) ( (~Sp(i) \/ ((((A(i) /\ ~B(i)) /\ ~Cp(i)) \/ ((~A(i) /\ B(i)) /\ ~Cp(i))) \/ ((~A(i) /\ ~B(i)) /\ Cp(i)))) /\ (~((((A(i) /\ ~B(i)) /\ ~Cp(i)) \/ ((~A(i) /\ B(i)) /\ ~Cp(i))) \/ ((~A(i) /\ ~B(i)) /\ Cp(i))) \/ Sp(i)) )
+	            /\ (
+	BigAnd(i=0..n) ( (~Cp(i+1) \/ (((A(i) /\ B(i)) \/ (Cp(i) /\ A(i))) \/ (Cp(i) /\ B(i)))) /\ (~(((A(i) /\ B(i)) \/ (Cp(i) /\ A(i))) \/ (Cp(i) /\ B(i))) \/ Cp(i+1)) )
+	  /\  ~Cp(0)  ) )
+	|- BigAnd(i=0..n) ( (~S(i) \/ Sp(i)) /\ (~Sp(i) \/ S(i)) )
 base {
 501: ax(C(0) |- C(0))
 502: negL(501, C(0))
@@ -907,7 +918,12 @@ root: andL(6, BigAnd(i=0..k+1) ( (~Sp(i) \/ ((((A(i) /\ ~B(i)) /\ ~Cp(i)) \/ ((~
    )
 }
 
-proof varphi
+proof varphi  proves
+	~C(0), ~Cp(0),
+	BigAnd(i=0..n) ( (~C(i+1) \/ (((A(i) /\ B(i)) \/ (C(i) /\ A(i))) \/ (C(i) /\ B(i)))) /\ (~(((A(i) /\ B(i)) \/ (C(i) /\ A(i))) \/ (C(i) /\ B(i))) \/ C(i+1)) ),
+	BigAnd(i=0..n) ( (~Cp(i+1) \/ (((A(i) /\ B(i)) \/ (Cp(i) /\ A(i))) \/ (Cp(i) /\ B(i)))) /\ (~(((A(i) /\ B(i)) \/ (Cp(i) /\ A(i))) \/ (Cp(i) /\ B(i))) \/ Cp(i+1)) )
+	|- BigAnd(i=0..n) ( (~C(i) \/ Cp(i)) /\ (~Cp(i) \/ C(i)) )
+
 base {
 1: ax(C(0) |- C(0))
 2: negL(1, C(0))
@@ -961,7 +977,12 @@ root: andEqL1(11, ( BigAnd(i=0..k) ( (~Cp(i+1) \/ (((A(i) /\ B(i)) \/ (Cp(i) /\ 
 	)
 }
 
-proof phi
+proof phi proves
+    ~C(0), ~Cp(0),
+	BigAnd(i=0..n) ( (~C(i+1) \/ (((A(i) /\ B(i)) \/ (C(i) /\ A(i))) \/ (C(i) /\ B(i)))) /\ (~(((A(i) /\ B(i)) \/ (C(i) /\ A(i))) \/ (C(i) /\ B(i))) \/ C(i+1)) ),
+	BigAnd(i=0..n) ( (~Cp(i+1) \/ (((A(i) /\ B(i)) \/ (Cp(i) /\ A(i))) \/ (Cp(i) /\ B(i)))) /\ (~(((A(i) /\ B(i)) \/ (Cp(i) /\ A(i))) \/ (Cp(i) /\ B(i))) \/ Cp(i+1)) )
+	|- ( (~C(n+1) \/ Cp(n+1)) /\ (~Cp(n+1) \/ C(n+1)) )
+
 base {
 1: ax(C(1) |- C(1))
 2: negL(1, C(1))
@@ -1717,7 +1738,11 @@ root: andEqL1(318, ( BigAnd(i=0..k) ( (~Cp(i+1) \/ (((A(i) /\ B(i)) \/ (Cp(i) /\
 	)
 }
 
-proof chi
+proof chi   proves
+	BigAnd(i=0..n) ( (~C(i) \/ Cp(i)) /\ (~Cp(i) \/ C(i)) ),
+	BigAnd(i=0..n) ( (~S(i) \/ ((((A(i) /\ ~B(i)) /\ ~C(i)) \/ ((~A(i) /\ B(i)) /\ ~C(i))) \/ ((~A(i) /\ ~B(i)) /\ C(i)))) /\ (~((((A(i) /\ ~B(i)) /\ ~C(i)) \/ ((~A(i) /\ B(i)) /\ ~C(i))) \/ ((~A(i) /\ ~B(i)) /\ C(i))) \/ S(i)) ),
+	BigAnd(i=0..n) ( (~Sp(i) \/ ((((A(i) /\ ~B(i)) /\ ~Cp(i)) \/ ((~A(i) /\ B(i)) /\ ~Cp(i))) \/ ((~A(i) /\ ~B(i)) /\ Cp(i)))) /\ (~((((A(i) /\ ~B(i)) /\ ~Cp(i)) \/ ((~A(i) /\ B(i)) /\ ~Cp(i))) \/ ((~A(i) /\ ~B(i)) /\ Cp(i))) \/ Sp(i)) )
+	|- BigAnd(i=0..n) ( (~S(i) \/ Sp(i)) /\ (~Sp(i) \/ S(i)) )
 base {
 1: ax(A(0) |- A(0))
 
