@@ -9,6 +9,7 @@ package at.logic.gui.prooftool.parser
 
 import scala.swing.Publisher
 import scala.swing.event.Event
+import at.logic.calculi.treeProofs.TreeProof
 
 object ProofToolPublisher extends Publisher
 object StructPublisher extends Publisher
@@ -19,3 +20,6 @@ case object UnLoaded extends Event
 case object ShowLeaf extends Event
 case object HideLeaf extends Event
 case object HideTree extends Event
+case object HideStructuralRules extends Event
+case object ShowAllRules extends Event
+case class HideStructural(proof: TreeProof[_]) extends Event

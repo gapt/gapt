@@ -17,6 +17,8 @@ import at.logic.calculi.slk.SchemaProofLinkRule
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.occurrences.FormulaOccurrence
 import java.awt.{RenderingHints, BasicStroke}
+import at.logic.gui.prooftool.parser.{ShowAllRules, HideStructuralRules, ProofToolPublisher, HideStructural}
+import at.logic.calculi.lk.propositionalRules._
 
 class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence])
   extends BorderPanel with MouseMotionListener {
@@ -28,30 +30,47 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   private val bd = Swing.EmptyBorder(0,fSize*2,0,fSize*2)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(SANS_SERIF, ITALIC, fSize-2)
+  private var hideRules = false
   private val tx = proof.root match {
     case so: Sequent =>
       val ds = DrawSequent(so, ft, colored_occurrences)
-      ds.listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+      ds.listenTo(mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher)
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
         case e: MouseExited => ds.contents.foreach(x => x.foreground = black)
         case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
+        case e: HideStructural if e.proof == proof => println("hide structural matched")
+          ds.visible = false
       }
       ds
     case _ => new Label(proof.root.toString) { font = ft }
   }
 
-  listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+  listenTo(mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher)
   reactions += {
     case e: MouseDragged =>
       Main.body.cursor = new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR)
     case e: MouseReleased =>
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
+    case HideStructuralRules => hideStructuralRules
+    case ShowAllRules => showAllRules
   }
 
   initialize
-
   // end of constructor
+
+  def showAllRules = {
+    hideRules = false
+    initialize
+    revalidate
+  }
+
+  def hideStructuralRules = {
+    hideRules = true
+    initialize
+    revalidate
+  }
+
   def setColoredOccurrences(s : Set[FormulaOccurrence]) {
     colored_occurrences = s
     initialize
@@ -60,6 +79,11 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   def initialize = proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
+      if (hideRules) p.rule match {
+        case ContractionLeftRuleType | ContractionRightRuleType | WeakeningLeftRuleType | WeakeningRightRuleType =>
+          ProofToolPublisher.publish(new HideStructural(p.uProof.asInstanceOf[TreeProof[_]]))
+        case _ =>
+      }
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.Center
       layout(tx) = Position.South
     case p: BinaryTreeProof[_] =>
