@@ -166,6 +166,8 @@ trait LambdaFactoryProvider {
       case Abs(x, s) => apply( s, bvs + x )
       case App(x, y) => apply( x, bvs ) && apply( y, bvs )
     }
+
+
   }
 
   /*
