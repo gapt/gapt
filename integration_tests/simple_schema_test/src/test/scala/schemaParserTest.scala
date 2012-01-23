@@ -85,7 +85,7 @@ class schemaParserTest extends SpecificationWithJUnit {
           import scala.io._
 //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
 //          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input1.lks").toList.foldLeft("")((ch,res) => ch + res)
-          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val s = Source.fromFile("target" + separator + "test-classes" + separator + "adder.lks").toList.foldLeft("")((ch,res) => ch + res)
 
           println("\n\ns = "+s)
 
