@@ -7,6 +7,7 @@
 
 package at.logic.transformations.skolemization
 
+import at.logic.calculi.lk.base.{LKProof, Sequent}
 import org.specs._
 import org.specs.runner._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
@@ -22,7 +23,6 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import scala.collection.immutable._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.propositionalRules.{AndRightRule, Axiom}
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lksk.base.TypeSynonyms._
@@ -95,31 +95,48 @@ class SkolemizationTest extends SpecificationWithJUnit {
       res.root.toFSequent must beEqual (proof_sk.root.toFSequent)
     }
 
-    /*"work for a cut-free proof" in {
+    "work for a cut-free proof" in {
+      skip("fails because skolemized endsequent has R(s_{0}(a),s_{0}(s_{0}(a))) instead of R(a,s_{0}(a))")
+      /* Proof is:
+                 R(a,b) :- R(a,b)
+                 ----------------------   Ex,r
+                 R(a,b) :- ex y. R(a,y)
+            ---------------------------   Ex,l
+            ex y.R(a,y) :- ex y. R(a,y)
+      ---------------------------------- All,l
+      all x.ex y.R(x,y) :- ex y. R(a,y)
+
+      Skolemized: (wrote s instead of s_0 for easier reading)
+            R(a,s(a)) :- R(a,s(a))
+            -------------------------     Ex,r
+            R(a,s(a)) :- ex y. R(a,y)
+      ---------------------------------- All,l
+      all x.R(x,s(x)) :- ex y. R(a,y)
+       */
+
       val a = HOLVar("a", i)
       val b = HOLVar("b", i)
       val Rab = Atom( "R", a::b::Nil )
       val exyRay = ExVar( y, Atom( "R", a::y::Nil ) )
       val allxexyRxy = AllVar( x, ExVar( y, Atom( "R", x::y::Nil ) ) )
-      val ax = Axiom( Sequent( Rab::Nil, Rab::Nil ) )
-      val r1 = ExistsRightRule( ax._1, Rab, exyRay, b )
-      val r2 = ExistsLeftRule( r1, Rab, exyRay, b )
-      val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
-      val proof = ForallRightRule( r3, exyRay, allxexyRxy, a )
+      val ax = Axiom( Rab::Nil, Rab::Nil )
+      val r1 = ExistsRightRule( ax, ax.root.succedent(0), exyRay, b )
+      val r2 = ExistsLeftRule( r1, r1.root.antecedent(0) , exyRay, b )
+      val r3 = ForallLeftRule( r2, r2.root.antecedent(0), allxexyRxy, a )
+      val proof : LKProof = ForallRightRule( r3, exyRay, allxexyRxy, a )
 
       val fs0 = HOLConst( s0, i -> i )
-      val cs1 = HOLConst( s1, i )
-      val s0s1 = HOLApp( fs0, cs1 )
-      val sR = Atom( "R", cs1::s0s1::Nil )
-      val sax = Axiom( Sequent( sR::Nil, sR::Nil ) )
-      val exyRs1y = ExVar( y, Atom( "R", cs1::y::Nil ) )
-      val allxRxs0x = AllVar( x, Atom( "R", x::HOLApp( fs0, x )::Nil ) )
+      val s0s1 = HOLApp( fs0, a )
+      val sR = Atom( "R", a::s0s1::Nil )
+      val sax = Axiom( sR::Nil, sR::Nil )
 
-      val sr1 = ExistsRightRule( sax._1, sR, exyRs1y, s0s1 )
-      val proof_sk = ForallLeftRule( sr1, sR, allxRxs0x, cs1 )
+      val exyRs1y = ExVar( y, Atom( "R", a::y::Nil ) )
+      val sr1 = ExistsRightRule( sax, sax.root.succedent(0), exyRs1y, s0s1 )
 
-      // this does not work correctly
-      //skolemize( proof ) must beEqual( proof_sk )
-      skolemize( proof ).root.getSequent.multisetEquals( proof_sk.root.getSequent) must beEqual( true )    }         */
+      val allxRxs0x = AllVar( x, Atom( "R", List(x, HOLApp(fs0, x)) ))
+      val proof_sk = ForallLeftRule( sr1, sr1.root.antecedent(0) , allxRxs0x, s0s1 )
+
+      val skolemized_proof : LKProof = skolemize( proof )
+      skolemized_proof.root must beMultisetEqual (proof_sk.root)
   }
-}
+}}
