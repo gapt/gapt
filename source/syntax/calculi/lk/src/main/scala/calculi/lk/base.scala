@@ -273,14 +273,14 @@ import java.util.Comparator
             if (! first) sb.append(", ")
             else first = false
 
-            sb.append(formulaToString(f))
+            sb.append(f.formula)
         }
         sb.append(" :- ")
         first =true
         for (f <- s.succedent) {
             if (! first) sb.append(", ")
             else first = false
-            sb.append(formulaToString(f))
+            sb.append(f.formula)
 
         }
         sb.toString
