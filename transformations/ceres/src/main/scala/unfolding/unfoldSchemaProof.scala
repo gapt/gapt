@@ -182,7 +182,9 @@ object applySchemaSubstitution {
 
 
   //************************************************************************************
+  def apply( proof_name: String, number: Int ): LKProof = {
 
+  }
 
   def apply( proof: LKProof, subst: SchemaSubstitution1[HOLExpression] , cnt: Int) : LKProof = {
 //    println("\n"+proof.rule)

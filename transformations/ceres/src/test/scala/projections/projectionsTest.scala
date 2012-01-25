@@ -926,7 +926,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
 
          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
          val subst = new SchemaSubstitution1[HOLExpression](new_map)
-         val psi1 = applySchemaSubstitution(psi, subst)
+         //val psi1 = applySchemaSubstitution(psi, subst)
     //     Main.display("psi1", applySchemaSubstitution(psi, subst)) ; while(true) {}
    //     saveXML( ("psi1", psi1)::Nil, List(), "ceco.xml" )
 
@@ -938,8 +938,8 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
     //     while(true) {}
            println("\n\n PROJECTIONS \n\n")
 
-        val cs = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( StructCreators.extract(psi1) ) ) )
-        cs.foreach(s => println(printSchemaProof.sequentToString(s)+"\n"))
+      //  val cs = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( StructCreators.extract(psi1) ) ) )
+      //  cs.foreach(s => println(printSchemaProof.sequentToString(s)+"\n"))
 
    //    val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\chi", real_n ) )
 

@@ -20,7 +20,18 @@ import swing.Dialog.Message
 import scala.collection.immutable.Seq
 import at.logic.algorithms.lk.getCutAncestors
 import at.logic.parsing.language.xml.XMLExporter
-import at.logic.calculi.resolution.robinson.Clause
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.algorithms.lksk.eliminateDefinitions
+import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
+import swing.Swing.EmptyIcon
+import at.logic.language.lambda.typedLambdaCalculus.Var
+import at.logic.language.hol.HOLExpression
+import at.logic.transformations.ceres.unfolding.applySchemaSubstitution._
+import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, SchemaSubstitution1}
+import at.logic.language.schema.IntVar._
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.schema.IntVar
 
 
 object Main extends SimpleSwingApplication {
@@ -198,40 +209,6 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
-      contents += new MenuItem(Action("Compute ClList") { computeClList }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Compute Schematic Clause Set") { computeSchematicClauseSet }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Compute ClList (Only Quantified Cuts)") { computeClListOnlyQuantifiedCuts }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Gentzen Method") { gentzen }) { border = customBorder }
-      contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK }) { border = customBorder }
-      contents += new Separator
-      contents += new MenuItem(Action("TestRefutation") { testRefutation }) { border = customBorder }
-      contents += new MenuItem(Action("TestSchemata") { testSchemata }) { border = customBorder }
-      contents += new Separator
       contents += new MenuItem(Action("Mark Cut-Ancestors") { markCutAncestors }) {
         border = customBorder
         enabled = false
@@ -254,7 +231,7 @@ object Main extends SimpleSwingApplication {
         border = customBorder
       }
       contents += new Separator
-      contents += new Menu("Show Proof") {
+      contents += new Menu("View Proof") {
         MenuScroller.setScrollerFor(this.peer)
         mnemonic = Key.P
         border = customBorder
@@ -266,7 +243,7 @@ object Main extends SimpleSwingApplication {
             for (i <- l) contents += new MenuItem(Action(i._1) { loadProof(i) }) { border = customBorder }
         }
       }
-      contents += new Menu("Show Clause List") {
+      contents += new Menu("View Clause List") {
         MenuScroller.setScrollerFor(this.peer)
         mnemonic = Key.C
         border = customBorder
@@ -283,24 +260,69 @@ object Main extends SimpleSwingApplication {
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
         }
       }
-      contents += new MenuItem(Action("Show Struct") { showStruct }) {
+    }
+    contents += new Menu("LK Proof") {
+      mnemonic = Key.L
+      contents += new Menu("Compute Clause Set") {
+        contents += new MenuItem(Action("All Cuts") { computeClList }) {
+          border = customBorder
+          enabled = false
+          listenTo(ProofToolPublisher)
+          reactions += {
+            case Loaded => this.enabled = true
+            case UnLoaded => this.enabled = false
+          }
+        }
+        contents += new MenuItem(Action("Only Quantified Cuts") { computeClListOnlyQuantifiedCuts }) {
+          border = customBorder
+          enabled = false
+          listenTo(ProofToolPublisher)
+          reactions += {
+            case Loaded => this.enabled = true
+            case UnLoaded => this.enabled = false
+          }
+        }
+      }
+      contents += new Menu("Compute Struct") {
+        contents += new MenuItem(Action("All Cuts") { showStruct }) {
+          border = customBorder
+          enabled = false
+          listenTo(ProofToolPublisher)
+          reactions += {
+            case Loaded => enabled = true
+            case UnLoaded => enabled = false
+          }
+        }
+        contents += new MenuItem(Action("Only Quantified Cuts") { showStructOnlyQuantifiedCuts }) {
+          border = customBorder
+          enabled = false
+          listenTo(ProofToolPublisher)
+          reactions += {
+            case Loaded => enabled = true
+            case UnLoaded => enabled = false
+          }
+        }
+      }
+      contents += new Separator
+      contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen }) { border = customBorder }
+      contents += new Separator
+      contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK }) { border = customBorder }
+    }
+    contents += new Menu("LKS Proof") {
+      mnemonic = Key.P
+      contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
         reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
         }
       }
-      contents += new MenuItem(Action("Show Struct (OnlyQuantifiedCuts)") { showStructOnlyQuantifiedCuts }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
-        }
-      }
+      contents += new MenuItem(Action("Compute Proof Instance") { computeProofInstance } )  { border = customBorder }
+      contents += new Separator
+      contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
+      contents += new MenuItem(Action("Test Schematic Clause Set") { testSchematicClauseSet }) { border = customBorder }
     }
     contents += new Menu("Help") {
       mnemonic = Key.H
@@ -312,10 +334,6 @@ object Main extends SimpleSwingApplication {
   }
 
   def computeClList = try {
-    import at.logic.transformations.skolemization.lksk.LKtoLKskc
-    import at.logic.transformations.ceres.struct.StructCreators
-    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
@@ -329,16 +347,16 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeSchematicClauseSet = try {
-    import at.logic.transformations.ceres.struct.StructCreators
-    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-    import at.logic.language.schema.IntVar
+    import at.logic.language.schema._
     import at.logic.language.lambda.symbols.VariableStringSymbol
 
     val n = IntVar(new VariableStringSymbol("n"))
-    val s = StructCreators.extractStruct( body.getContent.getData.get._1, n )
-    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
-    db.addSeqList(csPre.map(x => x.toFSequent))
-    body.contents = new Launcher(Some("cllist",csPre),16)
+
+    val s = StructCreators.extractStruct( body.getContent.getData.get._1, n)
+    val cs : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+
+    db.addSeqList(cs.map(x => x.toFSequent))
+    body.contents = new Launcher(Some("cllist",cs),16)
 
   } catch {
       case e: AnyRef =>
@@ -347,11 +365,6 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeClListOnlyQuantifiedCuts = try {
-    import at.logic.transformations.skolemization.lksk.LKtoLKskc
-    import at.logic.transformations.ceres.struct.StructCreators
-    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-    import at.logic.algorithms.lksk._
-
     val proof_sk = eliminateDefinitions(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
     val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
@@ -364,9 +377,6 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def showStruct = try {
-    import at.logic.transformations.skolemization.lksk.LKtoLKskc
-    import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
-
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = structToExpressionTree( StructCreators.extract( proof_sk ) )
     body.contents = new Launcher(Some("Struct",s),12)
@@ -378,10 +388,6 @@ object Main extends SimpleSwingApplication {
 
   // Computes the struct, ignoring propositional cuts
   def showStructOnlyQuantifiedCuts = try {
-    import at.logic.transformations.skolemization.lksk.LKtoLKskc
-    import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
-    import at.logic.algorithms.lksk._
-
     val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
     val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
 
@@ -393,9 +399,6 @@ object Main extends SimpleSwingApplication {
   }
 
   def eliminateDefsLK = try {
-    import at.logic.algorithms.lk._
-    //import at.logic.transformations.skolemization.lksk.LKtoLKskc
-
     val pair = body.getContent.getData.get
     val new_proof = eliminateDefinitions( pair._2.asInstanceOf[LKProof]   )
     db.addProofs((pair._1+" without def rules", new_proof)::Nil)
@@ -407,9 +410,6 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def eliminateDefsLKsk = try {
-    import at.logic.algorithms.lksk._
-    import at.logic.transformations.skolemization.lksk.LKtoLKskc
-
     val pair = body.getContent.getData.get
     val new_proof = eliminateDefinitions( LKtoLKskc( pair._2.asInstanceOf[LKProof] )  )
     db.addProofs((pair._1+" without def rules", new_proof)::Nil)
@@ -452,6 +452,14 @@ object Main extends SimpleSwingApplication {
     }
   }
 
+  def computeProofInstance = {
+    val input = Dialog.showInput(body, "Please enter number of the instance:",
+      "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "0").get.replaceAll("""[a-z,A-Z]*""","")
+    val number = if (input.isEmpty) 0 else if (input.size > 10) input.dropRight(10).toInt else input.toInt
+
+    val proof = applySchemaSubstitution(name, number)
+  }
+
                  //commendet by Cvetan
   def testRefutation =  { /*
     import at.logic.calculi.resolution.andrews._
@@ -474,26 +482,6 @@ object Main extends SimpleSwingApplication {
 */  }
 
   def testSchemata = {
-  /*  import org.scilab.forge.jlatexmath._
-    import java.awt.image.BufferedImage
-    import java.awt.Color
-
-    val string = """\bigwedge_{i=0}^{n} A_{i} \vdash \bigvee_{i=0}^n A_{i} \supset B_{i}"""
-    val formula = new TeXFormula(string)
-
-    val icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, 30)
-	  icon.setInsets(new Insets(5, 5, 5, 5))
-
-    val image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB)
-    val g2 = image.createGraphics()
-	  g2.setColor(Color.white)
-	  g2.fillRect(0,0,icon.getIconWidth(),icon.getIconHeight())
-	  val jl = new Label
-	  jl.foreground = new Color(0, 0, 0)
-	  icon.paintIcon(jl.peer, g2, 0, 0)
-    jl.icon = icon
-    body.viewportView = jl
-   */
     import at.logic.calculi.lk.macroRules._
     import at.logic.calculi.lk.base._
     import at.logic.language.schema._
@@ -502,11 +490,6 @@ object Main extends SimpleSwingApplication {
     import at.logic.language.lambda.symbols.VariableStringSymbol
     import at.logic.language.hol.logicSymbols.ConstantStringSymbol
     import at.logic.calculi.occurrences._
-    import at.logic.transformations.ceres.struct._
-    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-    import at.logic.parsing.writers.FileWriter
-//    import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-    //import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 
     implicit val factory = defaultFormulaOccurrenceFactory
     //--  Create LKS proof as in my presentation --//
@@ -659,6 +642,9 @@ object Main extends SimpleSwingApplication {
     SchemaProofDB.put(new SchemaProof("\\chi", k::Nil, FSequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), chi0, chin))
     SchemaProofDB.put(new SchemaProof("\\psi", k::Nil, FSequent(A0::BigAnd(i, orneg, zero, n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), base, step))
 
+    db.addProofs(List(("\\chi", chi0), ("\\chi", chin), ("\\psi", base), ("\\psi", step)))
+    ProofToolPublisher.publish(ProofDbChanged)
+
   //  checkProofLinks( base )
   //  checkProofLinks( step )
   //  checkProofLinks( chi0 )
@@ -677,6 +663,93 @@ object Main extends SimpleSwingApplication {
     }  */
     body.contents = new Launcher(Some("\\psi", step), 16)
   }
+
+  def testSchematicClauseSet = try {
+    import at.logic.transformations.ceres.struct._
+    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+    import at.logic.language.schema._
+    import at.logic.language.lambda.symbols.VariableStringSymbol
+    import at.logic.parsing.writers.FileWriter
+    import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+    import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
+    import at.logic.utils.ds.Multisets.HashMultiset
+
+      val n = IntVar(new VariableStringSymbol("n"))
+
+      val s = StructCreators.extractStruct( "psi", n)
+      val cs : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+
+      val m_empty = HashMultiset[SchemaFormula]()
+      var cc: at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration = (m_empty, m_empty)
+
+      val cs_pruned_psi = cs.filter( s => s.antecedent.isEmpty || s.antecedent.exists( fo => fo.formula match {
+      case IndexedPredicate(pred, _) => pred.name match {
+        case sym : ClauseSetSymbol => sym.cut_occs == cc && sym.name == "psi"
+        case _ => false
+      }
+      case _ => false
+    } ) )
+
+      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
+      case IndexedPredicate(pred, _) => pred.name match {
+        case sym : ClauseSetSymbol if sym.name == "varphi" => cc = sym.cut_occs
+        case _ => false
+      }
+      case _ => false
+    } ))
+
+      val cs_pruned_varphi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
+      case IndexedPredicate(pred, _) => pred.name match {
+        case sym : ClauseSetSymbol => sym.cut_occs == cc
+        case _ => false
+      }
+      case _ => false
+    } ) )
+
+       cs_pruned_varphi.foreach( s => s.succedent.foreach( fo => fo.formula match {
+      case IndexedPredicate(pred, _) => pred.name match {
+        case sym : ClauseSetSymbol if sym.name == "phi" => cc = sym.cut_occs
+        case _ => false
+      }
+      case _ => false
+    } ))
+
+       val cs_pruned_phi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
+      case IndexedPredicate(pred, _) => pred.name match {
+        case sym : ClauseSetSymbol => sym.cut_occs == cc
+        case _ => false
+      }
+      case _ => false
+    } ) )
+
+      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
+      case IndexedPredicate(pred, _) => pred.name match {
+        case sym : ClauseSetSymbol if sym.name == "chi" => cc = sym.cut_occs
+        case _ => false
+      }
+      case _ => false
+    } ))
+
+      val cs_pruned_chi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
+      case IndexedPredicate(pred, _) => pred.name match {
+        case sym : ClauseSetSymbol => sym.cut_occs == cc
+        case _ => false
+      }
+      case _ => false
+    } ) )
+
+      val ccs = cs_pruned_psi ::: cs_pruned_varphi ::: cs_pruned_phi ::: cs_pruned_chi
+
+      (new FileWriter("ccs_pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ccs.map(_.toFSequent), Nil).close
+
+    db.addSeqList(ccs.map(x => x.toFSequent))
+    body.contents = new Launcher(Some("cllist",ccs),16)
+
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 
   val body = new MyScrollPane
   val db = new FileParser

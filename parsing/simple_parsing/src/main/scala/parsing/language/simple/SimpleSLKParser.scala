@@ -99,7 +99,7 @@ object SHLK {
         case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" => {
 //          proofName = str
           bigMap.put(str, Pair(mapBase, mapStep))
-          SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("n"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
+          SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
           mapBase = Map.empty[String, LKProof]
           mapStep = Map.empty[String, LKProof]
 //          println("\n\nParsing is SUCCESSFUL : "+str)
