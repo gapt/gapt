@@ -334,12 +334,13 @@ object Main extends SimpleSwingApplication {
   }
 
   def computeClList = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
     db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
-
+    body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
@@ -349,7 +350,7 @@ object Main extends SimpleSwingApplication {
   def computeSchematicClauseSet = try {
     import at.logic.language.schema._
     import at.logic.language.lambda.symbols.VariableStringSymbol
-
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val n = IntVar(new VariableStringSymbol("n"))
 
     val s = StructCreators.extractStruct( body.getContent.getData.get._1, n)
@@ -357,7 +358,7 @@ object Main extends SimpleSwingApplication {
 
     db.addSeqList(cs.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",cs),16)
-
+    body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
@@ -365,11 +366,13 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeClListOnlyQuantifiedCuts = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
     val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
     val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
     db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
+    body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
@@ -377,6 +380,7 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def showStruct = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = structToExpressionTree( StructCreators.extract( proof_sk ) )
     body.contents = new Launcher(Some("Struct",s),12)
@@ -388,10 +392,12 @@ object Main extends SimpleSwingApplication {
 
   // Computes the struct, ignoring propositional cuts
   def showStructOnlyQuantifiedCuts = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
     val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
 
     body.contents = new Launcher(Some("Struct",s),12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
@@ -399,10 +405,12 @@ object Main extends SimpleSwingApplication {
   }
 
   def eliminateDefsLK = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val pair = body.getContent.getData.get
     val new_proof = eliminateDefinitions( pair._2.asInstanceOf[LKProof]   )
     db.addProofs((pair._1+" without def rules", new_proof)::Nil)
     body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
@@ -410,10 +418,12 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def eliminateDefsLKsk = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val pair = body.getContent.getData.get
     val new_proof = eliminateDefinitions( LKtoLKskc( pair._2.asInstanceOf[LKProof] )  )
     db.addProofs((pair._1+" without def rules", new_proof)::Nil)
     body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
@@ -441,6 +451,7 @@ object Main extends SimpleSwingApplication {
 
 
   def markCutAncestors = {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.getContent.contents.head match {
       case dp: DrawProof => body.getContent.getData match {
         case Some((_, proof : LKProof) ) =>
@@ -450,14 +461,20 @@ object Main extends SimpleSwingApplication {
       }
       case _ => Dialog.showMessage(body, "LK proof not found!")
     }
+    body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def computeProofInstance = {
     val input = Dialog.showInput(body, "Please enter number of the instance:",
       "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "0").get.replaceAll("""[a-z,A-Z]*""","")
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val number = if (input.isEmpty) 0 else if (input.size > 10) input.dropRight(10).toInt else input.toInt
-
+    val name = body.getContent.getData.get._1
     val proof = applySchemaSubstitution(name, number)
+    db.addProofs((name + "_" + number, proof)::Nil)
+    body.contents = new Launcher(Some(name + "_" + number, proof), 12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+    ProofToolPublisher.publish(ProofDbChanged)
   }
 
                  //commendet by Cvetan
