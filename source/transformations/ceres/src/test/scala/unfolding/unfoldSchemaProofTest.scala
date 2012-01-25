@@ -257,14 +257,14 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
           val An3 = IndexedPredicate(new ConstantStringSymbol("A"), n3)
           val An1 = IndexedPredicate(new ConstantStringSymbol("A"), n1)
           val b = BigAnd(i, A, zero, n3)
-          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, one)
+          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, two)
           val subst = new SchemaSubstitution1[HOLExpression](new_map)
 
 //          StepMinusOne(map.get("phi").get._2.get("root").get, k)
 
 //          println("-1 = "+StepMinusOne.minusOne(Or(And(An3, An1), b) , n))
 
-          val phi1 = applySchemaSubstitution(map.get("psi").get._2.get("root").get, subst, 2)
+          val phi1 = applySchemaSubstitution(map.get("psi").get._2.get("root").get, subst, 3)
 
 //           CloneLKProof(map.get("phi").get._1.get("root").get)
 
