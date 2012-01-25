@@ -3,6 +3,7 @@
 package at.logic.transformations.ceres.unfolding
 
 
+import _root_.at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
 import scala.xml._
 import at.logic.language.schema.{IntVar, IntZero, IndexedPredicate, SchemaFormula, Succ, BigAnd, BigOr}
@@ -183,7 +184,17 @@ object applySchemaSubstitution {
 
   //************************************************************************************
   def apply( proof_name: String, number: Int ): LKProof = {
+    val k = IntVar(new VariableStringSymbol("k")) ;
+    val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
+    val subst = new SchemaSubstitution1[HOLExpression](new_map)
+    apply(SchemaProofDB.get(proof_name).rec, subst, number)
+  }
 
+  def toIntegerTerm(i: Int): IntegerTerm = {
+    if (i == 0)
+      IntZero()
+    else
+      Succ(toIntegerTerm(i-1))
   }
 
   def apply( proof: LKProof, subst: SchemaSubstitution1[HOLExpression] , cnt: Int) : LKProof = {
@@ -214,11 +225,11 @@ object applySchemaSubstitution {
 //                apply(SchemaProofDB.get(link), new_subst, cnt1)
               new_ind match {
                 case y:IntZero => {
-                println("\nnew_ind = "+0)
+//                println("\nnew_ind = "+0)
                 CloneLKProof(SchemaProofDB.get(link).base)
                 }
                 case _ => {
-                println("\nnew_ind > "+0)
+//                println("\nnew_ind > "+0)
                 apply(SchemaProofDB.get(link).rec, subst, StepMinusOne.length(new_ind.asInstanceOf[IntegerTerm], subst.map.head._1.asInstanceOf[IntVar]))
 //                CloneLKProof(SchemaProofDB.get(link).base)
                 }
