@@ -264,7 +264,9 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
 
 //          println("-1 = "+StepMinusOne.minusOne(Or(And(An3, An1), b) , n))
 
-          val phi1 = applySchemaSubstitution(map.get("psi").get._2.get("root").get, subst, 3)
+//          val phi1 = applySchemaSubstitution(map.get("psi").get._2.get("root").get, subst, 3)
+          val phi1 = applySchemaSubstitution("psi", 3)
+
 
 //           CloneLKProof(map.get("phi").get._1.get("root").get)
 
