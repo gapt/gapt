@@ -11,11 +11,11 @@ import scala.swing._
 import BorderPanel._
 import event.Key
 import at.logic.gui.prooftool.parser._
+import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.{Sequent, LKProof}
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.transformations.ReductiveCutElim
 import javax.swing.filechooser.FileFilter
-import java.io.File
 import swing.Dialog.Message
 import scala.collection.immutable.Seq
 import at.logic.algorithms.lk.getCutAncestors
@@ -25,14 +25,13 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import swing.Swing.EmptyIcon
-import at.logic.language.lambda.typedLambdaCalculus.Var
-import at.logic.language.hol.HOLExpression
-import at.logic.transformations.ceres.unfolding.applySchemaSubstitution._
-import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, SchemaSubstitution1}
-import at.logic.language.schema.IntVar._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.schema.IntVar
+import at.logic.transformations.ceres.unfolding.applySchemaSubstitution
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
+import java.io.File
+import at.logic.parsing.writers.FileWriter
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
+import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.utils.ds.trees.Tree
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -73,6 +72,39 @@ object Main extends SimpleSwingApplication {
   def fSaveAll: Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ => XMLExporter(chooser.selectedFile.getPath, db.getProofDB)
+  }
+
+  def fExportTPTP = chooser.showSaveDialog(mBar) match {
+    case FileChooser.Result.Cancel =>
+    case _ =>
+      val list = body.getContent.getData.get._2 match {
+        case l: List[Sequent] => l.map(x => x.toFSequent)
+        case l: List[FSequent] => l
+        case _ => Nil
+      }
+
+      if (list != Nil) {
+        import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
+
+        val file = new JBufferedWriter(new JFileWriter( chooser.selectedFile.getPath ))
+        file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(list))
+        file.close
+      } else Dialog.showMessage(body,"This is not a Clause Set, can't export it!")
+  }
+
+  def fExportTeX = chooser.showSaveDialog(mBar) match {
+    case FileChooser.Result.Cancel =>
+    case _ =>
+      val list = body.getContent.getData.get._2 match {
+        case l: List[Sequent] => l.map(x => x.toFSequent)
+        case l: List[FSequent] => l
+        case _ => Nil
+      }
+
+      if (list != Nil)
+        (new FileWriter( chooser.selectedFile.getPath ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+          .exportSequentList( list , Nil).close
+      else Dialog.showMessage(body,"This is not a Clause Set, can't export it!")
   }
 
   def fExit: Unit = System.exit(0)
@@ -126,10 +158,17 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  // Used by Show Clause List menu
+  // Used by View Clause List menu
   def loadClauseSet(clList: (String, List[Sequent])): Unit = {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(clList), 12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  // Used by View Struct menu
+  def loadStruct(struct: (String, Tree[_])): Unit = {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.contents = new Launcher(Some(struct), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -154,19 +193,30 @@ object Main extends SimpleSwingApplication {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
         border = customBorder
       }
-      contents += new MenuItem(Action("Save Proof") { fSaveProof }) {
+      contents += new MenuItem(Action("Save Proof as XML") { fSaveProof }) {
         mnemonic = Key.P
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, JActionEvent.CTRL_MASK))
         border = customBorder
       }
-      contents += new MenuItem(Action("Save All") { fSaveAll }) {
+      contents += new MenuItem(Action("Save All as XML") { fSaveAll }) {
         mnemonic = Key.S
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, JActionEvent.CTRL_MASK))
         border = customBorder
       }
       contents += new Separator
-      contents += new MenuItem(Action("Exit") { fExit }) {
+      contents += new MenuItem(Action("Export Clause Set as TPTP") { fExportTPTP }) {
+        mnemonic = Key.T
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
+      contents += new MenuItem(Action("Export Clause Set as TeX") { fExportTeX }) {
         mnemonic = Key.E
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
+      contents += new Separator
+      contents += new MenuItem(Action("Exit") { fExit }) {
+        mnemonic = Key.X
         border = customBorder
       }
     }
@@ -251,7 +301,6 @@ object Main extends SimpleSwingApplication {
         reactions += {
           case ProofDbChanged =>
             import at.logic.calculi.occurrences._
-            import at.logic.calculi.lk.base.types.FSequent
             implicit val factory = defaultFormulaOccurrenceFactory
             implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence])
             implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
@@ -260,48 +309,34 @@ object Main extends SimpleSwingApplication {
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
         }
       }
+      contents += new Menu("View Struct") {
+        MenuScroller.setScrollerFor(this.peer)
+        mnemonic = Key.S
+        border = customBorder
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case ProofDbChanged =>
+            val l = db.getStructTrees
+            contents.clear
+            for (i <- l) contents += new MenuItem(Action(i._1) { loadStruct(i) }) { border = customBorder }
+        }
+      }
     }
     contents += new Menu("LK Proof") {
       mnemonic = Key.L
+      enabled = false
+      listenTo(ProofToolPublisher)
+      reactions += {
+        case Loaded => enabled = true
+        case UnLoaded => enabled = false
+      }
       contents += new Menu("Compute Clause Set") {
-        contents += new MenuItem(Action("All Cuts") { computeClList }) {
-          border = customBorder
-          enabled = false
-          listenTo(ProofToolPublisher)
-          reactions += {
-            case Loaded => this.enabled = true
-            case UnLoaded => this.enabled = false
-          }
-        }
-        contents += new MenuItem(Action("Only Quantified Cuts") { computeClListOnlyQuantifiedCuts }) {
-          border = customBorder
-          enabled = false
-          listenTo(ProofToolPublisher)
-          reactions += {
-            case Loaded => this.enabled = true
-            case UnLoaded => this.enabled = false
-          }
-        }
+        contents += new MenuItem(Action("All Cuts") { computeClList }) { border = customBorder }
+        contents += new MenuItem(Action("Only Quantified Cuts") { computeClListOnlyQuantifiedCuts }) { border = customBorder }
       }
       contents += new Menu("Compute Struct") {
-        contents += new MenuItem(Action("All Cuts") { showStruct }) {
-          border = customBorder
-          enabled = false
-          listenTo(ProofToolPublisher)
-          reactions += {
-            case Loaded => enabled = true
-            case UnLoaded => enabled = false
-          }
-        }
-        contents += new MenuItem(Action("Only Quantified Cuts") { showStructOnlyQuantifiedCuts }) {
-          border = customBorder
-          enabled = false
-          listenTo(ProofToolPublisher)
-          reactions += {
-            case Loaded => enabled = true
-            case UnLoaded => enabled = false
-          }
-        }
+        contents += new MenuItem(Action("All Cuts") { showStruct }) { border = customBorder }
+        contents += new MenuItem(Action("Only Quantified Cuts") { showStructOnlyQuantifiedCuts }) { border = customBorder }
       }
       contents += new Separator
       contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen }) { border = customBorder }
@@ -310,15 +345,14 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("LKS Proof") {
       mnemonic = Key.P
-      contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
+      enabled = false
+      listenTo(ProofToolPublisher)
+      reactions += {
+        case Loaded => enabled = true
+        case UnLoaded => enabled = false
       }
+      contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet }) { border = customBorder }
+      contents += new MenuItem(Action("Compute Struct") { computeSchematicStruct }) { border = customBorder }
       contents += new MenuItem(Action("Compute Proof Instance") { computeProofInstance } )  { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
@@ -338,6 +372,7 @@ object Main extends SimpleSwingApplication {
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
     val csPre : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
+
     db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -348,7 +383,7 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeSchematicClauseSet = try {
-    import at.logic.language.schema._
+    import at.logic.language.schema.IntVar
     import at.logic.language.lambda.symbols.VariableStringSymbol
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val n = IntVar(new VariableStringSymbol("n"))
@@ -357,12 +392,27 @@ object Main extends SimpleSwingApplication {
     val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
 
     db.addSeqList(cs.map(x => x.toFSequent))
-    body.contents = new Launcher(Some("cllist",cs),16)
+    body.contents = new Launcher(Some("Schematic Clause Set",cs),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+        Dialog.showMessage(body,"Couldn't compute clause set!\n\n"+t.replaceAll(",","\n"))
+  } finally ProofToolPublisher.publish(ProofDbChanged)
+
+  def computeSchematicStruct = try {
+    import at.logic.language.schema.IntVar
+    import at.logic.language.lambda.symbols.VariableStringSymbol
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val n = IntVar(new VariableStringSymbol("n"))
+    val s = structToExpressionTree( StructCreators.extractStruct( body.getContent.getData.get._1, n) )
+    db.addStructTree( s )
+    body.contents = new Launcher(Some("Schematic Struct",s),12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeClListOnlyQuantifiedCuts = try {
@@ -383,26 +433,28 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = structToExpressionTree( StructCreators.extract( proof_sk ) )
-    body.contents = new Launcher(Some("Struct",s),12)
-  } catch {
-      case e: AnyRef =>
-        val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
-  }
-
-  // Computes the struct, ignoring propositional cuts
-  def showStructOnlyQuantifiedCuts = try {
-    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
-    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
-
+    db.addStructTree( s )
     body.contents = new Launcher(Some("Struct",s),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: AnyRef =>
         val t = e.toString
         Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
-  }
+  } finally ProofToolPublisher.publish(ProofDbChanged)
+
+  // Computes the struct, ignoring propositional cuts
+  def showStructOnlyQuantifiedCuts = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
+    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
+    db.addStructTree( s )
+    body.contents = new Launcher(Some("Struct",s),12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def eliminateDefsLK = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -686,9 +738,6 @@ object Main extends SimpleSwingApplication {
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
     import at.logic.language.schema._
     import at.logic.language.lambda.symbols.VariableStringSymbol
-    import at.logic.parsing.writers.FileWriter
-    import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-    import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
     import at.logic.utils.ds.Multisets.HashMultiset
 
       val n = IntVar(new VariableStringSymbol("n"))
@@ -757,8 +806,6 @@ object Main extends SimpleSwingApplication {
 
       val ccs = cs_pruned_psi ::: cs_pruned_varphi ::: cs_pruned_phi ::: cs_pruned_chi
 
-      (new FileWriter("ccs_pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ccs.map(_.toFSequent), Nil).close
-
     db.addSeqList(ccs.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",ccs),16)
 
@@ -788,6 +835,8 @@ object Main extends SimpleSwingApplication {
 
       def getDescription: String = ".xml and .gz"
     }
+
+    fileFilter = acceptAllFileFilter
   }
 
   /*

@@ -20,6 +20,7 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
 import io.Source
 import at.logic.parsing.language.simple.SHLK
+import at.logic.utils.ds.trees.Tree
 
 class FileParser {
 
@@ -72,10 +73,16 @@ class FileParser {
       ("sequentList "+proofdb.sequentLists.size.toString, seqList)::proofdb.sequentLists)
   }
 
+  def addStructTree(struct : Tree[_] ) = {
+    structs = ("struct "+structs.size.toString, struct)::structs
+  }
+
   def getSequentLists = proofdb.sequentLists
   def getProofs = proofdb.proofs:::proofs
   def getProofDB = proofdb
+  def getStructTrees = structs
 
   private var proofdb = new ProofDatabase(Nil,Nil,Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil
+  private var structs: List[(String, Tree[_])] = Nil
 }
