@@ -3,10 +3,11 @@
 package at.logic.transformations.ceres.unfolding
 
 
-import _root_.at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.schema._
+import at.logic.language.schema.IndexedPredicate._
 import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
 import scala.xml._
-import at.logic.language.schema.{IntVar, IntZero, IndexedPredicate, SchemaFormula, Succ, BigAnd, BigOr}
 import at.logic.calculi.slk._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.{Or => HOLOr, Neg => HOLNeg, And => HOLAnd, _}
@@ -26,10 +27,10 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.language.hol.{HOLFormula}
+import scala.Predef._
+
 //import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
-import at.logic.language.schema._
-import at.logic.language.schema.IntegerTerm
 //import at.logic.language.schema.SchemaSubstitution
 
 object applySchemaSubstitution {
@@ -187,7 +188,7 @@ object applySchemaSubstitution {
     val k = IntVar(new VariableStringSymbol("k")) ;
     val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
     val subst = new SchemaSubstitution1[HOLExpression](new_map)
-    apply(SchemaProofDB.get(proof_name).rec, subst, number)
+    RemoveEqRulesFromGroundSchemaProof(apply(SchemaProofDB.get(proof_name).rec, subst, number))
   }
 
   def toIntegerTerm(i: Int): IntegerTerm = {
@@ -536,6 +537,22 @@ import at.logic.language.hol._
       case _ => -10000
     }
 
+    def lengthGround(t: IntegerTerm): Int = t match {
+      case c: IntZero => 0
+      case Succ(t1) => {
+        1 + lengthGround(t1)
+      }
+      case _ => throw new Exception("lengthGround")
+    }
+
+    def lengthVar(t: IntegerTerm): Int = t match {
+      case y: IntVar => 0
+      case Succ(t1) => {
+        1 + lengthVar(t1)
+      }
+      case _ => throw new Exception("lengthVar")
+    }
+
 
     //return an axpression such that all s(k) is substituted by k
     def minusOne(e: HOLExpression, k:IntVar): HOLExpression = e match {
@@ -695,4 +712,211 @@ import at.logic.language.hol._
       case _ => { println("ERROR in StepMinusOne : missing rule!");throw new Exception("ERROR in unfolding: StepMinusOne") }
     }
   }
+}
+
+
+//unfold the ground BigAnd/BigOr skipping all equivalence inferences
+object RemoveEqRulesFromGroundSchemaProof {
+import at.logic.language.hol._
+
+    def apply(p: LKProof):LKProof = {
+      p match {
+
+        case Axiom(ro) => Axiom(ro.antecedent.map(fo => fo.formula.asInstanceOf[HOLFormula]),ro.succedent.map(fo => fo.formula.asInstanceOf[HOLFormula]))
+
+        case AndLeftEquivalenceRule1(p, s, a, m) => {
+//            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+//            val new_p = apply(p)
+//            AndLeftEquivalenceRule1(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+              apply(p)
+        }
+
+        case AndRightEquivalenceRule1(p, s, a, m) => {
+           // println("\nAndRightEquivalenceRule1\n")
+//            val new_p = apply(p)
+//            AndRightEquivalenceRule1(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+            apply(p)
+        }
+
+        case OrRightEquivalenceRule1(p, s, a, m) => {
+           // println("\nOrRightEquivalenceRule1\n")
+//            val new_p = apply(p)
+//            OrRightEquivalenceRule1(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+          apply(p)
+        }
+
+        case AndLeftEquivalenceRule3(p, s, a, m) => {
+           // println("\nAndLeftEquivalenceRule3\n")
+//            val new_p = apply(p)
+//            AndLeftEquivalenceRule3(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+          apply(p)
+        }
+
+        case AndRightEquivalenceRule3(p, s, a, m) => {
+           // println("\nAndRightEquivalenceRule3\n")
+//            val new_p = apply(p)
+//            AndRightEquivalenceRule3(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+          apply(p)
+        }
+
+        case OrRightEquivalenceRule3(p, s, a, m) => {
+          //println("\nOrRightEquivalenceRule3\n")
+//          val new_p = apply(p)
+//          OrRightEquivalenceRule3(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+          apply(p)
+        }
+
+        case WeakeningLeftRule(p, _, m) => {
+            val new_p = apply(p)
+            implicit val factory = defaultFormulaOccurrenceFactory
+            WeakeningLeftRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(m.formula ))
+        }
+
+        case WeakeningRightRule(p, _, m) => {
+            val new_p = apply(p)
+            implicit val factory = defaultFormulaOccurrenceFactory
+            WeakeningRightRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(m.formula ))
+        }
+
+        case CutRule( p1, p2, _, a1, a2 ) => {
+            val new_p1 = apply(p1)
+            val new_p2 = apply(p2)
+            CutRule(new_p1, new_p2, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a2.formula))
+        }
+
+        case OrLeftRule(p1, p2, _, a1, a2, m) => {
+            val new_p1 = apply(p1)
+            val new_p2 = apply(p2)
+            OrLeftRule(new_p1, new_p2, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a1.formula), RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a2.formula))
+        }
+
+        case AndRightRule(p1, p2, _, a1, a2, m) => {
+            val new_p1 = apply(p1)
+            val new_p2 = apply(p2)
+            AndRightRule(new_p1, new_p2, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a1.formula), RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a2.formula) )
+        }
+
+        case NegLeftRule( p, _, a, m ) => {
+            val new_p = apply(p)
+            NegLeftRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a.formula ))
+        }
+
+        case AndLeft1Rule(p, r, a, m) =>  {
+            val new_p = apply(p)
+            val a2 = m.formula  match { case And(l, right) => right }
+//            println("AndLeft1Rule : "+printSchemaProof.sequentToString(new_p.root))
+//            println("aux : \n"+printSchemaProof.formulaToString(a.formula))
+//            println(printSchemaProof.formulaToString(a2))
+            AndLeft1Rule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a.formula), RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a2))
+        }
+
+        case AndLeft2Rule(p, r, a, m) =>  {
+            val new_p = apply(p)
+            val a2 = m.formula  match { case And(l, _) => l }
+       //     println("AndLeft2Rule : "+printSchemaProof.sequentToString(new_p.root))
+       //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
+       //     println(printSchemaProof.formulaToString(a2))
+            AndLeft2Rule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a2), RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a.formula) )
+        }
+
+        case OrRight1Rule(p, r, a, m) =>  {
+            val new_p = apply(p)
+            val a2 = m.formula  match { case Or(_, r) => r }
+//            println("\np or:r1 = "+p.root)
+//            println("\nnew_p or:r1 = "+new_p.root)
+//            println("\nor:r1 a = "+a.formula)
+//            println("\nor:r1 m = "+m.formula)
+            OrRight1Rule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a.formula), RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a2))
+        }
+
+        case OrRight2Rule(p, r, a, m) =>  {
+            val new_p = apply(p)
+            val a2 = m.formula  match { case Or(l, _) => l }
+//            println("\np or:r2 = "+p.root)
+//            println("\nnew_p or:r2 = "+new_p.root)
+//          println("\nor:r2 a = "+a.formula)
+//            println("\nor:r2 m = "+m.formula)
+            OrRight2Rule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a2), RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a.formula))
+        }
+
+        case NegRightRule( p, _, a, m ) => {
+            val new_p = apply(p)
+            NegRightRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a.formula ))
+        }
+
+        case ContractionLeftRule(p, _, a1, a2, m) => {
+            val new_p = apply(p)
+            println("c:l -> "+printSchemaProof.sequentToString(new_p.root))
+            println("aux1 : \n"+printSchemaProof.formulaToString(a1.formula))
+            println("aux2 : \n"+printSchemaProof.formulaToString(a2.formula))
+
+            ContractionLeftRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a1.formula ))
+        }
+
+        case ContractionRightRule(p, _, a1, a2, m) => {
+            val new_p = apply(p)
+//            println("\nc:r = "+new_p.root)
+            ContractionRightRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a1.formula ))
+        }
+        case _ => { println("ERROR in object RemoveEqRulesFromGroundSchemaProof : missing rule!");throw new Exception("ERROR in unfolding: object RemoveEqRulesFromGroundSchemaProof") }
+      }
+    }
+
+
+    // BigAnd(1,3,A_i) => A_1 /\ A_2 /\ A_3. Now works for 1 index, soon it will work for many
+    def unfoldGroundSchF(f: HOLFormula): HOLFormula = f match {
+      case BigAnd(v, formula, init, end) =>
+        andNSchemaF(formula, StepMinusOne.lengthGround(init), StepMinusOne.lengthGround(end))
+//      case BigOr(v, formula, init, end) =>
+//        orNSchemaF(formula, StepMinusOne.lengthGround(init), StepMinusOne.lengthGround(end))
+      case And(l @ left, r @ right) => And(unfoldGroundSchF(l), unfoldGroundSchF(r))
+      case Or(l @ left, r @ right) => Or(unfoldGroundSchF(l), unfoldGroundSchF(r))
+      case Neg(l @ left) => Neg(unfoldGroundSchF(l))
+      case _ => f
+    }
+
+    def groundSchemaF(f: HOLFormula, init: Int): HOLFormula = f match {
+      case IndexedPredicate(pointer @ f1, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], applySchemaSubstitution.toIntegerTerm(init+StepMinusOne.lengthVar(l.head.asInstanceOf[IntegerTerm])))
+      case And(l @ left, r @ right) => And(groundSchemaF(l, init), groundSchemaF(r, init))
+      case Or(l @ left, r @ right) => Or(groundSchemaF(l, init), groundSchemaF(r, init))
+      case Neg(l @ left) => Neg(groundSchemaF(l, init))
+      case _ => throw new Exception("groundSchemaF")
+    }
+
+    // apply N-times And on a grounded f
+    def andNSchemaF(f: HOLFormula, init: Int, end: Int): HOLFormula = {
+      if (init == end)
+        groundSchemaF(f, init)
+      else {
+        def list = (init to end).toList
+        val l1 = list.map(i =>  {
+          f match {
+            case IndexedPredicate(pointer @ f1, l @ ts) => groundSchemaF(f, i)
+            case And(l @ left, r @ right) => And(groundSchemaF(l, i), groundSchemaF(r, i))
+            case Or(l @ left, r @ right) => Or(groundSchemaF(l, i), groundSchemaF(r, i))
+            case Neg(l @ left) => Neg(groundSchemaF(l, i))
+            case _ => throw new Exception("andNSchemaF")
+          }
+        })
+        l1.tail.foldLeft(l1.head)((x, res) => And(x, res))
+      }
+    }
+
+
+    // apply N-times And on a grounded f
+//    def orNSchemaF(f: HOLFormula, init: Int, end: Int): HOLFormula = {
+//      if (init == end)
+//        groundSchemaF(f, init)
+//      else
+//        for (i<-init to end ) {
+//          f match {
+//            case IndexedPredicate(pointer @ f1, l @ ts) => Or(groundSchemaF(f, i), andNSchemaF(f, i+1, end))
+//            case And(l @ left, r @ right) => Or(And(groundSchemaF(l, i), groundSchemaF(r, i)) , andNSchemaF(f, init+1, end))
+//            case Or(l @ left, r @ right) => Or(Or(groundSchemaF(l, i), groundSchemaF(r, i)) , andNSchemaF(f, init+1, end))
+//            case Neg(l @ left) => Or(Neg(groundSchemaF(l, i)) , andNSchemaF(f, init+1, end))
+//            case _ => throw new Exception("andNSchemaF")
+//          }
+//        }
+//    }
+
 }
