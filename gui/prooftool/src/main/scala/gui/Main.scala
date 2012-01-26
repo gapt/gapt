@@ -32,7 +32,7 @@ import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, Schema
 import at.logic.language.schema.IntVar._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.schema.IntVar
-
+import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -337,7 +337,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
-    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+    val csPre : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
     db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -354,7 +354,7 @@ object Main extends SimpleSwingApplication {
     val n = IntVar(new VariableStringSymbol("n"))
 
     val s = StructCreators.extractStruct( body.getContent.getData.get._1, n)
-    val cs : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+    val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
 
     db.addSeqList(cs.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",cs),16)
@@ -369,7 +369,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
     val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
-    val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+    val csPre : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
     db.addSeqList(csPre.map(x => x.toFSequent))
     body.contents = new Launcher(Some("cllist",csPre),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -694,7 +694,7 @@ object Main extends SimpleSwingApplication {
       val n = IntVar(new VariableStringSymbol("n"))
 
       val s = StructCreators.extractStruct( "psi", n)
-      val cs : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+      val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
 
       val m_empty = HashMultiset[SchemaFormula]()
       var cc: at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration = (m_empty, m_empty)
