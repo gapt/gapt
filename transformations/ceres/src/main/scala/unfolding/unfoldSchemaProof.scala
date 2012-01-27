@@ -185,10 +185,14 @@ object applySchemaSubstitution {
 
   //************************************************************************************
   def apply( proof_name: String, number: Int ): LKProof = {
-    val k = IntVar(new VariableStringSymbol("k")) ;
-    val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
-    val subst = new SchemaSubstitution1[HOLExpression](new_map)
-    RemoveEqRulesFromGroundSchemaProof(apply(SchemaProofDB.get(proof_name).rec, subst, number))
+    if (number < 1)
+      RemoveEqRulesFromGroundSchemaProof(SchemaProofDB.get(proof_name).base)
+    else {
+      val k = IntVar(new VariableStringSymbol("k")) ;
+      val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
+      val subst = new SchemaSubstitution1[HOLExpression](new_map)
+      RemoveEqRulesFromGroundSchemaProof(apply(SchemaProofDB.get(proof_name).rec, subst, number))
+    }
   }
 
   def toIntegerTerm(i: Int): IntegerTerm = {
@@ -846,10 +850,9 @@ import at.logic.language.hol._
 
         case ContractionLeftRule(p, _, a1, a2, m) => {
             val new_p = apply(p)
-            println("c:l -> "+printSchemaProof.sequentToString(new_p.root))
-            println("aux1 : \n"+printSchemaProof.formulaToString(a1.formula))
-            println("aux2 : \n"+printSchemaProof.formulaToString(a2.formula))
-
+//            println("c:l -> "+printSchemaProof.sequentToString(new_p.root))
+//            println("aux1 : \n"+printSchemaProof.formulaToString(a1.formula))
+//            println("aux2 : \n"+printSchemaProof.formulaToString(a2.formula))
             ContractionLeftRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a1.formula ))
         }
 
