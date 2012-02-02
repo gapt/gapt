@@ -21,18 +21,14 @@ class HerbrandExtractionException(msg: String) extends Exception(msg)
 
 object herbrandExtraction {
 
-  // key: Formula quantified
-  // value: terms that instantiate the quantified variables
-  // NOTE: Assuming that all variables were renamed (though this is not
-  // implemented).
-  var terms = new HashMap[Formula, List[HOLExpression]]
-
-  def apply(proof: LKProof) : (FSequent, HashMap[Formula, List[HOLExpression]]) = {
+  def apply(proof: LKProof) : FSequent = {
     val hs = buildHerbrand(proof)
     val exphs = expandArrays(hs)
-    (exphs, terms)
+    exphs
   }
 
+  // Expand herbrand arrays of the type (A o <B, C>) to formulas A o B, A o C
+  // (where 'o' is a connective)
   private def expandArrays(seq: Sequent) : FSequent = {
     val newant = seq.antecedent.foldLeft (Seq[HOLFormula]()) ((acc, f) => (expand (f.formula)) ++ acc)
     val newsucc = seq.succedent.foldLeft (Seq[HOLFormula]()) ((acc, f) => (expand (f.formula)) ++ acc)
@@ -54,7 +50,8 @@ object herbrandExtraction {
       for(fa <- left; fb <- right) yield { Imp(fa, fb) }
     case Neg(a) => expand(a).map(x => Neg(x))
     case HArray(a, b) => expand(a) ++ expand(b)
-    case Atom(_, _) => f::Nil 
+    case Atom(_, _) => f::Nil
+    case _ => throw new HerbrandExtractionException("Illegal formula on Herbrand sequent.")
   }
 
   private def getOccSamePosition(s1: Seq[FormulaOccurrence], f: FormulaOccurrence, s2: Seq[FormulaOccurrence]) = {
@@ -104,7 +101,6 @@ object herbrandExtraction {
       if(aux1hs.formula != aux2hs.formula){
         val ha = HArray(aux1hs.formula, aux2hs.formula)
         val haocc = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors ++ aux2hs.ancestors)
-        //val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
         // Creating the sequent by hand (choosing this solution so that the code
         // from propositionalRules is not polluted with ifs).
         val ant1 = createContext(hs.antecedent.filterNot(x =>  x == aux1hs || x == aux2hs))
@@ -124,7 +120,6 @@ object herbrandExtraction {
       if(aux1hs.formula != aux2hs.formula){
         val ha = HArray(aux1hs.formula, aux2hs.formula)
         val haocc = aux1hs.factory.createFormulaOccurrence(ha, aux1hs.ancestors ++ aux2hs.ancestors)
-        //val f2 = aux2hs.factory.createFormulaOccurrence(ha, aux2hs.ancestors)
         // Creating the sequent by hand (choosing this solution so that the code
         // from propositionalRules is not polluted with ifs).
         val antecedent = createContext(hs.antecedent)
@@ -225,35 +220,9 @@ object herbrandExtraction {
       NegRightRule(hs, auxhs)
 
     /* WEAK QUANTIFIER RULES */
-    // NOTE: Check if the behaviour for non-prenex formulas is what we need
-    // after the cut-introduction procedure is developed for them.
     case ForallLeftRule(up, _, aux, prin, term) =>
-      // Save the term used for substitution
-      val key = prin.formula
-      if(terms.contains(key)){
-        val lst = terms(key)
-        terms -= key
-        terms += (key -> (term :: lst))
-      }
-      else {
-        terms += (key -> (term::Nil))
-      }
-      // Return the same Herbrand sequent. We are not applying quantifier rules, 
-      // we want the instantiated terms.
       buildHerbrand(up)
     case ExistsRightRule(up, _, aux, prin, term) =>
-      // Save the term used for substitution
-      val key = prin.formula
-      if(terms.contains(key)){
-        val lst = terms(key)
-        terms -= key
-        terms += (key -> (term :: lst))
-      }
-      else {
-        terms += (key -> (term::Nil))
-      }
-      // Return the same Herbrand sequent. We are not applying quantifier rules, 
-      // we want the instantiated terms.
       buildHerbrand(up)
 
     // TODO: equalities
