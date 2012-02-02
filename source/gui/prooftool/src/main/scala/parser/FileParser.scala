@@ -68,9 +68,11 @@ class FileParser {
     proofdb = new ProofDatabase(proofdb.proofs:::proofs, proofdb.axioms, proofdb.sequentLists)
   }
 
-  def addSeqList(seqList : List[FSequent]) = {
+  def addSeqList(seqList : List[FSequent]) { addSeqList("sequentList ", seqList) }
+
+  def addSeqList(name: String, seqList : List[FSequent]) {
     proofdb = new ProofDatabase(proofdb.proofs, proofdb.axioms,
-      ("sequentList "+proofdb.sequentLists.size.toString, seqList)::proofdb.sequentLists)
+      (name+proofdb.sequentLists.size.toString, seqList)::proofdb.sequentLists)
   }
 
   def addStructTree(struct : Tree[_] ) = {

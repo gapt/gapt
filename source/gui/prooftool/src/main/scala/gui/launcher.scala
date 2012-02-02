@@ -33,7 +33,7 @@ with MouseMotionListener with javax.swing.Scrollable {
       c.insets.set(15, 15, 15, 15)
       obj match {
         case proof: TreeProof[_] =>
-          layout(new DrawProof(proof, fSize, Set())) = c
+          layout(new DrawProof(proof, fSize, Set(), Set())) = c
           ProofToolPublisher.publish(Loaded)
           StructPublisher.publish(UnLoaded)
         case tree: Tree[_] =>

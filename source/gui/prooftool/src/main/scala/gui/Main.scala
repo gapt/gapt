@@ -18,7 +18,6 @@ import at.logic.transformations.ReductiveCutElim
 import javax.swing.filechooser.FileFilter
 import swing.Dialog.Message
 import scala.collection.immutable.Seq
-import at.logic.algorithms.lk.getCutAncestors
 import at.logic.parsing.language.xml.XMLExporter
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
@@ -32,6 +31,7 @@ import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.utils.ds.trees.Tree
+import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) = {
@@ -240,6 +240,7 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
+      contents += new Separator
       contents += new MenuItem(Action("Hide Structural Rules") { ProofToolPublisher.publish(HideStructuralRules) }) {
         border = customBorder
         enabled = false
@@ -259,6 +260,16 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
+      contents += new MenuItem(Action("Hide Sequent Contexts") { hideSequentContext }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new Separator
       contents += new MenuItem(Action("Mark Cut-Ancestors") { markCutAncestors }) {
         border = customBorder
         enabled = false
@@ -268,7 +279,15 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
-
+      contents += new MenuItem(Action("Extract Cut-Formulas") { extractCutFormulas }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
     }
     contents += new Menu("View") {
       mnemonic = Key.V
@@ -366,6 +385,18 @@ object Main extends SimpleSwingApplication {
       }
     }
   }
+
+  def extractCutFormulas = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val list = cutformulaExtraction( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+    db.addSeqList("cutFormulaList ", list.map(x => x.toFSequent) )
+    body.contents = new Launcher(Some("Cut-formula List",list),16)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't extract CutFormula List!\n\n"+t.replaceAll(",","\n"))
+  } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeClList = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -508,6 +539,20 @@ object Main extends SimpleSwingApplication {
       case dp: DrawProof => body.getContent.getData match {
         case Some((_, proof : LKProof) ) =>
           dp.setColoredOccurrences(getCutAncestors(proof))
+          dp.revalidate
+        case _ => Dialog.showMessage(body, "This is not an LK proof!")
+      }
+      case _ => Dialog.showMessage(body, "LK proof not found!")
+    }
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  def hideSequentContext = {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.getContent.contents.head match {
+      case dp: DrawProof => body.getContent.getData match {
+        case Some((name, proof : LKProof) ) =>
+          dp.setVisibleOccurrences(getAuxFormulas(proof))
           dp.revalidate
         case _ => Dialog.showMessage(body, "This is not an LK proof!")
       }

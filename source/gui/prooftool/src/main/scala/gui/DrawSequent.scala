@@ -21,7 +21,8 @@ import at.logic.transformations.ceres.struct.ClauseSetSymbol
 
 object DrawSequent {
 
-  def apply(seq: Sequent, ft: Font) = new FlowPanel {
+  def apply(seq: Sequent, ft: Font): FlowPanel = apply(seq, ft, Set(), Set())
+  /*new FlowPanel {
     background = new Color(255,255,255)
     opaque = false
 
@@ -38,14 +39,16 @@ object DrawSequent {
       else first = false
       contents += formulaToLabel(f.formula, ft)
     }
-  }
+  } */
+ // def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence]): FlowPanel = apply(seq, ft, cut_anc, Set())
 
-  def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence]) = new FlowPanel {
+  def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence], vis_occ: Set[FormulaOccurrence]) = new FlowPanel {
     background = new Color(255,255,255)
     opaque = false
 
     private var first = true
     for (f <- seq.antecedent) {
+      if (vis_occ.isEmpty || vis_occ.contains(f) ) {
       if (! first) contents += new Label(", ") {font = ft}
       else first = false
       if (cut_anc.contains(f)) {
@@ -53,10 +56,12 @@ object DrawSequent {
         fl.background = new Color(0,255,0)
         contents += fl
       } else contents += formulaToLabel(f.formula, ft)
+      }
     }
     contents += new Label(" \u22a2 ") {font = ft}
     first =true
     for (f <- seq.succedent) {
+      if (vis_occ.isEmpty || vis_occ.contains(f) ) {
       if (! first) contents += new Label(", ")  {font = ft}
       else first = false
       if (cut_anc.contains(f)) {
@@ -64,6 +69,7 @@ object DrawSequent {
         fl.background = new Color(0,255,0)
         contents += fl
       } else contents += formulaToLabel(f.formula, ft)
+      }
     }
   }
 
