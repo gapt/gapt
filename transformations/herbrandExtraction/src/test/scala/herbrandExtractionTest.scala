@@ -75,6 +75,23 @@ class herbrandExtractionTest extends SpecificationWithJUnit {
 
         (hs) must beEqual (ax.root.toFSequent)
       }
+      "- forall left and exists right on the same proof" in {
+        val p = HOLVar("p", i -> o)
+        val x = HOLVar("X", i )
+        val a = HOLVar("a", i)
+        val px = HOLAppFormula(p, x)
+        val pa = HOLAppFormula(p, a)
+        val left = AllVar(x, px)
+        val right = ExVar(x, px)
+
+        val axiom = Axiom(pa::Nil, pa::Nil)
+        val exRule = ExistsRightRule(axiom, pa, right, a)
+        val allRule = ForallLeftRule(exRule, pa, left, a)
+
+        val (hs, terms) = herbrandExtraction(allRule)
+
+        (hs) must beEqual (axiom.root.toFSequent)
+      }
     }
 
     // Tests for contraction with quantifications (creating herbrand
