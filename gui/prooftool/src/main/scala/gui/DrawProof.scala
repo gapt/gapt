@@ -20,7 +20,8 @@ import java.awt.{RenderingHints, BasicStroke}
 import at.logic.gui.prooftool.parser.{ShowAllRules, HideStructuralRules, ProofToolPublisher, HideStructural}
 import at.logic.calculi.lk.propositionalRules._
 
-class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence])
+class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence],
+                private var visible_occurrences : Set[FormulaOccurrence])
   extends BorderPanel with MouseMotionListener {
   background = white
   opaque = false
@@ -33,7 +34,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   private var hideRules = false
   private val tx = proof.root match {
     case so: Sequent =>
-      val ds = DrawSequent(so, ft, colored_occurrences)
+      val ds = DrawSequent(so, ft, colored_occurrences, visible_occurrences)
       ds.listenTo(mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher)
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
@@ -76,6 +77,11 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     initialize
   }
 
+  def setVisibleOccurrences(s : Set[FormulaOccurrence]) {
+    visible_occurrences = s
+    initialize
+  }
+
   def initialize = proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
@@ -84,12 +90,12 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           ProofToolPublisher.publish(new HideStructural(p.uProof.asInstanceOf[TreeProof[_]]))
         case _ =>
       }
-      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.Center
+      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences)) = Position.Center
       layout(tx) = Position.South
     case p: BinaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.West
-      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, colored_occurrences)) = Position.East
+      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences)) = Position.West
+      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences)) = Position.East
       layout(tx) = Position.South
     case p: NullaryTreeProof[_] => p match {
       case SchemaProofLinkRule(_, link, indices) =>

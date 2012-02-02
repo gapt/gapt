@@ -64,7 +64,21 @@ object getAncestors {
     o.foldLeft( new HashSet[FormulaOccurrence] )( (res, o) => res ++ apply( o ) )
 }
 
-
+object getAuxFormulas {
+  def apply(proof: LKProof): Set[FormulaOccurrence] = proof match {
+      case UnaryLKProof(_,p,_,auxs,main) => (getAuxFormulas( p ) ++ auxs.toSet) + main
+      case BinaryLKProof(_,p1,p2,_,aux1,aux2,main) =>
+        val set = getAuxFormulas( p1 ) ++ getAuxFormulas( p2 ) ++ Set(aux1,aux2)
+        if (main == None) set
+        else set + main.get
+      case Axiom(_) => Set[FormulaOccurrence]()
+      // support LKsk
+      case UnaryLKskProof(_,p,_,auxs,main) => (getAuxFormulas( p ) ++ auxs.toSet) + main
+      // support SLK
+      case UnarySchemaProof(_,p,_,auxs,main) => (getAuxFormulas( p ) ++ auxs.toSet) + main
+      case SchemaProofLinkRule(_, _, _) => Set[FormulaOccurrence]()
+  }
+}
 
 object eliminateDefinitions {
 
@@ -595,6 +609,11 @@ object cutformulaExtraction {
     case x : NullaryLKProof => Nil
     case UnaryLKProof(_, p1, _, _, _ ) => getCutsAsProofs(p1)
     case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutsAsProofs(p1) ++ getCutsAsProofs(p2)
+    // support LKsk
+    case UnaryLKskProof(_,p,_,_,_) => getCutsAsProofs(p)
+    // support SLK
+    case UnarySchemaProof(_,p,_,_,_) => getCutsAsProofs(p)
+    case SchemaProofLinkRule(_, _, _) => Nil
     case _ => throw new Exception("Unkown LK rule in extraction of cut-forumlas from proof! ")
   }
 
