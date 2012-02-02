@@ -586,3 +586,22 @@ object replaceSubproof {
     }
   }
 }
+
+object cutformulaExtraction {
+  def apply(p:LKProof) = getCutFormulas(p)
+
+  def getCutsAsProofs(p : LKProof) : List[LKProof] = p match {
+    case CutRule(p1,p2,root,aux1,aux2) => getCutsAsProofs(p1) ++ getCutsAsProofs(p2) ++ List(p)
+    case x : NullaryLKProof => Nil
+    case UnaryLKProof(_, p1, _, _, _ ) => getCutsAsProofs(p1)
+    case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutsAsProofs(p1) ++ getCutsAsProofs(p2)
+    case _ => throw new Exception("Unkown LK rule in extraction of cut-forumlas from proof! ")
+  }
+
+  def getCutFormulas(p:LKProof) : List[Sequent] = {
+    getCutsAsProofs(p) map ((x: LKProof) =>
+      x match { case CutRule(_,_,_,aux,_) => Sequent(Nil, List(aux)) }
+      )
+  }
+
+}
