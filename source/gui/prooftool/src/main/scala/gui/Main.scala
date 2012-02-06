@@ -436,7 +436,7 @@ object Main extends SimpleSwingApplication {
     import at.logic.language.lambda.symbols.VariableStringSymbol
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val n = IntVar(new VariableStringSymbol("n"))
-    val s = structToExpressionTree( StructCreators.extractStruct( body.getContent.getData.get._1, n) )
+    val s = structToExpressionTree.prunedTree( StructCreators.extractStruct( body.getContent.getData.get._1, n) )
     db.addStructTree( s )
     body.contents = new Launcher(Some("Schematic Struct",s),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -463,7 +463,7 @@ object Main extends SimpleSwingApplication {
   def showStruct = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
-    val s = structToExpressionTree( StructCreators.extract( proof_sk ) )
+    val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk ) )
     db.addStructTree( s )
     body.contents = new Launcher(Some("Struct",s),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -477,7 +477,7 @@ object Main extends SimpleSwingApplication {
   def showStructOnlyQuantifiedCuts = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
-    val s = structToExpressionTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
+    val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
     db.addStructTree( s )
     body.contents = new Launcher(Some("Struct",s),12)
     body.cursor = java.awt.Cursor.getDefaultCursor

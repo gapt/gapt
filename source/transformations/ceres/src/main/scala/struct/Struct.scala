@@ -34,7 +34,10 @@ import at.logic.calculi.lk.base.types.FSequent
 import clauseSets.StandardClauseSet._
 
 package struct {
-  trait Struct
+
+import _root_.at.logic.utils.ds.trees.LeafTree._
+
+trait Struct
 
   // Times is done as an object instead of a case class since
   // it has a convenience constructor (with empty auxFOccs)
@@ -69,6 +72,31 @@ package struct {
       case Dual(sub) => UnaryTree(DualC, apply(sub))
       case Times(left, right, _) => BinaryTree(TimesC, apply(left), apply(right))
       case Plus(left, right) => BinaryTree(PlusC, apply(left), apply(right))
+      case EmptyTimesJunction() => LeafTree(EmptyTimesC)
+      case EmptyPlusJunction() => LeafTree(EmptyPlusC)
+    }
+
+    // constructs struct Tree without empty leaves.
+    def prunedTree(s: Struct) : Tree[HOLExpression] = s match
+    {
+      case A(f) => LeafTree(f.formula)
+      case Dual(sub) => UnaryTree(DualC, prunedTree(sub))
+      case Times(left, right, _) =>
+        val l = prunedTree(left)
+        val r = prunedTree(right)
+        if (l.isInstanceOf[LeafTree[HOLExpression]] && (l.vertex == EmptyTimesC || l.vertex == EmptyPlusC))
+          if (r.isInstanceOf[LeafTree[HOLExpression]] && (r.vertex == EmptyTimesC || r.vertex == EmptyPlusC)) LeafTree(EmptyTimesC)
+          else r
+        else if (r.isInstanceOf[LeafTree[HOLExpression]] && (r.vertex == EmptyTimesC || r.vertex == EmptyPlusC)) l
+        else BinaryTree(TimesC, l, r)
+      case Plus(left, right) =>
+        val l = prunedTree(left)
+        val r = prunedTree(right)
+        if (l.isInstanceOf[LeafTree[HOLExpression]] && (l.vertex == EmptyTimesC || l.vertex == EmptyPlusC))
+          if (r.isInstanceOf[LeafTree[HOLExpression]] && (r.vertex == EmptyTimesC || r.vertex == EmptyPlusC)) LeafTree(EmptyPlusC)
+          else r
+        else if (r.isInstanceOf[LeafTree[HOLExpression]] && (r.vertex == EmptyTimesC || r.vertex == EmptyPlusC)) l
+        else BinaryTree(PlusC, l, r)
       case EmptyTimesJunction() => LeafTree(EmptyTimesC)
       case EmptyPlusJunction() => LeafTree(EmptyPlusC)
     }
