@@ -21,27 +21,10 @@ import at.logic.transformations.ceres.struct.ClauseSetSymbol
 
 object DrawSequent {
 
+  //used by DrawClList
   def apply(seq: Sequent, ft: Font): FlowPanel = apply(seq, ft, Set(), Set())
-  /*new FlowPanel {
-    background = new Color(255,255,255)
-    opaque = false
 
-    private var first = true
-    for (f <- seq.antecedent) {
-      if (! first) contents += new Label(", ") {font = ft}
-      else first = false
-      contents += formulaToLabel(f.formula, ft)
-    }
-    contents += new Label(" \u22a2 ") {font = ft}
-    first =true
-    for (f <- seq.succedent) {
-      if (! first) contents += new Label(", ")  {font = ft}
-      else first = false
-      contents += formulaToLabel(f.formula, ft)
-    }
-  } */
- // def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence]): FlowPanel = apply(seq, ft, cut_anc, Set())
-
+  //used by DrawProof
   def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence], vis_occ: Set[FormulaOccurrence]) = new FlowPanel {
     background = new Color(255,255,255)
     opaque = false
@@ -100,9 +83,9 @@ object DrawSequent {
     case ExVar(v, f) => "(" + """\exists """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
     case AllVar(v, f) => "(" + """\forall """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
     case BigAnd(v, formula, init, end) =>
-      "⋀_{" + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
+      """ \bigwedge_{ """ + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
     case BigOr(v, formula, init, end) =>
-      "⋁_{" + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
+      """ \bigvee_{ """ + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
     case IndexedPredicate(constant, indices) if (constant != BiggerThanC) =>
       {if (constant.name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
         val cl = constant.name.asInstanceOf[ClauseSetSymbol]
