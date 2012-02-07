@@ -270,7 +270,7 @@ object SHLK {
         case _ => {println("ERROR");Axiom(List(), List())}
       }
 
-      def proof_name : Parser[String] = """[a-z]*[0-9]*""".r
+      def proof_name : Parser[String] = """[\\]*[a-z]*[0-9]*""".r
 
       def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
