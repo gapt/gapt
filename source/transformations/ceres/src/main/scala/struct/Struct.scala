@@ -35,8 +35,6 @@ import clauseSets.StandardClauseSet._
 
 package struct {
 
-import _root_.at.logic.utils.ds.trees.LeafTree._
-
 trait Struct
 
   // Times is done as an object instead of a case class since
