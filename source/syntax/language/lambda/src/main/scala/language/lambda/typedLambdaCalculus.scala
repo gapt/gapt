@@ -42,22 +42,6 @@ trait LambdaFactoryProvider {
     def noUnboundedBounded: Boolean = {val ret = noUnboundedBoundedRec(Set[Var]()); if (!ret) Console.println(toStringSimple); ret} // confirms there are no unbounded bounded variables in the term
     protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean // the recursive call
     def variant(gen: => VariantGenerator): LambdaExpression
-    /*def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
-      case v: Var => (HashSet(v), new EmptySet)
-      case app: App => {
-        val mFBV = app.function.getFreeAndBoundVariables()
-        val nFBV = app.argument.getFreeAndBoundVariables()
-        (mFBV._1 ++ nFBV._1, mFBV._2 ++ nFBV._2)
-      }
-      case abs: Abs => {
-        val mFBV = abs.expression.getFreeAndBoundVariables()
-        //val bound = mFBV._2 + x
-        //val free = mFBV._1 - x
-        val bound = mFBV._2 + abs.variable
-        val free = mFBV._1.filter(y => abs.variable != y)
-        (free, bound)
-      }
-    }*/
     def toStringSimple: String
     def cloneTerm: LambdaExpression
   }
@@ -98,7 +82,7 @@ trait LambdaFactoryProvider {
    * has index 2 instead of 1.
    */
   class Var protected[typedLambdaCalculus]( val name: SymbolA, val exptype: TA,  dbInd: Option[Int]) extends LambdaExpression {
-    private[lambda] val dbIndex: Option[Int] = dbInd // represents a bound variable and its de Bruijn index
+    val dbIndex: Option[Int] = dbInd // represents a bound variable and its de Bruijn index
     def this(name: SymbolA, exptype: TA) = this(name, exptype, None)
     // alpha equals as ignores bound variable names
     override def equals(a: Any) = (a,dbIndex) match {
@@ -154,11 +138,9 @@ trait LambdaFactoryProvider {
   object doesNotContainFreeBound {
     def apply( e: LambdaExpression ) : Boolean = {
       val ret = doesNotContainFreeBound( e, new HashSet[Var] )
-//      if (!ret)
-//        println(e + " contains a free bound variable!")
-      //ret
-      // always return true
-      true
+      if (!ret)
+        println(e + " contains a free bound variable!")
+      ret
       }
 
     def apply( e: LambdaExpression, bvs: Set[Var] ) : Boolean = e match {
@@ -180,7 +162,11 @@ trait LambdaFactoryProvider {
    * the non-default methods will have the suffix InScope.
    */
    class Abs protected[typedLambdaCalculus](val variable: Var, val expression: LambdaExpression ) extends LambdaExpression  {
-     require (variable.isFree && doesNotContainFreeBound( expression ) )
+     // requirement of doesNotContainFreeBound must fail here, since for instance in the case of lambda x.lambda y.xy,
+     // the deBruijn Index of y needs to be changed due to the outer abstraction. during the recursive recreation of the term,
+     // x needs to have its db Index set, so it will not appear free in the subexpression lambda.y.xy
+      //     require (variable.isFree && doesNotContainFreeBound( expression ) )
+     require (variable.isFree, "Cannot abstract over a bound variable!")
     val expressionInScope = createDeBruijnIndex(variable, expression, computeMaxDBIndex(expression)+1)
     val variableInScope = variable.factory.createVar(variable.name, variable.exptype, Some(computeMaxDBIndex(expression)+1))  // set bounded variable index for given variable, must be done only after the index was alrewady set as otherwise the new var will be bound and the old ones not
     def exptype: TA = ->(variable.exptype,expression.exptype)
@@ -263,7 +249,7 @@ trait LambdaFactoryProvider {
           }
         case _          => false
       }
-    })
+    }, "Types don't fit while constructing application "+function+" "+argument)
     def variant(gen: => VariantGenerator) = App(function.variant(gen), argument.variant(gen))
     def exptype: TA = {
       function.exptype match {
