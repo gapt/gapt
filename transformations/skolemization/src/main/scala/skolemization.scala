@@ -2,7 +2,6 @@ package at.logic.transformations.skolemization
 
 // This package implements formula and proof Skolemization.
 
-import at.logic.language.lambda.typedLambdaCalculus.{Var,LambdaExpression}
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import at.logic.utils.logging.Logger
@@ -23,6 +22,7 @@ import at.logic.algorithms.lk.applySubstitution
 import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import at.logic.utils.ds.streams.Definitions._
 import scala.collection.immutable.Stream.Empty
+import typedLambdaCalculus.{AbsInScope, App, Var, LambdaExpression}
 
 /*
 object skolemize {
@@ -430,6 +430,8 @@ object skolemize {
         m + ( fo -> s )
       })
 
+    println("\n===== Start Skolemizing ====")
+
     skolemize( p, symbol_map, inst_map, new HashSet[FormulaOccurrence] )._1
   }
 
@@ -451,7 +453,7 @@ object skolemize {
     implicit val s_map = symbol_map
     implicit val i_map = inst_map
     implicit val c_ancs = cut_ancs
-
+    println("=== Skolemizing: " + proof.root + " ===")
     proof match
     {
       case Axiom(s) => {
@@ -460,15 +462,16 @@ object skolemize {
 /*        val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ) */
         val new_seq = ( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
         val ax = Axiom( new_seq._1, new_seq._2 )
+        println("Skolemization creates Axiom: " + ax.root.toStringSimple)
         var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
         new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
         (ax, new_map)
       }
-      case ForallRightRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply )
-      case ExistsLeftRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a, m, v, ExistsLeftRule.apply )
-      case ForallLeftRule(p, _, a, m, t) => handleWeakQuantRule( proof, p, a, m, t, 1, ForallLeftRule.computeAux,
+      case ForallRightRule(p, _, a, m, v) => debug("all,r",p,a::m::Nil, Nil, v::Nil); handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply )
+      case ExistsLeftRule(p, _, a, m, v) => debug("ex,l",p,a::m::Nil, Nil, v::Nil); handleStrongQuantRule( proof, p, a, m, v, ExistsLeftRule.apply )
+      case ForallLeftRule(p, _, a, m, t) => debug("ex,r",p,a::m::Nil, Nil, t::Nil); handleWeakQuantRule( proof, p, a, m, t, 1, ForallLeftRule.computeAux,
         ForallLeftRule.apply)
-      case ExistsRightRule(p, _, a, m, t) => handleWeakQuantRule( proof, p, a, m, t, 0, ExistsRightRule.computeAux,
+      case ExistsRightRule(p, _, a, m, t) => debug("all,l",p,a::m::Nil, Nil, t::Nil); handleWeakQuantRule( proof, p, a, m, t, 0, ExistsRightRule.computeAux,
         ExistsRightRule.apply)
       case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, 1, WeakeningLeftRule.apply)
       case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, 0, WeakeningRightRule.apply)
@@ -510,6 +513,20 @@ object skolemize {
         (ret, copyMapToDescendant( proof, ret, new_p1._2 ++ new_p2._2))
       }
     }
+  }
+  
+  def debug(msg: String,  proof : LKProof, aux : List[FormulaOccurrence], formulas : List[HOLFormula], terms: List[LambdaExpression]) = {
+    println("====== DEBUG: "+ msg)
+    println("== endsequent: "+proof.root.toStringSimple)
+    println("== auxiliaries:")
+    aux map  ((x:FormulaOccurrence) => println("== "+x.formula.toStringSimple))
+    println("==")
+    println("== formulas:")
+    formulas map  ((x:HOLFormula) => println(x.toStringSimple))
+    println("==")
+    println("== terms:")
+    terms map  ((x:LambdaExpression) => println("== "+x.toStringSimple))
+    println()
   }
 
   def handleEqRule( proof: LKProof, p1: LKProof, p2: LKProof, e: FormulaOccurrence, a: FormulaOccurrence, m: FormulaOccurrence,
@@ -656,21 +673,24 @@ object skolemize {
       cut_ancs: Set[FormulaOccurrence]
 
     ) = {
-      //println("entering weak quant rule")
+      println("\nentering weak quant rule for "+proof.root.toStringSimple)
+      inst_map map println
+      println
+      symbol_map map println
       val new_main = if (cut_ancs.contains( m )) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
-      //println("before: " + m.formula.toStringSimple)
-      //println("after: " + new_main.toStringSimple)
+      println("before: " + m.formula.toStringSimple)
+      println("after: " + new_main.toStringSimple)
       val inst_list = inst_map( m )
       val new_inst_map = copyMapToAncestor( inst_map ).updated( a, inst_list :+ t )
-      //println("recursive call in weak quant rule")
+      println("recursive call in weak quant rule")
       val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), new_inst_map, copySetToAncestor( cut_ancs ) )
-/*
-    println("==========================")
+
+    println("===========!!!===============")
     println(new_proof._1)
     println(new_proof._2(a).formula)
-    println(new_main)
+    println(new_main.toStringSimple)
     println(t)
-    */
+
       val ret = constructor( new_proof._1, new_proof._2( a ), new_main, t )
       ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
   }
@@ -697,18 +717,18 @@ object skolemize {
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],
       cut_ancs: Set[FormulaOccurrence]
     ) = {
-      //println("entering strong quant rule")
+      println("\nentering strong quant rule for "+proof.root.toStringSimple)
       if (!cut_ancs.contains( m ) )
       {
         val sym_stream = symbol_map( m )
         val sym = sym_stream.head
-        //println("skolem symbol: " + sym)
+        println("skolem symbol: " + sym)
         val skolem_term = Function( sym, inst_map( m ), v.exptype )
         val sub = Substitution( v, skolem_term )
         val sub_proof = applySubstitution( p, sub )
-        //println("old es: " + p.root.getSequent.toStringSimple)
-        //println("sub: " + sub )
-        //println("after sub: " + sub_proof._1.root.getSequent.toStringSimple )
+        println("old es: " + p.root)
+        sub.map map (( x : (Var,HOLExpression) ) => println("sub: " + x._1 + " -> " + x._2.toStringSimple))
+        println("after sub: " + sub_proof._1.root )
         // invert the formula occurrence map.
         val inv_map = sub_proof._2.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])((m, p) => m + (p._2 -> p._1) )
         val new_symbol_map = copyMapToAncestor( symbol_map ).updated( a, sym_stream.tail )
@@ -763,6 +783,7 @@ object skolemize {
 
   def apply(f: HOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) : HOLFormula = skolemize( f, pol, symbols )
 
+
   def skolemize(f: HOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) = sk( f, pol, Nil, symbols )
 
   def sk(f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[ConstantSymbolA]) : HOLFormula = f match {
@@ -775,6 +796,7 @@ object skolemize {
       {
         //println( "skolemizing ExQ")
         val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
+
         //println( "substitution: " + sub )
         //println( "before: " + f )
         //println( "after: " + sub( f ) )

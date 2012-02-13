@@ -17,13 +17,13 @@ import at.logic.utils.ds.trees._
 package base {
 
 import _root_.at.logic.utils.traits.Occurrence
-import collection.immutable.Seq
 import at.logic.language.lambda.substitutions.Substitution
 
 import java.util.Comparator
 import scala.math.Ordering._
 import tools.nsc.settings.FscSettings
 import base.types._
+import collection.immutable.{HashSet, Seq}
 
 /*
 import java.util.Comparator
@@ -151,6 +151,9 @@ import java.util.Comparator
 
   class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[FormulaOccurrence])
   {
+    require(checkFormulaOccurrences(antecedent), "antecedent contains binding errors: "+ (antecedent map (_.formula.toStringSimple)))
+    require(checkFormulaOccurrences(succedent),  "succedent contains binding errors: "+  (succedent map (_.formula.toStringSimple)))
+
     //TODO improve both equals methods
     def multisetEquals( o: Sequent ) = o.antecedent.diff(antecedent).isEmpty &&
                                        o.succedent.diff(succedent).isEmpty &&
@@ -199,6 +202,32 @@ import java.util.Comparator
     def toFormula = Or( antecedent.toList.map( f => Neg( f.formula ) ) ++ succedent.map(_.formula) )
     // checks whether this sequent is of the form F :- F
     def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head.formula == succedent.head.formula
+
+
+    //sanity checks for free and bound variables
+    def checkFormulaOccurrences(l : Seq[FormulaOccurrence]) = {
+      (l filterNot ((fo : FormulaOccurrence) => checkFormulas( List(fo.formula) ++ fo.ancestors.map(((occ:FormulaOccurrence) => occ.formula) ) ))).isEmpty
+    }
+    
+    def checkFormulas(l : Seq[HOLFormula]) = {
+      (l.foldLeft(List[LambdaExpression]())((x:List[LambdaExpression], y:HOLFormula) => x ++ checkLambdaExpression (y) )).isEmpty
+    }
+
+    def checkLambdaExpression(t: LambdaExpression) = checkLambdaExpression_(t, HashSet[Var]())
+    def checkLambdaExpression_(t: LambdaExpression, scope: HashSet[Var]) : List[Var] = t match {
+      case v : Var  =>
+        if (scope.contains(v) && v.isFree) return List(v)
+        if ((!scope.contains(v)) && v.isBound) return List(v)
+        List()
+      case App(s,t) =>
+        checkLambdaExpression_(s,scope) ++ checkLambdaExpression_(t,scope)
+      case AbsInScope(v,t) =>
+        checkLambdaExpression_(t, scope + v)
+      case _ => throw new Exception("Unhandled Lambda Term Type (not var, abs nor app)")
+    }
+
+
+
   }
 
   object Sequent {

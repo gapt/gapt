@@ -95,8 +95,8 @@ class SkolemizationTest extends SpecificationWithJUnit {
       res.root.toFSequent must beEqual (proof_sk.root.toFSequent)
     }
 
-    "work for a cut-free proof" in {
-      skip("fails because skolemized endsequent has R(s_{0}(a),s_{0}(s_{0}(a))) instead of R(a,s_{0}(a))")
+    "work for a cut-free proof (1)" in {
+      skip("still not working")
       /* Proof is:
                  R(a,b) :- R(a,b)
                  ----------------------   Ex,r
@@ -105,13 +105,15 @@ class SkolemizationTest extends SpecificationWithJUnit {
             ex y.R(a,y) :- ex y. R(a,y)
       ---------------------------------- All,l
       all x.ex y.R(x,y) :- ex y. R(a,y)
+      --------------------------------------- All,r
+      all x.ex y.R(x,y) :- all x.ex y. R(x,y)
 
-      Skolemized: (wrote s instead of s_0 for easier reading)
-            R(a,s(a)) :- R(a,s(a))
-            -------------------------     Ex,r
-            R(a,s(a)) :- ex y. R(a,y)
+      Skolemized: (wrote s0 instead of s_{0} for easier reading)
+          R(s1,s0(s1)) :- R(s1,s0(s1))
+          ----------------------------   Ex,r
+          R(s1,s0(s1)) :- ex y. R(s1,y)
       ---------------------------------- All,l
-      all x.R(x,s(x)) :- ex y. R(a,y)
+      all x.R(x,s0(x)) :- ex y. R(s1,y)
        */
 
       val a = HOLVar("a", i)
@@ -125,18 +127,30 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val r3 = ForallLeftRule( r2, r2.root.antecedent(0), allxexyRxy, a )
       val proof : LKProof = ForallRightRule( r3, exyRay, allxexyRxy, a )
 
-      val fs0 = HOLConst( s0, i -> i )
-      val s0s1 = HOLApp( fs0, a )
-      val sR = Atom( "R", a::s0s1::Nil )
-      val sax = Axiom( sR::Nil, sR::Nil )
+      val fs0 = HOLConst( new ConstantStringSymbol("s_{0}"), i -> i )
+      val s1c = HOLConst( new ConstantStringSymbol("s_{2}"), i)
+      val s0s1 = HOLApp( fs0,  s1c)
+      val sR = Atom( "R", List(s1c,s0s1) )
+      val sax = Axiom( List(sR), List(sR) )
 
-      val exyRs1y = ExVar( y, Atom( "R", a::y::Nil ) )
+      val exyRs1y = ExVar( y, Atom( "R", List(s1c, y )))
+//      val exyRs1s0s1 = ExVar( y, Atom( "R", List(a,y) ) )
       val sr1 = ExistsRightRule( sax, sax.root.succedent(0), exyRs1y, s0s1 )
 
       val allxRxs0x = AllVar( x, Atom( "R", List(x, HOLApp(fs0, x)) ))
-      val proof_sk = ForallLeftRule( sr1, sr1.root.antecedent(0) , allxRxs0x, s0s1 )
+      val sr2 = ForallLeftRule( sr1, sr1.root.antecedent(0) , allxRxs0x, s1c )
+      val proof_sk = sr2
 
+      SkolemSymbolFactory.reset
+
+      println("=== starting skolemization ===")
       val skolemized_proof : LKProof = skolemize( proof )
+      println("=== endsequent skolemized ===")
+      println(skolemized_proof.root)
+
       skolemized_proof.root must beMultisetEqual (proof_sk.root)
   }
-}}
+
+
+
+  }}

@@ -76,7 +76,7 @@ import _root_.at.logic.utils.traits.Occurrence
       else {
         val aux_fo = term1op.get
         val aux_form = computeAux(main, term)
-        assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toStringSimple + " is not equal to the formula " + aux_fo.formula.toStringSimple + " at the given occurrence")
+        assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toString + " is not equal to the formula " + aux_fo.formula.toString + " at the given occurrence ("+aux_form.toPrettyString + " != " + aux_fo.formula.toPrettyString+")")
         (aux_fo, aux_form)
       }
     }

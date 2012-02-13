@@ -78,6 +78,7 @@ import propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.definitionRules._
+import at.logic.language.lambda.types.Definitions._
 
 object loadProofs {
     def apply(file: String) = 
@@ -337,6 +338,24 @@ object loadProofDB {
   }
   object ceres {
     def help = ceresHelp.apply
+  }
+
+  object proofs {
+    def simple1() : LKProof = {
+      val x = HOLVar(new VariableStringSymbol("x"), i)
+      val y = HOLVar(new VariableStringSymbol("y"), i)
+      val a = HOLVar(new VariableStringSymbol("a"), i)
+      val b = HOLVar(new VariableStringSymbol("b"), i)
+      val Rab = Atom( new ConstantStringSymbol("R"), a::b::Nil )
+      val exyRay = ExVar( y, Atom( new ConstantStringSymbol("R"), a::y::Nil ) )
+      val allxexyRxy = AllVar( x, ExVar( y, Atom( new ConstantStringSymbol("R"), x::y::Nil ) ) )
+      val ax = Axiom( Rab::Nil, Rab::Nil )
+      val r1 = ExistsRightRule( ax, ax.root.succedent(0), exyRay, b )
+      val r2 = ExistsLeftRule( r1, r1.root.antecedent(0) , exyRay, b )
+      val r3 = ForallLeftRule( r2, r2.root.antecedent(0), allxexyRxy, a )
+      val proof : LKProof = ForallRightRule( r3, exyRay, allxexyRxy, a )
+      proof
+    }
   }
 
   object huet {

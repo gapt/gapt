@@ -5,10 +5,12 @@ import typedLambdaCalculus._
 
 package substitutions {
 
-  /* substitution preserves the following:
-   * 1) it is a valid function, i.e. order of elements is irrelevant and each varialbe is mapped to only one element
-   * 2) all mappings are applied simultaneously to a term i.e. {x |-> y, y |-> a}x = y and not a.
-   */
+import collection.immutable.HashSet
+
+/* substitution preserves the following:
+* 1) it is a valid function, i.e. order of elements is irrelevant and each varialbe is mapped to only one element
+* 2) all mappings are applied simultaneously to a term i.e. {x |-> y, y |-> a}x = y and not a.
+*/
   class Substitution[T <: LambdaExpression] protected[substitutions](val map: scala.collection.immutable.Map[Var, T]) extends (T => T) {
     def ::(sub:Tuple2[Var, T]) = new Substitution(map + sub)
     def :::(otherSubstitution:Substitution[T]) = new Substitution(map ++ otherSubstitution.map.iterator)
@@ -19,11 +21,32 @@ package substitutions {
     }
     override def hashCode() = map.hashCode
     override def toString = map.toString
+
+    /*copy of a method in Sequent */
+    def checkLambdaExpression(t: LambdaExpression) = checkLambdaExpression_(t, HashSet[Var]())
+    def checkLambdaExpression_(t: LambdaExpression, scope: HashSet[Var]) : List[Var] = t match {
+      case v : Var  =>
+        if (scope.contains(v) && v.isFree) return List(v)
+        if ((!scope.contains(v)) && v.isBound) return List(v)
+        List()
+      case App(s,t) =>
+        checkLambdaExpression_(s,scope) ++ checkLambdaExpression_(t,scope)
+      case AbsInScope(v,t) =>
+        checkLambdaExpression_(t, scope + v)
+      case _ => throw new Exception("Unhandled Lambda Term Type (not var, abs nor app)")
+    }
+
     // the change of db indices is done automatically in the constructor of abs
     protected def applyWithChangeDBIndices(expression: T): T = expression match {
       case x:Var if x.isFree => {
         map.get(x) match {
           case Some(t) => {
+            val freevarsWithDBIndex = checkLambdaExpression(t)
+            if (!freevarsWithDBIndex.isEmpty) {
+              println("ERROR: bound variables "+ freevarsWithDBIndex +" outside of binding context in term "+t.toStringSimple)
+              throw new Exception("ERROR: bound variables "+ freevarsWithDBIndex +" outside of binding context in term "+t.toStringSimple)
+            }
+
             //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
             t
           }
