@@ -75,13 +75,13 @@ class ProjectionTermTest extends SpecificationWithJUnit {
           val map = SHLK.parseProof(str)
 
           val pterm = ProjectionTermCreators.extract(map.get(proof_name).get._2.get("root").get, Set.empty[FormulaOccurrence], map.get(proof_name).get._2.get("root").get)
-          val t = pStructToExpressionTree(pterm)
+          val t = PStructToExpressionTree.applyConsole(pterm)
 
 //          val pterm = ProjectionTermCreators.extract(root, Set.empty[FormulaOccurrence], root)
 //          val t = pStructToExpressionTree(pterm)
           println(printSchemaProof(map.get(proof_name).get._2.get("root").get))
           println("\n\n\n\n\n\n\n\n\n\n")
-          pStructToExpressionTree.printTree(t)
+          PStructToExpressionTree.printTree(t)
           println("\n\n")
 
 //          printSchemaProof.sequentToString(ax2.root)
