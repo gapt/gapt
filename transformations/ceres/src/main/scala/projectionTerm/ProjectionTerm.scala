@@ -82,6 +82,12 @@ object pAxiomTerm {
 
 
 object ProjectionTermCreators {
+//  def apply(proof_name: String): List[(String,Tree[String])] = {
+//    SchemaProofDB.
+//    extract(SchemaProofDB.get(proof_name).base, )
+//      TODO
+//  }
+
   def extract(pr: LKProof, omega: Set[FormulaOccurrence], p_old: LKProof): ProjectionTerm = pr match {
     case Axiom(ro) => pAxiomTerm(ro)
     case WeakeningLeftRule(p, _, m) => {
@@ -228,7 +234,13 @@ object pStructToExpressionTree {
 //    case EmptyPlusJunction() => LeafTree(EmptyPlusC)
 
     case pTimes(rho, left, right) => BinaryTree(printSchemaProof.formulaToString(pTimesC)+"_"+rho, apply(left), apply(right))
-    case pPlus(seq1, seq2, left, right, w1, w2) => BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), apply(left), apply(right), w1, w2)
+    case pPlus(seq1, seq2, left, right, w1, w2) => {
+//      BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), apply(left), apply(right), w1, w2)
+      val t1 = UnaryTree("w^{"+ printSchemaProof.sequentToString(w1) +"}", apply(left))
+      val t2 = UnaryTree("w^{"+ printSchemaProof.sequentToString(w2) +"}", apply(right))
+      BinaryTree(printSchemaProof.formulaToString(pPlusC), t1, t2)
+
+    }
     case pUnary(rho, upper) => UnaryTree(rho, apply(upper))
 //    case pProofLinkTerm(omega, proof_name, index) => LeafTree(new pProjSymbol(omega, index))
     case pAxiomTerm(seq) => {
@@ -315,21 +327,24 @@ object pStructToExpressionTree {
     case LeafTree(vert) => print(" "+Console.MAGENTA+Console.UNDERLINED+vert+Console.RESET+" ")
 
     case UnaryTree(vert, up) => {
-      print(Console.GREEN )
+      if (vert.startsWith("w"))
+        print(Console.YELLOW )
+      else
+        print(Console.GREEN )
       print(" "+vert)
       print(Console.RESET)
       printTree(up)
     }
 
-    case BinaryTreeWeak12(vert, up1, up2, w1, w2) => {
-      print(Console.BLUE+" ("+Console.RESET+" w^{"+Console.YELLOW+printSchemaProof.sequentToString(w1)+Console.RESET+"}")
-      printTree(up1)
-      print(" "+Console.BLUE)
-      print("\n\n                                  "+vert+"\n\n")
-      print(Console.RESET+" w^{"+Console.YELLOW+printSchemaProof.sequentToString(w2)+Console.RESET+"}")
-      printTree(up2)
-      print(Console.BLUE+")"+Console.RESET)
-    }
+//    case BinaryTreeWeak12(vert, up1, up2, w1, w2) => {
+//      print(Console.BLUE+" ("+Console.RESET+" w^{"+Console.YELLOW+printSchemaProof.sequentToString(w1)+Console.RESET+"}")
+//      printTree(up1)
+//      print(" "+Console.BLUE)
+//      print("\n\n                                  "+vert+"\n\n")
+//      print(Console.RESET+" w^{"+Console.YELLOW+printSchemaProof.sequentToString(w2)+Console.RESET+"}")
+//      printTree(up2)
+//      print(Console.BLUE+")"+Console.RESET)
+//    }
 
     case BinaryTree(vert, up1, up2) => {
       if (vert == pPlusSymbol.toString)
@@ -339,11 +354,15 @@ object pStructToExpressionTree {
       print("(")
       print(Console.RESET)
       printTree(up1)
-      if (vert == pPlusSymbol.toString)
+      if (vert == pPlusSymbol.toString) {
         print(Console.BLUE)
-      else
+        print("\n\n                                   "+vert+"\n\n")
+      }
+      else {
         print(Console.RED)
-      print(" "+vert+" ")
+        print(" "+vert+" ")
+      }
+
       print(Console.RESET)
       printTree(up2)
       if (vert == pPlusSymbol.toString)
@@ -357,15 +376,15 @@ object pStructToExpressionTree {
   }
 }
 
-class BinaryTreeWeak12(override val vertex: String, override val t1: Tree[String], override val t2: Tree[String], val w1: Sequent, val w2: Sequent) extends BinaryTree[String](vertex, t1, t2)
-
-object BinaryTreeWeak12 {
-  def apply(vertex: String, t1: Tree[String], t2: Tree[String], w1:Sequent, w2:Sequent) = {
-    new BinaryTreeWeak12(vertex, t1, t2, w1, w2)
-  }
-  def unapply(t: Tree[String]) = t match {
-    case t: BinaryTreeWeak12 => Some((t.vertex, t.t1, t.t2, t.w1, t.w2))
-    case t: Tree[_] => None
-  }
-}
+//class BinaryTreeWeak12(override val vertex: String, override val t1: Tree[String], override val t2: Tree[String], val w1: Sequent, val w2: Sequent) extends BinaryTree[String](vertex, t1, t2)
+//
+//object BinaryTreeWeak12 {
+//  def apply(vertex: String, t1: Tree[String], t2: Tree[String], w1:Sequent, w2:Sequent) = {
+//    new BinaryTreeWeak12(vertex, t1, t2, w1, w2)
+//  }
+//  def unapply(t: Tree[String]) = t match {
+//    case t: BinaryTreeWeak12 => Some((t.vertex, t.t1, t.t2, t.w1, t.w2))
+//    case t: Tree[_] => None
+//  }
+//}
 
