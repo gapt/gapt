@@ -1,9 +1,12 @@
 package at.logic.transformations.ceres
 
-import _root_.at.logic.calculi.slk.AndEquivalenceRule1._
-import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.calculi.slk.AndEquivalenceRule1._
+import at.logic.language.hol.logicSymbols.{ConstantSymbolA, LogicalSymbolsA}
+import at.logic.language.lambda.symbols.{SymbolA, VariableStringSymbol}
+import at.logic.transformations.ceres.PStructToExpressionTree._
+import at.logic.utils.ds.Multisets
+import at.logic.utils.ds.Multisets.Multiset
 import at.logic.language.lambda.typedLambdaCalculus.Var
-import at.logic.language.hol.logicSymbols.LogicalSymbolsA
 import at.logic.language.hol.{HOLConst, HOLExpression, HOLFormula}
 import at.logic.utils.ds.trees.{BinaryTree, UnaryTree, LeafTree, Tree}
 import at.logic.algorithms.lk.{getCutAncestors, getAncestors}
@@ -14,6 +17,8 @@ import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOcc
 import at.logic.language.schema._
 import at.logic.calculi.proofs.{BinaryRuleTypeA, UnaryRuleTypeA, NullaryRuleTypeA}
 import projections.printSchemaProof
+import collection.immutable.HashMap
+
 //import scala.collection.mutable.{Map, HashMap}
 import unfolding.{StepMinusOne, SchemaSubstitution1}
 
@@ -224,28 +229,68 @@ object ProjectionTermCreators {
 
 
 
-object pStructToExpressionTree {
-  def apply(s: ProjectionTerm) : Tree[String] = s match {
-//    case A(f) => LeafTree(f.formula)
-//    case Dual(sub) => UnaryTree(DualC, apply(sub))
-//    case Times(left, right, _) => BinaryTree(TimesC, apply(left), apply(right))
-//    case Plus(left, right) => BinaryTree(PlusC, apply(left), apply(right))
-//    case EmptyTimesJunction() => LeafTree(EmptyTimesC)
-//    case EmptyPlusJunction() => LeafTree(EmptyPlusC)
+object PStructToExpressionTree {
 
-    case pTimes(rho, left, right) => BinaryTree(printSchemaProof.formulaToString(pTimesC)+"_"+rho, apply(left), apply(right))
+  def apply(s: ProjectionTerm) : Tree[AnyRef] = s match {
+     case pTimes(rho, left, right) => BinaryTree(new PTimesC(rho), apply(left), apply(right))
     case pPlus(seq1, seq2, left, right, w1, w2) => {
 //      BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), apply(left), apply(right), w1, w2)
-      val t1 = UnaryTree("w^{"+ printSchemaProof.sequentToString(w1) +"}", apply(left))
-      val t2 = UnaryTree("w^{"+ printSchemaProof.sequentToString(w2) +"}", apply(right))
-      BinaryTree(printSchemaProof.formulaToString(pPlusC), t1, t2)
+      val t1 = UnaryTree(new PWeakC(w1), apply(left))
+      val t2 = UnaryTree(new PWeakC(w2), apply(right))
+      BinaryTree(PPlusC, t1, t2)
 
     }
     case pUnary(rho, upper) => UnaryTree(rho, apply(upper))
+    case pAxiomTerm(seq) => {
+      LeafTree(seq)
+    }
+    case pProofLinkTerm( seq, omega, proof_name, index, p_old ) => {
+      val cut_omega_anc = getCutAncestors(p_old) ++ getAncestors(omega)
+      val seq1 = SchemaProofDB.get(proof_name).rec.root
+      val len = StepMinusOne.lengthVar(index)
+      val foccsInSeq = (seq.antecedent ++ seq.succedent).filter(fo => cut_omega_anc.contains(fo))
+      var new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm]
+      var sub = new SchemaSubstitution1[HOLExpression](new_map)
+      if (len == 0)
+        new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(index) )
+      else
+        if (len == 1)
+          new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] //+ Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
+        else {
+//          var new_term = index
+//          for (i<-StepMinusOne.lengthVar(new_term) to 2 ) {
+//            new_term = Pred(index)
+//          }
+          // TODO !!!
+          new_map
+        }
+      sub = new SchemaSubstitution1[HOLExpression](new_map)
+      val ms1 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
+      val ms11 = foccsInSeq.filter(fo => seq.antecedent.contains(fo)).map(fo => sub(fo.formula)).foldLeft(ms1)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      val ms2 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
+      val ms22 = foccsInSeq.filter(fo => seq.succedent.contains(fo)).map(fo => sub(fo.formula)).foldLeft(ms2)((res,f) => res + f.asInstanceOf[SchemaFormula])
+
+      LeafTree(IndexedPredicate(new ProjectionSetSymbol(proof_name, (ms11,ms22)), index::Nil))
+    }
+  }
+
+
+// for nice printing in console - the braces are with different colors and such things
+  def applyConsole(s: ProjectionTerm) : Tree[String] = s match {
+
+    case pTimes(rho, left, right) => BinaryTree[String](printSchemaProof.formulaToString(new PTimesC(""))+"_"+rho, applyConsole(left), applyConsole(right))
+    case pPlus(seq1, seq2, left, right, w1, w2) => {
+//      BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), applyapply(left), applyapply(right), w1, w2)
+      val t1 = UnaryTree[String]("w^{"+ printSchemaProof.sequentToString(w1) +"}", applyConsole(left))
+      val t2 = UnaryTree[String]("w^{"+ printSchemaProof.sequentToString(w2) +"}", applyConsole(right))
+      BinaryTree[String](printSchemaProof.formulaToString(PPlusC), t1, t2)
+
+    }
+    case pUnary(rho, upper) => UnaryTree[String](rho, applyConsole(upper))
 //    case pProofLinkTerm(omega, proof_name, index) => LeafTree(new pProjSymbol(omega, index))
     case pAxiomTerm(seq) => {
 //      println("pAxiomTerm "+ printSchemaProof.sequentToString(seq))
-      LeafTree(printSchemaProof.sequentToString(seq))
+      LeafTree[String](printSchemaProof.sequentToString(seq))
     }
     case pProofLinkTerm( seq, omega, proof_name, index, p_old ) => {
 //      val cut_omega_anc = getCutAncestors(SchemaProofDB.get(proof_name).rec) ++ getAncestors(omega)
@@ -277,52 +322,55 @@ object pStructToExpressionTree {
         str = printSchemaProof.formulaToString(sub(foccsInSeq.head.formula))
       else
         str1 = foccsInSeq.tail.foldLeft(", ")((res,fo) => printSchemaProof.formulaToString(fo.formula)+res)
-
 //        foccsInSeq.foldLeft(", ")((res,fo) => printSchemaProof.formulaToString(fo.formula)+res)
-      LeafTree("pr^"+Console.RESET+"{"+Console.CYAN+str+str1+Console.RESET+"},"+proof_name+"("+Console.MAGENTA+Console.UNDERLINED+printSchemaProof.formulaToString(index)+Console.RESET+")")
-
-
+      LeafTree[String]("pr^"+Console.RESET+"{"+Console.CYAN+str+str1+Console.RESET+"},"+proof_name+"("+Console.MAGENTA+Console.UNDERLINED+printSchemaProof.formulaToString(index)+Console.RESET+")")
     }
   }
 
 
   // We define some symbols that represent the operations of the struct
-  case object pTimesSymbol extends LogicalSymbolsA {
+ case class PTimesSymbol(val rho: String) extends LogicalSymbolsA {
     override def unique = "TimesSymbol"
-    override def toString = "⊗"
+    override def toString = "⊗_"+rho
     def toCode = "TimesSymbol"
   }
 
-  case object pPlusSymbol extends LogicalSymbolsA {
+  case object PPlusSymbol extends LogicalSymbolsA {
     override def unique = "PlusSymbol"
     override def toString = "⊕"
     def toCode = "PlusSymbol"
   }
 
-  case object pDualSymbol extends LogicalSymbolsA {
-    override def unique = "DualSymbol"
-    override def toString = "¬"//"∼"
-    def toCode = "DualSymbol"
+  case class PWeakSymbol(val seq: Sequent) extends LogicalSymbolsA {
+    override def unique = "WeakSymbol"
+    override def toString = "w^{"+seq.toString+"}"
+    def toCode = "WeakSymbol"
   }
 
-  case object pEmptyTimesSymbol extends LogicalSymbolsA {
-    override def unique = "EmptyTimesSymbol"
-    override def toString = "ε_⊗"
-    def toCode = "EmptyTimesSymbol"
+  class ProjectionSetSymbol (val name: String, val cut_occs: (Multiset[SchemaFormula], Multiset[SchemaFormula])) extends ConstantSymbolA {
+    def compare( that: SymbolA ) : Int =
+      // TODO: implement
+      throw new Exception
+
+    def toCode() : String =
+      // TODO: implement
+      throw new Exception
+
+    override def toString() =
+      "pr^{(" + cutConfToString(cut_occs) + ")," + name +"}"
+
+    private def cutConfToString( cc : (Multiset[SchemaFormula], Multiset[SchemaFormula]) ) = {
+      def str( m : Multiset[SchemaFormula] ) = m.foldLeft( "" )( (s, f) => s + f.toStringSimple )
+      str( cc._1 ) + "|" + str( cc._2 )
+    }
   }
 
-  case object pEmptyPlusSymbol extends LogicalSymbolsA {
-    override def unique = "EmptyPlusSymbol"
-    override def toString = "ε_⊕"
-    def toCode = "EmptyPlusSymbol"
-  }
+  case class PTimesC(val rho: String) extends HOLConst(new PTimesSymbol(rho), "( o -> (o -> o) )")
+  case object PPlusC extends HOLConst(PPlusSymbol, "( o -> (o -> o) )")
+  case class PWeakC(val seq: Sequent) extends HOLConst(new PWeakSymbol(seq), "(o -> o)")
 
-  case object pTimesC extends HOLConst(pTimesSymbol, "( o -> (o -> o) )")
-  case object pPlusC extends HOLConst(pPlusSymbol, "( o -> (o -> o) )")
-  case object pDualC extends HOLConst(pDualSymbol, "(o -> o)")
-  case object pEmptyTimesC extends HOLConst(pEmptyTimesSymbol, "o")
-  case object pEmptyPlusC extends HOLConst(pEmptyPlusSymbol, "o")
 
+  // for nice printing in Console only !
   def printTree(r: Tree[String]): Unit = r match {
     case LeafTree(vert) => print(" "+Console.MAGENTA+Console.UNDERLINED+vert+Console.RESET+" ")
 
@@ -347,14 +395,14 @@ object pStructToExpressionTree {
 //    }
 
     case BinaryTree(vert, up1, up2) => {
-      if (vert == pPlusSymbol.toString)
+      if (vert == PPlusSymbol.toString)
         print(Console.BLUE)
       else
         print(Console.RED)
       print("(")
       print(Console.RESET)
       printTree(up1)
-      if (vert == pPlusSymbol.toString) {
+      if (vert == PPlusSymbol.toString) {
         print(Console.BLUE)
         print("\n\n                                   "+vert+"\n\n")
       }
@@ -365,7 +413,7 @@ object pStructToExpressionTree {
 
       print(Console.RESET)
       printTree(up2)
-      if (vert == pPlusSymbol.toString)
+      if (vert == PPlusSymbol.toString)
         print(Console.BLUE)
       else
         print(Console.RED)
