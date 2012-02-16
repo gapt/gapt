@@ -16,7 +16,11 @@ import at.logic.utils.ds.trees._
 import at.logic.language.hol.HOLExpression
 import DrawSequent._
 import at.logic.gui.prooftool.parser.{StructPublisher, ShowLeaf, HideLeaf, HideTree}
-import at.logic.transformations.ceres.struct.structToExpressionTree.{TimesC, PlusC, EmptyTimesC, EmptyPlusC}
+import at.logic.transformations.ceres.struct.structToExpressionTree.{TimesC, PlusC}
+import at.logic.transformations.ceres.PStructToExpressionTree.{PWeakC, PTimesC, PPlusC}
+import java.awt.event.MouseEvent
+import at.logic.calculi.lk.base.Sequent
+import javax.swing.Icon
 
 class DrawTree(private val struct: Tree[_], private val fSize: Int) extends BorderPanel {
   background = new Color(255,255,255)
@@ -25,37 +29,67 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val bd = Swing.EmptyBorder(fSize / 2)
   private val tx = struct.vertex match {
+    case PWeakC(seq) => "w^{" + sequentToLatexString(seq) + "}"
     case he: HOLExpression => formulaToLatexString(he)
+    case seq: Sequent => sequentToLatexString(seq)
     case _ => struct.vertex.toString
   }
   private var drawLines = true
 
   struct match {
     case tree: UnaryTree[_] =>
-      val label = new Label(tx) {
-        border = bd
-        font = ft
-        listenTo(mouse.clicks, StructPublisher)
-        reactions += {
-          case ShowLeaf =>
-            text = tx
-            drawLines = true
-          case e: MouseClicked =>
-            if (text == "x") {
-              text = tx
-              drawLines = true
-              publish(ShowLeaf)
-            }
-            else {
-              text = "x"
-              drawLines = false
-              publish(HideTree)
-            }
+      val mylabel = tree.vertex match {
+        case PWeakC(_) => latexToLabel(tx, ft)
+        case _ => new Label(tx) {
+          font = ft
+          val myicon : Icon = null
         }
       }
-      layout(label) = Position.North
+      mylabel.opaque = false
+      mylabel.border = bd
+      mylabel.listenTo(mouse.clicks, StructPublisher)
+      mylabel.reactions += {
+        case ShowLeaf =>
+          if (mylabel.myicon != null) {
+            mylabel.icon = mylabel.myicon
+            mylabel.text = ""
+          } else mylabel.text = tx
+          drawLines = true
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
+          if (mylabel.myicon != null) {
+            if (mylabel.text == "") {
+              mylabel.text = "x"
+              mylabel.icon = null
+              drawLines = false
+              mylabel.publish(HideTree)
+            }
+            else {
+              mylabel.icon = mylabel.myicon
+              mylabel.text = ""
+              drawLines = true
+              mylabel.publish(ShowLeaf)
+            }
+          } else {
+            if (mylabel.text == "x") {
+              mylabel.text = tx
+              drawLines = true
+              mylabel.publish(ShowLeaf)
+            }
+            else {
+              mylabel.text = "x"
+              drawLines = false
+              mylabel.publish(HideTree)
+            }
+          }
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+          if (mylabel.myicon != null) {
+            mylabel.text = "x"
+            mylabel.icon = null
+          } else mylabel.text = "x"
+      }
+      layout(mylabel) = Position.North
       layout(new DrawTree(tree.t, fSize) {
-        listenTo(label, StructPublisher)
+        listenTo(mylabel, StructPublisher)
         reactions += {
           case ShowLeaf => visible = true
           case HideTree => visible = false
@@ -64,8 +98,8 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
     case tree: BinaryTree[_] =>
       val label = new Label(tx) {
         tree.vertex match {
-          case TimesC => foreground = new Color(255,0,0)
-          case PlusC => foreground = new Color(0,0,255)
+          case TimesC | PTimesC(_) => foreground = new Color(255,0,0)
+          case PlusC | PPlusC => foreground = new Color(0,0,255)
           case _ =>
         }
         border = bd
@@ -75,7 +109,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
           case ShowLeaf =>
             text = tx
             drawLines = true
-          case e: MouseClicked =>
+          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
             if (text == "x") {
               text = tx
               drawLines = true
@@ -86,6 +120,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
               drawLines = false
               publish(HideTree)
             }
+          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => text = "x"
         }
       }
       layout(label) = Position.North
@@ -106,10 +141,6 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
     case tree: LeafTree[_] =>
       val mylabel = latexToLabel(tx, ft)
       mylabel.opaque = false
-      tree.vertex match {
-        case EmptyTimesC | EmptyPlusC => mylabel.foreground = new Color(0,255,0)
-        case _ =>
-      }
       mylabel.border = bd
       mylabel.listenTo(mouse.clicks, StructPublisher)
       mylabel.reactions += {
@@ -132,7 +163,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
       layout(mylabel) = Position.North
   }
 
-  override def paintComponent(g: Graphics2D) = {
+  override def paintComponent(g: Graphics2D) {
     super.paintComponent(g)
 
     g.setStroke(new BasicStroke(fSize / 25, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND))

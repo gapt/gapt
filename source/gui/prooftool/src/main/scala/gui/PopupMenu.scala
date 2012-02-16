@@ -28,7 +28,7 @@ class PopupMenu extends Component with Wrapper {
 
 object PopupMenu {
 
-  def apply(tproof: TreeProof[_], component: Component, x: Int, y: Int) = {
+  def apply(tproof: TreeProof[_], component: Component, x: Int, y: Int) {
     proof = Some(tproof)
     popupMenu.show(component, x, y)
   }
@@ -46,7 +46,7 @@ object PopupMenu {
 */
   }
 
-  def gentzen(proof: TreeProof[_]) = try {
+  def gentzen(proof: TreeProof[_]) : Unit = try {
     val steps = Dialog.showConfirmation(body, "Do you want to see intermediary steps?",
       "ProofTool", Dialog.Options.YesNo, Message.Question) match {
       case Dialog.Result.Yes => true

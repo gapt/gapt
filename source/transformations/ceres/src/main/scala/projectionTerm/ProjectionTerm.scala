@@ -19,6 +19,7 @@ import at.logic.language.schema._
 import at.logic.calculi.proofs.{BinaryRuleTypeA, UnaryRuleTypeA, NullaryRuleTypeA}
 import projections.printSchemaProof
 import collection.immutable.HashMap
+import struct.{cutOccConfigToCutConfig, StructCreators, TypeSynonyms}
 
 //import scala.collection.mutable.{Map, HashMap}
 import unfolding.{StepMinusOne, SchemaSubstitution1}
@@ -89,6 +90,28 @@ object pAxiomTerm {
 class ProjectionTermCreators(val ccmap: scala.collection.immutable.Map[String, List[FormulaOccurrence]]) {}
 
 object ProjectionTermCreators {
+  // Takes all proofs from SchemaProofDB and computes projections for all cut-configurations
+  def apply() : List[(String,Tree[_])] = {
+    var projs = List[(String,Tree[_])]()
+    SchemaProofDB.foreach( pair => {
+      val cutConfs_base = StructCreators.cutConfigurations(pair._2.base)
+      val set_base = cutConfs_base.map( cc => ("\u039e(" + pair._1 + "_base, (" +
+        cutConfToString( cutOccConfigToCutConfig( pair._2.base.root, cc, pair._2.seq, pair._2.vars, IntZero()::Nil ) ) + "))",
+        PStructToExpressionTree(extract( pair._2.base, cc, pair._2.base)))).toList
+      val cutConfs_step = StructCreators.cutConfigurations(pair._2.rec)
+      val set_step = cutConfs_step.map( cc => ("\u039e(" + pair._1 + "_step, (" +
+        cutConfToString( cutOccConfigToCutConfig( pair._2.rec.root, cc, pair._2.seq, pair._2.vars,  Succ(IntVar(new VariableStringSymbol("k") ))::Nil ) ) + "))",
+        PStructToExpressionTree(extract( pair._2.rec, cc, pair._2.rec)))).toList
+      projs = projs ::: set_base ::: set_step
+    } )
+    projs
+  }
+
+  def cutConfToString( cc : TypeSynonyms.CutConfiguration ) = {
+    def str( m : Multiset[SchemaFormula] ) = m.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + printSchemaProof.formulaToString(f) )
+    str( cc._1 ) + " | " + str( cc._2 )
+  }
+
   def apply(ccmap: scala.collection.immutable.Map[String, List[FormulaOccurrence]]) = {
     new ProjectionTermCreators(ccmap)
   }
@@ -140,7 +163,6 @@ object ProjectionTermCreators {
     case UnaryTree(_,up) => getCC(up.asInstanceOf[LKProof], omega, p_old)
     case BinaryTree(_, up1, up2) => getCC(up1.asInstanceOf[LKProof], omega, p_old) ++ getCC(up2.asInstanceOf[LKProof], omega, p_old)
   }
-
 
 
   def extract(pr: LKProof, omega: Set[FormulaOccurrence], p_old: LKProof): ProjectionTerm = pr match {

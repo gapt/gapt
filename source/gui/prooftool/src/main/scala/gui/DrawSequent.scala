@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage
 import swing.{Label, FlowPanel}
 import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, IntegerTerm, IntVar, IntConst, IntZero, Succ}
 import at.logic.transformations.ceres.struct.ClauseSetSymbol
+import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
 
 
 object DrawSequent {
@@ -75,6 +76,25 @@ object DrawSequent {
     icon = myicon
   }
 
+   // this method is by DrawTree when drawing projections.
+  def sequentToLatexString(seq: Sequent): String = {
+    var s = " "
+    var first = true
+    for (f <- seq.antecedent) {
+      if (! first) s = s + ", "
+      else first = false
+      s = s + formulaToLatexString(f.formula)
+    }
+    s = s + " \u22a2 "
+    first = true
+    for (f <- seq.succedent) {
+      if (! first) s = s + ", "
+      else first = false
+      s = s + formulaToLatexString(f.formula)
+    }
+    s
+  }
+
   def formulaToLatexString(t: LambdaExpression): String = t match {
     case Neg(f) => """\neg """ + formulaToLatexString(f)
     case And(f1,f2) => "(" + formulaToLatexString(f1) + """ \wedge """ + formulaToLatexString(f2) + ")"
@@ -90,6 +110,10 @@ object DrawSequent {
       {if (constant.name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
         val cl = constant.name.asInstanceOf[ClauseSetSymbol]
         "cl^{(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
+          cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")," + cl.name +"}"
+      } else if (constant.name.isInstanceOf[ProjectionSetSymbol]) { //parse pr variables to display cut-configuration.
+        val cl = constant.name.asInstanceOf[ProjectionSetSymbol]
+        "pr^{(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
           cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")," + cl.name +"}"
       }
       else nameToLatexString(constant.name.toString)} + {if (indices.isEmpty) "" else indices.map(x => formulaToLatexString(x)).mkString("_{",",","}")}

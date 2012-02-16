@@ -8,7 +8,7 @@ package at.logic.gui.prooftool.parser
  */
 
 import scala.swing.{Dialog, Label}
-import java.io.{FileInputStream, InputStreamReader, IOException}
+import java.io.{FileInputStream, InputStreamReader}
 import java.util.zip.GZIPInputStream
 import at.logic.parsing.language.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.parsing.readers.XMLReaders._
@@ -28,22 +28,22 @@ class FileParser {
 
   def gzFileStreamReader(f: String) = new InputStreamReader(new GZIPInputStream(new FileInputStream(f)), "UTF8")
 
-  def ceresFileReader(input: InputStreamReader) = {
+  def ceresFileReader(input: InputStreamReader) {
     proofs = Nil
     proofdb = (new XMLReader(input) with XMLProofDatabaseParser).getProofDatabase()
   }
 
-  def stabFileReader(input: InputStreamReader) = {
+  def stabFileReader(input: InputStreamReader) {
     proofdb = new ProofDatabase(Nil, Nil, Nil)
     proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
   }
 
-  def lksFileReader(f: String) = {
+  def lksFileReader(f: String) {
     proofs = Nil
     proofdb = new ProofDatabase(SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
   }
 
-  def parseFile(path: String) = try {
+  def parseFile(path: String) : Unit = try {
     if (path.endsWith(".lks")) lksFileReader(path)
     else if (path.endsWith(".xml")) try {
       ceresFileReader(xmlFileStreamReader(path))
@@ -61,10 +61,11 @@ class FileParser {
     case e: AnyRef => errorMessage(e.toString, path)
   }
 
-  def errorMessage(err: String, path: String) =
+  def errorMessage(err: String, path: String) {
         Dialog.showMessage(new Label(err),"Could not load file: "+path+"!\n\n"+err.replaceAll(",",",\n").replaceAll(">",">\n"))
+  }
 
-  def addProofs(proofs : List[(String, LKProof)]) = {
+  def addProofs(proofs : List[(String, LKProof)]) {
     proofdb = new ProofDatabase(proofdb.proofs:::proofs, proofdb.axioms, proofdb.sequentLists)
   }
 
@@ -75,8 +76,12 @@ class FileParser {
       (name+proofdb.sequentLists.size.toString, seqList)::proofdb.sequentLists)
   }
 
-  def addStructTree(struct : Tree[_] ) = {
+  def addStructTree(struct : Tree[_] ) {
     structs = ("struct "+structs.size.toString, struct)::structs
+  }
+
+  def addTrees(list : List[(String, Tree[_])] ) {
+    structs = list:::structs
   }
 
   def getSequentLists = proofdb.sequentLists
