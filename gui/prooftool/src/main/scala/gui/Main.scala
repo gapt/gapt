@@ -32,14 +32,18 @@ import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.utils.ds.trees.Tree
 import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors}
+import at.logic.transformations.ceres.ProjectionTermCreators
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.transformations.ceres.PStructToExpressionTree
+import at.logic.calculi.slk.SchemaProofDB
 
 object Main extends SimpleSwingApplication {
-  override def startup(args: Array[String]) = {
+  override def startup(args: Array[String]) {
     showFrame
     if (args.length >= 1) loadProof(args(0),12)
   }
 
-  def showFrame: Unit = {
+  def showFrame {
     val t = top
     t.pack
     t.location = new Point(100,50)
@@ -48,19 +52,19 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used for displaying things directly from Scala shell
-  def display(name: String, obj: AnyRef): Unit = {
+  def display(name: String, obj: AnyRef) {
     showFrame
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(name, obj), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def fOpen: Unit = chooser.showOpenDialog(mBar) match {
+  def fOpen : Unit = chooser.showOpenDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ => loadProof(chooser.selectedFile.getPath,12)
   }
 
-  def fSaveProof: Unit = chooser.showSaveDialog(mBar) match {
+  def fSaveProof : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ =>
       val data = body.getContent.getData.get._2
@@ -69,12 +73,12 @@ object Main extends SimpleSwingApplication {
       else Dialog.showMessage(body,"This is not a proof, can't save it!")
   }
 
-  def fSaveAll: Unit = chooser.showSaveDialog(mBar) match {
+  def fSaveAll : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ => XMLExporter(chooser.selectedFile.getPath, db.getProofDB)
   }
 
-  def fExportTPTP = chooser.showSaveDialog(mBar) match {
+  def fExportTPTP : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ =>
       val list = body.getContent.getData.get._2 match {
@@ -92,7 +96,7 @@ object Main extends SimpleSwingApplication {
       } else Dialog.showMessage(body,"This is not a Clause Set, can't export it!")
   }
 
-  def fExportTeX = chooser.showSaveDialog(mBar) match {
+  def fExportTeX : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ =>
       val list = body.getContent.getData.get._2 match {
@@ -107,9 +111,9 @@ object Main extends SimpleSwingApplication {
       else Dialog.showMessage(body,"This is not a Clause Set, can't export it!")
   }
 
-  def fExit: Unit = System.exit(0)
+  def fExit : Unit = System.exit(0)
 
-  def zoomIn: Unit = {
+  def zoomIn {
     val content = body.getContent
     content.fontSize * 3 / 2 match {
       case j: Int if j > 200 =>
@@ -117,7 +121,7 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def zoomOut: Unit = {
+  def zoomOut {
     val content = body.getContent
     content.fontSize / 3 * 2 match {
       case j: Int if j < 10 =>
@@ -135,21 +139,21 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used for ShowProof menu, loads proof directly
-  def loadProof(proof: LKProof): Unit = {
+  def loadProof(proof: LKProof) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(proof.name, proof), 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used for ShowProof menu
-  def loadProof(proof: (String, TreeProof[_])): Unit = {
+  def loadProof(proof: (String, TreeProof[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(proof), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used by startup and open dialog
-  def loadProof(path: String, fontSize: Int): Unit = {
+  def loadProof(path: String, fontSize: Int) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     db.parseFile(path)
     val proofs = db.getProofs
@@ -159,21 +163,21 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used by View Clause List menu
-  def loadClauseSet(clList: (String, List[Sequent])): Unit = {
+  def loadClauseSet(clList: (String, List[Sequent])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(clList), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used by View Struct menu
-  def loadStruct(struct: (String, Tree[_])): Unit = {
+  def loadStruct(struct: (String, Tree[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(struct), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used for Zooming
-  def load(option: Option[(String, AnyRef)], fontSize: Int): Unit = {
+  def load(option: Option[(String, AnyRef)], fontSize: Int) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(option, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -328,7 +332,7 @@ object Main extends SimpleSwingApplication {
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
         }
       }
-      contents += new Menu("View Struct") {
+      contents += new Menu("View Term Tree") {
         MenuScroller.setScrollerFor(this.peer)
         mnemonic = Key.S
         border = customBorder
@@ -372,6 +376,7 @@ object Main extends SimpleSwingApplication {
       }
       contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet }) { border = customBorder }
       contents += new MenuItem(Action("Compute Struct") { computeSchematicStruct }) { border = customBorder }
+      contents += new MenuItem(Action("Compute Projection Term") { computeSchematicProjectionTerm }) { border = customBorder }
       contents += new MenuItem(Action("Compute Proof Instance") { computeProofInstance } )  { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
@@ -386,7 +391,7 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def extractCutFormulas = try {
+  def extractCutFormulas : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val list = cutformulaExtraction( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     db.addSeqList("cutFormulaList ", list.map(x => x.toFSequent) )
@@ -398,7 +403,7 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't extract CutFormula List!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def computeClList = try {
+  def computeClList : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = StructCreators.extract( proof_sk )
@@ -413,7 +418,7 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def computeSchematicClauseSet = try {
+  def computeSchematicClauseSet : Unit = try {
     import at.logic.language.schema.IntVar
     import at.logic.language.lambda.symbols.VariableStringSymbol
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -431,7 +436,7 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't compute clause set!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def computeSchematicStruct = try {
+  def computeSchematicStruct : Unit = try {
     import at.logic.language.schema.IntVar
     import at.logic.language.lambda.symbols.VariableStringSymbol
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -446,7 +451,20 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def computeClListOnlyQuantifiedCuts = try {
+  def computeSchematicProjectionTerm : Unit = try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+  //  val proof_name = body.getContent.getData.get._1
+    val pterms = ProjectionTermCreators() //.extract(SchemaProofDB.get(proof_name).rec, Set(), SchemaProofDB.get(proof_name).rec)
+    db.addTrees( pterms )
+    body.contents = new Launcher(Some( pterms.head ),12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Couldn't compute Projection Terms!\n\n"+t.replaceAll(",","\n"))
+  } finally ProofToolPublisher.publish(ProofDbChanged)
+
+  def computeClListOnlyQuantifiedCuts : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
     val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
@@ -460,7 +478,7 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def showStruct = try {
+  def showStruct : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk ) )
@@ -474,7 +492,7 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   // Computes the struct, ignoring propositional cuts
-  def showStructOnlyQuantifiedCuts = try {
+  def showStructOnlyQuantifiedCuts : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
     val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
@@ -487,7 +505,7 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def eliminateDefsLK = try {
+  def eliminateDefsLK : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val pair = body.getContent.getData.get
     val new_proof = eliminateDefinitions( pair._2.asInstanceOf[LKProof]   )
@@ -500,7 +518,7 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def eliminateDefsLKsk = try {
+  def eliminateDefsLKsk : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val pair = body.getContent.getData.get
     val new_proof = eliminateDefinitions( LKtoLKskc( pair._2.asInstanceOf[LKProof] )  )
@@ -513,7 +531,7 @@ object Main extends SimpleSwingApplication {
         Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def gentzen = try {
+  def gentzen : Unit = try {
     val steps = Dialog.showConfirmation(body, "Do you want to see intermediary steps?",
       "ProofTool", Dialog.Options.YesNo, Message.Question) match {
       case Dialog.Result.Yes => true
@@ -533,7 +551,7 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
 
-  def markCutAncestors = {
+  def markCutAncestors {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.getContent.contents.head match {
       case dp: DrawProof => body.getContent.getData match {
@@ -547,7 +565,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def hideSequentContext = {
+  def hideSequentContext {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.getContent.contents.head match {
       case dp: DrawProof => body.getContent.getData match {
@@ -561,7 +579,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def computeProofInstance = {
+  def computeProofInstance {
     val input = Dialog.showInput(body, "Please enter number of the instance:",
       "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "0").get.replaceAll("""[a-z,A-Z]*""","")
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -574,28 +592,7 @@ object Main extends SimpleSwingApplication {
     ProofToolPublisher.publish(ProofDbChanged)
   }
 
-                 //commendet by Cvetan
-  def testRefutation =  { /*
-    import at.logic.calculi.resolution.andrews._
-    import at.logic.calculi.resolution.base.InitialSequent
-    import at.logic.language.hol._
-    import logicSymbols.ConstantStringSymbol
-    import at.logic.calculi.occurrences._
-
-    implicit val factory = defaultFormulaOccurrenceFactory
-      val a = Atom(ConstantStringSymbol("p"), Nil)
-      val s = Sequent(Seq.empty[FormulaOccurrence], factory.createFormulaOccurrence(Neg(Or(a, Neg(a))), Seq.empty[FormulaOccurrence]) +: Seq.empty[FormulaOccurrence])
-
-      val p0 = InitialSequent[Sequent](s)
-      val p1 = NotT( p0, p0.root.succedent.head )
-      val p2 = OrFL( p1, p1.root.antecedent.head )
-      val p3 = OrFR( p1, p1.root.antecedent.head )
-      val p4 = NotF( p3, p3.root.antecedent.head )
-      val p5 = Cut( p4, p2, p4.root.succedent.head, p2.root.antecedent.head )
-    body.contents = new Launcher(Some("resolution refutation",p5),16)
-*/  }
-
-  def testSchemata = {
+  def testSchemata {
     import at.logic.calculi.lk.macroRules._
     import at.logic.calculi.lk.base._
     import at.logic.language.schema._
@@ -778,7 +775,7 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("\\psi", step), 16)
   }
 
-  def testSchematicClauseSet = try {
+  def testSchematicClauseSet : Unit = try {
     import at.logic.transformations.ceres.struct._
     import at.logic.transformations.ceres.clauseSets.StandardClauseSet
     import at.logic.language.schema._
@@ -787,7 +784,7 @@ object Main extends SimpleSwingApplication {
 
       val n = IntVar(new VariableStringSymbol("n"))
 
-      val s = StructCreators.extractStruct( "psi", n)
+      val s = StructCreators.extractStruct( "\\psi", n)
       val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
 
       val m_empty = HashMultiset[SchemaFormula]()
@@ -795,7 +792,7 @@ object Main extends SimpleSwingApplication {
 
       val cs_pruned_psi = cs.filter( s => s.antecedent.isEmpty || s.antecedent.exists( fo => fo.formula match {
       case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc && sym.name == "psi"
+        case sym : ClauseSetSymbol => sym.cut_occs == cc && sym.name == "\\psi"
         case _ => false
       }
       case _ => false
@@ -803,7 +800,7 @@ object Main extends SimpleSwingApplication {
 
       cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
       case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "varphi" => cc = sym.cut_occs
+        case sym : ClauseSetSymbol if sym.name == "\\varphi" => cc = sym.cut_occs
         case _ => false
       }
       case _ => false
@@ -819,7 +816,7 @@ object Main extends SimpleSwingApplication {
 
        cs_pruned_varphi.foreach( s => s.succedent.foreach( fo => fo.formula match {
       case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "phi" => cc = sym.cut_occs
+        case sym : ClauseSetSymbol if sym.name == "\\phi" => cc = sym.cut_occs
         case _ => false
       }
       case _ => false
@@ -835,7 +832,7 @@ object Main extends SimpleSwingApplication {
 
       cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
       case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "chi" => cc = sym.cut_occs
+        case sym : ClauseSetSymbol if sym.name == "\\chi" => cc = sym.cut_occs
         case _ => false
       }
       case _ => false

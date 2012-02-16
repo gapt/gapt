@@ -39,7 +39,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
         case e: MouseExited => ds.contents.foreach(x => x.foreground = black)
-        case e: MouseClicked => PopupMenu(proof, this, e.point.x, e.point.y)
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(proof, this, e.point.x, e.point.y)
         case e: HideStructural if e.proof == proof => println("hide structural matched")
           ds.visible = false
       }
@@ -60,13 +60,13 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   initialize
   // end of constructor
 
-  def showAllRules = {
+  def showAllRules {
     hideRules = false
     initialize
     revalidate
   }
 
-  def hideStructuralRules = {
+  def hideStructuralRules {
     hideRules = true
     initialize
     revalidate
@@ -82,7 +82,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     initialize
   }
 
-  def initialize = proof match {
+  def initialize : Unit = proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
       if (hideRules) p.rule match {
@@ -121,7 +121,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     case fPanel: FlowPanel => fPanel.contents.foldLeft(0)((width, x) => width + x.size.width + 5)
   }
 
-  override def paintComponent(g: Graphics2D) = {
+  override def paintComponent(g: Graphics2D) {
     import scala.math.max
 
     super.paintComponent(g)
