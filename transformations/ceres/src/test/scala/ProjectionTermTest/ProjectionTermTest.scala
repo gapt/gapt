@@ -77,11 +77,20 @@ class ProjectionTermTest extends SpecificationWithJUnit {
           val pterm = ProjectionTermCreators.extract(map.get(proof_name).get._2.get("root").get, Set.empty[FormulaOccurrence], map.get(proof_name).get._2.get("root").get)
           val t = PStructToExpressionTree.applyConsole(pterm)
 
+          val ptermcc = ProjectionTermCreators.extract(map.get(proof_name).get._2.get("root").get, Set.empty[FormulaOccurrence] + map.get(proof_name).get._2.get("root").get.root.succedent.head, map.get(proof_name).get._2.get("root").get)
+          val tcc = PStructToExpressionTree.applyConsole(ptermcc)
+
+
 //          val pterm = ProjectionTermCreators.extract(root, Set.empty[FormulaOccurrence], root)
 //          val t = pStructToExpressionTree(pterm)
           println(printSchemaProof(map.get(proof_name).get._2.get("root").get))
           println("\n\n\n\n\n\n\n\n\n\n")
           PStructToExpressionTree.printTree(t)
+          println("\n\n")
+//          ProjectionTermCreators(proof_name)
+
+          println("\n\n\n\n\n\n\n\n\n\n")
+          PStructToExpressionTree.printTree(tcc)
           println("\n\n")
 
 //          printSchemaProof.sequentToString(ax2.root)
