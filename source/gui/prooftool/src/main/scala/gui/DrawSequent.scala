@@ -7,23 +7,31 @@ package at.logic.gui.prooftool.gui
  * Time: 4:25 PM
  */
 
-import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.base.{types, Sequent}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol._
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
+import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, IntegerTerm, IntVar, IntConst, IntZero, Succ}
+import at.logic.transformations.ceres.struct.ClauseSetSymbol
+import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
+import scala.collection.immutable.Seq
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.{Color, Font}
 import java.awt.image.BufferedImage
 import swing.{Label, FlowPanel}
-import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, IntegerTerm, IntVar, IntConst, IntZero, Succ}
-import at.logic.transformations.ceres.struct.ClauseSetSymbol
-import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
-
 
 object DrawSequent {
 
   //used by DrawClList
   def apply(seq: Sequent, ft: Font): FlowPanel = apply(seq, ft, Set(), Set())
+
+  //used by DrawClList to draw FSequents
+  def applyF(seq: types.FSequent, ft: Font): FlowPanel = {
+    implicit val factory = defaultFormulaOccurrenceFactory
+    implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq[FormulaOccurrence]())
+    implicit def fseq2seq(s : types.FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
+    apply(fseq2seq(seq), ft, Set(), Set())
+  }
 
   //used by DrawProof
   def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence], vis_occ: Set[FormulaOccurrence]) = new FlowPanel {
@@ -76,7 +84,7 @@ object DrawSequent {
     icon = myicon
   }
 
-   // this method is by DrawTree when drawing projections.
+   // this method is used by DrawTree when drawing projections.
   def sequentToLatexString(seq: Sequent): String = {
     var s = " "
     var first = true

@@ -11,10 +11,9 @@ import swing.{Label, GridBagPanel}
 import GridBagPanel._
 import java.awt.{Font, Color}
 import Font._
-import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.base.{types, Sequent}
 
-
-class DrawClList(private var clList: List[Sequent], val fontSize: Int) extends GridBagPanel {
+class DrawClList(private var clList: List[_], val fontSize: Int) extends GridBagPanel {
   background = new Color(255,255,255)
 
   val c = new Constraints
@@ -26,13 +25,23 @@ class DrawClList(private var clList: List[Sequent], val fontSize: Int) extends G
     if (first) {
       first = false
       c.grid = (0,y)
-      layout(DrawSequent(x, ft)) = c
+      val component = x match {
+        case s : Sequent => DrawSequent(s, ft)
+        case fs : types.FSequent => DrawSequent.applyF(fs, ft)
+        case _ => new Label(x.toString) { font = ft }
+      }
+      layout( component ) = c
     } else {
       y += 1
       c.grid = (0,y)
       layout(new Label(";")  { font = ft }) = c
       y += 1
       c.grid = (0,y)
-      layout(DrawSequent(x, ft)) = c
+      val component = x match {
+        case s : Sequent => DrawSequent(s, ft)
+        case fs : types.FSequent => DrawSequent.applyF(fs, ft)
+        case _ => new Label(x.toString) { font = ft }
+      }
+      layout( component ) = c
     }
 }
