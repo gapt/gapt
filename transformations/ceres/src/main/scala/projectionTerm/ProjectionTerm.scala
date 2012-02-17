@@ -204,23 +204,34 @@ object ProjectionTermCreators {
         pUnary(pr.name, extract(p, omega, p_old))
     }
     case CutRule( p1, p2, _, a1, a2 ) => {
-      val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !getAncestors(omega).contains(fo)), p2.root.succedent.filter(fo => fo != a2 && !getAncestors(omega).contains(fo)))
-      val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !getAncestors(omega).contains(fo)), p1.root.succedent.filter(fo => fo != a1 && !getAncestors(omega).contains(fo)))
+      val omega_ancs = getAncestors(omega)
+      val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo)),
+                       p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo)))
+      val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo)),
+                       p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo)))
       pPlus(p1.root, p2.root, extract(p1, omega, p_old), extract(p2, omega, p_old), w1, w2)
     }
     case OrLeftRule(p1, p2, _, a1, a2, m) => {
-      if (getAncestors(omega).contains(m) || getCutAncestors(p_old).contains(m)) {
-        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2), p2.root.succedent.filter(fo => fo != a2))
-        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1), p1.root.succedent.filter(fo => fo != a1))
+      val omega_ancs = getAncestors(omega)
+      val cut_ancs = getCutAncestors(p_old)
+      if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
+        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+                         p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+                         p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
         pPlus(p1.root, p2.root, extract(p1, omega, p_old), extract(p2, omega, p_old), w1, w2)
       }
       else
         pTimes(pr.name, extract(p1, omega, p_old), extract(p2, omega, p_old))
     }
     case AndRightRule(p1, p2, _, a1, a2, m) => {
-      if (getAncestors(omega).contains(m) || getCutAncestors(p_old).contains(m)) {
-        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2), p2.root.succedent.filter(fo => fo != a2))
-        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1), p1.root.succedent.filter(fo => fo != a1))
+      val omega_ancs = getAncestors(omega)
+      val cut_ancs = getCutAncestors(p_old)
+      if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
+        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+                         p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+                         p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
         pPlus(p1.root, p2.root, extract(p1, omega, p_old), extract(p2, omega, p_old), w1, w2)
       }
       else
@@ -328,8 +339,10 @@ object PStructToExpressionTree {
      case pTimes(rho, left, right) => BinaryTree(new PTimesC(rho), apply(left), apply(right))
     case pPlus(seq1, seq2, left, right, w1, w2) => {
 //      BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), apply(left), apply(right), w1, w2)
-      val t1 = UnaryTree(new PWeakC(w1), apply(left))
-      val t2 = UnaryTree(new PWeakC(w2), apply(right))
+      val t1 = if (w1.antecedent.isEmpty && w1.succedent.isEmpty) apply(left)
+               else UnaryTree(new PWeakC(w1), apply(left))
+      val t2 = if (w2.antecedent.isEmpty && w2.succedent.isEmpty) apply(right)
+               else UnaryTree(new PWeakC(w2), apply(right))
       BinaryTree(PPlusC, t1, t2)
 
     }

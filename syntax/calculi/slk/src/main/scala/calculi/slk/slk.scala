@@ -405,7 +405,7 @@ object OrEquivalenceRule1 {
               def rule = OrEquivalenceRule1Type
               def aux = (auxf::Nil)::Nil
               def prin = prinFormula::Nil
-              override def name = "eq"
+              override def name = "\u2261:1"
             }
       }
       case _ => throw new LKRuleCreationException("Main formula of OrEquivalenceRule1 must have a BigOr as head symbol.")
@@ -488,7 +488,7 @@ object OrEquivalenceRule1 {
                 def rule = OrEquivalenceRule2Type
                 def aux = (auxf::Nil)::Nil
                 def prin = prinFormula::Nil
-                override def name = "eq"
+                override def name = "\u2261:2"
               }
         }
         case _ => throw new LKRuleCreationException("Main formula of OrEquivalenceRule2 must have a BigOr as head symbol.")
@@ -572,7 +572,7 @@ object OrEquivalenceRule1 {
                 def rule = OrEquivalenceRule3Type
                 def aux = (auxf::Nil)::Nil
                 def prin = prinFormula::Nil
-                override def name = "eq"
+                override def name = "\u2261:3"
               }
         }
         case _ => throw new LKRuleCreationException("Main formula of OREquivalenceRule3 must have a BigOr as head symbol.")

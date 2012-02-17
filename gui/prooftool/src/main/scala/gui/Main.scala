@@ -163,7 +163,7 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used by View Clause List menu
-  def loadClauseSet(clList: (String, List[Sequent])) {
+  def loadClauseSet(clList: (String, List[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(clList), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -323,11 +323,7 @@ object Main extends SimpleSwingApplication {
         listenTo(ProofToolPublisher)
         reactions += {
           case ProofDbChanged =>
-            import at.logic.calculi.occurrences._
-            implicit val factory = defaultFormulaOccurrenceFactory
-            implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence])
-            implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
-            val l = db.getSequentLists.map(pair => Pair(pair._1, pair._2.map(fs => fseq2seq(fs))))
+            val l = db.getSequentLists
             contents.clear
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
         }
