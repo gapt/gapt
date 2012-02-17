@@ -1,6 +1,7 @@
 package at.logic.transformations.ceres
 
-import _root_.at.logic.calculi.slk.{SchemaProof, SchemaProofDB}
+import at.logic.calculi.slk.{SchemaProof, SchemaProofDB}
+import at.logic.algorithms.lk.{getCutAncestors, getAncestors}
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.language.hol.{HOLFormula, HOLVarFormula}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
@@ -74,10 +75,10 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
           val map = SHLK.parseProof(str)
 
-          val pterm = ProjectionTermCreators.extract(map.get(proof_name).get._2.get("root").get, Set.empty[FormulaOccurrence], map.get(proof_name).get._2.get("root").get)
+          val pterm = ProjectionTermCreators.extract(map.get(proof_name).get._2.get("root").get, Set.empty[FormulaOccurrence], getCutAncestors(map.get(proof_name).get._2.get("root").get))
           val t = PStructToExpressionTree.applyConsole(pterm)
 
-          val ptermcc = ProjectionTermCreators.extract(map.get(proof_name).get._2.get("root").get, Set.empty[FormulaOccurrence] + map.get(proof_name).get._2.get("root").get.root.succedent.head, map.get(proof_name).get._2.get("root").get)
+          val ptermcc = ProjectionTermCreators.extract(map.get(proof_name).get._2.get("root").get, Set.empty[FormulaOccurrence] + map.get(proof_name).get._2.get("root").get.root.succedent.head, getCutAncestors(map.get(proof_name).get._2.get("root").get))
           val tcc = PStructToExpressionTree.applyConsole(ptermcc)
 
 
@@ -99,3 +100,9 @@ class ProjectionTermTest extends SpecificationWithJUnit {
        }
    }
 }
+
+
+
+
+
+
