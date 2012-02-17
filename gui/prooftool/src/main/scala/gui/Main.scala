@@ -30,12 +30,13 @@ import java.io.File
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-import at.logic.utils.ds.trees.Tree
 import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors}
 import at.logic.transformations.ceres.ProjectionTermCreators
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.transformations.ceres.PStructToExpressionTree
 import at.logic.calculi.slk.SchemaProofDB
+import at.logic.utils.ds.trees.Tree
+import at.logic.calculi.lk.base.{BinaryLKProof, UnaryLKProof, NullaryLKProof}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -127,6 +128,40 @@ object Main extends SimpleSwingApplication {
       case j: Int if j < 10 =>
       case j: Int => load(content.getData,j)
     }
+  }
+
+  def search {
+    val input_str = Dialog.showInput[String](body, "Please enter string to search:",
+      "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "") match {
+      case Some(str) => str
+      case _ => ""
+    }
+    if (! input_str.isEmpty) {
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      body.getContent.contents.head match {
+        case dp: DrawProof =>
+          dp.setColoredOccurrences(searchFormulas(input_str, dp.proof))
+          dp.revalidate
+       // TODO: add other cases here
+        case _ => Dialog.showMessage(body, "Can not search in this object!")
+      }
+      body.cursor = java.awt.Cursor.getDefaultCursor
+    }
+  }
+
+  def searchFormulas(str: String, proof: TreeProof[_]): Set[FormulaOccurrence] = proof match {
+    case p: NullaryLKProof =>
+      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
+      p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
+    case p: UnaryLKProof =>
+      searchFormulas(str, p.uProof.asInstanceOf[TreeProof[_]]) ++
+      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
+      p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
+    case p: BinaryLKProof =>
+      searchFormulas(str, p.uProof1.asInstanceOf[TreeProof[_]]) ++
+      searchFormulas(str, p.uProof2.asInstanceOf[TreeProof[_]]) ++
+      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
+      p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
   }
 
   def top = new MainFrame {
@@ -226,6 +261,13 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       mnemonic = Key.E
+
+      contents += new MenuItem(Action("Search...") { search }) {
+        mnemonic = Key.S
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
+      contents += new Separator
       contents += new MenuItem(Action("Show Leaves") { StructPublisher.publish(ShowLeaf) }) {
         border = customBorder
         enabled = false
@@ -449,8 +491,8 @@ object Main extends SimpleSwingApplication {
 
   def computeSchematicProjectionTerm : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-  //  val proof_name = body.getContent.getData.get._1
-    val pterms = ProjectionTermCreators() //.extract(SchemaProofDB.get(proof_name).rec, Set(), SchemaProofDB.get(proof_name).rec)
+    val proof_name = body.getContent.getData.get._1
+    val pterms = ProjectionTermCreators(proof_name)
     db.addTrees( pterms )
     body.contents = new Launcher(Some( pterms.head ),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -577,15 +619,24 @@ object Main extends SimpleSwingApplication {
 
   def computeProofInstance {
     val input = Dialog.showInput(body, "Please enter number of the instance:",
-      "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "0").get.replaceAll("""[a-z,A-Z]*""","")
-    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val number = if (input.isEmpty) 0 else if (input.size > 10) input.dropRight(10).toInt else input.toInt
-    val name = body.getContent.getData.get._1
-    val proof = applySchemaSubstitution(name, number)
-    db.addProofs((name + "_" + number, proof)::Nil)
-    body.contents = new Launcher(Some(name + "_" + number, proof), 12)
-    body.cursor = java.awt.Cursor.getDefaultCursor
-    ProofToolPublisher.publish(ProofDbChanged)
+      "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "0") match {
+      case Some(str) => str.replaceAll("""[a-z,A-Z]*""","")
+      case _ => ""
+    }
+    if (! input.isEmpty) try {
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      val number = if (input.size > 10) input.dropRight(10).toInt else input.toInt
+      val name = body.getContent.getData.get._1
+      val proof = applySchemaSubstitution(name, number)
+      db.addProofs((name + "_" + number, proof)::Nil)
+      body.contents = new Launcher(Some(name + "_" + number, proof), 12)
+      body.cursor = java.awt.Cursor.getDefaultCursor
+      ProofToolPublisher.publish(ProofDbChanged)
+    } catch {
+      case e: AnyRef =>
+        val t = e.toString
+        Dialog.showMessage(body,"Could not construct proof instance!\n\n"+t.replaceAll(",","\n"))
+    }
   }
 
   def testSchemata {

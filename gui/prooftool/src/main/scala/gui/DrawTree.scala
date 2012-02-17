@@ -18,11 +18,11 @@ import DrawSequent._
 import at.logic.gui.prooftool.parser.{StructPublisher, ShowLeaf, HideLeaf, HideTree}
 import at.logic.transformations.ceres.struct.structToExpressionTree.{TimesC, PlusC}
 import at.logic.transformations.ceres.PStructToExpressionTree.{PWeakC, PTimesC, PPlusC}
-import java.awt.event.MouseEvent
 import at.logic.calculi.lk.base.Sequent
 import javax.swing.Icon
+import java.awt.event.{MouseMotionListener, MouseEvent}
 
-class DrawTree(private val struct: Tree[_], private val fSize: Int) extends BorderPanel {
+class DrawTree(private val struct: Tree[_], private val fSize: Int) extends BorderPanel with MouseMotionListener {
   background = new Color(255,255,255)
   opaque = false
 
@@ -193,5 +193,23 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
       }
       case _ =>
     }
+  }
+
+  listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+  reactions += {
+    case e: MouseDragged =>
+      Main.body.cursor = new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR)
+    case e: MouseReleased =>
+      Main.body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  this.peer.setAutoscrolls(true)
+  this.peer.addMouseMotionListener(this)
+
+  def mouseMoved(e: MouseEvent) {}
+  def mouseDragged(e: MouseEvent) {
+    //The user is dragging us, so scroll!
+    val r = new Rectangle(e.getX(), e.getY(), 1, 1);
+    this.peer.scrollRectToVisible(r);
   }
 }

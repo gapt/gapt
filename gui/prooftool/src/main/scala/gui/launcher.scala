@@ -8,7 +8,7 @@ package at.logic.gui.prooftool.gui
  */
 
 import scala.swing._
-import event.MouseDragged
+import event.{MouseReleased, MouseDragged}
 import java.awt.Font._
 import javax.swing.border.TitledBorder
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
@@ -22,10 +22,11 @@ class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
 
   def getContent: Launcher = contents.last.asInstanceOf[Launcher]
+//  def content_=(c : Component) { viewportView = c }
+//  def content = viewportView.get.asInstanceOf[Launcher]
 }
 
-class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel
-with MouseMotionListener with javax.swing.Scrollable {
+class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel with MouseMotionListener {
   option match {
     case Some((name: String, obj: AnyRef)) =>
       val c = new Constraints
@@ -60,18 +61,13 @@ with MouseMotionListener with javax.swing.Scrollable {
   def fontSize = fSize
   def getData = option
 
-  // From here starts test code, trying to scroll normally.
-	def getPreferredScrollableViewportSize = preferredSize
-
-	def getScrollableTracksViewportHeight: Boolean = false
-	def getScrollableTracksViewportWidth: Boolean = false
-
-	def getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
-    3 * getScrollableUnitIncrement(visibleRect, orientation, direction)
-	  // scrollablePeer.getScrollableBlockIncrement(visibleRect, orientation.id, direction)
-
-	def getScrollableUnitIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int = 10 * fSize
-    // scrollablePeer.getScrollableUnitIncrement(visibleRect, orientation.id, direction)
+  listenTo(mouse.moves, mouse.clicks, mouse.wheel)
+  reactions += {
+    case e: MouseDragged =>
+      Main.body.cursor = new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR)
+    case e: MouseReleased =>
+      Main.body.cursor = java.awt.Cursor.getDefaultCursor
+  }
 
   this.peer.setAutoscrolls(true)
   this.peer.addMouseMotionListener(this)
@@ -82,6 +78,4 @@ with MouseMotionListener with javax.swing.Scrollable {
     val r = new Rectangle(e.getX(), e.getY(), 1, 1);
     this.peer.scrollRectToVisible(r);
   }
-
-
 }

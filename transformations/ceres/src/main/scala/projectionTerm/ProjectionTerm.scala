@@ -127,6 +127,7 @@ object ProjectionTermCreators {
     })
   }
 
+  def apply(proof_name : String) = relevantProj(proof_name)
 
   // Takes all proofs from SchemaProofDB and computes projections for all cut-configurations
   def apply() : List[(String,Tree[_])] = {
