@@ -61,16 +61,16 @@ class ProjectionTermTest extends SpecificationWithJUnit {
               val root = CutRule(orl1, ax3, A1)
 
 
-//          val str = Source.fromFile("target" + separator + "test-classes" + separator + "adder.lks").toList.foldLeft("")((ch,res) => ch + res)
-//          val proof_name = "psi"
+          val str = Source.fromFile("target" + separator + "test-classes" + separator + "adder.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val proof_name = "psi"
 //          val proof_name = "varphi"
 //          val proof_name = "phi"
 //          val proof_name = "chi"
 
 
 
-          val str = Source.fromFile("target" + separator + "test-classes" + separator + "simple.lks").toList.foldLeft("")((ch,res) => ch + res)
-          val proof_name = "\\psi"
+//          val str = Source.fromFile("target" + separator + "test-classes" + separator + "simple.lks").toList.foldLeft("")((ch,res) => ch + res)
+//          val proof_name = "\\psi"
 
           val map = SHLK.parseProof(str)
 
@@ -87,12 +87,13 @@ class ProjectionTermTest extends SpecificationWithJUnit {
           println("\n\n\n\n\n\n\n\n\n\n")
           PStructToExpressionTree.printTree(t)
           println("\n\n")
-//          ProjectionTermCreators(proof_name)
+          ProjectionTermCreators.genCC(proof_name)
 
-          println("\n\n\n\n\n\n\n\n\n\n")
-          PStructToExpressionTree.printTree(tcc)
-          println("\n\n")
+//          println("\n\n")
+//          PStructToExpressionTree.printTree(tcc)
+//          println("\n\n")
 
+          ProjectionTermCreators.relevantProj(proof_name)
 //          printSchemaProof.sequentToString(ax2.root)
 
        }
