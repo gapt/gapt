@@ -30,16 +30,19 @@ class FileParser {
 
   def ceresFileReader(input: InputStreamReader) {
     proofs = Nil
+    structs = Nil
     proofdb = (new XMLReader(input) with XMLProofDatabaseParser).getProofDatabase()
   }
 
   def stabFileReader(input: InputStreamReader) {
+    structs = Nil
     proofdb = new ProofDatabase(Nil, Nil, Nil)
     proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
   }
 
   def lksFileReader(f: String) {
     proofs = Nil
+    structs = Nil
     proofdb = new ProofDatabase(SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
   }
 
