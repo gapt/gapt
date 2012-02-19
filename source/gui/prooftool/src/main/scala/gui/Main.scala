@@ -10,33 +10,35 @@ package at.logic.gui.prooftool.gui
 import scala.swing._
 import BorderPanel._
 import event.Key
-import at.logic.gui.prooftool.parser._
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.{Sequent, LKProof}
-import at.logic.calculi.treeProofs.TreeProof
-import at.logic.transformations.ReductiveCutElim
-import javax.swing.filechooser.FileFilter
 import swing.Dialog.Message
+import swing.Swing.EmptyIcon
 import scala.collection.immutable.Seq
+import java.io.File
+import javax.swing.filechooser.FileFilter
+
+import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors}
+import at.logic.algorithms.lksk.eliminateDefinitions
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.{Sequent, LKProof, BinaryLKProof, UnaryLKProof, NullaryLKProof}
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.slk.SchemaProofDB
+import at.logic.calculi.treeProofs.TreeProof
+import at.logic.gui.prooftool.parser._
+import at.logic.language.schema.IntVar
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.xml.XMLExporter
+import at.logic.parsing.writers.FileWriter
+import at.logic.transformations.ReductiveCutElim
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
-import swing.Swing.EmptyIcon
 import at.logic.transformations.ceres.unfolding.applySchemaSubstitution
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
-import java.io.File
-import at.logic.parsing.writers.FileWriter
-import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors}
 import at.logic.transformations.ceres.ProjectionTermCreators
-import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.transformations.ceres.PStructToExpressionTree
-import at.logic.calculi.slk.SchemaProofDB
 import at.logic.utils.ds.trees.Tree
-import at.logic.calculi.lk.base.{BinaryLKProof, UnaryLKProof, NullaryLKProof}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -221,7 +223,6 @@ object Main extends SimpleSwingApplication {
   val mBar: MenuBar = new MenuBar() {
     import javax.swing.KeyStroke
     import java.awt.event.{KeyEvent, ActionEvent => JActionEvent}
-    import at.logic.language.hol.{HOLFormula}
 
     focusable = true
     val customBorder = Swing.EmptyBorder(5,3,5,3)
@@ -457,8 +458,6 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeSchematicClauseSet : Unit = try {
-    import at.logic.language.schema.IntVar
-    import at.logic.language.lambda.symbols.VariableStringSymbol
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val n = IntVar(new VariableStringSymbol("n"))
 
@@ -475,8 +474,6 @@ object Main extends SimpleSwingApplication {
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeSchematicStruct : Unit = try {
-    import at.logic.language.schema.IntVar
-    import at.logic.language.lambda.symbols.VariableStringSymbol
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val n = IntVar(new VariableStringSymbol("n"))
     val s = structToExpressionTree.prunedTree( StructCreators.extractStruct( body.getContent.getData.get._1, n) )
@@ -645,9 +642,9 @@ object Main extends SimpleSwingApplication {
     import at.logic.language.schema._
     import at.logic.calculi.slk._
     import at.logic.calculi.lk.propositionalRules._
-    import at.logic.language.lambda.symbols.VariableStringSymbol
     import at.logic.language.hol.logicSymbols.ConstantStringSymbol
     import at.logic.calculi.occurrences._
+    import at.logic.language.hol.{HOLFormula}
 
     implicit val factory = defaultFormulaOccurrenceFactory
     //--  Create LKS proof as in my presentation --//
@@ -668,13 +665,12 @@ object Main extends SimpleSwingApplication {
     val and_0_k_not_ai_lor_asi = BigAnd(i, Or(Neg(ai), asi), IntZero(), k)
     val and_0_sk_not_ai_lor_asi = BigAnd(i, Or(Neg(ai), asi), IntZero(), Succ(k))
     // end of formula definitions --//
-    import at.logic.language.hol.{HOLFormula}
 
     //-- Definition of psi_base
     val orl0 = OrLeftRule(NegLeftRule( Axiom(a0 +: Seq.empty[HOLFormula], a0 +: Seq.empty[HOLFormula]), a0 ), Axiom( a1 +: Seq.empty[HOLFormula], a1 +: Seq.empty[HOLFormula]), Neg(a0), a1)
     val psi_0 = AndEquivalenceRule3(orl0, not_a0_lor_a1, and_0_0_not_ai_lor_asi)
     // end of definition of psi_base --//
-    import at.logic.calculi.lk.base.types.FSequent
+
     implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence])
     implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
 
@@ -824,9 +820,7 @@ object Main extends SimpleSwingApplication {
 
   def testSchematicClauseSet : Unit = try {
     import at.logic.transformations.ceres.struct._
-    import at.logic.transformations.ceres.clauseSets.StandardClauseSet
     import at.logic.language.schema._
-    import at.logic.language.lambda.symbols.VariableStringSymbol
     import at.logic.utils.ds.Multisets.HashMultiset
 
       val n = IntVar(new VariableStringSymbol("n"))
