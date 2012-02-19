@@ -571,8 +571,23 @@ import at.logic.language.hol._
       case _ => e
     }
 
+    def minusMore(e: HOLExpression, k:IntVar, times: Int): HOLExpression = {
+      if (times == 0)
+        e
+      else
+        minusMore(minusOne(e, k), k, times-1)
+    }
+
     def minusOneFSeq(fseq: types.FSequent, k:IntVar): types.FSequent = {
       (fseq._1.map(f => minusOne(f, k).asInstanceOf[HOLFormula]),fseq._2.map(f => minusOne(f, k).asInstanceOf[HOLFormula]))
+    }
+
+    def intTermPlus(t: IntegerTerm, times: Int): IntegerTerm = {
+      if (times == 0)
+        t
+      else {
+        intTermPlus(Succ(t), times-1)
+      }
     }
 
 
