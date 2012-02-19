@@ -222,12 +222,10 @@ object ProjectionTermCreators {
         if (len == 1)
           new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] //+ Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
         else {
-//          var new_term = index
-//          for (i<-StepMinusOne.lengthVar(new_term) to 2 ) {
-//            new_term = Pred(index)
-//          }
-          // TODO !!!
-          new_map
+          val k = IntVar(new VariableStringSymbol("k"))
+          new_map  = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k.asInstanceOf[Var], StepMinusOne.intTermPlus(k, len-1 ))
+          sub = new SchemaSubstitution1[HOLExpression](new_map)
+          return (proof_name, (seq1.antecedent ++ seq1.succedent).toList.filter(fo => foccsInSeq.map(fo => sub(fo.formula)).contains(sub(fo.formula))))::Nil
         }
       sub = new SchemaSubstitution1[HOLExpression](new_map)
       val fcc = foccsInSeq.map(fo => sub(fo.formula))
