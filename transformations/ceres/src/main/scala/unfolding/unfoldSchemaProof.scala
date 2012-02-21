@@ -527,7 +527,7 @@ import at.logic.language.hol._
       if(length(t, k) > 0)
         Pred(t)
       else {
-        println("\nWARNING : intTermMinusOne !\n")
+        println("WARNING : intTermMinusOne !")
         t
       }
     }
