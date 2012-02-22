@@ -36,14 +36,14 @@ class FileParser {
 
   def stabFileReader(input: InputStreamReader) {
     structs = Nil
-    proofdb = new ProofDatabase(Nil, Nil, Nil)
+    proofdb = new ProofDatabase((Map(),Map(),Map()),Nil, Nil, Nil)
     proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
   }
 
   def lksFileReader(f: String) {
     proofs = Nil
     structs = Nil
-    proofdb = new ProofDatabase(SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
+    proofdb = new ProofDatabase((Map(),Map(),Map()),SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
   }
 
   def parseFile(path: String) : Unit = try {
@@ -69,13 +69,13 @@ class FileParser {
   }
 
   def addProofs(proofs : List[(String, LKProof)]) {
-    proofdb = new ProofDatabase(proofdb.proofs:::proofs, proofdb.axioms, proofdb.sequentLists)
+    proofdb = new ProofDatabase(proofdb.Definitions, proofdb.proofs:::proofs, proofdb.axioms, proofdb.sequentLists)
   }
 
   def addSeqList(seqList : List[FSequent]) { addSeqList("sequentList ", seqList) }
 
   def addSeqList(name: String, seqList : List[FSequent]) {
-    proofdb = new ProofDatabase(proofdb.proofs, proofdb.axioms,
+    proofdb = new ProofDatabase(proofdb.Definitions, proofdb.proofs, proofdb.axioms,
       (name+proofdb.sequentLists.size.toString, seqList)::proofdb.sequentLists)
   }
 
@@ -92,7 +92,7 @@ class FileParser {
   def getProofDB = proofdb
   def getStructTrees = structs
 
-  private var proofdb = new ProofDatabase(Nil,Nil,Nil)
+  private var proofdb = new ProofDatabase((Map(),Map(),Map()),Nil,Nil,Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil
   private var structs: List[(String, Tree[_])] = Nil
 }
