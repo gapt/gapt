@@ -23,14 +23,18 @@ import swing.{Label, FlowPanel}
 object DrawSequent {
 
   //used by DrawClList
-  def apply(seq: Sequent, ft: Font): FlowPanel = apply(seq, ft, Set(), Set())
+  def apply(seq: Sequent, ft: Font, str: String): FlowPanel = if (! str.isEmpty) {
+    val set: Set[FormulaOccurrence] = ( seq.antecedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ++
+      seq.succedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ).toSet
+    apply(seq, ft, set, Set())
+  } else apply(seq, ft, Set(), Set())
 
   //used by DrawClList to draw FSequents
-  def applyF(seq: types.FSequent, ft: Font): FlowPanel = {
+  def applyF(seq: types.FSequent, ft: Font, str: String): FlowPanel = {
     implicit val factory = defaultFormulaOccurrenceFactory
     implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq[FormulaOccurrence]())
     implicit def fseq2seq(s : types.FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
-    apply(fseq2seq(seq), ft, Set(), Set())
+    apply(fseq2seq(seq), ft, str)
   }
 
   //used by DrawProof
