@@ -25,10 +25,30 @@ trait FOL extends HOL
   override def factory : LambdaFactoryA = FOLFactory
 }
 
-// right now FOLExpression refers to both valid FOL terms and formulas and components of such valid terms and formulas, so for example, the head symbol of an atom is also a fol expression although it has a complex type.
-// we need to separate fol expression into FOLExpression which refers only to valid fol expressions and to FOLComponent which contains the fol factory but refers to possibly invlaid fol expressions.
+/**
+ *The following is a note about the construction of this trait. Right now FOLExpression refers to both valid FOL terms
+ * and formulas and components of such valid terms and formulas, so for example, the head symbol of an atom is also a
+ * fol expression although it has a complex type.
+ * @author ?
+ * @version ?
+ */
+/* TODO we need to separate fol expression into FOLExpression which refers  only to valid fol expressions and to
+FOLComponent which contains the fol factory but refers to possibly invalid fol expressions.
+ */
 trait FOLExpression extends HOLExpression with FOL {
-    override def toString = this match {
+  /**
+   * This function takes a FOL construction and converts it to a string version. The String version is made
+   * by replacing the code construction for logic symbols by string   versions in the file language/hol/logicSymbols.scala.
+   * Terms are also handled by the this function.
+   *
+   @param  this  The method has no parameters other then the object which is to be written as a string
+   *
+   @throws Exception This occurs when an unknown subformula is found when parsing the FOL construction
+   *
+   @return A String which contains the defined symbols in language/hol/logicSymbols.scala.
+   *
+   */
+  override def toString = this match {
       case Var(x,_) => x.toString
       case Atom(x, args) => x + "(" +
         (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
@@ -45,9 +65,20 @@ trait FOLExpression extends HOLExpression with FOL {
       case _ => throw new Exception("Unknown FOL expression: " + super.toString)
     }
 
-    // this function outputs the string which creates
-    // an object like this. can be used to create
-    // tests based on bugs.
+  /**
+   * This is an identity function for FOL construction, in that this
+   *function takes a FOL statement, and outputs the statement as it was written/coded. Old
+   *comment for this function was written as follows:
+   * this function outputs the string which creates
+   * an object like this. can be used to create
+   * tests based on bugs.
+   *
+   The method has no parameters other then the object which is to be written as a string
+   @param  this  The method has no parameters other then the object which is to be written as a string
+   *
+   @return A String illustrating the construction of the given FOL expression
+   *
+   */
     def toCode : String = this match {
       case FOLVar(x) => "FOLVar( " + x.toCode + " )"
       case FOLConst(x) => "FOLConst( " + x.toCode + " )"
@@ -162,7 +193,7 @@ object Function {
     case _ => None
   }
 }
-
+// TODO put on wiki these are constants representing symbols in the logic.
 case object BottomC extends HOLConst(BottomSymbol, "o") with FOLFormula
 case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL

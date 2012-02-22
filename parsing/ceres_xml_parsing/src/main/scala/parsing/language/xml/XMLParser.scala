@@ -12,13 +12,13 @@
 package at.logic.parsing.language.xml
 
 import _root_.at.logic.calculi.lk.base._
+import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import scala.xml._
 import scala.xml.Utility.trim
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ParsingException
 import at.logic.parsing.readers.XMLReaders.NodeReader
-import at.logic.language.hol._
 import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
@@ -32,8 +32,9 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.types.FSequent
 
 import scala.collection.immutable.Set
+import scala.Predef._
 
-class ProofDatabase( val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );
+class ProofDatabase(val Definitions: (Map[String,(List[HOLVar],HOLFormula)],Map[String,(List[HOLVar],HOLFormula)],Map[HOLFormula,HOLFormula]), val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );
 
 class TestException(val formulas : (HOLExpression, HOLFormula)) extends Exception
 
@@ -333,15 +334,69 @@ object XMLParser {
       }
   }
 
+  //for(n <- (pdb\"definitionlist")){ (new NodeReader( n ) with XMLDefinitionParser).getTermDefinition() }
   trait XMLProofDatabaseParser extends XMLNodeParser {
     def getProofDatabase() : ProofDatabase = getProofDatabase( getInput() )
     def getProofDatabase( pdb : Node ) : ProofDatabase = 
-      new ProofDatabase( (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getNamedProof() ).toList,
-                         (new NodeReader( (pdb\"axiomset").head ) with XMLSequentParser).getAxiomSet(),
-                         (pdb\"sequentlist").map( n => ( new NodeReader( n ) with XMLSequentParser ).getNamedSequentList() ).toList
-                       )
-  }
+      new ProofDatabase(
 
+          (((pdb\"definitionlist").filter( (n: Node) =>
+            trim(n) match{ case <termdef>{ ns @ _* }</termdef> => true ; case _ =>false})).map(n =>
+            ( new NodeReader( n ) with XMLDefinitionParser ).getNameTermDefinition()).toMap,
+          ((pdb\"definitionlist").filter( (n: Node) =>
+            trim(n) match{ case <formuladef>{ ns @ _* }</formuladef> => true ; case _ =>false})).map(n =>
+            ( new NodeReader( n ) with XMLDefinitionParser ).getNameTermDefinition()).toMap,
+          ((pdb\"definitionlist").filter( (n: Node) =>
+          trim(n) match{ case <indirecttermdef>{ ns @ _* }</indirecttermdef> => true ; case _ =>false})).map(n =>
+          ( new NodeReader( n ) with XMLDefinitionParser ).getIndirectDefinition()).toMap),
+          (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getNamedProof() ).toList,
+          (new NodeReader( (pdb\"axiomset").head ) with XMLSequentParser).getAxiomSet(),
+          (pdb\"sequentlist").map( n => ( new NodeReader( n ) with XMLSequentParser ).getNamedSequentList() ).toList
+
+      )
+
+  }
+  trait XMLDefinitionParser extends XMLNodeParser {
+
+
+    /**
+     * This is a new trait for parsing the definition list of the xml files.
+     *                            XMLFormulaParser
+     *
+     *                              trait XMLVariableListParser extends XMLNodeParser {
+
+     */
+    def getNameTermDefinition() : (String, (List[HOLVar],HOLFormula)) = getNameTermDefinition( getInput() )
+    def getNameTermDefinition(n: Node) : (String, (List[HOLVar],HOLFormula)) = (n.attribute("symbol").get.head.text, getTermDefinitionRec(n))
+    def getTermDefinitionRec( n : Node ) : (List[HOLVar],HOLFormula) = (
+      (n.child).filter( (m: Node) =>
+      trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => true ; case _ =>false}).map(c =>
+        ( new NodeReader( c ) with XMLVariableListParser ).getVariableList()).head,
+      (n.child).filter( (m: Node) =>
+      trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => false ; case _ =>true}).map(c =>
+      ( new NodeReader( c ) with XMLFormulaParser ).getFormula()).head
+      )
+
+
+    def getNameFormulaDefinition() : (String, (List[HOLVar],HOLFormula)) = getNameFormulaDefinition( getInput() )
+    def getNameFormulaDefinition(n: Node) : (String, (List[HOLVar],HOLFormula)) = (n.attribute("symbol").get.head.text, getFormulaDefinitionRec(n))
+    def getFormulaDefinitionRec( n : Node ) : (List[HOLVar],HOLFormula) = (
+      (n.child).filter( (m: Node) =>
+        trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => true ; case _ =>false}).map(c =>
+        ( new NodeReader( c ) with XMLVariableListParser ).getVariableList()).head,
+      (n.child).filter( (m: Node) =>
+        trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => false ; case _ =>true}).map(c =>
+        ( new NodeReader( c ) with XMLFormulaParser ).getFormula()).head
+      )
+
+    def getIndirectDefinition() : (HOLFormula,HOLFormula) = getIndirectDefinitionRec(getInput())
+    def getIndirectDefinitionRec (ns : Node) : (HOLFormula , HOLFormula) =  (
+      ( new NodeReader( ns.child(1) ) with XMLFormulaParser ).getFormula(),
+      ( new NodeReader( ns.child(2) ) with XMLFormulaParser ).getFormula()
+      )
+
+
+  }
   /**
    * This trait parses XML elements &lt;proof&gt;, &lt;rule&gt; and &lt;prooflink&gt;
    * into the respective objects.
@@ -1043,16 +1098,6 @@ object XMLParser {
      *                          defined by the &amp;formula; entity.
      */
     def getFormula() : HOLFormula = getFormula( getInput() )
-
-    /**
-     * If n is one of the elements defined by the
-     * &amp;formula; entity, a HOLFormula object corresponding to the Node is returned.
-     *
-     * @param n A Node corresponding to an element defined by the &amp;formula; entity.
-     * @return An HOLFormula object corresponding to the Node provided by getInput().
-     * @throws ParsingException If n is not one of the elements
-     *                          defined by the &amp;formula; entity.
-     */
     def getFormula(n : Node) : HOLFormula =
       trim(n) match {
         case <constantatomformula>{ ns @ _* }</constantatomformula>
