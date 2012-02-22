@@ -22,23 +22,23 @@ import at.logic.calculi.lk.base.Sequent
 import javax.swing.Icon
 import java.awt.event.{MouseMotionListener, MouseEvent}
 
-class DrawTree(private val struct: Tree[_], private val fSize: Int) extends BorderPanel with MouseMotionListener {
+class DrawTree(val tree: Tree[_], private val fSize: Int) extends BorderPanel with MouseMotionListener {
   background = new Color(255,255,255)
   opaque = false
 
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val bd = Swing.EmptyBorder(fSize / 2)
-  private val tx = struct.vertex match {
+  private val tx = tree.vertex match {
     case PWeakC(seq) => "w^{" + sequentToLatexString(seq) + "}"
     case he: HOLExpression => formulaToLatexString(he)
     case seq: Sequent => sequentToLatexString(seq)
-    case _ => struct.vertex.toString
+    case _ => tree.vertex.toString
   }
   private var drawLines = true
 
-  struct match {
-    case tree: UnaryTree[_] =>
-      val mylabel = tree.vertex match {
+  tree match {
+    case utree: UnaryTree[_] =>
+      val mylabel = utree.vertex match {
         case PWeakC(_) => latexToLabel(tx, ft)
         case _ => new Label(tx) {
           font = ft
@@ -88,16 +88,16 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
           } else mylabel.text = "x"
       }
       layout(mylabel) = Position.North
-      layout(new DrawTree(tree.t, fSize) {
+      layout(new DrawTree(utree.t, fSize) {
         listenTo(mylabel, StructPublisher)
         reactions += {
           case ShowLeaf => visible = true
           case HideTree => visible = false
         }
       }) = Position.Center
-    case tree: BinaryTree[_] =>
+    case btree: BinaryTree[_] =>
       val label = new Label(tx) {
-        tree.vertex match {
+        btree.vertex match {
           case TimesC | PTimesC(_) => foreground = new Color(255,0,0)
           case PlusC | PPlusC => foreground = new Color(0,0,255)
           case _ =>
@@ -124,21 +124,21 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
         }
       }
       layout(label) = Position.North
-      layout(new DrawTree(tree.t1, fSize) {
+      layout(new DrawTree(btree.t1, fSize) {
         listenTo(label, StructPublisher)
         reactions += {
           case ShowLeaf => visible = true
           case HideTree => visible = false
         }
       }) = Position.West
-      layout(new DrawTree(tree.t2, fSize) {
+      layout(new DrawTree(btree.t2, fSize) {
         listenTo(label, StructPublisher)
         reactions += {
           case ShowLeaf => visible = true
           case HideTree => visible = false
         }
       }) = Position.East
-    case tree: LeafTree[_] =>
+    case ltree: LeafTree[_] =>
       val mylabel = latexToLabel(tx, ft)
       mylabel.opaque = false
       mylabel.border = bd
@@ -169,7 +169,7 @@ class DrawTree(private val struct: Tree[_], private val fSize: Int) extends Bord
     g.setStroke(new BasicStroke(fSize / 25, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND))
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
 
-    if (drawLines) struct match {
+    if (drawLines) tree match {
       case p: UnaryTree[_] => {
         val north = this.layout.find(x => x._2 == Position.North).get._1
         val north_width = north.size.width

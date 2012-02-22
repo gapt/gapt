@@ -19,7 +19,7 @@ import javax.swing.filechooser.FileFilter
 import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors}
 import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.{Sequent, LKProof, BinaryLKProof, UnaryLKProof, NullaryLKProof}
+import at.logic.calculi.lk.base.{Sequent, LKProof}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.treeProofs.TreeProof
@@ -138,32 +138,25 @@ object Main extends SimpleSwingApplication {
       case Some(str) => str
       case _ => ""
     }
-    if (! input_str.isEmpty) {
+    if (! input_str.isEmpty) try {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       body.getContent.contents.head match {
         case dp: DrawProof =>
-          dp.setColoredOccurrences(searchFormulas(input_str, dp.proof))
+          dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof))
           dp.revalidate
-       // TODO: add other cases here
-        case _ => Dialog.showMessage(body, "Can not search in this object!")
+    /*    case dt: DrawTree =>
+          dt.setColoredOccurrences(Search.inTree(input_str, dt.tree))
+          dt.revalidate*/
+        case dl: DrawList =>
+          dl.search = input_str
+          dl.revalidate
+        case _ => throw new Exception("Can not search in this object!")
       }
+    } catch {
+      case e: Exception => Dialog.showMessage(body, e.toString)
+    } finally {
       body.cursor = java.awt.Cursor.getDefaultCursor
     }
-  }
-
-  def searchFormulas(str: String, proof: TreeProof[_]): Set[FormulaOccurrence] = proof match {
-    case p: NullaryLKProof =>
-      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-      p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
-    case p: UnaryLKProof =>
-      searchFormulas(str, p.uProof.asInstanceOf[TreeProof[_]]) ++
-      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-      p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
-    case p: BinaryLKProof =>
-      searchFormulas(str, p.uProof1.asInstanceOf[TreeProof[_]]) ++
-      searchFormulas(str, p.uProof2.asInstanceOf[TreeProof[_]]) ++
-      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-      p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
   }
 
   def top = new MainFrame {
@@ -195,6 +188,8 @@ object Main extends SimpleSwingApplication {
     db.parseFile(path)
     val proofs = db.getProofs
     if (proofs.size > 0) body.contents = new Launcher(Some(proofs.head), fontSize)
+    else if (db.getSequentLists.size > 0)
+      body.contents = new Launcher(Some(db.getSequentLists.head), fontSize)
     else body.contents = new Launcher(None, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }

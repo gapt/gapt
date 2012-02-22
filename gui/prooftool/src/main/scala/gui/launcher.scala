@@ -10,13 +10,11 @@ package at.logic.gui.prooftool.gui
 import scala.swing._
 import event.{MouseReleased, MouseDragged}
 import java.awt.Font._
+import java.awt.event.{MouseEvent, MouseMotionListener}
 import javax.swing.border.TitledBorder
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
-import java.awt.event.{MouseEvent, MouseMotionListener}
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.lk.base.{LKProof, Sequent}
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -41,8 +39,8 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           layout(new DrawTree(tree, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(Loaded)
-        case clList: List[Sequent] =>
-          layout(new DrawClList(clList, fSize)) = c
+        case list: List[_] =>
+          layout(new DrawList(list, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
         case _ =>
