@@ -1098,6 +1098,16 @@ object XMLParser {
      *                          defined by the &amp;formula; entity.
      */
     def getFormula() : HOLFormula = getFormula( getInput() )
+
+    /**
+     *  If n is one of the elements defined by the
+     * &amp;formula; entity, a HOLFormula object corresponding to the Node is returned.
+     *
+     * @param n A Node corresponding to an element defined by the &amp;formula; entity.
+     * @return An HOLFormula object corresponding to the Node provided by getInput().
+     * @throws ParsingException If n is not one of the elements
+     *                          defined by the &amp;formula; entity.
+    */
     def getFormula(n : Node) : HOLFormula =
       trim(n) match {
         case <constantatomformula>{ ns @ _* }</constantatomformula>
