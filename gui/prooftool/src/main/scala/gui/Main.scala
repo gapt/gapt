@@ -144,9 +144,9 @@ object Main extends SimpleSwingApplication {
         case dp: DrawProof =>
           dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof))
           dp.revalidate
-    /*    case dt: DrawTree =>
-          dt.setColoredOccurrences(Search.inTree(input_str, dt.tree))
-          dt.revalidate*/
+        case dt: DrawTree =>
+          dt.search = input_str
+          dt.revalidate
         case dl: DrawList =>
           dl.search = input_str
           dl.revalidate
@@ -366,9 +366,13 @@ object Main extends SimpleSwingApplication {
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
         }
       }
+      contents += new MenuItem(Action("View Definition List") { loadClauseSet(("Definition List", db.getDefinitions)) }) {
+        mnemonic = Key.D
+        border = customBorder
+      }
       contents += new Menu("View Term Tree") {
         MenuScroller.setScrollerFor(this.peer)
-        mnemonic = Key.S
+        mnemonic = Key.T
         border = customBorder
         listenTo(ProofToolPublisher)
         reactions += {
