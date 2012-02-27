@@ -49,9 +49,8 @@ object SHLK {
 //    sp.parseAll(sp.line, txt)
     sp.parseAll(sp.slkProofs, txt) match {
       case sp.Success(result, input) => // println("\n\nSUCCESS parse :) \n")
-      case _ => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
-        //TODO we should output line in the file, where problem occurred, not label of the rule, because it may occur in different places in the file.
-        throw new Exception("Parsing failed on line "+ {if (error_buffer.isEmpty) "1" else error_buffer})
+      case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
+        throw new Exception(x.toString)
     }
 
 //    class ParserTxt extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
