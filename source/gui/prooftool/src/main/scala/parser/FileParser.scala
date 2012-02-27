@@ -36,14 +36,14 @@ class FileParser {
 
   def stabFileReader(input: InputStreamReader) {
     structs = Nil
-    proofdb = new ProofDatabase((Map(),Map(),Map()),Nil, Nil, Nil)
+    proofdb = new ProofDatabase(Map(),Nil, Nil, Nil)
     proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
   }
 
   def lksFileReader(f: String) {
     proofs = Nil
     structs = Nil
-    proofdb = new ProofDatabase((Map(),Map(),Map()),SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
+    proofdb = new ProofDatabase(Map(),SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
   }
 
   def parseFile(path: String) : Unit = try {
@@ -97,7 +97,7 @@ class FileParser {
   def getProofDB = proofdb
   def getStructTrees = structs
 
-  private var proofdb = new ProofDatabase((Map(),Map(),Map()),Nil,Nil,Nil)
+  private var proofdb = new ProofDatabase(Map(),Nil,Nil,Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil
   private var structs: List[(String, Tree[_])] = Nil
 }

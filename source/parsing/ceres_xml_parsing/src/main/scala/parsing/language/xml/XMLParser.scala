@@ -34,7 +34,7 @@ import at.logic.calculi.lk.base.types.FSequent
 import scala.collection.immutable.Set
 import scala.Predef._
 
-class ProofDatabase(val Definitions: (Map[String,(List[HOLVar],HOLFormula)],Map[String,(List[HOLVar],HOLFormula)],Map[HOLFormula,HOLFormula]), val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );
+class ProofDatabase(val Definitions: Map[HOLFormula,HOLFormula], val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );
 
 class TestException(val formulas : (HOLExpression, HOLFormula)) extends Exception
 
@@ -337,25 +337,16 @@ object XMLParser {
   //for(n <- (pdb\"definitionlist")){ (new NodeReader( n ) with XMLDefinitionParser).getTermDefinition() }
   trait XMLProofDatabaseParser extends XMLNodeParser {
     def getProofDatabase() : ProofDatabase = getProofDatabase( getInput() )
-    def getProofDatabase( pdb : Node ) : ProofDatabase = 
-      new ProofDatabase(
-
-          (((pdb\"definitionlist").filter( (n: Node) =>
-            trim(n) match{ case <termdef>{ ns @ _* }</termdef> => true ; case _ =>false})).map(n =>
-            ( new NodeReader( n ) with XMLDefinitionParser ).getNameTermDefinition()).toMap,
-          ((pdb\"definitionlist").filter( (n: Node) =>
-            trim(n) match{ case <formuladef>{ ns @ _* }</formuladef> => true ; case _ =>false})).map(n =>
-            ( new NodeReader( n ) with XMLDefinitionParser ).getNameTermDefinition()).toMap,
-          ((pdb\"definitionlist").filter( (n: Node) =>
-          trim(n) match{ case <indirecttermdef>{ ns @ _* }</indirecttermdef> => true ; case _ =>false})).map(n =>
-          ( new NodeReader( n ) with XMLDefinitionParser ).getIndirectDefinition()).toMap),
+    def getProofDatabase( pdb : Node ) : ProofDatabase =
+     new ProofDatabase(  (pdb\"definitionlist"\"termdef").map(n => ( new NodeReader( n ) with XMLDefinitionParser ).getNameTermDefinition()).toList.map(
+       c => ( Atom(new ConstantStringSymbol(c._1 ), (c._2)._1), (c._2)._2)).toMap ++ (pdb\"definitionlist"\"formuladef").map(n => ( new NodeReader( n ) with XMLDefinitionParser ).getNameFormulaDefinition()).toList.map(
+       c => ( Atom(new ConstantStringSymbol(c._1 ), (c._2)._1), (c._2)._2)).toMap ++ (pdb\"definitionlist"\"indirecttermdef").map(n => ( new NodeReader( n ) with XMLDefinitionParser ).getIndirectDefinition()).toMap,
           (pdb\"proof").map( n => ( new NodeReader( n ) with XMLProofParser ).getNamedProof() ).toList,
           (new NodeReader( (pdb\"axiomset").head ) with XMLSequentParser).getAxiomSet(),
           (pdb\"sequentlist").map( n => ( new NodeReader( n ) with XMLSequentParser ).getNamedSequentList() ).toList
 
       )
-
-  }
+   }
   trait XMLDefinitionParser extends XMLNodeParser {
 
 
@@ -368,27 +359,27 @@ object XMLParser {
      */
     def getNameTermDefinition() : (String, (List[HOLVar],HOLFormula)) = getNameTermDefinition( getInput() )
     def getNameTermDefinition(n: Node) : (String, (List[HOLVar],HOLFormula)) = (n.attribute("symbol").get.head.text, getTermDefinitionRec(n))
-    def getTermDefinitionRec( n : Node ) : (List[HOLVar],HOLFormula) = (
-      (n.child).filter( (m: Node) =>
-      trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => true ; case _ =>false}).map(c =>
-        ( new NodeReader( c ) with XMLVariableListParser ).getVariableList()).head,
-      (n.child).filter( (m: Node) =>
-      trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => false ; case _ =>true}).map(c =>
-      ( new NodeReader( c ) with XMLFormulaParser ).getFormula()).head
-      )
-
-
+    def getTermDefinitionRec( n : Node ) : (List[HOLVar],HOLFormula) =
+      (
+        (n.child).filter( (m: Node) =>
+          trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => true ; case _ =>false}).map(c =>
+          ( new NodeReader( c ) with XMLVariableListParser ).getVariableList()).head,
+        (n.child).filter( (m: Node) =>
+          trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => false ; case _ =>true}).
+          map(
+          c => Atom(new ConstantStringSymbol( c.attribute("symbol").get.head.text ),
+            XMLUtils.nodesToAbstractTerms(c.child.toList))).head
+       )
     def getNameFormulaDefinition() : (String, (List[HOLVar],HOLFormula)) = getNameFormulaDefinition( getInput() )
     def getNameFormulaDefinition(n: Node) : (String, (List[HOLVar],HOLFormula)) = (n.attribute("symbol").get.head.text, getFormulaDefinitionRec(n))
     def getFormulaDefinitionRec( n : Node ) : (List[HOLVar],HOLFormula) = (
       (n.child).filter( (m: Node) =>
-        trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => true ; case _ =>false}).map(c =>
+         trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => true ; case _ =>false}).map(c =>
         ( new NodeReader( c ) with XMLVariableListParser ).getVariableList()).head,
       (n.child).filter( (m: Node) =>
         trim(m) match{ case <variablelist>{ ns @ _* }</variablelist> => false ; case _ =>true}).map(c =>
         ( new NodeReader( c ) with XMLFormulaParser ).getFormula()).head
       )
-
     def getIndirectDefinition() : (HOLFormula,HOLFormula) = getIndirectDefinitionRec(getInput())
     def getIndirectDefinitionRec (ns : Node) : (HOLFormula , HOLFormula) =  (
       ( new NodeReader( ns.child(1) ) with XMLFormulaParser ).getFormula(),
