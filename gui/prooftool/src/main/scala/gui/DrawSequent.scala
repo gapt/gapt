@@ -77,6 +77,7 @@ object DrawSequent {
     font = ft
     opaque = true
 
+    val latexText = ls
     val formula = new TeXFormula(ls)
     val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, ft.getSize)
     val myimage = new BufferedImage(myicon.getIconWidth(), myicon.getIconHeight(), BufferedImage.TYPE_INT_ARGB)
