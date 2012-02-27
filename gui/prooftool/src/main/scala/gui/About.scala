@@ -27,7 +27,7 @@ object About {
           new ImageIcon(Main.getClass.getClassLoader.getResource(path))
         } catch {
           case e: Exception =>
-            Dialog.showMessage(Main.mBar,"Couldn't load image: "+path+"\n \n"+e.toString+"\n")
+            Main.errorMessage("Couldn't load image: "+path+"\n \n"+e.toString+"\n")
             Swing.EmptyIcon
         }
       }
@@ -52,7 +52,7 @@ object About {
       c.grid = (1,2)
       layout(new Label("Vendor:") { horizontalAlignment = Alignment.Right }) = c
       c.grid = (2,0)
-      layout(new Label("1.0") { horizontalAlignment = Alignment.Left }) = c
+      layout(new Label("1.1") { horizontalAlignment = Alignment.Left }) = c
       c.grid = (2,1)
       layout(new Label("Mikheil Rukhaia") { horizontalAlignment = Alignment.Left }) = c
       c.grid = (2,2)
