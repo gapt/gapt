@@ -70,48 +70,71 @@ object Main extends SimpleSwingApplication {
   def fSaveProof : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ =>
-      val data = body.getContent.getData.get._2
-      if (data.isInstanceOf[LKProof])
-        XMLExporter(chooser.selectedFile.getPath, "the-proof", data.asInstanceOf[LKProof])
-      else errorMessage("This is not a proof, can't save it!")
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      body.getContent.getData.get._2 match {
+        case proof: LKProof => try {
+          XMLExporter(chooser.selectedFile.getPath, "the-proof", proof)
+        } catch {
+          case e: AnyRef => errorMessage("Can't save the proof! \n\n" + e.toString)
+        }
+        case _ => infoMessage("This is not a proof, can't save it!")
+      }
+      body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def fSaveAll : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
-    case _ => XMLExporter(chooser.selectedFile.getPath, db.getProofDB)
+    case _ => try {
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      XMLExporter(chooser.selectedFile.getPath, db.getProofDB)
+    } catch {
+      case e: AnyRef => errorMessage("Can't save the database! \n\n" + e.toString)
+    } finally {  body.cursor = java.awt.Cursor.getDefaultCursor }
   }
 
   def fExportTPTP : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ =>
-      val list = body.getContent.getData.get._2 match {
-        case l: List[Sequent] => l.map(x => x.toFSequent)
-        case l: List[FSequent] => l
-        case _ => Nil
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      body.getContent.getData.get._2  match {
+        case l : List[_] => try {
+          import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
+
+          val file = new JBufferedWriter(new JFileWriter( chooser.selectedFile.getPath ))
+          file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(
+            l.map( x => x match {
+              case s: Sequent => s.toFSequent
+              case fs: FSequent => fs
+              case _ => throw new Exception("This is not a clause set.")
+            })
+          ))
+          file.close
+        } catch {
+          case e: AnyRef => errorMessage("Can't save the clause set! \n\n" + e.toString)
+        }
+        case _ => infoMessage("This is not a clause set, can't export it!")
       }
-
-      if (list != Nil) {
-        import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
-
-        val file = new JBufferedWriter(new JFileWriter( chooser.selectedFile.getPath ))
-        file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(list))
-        file.close
-      } else errorMessage("This is not a Clause Set, can't export it!")
+      body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def fExportTeX : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ =>
-      val list = body.getContent.getData.get._2 match {
-        case l: List[Sequent] => l.map(x => x.toFSequent)
-        case l: List[FSequent] => l
-        case _ => Nil
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      body.getContent.getData.get._2  match {
+        case l : List[_] => try {
+          (new FileWriter( chooser.selectedFile.getPath ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+            .exportSequentList( l.map( x => x match {
+              case s: Sequent => s.toFSequent
+              case fs: FSequent => fs
+              case _ => throw new Exception("This is not a clause set.")
+            }) , Nil).close
+        } catch {
+          case e: AnyRef => errorMessage("Can't save the clause set! \n\n" + e.toString)
+        }
+        case _ => infoMessage("This is not a clause set, can't export it!")
       }
-
-      if (list != Nil)
-        (new FileWriter( chooser.selectedFile.getPath ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
-          .exportSequentList( list , Nil).close
-      else errorMessage("This is not a Clause Set, can't export it!")
+      body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def fExit : Unit = System.exit(0)
@@ -285,7 +308,7 @@ object Main extends SimpleSwingApplication {
       contents += new Separator
       contents += new MenuItem(Action("Hide Structural Rules") {
         warningMessage("This feature is under development and might not work properly!")
-        ProofToolPublisher.publish(HideStructuralRules) 
+        ProofToolPublisher.publish(HideStructuralRules)
       }) {
         border = customBorder
         enabled = false
@@ -899,6 +922,10 @@ object Main extends SimpleSwingApplication {
         val t = e.toString
         errorMessage("Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
+
+  def infoMessage(info: String) {
+    Dialog.showMessage(body, info, "ProofTool Information")
+  }
 
   def warningMessage(warning: String) {
     Dialog.showMessage(body, warning, "ProofTool Warning", Dialog.Message.Warning)

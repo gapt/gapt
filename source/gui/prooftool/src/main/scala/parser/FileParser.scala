@@ -21,6 +21,7 @@ import at.logic.calculi.lk.base.LKProof
 import io.Source
 import at.logic.parsing.language.simple.SHLK
 import at.logic.utils.ds.trees.Tree
+import at.logic.language.hol.HOLFormula
 
 class FileParser {
 
@@ -88,10 +89,8 @@ class FileParser {
     structs = list:::structs
   }
 
-  def getDefinitions = {
- //   println(proofdb.Definitions._1.size + ", " + proofdb.Definitions._2.size + ", " + proofdb.Definitions._3.size)
-    proofdb.Definitions.toList
-  }
+  def getDefinitions: List[(HOLFormula, HOLFormula)] = proofdb.Definitions.toList //._1.toList ::: proofdb.Definitions._2.toList ::: proofdb.Definitions._3.toList
+
   def getSequentLists = proofdb.sequentLists
   def getProofs = proofdb.proofs:::proofs
   def getProofDB = proofdb
