@@ -36,7 +36,7 @@ trait SimpleResolutionParserFOL extends SimpleResolutionParser with SimpleFOLPar
   override def formula = formula2
   override def neg = neg2
   def clause: Parser[FSequent] = repsep(formula,"|") ~ "." ^^ {
-      case ls ~ "." => new Pair(
+      case ls ~ "." => FSequent(
             (ls.filter(filterPosFormulas).map(stripNeg)),
             (ls.filter(x => !filterPosFormulas(x)))
        ) }

@@ -11,6 +11,7 @@ import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.provers.atp.commands.base.{BranchCommand, Command}
 import _root_.at.logic.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.calculi.lk.base.FSequent
 import at.logic.provers.atp.commands.refinements.simple._
 import at.logic.provers.atp.commands.refinements.base._
 import at.logic.provers.atp.commands.sequents._
@@ -39,7 +40,7 @@ class ProverTest extends SpecificationWithJUnit {
       SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
       InsertResolventCommand[Clause]),
     RefutationReachedCommand[Clause]), stream1a)
-  def streama: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1a))
+  def streama: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1a))
 
   // stream based on normal stack usage using configurations normally - may explode stack if branching too fast
   def stream1b:  Stream[Command[Clause]] = Stream.cons(SimpleRefinementGetCommand[Clause],
@@ -51,7 +52,7 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1b)))))))
-  def streamb: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1b))
+  def streamb: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1b))
 
   // stream based on "deterministic and command" that allows branching in a sequential way, which can be used in user interfaces as the other commands might
   // ask for an input, put it in the stack and will not necessarily act on it immediately.
@@ -64,7 +65,7 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1c)))))))
-  def streamc: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1c))
+  def streamc: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1c))
   def stream1d: Stream[Command[Clause]] =  Stream.cons(SimpleRefinementGetCommand[Clause],
     Stream.cons(VariantsCommand,
     Stream.cons(DeterministicAndCommand[Clause]((
@@ -83,7 +84,7 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1e))))))))
-  def streame: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1e))
+  def streame: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1e))
 
   def getRefutation(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streamc)).next must beLike {
       case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => true
@@ -153,15 +154,15 @@ class ProverTest extends SpecificationWithJUnit {
         val fun1 = Function(new ConstantStringSymbol("f"), var1::Nil)
         val lit1 = Atom(new ConstantStringSymbol("P"),var1::Nil)
         val lit2 = Atom(new ConstantStringSymbol("P"),fun1::Nil)
-        getRefutationd("-P(x) | -P(y) | P(f(x)). P(x).",(List(lit1),List(lit2))) must beTrue
+        getRefutationd("-P(x) | -P(y) | P(f(x)). P(x).",FSequent(List(lit1),List(lit2))) must beTrue
       }
       "P(f(a)) from -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a)." in {
         val pfa = parse("P(f(a))")
-        getRefutationd(" -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a).",(List(),List(pfa))) must beTrue
+        getRefutationd(" -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a).",FSequent(List(),List(pfa))) must beTrue
       }
       "-P(f(a)) from -=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x)." in {
         val pfa = parse("P(f(a))")
-        getRefutationd("-=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x).",(List(pfa),List())) must beTrue
+        getRefutationd("-=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x).",FSequent(List(pfa),List())) must beTrue
       }
     }
     /*"When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {

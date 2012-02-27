@@ -700,7 +700,7 @@ object Main extends SimpleSwingApplication {
     implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
 
     //-- Definition of psi_step
-    val psi_k = SchemaProofLinkRule(Pair(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]), "\\psi", k::Nil)
+    val psi_k = SchemaProofLinkRule(FSequent(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]), "\\psi", k::Nil)
     val orlsk = OrLeftRule(NegLeftRule( Axiom( ask +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]), ask ), Axiom( assk +: Seq.empty[HOLFormula], assk +: Seq.empty[HOLFormula]), Neg(ask), assk)
     val cut = CutRule(psi_k, orlsk, ask)
     val psi_sk = AndEquivalenceRule1(AndLeftRule(cut, and_0_k_not_ai_lor_asi, not_ask_lor_assk),
@@ -709,7 +709,7 @@ object Main extends SimpleSwingApplication {
 
     SchemaProofDB.clear
     SchemaProofDB.put( new SchemaProof( "\\psi", k::Nil,
-        Pair(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]),
+        FSequent(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]),
         psi_0, psi_sk ))
 
     checkProofLinks( psi_0 )

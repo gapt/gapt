@@ -7,6 +7,7 @@
 
 package at.logic.parsing.calculi.simple
 
+import at.logic.calculi.lk.base.FSequent
 import org.specs._
 import org.specs.runner._
 import at.logic.language.hol._
@@ -67,23 +68,23 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
     }
     */
     "return an empty clause when given ." in {
-      (new MyParser2(".").getClauseList) must beEqual (Seq((Nil,Nil)))
+      (new MyParser2(".").getClauseList) must beEqual (Seq(FSequent(Nil,Nil)))
     }
     "return an empty list when given nothing" in {
       (new MyParser2("").getClauseList) must beEqual (Nil)
     }
     "return the correct clause of -p(x). fol" in {
-      (new MyParser2("-P(x).").getClauseList) must beEqual (Seq((px_fol::Nil,Nil)))
+      (new MyParser2("-P(x).").getClauseList) must beEqual (Seq(FSequent(px_fol::Nil,Nil)))
     }
     "return the correct clauses for p(a). -p(x) | p(f(x)). -p(f(f(a))). in fol" in {
-      (new MyParser2("P(a). -P(x) | P(f(x)). -P(f(f(a))).").getClauseList) must beEqual (Seq( (Nil,pa_fol::Nil), (px_fol::Nil,pfx_fol::Nil), (pffa_fol::Nil,Nil)))
+      (new MyParser2("P(a). -P(x) | P(f(x)). -P(f(f(a))).").getClauseList) must beEqual (Seq( FSequent(Nil,pa_fol::Nil), FSequent(px_fol::Nil,pfx_fol::Nil), FSequent(pffa_fol::Nil,Nil)))
     }
     /*
     "return the correct clause for p(x) | -p(x) in hol" in {
       (new MyParser("p(x:i) | -p(x:i).").getClauseList) must beEqual (Clause(px::Nil,px::Nil)::Nil)
     }*/
     "return the correct clause for p(x) | -p(x) in fol" in {
-      (new MyParser2("P(x) | -P(x).").getClauseList) must beEqual (Seq((px_fol::Nil,px_fol::Nil)))
+      (new MyParser2("P(x) | -P(x).").getClauseList) must beEqual (Seq(FSequent(px_fol::Nil,px_fol::Nil)))
     }
 
     /*

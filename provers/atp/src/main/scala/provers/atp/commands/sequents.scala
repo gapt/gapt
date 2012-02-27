@@ -12,7 +12,6 @@ package sequents {
 
 import _root_.at.logic.algorithms.subsumption.managers._
 import _root_.at.logic.algorithms.subsumption.SubsumptionAlgorithm
-import _root_.at.logic.calculi.lk.base.Sequent
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
 import _root_.at.logic.calculi.resolution.robinson.Clause
 import _root_.at.logic.language.hol.{HOLFormula, HOLExpression, HOLVar}
@@ -20,6 +19,7 @@ import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.language.lambda.types.->
 import _root_.at.logic.utils.ds.{Add, Remove, PublishingBufferEvent, PublishingBuffer}
 import _root_.at.logic.utils.patterns.listeners.ListenerManager
+import at.logic.calculi.lk.base.{FSequent, Sequent}
 import at.logic.provers.atp.commands.base.{ResultCommand, DataCommand}
 import at.logic.provers.atp.Definitions._
 import at.logic.calculi.lk.base.types.FSequent
@@ -73,7 +73,7 @@ import at.logic.calculi.lk.base.types.FSequent
   object fvarInvariantMSEquality {
     def apply[V <: Sequent](c1: V, f2: FSequent): Boolean = {
       val f1 = (c1.antecedent.map(_.formula), c1.succedent.map(_.formula))
-      val (neg,pos) = f2
+      val FSequent(neg,pos) = f2
       // we get all free variables from f2 and try to systematically replace those in f1
       val set1 = (f1._1 ++ f1._2).flatMap(_.subTerms).filter(e => e match {case f: HOLVar => true; case _ => false}).toSet
       val set2 = (f2._1 ++ f2._2).flatMap(_.subTerms).filter(e => e match {case f: HOLVar => true; case _ => false}).toSet

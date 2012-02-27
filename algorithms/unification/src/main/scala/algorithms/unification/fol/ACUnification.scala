@@ -1,6 +1,5 @@
 package at.logic.algorithms.unification
 
-import _root_.at.logic.calculi.lk.base.FSequent
 import _root_.at.logic.calculi.lk.base.types.FSequent
 import _root_.at.logic.calculi.lkmodulo.types.Equation
 import _root_.at.logic.calculi.lkmodulo.{EequalityA, Equation}
@@ -9,6 +8,7 @@ import _root_.at.logic.language.lambda.symbols.{VariableStringSymbol, VariableSy
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader
 import at.logic.algorithms.diophantine.{LankfordSolver, Vector}
+import at.logic.calculi.lk.base.FSequent
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.fol._
 import at.logic.language.fol.{Equation => FOLEquation}
@@ -17,6 +17,7 @@ import scala.collection.immutable.Seq
 
 import collection.mutable.HashMap
 import collection.immutable.Stream.Cons
+import at.logic.calculi.lk.base.FSequent
 
 object ACUnification {
   val algorithms  = new HashMap[ConstantSymbolA, FinitaryUnification[FOLTerm]]
@@ -870,7 +871,7 @@ object ACUEquality {
   def tautology_deletion(seqs : List[FSequent], e: EequalityA) = {
     import at.logic.language.hol._
     seqs.filter(_ match {
-      case (_, succedent) => succedent.exists(
+      case FSequent(_, succedent) => succedent.exists(
         (f: HOLFormula) =>
           f match {
             case Atom(ConstantStringSymbol("="), List(x,y)) =>  e.word_equalsto(x.asInstanceOf[FOLTerm],y.asInstanceOf[FOLTerm])
