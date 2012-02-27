@@ -133,8 +133,8 @@ object ProjectionTermCreators {
 //      print("\n\n\n")
       ("\u039e("+ tri._1 +"_base, ("+cutConfToString( (ms11,ms22) ) + "))", tri._2)
     })
-    println("\nl.size = "+l.size)
-    l.foreach(x => println(x._1))
+  //  println("\nl.size = "+l.size)
+  //  l.foreach(x => println(x._1))
     l
   }
 
@@ -184,11 +184,11 @@ object ProjectionTermCreators {
     val cclistproof_name = cclist.filter(pair => pair._1 == proof_name)
     val cclist1 = cclistproof_name.map(pair => getCC(SchemaProofDB.get(pair._1).rec, pair._2._1 ::: pair._2._2, SchemaProofDB.get(pair._1).rec)).flatten
     val l = Utils.removeDoubles(cclist ::: cclist1).filter(pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty)
-    l.foreach(tri => {
-      println("\n"+tri._1)
-      tri._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-      tri._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-    })
+    // l.foreach(tri => {
+    //  println("\n"+tri._1)
+    //  tri._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+    //  tri._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+    // })
     l.map(pair => (pair._1, PStructToExpressionTree(extract(SchemaProofDB.get(pair._1).rec, (pair._2._1 ::: pair._2._2).toSet, getCutAncestors(SchemaProofDB.get(pair._1).rec))), (pair._2._1 ::: pair._2._2).toSet ))
   }
 
@@ -210,11 +210,11 @@ object ProjectionTermCreators {
 
       (pair._1, s)
     })
-    cclistbase.foreach(pair => {
-      println("\n\ncclistbase : "+pair._1)
-      pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-      pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-    })
+    // cclistbase.foreach(pair => {
+    //  println("\n\ncclistbase : "+pair._1)
+    //  pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+    //  pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+    // })
     Utils.removeDoubles(cclistbase).filter(pair =>
       pair._2._1.nonEmpty || pair._2._2.nonEmpty).map(pair =>
       (pair._1, PStructToExpressionTree(extract(SchemaProofDB.get(pair._1).base, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors(SchemaProofDB.get(pair._1).base))), (pair._2._1.toSet, pair._2._2.toSet) ))

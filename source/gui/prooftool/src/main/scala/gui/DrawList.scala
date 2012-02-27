@@ -16,7 +16,7 @@ class DrawList(val list: List[_], val fontSize: Int) extends GridPanel(0, 1) {
   background = new Color(255,255,255)
   private var str: String = ""
   initialize
-                       println(list.size)
+                    //   println(list.size)
   def search_=(string: String) {
     str = string
     contents.clear

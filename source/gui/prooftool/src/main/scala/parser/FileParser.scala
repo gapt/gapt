@@ -65,7 +65,8 @@ class FileParser {
   }
 
   def errorMessage(err: String, path: String) {
-        Dialog.showMessage(new Label(err),"Could not load file: "+path+"!\n\n"+err.replaceAll(",",",\n").replaceAll(">",">\n"))
+    Dialog.showMessage(new Label(err),"Could not load file: "+path+"!\n\n"+err.replaceAll(",",",\n").replaceAll(">",">\n"),
+      "ProofTool Error", Dialog.Message.Error)
   }
 
   def addProofs(proofs : List[(String, LKProof)]) {
@@ -88,7 +89,7 @@ class FileParser {
   }
 
   def getDefinitions = {
-    println(proofdb.Definitions._1.size + ", " + proofdb.Definitions._2.size + ", " + proofdb.Definitions._3.size)
+ //   println(proofdb.Definitions._1.size + ", " + proofdb.Definitions._2.size + ", " + proofdb.Definitions._3.size)
     proofdb.Definitions._1.toList ::: proofdb.Definitions._2.toList ::: proofdb.Definitions._3.toList
   }
   def getSequentLists = proofdb.sequentLists

@@ -73,7 +73,7 @@ object Main extends SimpleSwingApplication {
       val data = body.getContent.getData.get._2
       if (data.isInstanceOf[LKProof])
         XMLExporter(chooser.selectedFile.getPath, "the-proof", data.asInstanceOf[LKProof])
-      else Dialog.showMessage(body,"This is not a proof, can't save it!")
+      else errorMessage("This is not a proof, can't save it!")
   }
 
   def fSaveAll : Unit = chooser.showSaveDialog(mBar) match {
@@ -96,7 +96,7 @@ object Main extends SimpleSwingApplication {
         val file = new JBufferedWriter(new JFileWriter( chooser.selectedFile.getPath ))
         file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(list))
         file.close
-      } else Dialog.showMessage(body,"This is not a Clause Set, can't export it!")
+      } else errorMessage("This is not a Clause Set, can't export it!")
   }
 
   def fExportTeX : Unit = chooser.showSaveDialog(mBar) match {
@@ -111,7 +111,7 @@ object Main extends SimpleSwingApplication {
       if (list != Nil)
         (new FileWriter( chooser.selectedFile.getPath ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
           .exportSequentList( list , Nil).close
-      else Dialog.showMessage(body,"This is not a Clause Set, can't export it!")
+      else errorMessage("This is not a Clause Set, can't export it!")
   }
 
   def fExit : Unit = System.exit(0)
@@ -153,7 +153,7 @@ object Main extends SimpleSwingApplication {
         case _ => throw new Exception("Can not search in this object!")
       }
     } catch {
-      case e: Exception => Dialog.showMessage(body, e.toString)
+      case e: Exception => errorMessage(e.toString)
     } finally {
       body.cursor = java.awt.Cursor.getDefaultCursor
     }
@@ -283,7 +283,10 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
-      contents += new MenuItem(Action("Hide Structural Rules") { ProofToolPublisher.publish(HideStructuralRules) }) {
+      contents += new MenuItem(Action("Hide Structural Rules") {
+        warningMessage("This feature is under development and might not work properly!")
+        ProofToolPublisher.publish(HideStructuralRules) 
+      }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -438,7 +441,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't extract CutFormula List!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't extract CutFormula List!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeClList : Unit = try {
@@ -453,7 +456,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeSchematicClauseSet : Unit = try {
@@ -469,7 +472,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute clause set!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute clause set!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeSchematicStruct : Unit = try {
@@ -482,7 +485,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeSchematicProjectionTerm : Unit = try {
@@ -495,7 +498,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute Projection Terms!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute Projection Terms!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def computeClListOnlyQuantifiedCuts : Unit = try {
@@ -509,7 +512,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def showStruct : Unit = try {
@@ -522,7 +525,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   // Computes the struct, ignoring propositional cuts
@@ -536,7 +539,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute Struct!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def eliminateDefsLK : Unit = try {
@@ -549,7 +552,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def eliminateDefsLKsk : Unit = try {
@@ -562,7 +565,7 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def gentzen : Unit = try {
@@ -581,7 +584,7 @@ object Main extends SimpleSwingApplication {
         val t = e.toString + "\n\n" + e.getStackTraceString
         var k = 0
         val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
-        Dialog.showMessage(body, t.dropRight(t.size - index - 1))
+        errorMessage(t.dropRight(t.size - index - 1))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
 
@@ -592,9 +595,9 @@ object Main extends SimpleSwingApplication {
         case Some((_, proof : LKProof) ) =>
           dp.setColoredOccurrences(getCutAncestors(proof))
           dp.revalidate
-        case _ => Dialog.showMessage(body, "This is not an LK proof!")
+        case _ => errorMessage("This is not an LK proof!")
       }
-      case _ => Dialog.showMessage(body, "LK proof not found!")
+      case _ => errorMessage("LK proof not found!")
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -606,9 +609,9 @@ object Main extends SimpleSwingApplication {
         case Some((name, proof : LKProof) ) =>
           dp.setVisibleOccurrences(getAuxFormulas(proof))
           dp.revalidate
-        case _ => Dialog.showMessage(body, "This is not an LK proof!")
+        case _ => errorMessage("This is not an LK proof!")
       }
-      case _ => Dialog.showMessage(body, "LK proof not found!")
+      case _ => errorMessage("LK proof not found!")
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -631,7 +634,7 @@ object Main extends SimpleSwingApplication {
     } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Could not construct proof instance!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Could not construct proof instance!\n\n"+t.replaceAll(",","\n"))
     }
   }
 
@@ -812,7 +815,7 @@ object Main extends SimpleSwingApplication {
         val t = e.toString + "\n\n" + e.getStackTraceString
         var k = 0
         val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
-        Dialog.showMessage(body, t.dropRight(t.size - index - 1))
+        errorMessage(t.dropRight(t.size - index - 1))
     }  */
     body.contents = new Launcher(Some("\\psi", step), 16)
   }
@@ -894,8 +897,16 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: AnyRef =>
         val t = e.toString
-        Dialog.showMessage(body,"Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
+        errorMessage("Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
+
+  def warningMessage(warning: String) {
+    Dialog.showMessage(body, warning, "ProofTool Warning", Dialog.Message.Warning)
+  }
+
+  def errorMessage(error: String) {
+    Dialog.showMessage(body, error, "ProofTool Error", Dialog.Message.Error)
+  }
 
   val body = new MyScrollPane
   val db = new FileParser
