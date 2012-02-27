@@ -90,7 +90,7 @@ class FileParser {
 
   def getDefinitions = {
  //   println(proofdb.Definitions._1.size + ", " + proofdb.Definitions._2.size + ", " + proofdb.Definitions._3.size)
-    proofdb.Definitions._1.toList ::: proofdb.Definitions._2.toList ::: proofdb.Definitions._3.toList
+    proofdb.Definitions.toList
   }
   def getSequentLists = proofdb.sequentLists
   def getProofs = proofdb.proofs:::proofs
