@@ -107,10 +107,9 @@ object ProjectionTermCreators {
       val trans_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntVar(new VariableStringSymbol("n")) )
       val trans_sub = new SchemaSubstitution1[HOLExpression](trans_map)
       val seq = SchemaProofDB.get(tri._1).rec.root
-      val ms1 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms2 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms11 = tri._3.filter(fo => seq.antecedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms1)((res,f) => res + f.asInstanceOf[SchemaFormula])
-      val ms22 = tri._3.filter(fo => seq.succedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms1)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      val ms = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
+      val ms11 = tri._3.filter(fo => seq.antecedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      val ms22 = tri._3.filter(fo => seq.succedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
 //      println("\nslpt\n")
 //      ms11.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
@@ -124,12 +123,9 @@ object ProjectionTermCreators {
       val trans_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntZero() )
       val trans_sub = new SchemaSubstitution1[HOLExpression](trans_map)
       val seq = SchemaProofDB.get(tri._1).rec.root
-      val ms1 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms2 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms11 = seq.antecedent.filter(fo => tri._3._2.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms1)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[SchemaFormula])
-      val ms22 =  seq.succedent.filter(fo => tri._3._2.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms2)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[SchemaFormula])
-//      val ms11 = tri._3.filter(fo => seq.antecedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms1)((res,f) => res + f.asInstanceOf[SchemaFormula])
-//      val ms22 = tri._3.filter(fo => seq.succedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms1)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      val ms = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
+      val ms11 = seq.antecedent.filter(fo => tri._3._1.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[SchemaFormula])
+      val ms22 =  seq.succedent.filter(fo => tri._3._2.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[SchemaFormula])
 //      println("\nslpt\n")
 //      ms11.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
@@ -137,7 +133,7 @@ object ProjectionTermCreators {
 //      print("\n\n\n")
       ("\u039e("+ tri._1 +"_base, ("+cutConfToString( (ms11,ms22) ) + "))", tri._2)
     })
-    println("l.size = "+l.size)
+    println("\nl.size = "+l.size)
     l.foreach(x => println(x._1))
     l
   }
@@ -172,18 +168,13 @@ object ProjectionTermCreators {
     val cclist = getCC(p_rec, List.empty[FormulaOccurrence], p_rec)
     val cclistproof_name = cclist.filter(pair => pair._1 == proof_name)
     val cclist1 = cclistproof_name.map(pair => getCC(SchemaProofDB.get(pair._1).rec, pair._2._1 ::: pair._2._2, SchemaProofDB.get(pair._1).rec)).flatten
-
     val l = Utils.removeDoubles(cclist ::: cclist1).filter(pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty)
-
-    l.foreach(pair => {
-      println("\n\n\n"+pair._1 +" : ")
-      pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-      pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-    })
-
-    l.map(pair => (pair._1,
-                   PStructToExpressionTree.applyConsole(extract(SchemaProofDB.get(pair._1).rec, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors(SchemaProofDB.get(pair._1).rec))),
-                   (pair._2._1 ::: pair._2._1).toSet ))
+//    l.foreach(pair => {
+//      println("\n\n\n"+pair._1 +" : ")
+//      pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+//      pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+//    })
+    l.map(pair => (pair._1, PStructToExpressionTree.applyConsole(extract(SchemaProofDB.get(pair._1).rec, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors(SchemaProofDB.get(pair._1).rec))), (pair._2._1 ::: pair._2._1).toSet ))
   }
 
   //for ProofTool printing
@@ -208,7 +199,7 @@ object ProjectionTermCreators {
     val cclistproof_name = cclist.filter(pair => pair._1 == proof_name)
     val cclist1 = cclistproof_name.map(pair => getCC(p_rec, pair._2._1 ::: pair._2._2, p_rec)).flatten
 
-    val cclistbase = (cclist1 ::: cclist).map(pair =>{
+    val cclistbase = Utils.removeDoubles(cclist1 ::: cclist).map(pair =>{
       val seq = SchemaProofDB.get(pair._1).base.root
       val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
       val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
@@ -219,11 +210,11 @@ object ProjectionTermCreators {
 
       (pair._1, s)
     })
-//    cclistbase.foreach(pair => {
-//      println("\n\n"+pair._1)
-//      pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-//      pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-//    })
+    cclistbase.foreach(pair => {
+      println("\n\ncclistbase : "+pair._1)
+      pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+      pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+    })
     Utils.removeDoubles(cclistbase).filter(pair =>
       pair._2._1.nonEmpty || pair._2._2.nonEmpty).map(pair =>
       (pair._1, PStructToExpressionTree(extract(SchemaProofDB.get(pair._1).base, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors(SchemaProofDB.get(pair._1).base))), (pair._2._1.toSet, pair._2._2.toSet) ))
@@ -411,7 +402,7 @@ object ProjectionTermCreators {
 object PStructToExpressionTree {
 
   def apply(s: ProjectionTerm) : Tree[AnyRef] = s match {
-     case pTimes(rho, left, right) => BinaryTree(new PTimesC(rho), apply(left), apply(right))
+    case pTimes(rho, left, right) => BinaryTree(new PTimesC(rho), apply(left), apply(right))
     case pPlus(seq1, seq2, left, right, w1, w2) => {
 //      BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), apply(left), apply(right), w1, w2)
       val t1 = if (w1.antecedent.isEmpty && w1.succedent.isEmpty) apply(left)
@@ -429,31 +420,25 @@ object PStructToExpressionTree {
       val cut_omega_anc = canc ++ getAncestors(omega)
       val seq1 = SchemaProofDB.get(proof_name).rec.root
       val len = StepMinusOne.lengthVar(index)
-      val foccsInSeq = (seq.antecedent ++ seq.succedent).filter(fo => cut_omega_anc.contains(fo))
+      val foccsInSeqAnt = seq.antecedent.filter(fo => cut_omega_anc.contains(fo))
+      val foccsInSeqSucc = seq.succedent.filter(fo => cut_omega_anc.contains(fo))
       var new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm]
-      var sub = new SchemaSubstitution1[HOLExpression](new_map)
-      if (len == 0) {
-        new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(index) )
-      }
-      else
-        if (len == 1)
-          new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] //+ Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
-        else {
-//          var new_term = index
-//          for (i<-StepMinusOne.lengthVar(new_term) to 2 ) {
-//            new_term = Pred(index)
-//          }
-          // TODO !!!
-          new_map
-        }
-      sub = new SchemaSubstitution1[HOLExpression](new_map)
-      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+      var strant = "";var str1ant = "";var strsucc = "";var str1succ = "";
+      val k = IntVar(new VariableStringSymbol("k"))
       val trans_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntVar(new VariableStringSymbol("n")) )
       val trans_sub = new SchemaSubstitution1[HOLExpression](trans_map)
-      val ms1 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms2 = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms11 = foccsInSeq.filter(fo => seq.antecedent.contains(fo)).map(fo => trans_sub(sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])))).foldLeft(ms1)((res,f) => res + f.asInstanceOf[SchemaFormula])
-      val ms22 = foccsInSeq.filter(fo => seq.succedent.contains(fo)).map(fo => trans_sub(sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])))).foldLeft(ms2)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      var f1 = Seq.empty[HOLExpression];var f2 = Seq.empty[HOLExpression];
+      if (len == 0) {
+        f1 = foccsInSeqAnt.map(fo => trans_sub(fo.formula))
+        f2 = foccsInSeqSucc.map(fo => trans_sub(fo.formula))
+      }
+      else {
+        f1 = foccsInSeqAnt.map(fo => trans_sub(StepMinusOne.minusMore(fo.formula, k.asInstanceOf[IntVar], len)))
+        f2 = foccsInSeqSucc.map(fo => trans_sub(StepMinusOne.minusMore(fo.formula, k.asInstanceOf[IntVar], len)))
+      }
+      val ms = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
+      val ms11 = f1.foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      val ms22 = f2.foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
 //      ms11.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
 //      ms22.foreach(f => println(printSchemaProof.formulaToString(f)))
@@ -485,33 +470,38 @@ object PStructToExpressionTree {
       val cut_omega_anc = ccanc ++ getAncestors(omega)
       val seq1 = SchemaProofDB.get(proof_name).rec.root
       val len = StepMinusOne.lengthVar(index)
-      val foccsInSeq = (seq.antecedent ++ seq.succedent).filter(fo => cut_omega_anc.contains(fo))
+//      val foccsInSeq = (seq.antecedent ++ seq.succedent).filter(fo => cut_omega_anc.contains(fo))
+      val foccsInSeqAnt = seq.antecedent.filter(fo => cut_omega_anc.contains(fo))
+      val foccsInSeqSucc = seq.succedent.filter(fo => cut_omega_anc.contains(fo))
       var new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm]
-      var sub = new SchemaSubstitution1[HOLExpression](new_map)
-      if (len == 0)
-        new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(index) )
+      var strant = "";var str1ant = "";var strsucc = "";var str1succ = "";
+      val k = IntVar(new VariableStringSymbol("k"))
+      val trans_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntVar(new VariableStringSymbol("n")) )
+      val trans_sub = new SchemaSubstitution1[HOLExpression](trans_map)
+      var f1 = Seq.empty[HOLExpression];var f2 = Seq.empty[HOLExpression];
+      if (len == 0) {
+          f1 = foccsInSeqAnt.map(fo => trans_sub(fo.formula))
+          f2 = foccsInSeqSucc.map(fo => trans_sub(fo.formula))
+      }
+      else {
+        f1 = foccsInSeqAnt.map(fo => trans_sub(StepMinusOne.minusMore(fo.formula, k.asInstanceOf[IntVar], len)))
+        f2 = foccsInSeqSucc.map(fo => trans_sub(StepMinusOne.minusMore(fo.formula, k.asInstanceOf[IntVar], len)))
+      }
+//      f1.foreach(x => println("ms11"+x))
+//      f2.foreach(x => println("ms22"+x))
+      if (f1.size == 0)
+        strant = ""
+      else if (f1.size == 1)
+        str1ant = printSchemaProof.formulaToString(f1.head)
       else
-        if (len == 1)
-          new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] //+ Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
-        else {
-//          var new_term = index
-//          for (i<-StepMinusOne.lengthVar(new_term) to 2 ) {
-//            new_term = Pred(index)
-//          }
-          // TODO !!!
-          new_map
-        }
-      sub = new SchemaSubstitution1[HOLExpression](new_map)
-      var str = ""
-      var str1 = ""
-      if (foccsInSeq.size == 0)
-        str = ""
-      else if (foccsInSeq.size == 1)
-        str = printSchemaProof.formulaToString(sub(foccsInSeq.head.formula))
+        str1ant = f1.tail.foldLeft(", ")((res,f) => printSchemaProof.formulaToString(f)+res)
+      if (f2.size == 0)
+        strsucc = ""
+      else if (f2.size == 1)
+        str1succ = printSchemaProof.formulaToString(f2.head)
       else
-        str1 = foccsInSeq.tail.foldLeft(", ")((res,fo) => printSchemaProof.formulaToString(fo.formula)+res)
-//        foccsInSeq.foldLeft(", ")((res,fo) => printSchemaProof.formulaToString(fo.formula)+res)
-      LeafTree[String]("pr^"+Console.RESET+"{"+Console.CYAN+str+str1+Console.RESET+"},"+proof_name+"("+Console.MAGENTA+Console.UNDERLINED+printSchemaProof.formulaToString(index)+Console.RESET+")")
+        str1succ = f2.tail.foldLeft(", ")((res,f) => printSchemaProof.formulaToString(f)+res)
+      return LeafTree[String]("pr^"+Console.RESET+"{"+Console.CYAN+strant+str1ant+"|"+strsucc+str1succ +Console.RESET+"},"+proof_name+"("+Console.MAGENTA+Console.UNDERLINED+printSchemaProof.formulaToString(index)+Console.RESET+")")
     }
   }
 
