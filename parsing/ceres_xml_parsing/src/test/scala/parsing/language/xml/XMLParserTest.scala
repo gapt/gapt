@@ -465,9 +465,13 @@ class XMLParserTest extends SpecificationWithJUnit {
     "parse correctly a proof with definitions from a gzipped file" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "xml" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
 
+<<<<<<< .mine
+      proofdb.Definitions.size must beEqual(21)
+=======
       proofdb.Definitions._1.size must beEqual(1)
       proofdb.Definitions._2.size must beEqual(15)
       proofdb.Definitions._3.size must beEqual(4)
+>>>>>>> .r1007
     }
   }
 }
