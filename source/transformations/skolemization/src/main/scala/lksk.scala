@@ -2,6 +2,7 @@
 // a transformation from LK to LK_skc
 package at.logic.transformations.skolemization.lksk
 
+import at.logic.calculi.lk.base.{FSequent, LKProof, Sequent}
 import at.logic.utils.logging.Logger
 import scala.collection.mutable.{Map,HashMap}
 import at.logic.calculi.lksk._
@@ -13,7 +14,6 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules.{ImpLeftRule, AndRightRule, OrRight1Rule, ImpRightRule, WeakeningLeftRule => LKWeakeningLeftRule, OrRight2Rule, ContractionRightRule, ContractionLeftRule, WeakeningRightRule => LKWeakeningRightRule, OrLeftRule, CutRule, AndLeft1Rule, AndLeft2Rule,NegRightRule,NegLeftRule}
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.base.{LKProof,Sequent}
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
@@ -26,7 +26,7 @@ import at.logic.calculi.occurrences.factory
 
 
 object LKtoLKskc {
-  implicit def sequent2fsequent(fs : Sequent) : FSequent = (fs.antecedent map (_.formula), fs.succedent map (_.formula))
+  implicit def sequent2fsequent(fs : Sequent) : FSequent = FSequent(fs.antecedent map (_.formula), fs.succedent map (_.formula))
   def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Nil)
 
   def logInfo( msg: String ) = (new Logger{}).info( msg )

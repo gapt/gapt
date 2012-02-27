@@ -386,7 +386,7 @@ object Projections {
         val r:HashMultiset[SchemaFormula] = root.succedent.map(fo => fo.formula).filter(f => cut_ancs.map(fo => fo.formula).contains(f)).foldLeft(HashMultiset[SchemaFormula])((hs,f) => hs + f.asInstanceOf[SchemaFormula])
         val cl_n = IndexedPredicate( new ClauseSetSymbol(link, (l,r) ), fresh_param::Nil )
     //    println("new_seq = "+printSchemaProof.sequentToString(new_seq))
-        val pair = Pair(ant.map(fo => fo.formula) ++: (cl_n +: Seq.empty[SchemaFormula]), succ.map(fo => fo.formula))
+        val pair = FSequent(ant.map(fo => fo.formula) ++: (cl_n +: Seq.empty[SchemaFormula]), succ.map(fo => fo.formula))
         pair._1.foreach(f => println(printSchemaProof.formulaToString(f)))
         println("|-")
         pair._2.foreach(f => println(printSchemaProof.formulaToString(f)))

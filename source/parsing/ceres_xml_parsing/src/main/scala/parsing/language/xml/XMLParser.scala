@@ -285,7 +285,7 @@ object XMLParser {
     def getSequent(n: Node) : FSequent =
       trim(n) match {
         case <sequent>{ns @ _*}</sequent> =>
-          (getFormulaList(ns.head), getFormulaList(ns.last))
+          FSequent(getFormulaList(ns.head), getFormulaList(ns.last))
         case _ => throw new ParsingException("Could not parse XML: " + n.toString)
       }
  
@@ -478,18 +478,18 @@ object XMLParser {
           val triple = createRule( rt, conc, prems, l_perms, r_perms, param, subst )
 
 
-          val root : FSequent = (triple._1.root.antecedent map (_.formula), triple._1.root.succedent map (_.formula))
+          val root : FSequent = FSequent(triple._1.root.antecedent map (_.formula), triple._1.root.succedent map (_.formula))
 
 
           // check whether conclusion has been correctly constructed
-          assert( FSequent.multiSetEquals( root, conc ), triple._1.root.toStringSimple + " does not equal " + FSequent.seqToStringSimple(conc) + "(rule type " + rt + ")")
+          assert( FSequent.multiSetEquals( root, conc ), triple._1.root.toStringSimple + " does not equal " + FSequent.toStringSimple(conc) + "(rule type " + rt + ")")
           // check whether the permutation of the formula occurrences corresponds to the conclusion
           def checkPerm( perm: Array[FormulaOccurrence], list: Seq[Formula] ) =
             perm.zip( perm.indices ).foreach( p => assert( p._1.formula == list.apply( p._2 ),
               "formula at occurrence " + p._1.formula.toStringSimple +
               " is not equal to formula in list position " + p._2 + ": " +
               list.apply( p._2 ).toStringSimple + " after creating rule of type " + rt + ".\n" +
-              "Conclusion sequent: " + FSequent.seqToStringSimple(conc) + "\n" +
+              "Conclusion sequent: " + FSequent.toStringSimple(conc) + "\n" +
               { param match { case Some( s ) => "permutation parameter: " + s
                             case None => "" } }
           ) )

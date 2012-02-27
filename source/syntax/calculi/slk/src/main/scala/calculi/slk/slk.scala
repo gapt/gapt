@@ -669,7 +669,7 @@ object OrEquivalenceRule1 {
 
 //        require( ps.seq.antecedent.map(fo => fo.formula).toSet == so.antecedent.map(fo => sub(fo.formula)).toSet)
 //        require( ps.seq.succedent.map(fo => fo.formula).toSet == so.succedent.map(fo => sub(fo.formula)).toSet)
-        require(ps.seq == substitute(sub , so.toFSequent()) )
+        require(ps.seq equals substitute(sub , so.toFSequent()) )
 
       }
     }

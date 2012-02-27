@@ -30,6 +30,7 @@ import _root_.at.logic.provers.atp.commands.replay.ReplayCommand
 import _root_.at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
 import _root_.at.logic.provers.atp.commands.sequents.{fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
 import _root_.at.logic.provers.atp.Definitions._
+import at.logic.calculi.lk.base.FSequent
 import sys.process._
 import java.io._
 import scala.xml._
@@ -143,7 +144,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
     }
 
     private def literals2FSequent(lits: Seq[FOLFormula]): FSequent = {
-     (lits.filter(l => l match {
+     FSequent(lits.filter(l => l match {
             case Neg(_) => true
             case _ => false})
           .map(l => l match {

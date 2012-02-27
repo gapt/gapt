@@ -42,7 +42,7 @@ object Main {
     Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
-  def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
+  def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
   def main(args: Array[String]) {
     val prover = new Prover[at.logic.calculi.resolution.robinson.Clause]{}
     prover.refute(Stream.cons(SetClausesCommand((new FileReader(args(0)) with SimpleResolutionParserFOL).getClauseList), stream)).next

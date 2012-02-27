@@ -474,7 +474,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
     }
 
   def apply(fseq: types.FSequent): types.FSequent = {
-    (fseq._1.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]),fseq._2.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]))
+    FSequent(fseq._1.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]),fseq._2.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]))
   }
 }
 //substitution end
@@ -579,7 +579,7 @@ import at.logic.language.hol._
     }
 
     def minusOneFSeq(fseq: types.FSequent, k:IntVar): types.FSequent = {
-      (fseq._1.map(f => minusOne(f, k).asInstanceOf[HOLFormula]),fseq._2.map(f => minusOne(f, k).asInstanceOf[HOLFormula]))
+      FSequent(fseq._1.map(f => minusOne(f, k).asInstanceOf[HOLFormula]),fseq._2.map(f => minusOne(f, k).asInstanceOf[HOLFormula]))
     }
 
     def intTermPlus(t: IntegerTerm, times: Int): IntegerTerm = {

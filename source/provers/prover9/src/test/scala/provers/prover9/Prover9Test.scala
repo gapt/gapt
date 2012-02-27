@@ -12,6 +12,7 @@ import _root_.at.logic.parsing.readers.StringReader
 import _root_.at.logic.provers.atp.commands.base.{SetStreamCommand, PrependCommand}
 import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause
 import _root_.at.logic.provers.atp.Prover
+import at.logic.calculi.lk.base.FSequent
 import commands.Prover9InitCommand
 import org.specs._
 import org.specs.runner._
@@ -37,12 +38,12 @@ class Prover9Test extends SpecificationWithJUnit {
 
   private object MyProver extends Prover[Clause]
 
-  def getRefutation(ls: Iterable[FSequent]): Boolean = MyProver.refute(Stream(SetTargetClause((List(),List())), Prover9InitCommand(ls), SetStreamCommand())).next must beLike {
-      case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals (List(),List()) => true
+  def getRefutation(ls: Iterable[FSequent]): Boolean = MyProver.refute(Stream(SetTargetClause(FSequent(List(),List())), Prover9InitCommand(ls), SetStreamCommand())).next must beLike {
+      case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals (FSequent(List(),List())) => true
       case _ => false
   }
 
-  def getRefutation2(ls: Iterable[FSequent]) = MyProver.refute(Stream(SetTargetClause((List(),List())), Prover9InitCommand(ls), SetStreamCommand())).next
+  def getRefutation2(ls: Iterable[FSequent]) = MyProver.refute(Stream(SetTargetClause(FSequent(List(),List())), Prover9InitCommand(ls), SetStreamCommand())).next
 
   "Prover9 within ATP" should {
     /*"prove (with para) SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
@@ -129,9 +130,9 @@ class Prover9Test extends SpecificationWithJUnit {
     } */
     "prove (with xx - 3) -=(a,a) | -=(a,a)." in {
       val eaa = parse("=(a,a)")
-      val s = (List(eaa,eaa),Nil)
+      val s = FSequent(List(eaa,eaa),Nil)
       (getRefutation2(List(s)) match {
-        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].toTreeProof.root syntacticMultisetEquals (List(),List()) => true
+        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) => true
         case _ => false
       }) must beTrue
     }
@@ -143,8 +144,8 @@ class Prover9Test extends SpecificationWithJUnit {
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
 
       val p = Atom(new ConstantStringSymbol("P"), Nil)
-      val s1 = (Nil, p::Nil)
-      val s2 = (p::Nil, Nil)
+      val s1 = FSequent(Nil, p::Nil)
+      val s2 = FSequent(p::Nil, Nil)
       val result : Boolean = Prover9.refute( s1::s2::Nil )
       result must beEqual( true )
     }
@@ -160,10 +161,10 @@ class Prover9Test extends SpecificationWithJUnit {
       val k = parse("=(f(f(c,x),y), x)")
       val skk_i = parse("=(f(f(f(b,c),c),x), f(a,x))")
 
-      val s1 = (Nil, List(i))
-      val s2 = (Nil, List(k))
-      val s3 = (Nil, List(s))
-      val t1 = (List(skk_i),Nil)
+      val s1 = FSequent(Nil, List(i))
+      val s2 = FSequent(Nil, List(k))
+      val s3 = FSequent(Nil, List(s))
+      val t1 = FSequent(List(skk_i),Nil)
       val result : Boolean = Prover9.refute( List(s1,s2,s3,t1) )
       result must beEqual( true )
     }
@@ -174,8 +175,8 @@ class Prover9Test extends SpecificationWithJUnit {
       //checks, if the execution of prover9 works, o.w. skip test
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
 
-      val s1 = (Nil, List(parse("P")))
-      val t1 = (List(parse("Q")),Nil)
+      val s1 = FSequent(Nil, List(parse("P")))
+      val t1 = FSequent(List(parse("Q")),Nil)
       val result : Boolean = Prover9.refute( List(s1,t1) )
       result must beEqual( false )
     }

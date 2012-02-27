@@ -299,7 +299,7 @@ object loadProofDB {
       Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
       Stream.cons(InsertResolventCommand[Clause],
       Stream.cons(RefutationReachedCommand[Clause], stream1)))))))                                                                                  */
-    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
+    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
     def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
       new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
@@ -320,7 +320,7 @@ object loadProofDB {
       Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
       Stream.cons(InsertResolventCommand[Clause],
       Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
-    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause((List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
+    def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
     def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
       new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
@@ -331,7 +331,7 @@ object loadProofDB {
     def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
       try {
          new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
-          refute(Stream(SetTargetClause((List(),List())), Prover9InitCommand(clauses), SetStreamCommand())).next
+          refute(Stream(SetTargetClause(FSequent(List(),List())), Prover9InitCommand(clauses), SetStreamCommand())).next
       } catch {
         case e: IOException => throw new IOException("Prover9 is not installed: " + e.getMessage())
       }
@@ -696,7 +696,7 @@ object loadProofDB {
           println("Axiom!")
           val antd  = recursive_elimination_from(defs,antecedent.map((x:FormulaOccurrence) => x.formula))
           val succd = recursive_elimination_from(defs,succedent.map((x:FormulaOccurrence) => x.formula))
-          val sequent = fsequent2sequent.apply( (antd,succd) )
+          val sequent = fsequent2sequent.apply( FSequent(antd,succd) )
           val dproof = Axiom(sequent)
 //          val correspondences = emptymap ++ ((antecedent ++ succedent) zip (duproof.root.antecedent ++ duproof.root.succedent))
           val correspondences = calculateCorrespondences(defs,Sequent(antecedent, succedent) , dproof)
