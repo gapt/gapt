@@ -32,9 +32,9 @@ class DrawList(val list: List[_], val fontSize: Int) extends GridPanel(0, 1) {
       if (first) {
         first = false
         val component = x match {
-          case (f1: HOLFormula, f2: HOLFormula) => drawDefinition(f1, f2, ft)
           case s : Sequent => DrawSequent(s, ft, str)
           case fs : types.FSequent => DrawSequent.applyF(fs, ft, str)
+          case (f1: HOLFormula, f2: HOLFormula) => drawDefinition(f1, f2, ft)
           case _ => new Label(x.toString) {
             background = new Color(255,255,255)
             opaque = true
@@ -46,9 +46,9 @@ class DrawList(val list: List[_], val fontSize: Int) extends GridPanel(0, 1) {
       } else {
         contents += new Label(";")  { font = ft }
         val component = x match {
-          case (f1: HOLFormula, f2: HOLFormula) => drawDefinition(f1, f2, ft)
           case s : Sequent => DrawSequent(s, ft, str)
           case fs : types.FSequent => DrawSequent.applyF(fs, ft, str)
+          case (f1: HOLFormula, f2: HOLFormula) => drawDefinition(f1, f2, ft)
           case _ => new Label(x.toString) {
             background = new Color(255,255,255)
             opaque = true

@@ -64,6 +64,9 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
             mylabel.text = ""
           } else mylabel.text = tx
           drawLines = true
+        case HideLeaf if tx.contains("w^{") =>
+          mylabel.text = "w*"
+          mylabel.icon = null
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
           if (mylabel.myicon != null) {
             if (mylabel.text == "") {
@@ -92,9 +95,9 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
           }
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
           if (mylabel.myicon != null) {
-            mylabel.text = "x"
+            mylabel.text = "w*"
             mylabel.icon = null
-          } else mylabel.text = "x"
+          }
       }
       layout(mylabel) = Position.North
       layout(new DrawTree(utree.t, fSize, str) {
@@ -133,7 +136,6 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
               drawLines = false
               publish(HideTree)
             }
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => text = "x"
         }
       }
       layout(label) = Position.North
