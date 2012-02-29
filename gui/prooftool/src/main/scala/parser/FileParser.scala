@@ -7,7 +7,7 @@ package at.logic.gui.prooftool.parser
  * Time: 4:42 PM
  */
 
-import scala.swing.{Dialog, Label}
+import scala.swing.Dialog
 import java.io.{FileInputStream, InputStreamReader}
 import java.util.zip.GZIPInputStream
 import at.logic.parsing.language.xml.XMLParser.XMLProofDatabaseParser
@@ -22,6 +22,7 @@ import io.Source
 import at.logic.parsing.language.simple.SHLK
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLFormula
+import at.logic.gui.prooftool.gui.Main
 
 class FileParser {
 
@@ -52,22 +53,25 @@ class FileParser {
     else if (path.endsWith(".xml")) try {
       ceresFileReader(xmlFileStreamReader(path))
     } catch {
-      case pe: ParsingException => stabFileReader(xmlFileStreamReader(path))
+      case pe: ParsingException =>
+        Main.questionMessage("There was a parsing exception:\n\n \t " + pe.getMessage + "\n\nContinue with another parser?") match {
+          case Dialog.Result.Yes => stabFileReader(xmlFileStreamReader(path))
+          case _ =>
+        }
     }
     else if (path.endsWith(".gz")) try {
       ceresFileReader(gzFileStreamReader(path))
     } catch {
-      case pe: ParsingException => stabFileReader(gzFileStreamReader(path))
+      case pe: ParsingException =>
+        Main.questionMessage("There was a parsing exception:\n\n \t " + pe.getMessage + "\n\nContinue with another parser?") match {
+          case Dialog.Result.Yes => stabFileReader(gzFileStreamReader(path))
+          case _ =>
+        }
     }
     else throw new Exception("Can not recognize file extension!")
     ProofToolPublisher.publish(ProofDbChanged)
   } catch {
-    case e: AnyRef => errorMessage(e.toString, path)
-  }
-
-  def errorMessage(err: String, path: String) {
-    Dialog.showMessage(new Label(err),"Could not load file: "+path+"!\n\n"+err.replaceAll(",",",\n").replaceAll(">",">\n"),
-      "ProofTool Error", Dialog.Message.Error)
+    case err: AnyRef => Main.errorMessage("Could not load file: "+path+"!\n\n"+err.toString.replaceAll(",",",\n").replaceAll(">",">\n"))
   }
 
   def addProofs(proofs : List[(String, LKProof)]) {

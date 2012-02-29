@@ -10,13 +10,8 @@ package at.logic.gui.prooftool.gui
 import swing.SequentialContainer.Wrapper
 import javax.swing.JPopupMenu
 import swing._
-import swing.Dialog.Message
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
-import at.logic.transformations.ReductiveCutElim
-import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher}
-import at.logic.algorithms.lk.replaceSubproof
-import Main.{body, db}
 
 
 class PopupMenu extends Component with Wrapper {
@@ -25,18 +20,18 @@ class PopupMenu extends Component with Wrapper {
   def show(invoker: Component, x: Int, y: Int): Unit = peer.show(invoker.peer, x, y)
 }
 
-
 object PopupMenu {
 
   def apply(tproof: TreeProof[_], component: Component, x: Int, y: Int) {
-    proof = Some(tproof)
+    proof = Some(tproof.asInstanceOf[LKProof])
     popupMenu.show(component, x, y)
   }
 
-  private var proof: Option[TreeProof[_]] = None
+  private var proof: Option[LKProof] = None
 
   private val popupMenu = new PopupMenu {
-    contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(proof.get) })
+    contents += new MenuItem(Action("Apply Gentzen's Method") { Main.gentzen(proof.get) })
+    contents += new MenuItem(Action("Export Subproof in XML") { Main.fSaveProof(proof.get) })
 /*  This functions can be added later:
     contents += new MenuItem("Compute Clause Set")
     contents += new MenuItem("Compute Clause Term")
@@ -45,27 +40,5 @@ object PopupMenu {
     contents += new MenuItem("Hide Proof Above")
 */
   }
-
-  def gentzen(proof: TreeProof[_]) : Unit = try {
-    val steps = Dialog.showConfirmation(body, "Do you want to see intermediary steps?",
-      "ProofTool", Dialog.Options.YesNo, Message.Question) match {
-      case Dialog.Result.Yes => true
-      case _ => false
-    }
-    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val newSubproof = ReductiveCutElim(proof.asInstanceOf[LKProof], steps)
-    val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
-    val newProof = replaceSubproof(oldProof, proof.asInstanceOf[LKProof], newSubproof)
-    ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
-    db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
-    body.contents = new Launcher(Some("Result:", newProof),14)
-    body.cursor = java.awt.Cursor.getDefaultCursor
-  } catch {
-    case e: Exception =>
-        val t = e.toString + "\n\n" + e.getStackTraceString
-        var k = 0
-        val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
-        Dialog.showMessage(body, t.dropRight(t.size - index - 1))
-  } finally ProofToolPublisher.publish(ProofDbChanged)
 }
 
