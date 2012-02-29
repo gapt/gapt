@@ -187,10 +187,10 @@ object ReductiveCutElim {
         regularize(tmp)._1
       }
       else ContractionLeftRule(CutRule(proof, up, cutFormula2), aux1.formula)
-    // This is a case for nontautological axiom on the left
-    case (ax: NullaryLKProof, proof: LKProof) =>
-      if (proof.isInstanceOf[UnaryLKProof]) reduceUnaryRight(ax, proof.asInstanceOf[UnaryLKProof], cutFormula1)
-      else reduceBinaryRight(ax, proof.asInstanceOf[BinaryLKProof], cutFormula1)
+    // These are cases for nontautological axioms on the left (cases on the right are not needed because, since we
+    // first reduce rank on the left, when it reaches nontautological axiom on the right, previous case is applicable)
+    case (ax: NullaryLKProof, proof: UnaryLKProof) => reduceUnaryRight(ax, proof, cutFormula1)
+    case (ax: NullaryLKProof, proof: BinaryLKProof) => reduceBinaryRight(ax, proof, cutFormula1)
     case (unary: UnaryLKProof, proof: LKProof) =>
       if (unary.rule == WeakeningRightRuleType) {
         val unap = WeakeningRightRule.unapply(unary)
