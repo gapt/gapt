@@ -16,7 +16,7 @@ import scala.collection.immutable.Seq
 import java.io.File
 import javax.swing.filechooser.FileFilter
 
-import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors}
+import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors, replaceSubproof}
 import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.{Sequent, LKProof}
@@ -67,11 +67,11 @@ object Main extends SimpleSwingApplication {
     case _ => loadProof(chooser.selectedFile.getPath,12)
   }
 
-  def fSaveProof : Unit = chooser.showSaveDialog(mBar) match {
+  def fSaveProof(tp: AnyRef) : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Cancel =>
     case _ =>
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      body.getContent.getData.get._2 match {
+      tp match {
         case proof: LKProof => try {
           XMLExporter(chooser.selectedFile.getPath, "the-proof", proof)
         } catch {
@@ -100,14 +100,14 @@ object Main extends SimpleSwingApplication {
         case l : List[_] => try {
           import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
 
+          val list = l.map( x => x match {
+            case s: Sequent => s.toFSequent
+            case fs: FSequent => fs
+            case _ => throw new Exception("This is not a clause set.")
+          })
+
           val file = new JBufferedWriter(new JFileWriter( chooser.selectedFile.getPath ))
-          file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(
-            l.map( x => x match {
-              case s: Sequent => s.toFSequent
-              case fs: FSequent => fs
-              case _ => throw new Exception("This is not a clause set.")
-            })
-          ))
+          file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem( list ))
           file.close
         } catch {
           case e: AnyRef => errorMessage("Can't save the clause set! \n\n" + e.toString)
@@ -123,12 +123,13 @@ object Main extends SimpleSwingApplication {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       body.getContent.getData.get._2  match {
         case l : List[_] => try {
+          val list = l.map( x => x match {
+            case s: Sequent => s.toFSequent
+            case fs: FSequent => fs
+            case _ => throw new Exception("This is not a clause set.")
+          })
           (new FileWriter( chooser.selectedFile.getPath ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
-            .exportSequentList( l.map( x => x match {
-              case s: Sequent => s.toFSequent
-              case fs: FSequent => fs
-              case _ => throw new Exception("This is not a clause set.")
-            }) , Nil).close
+            .exportSequentList( list , Nil).close
         } catch {
           case e: AnyRef => errorMessage("Can't save the clause set! \n\n" + e.toString)
         }
@@ -251,7 +252,7 @@ object Main extends SimpleSwingApplication {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
         border = customBorder
       }
-      contents += new MenuItem(Action("Save Proof as XML") { fSaveProof }) {
+      contents += new MenuItem(Action("Save Proof as XML") { fSaveProof(body.getContent.getData.get._2) }) {
         mnemonic = Key.P
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, JActionEvent.CTRL_MASK))
         border = customBorder
@@ -426,7 +427,7 @@ object Main extends SimpleSwingApplication {
         contents += new MenuItem(Action("Only Quantified Cuts") { showStructOnlyQuantifiedCuts }) { border = customBorder }
       }
       contents += new Separator
-      contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen }) { border = customBorder }
+      contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(body.getContent.getData.get._2.asInstanceOf[LKProof]) }) { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK }) { border = customBorder }
     }
@@ -591,25 +592,29 @@ object Main extends SimpleSwingApplication {
         errorMessage("Couldn't eliminate definitions!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
 
-  def gentzen : Unit = try {
-    val steps = Dialog.showConfirmation(body, "Do you want to see intermediary steps?",
-      "ProofTool", Dialog.Options.YesNo, Message.Question) match {
+  def gentzen(proof: LKProof) : Unit = try {
+    val steps = questionMessage("Do you want to see intermediary steps?") match {
       case Dialog.Result.Yes => true
       case _ => false
     }
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val proof = ReductiveCutElim(body.getContent.getData.get._2.asInstanceOf[LKProof], steps)
-    db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
-    body.contents = new Launcher(Some("Gentzen Result", proof),14)
-    body.cursor = java.awt.Cursor.getDefaultCursor
+    val newSubproof = ReductiveCutElim(proof, steps)
+    val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
+    val newProof = replaceSubproof(oldProof, proof, newSubproof)
+    if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
+    body.contents = new Launcher(Some("Gentzen Result:", newProof),14)
   } catch {
     case e: Exception =>
-        val t = e.toString + "\n\n" + e.getStackTraceString
-        var k = 0
-        val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
-        errorMessage(t.dropRight(t.size - index - 1))
-  } finally ProofToolPublisher.publish(ProofDbChanged)
-
+      val t = e.toString + "\n\n" + e.getStackTraceString
+      var k = 0
+      val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
+      Main.errorMessage(t.dropRight(t.size - index - 1))
+    case e: AnyRef => Main.errorMessage(e.toString)
+  } finally {
+    db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
+    body.cursor = java.awt.Cursor.getDefaultCursor
+    ProofToolPublisher.publish(ProofDbChanged)
+  }
 
   def markCutAncestors {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -934,6 +939,9 @@ object Main extends SimpleSwingApplication {
   def errorMessage(error: String) {
     Dialog.showMessage(body, error, "ProofTool Error", Dialog.Message.Error)
   }
+
+  def questionMessage(question: String) =
+    Dialog.showConfirmation(body, question, "ProofTool Question", Dialog.Options.YesNo, Message.Question)
 
   val body = new MyScrollPane
   val db = new FileParser
