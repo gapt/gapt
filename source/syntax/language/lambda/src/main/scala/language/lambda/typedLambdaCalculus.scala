@@ -340,22 +340,27 @@ trait LambdaFactoryProvider {
   }
 
   object freshVar {
-    def apply(exptype: TA, disallowedVariables: Set[Var], dummy: LambdaExpression) :Var = {
-      var counter = 1
-      var v = Var("#"+counter, exptype,dummy.factory)
-      while (disallowedVariables.contains(v)) {
-        counter += 1
-        v = Var("#"+counter, exptype,dummy.factory)
-      }
-      v
-    }
+    //convenience method for the naming convention #number
+    def apply[V <: Var](exptype: TA, disallowedVariables: Set[V], dummy: LambdaExpression) :Var =
+      apply(exptype, disallowedVariables, "#"+_ , dummy)
 
-    def apply(exptype: TA, disallowedVariables: Set[Var], namer: Int => String, dummy: LambdaExpression) :Var = {
+    def apply[V <: Var](exptype: TA, disallowedVariables: Set[V], factory: LambdaFactoryA) :Var =
+      apply(exptype, disallowedVariables, "#"+_ , factory)
+
+    //convenience method
+    def apply[V <: Var](exptype: TA, disallowedVariables: Set[V], namer: Int => String, dummy: LambdaExpression) :Var =
+      get(exptype, disallowedVariables map  ((x:V) => x.name.toString()), namer, dummy.factory)
+
+    def apply[V <: Var](exptype: TA, disallowedVariables: Set[V], namer: Int => String, factory: LambdaFactoryA) :Var =
+      get(exptype, disallowedVariables map  ((x:V) => x.name.toString()), namer, factory)
+
+    //get must have a new name because the 4rd apply method above has the same type signature modulo type erasure
+    def get(exptype: TA, disallowedNames: Set[String], namer: Int => String, factory: LambdaFactoryA) :Var = {
      var counter = 1
-     var v = Var(namer(counter), exptype,dummy.factory)
-     while (disallowedVariables.contains(v)) {
+     var v = Var(namer(counter), exptype, factory)
+     while (disallowedNames.contains(v.name.toString())) {
        counter += 1
-       v = Var(namer(counter), exptype,dummy.factory)
+       v = Var(namer(counter), exptype, factory)
      }
      v
    }
@@ -371,9 +376,12 @@ trait LambdaFactoryProvider {
       }
       v
     }
+
     def apply(exptype: TA, context: LambdaExpression, dummy: LambdaExpression) :Var = {
       val (cFV, cBV) = context.getFreeAndBoundVariables
-      apply(exptype, cFV ++ cBV, dummy)
+      // we need to use the names and not the vars, because bound variables have additional state which will make them
+      // useless during disallowedNames.contains in the get method
+      get(exptype, (cFV ++ cBV) map  (_.name.toString), "#"+_ ,dummy.factory)
     }
   }
 

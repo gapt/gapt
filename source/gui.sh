@@ -30,5 +30,5 @@ else
     echo found ${JARNAME} in ${SCP}!
     export JAVA_OPTS="-Xss2m -Xmx2g"
     #scala -classpath ${SCP}/${JARNAME} -i cli-script.scala
-    $JAVA_HOME/bin/java -jar ${SCP}/${JARNAME}
+    $JAVA_HOME/bin/java -jar ${SCP}/${JARNAME} $*
 fi

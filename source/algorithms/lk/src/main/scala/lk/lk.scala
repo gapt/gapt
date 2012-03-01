@@ -3,6 +3,7 @@ package at.logic.algorithms.lk
 import _root_.at.logic.calculi.lksk.{ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, ForallSkRightRule}
 import _root_.at.logic.calculi.occurrences._
 import at.logic.calculi.lk.propositionalRules._
+import at.logic.language.lambda.typedLambdaCalculus._
 import scala.collection.immutable.{HashSet, Set}
 import scala.collection.mutable.{Map, HashMap}
 
@@ -18,7 +19,6 @@ import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
 import at.logic.calculi.slk._
 
 import at.logic.language.hol._
-import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
 import at.logic.language.lambda.substitutions
 import substitutions.Substitution
 
@@ -298,9 +298,13 @@ object eliminateDefinitions {
 }
 
 object regularize {
-  def apply( p: LKProof ) = rec( p, Set[HOLVar]() )
+  def apply( p: LKProof ) = {
+    val blacklist = findVariableNames(p)
+    println("regularization blacklist is: "+blacklist)
+    rec( p, blacklist )
+  }
 
-  def rec( proof: LKProof, vars: Set[HOLVar] ) : (LKProof, Set[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) = 
+  def rec( proof: LKProof, vars: Set[String] ) : (LKProof, Set[String], Map[FormulaOccurrence, FormulaOccurrence] ) =
   {
     //implicit val factory = PointerFOFactoryInstance
     proof match
@@ -425,35 +429,37 @@ object regularize {
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case ExistsLeftRule( p, s, a, m, v ) => {
-        val new_parent = rec( p, vars + v )
+        val vname = v.name.toString
+        val new_parent = rec( p, vars + vname )
         val blacklist = new_parent._2
-        val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
+        val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( vname ) ) // rename eigenvariable
         {
           // FIXME: casts!?
-          val new_var_name = v.name.toString.head + "_"
-          val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], (x => new_var_name + x.toString), v ).asInstanceOf[HOLVar]
+          val new_var_name = (x:Int) => v.name.toString.replaceAll("_.*$","")+"_"+x
+          val new_var = freshVar.get( v.exptype, blacklist, new_var_name, v.factory ).asInstanceOf[HOLVar]
           val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
           val new_map = new_parent._3.clone
           new_map.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
-            ( ExistsLeftRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist + new_var, new_map )
+            ( ExistsLeftRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist + new_var.name.toString, new_map )
         } else
-          ( ExistsLeftRule( new_parent._1, new_parent._3( a ), m.formula, v ), blacklist + v, new_parent._3 )
+          ( ExistsLeftRule( new_parent._1, new_parent._3( a ), m.formula, v ), blacklist + v.name.toString, new_parent._3 )
         ( new_proof, new_blacklist, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_map ) )
       }
       case ForallRightRule( p, s, a, m, v ) => {
-        val new_parent = rec( p, vars + v )
+        val vname = v.name.toString
+        val new_parent = rec( p, vars + vname )
         val blacklist = new_parent._2
-        val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
+        val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( vname ) ) // rename eigenvariable
         {
           // FIXME: casts!?
-          val new_var_name = v.name.toString.head + "_"
-          val new_var = freshVar( v.exptype, blacklist.asInstanceOf[Set[Var]], (x => new_var_name + x.toString), v ).asInstanceOf[HOLVar]
+          val new_var_name = (x:Int) => v.name.toString.replaceAll("_.*$","")+"_"+x
+          val new_var = freshVar.get( v.exptype, blacklist, new_var_name, v.factory ).asInstanceOf[HOLVar]
           val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
           val new_map = new_parent._3.clone
           new_map.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
-          ( ForallRightRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist + new_var, new_map )
+          ( ForallRightRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist + new_var.name.toString, new_map )
         } else
-          ( ForallRightRule( new_parent._1, new_parent._3( a ), m.formula, v ), blacklist + v, new_parent._3 )
+          ( ForallRightRule( new_parent._1, new_parent._3( a ), m.formula, v ), blacklist + v.name.toString, new_parent._3 )
         ( new_proof, new_blacklist, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_map ) )
       }
     }
@@ -462,7 +468,7 @@ object regularize {
   def handleWeakening( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       vars: Set[HOLVar],
+                       vars: Set[String],
                        constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
@@ -474,14 +480,17 @@ object regularize {
                          old_proof: LKProof,
                          a1: FormulaOccurrence,
                          a2: FormulaOccurrence,
-                         vars: Set[HOLVar],
+                         vars: Set[String],
                          constructor: (LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof) = {
     val new_proof = constructor( new_parent._1, new_parent._2( a1 ), new_parent._2( a2 ) )
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
 
-  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m :HOLFormula, vars: Set[HOLVar],
-    constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => BinaryLKProof with AuxiliaryFormulas ) = {
+  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas,
+                        p1: LKProof, p2: LKProof,
+                        a1: FormulaOccurrence, a2: FormulaOccurrence,
+                        m :HOLFormula, vars: Set[String],
+                        constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => BinaryLKProof with AuxiliaryFormulas ) = {
        // first left, then right
       val rec1 = rec( p1, vars )
       val rec2 = rec( p2, vars ++ rec1._2 )
@@ -490,7 +499,7 @@ object regularize {
                    computeMap( p2.root.antecedent ++ p2.root.succedent, r, new_proof, rec2._3 ) )
   }
 
-  def handleBinaryProp( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, vars: Set[HOLVar],
+  def handleBinaryProp( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, vars: Set[String],
     constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence) => BinaryLKProof with AuxiliaryFormulas ) = {
        // first left, then right
       val rec1 = rec( p1, vars )
@@ -509,6 +518,15 @@ object regularize {
       new_proof.getDescendantInLowerSequent( old_map(fo) ).get ) )
     map
   }
+
+  def findVariableNames(e:LambdaExpression) : Set[String] = e match {
+    case Var(sym,_) => Set(sym.toString)
+    case App(s,t) => findVariableNames(s) ++ findVariableNames(t)
+    case Abs(v,t) => Set(v.name.toString) ++ findVariableNames(t)
+  }
+
+  def findVariableNames(root : Sequent) : Set[String] = (root.antecedent ++ root.succedent).foldLeft (Set[String]()) ((x:Set[String], y:FormulaOccurrence) => x ++ findVariableNames(y.formula))
+  def findVariableNames(p : LKProof) : Set[String] = p.fold (findVariableNames)  (_ ++ findVariableNames(_)) (_ ++ _ ++ findVariableNames(_))
 
 }
 
