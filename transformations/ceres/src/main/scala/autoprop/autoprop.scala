@@ -1,3 +1,5 @@
+package at.logic.transformations.ceres.autoprop
+
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.{LKProof, Sequent}
 import at.logic.calculi.lk.macroRules._
@@ -14,6 +16,11 @@ import at.logic.transformations.ceres.unfolding.{StepMinusOne, SchemaSubstitutio
 // continue autopropositional
 object Autoprop {
   def apply(seq: FSequent): LKProof = {
+    if (isSeqTautology(seq)) {
+      val (f, rest) = getAxiomfromSeq(seq)
+      return WeakeningRuleN(Axiom(f::Nil, f::Nil), rest)
+    }
+    
     var f = getNonAtomicFAnt(seq).get._1
     var rest = getNonAtomicFAnt(seq).get._2
     f match {
@@ -57,6 +64,7 @@ object Autoprop {
           OrLeftEquivalenceRule1(up, Or(BigOr(i, iter, from, Pred(to)), subst(iter).asInstanceOf[SchemaFormula]), BigOr(i, iter, from, to))
         }
       }
+      case _ => throw new Exception("Error in ANT-case in Autoprop.apply !\n")
     }
 
     f = getNonAtomicFSucc(seq).get._1
@@ -74,7 +82,6 @@ object Autoprop {
         val up = AndRightRule(t1, t2, f1, f2)
         ContractionRuleN(up, rest)
       }
-      //TODO !!!
       case BigAnd(i, iter, from, to) => {
         val i = IntVar(new VariableStringSymbol("i"))
         if (from == to) {
@@ -103,13 +110,19 @@ object Autoprop {
           OrRightEquivalenceRule1(up, Or(BigOr(i, iter, from, Pred(to)), subst(iter).asInstanceOf[SchemaFormula]), BigOr(i, iter, from, to))
         }
       }
+      case _ => throw new Exception("Error in SUCC-case in Autoprop.apply !\n")
     }
     Axiom(Nil,Nil)
   }
-  
+
   def ContractionRuleN(p : LKProof, seq: FSequent) : LKProof = {
     val up = seq.antecedent.foldLeft(p)((res, f) => ContractionLeftRule(res, f))
     seq.succedent.foldLeft(up)((res, f) => ContractionRightRule(res, f))
+  }
+
+  def WeakeningRuleN(p : LKProof, seq: FSequent) : LKProof = {
+    val up = seq.antecedent.foldLeft(p)((res, f) => WeakeningLeftRule(res, f))
+    seq.succedent.foldLeft(up)((res, f) => WeakeningRightRule(res, f))
   }
 
   //return the first non Atomic f-la and the subsequent without that f-la
@@ -129,12 +142,17 @@ object Autoprop {
     None
   }
   
+  def isAtom(f: HOLFormula): Boolean = f match {
+    case IndexedPredicate(_, _) => true
+    case _ => false
+  }
+  
   def isSeqTautology(seq: FSequent): Boolean = {
-    seq.antecedent.foreach(f => seq.succedent.foreach(f2 =>  if(f == f2) return true))
+    seq.antecedent.foreach(f => seq.succedent.foreach(f2 =>  if(f == f2 && isAtom(f)) return true))
     seq.antecedent.foreach(f => {
       val subseq = removeFfromSeqAnt(seq, f)
       subseq.antecedent.foreach(x => x match {
-        case Neg(f1) => if (f == f1) return true
+        case Neg(f1) => if (f == f1 && isAtom(f)) return true
       })
     })
     seq.succedent.foreach(f => {
@@ -160,5 +178,15 @@ object Autoprop {
 
   def removeFfromSeqSucc(seq: FSequent, flist : List[HOLFormula]) : FSequent = {
     new FSequent(seq.antecedent, seq.succedent.filter(x => !flist.contains(x)))
+  }
+  
+  def getAxiomfromSeq(seq: FSequent) : (HOLFormula, FSequent) = {
+    if (isSeqTautology(seq)) {
+      seq.antecedent.foreach(f => if (seq.succedent.contains(f)){
+        return (f, removeFfromSeqAnt(removeFfromSeqSucc(seq, f), f))
+      })
+      throw new Exception("\nError in if-autoprop.getAxiomfromSeq !\n")
+    }
+    else throw new Exception("\nError in else-autoprop.getAxiomfromSeq !\n")
   }
 }
