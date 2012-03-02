@@ -37,7 +37,7 @@ import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCrea
 import at.logic.transformations.ceres.unfolding.applySchemaSubstitution
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.ProjectionTermCreators
-import at.logic.transformations.ceres.PStructToExpressionTree
+import at.logic.transformations.ceres.autoprop.Autoprop
 import at.logic.utils.ds.trees.Tree
 
 object Main extends SimpleSwingApplication {
@@ -166,6 +166,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       body.getContent.contents.head match {
         case dp: DrawProof =>
+          dp.search = input_str
           dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof))
           dp.revalidate
         case dt: DrawTree =>
@@ -443,9 +444,6 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Compute Struct") { computeSchematicStruct }) { border = customBorder }
       contents += new MenuItem(Action("Compute Projection Term") { computeSchematicProjectionTerm }) { border = customBorder }
       contents += new MenuItem(Action("Compute Proof Instance") { computeProofInstance } )  { border = customBorder }
-      contents += new Separator
-      contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
-      contents += new MenuItem(Action("Test Schematic Clause Set") { testSchematicClauseSet }) { border = customBorder }
     }
     contents += new Menu("Help") {
       mnemonic = Key.H
@@ -453,6 +451,13 @@ object Main extends SimpleSwingApplication {
         mnemonic = Key.A
         border = customBorder
       }
+    }
+    contents += new Menu("Tests") {
+      mnemonic = Key.T
+      contents += new MenuItem(Action("Test Auto Propositional") { Autoprop() })
+      contents += new Separator
+      contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
+      contents += new MenuItem(Action("Pruned Clause Set of Adder") { testSchematicClauseSet }) { border = customBorder }
     }
   }
 

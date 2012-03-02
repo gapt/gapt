@@ -21,7 +21,7 @@ import at.logic.gui.prooftool.parser.{ShowAllRules, HideStructuralRules, ProofTo
 import at.logic.calculi.lk.propositionalRules._
 
 class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence],
-                private var visible_occurrences : Set[FormulaOccurrence])
+                private var visible_occurrences : Set[FormulaOccurrence], private var str: String)
   extends BorderPanel with MouseMotionListener {
   background = white
   opaque = false
@@ -90,12 +90,12 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           ProofToolPublisher.publish(new HideStructural(p.uProof.asInstanceOf[TreeProof[_]]))
         case _ =>
       }
-      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences)) = Position.Center
+      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences, str)) = Position.Center
       layout(tx) = Position.South
     case p: BinaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences)) = Position.West
-      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences)) = Position.East
+      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences, str)) = Position.West
+      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences, str)) = Position.East
       layout(tx) = Position.South
     case p: NullaryTreeProof[_] => p match {
       case SchemaProofLinkRule(_, link, indices) =>
@@ -121,6 +121,12 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     case fPanel: FlowPanel => fPanel.contents.foldLeft(0)((width, x) => width + x.size.width + 5)
   }
 
+  def search_=(s: String) {
+    str = s
+    repaint
+  }
+  def search = str
+
   override def paintComponent(g: Graphics2D) {
     import scala.math.max
 
@@ -131,6 +137,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     g.setFont(labelFont)
     // g.setStroke(new BasicStroke(fSize / 25))
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
+    if (! str.isEmpty && proof.name.contains(str)) g.setColor(new Color(0,255,0))
 
     proof match {
       case p: UnaryTreeProof[_] => {
