@@ -11,10 +11,14 @@ import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.schema._
 import at.logic.calculi.slk._
 import at.logic.transformations.ceres.unfolding.{StepMinusOne, SchemaSubstitution1}
+import collection.immutable
 
 
 // continue autopropositional
 object Autoprop {
+  // This method is used in prooftool to test autopropositional feature.
+  def apply(): LKProof = apply(new FSequent(immutable.Seq[HOLFormula](), immutable.Seq[HOLFormula]()))
+
   def apply(seq: FSequent): LKProof = {
     if (isSeqTautology(seq)) {
       val (f, rest) = getAxiomfromSeq(seq)
