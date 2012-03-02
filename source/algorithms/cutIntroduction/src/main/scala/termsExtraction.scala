@@ -1,14 +1,13 @@
 /**
  * Terms extraction
  *
- * Returns a list with the terms used to instantiate each wekely quantified
+ * Returns a list with the terms used to instantiate each weakly quantified
  * formula.
  * Implemented for the cut-introduction algorithm.
- * NOTE: Prenex formulas only.
- TODO: explain this nicely
- // NOTE: Since we are dealing only with prenex formulas, it is not the case 
-     // that aux1 or aux2 have instantiated formulas. Therefore, they were not 
-     // added to the HashMap. It is not needed to alter the HashMap.
+ * NOTE: This algorithm was developed for prenex formulas only.
+ * This means that when we hava a binary rule such as A ^ B, it is never the
+ * case that A or B have instantiated terms. Therefore, we don't worry about it
+ * and don't look them up on the hashmap (they won't be there anyway...)
  */
 
 import at.logic.calculi.lk.base._
@@ -20,12 +19,14 @@ import at.logic.calculi.occurrences._
 import scala.collection.immutable._
 import at.logic.calculi.lk.base.types._
 
-package herbrandExtraction {
+package cutIntroduction {
 
 class TermsExtractionException(msg: String) extends Exception(msg)
 
 object termsExtraction {
 
+  // If all the quantified formulas have only one quantifier, each sequent of
+  // the list will have only one element
   def apply(proof: LKProof) : List[Seq[HOLExpression]] = {
     val map = extractTerms(proof)
     var terms = Nil
