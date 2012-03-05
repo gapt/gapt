@@ -26,6 +26,7 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
       val i = IntVar(new VariableStringSymbol("i"))
       val A = IndexedPredicate(new ConstantStringSymbol("A"), i)
       val B = IndexedPredicate(new ConstantStringSymbol("B"), i)
+      val C = IndexedPredicate(new ConstantStringSymbol("C"), i)
       val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
       val four = Succ(three);val five = Succ(four); val six = Succ(Succ(four));val seven = Succ(Succ(five));       val A0 = IndexedPredicate(new ConstantStringSymbol("A"), IntZero())
       val A1 = IndexedPredicate(new ConstantStringSymbol("A"), one)
@@ -50,14 +51,45 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
 //      val fseq = FSequent(A0 :: Neg(A0) :: Nil, Nil)
       val biga = BigAnd(i, A, zero, one)
       val bigo = BigOr(i, A, zero, one)
+      val biga2 = BigAnd(i, A, zero, two)
+      val bigo2 = BigOr(i, A, zero, two)
 
-      val fseq = FSequent(bigo :: Nil, A0 :: A1 :: Nil )
+//      val fseq = FSequent(bigo :: Nil, A0 :: A1 :: Nil )
 //      val fseq = FSequent(biga :: Nil, A0 :: A1 :: Nil )
-//      val fseq = FSequent(A :: B :: Nil, A1 :: And(A, B) :: Nil)
-//      val fseq = FSequent(A0 :: A1 :: Nil, big :: Nil)
+//      val fseq = FSequent(biga :: Nil, A0 :: A1 :: A2 :: Nil )
+//      val fseq = FSequent(A :: B :: Nil, And(A, B) :: Nil)
+//      val fseq = FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil)
+//      val fseq = FSequent(A0 :: A1 :: Nil, biga :: Nil)
+//        val fseq = FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil)
+//      val fseq = FSequent(A0 :: A1 :: Nil, bigo :: Nil)
+      val fseq = FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil)
 
-      val p = Autoprop(fseq)
+//      val fseq = FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil)
+
+
+      val p = Autoprop.apply1(fseq)
+      println(Console.RED+"\n\n\nautopropositional : "+Console.RESET+printSchemaProof.sequentToString(p.root) )
+      println("\n\n\nautopropositional, size = "+rulesNumber(p))
       printSchemaProof(p)
+
+      val p1 = StructuralOptimizationAfterAutoprop(p)
+      println("\n\n\niteration 1, size = :"+rulesNumber(p1))
+      printSchemaProof(p1)
+
+      val p2 = StructuralOptimizationAfterAutoprop(p1)
+      println("\n\n\niteration 2, size = :"+rulesNumber(p2))
+      printSchemaProof(p2)
+
+      val p3 = StructuralOptimizationAfterAutoprop(p2)
+      println("\n\n\niteration 3, size = :"+rulesNumber(p3))
+      printSchemaProof(p3)
+      println("\n\n")
+
+//      val p4 = Autoprop()
+//      println("\n\n\nautoprop minimal form, size = "+rulesNumber(p4))
+//      printSchemaProof(p4)
+//      println("\n\n")
     }
   }
 }
+

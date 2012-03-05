@@ -37,7 +37,7 @@ import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCrea
 import at.logic.transformations.ceres.unfolding.applySchemaSubstitution
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.ProjectionTermCreators
-import at.logic.transformations.ceres.autoprop.Autoprop
+import at.logic.transformations.ceres.autoprop._
 import at.logic.utils.ds.trees.Tree
 
 object Main extends SimpleSwingApplication {
@@ -454,7 +454,14 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Tests") {
       mnemonic = Key.T
-      contents += new MenuItem(Action("Test Auto Propositional") { Autoprop() })
+      val auto1 = Autoprop.apply1(at.logic.transformations.ceres.autoprop.test.apply())
+      val auto2 = StructuralOptimizationAfterAutoprop(auto1)
+      val auto3 = StructuralOptimizationAfterAutoprop(auto2)
+      contents += new MenuItem(Action("Test Auto Propositional") { body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(auto1), auto1), 16) }) { border = customBorder }
+      contents += new MenuItem(Action("Iteration 1")             { body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(auto2), auto2), 16) }) { border = customBorder }
+      contents += new MenuItem(Action("Iteration 2")             { body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(auto3), auto3), 16) }) { border = customBorder }
+      contents += new MenuItem(Action("Iteration 3")             { body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(Autoprop.apply()), Autoprop.apply()),   16) }) { border = customBorder }
+
       contents += new Separator
       contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
       contents += new MenuItem(Action("Pruned Clause Set of Adder") { testSchematicClauseSet }) { border = customBorder }
