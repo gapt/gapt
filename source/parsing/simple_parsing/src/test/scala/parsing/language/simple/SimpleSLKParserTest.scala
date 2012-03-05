@@ -27,7 +27,7 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.parsing.readers.StringReader
 import scala.io._
 import java.io.File.separator
-
+import java.io.{FileInputStream, InputStreamReader}
 
 
 class SimpleSLKParserTest extends SpecificationWithJUnit {
@@ -74,7 +74,7 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
 //          p.root.toString must beEqual ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
 //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
 //          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
-          val s = Source.fromFile("target" + separator + "test-classes" + separator + "adder.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
 
           val map = SHLK.parseProof(s)
 //          println("\n\np = "+  map.get("chi").get._1.get("root").get.root.toString()  )
