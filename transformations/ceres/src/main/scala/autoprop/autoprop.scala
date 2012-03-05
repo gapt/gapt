@@ -23,7 +23,13 @@ import collection.immutable
 // continue autopropositional
 object Autoprop {
   // This method is used in prooftool to test autopropositional feature.
-  def apply(): LKProof = apply(test.apply())
+  def apply(): List[LKProof] = {
+    val auto1 = apply1(test.apply())
+    val auto2 = StructuralOptimizationAfterAutoprop(auto1)
+    val auto3 = StructuralOptimizationAfterAutoprop(auto2)
+    val auto = apply(test.apply())
+    List(auto1,auto2,auto3,auto)
+  }
   def apply(seq: FSequent): LKProof = {
     var p = apply1(seq)
     while (rulesNumber(p) != rulesNumber(StructuralOptimizationAfterAutoprop(p)))
