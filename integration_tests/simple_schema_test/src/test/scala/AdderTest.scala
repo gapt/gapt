@@ -21,6 +21,7 @@ import at.logic.calculi.lk.base.Sequent
 import at.logic.utils.ds.Multisets.HashMultiset
 import at.logic.language.schema.{IndexedPredicate, SchemaFormula}
 import at.logic.transformations.ceres.struct.{ClauseSetSymbol, StructCreators}
+import java.io.{FileInputStream, InputStreamReader}
 
 class AdderTest extends SpecificationWithJUnit {
 
@@ -29,7 +30,7 @@ class AdderTest extends SpecificationWithJUnit {
    "extract a schema clause set from an Adder proof" in {
      skip("needs too much memory to pass")
 
-      SHLK.parseProofs(Source.fromFile( "target" + separator + "test-classes" + separator + "adder.lks" ).foldLeft("")((st, x) => st + x))
+      SHLK.parseProofs(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks")))
 
       val n = IntVar(new VariableStringSymbol("n"))
 

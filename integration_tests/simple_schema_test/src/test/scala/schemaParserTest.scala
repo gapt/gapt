@@ -42,7 +42,7 @@ import scala.collection.immutable.Seq
 import at.logic.transformations.ceres.projections._
 import java.io.File.separator
 import scala.io.Source
-import java.io._
+import java.io.{FileInputStream, InputStreamReader}
 import at.logic.provers.prover9.Prover9
 import at.logic.gui.prooftool.gui.Main
 import at.logic.parsing.language.simple.SHLK
@@ -82,12 +82,12 @@ class schemaParserTest extends SpecificationWithJUnit {
 //                                    "3 : ax(A(0) |- A(0))","2")
 //          println("\n\n"+p.root.toString)
 
-          import scala.io._
+    //      import scala.io._
 //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
 //          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input1.lks").toList.foldLeft("")((ch,res) => ch + res)
-          val s = Source.fromFile("target" + separator + "test-classes" + separator + "adder.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
 
-          println("\n\ns = "+s)
+         // println("\n\ns = "+s)
 
 //          val p = SHLK.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \/ A(i+1) ) ) |- A(k+1))" +
 //                                              "2 : ax(A(k+1) |- A(k+1))" +
