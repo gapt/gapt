@@ -18,7 +18,6 @@ import at.logic.parsing.ParsingException
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
-import io.Source
 import at.logic.parsing.language.simple.SHLK
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLFormula
@@ -26,7 +25,7 @@ import at.logic.gui.prooftool.gui.Main
 
 class FileParser {
 
-  def xmlFileStreamReader(f: String) = new InputStreamReader(new FileInputStream(f), "UTF8")
+  def fileStreamReader(f: String) = new InputStreamReader(new FileInputStream(f), "UTF8")
 
   def gzFileStreamReader(f: String) = new InputStreamReader(new GZIPInputStream(new FileInputStream(f)), "UTF8")
 
@@ -45,17 +44,20 @@ class FileParser {
   def lksFileReader(f: String) {
     proofs = Nil
     structs = Nil
-    proofdb = new ProofDatabase(Map(),SHLK.parseProofs(Source.fromFile(f).foldLeft("")((st, x) => st + x)), Nil, Nil)
+  //  val start = System.currentTimeMillis()
+    proofdb = new ProofDatabase(Map(),SHLK.parseProofs(fileStreamReader(f)), Nil, Nil)
+  //  val end = System.currentTimeMillis()
+  //  println("parsing took " + (end - start).toString)
   }
 
   def parseFile(path: String) : Unit = try {
     if (path.endsWith(".lks")) lksFileReader(path)
     else if (path.endsWith(".xml")) try {
-      ceresFileReader(xmlFileStreamReader(path))
+      ceresFileReader(fileStreamReader(path))
     } catch {
       case pe: ParsingException =>
         Main.questionMessage("There was a parsing exception:\n\n \t " + pe.getMessage + "\n\nContinue with another parser?") match {
-          case Dialog.Result.Yes => stabFileReader(xmlFileStreamReader(path))
+          case Dialog.Result.Yes => stabFileReader(fileStreamReader(path))
           case _ =>
         }
     }

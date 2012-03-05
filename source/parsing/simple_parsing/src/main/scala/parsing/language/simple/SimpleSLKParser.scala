@@ -19,18 +19,19 @@ import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
+import java.io.InputStreamReader
 
 
 object SHLK {
 
-  def parseProofs(input: String): List[(String, LKProof)] = {
+  def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
 //    ("p",parseProof(input, "root"))::Nil
     val m = SHLK.parseProof(input)
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
 
   //plabel should return the proof corresponding to this label
-  def parseProof(txt: String): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
+  def parseProof(txt: InputStreamReader): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
     var mapBase = Map.empty[String, LKProof]
     var mapStep = Map.empty[String, LKProof]
     var map  = Map.empty[String, LKProof]
