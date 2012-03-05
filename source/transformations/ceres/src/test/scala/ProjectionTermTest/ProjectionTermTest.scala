@@ -10,9 +10,9 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, SchemaSubstitution1}
 import org.specs._
 import projections.printSchemaProof
-import scala.io.Source
 import at.logic.parsing.language.simple.SHLK
 import java.io.File.separator
+import java.io.{FileInputStream, InputStreamReader}
 
 class ProjectionTermTest extends SpecificationWithJUnit {
     implicit val factory = defaultFormulaOccurrenceFactory
@@ -62,7 +62,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
               val root = CutRule(orl1, ax3, A1)
 
 
-          val str = Source.fromFile("target" + separator + "test-classes" + separator + "adder.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val str = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
           val proof_name = "psi"
 //          val proof_name = "varphi"
 //          val proof_name = "phi"

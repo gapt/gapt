@@ -6,6 +6,8 @@ import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, Schema
 import org.specs._
 import org.specs.runner._
 import org.specs.matcher.Matcher
+import java.io.{FileInputStream, InputStreamReader}
+
 //import scala.xml.dtd._
 
 import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
@@ -37,7 +39,6 @@ import at.logic.calculi.lk.definitionRules._
 import scala.collection.immutable.Seq
 import at.logic.parsing.readers.StringReader
 import java.io.File.separator
-import scala.io._
 
 class UnfoldSchemaProofTest extends SpecificationWithJUnit {
     implicit val factory = defaultFormulaOccurrenceFactory
@@ -248,7 +249,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
 
           val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
           println("\n\nunfolding TEST ")
-          val str = Source.fromFile("target" + separator + "test-classes" + separator + "adder.lks").toList.foldLeft("")((ch,res) => ch + res)
+          val str = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
           val map = SHLK.parseProof(str)
           val n = IntVar(new VariableStringSymbol("n"));val n1 = Succ(n);val n2 = Succ(n1);val n3 = Succ(n2);
           val k = IntVar(new VariableStringSymbol("k")) ; val i = IntVar(new VariableStringSymbol("i"))
