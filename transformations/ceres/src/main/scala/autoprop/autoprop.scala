@@ -18,18 +18,22 @@ import at.logic.transformations.ceres.projections.printSchemaProof
 import at.logic.transformations.ceres.unfolding.{StepMinusOne, SchemaSubstitution1}
 import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
-
+import at.logic.parsing.language.simple.SHLK
 
 // continue autopropositional
 object Autoprop {
   // This method is used in prooftool to test autopropositional feature.
-  def apply(): List[LKProof] = {
+  def apply(s: String): List[LKProof] = if (s.isEmpty) {
     val auto1 = apply1(test.apply())
     val auto2 = StructuralOptimizationAfterAutoprop(auto1)
     val auto3 = StructuralOptimizationAfterAutoprop(auto2)
     val auto = apply(test.apply())
     List(auto1,auto2,auto3,auto)
+  } else {
+    val seq = SHLK.parseSequent(s)
+    apply( seq ) :: Nil
   }
+
   def apply(seq: FSequent): LKProof = {
     var p = apply1(seq)
     while (rulesNumber(p) != rulesNumber(StructuralOptimizationAfterAutoprop(p)))

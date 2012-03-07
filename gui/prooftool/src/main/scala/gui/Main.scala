@@ -157,8 +157,7 @@ object Main extends SimpleSwingApplication {
   }
 
   def search {
-    val input_str = Dialog.showInput[String](body, "Please enter string to search:",
-      "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "") match {
+    val input_str = inputMessage("Please enter string to search:", Seq()) match {
       case Some(str) => str
       case _ => ""
     }
@@ -454,15 +453,24 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Tests") {
       mnemonic = Key.T
-      contents += new Menu("Test Auto Propositional") {
-        val list = Autoprop()
+      contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
+      contents += new MenuItem(Action("Pruned Clause Set of Adder") { testSchematicClauseSet }) { border = customBorder }
+      contents += new Separator
+      contents += new MenuItem(Action("Test Auto Propositional") {
+        val sequents = Seq( "A(k+1), B(2) |- A(k+1), ~C(1)",
+          "~ ~ A |- A", "A |- ~ ~ A", "(A(k) /\\ A(k+1)) |- ~(~A(k) \\/ ~A(k+1))")
+        val str = inputMessage("Please choose sequent to prove:", sequents) match {
+          case Some(s) => s
+          case _ => ""
+        }
+        body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+        val list = Autoprop(str)
         for (i <- list) contents += new MenuItem(Action("Iteration " + list.indexOf(i).toString) {
           body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(i), i), 16)
         }) { border = customBorder }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
-      contents += new MenuItem(Action("Pruned Clause Set of Adder") { testSchematicClauseSet }) { border = customBorder }
+        if (! list.isEmpty) body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(list.head), list.head), 16)
+        body.cursor = java.awt.Cursor.getDefaultCursor
+      }) { border = customBorder }
     }
   }
 
@@ -618,6 +626,7 @@ object Main extends SimpleSwingApplication {
       val t = e.toString + "\n\n" + e.getStackTraceString
       var k = 0
       val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
+      println("ERROR: "+ e.getMessage)
       Main.errorMessage(t.dropRight(t.size - index - 1))
     case e: AnyRef => Main.errorMessage(e.toString)
   } finally {
@@ -655,8 +664,7 @@ object Main extends SimpleSwingApplication {
   }
 
   def computeProofInstance {
-    val input = Dialog.showInput(body, "Please enter number of the instance:",
-      "ProofTool", Dialog.Message.Plain, EmptyIcon, Seq(), "0") match {
+    val input = inputMessage("Please enter number of the instance:", Seq()) match {
       case Some(str) => str.replaceAll("""[a-z,A-Z]*""","")
       case _ => ""
     }
@@ -937,6 +945,10 @@ object Main extends SimpleSwingApplication {
         val t = e.toString
         errorMessage("Couldn't compute ClList!\n\n"+t.replaceAll(",","\n"))
   } finally ProofToolPublisher.publish(ProofDbChanged)
+
+  def inputMessage(message: String, values: Seq[String]) =
+    Dialog.showInput[String](body, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values,
+      if (values.isEmpty) "" else values.head)
 
   def infoMessage(info: String) {
     Dialog.showMessage(body, info, "ProofTool Information")

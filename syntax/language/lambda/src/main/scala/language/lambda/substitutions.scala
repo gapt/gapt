@@ -2,6 +2,8 @@ package at.logic.language.lambda
 
 import symbols._
 import typedLambdaCalculus._
+import BetaReduction._
+
 
 package substitutions {
 
@@ -15,6 +17,8 @@ import collection.immutable.HashSet
     def ::(sub:Tuple2[Var, T]) = new Substitution(map + sub)
     def :::(otherSubstitution:Substitution[T]) = new Substitution(map ++ otherSubstitution.map.iterator)
     def apply(expression: T): T = applyWithChangeDBIndices(expression)
+    def applyAndBetaNormalize(expr : T) : T = betaNormalize(apply(expr))(StrategyOuterInner.Outermost).asInstanceOf[T] //TODO:instead of casting, change betanormalize
+
     override def equals(a: Any) = a match {
       case s: Substitution[_] => map.equals(s.map)
       case _ => false
@@ -81,7 +85,7 @@ import collection.immutable.HashSet
     def apply[T <: LambdaExpression](map: scala.collection.immutable.Map[Var, T]): Substitution[T] = new Substitution( map )
     def apply() = new Substitution(new scala.collection.immutable.HashMap())
   }
-  
+
   object ImplicitConverters {
     implicit def convertSubstitutionToPair[T <: LambdaExpression](sub: Substitution[T]): Tuple2[Var,T] = {
       require(sub.map.size == 1)
