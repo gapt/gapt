@@ -23,7 +23,7 @@ object applySubstitution {
                        old_proof: LKProof,
                        constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
-     val new_proof = constructor( new_parent._1, subst(m.formula).asInstanceOf[HOLFormula] )
+     val new_proof = constructor( new_parent._1, subst.applyAndBetaNormalize(m.formula).asInstanceOf[HOLFormula] )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )  
   }
   def handleContraction( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
@@ -71,8 +71,8 @@ object applySubstitution {
       case Axiom(so) => {
         val ant_occs = so.antecedent
         val succ_occs = so.succedent
-        val a = Axiom(ant_occs.map( fo => betaNormalize( subst(fo.formula)).asInstanceOf[HOLFormula]) ,
-          succ_occs.map( fo => betaNormalize( subst(fo.formula) ).asInstanceOf[HOLFormula] ) ) 
+        val a = Axiom(ant_occs.map( fo => betaNormalize( subst.applyAndBetaNormalize(fo.formula)).asInstanceOf[HOLFormula]) ,
+          succ_occs.map( fo => betaNormalize( subst.applyAndBetaNormalize(fo.formula) ).asInstanceOf[HOLFormula] ) )
         val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
         //a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
         a.root.antecedent.zip(ant_occs).foreach(p => map.update( p._2, p._1))
@@ -97,26 +97,26 @@ object applySubstitution {
       case AndLeft1Rule(p, s, a, m) => {
         val f = m.formula match { case And(_, w) => w }
         val new_parent = new_parents.head
-        val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), subst( f ).asInstanceOf[HOLFormula] )
+        val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( f ).asInstanceOf[HOLFormula] )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case AndLeft2Rule(p, s, a, m) => {
         val f = m.formula match { case And(w, _) => w }
         val new_parent = new_parents.head
-        val new_proof = AndLeft2Rule( new_parent._1, subst( f ).asInstanceOf[HOLFormula], new_parent._2( a ) )
+        val new_proof = AndLeft2Rule( new_parent._1, subst.applyAndBetaNormalize( f ).asInstanceOf[HOLFormula], new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case OrLeftRule(p1, p2, s, a1, a2, m) => handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, OrLeftRule.apply )
       case OrRight1Rule(p, s, a, m) => {
         val f = m.formula match { case Or(_, w) => w }
         val new_parent = new_parents.head
-        val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), subst( f ).asInstanceOf[HOLFormula] )
+        val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( f ).asInstanceOf[HOLFormula] )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case OrRight2Rule(p, s, a, m) => {
         val f = m.formula match { case Or(w, _) => w }
         val new_parent = new_parents.head
-        val new_proof = OrRight2Rule( new_parent._1, subst( f ).asInstanceOf[HOLFormula], new_parent._2( a ) )
+        val new_proof = OrRight2Rule( new_parent._1, subst.applyAndBetaNormalize( f ).asInstanceOf[HOLFormula], new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       // TODO: use handleBinaryProp here!?
@@ -146,50 +146,50 @@ object applySubstitution {
       }
       case DefinitionRightRule( p, s, a, m ) => {
         val new_parent = new_parents.head
-        val new_proof = DefinitionRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula] )
+        val new_proof = DefinitionRightRule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case DefinitionLeftRule( p, s, a, m ) => {
         val new_parent = new_parents.head
-        val new_proof = DefinitionLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula] )
+        val new_proof = DefinitionLeftRule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case EquationLeft1Rule( p1, p2, s, a1, a2, m ) =>
         handleEquationRule( EquationLeft1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
-          subst( m.formula ).asInstanceOf[HOLFormula] )
+          subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case EquationLeft2Rule( p1, p2, s, a1, a2, m ) =>
         handleEquationRule( EquationLeft2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
-          subst( m.formula ).asInstanceOf[HOLFormula] )
+          subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case EquationRight1Rule( p1, p2, s, a1, a2, m ) =>
         handleEquationRule( EquationRight1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
-          subst( m.formula ).asInstanceOf[HOLFormula] )
+          subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case EquationRight2Rule( p1, p2, s, a1, a2, m ) =>
         handleEquationRule( EquationRight2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
-          subst( m.formula ).asInstanceOf[HOLFormula] )
+          subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case ForallLeftRule( p, s, a, m, t ) => {
         val new_parent = new_parents.head
-        val new_proof = ForallLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst( t ) )
+        val new_proof = ForallLeftRule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula], subst.applyAndBetaNormalize( t ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
     }
       case ExistsRightRule( p, s, a, m, t ) => {
         val new_parent = new_parents.head
-        val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], subst( t ) )
+        val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula], subst.applyAndBetaNormalize( t ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case ExistsLeftRule( p, s, a, m, v ) => {
         assert( !subst.map.contains( v ) )
         val new_parent = new_parents.head
-        val new_proof = ExistsLeftRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], v )
+        val new_proof = ExistsLeftRule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula], v )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case ForallRightRule( p, s, a, m, v ) => {
         assert( !subst.map.contains( v ) )
         val new_parent = new_parents.head
-        val new_proof = ForallRightRule( new_parent._1, new_parent._2( a ), subst( m.formula ).asInstanceOf[HOLFormula], v )
+        val new_proof = ForallRightRule( new_parent._1, new_parent._2( a ), subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula], v )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
     }
