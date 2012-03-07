@@ -1,10 +1,11 @@
 package at.logic.parsing.language.simple
 
-import at.logic.language.schema.IndexedPredicate._
+import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.slk._
+import at.logic.language.schema.IndexedPredicate._
 import at.logic.language.schema.{SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
-import at.logic.calculi.lk.base.{Sequent, FSequent, LKProof}
+import at.logic.calculi.lk.base.{Sequent, LKProof}
 import at.logic.calculi.lk.propositionalRules._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
@@ -22,6 +23,7 @@ import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 
 
+
 object SHLK {
 
   def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
@@ -29,6 +31,137 @@ object SHLK {
     val m = SHLK.parseProof(input)
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
+
+
+  def parseSequent(txt: String): FSequent = {
+    lazy val sp = new SequentParser
+    sp.parseAll(sp.sequent, txt) match {
+      case res @ sp.Success(result, input) => {
+//        println("\n\nSUCCESS parse :) \n")
+        return res.result.toFSequent()
+      }
+      case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
+        throw new Exception("Error in SHLK.parseSequent : "+x.toString)
+    }
+    class SequentParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
+      def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
+      def term: Parser[HOLExpression] = ( non_formula | formula)
+      def formula: Parser[HOLFormula] = (neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
+      def intTerm: Parser[HOLExpression] = (index | schemaFormula)
+      def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
+      def intConst: Parser[IntegerTerm] = (intZero | intOne | intTwo | intThree)
+      def intOne :  Parser[IntegerTerm] = "1".r ^^ { case x => {  Succ(IntZero())}}
+      def intTwo :  Parser[IntegerTerm] = "2".r ^^ { case x => {  Succ(Succ(IntZero()))}}
+      def intThree: Parser[IntegerTerm] = "3".r ^^ { case x => {  Succ(Succ(Succ(IntZero())))}}
+      def intZero:  Parser[IntegerTerm] = "0".r ^^ { case x => {  IntZero()}
+      }
+      def sum : Parser[IntegerTerm] = intVar ~ "+" ~ intConst ^^ {case indV ~ "+" ~ indC => {
+        //        println("\n\nsum")
+        indC match {
+          case Succ(IntZero()) => Succ(indV)
+          case Succ(Succ(IntZero())) => Succ(Succ(indV))
+          case Succ(Succ(Succ(IntZero()))) => Succ(Succ(Succ(indV)))
+        }}}
+      def intVar: Parser[IntVar] = "[i,j,m,n,k]".r ^^ {
+        case x => { /*println("\n\nintVar");*/ IntVar(new VariableStringSymbol(x))}
+      }
+      def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
+        case "s(" ~ intTerm ~ ")" => Succ(intTerm.asInstanceOf[IntegerTerm])
+      }
+      def schemaFormula = formula
+      def indPred : Parser[HOLFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
+        case x ~ "(" ~ l ~ ")" => {
+          IndexedPredicate(new ConstantStringSymbol(x), l)
+        }
+      }
+
+      //      def bigAnd : Parser[HOLFormula] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
+      //        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
+      //          println("\n\nBigAnd\n\n")
+      //          BigAnd(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+      //        }
+      //      }
+      //      def bigOr : Parser[HOLFormula] = "BigOr" ~ "(" ~ intVar ~ "," ~ index ~ "," ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
+      //        case "BigOr" ~ "(" ~ intVar ~ "," ~ ind1 ~ "," ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
+      //          println("\n\nBigOr\n\n")
+      //          BigOr(intVar, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+      //        }
+      //      }
+
+      // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
+      def prefix : Parser[Tuple3[IntVar, IntegerTerm, IntegerTerm]] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
+        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
+          //          println("\n\nprefix\n\n")
+          Tuple3(intVar1, ind1, ind2 )
+        }
+      }
+      def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
+        case l ~ schemaFormula  => {
+          //          println("Works?")
+          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => BigAnd(triple._1, res, triple._2, triple._3))
+          //          BigAnd(l.tail.head._1, schemaFormula.asInstanceOf[SchemaFormula], l.tail.head._2, l.tail.head._3)
+
+          //          throw new Exception("ERROR in big connective symbol")
+          //          l.head match {
+          //            case str ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")" => {
+          //              if(str == "BigAnd") {
+          //                println("\n\nBigAnd\n\n")
+          //                BigAnd(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+          //              }
+          //              else if (str == "BigOr") {
+          //                println("\n\nBigOr\n\n")
+          //                BigOr(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+          //              }
+          //              else {
+          //                println("\n\nERROR in big connective symbol\n\n")
+          //                throw new Exception("ERROR in big connective symbol")
+          //              }
+          //            }
+          //          }
+        }
+      }
+      def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)
+      def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), ind->ind).asInstanceOf[HOLVar]}
+      def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
+      def and: Parser[HOLFormula] = "(" ~ repsep(formula, "/\\") ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => And(f, res)) } }
+      def or: Parser[HOLFormula]  = "(" ~ repsep(formula, """\/""" ) ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => Or(f, res)) } }
+      def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}
+      def abs: Parser[HOLExpression] = "Abs" ~ variable ~ term ^^ {case "Abs" ~ v ~ x => Abs(v,x).asInstanceOf[HOLExpression]}
+      def neg: Parser[HOLFormula] = "~" ~ formula ^^ {case "~" ~ x => Neg(x)}
+      def atom: Parser[HOLFormula] = (equality | var_atom | const_atom)
+      def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
+      def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
+      def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
+        //        println("\n\nvar_atom")
+        Atom(new VariableStringSymbol(x), params)
+      }}
+      def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
+        //        println("\n\nconst_atom")
+        Atom(new ConstantStringSymbol(x), params)
+      }}
+      def equality: Parser[HOLFormula] = /*eq_infix | */ eq_prefix // infix is problematic in higher order
+      //def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
+      def eq_prefix: Parser[HOLFormula] = "=" ~ "(" ~ term ~ "," ~ term  ~ ")" ^^ {case "=" ~ "(" ~ x ~ "," ~ y  ~ ")" => Equation(x,y)}
+      def var_func: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, ind->ind)}
+      /*def var_func: Parser[HOLExpression] = (var_func1 | var_funcn)
+      def var_func1: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
+      def var_funcn: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "^" ~ decimalNumber ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "^" ~ n ~ "(" ~ params ~ ")" ~ ":" ~ tp => genF(n.toInt, HOLVar(new VariableStringSymbol(x)), params)}
+      */
+      def const_func: Parser[HOLExpression] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, ind->ind)}
+      protected def word: String = """[a-zA-Z0-9$_{}]*"""
+      protected def symbol: Parser[String] = symbols.r
+      def symbols: String = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""" // +-*/\^<>=`~?@&|!#{}';
+
+      //      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
+      def sequent: Parser[Sequent] = repsep(formula,",") ~ "|-" ~ repsep(formula,",") ^^ { case lfs ~ "|-" ~ rfs => {
+        //          println("\n\nSEQUENT")
+          Axiom(lfs, rfs).root
+        }
+      }
+    }
+    throw new Exception("\nError in SHLK.parseSequent function !\n")
+  }
+  
 
   //plabel should return the proof corresponding to this label
   def parseProof(txt: InputStreamReader): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
@@ -180,6 +313,12 @@ object SHLK {
 //          BigAnd(intVar1, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
 //        }
 //      }
+//      def bigOr : Parser[HOLFormula] = "BigOr" ~ "(" ~ intVar ~ "," ~ index ~ "," ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
+//        case "BigOr" ~ "(" ~ intVar ~ "," ~ ind1 ~ "," ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
+//          println("\n\nBigOr\n\n")
+//          BigOr(intVar, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
+//        }
+//      }
 
      // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
       def prefix : Parser[Tuple3[IntVar, IntegerTerm, IntegerTerm]] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
@@ -213,13 +352,6 @@ object SHLK {
 //          }
         }
       }
-
-//      def bigOr : Parser[HOLFormula] = "BigOr" ~ "(" ~ intVar ~ "," ~ index ~ "," ~ index ~ "," ~ schemaFormula ~ ")" ^^ {
-//        case "BigOr" ~ "(" ~ intVar ~ "," ~ ind1 ~ "," ~ ind2 ~ "," ~ schemaFormula ~ ")"  => {
-//          println("\n\nBigOr\n\n")
-//          BigOr(intVar, schemaFormula.asInstanceOf[SchemaFormula], ind1, ind2)
-//        }
-//      }
 
       def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)
       def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), ind->ind).asInstanceOf[HOLVar]}
@@ -516,7 +648,6 @@ object SHLK {
 //    m
   //  println("\nSchemaProofDB.size = "+SchemaProofDB.size+"\n")
     bigMap
-
   }
 }
 
@@ -524,30 +655,29 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
   import at.logic.language.schema._
 
   def apply(expression: T): T = expression match {
-      case x:IntVar => {
-          map.get(x) match {
-            case Some(t) => {
-              //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
-              t
-            }
-            case _ => {
-              //println(x + " Error in schema subst 1")
-              x.asInstanceOf[T]
-            }
-          }
+    case x:IntVar => {
+      map.get(x) match {
+        case Some(t) => {
+          //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+          t
+        }
+        case _ => {
+          //println(x + " Error in schema subst 1")
+          x.asInstanceOf[T]
+        }
       }
-      case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
-      case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
-      case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
-      case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
-      case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-      case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-      case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-
-      case _ => expression
     }
-}
+    case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+    case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+    case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+    case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+    case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+    case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+    case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
 
+    case _ => expression
+  }
+}
 
 
 //                    This copy has types. This is why it is kept !
@@ -654,3 +784,4 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
 //
 //  }
 //}
+
