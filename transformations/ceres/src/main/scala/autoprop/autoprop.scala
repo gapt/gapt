@@ -54,9 +54,9 @@ object Autoprop {
       f match {
         case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1 +: rest.succedent)), f1)
         case And(f1, f2) => {
-          val up1 = AndLeft1Rule(apply1(new FSequent(f1 +: f2 +: rest.antecedent, rest.succedent)), f1, f)
-          val up2 = AndLeft2Rule(up1, f2, f)
-          return WeakeningLeftRule(up2, f)
+          val up1 = AndLeft1Rule(apply1(new FSequent(f1 +: f2 +: rest.antecedent, rest.succedent)), f1, f2)
+          val up2 = AndLeft2Rule(up1, f1, f2)
+          return ContractionLeftRule(up2, f)
         }
         case Or(f1, f2) => {
           val t1 = apply1(new FSequent(f1 +: rest.antecedent, rest.succedent))
@@ -105,9 +105,9 @@ object Autoprop {
     f match {
       case Neg(f1) => return NegRightRule(apply1(new FSequent(f1 +: rest.antecedent, rest.succedent)), f1)
       case Or(f1, f2) => {
-        val up1 = OrRight1Rule(apply1(new FSequent(rest.antecedent, f1 +: f2 +: rest.succedent)), f1, f)
-        val up2 = OrRight2Rule(up1, f2, f)
-        return WeakeningRightRule(up2, f)
+        val up1 = OrRight1Rule(apply1(new FSequent(rest.antecedent, f1 +: f2 +: rest.succedent)), f1, f2)
+        val up2 = OrRight2Rule(up1, f1, f2)
+        return ContractionRightRule(up2, f)
       }
       case And(f1, f2) => {
         val t1 = apply1(new FSequent(rest.antecedent, f1 +: rest.succedent))
@@ -493,7 +493,7 @@ object delSuperfluousRules {
         OrRight1Rule( new_p, a.formula, a2)
       }
       case OrRight2Rule(p, r, a, m) =>  {
-        if (set.contains(a))
+        if (set.contains(m))
           return apply(set, p)
         val new_p = apply(set, p)
         val a2 = m.formula  match { case Or(l, _) => l }
@@ -586,8 +586,8 @@ object test {
     //      val fseq = FSequent(biga :: Nil, A0 :: A1 :: A2 :: Nil )
     //      val fseq = FSequent(A :: B :: Nil, And(A, B) :: Nil)
 //    val fseq = FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil)
-//    val fseq = FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil)
-    val fseq = FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil)
+    val fseq = FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil)
+//    val fseq = FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil)
 //    val fseq = FSequent(A0 :: A1 :: A2 :: Nil, biga :: Nil)
     //      val fseq = FSequent(A0 :: A1 :: Nil, bigo :: Nil)
     fseq
