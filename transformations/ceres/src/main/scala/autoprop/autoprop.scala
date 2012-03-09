@@ -26,9 +26,9 @@ object Autoprop {
   def apply(s: String): List[LKProof] = if (s.isEmpty) {
     val auto1 = apply1(test.apply())
     val auto2 = StructuralOptimizationAfterAutoprop(auto1)
-    val auto3 = StructuralOptimizationAfterAutoprop(auto2)
-    val auto = apply(test.apply())
-    List(auto1,auto2,auto3,auto)
+//    val auto3 = StructuralOptimizationAfterAutoprop(auto2)
+//    val auto = apply(test.apply())
+    List(auto1,auto2)//,auto3,auto)
   } else {
     val seq = SHLK.parseSequent(s)
     apply( seq ) :: Nil
@@ -215,34 +215,80 @@ object Autoprop {
 }
 
 
+
 //delete from an SLKProof those weakening inefernces whose aux. f-las go to a contraction inference
 object StructuralOptimizationAfterAutoprop {
   def apply(p: LKProof): LKProof = apply(p, p)
+  
+  def removeNonWeakDesc(anc: Set[FormulaOccurrence], ws: Set[FormulaOccurrence]): Set[FormulaOccurrence] = {
+    anc.filter(fo => !(getAncestors(fo).intersect(ws)).isEmpty)
+  }
+
+  def removeWeakDesc(anc: Set[FormulaOccurrence], ws: Set[FormulaOccurrence]): Set[FormulaOccurrence] = {
+    anc.filter(fo => (getAncestors(fo).intersect(ws)).isEmpty)
+  }
+
   def apply(p : LKProof, p_old : LKProof): LKProof = p match {
     case ax: NullaryLKProof => p
     case ContractionLeftRule(up, _, a1, a2, _)  => {
       val anc1 = getAncestors(a1);val anc2 = getAncestors(a2)
       val b1 = isDescentanfOfAuxFOccOfWeakRule(anc1, p_old)
       val b2 = isDescentanfOfAuxFOccOfWeakRule(anc2, p_old)
-      if (b1 && b2)
-        delSuperfluousRules(anc1 ++ anc2, up)
-      else
-        if (b1)
-          delSuperfluousRules(anc1, up)
-        else
-          delSuperfluousRules(anc2, up)
+      val wfo = getWeakFOccs(up)
+      if ((b1 || b2) && isUpperMostContr(up)) {
+        val p1 = delSuperfluousRules(removeNonWeakDesc(anc1 ++ anc2, wfo), up)
+
+//        println("\na1 = "+printSchemaProof.formulaToString (a1))
+//        println("\n1\n")
+//        println("\np1 = \n")
+//        println(printSchemaProof(p1))
+        p1
+      }
+      else  {
+        val p2 = apply(up, p_old)
+//        println("\n2 = \n")
+//        println("\na1 = "+printSchemaProof.formulaToString (a1.formula))
+
+//        println(printSchemaProof(p2))
+
+        if (p2.root.antecedent.filter(fo => fo.formula == a1.formula).size < 2)
+          return p2
+        return ContractionLeftRule(p2, a1.formula)
+      }
+//
+//      else
+//        if (b1) {
+//                    println("\n2 left\n")
+//          return delSuperfluousRules(removeNonWeakDesc(anc1, wfo), up)
+//        }
+//        else
+//          if (b2) {
+//                        println("\n3 left\n")
+//            delSuperfluousRules(removeNonWeakDesc(anc2, wfo), up)
+//          }
+//          else {
+//                        println("\n4 left\n")
+//            ContractionLeftRule(apply(up, p_old), a1.formula)
+//          }
     }
     case ContractionRightRule(up, _, a1, a2, _) => {
       val anc1 = getAncestors(a1);val anc2 = getAncestors(a2)
       val b1 = isDescentanfOfAuxFOccOfWeakRule(anc1, p_old)
       val b2 = isDescentanfOfAuxFOccOfWeakRule(anc2, p_old)
-      if (b1 && b2)
-        delSuperfluousRules(anc1 ++ anc2, up)
-      else
-        if (b1)
-          delSuperfluousRules(anc1, up)
-        else
-          delSuperfluousRules(anc2, up)
+      val wfo = getWeakFOccs(p_old)
+      if ((b1 || b2) && isUpperMostContr(up)) {
+//        println("\n1\n")
+        val p1 = delSuperfluousRules(removeNonWeakDesc(anc1 ++ anc2, wfo), up)
+//        if (!removeNonWeakDesc(getAncestors(a1), wfo).isEmpty) {
+//          println("\n1 right if\n")
+        p1
+      }
+      else {
+        val p2 = apply(up, p_old)
+        if (p2.root.succedent.filter(fo => fo.formula == a1.formula).size < 2)
+          return p2
+        return ContractionRightRule(p2, a1.formula)
+      }
     }
     case AndLeftEquivalenceRule1(p, s, a, m) => {
       //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
@@ -350,6 +396,47 @@ object StructuralOptimizationAfterAutoprop {
 
 
 //**************************************************************************
+
+  //getDescOfAuxFOccOfWeakRule
+object getWeakFOccs {
+  def apply(p: LKProof): Set[FormulaOccurrence] = {
+    p match {
+      case ax: NullaryLKProof => return Set.empty[FormulaOccurrence]
+      case WeakeningLeftRule(up, _, m) => {
+        return apply(up) + m
+      }
+      case WeakeningRightRule(up, _, m) => {
+        return apply(up) + m
+      }
+      case UnaryLKProof(_, up, _, _, _) => return apply(up)
+      case BinaryLKProof(_, up1, up2, _, _, _, _) => return apply(up1) ++ apply (up2)
+      case AndEquivalenceRule1(up, _, _, _) => return apply(up)
+      case OrEquivalenceRule1(up, _, _, _) => return apply(up)
+      case AndEquivalenceRule3(up, _, _, _) => return apply(up)
+      case OrEquivalenceRule3(up, _, _, _) => return apply(up)
+      case _ => { println("ERROR in getWeakFOccs : missing rule!");throw new Exception("ERROR in autoprop: getWeakFOccs") }
+    }
+  }
+}
+
+object isUpperMostContr {
+  def apply(p: LKProof):Boolean = (contrNumber(p) == 0)
+  
+  def contrNumber(p: LKProof): Int = p match {
+    case ax: NullaryLKProof => return 0
+    case ContractionLeftRule(up, _, _, _, _) => return contrNumber(up) + 1
+    case ContractionRightRule(up, _, _, _, _) =>return contrNumber(up) + 1
+    case UnaryLKProof(_, up, _, _, _) => return contrNumber(up)
+    case BinaryLKProof(_, up1, up2, _, _, _, _) => return contrNumber(up1) + contrNumber (up2)
+    case AndEquivalenceRule1(up, _, _, _) => return contrNumber(up)
+    case OrEquivalenceRule1(up, _, _, _) => return contrNumber(up)
+    case AndEquivalenceRule3(up, _, _, _) => return contrNumber(up)
+    case OrEquivalenceRule3(up, _, _, _) => return contrNumber(up)
+    case _ => { println("ERROR in getWeakFOccs : missing rule!");throw new Exception("ERROR in autoprop: getWeakFOccs") }
+  }
+}
+
+
 object isDescentanfOfAuxFOccOfWeakRule {
   def apply(s: Set[FormulaOccurrence], p:LKProof): Boolean = {
 //    println("\nrule = "+p.name)
@@ -585,8 +672,8 @@ object test {
     //      val fseq = FSequent(biga :: Nil, A0 :: A1 :: Nil )
     //      val fseq = FSequent(biga :: Nil, A0 :: A1 :: A2 :: Nil )
     //      val fseq = FSequent(A :: B :: Nil, And(A, B) :: Nil)
-//    val fseq = FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil)
-    val fseq = FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil)
+    val fseq = FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil)
+//    val fseq = FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil)
 //    val fseq = FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil)
 //    val fseq = FSequent(A0 :: A1 :: A2 :: Nil, biga :: Nil)
     //      val fseq = FSequent(A0 :: A1 :: Nil, bigo :: Nil)

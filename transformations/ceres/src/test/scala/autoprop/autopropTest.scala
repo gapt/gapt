@@ -11,7 +11,7 @@ import java.io.File.separator
 import scala.io._
 import org.specs.SpecificationWithJUnit
 
-class UnfoldSchemaProofTest extends SpecificationWithJUnit {
+class autopropTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   import at.logic.language.schema._
   "autopropTest" should {
@@ -61,8 +61,13 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
 //      val fseq = FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil)
 //      val fseq = FSequent(A0 :: A1 :: Nil, biga :: Nil)
 //        val fseq = FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil)
+
 //      val fseq = FSequent(A0 :: A1 :: Nil, bigo :: Nil)
       val fseq = FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil)
+
+//      val fseq = FSequent(And(A , B) :: Nil, Neg(Or(Neg(A), Neg(B))) :: Nil)
+//      val fseq = FSequent(Neg(And(Neg(A), Neg(B))) :: Nil, Or(A , B) :: Nil)
+
 
 //      val fseq = FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil)
 
@@ -75,20 +80,37 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
       val p1 = StructuralOptimizationAfterAutoprop(p)
       println("\n\n\niteration 1, size = :"+rulesNumber(p1))
       printSchemaProof(p1)
-
+//
       val p2 = StructuralOptimizationAfterAutoprop(p1)
       println("\n\n\niteration 2, size = :"+rulesNumber(p2))
       printSchemaProof(p2)
-
+////
       val p3 = StructuralOptimizationAfterAutoprop(p2)
       println("\n\n\niteration 3, size = :"+rulesNumber(p3))
       printSchemaProof(p3)
       println("\n\n")
 
-//      val p4 = Autoprop()
-//      println("\n\n\nautoprop minimal form, size = "+rulesNumber(p4))
-//      printSchemaProof(p4)
+      val p4 = StructuralOptimizationAfterAutoprop(p3)
+      println("\n\n\niteration 3, size = :"+rulesNumber(p4))
+      printSchemaProof(p4)
+      println("\n\n")
+
+      val p5 = StructuralOptimizationAfterAutoprop(p4)
+      println("\n\n\niteration 3, size = :"+rulesNumber(p5))
+      printSchemaProof(p5)
+      println("\n\n")
+
+//      val pauto = Autoprop(fseq)
+//      println("\n\n\nautoprop minimal form, size = "+rulesNumber(pauto))
+//      printSchemaProof(pauto)
 //      println("\n\n")
+
+      Autoprop(FSequent(Neg(And(Neg(A), Neg(B))) :: Nil, Or(A , B) :: Nil))
+      Autoprop(FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil))
+      Autoprop(FSequent(And(A , B) :: Nil, Neg(Or(Neg(A), Neg(B))) :: Nil))
+      Autoprop(FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil))
+      Autoprop(FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil))
+      Autoprop(FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil))
     }
   }
 }
