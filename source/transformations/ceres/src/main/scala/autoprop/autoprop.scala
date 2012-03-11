@@ -224,9 +224,6 @@ object StructuralOptimizationAfterAutoprop {
     anc.filter(fo => !(getAncestors(fo).intersect(ws)).isEmpty)
   }
 
-  def removeWeakDesc(anc: Set[FormulaOccurrence], ws: Set[FormulaOccurrence]): Set[FormulaOccurrence] = {
-    anc.filter(fo => (getAncestors(fo).intersect(ws)).isEmpty)
-  }
 
   def apply(p : LKProof, p_old : LKProof): LKProof = p match {
     case ax: NullaryLKProof => p
@@ -625,6 +622,27 @@ object rulesNumber {
     case AndEquivalenceRule3(up, _, _, _) => apply(up) + 1
     case OrEquivalenceRule3(up, _, _, _) => apply(up) + 1
     case _ => { println("ERROR in delSuperfluousWeakening : missing rule!");throw new Exception("ERROR in rulesNumber") }
+  }
+}
+
+object NNF {
+  def apply(f: HOLFormula) : HOLFormula = {
+    println("\nf = "+printSchemaProof.formulaToString (f))
+    f match {
+      case IndexedPredicate(f1,_) => f
+      case Imp(f1, f2) => apply(Or(Neg(f1), f2))
+      case Neg(f1) => f1 match {
+        case IndexedPredicate(f2,_) => f
+        case Neg(f2) => apply(f2)
+        case And(a,b) => Or(apply(Neg(a)).asInstanceOf[SchemaFormula], apply(Neg(b)).asInstanceOf[SchemaFormula])
+        case Or(a,b) => And(apply(Neg(a)).asInstanceOf[SchemaFormula], apply(Neg(b)).asInstanceOf[SchemaFormula])
+        case Imp(a, b) => apply(And(a, Neg(b)))
+        case _ => throw new Exception("Error in Neg in NNF")
+      }
+      case And(f1, f2) => And(apply(f1).asInstanceOf[SchemaFormula], apply(f2).asInstanceOf[SchemaFormula])
+      case Or(f1, f2) => Or(apply(f1).asInstanceOf[SchemaFormula], apply(f2).asInstanceOf[SchemaFormula])
+      case _ => throw new Exception("Missing case in autoprop.scala, object NNF")
+    }
   }
 }
 
