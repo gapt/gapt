@@ -29,8 +29,8 @@ object NNF {
         case at.logic.language.hol.And(a,b) => at.logic.language.hol.Or(apply(at.logic.language.hol.Neg(a)), apply(at.logic.language.hol.Neg(b)))
         case at.logic.language.hol.Or(a,b) => at.logic.language.hol.And(apply(at.logic.language.hol.Neg(a)), apply(at.logic.language.hol.Neg(b)))
         case at.logic.language.hol.Imp(a, b) => apply(at.logic.language.hol.And(a, at.logic.language.hol.Neg(b)))
-        case at.logic.language.hol.ExVar(x, f2) => at.logic.language.hol.AllVar(x, apply(f2))
-        case at.logic.language.hol.AllVar(x, f2) => at.logic.language.hol.ExVar(x, apply(f2))
+        case at.logic.language.hol.ExVar(x, f2) => at.logic.language.hol.AllVar(x, apply(at.logic.language.hol.Neg(f2)))
+        case at.logic.language.hol.AllVar(x, f2) => at.logic.language.hol.ExVar(x, apply(at.logic.language.hol.Neg(f2)))
         case _ => throw new Exception("Error in Neg in NNF")
       }
       case at.logic.language.hol.And(f1, f2) => at.logic.language.hol.And(apply(f1), apply(f2))
