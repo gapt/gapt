@@ -89,16 +89,25 @@ object SHLK {
       //      }
 
       // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
-      def prefix : Parser[Tuple3[IntVar, IntegerTerm, IntegerTerm]] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
+      def prefix : Parser[Tuple4[Boolean, IntVar, IntegerTerm, IntegerTerm]] = """[BigAnd]*[BigOr]*""".r ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
         case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
           //          println("\n\nprefix\n\n")
-          Tuple3(intVar1, ind1, ind2 )
+          Tuple4(true, intVar1, ind1, ind2)
+        }
+        case "BigOr" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
+          //          println("\n\nprefix\n\n")
+          Tuple4(false, intVar1, ind1, ind2)
         }
       }
       def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
         case l ~ schemaFormula  => {
           //          println("Works?")
-          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => BigAnd(triple._1, res, triple._2, triple._3))
+          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => {
+            if (triple._1)
+              BigAnd(triple._2, res, triple._3, triple._4)
+            else
+              BigOr(triple._2, res, triple._3, triple._4)
+          })
           //          BigAnd(l.tail.head._1, schemaFormula.asInstanceOf[SchemaFormula], l.tail.head._2, l.tail.head._3)
 
           //          throw new Exception("ERROR in big connective symbol")
@@ -321,16 +330,25 @@ object SHLK {
 //      }
 
      // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
-      def prefix : Parser[Tuple3[IntVar, IntegerTerm, IntegerTerm]] = "BigAnd" ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
+      def prefix : Parser[Tuple4[Boolean, IntVar, IntegerTerm, IntegerTerm]] = """[BigAnd]*[BigOr]*""".r ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
         case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
-//          println("\n\nprefix\n\n")
-          Tuple3(intVar1, ind1, ind2 )
+          //          println("\n\nprefix\n\n")
+          Tuple4(true, intVar1, ind1, ind2)
+        }
+        case "BigOr" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
+          //          println("\n\nprefix\n\n")
+          Tuple4(false, intVar1, ind1, ind2)
         }
       }
       def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
         case l ~ schemaFormula  => {
-//          println("Works?")
-          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => BigAnd(triple._1, res, triple._2, triple._3))
+          //          println("Works?")
+          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => {
+            if (triple._1)
+              BigAnd(triple._2, res, triple._3, triple._4)
+            else
+              BigOr(triple._2, res, triple._3, triple._4)
+          })
 //          BigAnd(l.tail.head._1, schemaFormula.asInstanceOf[SchemaFormula], l.tail.head._2, l.tail.head._3)
 
 //          throw new Exception("ERROR in big connective symbol")
