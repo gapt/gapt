@@ -10,6 +10,8 @@
  * and don't look them up on the hashmap (they won't be there anyway...)
  */
 
+package at.logic.algorithms.cutIntroduction
+
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
@@ -18,8 +20,6 @@ import at.logic.language.hol._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable._
 import at.logic.calculi.lk.base.types._
-
-package cutIntroduction {
 
 class TermsExtractionException(msg: String) extends Exception(msg)
 
@@ -143,4 +143,4 @@ object termsExtraction {
 
   }
 }
-}
+
