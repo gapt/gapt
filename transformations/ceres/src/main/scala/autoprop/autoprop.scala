@@ -53,6 +53,9 @@ object Autoprop {
   //    println("\nrest = "+rest )
       f match {
         case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1 +: rest.succedent)), f1)
+        case Imp(f1, f2)=> {
+          return ImpLeftRule(apply1(new FSequent(rest.antecedent, f1 +: rest.succedent)), apply1(new FSequent(f2 +: rest.antecedent, rest.succedent)), f1, f2)
+        }
         case And(f1, f2) => {
           val up1 = AndLeft1Rule(apply1(new FSequent(f1 +: f2 +: rest.antecedent, rest.succedent)), f1, f2)
           val up2 = AndLeft2Rule(up1, f1, f2)
@@ -104,6 +107,9 @@ object Autoprop {
     val rest = getNonAtomicFSucc(seq).get._2
     f match {
       case Neg(f1) => return NegRightRule(apply1(new FSequent(f1 +: rest.antecedent, rest.succedent)), f1)
+      case Imp(f1, f2)=> {
+        return ImpRightRule(apply1(new FSequent(f1 +: rest.antecedent, f2 +: rest.succedent)), f1, f2)
+      }
       case Or(f1, f2) => {
         val up1 = OrRight1Rule(apply1(new FSequent(rest.antecedent, f1 +: f2 +: rest.succedent)), f1, f2)
         val up2 = OrRight2Rule(up1, f1, f2)
@@ -223,7 +229,6 @@ object StructuralOptimizationAfterAutoprop {
   def removeNonWeakDesc(anc: Set[FormulaOccurrence], ws: Set[FormulaOccurrence]): Set[FormulaOccurrence] = {
     anc.filter(fo => !(getAncestors(fo).intersect(ws)).isEmpty)
   }
-
 
   def apply(p : LKProof, p_old : LKProof): LKProof = p match {
     case ax: NullaryLKProof => p
@@ -386,6 +391,15 @@ object StructuralOptimizationAfterAutoprop {
     case NegRightRule( p, _, a, m ) => {
       val new_p = apply(p, p_old)
       NegRightRule( new_p, a.formula )
+    }
+    case ImpLeftRule(p1, p2, seq, a1, a2, _) =>{
+      val new_p1 = apply(p1, p_old)
+      val new_p2 = apply(p2, p_old)
+      ImpLeftRule(new_p1, new_p2, a1.formula, a2.formula)
+    }
+    case ImpRightRule(p, _, a1, a2, m ) => {
+      val new_p = apply(p, p_old)
+      ImpRightRule(new_p, a1.formula, a2.formula )
     }
     case _ => { println("ERROR in StructuralOptimizationAfterAutoprop : missing rule!");throw new Exception("ERROR in autoprop: StructuralOptimizationAfterAutoprop") }
   }   
@@ -605,6 +619,21 @@ object delSuperfluousRules {
         val new_p = apply(set, p)
         //            println("\nc:r = "+new_p.root)
         ContractionRightRule( new_p, a1.formula )
+      }
+      case ImpLeftRule(p1, p2, seq, a1, a2, _) =>{
+        if (set.contains(a1))
+          return apply(set, p2)
+        if (set.contains(a2))
+          return apply(set, p1)
+        val new_p1 = apply(set, p1)
+        val new_p2 = apply(set, p2)
+        ImpLeftRule(new_p1, new_p2, a1.formula, a2.formula)
+      }
+      case ImpRightRule(p, _, a1, a2, m ) => {
+        if (set.contains(m))
+          return apply(set, p)
+        val new_p = apply(set, p)
+        ImpRightRule(new_p, a1.formula, a2.formula )
       }
       case _ => { println("ERROR in delSuperfluousWeakening : missing rule!");throw new Exception("ERROR in delSuperfluousWeakening") }
     }
