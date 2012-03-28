@@ -8,7 +8,9 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
+import scala.collection.Map
 import scala.collection.mutable._
+import scala.collection.mutable.HashMap
 
 class DecompositionException(msg: String) extends Exception(msg)
 
@@ -21,12 +23,67 @@ object decomposition {
 //    val deltatable = computeDeltaTable(lst)
 //  }
 
-//  private def computeDeltaTable(terms: List[FOLTerm]) = {
-    // This HashMap is mutable because I will update it frequently and do not want a new one returned...
-//    val deltaTbl = new HashMap[List[FOLTerm], List[FOLTerm, List[FOLTerm]]]
-    // Adds ti : (alpha, ti) to the table
-//    terms.foreach(t => deltaTbl + (t -> ((FOLVar("alpha", i), t::Nil)::Nil)))
-//  }
+  def computeDeltaTable(terms: List[FOLTerm]) = {
+
+    // Takes a hashmap and an integer i and process all entries of the hashmap
+    // s.t. the key has size i-1
+    // Returns a new hashmap with the new entries
+    // NOTE: iterate one data structure, update another
+    def g(m: HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]], i: Int) :
+    HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] = 
+    {
+      // HashMap that will hold the new delta-vectors computed
+      var newentries = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
+      // Take only the elements of size (i-1) from the current delta table
+      val mi = m.filter( e => e._1.length == (i-1))
+
+      mi.foreach { case (key, value) => 
+        // Iterate over the list of decompositions
+        value.foreach {case (u, tl) =>
+          // Only choose terms that are after the last term in tl
+          val maxIdx = terms.lastIndexWhere(e => tl.contains(e))
+          val termsToAdd = terms.slice(maxIdx, (terms.length+1))
+
+          // Compute delta of the incremented list
+          termsToAdd.foreach {case e =>
+            // TODO if (tl :+ e) is not trivial ...
+            val p = delta(tl :+ e)
+
+            // If non-trivial
+            if (p._2 != (tl :+ e)) {
+              // Update new entries
+              if (newentries.contains(p._2)) {
+                val lst = newentries(p._2)
+                val newlst = lst :+ (p._1, tl :+ e)
+                newentries -= p._2
+                newentries += (p._2 -> newlst)
+              }
+              else {
+                newentries += (p._2 -> ((p._1, tl :+ e)::Nil))
+              }
+            }
+          }
+        }
+      }
+      // Return the hashmap with the new information
+      m ++ newentries
+    }
+ 
+    // Iterate over the size of the terms list.
+    // f(i) returns the delta table complete until elements of size i
+    def f(i: Int) : HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] = i match {
+      // Initialize hashmap
+      case 1 => 
+        var deltaTbl = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
+        terms.foreach(t => deltaTbl += ((t::Nil) -> ((FOLVar(new VariableStringSymbol("alpha")), t::Nil)::Nil)))
+        deltaTbl
+      // Compute
+      case n => g(f(n-1), n)
+    }
+
+    // Return the complete delta table
+    f(terms.length)
+  }
 
   def delta(terms: List[FOLTerm]) : (FOLTerm, List[FOLTerm]) = terms.head match {
     // If the variables are reached
