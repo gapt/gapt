@@ -98,6 +98,17 @@ class decompositionTest extends SpecificationWithJUnit {
         (dec) must beEqual (common, gc::c::Nil)
  
       }
+
+      // TODO: test after the whole algorithm is ready
+      /*
+      "decomposition of a big term." in {
+        // a, fa, f^{2}a, ..., f^{n^2 - 1}a --> itsellf so far
+
+        val f = ConstantStringSymbol("f")
+        val a = FOLConst(new ConstantStringSymbol("a"))
+        val n = 2
+      }
+      */
     }
   }
 }
