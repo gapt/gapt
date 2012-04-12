@@ -18,10 +18,58 @@ object decomposition {
 
   // Input: a set of terms
   // Output: two sets of terms
-//  def apply(terms: List[Seq[FOLExpression]]) : (List[FOLTerm],List[FOLTerm]) = {
-//    val lst = terms.flatten
-//    val deltatable = computeDeltaTable(lst)
-//  }
+  def apply(terms: List[List[FOLTerm]]) : List[(List[FOLTerm],List[FOLTerm])] = {
+    // Note: for the case of one quantifier, each sequence on this list will have
+    // only one term
+    val lst = terms.foldRight(List[FOLTerm]()) ((s, acc) => s ++ acc)
+    val deltatable = computeDeltaTable(lst)
+    val decompositions = findValidDecompositions(lst, deltatable)
+    decompositions
+  }
+
+  def findValidDecompositions(terms: List[FOLTerm], deltaTable: HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]) = {
+    deltaTable.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {case ((key, value), decompositions) =>
+      // (s_1, ..., s_n)
+      val s = key
+      // List of: (u_i, (t_1, ..., t_k))
+      var pairs = value
+      // The trivial decomposition might be needed now
+      // E.g.: T = {a, fa, f^2a, f^3a}
+      if (s.forall(t => terms.contains(t))) {
+        pairs = pairs :+ (FOLVar(new VariableStringSymbol("alpha")), s)
+      }
+
+      // Find all subsets (could not find a buit-in scala function)
+      // TODO: this should be put somewhere else...
+      def subsets[T](s : List[T]) : List[List[T]] = {
+        if (s.size == 0) List(List()) 
+        else { 
+          val tailSubsets = subsets(s.tail); 
+          tailSubsets ++ tailSubsets.map(s.head :: _) 
+        }
+      }
+
+      // Checks if the union of a subset of pairs contains all the terms
+      
+      // Collect all subsets
+      val allsubsets = subsets(pairs)
+
+      // Join the pairs of each subset
+      val subsetpairs = allsubsets.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {(subset, acc1) =>
+        val d = subset.foldRight(List[FOLTerm](), List[FOLTerm]()) ( (el, acc2) => (el._1 :: acc2._1, el._2 ++ acc2._2))
+        d :: acc1
+      }
+
+      // Check which pairs are a decomposition
+      // Note: each pair is ({u_1, ..., u_k}, {t_1, ..., t_j})
+      // and for this to be a valid decomposition, {t_1, ..., t_j}
+      // must contain all terms.
+      val valid = subsetpairs.filter(p => p._2.contains(terms))
+
+      val dec = valid.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) ( (p, acc) => (p._1, s) :: acc)
+      dec ++ decompositions
+    }
+  }
 
   def computeDeltaTable(terms: List[FOLTerm]) = {
 
@@ -62,6 +110,7 @@ object decomposition {
                 newentries += (p._2 -> ((p._1, tl :+ e)::Nil))
               }
             }
+            // TODO else mark as trivial
           }
         }
       }

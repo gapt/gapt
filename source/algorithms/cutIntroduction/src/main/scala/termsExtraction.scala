@@ -16,7 +16,7 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
-import at.logic.language.hol._
+import at.logic.language.fol._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable._
 import at.logic.calculi.lk.base.types._
@@ -27,7 +27,7 @@ object termsExtraction {
 
   // If all the quantified formulas have only one quantifier, each sequent of
   // the list will have only one element
-  def apply(proof: LKProof) : List[Seq[HOLExpression]] = {
+  def apply(proof: LKProof) : List[List[FOLTerm]] = {
     val map = extractTerms(proof)
     var terms = Nil
     // Process the hashmap
@@ -35,10 +35,10 @@ object termsExtraction {
     terms
   }
   
-  private def extractTerms(proof: LKProof) : HashMap[FormulaOccurrence, List[List[HOLExpression]]] = proof match {
+  private def extractTerms(proof: LKProof) : HashMap[FormulaOccurrence, List[List[FOLTerm]]] = proof match {
 
     /* AXIOM */
-    case Axiom(s) => new HashMap[FormulaOccurrence, List[List[HOLExpression]]] 
+    case Axiom(s) => new HashMap[FormulaOccurrence, List[List[FOLTerm]]] 
 
     /* WEAKENING RULES */
     case WeakeningLeftRule(up, _, pf) =>
@@ -52,14 +52,12 @@ object termsExtraction {
       val t1 = map(aux1)
       val t2 = map(aux2)
       val auxmap = map - (aux1, aux2)
-      // TODO: check this concatenation
       auxmap + (prin -> (t1 ++ t2))
     case ContractionRightRule(up, _, aux1, aux2, prin) =>
       val map = extractTerms(up)
       val t1 = map(aux1)
       val t2 = map(aux2)
       val auxmap = map - (aux1, aux2)
-      // TODO: check this concatenation
       auxmap + (prin -> (t1 ++ t2))
 
      /* RIGHT CONJUNCTION RULE */
@@ -114,7 +112,8 @@ object termsExtraction {
         auxmap + (prin -> terms)
       }
       else {
-        map + (prin -> ((term::Nil)::Nil))
+        val folterm = term.asInstanceOf[FOLTerm]
+        map + (prin -> ((folterm::Nil)::Nil))
       }
     case ExistsRightRule(up, _, aux, prin, term) =>
       val map = extractTerms(up)
@@ -126,7 +125,8 @@ object termsExtraction {
         auxmap + (prin -> terms)
       }
       else {
-        map + (prin -> ((term::Nil)::Nil))
+        val folterm = term.asInstanceOf[FOLTerm]
+        map + (prin -> ((folterm::Nil)::Nil))
       }
 
     /* CUT RULE */
