@@ -21,6 +21,7 @@
     <module>lksk</module>
     <module>fol</module>
     <module>postAutopropTransformation</module>
+    <module>rewriting</module>
   </modules>
 
   <packaging>pom</packaging>

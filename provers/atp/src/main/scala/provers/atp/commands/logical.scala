@@ -19,6 +19,8 @@ import at.logic.provers.atp.Definitions._
     def apply(state: State, data: Any) =
       ((commands._1.foldLeft(List((state,data)))((res,com) => res.flatMap(y => com(state,y._2)))) ++
       (commands._2.foldLeft(List((state,data)))((res,com) => res.flatMap(y => com(state,y._2)))))
+
+    override def toString = "DeterministicAndCommand("+commands+")"
   }
 
   // in order to keep the ndStream stack relatively small, we concatenate a list of commands in one configuration. This is clearly a deterministic command
@@ -32,5 +34,8 @@ import at.logic.provers.atp.Definitions._
     // tells the Prover if should terminate this branch or not. In deterministic execution only one none result configuration exists in ndStream and terminating it
     // should correspond to the possibility of having more clauses to resolve on. If using refinements then it corresponds if all pairs were matched already.
     def isRepeat(state: State): Boolean
+
+    override def toString = "DeterministicMacroCommand("+init+", "+datas+", "+result+")"
+
   }
 }
