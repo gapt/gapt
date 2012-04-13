@@ -49,5 +49,7 @@ import logical.DeterministicAndCommand
         )
       List((state,Stream.cons(GetGuidedClausesCommand(parentIds), Stream.cons(SetClausesFromDataCommand, Stream.cons(SetTargetClause(cls), stream1)))))
     }
+
+    override def toString = "ReplayCommand("+parentIds+", " + id + ", " +cls+ ")"
   }
 }

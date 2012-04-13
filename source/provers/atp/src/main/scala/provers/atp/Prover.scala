@@ -11,6 +11,9 @@ import at.logic.calculi.resolution.base._
 import at.logic.calculi.lk.base._
 import collection.mutable.HashMap
 import at.logic.provers.atp.commands.base._
+import commands.guided.IsGuidedNotFoundCommand
+import commands.refinements.simple.SimpleRefinementGetCommand
+import commands.robinson.VariantsCommand
 
 object Definitions {
   type State = HashMap[String, Any]
@@ -67,7 +70,9 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
     //Console.println("debug -- command: " + conf.commands.head.getClass + ", data: " + conf.data + ", next Command: " + conf.commands.tail.head.getClass)
     if (conf.commands.isEmpty) List()
     else {
-      //println(conf.commands.head.getClass)
+      //if (!conf.commands.head.toString.matches("(VariantsCommand|IsGuidedNotFoundCommand|SimpleRefinementGetCommand|ClauseFactorCommand).*"))
+      //    println("Prover Executing command: "+conf.commands.head.getClass+" :: "+conf.commands.head.toString)
+
       conf.commands.head match {
         case com: InitialCommand[_] => com(conf.state).map(x => new MyConfiguration(x._1, conf.commands.tail, x._2))
         case com: DataCommand[_] => {

@@ -41,6 +41,9 @@ import scala.Some
       clauses.foreach(x => pb += InitialClause(x._1.asInstanceOf[Seq[at.logic.language.fol.FOLFormula]], x._2.asInstanceOf[Seq[at.logic.language.fol.FOLFormula]])(defaultFormulaOccurrenceFactory))
       List((state += new Tuple2("clauses", pb), data))
     }
+
+    override def toString = "SetClausesCommand("+clauses+")"
+
   }
 
   // this should also work with subsumption but as we replace the pb we need to remove subsumption managers if there are any in the state
@@ -54,6 +57,8 @@ import scala.Some
       clauses.foreach(x => pb += x)
       List((state += new Tuple2("clauses", pb), data))
     }
+
+    override def toString = "SetClausesFromDataCommand()"
   }
 
 
@@ -63,6 +68,7 @@ import scala.Some
       val p = data.asInstanceOf[Tuple2[RobinsonResolutionProof,RobinsonResolutionProof]]
       List((state, (Variant(p._1),Variant(p._2))))
     }
+    override def toString = "VariantsCommand()"
   }
 
 case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
@@ -72,6 +78,8 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
       require(mgus.size < 2) // as it is first order it must have at most one mgu
       mgus.map(x => (state,  Resolution(p1,p2,lit1,lit2,x.asInstanceOf[Substitution[FOLExpression]])))
     }
+  
+    override def toString = "ResolveCommand("+alg.getClass+")"
   }
 
   // this command should be used when the target clause is not the empty clause and should be called before Resolution is called
@@ -122,6 +130,9 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
       }) :+ p._2
       for {f1 <- fac1; f2 <- fac2} yield ((state, (f1,f2)))
     }
+
+     override def toString = "ClauseFactorCommand()"
+
   }
 
   // this command factorize only on the side of the resolving assuming on the way to the empty clause we will factorize also on the other side
@@ -172,6 +183,9 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
                 ++ computeFactors(alg, lits, x::Nil, formOcc, a._2, a._1)) ++ facts ++ computeFactors(alg, lits, x::Nil, formOcc, sub, usedOccurrences)
         }
       }
+
+    override def toString = "FactorCommand()"
+
   }
 
   case class ParamodulationCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
@@ -221,6 +235,9 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
             case _ => List()
         })).flatMap((x => x.map(y => (state, y))))
     }
+
+    override def toString = "ParamodulationCommand()"
+
   }
 
   // create variants to a pair of two clauses and propagate the literal and position information
@@ -231,6 +248,9 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
       val v2 = Variant(p2)
       List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2),pos1),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2),pos2))))
     }
+
+    override def toString = "VariantLiteralPositionCommand()"
+
   }
 
    // create variants to a pair of two clauses and propagate the literal information
@@ -241,6 +261,9 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
       val v2 = Variant(p2)
       List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2)),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2)))))
     }
+
+    override def toString = "VariantLiteralCommand()"
+
   }
 
   // paramodulation where we get in addition to the two clauses, also the literals and the position in the literals
@@ -267,5 +290,8 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
         List((state, Paramodulation(p1, p2, lit1, lit2, Replacement(pos2, l).apply(lit2.formula).asInstanceOf[FOLFormula], mgu.head)))
       } else throw new ProverException("Equation's position: " + pos1 + " is greater than 2 or smaller than 1")
     }
+
+    override def toString = "ParamodulationLiteralPositionCommand()"
+
   }
 }

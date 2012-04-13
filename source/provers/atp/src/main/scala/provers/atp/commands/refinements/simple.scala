@@ -33,6 +33,9 @@ package simple {
         case Some(p) => List((state, p))
       }
     }
+
+    override def toString = "SimpleRefinementGetCommand()"
+
   }
 
   private[refinements] class SimpleRefinement[V <: Sequent](clauses: PublishingBuffer[ResolutionProof[V]]) extends Refinement[V](clauses) {
@@ -55,5 +58,8 @@ package simple {
       pairs.filter(x => x._1.root == s || x._2.root == s).foreach(x => pairs -= x)
     }
     def isEmpty: Boolean = pairs.isEmpty
+
+    override def toString = "SimpleRefinement("+clauses+")"
+
   }
 }

@@ -21,6 +21,8 @@ import scala.collection.mutable.Map
       //println("gclauses: " + parentIds.map(guidedMap(_).root))
       List((state,parentIds.map(guidedMap(_))))
     }
+
+    override def toString = "GetGuidedClausesCommand("+parentIds+")"
   }
 
   case class GetGuidedClausesLiteralsPositions(ls: Iterable[Tuple3[String, Int, Iterable[Int]]]) extends DataCommand[Clause] {
@@ -31,6 +33,9 @@ import scala.collection.mutable.Map
         (p,p.root.literals(x._2),x._3)
       })))
     }
+
+    override def toString = "GetGuidedClausesLiteralsPositions("+ls+")"
+
   }
 
   case class GetGuidedClausesLiterals(ls: Iterable[Tuple2[String, Int]]) extends DataCommand[Clause] {
@@ -41,6 +46,8 @@ import scala.collection.mutable.Map
         (p,p.root.literals(x._2))
       })))
     }
+    override def toString = "GetGuidedClausesLiterals("+ls+")"
+
   }
 
   case class AddGuidedInitialClauseCommand(id: String, cls: Seq[FOLFormula]) extends DataCommand[Clause] {
@@ -55,6 +62,9 @@ import scala.collection.mutable.Map
       guidedMap += ((id, p))
       List((state,p))
     }
+
+    override def toString = "AddGuidedInitialClauseCommand("+id +", "+cls+")"
+
   }
 
   case class AddGuidedClausesCommand(ids: Iterable[String]) extends DataCommand[Clause] {
@@ -69,6 +79,9 @@ import scala.collection.mutable.Map
       clauses.zip(ids).foreach(p => guidedMap += ((p._2, p._1)))
       List((state,clauses))
     }
+
+    override def toString = "AddGuidedClausesCommand("+ids+")"
+
   }
 
   // we add a clause which might be a variant of that we look for.
@@ -85,6 +98,9 @@ import scala.collection.mutable.Map
       //println("res: " + id + " - " + p.root)
       List((state,p))
     }
+
+    override def toString = "AddGuidedResolventCommand("+id+")"
+
   }
 
   case object IsGuidedNotFoundCommand extends DataCommand[Clause] {
@@ -93,12 +109,18 @@ import scala.collection.mutable.Map
         List((state,data))
       else
         List()
+
+    override def toString = "IsGuidedNotFoundCommand()"
+
   }
   case object SetGuidedFoundCommand extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
       state += (("guided_target_found",true))
       List((state,data))
     }
+
+    override def toString = "SetGuidedFoundCommand()"
+
   }
 
 

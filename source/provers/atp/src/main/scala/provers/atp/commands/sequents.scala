@@ -49,6 +49,9 @@ import at.logic.calculi.lk.base.types.FSequent
       }) += data.asInstanceOf[ResolutionProof[V]]
       List((state,data))
     }
+
+    override def toString = "InsertResolventCommand()"
+
   }
 
   // deterministically trying to match all indices (it is deterministic as it does not change the state of the different cases)
@@ -110,6 +113,9 @@ import at.logic.calculi.lk.base.types.FSequent
           state("simpleSubsumManager") = man
           man
     }
+
+    override def toString = "SimpleSubsumptionCommand("+alg.getClass+ ")"
+
   }
   case class SimpleForwardSubsumptionCommand[V <: Sequent](a: SubsumptionAlgorithm) extends SimpleSubsumptionCommand[V](a) {
 
@@ -119,6 +125,8 @@ import at.logic.calculi.lk.base.types.FSequent
       val res1 = res.root.toFSequent()
       if (manager.forwardSubsumption(res1)) List() else List((state,data))
     }
+    override def toString = "SimpleForwardSubsumptionCommand("+a.getClass+")"
+
   }
   case class SimpleBackwardSubsumptionCommand[V <: Sequent](a: SubsumptionAlgorithm) extends SimpleSubsumptionCommand[V](a) {
     def apply(state: State, data: Any) = {
@@ -128,5 +136,6 @@ import at.logic.calculi.lk.base.types.FSequent
       manager.backwardSubsumption(res1)
       List((state,data))
     }
+    override def toString = "SimpleBackwardSubsumptionCommand("+a.getClass+")"
   }
 }
