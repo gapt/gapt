@@ -394,31 +394,60 @@ object loadProofDB {
     def gv(p : ResolutionProof[Clause]) : String = {
       val ids = createMap(p,1,collection.immutable.Map[Clause, Int]())._1
 
-
-      "digraph resproof {\n"+
-       (ids.keys.foldLeft ("")((str, clause) => str+ "v" + ids(clause) +" [label=\""+clause+"\"];\n\n")) +
-        gv(p, ids) +
+      "digraph resproof {\n graph [rankdir=TB]; node [shape=box];\n" +
+       (ids.keys.foldLeft ("")((str, clause) => str+ "v" + ids(clause) +" [label=\""+clause+"\"];\n")) +
+        gv(p, ids, List())._1 +
       "}\n"
     }
-    def gv(p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int]) : String = p match {
+    def gv(p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int], edges : List[List[Int]] )
+    : (String, List[List[Int]]) = p match {
       case Resolution(clause, p1, p2, occ1, occ2, subst) =>
-        gv( p1, ids) + gv(p2, ids)+
-        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ1 + "\"];\n" +
-        "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ2 + "\"];\n\n"
+        val (str1, e1) = gv( p1, ids, edges)
+        val (str2, e2) = gv( p2, ids, e1)
+        val triple = List(ids(clause), ids(p1.vertex), ids(p2.vertex))
+        if (e2 contains (triple))
+          (str1 + str2, e2)
+        else
+          (str1 + str2 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ1 + "\"];\n" +
+          "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ2 + "\"];\n\n",
+          triple :: e2)
+
 
       case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
-        gv( p1, ids) + gv(p2, ids) +
-        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ1 + "\"];\n" +
-        "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ2 + "\"];\n\n"
-      case Factor(clause, p1, occs, sub) =>
-        gv( p1, ids) +
-        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Factor "+ occs.toString().replaceFirst("List","") + "\"];\n\n"
-      case Variant(clause, p1, sub) =>
-        gv( p1, ids) +
-        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Factor "+ sub.toString().replaceFirst("Map","") + "\"];\n\n"
-      case InitialClause(clause) => ""//"v" + ids(clause) +" [label=\""+clause+"\"];\n\n"
+        val (str1, e1) = gv( p1, ids, edges)
+        val (str2, e2) = gv( p2, ids, e1)
+        val triple = List(ids(clause), ids(p1.vertex), ids(p2.vertex))
+        if (e2 contains (triple))
+          (str1 + str2, e2)
+        else
+          (str1 + str2 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ1 + "\"];\n" +
+          "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ2 + "\"];\n\n",
+          triple :: e2)
 
-      case _ => ""
+      case Factor(clause, p1, occs, sub) =>
+        val (str1, e1) = gv( p1, ids, edges)
+        val triple = List(ids(clause), ids(p1.vertex))
+        if (e1 contains (triple))
+          (str1, e1)
+        else
+          (str1 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Factor "+ occs.toString().replaceFirst("List","") + "\"];\n\n",
+           triple :: e1)
+      case Variant(clause, p1, sub) =>
+        val (str1, e1) = gv( p1, ids, edges)
+        val triple = List(ids(clause), ids(p1.vertex))
+        if (e1 contains (triple))
+          (str1, e1)
+        else
+          (str1 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Variant "+ sub.toString().replaceFirst("Map","") + "\"];\n\n",
+          triple :: e1)
+
+      case InitialClause(clause) => ("", edges) //"v" + ids(clause) +" [label=\""+clause+"\"];\n\n"
+
+      case _ => ("", edges)
     }
 
     def apply(indent : String, p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int]) : String = p match {
