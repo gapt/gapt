@@ -349,26 +349,95 @@ object loadProofDB {
       try { op(p) } finally { p.close() }
     }
 
-    def apply(p: ResolutionProof[Clause]) : String = apply("", p)
+    def apply(p: ResolutionProof[Clause]) : String = {
+      apply("", p, createMap(p,1,collection.immutable.Map[Clause, Int]())._1)
+    }
 
-    def apply(indent : String, p : ResolutionProof[Clause]) : String = p match {
+    def createMap(p : ResolutionProof[Clause], i : Int, map : collection.immutable.Map[Clause, Int]) : (collection.immutable.Map[Clause, Int], Int) = p match {
       case Resolution(clause, p1, p2, occ1, occ2, subst) =>
-        indent + "Resolution("+clause+": "+ occ1.formula + "/"+occ2.formula + ")\n" +
-          apply("  "+indent, p1) + apply("  "+indent, p2)
+        val (m1,h1) = createMap(p1, i, map)
+        val (m2,h2) = createMap(p2, h1, m1)
+        if (m2 contains clause)
+          (m2,h2)
+        else
+          (m2 + ((clause, h2+1)), h2+1)
+
       case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
-        indent + "Paramodulation("+clause+": "+ occ1.formula + "/"+occ2.formula + ")\n" +
-          apply("  "+indent, p1) + apply("  "+indent, p2)
+        val (m1,h1) = createMap(p1, i, map)
+        val (m2,h2) = createMap(p2, h1, m1)
+        if (m2 contains clause)
+          (m2,h2)
+        else
+          (m2 + ((clause, h2+1)), h2+1)
       case Factor(clause, p1, occs, sub) =>
-        indent + "Factor("+clause+": "+ occs.map((x:FormulaOccurrence) => x.formula) + ")\n" +
-          apply("  "+indent, p1)
+        val (m1,h1) = createMap(p1, i, map)
+        if (m1 contains clause)
+          (m1,h1)
+        else
+          (m1 + ((clause, h1+1)), h1+1)
       case Variant(clause, p1, sub) =>
-        indent + "Variant("+clause+": "+ sub + ")\n" +
-          apply("  "+indent, p1)
-      case InitialClause(clause) => indent+"InitialClause("+clause+")\n\n"
+        val (m1,h1) = createMap(p1, i, map)
+        if (m1 contains clause)
+          (m1,h1)
+        else
+          (m1 + ((clause, h1+1)), h1+1)
+
+      case InitialClause(clause) =>
+        if (map contains clause)
+          (map,i)
+        else
+          (map + ((clause, i+1)), i+1)
+
+      case _ => throw new Exception("Unhandled Case!")
+    }
+
+    def gv(p : ResolutionProof[Clause]) : String = {
+      val ids = createMap(p,1,collection.immutable.Map[Clause, Int]())._1
+
+
+      "digraph resproof {\n"+
+       (ids.keys.foldLeft ("")((str, clause) => str+ "v" + ids(clause) +" [label=\""+clause+"\"];\n\n")) +
+        gv(p, ids) +
+      "}\n"
+    }
+    def gv(p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int]) : String = p match {
+      case Resolution(clause, p1, p2, occ1, occ2, subst) =>
+        gv( p1, ids) + gv(p2, ids)+
+        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ1 + "\"];\n" +
+        "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ2 + "\"];\n\n"
+
+      case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+        gv( p1, ids) + gv(p2, ids) +
+        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ1 + "\"];\n" +
+        "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ2 + "\"];\n\n"
+      case Factor(clause, p1, occs, sub) =>
+        gv( p1, ids) +
+        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Factor "+ occs.toString().replaceFirst("List","") + "\"];\n\n"
+      case Variant(clause, p1, sub) =>
+        gv( p1, ids) +
+        "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Factor "+ sub.toString().replaceFirst("Map","") + "\"];\n\n"
+      case InitialClause(clause) => ""//"v" + ids(clause) +" [label=\""+clause+"\"];\n\n"
+
+      case _ => ""
+    }
+
+    def apply(indent : String, p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int]) : String = p match {
+      case Resolution(clause, p1, p2, occ1, occ2, subst) =>
+        indent + "(" + ids(clause) +") Resolution(["+clause+"] aux1=["+ occ1.formula + "] aux2=["+occ2.formula + "] sub=" + subst + ")\n" +
+          apply("  "+indent, p1, ids) + apply("  "+indent, p2, ids)
+      case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+        indent + "(" + ids(clause) + ") Paramodulation(["+clause+"] aux1=["+ occ1.formula + "] aux2=["+occ2.formula + "])\n" +
+          apply("  "+indent, p1, ids) + apply("  "+indent, p2, ids)
+      case Factor(clause, p1, occs, sub) =>
+        indent + "(" + ids(clause) + ") Factor(["+clause+"] auxs=["+ occs.map((x:FormulaOccurrence) => x.formula) + "])\n" +
+          apply("  "+indent, p1, ids)
+      case Variant(clause, p1, sub) =>
+        indent + "(" + ids(clause) + ") Variant(["+clause+"])\n" +
+          apply("  "+indent, p1, ids)
+      case InitialClause(clause) => indent+ "(" + ids(clause) +") InitialClause(["+clause+"])\n\n"
 
       case _ => indent + "(need to handle " + p.getClass + " -- " + "" + ")\n"
-    } 
-
+    }
   }
 
   object ceres {
