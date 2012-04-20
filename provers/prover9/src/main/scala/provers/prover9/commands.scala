@@ -23,14 +23,14 @@ import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.language.lambda.symbols.VariableStringSymbol
 import _root_.at.logic.language.lambda.types.Ti
 import _root_.at.logic.parsing.language.tptp.TPTPFOLExporter
-import _root_.at.logic.provers.atp.commands.base._
 import _root_.at.logic.provers.atp.commands.guided.GetGuidedClausesCommand._
 import _root_.at.logic.provers.atp.commands.guided.{AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand}
 import _root_.at.logic.provers.atp.commands.replay.ReplayCommand
 import _root_.at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
-import _root_.at.logic.provers.atp.commands.sequents.{fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
 import _root_.at.logic.provers.atp.Definitions._
 import at.logic.calculi.lk.base.FSequent
+import at.logic.provers.atp.commands.base._
+import at.logic.provers.atp.commands.sequents.{RefutationReachedCommand, fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
 import sys.process._
 import java.io._
 import scala.xml._
@@ -128,13 +128,14 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
         stderr => {val err:String = scala.io.Source.fromInputStream(stderr).mkString; if (!err.isEmpty) throw new Prover9Exception(err)}
       )
 
-      val p  = "tptp_to_ladr" #| "prover9" #| "prooftrans xml expand"
+//      val p  = "tptp_to_ladr" #| "prover9" #| "prooftrans xml expand"
+      val p  = "tptp_to_ladr" #| "prover9" #| "prooftrans xml"
       val proc = p.run(pio)
       val exitValue = proc.exitValue
 
       tptpIS.close()
 
-      List((state, cmnds))
+      List((state, cmnds ++ List(RefutationReachedCommand[Clause]) ))
     }
     
     private def returnAndPrint[T](x:T) = {println("Scheduling P9 Command:"+x); x }
@@ -158,7 +159,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
     }
     val INT_CHAR = 97
 
-    private def getParents(e: Node): Iterable[String] = (e \\ "@parents").text.split(" ")
+    private def getParents(e: Node): Iterable[String] = { println((e \\ "@parents").foldLeft("")((s:String, n:Node) => if (s.isEmpty) n.text else s + " " + n.text)  ); (e \\ "@parents").foldLeft("")((s:String, n:Node) =>if (s.isEmpty) n.text else s + " " + n.text).split(" ") }
 
     private def assumption(id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
       List(AddGuidedInitialClauseCommand(id, cls), InsertResolventCommand[Clause])
@@ -176,16 +177,19 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
       /*require(lit1.size == 1 && lit2.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
       List(GetGuidedClausesLiterals(List((par1Id, lit1.head.toInt - INT_CHAR), (par2Id, lit2.head.toInt - INT_CHAR))), VariantLiteralCommand, ResolveCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))
       */
-      List(ReplayCommand(List(par1Id,par2Id,"0"), id, literals2FSequent(cls)), SpawnCommand())
+      //List(ReplayCommand(List(par1Id,par2Id,"0"), id, literals2FSequent(cls)), SpawnCommand())
+      List(ReplayCommand(List(par1Id,par2Id,"0"), id, literals2FSequent(cls)), InsertResolventCommand[Clause] )
     }
     // we apply replay here because the order of literals might change in our proof
     private def paramodulate(fromParentId: String, fromLiteral: Seq[Char], fromPos: Int, toParentId: String, toLiteral: Seq[Char], toPos: Iterable[Int], id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
       /*require(fromLiteral.size == 1 && toLiteral.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
       List(GetGuidedClausesLiteralsPositions(List((fromParentId, fromLiteral.head.toInt - INT_CHAR, List(fromPos)), (toParentId, toLiteral.head.toInt - INT_CHAR, toPos))), VariantLiteralPositionCommand, ParamodulationLiteralPositionCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))*/
-      List(ReplayCommand(List(fromParentId,toParentId, "0"), id, literals2FSequent(cls)), SpawnCommand())
+//      List(ReplayCommand(List(fromParentId,toParentId, "0"), id, literals2FSequent(cls)), SpawnCommand())
+      List(ReplayCommand(List(fromParentId,toParentId, "0"), id, literals2FSequent(cls)), InsertResolventCommand[Clause])
     }
     private def replay(parentIds: Iterable[String], id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
-      List(ReplayCommand("0" :: parentIds.toList, id, literals2FSequent(cls)), SpawnCommand())
+//      List(ReplayCommand("0" :: parentIds.toList, id, literals2FSequent(cls)), SpawnCommand())
+      List(ReplayCommand("0" :: parentIds.toList, id, literals2FSequent(cls)), InsertResolventCommand[Clause])
     }
 
     object MyParser extends JavaTokenParsers {
