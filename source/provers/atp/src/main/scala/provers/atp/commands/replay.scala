@@ -15,6 +15,11 @@ import _root_.at.logic.language.hol.HOLFormula
 import _root_.at.logic.provers.atp.commands.sequents._
 import at.logic.calculi.lk.base.types.FSequent
 import _root_.at.logic.provers.atp.Definitions._
+import at.logic.calculi.lk.base.{Sequent, FSequent}
+import at.logic.calculi.occurrences.defaultFormulaOccurrenceFactory
+import at.logic.calculi.resolution.robinson.InitialClause._
+import at.logic.provers.atp.Prover
+import at.logic.utils.ds.PublishingBuffer
 import refinements.simple.SimpleRefinementGetCommand
 import guided.{AddGuidedResolventCommand, GetGuidedClausesCommand,IsGuidedNotFoundCommand,SetGuidedFoundCommand}
 import sequents.RefutationReachedCommand._
@@ -23,9 +28,73 @@ import robinson.ParamodulationCommand._
 import robinson._
 import base._
 import logical.DeterministicAndCommand
+import scala.collection._
+import refinements.base.SequentsMacroCommand._
+import refinements.base.SequentsMacroCommand
+
+  //TODO: i'm not sure, why the other publishing buffers are robinsonproofs -- since we cannot upcast here and the gmap
+  // only holds resolution proofs, i'm not sure what is better
+case class SetClauseWithProofCommand(clauses : Iterable[ResolutionProof[Clause]]) extends DataCommand[Clause] {
+  def apply(state:State, data: Any) = {
+    val pb = new PublishingBuffer[ResolutionProof[Clause]]
+    clauses.foreach(x => pb += x )
+    List((state += new Tuple2("clauses", pb), data))
+  }
+}
+
+case class SetTargetClause2[V <: Sequent](val clause: Clause) extends DataCommand[V] {
+  def apply(state: State, data: Any) = List((state += new Tuple2("targetClause", clause.toFSequent), data))
+}
+
+
+case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
+  def apply(state: State, data: Any) = {
+    import Stream.cons
+
+    //get guided clauses mapping from id to resolution proof of id
+    println(id :: parentIds.toList)
+    val gmap = state("gmap").asInstanceOf[mutable.Map[String,ResolutionProof[Clause]]]
+    println("Data="+data)
+    println("Target clause="+cls)
+
+    val gproofs = (parentIds.toList).filterNot (_ == "-1") map gmap
+    //val target : Clause = if (id == "-1") Clause(Nil,Nil) else Clause(cls.antecedent, cls.succedent)
+    println("Trying to prove "+cls+" from :")
+    gproofs map println
+
+
+    //initialize new prover to spawn -- same as proveFOL in cli
+    val prover = new Prover[Clause] {}
+
+
+    def stream1:  Stream[Command[Clause]] = cons(SequentsMacroCommand[Clause](
+      SimpleRefinementGetCommand[Clause],
+      List(VariantsCommand, DeterministicAndCommand[Clause](
+        List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
+        List(ParamodulationCommand(FOLUnificationAlgorithm))),
+        SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+        SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+        InsertResolventCommand[Clause]),
+      RefutationReachedCommand[Clause]), stream1)
+
+
+    prover.refute(cons(SetClauseWithProofCommand(gproofs), cons(  SetTargetClause(cls), stream1))).next match {
+      case Some(r) =>
+        println("Found a refutation: "+r.toString)
+        gmap(id) = r
+        List( (state, r) )
+
+      case _ => println("Replay failed!");
+        List(  ) //need to signal failure!
+    } 
+  }
+
+  override def toString = "ReplayCommand New(" + parentIds + ")"
+}
+
 
   // we dont have subsumption as it might prevent reaching the exact clause we look for
-  case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
+  case class OldReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
       //println("replay: " + parentIds + " - " + id + " - target: " + cls)
       def stream1: Stream[Command[Clause]] =
