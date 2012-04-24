@@ -80,6 +80,7 @@ import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.language.lambda.types.Definitions._
 import at.logic.calculi.resolution.robinson._
+import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 
 object loadProofs {
     def apply(file: String) = 
@@ -329,6 +330,11 @@ object loadProofDB {
   }
 
   object prover9 {
+    private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
+    def apply1(clauses: String): Option[ResolutionProof[Clause]] = {
+      apply(new MyParser(clauses).getClauseList)
+    }
+
     def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
       try {
          new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
