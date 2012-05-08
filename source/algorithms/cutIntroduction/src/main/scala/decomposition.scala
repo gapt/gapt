@@ -39,8 +39,9 @@ object decomposition {
         pairs = pairs :+ (FOLVar(new VariableStringSymbol("alpha")), s)
       }
 
-      // Find all subsets (could not find a buit-in scala function)
+      // Find all subsets (could not find a built-in scala function)
       // TODO: this should be put somewhere else...
+      // TODO: find a more efficient way to do this.
       def subsets[T](s : List[T]) : List[List[T]] = {
         if (s.size == 0) List(List()) 
         else { 
@@ -90,11 +91,10 @@ object decomposition {
         value.foreach {case (u, tl) =>
           // Only choose terms that are after the last term in tl
           val maxIdx = terms.lastIndexWhere(e => tl.contains(e))
-          val termsToAdd = terms.slice(maxIdx, (terms.length+1))
+          val termsToAdd = terms.slice(maxIdx+1, (terms.length+1))
 
           // Compute delta of the incremented list
           termsToAdd.foreach {case e =>
-            // TODO if (tl :+ e) is not trivial ...
             val p = delta(tl :+ e)
 
             // If non-trivial
@@ -110,7 +110,6 @@ object decomposition {
                 newentries += (p._2 -> ((p._1, tl :+ e)::Nil))
               }
             }
-            // TODO else mark as trivial
           }
         }
       }
