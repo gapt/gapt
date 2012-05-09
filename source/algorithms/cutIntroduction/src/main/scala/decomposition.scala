@@ -18,12 +18,15 @@ object decomposition {
 
   // Input: a set of terms
   // Output: two sets of terms
-  def apply(terms: List[List[FOLTerm]]) : List[(List[FOLTerm],List[FOLTerm])] = {
+  //def apply(terms: List[List[FOLTerm]]) : List[(List[FOLTerm],List[FOLTerm])] = {
+  def apply(terms: List[FOLTerm]) : List[(List[FOLTerm],List[FOLTerm])] = {
     // Note: for the case of one quantifier, each sequence on this list will have
     // only one term
-    val lst = terms.foldRight(List[FOLTerm]()) ((s, acc) => s ++ acc)
-    val deltatable = computeDeltaTable(lst)
-    val decompositions = findValidDecompositions(lst, deltatable)
+    //val lst = terms.foldRight(List[FOLTerm]()) ((s, acc) => s ++ acc)
+    //val deltatable = computeDeltaTable(lst)
+    //val decompositions = findValidDecompositions(lst, deltatable)
+    val deltatable = computeDeltaTable(terms)
+    val decompositions = findValidDecompositions(terms, deltatable)
     decompositions
   }
 
@@ -34,8 +37,10 @@ object decomposition {
       // List of: (u_i, (t_1, ..., t_k))
       var pairs = value
       // The trivial decomposition might be needed now
-      // E.g.: T = {a, fa, f^2a, f^3a}
-      if (s.forall(t => terms.contains(t))) {
+      // E.g.: T = {a, fa, f^2a, f^3a} is a case where the trivial decomposition
+      // is needed
+      // Obs: if s.length == 1, it is already the trivial decomposition
+      if (s.length > 1 && s.forall(t => terms.contains(t))) {
         pairs = pairs :+ (FOLVar(new VariableStringSymbol("alpha")), s)
       }
 
@@ -65,7 +70,9 @@ object decomposition {
       // Note: each pair is ({u_1, ..., u_k}, {t_1, ..., t_j})
       // and for this to be a valid decomposition, {t_1, ..., t_j}
       // must contain all terms.
-      val valid = subsetpairs.filter(p => p._2.contains(terms))
+      val valid = subsetpairs.filter(p => 
+        terms.forall(t => p._2.contains(t))
+      )
 
       val dec = valid.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) ( (p, acc) => (p._1, s) :: acc)
       dec ++ decompositions
