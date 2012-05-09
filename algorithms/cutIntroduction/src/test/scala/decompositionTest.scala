@@ -208,16 +208,105 @@ class decompositionTest extends SpecificationWithJUnit {
         (deltatable) must haveTheSameElementsAs (expected)
       }
     }
-/*
+
     "find the right decompositions for" in {
-      "paper's example" in {
+      "the paper's example" in {
+        // fa, f²a, f³a, f⁴a
+
+        val f = ConstantStringSymbol("f")
+        val a = FOLConst(new ConstantStringSymbol("a"))
+        
+        val fa = Function(f, a::Nil)
+        val f2a = Function(f, (Function(f, a::Nil))::Nil)
+        val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
+        val f4a = Function(f, (Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil))::Nil)
+
+        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val falpha = Function(f, alpha::Nil)
+        val f2alpha = Function(f, (Function(f, alpha::Nil))::Nil)
+        val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
+
+        var expected : List[(List[FOLTerm], List[FOLTerm])] = Nil
+        expected = expected :+ (f3alpha::falpha::Nil, a::fa::Nil)
+        expected = expected :+ (f2alpha::f3alpha::falpha::Nil, a::fa::Nil)
+        expected = expected :+ (f2alpha::falpha::Nil, a::f2a::Nil)
+        expected = expected :+ (f2alpha::falpha::Nil, a::fa::f2a::Nil)
+        expected = expected :+ (falpha::Nil, a::fa::f2a::f3a::Nil)
+
+        val d = decomposition(fa::f2a::f3a::f4a::Nil)
+
+        (d) must haveTheSameElementsAs (expected)
 
       }
 
       "Stefan's example" in {
+        // t1 = f(c, gc)
+        // t2 = f(c, g²c)
+        // t3 = f(c, g³c)
+        // t4 = f(gc, c)
+        // t5 = f(g²c, gc)
+        // t6 = f(g³c, g²c)
 
+        val f = ConstantStringSymbol("f")
+        val g = ConstantStringSymbol("g")
+        val c = FOLConst(new ConstantStringSymbol("c"))
+
+        val gc = Function(g, c::Nil)
+        val g2c = Function(g, (Function(g, c::Nil))::Nil)
+        val g3c = Function(g, (Function(g, (Function(g, c::Nil))::Nil))::Nil)
+       
+        val t1 = Function(f, c::gc::Nil)
+        val t2 = Function(f, c::g2c::Nil)  
+        val t3 = Function(f, c::g3c::Nil)
+        val t4 = Function(f, gc::c::Nil)
+        val t5 = Function(f, g2c::gc::Nil)
+        val t6 = Function(f, g3c::g2c::Nil)
+
+        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val galpha = Function(g, alpha::Nil)
+        val g2alpha = Function(g, (Function(g, alpha::Nil))::Nil)
+        val f_c_galpha = Function(f, c::galpha::Nil)
+        val f_c_g2alpha = Function(f, c::g2alpha::Nil)
+        val f_galpha_alpha = Function(f, galpha::alpha::Nil)
+        val f_g2alpha_galpha = Function(f, g2alpha::galpha::Nil)
+        val f_alpha_gc = Function(f, alpha::gc::Nil)
+        val f_alpha_g2c = Function(f, alpha::g2c::Nil)
+        
+        var expected : List[(List[FOLTerm], List[FOLTerm])] = Nil
+        expected = expected :+ (f_c_g2alpha::f_galpha_alpha::f_g2alpha_galpha::f_c_galpha::Nil, c::gc::Nil)
+        expected = expected :+ (f_galpha_alpha::f_c_galpha::Nil, c::gc::g2c::Nil)
+
+        val d = decomposition(t1::t2::t3::t4::t5::t6::Nil)
+
+        (d) must haveTheSameElementsAs (expected)
+         
+      }
+
+      "an example that needs the trivial decomposition added at the end" in {
+        // a, fa, f²a, f³a
+
+        val f = ConstantStringSymbol("f")
+        val a = FOLConst(new ConstantStringSymbol("a"))
+        
+        val fa = Function(f, a::Nil)
+        val f2a = Function(f, (Function(f, a::Nil))::Nil)
+        val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
+
+        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val falpha = Function(f, alpha::Nil)
+        val f2alpha = Function(f, (Function(f, alpha::Nil))::Nil)
+        val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
+
+        var expected : List[(List[FOLTerm], List[FOLTerm])] = Nil
+        expected = expected :+ (f2alpha::alpha::Nil, a::fa::Nil)
+        expected = expected :+ (f2alpha::falpha::alpha::Nil, a::fa::Nil)
+        expected = expected :+ (falpha::alpha::Nil, a::f2a::Nil)
+        expected = expected :+ (falpha::alpha::Nil, a::fa::f2a::Nil)
+
+        val d = decomposition(a::fa::f2a::f3a::Nil)
+
+        (d) must haveTheSameElementsAs (expected)
       }
     }
-*/
   }
 }
