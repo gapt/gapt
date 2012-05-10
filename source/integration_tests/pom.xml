@@ -16,6 +16,7 @@
       <module>prime_proof_modulo_test</module>
     <module>tape_test</module>
     <module>misc_test</module>
+    <module>cutintro_test</module>
     <module>lattice_test</module>
     <module>lnp_test</module>
     <module>simple_schema_test</module>
