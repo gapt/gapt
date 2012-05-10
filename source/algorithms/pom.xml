@@ -22,6 +22,7 @@
     <module>fol</module>
     <module>postAutopropTransformation</module>
     <module>rewriting</module>
+    <module>cutIntroduction</module>
   </modules>
 
   <packaging>pom</packaging>

@@ -56,7 +56,6 @@ import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.language.lambda.substitutions.Substitution
 
 
-
 import at.logic.gui.prooftool.gui.Main
 
 import  at.logic.calculi.lk.base.types._
@@ -274,6 +273,29 @@ object loadProofDB {
       println("folterm: String => FOLFormula")
       println("folterm: String => FOLTerm")
       println("hol: String => HOLExpression")
+    }
+  }
+
+  object decompose {
+    import at.logic.algorithms.cutIntroduction._
+    
+    private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
+
+    def apply(t : String) = {
+      val terms = t.split(";")
+      println("Term set has size " + terms.length)
+      val folterms = terms.foldRight(List[FOLTerm]()) {(str, acc) => 
+        val f = new CLIParserFOL(str).getTerm.asInstanceOf[FOLTerm]
+        f :: acc}
+
+      // TODO automatically generate the standard example a, fa,...f^n a
+      val d = decomposition(folterms)
+
+      println("The decompositions found were:")
+      d.foreach{dec =>
+        val l = dec._1.length + dec._2.length
+        println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
+      }
     }
   }
 
