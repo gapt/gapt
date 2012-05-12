@@ -289,7 +289,7 @@ object loadProofDB {
         f :: acc}
 
       // TODO automatically generate the standard example a, fa,...f^n a
-      val d = decomposition(folterms)
+      val d = decomposition(folterms) sortWith ( (d1, d2) => d1._1.length + d1._2.length > d2._1.length + d2._2.length )
 
       println("The decompositions found were:")
       d.foreach{dec =>
