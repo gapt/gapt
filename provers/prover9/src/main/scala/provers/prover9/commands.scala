@@ -117,8 +117,8 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
               ((e\\"@jstring").text match {
                 case AssumptionRE(_) => returnAndPrint(assumption(id, cls)) // here no need to set the lastParents as there are none
                 case FactorRE(parent, lit1, lit2) => {lastParents += parent; returnAndPrint(factor(parent, lit1, lit2, id, cls))}
-                case ResolveRE(par1, lit1, par2, lit2) => returnAndPrint(resolve(par1, lit1, par2, lit2, id, cls))
-                case ParaRE(fPar, fLit, fPos, tPar, tLit, tPos, _) => returnAndPrint(paramodulate(fPar, fLit, fPos.toInt, tPar, tLit, tPos.split("""\s""").map(_.toInt), id, cls))
+                //case ResolveRE(par1, lit1, par2, lit2) => returnAndPrint(resolve(par1, lit1, par2, lit2, id, cls))
+                //case ParaRE(fPar, fLit, fPos, tPar, tLit, tPos, _) => returnAndPrint(paramodulate(fPar, fLit, fPos.toInt, tPar, tLit, tPos.split("""\s""").map(_.toInt), id, cls))
                 case CopyRE(pid) => {lastParents += pid; copy(pid, id)}
                 case _ => returnAndPrint(replay(getParents(e), id, cls))
               })
