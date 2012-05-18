@@ -32,9 +32,8 @@ class CutIntroTest extends SpecificationWithJUnit {
     "extract and decompose the termset of a simple proof (n = 4)" in {
       val proof = CutIntroProof( 4 )
 
-      // The next line causes an expection in extractTerms
-      // val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l )
-      // termset must beEqual( gen_termset( 4 ) )
+      val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l )
+      termset must beEqual( gen_termset( 4 ) )
     }
   }
 }
