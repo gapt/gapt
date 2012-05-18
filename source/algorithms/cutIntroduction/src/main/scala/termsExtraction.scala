@@ -29,9 +29,10 @@ object termsExtraction {
   // the list will have only one element
   def apply(proof: LKProof) : List[List[FOLTerm]] = {
     val map = extractTerms(proof)
-    var terms = Nil
     // Process the hashmap
-    map.foreach(t => terms ++ t._2)
+    val terms = map.foldRight(List[List[FOLTerm]]()){(t, acc) =>
+      acc ++ t._2
+    }
     terms
   }
   
@@ -49,16 +50,22 @@ object termsExtraction {
     /* CONTRACTION RULES */
     case ContractionLeftRule(up, _, aux1, aux2, prin) =>
       val map = extractTerms(up)
-      val t1 = map(aux1)
-      val t2 = map(aux2)
-      val auxmap = map - (aux1, aux2)
-      auxmap + (prin -> (t1 ++ t2))
+      if (map.contains(aux1) && map.contains(aux2)) {
+        val t1 = map(aux1)
+        val t2 = map(aux2)
+        val auxmap = map - (aux1, aux2)
+        auxmap + (prin -> (t1 ++ t2))
+      }
+      else map
     case ContractionRightRule(up, _, aux1, aux2, prin) =>
       val map = extractTerms(up)
-      val t1 = map(aux1)
-      val t2 = map(aux2)
-      val auxmap = map - (aux1, aux2)
-      auxmap + (prin -> (t1 ++ t2))
+      if (map.contains(aux1) && map.contains(aux2)) {
+        val t1 = map(aux1)
+        val t2 = map(aux2)
+        val auxmap = map - (aux1, aux2)
+        auxmap + (prin -> (t1 ++ t2))
+      }
+      else map
 
      /* RIGHT CONJUNCTION RULE */
     case AndRightRule(up1, up2, _, aux1, aux2, _) =>
