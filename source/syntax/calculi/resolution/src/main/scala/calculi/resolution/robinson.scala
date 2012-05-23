@@ -263,4 +263,136 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
       else None
   }
 
+
+object Formatter {
+  //TODO: replace this by the standard scala io
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try { op(p) } finally { p.close() }
+  }
+
+  def apply(p: ResolutionProof[Clause]) : String = {
+    apply("", p, createMap(p,1,collection.immutable.Map[Clause, Int]())._1)
+  }
+
+  def asHumanReadableString(p:ResolutionProof[Clause]) = apply(p)
+
+  def createMap(p : ResolutionProof[Clause], i : Int, map : collection.immutable.Map[Clause, Int]) : (collection.immutable.Map[Clause, Int], Int) = p match {
+    case Resolution(clause, p1, p2, occ1, occ2, subst) =>
+      val (m1,h1) = createMap(p1, i, map)
+      val (m2,h2) = createMap(p2, h1, m1)
+      if (m2 contains clause)
+        (m2,h2)
+      else
+        (m2 + ((clause, h2+1)), h2+1)
+
+    case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+      val (m1,h1) = createMap(p1, i, map)
+      val (m2,h2) = createMap(p2, h1, m1)
+      if (m2 contains clause)
+        (m2,h2)
+      else
+        (m2 + ((clause, h2+1)), h2+1)
+    case Factor(clause, p1, occs, sub) =>
+      val (m1,h1) = createMap(p1, i, map)
+      if (m1 contains clause)
+        (m1,h1)
+      else
+        (m1 + ((clause, h1+1)), h1+1)
+    case Variant(clause, p1, sub) =>
+      val (m1,h1) = createMap(p1, i, map)
+      if (m1 contains clause)
+        (m1,h1)
+      else
+        (m1 + ((clause, h1+1)), h1+1)
+
+    case InitialClause(clause) =>
+      if (map contains clause)
+        (map,i)
+      else
+        (map + ((clause, i+1)), i+1)
+
+    case _ => throw new Exception("Unhandled Case!")
+  }
+
+  def asGraphViz(p : ResolutionProof[Clause]) : String = {
+    val ids = createMap(p,1,collection.immutable.Map[Clause, Int]())._1
+
+    "digraph resproof {\n graph [rankdir=TB]; node [shape=box];\n" +
+      (ids.keys.foldLeft ("")((str, clause) => str+ "v" + ids(clause) +" [label=\""+clause+"\"];\n")) +
+      gv(p, ids, List())._1 +
+      "}\n"
+  }
+  def gv(p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int], edges : List[List[Int]] )
+  : (String, List[List[Int]]) = p match {
+    case Resolution(clause, p1, p2, occ1, occ2, subst) =>
+      val (str1, e1) = gv( p1, ids, edges)
+      val (str2, e2) = gv( p2, ids, e1)
+      val triple = List(ids(clause), ids(p1.vertex), ids(p2.vertex))
+      if (e2 contains (triple))
+        (str1 + str2, e2)
+      else
+        (str1 + str2 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ1 + "\"];\n" +
+          "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Res "+ occ2 + "\"];\n\n",
+          triple :: e2)
+
+
+    case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+      val (str1, e1) = gv( p1, ids, edges)
+      val (str2, e2) = gv( p2, ids, e1)
+      val triple = List(ids(clause), ids(p1.vertex), ids(p2.vertex))
+      if (e2 contains (triple))
+        (str1 + str2, e2)
+      else
+        (str1 + str2 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ1 + "\"];\n" +
+          "v"+ids(p2.vertex)+" -> v"+ids(clause) + "[label=\"Para "+ occ2 + "\"];\n\n",
+          triple :: e2)
+
+    case Factor(clause, p1, occs, sub) =>
+      val (str1, e1) = gv( p1, ids, edges)
+      val triple = List(ids(clause), ids(p1.vertex))
+      if (e1 contains (triple))
+        (str1, e1)
+      else
+        (str1 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Factor "+ occs.toString().replaceFirst("List","") + "\"];\n\n",
+          triple :: e1)
+    case Variant(clause, p1, sub) =>
+      val (str1, e1) = gv( p1, ids, edges)
+      val triple = List(ids(clause), ids(p1.vertex))
+      if (e1 contains (triple))
+        (str1, e1)
+      else
+        (str1 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Variant "+ sub.toString().replaceFirst("Map","") + "\"];\n\n",
+          triple :: e1)
+
+    case InitialClause(clause) => ("", edges) //"v" + ids(clause) +" [label=\""+clause+"\"];\n\n"
+
+    case _ => ("", edges)
+  }
+
+  def apply(indent : String, p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int]) : String = p match {
+    case Resolution(clause, p1, p2, occ1, occ2, subst) =>
+      indent + "(" + ids(clause) +") Resolution(["+clause+"] aux1=["+ occ1.formula + "] aux2=["+occ2.formula + "] sub=" + subst + ")\n" +
+        apply("  "+indent, p1, ids) + apply("  "+indent, p2, ids)
+    case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+      indent + "(" + ids(clause) + ") Paramodulation(["+clause+"] aux1=["+ occ1.formula + "] aux2=["+occ2.formula + "])\n" +
+        apply("  "+indent, p1, ids) + apply("  "+indent, p2, ids)
+    case Factor(clause, p1, occs, sub) =>
+      indent + "(" + ids(clause) + ") Factor(["+clause+"] auxs=["+ occs.map((x:FormulaOccurrence) => x.formula) + "])\n" +
+        apply("  "+indent, p1, ids)
+    case Variant(clause, p1, sub) =>
+      indent + "(" + ids(clause) + ") Variant(["+clause+"])\n" +
+        apply("  "+indent, p1, ids)
+    case InitialClause(clause) => indent+ "(" + ids(clause) +") InitialClause(["+clause+"])\n\n"
+
+    case _ => indent + "(need to handle " + p.getClass + " -- " + "" + ")\n"
+  }
+}
+
+
+
 }
