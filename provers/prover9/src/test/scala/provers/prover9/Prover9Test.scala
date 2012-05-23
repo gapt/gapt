@@ -19,6 +19,7 @@ import org.specs.runner._
 import org.specs.mock.Mockito
 import org.mockito.Matchers._
 import java.io.IOException
+import at.logic.calculi.resolution.robinson.Formatter
 
 import at.logic.calculi.occurrences.factory
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
@@ -133,6 +134,38 @@ class Prover9Test extends SpecificationWithJUnit {
       val s = FSequent(List(eaa,eaa),Nil)
       (getRefutation2(List(s)) match {
         case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) => true
+        case _ => false
+      }) must beTrue
+    }
+
+    "prove an example from the automated deduction exercises" in {
+      skip("does not work yet :(")
+      /* loops at derivation of clause 7:
+        <clause id="7">
+          <literal>
+          ladr3(ladr2,A) = ladr3(B,ladr3(B,A))
+          </literal>
+          <justification jstring="[para(4(a,1),2(a,1,1))].">
+          <j1 parents="4 2" rule="para"></j1>
+          </justification>
+        </clause>
+       */
+
+      println("=======AD Example: =======")
+      val assoc = parse("=(*(x,*(y,z)), *(*(x,y),z) )")
+      val neutr = parse("=(*(x,e), x)")
+      val idem = parse("=(*(x,x), e)")
+      val comm = parse("=(*(x,y), *(y,x))")
+      val ncomm = parse("=(*(c1,c2), *(c2,c1))")
+      val s1 = FSequent(Nil,List(assoc))
+      val s2 = FSequent(Nil,List(neutr))
+      val s3 = FSequent(Nil,List(idem))
+      val s4 = FSequent(List(ncomm), Nil)
+      (getRefutation2(List(s1,s2,s3,s4)) match {
+        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) =>
+          println(Formatter.asHumanReadableString(a)   )
+          println("======= GraphViz output: =======\n" + Formatter.asGraphViz(a)   )
+          true
         case _ => false
       }) must beTrue
     }

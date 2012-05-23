@@ -57,6 +57,10 @@ class ResolutionTest extends SpecificationWithJUnit {
       val param = Paramodulation(cl1, cl2, cl1.root.succedent(0), cl2.root.succedent(0), FOLAtom(ConstantStringSymbol("="), FOLVar(VariableStringSymbol("y"))::FOLVar(VariableStringSymbol("x"))::Nil), Substitution[FOLExpression]((FOLVar(VariableStringSymbol("x")), FOLVar(VariableStringSymbol("y")))))
       val sq =  Seq(FOLAtom(ConstantStringSymbol("="), FOLVar(VariableStringSymbol("y"))::FOLVar(VariableStringSymbol("y"))::Nil))
       param.root.positive.map(_.formula) must beEqual (sq)
+
+      //val p =param.toTreeProof
+      //println(p)
+      //p must beEqual (p)
     }
   }
  /* "Andrews Resolution" should {
