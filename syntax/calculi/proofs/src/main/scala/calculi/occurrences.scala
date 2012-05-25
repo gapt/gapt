@@ -22,8 +22,8 @@ trait HasAncestors {
   }
 
   class FormulaOccurrence(val formula: HOLFormula,  override val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) extends Occurrence with HasAncestors {
-    override def toString = formula.toString
     val id = defaultFormulaOccurrenceFactory.freshId()   //makes it easier to detect problems with identic formulas/ancestors but different object ids
+    override def toString = formula.toString + "[" + id + "]"
     
     override def clone() : java.lang.Object = {
       println("Cloning ID: "+id)

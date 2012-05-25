@@ -52,11 +52,11 @@ object CutIntroExampleProof
 
 object CutIntroExampleTermset
 { 
-  def apply( n: Int ) : HashSet[FOLTerm] =
+  def apply( n: Int ) : List[FOLTerm] =
     if ( n == 0 )
-      new HashSet[FOLTerm]()
+      List[FOLTerm]()
     else
-      apply( n - 1 ) + SuccTerm( n - 1 )
+      SuccTerm( n - 1 ) :: apply( n - 1)
 
 }
 
@@ -75,7 +75,7 @@ object SuccTerm
 
 // Workaround until there is a real FOLSubstitution
 // applies a substitution x <- t to a formula or term f
-
+/*
 object FOLSubstitution
 {
 
@@ -91,3 +91,4 @@ object FOLSubstitution
       sub( f.asInstanceOf[FOLExpression] ).asInstanceOf[FOLTerm]
     }
 }
+*/

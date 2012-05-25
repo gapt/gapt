@@ -125,8 +125,8 @@ import collection.immutable
       )
     def getChildOf(fo: Occurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
     //override def toString : String = antecedent.toString + " :- " + succedent.toString
-    def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple ) + " :- " +
-                                  succedent.foldRight("")( (f, str) => str + ", " + f.toStringSimple )
+    def toStringSimple : String = antecedent.foldRight("")( (f, str) => str + ", " + f.formula.toStringSimple ) + " :- " +
+                                  succedent.foldRight("")( (f, str) => str + ", " + f.formula.toStringSimple )
     def toFSequent() : FSequent = {
       FSequent(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
     }

@@ -353,3 +353,22 @@ object getFreeVariablesFOL {
   def apply( f: FOLFormula ) = f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]]
 }
 
+object FOLSubstitution
+{
+  def apply(f: FOLFormula, x: FOLVar, t: FOLTerm) : FOLFormula =
+  {
+    val sub = Substitution(x, t.asInstanceOf[FOLExpression])
+      sub( f.asInstanceOf[FOLExpression]
+         ).asInstanceOf[FOLFormula]
+  }
+
+  def apply(f: FOLTerm, x: FOLVar, t: FOLTerm) : FOLTerm =
+  {
+    val sub = Substitution(x,
+        t.asInstanceOf[FOLExpression])
+      sub(
+          f.asInstanceOf[FOLExpression]
+         ).asInstanceOf[FOLTerm]
+  }
+}
+
