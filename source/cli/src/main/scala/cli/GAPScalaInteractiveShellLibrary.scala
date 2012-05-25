@@ -61,6 +61,8 @@ import at.logic.gui.prooftool.gui.Main
 
 import  at.logic.calculi.lk.base.types._
 
+import at.logic.algorithms.cutIntroduction._
+
 package GAPScalaInteractiveShellLibrary {
 import java.io.IOException
 import at.logic.provers.atp.commands.sequents.SetTargetClause
@@ -291,7 +293,12 @@ object loadProofDB {
 
   object termsExtractionFlat {
     def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p ).
-    foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l )
+    //foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
+      foldRight(List[FOLTerm]()) ( (t, acc) => 
+        t._2.foldRight(acc) ((lst, ac) =>
+          lst ++ ac
+        )
+      )
   }
 
   object decompose {
@@ -320,23 +327,12 @@ object loadProofDB {
       println("minimal size " + n + " at index " + i)
       d
     }
+  }
 
-    def apply(t : String) = {
-      val terms = t.split(";")
-      println("Term set has size " + terms.length)
-      val folterms = terms.foldRight(List[FOLTerm]()) {(str, acc) => 
-        val f = new CLIParserFOL(str).getTerm.asInstanceOf[FOLTerm]
-        f :: acc}
-
-      // TODO automatically generate the standard example a, fa,...f^n a
-      val d = decomposition(folterms) sortWith ( (d1, d2) => d1._1.length + d1._2.length > d2._1.length + d2._2.length )
-
-      println("The decompositions found were:")
-      d.foreach{dec =>
-        val l = dec._1.length + dec._2.length
-        println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
-      }
-      d
+  object cutIntro {
+    def apply(p : LKProof) = {
+      println("NOTE: This implementation is not complete. Currently it only computes the extended Herbrand sequent, and not the final proof with cuts.")
+      cutIntroduction(p)
     }
   }
 
@@ -538,6 +534,7 @@ object loadProofDB {
       println("refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]")
       println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
       println("prooftool: LKProof => Unit - visualize proof in prooftool")
+      println("decompose: String => Unit - take a list of terms (as a string with each term separated by a semi-colon) and shows the decompositions")
       println("CutIntroExampleTermset: Int => Set[FOLTerm] - construct the example termset for cut-introduction")
       println("CutIntroExampleProof: Int => LKProof - construct the example proof for cut-introduction")
       println("termsExtraction: LKProof => List[List[FOLTerm]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a list of lists)")

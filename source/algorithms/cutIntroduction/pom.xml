@@ -10,16 +10,11 @@
   <artifactId>cutIntroduction</artifactId>
   <packaging>jar</packaging>  
   <name>Cut Introduction Algorithm</name>
-  <!--dependencies>
+  <dependencies>
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>lkalgorithms</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>lk</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-  </dependencies-->
+  </dependencies>
 </project>

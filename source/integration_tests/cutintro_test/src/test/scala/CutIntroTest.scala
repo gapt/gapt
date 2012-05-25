@@ -28,8 +28,16 @@ class CutIntroTest extends SpecificationWithJUnit {
     "extract and decompose the termset of a simple proof (n = 4)" in {
       val proof = CutIntroExampleProof( 4 )
 
-      val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l )
-      termset must beEqual( CutIntroExampleTermset( 4 ) )
+      //val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
+      val termset = termsExtraction(proof).foldRight(List[FOLTerm]()) ( (t, acc) => 
+        t._2.foldRight(acc) ((lst, ac) =>
+          lst ++ ac
+        )
+      )
+
+      cutIntroduction(proof)
+
+      termset must haveTheSameElementsAs ( CutIntroExampleTermset( 4 ) )
     }
 
     "FOLSubstitution should work" in {

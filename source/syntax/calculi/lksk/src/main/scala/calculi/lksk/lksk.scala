@@ -25,7 +25,8 @@ import at.logic.calculi.lk.propositionalRules.{InitialRuleType, WeakeningLeftRul
 import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.base.{NullaryLKProof, LKProof,createContext,UnaryLKProof,LKRuleCreationException}
-import at.logic.calculi.occurrences.{focc2f, FormulaOccurrence}
+//import at.logic.calculi.occurrences.{focc2f, FormulaOccurrence}
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 
 // lksk proofs
@@ -34,7 +35,7 @@ import at.logic.calculi.occurrences.{focc2f, FormulaOccurrence}
 // actual rule extractor/factories
 // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
 object Axiom {
-  import at.logic.calculi.occurrences.focc2f
+  //import at.logic.calculi.occurrences.focc2f
 
   def createDefault(seq: FSequent, maps: Pair[List[Label], List[Label]]): Pair[LKProof, Pair[List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence]]] = {
     val left: Seq[LabelledFormulaOccurrence] =
