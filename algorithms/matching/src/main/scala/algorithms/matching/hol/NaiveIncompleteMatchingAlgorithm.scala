@@ -25,7 +25,7 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression]
       val res = holMatch(term, posInstance)(restrictedDomain)
       res match {
         case None => println(term.toStringSimple + " did not match " + posInstance.toStringSimple)
-        case Some(_) => println(term.toStringSimple + " matches " + posInstance.toStringSimple)
+        case Some(sub) => println(term.toStringSimple + " matches " + posInstance.toStringSimple + " with substitution " + sub.toString)
 
       }
       res 

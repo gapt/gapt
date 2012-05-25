@@ -41,6 +41,7 @@ import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader, FileWriter => JFileWriter, BufferedWriter=>JBufferedWriter}
 import java.io.File.separator
 import scala.collection.mutable.Map
+import scala.collection.immutable.HashSet
 
 import at.logic.algorithms.unification.hol._
 
@@ -276,10 +277,49 @@ object loadProofDB {
     }
   }
 
+  object CutIntroExampleTermset {
+    def apply( n : Int) = at.logic.testing.CutIntroExampleTermset( n )
+  }
+
+  object CutIntroExampleProof {
+    def apply( n : Int) = at.logic.testing.CutIntroExampleProof( n )
+  }
+
+  object termsExtraction {
+    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p )
+  }
+
+  object termsExtractionFlat {
+    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p ).
+    foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l )
+  }
+
   object decompose {
     import at.logic.algorithms.cutIntroduction._
     
     private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
+
+    def apply(s : HashSet[FOLTerm] ) = 
+    {
+      val d = decomposition(s.toList)
+
+      println("The decompositions found were:")
+      var n = 10000
+      var i = -1
+      d.zip(d.indices).foreach{ p =>
+        val dec = p._1
+        val j = p._2
+        val l = dec._1.length + dec._2.length
+        println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
+        if ( l < n )
+        {
+          n = l
+          i = j
+        }
+      }
+      println("minimal size " + n + " at index " + i)
+      d
+    }
 
     def apply(t : String) = {
       val terms = t.split(";")
@@ -296,6 +336,7 @@ object loadProofDB {
         val l = dec._1.length + dec._2.length
         println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
       }
+      d
     }
   }
 
@@ -497,6 +538,10 @@ object loadProofDB {
       println("refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]")
       println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
       println("prooftool: LKProof => Unit - visualize proof in prooftool")
+      println("CutIntroExampleTermset: Int => Set[FOLTerm] - construct the example termset for cut-introduction")
+      println("CutIntroExampleProof: Int => LKProof - construct the example proof for cut-introduction")
+      println("termsExtraction: LKProof => List[List[FOLTerm]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a list of lists)")
+      println("termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
     }
   }
 }

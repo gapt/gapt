@@ -12,6 +12,7 @@
 
   <modules>
     <module>utils</module>
+    <module>testing</module>
     <module>syntax</module>
     <module>provers</module>
     <module>transformations</module>
@@ -19,6 +20,7 @@
     <module>algorithms</module>
     <module>gui</module>
     <module>cli</module>
+    <!-- <module>applet</module>-->
     <module>parsing</module>
     <module>integration_tests</module>
   </modules>
