@@ -64,8 +64,8 @@ class DrawList(val list: List[_], val fontSize: Int) extends GridPanel(0, 1) {
     background = new Color(255,255,255)
     opaque = false
 
-    val label1 = DrawSequent.formulaToLabel(f1, ft, 0)
-    val label2 = DrawSequent.formulaToLabel(f2, ft, 0)
+    val label1 = DrawSequent.formulaToLabel(f1, ft)
+    val label2 = DrawSequent.formulaToLabel(f2, ft)
     
     if (! str.isEmpty && label1.latexText.contains(str)) label1.background = new Color(0,255,0)
     if (! str.isEmpty && label2.latexText.contains(str)) label2.background = new Color(0,255,0)

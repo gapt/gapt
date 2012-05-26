@@ -48,10 +48,10 @@ object DrawSequent {
       if (! first) contents += new Label(", ") {font = ft}
       else first = false
       if (cut_anc.contains(f)) {
-        val fl = formulaToLabel(f.formula, ft, f.id)
+        val fl = formulaToLabel(f.formula, ft)
         fl.background = new Color(0,255,0)
         contents += fl
-      } else contents += formulaToLabel(f.formula, ft, f.id)
+      } else contents += formulaToLabel(f.formula, ft)
       }
     }
     contents += new Label(" \u22a2 ") {font = ft}
@@ -61,15 +61,15 @@ object DrawSequent {
       if (! first) contents += new Label(", ")  {font = ft}
       else first = false
       if (cut_anc.contains(f)) {
-        val fl = formulaToLabel(f.formula, ft, f.id)
+        val fl = formulaToLabel(f.formula, ft)
         fl.background = new Color(0,255,0)
         contents += fl
-      } else contents += formulaToLabel(f.formula, ft, f.id)
+      } else contents += formulaToLabel(f.formula, ft)
       }
     }
   }
 
-  def formulaToLabel(f: HOLFormula, ft: Font, id: Int) = latexToLabel(formulaToLatexString(f) + "[" + id + "]", ft)
+  def formulaToLabel(f: HOLFormula, ft: Font) = latexToLabel(formulaToLatexString(f), ft)
 
   def latexToLabel(ls: String, ft: Font) = new Label {
     background = new Color(255,255,255)
