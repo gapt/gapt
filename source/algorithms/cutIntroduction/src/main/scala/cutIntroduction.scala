@@ -13,6 +13,7 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
+import at.logic.language.lambda.typedLambdaCalculus._
 import scala.collection.Map
 import scala.collection.mutable._
 import scala.collection.mutable.HashMap
@@ -118,7 +119,9 @@ object cutIntroduction {
     }
 
     println("\nExtended Herbrand sequent: \n" + ehsant + " |- " + ehssucc)
-    println("\nWhere X is: " + conj3)
+    // FIXME: very bad hack for showing the results in order to avoid working
+    // with hol and fol formulas at the same time.
+    println("\nWhere X is: λx." + conj3)
   }
 }
 
