@@ -1,7 +1,7 @@
 package at.logic.prooftool.graphs
    /*
-import org.specs._
-import org.specs.runner._
+import org.specs2.mutable._
+//import org.specs.runner._
 
 import at.logic.utils.ds.graphs._
 import GraphImplicitConverters._
