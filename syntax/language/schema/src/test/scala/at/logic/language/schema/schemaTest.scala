@@ -1,7 +1,6 @@
 package at.logic.language.schema
 
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.hol.Atom
 import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
@@ -10,6 +9,8 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
+import at.logic.language.hol.{HOLApp, HOLExpression, HOLConst, Atom}
+import at.logic.language.lambda.types._
 
 @RunWith(classOf[JUnitRunner])
 class SchemaTest extends SpecificationWithJUnit {
@@ -82,5 +83,32 @@ class SchemaTest extends SpecificationWithJUnit {
         case _ => ko
       }
     }
+
+    "create a schematic term" in {
+      val fconst = HOLConst(new ConstantStringSymbol("f"), Tindex()->Tindex()->Tindex())
+      val gconst = HOLConst(new ConstantStringSymbol("g"), Tindex()->Tindex())
+      val hconst = HOLConst(new ConstantStringSymbol("h"), Tindex()->Tindex())
+
+      def g(t: HOLExpression): HOLExpression = {
+        HOLApp(gconst, t)
+      }
+
+      def h(t: HOLExpression): HOLExpression = {
+        HOLApp(hconst, t)
+      }
+
+      def f(n: IntegerTerm, v: HOLExpression): HOLExpression = {
+        n match {
+          case IntZero() => g(n)
+          case _ => g(f(Pred(n), v))
+        }
+      }
+
+      print("\n\nf(4,0) = ")
+      println(f(Succ(Succ(Succ(Succ(IntZero())))), IntZero()))
+      true must beEqualTo (true)
+    }
+
+
   }
 }
