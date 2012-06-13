@@ -9,7 +9,6 @@
 
   <artifactId>atp</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
   <name>Resolution Automated Theorem Prover</name>
 
   <build>
