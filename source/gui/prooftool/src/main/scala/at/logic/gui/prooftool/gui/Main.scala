@@ -43,6 +43,7 @@ import at.logic.calculi.lk.base.{FSequent, Sequent, LKProof}
 import at.logic.language.schema.IndexedPredicate._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.schema.{IndexedPredicate, IntVar}
+import at.logic.prooftool.gui.MenuScroller
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
