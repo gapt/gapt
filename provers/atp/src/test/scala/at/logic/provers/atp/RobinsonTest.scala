@@ -17,7 +17,7 @@ import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.calculi.resolution.robinson.InitialClause._
 import at.logic.language.fol.{FOLFormula, FOLExpression}
 
-private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
+//private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
 
 class RobinsonTest extends SpecificationWithJUnit {
   "ParamodulationCommand" should  {
