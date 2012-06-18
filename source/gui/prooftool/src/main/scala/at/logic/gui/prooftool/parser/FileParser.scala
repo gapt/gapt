@@ -37,21 +37,22 @@ class FileParser {
 
   def stabFileReader(input: InputStreamReader) {
     structs = Nil
-    proofdb = new ProofDatabase(Map(),Nil, Nil, Nil)
+    proofdb = new ProofDatabase(Map(), Nil, Nil, Nil)
     proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
   }
 
-  def lksFileReader(f: String) {
+  def lksFileReader(input: InputStreamReader) {
     proofs = Nil
     structs = Nil
-  //  val start = System.currentTimeMillis()
-    proofdb = new ProofDatabase(Map(),SHLK.parseProofs(fileStreamReader(f)), Nil, Nil)
-  //  val end = System.currentTimeMillis()
-  //  println("parsing took " + (end - start).toString)
+    //  val start = System.currentTimeMillis()
+    proofdb = new ProofDatabase(Map(), SHLK.parseProofs(input), Nil, Nil)
+    //  val end = System.currentTimeMillis()
+    //  println("parsing took " + (end - start).toString)
   }
 
-  def parseFile(path: String) : Unit = try {
-    if (path.endsWith(".lks")) lksFileReader(path)
+  def parseFile(path: String): Unit = try {
+    if (path.endsWith(".lks")) lksFileReader(fileStreamReader(path))
+    else if (path.endsWith(".lks.gz")) lksFileReader(gzFileStreamReader(path))
     else if (path.endsWith(".xml")) try {
       ceresFileReader(fileStreamReader(path))
     } catch {
@@ -61,7 +62,7 @@ class FileParser {
           case _ =>
         }
     }
-    else if (path.endsWith(".gz")) try {
+    else if (path.endsWith(".xml.gz")) try {
       ceresFileReader(gzFileStreamReader(path))
     } catch {
       case pe: ParsingException =>
@@ -73,36 +74,41 @@ class FileParser {
     else throw new Exception("Can not recognize file extension!")
     ProofToolPublisher.publish(ProofDbChanged)
   } catch {
-    case err: AnyRef => Main.errorMessage("Could not load file: "+path+"!\n\n"+err.toString.replaceAll(",",",\n").replaceAll(">",">\n"))
+    case err: AnyRef => Main.errorMessage("Could not load file: " + path + "!\n\n" + err.toString.replaceAll(",", ",\n").replaceAll(">", ">\n"))
   }
 
-  def addProofs(proofs : List[(String, LKProof)]) {
-    proofdb = new ProofDatabase(proofdb.Definitions, proofdb.proofs:::proofs, proofdb.axioms, proofdb.sequentLists)
+  def addProofs(proofs: List[(String, LKProof)]) {
+    proofdb = new ProofDatabase(proofdb.Definitions, proofdb.proofs ::: proofs, proofdb.axioms, proofdb.sequentLists)
   }
 
-  def addSeqList(seqList : List[FSequent]) { addSeqList("sequentList ", seqList) }
+  def addSeqList(seqList: List[FSequent]) {
+    addSeqList("sequentList ", seqList)
+  }
 
-  def addSeqList(name: String, seqList : List[FSequent]) {
+  def addSeqList(name: String, seqList: List[FSequent]) {
     proofdb = new ProofDatabase(proofdb.Definitions, proofdb.proofs, proofdb.axioms,
-      (name+proofdb.sequentLists.size.toString, seqList)::proofdb.sequentLists)
+      (name + proofdb.sequentLists.size.toString, seqList) :: proofdb.sequentLists)
   }
 
-  def addStructTree(struct : Tree[_] ) {
-    structs = ("struct "+structs.size.toString, struct)::structs
+  def addStructTree(struct: Tree[_]) {
+    structs = ("struct " + structs.size.toString, struct) :: structs
   }
 
-  def addTrees(list : List[(String, Tree[_])] ) {
-    structs = list:::structs
+  def addTrees(list: List[(String, Tree[_])]) {
+    structs = list ::: structs
   }
 
   def getDefinitions: List[(HOLFormula, HOLFormula)] = proofdb.Definitions.toList //._1.toList ::: proofdb.Definitions._2.toList ::: proofdb.Definitions._3.toList
 
   def getSequentLists = proofdb.sequentLists
-  def getProofs = proofdb.proofs:::proofs
+
+  def getProofs = proofdb.proofs ::: proofs
+
   def getProofDB = proofdb
+
   def getStructTrees = structs
 
-  private var proofdb = new ProofDatabase(Map(),Nil,Nil,Nil)
+  private var proofdb = new ProofDatabase(Map(), Nil, Nil, Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil
   private var structs: List[(String, Tree[_])] = Nil
 }
