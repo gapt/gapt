@@ -14,6 +14,25 @@ import scala.collection.mutable.HashMap
 
 class DecompositionException(msg: String) extends Exception(msg)
 
+/*
+class DeltaTable() {
+  
+  var table = new HashMap[List[FOLTerm], HashMap[FormulaOccurrence, List[(FOLTerm, List[FOLTerm])]]] 
+
+  def add(f: FormulaOccurrence, t: List[FOLTerm], s: List[FOLTerm], u: List[FOLTerm]) {
+  
+    if(table.contains(s)) {
+
+    }
+    else {
+      var innerMap = 
+    }
+    
+  }
+
+}
+*/
+
 object decomposition {
 
   // Input: a set of terms
