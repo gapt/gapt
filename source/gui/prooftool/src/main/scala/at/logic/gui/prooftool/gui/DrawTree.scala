@@ -53,7 +53,10 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
           val myicon = icon
         }
       }
-      if (! str.isEmpty && tx.contains(str)) mylabel.background = new Color(0,255,0)
+      if (! str.isEmpty && tx.contains(str)) {
+        mylabel.opaque = true  // This is not nice when searched. Find a solution!
+        mylabel.background = new Color(0,255,0)
+      }
       else mylabel.opaque = false
       mylabel.border = bd
       mylabel.listenTo(mouse.clicks, StructPublisher)
