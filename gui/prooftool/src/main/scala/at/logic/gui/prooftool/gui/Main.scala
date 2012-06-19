@@ -189,6 +189,7 @@ object Main extends SimpleSwingApplication {
     contents = new BorderPanel {
      // layout(toolbar) = Position.North
       layout(body) = Position.Center
+     // layout(new ProgressBar { indeterminate = true }) = Position.South
     }
   }
 
@@ -979,6 +980,15 @@ object Main extends SimpleSwingApplication {
   private val chooser = new FileChooser {
     fileFilter = new FileFilter {
       def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".gz") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".gz"
+    }
+
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
         if (f.getName.endsWith(".lks") || f.isDirectory) true
         else false
       }
@@ -988,11 +998,11 @@ object Main extends SimpleSwingApplication {
 
     fileFilter = new FileFilter {
       def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".xml") || f.getName.endsWith(".xml.gz") || f.isDirectory) true
+        if (f.getName.endsWith(".xml") || f.isDirectory) true
         else false
       }
 
-      def getDescription: String = ".xml and .gz"
+      def getDescription: String = ".xml"
     }
 
     fileFilter = acceptAllFileFilter
