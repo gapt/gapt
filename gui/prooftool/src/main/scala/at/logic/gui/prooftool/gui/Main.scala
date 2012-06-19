@@ -166,7 +166,8 @@ object Main extends SimpleSwingApplication {
       body.getContent.contents.head match {
         case dp: DrawProof =>
           dp.search = input_str
-          dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof))
+          if (dp.proof.root.isInstanceOf[Sequent]) dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof))
+          else dp.searchNotInLKProof
           dp.revalidate
         case dt: DrawTree =>
           dt.search = input_str
