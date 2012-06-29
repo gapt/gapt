@@ -18,7 +18,7 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
-import scala.collection.immutable._
+import scala.collection.mutable._
 import at.logic.calculi.lk.base.types._
 import at.logic.algorithms.lk._
 
@@ -28,17 +28,12 @@ object termsExtraction {
 
   // If all the quantified formulas have only one quantifier, each sequent of
   // the list will have only one element
-  def apply(proof: LKProof) : HashMap[FormulaOccurrence, List[List[FOLTerm]]] = {
+  def apply(proof: LKProof) : Map[FormulaOccurrence, List[List[FOLTerm]]] = {
     val map = extractTerms(proof)
     map
-    // Process the hashmap
-    //val terms = map.foldRight(List[List[FOLTerm]]()){(t, acc) =>
-    //  acc ++ t._2
-    //}
-    //terms
   }
   
-  private def extractTerms(proof: LKProof) : HashMap[FormulaOccurrence, List[List[FOLTerm]]] = proof match {
+  private def extractTerms(proof: LKProof) : Map[FormulaOccurrence, List[List[FOLTerm]]] = proof match {
 
     /* AXIOM */
     case Axiom(s) => new HashMap[FormulaOccurrence, List[List[FOLTerm]]] 
@@ -64,22 +59,19 @@ object termsExtraction {
         val t1 = map(a1)
         val t2 = map(a2)
         val auxmap = map - (a1, a2)
-        val auxmap2 = auxmap + (prin -> (t1 ++ t2))
-        auxmap2
+        auxmap += (prin -> (t1 ++ t2))
       }
       else if (anc1.length == 1 && anc2.length == 0) {
         val a1 = anc1(0)
         val t = map(a1)
         val auxmap = map - (a1)
-        val auxmap2 = auxmap + (prin -> t)
-        auxmap2
+        auxmap += (prin -> t)
       }
       else if (anc1.length == 0 && anc2.length == 1) {
         val a2 = anc2(0)
         val t = map(a2)
         val auxmap = map - (a2)
-        val auxmap2 = auxmap + (prin -> t)
-        auxmap2
+        auxmap += (prin -> t)
       }
       else if (anc1.length > 0 && anc2.length > 1) {
         throw new TermsExtractionException("ERROR: More than one ancestor was instantiated.")
@@ -100,22 +92,19 @@ object termsExtraction {
         val t1 = map(a1)
         val t2 = map(a2)
         val auxmap = map - (a1, a2)
-        val auxmap2 = auxmap + (prin -> (t1 ++ t2))
-        auxmap2
+        auxmap += (prin -> (t1 ++ t2))
       }
       else if (anc1.length == 1 && anc2.length == 0) {
         val a1 = anc1(0)
         val t = map(a1)
         val auxmap = map - (a1)
-        val auxmap2 = auxmap + (prin -> t)
-        auxmap2
+        auxmap += (prin -> t)
       }
       else if (anc1.length == 0 && anc2.length == 1) {
         val a2 = anc2(0)
         val t = map(a2)
         val auxmap = map - (a2)
-        val auxmap2 = auxmap + (prin -> t)
-        auxmap2
+        auxmap += (prin -> t)
       }
       else if (anc1.length > 0 && anc2.length > 1) {
         throw new TermsExtractionException("ERROR: More than one ancestor was instantiated.")
@@ -176,13 +165,11 @@ object termsExtraction {
         // Append the new terms to every list in terms
         terms.foreach(lst => lst :+ term)
         val auxmap = map - a
-        val auxmap2 = auxmap + (prin -> terms)
-        auxmap2
+        auxmap += (prin -> terms)
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
-        val auxmap = map + (prin -> ((folterm::Nil)::Nil))
-        auxmap
+        map += (prin -> ((folterm::Nil)::Nil))
       }
     case ExistsRightRule(up, _, aux, prin, term) =>
       val map = extractTerms(up)
@@ -195,11 +182,11 @@ object termsExtraction {
         // Append the new terms to every list in terms
         terms.foreach(lst => lst :+ term)
         val auxmap = map - a
-        auxmap + (prin -> terms)
+        auxmap += (prin -> terms)
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
-        map + (prin -> ((folterm::Nil)::Nil))
+        map += (prin -> ((folterm::Nil)::Nil))
       }
 
     /* CUT RULE */

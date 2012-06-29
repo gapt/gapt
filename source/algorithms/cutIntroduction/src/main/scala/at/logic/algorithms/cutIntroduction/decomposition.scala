@@ -8,48 +8,141 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
-import scala.collection.Map
+import at.logic.calculi.occurrences._
 import scala.collection.mutable._
-import scala.collection.mutable.HashMap
+import at.logic.language.hol.logicSymbols._
 
 class DecompositionException(msg: String) extends Exception(msg)
 
-/*
 class DeltaTable() {
   
   var table = new HashMap[List[FOLTerm], HashMap[FormulaOccurrence, List[(FOLTerm, List[FOLTerm])]]] 
 
-  def add(f: FormulaOccurrence, t: List[FOLTerm], s: List[FOLTerm], u: List[FOLTerm]) {
-  
-    if(table.contains(s)) {
+  def add(f: FormulaOccurrence, t: List[FOLTerm], s: List[FOLTerm], u: FOLTerm) {
 
+    if(table.contains(s) && table(s).contains(f)) {
+      table(s)(f) = table(s)(f) :+ (u, t)
     }
+    else if (table.contains(s)){
+      table(s)(f) = ((u, t)::Nil)
+    }
+    // So sad that this HashMap is not created with the line above...
     else {
-      var innerMap = 
+      table(s) = new HashMap()
+      table(s)(f) = ((u, t)::Nil)
+    }  
+  }
+
+  def get(s: List[FOLTerm], f: FormulaOccurrence) = table(s)(f)
+
+  def getDecompositionsOfSize(n: Int) = {
+    table.filter( e => e._1.length == n)
+  }
+
+  def findValidDecompositions(terms: Map[FormulaOccurrence, List[FOLTerm]]) : List[(List[FOLTerm], List[FOLTerm])] = {
+
+    val allFormulas = terms.keys
+
+    // TODO: the next two functions should really be somewhere else...
+
+    // Find all subsets (could not find a built-in scala function)
+    def subsets[T](s : List[T]) : List[List[T]] = {
+      if (s.size == 0) List(List()) 
+      else { 
+        val tailSubsets = subsets(s.tail); 
+        tailSubsets ++ tailSubsets.map(s.head :: _) 
+      }
     }
-    
+
+    // Cartesian product of an arbitrary list of lists TODO: FIXME
+    def product[T](xs: List[List[T]]) : List[List[T]] = xs.foldLeft(List[List[T]]()) {
+      (x, y) => for(a <- x; b <- y) yield a :+ b
+    }
+
+
+    def findFormulaDecompositions(s: List[FOLTerm], f: FormulaOccurrence) = {
+      var pairs = table(s)(f)
+      val t = terms(f)
+
+      // The trivial decomposition might be needed now
+      // E.g.: T = {a, fa, f^2a, f^3a} is a case where the trivial decomposition is needed
+      // Obs: if s.length == 1, it is already the trivial decomposition
+      if (s.length > 1 && s.forall(e => t.contains(e))) {
+        pairs = pairs :+ (FOLVar(new VariableStringSymbol("alpha")), s)
+      }
+
+      // Checks if the union of a subset of pairs contains all the terms
+      
+      // Collect all subsets
+      val allsubsets = subsets(pairs)
+
+      // Join the pairs of each subset
+      val subsetpairs = allsubsets.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {(subset, acc1) =>
+        val d = subset.foldRight(List[FOLTerm](), List[FOLTerm]()) ( (el, acc2) => (el._1 :: acc2._1, el._2 ++ acc2._2))
+        d :: acc1
+      }
+
+      // Check which pairs are a decomposition
+      // Note: each pair is ({u_1, ..., u_k}, {t_1, ..., t_j})
+      // and for this to be a valid decomposition, {t_1, ..., t_j}
+      // must contain all terms.
+      val valid = subsetpairs.filter(p => 
+        t.forall(e => p._2.contains(e))
+      )
+
+      // Return all the U sets
+      valid.foldRight(List[List[FOLTerm]]()) ((p, acc) => p._1 :: acc)
+    }
+
+    table.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {case ((s, forms), decompositions) =>
+
+      if(allFormulas.forall(f => forms.keySet.contains(f))) {
+        println("Set s: " + s + " contains all formulas in its hashmap")
+        val setsOfUi = forms.keys.foldRight(List[List[List[FOLTerm]]]()) { (f, acc) =>
+          findFormulaDecompositions(s, f) :: acc
+        }
+
+        println("Decompositions for each formula: " + setsOfUi)
+
+        if(setsOfUi(0).length != 0) {
+          val uSets = product(setsOfUi)
+  
+          val dec = uSets.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) { (u, acc) =>
+            (u.flatten, s) :: acc 
+          }
+          println("Found decompositions: " + dec)
+          dec ++ decompositions
+        }
+        else decompositions
+      }
+      else decompositions
+    }
   }
 
 }
-*/
 
 object decomposition {
 
-  // Input: a set of terms
-  // Output: two sets of terms
-  //def apply(terms: List[List[FOLTerm]]) : List[(List[FOLTerm],List[FOLTerm])] = {
-  def apply(terms: List[FOLTerm]) : List[(List[FOLTerm],List[FOLTerm])] = {
-    // Note: for the case of one quantifier, each sequence on this list will have
-    // only one term
-    //val lst = terms.foldRight(List[FOLTerm]()) ((s, acc) => s ++ acc)
-    //val deltatable = computeDeltaTable(lst)
-    //val decompositions = findValidDecompositions(lst, deltatable)
-    val deltatable = computeDeltaTable(terms)
-    val decompositions = findValidDecompositions(terms, deltatable)
-    decompositions
+  // Input: a hashmap of formulas pointing to a list of terms
+  // Output: two lists of terms
+  def apply(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) : List[(List[FOLTerm],List[FOLTerm])] = {
+    val newterms = tuplesToTerms(terms)
+    val deltatable = fillDeltaTable(newterms)
+    //val decompositions = findValidDecompositions(newterms, deltatable)
+    deltatable.findValidDecompositions(newterms)
   }
 
-  def findValidDecompositions(terms: List[FOLTerm], deltaTable: HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]) = {
+  val tupleFunctionSymbol = ConstantStringSymbol("##")
+  def tuplesToTerms(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) : Map[FormulaOccurrence, List[FOLTerm]] = {
+    terms.foldRight(Map[FormulaOccurrence, List[FOLTerm]]()) { case ((f, tuples), hm) =>
+      val tuplesAsTerms = tuples.map(t => Function(tupleFunctionSymbol, t))
+      hm + (f -> tuplesAsTerms)
+    }
+  }
+  // TODO : implement functionsToTuples
+
+/*
+  def findValidDecompositions(terms: List[FOLTerm], deltaTable: Map[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]) = {
     deltaTable.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {case ((key, value), decompositions) =>
       // (s_1, ..., s_n)
       val s = key
@@ -97,8 +190,63 @@ object decomposition {
       dec ++ decompositions
     }
   }
+*/
 
-  def computeDeltaTable(terms: List[FOLTerm]) = {
+  def fillDeltaTable(terms: Map[FormulaOccurrence, List[FOLTerm]]) = {
+
+    var deltaTable = new DeltaTable()
+
+    terms.foreach { case (f, t) =>
+      // Initialize with trivial decompositions of size 1
+      t.foreach(e => deltaTable.add(f, e::Nil, e::Nil, FOLVar(new VariableStringSymbol("alpha"))) )
+
+      for (n <- 2 until t.length+1) {
+        //println("n = " + n)
+        // Take only the decompositions of term sets of size (n-1) from the current delta table
+        val one_less = deltaTable.getDecompositionsOfSize(n-1)
+
+        //println("Number of decompositions of size n-1 = " + one_less.size)
+
+        one_less.foreach { case (s, forms) =>
+          // If this formula's terms have a decomposition with this s
+          if(forms.contains(f)) {
+            //println("Entered if")
+            val pairs = deltaTable.get(s, f)
+
+            //println("Number of pairs = " + pairs.size)
+
+            // Iterate over the list of decompositions
+            pairs.foreach { case (u, ti) =>
+              //println("Pair: " + u + " --- " + ti)
+              //println("Terms: " + t)
+              // Only choose terms that are after the last term in tl
+              val maxIdx = t.lastIndexWhere(e => ti.contains(e))
+              val termsToAdd = t.slice(maxIdx + 1, (t.size + 1))
+         
+              //println("Terms to add = " + termsToAdd)
+
+              // Compute delta of the incremented list
+              termsToAdd.foreach {case e =>
+                val incrementedtermset = ti :+ e
+                val p = delta(incrementedtermset)
+           
+                // If non-trivial
+                if (p._2 != (incrementedtermset)) {
+                  // Update delta-table
+                  //println("Updating delta table...")
+                  deltaTable.add(f, incrementedtermset, p._2, p._1)
+                }
+              }
+
+            }
+          }
+        }
+      }
+    } 
+
+    deltaTable
+
+/**** OLD CODE ****
 
     // Takes a hashmap and an integer i and process all entries of the hashmap
     // s.t. the key has size i-1
@@ -157,6 +305,8 @@ object decomposition {
 
     // Return the complete delta table
     f(terms.length)
+*/
+
   }
 
   def delta(terms: List[FOLTerm]) : (FOLTerm, List[FOLTerm]) = terms.head match {
