@@ -271,9 +271,18 @@ object Formatter {
     try { op(p) } finally { p.close() }
   }
 
+  def lst2string[T](fun:(T=>String), seperator: String, l:List[T]) : String = l match {
+    case Nil => ""
+    case List(x) => fun(x)
+    case x::xs => fun(x)  + seperator + lst2string(fun, seperator, xs)
+  }
+
+
+
   def apply(p: ResolutionProof[Clause]) : String = {
     apply("", p, createMap(p,1,collection.immutable.Map[Clause, Int]())._1)
   }
+
 
   def asHumanReadableString(p:ResolutionProof[Clause]) = apply(p)
 
@@ -313,6 +322,60 @@ object Formatter {
         (map + ((clause, i+1)), i+1)
 
     case _ => throw new Exception("Unhandled Case!")
+  }
+
+  def asTex(p : ResolutionProof[Clause]) : String = {
+    val ids = createMap(p,1,collection.immutable.Map[Clause, Int]())._1
+    """\documentclass[a4paper,8pt,usenames,dvipsnames]{article}
+\ usepackage[utf8]{inputenc}
+\ usepackage{amssymb}
+\ usepackage{mathabx}
+\ usepackage[T1]{fontenc}% Needed for Type1 Concrete
+\ usepackage{bussproofs}
+
+\renewcommand{\fCenter}{\ensuremath{\vdash} }
+\newcommand{\AX}[2]{\AxiomC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\UI}[2]{\UnaryInfC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\BI}[2]{\BinaryInfC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\LL}[1]{\LeftLabel{\footnotesize \ensuremath{#1}}}
+\newcommand{\RL}[1]{\RightLabel{\footnotesize \ensuremath{#1}}}
+
+\begin{document}"""+
+      tex(p, ids, List())._1 + "\n\\DisplayProof\n\\end{document}"
+  }
+
+  def escapeTex(s:String) = s.replaceAll("_","\\_")
+
+
+  def tex(p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int], edges : List[List[Int]] )
+  : (String, List[List[Int]]) = {
+    def f(l:Seq[FormulaOccurrence]) : String = lst2string( (x:FormulaOccurrence) => escapeTex(x.formula.toPrettyString), ",", l.toList)
+
+    p match {
+      case Resolution(clause, p1, p2, occ1, occ2, subst) =>
+        val (str1, e1) = tex( p1, ids, edges)
+        val (str2, e2) = tex( p2, ids, e1)
+        (str1 + str2 + "\\RL{Resolve} \n\\BI{" + f(clause.negative) + "}{" + f(clause.positive) +"}",   e1)
+
+
+      case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+        val (str1, e1) = tex( p1, ids, edges)
+        val (str2, e2) = tex( p2, ids, e1)
+        (str1 + str2 + "\\RL{Para} \n\\BI{" + f(clause.negative) + "}{" + f(clause.positive) +"}",   e1)
+
+      case Factor(clause, p1, occs, sub) =>
+        val (str1, e1) = tex( p1, ids, edges)
+
+        (str1 + "\\RL{Factor} \n\\UI{" + f(clause.negative) + "}{" + f(clause.positive) +"}",   e1)
+      case Variant(clause, p1, sub) =>
+        val (str1, e1) = tex( p1, ids, edges)
+
+        (str1 + "\\RL{Variant} \n\\UI{" + f(clause.negative) + "}{" + f(clause.positive) +"}",   e1)
+
+      case InitialClause(clause) => ("\\AX{" + f(clause.negative) + "}{"+ f(clause.positive) +"}\n", edges)
+
+      case _ => ("", edges)
+    }
   }
 
   def asGraphViz(p : ResolutionProof[Clause]) : String = {

@@ -412,6 +412,7 @@ object loadProofDB {
 
     def asHumanReadableString(p: ResolutionProof[Clause]) = Formatter.asHumanReadableString(p)
     def asGraphVizString(p:ResolutionProof[Clause]) = Formatter.asGraphViz(p)
+    def asTex(p:ResolutionProof[Clause]) = Formatter.asTex(p)
   }
 
   object ceres {
