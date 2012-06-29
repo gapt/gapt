@@ -14,8 +14,8 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import scala.collection.Map
-import scala.collection.mutable._
+//import scala.collection.Map
+//import scala.collection.mutable._
 import scala.collection.mutable.HashMap
 
 class CutIntroException(msg: String) extends Exception(msg)
@@ -38,31 +38,32 @@ object cutIntroduction {
 
     println("\nQuantified formulas: " + quantFormulas)
 
-    val termset = terms.foldRight(List[FOLTerm]()) ( (t, acc) => 
-      t._2.foldRight(acc) ((lst, ac) =>
-        lst ++ ac
-      )
-    )
+    //val termset = terms.foldRight(List[FOLTerm]()) ( (t, acc) => 
+    //  t._2.foldRight(acc) ((lst, ac) =>
+    //    lst ++ ac
+    //  )
+    //)
 
     val ant = endSequent.antecedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
     val succ = endSequent.succedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
 
-    println("\nTerm set: {" + termset + "}")
-    println("of size " + termset.length)
+    println("\nTerm set: {" + terms + "}")
+    println("of size " + terms.size)
 
-    val decompositions = decomposition(termset).sortWith((d1, d2) => 
-      d1._1.length + d1._2.length < d2._1.length + d2._2.length
-    )
-
-    val smallestDec = decompositions.head
-    val u = smallestDec._1
-    val s = smallestDec._2
+    //val decompositions = decomposition(terms).sortWith((d1, d2) => 
+    //  d1._1.length + d1._2.length < d2._1.length + d2._2.length
+    //)
+    val decompositions = decomposition(terms) 
 
     println("\nThe decompositions found were:")
     decompositions.foreach{dec =>
       val l = dec._1.length + dec._2.length
       println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
     }
+
+    val smallestDec = decompositions.head
+    val u = smallestDec._1
+    val s = smallestDec._2
 
     println("\nDecomposition chosen: {" + smallestDec._1 + "} o {" + smallestDec._2 + "}")
     

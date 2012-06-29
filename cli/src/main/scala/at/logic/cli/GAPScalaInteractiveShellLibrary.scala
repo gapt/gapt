@@ -301,6 +301,7 @@ object loadProofDB {
       )
   }
 
+/* COMMENTING OUT UNTIL CUT INTRODUCTION IS FIXED
   object decompose {
     import at.logic.algorithms.cutIntroduction._
     
@@ -328,6 +329,7 @@ object loadProofDB {
       d
     }
   }
+*/
 
   object cutIntro {
     def apply(p : LKProof) = {
