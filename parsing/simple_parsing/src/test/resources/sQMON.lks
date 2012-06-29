@@ -1,0 +1,13 @@
+proof \psi  proves
+Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k+1,x)))
+
+base {
+    root: ax(Forall x (Imp P(x) P(f(z(k)))) , Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(1,x)))
+            )
+}
+
+step {
+    1:      ax( Imp P(g(k,x)) P(f(g(k,x))) |- Imp P(z(k)) P(f(g(k,z(k)))) )
+    2:      allL(1, Imp P(g(k,x)) P(f(g(k,x))), Forall x (Imp P(x) P(f(x))), g(k,x))
+    root:   allR(2, Imp P(z(k)) P(f(g(k,z(k)))), Forall x Imp P(x) P(f(g(k,x))), z(k))
+}

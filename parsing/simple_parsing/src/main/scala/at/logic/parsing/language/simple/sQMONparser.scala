@@ -20,14 +20,15 @@ import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
-import at.logic.language.schema.{sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+import at.logic.calculi.lk.quantificationRules._
+import at.logic.language.schema.{indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 
 
-object SHLK {
+object ParseQMON {
 
   def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
 //    ("p",parseProof(input, "root"))::Nil
-    val m = SHLK.parseProof(input)
+    val m = ParseQMON.parseProof(input)
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
 
@@ -42,7 +43,7 @@ object SHLK {
         return res.result.toFSequent()
       }
       case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
-        throw new Exception("Error in SHLK.parseSequent : "+x.toString)
+        throw new Exception("Error in ParseQMON.parseSequent : "+x.toString)
     }
     class SequentParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
@@ -101,11 +102,18 @@ object SHLK {
           })
         }
       }
-      def non_formula: Parser[HOLExpression] = (s_term | indexedVar | abs | variable | constant | var_func | const_func)
-      def s_term: Parser[HOLExpression] = "[f,g,h]".r ~ "(" ~ intTerm ~ "," ~ variable ~ ")" ^^ {
+      def non_formula: Parser[HOLExpression] = (fo_term | s_term | indexedVar | abs | variable | constant | var_func | const_func)
+      def s_term: Parser[HOLExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ variable ~ ")" ^^ {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
           println("\n\nsTerm\n")
           sTerm(name, i.asInstanceOf[IntegerTerm], args::Nil)
+        }
+      }
+      def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ variable ~ ")" ^^ {
+        case name ~ "(" ~ arg ~ ")" => {
+          println("\n\nfoTerm\n")
+          val v = hol.createVar(new VariableStringSymbol(name), i -> i).asInstanceOf[HOLVar]
+          HOLApp(v, arg).asInstanceOf[HOLExpression]
         }
       }
       def indexedVar: Parser[HOLVar] = regex(new Regex("[u-z]")) ~ "(" ~ intTerm ~ ")" ^^ {
@@ -153,7 +161,7 @@ object SHLK {
         }
       }
     }
-    throw new Exception("\nError in SHLK.parseSequent function !\n")
+    throw new Exception("\nError in ParseQMON.parseSequent function !\n")
   }
   
 
@@ -243,12 +251,11 @@ object SHLK {
         }
       }
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = ( non_formula | formula)
-      def formula: Parser[HOLFormula] = (neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
-
+      def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
       def intTerm: Parser[HOLExpression] = (index | schemaFormula)
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
       def intConst: Parser[IntegerTerm] = (intZero | intOne | intTwo | intThree)
@@ -330,9 +337,29 @@ object SHLK {
           })
         }
       }
-
-      def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)
-      def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), ind->ind).asInstanceOf[HOLVar]}
+      def non_formula: Parser[HOLExpression] = (fo_term | s_term | indexedVar | abs | variable | constant | var_func | const_func)
+      def s_term: Parser[HOLExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ non_formula ~ ")" ^^ {
+        case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
+//          println("\n\nsTerm\n)")
+//          println("args = "+args)
+//          println("args.extype = "+args.exptype)
+          sTerm(name, i.asInstanceOf[IntegerTerm], args::Nil)
+        }
+      }
+      def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ non_formula ~ ")" ^^ {
+        case name ~ "(" ~ arg ~ ")" => {
+//          println("\n\nfoTerm\n arg.extype = "+arg.exptype)
+          val v = hol.createVar(new VariableStringSymbol(name), arg.exptype  -> i).asInstanceOf[HOLVar]
+          HOLApp(v, arg).asInstanceOf[HOLExpression]
+        }
+      }
+      def indexedVar: Parser[HOLVar] = regex(new Regex("[z]")) ~ "(" ~ intTerm ~ ")" ^^ {
+        case x ~ "(" ~ index ~ ")" => {
+          indexedFOVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
+        }
+      }
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,y]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i).asInstanceOf[HOLVar]}
+      def variable: Parser[HOLVar] = (indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
       def and: Parser[HOLFormula] = "(" ~ repsep(formula, "/\\") ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => And(f, res)) } }
       def or: Parser[HOLFormula]  = "(" ~ repsep(formula, """\/""" ) ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => Or(f, res)) } }
@@ -343,22 +370,24 @@ object SHLK {
       def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
       def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
       def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
-//        println("\n\nvar_atom")
+        //        println("\n\nvar_atom")
         Atom(new VariableStringSymbol(x), params)
       }}
-      def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
-//        println("\n\nconst_atom")
+
+      //      def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
+      def const_atom: Parser[HOLFormula] = regex(new Regex("P")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
+
+        //        println("\n\nconst_atom")
         Atom(new ConstantStringSymbol(x), params)
       }}
       def equality: Parser[HOLFormula] = /*eq_infix | */ eq_prefix // infix is problematic in higher order
-     //def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
+      //def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
       def eq_prefix: Parser[HOLFormula] = "=" ~ "(" ~ term ~ "," ~ term  ~ ")" ^^ {case "=" ~ "(" ~ x ~ "," ~ y  ~ ")" => Equation(x,y)}
       def var_func: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, ind->ind)}
-     /*def var_func: Parser[HOLExpression] = (var_func1 | var_funcn)
-     def var_func1: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
-     def var_funcn: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "^" ~ decimalNumber ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "^" ~ n ~ "(" ~ params ~ ")" ~ ":" ~ tp => genF(n.toInt, HOLVar(new VariableStringSymbol(x)), params)}
-     */
-
+      /*def var_func: Parser[HOLExpression] = (var_func1 | var_funcn)
+      def var_func1: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
+      def var_funcn: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "^" ~ decimalNumber ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "^" ~ n ~ "(" ~ params ~ ")" ~ ":" ~ tp => genF(n.toInt, HOLVar(new VariableStringSymbol(x)), params)}
+      */
       def const_func: Parser[HOLExpression] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, ind->ind)}
       protected def word: String = """[a-zA-Z0-9$_{}]*"""
       protected def symbol: Parser[String] = symbols.r
@@ -614,7 +643,18 @@ object SHLK {
           ContractionRightRule(map.get(l).get, f)
         }
       }
+      
+      def allL: Parser[LKProof] = "allL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ non_formula ~ ")" ^^ {
+        case "allL(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ term ~ ")" => {
+          ForallLeftRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], term.asInstanceOf[HOLExpression])
+        }
+      }
 
+      def allR: Parser[LKProof] = "allR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ indexedVar ~ ")" ^^ {
+        case "allR(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ v ~ ")" => {
+          ForallRightRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
+        }
+      }
     }
 //    println("\n\nnumber of SLK-proofs = "+bigMap.size)
 //    println("\ndefMapr size = "+defMap.size)
@@ -628,138 +668,4 @@ object SHLK {
     bigMap
   }
 }
-
-class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
-  import at.logic.language.schema._
-
-  def apply(expression: T): T = expression match {
-    case x:IntVar => {
-      map.get(x) match {
-        case Some(t) => {
-          //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
-          t
-        }
-        case _ => {
-          //println(x + " Error in schema subst 1")
-          x.asInstanceOf[T]
-        }
-      }
-    }
-    case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
-    case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
-    case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
-    case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
-    case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-    case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-    case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-
-    case _ => expression
-  }
-}
-
-
-//                    This copy has types. This is why it is kept !
-//
-//object SHLK {
-//  //plabel should return the proof corresponding to this label
-//  def parseProof(txt: String, plabel: String): LKProof = {
-//    val map = Map.empty[String, LKProof]
-//    lazy val sp = new SimpleSLKParser
-//    sp.parseAll(sp.line, txt)
-//
-//
-//    class SimpleSLKParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
-//
-//      def line: Parser[List[Unit]] = rep(mapping)
-//
-//      def mapping: Parser[Unit] = label.r ~ "=" ~ proof ^^ {
-//        case l ~ "=" ~ p => {
-//          println("\nl = "+l)
-//          map(l) = p
-//        }
-//      }
-//
-//      def proof: Parser[LKProof] = ax | orL | orR1 | orR2 | negL | negR
-//      def label: String = """[0-9]*"""
-//
-//      def term: Parser[HOLExpression] = (non_formula | formula)
-//      def formula: Parser[HOLFormula] = (neg | atom | and | or | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
-//      def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)
-//      def variable: Parser[HOLVar] = regex(new Regex("[u-z]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => hol.createVar(new VariableStringSymbol(x), tp).asInstanceOf[HOLVar]}
-//      def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word)) ~ ":" ~ Type ^^ {case x ~ ":" ~ tp => hol.createVar(new ConstantStringSymbol(x), tp).asInstanceOf[HOLConst]}
-//      def and: Parser[HOLFormula] = "And" ~ formula ~ formula ^^ {case "And" ~ x ~ y => And(x,y)}
-//      def or: Parser[HOLFormula] = "Or" ~ formula ~ formula ^^ {case "Or" ~ x ~ y => Or(x,y)}
-//      def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}
-//      def abs: Parser[HOLExpression] = "Abs" ~ variable ~ term ^^ {case "Abs" ~ v ~ x => Abs(v,x).asInstanceOf[HOLExpression]}
-//      def neg: Parser[HOLFormula] = "Neg" ~ formula ^^ {case "Neg" ~ x => Neg(x)}
-//      def atom: Parser[HOLFormula] = (equality | var_atom | const_atom)
-//      def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
-//      def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
-//      def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new VariableStringSymbol(x), params)}
-//      def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params)}
-//      def equality: Parser[HOLFormula] = /*eq_infix | */ eq_prefix // infix is problematic in higher order
-//     //def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
-//      def eq_prefix: Parser[HOLFormula] = "=" ~ "(" ~ term ~ "," ~ term  ~ ")" ^^ {case "=" ~ "(" ~ x ~ "," ~ y  ~ ")" => Equation(x,y)}
-//      def var_func: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
-//     /*def var_func: Parser[HOLExpression] = (var_func1 | var_funcn)
-//     def var_func1: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
-//     def var_funcn: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "^" ~ decimalNumber ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "^" ~ n ~ "(" ~ params ~ ")" ~ ":" ~ tp => genF(n.toInt, HOLVar(new VariableStringSymbol(x)), params)}
-//     */
-//
-//      def const_func: Parser[HOLExpression] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp  => Function(new ConstantStringSymbol(x), params, tp)}
-//      protected def word: String = """[a-zA-Z0-9$_{}]*"""
-//      protected def symbol: Parser[String] = symbols.r
-//      def symbols: String = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""" // +-*/\^<>=`~?@&|!#{}';
-//
-//      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
-//          println("\n\nSEQUENT")
-//          Axiom(lf::Nil, rf::Nil).root
-//        }
-//      }
-//
-//      def orR1: Parser[LKProof] = "orR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-//        case "orR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => OrRight1Rule(map.get(l).get, f1, f2)
-//      }
-//
-//      def orR2: Parser[LKProof] = "orR2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-//        case "orR2(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => OrRight2Rule(map.get(label).get, f1, f2)
-//      }
-//
-//      def orL: Parser[LKProof] = "orL(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-//        case "orL(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-//          println("\n\nOR-Left")
-//          OrLeftRule(map.get(l1).get, map.get(l2).get, f1, f2)
-//        }
-//      }
-//
-//      def negL: Parser[LKProof] = "negL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-//        case "negL(" ~ label ~ "," ~ formula ~ ")" => {
-//          println("\n\nNEG-Left")
-//          NegLeftRule(map.get(label).get, formula)
-//        }
-//        case _ => {
-//          println("\n\nError!")
-//          sys.exit(10)
-//        }
-//      }
-//
-//      def negR: Parser[LKProof] = "negR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-//        case "negR(" ~ label ~ "," ~ formula ~ ")" => NegRightRule(map.get(label).get, formula)
-//      }
-//
-//      def ax: Parser[LKProof] = "ax(" ~ sequent ~ ")" ^^ {
-//        case "ax(" ~ sequent ~ ")" => {
-//          println("\n\nAXIOM")
-//          Axiom(sequent)
-//        }
-//      }
-//
-//    }
-//    println("\n\n\nsize = "+map.size)
-//    val m = map.get(plabel).get
-////    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
-//    m
-//
-//  }
-//}
 
