@@ -91,6 +91,12 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
 
 //          Main.display("phi", map.get("phi").get._2.get("root").get) ;
 
+
+//          val seq = SHLK.parseSequent("P(n,f(0,x)) |- ")
+//          val seq = SHLK.parseSequent("Forall x P(f(k,x)), P(x(k)) |- ")
+//          println(seq)
+
+
           	// specs2 require a least one Result, see org.specs2.specification.Example 
           	Success()
 
