@@ -33,21 +33,40 @@ trait IntegerTerm extends SchemaExpression {
 
 trait schemaTerm extends SchemaExpression
 
-object sTerm {
-  def apply(f: HOLConst, i: IntegerTerm, l: List[schemaTerm]): schemaTerm = {
-//    f.exptype match {
-//      case FunctionType(Ti(), ll) => {
-//        if (ll == Tindex()::(l.map(t => t.exptype)))
-//      }
-//      case _ => throw new Exception
-//    }
+object aTerm {
+  def apply(name: HOLConst, ind: IntegerTerm): IntegerTerm = {
+    SchemaFactory.createApp(name, ind).asInstanceOf[IntegerTerm]
+  }
+}
 
-    return AppN(f, i::l).asInstanceOf[schemaTerm]
+
+object sTerm {
+//  def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): schemaTerm = {
+////    f.exptype match {
+////      case FunctionType(Ti(), ll) => {
+////        if (ll == Tindex()::(l.map(t => t.exptype)))
+////      }
+////      case _ => throw new Exception
+////    }
+//    return AppN(f, i::l).asInstanceOf[schemaTerm]
+//  }
+  def apply(f: String, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
+//    AppN(HOLConst(new ConstantStringSymbol(f), ->(Tindex() , ->(Ti(), Ti()))), i::l).asInstanceOf[schemaTerm]
+    val func = HOLConst(new ConstantStringSymbol(f), ->(Tindex() , ->(Ti(), Ti())))
+    return HOLApp(HOLApp(func, i), l.head).asInstanceOf[HOLExpression]
+//    return new SchemaApp(new SchemaApp(func, i), l.head).asInstanceOf[HOLExpression]
+  }
+  def unapply(s : schemaTerm) = s match {
+    case AppN( Var( name, t ), args ) if (args.head.exptype == Tindex()) => Some( ( name, args.head.asInstanceOf[IntegerTerm], args.tail.asInstanceOf[List[SchemaExpression]] ) )
+    case _ => None
   }
 }
 
 class sTermRewriteSys(val func: HOLConst, val base: HOLExpression, val rec: HOLExpression) {
+}
 
+object sTermRewriteSys {
+  def apply(f: HOLConst, base: HOLExpression, step: HOLExpression) = new sTermRewriteSys(f, base, step)
 }
 
 object sTermDB extends Iterable[(HOLConst, sTermRewriteSys)] with TraversableOnce[(HOLConst, sTermRewriteSys)] {
@@ -318,3 +337,21 @@ class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map
       case _ => expression
   }
 }
+
+class indexedFOVar(override val name: VariableStringSymbol, val index: IntegerTerm) extends HOLVar(name, Ti(), None)
+
+object indexedFOVar {
+  def apply(name: VariableStringSymbol, i: IntegerTerm): HOLVar = {
+    new indexedFOVar(name, i)
+  }
+//  def unapply(s: schemaTerm) = s match {
+//    case App(t, ind) if t.exptype == ->(Tindex(), Ti()) && ind.exptype == Tindex() =>
+//      Some(t, ind)
+//    case _ => None
+//  }
+}
+
+// P(Int, FOTerm)
+//object sAtom {
+//  def apply()
+//}
