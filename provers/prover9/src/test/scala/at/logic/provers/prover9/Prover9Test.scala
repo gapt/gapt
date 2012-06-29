@@ -23,6 +23,8 @@ import java.io.IOException
 import at.logic.calculi.resolution.robinson.Formatter
 
 import at.logic.calculi.occurrences.factory
+import at.logic.parsing.language.tptp.TPTPFOLExporter
+
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
 
 // to use matchers like anyInt()
@@ -202,6 +204,32 @@ class Prover9Test extends SpecificationWithJUnit {
       val t1 = FSequent(List(skk_i),Nil)
       val result : Boolean = Prover9.refute( List(s1,s2,s3,t1) )
       result must beEqualTo( true )
+    }
+  }
+
+  "The Prover9 interface" should {
+    "find a refutation for a simple clause set }" in {
+      //checks, if the execution of prover9 works, o.w. skip test
+      Prover9.refute(box ) must not(throwA[IOException]).orSkip
+      println("==== SIMPLE EXAMPLE ====")
+      val f_eq_g = parse("=(f(x),g(x))")
+      val px = parse("P(x)")
+      val pfx = parse("P(f(x))")
+      val pa = parse("P(a)")
+      val goal = parse("P(g(a))")
+
+      val s1 = FSequent(Nil, List(f_eq_g))
+      val s2 = FSequent(List(px), List(pfx))
+      val s3 = FSequent(Nil, List(pa))
+      val t1 = FSequent(List(goal),Nil)
+      println(TPTPFOLExporter.tptp_problem(List(s1,s2,s3,t1)))
+      println()
+      val Some(result) = getRefutation2( List(s1,s2,s3,t1) )
+      //println(result)
+
+      println(Formatter.asTex(result))
+
+      true must beEqualTo( true )
     }
   }
 

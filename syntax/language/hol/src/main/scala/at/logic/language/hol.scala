@@ -49,7 +49,10 @@ trait Formula extends LambdaExpression {require(exptype == To())}
     //TODO: introduce binding priorities and skip more parens
     def toPrettyString : String = this match {
       case Var(x,tpe) => x.toString
-      case Atom(x, args) => x + "(" +
+      case Atom(EqSymbol, List(left,right)) =>
+        left.toPrettyString_ + " "+ EqSymbol + " " + right.toPrettyString_
+      case Atom(x, args) =>
+        x + "(" +
         (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
         else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
       case Function(x, args, tpe) => x + "(" +
@@ -70,6 +73,8 @@ trait Formula extends LambdaExpression {require(exptype == To())}
     //inner pretty printing, has parenthesis around
     def toPrettyString_ : String = this match {
       case Var(x,tpe) => x.toString
+      case Atom(ConstantStringSymbol("="), List(left,right)) =>
+        left.toPrettyString_ + " = " + right.toPrettyString_
       case Atom(x, args) => x + "(" +
         (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
         else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"

@@ -245,5 +245,26 @@ import collection.immutable
         }
         sb.toString
     }
+
+    // formats a sequent to a readable string
+    def fsequentToString(s : FSequent) : String = {
+      var sb = new scala.StringBuilder()
+      var first = true
+      for (f <- s.antecedent) {
+        if (! first) sb.append(", ")
+        else first = false
+
+        sb.append(f)
+      }
+      sb.append(" :- ")
+      first =true
+      for (f <- s.succedent) {
+        if (! first) sb.append(", ")
+        else first = false
+        sb.append(f)
+
+      }
+      sb.toString
+    }
   }
 }
