@@ -16,6 +16,7 @@ import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.Seq
 import at.logic.language.hol.{HOLFormula}
 
+
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
 case object AndEquivalenceRule2Type extends UnaryRuleTypeA
 case object AndEquivalenceRule3Type extends UnaryRuleTypeA
@@ -104,6 +105,26 @@ object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnc
 trait SchemaProofLink {
   def link: String
   def indices: List[IntegerTerm]
+}
+
+object FOSchemaProofLinkRule {
+  def apply(seq: FSequent, link_name: String, indices_ : List[IntegerTerm]) = {
+    def createSide(side : Seq[HOLFormula]) = {
+      side.map(f =>factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence]))
+    }
+    new LeafTree[Sequent]( Sequent(createSide(seq._1.map(f => f.asInstanceOf[HOLFormula])), createSide(seq._2.map(f => f.asInstanceOf[HOLFormula])) ) ) with NullaryLKProof with SchemaProofLink {
+      def rule = SchemaProofLinkRuleType
+      def link = link_name
+      def indices = indices_
+    }
+  }
+  def apply(seq: FSequent, name: String, ind : IntegerTerm) : LeafTree[Sequent] with NullaryLKProof with SchemaProofLink= this.apply(seq, name, ind::Nil)
+  def unapply( proof: LKProof ) =
+    if (proof.rule == SchemaProofLinkRuleType) {
+      val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
+      Some((r.root, r.link, r.indices))
+    }
+    else None
 }
 
 object SchemaProofLinkRule {
