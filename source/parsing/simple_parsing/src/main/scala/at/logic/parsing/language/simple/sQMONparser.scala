@@ -251,7 +251,7 @@ object ParseQMON {
         }
       }
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR | impL | impR
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = ( non_formula | formula)
@@ -358,7 +358,9 @@ object ParseQMON {
           indexedFOVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
       }
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,y]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i).asInstanceOf[HOLVar]}
+
+      // TODO: a should be a FOConstant
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,y,a]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i).asInstanceOf[HOLVar]}
       def variable: Parser[HOLVar] = (indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
       def and: Parser[HOLFormula] = "(" ~ repsep(formula, "/\\") ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => And(f, res)) } }
@@ -412,10 +414,17 @@ object ParseQMON {
 
       def proof_name : Parser[String] = """[\\]*[a-z]*[0-9]*""".r
 
-      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
+//      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
+//        case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
+////          println("\n\npLink")
+//          SchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
+//        }
+//      }
+
+      def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
-//          println("\n\npLink")
-          SchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
+          //          println("\n\npLink")
+          FOSchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
         }
       }
 
@@ -653,6 +662,18 @@ object ParseQMON {
       def allR: Parser[LKProof] = "allR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ indexedVar ~ ")" ^^ {
         case "allR(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ v ~ ")" => {
           ForallRightRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
+        }
+      }
+
+      def impL: Parser[LKProof] = "impL(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "impL(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          ImpLeftRule(map.get(l1).get, map.get(l2).get, f1, f2)
+        }
+      }
+
+      def impR: Parser[LKProof] = "impR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "impR(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
+          ImpRightRule(map.get(label).get, f1, f2)
         }
       }
     }

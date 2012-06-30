@@ -1,13 +1,86 @@
-proof \psi  proves
+proof \chi  proves
 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k+1,x)))
 
 base {
-    root: ax(Forall x (Imp P(x) P(f(z(k)))) , Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(1,x)))
-            )
+    root: ax(Forall x (Imp P(x) P(g(0,x))) , Forall x (Imp P(x) P(g(0,x))) |- Forall x (Imp P(x) P(g(1,x))) )
 }
 
 step {
-    1:      ax( Imp P(g(k,x)) P(f(g(k,x))) |- Imp P(z(k)) P(f(g(k,z(k)))) )
-    2:      allL(1, Imp P(g(k,x)) P(f(g(k,x))), Forall x (Imp P(x) P(f(x))), g(k,x))
-    root:   allR(2, Imp P(z(k)) P(f(g(k,z(k)))), Forall x Imp P(x) P(f(g(k,x))), z(k))
+    1:      ax( P(g(k,z(k)))  |- P(g(k,z(k)))  )
+    2:      ax( P(f(g(k,z(k))))  |- P(f(g(k,z(k))))  )
+    3:      impL( 1, 2, P(g(k,z(k))), P(f(g(k,z(k)))) )
+    4:      ax( P(z(k))  |- P(z(k)) )
+    5:      impL( 4, 3, P(z(k)), P(g(k,z(k))) )
+    6:      impR( 5, P(z(k)), P(f(g(k,z(k)))) )
+    7:      allL(6, Imp P(g(k,z(k))) P(f(g(k,z(k)))), Forall x (Imp P(x) P(f(x))), g(k,z(k)))
+    8:      allL(7, Imp P(z(k)) P(g(k,z(k))), Forall x (Imp P(x) P(g(k,x))), z(k) )
+    root:   allR(8, Imp P(z(k)) P(f(g(k,z(k)))), Forall x (Imp P(x) P(f(g(k,x)))), z(k) )
+}
+
+
+proof \tao  proves
+Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(g(k,x)) P(h(k,x))) |- Imp P(a) P(g(k,a))
+
+base {
+    root: ax( Forall x (Imp P(x) P(g(1,x))) , Forall x (Imp P(g(1,x)) P(h(1,x))) |- Imp P(a) P(g(1,a)) )
+}
+
+step {
+    1:      ax( P(g(k,a))  |- P(g(k,a)) )
+    2:      ax( P(h(k,a))  |- P(h(k,a)) )
+    3:      impL( 1, 2, P(g(k,a)), P(h(k,a)) )
+    4:      ax( P(a)  |- P(a) )
+    5:      impL( 4, 3, P(a), P(g(k,a)) )
+    6:      impR( 5, P(a), P(h(k,a)) )
+    7:      allL(6, Imp P(g(k,a)) P(h(k,a)), Forall x (Imp P(g(k,x)) P(h(k,x))), a)
+    root:   allL(7, Imp P(a) P(g(k,a)), Forall x (Imp P(x) P(g(k,x))), a )
+}
+
+
+proof \varphi  proves
+Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k,x)))
+
+base {
+    root: ax( Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(f(g(1,x)))) )
+}
+
+step {
+    1:      pLink(   (\varphi, k)
+                Forall x (Imp P(x) P(g(1,x)))
+                    |-
+                Forall x (Imp P(x) P(g(k,x)))
+                )
+    2:      pLink(   (\chi, k+1)
+                Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x)))
+                    |-
+                Forall x (Imp P(x) P(g(k+1,x)))
+                )
+
+    3:      cut( 1, 2, Forall x (Imp P(x) P(g(k,x))) )
+    root:   contrL( 3, Forall x (Imp P(x) P(g(1,x))) )
+}
+
+
+
+proof \sigma  proves
+Forall x (Imp P(x) P(g(1,x))), Forall x (Imp P(g(k,x)) P(h(k,x))) |- Forall x (Imp P(x) P(h(k,x)))
+
+base {
+    root: ax( Forall x (Imp P(x) P(g(1,x))), Forall x (Imp P(g(1,x)) P(h(1,x))) |- Imp P(a) P(h(1,x)) )
+
+}
+
+step {
+    1:      pLink(   (\varphi, k)
+                Forall x (Imp P(x) P(g(1,x)))
+                    |-
+                Forall x (Imp P(x) P(g(k,x)))
+                )
+    2:      pLink(   (\tao, k+1)
+                Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(g(k,x)) P(h(k,x)))
+                    |-
+                Imp P(a) P(h(k,a))
+                )
+
+    root:   cut( 1, 2, Forall x (Imp P(x) P(g(k,x))) )
 }
