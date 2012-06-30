@@ -96,7 +96,7 @@ class sQMONparserTest extends SpecificationWithJUnit {
       //          val seq = ParseQMON.parseSequent("Forall x P(f(k,x)), P(x(k)) |- ")
       //          println(seq)
 
-      println("\n\n"+map.get("\\psi").get._2.get("root").get.root)
+      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
       println("\n\n")
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
