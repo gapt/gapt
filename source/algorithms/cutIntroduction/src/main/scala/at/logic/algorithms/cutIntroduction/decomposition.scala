@@ -39,11 +39,12 @@ class DeltaTable() {
     table.filter( e => e._1.length == n)
   }
 
-  def findValidDecompositions(terms: Map[FormulaOccurrence, List[FOLTerm]]) : List[(List[FOLTerm], List[FOLTerm])] = {
+  def findValidDecompositions(terms: Map[FormulaOccurrence, List[FOLTerm]]) 
+  : List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])] = {
 
     val allFormulas = terms.keys
 
-    // TODO: the next two functions should really be somewhere else...
+    // TODO: the next two or three functions should really be somewhere else...
 
     // Find all subsets (could not find a built-in scala function)
     def subsets[T](s : List[T]) : List[List[T]] = {
@@ -54,11 +55,32 @@ class DeltaTable() {
       }
     }
 
-    // Cartesian product of an arbitrary list of lists TODO: FIXME
-    def product[T](xs: List[List[T]]) : List[List[T]] = xs.foldLeft(List[List[T]]()) {
-      (x, y) => for(a <- x; b <- y) yield a :+ b
+    // Cartesian product of an arbitrary list of lists
+    def product[T](l: List[List[T]]): List[List[T]] = l match {
+      case Nil => List(Nil)
+      case h :: t => for(eh <- h; et <- product(t)) yield eh :: et
     }
-
+/*
+    def mapProduct[T](l: List[List[T]]): List[List[T]] = l match {
+      case Nil => List(Nil)
+      case h :: t => for(eh <- h; et <- product(t)) yield eh :: et
+    }
+*/
+/*
+    def mapProduct[T](m: Map[FormulaOccurrence, List[List[FOLTerm]]]): List[Map[FormulaOccurrence, List[FOLTerm]]] = {
+      m.foldRight(List[Map[FormulaOccurrence, List[FOLTerm]]]()) {
+        case ((f, lst), acc) => (for(eh <- lst; et <- mapProduct(m - (f))) yield (et + (f -> eh))) :+ acc
+      }
+    }
+*/
+    // TODO: parametrize the types.
+    def mapProduct[T](m: Map[FormulaOccurrence, List[List[FOLTerm]]]): List[Map[FormulaOccurrence, List[FOLTerm]]] = {
+      val forms = m.keySet.toList
+      forms match {
+        case Nil => List(Map.empty)
+        case h :: t => for(eh <- m(h); et <- mapProduct(m - (h))) yield et + (h -> eh)
+      }
+    }
 
     def findFormulaDecompositions(s: List[FOLTerm], f: FormulaOccurrence) = {
       var pairs = table(s)(f)
@@ -94,23 +116,23 @@ class DeltaTable() {
       valid.foldRight(List[List[FOLTerm]]()) ((p, acc) => p._1 :: acc)
     }
 
-    table.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {case ((s, forms), decompositions) =>
+    table.foldRight(List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])]()) {case ((s, forms), decompositions) =>
 
       if(allFormulas.forall(f => forms.keySet.contains(f))) {
-        println("Set s: " + s + " contains all formulas in its hashmap")
-        val setsOfUi = forms.keys.foldRight(List[List[List[FOLTerm]]]()) { (f, acc) =>
-          findFormulaDecompositions(s, f) :: acc
+        //println("Set s: " + s + " contains all formulas in its hashmap")
+        val setsOfUi = forms.keys.foldRight(Map[FormulaOccurrence, List[List[FOLTerm]]]()) { (f, acc) =>
+          acc + (f -> findFormulaDecompositions(s, f))
         }
 
-        println("Decompositions for each formula: " + setsOfUi)
+        //println("Decompositions for each formula: " + setsOfUi)
 
-        if(setsOfUi(0).length != 0) {
-          val uSets = product(setsOfUi)
+        if(!setsOfUi.isEmpty) {
+          val uSets = mapProduct(setsOfUi)
   
-          val dec = uSets.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) { (u, acc) =>
-            (u.flatten, s) :: acc 
+          val dec = uSets.foldRight(List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])]()) { (u, acc) =>
+            (u, s) :: acc 
           }
-          println("Found decompositions: " + dec)
+          //println("Found decompositions: " + dec)
           dec ++ decompositions
         }
         else decompositions
@@ -125,21 +147,41 @@ object decomposition {
 
   // Input: a hashmap of formulas pointing to a list of terms
   // Output: two lists of terms
-  def apply(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) : List[(List[FOLTerm],List[FOLTerm])] = {
-    val newterms = tuplesToTerms(terms)
+  def apply(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) 
+  : List[(Map[FormulaOccurrence, List[List[FOLTerm]]], List[FOLTerm])] = {
+    //val newterms = tuplesToTerms(terms)
+    val newterms = terms.foldRight(Map[FormulaOccurrence, List[FOLTerm]]()) {
+      case ((f, tuples), newmap) => newmap + (f -> tuplesToTerms(tuples)) 
+    }
     val deltatable = fillDeltaTable(newterms)
     //val decompositions = findValidDecompositions(newterms, deltatable)
-    deltatable.findValidDecompositions(newterms)
+    val decompositions = deltatable.findValidDecompositions(newterms)
+    // NOTE: there shouldn't be a tuple symbol on the second element.
+    decompositions.foldRight(List[(Map[FormulaOccurrence, List[List[FOLTerm]]], List[FOLTerm])]()) {
+      case ((m, lst), acc) => (m.map{ case (k, v) => (k, termsToTuples(v))}, lst) :: acc
+    }
   }
 
   val tupleFunctionSymbol = ConstantStringSymbol("##")
-  def tuplesToTerms(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) : Map[FormulaOccurrence, List[FOLTerm]] = {
+  /*def tuplesToTerms(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) : Map[FormulaOccurrence, List[FOLTerm]] = {
     terms.foldRight(Map[FormulaOccurrence, List[FOLTerm]]()) { case ((f, tuples), hm) =>
       val tuplesAsTerms = tuples.map(t => Function(tupleFunctionSymbol, t))
       hm + (f -> tuplesAsTerms)
     }
+  }*/
+  def tuplesToTerms(terms: List[List[FOLTerm]]) : List[FOLTerm] = {
+    terms.foldRight(List[FOLTerm]()) { 
+      case (t, acc) => Function(tupleFunctionSymbol, t) :: acc
+    }
   }
-  // TODO : implement functionsToTuples
+  def termsToTuples(terms: List[FOLTerm]) : List[List[FOLTerm]] = {
+    terms.foldRight(List[List[FOLTerm]]()) {
+      case (t, acc) => t match {
+        case Function(tupleFunctionSymbol, lst) => lst :: acc
+        case _ => throw new DecompositionException("Tuple symbol not used.")
+      }
+    }
+  }
 
 /*
   def findValidDecompositions(terms: List[FOLTerm], deltaTable: Map[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]) = {
