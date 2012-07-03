@@ -50,19 +50,21 @@ object cutIntroduction {
     println("\nTerm set: {" + terms + "}")
     println("of size " + terms.size)
 
-    //val decompositions = decomposition(terms).sortWith((d1, d2) => 
-    //  d1._1.length + d1._2.length < d2._1.length + d2._2.length
-    //)
-    val decompositions = decomposition(terms) 
+    val decompositions = decomposition(terms).sortWith((d1, d2) => 
+      d1._1.size + d1._2.length < d2._1.size + d2._2.length
+    )
+    //val decompositions = decomposition(terms) 
 
     println("\nThe decompositions found were:")
     decompositions.foreach{dec =>
-      val l = dec._1.length + dec._2.length
+      val l = dec._1.size + dec._2.length
       println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
     }
 
     val smallestDec = decompositions.head
+    // This is a map from formula occurrence to a list of terms
     val u = smallestDec._1
+    // This is a list of terms
     val s = smallestDec._2
 
     println("\nDecomposition chosen: {" + smallestDec._1 + "} o {" + smallestDec._2 + "}")
@@ -71,8 +73,8 @@ object cutIntroduction {
     val alpha = FOLVar(new VariableStringSymbol("alpha"))
     val xalpha = Atom(x, alpha::Nil)
 
+    // TODO: implement these things at once
     val and = Atom(x, s(0)::Nil)
-
     val bigConj = s.drop(1).foldRight(and) {case (t, form) =>
       val xt = Atom(x, t::Nil)
       And(form, xt)
@@ -80,8 +82,25 @@ object cutIntroduction {
     
     val impl = Imp(xalpha, bigConj)
 
+    // Substitutes a term in a quantified formula (using the first quantifier).
+    def substitute(f: FOLFormula, t: FOLTerm) = f match {
+      case AllVar(v, form) => FOLSubstitution(form, v, t)
+      case _ => throw new CutIntroException("Error in replacing variables.") 
+    }
+
+    def substituteAll(f: FOLFormula, lst: List[FOLTerm]) : FOLFormula = lst match {
+      case Nil => f
+      case h :: t => substituteAll(substitute(f, h), t)
+    }
+
+    // Replace the terms from U in the proper formula
+    val alphaFormulas = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
+      (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+    }
+
     // Right now, replacing blindly all quantified terms by all terms in U. This
-    // should be fixed once the colors are applied.
+    // should be fixed once the colors are applied
+    /*
     val alphaFormulas = quantFormulas.foldRight(List[FOLFormula]()) ( (f, acc) =>
       u.foldRight(acc) ((t, lst) => f match {
         case AllVar(v, form) => 
@@ -91,10 +110,16 @@ object cutIntroduction {
         }
       )
     )
+  */
 
     val xvar = FOLVar(new VariableStringSymbol("x"))
-    val ux = u.map(t => FOLSubstitution(t, alpha, xvar))
+    val ux = u.map{ 
+      //case (f, terms) => (f, terms.map(t => FOLSubstitution(t, alpha, xvar))) 
+      case (f, lstterms) => 
+        (f, for(t <- lstterms) yield t.map(e => FOLSubstitution(e, alpha, xvar))) 
+    }
 
+    /*
     val xFormulas = quantFormulas.foldRight(List[FOLFormula]()) ( (f, acc) =>
       ux.foldRight(acc) ((t, lst) => f match {
         case AllVar(v, form) => 
@@ -104,7 +129,12 @@ object cutIntroduction {
         }
       )
     )
+  */
     
+    val xFormulas = ux.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
+      (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+    }
+
     val ehsant = (impl +: alphaFormulas.toSeq) ++ ant
     val ehssucc = succ
 

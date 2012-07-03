@@ -21,9 +21,8 @@ import at.logic.calculi.lk.quantificationRules._
 import scala.collection.immutable.HashSet
 
 import at.logic.testing._
-/*
+
 @RunWith(classOf[JUnitRunner])
-// COMMENTING OUT THIS TESTS UNTIL THE IMPLEMENTATION OF CUT INTRODUCTION IS FIXED
 class CutIntroTest extends SpecificationWithJUnit {
   "CutIntroduction" should {
 
@@ -55,5 +54,4 @@ class CutIntroTest extends SpecificationWithJUnit {
     }
   }
 }
-*/
 
