@@ -301,12 +301,14 @@ object loadProofDB {
       )
   }
 
-/* COMMENTING OUT UNTIL CUT INTRODUCTION IS FIXED
+  /*
   object decompose {
     import at.logic.algorithms.cutIntroduction._
     
     private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
 
+    
+    TODO: should be applied to a hashmap
     def apply(s : HashSet[FOLTerm] ) = 
     {
       val d = decomposition(s.toList)
@@ -329,11 +331,10 @@ object loadProofDB {
       d
     }
   }
-*/
+  */
 
   object cutIntro {
     def apply(p : LKProof) = {
-      println("NOTE: This implementation is not complete. Currently it only computes the extended Herbrand sequent, and not the final proof with cuts.")
       cutIntroduction(p)
     }
   }
