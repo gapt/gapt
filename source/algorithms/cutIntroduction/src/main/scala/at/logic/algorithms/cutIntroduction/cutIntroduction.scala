@@ -11,38 +11,28 @@ import at.logic.language.lambda.substitutions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus._
-//import scala.collection.Map
-//import scala.collection.mutable._
+import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 
 class CutIntroException(msg: String) extends Exception(msg)
 
 object cutIntroduction {
 
-  // This method should return a proof eventually
-  //def apply(proof: LKProof) : LKProof = {
-  def apply(proof: LKProof) : Unit = {
+  def apply(proof: LKProof) : LKProof = {
 
     val endSequent = proof.root
 
     println("\nEnd sequent: " + endSequent)
 
-    // In order to deal with more than one formula, terms must be colored on
-    // this hashmap
     val terms = termsExtraction(proof)
 
     val quantFormulas = terms.keys.toList.map(fo => fo.formula)
 
     println("\nQuantified formulas: " + quantFormulas)
-
-    //val termset = terms.foldRight(List[FOLTerm]()) ( (t, acc) => 
-    //  t._2.foldRight(acc) ((lst, ac) =>
-    //    lst ++ ac
-    //  )
-    //)
 
     val ant = endSequent.antecedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
     val succ = endSequent.succedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
@@ -53,7 +43,6 @@ object cutIntroduction {
     val decompositions = decomposition(terms).sortWith((d1, d2) => 
       d1._1.size + d1._2.length < d2._1.size + d2._2.length
     )
-    //val decompositions = decomposition(terms) 
 
     println("\nThe decompositions found were:")
     decompositions.foreach{dec =>
@@ -82,6 +71,7 @@ object cutIntroduction {
     
     val impl = Imp(xalpha, bigConj)
 
+    // TODO: maybe these substitution methods should be put somewhere elese...
     // Substitutes a term in a quantified formula (using the first quantifier).
     def substitute(f: FOLFormula, t: FOLTerm) = f match {
       case AllVar(v, form) => FOLSubstitution(form, v, t)
@@ -94,50 +84,38 @@ object cutIntroduction {
     }
 
     // Replace the terms from U in the proper formula
-    val alphaFormulas = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
-      (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+    val alphaFormulasL = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
+      f.formula.asInstanceOf[FOLFormula] match {
+        case AllVar(_, _) => 
+          (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+        case _ => acc
+      }
+    }
+    val alphaFormulasR = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
+      f.formula.asInstanceOf[FOLFormula] match {
+        case ExVar(_, _) => 
+          (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+        case _ => acc
+      }
     }
 
-    // Right now, replacing blindly all quantified terms by all terms in U. This
-    // should be fixed once the colors are applied
-    /*
-    val alphaFormulas = quantFormulas.foldRight(List[FOLFormula]()) ( (f, acc) =>
-      u.foldRight(acc) ((t, lst) => f match {
-        case AllVar(v, form) => 
-          // Replace t in f
-          val ft = FOLSubstitution(form, v, t)
-          ft :: lst
-        }
-      )
-    )
-  */
+    //println("============= Alpha formulas left: " + alphaFormulasL)
+    //println("============= Alpha formulas right: " + alphaFormulasR)
 
     val xvar = FOLVar(new VariableStringSymbol("x"))
     val ux = u.map{ 
-      //case (f, terms) => (f, terms.map(t => FOLSubstitution(t, alpha, xvar))) 
       case (f, lstterms) => 
         (f, for(t <- lstterms) yield t.map(e => FOLSubstitution(e, alpha, xvar))) 
     }
-
-    /*
-    val xFormulas = quantFormulas.foldRight(List[FOLFormula]()) ( (f, acc) =>
-      ux.foldRight(acc) ((t, lst) => f match {
-        case AllVar(v, form) => 
-          // Replace t in f
-          val ft = FOLSubstitution(form, v, t)
-          ft :: lst
-        }
-      )
-    )
-  */
     
     val xFormulas = ux.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
       (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
     }
 
-    val ehsant = (impl +: alphaFormulas.toSeq) ++ ant
-    val ehssucc = succ
+    val ehsant = (impl :: alphaFormulasL) ++ ant
+    val ehssucc = alphaFormulasR ++ succ
 
+    // TODO: implement these things at once
     val conj0 = xFormulas(0)
     val conj1 = xFormulas.drop(1).foldRight(conj0) {case (f, form) =>
       And(form, f)
@@ -153,6 +131,67 @@ object cutIntroduction {
     // FIXME: very bad hack for showing the results in order to avoid working
     // with hol and fol formulas at the same time.
     println("\nWhere X is: λx." + conj3)
+
+    
+    // Building up the final proof with cut
+    
+    val cutFormula = AllVar(xvar, conj3)
+    
+    val cutLeft = substitute(cutFormula, alpha)
+    val cutRight = s.foldRight(List[FOLFormula]()) { case (t, acc) =>
+      substitute(cutFormula, t) :: acc
+    }
+
+    def genWeakQuantRules(f: FOLFormula, lst: List[FOLTerm], ax: LKProof) : LKProof = (f, lst) match {
+      case (_, Nil) => ax
+      case(AllVar(_,_), h::t) => 
+        val newForm = substitute(f, h)
+        ForallLeftRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
+      case(ExVar(_,_), h::t) =>
+        val newForm = substitute(f, h)
+        ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
+    }
+
+    // TODO: contraction of the formulas
+    def uPart(hm: Map[FormulaOccurrence, List[List[FOLTerm]]], ax: LKProof) : LKProof = 
+    hm.foldRight(ax) {
+      case ((f, setU), ax) => f.formula.asInstanceOf[FOLFormula] match { 
+        case AllVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
+          genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+        }
+        case ExVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
+          genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+        }
+      }
+    }
+    /*
+    def uPart(hm: Map[FormulaOccurrence, List[List[FOLTerm]]], ax: LKProof) : LKProof = 
+    hm.foldRight(ax) {
+      case ((f, setU), ax) => f.formula.asInstanceOf[FOLFormula] match { 
+        case AllVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
+          ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula]) 
+        }
+        case ExVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
+          ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula]) 
+        }
+      }
+    }
+    */
+    val axiomL = Axiom((alphaFormulasL ++ ant), (cutLeft +: (succ ++ alphaFormulasR)))
+    //println("Left Axiom: " + axiomL)
+    val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
+
+    // TODO: contraction rule
+    def sPart(cf: FOLFormula, s: List[FOLTerm], ax: LKProof) = s.foldRight(ax) { case (t, ax) =>
+      val scf = substitute(cf, t)
+      //ContractionLeftRule( ForallLeftRule(ax, scf, cf, t), cf)
+      ForallLeftRule(ax, scf, cf, t)
+    }
+
+    val axiomR = Axiom((cutRight ++ alphaFormulasL ++ ant), (succ ++ alphaFormulasR))
+    val rightBranch = uPart(u, sPart(cutFormula, s, axiomR))
+
+    CutRule(leftBranch, rightBranch, cutFormula)
   }
 }
 

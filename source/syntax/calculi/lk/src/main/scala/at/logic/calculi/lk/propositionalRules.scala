@@ -147,13 +147,13 @@ import collection.immutable.Seq
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula. " + "\nContracted formula: " + term1 + "\nAntecedent: " + s1.root.antecedent)
       }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
       val term2op = s1.antecedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get

@@ -33,7 +33,7 @@ import _root_.at.logic.utils.traits.Occurrence
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
-        case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
+        case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula.")
     }
 
     def computeAux( main: HOLFormula, term: HOLExpression ) = main match {
