@@ -147,7 +147,7 @@ import collection.immutable.Seq
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula. " + "\nContracted formula: " + term1 + "\nAntecedent: " + s1.root.antecedent)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula.")
       }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
