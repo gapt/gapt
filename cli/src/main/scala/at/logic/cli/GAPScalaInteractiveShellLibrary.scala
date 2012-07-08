@@ -301,38 +301,6 @@ object loadProofDB {
       )
   }
 
-  /*
-  object decompose {
-    import at.logic.algorithms.cutIntroduction._
-    
-    private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
-
-    
-    TODO: should be applied to a hashmap
-    def apply(s : HashSet[FOLTerm] ) = 
-    {
-      val d = decomposition(s.toList)
-
-      println("The decompositions found were:")
-      var n = 10000
-      var i = -1
-      d.zip(d.indices).foreach{ p =>
-        val dec = p._1
-        val j = p._2
-        val l = dec._1.length + dec._2.length
-        println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
-        if ( l < n )
-        {
-          n = l
-          i = j
-        }
-      }
-      println("minimal size " + n + " at index " + i)
-      d
-    }
-  }
-  */
-
   object cutIntro {
     def apply(p : LKProof) = {
       cutIntroduction(p)
