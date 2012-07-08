@@ -46,7 +46,7 @@ object cutIntroduction {
 
     println("\nThe decompositions found were:")
     decompositions.foreach{dec =>
-      val l = dec._1.size + dec._2.length
+    val l = (dec._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + dec._2.length
       println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
     }
 
@@ -71,7 +71,7 @@ object cutIntroduction {
     
     val impl = Imp(xalpha, bigConj)
 
-    // TODO: maybe these substitution methods should be put somewhere elese...
+    // TODO: maybe these substitution methods should be put somewhere else...
     // Substitutes a term in a quantified formula (using the first quantifier).
     def substitute(f: FOLFormula, t: FOLTerm) = f match {
       case AllVar(v, form) => FOLSubstitution(form, v, t)
@@ -98,9 +98,6 @@ object cutIntroduction {
         case _ => acc
       }
     }
-
-    //println("============= Alpha formulas left: " + alphaFormulasL)
-    //println("============= Alpha formulas right: " + alphaFormulasR)
 
     val xvar = FOLVar(new VariableStringSymbol("x"))
     val ux = u.map{ 
@@ -164,27 +161,13 @@ object cutIntroduction {
         }
       }
     }
-    /*
-    def uPart(hm: Map[FormulaOccurrence, List[List[FOLTerm]]], ax: LKProof) : LKProof = 
-    hm.foldRight(ax) {
-      case ((f, setU), ax) => f.formula.asInstanceOf[FOLFormula] match { 
-        case AllVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
-          ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula]) 
-        }
-        case ExVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
-          ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula]) 
-        }
-      }
-    }
-    */
+
     val axiomL = Axiom((alphaFormulasL ++ ant), (cutLeft +: (succ ++ alphaFormulasR)))
-    //println("Left Axiom: " + axiomL)
     val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
 
     // TODO: contraction rule
     def sPart(cf: FOLFormula, s: List[FOLTerm], ax: LKProof) = s.foldRight(ax) { case (t, ax) =>
       val scf = substitute(cf, t)
-      //ContractionLeftRule( ForallLeftRule(ax, scf, cf, t), cf)
       ForallLeftRule(ax, scf, cf, t)
     }
 
