@@ -19,6 +19,7 @@ import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.{Color, Font}
 import java.awt.image.BufferedImage
 import swing.{Label, FlowPanel}
+import swing.event.{MouseExited, MouseEntered}
 
 object DrawSequent {
 
@@ -87,6 +88,12 @@ object DrawSequent {
 	  myicon.paintIcon(peer, g2, 0, 0)
 
     icon = myicon
+
+    listenTo(mouse.moves, mouse.clicks)
+    reactions += {
+      case e: MouseEntered => foreground = new Color(0,0,255)
+      case e: MouseExited => foreground = new Color(0,0,0)
+    }
   }
 
    // this method is used by DrawTree when drawing projections.
