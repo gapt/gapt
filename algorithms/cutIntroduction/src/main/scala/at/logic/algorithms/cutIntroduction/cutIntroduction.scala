@@ -40,8 +40,10 @@ object cutIntroduction {
     println("\nTerm set: {" + terms + "}")
     println("of size " + terms.size)
 
-    val decompositions = decomposition(terms).sortWith((d1, d2) => 
-      d1._1.size + d1._2.length < d2._1.size + d2._2.length
+    val decompositions = decomposition(terms).sortWith((d1, d2) =>
+      (d1._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + d1._2.length
+      <
+      (d2._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + d2._2.length
     )
 
     println("\nThe decompositions found were:")
@@ -131,6 +133,7 @@ object cutIntroduction {
 
     
     // Building up the final proof with cut
+    println("\nGenerating final proof with cut\n")
     
     val cutFormula = AllVar(xvar, conj3)
     
