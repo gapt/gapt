@@ -144,10 +144,11 @@ object DrawSequent {
       else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
     case Var(name, _) => name.toString
     case Function(name, args, _) =>
-      if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
+      if (args.size == 1) parseNestedUnaryFunction(name.toString, args.head, 1)
+      else if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
         "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString) + formulaToLatexString(args.last) + ")"
       else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
-    case Abs(v, t) => "(" + """\lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(t) + ")"
+    case Abs(v, t) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(t) + ")"
   }
 
   def nameToLatexString(name: String) = name match {
@@ -167,5 +168,13 @@ object DrawSequent {
         v.toStringSimple
     case Succ(t) => parseIntegerTerm( t, n + 1 )
     case _ => throw new Exception("Error in parseIntegerTerm(..) in gui")
+  }
+
+  def parseNestedUnaryFunction(parent_name: String, t: LambdaExpression, n: Int) : String = t match {
+    case Function(name, args, _) =>
+      if (args.size == 1 && name.toString == parent_name) parseNestedUnaryFunction(parent_name, args.head, n+1)
+      else parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + formulaToLatexString(t) + ")"
+    case Var(name, _) =>
+      parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + name.toString + ")"
   }
 }
