@@ -18,7 +18,7 @@ import decomposition._
 @RunWith(classOf[JUnitRunner])
 class decompositionTest extends SpecificationWithJUnit {
 
-// On the comments of the examples below, consider A as alpha
+// On the comments of the examples below, consider A as α
 
   "The decomposition" should {
     "compute the delta-vector correctly" in {
@@ -38,7 +38,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f1 = Function(f, hggc::ggc::Nil)
         val f2 = Function(f, hgc::gc::Nil)
       
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val galpha = Function(g, alpha::Nil)
         val hgalpha = Function(h, galpha::Nil)
         val common = Function(f, hgalpha::galpha::Nil)
@@ -66,7 +66,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f1 = Function(f, hggc::gga::Nil)
         val f2 = Function(f, hgc::gb::Nil)
       
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
       
         val dec = delta(f1::f2::Nil)
       
@@ -91,7 +91,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f1 = Function(f, hggc::ga::Nil)
         val f2 = Function(f, hgc::ga::Nil)
       
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val galpha = Function(g, alpha::Nil)
         val hgalpha = Function(h, galpha::Nil)
         val common = Function(f, hgalpha::ga::Nil)
@@ -112,7 +112,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f2a = Function(f, (Function(f, a::Nil))::Nil)
         val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
         
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val falpha = Function(f, alpha::Nil)
 
         val dec = delta(fa::f2a::f3a::Nil)
@@ -134,7 +134,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
         val f4a = Function(f, (Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil))::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val falpha = Function(f, alpha::Nil)
         val f2alpha = Function(f, (Function(f, alpha::Nil))::Nil)
         val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
@@ -182,7 +182,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val t5 = Function(f, g2c::gc::Nil)
         val t6 = Function(f, g3c::g2c::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val galpha = Function(g, alpha::Nil)
         val g2alpha = Function(g, (Function(g, alpha::Nil))::Nil)
         val f_c_galpha = Function(f, c::galpha::Nil)
@@ -224,7 +224,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
         val f4a = Function(f, (Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil))::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val falpha = Function(f, alpha::Nil)
         val f2alpha = Function(f, (Function(f, alpha::Nil))::Nil)
         val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
@@ -265,7 +265,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val t5 = Function(f, g2c::gc::Nil)
         val t6 = Function(f, g3c::g2c::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val galpha = Function(g, alpha::Nil)
         val g2alpha = Function(g, (Function(g, alpha::Nil))::Nil)
         val f_c_galpha = Function(f, c::galpha::Nil)
@@ -295,7 +295,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f2a = Function(f, (Function(f, a::Nil))::Nil)
         val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("alpha"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
         val falpha = Function(f, alpha::Nil)
         val f2alpha = Function(f, (Function(f, alpha::Nil))::Nil)
         val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
