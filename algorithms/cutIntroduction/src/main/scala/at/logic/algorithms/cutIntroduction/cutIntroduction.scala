@@ -60,17 +60,20 @@ object cutIntroduction {
 
     println("\nDecomposition chosen: {" + smallestDec._1 + "} o {" + smallestDec._2 + "}")
     
+    def genConjunction(forms: List[FOLFormula]) : FOLFormula = forms match {
+      case Nil => throw new CutIntroException("The set S of the decomposition should not be empty.")
+      case f :: Nil => f
+      case f :: t => And(genConjunction(t), f)
+    }
+
     val x = ConstantStringSymbol("X")
-    val alpha = FOLVar(new VariableStringSymbol("alpha"))
+    val alpha = FOLVar(new VariableStringSymbol("α"))
     val xalpha = Atom(x, alpha::Nil)
 
-    // TODO: implement these things at once
-    val and = Atom(x, s(0)::Nil)
-    val bigConj = s.drop(1).foldRight(and) {case (t, form) =>
-      val xt = Atom(x, t::Nil)
-      And(form, xt)
-    }
-    
+    // X[s_i] forall i
+    val xs = s.map(t => Atom(x, t::Nil))
+    val bigConj = genConjunction(xs)
+   
     val impl = Imp(xalpha, bigConj)
 
     // TODO: maybe these substitution methods should be put somewhere else...
@@ -114,34 +117,25 @@ object cutIntroduction {
     val ehsant = (impl :: alphaFormulasL) ++ ant
     val ehssucc = alphaFormulasR ++ succ
 
-    // TODO: implement these things at once
-    val conj0 = xFormulas(0)
-    val conj1 = xFormulas.drop(1).foldRight(conj0) {case (f, form) =>
-      And(form, f)
-    }
-    val conj2 = ant.foldRight(conj1) {case (f, form) =>
-      And(form, f)
-    }
-    val conj3 = succ.foldRight(conj2) {case (f, form) =>
-      And(form, Neg(f))
-    }
+    val conj = genConjunction(xFormulas)
 
     println("\nExtended Herbrand sequent: \n" + ehsant + " |- " + ehssucc)
     // FIXME: very bad hack for showing the results in order to avoid working
     // with hol and fol formulas at the same time.
-    println("\nWhere X is: λx." + conj3)
+    println("\nWhere X is: λx." + conj)
 
     
     // Building up the final proof with cut
     println("\nGenerating final proof with cut\n")
     
-    val cutFormula = AllVar(xvar, conj3)
+    val cutFormula = AllVar(xvar, conj)
     
     val cutLeft = substitute(cutFormula, alpha)
     val cutRight = s.foldRight(List[FOLFormula]()) { case (t, acc) =>
       substitute(cutFormula, t) :: acc
     }
 
+    // Instantiates all the terms of a quantified formula sequentially
     def genWeakQuantRules(f: FOLFormula, lst: List[FOLTerm], ax: LKProof) : LKProof = (f, lst) match {
       case (_, Nil) => ax
       case(AllVar(_,_), h::t) => 
@@ -152,32 +146,63 @@ object cutIntroduction {
         ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
     }
 
-    // TODO: contraction of the formulas
-    def uPart(hm: Map[FormulaOccurrence, List[List[FOLTerm]]], ax: LKProof) : LKProof = 
+    def uPart(hm: Map[FormulaOccurrence, List[List[FOLTerm]]], ax: LKProof) : LKProof = {
+    var first = true;
     hm.foldRight(ax) {
       case ((f, setU), ax) => f.formula.asInstanceOf[FOLFormula] match { 
         case AllVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
-          genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+          if(first) {
+            first = false
+            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+          }
+          else
+            ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
         }
         case ExVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
-          genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+          if(first) {
+            first = false
+            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+          }
+          else
+            ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
         }
       }
+    }
     }
 
     val axiomL = Axiom((alphaFormulasL ++ ant), (cutLeft +: (succ ++ alphaFormulasR)))
     val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
 
-    // TODO: contraction rule
-    def sPart(cf: FOLFormula, s: List[FOLTerm], ax: LKProof) = s.foldRight(ax) { case (t, ax) =>
-      val scf = substitute(cf, t)
-      ForallLeftRule(ax, scf, cf, t)
+    def sPart(cf: FOLFormula, s: List[FOLTerm], ax: LKProof) = {
+    var first = true;
+    s.foldRight(ax) { case (t, ax) =>
+      if(first) {
+        first = false
+        val scf = substitute(cf, t)
+        ForallLeftRule(ax, scf, cf, t)
+      }
+      else {
+        val scf = substitute(cf, t)
+        ContractionLeftRule(ForallLeftRule(ax, scf, cf, t), cf)
+      }
+    }
     }
 
     val axiomR = Axiom((cutRight ++ alphaFormulasL ++ ant), (succ ++ alphaFormulasR))
     val rightBranch = uPart(u, sPart(cutFormula, s, axiomR))
 
-    CutRule(leftBranch, rightBranch, cutFormula)
+    val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
+
+    // Contracting the end sequent formulas that were duplicated to be splitted 
+    // at the cut rule
+
+    val contractAnt = endSequent.antecedent.foldRight(untilCut.asInstanceOf[LKProof]) { case (f, premise) =>
+      ContractionLeftRule(premise, f.formula.asInstanceOf[FOLFormula])
+    }
+
+    endSequent.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
+      ContractionRightRule(premise, f.formula.asInstanceOf[FOLFormula])
+    }
   }
 }
 

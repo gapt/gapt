@@ -78,7 +78,7 @@ class DeltaTable() {
       // E.g.: T = {a, fa, f^2a, f^3a} is a case where the trivial decomposition is needed
       // Obs: if s.length == 1, it is already the trivial decomposition
       if (s.length > 1 && s.forall(e => t.contains(e))) {
-        pairs = pairs :+ (FOLVar(new VariableStringSymbol("alpha")), s)
+        pairs = pairs :+ (FOLVar(new VariableStringSymbol("α")), s)
       }
 
       // Checks if the union of a subset of pairs contains all the terms
@@ -169,7 +169,7 @@ object decomposition {
 
     terms.foreach { case (f, t) =>
       // Initialize with trivial decompositions of size 1
-      t.foreach(e => deltaTable.add(f, e::Nil, e::Nil, FOLVar(new VariableStringSymbol("alpha"))) )
+      t.foreach(e => deltaTable.add(f, e::Nil, e::Nil, FOLVar(new VariableStringSymbol("α"))) )
 
       for (n <- 2 until t.length+1) {
         // Take only the decompositions of term sets of size (n-1) from the current delta table
@@ -207,13 +207,15 @@ object decomposition {
     deltaTable
   }
 
+  // TODO: the alpha variable should be declared globally somewhere else
+
   def delta(terms: List[FOLTerm]) : (FOLTerm, List[FOLTerm]) = terms.head match {
     // If the variables are reached
     case FOLVar(s) =>
       // If all variables are equal
       if ( terms.forall(t => t =^ terms.head) ) { return (FOLVar(s), Nil) }
       // If there are different variables 
-      else { return (FOLVar(new VariableStringSymbol("alpha")), terms) }
+      else { return (FOLVar(new VariableStringSymbol("α")), terms) }
 
     // If the terms are functions
     case Function(h, args) =>
@@ -281,12 +283,12 @@ object decomposition {
           }
           // The terms returned from the arguments are different
           else {
-            return (FOLVar(new VariableStringSymbol("alpha")), terms)
+            return (FOLVar(new VariableStringSymbol("α")), terms)
           }
         }
       }
       // If head terms are different
-      else { return (FOLVar(new VariableStringSymbol("alpha")), terms) }
+      else { return (FOLVar(new VariableStringSymbol("α")), terms) }
   }
   
 }
