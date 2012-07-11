@@ -26,8 +26,8 @@ import at.logic.testing._
 class CutIntroTest extends SpecificationWithJUnit {
   "CutIntroduction" should {
 
-    "extract and decompose the termset of a simple proof (n = 4)" in {
-      val proof = CutIntroExampleProof( 4 )
+    "extract and decompose the termset of the linear example proof (n = 4)" in {
+      val proof = LinearExampleProof( 4 )
 
       //val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
       val termset = termsExtraction(proof).foldRight(List[FOLTerm]()) ( (t, acc) => 
@@ -38,7 +38,7 @@ class CutIntroTest extends SpecificationWithJUnit {
 
       cutIntroduction(proof)
 
-      termset must haveTheSameElementsAs ( CutIntroExampleTermset( 4 ) )
+      termset must haveTheSameElementsAs ( LinearExampleTermset( 4 ) )
     }
 
     "FOLSubstitution should work" in {
@@ -50,7 +50,6 @@ class CutIntroTest extends SpecificationWithJUnit {
       val res =  FOLSubstitution( fx, x, c )
 
       res must beEqualTo( fc )
-
     }
   }
 }

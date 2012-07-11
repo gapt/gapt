@@ -279,12 +279,16 @@ object loadProofDB {
     }
   }
 
-  object CutIntroExampleTermset {
-    def apply( n : Int) = at.logic.testing.CutIntroExampleTermset( n )
+  object LinearExampleTermset {
+    def apply( n : Int) = at.logic.testing.LinearExampleTermset( n )
   }
 
-  object CutIntroExampleProof {
-    def apply( n : Int) = at.logic.testing.CutIntroExampleProof( n )
+  object LinearExampleProof {
+    def apply( n : Int) = at.logic.testing.LinearExampleProof( n )
+  }
+
+  object SquareDiagonalExampleProof {
+    def apply( n : Int) = at.logic.testing.SquareDiagonalExampleProof( n )
   }
 
   object termsExtraction {
@@ -507,8 +511,9 @@ object loadProofDB {
       println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
       println("prooftool: LKProof => Unit - visualize proof in prooftool")
       println("decompose: String => Unit - take a list of terms (as a string with each term separated by a semi-colon) and shows the decompositions")
-      println("CutIntroExampleTermset: Int => Set[FOLTerm] - construct the example termset for cut-introduction")
-      println("CutIntroExampleProof: Int => LKProof - construct the example proof for cut-introduction")
+      println("LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction")
+      println("LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction")
+      println("SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
       println("termsExtraction: LKProof => List[List[FOLTerm]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a list of lists)")
       println("termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
     }
