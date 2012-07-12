@@ -173,6 +173,14 @@
 	<reporting>
 		<plugins>
 			<plugin>
+                                <groupId>org.scala-tools</groupId>
+                                <artifactId>maven-scala-plugin</artifactId>
+                                <configuration>
+                                        <vscalaVersion>1.2-m1</vscalaVersion>
+                                </configuration>
+                        </plugin>
+
+			<plugin>
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
 				<version>${scala-maven-plugin.version}</version>
