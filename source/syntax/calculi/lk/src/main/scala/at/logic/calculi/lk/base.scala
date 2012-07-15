@@ -82,7 +82,9 @@ import collection.immutable
 
   class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[FormulaOccurrence])
   {
-    require(checkFormulaOccurrences(antecedent), "antecedent contains binding errors: "+ (antecedent map (_.formula.toStringSimple)))
+    require(checkFormulaOccurrences(antecedent), 
+      //"\nERROR: Antecedent contains binding errors: " + (antecedent map (_.formula.toStringSimple)))
+      "\nERROR: Antecedent contains binding errors: " + antecedent)
     require(checkFormulaOccurrences(succedent),  "succedent contains binding errors: "+  (succedent map (_.formula.toStringSimple)))
 
     //TODO improve both equals methods
@@ -137,18 +139,25 @@ import collection.immutable
 
     //sanity checks for free and bound variables
     def checkFormulaOccurrences(l : Seq[FormulaOccurrence]) = {
-      (l filterNot ((fo : FormulaOccurrence) => checkFormulas( List(fo.formula) ++ fo.ancestors.map(((occ:FormulaOccurrence) => occ.formula) ) ))).isEmpty
+      (l filterNot ((fo : FormulaOccurrence) => 
+        checkFormulas( List(fo.formula) ++ fo.ancestors.map(((occ:FormulaOccurrence) => occ.formula) ) ))
+      ).isEmpty
     }
     
     def checkFormulas(l : Seq[HOLFormula]) = {
-      (l.foldLeft(List[LambdaExpression]())((x:List[LambdaExpression], y:HOLFormula) => x ++ checkLambdaExpression (y) )).isEmpty
+      (l.foldLeft(List[LambdaExpression]())((x:List[LambdaExpression], y:HOLFormula) => 
+        x ++ checkLambdaExpression(y) )
+      ).isEmpty
     }
 
     def checkLambdaExpression(t: LambdaExpression) = checkLambdaExpression_(t, HashSet[Var]())
     def checkLambdaExpression_(t: LambdaExpression, scope: HashSet[Var]) : List[Var] = t match {
       case v : Var  =>
         if (scope.contains(v) && v.isFree) return List(v)
-        if ((!scope.contains(v)) && v.isBound) return List(v)
+        if ((!scope.contains(v)) && v.isBound) {
+          println("******** Bound variable not in scope: " + v)
+          return List(v)
+        }
         List()
       case App(s,t) =>
         checkLambdaExpression_(s,scope) ++ checkLambdaExpression_(t,scope)
