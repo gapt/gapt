@@ -1,0 +1,23 @@
+The file testing.scala in this directory contains some sequences of example proofs.
+They have been formalised for the purpose of testing cut-introduction.
+
+- LinearExampleProof
+  Expected compression ratio:
+    1 Pi_1-cut (1 quantifier):   n -> sqrt(n)
+    Pi_1-cuts (1 quantifier):    n -> log(n)
+
+- SquareDiagonalExampleProof
+  Expected compression ratio:
+    1 Pi_1-cut (1 quantifier):   n -> sqrt(n)
+    Pi_1-cuts (1 quantifier):    n -> log(n)
+
+- SquareEdgesExampleProof
+  Expected compression ratio:
+    1 Pi_1-cut (1 quantifier):   2n -> n + sqrt(n)
+    2 Pi_1-cuts (1 quantifier):  2n -> 2sqrt(n)
+    Pi_1-cuts (1 quantifier):    2n -> 2log(n)
+
+- SumExampleProof
+  Expected compression ratio:
+    Pi_1-cuts (1 quantifier):    n -> n
+    Pi_1-cuts (2 quantifiers):   n -> log(n)

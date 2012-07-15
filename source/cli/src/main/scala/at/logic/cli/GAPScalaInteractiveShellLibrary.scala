@@ -291,6 +291,14 @@ object loadProofDB {
     def apply( n : Int) = at.logic.testing.SquareDiagonalExampleProof( n )
   }
 
+  object SquareEdgesExampleProof {
+    def apply( n : Int) = at.logic.testing.SquareEdgesExampleProof( n )
+  }
+
+  object SumExampleProof {
+    def apply( n : Int) = at.logic.testing.SumExampleProof( n )
+  }
+
   object termsExtraction {
     def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p )
   }
@@ -514,6 +522,8 @@ object loadProofDB {
       println("LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction")
       println("LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction")
       println("SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
+      println("SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
+      println("SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
       println("termsExtraction: LKProof => List[List[FOLTerm]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a list of lists)")
       println("termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
     }
