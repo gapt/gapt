@@ -84,10 +84,12 @@ object cutIntroduction {
     }
 
     def substituteAll(f: FOLFormula, lst: List[FOLTerm]) : FOLFormula = lst match {
-      case Nil => f
-      case h :: t => substituteAll(substitute(f, h), t)
+      case Nil => println("Final grounded formula: " + f); f
+      case h :: t => println("\nSubstituting: " + h + " in " + f); substituteAll(substitute(f, h), t)
     }
 
+    // TODO: I suspect the replacement of more than one quantifier is not
+    // working.
     // Replace the terms from U in the proper formula
     val alphaFormulasL = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
       f.formula.asInstanceOf[FOLFormula] match {

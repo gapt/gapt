@@ -154,6 +154,7 @@ object termsExtraction {
 
     /* WEAK QUANTIFIER RULES */
     // This is when the HashMap is filled.
+    // TODO: check the order in which elements are added to the list.
     case ForallLeftRule(up, _, aux, prin, term) =>
       val map = extractTerms(up)
       val ancestorsAux = getAncestors(aux)
@@ -161,11 +162,11 @@ object termsExtraction {
       val anc = keys.filter(x => ancestorsAux.contains(x)).toList
       if(anc.length == 1){
         val a = anc(0)
-        val terms = map(a)
+        var terms = map(a)
         // Append the new terms to every list in terms
-        terms.foreach(lst => lst :+ term)
+        var newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
         val auxmap = map - a
-        auxmap += (prin -> terms)
+        auxmap += (prin -> newterms)
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
@@ -180,9 +181,9 @@ object termsExtraction {
         val a = anc(0)
         val terms = map(a)
         // Append the new terms to every list in terms
-        terms.foreach(lst => lst :+ term)
+        var newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
         val auxmap = map - a
-        auxmap += (prin -> terms)
+        auxmap += (prin -> newterms)
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
