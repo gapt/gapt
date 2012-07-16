@@ -79,17 +79,20 @@ object cutIntroduction {
     // TODO: maybe these substitution methods should be put somewhere else...
     // Substitutes a term in a quantified formula (using the first quantifier).
     def substitute(f: FOLFormula, t: FOLTerm) = f match {
-      case AllVar(v, form) => FOLSubstitution(form, v, t)
+      case AllVar(v, form) => var bla = FOLSubstitution(form, v, t);
+      println("Substituted formula: " + bla); bla
+      // TODO: add ExVar case
       case _ => throw new CutIntroException("Error in replacing variables.") 
     }
 
-    def substituteAll(f: FOLFormula, lst: List[FOLTerm]) : FOLFormula = lst match {
+    def substituteAll(f: FOLFormula, lst: List[FOLTerm]) : FOLFormula = {
+    println("SubstituteAll: " + f + " terms: " + lst);
+    lst match {
       case Nil => println("Final grounded formula: " + f); f
       case h :: t => println("\nSubstituting: " + h + " in " + f); substituteAll(substitute(f, h), t)
     }
+  }
 
-    // TODO: I suspect the replacement of more than one quantifier is not
-    // working.
     // Replace the terms from U in the proper formula
     val alphaFormulasL = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
       f.formula.asInstanceOf[FOLFormula] match {
