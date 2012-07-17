@@ -79,17 +79,15 @@ object cutIntroduction {
     // TODO: maybe these substitution methods should be put somewhere else...
     // Substitutes a term in a quantified formula (using the first quantifier).
     def substitute(f: FOLFormula, t: FOLTerm) = f match {
-      case AllVar(v, form) => var bla = FOLSubstitution(form, v, t);
-      println("Substituted formula: " + bla); bla
-      // TODO: add ExVar case
+      case AllVar(v, form) => FOLSubstitution(form, v, t)
+      case ExVar(v, form) => FOLSubstitution(form, v, t)
       case _ => throw new CutIntroException("Error in replacing variables.") 
     }
 
     def substituteAll(f: FOLFormula, lst: List[FOLTerm]) : FOLFormula = {
-    println("SubstituteAll: " + f + " terms: " + lst);
     lst match {
-      case Nil => println("Final grounded formula: " + f); f
-      case h :: t => println("\nSubstituting: " + h + " in " + f); substituteAll(substitute(f, h), t)
+      case Nil => f
+      case h :: t => substituteAll(substitute(f, h), t)
     }
   }
 
@@ -152,27 +150,27 @@ object cutIntroduction {
     }
 
     def uPart(hm: Map[FormulaOccurrence, List[List[FOLTerm]]], ax: LKProof) : LKProof = {
-    var first = true;
     hm.foldRight(ax) {
-      case ((f, setU), ax) => f.formula.asInstanceOf[FOLFormula] match { 
-        case AllVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
-          if(first) {
-            first = false
-            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+      case ((f, setU), ax) => var first = true; 
+        f.formula.asInstanceOf[FOLFormula] match { 
+          case AllVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
+            if(first) {
+              first = false
+              genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+            }
+            else
+              ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
           }
-          else
-            ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
-        }
-        case ExVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
-          if(first) {
-            first = false
-            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+          case ExVar(_, _) => setU.foldRight(ax) { case (terms, ax) =>
+            if(first) {
+              first = false
+              genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+            }
+            else
+              ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
           }
-          else
-            ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
         }
       }
-    }
     }
 
     val axiomL = Axiom((alphaFormulasL ++ ant), (cutLeft +: (succ ++ alphaFormulasR)))
