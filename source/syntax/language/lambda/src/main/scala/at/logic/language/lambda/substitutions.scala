@@ -16,7 +16,7 @@ import collection.immutable.HashSet
   class Substitution[T <: LambdaExpression] protected[substitutions](val map: scala.collection.immutable.Map[Var, T]) extends (T => T) {
     def ::(sub:Tuple2[Var, T]) = new Substitution(map + sub)
     def :::(otherSubstitution:Substitution[T]) = new Substitution(map ++ otherSubstitution.map.iterator)
-    def apply(expression: T): T = applyWithChangeDBIndices(expression)
+    def apply(expression: T): T = applyWithChangeDBIndices(expression, Nil)
     def applyAndBetaNormalize(expr : T) : T = betaNormalize(apply(expr))(StrategyOuterInner.Outermost).asInstanceOf[T] //TODO:instead of casting, change betanormalize
 
     override def equals(a: Any) = a match {
@@ -41,8 +41,9 @@ import collection.immutable.HashSet
     }
 
     // the change of db indices is done automatically in the constructor of abs
-    protected def applyWithChangeDBIndices(expression: T): T = expression match {
-      case x:Var if x.isFree => {
+    // NOTE: the list protectedVars contains the bound variables of the whole expression
+    protected def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
+      case x:Var if !(protectedVars.contains(x)) => {
         map.get(x) match {
           case Some(t) => {
             val freevarsWithDBIndex = checkLambdaExpression(t)
@@ -50,23 +51,20 @@ import collection.immutable.HashSet
               println("ERROR: bound variables "+ freevarsWithDBIndex +" outside of binding context in term "+t.toStringSimple)
               throw new Exception("ERROR: bound variables "+ freevarsWithDBIndex +" outside of binding context in term "+t.toStringSimple)
             }
-
-            //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
             t
           }
           case None => {
-            //println(x + " is free, but we don't substitute for it")
             x.asInstanceOf[T]
           }
       }
     }
-      case x:Var if !x.isFree => {
+      case x:Var => {
         if (map.contains( x ) )
           println("WARNING: trying to substitute for a bound variable, ignoring!") 
        expression 
       }
-      case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T]), applyWithChangeDBIndices(n.asInstanceOf[T])).asInstanceOf[T]
-      case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope.asInstanceOf[T])).asInstanceOf[T]
+      case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T], protectedVars), applyWithChangeDBIndices(n.asInstanceOf[T], protectedVars)).asInstanceOf[T]
+      case abs: Abs => Abs(abs.variable, applyWithChangeDBIndices(abs.expression.asInstanceOf[T],abs.variable::protectedVars)).asInstanceOf[T]
       case _ => expression
     }
 
