@@ -10,7 +10,7 @@ package substitutions {
 import collection.immutable.HashSet
 
 /* substitution preserves the following:
-* 1) it is a valid function, i.e. order of elements is irrelevant and each varialbe is mapped to only one element
+* 1) it is a valid function, i.e. order of elements is irrelevant and each variable is mapped to only one element
 * 2) all mappings are applied simultaneously to a term i.e. {x |-> y, y |-> a}x = y and not a.
 */
   class Substitution[T <: LambdaExpression] protected[substitutions](val map: scala.collection.immutable.Map[Var, T]) extends (T => T) {
@@ -56,8 +56,8 @@ import collection.immutable.HashSet
           case None => {
             x.asInstanceOf[T]
           }
+        }
       }
-    }
       case x:Var => {
         if (map.contains( x ) )
           println("WARNING: trying to substitute for a bound variable, ignoring!") 
