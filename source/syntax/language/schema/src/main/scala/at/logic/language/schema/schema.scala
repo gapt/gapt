@@ -314,8 +314,8 @@ object SchemaFactory extends LambdaFactoryA {
 
 //this substitution is works for InVar Only. It gives an instance of a schema.
 class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map[Var, T]) extends Substitution[T](map) {
-  override def applyWithChangeDBIndices(expression: T): T = expression match {
-      case x:IntVar if x.isFree => {
+  override def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
+      case x:IntVar if !(protectedVars.contains(x)) => {
           map.get(x) match {
             case Some(t) => {
               //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
@@ -327,13 +327,13 @@ class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map
             }
         }
       }
-      case x:IntVar if !x.isFree => {
+      case x:IntVar => {
         if (map.contains( x ) )
           println("WARNING: trying to substitute for a bound variable, ignoring!")
        expression
       }
-      case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T]), applyWithChangeDBIndices(n.asInstanceOf[T])).asInstanceOf[T]
-      case abs: Abs => Abs(abs.variable ,applyWithChangeDBIndices(abs.expressionInScope.asInstanceOf[T])).asInstanceOf[T]
+      case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T], protectedVars), applyWithChangeDBIndices(n.asInstanceOf[T], protectedVars)).asInstanceOf[T]
+      case abs: Abs => Abs(abs.variable, applyWithChangeDBIndices(abs.expressionInScope.asInstanceOf[T], abs.variable::protectedVars)).asInstanceOf[T]
       case _ => expression
   }
 }
