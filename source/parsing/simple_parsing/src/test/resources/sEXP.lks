@@ -1,0 +1,24 @@
+proof \psi proves
+    Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k,x)))
+
+base {
+    root: ax( Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(0,x))) )
+}
+
+step {
+    1:      pLink(   (\psi, k)
+                    Forall x (Imp P(x) P(f(x)))
+                        |-
+                    Forall x (Imp P(x) P(g(k,x)))
+                )
+    2:      ax( P(z(0)) |- P(z(0)) )
+    3:      ax( P(g(k,z(0))) |- P(g(k,z(0))) )
+    4:      impL( 2, 3, P(z(0)), P(g(k,z(0))) )
+    5:      ax( P(g(k+1,z(0))) |- P(g(k+1,z(0))) )
+    6:      impL( 4, 5, P(g(k,z(0))), P(g(k+1,z(0))) )
+    7:      impR( 6, P(z(0)), P(g(k+1,z(0))) )
+    8:      allL(7, Imp P(z(0)) P(g(k,z(0))), Forall x (Imp P(x) P(g(k,x))), z(0) )
+    9:      allL(8, Imp P(g(k,z(0))) P(g(k+1,z(0))), Forall x (Imp P(g(k,x)) P(g(k+1,x))), z(0) )
+    10:     allR(9, Imp P(z(0)) P(g(k+1,z(0))), Forall x (Imp P(x) P(g(k+1,x))), z(0) )
+    root:   cut( 1, 10, Forall x (Imp P(x) P(g(k,x))) )
+}
