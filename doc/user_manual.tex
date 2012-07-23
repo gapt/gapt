@@ -124,6 +124,9 @@ calculus $\mathbf{LK}_{sk}$. This calculus was proposed to solve the problem of
 Skolemization in higher-order logic, and it basically replaces eigenvariables
 with Skolem terms. For more information, see \cite{Hetzl2011}.
 
+% TODO: it would be nice to combine extractStruct,structToClausesList,prover9 etc.
+%       to an example session for applying Ceres to a proof
+
 \paragraph{\textbf{extractStruct: LKProof $\rightarrow$ Struct}}
 Extracts a struct from a LKProof. A struct is referred to as a clause term in
 \cite{Baaz2011}. I will give a quick definition of it. For more details and
@@ -145,6 +148,15 @@ is the following:
 where $\mathcal{C} \times \mathcal{D} = \{ C \circ D | C \in \mathcal{C} \wedge
 D \in \mathcal{D}\}$ and if $S = \Gamma \vdash \Delta$ and $S' = \Pi \vdash
 \Lambda$, $S \circ S' = \Gamma, \Pi \vdash \Delta, \Lambda.$
+
+\paragraph{\textbf{structToClausesList: Struct $\rightarrow$ List[Sequent]}} computes
+the standard characteristic clause set
+from the struct, see~\cite[Section 4.2.1]{WoltzenlogelPaleo09General} for details.
+
+\paragraph{\textbf{prover9: List[Sequent],Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
+sends the input clause set (given as either List[Sequent] or Seq[Clause]) to prover9. Returns
+the resolution proof obtained from replaying the output proof of prover9,
+see~\cite{Dunchev12System} for details.
 
 
 \bibliographystyle{plain}
