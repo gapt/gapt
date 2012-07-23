@@ -384,10 +384,19 @@ object loadProofDB {
       } catch {
         case e: IOException => throw new IOException("Prover9 is not installed: " + e.getMessage())
       }
+
+    def apply(clauses: List[Sequent]): Option[ResolutionProof[Clause]] =
+      try {
+         new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
+          refute(Stream(SetTargetClause(FSequent(List(),List())), Prover9InitCommand( (clauses map ( (x:Sequent) => x.toFSequent)).toList   ), SetStreamCommand())).next
+      } catch {
+        case e: IOException => throw new IOException("Prover9 is not installed: " + e.getMessage())
+      }
   }
 
   object replay {
-    def apply = prover9.apply _
+    def apply( clauses: Seq[FSequent] ) = prover9.apply( clauses ) 
+    def apply( clauses: List[Sequent] ) = prover9.apply( clauses ) 
   }
 
   object format {
@@ -492,40 +501,49 @@ object loadProofDB {
 
   object ceresHelp {
     def apply() = {
-      println("Available commands:")
-      println("loadProofs: String => List[(String, LKProof)]")
-      println("loadProofDB: String => ProofDatabase")
-      println("printProofStats: LKProof => Unit")
-      println("lkTolksk: LKProof => LKProof")
-      println("extractStruct: LKProof => Struct")
-      println("structToClausesList: Struct => List[Sequent]")
-      println("structToLabelledClausesList: Struct => List[LabelledSequent]")
-      println("createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
-      println("regularize: LKProof => LKProof")
-      println("skolemize: LKProof => LKProof")
-      println("fsequent2sequent: FSequent => Sequent")
-      println("deleteTautologies: List[FSequent] => List[FSequent]")
-      println("removeDuplicates: List[FSequent] => List[FSequent]")
-      println("unitResolve: List[FSequent] => List[FSequent]")
-      println("removeSubsumed: List[FSequent] => List[FSequent]")
-      println("normalizeClauses: List[FSequent] => List[FSequent]")
-      println("writeLatex: List[FSequent], String => Unit")
-      println("writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
-      println("parse fol: String => FOLTerm")
-      println("parse hol: String => HOLExpression")
-      println("exportXML: List[Proof], List[String], String => Unit")
-      println("exportTPTP: List[Proof], List[String], String => Unit")
-      println("refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]")
-      println("refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
-      println("prooftool: LKProof => Unit - visualize proof in prooftool")
-      println("decompose: String => Unit - take a list of terms (as a string with each term separated by a semi-colon) and shows the decompositions")
-      println("LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction")
-      println("LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction")
-      println("SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
-      println("SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
-      println("SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
-      println("termsExtraction: LKProof => List[List[FOLTerm]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a list of lists)")
-      println("termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
+      println("Available commands:\n")
+      println("File Input/Output:")
+      println("  loadProofDB: String => ProofDatabase - load proofdatabase from xml file")
+      println("  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs")
+      println("")
+      println("Automated Deduction:")
+      println("  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP")
+      println("  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
+      println("  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9")
+      println("")
+      println("General Proof Theory:")
+      println("  skolemize: LKProof => LKProof - skolemize the given proof")
+      println("")
+      println("Cut-Elimination by Resolution:")
+      println("  extractStruct: LKProof => Struct")
+      println("  structToClausesList: Struct => List[Sequent]")
+      println("  structToLabelledClausesList: Struct => List[LabelledSequent]")
+      println("")
+      println("Uncategorized:") // this section should ideally converge to empty by distributing all functions described here in reasonable categories above
+      println("  regularize: LKProof => LKProof")
+      println("  printProofStats: LKProof => Unit")
+      println("  lkTolksk: LKProof => LKProof")
+      println("  createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
+      println("  fsequent2sequent: FSequent => Sequent")
+      println("  deleteTautologies: List[FSequent] => List[FSequent]")
+      println("  removeDuplicates: List[FSequent] => List[FSequent]")
+      println("  unitResolve: List[FSequent] => List[FSequent]")
+      println("  removeSubsumed: List[FSequent] => List[FSequent]")
+      println("  normalizeClauses: List[FSequent] => List[FSequent]")
+      println("  writeLatex: List[FSequent], String => Unit")
+      println("  writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
+      println("  parse fol: String => FOLTerm")
+      println("  parse hol: String => HOLExpression")
+      println("  exportXML: List[Proof], List[String], String => Unit")
+      println("  exportTPTP: List[Proof], List[String], String => Unit")
+      println("  prooftool: LKProof => Unit - visualize proof in prooftool")
+      println("  LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction")
+      println("  LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction")
+      println("  SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
+      println("  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
+      println("  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
+      println("  termsExtraction: LKProof => List[List[FOLTerm]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a list of lists)")
+      println("  termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
     }
   }
 }
