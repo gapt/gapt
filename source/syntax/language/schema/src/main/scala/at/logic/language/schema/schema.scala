@@ -331,9 +331,9 @@ object SchemaFactory extends LambdaFactoryA {
  // private def createTimes(t1: IntegerTermExpression, t2:IntegerTermExpression): IntegerTermExpression  = AppN(TimesC, t1::t2::Nil).asInstanceOf[IntegerTermExpression]
 }
 
-//this substitution is works for InVar Only. It gives an instance of a schema.
+//this substitution works for IntVar Only. It gives an instance of a schema.
 class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map[Var, T]) extends Substitution[T](map) {
-  def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
+   override def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
       case x:IntVar if !(protectedVars.contains(x)) => {
           map.get(x) match {
             case Some(t) => {
