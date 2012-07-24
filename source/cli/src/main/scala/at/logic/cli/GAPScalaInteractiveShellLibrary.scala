@@ -20,6 +20,7 @@ import at.logic.parsing.calculi.latex._
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.simple.SimpleHOLParser
+import at.logic.parsing.language.simple.ParseQMON
 import at.logic.parsing.readers.StringReader
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
@@ -272,10 +273,15 @@ object loadProofDB {
        new CLIParserHOL(string) getTerm
     }
 
+    def slk(file:String) = {
+      ParseQMON.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
+    }
+
     def help() = {
       println("folterm: String => FOLFormula")
       println("folterm: String => FOLTerm")
       println("hol: String => HOLExpression")
+      println("slk: String => Map[String, Pair[LKProof, LKProof]]")
     }
   }
 
@@ -534,6 +540,7 @@ object loadProofDB {
       println("  writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
       println("  parse fol: String => FOLTerm")
       println("  parse hol: String => HOLExpression")
+      println("  parse slk: String => Map[String, Pair[LKProof, LKProof]]")
       println("  exportXML: List[Proof], List[String], String => Unit")
       println("  exportTPTP: List[Proof], List[String], String => Unit")
       println("  prooftool: LKProof => Unit - visualize proof in prooftool")

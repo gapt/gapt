@@ -167,6 +167,16 @@ object ParseQMON {
 
 //--------------------------------- parse SLK proof -----------------------
 
+  def parseProofFlat(txt: InputStreamReader): Map[String, Pair[LKProof, LKProof]] =
+  {
+    val map = parseProof( txt )
+    map.map( pp => {
+      val name = pp._1
+      val pair = pp._2
+      (name, Pair(pair._1.get("root").get, pair._2.get("root").get)) 
+    })
+  }
+
   //plabel should return the proof corresponding to this label
   def parseProof(txt: InputStreamReader): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
     var mapBase = Map.empty[String, LKProof]
