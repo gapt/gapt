@@ -14,6 +14,7 @@ import at.logic.language.schemata.logicSymbols._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.hol.HOLFactory
 import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.hol.Definitions._
 
 // propositiopnal
 trait Schema extends HOL {
@@ -39,6 +40,20 @@ object aTerm {
   }
 }
 
+object foTerm {
+  def apply(name: String, args: List[HOLExpression]): HOLExpression = {
+    val v = hol.createVar(new VariableStringSymbol(name), args.head.exptype  -> Ti()).asInstanceOf[HOLVar]
+    HOLApp(v, args.head).asInstanceOf[HOLExpression]
+  }
+  def apply(v: HOLVar, args: List[HOLExpression]): HOLExpression = {
+    HOLApp(v, args.head).asInstanceOf[HOLExpression]
+  }
+  def unapply(s: HOLExpression) = s match {
+    case HOLApp(v, arg) if s.exptype == Ti() => Some(v, arg)
+    case _ => None
+  }
+}
+
 
 object sTerm {
 //  def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): schemaTerm = {
@@ -56,8 +71,12 @@ object sTerm {
     return HOLApp(HOLApp(func, i), l.head).asInstanceOf[HOLExpression]
 //    return new SchemaApp(new SchemaApp(func, i), l.head).asInstanceOf[HOLExpression]
   }
-  def unapply(s : schemaTerm) = s match {
-    case AppN( Var( name, t ), args ) if (args.head.exptype == Tindex()) => Some( ( name, args.head.asInstanceOf[IntegerTerm], args.tail.asInstanceOf[List[SchemaExpression]] ) )
+  def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
+    HOLApp(HOLApp(f, i), l.head).asInstanceOf[HOLExpression]
+  }
+  def unapply(s : HOLExpression) = s match {
+    case HOLApp(HOLApp(func, i), arg) if i.exptype == Tindex() => Some( ( func, i, arg ) )
+//    case AppN( Var( name, t ), args ) if (args.head.exptype == Tindex()) => Some( ( name, args.head, args.tail ) )
     case _ => None
   }
 }
@@ -208,15 +227,15 @@ object Or {
   }
 
   def unapply(expression: LambdaExpression) = expression match {
-    case App(App(OrC,left),right) => Some( (left.asInstanceOf[SchemaFormula],right.asInstanceOf[SchemaFormula]) )
+    case App(App(OrC,left),right) => Some( (left,right) )
     case _ => None
   }
 }
 
 object Imp {
-  def apply(left: SchemaFormula, right: SchemaFormula) = (SchemaFactory.createApp(SchemaFactory.createApp(ImpC,left),right)).asInstanceOf[SchemaFormula]
+  def apply(left: HOLFormula, right: HOLFormula) = (SchemaFactory.createApp(SchemaFactory.createApp(ImpC,left),right)).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
-      case App(App(ImpC,left),right) => Some( (left.asInstanceOf[SchemaFormula],right.asInstanceOf[SchemaFormula]) )
+      case App(App(ImpC,left),right) => Some( (left,right) )
       case _ => None
   }
 }
@@ -314,7 +333,7 @@ object SchemaFactory extends LambdaFactoryA {
 
 //this substitution is works for InVar Only. It gives an instance of a schema.
 class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map[Var, T]) extends Substitution[T](map) {
-  override def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
+  def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
       case x:IntVar if !(protectedVars.contains(x)) => {
           map.get(x) match {
             case Some(t) => {
@@ -344,14 +363,18 @@ object indexedFOVar {
   def apply(name: VariableStringSymbol, i: IntegerTerm): HOLVar = {
     new indexedFOVar(name, i)
   }
-//  def unapply(s: schemaTerm) = s match {
-//    case App(t, ind) if t.exptype == ->(Tindex(), Ti()) && ind.exptype == Tindex() =>
-//      Some(t, ind)
-//    case _ => None
-//  }
+  def unapply(s: HOLExpression) = s match {
+    case v: indexedFOVar => Some(v.name, v.index)
+    case _ => None
+  }
 }
 
-// P(Int, FOTerm)
-//object sAtom {
-//  def apply()
-//}
+class foVar(name: VariableStringSymbol, tp: TAtomicA) extends HOLVar(name, tp -> Ti(), None)
+
+object foVar{
+  def apply(name: VariableStringSymbol, tp: TAtomicA) = new foVar(name, tp)
+  def unapply(t: HOLExpression) = t match {
+    case HOLVar(name, typ) => Some(name, typ)
+    case _ => None
+  }
+}
