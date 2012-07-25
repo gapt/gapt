@@ -146,13 +146,13 @@ object applySchemaSubstitution {
         val f = m.formula match { case Or(_, w) => w }
         val new_parent = new_parents.head
 //        val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), subst( f ).asInstanceOf[HOLFormula] )
-        val new_proof = OrRight1Rule( new_parent, subst( a.formula ).asInstanceOf[HOLFormula], subst( f ).asInstanceOf[HOLFormula] )
+        val new_proof = OrRight1Rule( new_parent, subst( a.formula ).asInstanceOf[HOLFormula], subst( f.asInstanceOf[HOLFormula] ).asInstanceOf[HOLFormula] )
         new_proof
       }
       case OrRight2Rule(p, s, a, m) => {
         val f = m.formula match { case Or(w, _) => w }
         val new_parent = new_parents.head
-        val new_proof = OrRight2Rule( new_parent, subst( f ).asInstanceOf[HOLFormula], subst( a.formula ).asInstanceOf[HOLFormula] )
+        val new_proof = OrRight2Rule( new_parent, subst( f.asInstanceOf[HOLFormula] ).asInstanceOf[HOLFormula], subst( a.formula ).asInstanceOf[HOLFormula] )
         new_proof
       }
       case NegLeftRule(p, s, a, m) => {

@@ -54,7 +54,7 @@ object Autoprop {
       f match {
         case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1 +: rest.succedent)), f1)
         case Imp(f1, f2)=> {
-          return ImpLeftRule(apply1(new FSequent(rest.antecedent, f1 +: rest.succedent)), apply1(new FSequent(f2 +: rest.antecedent, rest.succedent)), f1, f2)
+          return ImpLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), apply1(new FSequent(f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
         case And(f1, f2) => {
           val up1 = AndLeft1Rule(apply1(new FSequent(f1 +: f2 +: rest.antecedent, rest.succedent)), f1, f2)
@@ -62,9 +62,9 @@ object Autoprop {
           return ContractionLeftRule(up2, f)
         }
         case Or(f1, f2) => {
-          val t1 = apply1(new FSequent(f1 +: rest.antecedent, rest.succedent))
-          val t2 = apply1(new FSequent(f2 +: rest.antecedent, rest.succedent))
-          val up = OrLeftRule(t1, t2, f1, f2)
+          val t1 = apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent))
+          val t2 = apply1(new FSequent(f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent))
+          val up = OrLeftRule(t1, t2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
           return ContractionRuleN(up, rest)
         }
         case BigAnd(i, iter, from, to) => {
@@ -108,11 +108,11 @@ object Autoprop {
     f match {
       case Neg(f1) => return NegRightRule(apply1(new FSequent(f1 +: rest.antecedent, rest.succedent)), f1)
       case Imp(f1, f2)=> {
-        return ImpRightRule(apply1(new FSequent(f1 +: rest.antecedent, f2 +: rest.succedent)), f1, f2)
+        return ImpRightRule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, f2.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
       }
       case Or(f1, f2) => {
-        val up1 = OrRight1Rule(apply1(new FSequent(rest.antecedent, f1 +: f2 +: rest.succedent)), f1, f2)
-        val up2 = OrRight2Rule(up1, f1, f2)
+        val up1 = OrRight1Rule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+        val up2 = OrRight2Rule(up1, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         return ContractionRightRule(up2, f)
       }
       case And(f1, f2) => {
@@ -427,7 +427,7 @@ object StructuralOptimizationAfterAutoprop {
       //            println("\nnew_p or:r1 = "+new_p.root)
       //            println("\nor:r1 a = "+a.formula)
       //            println("\nor:r1 m = "+m.formula)
-      OrRight1Rule( new_p, a.formula, a2)
+      OrRight1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
     }
     case OrRight2Rule(p, r, a, m) =>  {
       val new_p = apply(p, p_old)
@@ -436,7 +436,7 @@ object StructuralOptimizationAfterAutoprop {
       //            println("\nnew_p or:r2 = "+new_p.root)
       //          println("\nor:r2 a = "+a.formula)
       //            println("\nor:r2 m = "+m.formula)
-      OrRight2Rule( new_p, a2, a.formula)
+      OrRight2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula)
     }
     case NegRightRule( p, _, a, m ) => {
       val new_p = apply(p, p_old)
@@ -638,7 +638,7 @@ object delSuperfluousRules {
         //            println("\nnew_p or:r1 = "+new_p.root)
         //            println("\nor:r1 a = "+a.formula)
         //            println("\nor:r1 m = "+m.formula)
-        OrRight1Rule( new_p, a.formula, a2)
+        OrRight1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
       }
       case OrRight2Rule(p, r, a, m) =>  {
         if (set.contains(m))
@@ -649,7 +649,7 @@ object delSuperfluousRules {
         //            println("\nnew_p or:r2 = "+new_p.root)
         //          println("\nor:r2 a = "+a.formula)
         //            println("\nor:r2 m = "+m.formula)
-        OrRight2Rule( new_p, a2, a.formula)
+        OrRight2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula)
       }
       case NegRightRule( p, _, a, m ) => {
         if (set.contains(a))
