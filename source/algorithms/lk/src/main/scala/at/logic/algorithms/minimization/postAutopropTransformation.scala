@@ -176,7 +176,7 @@ object StructuralOptimizationAfterAutoprop {
       //            println("\nnew_p or:r1 = "+new_p.root)
       //            println("\nor:r1 a = "+a.formula)
       //            println("\nor:r1 m = "+m.formula)
-      OrRight1Rule( new_p, a.formula, a2)
+      OrRight1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
     }
     case OrRight2Rule(p, r, a, m) =>  {
       val new_p = apply(p, p_old)
@@ -185,7 +185,7 @@ object StructuralOptimizationAfterAutoprop {
       //            println("\nnew_p or:r2 = "+new_p.root)
       //          println("\nor:r2 a = "+a.formula)
       //            println("\nor:r2 m = "+m.formula)
-      OrRight2Rule( new_p, a2, a.formula)
+      OrRight2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula)
     }
     case NegRightRule( p, _, a, m ) => {
       val new_p = apply(p, p_old)
@@ -378,7 +378,7 @@ object delSuperfluousRules {
         //            println("\nnew_p or:r1 = "+new_p.root)
         //            println("\nor:r1 a = "+a.formula)
         //            println("\nor:r1 m = "+m.formula)
-        OrRight1Rule( new_p, a.formula, a2)
+        OrRight1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
       }
       case OrRight2Rule(p, r, a, m) =>  {
         if (set.contains(m))
@@ -389,7 +389,7 @@ object delSuperfluousRules {
         //            println("\nnew_p or:r2 = "+new_p.root)
         //          println("\nor:r2 a = "+a.formula)
         //            println("\nor:r2 m = "+m.formula)
-        OrRight2Rule( new_p, a2, a.formula)
+        OrRight2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula)
       }
       case NegRightRule( p, _, a, m ) => {
         if (set.contains(a))
