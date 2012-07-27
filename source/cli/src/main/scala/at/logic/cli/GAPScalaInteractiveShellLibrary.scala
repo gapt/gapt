@@ -9,6 +9,7 @@ package at.logic.cli
 
 import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.transformations.ceres.autoprop._
 
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
@@ -405,6 +406,11 @@ object loadProofDB {
     def apply( clauses: List[Sequent] ) = prover9.apply( clauses ) 
   }
 
+  // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
+  object proveProp {
+    def apply( seq: FSequent ) : Option[LKProof] = Some( Autoprop( seq ) )
+  }
+
   object format {
     def apply(p: ResolutionProof[Clause]) = asHumanReadableString(p)
 
@@ -512,13 +518,19 @@ object loadProofDB {
       println("  loadProofDB: String => ProofDatabase - load proofdatabase from xml file")
       println("  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs")
       println("")
+      println("Parsing and Printing:")
+      println("  parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"")
+      println("  parse.hol: String => HOLExpression")
+      println("  parse.slk: String => Map[String, Pair[LKProof, LKProof]]")
+      println("")
       println("Automated Deduction:")
       println("  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP")
       println("  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
       println("  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9")
+      println("  proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic")
       println("")
-      println("General Proof Theory:")
-      println("  skolemize: LKProof => LKProof - skolemize the given proof")
+      println("Proof Theory:")
+      println("  skolemize: LKProof => LKProof - skolemize the input proof")
       println("")
       println("Cut-Elimination by Resolution:")
       println("  extractStruct: LKProof => Struct")
@@ -538,9 +550,6 @@ object loadProofDB {
       println("  normalizeClauses: List[FSequent] => List[FSequent]")
       println("  writeLatex: List[FSequent], String => Unit")
       println("  writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
-      println("  parse fol: String => FOLTerm")
-      println("  parse hol: String => HOLExpression")
-      println("  parse slk: String => Map[String, Pair[LKProof, LKProof]]")
       println("  exportXML: List[Proof], List[String], String => Unit")
       println("  exportTPTP: List[Proof], List[String], String => Unit")
       println("  prooftool: LKProof => Unit - visualize proof in prooftool")
