@@ -2,23 +2,23 @@ proof \chi  proves
 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k+1,x)))
 
 base {
-    root: ax(Forall x (Imp P(x) P(g(0,x))) , Forall x (Imp P(x) P(g(0,x))) |- Forall x (Imp P(x) P(g(1,x))) )
+    root: ax(Forall x (Imp P(x) P(g(1,x))) , Forall x (Imp P(x) P(g(0,x))) |- Forall x (Imp P(x) P(g(1,x))) )
 }
 
 step {
-    1:      ax( P(g(k,z(k)))  |- P(g(k,z(k)))  )
-    2:      ax( P(f(g(k,z(k))))  |- P(f(g(k,z(k))))  )
-    3:      impL( 1, 2, P(g(k,z(k))), P(f(g(k,z(k)))) )
-    4:      ax( P(z(k))  |- P(z(k)) )
-    5:      impL( 4, 3, P(z(k)), P(g(k,z(k))) )
-    6:      impR( 5, P(z(k)), P(f(g(k,z(k)))) )
-    7:      allL(6, Imp P(g(k,z(k))) P(f(g(k,z(k)))), Forall x (Imp P(x) P(f(x))), g(k,z(k)))
-    8:      allL(7, Imp P(z(k)) P(g(k,z(k))), Forall x (Imp P(x) P(g(k,x))), z(k) )
-    root:   allR(8, Imp P(z(k)) P(f(g(k,z(k)))), Forall x (Imp P(x) P(f(g(k,x)))), z(k) )
+    1:      ax( P(g(k+1,z(k+1)))  |- P(g(k+1,z(k+1)))  )
+    2:      ax( P(f(g(k+1,z(k+1))))  |- P(f(g(k+1,z(k+1))))  )
+    3:      impL( 1, 2, P(g(k+1,z(k+1))), P(f(g(k+1,z(k+1)))) )
+    4:      ax( P(z(k+1))  |- P(z(k+1)) )
+    5:      impL( 4, 3, P(z(k+1)), P(g(k+1,z(k+1))) )
+    6:      impR( 5, P(z(k+1)), P(f(g(k+1,z(k+1)))) )
+    7:      allL(6, Imp P(g(k+1,z(k+1))) P(f(g(k+1,z(k+1)))), Forall x (Imp P(x) P(f(x))), g(k+1,z(k+1)))
+    8:      allL(7, Imp P(z(k+1)) P(g(k+1,z(k+1))), Forall x (Imp P(x) P(g(k+1,x))), z(k+1) )
+    root:   allR(8, Imp P(z(k+1)) P(f(g(k+1,z(k+1)))), Forall x (Imp P(x) P(f(g(k+1,x)))), z(k+1) )
 }
 
 
-proof \tao  proves
+proof \tau  proves
 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(g(k,x)) P(h(k,x))) |- Imp P(a) P(g(k,a))
 
 base {
@@ -41,7 +41,7 @@ proof \varphi  proves
 Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k,x)))
 
 base {
-    root: ax( Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(f(g(1,x)))) )
+    root: ax( Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(0,x))) )
 }
 
 step {
@@ -50,7 +50,7 @@ step {
                     |-
                 Forall x (Imp P(x) P(g(k,x)))
                 )
-    2:      pLink(   (\chi, k+1)
+    2:      pLink(   (\chi, k)
                 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x)))
                     |-
                 Forall x (Imp P(x) P(g(k+1,x)))
@@ -76,7 +76,7 @@ step {
                     |-
                 Forall x (Imp P(x) P(g(k,x)))
                 )
-    2:      pLink(   (\tao, k+1)
+    2:      pLink(   (\tau, k+1)
                 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(g(k,x)) P(h(k,x)))
                     |-
                 Imp P(a) P(h(k,a))

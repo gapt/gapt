@@ -9,8 +9,9 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import at.logic.language.hol.{HOLApp, HOLExpression, HOLConst, Atom}
 import at.logic.language.lambda.types._
+import at.logic.language.hol._
+import at.logic.language.hol.Definitions._
 
 @RunWith(classOf[JUnitRunner])
 class SchemaTest extends SpecificationWithJUnit {
@@ -27,7 +28,7 @@ class SchemaTest extends SpecificationWithJUnit {
     val and = And(p1, p2)
     val or = Or(bigAnd, bigOr)
     val neg = Neg(or)
-    val imp = Imp(neg, and)
+    val imp = Imp(neg.asInstanceOf[HOLFormula], and.asInstanceOf[HOLFormula])
 
     "create IndexedPredicate correctly (1)" in {
       (p1) must beLike {case f: SchemaFormula => ok}
@@ -107,6 +108,24 @@ class SchemaTest extends SpecificationWithJUnit {
       print("\n\nf(4,0) = ")
       println(f(Succ(Succ(Succ(Succ(IntZero())))), IntZero()))
       true must beEqualTo (true)
+    }
+
+    "unfold a schematic term" in {
+      def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
+      def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
+      def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
+      val k = IntVar(new VariableStringSymbol("k"))
+      val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
+      val base = x
+      val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val db = dbTRS(g, base, step)
+      val term = sTerm(g, Succ(Succ(k)), x::Nil)
+      val unf = unfoldSTerm(term, db)
+      println("\n\nterm = "+term)
+      println("unfold = "+unf)
+      println()
+      true must beEqualTo (true)
+      
     }
 
 

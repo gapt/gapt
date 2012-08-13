@@ -54,6 +54,60 @@ object foTerm {
   }
 }
 
+//database for trs
+class dbTRS(val map: scala.collection.mutable.Map[HOLConst, Tuple2[HOLExpression, HOLExpression]])
+
+object dbTRS {
+  def apply(term: HOLConst, base: HOLExpression, step: HOLExpression): dbTRS = {
+    val m = scala.collection.mutable.Map.empty[HOLConst, Tuple2[HOLExpression, HOLExpression]] + Pair(term, Tuple2(base, step))
+    new dbTRS(m)
+  }
+}
+
+
+//TODO : improve it also for ground cases!
+object unfoldSTerm {
+  def apply(t: HOLExpression, trs: dbTRS): HOLExpression = {
+    val k = IntVar(new VariableStringSymbol("k"))
+    t match {
+      case sTerm(func, i, arg) if trs.map.contains(func.asInstanceOf[HOLConst]) =>
+        if (i == IntZero())
+          trs.map.get(func.asInstanceOf[HOLConst]).get._1
+        else
+          if (i == k)
+            t
+          else
+            trs.map.get(func.asInstanceOf[HOLConst]).get._2 match {
+              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg::Nil), trs)::Nil)
+            }
+      case sTerm(func, i, arg) => t
+      case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs)::Nil)
+      case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
+    }
+  }
+}
+
+object unfoldSFormula {
+  def apply(f: HOLFormula, trs: dbTRS): HOLFormula = {
+    println("unfolding formula : "+f)
+    f match {
+      //case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+      case Atom(name, args) => Atom(name, args.map(t => unfoldSTerm(t, trs)))
+      case Imp(f1, f2) => Imp(apply(f1.asInstanceOf[HOLFormula], trs), apply(f2.asInstanceOf[HOLFormula], trs))
+      case ExVar(v, f) => ExVar(v, apply(f, trs))
+      case AllVar(v, f) => AllVar(v, apply(f, trs))
+//      case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+//      case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+//      case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+//      case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+//      case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+//      case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+      case _ => f
+
+    }
+  }
+}
+
 
 object sTerm {
 //  def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): schemaTerm = {
@@ -101,6 +155,10 @@ class IntVar (name: VariableSymbolA, dbInd: Option[Int]) extends HOLVar(name, Ti
 }
 case object IntVar {
   def apply(name: VariableSymbolA) = SchemaFactory.createVar(name).asInstanceOf[IntVar]
+  def unapply(t: IntegerTerm) = t match {
+    case v:HOLVar => Some(t)
+    case _ => None
+  }
 }
 
 class IntConst(name: ConstantSymbolA) extends HOLConst(name, Tindex()) with IntegerTerm {
@@ -129,9 +187,14 @@ object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex(
 
 //  Predecessor, the inverse of successor Succ
 object Pred {
-  def apply(t: IntegerTerm): IntegerTerm  = t match {
-    case Succ(t1) => t1
-    case _ => throw new Exception("ERROR in Predecessor")
+  def apply(t: IntegerTerm): IntegerTerm  =  {
+    println("Pred : "+t)
+    t match {
+      case Succ(t1) => t1
+//      case IntVar(v) => t
+//      case z:IntZero => t
+      case _ => throw new Exception("ERROR in Predecessor")
+    }
   }
   /*def unapply(p: IntegerTerm) = p match {
     case App(Succ, t : IntegerTerm) => Some(t)

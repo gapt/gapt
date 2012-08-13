@@ -6,7 +6,6 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.propositionalRules.Axiom
 import at.logic.calculi.lk.lkExtractors._
 import at.logic.language.schema._
 import at.logic.utils.ds.trees._
@@ -15,6 +14,8 @@ import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.Seq
 import at.logic.language.hol.{HOLFormula}
+import at.logic.utils.traits.Occurrence
+import at.logic.calculi.lk.propositionalRules.{ContractionRightRuleType, ContractionLeftRuleType, CutRuleType, Axiom}
 
 
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
@@ -24,6 +25,7 @@ case object OrEquivalenceRule1Type extends UnaryRuleTypeA
 case object OrEquivalenceRule2Type extends UnaryRuleTypeA
 case object OrEquivalenceRule3Type extends UnaryRuleTypeA
 case object SchemaProofLinkRuleType extends NullaryRuleTypeA
+case object TermEquivalenceRule1Type extends UnaryRuleTypeA
 
 // The following two classes are used to keep a global directory
 // of proof schemata. Their definition is somewhat ad-hoc.
@@ -657,6 +659,270 @@ object OrEquivalenceRule1 {
         None
   }
 
+
+
+// TODO: some preprocessing should be done, i.e. auxf.formula ->>_{\beta} main
+  object TermEquivalenceRule1 {
+    def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
+      val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
+      def createSide( s : Seq[FormulaOccurrence] ) =
+        if ( s.contains(auxf) )
+          prinFormula +: createContext( s.filter(_ != auxf) )
+        else
+          createContext(s)
+
+      new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = TermEquivalenceRule1Type
+        def aux = (auxf::Nil)::Nil
+        def prin = prinFormula::Nil
+        override def name = "def:1"
+      }
+    }
+
+
+    def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+        case (x::_) => apply(s1, x, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the OrEquivalenceRule3 with the given formula")
+      }
+    }
+
+    def unapply(proof: LKProof) =  if (proof.rule == TermEquivalenceRule1Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      Some((r.uProof, r.root, a1, p1))
+    }
+    else None
+  }
+
+
+  object TermRightEquivalenceRule1 {
+    def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
+        case (x::_) => TermEquivalenceRule1.apply(s1, x, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the TermEquivalenceRule1 with the given formula")
+      }
+    }
+    def unapply(proof: LKProof) = if (proof.rule == TermEquivalenceRule1Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      if (r.root.succedent.contains(p1))
+        Some((r.uProof, r.root, a1, p1))
+      else
+        None
+    }
+    else
+      None
+  }
+
+  object TermLeftEquivalenceRule1 {
+    def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
+        case (x::_) => TermEquivalenceRule1.apply(s1, x, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the TermEquivalenceRule1 with the given formula")
+      }
+    }
+    def unapply(proof: LKProof) = if (proof.rule == TermEquivalenceRule1Type) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      if (r.root.antecedent.contains(p1))
+        Some((r.uProof, r.root, a1, p1))
+      else
+        None
+    }
+    else
+      None
+  }
+
+  object sCutRule {
+    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+      val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc, trs)
+      val sequent = getSequent(s1.root, s2.root, term1, term2)
+
+      new BinaryTree[Sequent](sequent, s1, s2)
+        with BinaryLKProof with AuxiliaryFormulas {
+        def rule = CutRuleType
+        def aux = (term1::Nil)::(term2::Nil)::Nil
+        override def name = "cut"
+      }
+    }
+    def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+      val (term1, term2) = getTerms(s1, s2, term1oc, term2oc, trs)
+      getSequent(s1, s2, term1, term2)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, s2: LKProof, term: HOLFormula, trs: dbTRS): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas  = {
+      val succ = s1.root.succedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term, trs)).toList
+      val ant = s2.root.antecedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term, trs)).toList
+  //    println("\n\nant = "+ant)
+  //    println("succ = "+succ)
+      (succ, ant) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, trs)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+    private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+      val term1op = s1.succedent.find(_ == term1oc)
+      val term2op = s2.antecedent.find(_ == term2oc)
+      if (term1op == None || term2op == None) {
+        val s1str = s1.succedent.head.toString()
+        val s2str = s2.antecedent.head.toString()
+        val t1str = term1oc.asInstanceOf[FormulaOccurrence].formula.toString()
+        val t2str = term2oc.asInstanceOf[FormulaOccurrence].formula.toString()
+        val str = "s1: " + s1str + "\ns2: " + s2str + "\nt1: " + t1str + "\nt2: " + t2str + "\n"
+        throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent\n" + str)
+      }
+      else {
+        val term1 = term1op.get
+        val term2 = term2op.get
+        if (unfoldSFormula(term1.formula, trs) != unfoldSFormula(term2.formula,trs)) throw new LKRuleCreationException("Formulas to be cut are not identical")
+        else {
+          (term1, term2)
+        }
+      }
+    }
+    private def getSequent(s1: Sequent, s2: Sequent, term1: Occurrence, term2: Occurrence) = {
+      val ant1 = createContext(s1.antecedent)
+      val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
+      val antecedent = ant1 ++ ant2
+      val suc1 = createContext(s1.succedent.filterNot(_ == term1))
+      val suc2 = createContext(s2.succedent)
+      val succedent = suc1 ++ suc2
+      Sequent(antecedent, succedent)
+    }
+    def unapply(proof: LKProof) = if (proof.rule == CutRuleType) {
+      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas]
+      val ((a1::Nil)::(a2::Nil)::Nil) = r.aux
+      Some((r.uProof1, r.uProof2, r.root, a1, a2))
+    }
+    else None
+  }
+
+
+
+  object sContractionLeftRule {
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+      val (term1, term2) = getTerms(s1.root, term1oc, term2oc, trs)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, term1, term2, prinFormula)
+
+      new UnaryTree[Sequent](sequent, s1)
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = ContractionLeftRuleType
+        def aux = (term1::term2::Nil)::Nil
+        def prin = prinFormula::Nil
+        override def name = "c:l"
+      }
+    }
+    def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+      val (term1, term2) = getTerms(s1, term1oc, term2oc, trs)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, term1: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      (s1.root.antecedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term1,trs))).toList match {
+        case (x::y::_) => apply(s1, x, y, trs)
+        case _ => throw new LKRuleCreationException("No matching formulas found to contract.")
+      }
+    }
+    private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs:dbTRS) = {
+      val term1op = s1.antecedent.find(_ == term1oc)
+      val term2op = s1.antecedent.find(_ == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
+      else {
+        val term1 = term1op.get
+        val term2 = term2op.get
+        if (unfoldSFormula(term1.formula, trs) != unfoldSFormula(term2.formula, trs)) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
+        else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
+        else {
+          (term1, term2)
+        }
+      }
+    }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val ant1 = createContext(s1.antecedent.filterNot(x => x == term1 || x == term2))
+      val antecedent = ant1 :+ prinFormula
+      val succedent = createContext(s1.succedent)
+      Sequent(antecedent, succedent)
+    }
+    def unapply(proof: LKProof) = if (proof.rule == ContractionLeftRuleType) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::a2::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      Some((r.uProof, r.root, a1, a2, p1))
+    }
+    else None
+  }
+
+
+  object sContractionRightRule {
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+      val (term1, term2) = getTerms(s1.root, term1oc, term2oc, trs)
+      val prinFormula = getPrinFormula(term1, term2)
+      val sequent = getSequent(s1.root, term1, term2, prinFormula)
+
+      new UnaryTree[Sequent](sequent, s1)
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = ContractionRightRuleType
+        def aux = (term1::term2::Nil)::Nil
+        def prin = prinFormula::Nil
+        override def name = "c:r"
+      }
+    }
+    def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+      val (term1, term2) = getTerms(s1, term1oc, term2oc, trs)
+      val prinFormula = getPrinFormula(term1, term2)
+      getSequent(s1, term1, term2, prinFormula)
+    }
+    // convenient method to choose the first two formulas
+    def apply(s1: LKProof, term1: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      (s1.root.succedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term1, trs))).toList match {
+        case (x::y::_) => apply(s1, x, y, trs)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+    private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence, trs: dbTRS) = {
+      val term1op = s1.succedent.find(_ == term1oc)
+      val term2op = s1.succedent.find(_ == term2oc)
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      else {
+        val term1 = term1op.get
+        val term2 = term2op.get
+        if (unfoldSFormula(term1.formula, trs) != unfoldSFormula(term2.formula, trs)) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
+        else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
+        else {
+          (term1, term2)
+        }
+      }
+    }
+    private def getPrinFormula(term1: FormulaOccurrence, term2: FormulaOccurrence) = {
+      val holterm1 = term1.formula.asInstanceOf[HOLFormula]
+      term1.factory.createFormulaOccurrence(holterm1, term1::term2::Nil)
+    }
+    private def getSequent(s1: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+      val antecedent = createContext(s1.antecedent)
+      val suc1 = createContext(s1.succedent.filterNot(x =>  x == term1 || x == term2))
+      val succedent = suc1 :+ prinFormula
+      Sequent(antecedent, succedent)
+    }
+    def unapply(proof: LKProof) = if (proof.rule == ContractionRightRuleType) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::a2::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      Some((r.uProof, r.root, a1, a2, p1))
+    }
+    else None
+  }
+
 //-------------------------------------------------------------------------------------------------
 
  // convenient extractors
@@ -671,6 +937,8 @@ object OrEquivalenceRule1 {
       case _ => None
     }
   }
+
+
 
   // TODO: refactor somewhere else
   // checks whether the SchemaProofLink calls are correct
