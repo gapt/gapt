@@ -18,6 +18,17 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.Seq
+import at.logic.language.hol.HOLVarFormula._
+import at.logic.calculi.lk.propositionalRules.NegLeftRule._
+import org.specs2.execute.Success
+import at.logic.language.hol.HOLConst._
+import at.logic.language.lambda.types.Ti._
+import at.logic.language.lambda.types.->._
+import at.logic.language.lambda.types.Tindex._
+import at.logic.language.hol.Definitions._
+import at.logic.language.schema.sTerm._
+import at.logic.language.lambda.types.{Tindex, ->, Ti}
+import at.logic.language.hol.{HOLConst, HOLVar, Atom, HOLVarFormula}
 
 @RunWith(classOf[JUnitRunner])
 class SLKTest extends SpecificationWithJUnit {
@@ -58,7 +69,30 @@ class SLKTest extends SpecificationWithJUnit {
       proof.root.toFSequent must beEqualTo (FSequent( or_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula]))
 
     }
+    "work for sCutRule" in {
+      def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
+      def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
+      def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
+      val k = IntVar(new VariableStringSymbol("k"))
+      val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
+      val base = x
+      val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val db = dbTRS(g, base, step)
+      val term1 = sTerm(g, Succ(Succ(k)), x::Nil)
+      val term2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      println("\n\nterm1 = "+unfoldSTerm(term1, db))
+      println("term2 = "+unfoldSTerm(term2, db))
+      val f1 = Atom(new ConstantStringSymbol("P"), term1::Nil)
+      val f2 = Atom(new ConstantStringSymbol("P"), term2::Nil)
+      println("\n\nf1 = "+unfoldSFormula(f1, db))
+      println("f2 = "+unfoldSFormula(f2, db))
 
+      val ax1  = Axiom(f1::Nil, f1::Nil)
+      val ax2  = Axiom(f2::Nil, f2::Nil)
+      val cut = sCutRule(ax1, ax2, f1, db)
+      println("\n\nroot = "+cut.root)
+      Success()
+    }
     /*
     // TODO: fix this test!
     "have a correct SchemaProofLinkRule extractor" in {

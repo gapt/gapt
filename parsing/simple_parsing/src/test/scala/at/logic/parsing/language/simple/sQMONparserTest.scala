@@ -34,7 +34,7 @@ import org.specs2.execute.Success
 @RunWith(classOf[JUnitRunner])
 class sQMONparserTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
-  "SimpleSLKParser" should {
+  "sQMONparser" should {
 
     "parse correctly a SLK-proof" in {
       val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
@@ -78,6 +78,10 @@ class sQMONparserTest extends SpecificationWithJUnit {
       //          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sQMON.lks"))
 
+//      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
+//      val map1 = ParseQMON.parseProof(s1)
+
+
       val map = ParseQMON.parseProof(s)
       //          println("\n\np = "+  map.get("chi").get._1.get("root").get.root.toString()  )
       //                       val p = map.get("chi").get._2.get("root").get
@@ -96,11 +100,23 @@ class sQMONparserTest extends SpecificationWithJUnit {
       //          val seq = ParseQMON.parseSequent("Forall x P(f(k,x)), P(x(k)) |- ")
       //          println(seq)
 
-      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
-      println("\n\n")
+//      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
+      println(Console.BLUE+"\n---- applySchemaSubstitution ----\n"+Console.RESET)
+
+      def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
+      def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
+      def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
+      val k = IntVar(new VariableStringSymbol("k"))
+      val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
+      val base = x
+      val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val db = dbTRS(g, base, step)
+      val varphi = applySchemaSubstitution("\\sigma",2, db)
+      println("\nvarphi = "+varphi.root)
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
 
     }
   }
 }
+

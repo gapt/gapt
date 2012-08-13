@@ -4,7 +4,6 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.slk._
 import at.logic.language.schema.IndexedPredicate._
-import at.logic.calculi.lk.base.{Sequent, LKProof}
 import at.logic.calculi.lk.propositionalRules._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
@@ -21,6 +20,9 @@ import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.language.schema.{sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+import at.logic.calculi.lk.base.FSequent._
+import at.logic.calculi.lk.base.{FSequent, types, Sequent, LKProof}
+
 
 
 object SHLK {
@@ -634,13 +636,14 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
 
   def apply(expression: T): T = expression match {
     case x:IntVar => {
+//      println("\nIntVar = "+x)
       map.get(x) match {
         case Some(t) => {
-          //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+//          println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
           t
         }
         case _ => {
-          //println(x + " Error in schema subst 1")
+          println(x + " Error in schema subst 1")
           x.asInstanceOf[T]
         }
       }
@@ -652,8 +655,27 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
     case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
     case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
     case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+    case Imp(l, r) => Imp(apply(l.asInstanceOf[T]).asInstanceOf[HOLFormula], apply(r.asInstanceOf[T]).asInstanceOf[HOLFormula]).asInstanceOf[T]
+    case AllVar(v, f) => AllVar(v, apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]).asInstanceOf[T]
+    case at @ Atom(name, args) => {
+      Atom(name, args.map(x => apply(x.asInstanceOf[T]).asInstanceOf[HOLExpression])).asInstanceOf[T]
+    }
+    case v @ foVar(name, typ) => v.asInstanceOf[T]
+    case indexedFOVar(name, ind) => indexedFOVar(name, apply(ind.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+    case st @ sTerm(name, i, args) => {
+      sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], args::Nil).asInstanceOf[T]
+    }
+    case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
 
-    case _ => expression
+    case _ => {
+      println("\ncase _ =>")
+      println(expression)
+      expression
+    }
+  }
+
+  def apply(fseq: types.FSequent): types.FSequent = {
+    FSequent(fseq._1.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]),fseq._2.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]))
   }
 }
 

@@ -924,6 +924,11 @@ import at.logic.calculi.slk._
       apply(up)
       println("\n UnaryProof : "+sequentToString(r))
     }
+    case TermEquivalenceRule1(up, r, _, _) =>  {
+      apply(up)
+      println("\n UnaryProof : "+sequentToString(r))
+    }
+
     case _ => println("ERROR in printSchemaProof")
   }
 }
