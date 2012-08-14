@@ -188,7 +188,7 @@ object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex(
 //  Predecessor, the inverse of successor Succ
 object Pred {
   def apply(t: IntegerTerm): IntegerTerm  =  {
-    println("Pred : "+t)
+//    println("Pred : "+t)
     t match {
       case Succ(t1) => t1
 //      case IntVar(v) => t
@@ -268,7 +268,9 @@ object BiggerThan {
 object Neg {
   def apply(sub: SchemaFormula) = App(NegC,sub).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case App(NegC,sub) => Some( (sub.asInstanceOf[SchemaFormula]) )
+//    case App(NegC,sub) => Some( (sub.asInstanceOf[SchemaFormula]) )
+    case App(NegC,sub) => Some( sub )
+
     case _ => None
   }
 }
