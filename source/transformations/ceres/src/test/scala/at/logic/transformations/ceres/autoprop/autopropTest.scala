@@ -3,7 +3,7 @@ package at.logic.transformations.ceres.autoprop
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.propositionalRules.{Axiom, NegLeftRule}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.language.hol.HOLFormula
+import at.logic.language.hol.{Atom, HOLConst, HOLFormula}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.transformations.ceres.projections.printSchemaProof
@@ -13,6 +13,9 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
+//import at.logic.language.fol.{FOLConst, FOLFactory}
+import at.logic.language.lambda.types.Ti
+
 
 @RunWith(classOf[JUnitRunner])
 class autopropTest extends SpecificationWithJUnit {
@@ -115,7 +118,19 @@ class autopropTest extends SpecificationWithJUnit {
       Autoprop(FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil))
       Autoprop(FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil))
       Autoprop(FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil))
-      // specs2 require a least one Result, see org.specs2.specification.Example 
+      // specs2 require a least one Result, see org.specs2.specification.Example
+
+//      val c = FOLFactory.createVar(new ConstantStringSymbol("c"), Ti()).asInstanceOf[FOLConst]
+//      val Pc = at.logic.language.fol.Atom(new ConstantStringSymbol("P"), c::Nil)
+//      val seq = FSequent(Pc::Nil, Pc::Nil)
+
+      val c2 = HOLConst(new ConstantStringSymbol("c"), Ti())
+      val Pc2 = Atom(new ConstantStringSymbol("P"), c2::Nil)
+      val nPc2 = at.logic.language.hol.Neg(Pc2.asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]
+//      val seq = FSequent(Pc2::Nil, Pc2::Nil)
+      val seq = FSequent(nPc2::Pc2::Nil, Nil)
+
+      printSchemaProof(Autoprop(seq))
       Success()
     }
   }

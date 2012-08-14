@@ -10,7 +10,7 @@ import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrence
 import at.logic.calculi.slk._
 import at.logic.calculi.slk.AndEquivalenceRule1._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.hol.{HOLExpression, HOLFormula}
+import at.logic.language.hol.{Atom, HOLExpression, HOLFormula}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.schema._
@@ -52,7 +52,7 @@ object Autoprop {
       val rest = getNonAtomicFAnt(seq).get._2
   //    println("\nrest = "+rest )
       f match {
-        case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1 +: rest.succedent)), f1)
+        case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula])
         case Imp(f1, f2)=> {
           return ImpLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), apply1(new FSequent(f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
@@ -106,7 +106,7 @@ object Autoprop {
 //    println("\nsucc f = "+printSchemaProof.formulaToString(f) )
     val rest = getNonAtomicFSucc(seq).get._2
     f match {
-      case Neg(f1) => return NegRightRule(apply1(new FSequent(f1 +: rest.antecedent, rest.succedent)), f1)
+      case Neg(f1) => return NegRightRule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula])
       case Imp(f1, f2)=> {
         return ImpRightRule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, f2.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
       }
@@ -220,6 +220,7 @@ object Autoprop {
   def getNonAtomicFAnt(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.antecedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
+//      case Atom(_, _) => {}
       case _ => return Some(f, removeFfromSeqAnt(seq, f))
     })
     None
@@ -228,6 +229,7 @@ object Autoprop {
   def getNonAtomicFSucc(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.succedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
+//      case Atom(_, _) => {}
       case _ => return Some(f, removeFfromSeqSucc(seq, f))
     })
     None
@@ -235,6 +237,7 @@ object Autoprop {
   
   def isAtom(f: HOLFormula): Boolean = f match {
     case IndexedPredicate(_, _) => true
+    case Atom(_, _) => true
     case _ => false
   }
   
