@@ -21,7 +21,7 @@ import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.language.schema.{foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+import at.logic.language.schema.{dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 
 
 object ParseQMON {
@@ -163,9 +163,15 @@ object ParseQMON {
     }
     throw new Exception("\nError in ParseQMON.parseSequent function !\n")
   }
-  
+
+
+
 
 //--------------------------------- parse SLK proof -----------------------
+
+
+
+
 
   def parseProofFlat(txt: InputStreamReader): Map[String, Pair[LKProof, LKProof]] =
   {
@@ -255,11 +261,28 @@ object ParseQMON {
       }
 
 
-      def slkProofs: Parser[List[Unit]] =  rep(define) ~ rep(slkProof) ^^ {
+      def slkProofs: Parser[List[Unit]] =  rep(trs) ~ rep(define) ~ rep(slkProof) ^^ {
          case a ~ s  => {
           List.empty[Unit]
         }
       }
+
+      def trs: Parser[dbTRS] = s_term ~ "->" ~ term ~ s_term ~ "->" ~ term ^^ {
+        case t1 ~ "->" ~ base ~ t2 ~ "->" ~ step => {
+          t1 match {
+            case sTerm(func1, i1, arg1) =>
+              t2 match {
+                case sTerm(func2, i2, arg2) => {
+//                  if(func1 == func2) {
+                    val db = dbTRS(func1.asInstanceOf[HOLConst], base, step)
+                    db
+//                  }
+                }
+              }
+          }
+        }
+      }
+
 
       def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR | impL | impR | termDefL1 | termDefR1
       def label: String = """[0-9]*[root]*"""
