@@ -79,7 +79,7 @@ class autopropTest extends SpecificationWithJUnit {
 //      val fseq = FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil)
 
 
-      val p = Autoprop.apply1(fseq)
+      val p = Autoprop.apply1(fseq) //UNCOMMENT !
       println(Console.RED+"\n\n\nautopropositional : "+Console.RESET+printSchemaProof.sequentToString(p.root) )
       println("\n\n\nautopropositional, size = "+rulesNumber(p))
       printSchemaProof(p)
@@ -124,13 +124,29 @@ class autopropTest extends SpecificationWithJUnit {
 //      val Pc = at.logic.language.fol.Atom(new ConstantStringSymbol("P"), c::Nil)
 //      val seq = FSequent(Pc::Nil, Pc::Nil)
 
+      println("\n\nHOL Examples")
       val c2 = HOLConst(new ConstantStringSymbol("c"), Ti())
+      val d2 = HOLConst(new ConstantStringSymbol("d"), Ti())
+      val e2 = HOLConst(new ConstantStringSymbol("e"), Ti())
       val Pc2 = Atom(new ConstantStringSymbol("P"), c2::Nil)
-      val nPc2 = at.logic.language.hol.Neg(Pc2.asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]
-//      val seq = FSequent(Pc2::Nil, Pc2::Nil)
-      val seq = FSequent(nPc2::Pc2::Nil, Nil)
+      val Pd2 = Atom(new ConstantStringSymbol("P"), d2::Nil)
+      val Pe2 = Atom(new ConstantStringSymbol("P"), e2::Nil)
+      val andPc2Pd2 = at.logic.language.hol.And(Pc2, Pd2)
+      val impPc2Pd2 = at.logic.language.hol.Imp(Pc2, Pd2)
+      val imp_andPc2Pd2_Pe2 = at.logic.language.hol.Imp(andPc2Pd2, Pe2)
+      val orPc2Pd2 = at.logic.language.hol.Or(Pc2, Pd2)
+      val seq11 = FSequent(Pc2::Nil, Pc2::Nil)
+      val seq12 = FSequent(andPc2Pd2::Nil, Pc2::Nil)
+      val seq13 = FSequent(Pc2::Nil, orPc2Pd2::Nil)
+      val seq14 = FSequent(andPc2Pd2::Nil, orPc2Pd2::Nil)
+      val seq15 = FSequent(Pc2::impPc2Pd2::imp_andPc2Pd2_Pe2::Nil, Pe2::Nil)
 
-      printSchemaProof(Autoprop(seq))
+
+      printSchemaProof(Autoprop(seq11))
+      printSchemaProof(Autoprop(seq12))
+      printSchemaProof(Autoprop(seq13))
+      printSchemaProof(Autoprop(seq14))
+      printSchemaProof(Autoprop(seq15))
       Success()
     }
   }
