@@ -127,14 +127,14 @@ object applySchemaSubstitution {
         val f = m.formula match { case And(_, w) => w }
         val new_parent = new_parents.head
 //        val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), subst( f ).asInstanceOf[HOLFormula] )
-        val new_proof = AndLeft1Rule( new_parent, subst(a.formula).asInstanceOf[HOLFormula], subst( f ).asInstanceOf[HOLFormula] )
+        val new_proof = AndLeft1Rule( new_parent, subst(a.formula).asInstanceOf[HOLFormula], subst( f.asInstanceOf[HOLFormula] ).asInstanceOf[HOLFormula] )
         new_proof
       }
       case AndLeft2Rule(p, s, a, m) => {
         val f = m.formula match { case And(w, _) => w }
         val new_parent = new_parents.head
 //        val new_proof = AndLeft2Rule( new_parent._1, subst( f ).asInstanceOf[HOLFormula], new_parent._2( a ) )
-        val new_proof = AndLeft2Rule( new_parent, subst( f ).asInstanceOf[HOLFormula], subst(a.formula).asInstanceOf[HOLFormula] )
+        val new_proof = AndLeft2Rule( new_parent, subst( f.asInstanceOf[HOLFormula] ).asInstanceOf[HOLFormula], subst(a.formula).asInstanceOf[HOLFormula] )
         new_proof
       }
   //    case OrLeftRule(p1, p2, s, a1, a2, m) => handleBinaryProp( new_parents.head, new_parents.last, subst, a1, a2, p1, p2, proof, OrLeftRule.apply )
