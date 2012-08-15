@@ -159,7 +159,7 @@ object StructuralOptimizationAfterAutoprop {
       //      println("AndLeft1Rule : "+printSchemaProof.sequentToString(new_p.root))
       //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
       //    println(printSchemaProof.formulaToString(a2))
-      AndLeft1Rule( new_p, a.formula, a2)
+      AndLeft1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
     }
     case AndLeft2Rule(p, r, a, m) =>  {
       val new_p = apply(p, p_old)
@@ -167,7 +167,7 @@ object StructuralOptimizationAfterAutoprop {
       //     println("AndLeft2Rule : "+printSchemaProof.sequentToString(new_p.root))
       //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
       //     println(printSchemaProof.formulaToString(a2))
-      AndLeft2Rule( new_p, a2, a.formula )
+      AndLeft2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula )
     }
     case OrRight1Rule(p, r, a, m) =>  {
       val new_p = apply(p, p_old)
@@ -357,7 +357,7 @@ object delSuperfluousRules {
         //      println("AndLeft1Rule : "+printSchemaProof.sequentToString(new_p.root))
         //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
         //    println(printSchemaProof.formulaToString(a2))
-        AndLeft1Rule( new_p, a.formula, a2)
+        AndLeft1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
       }
       case AndLeft2Rule(p, r, a, m) =>  {
         if (set.contains(m))
@@ -367,7 +367,7 @@ object delSuperfluousRules {
         //     println("AndLeft2Rule : "+printSchemaProof.sequentToString(new_p.root))
         //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
         //     println(printSchemaProof.formulaToString(a2))
-        AndLeft2Rule( new_p, a2, a.formula )
+        AndLeft2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula )
       }
       case OrRight1Rule(p, r, a, m) =>  {
         if (set.contains(m))
