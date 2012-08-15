@@ -22,6 +22,7 @@ import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+//import at.logic.transformations.ceres.autoprop.Autoprop
 
 
 object ParseQMON {
@@ -709,6 +710,10 @@ object ParseQMON {
         }
       }
 
+//      def autoprop: Parser[LKProof] = "autoprop" ~ sequent ^^ {
+//        case "autoprop" ~ seq => Autoprop(seq.toFSequent())
+//      }
+      
       def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "termDefL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
           TermLeftEquivalenceRule1(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
