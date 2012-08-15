@@ -19,6 +19,7 @@ import at.logic.transformations.ceres.unfolding.{StepMinusOne, SchemaSubstitutio
 import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
 import at.logic.parsing.language.simple.SHLK
+import at.logic.language.lambda.types.{Ti, Tindex}
 
 // continue autopropositional
 object Autoprop {
@@ -50,15 +51,15 @@ object Autoprop {
       val f = getNonAtomicFAnt(seq).get._1
 //      println("\nant f = "+printSchemaProof.formulaToString(f) )
       val rest = getNonAtomicFAnt(seq).get._2
-  //    println("\nrest = "+rest )
+//      println("\nrest = "+rest )
       f match {
         case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula])
         case Imp(f1, f2)=> {
           return ImpLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), apply1(new FSequent(f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
         case And(f1, f2) => {
-          val up1 = AndLeft1Rule(apply1(new FSequent(f1 +: f2 +: rest.antecedent, rest.succedent)), f1, f2)
-          val up2 = AndLeft2Rule(up1, f1, f2)
+          val up1 = AndLeft1Rule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+          val up2 = AndLeft2Rule(up1, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
           return ContractionLeftRule(up2, f)
         }
         case Or(f1, f2) => {
@@ -116,9 +117,9 @@ object Autoprop {
         return ContractionRightRule(up2, f)
       }
       case And(f1, f2) => {
-        val t1 = apply1(new FSequent(rest.antecedent, f1 +: rest.succedent))
-        val t2 = apply1(new FSequent(rest.antecedent, f2 +: rest.succedent))
-        val up = AndRightRule(t1, t2, f1, f2)
+        val t1 = apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent))
+        val t2 = apply1(new FSequent(rest.antecedent, f2.asInstanceOf[HOLFormula] +: rest.succedent))
+        val up = AndRightRule(t1, t2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
 //        print("\nsucc And(f1, f2) = ")
 //        println (printSchemaProof.formulaToString(f))
 //        println(printSchemaProof.sequentToString(up.root))
@@ -220,7 +221,11 @@ object Autoprop {
   def getNonAtomicFAnt(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.antecedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
-//      case Atom(_, _) => {}
+      case Atom(_ , arg) => {
+        if ( arg.head.exptype == Ti())
+          { println("Ant Atom(_,_)") }
+        else return Some(f, removeFfromSeqAnt(seq, f))
+      }
       case _ => return Some(f, removeFfromSeqAnt(seq, f))
     })
     None
@@ -229,7 +234,11 @@ object Autoprop {
   def getNonAtomicFSucc(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.succedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
-//      case Atom(_, _) => {}
+      case Atom(_ , arg) => {
+        if ( arg.head.exptype == Ti() )
+          { println("Succ Atom(_,_)") }
+        else return Some(f, removeFfromSeqAnt(seq, f))
+      }
       case _ => return Some(f, removeFfromSeqSucc(seq, f))
     })
     None
@@ -413,7 +422,7 @@ object StructuralOptimizationAfterAutoprop {
       //      println("AndLeft1Rule : "+printSchemaProof.sequentToString(new_p.root))
       //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
       //    println(printSchemaProof.formulaToString(a2))
-      AndLeft1Rule( new_p, a.formula, a2)
+      AndLeft1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
     }
     case AndLeft2Rule(p, r, a, m) =>  {
       val new_p = apply(p, p_old)
@@ -421,7 +430,7 @@ object StructuralOptimizationAfterAutoprop {
       //     println("AndLeft2Rule : "+printSchemaProof.sequentToString(new_p.root))
       //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
       //     println(printSchemaProof.formulaToString(a2))
-      AndLeft2Rule( new_p, a2, a.formula )
+      AndLeft2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula )
     }
     case OrRight1Rule(p, r, a, m) =>  {
       val new_p = apply(p, p_old)
@@ -620,7 +629,7 @@ object delSuperfluousRules {
         //      println("AndLeft1Rule : "+printSchemaProof.sequentToString(new_p.root))
         //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
         //    println(printSchemaProof.formulaToString(a2))
-        AndLeft1Rule( new_p, a.formula, a2)
+        AndLeft1Rule( new_p, a.formula, a2.asInstanceOf[HOLFormula])
       }
       case AndLeft2Rule(p, r, a, m) =>  {
         if (set.contains(m))
@@ -630,7 +639,7 @@ object delSuperfluousRules {
         //     println("AndLeft2Rule : "+printSchemaProof.sequentToString(new_p.root))
         //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
         //     println(printSchemaProof.formulaToString(a2))
-        AndLeft2Rule( new_p, a2, a.formula )
+        AndLeft2Rule( new_p, a2.asInstanceOf[HOLFormula], a.formula )
       }
       case OrRight1Rule(p, r, a, m) =>  {
         if (set.contains(m))

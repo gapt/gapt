@@ -89,7 +89,7 @@ object unfoldSTerm {
 
 object unfoldSFormula {
   def apply(f: HOLFormula, trs: dbTRS): HOLFormula = {
-    println("unfolding formula : "+f)
+//    println("unfolding formula : "+f)
     f match {
       //case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
       case Atom(name, args) => Atom(name, args.map(t => unfoldSTerm(t, trs)))
@@ -278,7 +278,7 @@ object Neg {
 object And {
   def apply(left: SchemaFormula, right: SchemaFormula) = (SchemaFactory.createApp(SchemaFactory.createApp(AndC,left),right)).asInstanceOf[SchemaFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case App(App(AndC,left),right) => Some( (left.asInstanceOf[SchemaFormula],right.asInstanceOf[SchemaFormula]) )
+    case App(App(AndC,left),right) => Some( (left,right) )
     case _ => None
   }
 }
