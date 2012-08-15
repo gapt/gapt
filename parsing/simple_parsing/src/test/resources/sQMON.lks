@@ -1,3 +1,6 @@
+g(0,x) -> x
+g(k+1,x) -> f(g(k,x))
+
 proof \chi  proves
 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k+1,x)))
 
