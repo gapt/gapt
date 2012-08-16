@@ -5,7 +5,7 @@ proof \chi  proves
 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k+1,x)))
 
 base {
-    root: ax(Forall x (Imp P(x) P(g(1,x))) , Forall x (Imp P(x) P(g(0,x))) |- Forall x (Imp P(x) P(g(1,x))) )
+    root: ax( Forall x (Imp P(x) P(g(0,x))), Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(1,x))) )
 }
 
 step {
@@ -21,6 +21,31 @@ step {
 }
 
 
+proof \varphi  proves
+Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k+1,x)))
+
+base {
+    root: ax( Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(1,x))) )
+}
+
+step {
+    1:      pLink(   (\varphi, k)
+                Forall x (Imp P(x) P(g(1,x)))
+                    |-
+                Forall x (Imp P(x) P(g(k+1,x)))
+                )
+    2:      pLink(   (\chi, k+1)
+                Forall x (Imp P(x) P(g(k+1,x))) , Forall x (Imp P(x) P(g(1,x)))
+                    |-
+                Forall x (Imp P(x) P(g(k+2,x)))
+                )
+
+    3:      cut( 1, 2, Forall x (Imp P(x) P(g(k+1,x))) )
+    root:   contrL( 3, Forall x (Imp P(x) P(g(1,x))) )
+}
+
+
+
 proof \tau  proves
 Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(g(k,x)) P(h(k,x))) |- Imp P(a) P(g(k,a))
 
@@ -29,40 +54,15 @@ base {
 }
 
 step {
-    1:      ax( P(g(k,a))  |- P(g(k,a)) )
-    2:      ax( P(h(k,a))  |- P(h(k,a)) )
-    3:      impL( 1, 2, P(g(k,a)), P(h(k,a)) )
+    1:      ax( P(g(k+1,a))  |- P(g(k+1,a)) )
+    2:      ax( P(h(k+1,a))  |- P(h(k+1,a)) )
+    3:      impL( 1, 2, P(g(k+1,a)), P(h(k+1,a)) )
     4:      ax( P(a)  |- P(a) )
-    5:      impL( 4, 3, P(a), P(g(k,a)) )
-    6:      impR( 5, P(a), P(h(k,a)) )
-    7:      allL(6, Imp P(g(k,a)) P(h(k,a)), Forall x (Imp P(g(k,x)) P(h(k,x))), a)
-    root:   allL(7, Imp P(a) P(g(k,a)), Forall x (Imp P(x) P(g(k,x))), a )
+    5:      impL( 4, 3, P(a), P(g(k+1,a)) )
+    6:      impR( 5, P(a), P(h(k+1,a)) )
+    7:      allL(6, Imp P(g(k+1,a)) P(h(k+1,a)), Forall x (Imp P(g(k+1,x)) P(h(k+1,x))), a)
+    root:   allL(7, Imp P(a) P(g(k+1,a)), Forall x (Imp P(x) P(g(k+1,x))), a )
 }
-
-
-proof \varphi  proves
-Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k,x)))
-
-base {
-    root: ax( Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(0,x))) )
-}
-
-step {
-    1:      pLink(   (\varphi, k)
-                Forall x (Imp P(x) P(g(1,x)))
-                    |-
-                Forall x (Imp P(x) P(g(k,x)))
-                )
-    2:      pLink(   (\chi, k)
-                Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(x) P(g(1,x)))
-                    |-
-                Forall x (Imp P(x) P(g(k+1,x)))
-                )
-
-    3:      cut( 1, 2, Forall x (Imp P(x) P(g(k,x))) )
-    root:   contrL( 3, Forall x (Imp P(x) P(g(1,x))) )
-}
-
 
 
 proof \sigma  proves
@@ -77,13 +77,13 @@ step {
     1:      pLink(   (\varphi, k)
                 Forall x (Imp P(x) P(g(1,x)))
                     |-
-                Forall x (Imp P(x) P(g(k,x)))
+                Forall x (Imp P(x) P(g(k+1,x)))
                 )
     2:      pLink(   (\tau, k+1)
-                Forall x (Imp P(x) P(g(k,x))) , Forall x (Imp P(g(k,x)) P(h(k,x)))
+                Forall x (Imp P(x) P(g(k+1,x))) , Forall x (Imp P(g(k+1,x)) P(h(k+1,x)))
                     |-
-                Imp P(a) P(h(k,a))
+                Imp P(a) P(h(k+1,a))
                 )
 
-    root:   cut( 1, 2, Forall x (Imp P(x) P(g(k,x))) )
+    root:   cut( 1, 2, Forall x (Imp P(x) P(g(k+1,x))) )
 }
