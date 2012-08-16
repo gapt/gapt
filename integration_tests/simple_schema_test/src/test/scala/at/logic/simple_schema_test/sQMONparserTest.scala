@@ -129,8 +129,8 @@ class sQMONparserTest extends SpecificationWithJUnit {
 //      val varphi = applySchemaSubstitution("\\tau",1, db)
       val varphi = applySchemaSubstitution("\\sigma",2, db)
 
-      Main.display("varphi", varphi);
-      while(true){}
+//      Main.display("varphi", varphi);
+//      while(true){}
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
 
