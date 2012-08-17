@@ -55,7 +55,8 @@ object Autoprop {
       f match {
         case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula])
         case Imp(f1, f2)=> {
-          return ImpLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), apply1(new FSequent(f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+          val up = ImpLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), apply1(new FSequent(f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+          return ContractionRuleN(up, rest)
         }
         case And(f1, f2) => {
           val up1 = AndLeft1Rule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
@@ -109,7 +110,8 @@ object Autoprop {
     f match {
       case Neg(f1) => return NegRightRule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula])
       case Imp(f1, f2)=> {
-        return ImpRightRule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, f2.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+        val up = ImpRightRule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, f2.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+        return ContractionRuleN(up, rest)
       }
       case Or(f1, f2) => {
         val up1 = OrRight1Rule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
@@ -223,7 +225,7 @@ object Autoprop {
       case IndexedPredicate(_, _) => {}
       case Atom(_ , arg) => {
         if ( arg.head.exptype == Ti())
-          { println("Ant Atom(_,_)") }
+          {  }
         else return Some(f, removeFfromSeqAnt(seq, f))
       }
       case _ => return Some(f, removeFfromSeqAnt(seq, f))
