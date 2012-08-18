@@ -103,7 +103,7 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
 
 
 //--------------------------------------------------
-import at.logic.transformations.ceres.projections.printSchemaProof
+//import at.logic.algorithms.shlk._
 
 val chi0a = Axiom(A0 +: Seq.empty[HOLFormula], A0 +: Seq.empty[HOLFormula])
 val eqq1 = AndLeftEquivalenceRule3(chi0a, A0, BigAnd(i,A,zero,zero))

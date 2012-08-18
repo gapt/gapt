@@ -105,7 +105,7 @@ class sCSunfoldTest extends SpecificationWithJUnit {
 
       val phin = bigo
 
-      printSchemaProof(phin)
+//      printSchemaProof(phin)
       // specs2 require a least one Result, see org.specs2.specification.Example 
       Success() 
 
