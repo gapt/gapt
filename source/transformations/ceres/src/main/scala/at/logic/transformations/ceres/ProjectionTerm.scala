@@ -50,7 +50,7 @@ import at.logic.utils.ds.trees.BinaryTree
 import at.logic.utils.ds.trees.LeafTree
 import at.logic.utils.ds.trees.Tree
 import at.logic.utils.ds.trees.UnaryTree
-import projections.printSchemaProof
+import at.logic.algorithms.shlk._
 import scala.collection.immutable.HashMap
 import struct.StructCreators
 import struct.TypeSynonyms
