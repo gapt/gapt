@@ -43,7 +43,7 @@ import at.logic.language.schema.IntZero
 import at.logic.language.schema.IntegerTerm
 import at.logic.language.schema.SchemaFormula
 import at.logic.language.schema.Succ
-import at.logic.transformations.ceres.unfolding.SchemaSubstitution1
+import at.logic.algorithms.shlk._
 import at.logic.utils.ds.Multisets
 import at.logic.utils.ds.Multisets.Multiset
 import at.logic.utils.ds.trees.BinaryTree
@@ -55,8 +55,7 @@ import scala.collection.immutable.HashMap
 import struct.StructCreators
 import struct.TypeSynonyms
 import struct.cutOccConfigToCutConfig
-import unfolding.SchemaSubstitution1
-import unfolding.StepMinusOne
+
 
 trait ProjectionTerm
 

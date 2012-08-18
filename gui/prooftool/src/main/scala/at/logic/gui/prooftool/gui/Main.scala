@@ -33,10 +33,9 @@ import at.logic.transformations.ReductiveCutElim
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
-import at.logic.transformations.ceres.unfolding.applySchemaSubstitution
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.ProjectionTermCreators
-import at.logic.transformations.ceres.autoprop._
+import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 

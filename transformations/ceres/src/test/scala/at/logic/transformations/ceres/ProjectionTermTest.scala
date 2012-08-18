@@ -7,12 +7,11 @@ import at.logic.language.hol.{HOLFormula, HOLVarFormula}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, SchemaSubstitution1}
+import at.logic.algorithms.shlk._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import projections.printSchemaProof
-import at.logic.parsing.language.simple.SHLK
 import java.io.File.separator
 import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success

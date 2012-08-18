@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.parsing.language.simple
+package at.logic.algorithms.shlk
 
 import at.logic.language.schema._
 import at.logic.calculi.lk.base.Sequent
@@ -111,7 +111,7 @@ class sQMONparserTest extends SpecificationWithJUnit {
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
       val db = dbTRS(g, base, step)
-      val varphi = applySchemaSubstitution("\\sigma",2, db)
+      val varphi = applySchemaSubstitution2("\\sigma",2, db)
       println("\nvarphi = "+varphi.root)
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()

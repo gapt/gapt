@@ -1,12 +1,12 @@
 // --------------------- substitution begin
 
-package at.logic.transformations.ceres.unfolding
+package at.logic.algorithms.shlk
 
 
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.schema._
 import at.logic.language.schema.IndexedPredicate._
-import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
+//import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
 import scala.xml._
 import at.logic.calculi.slk._
 import at.logic.language.hol.logicSymbols._
@@ -16,7 +16,7 @@ WeakeningLeftRule => LKskWeakeningLeftRule,
 WeakeningRightRule => LKskWeakeningRightRule,
 ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule}
 
-import  at.logic.transformations.ceres.projections.printSchemaProof
+//import  at.logic.transformations.ceres.projections.printSchemaProof
 import scala.collection.mutable.{Map, HashMap}
 
 import at.logic.calculi.lk.propositionalRules._
@@ -65,11 +65,11 @@ object applySchemaSubstitution {
                          a1: FormulaOccurrence,
                          a2: FormulaOccurrence,
                         constructor: (LKProof, HOLFormula) => LKProof) = {
- //   println("n = "+subst.map.toList.head._2)
- //   println("handleContraction \n\n1"+printSchemaProof.sequentToString(new_parent._1.root))
- //   println("2\n\n"+printSchemaProof.formulaToString(subst(a1.formula)))
+//   println("n = "+subst.map.toList.head._2)
+//   println("handleContraction \n\n1"+printSchemaProof.sequentToString(new_parent._1.root))
+//   println("2\n\n"+printSchemaProof.formulaToString(subst(a1.formula)))
 
- //   println("3\n\n"+printSchemaProof.sequentToString(old_parent.root))
+//   println("3\n\n"+printSchemaProof.sequentToString(old_parent.root))
   //  println("4\n\n"+printSchemaProof.formulaToString(a1.formula))
 
 //    println("4\n\n"+printSchemaProof.sequentToString(old_proof.root))
@@ -159,7 +159,7 @@ object applySchemaSubstitution {
         val new_parent = new_parents.head
       //  val new_proof = NegLeftRule( new_parent._1, new_parent._2( a ) )
         val new_proof = NegLeftRule( new_parent, subst( a.formula ).asInstanceOf[HOLFormula] )
- //       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+//       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         new_proof
       }
       case NegRightRule(p, s, a, m) => {
@@ -254,7 +254,7 @@ object applySchemaSubstitution {
             }
 
       //      }
- //           apply(SchemaProofDB.get(link), new_subst)
+//           apply(SchemaProofDB.get(link), new_subst)
 
       }
 
@@ -445,38 +445,6 @@ import at.logic.language.hol._
     }}
 }
 
-
-class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
-  import at.logic.language.schema._
-
-  def apply(expression: T): T = expression match {
-      case x:IntVar => {
-          map.get(x) match {
-            case Some(t) => {
-              //println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
-              t
-            }
-            case _ => {
-              //println(x + " Error in schema subst 1")
-              x.asInstanceOf[T]
-            }
-          }
-      }
-      case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
-      case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
-      case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
-      case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
-      case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-      case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-      case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-
-      case _ => expression
-    }
-
-  def apply(fseq: types.FSequent): types.FSequent = {
-    FSequent(fseq._1.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]),fseq._2.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]))
-  }
-}
 //substitution end
 
 

@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.parsing.language.simple
+package at.logic.algorithms.shlk
 
 import at.logic.language.schema._
 import at.logic.calculi.lk.base.Sequent

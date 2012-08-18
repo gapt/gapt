@@ -7,7 +7,7 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.hol.{HOLExpression, HOLFormula}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.Var
-import at.logic.parsing.language.simple.SHLK
+import at.logic.algorithms.shlk._
 import at.logic.transformations.ceres.projections.printSchemaProof
 import java.io.File.separator
 import scala.io._

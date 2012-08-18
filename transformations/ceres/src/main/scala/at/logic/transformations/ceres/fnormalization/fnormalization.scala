@@ -15,7 +15,7 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.schema._
 import at.logic.transformations.ceres.projections.printSchemaProof
-import at.logic.transformations.ceres.unfolding.{StepMinusOne, SchemaSubstitution1}
+import at.logic.algorithms.shlk._
 
 object NNF {
   def apply(f: HOLFormula) : HOLFormula = {

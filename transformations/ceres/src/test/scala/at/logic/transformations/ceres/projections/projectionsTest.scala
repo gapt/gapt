@@ -1,8 +1,9 @@
-package at.logic.transformations.ceres.projections;
+//package at.logic.transformations.ceres.projections;
 //
 //package at.logic.transformations.ceres.projections
 //
-//import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, SchemaSubstitution1}
+////import at.logic.transformations.ceres.unfolding.{applySchemaSubstitution, SchemaSubstitution1}
+//import at.logic.algorithms.shlk._
 //import org.specs2.mutable._
 ////import org.specs.runner._
 //import org.specs.matcher.Matcher
@@ -37,7 +38,7 @@ package at.logic.transformations.ceres.projections;
 //import scala.collection.immutable.Seq
 //
 //
-// /*
+///*
 //// -------- prooftool begin----------------------------------------------------------------------
 //
 //    import scala.swing._
@@ -91,16 +92,16 @@ package at.logic.transformations.ceres.projections;
 //                }) = Position.South
 //            case SchemaProofLinkRule(_, link, indices) =>
 //              layout(new BoxPanel(Orientation.Vertical) {
-// 	          background = white
-// 	          contents += new Label("(" + link + ", " + formulaToString(indices.head) + ")") {
-// 	            font = ft
-// 	            xLayoutAlignment = 0.5
-// 	          }
-// 	          contents += new Label(tx) {
-// 	            font = ft
-// 	            xLayoutAlignment = 0.5
-// 	          }
-// 	        }) = Position.South
+//	          background = white
+//	          contents += new Label("(" + link + ", " + formulaToString(indices.head) + ")") {
+//	            font = ft
+//	            xLayoutAlignment = 0.5
+//	          }
+//	          contents += new Label(tx) {
+//	            font = ft
+//	            xLayoutAlignment = 0.5
+//	          }
+//	        }) = Position.South
 //        }
 //      }
 //
@@ -177,13 +178,13 @@ package at.logic.transformations.ceres.projections;
 ////import at.logic.language.hol.logicSymbols._
 //
 //object ProoftoolSequentFormatter {
-// //formats a lambda term to a readable string, distinguishing function and logical symbols
+////formats a lambda term to a readable string, distinguishing function and logical symbols
 //  def formulaToString(f:LambdaExpression) : String = f match {
 //    case BigAnd(v, formula, init, end) =>
-// 	        "⋀" + formulaToString(v) + "=(" + formulaToString(init) + ".." + formulaToString(end) + ")(" + formulaToString(formula) + ")"
+//	        "⋀" + formulaToString(v) + "=(" + formulaToString(init) + ".." + formulaToString(end) + ")(" + formulaToString(formula) + ")"
 //
 //    case BigOr(v, formula, init, end) =>
-// 	        "⋁" + formulaToString(v) + "=(" + formulaToString(init) + ".." + formulaToString(end) + ")(" + formulaToString(formula) + ")"
+//	        "⋁" + formulaToString(v) + "=(" + formulaToString(init) + ".." + formulaToString(end) + ")(" + formulaToString(formula) + ")"
 //
 //    case t : IntegerTerm  => parseIntegerTerm(t, 0)
 //    case App(x,y) => x match {
@@ -205,19 +206,19 @@ package at.logic.transformations.ceres.projections;
 //  }
 //
 //  def parseIntegerTerm( t: IntegerTerm, n: Int) : String = t match {
-// 	    // FIXME: in the first case, we implicitely assume
-// 	    // that all IntConsts are 0!
-// 	    // this is just done for convenience, and should be changed ASAP
-// 	    case z : IntConst => n.toString
-// 	    case IntZero() => n.toString
+//	    // FIXME: in the first case, we implicitely assume
+//	    // that all IntConsts are 0!
+//	    // this is just done for convenience, and should be changed ASAP
+//	    case z : IntConst => n.toString
+//	    case IntZero() => n.toString
 //
-// 	    case v : IntVar => if (n > 0)
-// 	        v.toStringSimple + "+" + n.toString
-// 	      else
-// 	        v.toStringSimple
-// 	    case Succ(t) => parseIntegerTerm( t, n + 1 )
+//	    case v : IntVar => if (n > 0)
+//	        v.toStringSimple + "+" + n.toString
+//	      else
+//	        v.toStringSimple
+//	    case Succ(t) => parseIntegerTerm( t, n + 1 )
 //  }
-// /*
+///*
 //  def formulaToString(f:SchemaExpression) : String = f match {
 //    case AppN(BigAndC, SchemaAbs(i, formula)::lower::upper::Nil) => BigAndC.name + "<sub>" + formulaToString(i) + " = " + formulaToString(lower) + "</sub>" +
 //      "<sup>" + formulaToString(upper) + "</sup>" + formulaToString(formula)
@@ -331,8 +332,8 @@ package at.logic.transformations.ceres.projections;
 //      layout(body) = Position.Center
 //    }
 //  }
-// val body = new MyScrollPane
-// }
+//val body = new MyScrollPane
+//}
 //
 //
 //
@@ -396,11 +397,11 @@ package at.logic.transformations.ceres.projections;
 //                         a1: FormulaOccurrence,
 //                         a2: FormulaOccurrence,
 //                        constructor: (LKProof, HOLFormula) => LKProof) = {
-// //   println("n = "+subst.map.toList.head._2)
-// //   println("handleContraction \n\n1"+printSchemaProof.sequentToString(new_parent._1.root))
-// //   println("2\n\n"+printSchemaProof.formulaToString(subst(a1.formula)))
+////   println("n = "+subst.map.toList.head._2)
+////   println("handleContraction \n\n1"+printSchemaProof.sequentToString(new_parent._1.root))
+////   println("2\n\n"+printSchemaProof.formulaToString(subst(a1.formula)))
 //
-// //   println("3\n\n"+printSchemaProof.sequentToString(old_parent.root))
+////   println("3\n\n"+printSchemaProof.sequentToString(old_parent.root))
 //  //  println("4\n\n"+printSchemaProof.formulaToString(a1.formula))
 //
 ////    println("4\n\n"+printSchemaProof.sequentToString(old_proof.root))
@@ -493,7 +494,7 @@ package at.logic.transformations.ceres.projections;
 //      //  val new_proof = NegLeftRule( new_parent._1, new_parent._2( a ) )
 //        val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
 //        val new_proof = NegLeftRule( new_parent._1, subst( a.formula ).asInstanceOf[HOLFormula] )
-// //       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
+////       ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
 //        (new_proof,map)
 //      }
 //      case NegRightRule(p, s, a, m) => {
@@ -517,7 +518,7 @@ package at.logic.transformations.ceres.projections;
 //  }
 //
 //  def apply( proof: LKProof, subst: SchemaSubstitution1[HOLExpression] ) : (LKProof, Map[FormulaOccurrence, FormulaOccurrence]) = {
-// //   println("\n"+proof.rule+")")
+////   println("\n"+proof.rule+")")
 //
 //    proof match {
 //      case SchemaProofLinkRule( seq, link, ind::_ ) => {
@@ -546,7 +547,7 @@ package at.logic.transformations.ceres.projections;
 //         //       case _ =>
 //                    apply(SchemaProofDB.get(link), new_subst)
 //      //      }
-// //           apply(SchemaProofDB.get(link), new_subst)
+////           apply(SchemaProofDB.get(link), new_subst)
 //          }
 //        }
 //      }
@@ -614,7 +615,7 @@ package at.logic.transformations.ceres.projections;
 //import at.logic.language.hol._
 //
 //    def apply(p: LKProof):LKProof = {
-// //     println("\nCloneLKProof : "+p.rule)
+////     println("\nCloneLKProof : "+p.rule)
 //      p match {
 //
 //        case Axiom(ro) => Axiom(ro.antecedent.map(fo => fo.formula.asInstanceOf[HOLFormula]),ro.succedent.map(fo => fo.formula.asInstanceOf[HOLFormula]))
@@ -841,12 +842,12 @@ package at.logic.transformations.ceres.projections;
 //  val end = chin
 //
 ////  val f = end.root.succedent.toList.head//.formula.asInstanceOf[SchemaFormula]
-// // val f = end.root.antecedent.toList.head
+//// val f = end.root.antecedent.toList.head
 //
 //
-// // getAncestors( f ).foreach(fo => println(formulaToString(fo.formula)))
+//// getAncestors( f ).foreach(fo => println(formulaToString(fo.formula)))
 //
-// // Main.display("Proof", end)
+//// Main.display("Proof", end)
 //
 //    SchemaProofDB.clear
 //    val chi = new SchemaProof( "\\chi", n::Nil, Pair(BigAnd(i,A,zero,n) +: Seq.empty[HOLFormula], BigAnd(i,A,zero,n) +: Seq.empty[HOLFormula]), chi0, chin )
@@ -854,18 +855,18 @@ package at.logic.transformations.ceres.projections;
 ////    val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
 ////    val subst = new SchemaSubstitution1[HOLExpression](new_map)
 ////    val chi1 = applySchemaSubstitution(chi, subst)
-// //   Main.display("chi", chi1) ; while(true){}
+////   Main.display("chi", chi1) ; while(true){}
 //
 //  //  println("\n\n\n\n -------- SUBSTITUTION applied: --------\n\n")
 //
-// // val chi = chin
-// //   val chi = applySchemaSubstitution(chin, subst)
-// //  val projs = Projections(end, s+f).toList
-// // projs.foreach(p => { println("\nNext projection:\n");printSchemaProof( p._1 ) } )
+//// val chi = chin
+////   val chi = applySchemaSubstitution(chin, subst)
+////  val projs = Projections(end, s+f).toList
+//// projs.foreach(p => { println("\nNext projection:\n");printSchemaProof( p._1 ) } )
 ////  Main.display("Projection", projs.head._1);while(true) {}
 ////  Main.display("Projection", projs.tail.head._1)
 //
-// //   Main.display("proof", chi) ; while(true){}
+////   Main.display("proof", chi) ; while(true){}
 //
 //
 //

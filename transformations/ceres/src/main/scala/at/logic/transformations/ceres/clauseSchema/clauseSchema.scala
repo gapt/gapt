@@ -16,10 +16,9 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
 import at.logic.language.schema._
 import at.logic.transformations.ceres.projections.printSchemaProof
-import at.logic.transformations.ceres.unfolding.{StepMinusOne, SchemaSubstitution1}
+import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
-import at.logic.parsing.language.simple.SHLK
 
 abstract class sClause {
   override def toString: String

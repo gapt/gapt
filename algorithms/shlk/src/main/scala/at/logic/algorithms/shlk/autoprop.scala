@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres.autoprop
+package at.logic.algorithms.shlk
 
 import at.logic.algorithms.lk.getAncestors
 import at.logic.calculi.lk.base._
@@ -14,11 +14,9 @@ import at.logic.language.hol.{Atom, HOLExpression, HOLFormula}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.schema._
-import at.logic.transformations.ceres.projections.printSchemaProof
-import at.logic.transformations.ceres.unfolding.{StepMinusOne, SchemaSubstitution1}
+//import at.logic.transformations.ceres.projections.printSchemaProof
 import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
-import at.logic.parsing.language.simple.SHLK
 import at.logic.language.lambda.types.{Ti, Tindex}
 
 // continue autopropositional

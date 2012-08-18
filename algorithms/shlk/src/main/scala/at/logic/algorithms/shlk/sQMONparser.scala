@@ -1,4 +1,4 @@
-package at.logic.parsing.language.simple
+package at.logic.algorithms.shlk
 
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.macroRules._
@@ -710,9 +710,9 @@ object ParseQMON {
         }
       }
 
-//      def autoprop: Parser[LKProof] = "autoprop" ~ sequent ^^ {
-//        case "autoprop" ~ seq => Autoprop(seq.toFSequent())
-//      }
+      def autoprop: Parser[LKProof] = "autoprop" ~ sequent ^^ {
+        case "autoprop" ~ seq => Autoprop(seq.toFSequent())
+      }
       
       def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "termDefL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
