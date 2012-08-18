@@ -15,7 +15,6 @@ import at.logic.language.hol.{HOLExpression, HOLFormula}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
 import at.logic.language.schema._
-import at.logic.transformations.ceres.projections.printSchemaProof
 import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
