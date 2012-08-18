@@ -18,7 +18,7 @@ import at.logic.parsing.ParsingException
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
-import at.logic.parsing.language.simple.SHLK
+import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLFormula
 import at.logic.gui.prooftool.gui.Main

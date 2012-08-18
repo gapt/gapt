@@ -32,8 +32,7 @@ import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success
 import at.logic.gui.prooftool.gui.Main
 import at.logic.transformations.ceres.projections.printSchemaProof
-import at.logic.parsing.language.simple.applySchemaSubstitution._
-import at.logic.parsing.language.simple.{applySchemaSubstitution, ParseQMON}
+import at.logic.algorithms.shlk._
 
 @RunWith(classOf[JUnitRunner])
 class sQMONparserTest extends SpecificationWithJUnit {
@@ -127,7 +126,7 @@ class sQMONparserTest extends SpecificationWithJUnit {
       val db = dbTRS(g, base, step)
 //      val varphi = applySchemaSubstitution("\\varphi",1, db)
 //      val varphi = applySchemaSubstitution("\\tau",1, db)
-      val varphi = applySchemaSubstitution("\\sigma",2, db)
+      val varphi = applySchemaSubstitution2("\\sigma",6, db)
 
 //      Main.display("varphi", varphi);
 //      while(true){}

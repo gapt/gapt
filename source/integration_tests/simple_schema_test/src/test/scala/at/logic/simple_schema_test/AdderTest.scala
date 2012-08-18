@@ -4,7 +4,7 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.parsing.language.simple.SHLK
+import at.logic.algorithms.shlk._
 import io.Source
 import java.io.File.separator
 import at.logic.language.schema.IntVar

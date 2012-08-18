@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres.autoprop
+package at.logic.algorithms.shlk
 
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.propositionalRules.{Axiom, NegLeftRule}
@@ -6,7 +6,7 @@ import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrence
 import at.logic.language.hol.{Atom, HOLConst, HOLFormula}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.transformations.ceres.projections.printSchemaProof
+//import at.logic.transformations.ceres.projections.printSchemaProof
 import java.io.File.separator
 import scala.io._
 import org.specs2.mutable._
@@ -80,31 +80,31 @@ class autopropTest extends SpecificationWithJUnit {
 
 
       val p = Autoprop.apply1(fseq) //UNCOMMENT !
-      println(Console.RED+"\n\n\nautopropositional : "+Console.RESET+printSchemaProof.sequentToString(p.root) )
+//      println(Console.RED+"\n\n\nautopropositional : "+Console.RESET+printSchemaProof.sequentToString(p.root) )
       println("\n\n\nautopropositional, size = "+rulesNumber(p))
-      printSchemaProof(p)
+//      printSchemaProof(p)
 
       val p1 = StructuralOptimizationAfterAutoprop(p)
       println("\n\n\niteration 1, size = :"+rulesNumber(p1))
-      printSchemaProof(p1)
+//      printSchemaProof(p1)
 //
       val p2 = StructuralOptimizationAfterAutoprop(p1)
       println("\n\n\niteration 2, size = :"+rulesNumber(p2))
-      printSchemaProof(p2)
+//      printSchemaProof(p2)
 ////
       val p3 = StructuralOptimizationAfterAutoprop(p2)
       println("\n\n\niteration 3, size = :"+rulesNumber(p3))
-      printSchemaProof(p3)
+//      printSchemaProof(p3)
       println("\n\n")
 
       val p4 = StructuralOptimizationAfterAutoprop(p3)
       println("\n\n\niteration 3, size = :"+rulesNumber(p4))
-      printSchemaProof(p4)
+//      printSchemaProof(p4)
       println("\n\n")
 
       val p5 = StructuralOptimizationAfterAutoprop(p4)
       println("\n\n\niteration 3, size = :"+rulesNumber(p5))
-      printSchemaProof(p5)
+//      printSchemaProof(p5)
       println("\n\n")
 
 //      val pauto = Autoprop(fseq)
@@ -146,7 +146,7 @@ class autopropTest extends SpecificationWithJUnit {
 //      printSchemaProof(Autoprop(seq12))
 //      printSchemaProof(Autoprop(seq13))
 //      printSchemaProof(Autoprop(seq14))
-      printSchemaProof(Autoprop(seq15))
+//      printSchemaProof(Autoprop(seq15))
 
       Success()
     }

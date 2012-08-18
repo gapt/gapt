@@ -9,7 +9,7 @@ package at.logic.cli
 
 import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-import at.logic.transformations.ceres.autoprop._
+import at.logic.algorithms.shlk._
 
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
@@ -21,7 +21,6 @@ import at.logic.parsing.calculi.latex._
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.simple.SimpleHOLParser
-import at.logic.parsing.language.simple.ParseQMON
 import at.logic.parsing.readers.StringReader
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._

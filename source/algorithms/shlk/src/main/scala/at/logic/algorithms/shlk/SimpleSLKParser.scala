@@ -1,4 +1,4 @@
-package at.logic.parsing.language.simple
+package at.logic.algorithms.shlk
 
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.macroRules._
@@ -643,7 +643,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
           t
         }
         case _ => {
-          println(x + " Error in schema subst 1")
+//          println(x + " Error in schema subst 1")
           x.asInstanceOf[T]
         }
       }
@@ -668,8 +668,8 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
     case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
 
     case _ => {
-      println("\ncase _ =>")
-      println(expression)
+//      println("\ncase _ =>")
+//      println(expression)
       expression
     }
   }

@@ -1,7 +1,6 @@
 
-package at.logic.transformations.ceres.unfolding
+package at.logic.algorithms.shlk
 
-import at.logic.parsing.language.simple.SHLK
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -10,11 +9,9 @@ import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.Sequent
-import at.logic.transformations.ceres.struct._
 import at.logic.language.schema.{IntVar, IntZero, IndexedPredicate, SchemaFormula, Succ, BigAnd, BigOr}
 import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.slk._
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
@@ -262,7 +259,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
 //          println("-1 = "+StepMinusOne.minusOne(Or(And(An3, An1), b) , n))
 
 //          val phi1 = applySchemaSubstitution(map.get("psi").get._2.get("root").get, subst, 3)
-          val phi1 = applySchemaSubstitution("psi", 3)
+          ///////val phi1 = applySchemaSubstitution("psi", 3)//TODO: Uncomment and fix
 
 
 //           CloneLKProof(map.get("phi").get._1.get("root").get)

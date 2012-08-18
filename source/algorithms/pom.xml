@@ -18,6 +18,7 @@
     <module>lk</module>
     <module>lksk</module>
     <module>fol</module>
+    <module>shlk</module>
 <!--    <module>postAutopropTransformation</module> -->
     <module>rewriting</module>
     <module>cutIntroduction</module>
