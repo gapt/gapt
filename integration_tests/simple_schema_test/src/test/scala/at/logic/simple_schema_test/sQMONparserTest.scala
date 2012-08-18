@@ -31,7 +31,6 @@ import java.io.File.separator
 import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success
 import at.logic.gui.prooftool.gui.Main
-import at.logic.transformations.ceres.projections.printSchemaProof
 import at.logic.algorithms.shlk._
 
 @RunWith(classOf[JUnitRunner])

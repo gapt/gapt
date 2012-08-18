@@ -16,7 +16,6 @@ WeakeningLeftRule => LKskWeakeningLeftRule,
 WeakeningRightRule => LKskWeakeningRightRule,
 ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule}
 
-//import  at.logic.transformations.ceres.projections.printSchemaProof
 import scala.collection.mutable.{Map, HashMap}
 
 import at.logic.calculi.lk.propositionalRules._
