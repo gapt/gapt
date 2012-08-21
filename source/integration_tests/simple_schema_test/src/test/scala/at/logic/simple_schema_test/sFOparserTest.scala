@@ -34,9 +34,9 @@ import at.logic.gui.prooftool.gui.Main
 import at.logic.algorithms.shlk._
 
 @RunWith(classOf[JUnitRunner])
-class sQMONparserTest extends SpecificationWithJUnit {
+class sFOparserTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
-  "SimpleSLKParser" should {
+  "sFOparserTest" should {
 
     "parse correctly a SLK-proof" in {
       val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
@@ -78,7 +78,7 @@ class sQMONparserTest extends SpecificationWithJUnit {
       //          p.root.toString must beEqualTo ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
       //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
       //          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sQMON.lks"))
+      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sIND.lks"))
 
       val map = ParseQMON.parseProof(s)
       //          println("\n\np = "+  map.get("chi").get._1.get("root").get.root.toString()  )
