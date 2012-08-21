@@ -485,6 +485,25 @@ object CloneLKProof2 {
         //            println("\nc:r = "+new_p.root)
         ContractionRightRule( new_p, a1.formula )
       }
-      case _ => { println("ERROR in CloneLKProof2 : missing rule!");throw new Exception("ERROR in unfolding: CloneLKProof2") }
+
+      case ForallLeftRule(p, seq, a, m, t) => {
+        val new_parent = apply(p, trs)
+        ForallLeftRule(new_parent, a.formula, m.formula, t)
+      }
+      case ForallRightRule(p, seq, a, m, v) => {
+        val new_parent = apply(p, trs)
+        ForallRightRule(new_parent, a.formula, m.formula, v)
+      }
+
+      case ImpLeftRule(p1, p2, s, a1, a2, m) => {
+        val new_parent1 = apply(p1, trs)
+        val new_parent2 = apply(p2, trs)
+        ImpLeftRule(new_parent1, new_parent2, a1.formula, a2.formula)
+      }
+      case ImpRightRule(p, s, a1, a2, m) => {
+        val new_parent = apply(p, trs)
+        ImpRightRule(new_parent, a1.formula, a2.formula)
+      }
+      case _ => { println("ERROR in CloneLKProof2 : missing rule!");throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n") }
     }}
 }
