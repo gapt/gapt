@@ -32,11 +32,11 @@ import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success
 
 @RunWith(classOf[JUnitRunner])
-class sQMONparserTest extends SpecificationWithJUnit {
+class sFOparserTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
-  "sQMONparser" should {
+  "sFOparser" should {
 
-    "parse correctly a SLK-proof" in {
+    "parse correctly a FO SLK-proof" in {
       val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
       val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
       val ax1  = at.logic.calculi.lk.propositionalRules.Axiom(var3::Nil, var3::Nil)
@@ -76,7 +76,7 @@ class sQMONparserTest extends SpecificationWithJUnit {
       //          p.root.toString must beEqualTo ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
       //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
       //          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sQMON.lks"))
+      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sIND.lks"))
 
 //      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
 //      val map1 = ParseQMON.parseProof(s1)
