@@ -46,9 +46,6 @@ object applySchemaSubstitution2 {
       new_proof
   }
 
-
-
-
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
   def handleWeakening( new_parent: LKProof,
                        subst: SchemaSubstitution1[HOLExpression],
@@ -68,9 +65,9 @@ object applySchemaSubstitution2 {
                         constructor: (LKProof, HOLFormula, dbTRS) => LKProof, trs: dbTRS) = {
 
 //    println("n = "+subst.map.toList.head._2)
-    println("\n\nContrL:")
-    println("aux = "+subst(a1.formula))
-    println("seq = "+new_parent.root)
+//    println("\n\nContrL:")
+//    println("aux = "+subst(a1.formula))
+//    println("seq = "+new_parent.root)
     constructor( new_parent, subst(a1.formula).asInstanceOf[HOLFormula], trs )
 //    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
@@ -110,10 +107,10 @@ object applySchemaSubstitution2 {
       case CutRule(p1, p2, s, a1, a2) => {
         val new_p1 = new_parents.head
         val new_p2 = new_parents.last
-        println("Cut:")
-        println(new_p1.root)
-        println("aux = "+subst( a1.formula ))
-        println(new_p2.root)
+//        println("Cut:")
+//        println(new_p1.root)
+//        println("aux = "+subst( a1.formula ))
+//        println(new_p2.root)
         //val new_proof = CutRule( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
         val new_proof = sCutRule( new_p1, new_p2, subst( a1.formula ).asInstanceOf[HOLFormula], trs )
     //    ( new_proof, computeMap(
@@ -195,7 +192,7 @@ object applySchemaSubstitution2 {
 
 //  def apply(schema : SchemaProof, subst: SchemaSubstitution1[HOLExpression]) : LKProof = {
 //     subst.map.toList.head._2 match {
-//        case IntZero() => CloneLKProof(schema.base)
+//        case IntZero() => CloneLKProof2(schema.base)
 //        case _ => apply(schema.rec, subst)
 //     }
 //  }
@@ -242,11 +239,11 @@ object applySchemaSubstitution2 {
 
 
           if (cnt == 0)
-            CloneLKProof(SchemaProofDB.get(link).base)
+            CloneLKProof2(SchemaProofDB.get(link).base, trs)
       /*    new_ind match {
           case IntZero() => {
-                    // val res = (CloneLKProof(SchemaProofDB.get(link).base), new HashMap[FormulaOccurrence, FormulaOccurrence])
-                    val res = CloneLKProof(SchemaProofDB.get(link).base)
+                    // val res = (CloneLKProof2(SchemaProofDB.get(link).base), new HashMap[FormulaOccurrence, FormulaOccurrence])
+                    val res = CloneLKProof2(SchemaProofDB.get(link).base)
      //               printSchemaProof(res._1)
                     res
           } */
@@ -258,12 +255,12 @@ object applySchemaSubstitution2 {
               new_ind match {
                 case y:IntZero => {
 //                println("\nnew_ind = "+0)
-                CloneLKProof(SchemaProofDB.get(link).base)
+                CloneLKProof2(SchemaProofDB.get(link).base, trs)
                 }
                 case _ => {
 //                println("\nnew_ind > "+0)
                 apply(SchemaProofDB.get(link).rec, subst, StepMinusOne.length(new_ind.asInstanceOf[IntegerTerm], subst.map.head._1.asInstanceOf[IntVar]), trs)
-//                CloneLKProof(SchemaProofDB.get(link).base)
+//                CloneLKProof2(SchemaProofDB.get(link).base)
                 }
               }
             }
@@ -297,6 +294,10 @@ object applySchemaSubstitution2 {
       case OrEquivalenceRule1(up, r, aux, main) =>  {
 //        println("\n UnaryProof OrEquivalenceRule1: "+printSchemaProof.sequentToString(r))
         OrEquivalenceRule1(apply(up, subst, cnt, trs), subst(aux.formula).asInstanceOf[SchemaFormula], subst(main.formula).asInstanceOf[SchemaFormula])
+      }
+
+      case trsArrowRule(up, r, aux, _) =>  {
+        trsArrowRule(apply(up, subst, cnt, trs), subst(aux.formula).asInstanceOf[SchemaFormula], trs)
       }
 
       case Axiom(_) => {
@@ -339,3 +340,151 @@ object applySchemaSubstitution2 {
 
 
 
+//creates a copy of an existing LK proof (used for unfolding, not to have cycles in the tree having the base proof several times)
+//uses t.r.s. !!!
+object CloneLKProof2 {
+  import at.logic.language.hol._
+
+  def apply(p: LKProof, trs: dbTRS):LKProof = {
+    //      println("\nCloneLKProof2 : "+p.rule)
+    p match {
+      case trsArrowLeftRule(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        val new_p = apply(p, trs)
+        trsArrowLeftRule(new_p, a.formula, trs)
+      }
+      case trsArrowRightRule(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        val new_p = apply(p, trs)
+        trsArrowRightRule(new_p, a.formula, trs)
+      }
+
+      case Axiom(ro) => Axiom(ro.antecedent.map(fo => fo.formula.asInstanceOf[HOLFormula]),ro.succedent.map(fo => fo.formula.asInstanceOf[HOLFormula]))
+
+      case AndLeftEquivalenceRule1(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        val new_p = apply(p, trs)
+        AndLeftEquivalenceRule1(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      }
+
+      case AndRightEquivalenceRule1(p, s, a, m) => {
+        // println("\nAndRightEquivalenceRule1\n")
+        val new_p = apply(p, trs)
+        AndRightEquivalenceRule1(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      }
+
+      case OrRightEquivalenceRule1(p, s, a, m) => {
+        // println("\nOrRightEquivalenceRule1\n")
+        val new_p = apply(p, trs)
+        OrRightEquivalenceRule1(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      }
+
+      case AndLeftEquivalenceRule3(p, s, a, m) => {
+        // println("\nAndLeftEquivalenceRule3\n")
+        val new_p = apply(p, trs)
+        AndLeftEquivalenceRule3(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      }
+
+      case AndRightEquivalenceRule3(p, s, a, m) => {
+        // println("\nAndRightEquivalenceRule3\n")
+        val new_p = apply(p, trs)
+        AndRightEquivalenceRule3(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      }
+
+      case OrRightEquivalenceRule3(p, s, a, m) => {
+        //println("\nOrRightEquivalenceRule3\n")
+        val new_p = apply(p, trs)
+        OrRightEquivalenceRule3(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      }
+
+      case WeakeningLeftRule(p, _, m) => {
+        val new_p = apply(p, trs)
+        implicit val factory = defaultFormulaOccurrenceFactory
+        WeakeningLeftRule( new_p, m.formula )
+      }
+
+      case WeakeningRightRule(p, _, m) => {
+        val new_p = apply(p, trs)
+        implicit val factory = defaultFormulaOccurrenceFactory
+        WeakeningRightRule( new_p, m.formula )
+      }
+
+      case CutRule( p1, p2, _, a1, a2 ) => {
+        val new_p1 = apply(p1, trs)
+        val new_p2 = apply(p2, trs)
+        CutRule(new_p1, new_p2, a2.formula)
+      }
+
+      case OrLeftRule(p1, p2, _, a1, a2, m) => {
+        val new_p1 = apply(p1, trs)
+        val new_p2 = apply(p2, trs)
+        OrLeftRule(new_p1, new_p2, a1.formula, a2.formula)
+      }
+
+      case AndRightRule(p1, p2, _, a1, a2, m) => {
+        val new_p1 = apply(p1, trs)
+        val new_p2 = apply(p2, trs)
+        AndRightRule(new_p1, new_p2, a1.formula, a2.formula)
+      }
+
+      case NegLeftRule( p, _, a, m ) => {
+        val new_p = apply(p, trs)
+        NegLeftRule( new_p, a.formula )
+      }
+
+      case AndLeft1Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case And(l, right) => right }
+        //      println("AndLeft1Rule : "+printSchemaProof.sequentToString(new_p.root))
+        //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
+        //    println(printSchemaProof.formulaToString(a2))
+        AndLeft1Rule( new_p, a.formula, a2)
+      }
+
+      case AndLeft2Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case And(l, _) => l }
+        //     println("AndLeft2Rule : "+printSchemaProof.sequentToString(new_p.root))
+        //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
+        //     println(printSchemaProof.formulaToString(a2))
+        AndLeft2Rule( new_p, a2, a.formula )
+      }
+
+      case OrRight1Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case Or(_, r) => r }
+        //            println("\np or:r1 = "+p.root)
+        //            println("\nnew_p or:r1 = "+new_p.root)
+        //            println("\nor:r1 a = "+a.formula)
+        //            println("\nor:r1 m = "+m.formula)
+        OrRight1Rule( new_p, a.formula, a2)
+      }
+
+      case OrRight2Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case Or(l, _) => l }
+        //            println("\np or:r2 = "+p.root)
+        //            println("\nnew_p or:r2 = "+new_p.root)
+        //          println("\nor:r2 a = "+a.formula)
+        //            println("\nor:r2 m = "+m.formula)
+        OrRight2Rule( new_p, a2, a.formula)
+      }
+
+      case NegRightRule( p, _, a, m ) => {
+        val new_p = apply(p, trs)
+        NegRightRule( new_p, a.formula )
+      }
+
+      case ContractionLeftRule(p, _, a1, a2, m) => {
+        val new_p = apply(p, trs)
+        ContractionLeftRule( new_p, a1.formula )
+      }
+
+      case ContractionRightRule(p, _, a1, a2, m) => {
+        val new_p = apply(p, trs)
+        //            println("\nc:r = "+new_p.root)
+        ContractionRightRule( new_p, a1.formula )
+      }
+      case _ => { println("ERROR in CloneLKProof2 : missing rule!");throw new Exception("ERROR in unfolding: CloneLKProof2") }
+    }}
+}

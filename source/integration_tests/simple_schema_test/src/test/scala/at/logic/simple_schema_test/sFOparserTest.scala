@@ -1,5 +1,5 @@
 /*
- * sQMONparserTest.scala
+ * sFONparserTest.scala
  *
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
@@ -98,14 +98,14 @@ class sFOparserTest extends SpecificationWithJUnit {
       //          val seq = ParseQMON.parseSequent("Forall x P(f(k,x)), P(x(k)) |- ")
       //          println(seq)
 
-      println(Console.RED+"\n\n-------- sQMON --------\n\n"+Console.RESET)
+      println(Console.RED+"\n\n-------- sFO --------\n\n"+Console.RESET)
       val p = map.get("\\sigma").get._2.get("root").get
       val p1 = map.get("\\tau").get._2.get("root").get
       val p2 = map.get("\\varphi").get._2.get("root").get
       val p3 = map.get("\\chi").get._2.get("root").get
 
       println("\n\n")
-//      printSchemaProof(p)
+      printSchemaProof(p3)
       println("\n\n")
 //      Main.display("\\sigma (k+1)", p)
 //      Main.dispslay("\\tau (k+1)", p1)
@@ -123,11 +123,11 @@ class sFOparserTest extends SpecificationWithJUnit {
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
       val db = dbTRS(g, base, step)
-//      val varphi = applySchemaSubstitution("\\varphi",1, db)
-//      val varphi = applySchemaSubstitution("\\tau",1, db)
-      val varphi = applySchemaSubstitution2("\\sigma",6, db)
+//      val varphi = applySchemaSubstitution2("\\varphi",1, db)
+//      val varphi = applySchemaSubstitution2("\\tau",1, db)
+      val varphi = applySchemaSubstitution2("\\sigma",3, db)
 
-//      Main.display("varphi", varphi);
+      Main.display("varphi", varphi);
 //      while(true){}
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
