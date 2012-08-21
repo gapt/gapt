@@ -26,6 +26,7 @@ case object OrEquivalenceRule2Type extends UnaryRuleTypeA
 case object OrEquivalenceRule3Type extends UnaryRuleTypeA
 case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 case object TermEquivalenceRule1Type extends UnaryRuleTypeA
+case object trsArrowRuleType extends UnaryRuleTypeA
 
 // The following two classes are used to keep a global directory
 // of proof schemata. Their definition is somewhat ad-hoc.
@@ -922,6 +923,86 @@ object OrEquivalenceRule1 {
     }
     else None
   }
+
+
+  //----------------------- trsArrowRule ------------------
+
+  object trsArrowRule {
+    def apply(s1: LKProof, auxf: FormulaOccurrence, trs: dbTRS) = {
+      val prinFormula = factory.createFormulaOccurrence( unfoldSFormula(auxf.formula, trs), auxf  +: Seq.empty[FormulaOccurrence] )
+      def createSide( s : Seq[FormulaOccurrence] ) =
+        if ( s.contains(auxf) )
+          prinFormula +: createContext( s.filter(_ != auxf) )
+        else
+          createContext(s)
+
+      new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = trsArrowRuleType
+        def aux = (auxf::Nil)::Nil
+        def prin = prinFormula::Nil
+        override def name = "arrow"
+      }
+    }
+
+    def apply(s1: LKProof, auxf: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.antecedent ++ s1.root.succedent).filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(auxf, trs))).toList match {
+        case (x::_) => apply(s1, x, trs)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the trsArrowRule with the given formula")
+      }
+    }
+
+    def unapply(proof: LKProof) =  if (proof.rule == trsArrowRuleType) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      Some((r.uProof, r.root, a1, p1))
+    }
+    else None
+  }
+
+  object trsArrowRightRule {
+    def apply(s1: LKProof, auxf: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent).filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(auxf, trs))).toList match {
+        case (x::_) => trsArrowRule.apply(s1, x, trs)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the trsArrowRightRule with the given formula")
+      }
+    }
+    def unapply(proof: LKProof) = if (proof.rule == trsArrowRightRule) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      if (r.root.succedent.contains(p1))
+        Some((r.uProof, r.root, a1, p1))
+      else
+        None
+    }
+    else
+      None
+  }
+
+  object trsArrowLeftRule {
+    def apply(s1: LKProof, auxf: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+//      println("\n\ns1 = "+s1.root)
+//      println("\n\nauxf = "+auxf)
+      ((s1.root.antecedent).filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(auxf, trs))).toList match {
+        case (x::_) => trsArrowRule.apply(s1, x, trs)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences in the left side found for application of the trsArrowLeftRule with the given formula")
+      }
+    }
+    def unapply(proof: LKProof) = if (proof.rule == trsArrowRuleType) {
+      val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ((a1::Nil)::Nil) = r.aux
+      val (p1::Nil) = r.prin
+      if (r.root.antecedent.contains(p1))
+        Some((r.uProof, r.root, a1, p1))
+      else
+        None
+    }
+    else
+      None
+  }
+
 
 //-------------------------------------------------------------------------------------------------
 

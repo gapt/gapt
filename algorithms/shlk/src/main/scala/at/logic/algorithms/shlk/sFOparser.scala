@@ -22,7 +22,6 @@ import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
-//import at.logic.transformations.ceres.autoprop.Autoprop
 
 
 object ParseQMON {
@@ -198,9 +197,10 @@ object ParseQMON {
 //    sp2.parseAll(sp2.line, txt)
     val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
     val mapPredicateToArity = Map.empty[String, Int]
+    var trssys: dbTRS = dbTRS.apply()
     lazy val sp = new SimpleSLKParser
 
-//    var proofName = ""
+    //    var proofName = ""
 //    sp.parseAll(sp.line, txt)
     sp.parseAll(sp.slkProofs, txt) match {
       case sp.Success(result, input) => // println("\n\nSUCCESS parse :) \n")
@@ -220,9 +220,7 @@ object ParseQMON {
 //    }
 
     class SimpleSLKParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
-
       def line: Parser[List[Unit]] = rep(mappingBase)
-
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {
           error_buffer = l
@@ -268,7 +266,7 @@ object ParseQMON {
         }
       }
 
-      def trs: Parser[dbTRS] = s_term ~ "->" ~ term ~ s_term ~ "->" ~ term ^^ {
+      def trs: Parser[Unit] = s_term ~ "->" ~ term ~ s_term ~ "->" ~ term ^^ {
         case t1 ~ "->" ~ base ~ t2 ~ "->" ~ step => {
           t1 match {
             case sTerm(func1, i1, arg1) =>
@@ -276,7 +274,7 @@ object ParseQMON {
                 case sTerm(func2, i2, arg2) => {
 //                  if(func1 == func2) {
                     val db = dbTRS(func1.asInstanceOf[HOLConst], base, step)
-                    db
+                    trssys = db
 //                  }
                 }
               }
@@ -285,7 +283,7 @@ object ParseQMON {
       }
 
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR | impL | impR | termDefL1 | termDefR1
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR | impL | impR | termDefL1 | termDefR1 | arrowL | arrowR
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = ( non_formula | formula)
@@ -709,6 +707,19 @@ object ParseQMON {
           ImpRightRule(map.get(label).get, f1, f2)
         }
       }
+
+      def arrowL: Parser[LKProof] = "arrowL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
+        case "arrowL(" ~ label ~ "," ~ f1 ~  ")" => {
+          trsArrowLeftRule(map.get(label).get, f1, trssys)
+        }
+      }
+
+      def arrowR: Parser[LKProof] = "arrowR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
+        case "arrowR(" ~ label ~ "," ~ f1 ~  ")" => {
+          trsArrowRightRule(map.get(label).get, f1, trssys)
+        }
+      }
+
 
       def autoprop: Parser[LKProof] = "autoprop" ~ sequent ^^ {
         case "autoprop" ~ seq => Autoprop(seq.toFSequent())
