@@ -122,7 +122,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
         }
       }
     }
-   def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == ResolutionType) {
+   def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution[FOLExpression]) = if (proof.rule == ResolutionType) {
         val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas]
         Some((pr.root, pr.uProof1.asInstanceOf[RobinsonResolutionProof], pr.uProof2.asInstanceOf[RobinsonResolutionProof],
           pr.aux.head.head, pr.aux.tail.head.head, pr.substitution))
@@ -181,7 +181,7 @@ trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula
       }
     }
     
-    def unapply(proof: ResolutionProof[Clause]) = if (proof.rule == ParamodulationType) {
+    def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution[FOLExpression]) = if (proof.rule == ParamodulationType) {
       val p = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof]
       if (p.aux.size != 2) throw new Exception("Unexpected number of auxiliary clauses during Paramodulation matching (aux.size != 2)!")
       if (p.aux(0).size != 1) throw new Exception("Unexpected number of auxiliary clauses during Paramodulation matching (aux(0).size != 1)!")

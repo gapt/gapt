@@ -400,6 +400,10 @@ object loadProofDB {
       }
   }
 
+  object Robinson2LK {
+    def apply(resProof: ResolutionProof[Clause]): LKProof = at.logic.transformations.misc.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof])
+  }
+
   object replay {
     def apply( clauses: Seq[FSequent] ) = prover9.apply( clauses ) 
     def apply( clauses: List[Sequent] ) = prover9.apply( clauses ) 
