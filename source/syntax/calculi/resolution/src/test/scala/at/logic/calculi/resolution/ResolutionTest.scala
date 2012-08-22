@@ -7,7 +7,7 @@
 
 package at.logic.calculi.resolution
 
-import _root_.at.logic.calculi.resolution.robinson.{Paramodulation, InitialClause}
+import at.logic.calculi.resolution.robinson.{Resolution, Paramodulation, InitialClause}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -26,6 +26,10 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols.ImplicitConverters._
 import base._
 import at.logic.calculi.lk.base._
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import collection.immutable.Map.Map1
+
 //import robinson._
 //import andrews._
 import at.logic.language.hol.Definitions._
@@ -63,6 +67,18 @@ class ResolutionTest extends SpecificationWithJUnit {
       //val p =param.toTreeProof
       //println(p)
       //p must beEqual (p)
+    }
+  }
+  "extrator on Resolution rule" should {
+    "work properly" in {
+      val x = FOLVar(VariableStringSymbol("x"))
+      val fa = FOLFunction(ConstantStringSymbol("f"), List(FOLConst(ConstantStringSymbol("a"))))
+      val Pfa = FOLAtom(ConstantStringSymbol("P"),List(fa))
+      val Px = FOLAtom(ConstantStringSymbol("P"),List(x))
+      val cl1 = InitialClause(List(), List(Px))
+      val cl2 = InitialClause(List(Pfa), List())
+      val res = Resolution(cl1, cl2, cl1.root.succedent(0), cl2.root.antecedent(0), Substitution(new Map1(x,fa).asInstanceOf[Map[Var,FOLExpression]]))
+      res must beLike { case Resolution(_,_,_,_,_,_) => ok }
     }
   }
  /* "Andrews Resolution" should {

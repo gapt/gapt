@@ -1,5 +1,5 @@
 package at.logic.utils.logging
-
+ 
 import org.slf4j.LoggerFactory
 
 trait Logger {
