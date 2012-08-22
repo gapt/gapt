@@ -34,14 +34,16 @@ object Autoprop {
   }
 
   def apply(seq: FSequent): LKProof = {
+//    println("\n\nseq = "+seq)
     var p = apply1(seq)
-    while (rulesNumber(p) != rulesNumber(StructuralOptimizationAfterAutoprop(p)))
-      p = StructuralOptimizationAfterAutoprop(p)
+//    while (rulesNumber(p) != rulesNumber(StructuralOptimizationAfterAutoprop(p)))
+//      p = StructuralOptimizationAfterAutoprop(p)
     p
   }
 
   def apply1(seq: FSequent): LKProof = {
     if (isSeqTautology(seq)) {
+      println("\n\ntaut = "+seq)
       val (f, rest) = getAxiomfromSeq(seq)
       return WeakeningRuleN(Axiom(f::Nil, f::Nil), rest)
     }

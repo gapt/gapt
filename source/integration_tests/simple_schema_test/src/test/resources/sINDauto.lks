@@ -29,12 +29,9 @@ proof \varphi  proves
 Forall x (Imp P(x) P(g(1,x))) |- Forall x (Imp P(x) P(g(k+1,x)))
 
 base {
-    1:      ax(P(a) |- P(a))
-    2:      ax(P(g(1,a)) |- P(g(1,a)))
-    3:      impL(1, 2, P(a), P(g(1,a)))
-    4:      impR(3, P(a), P(g(1,a)))
-    5:      allL(4, Imp P(a) P(g(1,a)), Forall x (Imp P(x) P(g(1,x))), a)
-    root:   allR(5, Imp P(a) P(g(1,a)), Forall x (Imp P(x) P(g(1,x))), a)
+    1:      autoprop(Imp P(a) P(g(1,a)) |- Imp P(a) P(g(1,a)) )
+    2:      allL(1, Imp P(a) P(g(1,a)), Forall x (Imp P(x) P(g(1,x))), a)
+    root:   allR(2, Imp P(a) P(g(1,a)), Forall x (Imp P(x) P(g(1,x))), a)
 }
 
 step {
