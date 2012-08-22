@@ -941,7 +941,7 @@ object OrEquivalenceRule1 {
         def rule = trsArrowRuleType
         def aux = (auxf::Nil)::Nil
         def prin = prinFormula::Nil
-        override def name = "arrow"
+        override def name = "\u21A0"
       }
     }
 
