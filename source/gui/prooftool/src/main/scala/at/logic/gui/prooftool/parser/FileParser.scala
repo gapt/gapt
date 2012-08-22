@@ -18,7 +18,7 @@ import at.logic.parsing.ParsingException
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
-import at.logic.algorithms.shlk._
+import at.logic.algorithms.shlk.ParseQMON
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLFormula
 import at.logic.gui.prooftool.gui.Main
@@ -45,7 +45,7 @@ class FileParser {
     proofs = Nil
     structs = Nil
     //  val start = System.currentTimeMillis()
-    proofdb = new ProofDatabase(Map(), SHLK.parseProofs(input), Nil, Nil)
+    proofdb = new ProofDatabase(Map(), ParseQMON.parseProofs(input), Nil, Nil)
     //  val end = System.currentTimeMillis()
     //  println("parsing took " + (end - start).toString)
   }
