@@ -10,10 +10,11 @@ import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrence
 import at.logic.calculi.slk._
 import at.logic.calculi.slk.AndEquivalenceRule1._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.hol.{Atom, HOLExpression, HOLFormula}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.schema._
+import at.logic.language.hol.{HOLConst, Atom, HOLExpression, HOLFormula}
+
 //import at.logic.transformations.ceres.projections.printSchemaProof
 import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
@@ -223,6 +224,7 @@ object Autoprop {
   def getNonAtomicFAnt(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.antecedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
+//      case HOLConst(_,_)  => return Some(f, removeFfromSeqAnt(seq, f))
       case Atom(_ , arg) => {
         if ( arg.head.exptype == Ti())
           {  }
@@ -236,9 +238,10 @@ object Autoprop {
   def getNonAtomicFSucc(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.succedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
+//      case HOLConst(_,_)  => return Some(f, removeFfromSeqSucc(seq, f))
       case Atom(_ , arg) => {
         if ( arg.head.exptype == Ti() )
-          { println("Succ Atom(_,_)") }
+          {  }
         else return Some(f, removeFfromSeqAnt(seq, f))
       }
       case _ => return Some(f, removeFfromSeqSucc(seq, f))
