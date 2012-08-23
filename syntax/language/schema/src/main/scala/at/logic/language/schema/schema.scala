@@ -15,6 +15,7 @@ import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.hol.HOLFactory
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.hol.Definitions._
+import at.logic.language.lambda.typedLambdaCalculus.Var._
 
 // propositiopnal
 trait Schema extends HOL {
@@ -67,14 +68,19 @@ object dbTRS {
 }
 
 
-//TODO : improve it also for ground cases!
+//TODO : needs improvement for the step case
 object unfoldSTerm {
   def apply(t: HOLExpression, trs: dbTRS): HOLExpression = {
     val k = IntVar(new VariableStringSymbol("k"))
     t match {
       case sTerm(func, i, arg) if trs.map.contains(func.asInstanceOf[HOLConst]) =>
-        if (i == IntZero())
-          trs.map.get(func.asInstanceOf[HOLConst]).get._1
+        if (i == IntZero()) {
+          val x = foVar("x")
+          val base = trs.map.get(func.asInstanceOf[HOLConst]).get._1
+          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg)
+          val subst = new SchemaSubstitution1[HOLExpression](new_map)
+          subst(base)
+        }
         else
           if (i == k)
             t
@@ -91,10 +97,14 @@ object unfoldSTerm {
 
 object unfoldSFormula {
   def apply(f: HOLFormula, trs: dbTRS): HOLFormula = {
-//    println("unfolding formula : "+f)
+//    println("\nnunfolding formula : "+f)
     f match {
       //case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
-      case Atom(name, args) => Atom(name, args.map(t => unfoldSTerm(t, trs)))
+      case Atom(name, args) => {
+        val ff = Atom(name, args.map(t => unfoldSTerm(t, trs)))
+//        println("ff = "+ff)
+        ff
+      }
       case Imp(f1, f2) => Imp(apply(f1.asInstanceOf[HOLFormula], trs), apply(f2.asInstanceOf[HOLFormula], trs))
       case ExVar(v, f) => ExVar(v, apply(f, trs))
       case AllVar(v, f) => AllVar(v, apply(f, trs))
@@ -424,7 +434,9 @@ class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map
   }
 }
 
-class indexedFOVar(override val name: VariableStringSymbol, val index: IntegerTerm) extends HOLVar(name, Ti(), None)
+class indexedFOVar(override val name: VariableStringSymbol, val index: IntegerTerm) extends HOLVar(name, Ti(), None) {
+  override def toString = name.toString+"("+index+")"+":"+exptype.toString
+}
 
 object indexedFOVar {
   def apply(name: VariableStringSymbol, i: IntegerTerm): HOLVar = {
@@ -436,12 +448,69 @@ object indexedFOVar {
   }
 }
 
-class foVar(name: VariableStringSymbol, tp: TAtomicA) extends HOLVar(name, tp -> Ti(), None)
+class foVar(name: VariableStringSymbol) extends HOLVar(name, Ti(), None)
 
 object foVar{
-  def apply(name: VariableStringSymbol, tp: TAtomicA) = new foVar(name, tp)
+  def apply(name: String) = (new foVar(new VariableStringSymbol(name))).asInstanceOf[HOLVar]
   def unapply(t: HOLExpression) = t match {
     case HOLVar(name, typ) => Some(name, typ)
     case _ => None
+  }
+}
+
+class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
+  def apply(expression: T): T = {
+//    println("subst")
+    expression match {
+      case x:IntVar => {
+        //      println("\nIntVar = "+x)
+        map.get(x) match {
+          case Some(t) => {
+            //          println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+            t
+          }
+          case _ => {
+            //          println(x + " Error in schema subst 1")
+            x.asInstanceOf[T]
+          }
+        }
+      }
+      case x:foVar => {
+//        println("\nfoVar = "+x)
+        map.get(x) match {
+          case Some(t) => {
+            //          println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+            t
+          }
+          case _ => {
+            //          println(x + " Error in schema subst 1")
+            x.asInstanceOf[T]
+          }
+        }
+      }
+      case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+      case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+      case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
+      case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+      case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+      case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+      case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
+      case Imp(l, r) => Imp(apply(l.asInstanceOf[T]).asInstanceOf[HOLFormula], apply(r.asInstanceOf[T]).asInstanceOf[HOLFormula]).asInstanceOf[T]
+      case AllVar(v, f) => AllVar(v, apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]).asInstanceOf[T]
+      case at @ Atom(name, args) => {
+        Atom(name, args.map(x => apply(x.asInstanceOf[T]).asInstanceOf[HOLExpression])).asInstanceOf[T]
+      }
+      case indexedFOVar(name, ind) => indexedFOVar(name, apply(ind.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+      case st @ sTerm(name, i, args) => {
+        sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], args::Nil).asInstanceOf[T]
+      }
+      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
+
+      case _ => {
+        //      println("\ncase _ =>")
+        //      println(expression)
+        expression
+      }
+    }
   }
 }

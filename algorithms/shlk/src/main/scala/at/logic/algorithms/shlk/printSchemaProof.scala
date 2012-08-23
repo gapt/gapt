@@ -90,8 +90,6 @@ object printSchemaProof {
       println("\n BinaryProof : " + sequentToString(r))
     }
 
-
-
     case AndEquivalenceRule1(up, r, _, _) =>  {
       apply(up)
       println("\n UnaryProof : "+sequentToString(r))
@@ -120,7 +118,10 @@ object printSchemaProof {
       apply(up)
       println("\n UnaryProof : "+sequentToString(r))
     }
-
-    case _ => println("ERROR in printSchemaProof")
+    case trsArrowRule(up, r, _, _) =>  {
+      apply(up)
+      println("\n trsArrowRule : "+sequentToString(r))
+    }
+    case _ => println("ERROR in printSchemaProof : "+p.rule)
   }
 }
