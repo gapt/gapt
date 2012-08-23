@@ -78,7 +78,7 @@ object unfoldSTerm {
           val x = foVar("x")
           val base = trs.map.get(func.asInstanceOf[HOLConst]).get._1
           val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg)
-          val subst = new SchemaSubstitution1[HOLExpression](new_map)
+          val subst = new SchemaSubstitution2[HOLExpression](new_map)
           subst(base)
         }
         else
@@ -458,7 +458,7 @@ object foVar{
   }
 }
 
-class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
+class SchemaSubstitution2[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
   def apply(expression: T): T = {
 //    println("subst")
     expression match {
