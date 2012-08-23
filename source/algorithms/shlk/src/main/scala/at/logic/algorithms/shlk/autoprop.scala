@@ -43,7 +43,7 @@ object Autoprop {
 
   def apply1(seq: FSequent): LKProof = {
     if (isSeqTautology(seq)) {
-      println("\n\ntaut = "+seq)
+//      println("\n\ntaut = "+seq)
       val (f, rest) = getAxiomfromSeq(seq)
       return WeakeningRuleN(Axiom(f::Nil, f::Nil), rest)
     }

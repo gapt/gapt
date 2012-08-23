@@ -115,13 +115,18 @@ class SchemaTest extends SpecificationWithJUnit {
       def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
       def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
       val k = IntVar(new VariableStringSymbol("k"))
-      val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
+      val x = foVar("x")
+      val z = indexedFOVar(new VariableStringSymbol("z"), Succ(IntZero()))
+      val z0 = indexedFOVar(new VariableStringSymbol("z"), IntZero())
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
       val db = dbTRS(g, base, step)
       val term = sTerm(g, Succ(Succ(k)), x::Nil)
-      val unf = unfoldSTerm(term, db)
-      println("\n\nterm = "+term)
+      val term1 = sTerm(g, Succ(IntZero()), z::Nil)
+      val term2 = sTerm(g, IntZero(), z0::Nil)
+
+      val unf = unfoldSTerm(term2, db)
+      println("\n\nterm = "+term2)
       println("unfold = "+unf)
       println()
       true must beEqualTo (true)
