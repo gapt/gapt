@@ -2,7 +2,7 @@ g(0,x) -> x
 g(k+1,x) -> f(g(k,x))
 
 proof \psi  proves
-    Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k+1,x)))
+    Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k,x)))
 
 base {
     1:      ax( P(g(0,z(0))) |- P(g(0,z(0))) )
@@ -15,7 +15,7 @@ base {
 
 step {
     1:   pLink((\psi, k)
-            Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k+1,x))) )
+            Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k,x))) )
 
     2:      ax( P(g(k,z(k+1))) |- P(g(k,z(k+1)))  )
     3:      ax( P(g(k+1,z(k+1))) |- P(g(k+1,z(k+1))) )
@@ -41,7 +41,7 @@ base {
 
 step {
     1: pLink( (\psi, k+1) Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k+1,x))) )
-    2: ax( Imp P(a) P(g(k+1,a)) |- Imp (Imp P(g(k,a)) P(h(k,a))) (Imp P(a) P(h(k,a))) )
+    2: autoprop( Imp P(a) P(g(k+1,a)) |- Imp (Imp P(g(k+1,a)) P(h(k+1,a))) (Imp P(a) P(h(k+1,a))) )
     3: allL(2, Imp P(a) P(g(k+1,a)), Forall x (Imp P(x) P(g(k+1,x))), a )
     root: cut( 1, 3, Forall x (Imp P(x) P(g(k+1,x))) )
 }

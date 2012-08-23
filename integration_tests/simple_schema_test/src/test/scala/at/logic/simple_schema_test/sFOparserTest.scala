@@ -78,8 +78,8 @@ class sFOparserTest extends SpecificationWithJUnit {
       //          p.root.toString must beEqualTo ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
       //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
       //          val s = Source.fromFile("target" + separator + "test-classes" + separator + "input_multi_indxs.lks").toList.foldLeft("")((ch,res) => ch + res)
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
-//      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
+//      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
+      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
 
       val map = ParseQMON.parseProof(s)
       //          println("\n\np = "+  map.get("chi").get._1.get("root").get.root.toString()  )
@@ -102,15 +102,16 @@ class sFOparserTest extends SpecificationWithJUnit {
       println(Console.RED+"\n\n-------- sFO --------\n\n"+Console.RESET)
 //      val p = map.get("\\sigma").get._2.get("root").get
 //      val p1 = map.get("\\tau").get._2.get("root").get
-//      val p2 = map.get("\\varphi").get._2.get("root").get
+      val p2 = map.get("\\varphi").get._2.get("root").get
 //      val p2 = map.get("\\psi").get._2.get("root").get
 //      val p3 = map.get("\\chi").get._2.get("root").get
       println("\n\n")
-//      printSchemaProof(p2)
+      printSchemaProof(p2)
       println("\n\n")
 //      Main.display("\\sigma (k+1)", p)
 //      Main.dispslay("\\tau (k+1)", p1)
 //      Main.display("\\varphi (k+1)", p2)
+//      Main.display("\\psi (k+1)", p2)
 //      Main.display("\\chi (k+1)", p3);
 //      val sig../..
 // ma = applySchemaSubstitution("\\sigma",1)
