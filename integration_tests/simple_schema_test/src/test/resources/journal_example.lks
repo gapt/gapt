@@ -36,7 +36,14 @@ proof \varphi proves
 Forall x (Imp P(x) P(f(x))) |- Imp (Imp P(g(k,a)) P(h(k,a))) (Imp P(a) P(h(k,a)))
 
 base {
-    root: ax( Forall x (Imp P(x) P(f(x))) |- Imp (Imp P(g(0,a)) P(h(0,a))) (Imp P(a) P(h(0,a))) )
+    1:    ax( P(g(0,z(0))) |- P(g(0,z(0))) )
+    2:    arrowL( 1, P(g(0,z(0))) )
+    3:    impR(2, P(z(0)), P(g(0,z(0))) )
+    4:    allR(3, Imp P(z(0)) P(g(0,z(0))), Forall x (Imp P(x) P(g(0,x))), z(0) )
+    5:    weakL(4, Forall x (Imp P(x) P(f(x))) )
+    6:    autoprop( Imp P(a) P(g(0,a)) |- Imp (Imp P(g(0,a)) P(h(0,a))) (Imp P(a) P(h(0,a))) )
+    7:    allL(6, Imp P(a) P(g(0,a)), Forall x (Imp P(x) P(g(0,x))), a )
+    root: cut( 5, 7, Forall x (Imp P(x) P(g(0,x))) )
 }
 
 step {

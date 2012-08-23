@@ -11,7 +11,7 @@ import at.logic.calculi.lk.base.{types, Sequent}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, IntegerTerm, IntVar, IntConst, IntZero, Succ}
+import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, IntegerTerm, IntVar, IntConst, IntZero, Succ}
 import at.logic.transformations.ceres.struct.ClauseSetSymbol
 import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
 import scala.collection.immutable.Seq
@@ -142,6 +142,7 @@ object DrawSequent {
       if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
         "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString) + formulaToLatexString(args.last) + ")"
       else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
+    case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index) + "}"
     case Var(name, _) => name.toString
     case Function(name, args, _) =>
       if (args.size == 1) parseNestedUnaryFunction(name.toString, args.head, 1)
