@@ -337,10 +337,12 @@ import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
 import at.logic.calculi.slk._
 import at.logic.utils.ds.Multisets._
-import at.logic.language.schema.{IntVar, IndexedPredicate, SchemaFormula}
 import at.logic.calculi.lk.lkExtractors. {BinaryLKProof, UnaryLKProof}
 import scala.collection.immutable.Seq
 import at.logic.algorithms.shlk._
+import at.logic.language.schema.{dbTRS, IntVar, IndexedPredicate, SchemaFormula, foVar, Succ, indexedFOVar, foTerm, sTerm, IntZero}
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.types.{Ti, ->, Tindex}
 
 object Projections {
 
@@ -361,7 +363,6 @@ object Projections {
     implicit val c_ancs = cut_ancs
     implicit val factory = defaultFormulaOccurrenceFactory
     println("\nRule = "+proof.rule)
-
     proof match {
        case Axiom(s) => {
        // println("\nAxiom\n")
@@ -472,9 +473,35 @@ object Projections {
         val s2 = apply( p2, new_cut_ancs + a2 )
         handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs + a1 + a2 )
       }
+      case trsArrowLeftRule(p, s, aux, main) => handleTrsArrowRule(proof, p, aux, trsArrowLeftRule.apply)
+      case trsArrowRightRule(p, s, aux, main) => handleTrsArrowRule(proof, p, aux, trsArrowRightRule.apply)
 
       case _ => throw new Exception("No such a rule in Projections.apply")
     }
+  }
+
+  def handleTrsArrowRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, constructor: (LKProof, HOLFormula, dbTRS) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
+    val s = apply( p, copySetToAncestor( cut_ancs ) )
+    println("\ntrsArrowRule = "+proof.rule)
+    if (cut_ancs.contains( a ) )
+      handleUnaryCutAnc( proof, s )
+    else
+      s.map( pm => {
+        //   println("\nauxf = "+printSchemaProof.formulaToString(pm._2( a ).formula))
+        //printSchemaProof(pm._1)
+        val new_p = constructor( pm._1, pm._2( a ).formula, getTRS() )
+        (new_p, copyMapToDescendant( proof, new_p, pm._2) )
+      } )
+  }
+
+  //just for testing reasons. It should be removed.
+  private def getTRS(): dbTRS = {
+    def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
+    val k = IntVar(new VariableStringSymbol("k"))
+    val x = foVar("x")
+    val base = x
+    val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+    dbTRS(g, base, step)
   }
 
 
@@ -759,11 +786,11 @@ object Projections {
                            map: Map[FormulaOccurrence, FormulaOccurrence] ) =
     map.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => {
         val desc = old_p.getDescendantInLowerSequent( p._1 )
-      println("old_p.getDescendantInLowerSequent( p._1 ) "+printSchemaProof.formulaToString(p._1.formula))
-       println("desc.get "+printSchemaProof.formulaToString(desc.get.formula))
-       println("old_proof : " + printSchemaProof.sequentToString(old_p.root))
-      println("new_p : " + printSchemaProof.sequentToString(new_p.root))
-      println("p_2 = "+printSchemaProof.formulaToString(p._2.formula))
+//      println("old_p.getDescendantInLowerSequent( p._1 ) "+printSchemaProof.formulaToString(p._1.formula))
+//       println("desc.get "+printSchemaProof.formulaToString(desc.get.formula))
+//       println("old_proof : " + printSchemaProof.sequentToString(old_p.root))
+//      println("new_p : " + printSchemaProof.sequentToString(new_p.root))
+//      println("p_2 = "+printSchemaProof.formulaToString(p._2.formula))
         if (desc != None)
           m + (desc.get -> new_p.getDescendantInLowerSequent( p._2 ).get )
         else
