@@ -3,6 +3,7 @@ package at.logic.algorithms.shlk
 import at.logic.calculi.lk.base.{LKProof, Sequent}
 import at.logic.calculi.lk.lkExtractors.{BinaryLKProof, UnaryLKProof}
 import at.logic.calculi.lk.propositionalRules.Axiom
+import at.logic.language.schema.{foVar, indexedFOVar}
 
 object printSchemaProof {
   import at.logic.language.lambda.symbols._
@@ -36,6 +37,8 @@ object printSchemaProof {
       }
       case _ => formulaToString(x) +"("+ formulaToString(y) +")"
     }
+    case indexedFOVar(name, index) => name.toString() + "_{"+ parseIntegerTerm(index, 0)+"}"
+    case foVar(name, _) => name.toString()
     case Var(name,t) => name.toString()
     case Abs(x,y) => formulaToString(y)
     case  x : Any    => "(unmatched class: "+x.getClass() + ")"
@@ -63,7 +66,7 @@ object printSchemaProof {
       else first = false
       sb.append(formulaToString(f.formula))
     }
-    sb.append(" \u22a2 ")
+    sb.append(Console.RED+" \u22a2 "+Console.RESET)
     first =true
     for (f <- s.succedent) {
       if (! first) sb.append(", ")
@@ -82,29 +85,29 @@ object printSchemaProof {
 
     case UnaryLKProof(_, up, r, _, _) => {
       apply(up)
-      println("\n UnaryProof : " + sequentToString(r))
+      println("\n"+ p.rule + " : " + sequentToString(r))
     }
     case BinaryLKProof(_, up1, up2, r, _, _, _) => {
       apply(up1)
       apply(up2)
-      println("\n BinaryProof : " + sequentToString(r))
+      println("\n"+ p.rule + " : " + sequentToString(r))
     }
 
     case AndEquivalenceRule1(up, r, _, _) =>  {
       apply(up)
-      println("\n UnaryProof : "+sequentToString(r))
+      println("\n"+ p.rule + " : "+sequentToString(r))
     }
     case AndEquivalenceRule2(up, r, _, _) =>  {
       apply(up)
-      println("\n UnaryProof : "+sequentToString(r))
+      println("\n"+ p.rule + " : "+sequentToString(r))
     }
     case AndEquivalenceRule3(up, r, _, _) =>  {
       apply(up)
-      println("\n UnaryProof : "+sequentToString(r))
+      println("\n"+ p.rule + " : "+sequentToString(r))
     }
     case OrEquivalenceRule1(up, r, _, _) =>  {
       apply(up)
-      println("\n UnaryProof : "+sequentToString(r))
+      println("\n"+ p.rule + " : "+sequentToString(r))
     }
     case OrEquivalenceRule2(up, r, _, _) =>  {
       apply(up)
@@ -120,7 +123,7 @@ object printSchemaProof {
     }
     case trsArrowRule(up, r, _, _) =>  {
       apply(up)
-      println("\n trsArrowRule : "+sequentToString(r))
+      println("\n"+ p.rule + " : "+sequentToString(r))
     }
     case _ => println("ERROR in printSchemaProof : "+p.rule)
   }

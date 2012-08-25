@@ -41,7 +41,7 @@ import at.logic.language.schema.IndexedPredicate
 import at.logic.language.schema.IntVar
 import at.logic.language.schema.IntZero
 import at.logic.language.schema.IntegerTerm
-import at.logic.language.schema.SchemaFormula
+//import at.logic.language.schema.SchemaFormula
 import at.logic.language.schema.Succ
 import at.logic.algorithms.shlk._
 import at.logic.utils.ds.Multisets
@@ -135,9 +135,9 @@ object ProjectionTermCreators {
       val trans_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntVar(new VariableStringSymbol("n")) )
       val trans_sub = new SchemaSubstitution1[HOLExpression](trans_map)
       val seq = SchemaProofDB.get(tri._1).rec.root
-      val ms = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms11 = tri._3.filter(fo => seq.antecedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
-      val ms22 = tri._3.filter(fo => seq.succedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      val ms = new Multisets.HashMultiset[HOLFormula](HashMap.empty[HOLFormula, Int])
+      val ms11 = tri._3.filter(fo => seq.antecedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms)((res,f) => res + f.asInstanceOf[HOLFormula])
+      val ms22 = tri._3.filter(fo => seq.succedent.contains(fo)).map(fo => trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))).foldLeft(ms)((res,f) => res + f.asInstanceOf[HOLFormula])
 //      println("\nslpt\n")
 //      ms11.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
@@ -151,9 +151,9 @@ object ProjectionTermCreators {
       val trans_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntZero() )
       val trans_sub = new SchemaSubstitution1[HOLExpression](trans_map)
       val seq = SchemaProofDB.get(tri._1).rec.root
-      val ms = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms11 = seq.antecedent.filter(fo => tri._3._1.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[SchemaFormula])
-      val ms22 =  seq.succedent.filter(fo => tri._3._2.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[SchemaFormula])
+      val ms = new Multisets.HashMultiset[HOLFormula](HashMap.empty[HOLFormula, Int])
+      val ms11 = seq.antecedent.filter(fo => tri._3._1.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])
+      val ms22 =  seq.succedent.filter(fo => tri._3._2.map(x => x.formula).contains(trans_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])).foldLeft(ms)((res,fo) => res + trans1_sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])).asInstanceOf[HOLFormula])
 //      println("\nslpt\n")
 //      ms11.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
@@ -186,7 +186,7 @@ object ProjectionTermCreators {
   }
 
   def cutConfToString( cc : TypeSynonyms.CutConfiguration ) = {
-    def str( m : Multiset[SchemaFormula] ) = m.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + printSchemaProof.formulaToString(f) )
+    def str( m : Multiset[HOLFormula] ) = m.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + printSchemaProof.formulaToString(f) )
     str( cc._1 ) + " | " + str( cc._2 )
   }
 
@@ -464,9 +464,9 @@ object PStructToExpressionTree {
         f1 = foccsInSeqAnt.map(fo => trans_sub(StepMinusOne.minusMore(fo.formula, k.asInstanceOf[IntVar], len)))
         f2 = foccsInSeqSucc.map(fo => trans_sub(StepMinusOne.minusMore(fo.formula, k.asInstanceOf[IntVar], len)))
       }
-      val ms = new Multisets.HashMultiset[SchemaFormula](HashMap.empty[SchemaFormula, Int])
-      val ms11 = f1.foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
-      val ms22 = f2.foldLeft(ms)((res,f) => res + f.asInstanceOf[SchemaFormula])
+      val ms = new Multisets.HashMultiset[HOLFormula](HashMap.empty[HOLFormula, Int])
+      val ms11 = f1.foldLeft(ms)((res,f) => res + f.asInstanceOf[HOLFormula])
+      val ms22 = f2.foldLeft(ms)((res,f) => res + f.asInstanceOf[HOLFormula])
 //      ms11.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
 //      ms22.foreach(f => println(printSchemaProof.formulaToString(f)))
@@ -553,7 +553,7 @@ object PStructToExpressionTree {
     def toCode = "WeakSymbol"
   }
 
-  class ProjectionSetSymbol (val name: String, val cut_occs: (Multiset[SchemaFormula], Multiset[SchemaFormula])) extends ConstantSymbolA {
+  class ProjectionSetSymbol (val name: String, val cut_occs: (Multiset[HOLFormula], Multiset[HOLFormula])) extends ConstantSymbolA {
     def compare( that: SymbolA ) : Int =
       // TODO: implement
       throw new Exception
@@ -565,8 +565,8 @@ object PStructToExpressionTree {
     override def toString() =
       "pr^{(" + cutConfToString(cut_occs) + ")," + name +"}"
 
-    private def cutConfToString( cc : (Multiset[SchemaFormula], Multiset[SchemaFormula]) ) = {
-      def str( m : Multiset[SchemaFormula] ) = m.foldLeft( "" )( (s, f) => s + f.toStringSimple )
+    private def cutConfToString( cc : (Multiset[HOLFormula], Multiset[HOLFormula]) ) = {
+      def str( m : Multiset[HOLFormula] ) = m.foldLeft( "" )( (s, f) => s + f.toStringSimple )
       str( cc._1 ) + "|" + str( cc._2 )
     }
   }

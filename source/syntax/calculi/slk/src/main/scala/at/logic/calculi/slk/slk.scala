@@ -132,10 +132,10 @@ object FOSchemaProofLinkRule {
 
 object SchemaProofLinkRule {
   def apply(seq: FSequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {
-    def createSide(side : Seq[SchemaFormula]) = {
+    def createSide(side : Seq[HOLFormula]) = {
       side.map(f =>factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence]))
     }
-    new LeafTree[Sequent]( Sequent(createSide(seq._1.map(f => f.asInstanceOf[SchemaFormula])), createSide(seq._2.map(f => f.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
+    new LeafTree[Sequent]( Sequent(createSide(seq._1.map(f => f.asInstanceOf[HOLFormula])), createSide(seq._2.map(f => f.asInstanceOf[SchemaFormula])) ) ) with NullaryLKProof with SchemaProofLink {
       def rule = SchemaProofLinkRuleType
       def link = link_name
       def indices = indices_
