@@ -383,8 +383,8 @@ object Projections {
         //TODO : check name, name of the proof
         val ant = root.antecedent.filter(f => !cut_ancs.contains(f))
         val succ = root.succedent.filter(f => !cut_ancs.contains(f))
-        val l:HashMultiset[SchemaFormula] = root.antecedent.map(fo => fo.formula).filter(f => cut_ancs.map(fo => fo.formula).contains(f)).foldLeft(HashMultiset[SchemaFormula])((hs,f) => hs + f.asInstanceOf[SchemaFormula])
-        val r:HashMultiset[SchemaFormula] = root.succedent.map(fo => fo.formula).filter(f => cut_ancs.map(fo => fo.formula).contains(f)).foldLeft(HashMultiset[SchemaFormula])((hs,f) => hs + f.asInstanceOf[SchemaFormula])
+        val l:HashMultiset[HOLFormula] = root.antecedent.map(fo => fo.formula).filter(f => cut_ancs.map(fo => fo.formula).contains(f)).foldLeft(HashMultiset[HOLFormula])((hs,f) => hs + f.asInstanceOf[HOLFormula])
+        val r:HashMultiset[HOLFormula] = root.succedent.map(fo => fo.formula).filter(f => cut_ancs.map(fo => fo.formula).contains(f)).foldLeft(HashMultiset[HOLFormula])((hs,f) => hs + f.asInstanceOf[HOLFormula])
         val cl_n = IndexedPredicate( new ClauseSetSymbol(link, (l,r) ), fresh_param::Nil )
     //    println("new_seq = "+printSchemaProof.sequentToString(new_seq))
         val pair = FSequent(ant.map(fo => fo.formula) ++: (cl_n +: Seq.empty[SchemaFormula]), succ.map(fo => fo.formula))
@@ -482,7 +482,7 @@ object Projections {
 
   def handleTrsArrowRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, constructor: (LKProof, HOLFormula, dbTRS) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
-    println("\ntrsArrowRule = "+proof.rule)
+    println("\nprojecting : "+proof.rule)
     if (cut_ancs.contains( a ) )
       handleUnaryCutAnc( proof, s )
     else
@@ -508,7 +508,7 @@ object Projections {
   def handleEquivalenceSchemaRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, constructor: (LKProof, FormulaOccurrence, SchemaFormula) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
-    println("\nRule = "+proof.rule)
+    println("\nprojecting : "+proof.rule)
 
     if (cut_ancs.contains( m ) )
       handleUnaryCutAnc( proof, s )
@@ -543,11 +543,7 @@ object Projections {
           proof.root.succedent.filter( fo => !cut_ancs.contains( fo ) ) )
 
   // Handles the case of a binary rule operating on a cut-ancestor.
-  def handleBinaryCutAnc( proof: LKProof, p1: LKProof, p2: LKProof,
-    s1: Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])],
-    s2: Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])],
-    cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
-
+  def handleBinaryCutAnc( proof: LKProof, p1: LKProof, p2: LKProof, s1: Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])], s2: Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])], cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
   //  println("\n\n     handleBinaryCutAnc : \n")
 
    // println("p2: ")
@@ -568,7 +564,7 @@ object Projections {
 
     copyMapsToDescLeft( proof, new_p1 ) ++
     copyMapsToDescLeft( proof, new_p2 )
-    }
+  }
 
   // Apply weakenings to add the end-sequent ancestor of the other side
   // to the projection. Update the relevant maps.
@@ -624,7 +620,7 @@ object Projections {
     cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ) )
-      println("handleContractionRule")
+      println("\nprojecting : "+proof.rule)
       if (cut_ancs.contains( m ) )
         handleUnaryCutAnc( proof, s )
       else
@@ -639,7 +635,7 @@ object Projections {
     cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
-    println("handleUnaryRule")
+    println("\nprojecting : "+proof.rule)
     if (cut_ancs.contains( m ) )
       handleUnaryCutAnc( proof, s )
     else
@@ -659,7 +655,7 @@ object Projections {
     cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] =
   {
       val s = apply( p, copySetToAncestor( cut_ancs ) )
-      println("handleWeakeningRule, s.size = "+s.size)
+      println("\nprojecting : "+proof.rule)
       cut_ancs.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
       if (cut_ancs.contains( m ) )
         handleUnaryCutAnc( proof, s )
@@ -667,8 +663,8 @@ object Projections {
         s.map( pm => {
           val new_p = constructor( pm._1, m.formula )
              val new_map = copyMapToDescendant( proof, new_p, pm._2) + ( m -> new_p.prin.head )
-             println("new_map = " + new_map.size)
-             new_map.foreach(p => println(printSchemaProof.formulaToString(p._1.formula) + " -> "+printSchemaProof.formulaToString(new_map(p._1).formula)))
+//             println("new_map = " + new_map.size)
+//             new_map.foreach(p => println(printSchemaProof.formulaToString(p._1.formula) + " -> "+printSchemaProof.formulaToString(new_map(p._1).formula)))
 //          (new_p, copyMapToDescendant( proof, new_p, pm._2) + ( m -> new_p.prin.head ) )
           (new_p, new_map )
       } )
@@ -759,10 +755,15 @@ object Projections {
       )
   }
 
-  def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: HOLVar,
-    constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLVar) => LKProof)( implicit
-    cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
+  def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: HOLVar, constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLVar) => LKProof)( implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
+    println(Console.BLUE+"\n\n------------ ATTENTION !!!"+Console.RESET)
+    println("s.size = "+s.size)
+    println("\nprojecting : "+p.rule)
+    s.foreach(p => {
+      println("\nwith upper rule = "+p._1.rule)
+      printSchemaProof(p._1)
+    })
     if (cut_ancs.contains( m ) )
       handleUnaryCutAnc( proof, s )
     else

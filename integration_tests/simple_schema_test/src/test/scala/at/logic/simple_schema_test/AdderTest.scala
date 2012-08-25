@@ -18,6 +18,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
+import at.logic.language.hol.HOLFormula
 
 @RunWith(classOf[JUnitRunner])
 class AdderTest extends SpecificationWithJUnit {
@@ -33,7 +34,7 @@ class AdderTest extends SpecificationWithJUnit {
       val s = StructCreators.extractStruct( "psi", n)
       val cs : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
 
-      val m_empty = HashMultiset[SchemaFormula]()
+      val m_empty = HashMultiset[HOLFormula]()
       var cc: at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration = (m_empty, m_empty)
 
       val cs_pruned_psi = cs.filter( s => s.antecedent.isEmpty || s.antecedent.exists( fo => fo.formula match {

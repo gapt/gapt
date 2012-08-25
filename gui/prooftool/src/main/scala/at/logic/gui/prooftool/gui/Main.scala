@@ -38,6 +38,7 @@ import at.logic.transformations.ceres.ProjectionTermCreators
 import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.hol.HOLFormula
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -886,7 +887,7 @@ object Main extends SimpleSwingApplication {
       val s = StructCreators.extractStruct( "\\psi", n)
       val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
 
-      val m_empty = HashMultiset[SchemaFormula]()
+      val m_empty = HashMultiset[HOLFormula]()
       var cc: at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration = (m_empty, m_empty)
 
       val cs_pruned_psi = cs.filter( s => s.antecedent.isEmpty || s.antecedent.exists( fo => fo.formula match {
