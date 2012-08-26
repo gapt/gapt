@@ -1015,6 +1015,7 @@ object OrEquivalenceRule1 {
       case OrEquivalenceRule1(up, r, a, p) => Some((OrEquivalenceRule1Type, up, r, a::Nil, p))
       case OrEquivalenceRule2(up, r, a, p) => Some((OrEquivalenceRule2Type, up, r, a::Nil, p))
       case OrEquivalenceRule3(up, r, a, p) => Some((OrEquivalenceRule3Type, up, r, a::Nil, p))
+      case trsArrowRule(up, r, a, p)      => Some((trsArrowRuleType, up, r, a::Nil, p))
       case _ => None
     }
   }

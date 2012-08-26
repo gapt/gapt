@@ -4,29 +4,7 @@ import at.logic.algorithms.lk.getAncestors
 import at.logic.algorithms.lk.getCutAncestors
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.lk.propositionalRules.AndLeft1Rule
-import at.logic.calculi.lk.propositionalRules.AndLeft2Rule
-import at.logic.calculi.lk.propositionalRules.AndRightRule
-import at.logic.calculi.lk.propositionalRules.Axiom
-import at.logic.calculi.lk.propositionalRules.ContractionLeftRule
-import at.logic.calculi.lk.propositionalRules.ContractionRightRule
-import at.logic.calculi.lk.propositionalRules.CutRule
-import at.logic.calculi.lk.propositionalRules.NegLeftRule
-import at.logic.calculi.lk.propositionalRules.NegRightRule
-import at.logic.calculi.lk.propositionalRules.OrLeftRule
-import at.logic.calculi.lk.propositionalRules.OrRight1Rule
-import at.logic.calculi.lk.propositionalRules.OrRight2Rule
-import at.logic.calculi.lk.propositionalRules.WeakeningLeftRule
-import at.logic.calculi.lk.propositionalRules.WeakeningRightRule
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.slk.AndEquivalenceRule1
-import at.logic.calculi.slk.AndEquivalenceRule2
-import at.logic.calculi.slk.AndEquivalenceRule3
-import at.logic.calculi.slk.OrEquivalenceRule1
-import at.logic.calculi.slk.OrEquivalenceRule2
-import at.logic.calculi.slk.OrEquivalenceRule3
-import at.logic.calculi.slk.SchemaProofDB
-import at.logic.calculi.slk.SchemaProofLinkRule
 import at.logic.language.fol.Utils
 import at.logic.language.hol.HOLConst
 import at.logic.language.hol.HOLExpression
@@ -41,6 +19,10 @@ import at.logic.language.schema.IndexedPredicate
 import at.logic.language.schema.IntVar
 import at.logic.language.schema.IntZero
 import at.logic.language.schema.IntegerTerm
+import at.logic.calculi.slk._
+import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
+import at.logic.calculi.lk.propositionalRules._
+
 //import at.logic.language.schema.SchemaFormula
 import at.logic.language.schema.Succ
 import at.logic.algorithms.shlk._
@@ -367,6 +349,24 @@ object ProjectionTermCreators {
       else
         pUnary(pr.name, extract(p, omega, cut_ancs))
     }
+    case ImpRightRule( p, _, _, _, m ) => {
+      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+        extract(p, omega, cut_ancs)
+      else
+        pUnary(pr.name, extract(p, omega, cut_ancs))
+    }
+    case ImpLeftRule(p1, p2, _, a1, a2, m) => {
+      val omega_ancs = getAncestors(omega)
+      if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
+        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+          p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+          p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+        pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
+      }
+      else
+        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs))
+    }
     case ContractionLeftRule(p, _, a1, a2, m) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
@@ -374,6 +374,31 @@ object ProjectionTermCreators {
         pUnary(pr.name, extract(p, omega, cut_ancs))
     }
     case ContractionRightRule(p, _, a1, a2, m) => {
+      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+        extract(p, omega, cut_ancs)
+      else
+        pUnary(pr.name, extract(p, omega, cut_ancs))
+    }
+    case ForallLeftRule( p, _, a, m, _ ) => {
+      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+        extract(p, omega, cut_ancs)
+      else
+        pUnary(pr.name, extract(p, omega, cut_ancs))
+    }
+    case ForallRightRule( p, _, a, m, _ ) => {
+      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+        extract(p, omega, cut_ancs)
+      else
+        throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
+
+    }
+    case ExistsLeftRule( p, _, a, m, _ ) => {
+      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+        extract(p, omega, cut_ancs)
+      else
+        throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
+    }
+    case ExistsRightRule( p, _, a, m, _ ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
@@ -415,7 +440,15 @@ object ProjectionTermCreators {
       else
         pUnary(pr.name, extract(up, omega, cut_ancs))
     }
-    case _ => { println("ERROR in extraction of projection term : missing rule!");throw new Exception("ERROR in extract: ProjectionTermCreators") }
+    case trsArrowRule( p, _, a, m ) => {
+      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+        extract(p, omega, cut_ancs)
+      else
+        pUnary(pr.name, extract(p, omega, cut_ancs))
+    }
+
+
+    case _ => { println("ERROR in extraction of projection term : missing rule! "+pr.rule);throw new Exception("ERROR in extract: ProjectionTermCreators "+pr.rule) }
   }
 
   def omegaPrime(p: LKProof, seq: Sequent, omega: Set[FormulaOccurrence]): Set[FormulaOccurrence] = {

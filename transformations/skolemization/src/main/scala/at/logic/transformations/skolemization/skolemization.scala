@@ -23,6 +23,7 @@ import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import at.logic.utils.ds.streams.Definitions._
 import scala.collection.immutable.Stream.Empty
 import typedLambdaCalculus.{AbsInScope, App, Var, LambdaExpression}
+import at.logic.calculi.slk.{trsArrowLeftRule, SchemaProofLinkRule}
 
 /*
 object skolemize {
@@ -424,13 +425,18 @@ object skolemize {
 
     // TODO: make this a parameter?
     var cur_stream = SkolemSymbolFactory.getSkolemSymbols
+    println("\n\n\n"+cur_stream+" , "+cur_stream.tail+" , "+cur_stream.tail.tail+" , "+cur_stream.tail.tail.tail)
+
     val symbol_map = fos.foldLeft(new HashMap[FormulaOccurrence, Stream[ConstantSymbolA]])( (m, fo) => {
         val s = even( cur_stream )
-        cur_stream = odd( cur_stream )
+//        println("\n\nfo -> s : "+(fo -> s).toString())
+//        println("\n\n\n"+cur_stream+" , "+s+" , "+s.tail+" , "+s.tail.tail)
+      cur_stream = odd( cur_stream )
+
         m + ( fo -> s )
       })
 
-    println("\n===== Start Skolemizing ====")
+    println(Console.RED+"\n===== Start Skolemizing ====\n"+Console.RESET)
 
     skolemize( p, symbol_map, inst_map, new HashSet[FormulaOccurrence] )._1
   }
@@ -456,6 +462,16 @@ object skolemize {
     println("=== Skolemizing: " + proof.root + " ===")
     proof match
     {
+      case SchemaProofLinkRule(s, link, indices) => {
+        val ant = s.antecedent
+        val succ = s.succedent
+        val new_seq = ( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
+        val ax = Axiom( new_seq._1, new_seq._2 )
+        println("Skolemization creates SchemaProofLink: " + ax.root.toStringSimple)
+        var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
+        new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
+        (ax, new_map)
+      }
       case Axiom(s) => {
         val ant = s.antecedent
         val succ = s.succedent
@@ -467,6 +483,20 @@ object skolemize {
         new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
         (ax, new_map)
       }
+
+
+//      case trsArrowLeftRule(p, seq, a, m) => {
+//        val new_main = if (cut_ancs.contains( m )) m.formula else sk( m.formula, 0, inst_map( m ), symbol_map( m ) )
+//        val (na1, na2) = new_main match { case Imp(l, r) => (l, r) }
+//        val new_proof = skolemize( p,
+//          copyMapToAncestor(symbol_map).updated(a1, even(symbol_map( m ))).updated(a2, odd(symbol_map( m ))),
+//          copyMapToAncestor(inst_map),
+//          copySetToAncestor(cut_ancs) )
+//        val ret = ImpRightRule( new_proof._1, new_proof._2( a1 ), new_proof._2( a2 ) )
+//        (ret, copyMapToDescendant( proof, ret, new_proof._2 ))
+//      }
+
+
       case ForallRightRule(p, _, a, m, v) => debug("all,r",p,a::m::Nil, Nil, v::Nil); handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply )
       case ExistsLeftRule(p, _, a, m, v) => debug("ex,l",p,a::m::Nil, Nil, v::Nil); handleStrongQuantRule( proof, p, a, m, v, ExistsLeftRule.apply )
       case ForallLeftRule(p, _, a, m, t) => debug("ex,r",p,a::m::Nil, Nil, t::Nil); handleWeakQuantRule( proof, p, a, m, t, 1, ForallLeftRule.computeAux,

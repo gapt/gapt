@@ -102,8 +102,8 @@ class sFOparserTest extends SpecificationWithJUnit {
       println(Console.RED+"\n\n-------- sFO --------\n\n"+Console.RESET)
 //      val p = map.get("\\sigma").get._2.get("root").get
 //      val p1 = map.get("\\tau").get._2.get("root").get
-      val p2 = map.get("\\varphi").get._2.get("root").get
-//      val p2 = map.get("\\psi").get._2.get("root").get
+//      val p2 = map.get("\\varphi").get._2.get("root").get
+      val p2 = map.get("\\psi").get._2.get("root").get
 //      val p3 = map.get("\\chi").get._2.get("root").get
       println("\n\n")
       printSchemaProof(p2)
