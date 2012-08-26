@@ -38,6 +38,7 @@ import at.logic.language.schema._
 import at.logic.calculi.lk.base.{FSequent, Sequent}
 import java.io.{FileInputStream, InputStreamReader}
 import scala.Console
+import at.logic.transformations.skolemization.skolemize
 
 
 //import at.logic.language.fol._
@@ -316,16 +317,16 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
       val input = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
       val map = ParseQMON.parseProof(input)
 //      val step = map.get("\\varphi").get._2.get("root").get
-      val step = map.get("\\varphi").get._2.get("root").get
+      val step = map.get("\\psi").get._2.get("root").get
 
-
+//      val sk = skolemize(step)
       printSchemaProof( step )
 
       //projections:
       println(Console.RED+"\n\n------ PROJECTIONS ------\n\n"+Console.RESET)
 
-      val f = step.root.antecedent.toList.head
-      val s = Set.empty[FormulaOccurrence]//Set[FormulaOccurrence]()+f
+      val f = step.root.succedent.toList.head
+      val s = Set.empty[FormulaOccurrence]+f
       Projections(step, s).toList.foreach(p => {println("\nNext projection:\n");printSchemaProof( p._1 )})
       true must beEqualTo (true)
     }

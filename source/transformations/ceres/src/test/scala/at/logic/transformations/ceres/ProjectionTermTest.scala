@@ -22,7 +22,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
     import at.logic.language.schema._
     "ProjectionTermTest" should {
         "create a ProjectionTerm" in {
-          println("\n\nProjectionTerm\n\n")
+          println("\n\nProjectionTerm for the Adder.lks\n\n")
 
 
           val k = IntVar(new VariableStringSymbol("k"))
@@ -103,7 +103,29 @@ class ProjectionTermTest extends SpecificationWithJUnit {
           // specs2 require a least one Result, see org.specs2.specification.Example 
           Success()
        }
-   }
+
+
+    "should extract proj.term for the journal paper" in {
+      println("\n\nProjectionTerm for the journal paper\n\n")
+      SchemaProofDB.clear
+      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
+      val map = ParseQMON.parseProof(s)
+      val p2 = map.get("\\psi").get._2.get("root").get
+//      val p2 = map.get("\\varphi").get._2.get("root").get
+
+      println("\n\n")
+      printSchemaProof(p2)
+      println("\n\n")
+      val f = p2.root.succedent.head
+      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence]+f, getCutAncestors(p2))
+      val t = PStructToExpressionTree.applyConsole(pterm)
+      PStructToExpressionTree.printTree(t)
+      Success()
+    }
+
+
+
+  }
 }
 
 
