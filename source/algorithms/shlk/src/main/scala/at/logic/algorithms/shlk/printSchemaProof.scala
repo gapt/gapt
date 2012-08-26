@@ -37,8 +37,8 @@ object printSchemaProof {
       }
       case _ => formulaToString(x) +"("+ formulaToString(y) +")"
     }
-    case indexedFOVar(name, index) => name.toString() + "_{"+ parseIntegerTerm(index, 0)+"}"
-    case foVar(name, _) => name.toString()
+    case ifo:indexedFOVar => ifo.name.toString() + "_{"+ parseIntegerTerm(ifo.index, 0)+"}"
+    case fo:foVar => fo.name.toString()
     case Var(name,t) => name.toString()
     case Abs(x,y) => formulaToString(y)
     case  x : Any    => "(unmatched class: "+x.getClass() + ")"
