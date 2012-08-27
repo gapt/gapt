@@ -143,7 +143,11 @@ object Utils {
     removeDoubles_(l.reverse).reverse
   }
 
-  //for triples
+  //auxiliary function which removes duplications from list of type:
+  //List[List[(String, Tree[AnyRef], Set[FormulaOccurrence])]]
+  //and type
+  ////List[List[(String, Tree[AnyRef], (Set[FormulaOccurrence], Set[FormulaOccurrence]))]]
+
   def removeDoubles3[T,R](l : List[Tuple3[String,T,R]]) : List[Tuple3[String,T,R]] = {
     l match {
       case head :: tail =>
@@ -154,7 +158,7 @@ object Utils {
       case Nil => Nil
     }
   }
-  
+
   private def removeDoubles_[T](l : List[T]) : List[T] = {
     l match {
       case head :: tail =>

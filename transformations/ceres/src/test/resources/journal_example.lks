@@ -13,7 +13,8 @@ base {
 }
 
 step {
-    1:      pLink((\psi, k) Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k,x))) )
+    1:   pLink((\psi, k)
+            Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k,x))) )
     2:      ax( P(g(k,z(k+1))) |- P(g(k,z(k+1)))  )
     3:      ax( P(g(k+1,z(k+1))) |- P(g(k+1,z(k+1))) )
     4:      arrowL(3, P(g(k+1,z(k+1))))
