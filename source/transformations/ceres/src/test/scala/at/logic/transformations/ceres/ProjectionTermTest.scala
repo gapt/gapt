@@ -89,15 +89,15 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //          val t = pStructToExpressionTree(pterm)
           println(printSchemaProof(map.get(proof_name).get._2.get("root").get))
           println("\n\n\n\n\n\n\n\n\n\n")
-          PStructToExpressionTree.printTree(t)
+//          PStructToExpressionTree.printTree(t)
           println("\n\n")
-          ProjectionTermCreators.genCC(proof_name)
+//          ProjectionTermCreators.genCC(proof_name)
 
 //          println("\n\n")
 //          PStructToExpressionTree.printTree(tcc)
 //          println("\n\n")
 
-          ProjectionTermCreators.relevantProj(proof_name)
+//          ProjectionTermCreators.relevantProj(proof_name)
 //          printSchemaProof.sequentToString(ax2.root)
           
           // specs2 require a least one Result, see org.specs2.specification.Example 
@@ -110,16 +110,25 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
       val map = ParseQMON.parseProof(s)
-      val p2 = map.get("\\psi").get._2.get("root").get
-//      val p2 = map.get("\\varphi").get._2.get("root").get
-
+//      val p2 = map.get("\\psi").get._2.get("root").get
+      val proof_name = "\\varphi"
+      val p2 = map.get(proof_name).get._2.get("root").get
+      val p1 = map.get("\\psi").get._2.get("root").get
       println("\n\n")
       printSchemaProof(p2)
       println("\n\n")
       val f = p2.root.succedent.head
-      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence]+f, getCutAncestors(p2))
-      val t = PStructToExpressionTree.applyConsole(pterm)
-      PStructToExpressionTree.printTree(t)
+//      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence]+f, getCutAncestors(p2))
+//      val t = PStructToExpressionTree.applyConsole(pterm)
+//      PStructToExpressionTree.printTree(t)
+      ProjectionTermCreators.relevantProj(proof_name)
+//      val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
+//      val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
+//      ProjectionTermCreators.genCCProofTool("\\varphi")
+//      ProjectionTermCreators.genCCProofTool("\\psi")
+
+//      println("\ncclist1 = "+cclist1)
+//      println("\ncclist2 = "+cclist2)
       Success()
     }
 
@@ -127,8 +136,6 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
   }
 }
-
-
 
 
 
