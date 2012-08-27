@@ -660,16 +660,15 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
     case at @ Atom(name, args) => {
       Atom(name, args.map(x => apply(x.asInstanceOf[T]).asInstanceOf[HOLExpression])).asInstanceOf[T]
     }
-    case v @ foVar(name, typ) => v.asInstanceOf[T]
-    case indexedFOVar(name, ind) => indexedFOVar(name, apply(ind.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+    case v : foVar => v.asInstanceOf[T]
+    case ifo: indexedFOVar => indexedFOVar(ifo.name, apply(ifo.index.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
     case st @ sTerm(name, i, args) => {
       sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], args::Nil).asInstanceOf[T]
     }
     case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
 
     case _ => {
-//      println("\ncase _ =>")
-//      println(expression)
+      println("\n SchemaSubstitution1: case _ => " + expression.toString)
       expression
     }
   }

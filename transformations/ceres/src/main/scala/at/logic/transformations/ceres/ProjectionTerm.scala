@@ -103,14 +103,19 @@ object ProjectionTermCreators {
 
   def relevantProj(main_proof: String) : List[(String, Tree[AnyRef])] = {
     val s = SchemaProofDB.toList.map(pair => genCC(pair._1)) //for console
-    val spt = SchemaProofDB.toList.map(pair => genCCProofTool(pair._1))
+    val spt = Utils.removeDoubles3(SchemaProofDB.toList.map(pair => genCCProofTool(pair._1)).flatten)
     val sptb = SchemaProofDB.toList.map(pair => genCCProofToolBase(pair._1))
 
     val sl    = (main_proof, PStructToExpressionTree.applyConsole(extract(SchemaProofDB.get(main_proof).rec, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))), Set.empty[FormulaOccurrence]) :: s.flatten //for console
-    val slpt  = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).rec,  Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))) , Set.empty[FormulaOccurrence]) :: spt.flatten
+    val slpt  = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).rec,  Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))) , Set.empty[FormulaOccurrence]) :: spt
     val slptb = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).base, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).base))), (Set.empty[FormulaOccurrence], Set.empty[FormulaOccurrence])) :: sptb.flatten
-//    println("\n\n\n"+slptb.size)
-//    slptb.foreach(tri => { println("\n"+tri._1); tri._3.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))})
+    println("\n\n\n"+slpt.size)
+    slpt.foreach(tri => { println("\n"+tri._1); //print(" ( ");
+                                                tri._3.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+//                                                  print(" , ")
+//                                                tri._3.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+//                                                  print(" ) ")
+                })
 
     val l  = slpt.map(tri => {
       val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]

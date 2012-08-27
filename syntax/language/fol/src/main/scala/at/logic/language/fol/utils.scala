@@ -143,6 +143,18 @@ object Utils {
     removeDoubles_(l.reverse).reverse
   }
 
+  //for triples
+  def removeDoubles3[T,R](l : List[Tuple3[String,T,R]]) : List[Tuple3[String,T,R]] = {
+    l match {
+      case head :: tail =>
+        if (tail.map(tri => tri._3).contains(head._3))
+          removeDoubles3(tail)
+        else
+          head :: removeDoubles3(tail)
+      case Nil => Nil
+    }
+  }
+  
   private def removeDoubles_[T](l : List[T]) : List[T] = {
     l match {
       case head :: tail =>
