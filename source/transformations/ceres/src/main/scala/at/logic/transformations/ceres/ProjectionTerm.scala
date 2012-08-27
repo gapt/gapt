@@ -104,18 +104,18 @@ object ProjectionTermCreators {
   def relevantProj(main_proof: String) : List[(String, Tree[AnyRef])] = {
     val s = SchemaProofDB.toList.map(pair => genCC(pair._1)) //for console
     val spt = Utils.removeDoubles3(SchemaProofDB.toList.map(pair => genCCProofTool(pair._1)).flatten)
-    val sptb = SchemaProofDB.toList.map(pair => genCCProofToolBase(pair._1))
-
+    val sptb = Utils.removeDoubles3(SchemaProofDB.toList.map(pair => genCCProofToolBase(pair._1)).flatten)
+//    println("size = "+sptb.size)
     val sl    = (main_proof, PStructToExpressionTree.applyConsole(extract(SchemaProofDB.get(main_proof).rec, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))), Set.empty[FormulaOccurrence]) :: s.flatten //for console
     val slpt  = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).rec,  Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))) , Set.empty[FormulaOccurrence]) :: spt
-    val slptb = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).base, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).base))), (Set.empty[FormulaOccurrence], Set.empty[FormulaOccurrence])) :: sptb.flatten
+    val slptb = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).base, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).base))), (Set.empty[FormulaOccurrence], Set.empty[FormulaOccurrence])) :: sptb
     println("\n\n\n"+slpt.size)
-    slpt.foreach(tri => { println("\n"+tri._1); //print(" ( ");
-                                                tri._3.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+//    slpt.foreach(tri => { println("\n"+tri._1); //print(" ( ");
+//                                                tri._3.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
 //                                                  print(" , ")
 //                                                tri._3.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
 //                                                  print(" ) ")
-                })
+//                })
 
     val l  = slpt.map(tri => {
       val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
@@ -213,7 +213,7 @@ object ProjectionTermCreators {
     val cclist = getCC(p_rec, List.empty[FormulaOccurrence], p_rec)
     val cclistproof_name = cclist.filter(pair => pair._1 == proof_name)
     val cclist1 = cclistproof_name.map(pair => getCC(p_rec, pair._2._1 ::: pair._2._2, p_rec)).flatten
-
+    println("\ncclist1 = "+cclist1)
     val cclistbase = Utils.removeDoubles(cclist1 ::: cclist).map(pair =>{
       val seq = SchemaProofDB.get(pair._1).base.root
       val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
@@ -222,19 +222,19 @@ object ProjectionTermCreators {
       val groundccant = pair._2._1.map(fo => sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])))
       val groundccsucc = pair._2._2.map(fo => sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])))
       val s = (seq.antecedent.filter(fo => groundccant.contains(fo.formula)), seq.succedent.filter(fo => groundccsucc.contains(fo.formula)))
-
       (pair._1, s)
     })
-    // cclistbase.foreach(pair => {
-    //  println("\n\ncclistbase : "+pair._1)
-    //  pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-    //  pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
-    // })
+//    cclistbase.foreach(pair => {
+//      println("\n\ncclistbase : "+pair._1)
+//      pair._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+//      pair._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
+//    })
     Utils.removeDoubles(cclistbase).filter(pair =>
       pair._2._1.nonEmpty || pair._2._2.nonEmpty).map(pair =>
       (pair._1, PStructToExpressionTree(extract(SchemaProofDB.get(pair._1).base, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors(SchemaProofDB.get(pair._1).base))), (pair._2._1.toSet, pair._2._2.toSet) ))
   }
 
+  //from cut occurrence configuration gives a cut configuration omega with (ant |- succ)
   def getCC(p: LKProof, omega: List[FormulaOccurrence], p_old: LKProof): List[(String, (List[FormulaOccurrence], List[FormulaOccurrence]))] = p match {
     case SchemaProofLinkRule( seq, proof_name, index::_ ) => {
       val cut_omega_anc = getCutAncestors(p_old) ++ getAncestors(omega.toSet)

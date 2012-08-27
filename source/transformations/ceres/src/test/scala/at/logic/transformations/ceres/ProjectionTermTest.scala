@@ -3,7 +3,6 @@ package at.logic.transformations.ceres
 import at.logic.calculi.slk.{SchemaProof, SchemaProofDB}
 import at.logic.algorithms.lk.{getCutAncestors, getAncestors}
 import at.logic.calculi.lk.propositionalRules._
-import at.logic.language.hol.{HOLFormula, HOLVarFormula}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
@@ -15,6 +14,8 @@ import at.logic.algorithms.shlk._
 import java.io.File.separator
 import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success
+import at.logic.language.lambda.typedLambdaCalculus.Var
+import at.logic.language.hol.{HOLExpression, HOLFormula, HOLVarFormula}
 
 @RunWith(classOf[JUnitRunner])
 class ProjectionTermTest extends SpecificationWithJUnit {
@@ -89,7 +90,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //          val t = pStructToExpressionTree(pterm)
           println(printSchemaProof(map.get(proof_name).get._2.get("root").get))
           println("\n\n\n\n\n\n\n\n\n\n")
-//          PStructToExpressionTree.printTree(t)
+          PStructToExpressionTree.printTree(t)
           println("\n\n")
 //          ProjectionTermCreators.genCC(proof_name)
 
@@ -114,6 +115,8 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val proof_name = "\\varphi"
       val p2 = map.get(proof_name).get._2.get("root").get
       val p1 = map.get("\\psi").get._2.get("root").get
+      val p1b = map.get("\\psi").get._1.get("root").get
+
       println("\n\n")
       printSchemaProof(p2)
       println("\n\n")
@@ -124,11 +127,18 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       ProjectionTermCreators.relevantProj(proof_name)
 //      val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
 //      val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
-//      ProjectionTermCreators.genCCProofTool("\\varphi")
-//      ProjectionTermCreators.genCCProofTool("\\psi")
-
-//      println("\ncclist1 = "+cclist1)
+//      ProjectionTermCreators.genCCProofToolBase("\\varphi")
+//      ProjectionTermCreators.genCCProofToolBase("\\psi")
+//      val l = ProjectionTermCreators.getCC(p2, p2.root.succedent.head::Nil, p2)
+//      println("\nl = "+l)
 //      println("\ncclist2 = "+cclist2)
+//      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+//      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+//      var sub = new SchemaSubstitution1[HOLExpression](new_map)
+//      val fo = p1.root.succedent.head
+//      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
+//      println("\nfo = "+fo.formula)
+//      println("\nfosub = "+fosub)
       Success()
     }
 
