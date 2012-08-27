@@ -668,7 +668,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
     case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
 
     case _ => {
-      println("\n SchemaSubstitution1: case _ => " + expression.toString)
+//      println("\n SchemaSubstitution1: case _ => " + expression.toString)
       expression
     }
   }
