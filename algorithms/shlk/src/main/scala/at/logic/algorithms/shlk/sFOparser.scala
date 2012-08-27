@@ -600,37 +600,37 @@ object ParseQMON {
 
       def andEqR1: Parser[LKProof] = "andEqR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andEqR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          AndRightEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          AndRightEquivalenceRule1(map.get(l).get, f1, f2)
         }
       }
 
       def andEqR2: Parser[LKProof] = "andEqR2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andEqR2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          AndRightEquivalenceRule2(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          AndRightEquivalenceRule2(map.get(l).get, f1, f2)
         }
       }
 
       def andEqR3: Parser[LKProof] = "andEqR3(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andEqR3(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          AndRightEquivalenceRule3(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          AndRightEquivalenceRule3(map.get(l).get, f1, f2)
         }
       }
 
       def andEqL1: Parser[LKProof] = "andEqL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andEqL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          AndLeftEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          AndLeftEquivalenceRule1(map.get(l).get, f1, f2)
         }
       }
 
       def andEqL2: Parser[LKProof] = "andEqL2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andEqL2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          AndLeftEquivalenceRule2(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          AndLeftEquivalenceRule2(map.get(l).get, f1, f2)
         }
       }
 
       def andEqL3: Parser[LKProof] = "andEqL3(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andEqL3(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          AndLeftEquivalenceRule3(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          AndLeftEquivalenceRule3(map.get(l).get, f1, f2)
         }
       }
 
