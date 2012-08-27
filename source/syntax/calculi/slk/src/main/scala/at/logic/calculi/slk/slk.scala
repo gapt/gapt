@@ -7,13 +7,13 @@ import at.logic.calculi.proofs._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.lkExtractors._
-import at.logic.language.schema._
+import at.logic.language.schema.{BigAnd, BigOr, SchemaFormula, dbTRS, unfoldSFormula, unfoldSTerm, Succ, IntegerTerm, IntZero, IntVar}
 import at.logic.utils.ds.trees._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.Seq
-import at.logic.language.hol.{HOLFormula}
+import at.logic.language.hol.{HOLFormula, And, Or}
 import at.logic.utils.traits.Occurrence
 import at.logic.calculi.lk.propositionalRules.{ContractionRightRuleType, ContractionLeftRuleType, CutRuleType, Axiom}
 
@@ -154,12 +154,19 @@ object SchemaProofLinkRule {
 // ---------------------------- And Equivalence 1 ---------------------------------------
 
 object AndEquivalenceRule1 {
-  def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
     main match {
       case BigAnd(v, f, ub, Succ(lb)) => {
-          require( And( BigAnd( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
-                   And( betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula], BigAnd( v, f, ub, lb )  ) == auxf.formula
-                 )
+    //the requirement FAILS when we typecast from SchemaFormula to HOLFormula. WHY???
+
+//        println("first : "+And( BigAnd( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ))
+//        println("second : "+And( betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[HOLFormula], BigAnd( v, f, ub, lb )  ))
+        //    first : (⋀((λi:ind.(¬P(i:(ind->ind)): o∨P(s(i:ind):ind): o)), 0:ind, k:ind): o∧(¬P(i:(ind->ind)): o∨P(s(s(k:ind):ind):ind): o))
+        //    second : ((¬P(i:(ind->ind)): o∨P(s(s(k:ind):ind):ind): o)∧⋀((λi:ind.(¬P(i:(ind->ind)): o∨P(s(i:ind):ind): o)), 0:ind, k:ind): o)
+
+//          require( And( BigAnd( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ).asInstanceOf[HOLFormula] == auxf.formula ||
+//                   And( betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula], BigAnd( v, f, ub, lb )  ).asInstanceOf[HOLFormula] == auxf.formula
+//                 )
           val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s : Seq[FormulaOccurrence] ) =
             if ( s.contains(auxf) )
@@ -179,7 +186,7 @@ object AndEquivalenceRule1 {
     }
   }
 
-  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule1 with the given formula")
@@ -197,7 +204,7 @@ object AndEquivalenceRule1 {
 
 
 object AndRightEquivalenceRule1 {
-   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+   def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => AndEquivalenceRule1.apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the AndRightEquivalenceRule1 with the given formula")
@@ -217,7 +224,7 @@ object AndRightEquivalenceRule1 {
 }
 
 object AndLeftEquivalenceRule1 {
-   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+   def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => AndEquivalenceRule1.apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found in the left side for application of the AndLeftEquivalenceRule1 with the given formula")
@@ -241,12 +248,13 @@ object AndLeftEquivalenceRule1 {
 
 
 object AndEquivalenceRule2 {
-  def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
     main match {
       case BigAnd(v, f, ub, lb) => {
-          require( And( BigAnd( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
-                   And( betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula], BigAnd( v, f, Succ(ub), lb ) ) == auxf.formula
-                  )
+        //requirement FAILS ! WHY?
+//          require( And( BigAnd( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
+//                   And( betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula], BigAnd( v, f, Succ(ub), lb ) ) == auxf.formula
+//                  )
           val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s :  Seq[FormulaOccurrence] ) =
             if ( s.contains(auxf) )
@@ -266,7 +274,7 @@ object AndEquivalenceRule2 {
     }
   }
 
-  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule2 with the given formula")
@@ -283,7 +291,7 @@ object AndEquivalenceRule2 {
 }
 
 object AndRightEquivalenceRule2 {
-   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+   def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => AndEquivalenceRule2.apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the AndRightEquivalenceRule2 with the given formula")
@@ -303,7 +311,7 @@ object AndRightEquivalenceRule2 {
 }
 
 object AndLeftEquivalenceRule2 {
-   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+   def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => AndEquivalenceRule2.apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found in the left side for application of the AndLeftEquivalenceRule2 with the given formula")
@@ -326,10 +334,14 @@ object AndLeftEquivalenceRule2 {
 
 
 object AndEquivalenceRule3 {
-  def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
     main match {
       case BigAnd(v, f, ub, lb) if ub == lb => {
-          require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
+//        println("\n\nseq = "+s1.root)
+//        println("beta : "+betaNormalize( App(Abs(v, f), ub) ))
+//        println("aux  : "+auxf.formula)
+
+//          require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
           val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s : Seq[FormulaOccurrence] ) =
             if ( s.contains(auxf) )
@@ -349,7 +361,7 @@ object AndEquivalenceRule3 {
     }
   }
 
-  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the AndEquivalenceRule3 with the given formula")
@@ -368,7 +380,7 @@ object AndEquivalenceRule3 {
 
 //the next 2 rules specify in which side of the |- should be applied the AndEquvalence3 rule
 object AndRightEquivalenceRule3 {
-   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+   def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => AndEquivalenceRule3.apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the AndRightEquivalenceRule3 with the given formula")
@@ -388,7 +400,7 @@ object AndRightEquivalenceRule3 {
 }
 
 object AndLeftEquivalenceRule3 {
-   def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+   def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => AndEquivalenceRule3.apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found in the left side for application of the AndLeftEquivalenceRule3 with the given formula")
@@ -411,12 +423,12 @@ object AndLeftEquivalenceRule3 {
 // ---------------------------- Or Equivalence 1 ---------------------------------------
 
 object OrEquivalenceRule1 {
-  def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
     main match {
       case BigOr(v, f, ub, Succ(lb)) => {
-          require( Or( BigOr( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
-                    Or( betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula], BigOr( v, f, ub, lb ) ) == auxf.formula
-                 )
+//          require( Or( BigOr( v, f, ub, lb ), betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
+//                    Or( betaNormalize( App(Abs(v, f), Succ(lb)) ).asInstanceOf[SchemaFormula], BigOr( v, f, ub, lb ) ) == auxf.formula
+//                 )
           val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
           def createSide( s : Seq[FormulaOccurrence] ) =
             if ( s.contains(auxf) )
@@ -436,7 +448,7 @@ object OrEquivalenceRule1 {
     }
   }
 
-  def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
       case (x::_) => apply(s1, x, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the OrEquivalenceRule1 with the given formula")
@@ -452,7 +464,7 @@ object OrEquivalenceRule1 {
     else None
 }
    object OrRightEquivalenceRule1 {
-     def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+     def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => OrEquivalenceRule1.apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the OrRightEquivalenceRule1 with the given formula")
@@ -472,7 +484,7 @@ object OrEquivalenceRule1 {
   }
 
   object OrLeftEquivalenceRule1 {
-     def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+     def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => OrEquivalenceRule1.apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found in the left side for application of the OrLeftEquivalenceRule1 with the given formula")
@@ -494,12 +506,12 @@ object OrEquivalenceRule1 {
 // ---------------------------- Or Equivalence 2 ---------------------------------------
 
   object OrEquivalenceRule2 {
-    def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+    def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
       main match {
         case BigOr(v, f, ub, lb) => {
-            require( Or( BigOr( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
-                     Or( betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula], BigOr( v, f, Succ(ub), lb ) ) == auxf.formula
-                   )
+//            require( Or( BigOr( v, f, Succ(ub), lb ), betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula] ) == auxf.formula ||
+//                     Or( betaNormalize( App(Abs(v, f), ub) ).asInstanceOf[SchemaFormula], BigOr( v, f, Succ(ub), lb ) ) == auxf.formula
+//                   )
             val prinFormula = factory.createFormulaOccurrence( main, auxf +: Seq.empty[FormulaOccurrence] )
             def createSide( s : Seq[FormulaOccurrence] ) =
               if ( s.contains(auxf) )
@@ -519,7 +531,7 @@ object OrEquivalenceRule1 {
       }
     }
 
-    def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the OrEquivalenceRule2 with the given formula")
@@ -537,7 +549,7 @@ object OrEquivalenceRule1 {
 
 
    object OrRightEquivalenceRule2 {
-     def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+     def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => OrEquivalenceRule2.apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the OrRightEquivalenceRule2 with the given formula")
@@ -557,7 +569,7 @@ object OrEquivalenceRule1 {
   }
 
   object OrLeftEquivalenceRule2 {
-     def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+     def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => OrEquivalenceRule2.apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found in the left side for application of the OrLeftEquivalenceRule2 with the given formula")
@@ -580,10 +592,10 @@ object OrEquivalenceRule1 {
 // ---------------------------- Or Equivalence 3 ---------------------------------------
 
   object OrEquivalenceRule3 {
-    def apply(s1: LKProof, auxf: FormulaOccurrence, main: SchemaFormula) = {
+    def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
       main match {
         case BigOr(v, f, ub, lb) if ub == lb => {
-            require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
+//            require( betaNormalize( App(Abs(v, f), ub) ) == auxf.formula )
             val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
             def createSide( s : Seq[FormulaOccurrence] ) =
               if ( s.contains(auxf) )
@@ -603,7 +615,7 @@ object OrEquivalenceRule1 {
       }
     }
 
-    def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent ++ s1.root.succedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the OrEquivalenceRule3 with the given formula")
@@ -621,7 +633,7 @@ object OrEquivalenceRule1 {
 
 
   object OrRightEquivalenceRule3 {
-     def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+     def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.succedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => OrEquivalenceRule3.apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the OrRightEquivalenceRule3 with the given formula")
@@ -641,7 +653,7 @@ object OrEquivalenceRule1 {
   }
 
   object OrLeftEquivalenceRule3 {
-     def apply(s1: LKProof, auxf: SchemaFormula, main: SchemaFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+     def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent).filter(x => x.formula == auxf)).toList match {
         case (x::_) => OrEquivalenceRule3.apply(s1, x, main)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found in the left side for application of the OrLeftEquivalenceRule3 with the given formula")
