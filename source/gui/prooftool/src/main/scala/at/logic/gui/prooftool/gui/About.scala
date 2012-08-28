@@ -27,7 +27,7 @@ object About {
           new ImageIcon(Main.getClass.getClassLoader.getResource(path))
         } catch {
           case e: Exception =>
-            Main.errorMessage("Couldn't load image: "+path+"\n \n"+e.toString+"\n")
+            Main.errorMessage("Couldn't load image: "+path+"\n\n"+Main.getExceptionString(e))
             Swing.EmptyIcon
         }
       }
