@@ -39,6 +39,7 @@ import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.hol.HOLFormula
+import com.itextpdf.text.pdf.{PdfStream, PdfIndirectReference, BaseFont}
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -63,63 +64,96 @@ object Main extends SimpleSwingApplication {
   }
 
   def fOpen : Unit = chooser.showOpenDialog(mBar) match {
-    case FileChooser.Result.Cancel =>
-    case _ => loadProof(chooser.selectedFile.getPath,12)
+    case FileChooser.Result.Approve => loadProof(chooser.selectedFile.getPath,12)
+    case _ =>
   }
 
   def fSaveProof(tp: AnyRef) : Unit = chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Cancel =>
-    case _ =>
+    case FileChooser.Result.Approve =>
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       tp match {
         case proof: LKProof => try {
-          XMLExporter(chooser.selectedFile.getPath, "the-proof", proof)
+          val result = chooser.selectedFile.getPath
+          val path = if (result.endsWith(".xml")) result else result + ".xml"
+          XMLExporter(path, "the-proof", proof)
         } catch {
           case e: AnyRef => errorMessage("Can't save the proof! \n\n" + e.toString)
         }
         case _ => infoMessage("This is not a proof, can't save it!")
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
+    case _ =>
   }
 
   def fSaveAll : Unit = chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Cancel =>
-    case _ => try {
+    case FileChooser.Result.Approve => try {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      XMLExporter(chooser.selectedFile.getPath, db.getProofDB)
+      val result = chooser.selectedFile.getPath
+      val path = if (result.endsWith(".xml")) result else result + ".xml"
+      XMLExporter(path, db.getProofDB)
     } catch {
       case e: AnyRef => errorMessage("Can't save the database! \n\n" + e.toString)
-    } finally {  body.cursor = java.awt.Cursor.getDefaultCursor }
+    } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+    case _ =>
+  }
+
+  def fExportPdf : Unit = chooser.showSaveDialog(mBar) match {
+    case FileChooser.Result.Approve => try {
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      import java.io.FileOutputStream
+      import com.itextpdf.text.{Document, Rectangle => PdfRectangle}
+      import com.itextpdf.text.pdf.PdfWriter
+
+      val component = body.getContent.contents.head
+      val width = component.size.width
+      val height = component.size.height
+      val document = new Document(new PdfRectangle(width, height + 20))
+      val result = chooser.selectedFile.getPath
+      val path = if (result.endsWith(".pdf")) result else result + ".pdf"
+      val writer = PdfWriter.getInstance(document, new FileOutputStream(path))
+      document.open
+      val content = writer.getDirectContent
+      val template = content.createTemplate(width, height)
+      val g2 = template.createGraphicsShapes(width, height)
+      component.paint(g2)
+      g2.dispose
+      content.addTemplate(template, 0, 10)
+      document.close
+    } catch {
+      case e: AnyRef => errorMessage("Can't export to pdf! \n\n" + e.toString)
+    } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+    case _ =>
   }
 
   def fExportTPTP : Unit = chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Cancel =>
-    case _ =>
+    case FileChooser.Result.Approve =>
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       body.getContent.getData.get._2  match {
         case l : List[_] => try {
-          import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
-
           val list = l.map( x => x match {
             case s: Sequent => s.toFSequent
             case fs: FSequent => fs
             case _ => throw new Exception("This is not a clause set.")
           })
 
-          val file = new JBufferedWriter(new JFileWriter( chooser.selectedFile.getPath ))
+          import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
+
+          val result = chooser.selectedFile.getPath
+          val path = if (result.endsWith(".tptp")) result else result + ".tptp"
+          val file = new JBufferedWriter(new JFileWriter( path ))
           file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem( list ))
           file.close
         } catch {
-          case e: AnyRef => errorMessage("Can't save the clause set! \n\n" + e.toString)
+          case e: AnyRef => errorMessage("Can't export the clause set! \n\n" + e.toString)
         }
         case _ => infoMessage("This is not a clause set, can't export it!")
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
+    case _ =>
   }
 
   def fExportTeX : Unit = chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Cancel =>
-    case _ =>
+    case FileChooser.Result.Approve =>
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       body.getContent.getData.get._2  match {
         case l : List[_] => try {
@@ -128,14 +162,17 @@ object Main extends SimpleSwingApplication {
             case fs: FSequent => fs
             case _ => throw new Exception("This is not a clause set.")
           })
-          (new FileWriter( chooser.selectedFile.getPath ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+          val result = chooser.selectedFile.getPath
+          val path = if (result.endsWith(".tex")) result else result + ".tex"
+          (new FileWriter( path ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
             .exportSequentList( list , Nil).close
         } catch {
-          case e: AnyRef => errorMessage("Can't save the clause set! \n\n" + e.toString)
+          case e: AnyRef => errorMessage("Can't export the clause set! \n\n" + e.toString)
         }
         case _ => infoMessage("This is not a clause set, can't export it!")
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
+    case _ =>
   }
 
   def fExit : Unit = System.exit(0)
@@ -143,7 +180,7 @@ object Main extends SimpleSwingApplication {
   def zoomIn {
     val content = body.getContent
     content.fontSize * 3 / 2 match {
-      case j: Int if j > 200 =>
+      case j: Int if j > 72 =>
       case j: Int => load(content.getData,j)
     }
   }
@@ -151,7 +188,7 @@ object Main extends SimpleSwingApplication {
   def zoomOut {
     val content = body.getContent
     content.fontSize / 3 * 2 match {
-      case j: Int if j < 10 =>
+      case j: Int if j < 1 =>
       case j: Int => load(content.getData,j)
     }
   }
@@ -262,6 +299,12 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Save All as XML") { fSaveAll }) {
         mnemonic = Key.S
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
+      contents += new Separator
+      contents += new MenuItem(Action("Export as PDF") { fExportPdf }) {
+        mnemonic = Key.D
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, JActionEvent.CTRL_MASK))
         border = customBorder
       }
       contents += new Separator
@@ -455,33 +498,7 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Tests") {
       mnemonic = Key.T
-      contents += new MenuItem(Action("Test Schemata") { testSchemata }) { border = customBorder }
       contents += new MenuItem(Action("Pruned Clause Set of Adder") { testSchematicClauseSet }) { border = customBorder }
-      contents += new Separator
-      contents += new MenuItem(Action("Test Auto") {
-        val i = IntVar(new VariableStringSymbol("i"))
-        val A = IndexedPredicate(new ConstantStringSymbol("A"), i)
-        val B = IndexedPredicate(new ConstantStringSymbol("B"), i)
-        val C = IndexedPredicate(new ConstantStringSymbol("C"), i)
-        val fseq = FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil)
-
-        body.contents = new Launcher(Some("Proof", Autoprop.apply1(fseq)), 16)
-      }) { border = customBorder }
-      contents += new MenuItem(Action("Test Auto Propositional") {
-        val sequents = Seq( "A(k+1), B(2) |- A(k+1), ~C(1)",
-          "~ ~ A |- A", "A |- ~ ~ A", "(A(k) /\\ A(k+1)) |- ~(~A(k) \\/ ~A(k+1))")
-        val str = inputMessage("Please choose sequent to prove:", sequents) match {
-          case Some(s) => s
-          case _ => ""
-        }
-        body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-        val list = Autoprop(str)
-        for (i <- list) contents += new MenuItem(Action("Iteration " + list.indexOf(i).toString) {
-          body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(i), i), 16)
-        }) { border = customBorder }
-        if (! list.isEmpty) body.contents = new Launcher(Some("Number of inferences : "+rulesNumber(list.head), list.head), 16)
-        body.cursor = java.awt.Cursor.getDefaultCursor
-      }) { border = customBorder }
     }
   }
 
@@ -695,188 +712,6 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def testSchemata {
-    import at.logic.calculi.lk.macroRules._
-    import at.logic.calculi.lk.base._
-    import at.logic.language.schema._
-    import at.logic.calculi.slk._
-    import at.logic.calculi.lk.propositionalRules._
-    import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-    import at.logic.calculi.occurrences._
-    import at.logic.language.hol.{HOLFormula}
-
-    implicit val factory = defaultFormulaOccurrenceFactory
-    //--  Create LKS proof as in my presentation --//
-
-    //-- Some formula definitions
-    val i = IntVar(new VariableStringSymbol("i"))
-    val n = IntVar(new VariableStringSymbol("n"))
-    val k = IntVar(new VariableStringSymbol("k"))
-    val ai = IndexedPredicate(new ConstantStringSymbol("A"), i::Nil)
-    val asi = IndexedPredicate(new ConstantStringSymbol("A"), Succ(i)::Nil)
-    val a0 = IndexedPredicate(new ConstantStringSymbol("A"), IntZero()::Nil)
-    val a1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(IntZero())::Nil)
-    val ask = IndexedPredicate(new ConstantStringSymbol("A"), Succ(k)::Nil)
-    val assk = IndexedPredicate(new ConstantStringSymbol("A"), Succ(Succ(k))::Nil)
-    val not_a0_lor_a1 = Or(Neg(a0), a1)
-    val not_ask_lor_assk = Or(Neg(ask), assk)
-    val and_0_0_not_ai_lor_asi = BigAnd(i, Or(Neg(ai), asi), IntZero(), IntZero())
-    val and_0_k_not_ai_lor_asi = BigAnd(i, Or(Neg(ai), asi), IntZero(), k)
-    val and_0_sk_not_ai_lor_asi = BigAnd(i, Or(Neg(ai), asi), IntZero(), Succ(k))
-    // end of formula definitions --//
-
-    //-- Definition of psi_base
-    val orl0 = OrLeftRule(NegLeftRule( Axiom(a0 +: Seq.empty[HOLFormula], a0 +: Seq.empty[HOLFormula]), a0 ), Axiom( a1 +: Seq.empty[HOLFormula], a1 +: Seq.empty[HOLFormula]), Neg(a0), a1)
-    val psi_0 = AndEquivalenceRule3(orl0, not_a0_lor_a1, and_0_0_not_ai_lor_asi)
-    // end of definition of psi_base --//
-
-    implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence])
-    implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
-
-    //-- Definition of psi_step
-    val psi_k = SchemaProofLinkRule(FSequent(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]), "\\psi", k::Nil)
-    val orlsk = OrLeftRule(NegLeftRule( Axiom( ask +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]), ask ), Axiom( assk +: Seq.empty[HOLFormula], assk +: Seq.empty[HOLFormula]), Neg(ask), assk)
-    val cut = CutRule(psi_k, orlsk, ask)
-    val psi_sk = AndEquivalenceRule1(AndLeftRule(cut, and_0_k_not_ai_lor_asi, not_ask_lor_assk),
-      And(and_0_k_not_ai_lor_asi, not_ask_lor_assk), and_0_sk_not_ai_lor_asi)
-    // end of definition of psi_step --//
-
-    SchemaProofDB.clear
-    SchemaProofDB.put( new SchemaProof( "\\psi", k::Nil,
-        FSequent(a0 +: and_0_k_not_ai_lor_asi +: Seq.empty[HOLFormula], ask +: Seq.empty[HOLFormula]),
-        psi_0, psi_sk ))
-
-    checkProofLinks( psi_0 )
-    checkProofLinks( psi_sk )
-
-    //---------------------------- NEW EXAMPLE -----------------------------//
-    val n1 = Succ(k)
-    val n2 = Succ(n1)
-    val n3 = Succ(n2)
-    val zero = IntZero()
-    val one = Succ(IntZero())
-    val two = Succ(Succ(IntZero()))
-    val A0 = IndexedPredicate(new ConstantStringSymbol("A"), zero)
-    val A1 = IndexedPredicate(new ConstantStringSymbol("A"), one)
-    val A2 = IndexedPredicate(new ConstantStringSymbol("A"), two)
-    val Ai = IndexedPredicate(new ConstantStringSymbol("A"), i)
-    val Ai1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(i))
-    val orneg = Or(Neg(Ai), Ai1)
-    val An1 = IndexedPredicate(new ConstantStringSymbol("A"), n1)
-    val An2 = IndexedPredicate(new ConstantStringSymbol("A"), n2)
-    val An3 = IndexedPredicate(new ConstantStringSymbol("A"), n3)
-
-    //-------- Definition of \psi_base
-
-    val ax1 = Axiom(Sequent(A0::Nil, A0::Nil))
-    val negl1 = NegLeftRule(ax1,A0)
-    val ax2 = Axiom(Sequent(A1::Nil, A1::Nil))
-    val orl1 = OrLeftRule(negl1, ax2, Neg(A0), A1)
-    val negl2 = NegLeftRule(orl1,A1)
-    val ax3 = Axiom(Sequent(A2::Nil, A2::Nil))
-    val orl2 = OrLeftRule(negl2, ax3, Neg(A1), A2)
-    val ax4 = Axiom(Sequent(A0::Nil, A0::Nil))
-    val negl3 = NegLeftRule(ax4,A0)
-    val ax5 = Axiom(Sequent(A1::Nil, A1::Nil))
-    val orl3 = OrLeftRule(negl3, ax5, Neg(A0), A1)
-    val ax6 = Axiom(Sequent(A0::Nil, A0::Nil))
-    val andEqR1 = AndRightEquivalenceRule3(ax6,A0, BigAnd(i,Ai,zero,zero))
-    val orl22 = AndRightRule(andEqR1, orl3, BigAnd(i,Ai,zero,zero), A1)
-    val contrl1 = ContractionLeftRule(orl22, A0)
-    val andEqR2 = AndRightEquivalenceRule1(contrl1, And(BigAnd(i,Ai,zero,zero), A1), BigAnd(i,Ai,zero,one))
-    val andr2 = AndRightRule(orl2, andEqR2, A2, BigAnd(i,Ai,zero,one))
-    val andr3 = AndRightEquivalenceRule1(andr2, And(A2, BigAnd(i,Ai,zero,one)), BigAnd(i,Ai,zero,two))
-    val contrl2 = ContractionLeftRule(andr3, A0)
-    val contrl3 = ContractionLeftRule(contrl2, Or(Neg(A0),A1))
-    val andleq3 = AndLeftEquivalenceRule3(contrl3, Or(Neg(A0),A1), BigAnd(i, Or(Neg(Ai),Ai1), zero, zero))
-    val andlb = AndLeftRule(andleq3, Or(Neg(A1),A2), BigAnd(i, Or(Neg(Ai),Ai1), zero, zero))
-    val base = AndLeftEquivalenceRule1(andlb, And(Or(Neg(A1),A2), BigAnd(i, Or(Neg(Ai),Ai1), zero, zero)), BigAnd(i, Or(Neg(Ai),Ai1), zero, one))
-
-    //----------- end of definition of \psi_base
-
-    //-------- Definition of \psi_step
-
-    val pl2 = SchemaProofLinkRule(FSequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
-    val wl2 = WeakeningLeftRule(pl2, Neg(An2))
-    val pl3 = SchemaProofLinkRule(FSequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
-    val wl3 = WeakeningLeftRule(pl3, An3)
-    val orl5 = OrLeftRule(wl2, wl3, Neg(An2), An3)
-    val cont1l = ContractionLeftRule(orl5, A0)
-    val cont2l = ContractionLeftRule(cont1l, BigAnd(i,orneg,zero,n1))
-    val pr2 = ContractionRightRule(cont2l, BigAnd(i,Ai,zero,n2))
-
-    val pl1 = SchemaProofLinkRule(FSequent(A0::BigAnd(i,orneg,zero,n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), "\\psi", k)
-    val ax66 = Axiom(Sequent(An2::Nil, An2::Nil))
-    val andl222 = AndLeft2Rule(ax66, BigAnd(i,Ai,zero,n1), An2)
-    val eq4 = AndLeftEquivalenceRule1(andl222, And(BigAnd(i,Ai,zero,n1), An2), BigAnd(i,Ai,zero,n2))
-    val cut1 = CutRule(pl1, eq4, BigAnd(i,Ai,zero,n2))
-    val neg4l = NegLeftRule(cut1, An2)
-    val ax7 = Axiom(Sequent(An3::Nil, An3::Nil))
-    val pr3 = OrLeftRule(neg4l, ax7, Neg(An2), An3)
-
-    val andr5 = AndRightRule(pr2, pr3, BigAnd(i,Ai,zero,n2), An3)
-    val equiv = AndRightEquivalenceRule1(andr5, And(BigAnd(i,Ai,zero,n2), An3), BigAnd(i,Ai,zero,n3))
-    val contr5 = ContractionLeftRule(equiv, A0)
-    val contr55 = ContractionLeftRule(contr5, BigAnd(i,orneg,zero,n1))
-    val contr555 = ContractionLeftRule(contr55, Or(Neg(An2), An3))
-    val andl555 = AndLeftRule(contr555, BigAnd(i,orneg,zero,n1), Or(Neg(An2), An3))
-    val eq33 = AndLeftEquivalenceRule1(andl555, And(BigAnd(i,orneg,zero,n1), Or(Neg(An2), An3)), BigAnd(i,orneg,zero,n2))
-    val negr33 = NegRightRule(eq33, A0)
-    val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,Ai,zero,n3))
-
-    val ax10 = Axiom(Sequent(A0::Nil, A0::Nil))
-    val nl6 = NegLeftRule(ax10, A0)
-    val khin3 = SchemaProofLinkRule(FSequent(BigAnd(i,Ai,zero,n3)::Nil, BigAnd(i,Ai,zero,n3)::Nil), "\\chi", n3)
-    val orl10 = OrLeftRule(nl6, khin3, Neg(A0), BigAnd(i,Ai,zero,n3))
-    val step = CutRule(pl13, orl10, Or(Neg(A0), BigAnd(i,Ai,zero,n3)))
-
-    //----------- end of definition of \psi_step
-
-    //----------- Definition of \chi_0
-
-    val chi0a = Axiom(Sequent(A0::Nil, A0::Nil))
-    val eqq1 = AndLeftEquivalenceRule3(chi0a, A0, BigAnd(i,Ai,zero,zero))
-    val chi0 = AndRightEquivalenceRule3(eqq1, A0, BigAnd(i,Ai,zero,zero))
-
-    //----------- end of definition of \chi_0
-
-    //----------- Definition of \chi_k+1
-
-    val prh = SchemaProofLinkRule(FSequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), "\\chi", k)
-    val ax8 = Axiom(Sequent(An1::Nil, An1::Nil))
-    val andr6 = AndRightRule(prh, ax8, BigAnd(i,Ai,zero,k), An1)
-    val eq44 = AndRightEquivalenceRule1(andr6, And(BigAnd(i,Ai,zero,k), An1), BigAnd(i,Ai,zero,n1))
-    val andlc = AndLeftRule(eq44, BigAnd(i,Ai,zero,k), An1)
-    val chin = AndLeftEquivalenceRule1(andlc, And(BigAnd(i,Ai,zero,k), An1), BigAnd(i,Ai,zero,n1))
-
-    //----------- end of definition of \chi_k+1
-
-    SchemaProofDB.clear
-    SchemaProofDB.put(new SchemaProof("\\chi", k::Nil, FSequent(BigAnd(i,Ai,zero,k)::Nil, BigAnd(i,Ai,zero,k)::Nil), chi0, chin))
-    SchemaProofDB.put(new SchemaProof("\\psi", k::Nil, FSequent(A0::BigAnd(i, orneg, zero, n1)::Nil, BigAnd(i,Ai,zero,n2)::Nil), base, step))
-
-    db.addProofs(List(("\\chi", chi0), ("\\chi", chin), ("\\psi", base), ("\\psi", step)))
-    ProofToolPublisher.publish(ProofDbChanged)
-
-  //  checkProofLinks( base )
-  //  checkProofLinks( step )
-  //  checkProofLinks( chi0 )
-  //  checkProofLinks( chin )
-
-  /*  try {
-      val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extractStruct( "\\psi", n ) )
-     // (new FileWriter("cs-psi.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(cs.map(so => so.getSequent), Nil).close
-      body.contents = new Launcher(Some(("Schema CL List", cs)), 16)
-    } catch {
-      case e: Exception =>
-        val t = e.toString + "\n\n" + e.getStackTraceString
-        var k = 0
-        val index = t.indexWhere( (x => {if (x == '\n') k += 1; if (k == 51) true; else false}))
-        errorMessage(t.dropRight(t.size - index - 1))
-    }  */
-    body.contents = new Launcher(Some("\\psi", step), 16)
-  }
-
   def testSchematicClauseSet : Unit = try {
     import at.logic.transformations.ceres.struct._
     import at.logic.language.schema._
@@ -995,6 +830,33 @@ object Main extends SimpleSwingApplication {
       }
 
       def getDescription: String = ".lks"
+    }
+
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".pdf") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".pdf"
+    }
+
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".tex") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".tex"
+    }
+
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".tptp") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".tptp"
     }
 
     fileFilter = new FileFilter {
