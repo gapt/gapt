@@ -87,7 +87,7 @@ case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent)
     prover.refute(cons(SetClauseWithProofCommand(gproofs), cons(  SetTargetClause(cls),  stream1))).next match {
       case Some(r) =>
         println("Found a refutation: "+r.toString)
-        gmap(id) = r
+        gmap(id) = r      //add new id to the guidance map
         List( (state, r) )
 
       case _ => println("Replay failed!");
