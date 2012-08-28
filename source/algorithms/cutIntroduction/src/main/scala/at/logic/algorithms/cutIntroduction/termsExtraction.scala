@@ -26,7 +26,7 @@ class TermsExtractionException(msg: String) extends Exception(msg)
 
 object termsExtraction {
 
-  // If all the quantified formulas have only one quantifier, each sequent of
+  // If all the quantified formulas have only one quantifier, each list of
   // the list will have only one element
   def apply(proof: LKProof) : Map[FormulaOccurrence, List[List[FOLTerm]]] = {
     val map = extractTerms(proof)

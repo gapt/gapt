@@ -129,8 +129,8 @@ class DeltaTable() {
 
 object decomposition {
 
-  // Input: a hashmap of formulas pointing to a list of terms
-  // Output: two lists of terms
+  // Input: a hashmap of formulas pointing to a list of tuples of terms
+  // Output: a list of decompositions for each formula.
   def apply(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) 
   : List[(Map[FormulaOccurrence, List[List[FOLTerm]]], List[FOLTerm])] = {
     

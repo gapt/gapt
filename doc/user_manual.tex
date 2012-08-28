@@ -3,6 +3,7 @@
 \usepackage{listings}
 \usepackage{color}
 \usepackage{amsmath}
+\usepackage{url}
 
 % Using a report without chapters
 \renewcommand*\thesection{\arabic{section}}
@@ -14,7 +15,12 @@
 }
 
 \title{GAPT - Generic Architecture for Proof Transformations \\ \vspace{0.5cm} User's manual}
-\author{Giselle Reis \\ \texttt{giselle@logic.at}}
+% Whenever you contribute for this manual, include your name here
+% (alphabetically by last name) :)
+\author{
+Stefan Hetzl - \texttt{hetzl@logic.at}\\
+Giselle Reis - \texttt{giselle@logic.at}
+}
 
 \begin{document}
 \maketitle
@@ -24,7 +30,6 @@
 Talk about the system, the motivation, the ceres method and the necessary
 previous knowledge.
 
-% TODO: put references.
 Required knowledge:
 \begin{itemize}
   \item Proof theory
@@ -32,23 +37,99 @@ Required knowledge:
   \item CERES method
 \end{itemize}
 
+\section{System Requirements}
+\label{sec:sysreq}
+
+To run GAPT you need to have these installed:
+
+\begin{itemize}
+\item Java JDK - 1.6.0 or higher (we had problems with OpenJDK, but you can try
+it at your own risk)
+\item Maven2 - 2.2.1 or higher
+\item Subversion (a.k.a. svn)
+\item Prover9 (\url{http://www.cs.unm.edu/~mccune/mace4/download/}) - make sure
+the commands \texttt{prover9}, \texttt{prooftrans} and \texttt{tptp\_to\_ladr}
+are available.
+\end{itemize}
+
 \section{Running the system}
 
-TODO: describe how to download the jars from the site and run them.
+If you used svn to check out the source of GAPT from the website, after
+everything is downloaded you should see two folders: ``doc'' and ``source''. To
+compile the system, just go into the folder ``source'' and type:
+
+\begin{lstlisting}
+$ mvn install
+\end{lstlisting}
+
+Then you can go get something to eat, a coffee or anything more interesting. The
+whole system takes about 15 minutes (or more) to compile, and you don't want to keep
+staring at a screen printing non sense for that long. It's good to check,
+though, once in a while, if no errors occurred. If something wrong happened,
+there are somethings you can do (in that order):
+
+\begin{enumerate}
+\item Make sure you have all required packages (Section \ref{sec:sysreq}).
+\item Try running \texttt{make clean} and then \texttt{make install} again.
+\item Send us an e-mail ({\color{red}TODO}: which e-mail?).
+\end{enumerate}
+
+Probably the first thing you want to do after compiling your project is run it
+and make some tests. The easiest way to do this, is to run the scripts in the
+source folder. There are two bash scripts in this folder that you should care
+about. You may first want to make them executable:
+
+\begin{lstlisting}
+$ chmod +x cli.sh
+$ chmod +x gui.sh
+\end{lstlisting}
+
+What do each of these scripts do?
+
+\texttt{cli.sh}: This will start GAPT inside a scala iteractive shell.
+
+\texttt{gui.sh}: This will start ProofTool, an interface to visualize proofs.
+
+If for any reason these scripts do not work, no need for crying.
+The jars for these applications are created during compilation
+and it's just a matter of finding the directory where they are to execute them.
+
+The jar for GAPT is created inside the directory \texttt{cli/target} (you
+should use the one with dependencies) and you can execute it like this:
+
+\begin{lstlisting}
+$ java -jar cli-XX-SNAPSHOT-jar-with-dependencies.jar
+\end{lstlisting}
+
+The jar for ProofTool is created inside the directory
+\texttt{gui/prooftool/target} (also use the one with dependencies) and again you
+can execute it like this:
+
+\begin{lstlisting}
+$ java -jar prooftool-XX-SNAPSHOT-jar-with-dependencies.jar
+\end{lstlisting}
+
+{\color{red}TODO}: describe how to download the jars from the site and run them. Easier than
+installing the system...
 
 \section{Some useful \texttt{scala} tips}
+
+Since GAPT runs in an interactive \texttt{scala} shell, here are some useful things you
+should know about it.
 
 If you want to assign the result of a method to a variable, use: 
 \texttt{var v = method(args)}. Otherwise, the system will create a variable by 
 itself. You can see it's name and type before the description, like this:
 
 With a variable name:
+
 \begin{lstlisting}
 scala> var i = 12
 i: Int = 12
 \end{lstlisting}
 
 Without a variable name (in this case, the system created the variable \texttt{res12}):
+
 \begin{lstlisting}
 scala> 12
 res12: Int = 12
@@ -68,13 +149,75 @@ To quit the interactive shell, just type \texttt{:quit} and press enter.
 
 \section{Top level commands}
 
-After executing the client, you will get to an interactive \texttt{scala} shell 
+After executing the client (\texttt{cli.sh}), you will get to an interactive \texttt{scala} shell 
 from where it is possile to run the operations GAPT provides. You can see all of
-them by typing \texttt{ceresHelp()} and pressing enter. In this section we will 
-describe what each of these are.
+them by typing \texttt{ceresHelp} and pressing enter. Here they are (as of
+28/08/2012):
+
+\begin{lstlisting}
+Available commands:
+
+File Input/Output:
+  loadProofDB: String => ProofDatabase - load proofdatabase from xml file
+  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
+  exportXML: List[Proof], List[String], String => Unit
+  exportTPTP: List[Proof], List[String], String => Unit
+
+Parsing:
+  parse.fol: String => FOLFormula - example: "Forall x Imp P(x,f(x)) Exists y P(x,y)"
+  parse.hol: String => HOLExpression
+  parse.slk: String => Map[String, Pair[LKProof, LKProof]]
+
+Automated Deduction:
+  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
+  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
+  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
+  proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
+
+Proof Theory:
+  skolemize: LKProof => LKProof - skolemize the input proof
+
+Cut-Elimination by Resolution:
+  extractStruct: LKProof => Struct
+  structToClausesList: Struct => List[Sequent]
+  structToLabelledClausesList: Struct => List[LabelledSequent]
+
+Cut-Introduction:
+  cutIntro: LKProof => LKProof
+  termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof
+  termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)
+
+Proof Examples:
+  LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction
+  LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction
+  SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction
+  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction
+  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
+
+Visualization:
+  prooftool: LKProof => Unit - visualize proof in prooftool
+
+Uncategorized:
+  regularize: LKProof => LKProof
+  printProofStats: LKProof => Unit
+  lkTolksk: LKProof => LKProof
+  createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))
+  fsequent2sequent: FSequent => Sequent
+  deleteTautologies: List[FSequent] => List[FSequent]
+  removeDuplicates: List[FSequent] => List[FSequent]
+  unitResolve: List[FSequent] => List[FSequent]
+  removeSubsumed: List[FSequent] => List[FSequent]
+  normalizeClauses: List[FSequent] => List[FSequent]
+  writeLatex: List[FSequent], String => Unit
+  writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
+\end{lstlisting}
+
+In the following subsections we will (try to) describe what each of these are.
 
 The syntax for calling the methods are always the name of the method followed by
 the arguments in parenthesis, separated by commas if there's more than one.
+
+\subsection{File Input/Output}
 
 \paragraph{\textbf{loadProofs: String $\rightarrow$ List[(String, LKProof)]}}
 This method will take as an argument a string that represents the path of a file
@@ -90,6 +233,131 @@ Example:
 scala> var proof = loadProofs("integration_tests/misc_test/src/test/resources/sk2.xml")
 proof: List[(String, at.logic.calculi.lk.base.LKProof)] = List((p,ExistsRightRuleType( :- $\exists$(x.($\forall$(y.(((a P x) $\wedge$ (a Q y)))))), ForallRightRuleType( :- $\forall$(y.(((a P b) $\wedge$ (a Q y)))), AndRightRuleType( :- ((a P b) $\wedge$ (a Q \beta)), InitialRuleType( :- (a P b)), InitialRuleType( :- (a Q \beta)))))))
 \end{lstlisting}
+
+\paragraph{\textbf{loadProofDB: String $\rightarrow$ ProofDatabase}}
+{\color{red}TODO}
+
+\paragraph{\textbf{exportXML: List[Proof], List[String], String $\rightarrow$ Unit}}
+{\color{red}TODO}
+
+\paragraph{\textbf{exportTPTP: List[Proof], List[String], String $\rightarrow$ Unit}}
+{\color{red}TODO}
+
+\subsection{Parsing}
+
+\paragraph{\textbf{parse.fol: String $\rightarrow$ FOLFormula}}
+{\color{red}TODO}
+
+\paragraph{\textbf{parse.hol: String $\rightarrow$ HOLFormula}}
+{\color{red}TODO}
+
+\paragraph{\textbf{parse.fol: String $\rightarrow$ Map[String, Pair[LKProof, LKProof]]}}
+{\color{red}TODO}
+
+\subsection{Automated Deduction}
+  
+\paragraph{\textbf{refuteFOL: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{refuteFOLI: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{prover9: List[Sequent],Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
+sends the input clause set (given as either List[Sequent] or Seq[Clause]) to prover9. Returns
+the resolution proof obtained from replaying the output proof of prover9,
+see~\cite{Dunchev12System} for details.
+
+\paragraph{\textbf{proveProp: FSequent $\rightarrow$ Option[LKProof]}}
+{\color{red}TODO}
+
+\subsection{Proof Theory}
+
+\paragraph{\textbf{skolemize: LKProof $\rightarrow$ LKProof}}
+{\color{red}TODO}
+
+\subsection{Cut-Elimination by Resolution}
+
+% TODO: it would be nice to combine extractStruct,structToClausesList,prover9 etc.
+%       to an example session for applying Ceres to a proof
+
+\paragraph{\textbf{extractStruct: LKProof $\rightarrow$ Struct}}
+Extracts a struct from a LKProof. A struct is referred to as a clause term in
+\cite{Baaz2011}. I will give a quick definition of it. For more details and
+for an explanation of this structure on the CERES method, please refer to
+\cite{Baaz2011}, Chapter 6.
+
+Given a proof with cuts, by removing all the inference rules that operate on end
+sequent ancestors, we obtain a proof of the empty sequent (refutation). The
+axioms of this refutation are represented by \textit{clause terms}. Clause
+terms are $\{\oplus, \otimes\}$-terms over clause sets, and it's interpretation
+is the following:
+
+\begin{align*}
+|\mathcal{C}| &= \mathcal{C} \text{ if $\mathcal{C}$ is a set of clauses.}\\
+|X \oplus Y| &= |X| \cup |Y|\\
+|X \otimes Y| &= |X| \times |Y|
+\end{align*}
+
+where $\mathcal{C} \times \mathcal{D} = \{ C \circ D | C \in \mathcal{C} \wedge
+D \in \mathcal{D}\}$ and if $S = \Gamma \vdash \Delta$ and $S' = \Pi \vdash
+\Lambda$, $S \circ S' = \Gamma, \Pi \vdash \Delta, \Lambda.$
+
+\paragraph{\textbf{structToClausesList: Struct $\rightarrow$ List[Sequent]}} computes
+the standard characteristic clause set
+from the struct, see~\cite[Section 4.2.1]{WoltzenlogelPaleo09General} for details.
+
+\paragraph{\textbf{structToLabelledClausesList: Struct $\rightarrow$ List[LabelledSequent]}}
+{\color{red}TODO}
+
+\subsection{Cut-Introduction}
+
+\paragraph{\textbf{cutIntro: LKProof $\rightarrow$ LKProof}}
+This method is the implementation of the cut-introduction algorithm described on
+\cite{Hetzl2012}. It takes a cut-free proof in classical logic, automatically
+computes a universally quantified cut formula and builds a new proof with this
+cut. The example proofs listed in Section \ref{sec:exampleproofs} were
+implemented to test this method and, in general, have a good compression rate.
+
+\paragraph{\textbf{termsExtraction: LKProof $\rightarrow$ Map[FormulaOccurrence, List[List[FOLTerm]]]}}
+A crucial part of the cut-introduction algorithm of \cite{Hetzl2012} is the
+computation of the term set, which are the witnesses of the existential
+quantifiers of the end-sequent of a proof. This method takes a proof and returns
+a map. This map associates each existentially quantified formula of the end
+sequent with a list of tuples of terms. These tuples will have the same size as
+the number of quantifiers of the formula.
+
+\paragraph{\textbf{termsExtractionFlat: LKProof $\rightarrow$ Set[FOLTerm]}}
+{\color{red}TODO: I know what this does but what is it for exactly??} extract
+the witnesses of the existential quantifiers of the end-sequent of a proof (as a
+,,flat'' set)
+
+\subsection{Proof Examples}
+\label{sec:exampleproofs}
+
+%% TODO: maybe we could put examples of these proofs for n=2
+%% we can generate them and export to latex :)
+
+\paragraph{\textbf{LinearExampleTermset: Int $\rightarrow$ Set[FOLTerm]}}
+{\color{red}TODO}: construct the linear example termset for cut-introduction
+
+\paragraph{\textbf{LinearExampleProof: Int $\rightarrow$ LKProof}}
+{\color{red}TODO}: construct the linear example proof for cut-introduction
+
+\paragraph{\textbf{SquareDiagonalExampleProof: Int $\rightarrow$ LKProof}}
+{\color{red}TODO}: construct the square (diagonal) example proof for cut-introduction
+
+\paragraph{\textbf{SquareEdgesExampleProof: Int $\rightarrow$ LKProof}}
+{\color{red}TODO}: construct the square (edges) example proof for cut-introduction
+
+\paragraph{\textbf{SumExampleProof: Int $\rightarrow$ LKProof}}
+{\color{red}TODO}: construct the sum example proof for cut-introduction
+
+\subsection{Visualization}
+
+\paragraph{\textbf{prooftool: LKProof $\rightarrow$ Unit}}
+{\color{red}TODO}: visualize proof in prooftool
+
+\subsection{Uncategorized}
 
 \paragraph{\textbf{printProofStats: LKProof $\rightarrow$ Unit}}
 This method takes a proof and prints some statistics about it, namely the number
@@ -124,40 +392,36 @@ calculus $\mathbf{LK}_{sk}$. This calculus was proposed to solve the problem of
 Skolemization in higher-order logic, and it basically replaces eigenvariables
 with Skolem terms. For more information, see \cite{Hetzl2011}.
 
-% TODO: it would be nice to combine extractStruct,structToClausesList,prover9 etc.
-%       to an example session for applying Ceres to a proof
+\paragraph{\textbf{regularize: LKProof $\rightarrow$ LKProof}}
+{\color{red}TODO}
 
-\paragraph{\textbf{extractStruct: LKProof $\rightarrow$ Struct}}
-Extracts a struct from a LKProof. A struct is referred to as a clause term in
-\cite{Baaz2011}. I will give a quick definition of it. For more details and
-for an explanation of this structure on the CERES method, please refer to
-\cite{Baaz2011}, Chapter 6.
+\paragraph{\textbf{createHOLExpression: String $\rightarrow$ HOLExpression
+(Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))}}
+{\color{red}TODO}
 
-Given a proof with cuts, by removing all the inference rules that operate on end
-sequent ancestors, we obtain a proof of the empty sequent (refutation). The
-axioms of this refutation are represented by \textit{clause terms}. Clause
-terms are $\{\oplus, \otimes\}$-terms over clause sets, and it's interpretation
-is the following:
+\paragraph{\textbf{fsequent2sequent: FSequent $\rightarrow$ Sequent}}
+{\color{red}TODO}
 
-\begin{align*}
-|\mathcal{C}| &= \mathcal{C} \text{ if $\mathcal{C}$ is a set of clauses.}\\
-|X \oplus Y| &= |X| \cup |Y|\\
-|X \otimes Y| &= |X| \times |Y|
-\end{align*}
+\paragraph{\textbf{deleteTautologies: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
 
-where $\mathcal{C} \times \mathcal{D} = \{ C \circ D | C \in \mathcal{C} \wedge
-D \in \mathcal{D}\}$ and if $S = \Gamma \vdash \Delta$ and $S' = \Pi \vdash
-\Lambda$, $S \circ S' = \Gamma, \Pi \vdash \Delta, \Lambda.$
+\paragraph{\textbf{removeDuplicates: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
 
-\paragraph{\textbf{structToClausesList: Struct $\rightarrow$ List[Sequent]}} computes
-the standard characteristic clause set
-from the struct, see~\cite[Section 4.2.1]{WoltzenlogelPaleo09General} for details.
+\paragraph{\textbf{unitResolve: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
 
-\paragraph{\textbf{prover9: List[Sequent],Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
-sends the input clause set (given as either List[Sequent] or Seq[Clause]) to prover9. Returns
-the resolution proof obtained from replaying the output proof of prover9,
-see~\cite{Dunchev12System} for details.
+\paragraph{\textbf{removeSubsumed: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
 
+\paragraph{\textbf{normalizeClauses: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{writeLatex: List[FSequent], String $\rightarrow$ Unit}}
+{\color{red}TODO}
+
+\paragraph{\textbf{writeLabelledSequentListLatex: List[LabelledSequent], String $\rightarrow$ Unit}}
+{\color{red}TODO}
 
 \bibliographystyle{plain}
 \bibliography{references}
