@@ -320,9 +320,7 @@ object loadProofDB {
   }
 
   object cutIntro {
-    def apply(p : LKProof) = {
-      cutIntroduction(p)
-    }
+    def apply(p : LKProof) = cutIntroduction(p)
   }
 
   // atp support
@@ -520,8 +518,10 @@ object loadProofDB {
       println("File Input/Output:")
       println("  loadProofDB: String => ProofDatabase - load proofdatabase from xml file")
       println("  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs")
+      println("  exportXML: List[Proof], List[String], String => Unit")
+      println("  exportTPTP: List[Proof], List[String], String => Unit")
       println("")
-      println("Parsing and Printing:")
+      println("Parsing:")
       println("  parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"")
       println("  parse.hol: String => HOLExpression")
       println("  parse.slk: String => Map[String, Pair[LKProof, LKProof]]")
@@ -534,11 +534,27 @@ object loadProofDB {
       println("")
       println("Proof Theory:")
       println("  skolemize: LKProof => LKProof - skolemize the input proof")
+      // TODO: add herbrand sequent extraction to the top level and put it here
       println("")
       println("Cut-Elimination by Resolution:")
       println("  extractStruct: LKProof => Struct")
       println("  structToClausesList: Struct => List[Sequent]")
       println("  structToLabelledClausesList: Struct => List[LabelledSequent]")
+      println("")
+      println("Cut-Introduction:")
+      println("  cutIntro: LKProof => LKProof")
+      println("  termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof")
+      println("  termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
+      println("")
+      println("Proof Examples:")
+      println("  LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction")
+      println("  LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction")
+      println("  SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
+      println("  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
+      println("  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
+      println("")
+      println("Visualization:")
+      println("  prooftool: LKProof => Unit - visualize proof in prooftool")
       println("")
       println("Uncategorized:") // this section should ideally converge to empty by distributing all functions described here in reasonable categories above
       println("  regularize: LKProof => LKProof")
@@ -553,16 +569,6 @@ object loadProofDB {
       println("  normalizeClauses: List[FSequent] => List[FSequent]")
       println("  writeLatex: List[FSequent], String => Unit")
       println("  writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
-      println("  exportXML: List[Proof], List[String], String => Unit")
-      println("  exportTPTP: List[Proof], List[String], String => Unit")
-      println("  prooftool: LKProof => Unit - visualize proof in prooftool")
-      println("  LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction")
-      println("  LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction")
-      println("  SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
-      println("  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
-      println("  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
-      println("  termsExtraction: LKProof => List[List[FOLTerm]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a list of lists)")
-      println("  termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
     }
   }
 }
