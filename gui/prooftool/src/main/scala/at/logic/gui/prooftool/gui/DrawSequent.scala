@@ -175,7 +175,6 @@ object DrawSequent {
     case Function(name, args, _) =>
       if (args.size == 1 && name.toString == parent_name) parseNestedUnaryFunction(parent_name, args.head, n+1)
       else parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + formulaToLatexString(t) + ")"
-    case Var(name, _) =>
-      parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + name.toString + ")"
+    case _ => parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + formulaToLatexString(t) + ")"
   }
 }

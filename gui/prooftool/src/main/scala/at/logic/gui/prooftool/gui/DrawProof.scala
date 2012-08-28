@@ -114,9 +114,10 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           border = Swing.EmptyBorder(0,fSize,0,fSize)
           val pLink = DrawSequent.latexToLabel("(" + link + "," + DrawSequent.formulaToLatexString(indices.head) + ")", ft)
           pLink.xLayoutAlignment = 0.5
+          pLink.opaque = false
           pLink.border = Swing.EmptyBorder(0,0,5,0)
           tx.xLayoutAlignment = 0.5
-          tx.border = Swing.MatteBorder(2,0,0,0, new Color(255,0,0))
+          tx.border = Swing.MatteBorder(1,0,0,0, new Color(255,0,0))
           contents += pLink
           contents += tx
         }) = Position.South
