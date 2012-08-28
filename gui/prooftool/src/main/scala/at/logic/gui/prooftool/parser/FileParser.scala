@@ -74,8 +74,8 @@ class FileParser {
     else throw new Exception("Can not recognize file extension!")
     ProofToolPublisher.publish(ProofDbChanged)
   } catch {
-    case err: AnyRef =>
-      Main.errorMessage("Could not load file: " + path + "!\n\n" + err.toString.replaceAll(",", ",\n").replaceAll(">", ">\n"))
+      case err: Throwable =>
+        Main.errorMessage("Could not load file: " + path + "!\n\n" + Main.getExceptionString(err))
   }
 
   def addProofs(proofs: List[(String, LKProof)]) {
