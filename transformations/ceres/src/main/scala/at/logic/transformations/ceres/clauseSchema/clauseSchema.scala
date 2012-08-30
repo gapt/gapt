@@ -11,13 +11,14 @@ import at.logic.calculi.resolution.robinson.Clause
 import at.logic.calculi.slk._
 import at.logic.calculi.slk.AndEquivalenceRule1._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.hol.{HOLExpression, HOLFormula}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
-import at.logic.language.schema._
+import at.logic.language.schema.{Pred, IntVar, IntZero, IntegerTerm, Succ}
 import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
+import at.logic.language.lambda.types.{->, Ti, Tindex, TA}
+import at.logic.language.hol._
 
 abstract class sClause {
   override def toString: String
@@ -35,7 +36,6 @@ object sClauseVar {
     case _ => None
   }
 }
-
 
 class nonVarSclause(val ant: List[HOLFormula], val succ: List[HOLFormula]) extends sClause {
   override def toString = {
@@ -159,4 +159,26 @@ class ClauseSchema(val base: sClause, val rec: sClause) {
 
 object ClauseSchema {
   def apply(b: sClause, r: sClause) = new ClauseSchema(b, r)
+}
+
+
+object sTermN {
+  //the l.head should be of type Tindex() !
+  def apply(f: String, l: List[HOLExpression]): HOLExpression = {
+    require(l.head.exptype == Tindex())
+    val typ = l.reverse.map(x => x.exptype).foldRight(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
+    val func = HOLConst(new ConstantStringSymbol(f), typ)
+    return Function(func, l)
+  }
+  def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
+    Function(f, l)
+  }
+  def unapply(s : HOLExpression) = s match {
+    case Function(name, args, typ) if typ == Ti() && args.head.exptype == Tindex() => {
+      val typ = args.map(x => x.exptype).foldLeft(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
+      val f = HOLConst(name.asInstanceOf[ConstantStringSymbol], typ)
+      Some((f.name.toString(), args.head.asInstanceOf[HOLExpression], args.tail.asInstanceOf[List[HOLExpression]]))
+    }
+    case _ => None
+  }
 }
