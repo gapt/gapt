@@ -21,9 +21,9 @@ package types {
       case _ => None
     }
   }
-  case class Tindex() extends TAtomicA {override def toString = "ind"}//for indexed propositions. Look at schemata.
-  case class Ti() extends TAtomicA {override def toString = "i"}
-  case class To() extends TAtomicA {override def toString = "o"}
+  case class Tindex() extends TAtomicA {override def toString = "ω"}//for indexed propositions. Look at schemata.
+  case class Ti() extends TAtomicA {override def toString = "ι"}
+  case class To() extends TAtomicA {override def toString = "ο"}
   case class ->(in:TA, out:TA) extends TComplexA {override def toString = "(" + in.toString + "->" + out.toString + ")"}
 
   object Definitions {
