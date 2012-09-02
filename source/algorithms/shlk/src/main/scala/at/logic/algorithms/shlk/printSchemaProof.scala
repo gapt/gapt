@@ -24,6 +24,15 @@ object printSchemaProof {
       "⋁" + formulaToString(v) + "=(" + formulaToString(init) + ".." + formulaToString(end) + ")(" + formulaToString(formula) + ")"
 
     case t : IntegerTerm  => parseIntegerTerm(t, 0)
+
+      //this is for the case of sTerm
+    case Function(name, args, _) if args.length != 0 && args.head.exptype == Tindex() => {
+      if(args.length == 1)
+        return name+"("+formulaToString(args.head)+")"
+      else {
+        return name+"("+formulaToString(args.head)+args.tail.foldRight("")((x,rez) => ","+formulaToString(x)+rez )+")"
+      }
+    }
     case App(x,y) => x match {
       case App(Var(name,tp),z) =>
         if (name.toString.matches("""[\w\p{InGreek}]*""")) name.toString+"("+formulaToString(z)+","+formulaToString(y)+")"
