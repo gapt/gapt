@@ -67,7 +67,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
 
       val Pk1 = IndexedPredicate(new ConstantStringSymbol("P"), Succ(k))
       val X = sClauseVar("X")
-      val x = HOLVar(new VariableStringSymbol("x"), ->(Tindex(), Ti()))
+      val x = fo2Var(new VariableStringSymbol("x"))
       val P = HOLConst(new ConstantStringSymbol("P"), ->(Ti(), To()))
       val g = HOLVar(new VariableStringSymbol("g"), ->(Ti(),Ti()))
       val sigma0x0 = sTermN("σ", zero::x::zero::Nil)
@@ -79,7 +79,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val sigma_base = sTermN("σ", zero::x::l::Nil)
       val sigma_rec = sTermN("σ", Succ(k)::x::l::Nil)
       val st = sTermN("σ", k::x::l::Nil)
-      val rewrite_base = HOLApp(x, l)
+      val rewrite_base = indexedFOVar(new VariableStringSymbol("x"), l)
       val rewrite_step = HOLApp(g, st)
       val trsSigma = dbTRSsTermN("σ", Pair(sigma_base, rewrite_base), Pair(sigma_rec, rewrite_step))
 
@@ -92,15 +92,28 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val trsClauseSch = dbTRSclauseSchema("c", Pair(c0, clauseSchBase), Pair(ck, clauseSchRec))
       // ----------
 
-      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two.asInstanceOf[HOLExpression])
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two) + Pair(l.asInstanceOf[Var], three)
       val subst = new SchemaSubstitution3(map)
 
       val sig = subst(trsSigma.map.get("σ").get._2._1)
-      println("sig = "+sig)
-      val sigma3 = unfoldSTermN(sig, trsSigma, subst)
-      println("\n\nsigma3 = "+sigma3)
-//        println("unfold : "+unfoldSTermN())
-//      println("\n"+applySubToSclause(subst, trsClauseSch.map.get("c").get._2._2))
+//      println("sig = "+sig)
+      val sigma3 = unfoldSTermN(sig, trsSigma)
+//      println("\n\nsigma3 = "+sigma3)
+
+      println(Console.RED+"\nrewriting systems :\n"+Console.RESET)
+
+      println(trsSigma.map.get("σ").get._1._1 +Console.GREEN+"       →  "+Console.RESET+trsSigma.map.get("σ").get._1._2)
+      println(trsSigma.map.get("σ").get._2._1 +Console.GREEN+"  →  "+Console.RESET+trsSigma.map.get("σ").get._2._2)
+
+      println("\n\n"+trsClauseSch.map.get("c").get._1._1 +Console.GREEN+"    →  "+Console.RESET+trsClauseSch.map.get("c").get._1._2)
+      println(trsClauseSch.map.get("c").get._2._1 +Console.GREEN+"  →  "+Console.RESET+trsClauseSch.map.get("c").get._2._2)
+
+      val clause3 = applySubToSclause(subst, trsClauseSch.map.get("c").get._2._1)
+      println("\n\nclause schema for instance "+Console.RED+printSchemaProof.formulaToString(map.get(k).get)+Console.RESET+" :\n" )
+      println(clause3)
+      val rwclause3 = unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst)
+      println("\n\n\nnormalizing : \n\n"+rwclause3)
+      println("\n\n\noptimizing : \n\n"+normalizeSClause(rwclause3))
 
       //      println(normalizeSClause(sClauseComposition(rez, X)))
       println("\n\n\n\n")
