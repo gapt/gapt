@@ -40,7 +40,7 @@ import at.logic.language.lambda.types._
   }
 
   class sClauseVar(val name:String) extends sClause {
-    override def toString = {this.name}
+    override def toString = Console.BOLD+this.name+Console.RESET
   }
 
   object sClauseVar {
@@ -71,7 +71,7 @@ import at.logic.language.lambda.types._
 
   class sClauseComposition(val sclause1: sClause, val sclause2: sClause) extends sClause {
   //  override def toString = {sclause1 + " • " + sclause2}
-    override def toString = {sclause1 + Console.BLUE+" ◦ " + Console.RESET+ sclause2}
+    override def toString = {sclause1 + Console.BOLD+Console.BLUE+" ◦ " + Console.RESET+ sclause2}
   }
 
   //makes it with only one  "|-" sign, i.e. removes \circ
@@ -185,6 +185,7 @@ import at.logic.language.lambda.types._
   }
 
 
+
   //schematic term
   object sTermN {
     //the l.head should be of type Tindex() !
@@ -213,7 +214,7 @@ import at.logic.language.lambda.types._
   }
 
   object fo2Var {
-    def apply(name: VariableStringSymbol, i: IntegerTerm): HOLVar = {
+    def apply(name: VariableStringSymbol): HOLVar = {
       new fo2Var(name)
     }
     def unapply(s: HOLExpression) = s match {
@@ -245,26 +246,52 @@ import at.logic.language.lambda.types._
   }
 
   object unfoldSTermN {
+    //for ground term
+    def apply(t: HOLExpression, trs: dbTRSsTermN): HOLExpression = {
+      val k = IntVar(new VariableStringSymbol("k"))
+      val l = IntVar(new VariableStringSymbol("l"))
+      t match {
+        case sTermN(func, i, arg) if trs.map.contains(func) => {
+          if (i == IntZero()) {
+      //            println("\n\ni == 0")
+            val map = Map[Var, HOLExpression]() + Pair(k, i) + Pair(l, arg.last)
+            val subst = new SchemaSubstitution3(map)
+            val base = trs.map.get(func).get._1._2
+            subst(base)
+          }
+          else
+            if (i == k)
+              t
+            else  {
+              val map = Map[Var, HOLExpression]() + Pair(k, i) + Pair(l, arg.last)
+              val subst = new SchemaSubstitution3(map)
+              trs.map.get(func).get._2._2 match {
+                case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs)::Nil)
+              }
+            }
+        }
+        case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs)::Nil)
+        case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
+      }
+    }
+
+    ///for non-ground term
     def apply(t: HOLExpression, trs: dbTRSsTermN, subst: SchemaSubstitution3): HOLExpression = {
       val k = IntVar(new VariableStringSymbol("k"))
       t match {
         case sTermN(func, i, arg) if trs.map.contains(func) => {
           if (i == IntZero()) {
-            println("\n\ni == 0")
+//            println("\n\ni == 0")
             val base = trs.map.get(func).get._1._2
-            base//subst(base)
+            subst(subst(base))
           }
           else
           if (i == k)
             t
           else
             trs.map.get(func).get._2._2 match {
-              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: arg), trs, subst)::Nil)
+              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs, subst)::Nil)
             }
-        }
-        case sTermN(func, i, arg) => {
-          println("\n\nwrong !")
-          t
         }
         case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs, subst)::Nil)
         case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
@@ -272,62 +299,88 @@ import at.logic.language.lambda.types._
     }
   }
 
+  object unfoldGroundFormula {
+    def apply(f: HOLFormula, trs: dbTRSsTermN, subst: SchemaSubstitution3): HOLFormula = {
+      f match {
+        case Atom(name, args) => Atom(name, args.map(x => unfoldSTermN(x, trs)))
+        case _ => f
+      }
+    }
+  }
 
-//  object unfoldSchemaClause {
-//    def apply(t: sClause, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3): sClause = {
-//      val k = IntVar(new VariableStringSymbol("k"))
-//      t match {
-//        case clauseSchema(func, i::arg) if trsSclause.map.contains(func) => {
-//          if (i == IntZero()) {
+  object unfoldSchemaClause {
+    def apply(t: sClause, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3): sClause = {
+      val k = IntVar(new VariableStringSymbol("k"))
+      t match {
+        case clauseSchema(func, i::arg) if trsSclause.map.contains(func) => {
+//          println("\ncase clauseSchema(...)")
+          if (i == IntZero()) {
 //            println("\n\ni == 0")
-//            val base = trsSclause.map.get(func).get._1._2
-//            base//subst(base)
-//          }
-//          else
-//          if (i == k)
-//            t
-//          else
-//            trsSclause.map.get(func).get._2._2 match {
-//              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: arg), trs, subst)::Nil)
-//            }
-//        }
-//        case sTermN(func, i, arg) => {
-//          println("\n\nwrong !")
-//          t
-//        }
-//        case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs, subst)::Nil)
-//        case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
-//      }
-//    }
-//  }
+            val base = trsSclause.map.get(func).get._1._2
+            unfoldSchemaClause(base, trsSclause, trsSterms, subst)//subst(base)
+          }
+          else
+          if (i == k)
+            t
+          else {
+//            println("\nelse")
+            apply(trsSclause.map.get(func).get._2._2, trsSclause, trsSterms, subst)
+          }
+        }
+        case nonVarSclause(ant, succ) => {
+//          println("\n\nnonVarSclause !")
+          val newant = ant.map(x => subst(x).asInstanceOf[HOLFormula])
+          val newsucc = succ.map(x => subst(x).asInstanceOf[HOLFormula])
+          nonVarSclause(newant.map(x => unfoldGroundFormula(x, trsSterms, subst)), newsucc.map(x => unfoldGroundFormula(x, trsSterms, subst)))
+//          nonVarSclause(newant, newsucc)
+        }
+        case co:sClauseComposition => {
+//          println("\nco : "+subst.map.head._2.asInstanceOf[IntegerTerm])
+          val k = IntVar(new VariableStringSymbol("k"))
+//          println("map = "+subst.map)
+          val map =
+            if (subst.map.get(k).get.asInstanceOf[IntegerTerm] == IntZero())
+              subst.map
+            else {
+              (subst.map - k) + Pair(k.asInstanceOf[Var], Pred(subst.map.get(k).get.asInstanceOf[IntegerTerm]))
+            }
+          val new_subst = new SchemaSubstitution3(map)
+          val l = apply(applySubToSclause(subst, co.sclause1), trsSclause, trsSterms, new_subst)
+          val r = apply(applySubToSclause(subst, co.sclause2), trsSclause, trsSterms, new_subst)
+          sClauseComposition(l, r)
+        }
+        case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
+      }
+    }
+  }
 
 
   class SchemaSubstitution3(val map: scala.collection.immutable.Map[Var, HOLExpression])  {
     def apply(expression: HOLExpression): HOLExpression = {
-      //    println("subst")
+//      println("subst :    "+expression)
       expression match {
         case x:IntVar => {
-          //      println("\nIntVar = "+x)
+//                println("\nIntVar = "+x)
           map.get(x) match {
             case Some(t) => {
-              //          println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+//                        println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
               t
             }
             case _ => {
-              //          println(x + " Error in schema subst 1")
+//                        println(x + " Error in schema subst 1")
               x.asInstanceOf[HOLExpression]
             }
           }
         }
         case x:foVar => {
-          //        println("\nfoVar = "+x)
+//                  println("\nfoVar = "+x)
           map.get(x) match {
             case Some(t) => {
               //          println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
               t
             }
             case _ => {
-              //          println(x + " Error in schema subst 1")
+//                        println(x + " Error in schema subst 1")
               x.asInstanceOf[HOLExpression]
             }
           }
@@ -341,26 +394,33 @@ import at.logic.language.lambda.types._
   //      case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
   //      case Imp(l, r) => Imp(apply(l.asInstanceOf[T]).asInstanceOf[HOLFormula], apply(r.asInstanceOf[T]).asInstanceOf[HOLFormula]).asInstanceOf[T]
   //      case AllVar(v, f) => AllVar(v, apply(f.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]).asInstanceOf[HOLExpression]
-        case ifo: indexedFOVar => indexedFOVar(ifo.name, apply(ifo.index).asInstanceOf[IntegerTerm])
-        case sTermN(name, i, args) => {
-          println("sTermN = "+expression)
-          sTermN(name, apply(i).asInstanceOf[IntegerTerm] :: args.map(x => apply(x)))
+        case ifo: indexedFOVar => {
+//          println("indexedFOVar")
+          indexedFOVar(ifo.name, apply(ifo.index).asInstanceOf[IntegerTerm])
         }
-        case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression])::Nil).asInstanceOf[HOLExpression]
         case Atom(name, args) => {
+//          println("Atom")
           val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), args.reverse.map(x => x.exptype).foldRight(To().asInstanceOf[TA])((x,t) => ->(x, t)))
-  //        val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), FunctionType( To(), args.map( a => a.exptype ) ))
-            Atom(newAtomName, args.map(x => {
+//        val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), FunctionType( To(), args.map( a => a.exptype ) ))
+          Atom(newAtomName, args.map(x => {
 //              println("sub atom x = "+x)
-              apply(x)
-            }))
+            apply(x)
+          }))
         }
 
 //        the indexed variable
-        case HOLApp(func, arg) if func.exptype == Tindex() -> Ti() && arg.exptype == Tindex() => {
-          println("HOLApp(func, arg) = "+expression)
+        case HOLApp(fo2Var(name), index) if index.exptype == Tindex() => {
+//          println("HOLApp(func, arg) = "+expression)
 //          indexedFOVar(new VariableStringSymbol(func.asInstanceOf[HOLVar].name.toString()), IntZero()).asInstanceOf[HOLExpression]
           indexedFOVar(new VariableStringSymbol("x"), IntZero()).asInstanceOf[HOLExpression]
+        }
+        case sTermN(name, i, args) => {
+//          println("sTermN = "+expression)
+          sTermN(name, apply(i).asInstanceOf[IntegerTerm] :: args.map(x => apply(x)))
+        }
+        case foTerm(v, arg) => {
+//          println("foTerm")
+          foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression])::Nil).asInstanceOf[HOLExpression]
         }
         case _ => {
 //                println("\ncase _ =>")
