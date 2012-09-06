@@ -22,7 +22,8 @@ import at.logic.language.lambda.types.FunctionType._
 import at.logic.language.lambda.types.To._
 import at.logic.language.lambda.types._
 
-  abstract class sClause {
+  abstract class sClauseTerm {}
+  abstract class sClause extends sClauseTerm {
     override def toString: String
   }
 
@@ -130,9 +131,10 @@ import at.logic.language.lambda.types._
     }
   }
 
-
-  object applySubToSclause {
-    def apply(sub: SchemaSubstitution3, c: sClause): sClause = {
+  //applies sub to a sClauseTerm or sClause
+  //the sub is of type HOLVar -> HOLExpression
+  object applySubToSclauseOrSclauseTerm {
+    def apply(sub: SchemaSubstitution3, c: sClauseTerm): sClauseTerm = {
   //    println("sub, c = "+c)
       c match {
         case v:sClauseVar => c
@@ -142,7 +144,7 @@ import at.logic.language.lambda.types._
           nonVarSclause(ant1, succ1)
         }
         case compos:sClauseComposition => {
-          sClauseComposition(apply(sub, compos.sclause1), apply(sub, compos.sclause2))
+          sClauseComposition(apply(sub, compos.sclause1).asInstanceOf[sClause], apply(sub, compos.sclause2).asInstanceOf[sClause])
         }
         case cs:clauseSchema => {
           clauseSchema(cs.name, cs.args.map(x => {
@@ -152,7 +154,10 @@ import at.logic.language.lambda.types._
             }
           }))
         }
-        case _ => throw new Exception("\nERROR in applySubToSclause ! \n")
+        case t: sclTimes => sclTimes(apply(sub, t.left), apply(sub, t.right))
+        case t: sclPlus => sclPlus(apply(sub, t.left), apply(sub, t.right))
+        case t: sclTermVar => t
+        case _ => throw new Exception("\nERROR in applySubToSclauseOrSclauseTerm ! \n")
       }
     }
   }
@@ -168,7 +173,7 @@ import at.logic.language.lambda.types._
           val k = IntVar(new VariableStringSymbol("k"))
           val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, a)
           val new_subst = new SchemaSubstitution3(new_map)
-          val ground_c = applySubToSclause(new_subst, c)
+          val ground_c = applySubToSclauseOrSclauseTerm(new_subst, c).asInstanceOf[sClause]
           val new_val = apply(Pred(a), varListBase, varListRec, c)
           val Xmap = Map[sClauseVar, sClause]() + Pair(varListBase.head._1.asInstanceOf[sClauseVar], new_val)
           replace(ground_c, Xmap)
@@ -199,7 +204,7 @@ import at.logic.language.lambda.types._
       Function(f, l)
     }
     def unapply(s : HOLExpression) = s match {
-      case Function(name, args, typ) if typ == Ti() && args.head.exptype == Tindex() => {
+      case Function(name, args, typ) if typ == Ti() && args.length != 0 && args.head.exptype == Tindex() => {
         val typ = args.map(x => x.exptype).foldLeft(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
         val f = HOLConst(name.asInstanceOf[ConstantStringSymbol], typ)
         Some((f.name.toString(), args.head.asInstanceOf[HOLExpression], args.tail.asInstanceOf[List[HOLExpression]]))
@@ -224,7 +229,13 @@ import at.logic.language.lambda.types._
   }
 
 
-  class dbTRSsTermN(val map: scala.collection.mutable.Map[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]])
+
+  class dbTRSsTermN(val map: scala.collection.mutable.Map[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]]) {
+    def add(term: String, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): dbTRSsTermN = {
+      val newMap = map + Pair(term, Tuple2(base, step))
+      return new dbTRSsTermN(newMap)
+    }
+  }
   //the t.r.s. for the sTermN
   object dbTRSsTermN {
     def apply(term: String, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): dbTRSsTermN = {
@@ -245,6 +256,9 @@ import at.logic.language.lambda.types._
     def apply() = new dbTRSclauseSchema(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
   }
 
+
+  // unfolds terms of the form : σ(k+1, x, l)
+  //k : IntVar, x: HOLVar of type ind->i, l: IntVar
   object unfoldSTermN {
     //for ground term
     def apply(t: HOLExpression, trs: dbTRSsTermN): HOLExpression = {
@@ -345,8 +359,8 @@ import at.logic.language.lambda.types._
               (subst.map - k) + Pair(k.asInstanceOf[Var], Pred(subst.map.get(k).get.asInstanceOf[IntegerTerm]))
             }
           val new_subst = new SchemaSubstitution3(map)
-          val l = apply(applySubToSclause(subst, co.sclause1), trsSclause, trsSterms, new_subst)
-          val r = apply(applySubToSclause(subst, co.sclause2), trsSclause, trsSterms, new_subst)
+          val l = apply(applySubToSclauseOrSclauseTerm(subst, co.sclause1).asInstanceOf[sClause], trsSclause, trsSterms, new_subst)
+          val r = apply(applySubToSclauseOrSclauseTerm(subst, co.sclause2).asInstanceOf[sClause], trsSclause, trsSterms, new_subst)
           sClauseComposition(l, r)
         }
         case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
@@ -423,8 +437,7 @@ import at.logic.language.lambda.types._
           foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression])::Nil).asInstanceOf[HOLExpression]
         }
         case _ => {
-//                println("\ncase _ =>")
-//                println(expression)
+//                println("\ncase _ => " + expression)
           expression
         }
       }
@@ -443,3 +456,69 @@ import at.logic.language.lambda.types._
   }
 
 
+
+  //clause schema term ⊕
+  class sclPlus(val left: sClauseTerm, var right:sClauseTerm) extends sClauseTerm {
+    override def toString() = Console.RED+"("+Console.RESET+left.toString + Console.RED+" ⊕ "+Console.RESET+right.toString+Console.RED+")"+Console.RESET
+  }
+  object sclPlus {
+    def apply(l: sClauseTerm, r: sClauseTerm): sclPlus = {
+      new sclPlus(l,r)
+    }
+    def unapply(t: sClauseTerm) = t match {
+      case s:sclPlus => Some((s.left, s.right))
+      case _ => None
+    }
+  }
+
+  //clause schema term ⊗
+  class sclTimes(val left: sClauseTerm, var right:sClauseTerm) extends sClauseTerm {
+    override def toString() = Console.BLUE+" ( "+Console.RESET+left.toString + Console.BLUE+" ⊗ "+Console.RESET+right.toString+Console.BLUE+" ) "+Console.RESET
+  }
+  object sclTimes {
+    def apply(l: sClauseTerm, r: sClauseTerm): sclTimes = {
+      new sclTimes(l,r)
+    }
+    def unapply(t: sClauseTerm) = t match {
+      case s:sclTimes => Some((s.left, s.right))
+      case _ => None
+    }
+  }
+
+  //clause schema term variable ξ
+  class sclTermVar(val name: String) extends sClauseTerm {
+    override def toString() = Console.BOLD+name+Console.RESET
+  }
+  object sclTermVar {
+    def apply(name: String): sclTermVar = {
+      new sclTermVar(name)
+    }
+    def unapply(t: sClauseTerm) = t match {
+      case s:sclTermVar => Some((s.name))
+      case _ => None
+    }
+  }
+
+  //unfolds a ground schema clause term
+  object unfoldSclauseTerm {
+    def apply(t: sClauseTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3) : sClauseTerm = {
+      t match {
+        case x:sclTermVar => t
+        case s:sClause => unfoldSchemaClause(s, trsSclause, trsSterms, subst)
+        case x:sclTimes => sclTimes(apply(x.left, trsSclause, trsSterms, subst), apply(x.right, trsSclause, trsSterms, subst))
+        case x:sclPlus => sclPlus(apply(x.left, trsSclause, trsSterms, subst), apply(x.right, trsSclause, trsSterms, subst))
+        case _ => throw new Exception("case _ => in object unfoldSclauseTerm")
+      }
+    }
+  }
+
+  class sclTermVarSubstitution(val map: Map[sclTermVar, clauseSchema]) {
+    def apply(sclTerm: sClauseTerm): sClauseTerm = {
+      sclTerm match {
+        case t: sclTermVar if map.contains(t) => map.get(t).get
+        case t: sclTimes => sclTimes(apply(t.left), apply(t.right))
+        case t: sclPlus => sclPlus(apply(t.left), apply(t.right))
+        case _ => sclTerm
+      }
+    }
+  }
