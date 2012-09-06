@@ -13,7 +13,7 @@ import event.Key
 import swing.Dialog.Message
 import swing.Swing.EmptyIcon
 import scala.collection.immutable.Seq
-import java.io.File
+import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, File}
 import javax.swing.filechooser.FileFilter
 import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors, replaceSubproof}
 import at.logic.algorithms.lksk.eliminateDefinitions
@@ -36,6 +36,7 @@ import at.logic.transformations.ceres.ProjectionTermCreators
 import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLFormula
+import at.logic.parsing.writers.FileWriter
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -131,9 +132,6 @@ object Main extends SimpleSwingApplication {
             case fs: FSequent => fs
             case _ => throw new Exception("This is not a clause set.")
           })
-
-          import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
-
           val result = chooser.selectedFile.getPath
           val path = if (result.endsWith(".tptp")) result else result + ".tptp"
           val file = new JBufferedWriter(new JFileWriter( path ))
@@ -166,6 +164,25 @@ object Main extends SimpleSwingApplication {
             case e: Throwable => errorMessage("Can't export the clause set! \n\n" + getExceptionString(e))
         }
         case _ => infoMessage("This is not a clause set, can't export it!")
+      }
+      body.cursor = java.awt.Cursor.getDefaultCursor
+    case _ =>
+  }
+
+  def fExportProofToTex(tp: AnyRef) : Unit = chooser.showSaveDialog(mBar) match {
+    case FileChooser.Result.Approve =>
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      tp match {
+        case proof: LKProof => try {
+          val result = chooser.selectedFile.getPath
+          val path = if (result.endsWith(".tex")) result else result + ".tex"
+          val file = new JBufferedWriter(new JFileWriter( path ))
+          file.write(ProofToLatexExporter(proof))
+          file.close
+        } catch {
+          case e: Throwable => errorMessage("Can't save the proof! \n\n" + getExceptionString(e))
+        }
+        case _ => infoMessage("This is not a proof, can't save it!")
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
     case _ =>
@@ -312,6 +329,11 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Export Clause Set as TeX") { fExportTeX }) {
         mnemonic = Key.E
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, JActionEvent.CTRL_MASK))
+        border = customBorder
+      }
+      contents += new MenuItem(Action("Export Proof as TeX") { fExportProofToTex(body.getContent.getData.get._2) }) {
+        mnemonic = Key.A
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, JActionEvent.CTRL_MASK))
         border = customBorder
       }
       contents += new Separator
