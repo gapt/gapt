@@ -97,6 +97,7 @@ object DrawSequent {
   }
 
    // this method is used by DrawTree when drawing projections.
+  // also by ProofToLatexExporter.
   def sequentToLatexString(seq: Sequent): String = {
     var s = " "
     var first = true
@@ -105,7 +106,7 @@ object DrawSequent {
       else first = false
       s = s + formulaToLatexString(f.formula)
     }
-    s = s + " \u22a2 "
+    s = s + " \\vdash " // \u22a2
     first = true
     for (f <- seq.succedent) {
       if (! first) s = s + ", "
