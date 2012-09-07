@@ -32,6 +32,7 @@ object PopupMenu {
   private val popupMenu = new PopupMenu {
     contents += new MenuItem(Action("Apply Gentzen's Method") { Main.gentzen(proof.get) })
     contents += new MenuItem(Action("Export Subproof in XML") { Main.fSaveProof(proof.get) })
+    contents += new MenuItem(Action("Export Subproof in TeX") { Main.fExportProofToTex(proof.get) })
 /*  This functions can be added later:
     contents += new MenuItem("Compute Clause Set")
     contents += new MenuItem("Compute Clause Term")
