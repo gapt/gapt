@@ -1,24 +1,10 @@
-package at.logic.transformations.ceres.fnormalization
+package at.logic.algorithms.normalization
 
-import at.logic.algorithms.lk.getAncestors
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
-import at.logic.calculi.lk.macroRules._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.calculi.slk._
-import at.logic.calculi.slk.AndEquivalenceRule1._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.hol.{ExVar, HOLExpression, HOLFormula}
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus.Var
-import at.logic.language.schema._
-import at.logic.algorithms.shlk._
+import at.logic.language.hol.HOLFormula
 
 object NNF {
   def apply(f: HOLFormula) : HOLFormula = {
-//    println("\nf = "+printSchemaProof.formulaToString (f))
+    //    println("\nf = "+printSchemaProof.formulaToString (f))
     f match {
       case at.logic.language.hol.Atom(_, _) => f
       case at.logic.language.hol.Imp(f1, f2) => apply(at.logic.language.hol.Or(at.logic.language.hol.Neg(f1), f2))
