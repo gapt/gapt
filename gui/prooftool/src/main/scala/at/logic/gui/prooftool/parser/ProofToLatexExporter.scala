@@ -13,6 +13,8 @@ import at.logic.gui.prooftool.gui.DrawSequent
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.slk.SchemaProofLinkRule
 import at.logic.calculi.lk.quantificationRules.{ForallRightRuleType, ForallLeftRuleType, ExistsRightRuleType, ExistsLeftRuleType}
+import at.logic.calculi.lk.definitionRules.{DefinitionRightRuleType, DefinitionLeftRuleType}
+import at.logic.calculi.lk.equationalRules.{EquationRight2RuleType, EquationRight1RuleType, EquationLeft2RuleType, EquationLeft1RuleType}
 
 
 object ProofToLatexExporter {
@@ -20,16 +22,17 @@ object ProofToLatexExporter {
   def apply(proof: LKProof) = document(proofToLatex(proof))
 
   def document(body: String) =
-    "\\documentclass[10pt, a4paper]{article} \n" +
+    "\\documentclass{memoir} \n \n" +
+    "% Change the values to fit the proof in one 'page'. \n" +
+    "% Default size is A4 paper. \n" +
+    "\\setstocksize{297mm}{210mm} \n" +
+    "\\settrimmedsize{\\stockheight}{\\stockwidth}{*} \n \n" +
     "\\usepackage{fullpage} \n" +
     "\\usepackage{amssymb} \n" +
     "\\usepackage{bussproofs} \n" +
-    "\\usepackage{lscape} \n" +
+    "\\pagestyle{empty} \n" +
     "\\begin{document} \n" +
-    "% if proof is too wide uncomment the landscape environment \n" +
-    "% \\begin{landscape} \n" +
     body +
-    "% \\end{landscape} \n" +
     "\\end{document}"
 
   def proofToLatex(proof: LKProof) =
@@ -77,6 +80,12 @@ object ProofToLatexExporter {
     case ContractionLeftRuleType => "c \\colon l"
     case ContractionRightRuleType => "c \\colon r"
     case CutRuleType => "cut"
+    case DefinitionLeftRuleType => "d \\colon l"
+    case DefinitionRightRuleType => "d \\colon r"
+    case EquationLeft1RuleType => "e \\colon l1"
+    case EquationLeft2RuleType => "e \\colon l2"
+    case EquationRight1RuleType => "e \\colon r1"
+    case EquationRight2RuleType => "e \\colon r2"
     case _ => "\\twoheadrightarrow"
   }
 }

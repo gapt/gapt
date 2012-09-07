@@ -33,10 +33,9 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.ProjectionTermCreators
-import at.logic.algorithms.shlk._
+import at.logic.algorithms.shlk.applySchemaSubstitution
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLFormula
-import at.logic.parsing.writers.FileWriter
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -813,7 +812,7 @@ object Main extends SimpleSwingApplication {
     Dialog.showConfirmation(body, question, "ProofTool Question", Dialog.Options.YesNo, Message.Question)
 
   def getExceptionString(e: Throwable) = {
-    val st = e.toString + "\n"
+    val st = e.toString.replaceAll(",",",\n") + "\n"
     val trace = e.getStackTrace
     if (trace.length > 10)
       Range(0,10).map(i => trace.apply(i)).foldLeft(st)((s, x) => s + "\n   at " + x.toString) + "\n   ......."
