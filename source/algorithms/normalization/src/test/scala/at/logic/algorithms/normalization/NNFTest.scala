@@ -93,6 +93,26 @@ class NNFTest extends SpecificationWithJUnit {
 //        println("\nNNF( "+f+" ) = "+NNF(f))
 //        ok
       }
+      "NNF( (¬(∀x:ι.P(x) ∧ ∃x.P(x:ι))∧ ¬∀x.¬P(x)) ) = ((∃x.¬P(x) ∨ ∀x.¬P(x)) ∧ ∃x.P(x))" in {
+        val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
+        val a = HOLConst(new ConstantStringSymbol("a"), Ti())
+        val x = HOLVar(new VariableStringSymbol("x"), Ti())
+        val Pa = Atom(P, a::Nil)
+        val Px = Atom(P, x::Nil)
+        val f = And(Neg(And(AllVar(x, Px), ExVar(x, Px))), Neg(AllVar(x, Neg(Px))))
+        NNF(f) must beEqualTo(And(Or(ExVar(x, Neg(Px)), AllVar(x, Neg(Px))), ExVar(x, Px)))
+      }
+      "NNF( (¬(∀x.(P(x) ∨ ¬P(a)) ∧ ∃x.(¬P(x) ∧ P(a))) ∧ ¬∀x.¬¬P(x)) ) = ((∃x.(¬P(x) ∧ P(a)) ∨ ∀x.(P(x) ∨ ¬P(a))) ∧ ∃x.¬P(x))" in {
+        val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
+        val a = HOLConst(new ConstantStringSymbol("a"), Ti())
+        val x = HOLVar(new VariableStringSymbol("x"), Ti())
+        val Pa = Atom(P, a::Nil)
+        val Px = Atom(P, x::Nil)
+        val f = And(Neg(And(AllVar(x, Or(Px, Neg(Pa)) ), ExVar(x, And(Neg(Px), Pa )))), Neg(AllVar(x, Neg(Neg(Px)))))
+        NNF(f) must beEqualTo(And(Or(ExVar(x, And(Neg(Px), Pa) ), AllVar(x, Or(Px, Neg(Pa) ))), ExVar(x, Neg(Px))))
+//        println("\nNNF( "+f+" ) = "+"\n"+NNF(f))
+//        ok
+      }
     }
   }
 }
