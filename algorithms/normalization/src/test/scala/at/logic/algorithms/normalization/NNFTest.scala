@@ -21,70 +21,70 @@ class NNFTest extends SpecificationWithJUnit {
 
   "NNF" should {
     "transform to NNF the formulas" in {
-      "1" in {
+      "NNF(¬¬Pa) = Pa" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Neg(Neg(Pa))
         Pa must beEqualTo(NNF(f))
       }
-      "2" in {
+      "NNF(¬(¬Pa ∧ Pa)) = Pa ∨ ¬Pa" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Neg(And(Neg(Pa), Pa))
         NNF(f) must beEqualTo(Or(Pa, Neg(Pa)))
       }
-      "3" in {
+      "NNF(¬(¬Pa ∧ ¬Pa)) = Pa ∨ Pa" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Neg(And(Neg(Pa), Neg(Pa)))
         NNF(f) must beEqualTo(Or(Pa, Pa))
       }
-      "4" in {
+      "NNF(¬(¬Pa ∧ ¬Pa) ∨ ¬Pa) = (Pa ∨ Pa) ∨ ¬Pa" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Or(Neg(And(Neg(Pa), Neg(Pa))), Neg(Pa))
         NNF(f) must beEqualTo(Or(Or(Pa, Pa), Neg(Pa)))
       }
-      "5" in {
+      "NNF(¬(¬Pa ∧ ¬Pa) ∧ ¬¬Pa) = (Pa ∨ Pa) ∧ Pa" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = And(Neg(And(Neg(Pa), Neg(Pa))), Neg(Neg(Pa)))
         NNF(f) must beEqualTo(And(Or(Pa, Pa), Pa))
       }
-      "6" in {
+      "NNF(¬(¬(¬Pa ∧ ¬Pa) ∧ ¬¬Pa)) = (¬Pa ∧ ¬Pa) ∨ ¬Pa" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Neg(And(Neg(And(Neg(Pa), Neg(Pa))), Neg(Neg(Pa))))
         NNF(f) must beEqualTo(Or(And(Neg(Pa), Neg(Pa)), Neg(Pa)))
       }
-      "7" in {
+      "NNF(¬(¬(¬¬Pa ∧ ¬Pa) ∧ ¬¬Pa)) = (Pa ∧ ¬Pa) ∨ ¬Pa" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Neg(And(Neg(And(Neg(Neg(Pa)), Neg(Pa))), Neg(Neg(Pa))))
         NNF(f) must beEqualTo(Or(And(Pa, Neg(Pa)), Neg(Pa)))
       }
-      "8" in {
+      "NNF(¬(¬(¬¬Pa ∧ ¬Pa) ∧ ¬(¬Pa ⊃ Pa))) = (Pa ∧ ¬Pa) ∨ (Pa ∨ Pa)" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Neg(And(Neg(And(Neg(Neg(Pa)), Neg(Pa))), Neg(Imp(Neg(Pa), Pa))))
         NNF(f) must beEqualTo(Or(And(Pa, Neg(Pa)), Or(Pa, Pa)))        
       }
-      "9" in {
+      "NNF(¬¬(¬(¬¬Pa ∧ ¬Pa) ∧ ¬(¬Pa ⊃ Pa))) = (¬Pa ∨ Pa) ∧ (¬Pa ∧ ¬Pa)" in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
         val f = Neg(Neg(And(Neg(And(Neg(Neg(Pa)), Neg(Pa))), Neg(Imp(Neg(Pa), Pa)))))
         NNF(f) must beEqualTo(And(Or(Neg(Pa), Pa), And(Neg(Pa), Neg(Pa))))
       }
-      "10" in {
+      "NNF(¬¬(¬(¬¬Pa ∧ ¬Pa) ∧ ¬(¬Pa ⊃ Pa)) ⊃ Pa ) = ((Pa ∧ ¬Pa) ∨ (Pa ∨ Pa)) ∨ Pa  " in {
         val P = HOLVar(new VariableStringSymbol("P"), Ti() -> To())
         val a = HOLConst(new ConstantStringSymbol("a"), Ti())
         val Pa = Atom(P, a::Nil)
