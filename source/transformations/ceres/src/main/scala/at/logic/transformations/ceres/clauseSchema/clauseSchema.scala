@@ -23,7 +23,8 @@ import at.logic.language.lambda.types.To._
 import at.logic.language.lambda.types._
 
   abstract class sClauseTerm {}
-  abstract class sClause extends sClauseTerm {
+  trait sResolutionTerm {}
+  abstract class sClause extends sClauseTerm with sResolutionTerm{
     override def toString: String
   }
 
@@ -617,34 +618,59 @@ import at.logic.language.lambda.types._
               apply(applySubToSclauseOrSclauseTerm(new_subst, trsSCLterm.map.get(cl.name).get._2._2), trsSCLterm, trsSclause, trsSterms, new_subst, b1, b2)
             }
         }
-
-
-//        case nonVarSclause(ant, succ) => {
-//          //          println("\n\nnonVarSclause !")
-//          val newant = ant.map(x => subst(x).asInstanceOf[HOLFormula])
-//          val newsucc = succ.map(x => subst(x).asInstanceOf[HOLFormula])
-//          nonVarSclause(newant.map(x => unfoldGroundFormula(x, trsSterms, subst)), newsucc.map(x => unfoldGroundFormula(x, trsSterms, subst)))
-//          //          nonVarSclause(newant, newsucc)
-//        }
-//        case co:sClauseComposition => {
-//          //          println("\nco : "+subst.map.head._2.asInstanceOf[IntegerTerm])
-//          val k = IntVar(new VariableStringSymbol("k"))
-//          //          println("map = "+subst.map)
-//          val map =
-//            if (subst.map.get(k).get.asInstanceOf[IntegerTerm] == IntZero())
-//              subst.map
-//            else {
-//              (subst.map - k) + Pair(k.asInstanceOf[Var], Pred(subst.map.get(k).get.asInstanceOf[IntegerTerm]))
-//            }
-//          val new_subst = new SchemaSubstitution3(map)
-//          val l = apply(applySubToSclauseOrSclauseTerm(subst, co.sclause1).asInstanceOf[sClause], trsSclause, trsSterms, new_subst)
-//          val r = apply(applySubToSclauseOrSclauseTerm(subst, co.sclause2).asInstanceOf[sClause], trsSclause, trsSterms, new_subst)
-//          sClauseComposition(l, r)
-//        }
         case _ => {
-          println("\ncase _ => "+t)
+//          println("\ncase _ => "+t)
           t
-        }//throw new Exception("\nno such case in schema/unfoldSTerm")
+        }
       }
     }
+  }
+
+  //r(c(k+1, x, X); P(x(k))⊢; P(x(k)))
+  class ResolutionTerm(val left: sResolutionTerm, val right: sResolutionTerm, val atom: HOLFormula) extends sResolutionTerm {
+    override def toString() = Console.GREEN+"r( "+Console.RESET+ left.toString + Console.GREEN+" ; "+Console.RESET+ right.toString + Console.GREEN+" ; "+Console.RESET+atom.toString + Console.GREEN+" )"+Console.RESET
+  }
+  object ResolutionTerm {
+    def apply(l: sResolutionTerm, r: sResolutionTerm, at: HOLFormula): ResolutionTerm = {
+      require(at match {
+        case Atom(_,_) => true
+        case _ => false
+      })
+      new ResolutionTerm(l, r, at)
+    }
+    def unapply(r: sResolutionTerm) = r match {
+      case rt: ResolutionTerm => Some((rt.left, rt.right, rt.atom))
+      case _ => None
+    }
+  }
+
+
+  //ρ(k+1, x, X) , where X is sClauseVar ; x is fo2Var
+  class ResolutionSchema(val name:String,  val args: List[Object]) extends sResolutionTerm {
+    override def toString() = name+"("+printSchemaProof.formulaToString(args.head.asInstanceOf[HOLExpression])+ {args.tail.foldRight("")((x, rez) => ", "+x.toString+rez)} + ")"
+  }
+  object ResolutionSchema {
+    def apply(name:String,  args: List[Object]) : ResolutionSchema = {
+      new ResolutionSchema(name, args)
+    } 
+    def unapply(rs: sResolutionTerm) = rs match {
+      case r:ResolutionSchema => Some((r.name, r.args))
+      case _ => None
+    }
+  }
+
+
+  class dbTRSresolutionSchemaTerm(var map: scala.collection.mutable.Map[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]]) {
+    def add(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]): Unit = {
+      val newMap = map + Pair(term, Tuple2(base, step))
+      map = newMap
+    }
+  }
+  //the t.r.s. for the clause schema
+  object dbTRSresolutionSchemaTerm {
+    def apply(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]): dbTRSresolutionSchemaTerm = {
+      val m = scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]] + Pair(term, Tuple2(base, step))
+      new dbTRSresolutionSchemaTerm(m)
+    }
+    def apply() = new dbTRSresolutionSchemaTerm(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]])
   }

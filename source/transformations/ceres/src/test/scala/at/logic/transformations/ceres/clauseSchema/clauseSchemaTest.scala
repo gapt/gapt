@@ -195,7 +195,13 @@ class clauseSchemaTest extends SpecificationWithJUnit {
 //      println(trsSigma.map)
 //      println(trsClauseSch.map)
       println("\n\n")
-
+      val rhoBase = ResolutionSchema("ρ", zero::x::X::Nil)
+      val rhoStep = ResolutionSchema("ρ", Succ(k)::x::X::Nil)
+      val rwBase = ResolutionTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
+      val rwStep = ResolutionTerm(ResolutionSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
+      val trsRes = dbTRSresolutionSchemaTerm("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      println("trsRes = "+trsRes.map )
+      println("\n\n")
       ok
 
     }
