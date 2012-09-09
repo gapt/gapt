@@ -16,6 +16,7 @@ import at.logic.language.hol.HOLFactory
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.hol.Definitions._
 import at.logic.language.lambda.typedLambdaCalculus.Var._
+import collection.immutable.HashSet
 
 // propositiopnal
 trait Schema extends HOL {
@@ -33,7 +34,7 @@ trait IntegerTerm extends SchemaExpression {
 //  }
 }
 
-trait schemaTerm extends SchemaExpression
+//trait schemaTerm extends SchemaExpression
 
 object aTerm {
   def apply(name: HOLConst, ind: IntegerTerm): IntegerTerm = {
@@ -120,29 +121,25 @@ object unfoldSFormula {
   }
 }
 
-
 object sTerm {
-//  def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): schemaTerm = {
-////    f.exptype match {
-////      case FunctionType(Ti(), ll) => {
-////        if (ll == Tindex()::(l.map(t => t.exptype)))
-////      }
-////      case _ => throw new Exception
-////    }
-//    return AppN(f, i::l).asInstanceOf[schemaTerm]
-//  }
+  //the i should be of type Tindex() !
   def apply(f: String, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
 //    AppN(HOLConst(new ConstantStringSymbol(f), ->(Tindex() , ->(Ti(), Ti()))), i::l).asInstanceOf[schemaTerm]
     val func = HOLConst(new ConstantStringSymbol(f), ->(Tindex() , ->(Ti(), Ti())))
     return HOLApp(HOLApp(func, i), l.head).asInstanceOf[HOLExpression]
-//    return new SchemaApp(new SchemaApp(func, i), l.head).asInstanceOf[HOLExpression]
   }
   def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
     HOLApp(HOLApp(f, i), l.head).asInstanceOf[HOLExpression]
   }
   def unapply(s : HOLExpression) = s match {
+    //for the parser. Should be removed soon.
     case HOLApp(HOLApp(func, i), arg) if i.exptype == Tindex() => Some( ( func, i, arg ) )
-//    case AppN( Var( name, t ), args ) if (args.head.exptype == Tindex()) => Some( ( name, args.head, args.tail ) )
+    //Should remain only this one if it is OK
+//    case Function(name, args, typ) if typ == Ti() && args.head.exptype == Tindex() => {
+//      val typ = args.map(x => x.exptype).foldLeft(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
+//      val f = HOLConst(name.asInstanceOf[ConstantStringSymbol], typ)
+//      Some((f.name.toString(), args.head.asInstanceOf[HOLExpression], args.tail.asInstanceOf[List[HOLExpression]]))
+//    }
     case _ => None
   }
 }

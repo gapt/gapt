@@ -562,9 +562,11 @@ object Main extends SimpleSwingApplication {
   def computeSchematicStruct : Unit = try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val n = IntVar(new VariableStringSymbol("n"))
-    val s = structToExpressionTree.prunedTree( StructCreators.extractStruct( body.getContent.getData.get._1, n) )
-    db.addStructTree( s )
-    body.contents = new Launcher(Some("Schematic Struct",s),12)
+    val s = StructCreators.extractRelevantStruct( body.getContent.getData.get._1, n)
+    val structs_base = s._2.map(pair => (pair._1, structToExpressionTree.prunedTree(pair._2)) )
+    val structs_step = s._1.map(pair => (pair._1, structToExpressionTree.prunedTree(pair._2)) )
+    db.addTrees( structs_step ::: structs_base )
+    body.contents = new Launcher(Some(structs_step.head._1,structs_step.head._2),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: Throwable =>

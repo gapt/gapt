@@ -157,10 +157,13 @@ import at.logic.language.schema.SchemaFormula
   // by, for each o in cc, taking the element f from seq such that
   // f, where param goes to term, is equal to o.formula.
   object cutOccConfigToCutConfig {
-    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]) =
+    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]) = {
+      println("\n\ncc = " + cc)
+      println("so = "+so)
       cc.foldLeft( (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
+        println("fo = "+fo.formula)
         if (so.antecedent.contains( fo ))
           (cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs)
         else if (so.succedent.contains( fo ))
@@ -168,6 +171,7 @@ import at.logic.language.schema.SchemaFormula
         else
           throw new Exception
       })
+    }
 
     def getFormulaForCC( fo: FormulaOccurrence, fs: List[HOLFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
@@ -257,29 +261,76 @@ import at.logic.language.schema.SchemaFormula
     def toFormula( s: Sequent ) : HOLFormula =
       Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[HOLFormula] )).toList ++ (s.succedent map (_.formula.asInstanceOf[HOLFormula])) )
 
+    def extractRelevantStruct(name: String, fresh_param: IntVar): Pair[List[(String,  Struct, Set[FormulaOccurrence])], List[(String,  Struct, Set[FormulaOccurrence])]] = {
+      val rcc = RelevantCC(name)._1.flatten
+      val rez_step = rcc.map(pair => Tuple3("Θ(" + pair._1 + "_step, (" +
+        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).rec.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, Succ(IntVar(new VariableStringSymbol("k") ))::Nil ) ) + "))",
+        extractStepWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
+        pair._2))
+
+      val rcc1 = RelevantCC(name)._2.flatten
+      val rez_base = rcc1.map(pair => Tuple3("Θ(" + pair._1 + "_base, (" +
+        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).base.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, IntZero()::Nil ) ) + "))",
+        extractBaseWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
+        pair._2))
+      Pair(rez_step, rez_base)
+    }
+
+//    def extractStruct(name: String, fresh_param: IntVar) : Struct =
+//    {
+//      val cs_0 = SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) =>
+//        Plus(cutConfigurations( ps._2.base ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
+//          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero()::Nil ) ), IntZero()::Nil ), ps._2.base.root ) ) ), extractBaseWithCutConfig(ps._2, cc)), s2)),
+//            s) )
+//
+//      // assumption: all proofs in the SchemaProofDB have the
+//      // same running variable "k".
+//      val k = IntVar(new VariableStringSymbol("k") )
+//      val schema = SchemaProofDB.get( name )
+////      val precond = Times(A(toOccurrence(BiggerThan(IntZero(),k), schema.rec.root)),
+////                          A(toOccurrence(BiggerThan(k, fresh_param), schema.rec.root)))
+//      val cs_1 = SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) => //Times(precond, SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) =>
+//        Plus(cutConfigurations( ps._2.rec ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
+////        Plus(relevantCutConfigurations( name ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
+//
+//          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ(k)::Nil ) ), Succ(k)::Nil ), ps._2.rec.root ) ) ), extractStepWithCutConfig(ps._2, cc), Nil), s2)
+//              ),
+//            s) )
+//
+//      val cl_n = IndexedPredicate( new ClauseSetSymbol(name, (HashMultiset[HOLFormula], HashMultiset[HOLFormula]) ),
+//                                   fresh_param::Nil )
+//      Plus(A(toOccurrence(cl_n, schema.rec.root)), Plus( cs_0 ,cs_1) )
+//    }
+    private def hackGettingProof(s: String) : SchemaProof = {
+      val s1 = s.replace("Θ(","")
+      val s2 = s1.replace("_base","\n")
+      val s3 = s2.replace("_step","\n")
+      val s4 = s3.takeWhile(c => !c.equals('\n'))
+      println("hack = "+s4)
+      SchemaProofDB.get( s4 )
+    }
+    
     def extractStruct(name: String, fresh_param: IntVar) : Struct =
     {
-      val cs_0 = SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) => 
-        Plus(cutConfigurations( ps._2.base ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
-          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero()::Nil ) ), IntZero()::Nil ), ps._2.base.root ) ) ), extractBaseWithCutConfig(ps._2, cc)), s2)),
-            s) )
+      val terms = extractRelevantStruct(name, fresh_param)
+      val cs_0 = terms._2.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
+          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_base","\n").takeWhile(c => !c.equals('\n')),
+            cutOccConfigToCutConfig( hackGettingProof(triple._1).base.root, triple._3, hackGettingProof(triple._1).seq, hackGettingProof(triple._1).vars, IntZero()::Nil ) ), IntZero()::Nil ), hackGettingProof(triple._1).base.root ) ) ),
+            triple._2), result) )
 
       // assumption: all proofs in the SchemaProofDB have the
       // same running variable "k".
       val k = IntVar(new VariableStringSymbol("k") )
-      val schema = SchemaProofDB.get( name )
-      val precond = Times(A(toOccurrence(BiggerThan(IntZero(),k), schema.rec.root)),
-                          A(toOccurrence(BiggerThan(k, fresh_param), schema.rec.root)))
-      val cs_1 = Times(precond, SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) => 
-        Plus(cutConfigurations( ps._2.rec ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) => 
-          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ(k)::Nil ) ), Succ(k)::Nil ), ps._2.rec.root ) ) ), extractStepWithCutConfig(ps._2, cc), Nil), s2)
-              ),
-            s) ))
+      val cs_1 = terms._1.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
+        Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_step","\n").takeWhile(c => !c.equals('\n')),
+          cutOccConfigToCutConfig( hackGettingProof(triple._1).rec.root, triple._3, hackGettingProof(triple._1).seq, hackGettingProof(triple._1).vars, Succ(k)::Nil ) ), Succ(k)::Nil ), hackGettingProof(triple._1).rec.root ) ) ),
+          triple._2), result) )
 
       val cl_n = IndexedPredicate( new ClauseSetSymbol(name, (HashMultiset[HOLFormula], HashMultiset[HOLFormula]) ),
-                                   fresh_param::Nil )
-      Plus(A(toOccurrence(cl_n, schema.rec.root)), Plus( cs_0 ,cs_1) )
+        fresh_param::Nil )
+      Plus(A(toOccurrence(cl_n, SchemaProofDB.get(name).rec.root)), Plus( cs_0 ,cs_1) )
     }
+
 
     // TODO: refactor --- this method should be somewhere else
     // some combinatorics: return the set of all sets
@@ -300,12 +351,11 @@ import at.logic.language.schema.SchemaFormula
       combinations( occs.size, occs.toSet )
     }
 
-////    computes relevant cut configurations
-//    def cutConfigurations( p: LKProof ) : Set[Set[FormulaOccurrence]] = {
-//      all(name).get(p)
+//    computes relevant cut configurations
+//    def relevantCutConfigurations( proof_name: String ) : Set[Set[FormulaOccurrence]] = {
+//      RelevantCC(proof_name).map(set => set.map(pair => pair._2).flatten.toSet).toSet
 //    }
-//
-//    def all(proof_name:String) = createMapFromLKProoftoSetOfFOccs(RelevantCC(proof_name))
+
     
     def extractStepWithCutConfig( schema: SchemaProof, cc: CutOccurrenceConfiguration ) =
     {

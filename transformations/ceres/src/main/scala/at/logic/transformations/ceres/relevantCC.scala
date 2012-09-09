@@ -39,14 +39,16 @@ import struct.TypeSynonyms
 import struct.cutOccConfigToCutConfig
 
 object RelevantCC {
-  def apply(proof_name: String): List[List[(String, Set[FormulaOccurrence])]] = {
+  def apply(proof_name: String) ={ //: List[List[(String, Set[FormulaOccurrence])]] = {
     val s = SchemaProofDB.toList.map(pair => genCC(pair._1)) //for console
     val spt = SchemaProofDB.toList.map(pair => genCCProofTool(pair._1))
     val sptb = SchemaProofDB.toList.map(pair => genCCProofToolBase(pair._1))
 
-    val l = Utils.removeDoubles(List((proof_name, Set.empty[FormulaOccurrence]))::spt).filter(x => x.nonEmpty)
-    println("\n\nl = " + l)
-    l
+    val l_step = Utils.removeDoubles(List((proof_name, Set.empty[FormulaOccurrence]))::spt).filter(x => x.nonEmpty)
+    val l_base = Utils.removeDoubles(List((proof_name, Set.empty[FormulaOccurrence]))::sptb).filter(x => x.nonEmpty)
+    val pair = (l_step, l_base)
+    println("\n\npairRelevantCC = " + pair)
+    pair
   }
 
   def genCC(proof_name: String): List[(String, Set[FormulaOccurrence])] = {
