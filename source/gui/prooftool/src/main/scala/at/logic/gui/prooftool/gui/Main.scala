@@ -513,10 +513,10 @@ object Main extends SimpleSwingApplication {
         border = customBorder
       }
     }
-    contents += new Menu("Tests") {
-      mnemonic = Key.T
-      contents += new MenuItem(Action("Pruned Clause Set of Adder") { testSchematicClauseSet }) { border = customBorder }
-    }
+//    contents += new Menu("Tests") {
+//      mnemonic = Key.T
+//      contents += new MenuItem(Action("Name") { write a test function }) { border = customBorder }
+//    }
   }
 
   def extractCutFormulas : Unit = try {
@@ -714,85 +714,6 @@ object Main extends SimpleSwingApplication {
         errorMessage("Could not construct proof instance!\n\n" + getExceptionString(e))
     }
   }
-
-  def testSchematicClauseSet : Unit = try {
-    import at.logic.transformations.ceres.struct._
-    import at.logic.language.schema._
-    import at.logic.utils.ds.Multisets.HashMultiset
-
-      val n = IntVar(new VariableStringSymbol("n"))
-
-      val s = StructCreators.extractStruct( "\\psi", n)
-      val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
-
-      val m_empty = HashMultiset[HOLFormula]()
-      var cc: at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration = (m_empty, m_empty)
-
-      val cs_pruned_psi = cs.filter( s => s.antecedent.isEmpty || s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc && sym.name == "\\psi"
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "\\varphi" => cc = sym.cut_occs
-        case _ => false
-      }
-      case _ => false
-    } ))
-
-      val cs_pruned_varphi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-       cs_pruned_varphi.foreach( s => s.succedent.foreach( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "\\phi" => cc = sym.cut_occs
-        case _ => false
-      }
-      case _ => false
-    } ))
-
-       val cs_pruned_phi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "\\chi" => cc = sym.cut_occs
-        case _ => false
-      }
-      case _ => false
-    } ))
-
-      val cs_pruned_chi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-      val ccs = cs_pruned_psi ::: cs_pruned_varphi ::: cs_pruned_phi ::: cs_pruned_chi
-
-    db.addSeqList(ccs.map(x => x.toFSequent))
-    body.contents = new Launcher(Some("cllist",ccs),16)
-
-  } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute clause list!\n\n" + getExceptionString(e))
-  } finally ProofToolPublisher.publish(ProofDbChanged)
 
   def inputMessage(message: String, values: Seq[String]) =
     Dialog.showInput[String](body, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values,

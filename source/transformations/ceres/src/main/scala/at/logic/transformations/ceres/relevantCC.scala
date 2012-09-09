@@ -47,7 +47,7 @@ object RelevantCC {
     val l_step = Utils.removeDoubles(List((proof_name, Set.empty[FormulaOccurrence]))::spt).filter(x => x.nonEmpty)
     val l_base = Utils.removeDoubles(List((proof_name, Set.empty[FormulaOccurrence]))::sptb).filter(x => x.nonEmpty)
     val pair = (l_step, l_base)
-    println("\n\npairRelevantCC = " + pair)
+  //  println("\n\npairRelevantCC = " + pair)
     pair
   }
 

@@ -157,13 +157,10 @@ import at.logic.language.schema.SchemaFormula
   // by, for each o in cc, taking the element f from seq such that
   // f, where param goes to term, is equal to o.formula.
   object cutOccConfigToCutConfig {
-    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]) = {
-      println("\n\ncc = " + cc)
-      println("so = "+so)
+    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]) =
       cc.foldLeft( (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
-        println("fo = "+fo.formula)
         if (so.antecedent.contains( fo ))
           (cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs)
         else if (so.succedent.contains( fo ))
@@ -171,7 +168,7 @@ import at.logic.language.schema.SchemaFormula
         else
           throw new Exception
       })
-    }
+
 
     def getFormulaForCC( fo: FormulaOccurrence, fs: List[HOLFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
@@ -306,7 +303,6 @@ import at.logic.language.schema.SchemaFormula
       val s2 = s1.replace("_base","\n")
       val s3 = s2.replace("_step","\n")
       val s4 = s3.takeWhile(c => !c.equals('\n'))
-      println("hack = "+s4)
       SchemaProofDB.get( s4 )
     }
     
