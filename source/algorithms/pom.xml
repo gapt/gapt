@@ -16,6 +16,7 @@
     <module>diophantine</module>
     <module>matching</module>
     <module>lk</module>
+      <module>resolution</module>
     <module>lksk</module>
     <module>fol</module>
     <module>shlk</module>

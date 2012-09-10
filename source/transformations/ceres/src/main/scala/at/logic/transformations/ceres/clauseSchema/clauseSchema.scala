@@ -7,7 +7,6 @@ import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.calculi.resolution.robinson.Clause
 import at.logic.calculi.slk._
 import at.logic.calculi.slk.AndEquivalenceRule1._
 import at.logic.language.lambda.symbols.VariableStringSymbol

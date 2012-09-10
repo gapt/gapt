@@ -4,7 +4,7 @@
 package at.logic.integration_tests
 
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.Clause
+import _root_.at.logic.calculi.resolution.base.Clause
 import _root_.at.logic.provers.atp.commands.base.SetStreamCommand
 import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause
 import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause._

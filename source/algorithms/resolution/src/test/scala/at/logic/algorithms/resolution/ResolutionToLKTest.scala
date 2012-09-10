@@ -1,4 +1,4 @@
-package at.logic.transformations.misc
+package at.logic.algorithms.resolution
 
 import at.logic.calculi.lk.equationalRules.{EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.language.fol.{FOLExpression, FOLVar, FOLFormula}
@@ -6,7 +6,6 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression}
 import collection.immutable.Map.{Map1, Map2}
 import org.junit.runner.RunWith
-import org.specs2.matcher.{Expectable, Matcher}
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
@@ -15,22 +14,22 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.resolution.robinson._
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader
-
-private class MyParser(str: String) extends StringReader(str) with SimpleFOLParser
+import at.logic.algorithms.resolution.RobinsonToLK
 
 // we compare toStrings as proofs have only pointer equality. This needs to be changed by allowing syntaxEquals in graphs and vertices should
 // have syntaxEquals as well
 
 @RunWith(classOf[JUnitRunner])
 class ResolutionToLKTest extends SpecificationWithJUnit {
+  private class MyParser(str: String) extends StringReader(str) with SimpleFOLParser
 
   "RobinsonToLK" should {
     "transform the following resolution proof into an LK proof" in {
       "containing only an initial clause" in {
         val Pa = new MyParser("P(a)").getTerm.asInstanceOf[FOLFormula]
-        val resProof = InitialClause(Pa::List.empty, Pa::List.empty)
-        val lkProof = Axiom(Pa::List.empty, Pa::List.empty)
-        RobinsonToLK(resProof).toString must beEqualTo (lkProof.toString)
+        val resProof = InitialClause(Pa :: List.empty, Pa :: List.empty)
+        val lkProof = Axiom(Pa :: List.empty, Pa :: List.empty)
+        RobinsonToLK(resProof).toString must beEqualTo(lkProof.toString)
       }
       "containing a factorized clause" in {
         val Pfa = new MyParser("P(f(a))").getTerm.asInstanceOf[FOLFormula]
@@ -41,13 +40,13 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val x = new MyParser("x").getTerm
         val y = new MyParser("y").getTerm
 
-        val p1 = InitialClause(Pfa::Px::Pfy::List.empty, List.empty)
-        val resProof = Factor(p1, p1.root.negative(1), List(p1.root.negative(0),p1.root.negative(2)), Substitution(new Map2(x,fa,y,a).asInstanceOf[Map[Var,FOLExpression]]))
+        val p1 = InitialClause(Pfa :: Px :: Pfy :: List.empty, List.empty)
+        val resProof = Factor(p1, p1.root.negative(1), List(p1.root.negative(0), p1.root.negative(2)), Substitution(new Map2(x, fa, y, a).asInstanceOf[Map[Var, FOLExpression]]))
 
-        val l1 = Axiom(List(Pfa,Pfa,Pfa),List())
+        val l1 = Axiom(List(Pfa, Pfa, Pfa), List())
         val l2 = ContractionLeftRule(l1, l1.root.antecedent(1), l1.root.antecedent(0))
         val lkProof = ContractionLeftRule(l2, l2.root.antecedent(0), l2.root.antecedent(1))
-        RobinsonToLK(resProof).toString must beEqualTo (lkProof.toString)
+        RobinsonToLK(resProof).toString must beEqualTo(lkProof.toString)
       }
       "containing a variant clause" in {
         val Px = new MyParser("P(x)").getTerm.asInstanceOf[FOLFormula]
@@ -56,10 +55,10 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val y = new MyParser("y").getTerm
 
         val p1 = InitialClause(List(Px), List.empty)
-        val resProof = Variant(p1, Substitution(new Map1(x,y).asInstanceOf[Map[Var,FOLExpression]]))
+        val resProof = Variant(p1, Substitution(new Map1(x, y).asInstanceOf[Map[Var, FOLExpression]]))
 
-        val lkProof = Axiom(List(Py),List())
-        RobinsonToLK(resProof).toString must beEqualTo (lkProof.toString)
+        val lkProof = Axiom(List(Py), List())
+        RobinsonToLK(resProof).toString must beEqualTo(lkProof.toString)
       }
       "containing a resolution clause" in {
         val Pfa = new MyParser("P(f(a))").getTerm.asInstanceOf[FOLFormula]
@@ -71,12 +70,12 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
 
         val p1 = InitialClause(List(Px), List(Pfx))
         val p2 = InitialClause(List(Pffa), List(Pfa))
-        val resProof = Resolution(p2, p1, p2.root.positive(0), p1.root.negative(0), Substitution(new Map1(x,fa).asInstanceOf[Map[Var,FOLExpression]]))
+        val resProof = Resolution(p2, p1, p2.root.positive(0), p1.root.negative(0), Substitution(new Map1(x, fa).asInstanceOf[Map[Var, FOLExpression]]))
 
         val l1 = Axiom(List(Pfa), List(Pffa))
-        val l2 = Axiom(List(Pffa),List(Pfa))
+        val l2 = Axiom(List(Pffa), List(Pfa))
         val lkProof = CutRule(l2, l1, l2.root.succedent(0), l1.root.antecedent(0))
-        RobinsonToLK(resProof).toString must beEqualTo (lkProof.toString)
+        RobinsonToLK(resProof).toString must beEqualTo(lkProof.toString)
       }
       "containing a paramodulation clause for rule 1" in {
         val exb = new MyParser("=(x,b)").getTerm.asInstanceOf[FOLFormula]
@@ -88,12 +87,12 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
 
         val p1 = InitialClause(List(), List(exb))
         val p2 = InitialClause(List(Pfa), List())
-        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, Substitution(new Map1(x,a).asInstanceOf[Map[Var,FOLExpression]]))
+        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, Substitution(new Map1(x, a).asInstanceOf[Map[Var, FOLExpression]]))
 
         val l1 = Axiom(List(), List(eab))
-        val l2 = Axiom(List(Pfa),List())
+        val l2 = Axiom(List(Pfa), List())
         val lkProof = EquationLeft1Rule(l1, l2, l1.root.succedent(0), l2.root.antecedent(0), Pfb)
-        RobinsonToLK(resProof).toString must beEqualTo (lkProof.toString)
+        RobinsonToLK(resProof).toString must beEqualTo(lkProof.toString)
       }
       "containing a paramodulation clause for rule 2" in {
         val ebx = new MyParser("=(b,x)").getTerm.asInstanceOf[FOLFormula]
@@ -105,12 +104,12 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
 
         val p1 = InitialClause(List(), List(ebx))
         val p2 = InitialClause(List(Pfa), List())
-        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, Substitution(new Map1(x,a).asInstanceOf[Map[Var,FOLExpression]]))
+        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, Substitution(new Map1(x, a).asInstanceOf[Map[Var, FOLExpression]]))
 
         val l1 = Axiom(List(), List(eba))
-        val l2 = Axiom(List(Pfa),List())
+        val l2 = Axiom(List(Pfa), List())
         val lkProof = EquationLeft2Rule(l1, l2, l1.root.succedent(0), l2.root.antecedent(0), Pfb)
-        RobinsonToLK(resProof).toString must beEqualTo (lkProof.toString)
+        RobinsonToLK(resProof).toString must beEqualTo(lkProof.toString)
       }
     }
   }

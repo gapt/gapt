@@ -47,7 +47,7 @@ import scala.collection.immutable.HashSet
 import at.logic.algorithms.unification.hol._
 
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-import at.logic.calculi.resolution.robinson.{Clause}
+import at.logic.calculi.resolution.base.Clause
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.language.fol.{FOLExpression, FOLTerm}
 import at.logic.calculi.resolution.base.ResolutionProof
@@ -350,7 +350,7 @@ object loadProofDB {
     def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
     def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
-      new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
+      new Prover[Clause]{}.
         refute(Stream.cons(SetClausesCommand(clauses), stream)).next
   }
   object refuteFOLI {
@@ -371,7 +371,7 @@ object loadProofDB {
     def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
 
     def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
-      new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
+      new Prover[Clause]{}.
         refute(Stream.cons(SetClausesCommand(clauses), stream)).next
   }
 
@@ -383,7 +383,7 @@ object loadProofDB {
 
     def apply(clauses: Seq[FSequent]): Option[ResolutionProof[Clause]] =
       try {
-         new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
+         new Prover[Clause]{}.
           refute(Stream(SetTargetClause(FSequent(List(),List())), Prover9InitCommand(clauses), SetStreamCommand())).next
       } catch {
         case e: IOException => throw new IOException("Prover9 is not installed: " + e.getMessage())
@@ -391,7 +391,7 @@ object loadProofDB {
 
     def apply(clauses: List[Sequent]): Option[ResolutionProof[Clause]] =
       try {
-         new Prover[at.logic.calculi.resolution.robinson.Clause]{}.
+         new Prover[Clause]{}.
           refute(Stream(SetTargetClause(FSequent(List(),List())), Prover9InitCommand( (clauses map ( (x:Sequent) => x.toFSequent)).toList   ), SetStreamCommand())).next
       } catch {
         case e: IOException => throw new IOException("Prover9 is not installed: " + e.getMessage())
@@ -399,7 +399,7 @@ object loadProofDB {
   }
 
   object Robinson2LK {
-    def apply(resProof: ResolutionProof[Clause]): LKProof = at.logic.transformations.misc.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof])
+    def apply(resProof: ResolutionProof[Clause]): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof])
   }
 
   object replay {

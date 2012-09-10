@@ -7,7 +7,7 @@ package at.logic.provers.atp
 import _root_.at.logic.provers.atp.commands.logical.DeterministicMacroCommand
 import at.logic.utils.executionModels.ndStream.{Configuration, NDStream}
 import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
-import at.logic.calculi.resolution.base._
+import at.logic.calculi.resolution.base.{Clause, ResolutionProof}
 import at.logic.calculi.lk.base._
 import collection.mutable.HashMap
 import at.logic.provers.atp.commands.base._
@@ -27,9 +27,7 @@ object Main {
   import commands.sequents._
   import commands.robinson._
   import _root_.at.logic.provers.atp.commands.logical.DeterministicAndCommand
-  import at.logic.calculi.resolution.robinson.Clause
   import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-  import at.logic.calculi.resolution.robinson.Clause
   import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
   import at.logic.language.fol.FOLExpression
   import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
@@ -47,7 +45,7 @@ object Main {
     Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
   def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
   def main(args: Array[String]) {
-    val prover = new Prover[at.logic.calculi.resolution.robinson.Clause]{}
+    val prover = new Prover[Clause]{}
     prover.refute(Stream.cons(SetClausesCommand((new FileReader(args(0)) with SimpleResolutionParserFOL).getClauseList), stream)).next
   }
 }

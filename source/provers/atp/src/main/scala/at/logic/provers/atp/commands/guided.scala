@@ -6,7 +6,8 @@ package at.logic.provers.atp.commands
 package guided {
 
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.{Clause, InitialClause}
+import _root_.at.logic.calculi.resolution.robinson.{InitialClause}
+import at.logic.calculi.resolution.base.Clause
 import _root_.at.logic.language.fol.FOLFormula
 import _root_.at.logic.provers.atp.Definitions._
 import base.DataCommand
