@@ -7,16 +7,12 @@
 
 package at.logic.parsing.calculi.simple
 
-import at.logic.language.fol.FOLFormula
 import at.logic.language.hol.{Neg, HOLFormula}
-import at.logic.calculi.resolution.robinson.Clause
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base._
-import collection.immutable.Seq
+import at.logic.calculi.lk.base.FSequent
 
 import at.logic.calculi.occurrences.{factory => defaultFactory}
 

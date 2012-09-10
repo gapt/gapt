@@ -5,7 +5,7 @@
 package at.logic.provers.prover9
 
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.Clause
+import _root_.at.logic.calculi.resolution.base.Clause
 import _root_.at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
 import _root_.at.logic.parsing.readers.StringReader

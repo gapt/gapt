@@ -2,7 +2,8 @@ package at.logic.provers.atp.commands
 
 import at.logic.provers.atp.commands.base.DataCommand
 import at.logic.provers.atp.commands.sequents.SetSequentsCommand
-import at.logic.calculi.resolution.robinson.{InitialClause, Clause,RobinsonResolutionProof}
+import at.logic.calculi.resolution.robinson.{InitialClause,RobinsonResolutionProof}
+import at.logic.calculi.resolution.base.Clause
 import at.logic.provers.atp.Definitions._
 import at.logic.calculi.occurrences._
 import at.logic.utils.ds.PublishingBuffer

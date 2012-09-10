@@ -1,9 +1,8 @@
 package at.logic.provers.atp.commands
 
-import at.logic.calculi.lk.base._
-import at.logic.calculi.resolution.base._
 import at.logic.provers.atp.Definitions._
-
+import at.logic.calculi.resolution.base.ResolutionProof
+import at.logic.calculi.lk.base.Sequent
 /**
  * Created by IntelliJ IDEA.
  * User: shaolin

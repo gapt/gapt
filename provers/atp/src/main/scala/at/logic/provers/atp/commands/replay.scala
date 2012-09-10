@@ -9,7 +9,8 @@ import _root_.at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import _root_.at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
 import _root_.at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.{RobinsonResolutionProof, Clause}
+import _root_.at.logic.calculi.resolution.robinson.{RobinsonResolutionProof}
+import at.logic.calculi.resolution.base.Clause
 import _root_.at.logic.language.hol.HOLFormula
 import _root_.at.logic.provers.atp.commands.sequents._
 import at.logic.calculi.lk.base.types.FSequent

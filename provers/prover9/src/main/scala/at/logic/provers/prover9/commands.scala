@@ -14,7 +14,7 @@ import _root_.at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import _root_.at.logic.calculi.lk.base.types.FSequent
 import _root_.at.logic.calculi.occurrences.FormulaOccurrence
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.{RobinsonResolutionProof, Clause}
+import _root_.at.logic.calculi.resolution.base.{ResolutionProof, Clause}
 import _root_.at.logic.language.fol._
 import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import _root_.at.logic.language.hol.replacements.getAtPosition

@@ -27,38 +27,6 @@ import _root_.at.logic.language.lambda.types.->
 import _root_.at.logic.utils.traits.Occurrence
 import collection.immutable.Seq
 import at.logic.calculi.occurrences.FormulaOccurrence
-trait CNF extends Sequent {require((antecedent++succedent).forall(x => x.formula match {case Atom(_,_) => true; case _ => false}))}
-
-  object IsNeg {
-    def apply(formula: HOLFormula) = formula match {
-      case Neg(_) => true
-      case _ => false
-    }
-  }
-  object StripNeg {
-    def apply(formula: HOLFormula) = formula match {
-      case Neg(f) => f
-      case _ => formula
-    }
-  }
-
-  // the boolean represent isPositive as the negation is stripped from the literals
-  class Clause(val literals: Seq[Pair[FormulaOccurrence,Boolean]]) extends Sequent(
-    literals.filter(!_._2).map(_._1),
-    literals.filter(_._2).map(_._1)
-  ) with CNF {
-    def negative = antecedent
-    def positive = succedent
-  }
-
-  object Clause {
-    def apply(literals: Seq[Pair[FormulaOccurrence,Boolean]]) = new Clause(literals)
-    def apply(neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence]) = new Clause(neg.map((_,false)) ++ pos.map((_,true)))
-    def unapply(s: Sequent) = s match {
-      case c: Clause => Some(c.negative, c.positive)
-      case _ => None
-    }
-  }
 
   object createContext {
     def apply(set: Seq[FormulaOccurrence], sub: Substitution[FOLExpression]): Seq[FormulaOccurrence] =

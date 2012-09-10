@@ -12,7 +12,7 @@ package sequents {
 
 import _root_.at.logic.algorithms.subsumption.managers._
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.Clause
+import at.logic.calculi.resolution.base.Clause
 import _root_.at.logic.language.hol.{HOLFormula, HOLExpression, HOLVar}
 import _root_.at.logic.language.lambda.substitutions.Substitution
 import _root_.at.logic.language.lambda.types.->
