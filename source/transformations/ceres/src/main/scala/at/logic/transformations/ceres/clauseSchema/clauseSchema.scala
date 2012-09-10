@@ -116,7 +116,7 @@ import at.logic.language.lambda.types._
   }
 
 
-  //replace the clause variable "v" with the corresponging clause from the Map
+  //replace the clause variable "v" with the corresponding clause from the Map
   object replace {
     def apply(v: sClauseVar, pair: Pair[sClauseVar, sClause]): sClause = {
       if (v.name == pair._1.name)
@@ -294,7 +294,6 @@ import at.logic.language.lambda.types._
               }
             }
         }
-        case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs)::Nil)
         case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
       }
     }
@@ -479,7 +478,7 @@ import at.logic.language.lambda.types._
   }
 
   //clause schema term ⊕
-  class sclPlus(val left: sClauseTerm, var right:sClauseTerm) extends sClauseTerm {
+  class sclPlus(val left: sClauseTerm, val right:sClauseTerm) extends sClauseTerm {
     override def toString() = Console.RED+"("+Console.RESET+left.toString + Console.RED+" ⊕ "+Console.RESET+right.toString+Console.RED+")"+Console.RESET
   }
   object sclPlus {
@@ -673,4 +672,40 @@ import at.logic.language.lambda.types._
       new dbTRSresolutionSchemaTerm(m)
     }
     def apply() = new dbTRSresolutionSchemaTerm(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]])
+  }
+
+
+  object RewriteClauseSetSchemaInClauseSchemaTerm {
+    def apply(cst: sClauseTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]) : sClauseTerm = {
+      cst match {
+        case c:clauseSchema => {
+          normalizeSClause(replace(unfoldSchemaClause(c, trsSclause, trsSterms, subst), mapX))
+        }
+        case t: sclTimes => sclTimes(apply(t.left, trsSclause, trsSterms, subst, mapX), apply(t.right, trsSclause, trsSterms, subst, mapX))
+        case t: sclPlus => sclPlus(apply(t.left, trsSclause, trsSterms, subst, mapX), apply(t.right, trsSclause, trsSterms, subst, mapX))
+        case _ => {
+//          println("case _ => "+cst)
+          cst
+        }
+      }
+    }
+  }
+
+  //transforms ground clause-set term to a set
+  object clauseSetTermToSet {
+    def apply(t: sClauseTerm): Set[nonVarSclause] = {
+      t match {
+        case non:nonVarSclause => Set.empty[nonVarSclause]+non//non.asInstanceOf[clauseSchemaTerm]
+        case t:sclTimes => CartesianProduct(apply(t.left), apply(t.right))
+        case t:sclPlus => Union(apply(t.left), apply(t.right))
+        case _ => throw new Exception("Error in clauseSetTermToSet")
+      }
+    }
+    def CartesianProduct(s1: Set[nonVarSclause], s2: Set[nonVarSclause]): Set[nonVarSclause] = {
+      //TODO
+      Set.empty[nonVarSclause]
+    }
+    def Union(s1: Set[nonVarSclause], s2: Set[nonVarSclause]): Set[nonVarSclause] = {
+       (s1 ++ s2).foldLeft(Set.empty[nonVarSclause])((rez, el) => rez + el)
+    }
   }
