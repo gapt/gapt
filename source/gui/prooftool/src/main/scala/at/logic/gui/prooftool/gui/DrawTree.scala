@@ -220,6 +220,8 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
       Main.body.cursor = new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR)
     case e: MouseReleased =>
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
+    case e: MouseWheelMoved =>
+      Main.body.peer.dispatchEvent(e.peer)
   }
 
   this.peer.setAutoscrolls(true)

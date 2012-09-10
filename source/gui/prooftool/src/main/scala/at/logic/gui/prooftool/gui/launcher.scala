@@ -8,7 +8,7 @@ package at.logic.gui.prooftool.gui
  */
 
 import scala.swing._
-import event.{MouseReleased, MouseDragged}
+import event.{MouseWheelMoved, MouseReleased, MouseDragged}
 import java.awt.Font._
 import java.awt.event.{MouseEvent, MouseMotionListener}
 import javax.swing.border.TitledBorder
@@ -18,6 +18,9 @@ import at.logic.calculi.treeProofs.TreeProof
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
+
+  peer.getVerticalScrollBar.setUnitIncrement( 20 )
+  peer.getHorizontalScrollBar.setUnitIncrement( 20 )
 
   def getContent: Launcher = contents.last.asInstanceOf[Launcher]
 //  def content_=(c : Component) { viewportView = c }
@@ -65,6 +68,8 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       Main.body.cursor = new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR)
     case e: MouseReleased =>
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
+    case e: MouseWheelMoved =>
+      Main.body.peer.dispatchEvent(e.peer)
   }
 
   this.peer.setAutoscrolls(true)
