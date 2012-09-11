@@ -154,9 +154,17 @@ object DrawSequent {
     case Abs(v, t) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(t) + ")"
   }
 
+  // Add more unicode symbols if necessary
   def nameToLatexString(name: String) = name match {
     case "~" => """ \sim """
-    case _ => name
+    case "∈" => """ \in """
+    case "ν" => """ \nu """
+    case "⊆" => """ \subseteq """
+    case "∪" => """ \cup """
+    case "∩" => """ \cap """
+    case "≤" => """ \leq """
+    case _ => //if (!name.matches("""[\w]*|[+]|[=]|[*]|[<]|[>]""")) println(name)
+      name
   }
 
   def parseIntegerTerm( t: IntegerTerm, n: Int) : String = t match {
