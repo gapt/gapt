@@ -169,7 +169,7 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
         case HideLeaf =>
           mylabel.text = "x"
           mylabel.icon = null
-        case e: MouseClicked =>
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
           if (mylabel.text == "") {
             mylabel.text = "x"
             mylabel.icon = null

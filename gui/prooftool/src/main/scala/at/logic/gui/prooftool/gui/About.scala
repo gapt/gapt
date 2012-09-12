@@ -11,12 +11,14 @@ import scala.swing._
 import event._
 
 object About {
-  private val d = new Dialog
+  private val d = new Dialog {
+    resizable = false
+    setLocationRelativeTo(Main.mBar)
+    title = "About Prooftool"
+    modal = true
+  }
 
-  def apply() = {
-    d.resizable = false
-    d.setLocationRelativeTo(Main.mBar)
-    d.title = "About Prooftool"
+  def apply() {
     d.contents = new GridBagPanel { grid =>
       import GridBagPanel._
       import javax.swing.ImageIcon
@@ -33,7 +35,7 @@ object About {
       }
 
       val uri = "http://code.google.com/p/gapt/"
-       
+
       border = Swing.EmptyBorder(10, 10, 10, 10)
       val c = new Constraints
       c.fill = Fill.Horizontal
