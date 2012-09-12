@@ -18,8 +18,14 @@ import scala.collection.immutable.Seq
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.{Color, Font}
 import java.awt.image.BufferedImage
-import swing.{Label, FlowPanel}
-import swing.event.{MouseExited, MouseEntered}
+import swing._
+import event._
+import event.MouseClicked
+import event.MouseEntered
+import event.MouseExited
+import java.awt.event.{WindowFocusListener, MouseEvent}
+import at.logic.language.schema.IntZero
+import at.logic.language.schema.IntZero
 
 object DrawSequent {
 
@@ -77,6 +83,7 @@ object DrawSequent {
     foreground = new Color(0,0,0)
     font = ft
     opaque = true
+    yLayoutAlignment = 0.5
 
     val latexText = ls
     val formula = new TeXFormula(ls)
@@ -93,6 +100,25 @@ object DrawSequent {
     reactions += {
       case e: MouseEntered => foreground = new Color(0,0,255)
       case e: MouseExited => foreground = new Color(0,0,0)
+      case e: MouseClicked if (e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 2) =>
+        val d = new Dialog {
+          resizable = false
+          peer.setUndecorated(true)
+          contents = new TextField(latexText) {
+            editable = false
+            border = Swing.EmptyBorder(7)
+            listenTo(mouse.clicks)
+            reactions += {
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => this.copy()
+            }
+          }
+        //  modal = true
+          reactions += {
+            case e: WindowDeactivated if (e.source == this) => this.close
+          }
+        }
+        d.location = this.locationOnScreen.getLocation
+        d.open
     }
   }
 
