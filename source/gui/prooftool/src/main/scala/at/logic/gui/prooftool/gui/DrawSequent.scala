@@ -19,13 +19,8 @@ import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.{Color, Font}
 import java.awt.image.BufferedImage
 import swing._
-import event._
-import event.MouseClicked
-import event.MouseEntered
-import event.MouseExited
-import java.awt.event.{WindowFocusListener, MouseEvent}
-import at.logic.language.schema.IntZero
-import at.logic.language.schema.IntZero
+import event.{MouseClicked, MouseEntered, MouseExited, WindowDeactivated}
+import java.awt.event.MouseEvent
 
 object DrawSequent {
 
@@ -107,6 +102,7 @@ object DrawSequent {
           contents = new TextField(latexText) {
             editable = false
             border = Swing.EmptyBorder(7)
+            tooltip = "Select text and right-click to copy."
             listenTo(mouse.clicks)
             reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => this.copy()
