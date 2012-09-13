@@ -21,6 +21,9 @@ object ProofToLatexExporter {
 
   def apply(proof: LKProof) = document(proofToLatex(proof))
 
+  def apply(list: List[(String,LKProof)]) =
+    document(list.foldLeft("")((s, pair) => s + "\n The proof $" + pair._1 + "$ is:\n\n" + proofToLatex(pair._2)))
+
   def document(body: String) =
     "\\documentclass{memoir} \n \n" +
     "% Change the values to fit the proof in one 'page'. \n" +

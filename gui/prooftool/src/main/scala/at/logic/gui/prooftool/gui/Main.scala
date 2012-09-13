@@ -168,15 +168,19 @@ object Main extends SimpleSwingApplication {
     case _ =>
   }
 
-  def fExportProofToTex(tp: AnyRef) : Unit = chooser.showSaveDialog(mBar) match {
+  def fExportProofToTex(tp: AnyRef, ask: Boolean) : Unit = chooser.showSaveDialog(mBar) match {
     case FileChooser.Result.Approve =>
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       tp match {
         case proof: LKProof => try {
           val result = chooser.selectedFile.getPath
           val path = if (result.endsWith(".tex")) result else result + ".tex"
+          val fileContent = if (ask) questionMessage("Would you like to export all proofs?") match {
+            case Dialog.Result.Yes => ProofToLatexExporter(db.getProofs.map(pair => (pair._1, pair._2.asInstanceOf[LKProof])))
+            case _ => ProofToLatexExporter(proof)
+          } else ProofToLatexExporter(proof)
           val file = new JBufferedWriter(new JFileWriter( path ))
-          file.write(ProofToLatexExporter(proof))
+          file.write(fileContent)
           file.close
         } catch {
           case e: Throwable => errorMessage("Can't save the proof! \n\n" + getExceptionString(e))
@@ -330,7 +334,7 @@ object Main extends SimpleSwingApplication {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, JActionEvent.CTRL_MASK))
         border = customBorder
       }
-      contents += new MenuItem(Action("Export Proof as TeX") { fExportProofToTex(body.getContent.getData.get._2) }) {
+      contents += new MenuItem(Action("Export Proof as TeX") { fExportProofToTex(body.getContent.getData.get._2, true) }) {
         mnemonic = Key.A
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, JActionEvent.CTRL_MASK))
         border = customBorder
@@ -513,10 +517,12 @@ object Main extends SimpleSwingApplication {
         border = customBorder
       }
     }
-//    contents += new Menu("Tests") {
-//      mnemonic = Key.T
-//      contents += new MenuItem(Action("Name") { write a test function }) { border = customBorder }
-//    }
+    contents += new Menu("Tests") {
+      mnemonic = Key.T
+      contents += new MenuItem(Action("Test Expansion Tree") {
+        body.contents = new Launcher(Some(("Expansion Tree", db.getProofs.head._2.root.asInstanceOf[Sequent])), 12)
+      }) { border = customBorder }
+    }
   }
 
   def extractCutFormulas : Unit = try {
