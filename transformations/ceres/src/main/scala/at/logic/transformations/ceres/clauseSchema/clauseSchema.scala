@@ -21,12 +21,13 @@ import at.logic.language.lambda.types.FunctionType._
 import at.logic.language.lambda.types.To._
 import at.logic.language.lambda.types._
 
-  abstract class sClauseTerm {}
-  trait sResolutionTerm {}
-  abstract class sClause extends sClauseTerm with sResolutionTerm{
+  abstract class sResolutionTerm {}
+  abstract class sClauseTerm extends sResolutionTerm {}
+  abstract class sClause extends sClauseTerm {
     override def toString: String
   }
 
+  // c(k+1, x, X)
   class clauseSchema(val name: String, val args: List[Object]) extends sClause {
     override def toString:String = name+"("+printSchemaProof.formulaToString(args.head.asInstanceOf[HOLExpression])+ {args.tail.foldRight("")((x, rez) => ", "+x.toString+rez)} + ")"
   }
@@ -40,10 +41,11 @@ import at.logic.language.lambda.types._
     }
   }
 
+
+  //  X
   class sClauseVar(val name:String) extends sClause {
     override def toString = Console.BOLD+this.name+Console.RESET
   }
-
   object sClauseVar {
     def apply(name:String): sClause = new sClauseVar(name)
     def unaply(s : sClause) = s match {
@@ -52,14 +54,18 @@ import at.logic.language.lambda.types._
     }
   }
 
+
   //usual clause : no schematic symbols and no schematic variables
   class nonVarSclause(val ant: List[HOLFormula], val succ: List[HOLFormula]) extends sClause {
     override def toString = {
       printSchemaProof.sequentToString(Sequent(ant.map(f => defaultFormulaOccurrenceFactory.createFormulaOccurrence(f, List())), succ.map(f => defaultFormulaOccurrenceFactory.createFormulaOccurrence(f, List()))))
   //    ant + " |- " + succ
     }
+    override def equals(a: Any) = a match {
+      case non: nonVarSclause => this.ant.toSet == non.ant.toSet && this.succ.toSet == non.succ.toSet
+      case _ => false
+    }
   }
-
   object nonVarSclause {
     def apply(ant1: List[HOLFormula], succ1: List[HOLFormula]): nonVarSclause = {
       new nonVarSclause(ant1, succ1)
@@ -70,22 +76,29 @@ import at.logic.language.lambda.types._
     }
   }
 
-
+  // sClause1 ◦ sClause2
   class sClauseComposition(val sclause1: sClause, val sclause2: sClause) extends sClause {
-  //  override def toString = {sclause1 + " • " + sclause2}
     override def toString = {sclause1 + Console.BOLD+Console.BLUE+" ◦ " + Console.RESET+ sclause2}
   }
+  object sClauseComposition {
+    def apply(scl1: sClause , scl2: sClause): sClause = new sClauseComposition(scl1, scl2)
+    def unaply(s: sClause) = s match {
+      case compos:sClauseComposition => Some(Pair(compos.sclause1, compos.sclause2))
+      case _ => None
+    }
+  }
 
-  //makes it with only one  "|-" sign, i.e. removes \circ
-  object normalizeSClause {
+  //makes it with only one  "⊢" sign, i.e. removes ◦ as possible
+  object deComposeSClause {
     def apply(c: sClause): sClause = {
       val mergeNonVarSClauses = {
         val res = getNonVarSclauses(c)
-        if(res.length < 2)
-        res
+        if(res.length == 1)
+          res.head
         else
-        res.tail.foldLeft(res.head)((acc, clause) => nonVarSclause(acc.asInstanceOf[nonVarSclause].ant ++ clause.asInstanceOf[nonVarSclause].ant, acc.asInstanceOf[nonVarSclause].succ ++ clause.asInstanceOf[nonVarSclause].succ)).asInstanceOf[sClause]
+          res.tail.foldLeft(res.head)((acc, clause) => nonVarSclause(acc.asInstanceOf[nonVarSclause].ant ++ clause.asInstanceOf[nonVarSclause].ant, acc.asInstanceOf[nonVarSclause].succ ++ clause.asInstanceOf[nonVarSclause].succ)).asInstanceOf[sClause]
       }
+//      println("mergeNonVarSClauses = "+mergeNonVarSClauses)
       val sClauseVars = getSClausVars(c)
       if(sClauseVars.isEmpty)
         return mergeNonVarSClauses.asInstanceOf[nonVarSclause]
@@ -96,9 +109,12 @@ import at.logic.language.lambda.types._
       case non:nonVarSclause => non::Nil
       case comp:sClauseComposition =>
         getNonVarSclauses(comp.sclause1) ++ getNonVarSclauses(comp.sclause2)
+      case _ => {
+//        println("case _ => "+c)
+        throw new Exception("Error in getNonVarSclauses!")
+      }
     }
-
-    def getSClausVars(c: sClause): List[sClause] = c match {
+    private def getSClausVars(c: sClause): List[sClause] = c match {
       case v:sClauseVar => v::Nil
       case non:nonVarSclause => List.empty[sClause]
       case comp:sClauseComposition =>
@@ -106,16 +122,8 @@ import at.logic.language.lambda.types._
     }
   }
 
-  object sClauseComposition {
-    def apply(scl1: sClause , scl2: sClause): sClause = new sClauseComposition(scl1, scl2)
-    def unaply(s: sClause) = s match {
-      case compos:sClauseComposition => Some(Pair(compos.sclause1, compos.sclause2))
-      case _ => None
-    }
-  }
 
-
-  //replace the clause variable "v" with the corresponding clause from the Map
+  //replace "v" with the sClause from the Map
   object replace {
     def apply(v: sClauseVar, pair: Pair[sClauseVar, sClause]): sClause = {
       if (v.name == pair._1.name)
@@ -139,8 +147,8 @@ import at.logic.language.lambda.types._
   //    println("sub, c = "+c)
       c match {
         case v:sClauseVar => c
-        case cs:clauseSchemaTerm => {
-          clauseSchemaTerm(cs.name, cs.args.map(x => {
+        case cs:clauseSetTerm => {
+          clauseSetTerm(cs.name, cs.args.map(x => {
             x match {
               case e:HOLExpression => sub(x.asInstanceOf[HOLExpression])
               case _ => x
@@ -180,7 +188,7 @@ import at.logic.language.lambda.types._
         case    _      => {
           println("\nClauseSchemaPair rec:")
           val k = IntVar(new VariableStringSymbol("k"))
-          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, a)
+          val new_map = Map[Var, HOLExpression]() + Pair(k, a)
           val new_subst = new SchemaSubstitution3(new_map)
           val ground_c = applySubToSclauseOrSclauseTerm(new_subst, c).asInstanceOf[sClause]
           val new_val = apply(Pred(a), varListBase, varListRec, c)
@@ -200,7 +208,7 @@ import at.logic.language.lambda.types._
 
 
 
-  //schematic term
+  // σ(k+1, x, l)
   object sTermN {
     //the l.head should be of type Tindex() !
     def apply(f: String, l: List[HOLExpression]): HOLExpression = {
@@ -226,7 +234,6 @@ import at.logic.language.lambda.types._
   class fo2Var(override val name: VariableStringSymbol) extends HOLVar(name, ->(Tindex(),Ti()), None) {
     override def toString = name.toString+":"+this.exptype.toString
   }
-
   object fo2Var {
     def apply(name: VariableStringSymbol): HOLVar = {
       new fo2Var(name)
@@ -238,31 +245,29 @@ import at.logic.language.lambda.types._
   }
 
 
-
-  class dbTRSsTermN(val map: scala.collection.mutable.Map[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]]) {
+  // dbTRS for σ(k+1, x, l), i.e. sTermN
+  class dbTRSsTermN(val map: Map[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]]) {
     def add(term: String, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): dbTRSsTermN = {
       val newMap = map + Pair(term, Tuple2(base, step))
       return new dbTRSsTermN(newMap)
     }
   }
-  //the t.r.s. for the sTermN
   object dbTRSsTermN {
     def apply(term: String, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): dbTRSsTermN = {
-      val m = scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]] + Pair(term, Tuple2(base, step))
+      val m = Map.empty[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]] + Pair(term, Tuple2(base, step))
       new dbTRSsTermN(m)
     }
-    def apply() = new dbTRSsTermN(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]])
+    def apply() = new dbTRSsTermN(Map.empty[String, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]])
   }
 
-
-  class dbTRSclauseSchema(val map: scala.collection.mutable.Map[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
-  //the t.r.s. for the clause schema
+  // dbTRS for c(k+1, x, X)clauseSchema
+  class dbTRSclauseSchema(val map: Map[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
   object dbTRSclauseSchema {
     def apply(term: String, base: Tuple2[sClause, sClause], step: Tuple2[sClause, sClause]): dbTRSclauseSchema = {
-      val m = scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]] + Pair(term, Tuple2(base, step))
+      val m = Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]] + Pair(term, Tuple2(base, step))
       new dbTRSclauseSchema(m)
     }
-    def apply() = new dbTRSclauseSchema(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
+    def apply() = new dbTRSclauseSchema(Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
   }
 
 
@@ -277,7 +282,10 @@ import at.logic.language.lambda.types._
         case sTermN(func, i, arg) if trs.map.contains(func) => {
           if (i == IntZero()) {
       //            println("\n\ni == 0")
-            val map = Map[Var, HOLExpression]() + Pair(k, i) + Pair(l, arg.last)
+            val map = if(arg.size != 0)
+                        Map[Var, HOLExpression]() + Pair(k, i) + Pair(l, arg.last)
+                      else
+                        Map[Var, HOLExpression]() + Pair(k, i)
             val subst = new SchemaSubstitution3(map)
             val base = trs.map.get(func).get._1._2
             subst(base)
@@ -286,7 +294,10 @@ import at.logic.language.lambda.types._
             if (i == k)
               t
             else  {
-              val map = Map[Var, HOLExpression]() + Pair(k, i) + Pair(l, arg.last)
+              val map = if(arg.size != 0)
+                          Map[Var, HOLExpression]() + Pair(k, i) + Pair(l, arg.last)
+                        else
+                          Map[Var, HOLExpression]() + Pair(k, i)
               val subst = new SchemaSubstitution3(map)
               trs.map.get(func).get._2._2 match {
                 case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs)::Nil)
@@ -321,7 +332,8 @@ import at.logic.language.lambda.types._
     }
   }
 
-  object unfoldGroundFormula {
+  // rewrites  σ(k+1, x, k)  in  P(σ(k+1, x, k))
+  object unfoldGroundAtom {
     def apply(f: HOLFormula, trs: dbTRSsTermN, subst: SchemaSubstitution3): HOLFormula = {
       f match {
         case Atom(name, args) => Atom(name, args.map(x => unfoldSTermN(x, trs)))
@@ -330,6 +342,7 @@ import at.logic.language.lambda.types._
     }
   }
 
+  //c(3, x, X) is unfolded
   object unfoldSchemaClause {
     def apply(t: sClause, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3): sClause = {
       val k = IntVar(new VariableStringSymbol("k"))
@@ -353,7 +366,7 @@ import at.logic.language.lambda.types._
 //          println("\n\nnonVarSclause !")
           val newant = ant.map(x => subst(x).asInstanceOf[HOLFormula])
           val newsucc = succ.map(x => subst(x).asInstanceOf[HOLFormula])
-          nonVarSclause(newant.map(x => unfoldGroundFormula(x, trsSterms, subst)), newsucc.map(x => unfoldGroundFormula(x, trsSterms, subst)))
+          nonVarSclause(newant.map(x => unfoldGroundAtom(x, trsSterms, subst)), newsucc.map(x => unfoldGroundAtom(x, trsSterms, subst)))
 //          nonVarSclause(newant, newsucc)
         }
         case co:sClauseComposition => {
@@ -377,7 +390,7 @@ import at.logic.language.lambda.types._
   }
 
 
-  class SchemaSubstitution3(val map: scala.collection.immutable.Map[Var, HOLExpression])  {
+  class SchemaSubstitution3(val map: Map[Var, HOLExpression])  {
     def apply(expression: HOLExpression): HOLExpression = {
 //      println("subst :    "+expression)
       expression match {
@@ -452,26 +465,16 @@ import at.logic.language.lambda.types._
     }
   }
 
-
-  class dbTRSsClause(val map: scala.collection.mutable.Map[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
-  //the t.r.s. for the sTermN
-  object dbTRSsClause {
-    def apply(name: String, base: Tuple2[sClause, sClause], step: Tuple2[sClause, sClause]): dbTRSsClause = {
-      val m = scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]] + Pair("c", Tuple2(base, step))
-      new dbTRSsClause(m)
-    }
-    def apply() = new dbTRSsClause(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
-  }
-
-  class clauseSchemaTerm(val name: String, val args: List[Object]) extends sClauseTerm {
+  // d(k+1, x, X) -> sClauseTerm ⊗/⊕ sClauseTerm
+  class clauseSetTerm(val name: String, val args: List[Object]) extends sClauseTerm {
     override def toString:String = name+"("+printSchemaProof.formulaToString(args.head.asInstanceOf[HOLExpression])+ {args.tail.foldRight("")((x, rez) => ", "+x.toString+rez)} + ")"
   }
-  object clauseSchemaTerm {
-    def apply(sym: String, l: List[Object]): clauseSchemaTerm = {
-      new clauseSchemaTerm(sym, l)
+  object clauseSetTerm {
+    def apply(sym: String, l: List[Object]): clauseSetTerm = {
+      new clauseSetTerm(sym, l)
     }
     def unapply(c: sClause) = c match {
-      case sc: clauseSchemaTerm => Some((sc.name, sc.args))
+      case sc: clauseSetTerm => Some((sc.name, sc.args))
       case _ => None
     }
   }
@@ -548,6 +551,7 @@ import at.logic.language.lambda.types._
     }
   }
 
+  // substitution for ξ
   class sclTermVarSubstitution(val map: Map[sclTermVar, clauseSchema]) {
     def apply(sclTerm: sClauseTerm): sClauseTerm = {
       sclTerm match {
@@ -560,27 +564,26 @@ import at.logic.language.lambda.types._
   }
 
 
-
-  class dbTRSclauseSchemaTerm(var map: scala.collection.mutable.Map[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]]) {
+  class dbTRSclauseSetTerm(var map: Map[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]]) {
     def add(term: String, base: Tuple2[sClauseTerm, sClauseTerm], step: Tuple2[sClauseTerm, sClauseTerm]): Unit = {
       val newMap = map + Pair(term, Tuple2(base, step))
       map = newMap
     }
   }
   //the t.r.s. for the clause schema
-  object dbTRSclauseSchemaTerm {
-    def apply(term: String, base: Tuple2[sClauseTerm, sClauseTerm], step: Tuple2[sClauseTerm, sClauseTerm]): dbTRSclauseSchemaTerm = {
-      val m = scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]] + Pair(term, Tuple2(base, step))
-      new dbTRSclauseSchemaTerm(m)
+  object dbTRSclauseSetTerm {
+    def apply(term: String, base: Tuple2[sClauseTerm, sClauseTerm], step: Tuple2[sClauseTerm, sClauseTerm]): dbTRSclauseSetTerm = {
+      val m =  Map.empty[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]] + Pair(term, Tuple2(base, step))
+      new dbTRSclauseSetTerm(m)
     }
-    def apply() = new dbTRSclauseSchemaTerm(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]])
+    def apply() = new dbTRSclauseSetTerm( Map.empty[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]])
   }
 
 
   //TODO: find a way to store the first rewriting application ! Remove b1, b2
   //unfolds a ground schema clause term
-  object unfoldSchemaClauseTerm {
-    def apply(t: sClauseTerm, trsSCLterm: dbTRSclauseSchemaTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, b1:Boolean, b2:Boolean): sClauseTerm = {
+  object unfoldClauseSetTerm {
+    def apply(t: sClauseTerm, trsSCLterm: dbTRSclauseSetTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, b1:Boolean, b2:Boolean): sClauseTerm = {
       val k = IntVar(new VariableStringSymbol("k"))
       t match {
         case x:sclTermVar => x
@@ -588,11 +591,11 @@ import at.logic.language.lambda.types._
           sclPlus(apply(pl.left, trsSCLterm, trsSclause, trsSterms, subst, b1, b2), apply(pl.right, trsSCLterm, trsSclause, trsSterms, subst, b1, b2))
         }
         case ti:sclTimes => sclTimes(apply(ti.left, trsSCLterm, trsSclause, trsSterms, subst, b1, b2), apply(ti.right, trsSCLterm, trsSclause, trsSterms, subst, b1, b2))
-        case cl:clauseSchemaTerm if trsSCLterm.map.contains(cl.name) => {
+        case cl:clauseSetTerm if trsSCLterm.map.contains(cl.name) => {
           if (cl.args.head == IntZero()) {
             //            println("\n\ni == 0")
             val base = trsSCLterm.map.get(cl.name).get._1._2
-            unfoldSchemaClauseTerm(base, trsSCLterm, trsSclause, trsSterms, subst, b1, b2)//subst(base)
+            unfoldClauseSetTerm(base, trsSCLterm, trsSclause, trsSterms, subst, b1, b2)//subst(base)
           }
           else
             if (cl.args.head == k)
@@ -624,61 +627,94 @@ import at.logic.language.lambda.types._
     }
   }
 
+// ---------    resolution schemata ------------------
+
   //r(c(k+1, x, X); P(x(k))⊢; P(x(k)))
-  class ResolutionTerm(val left: sResolutionTerm, val right: sResolutionTerm, val atom: HOLFormula) extends sResolutionTerm {
-    override def toString() = Console.GREEN+"r( "+Console.RESET+ left.toString + Console.GREEN+" ; "+Console.RESET+ right.toString + Console.GREEN+" ; "+Console.RESET+atom.toString + Console.GREEN+" )"+Console.RESET
+  class rTerm(val left: sResolutionTerm, val right: sResolutionTerm, val atom: HOLFormula) extends sResolutionTerm {
+    override def toString() = Console.GREEN+"r( "+Console.RESET+ left.toString + Console.GREEN+" ; "+Console.RESET+ right.toString + Console.GREEN+" ; "+Console.RESET+printSchemaProof.formulaToString(atom) + Console.GREEN+" )"+Console.RESET
   }
-  object ResolutionTerm {
-    def apply(l: sResolutionTerm, r: sResolutionTerm, at: HOLFormula): ResolutionTerm = {
+  object rTerm {
+    def apply(l: sResolutionTerm, r: sResolutionTerm, at: HOLFormula): rTerm = {
       require(at match {
         case Atom(_,_) => true
         case _ => false
       })
-      new ResolutionTerm(l, r, at)
+      new rTerm(l, r, at)
     }
     def unapply(r: sResolutionTerm) = r match {
-      case rt: ResolutionTerm => Some((rt.left, rt.right, rt.atom))
+      case rt: rTerm => Some((rt.left, rt.right, rt.atom))
       case _ => None
     }
   }
 
+  //grounded rTerm
+  object resolutionDeduction {
+    def apply(t: sResolutionTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]): sResolutionTerm = {
+      t match {
+        case non:nonVarSclause => non
+        case r:rTerm => {
+          if (r.left.isInstanceOf[nonVarSclause]
+            && r.right.isInstanceOf[nonVarSclause]
+            && r.left.asInstanceOf[nonVarSclause].succ.contains(r.atom)
+            && r.right.asInstanceOf[nonVarSclause].ant.contains(r.atom)
+          ) {
+            val non2Ant = r.right.asInstanceOf[nonVarSclause].ant.filter(f => f != r.atom)
+            val non1Succ = r.left.asInstanceOf[nonVarSclause].succ.filter(f => f != r.atom)
+            return nonVarSclause(r.left.asInstanceOf[nonVarSclause].ant ::: non2Ant, r.right.asInstanceOf[nonVarSclause].succ ::: non1Succ)
+          }
+          else
+            return {
+              val left = apply(r.left, trsSclause, trsSterms, subst, mapX)
+              val right = apply(r.right, trsSclause, trsSterms, subst, mapX)
+              apply(rTerm(left, right, r.atom), trsSclause, trsSterms, subst, mapX)
+            }
+        }
+        case c: clauseSchema => deComposeSClause(replace(unfoldSchemaClause(c, trsSclause, trsSterms, subst), mapX))
+        case _ => {
+          println("\n case _ => in resolutionDeduction 2 : "+t)
+          t
+        }
+      }
+    }
+  }
 
-  //ρ(k+1, x, X) , where X is sClauseVar ; x is fo2Var
-  class ResolutionSchema(val name:String,  val args: List[Object]) extends sResolutionTerm {
+
+  //ρ(k+1, x, X) , where X is a sClauseVar ; x is a fo2Var
+  class ResolutionProofSchema(val name:String,  val args: List[Object]) extends sResolutionTerm {
     override def toString() = name+"("+printSchemaProof.formulaToString(args.head.asInstanceOf[HOLExpression])+ {args.tail.foldRight("")((x, rez) => ", "+x.toString+rez)} + ")"
   }
-  object ResolutionSchema {
-    def apply(name:String,  args: List[Object]) : ResolutionSchema = {
-      new ResolutionSchema(name, args)
+  object ResolutionProofSchema {
+    def apply(name:String,  args: List[Object]) : ResolutionProofSchema = {
+      new ResolutionProofSchema(name, args)
     } 
     def unapply(rs: sResolutionTerm) = rs match {
-      case r:ResolutionSchema => Some((r.name, r.args))
+      case r:ResolutionProofSchema => Some((r.name, r.args))
       case _ => None
     }
   }
 
 
-  class dbTRSresolutionSchemaTerm(var map: scala.collection.mutable.Map[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]]) {
+  class dbTRSresolutionSchema(var map: Map[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]]) {
     def add(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]): Unit = {
       val newMap = map + Pair(term, Tuple2(base, step))
       map = newMap
     }
   }
   //the t.r.s. for the clause schema
-  object dbTRSresolutionSchemaTerm {
-    def apply(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]): dbTRSresolutionSchemaTerm = {
-      val m = scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]] + Pair(term, Tuple2(base, step))
-      new dbTRSresolutionSchemaTerm(m)
+  object dbTRSresolutionSchema {
+    def apply(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]): dbTRSresolutionSchema = {
+      val m = Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]] + Pair(term, Tuple2(base, step))
+      new dbTRSresolutionSchema(m)
     }
-    def apply() = new dbTRSresolutionSchemaTerm(scala.collection.mutable.Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]])
+    def apply() = new dbTRSresolutionSchema( Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]])
   }
 
 
-  object RewriteClauseSetSchemaInClauseSchemaTerm {
+  object RewriteClauseSchemaInSclauseTerm {
     def apply(cst: sClauseTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]) : sClauseTerm = {
       cst match {
         case c:clauseSchema => {
-          normalizeSClause(replace(unfoldSchemaClause(c, trsSclause, trsSterms, subst), mapX))
+          deComposeSClause(replace(unfoldSchemaClause(c, trsSclause, trsSterms, subst), mapX))
         }
         case t: sclTimes => sclTimes(apply(t.left, trsSclause, trsSterms, subst, mapX), apply(t.right, trsSclause, trsSterms, subst, mapX))
         case t: sclPlus => sclPlus(apply(t.left, trsSclause, trsSterms, subst, mapX), apply(t.right, trsSclause, trsSterms, subst, mapX))
@@ -708,3 +744,4 @@ import at.logic.language.lambda.types._
        (s1 ++ s2).foldLeft(Set.empty[nonVarSclause])((rez, el) => rez + el)
     }
   }
+

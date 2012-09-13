@@ -49,7 +49,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val rez = clause_schema(two, map)
       println("\nclause_schema = "+rez)
       println("\n\n\n")
-//      println(normalizeSClause(sClauseComposition(rez, X)))
+//      println(deComposeSClause(sClauseComposition(rez, X)))
 //      println(Pred(two))
       println("\n\n\n\n")
       ok
@@ -114,7 +114,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       println(clause3)
       val rwclause3 = unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst)
       println("\n\n\nunfolding : \n\n"+rwclause3)
-      println("\n\n\noptimizing : \n\n"+normalizeSClause(rwclause3))
+      println("\n\n\noptimizing : \n\n"+deComposeSClause(rwclause3))
 
       // --- trs sigma' ---
       val a = HOLVar(new VariableStringSymbol("a"), Ti())
@@ -158,11 +158,11 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val rewrite_base1 = a
       val rewrite_step1 = HOLApp(g, st1)
       val P = HOLConst(new ConstantStringSymbol("P"), ->(Ti(), To()))
-      val d1base = clauseSchemaTerm("d1", zero::x::X::Nil)
-      val d1step = clauseSchemaTerm("d1", Succ(k)::x::X::Nil)
-      val d2base = clauseSchemaTerm("d2", zero::x::X::Nil)
-      val d2step = clauseSchemaTerm("d2", Succ(k)::x::X::Nil)
-      val d2k = clauseSchemaTerm("d2", k::x::X::Nil)
+      val d1base = clauseSetTerm("d1", zero::x::X::Nil)
+      val d1step = clauseSetTerm("d1", Succ(k)::x::X::Nil)
+      val d2base = clauseSetTerm("d2", zero::x::X::Nil)
+      val d2step = clauseSetTerm("d2", Succ(k)::x::X::Nil)
+      val d2k = clauseSetTerm("d2", k::x::X::Nil)
       val cstep = clauseSchema("c", Succ(k)::x::X::Nil)
       val cbase = clauseSchema("c", zero::x::X::Nil)
       val Pa = Atom(P, a::Nil)
@@ -183,7 +183,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val clauseSchRec: sClause = sClauseComposition(c1, nonVarSclause(Nil, Psigmaskxsk::Nil))
       val trsClauseSch = dbTRSclauseSchema("c", Pair(c0, clauseSchBase), Pair(ck, clauseSchRec))
       val trsSigma = dbTRSsTermN("σ'", Pair(sigma1_base, rewrite_base1), Pair(sigma1_rec, rewrite_step1))
-      val trsSCLterm = dbTRSclauseSchemaTerm("d1", pair1base, pair1step)
+      val trsSCLterm = dbTRSclauseSetTerm("d1", pair1base, pair1step)
       trsSCLterm.add("d2", pair2base, pair2step)
 
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two)
@@ -192,30 +192,252 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val d1step_ground = applySubToSclauseOrSclauseTerm(subst, d1step)
       println(d1step_ground)
 
-      val unfold_d1step_ground = unfoldSchemaClauseTerm(d1step_ground, trsSCLterm, trsClauseSch, trsSigma, subst, false, false)
+      val unfold_d1step_ground = unfoldClauseSetTerm(d1step_ground, trsSCLterm, trsClauseSch, trsSigma, subst, false, false)
       println(unfold_d1step_ground)
       val mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
 
-      val rwd1step_ground = RewriteClauseSetSchemaInClauseSchemaTerm(unfold_d1step_ground, trsClauseSch, trsSigma, subst, mapX)
+      val rwd1step_ground = RewriteClauseSchemaInSclauseTerm(unfold_d1step_ground, trsClauseSch, trsSigma, subst, mapX)
       println("rwd1step_ground = "+rwd1step_ground)
+
       val rwd1step_ground_toSet = clauseSetTermToSet(rwd1step_ground)
-      println("clause set = {\n"+rwd1step_ground_toSet.head);rwd1step_ground_toSet.tail.foreach(x => println(" ; "+x));println("}")
+      println("\n\nclause set : \n\n{\n"+rwd1step_ground_toSet.head);rwd1step_ground_toSet.tail.foreach(x => println(" ; "+unfoldSchemaClause(x,trsClauseSch, trsSigma, subst)));println("}")
 //      println(trsSigma.map)
 //      println(trsClauseSch.map)
+      println("\n\n")
+
       println(trsSCLterm.map)
 
       println("\n\n")
-      val rhoBase = ResolutionSchema("ρ", zero::x::X::Nil)
-      val rhoStep = ResolutionSchema("ρ", Succ(k)::x::X::Nil)
-      val rwBase = ResolutionTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
-      val rwStep = ResolutionTerm(ResolutionSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
-      val trsRes = dbTRSresolutionSchemaTerm("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      val rhoBase = ResolutionProofSchema("ρ", zero::x::X::Nil)
+      val rhoStep = ResolutionProofSchema("ρ", Succ(k)::x::X::Nil)
+      val rwBase = rTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
+      val rwStep = rTerm(ResolutionProofSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
+      val trsRes = dbTRSresolutionSchema("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
       println("\ntrsRes = "+trsRes.map )
       println("\n\n")
-
       ok
-
     }
+
+    "check 1" in {
+      println(Console.RED+"\n\n       check1\n\n"+Console.RESET)
+      val k = IntVar(new VariableStringSymbol("k"))
+      val l = IntVar(new VariableStringSymbol("l"))
+      val n1 = Succ(k); val n2 = Succ(n1); val n3 = Succ(n2)
+
+      val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
+      val four = Succ(three);val five = Succ(four); val six = Succ(Succ(four));val seven = Succ(Succ(five));       val A0 = IndexedPredicate(new ConstantStringSymbol("A"), IntZero())
+
+      val Pk1 = IndexedPredicate(new ConstantStringSymbol("P"), Succ(k))
+      val X = sClauseVar("X")
+      val x = fo2Var(new VariableStringSymbol("x"))
+      val P = HOLConst(new ConstantStringSymbol("P"), ->(Ti(), To()))
+      val g = HOLVar(new VariableStringSymbol("g"), ->(Ti(),Ti()))
+      val sigma0x0 = sTermN("σ", zero::x::zero::Nil)
+      val sigmaskxsk = sTermN("σ", Succ(k)::x::Succ(k)::Nil)
+      val Psigma0x0 = Atom(P, sigma0x0::Nil)
+      val Psigmaskxsk = Atom(P, sigmaskxsk::Nil)
+
+      // --- trs sigma ---
+      val sigma_base = sTermN("σ", zero::x::l::Nil)
+      val sigma_rec = sTermN("σ", Succ(k)::x::l::Nil)
+      val st = sTermN("σ", k::x::l::Nil)
+      val rewrite_base = indexedFOVar(new VariableStringSymbol("x"), l)
+      val rewrite_step = HOLApp(g, st)
+      var trsSigma = dbTRSsTermN("σ", Pair(sigma_base, rewrite_base), Pair(sigma_rec, rewrite_step))
+
+      // --- trs clause schema ---
+      val c1 = clauseSchema("c", k::x::X::Nil)
+      val ck = clauseSchema("c", Succ(k)::x::X::Nil)
+      val c0 = clauseSchema("c", zero::x::X::Nil)
+      val clauseSchBase: sClause = sClauseComposition(X, nonVarSclause(Nil, Psigma0x0::Nil))
+      val clauseSchRec: sClause = sClauseComposition(c1, nonVarSclause(Nil, Psigmaskxsk::Nil))
+      val trsClauseSch = dbTRSclauseSchema("c", Pair(c0, clauseSchBase), Pair(ck, clauseSchRec))
+      // ----------
+
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two) + Pair(l.asInstanceOf[Var], three)
+      val subst = new SchemaSubstitution3(map)
+
+      val sig = subst(trsSigma.map.get("σ").get._2._1)
+      //      println("sig = "+sig)
+      val sigma3 = unfoldSTermN(sig, trsSigma)
+      //      println("\n\nsigma3 = "+sigma3)
+
+      println(Console.RED+"\nrewriting systems :\n"+Console.RESET)
+
+      val clause3 = applySubToSclauseOrSclauseTerm(subst, trsClauseSch.map.get("c").get._2._1).asInstanceOf[sClause]
+      println("\n\nclause schema for instance "+Console.RED+printSchemaProof.formulaToString(map.get(k).get)+Console.RESET+" :\n" )
+      println(clause3)
+      val rwclause3 = unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst)
+      println("\n\n\nunfolding : \n\n"+rwclause3)
+      println("\n\n\noptimizing : \n\n"+deComposeSClause(rwclause3))
+
+      println("\n\n")
+      ok
+    }
+
+    "check 2" in {
+      println(Console.RED+"\n\n       check 2\n\n"+Console.RESET)
+      val l = IntVar(new VariableStringSymbol("l"))
+      val k = IntVar(new VariableStringSymbol("k"))
+      val X = sClauseVar("X")
+      val g = HOLVar(new VariableStringSymbol("g"), ->(Ti(),Ti()))
+      val x = fo2Var(new VariableStringSymbol("x"))
+      val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
+      val a = HOLVar(new VariableStringSymbol("a"), Ti())
+      val sigma1_base = sTermN("σ'", zero::Nil)
+      val sigma1_rec = sTermN("σ'", Succ(k)::Nil)
+      val st1 = sTermN("σ'", k::Nil)
+
+      val rewrite_base1 = a
+      val rewrite_step1 = HOLApp(g, st1)
+      val P = HOLConst(new ConstantStringSymbol("P"), ->(Ti(), To()))
+      val d1base = clauseSetTerm("d1", zero::x::X::Nil)
+      val d1step = clauseSetTerm("d1", Succ(k)::x::X::Nil)
+      val d2base = clauseSetTerm("d2", zero::x::X::Nil)
+      val d2step = clauseSetTerm("d2", Succ(k)::x::X::Nil)
+      val d2k = clauseSetTerm("d2", k::x::X::Nil)
+      val cstep = clauseSchema("c", Succ(k)::x::X::Nil)
+      val cbase = clauseSchema("c", zero::x::X::Nil)
+      val Pa = Atom(P, a::Nil)
+      val Psig1 = Atom(P, sigma1_rec::Nil)
+      val xi = sclTermVar("ξ")
+      val pair1base = Pair(d1base, sclPlus(d2base, xi))
+      val pair1step = Pair(d1step, sclPlus(d2step, cstep))
+      val pair2base = Pair(d2base, nonVarSclause(Pa::Nil, Nil))
+      val pair2step = Pair(d2step, sclPlus(d2k, nonVarSclause(Psig1::Nil, Nil)))
+      val c1 = clauseSchema("c", k::x::X::Nil)
+      val ck = clauseSchema("c", Succ(k)::x::X::Nil)
+      val c0 = clauseSchema("c", zero::x::X::Nil)
+      val sigma0x0 = sTermN("σ", zero::x::zero::Nil)
+      val sigmaskxsk = sTermN("σ", Succ(k)::x::Succ(k)::Nil)
+      val Psigma0x0 = Atom(P, sigma0x0::Nil)
+      val Psigmaskxsk = Atom(P, sigmaskxsk::Nil)
+      val clauseSchBase: sClause = sClauseComposition(X, nonVarSclause(Nil, Psigma0x0::Nil))
+      val clauseSchRec: sClause = sClauseComposition(c1, nonVarSclause(Nil, Psigmaskxsk::Nil))
+      val trsClauseSch = dbTRSclauseSchema("c", Pair(c0, clauseSchBase), Pair(ck, clauseSchRec))
+//      val trsSigma = dbTRSsTermN("σ'", Pair(sigma1_base, rewrite_base1), Pair(sigma1_rec, rewrite_step1))
+      val trsSCLterm = dbTRSclauseSetTerm("d1", pair1base, pair1step)
+      val sigma_base = sTermN("σ", zero::x::l::Nil)
+      val sigma_rec = sTermN("σ", Succ(k)::x::l::Nil)
+      val st = sTermN("σ", k::x::l::Nil)
+      val rewrite_base = indexedFOVar(new VariableStringSymbol("x"), l)
+      val rewrite_step = HOLApp(g, st)
+      var trsSigma = dbTRSsTermN("σ", Pair(sigma_base, rewrite_base), Pair(sigma_rec, rewrite_step))
+
+
+      trsSCLterm.add("d2", pair2base, pair2step)
+
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two) + Pair(l.asInstanceOf[Var], three)
+      val subst = new SchemaSubstitution3(map)
+
+      val clause3 = applySubToSclauseOrSclauseTerm(subst, trsClauseSch.map.get("c").get._2._1).asInstanceOf[sClause]
+      println("\n\nclause schema for instance "+Console.RED+printSchemaProof.formulaToString(map.get(k).get)+Console.RESET+" :\n" )
+      println(clause3)
+      val rwclause3 = unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst)
+      println("\n\n\nunfolding : \n\n"+rwclause3)
+      println("\n\n\noptimizing : \n\n"+deComposeSClause(rwclause3))
+
+//
+//      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two)
+//      val subst = new SchemaSubstitution3(map)
+//      println("\nd1step = "+d1step)
+//      val d1step_ground = applySubToSclauseOrSclauseTerm(subst, d1step)
+//      println(d1step_ground)
+//
+//      val unfold_d1step_ground = unfoldSchemaClauseTerm(d1step_ground, trsSCLterm, trsClauseSch, trsSigma, subst, false, false)
+//      println(unfold_d1step_ground)
+//      val mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
+//
+//      val rwd1step_ground = RewriteClauseSetSchemaInClauseSchemaTerm(unfold_d1step_ground, trsClauseSch, trsSigma, subst, mapX)
+//      println("rwd1step_ground = "+rwd1step_ground)
+//
+//      val rwd1step_ground_toSet = clauseSetTermToSet(rwd1step_ground)
+//      println("\n\nclause set : \n\n{\n"+rwd1step_ground_toSet.head);rwd1step_ground_toSet.tail.foreach(x => println(" ; "+unfoldSchemaClause(x,trsClauseSch, trsSigma, subst)));println("}")
+
+      println("\n\n")
+      ok
+    }
+
+    "check resolution deduction" in {
+      println(Console.RED+"\n\n       check resolution deduction\n\n"+Console.RESET)
+      val l = IntVar(new VariableStringSymbol("l"))
+      val k = IntVar(new VariableStringSymbol("k"))
+      val X = sClauseVar("X")
+      val g = HOLVar(new VariableStringSymbol("g"), ->(Ti(),Ti()))
+      val x = fo2Var(new VariableStringSymbol("x"))
+      val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
+      val a = HOLVar(new VariableStringSymbol("a"), Ti())
+      val sigma1_base = sTermN("σ'", zero::Nil)
+      val sigma1_rec = sTermN("σ'", Succ(k)::Nil)
+      val st1 = sTermN("σ'", k::Nil)
+
+      val rewrite_base1 = a
+      val rewrite_step1 = HOLApp(g, st1)
+      val P = HOLConst(new ConstantStringSymbol("P"), ->(Ti(), To()))
+      val c = HOLConst(new ConstantStringSymbol("c"), Ti())
+      val b = HOLConst(new ConstantStringSymbol("b"), Ti())
+      val Pc = HOLApp(P, c).asInstanceOf[HOLFormula]
+      val Pa = HOLApp(P, a).asInstanceOf[HOLFormula]
+      val Pb = HOLApp(P, b).asInstanceOf[HOLFormula]
+      val Px0 = HOLApp(P, indexedFOVar(new VariableStringSymbol("x"), zero)).asInstanceOf[HOLFormula]
+      val Px0copy = HOLApp(P, indexedFOVar(new VariableStringSymbol("x"), zero)).asInstanceOf[HOLFormula]
+//      print("Px0 == Px0copy  ->  ");println(Px0 == Px0copy)
+      val Pgx1 = HOLApp(P, HOLApp(g, indexedFOVar(new VariableStringSymbol("x"), one))).asInstanceOf[HOLFormula]
+      val r1 = nonVarSclause(Px0::Pgx1::Nil, Pb::Nil)
+      val r2 = nonVarSclause(Pb::Nil, Pc::Nil)
+      val sigma_base = sTermN("σ", zero::x::l::Nil)
+      val sigma_rec = sTermN("σ", Succ(k)::x::l::Nil)
+      val st = sTermN("σ", k::x::l::Nil)
+      val rewrite_base = indexedFOVar(new VariableStringSymbol("x"), l)
+      val rewrite_step = HOLApp(g, st)
+      var trsSigma = dbTRSsTermN("σ", Pair(sigma_base, rewrite_base), Pair(sigma_rec, rewrite_step))
+
+      trsSigma = trsSigma.add("σ'", Pair(sigma1_base, rewrite_base1), Pair(sigma1_rec, rewrite_step1))
+      val c1 = clauseSchema("c", k::x::X::Nil)
+      val ck = clauseSchema("c", Succ(k)::x::X::Nil)
+      val c0 = clauseSchema("c", zero::x::X::Nil)
+      val sigma0x0 = sTermN("σ", zero::x::zero::Nil)
+      val sigmaskxsk = sTermN("σ", Succ(k)::x::Succ(k)::Nil)
+      val Psigma0x0 = Atom(P, sigma0x0::Nil)
+      val Psigmaskxsk = Atom(P, sigmaskxsk::Nil)
+      val clauseSchBase: sClause = sClauseComposition(X, nonVarSclause(Nil, Psigma0x0::Nil))
+      val clauseSchRec: sClause = sClauseComposition(c1, nonVarSclause(Nil, Psigmaskxsk::Nil))
+      val trsClauseSch = dbTRSclauseSchema("c", Pair(c0, clauseSchBase), Pair(ck, clauseSchRec))
+
+
+      println("\n\n")
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two) + Pair(l.asInstanceOf[Var], three)
+      val subst = new SchemaSubstitution3(map)
+
+      val sig1 = subst(trsSigma.map.get("σ'").get._2._1)
+      println("\n\nsig1 = "+sig1)
+      val sigma13 = unfoldSTermN(sig1, trsSigma)
+      println("\n\nsigma13 = "+sigma13)
+      val f = HOLApp(P, sig1).asInstanceOf[HOLFormula]
+      val Psig1 = unfoldGroundAtom(f, trsSigma, subst)
+      println("\n\nPsig1 = "+Psig1)
+      println("\n\n")
+
+      val mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
+//      val mapFO2Var = Map[HOLVar, HOLExpression]() + Pair(x, HOLAbs(y, ))
+      val clause3 = applySubToSclauseOrSclauseTerm(subst, trsClauseSch.map.get("c").get._2._1).asInstanceOf[sClause]
+      val de = deComposeSClause(unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst))
+      println("deComposeSClause = "+de)
+      println("deComposeSClause2 = "+deComposeSClause(de))
+
+
+//      val r = rTerm(sClauseComposition(nonVarSclause(Psig1::Nil, Pc::Nil), nonVarSclause(Nil, Pb::Nil))  , rTerm(rTerm(r1, r2, Pb), nonVarSclause(Pc::Nil, Nil), Pc), Pc)
+      val r = rTerm( clause3 , rTerm(rTerm(r1, r2, Pb), nonVarSclause(Pc::Nil, Nil), Pc), Px0copy)
+      println("r = "+r)
+      println("\n\n")
+      println("resDeduction(r) = "+resolutionDeduction(r, trsClauseSch, trsSigma, subst, mapX))
+      println("\n\n")
+
+
+//      resolutionDeduction(r) must beEqualTo (nonVarSclause(Pa::Nil, Pb::Nil))
+                      ok
+    }
+
   }
 }
 
