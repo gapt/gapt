@@ -18,12 +18,20 @@ import java.awt.event.MouseEvent
 class DrawExpansionTree(val expansionTree: Sequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
-  private val width = toolkit.getScreenSize.width - 150
-  private val height = toolkit.getScreenSize.height - 150
-  preferredSize = new Dimension(width, height)
+  //private val width = toolkit.getScreenSize.width - 150
+  //private val height = toolkit.getScreenSize.height - 150
+  preferredSize = calculateOptimalSize
   dividerLocation = preferredSize.width / 2
   leftComponent = new SplitedExpansionTree(expansionTree.antecedent, "Negative content", ft)
   rightComponent = new SplitedExpansionTree(expansionTree.succedent, "Positive content", ft)
+
+  def calculateOptimalSize = {
+    val width = Main.top.size.width
+    val height = Main.top.size.height
+    if (width > 100 && height > 200)
+      new Dimension(Main.top.size.width - 70, Main.top.size.height - 150)
+    else new Dimension(width, height)
+  }
 }
 
 class SplitedExpansionTree(val formulas: Seq[FormulaOccurrence], val label: String, private val ft: Font) extends BoxPanel(Orientation.Vertical) {
@@ -41,7 +49,7 @@ class SplitedExpansionTree(val formulas: Seq[FormulaOccurrence], val label: Stri
         val lbl = DrawSequent.formulaToLabel(fo.formula, ft)
         lbl.border = Swing.EmptyBorder(10)
         lbl.reactions += {
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(this,e.point.x, e.point.y)
+          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(lbl, e.point.x, e.point.y)
         }
         contents += lbl
       })
