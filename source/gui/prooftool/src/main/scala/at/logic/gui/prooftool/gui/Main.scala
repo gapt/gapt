@@ -44,11 +44,20 @@ object Main extends SimpleSwingApplication {
   }
 
   def showFrame {
-    val t = top
-    t.pack
-    t.location = new Point(100,50)
-    t.size = new Dimension(700,500)
-    t.visible = true
+    top.pack
+    top.location = new Point(100,50)
+    top.size = new Dimension(700,500)
+    top.visible = true
+  }
+
+  lazy val top = new MainFrame {
+    title = "ProofTool"
+    menuBar = mBar
+    contents = new BorderPanel {
+      // layout(toolbar) = Position.North
+      layout(body) = Position.Center
+      // layout(new ProgressBar { indeterminate = true }) = Position.South
+    }
   }
 
   // Used for displaying things directly from Scala shell
@@ -234,16 +243,6 @@ object Main extends SimpleSwingApplication {
         case e: Throwable => errorMessage(getExceptionString(e))
     } finally {
       body.cursor = java.awt.Cursor.getDefaultCursor
-    }
-  }
-
-  def top = new MainFrame {
-    title = "ProofTool"
-    menuBar = mBar
-    contents = new BorderPanel {
-     // layout(toolbar) = Position.North
-      layout(body) = Position.Center
-     // layout(new ProgressBar { indeterminate = true }) = Position.South
     }
   }
 

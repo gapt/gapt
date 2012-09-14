@@ -103,6 +103,7 @@ object DrawSequent {
             editable = false
             border = Swing.EmptyBorder(7)
             tooltip = "Select text and right-click to copy."
+            font = ft.deriveFont(Font.PLAIN, 14)
             listenTo(mouse.clicks)
             reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => this.copy()
