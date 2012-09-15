@@ -684,8 +684,8 @@ object loadProofDB {
       //      va
       // l varphi = applySchemaSubstitution2("\\tau",1, db)
       val sigma = applySchemaSubstitution2("\\sigma",i, db)
-      Main.display("sigma", sigma);
-      while(true){}
+//      Main.display("sigma", sigma);
+//      while(true){}
     }
   }
   
