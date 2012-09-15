@@ -158,7 +158,8 @@ class sFOparserTest extends SpecificationWithJUnit {
       //          println("\n\np = "+  p.root.toString())
       //          p.root.toString must beEqualTo ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
       //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple.lks"))
+//      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple.lks"))
+      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
 
       //      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
       //      val map1 = ParseQMON.parseProof(s1)
@@ -184,7 +185,23 @@ class sFOparserTest extends SpecificationWithJUnit {
 
       //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
 
-
+      def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
+      def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
+      def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
+      val k = IntVar(new VariableStringSymbol("k"))
+      val x = foVar("x")//hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
+      val base = x
+      val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val db = dbTRS(g, base, step)
+      val sigma = applySchemaSubstitution2("\\sigma",2, db)
+      println("\n\n")
+//      val a = foVar("a")
+//      val t = sTerm(g, Succ(IntZero()), a::Nil)
+//      println("\n\nunfold sTerm = "+unfoldSTerm(t, db))
+//      printSchemaProof(sigma)
+      println("\n\n"+printSchemaProof.sequentToString(sigma.root))
+      println("\n\nremoving ↠ rules")
+      printSchemaProof(LKrwToLK(sigma, db))
 
       Success()
 

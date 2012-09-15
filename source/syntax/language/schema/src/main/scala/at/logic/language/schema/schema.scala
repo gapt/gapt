@@ -433,6 +433,10 @@ class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map
 
 class indexedFOVar(override val name: VariableStringSymbol, val index: IntegerTerm) extends HOLVar(name, Ti(), None) {
   override def toString = name.toString+"("+index+")"+":"+exptype.toString
+  override def equals(a: Any): Boolean = a match {
+    case v:indexedFOVar if v.name.toString() == this.name.toString() && v.index == this.index => true
+    case _ => false
+  }
 }
 
 object indexedFOVar {
@@ -445,8 +449,12 @@ object indexedFOVar {
   }
 }
 
-class foVar(name: VariableStringSymbol) extends HOLVar(name, Ti(), None)
-
+class foVar(name: VariableStringSymbol) extends HOLVar(name, Ti(), None) {
+  override def equals(a: Any): Boolean = a match {
+    case v:foVar if v.name.toString() == this.name.toString() => true
+    case _ => false
+  }
+}
 object foVar{
   def apply(name: String) = (new foVar(new VariableStringSymbol(name))).asInstanceOf[HOLVar]
   def unapply(t: HOLExpression) = t match {
@@ -499,7 +507,7 @@ class SchemaSubstitution2[T <: HOLExpression](val map: scala.collection.immutabl
       }
       case ifo: indexedFOVar => indexedFOVar(ifo.name, apply(ifo.index.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
       case st @ sTerm(name, i, args) => {
-        sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], args::Nil).asInstanceOf[T]
+        sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(args.asInstanceOf[T])::Nil).asInstanceOf[T]
       }
       case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
 

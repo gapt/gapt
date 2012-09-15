@@ -980,7 +980,7 @@ object OrEquivalenceRule1 {
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the trsArrowRightRule with the given formula")
       }
     }
-    def unapply(proof: LKProof) = if (proof.rule == trsArrowRightRule) {
+    def unapply(proof: LKProof) = if (proof.rule == trsArrowRuleType) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
