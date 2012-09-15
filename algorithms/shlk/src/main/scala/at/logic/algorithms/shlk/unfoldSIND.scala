@@ -25,10 +25,6 @@ import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.language.hol.{HOLFormula}
 import scala.Predef._
 import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules.ForallLeftRule._
-import at.logic.calculi.lk.quantificationRules.ForallRightRule._
-import at.logic.calculi.lk.propositionalRules.ImpLeftRule._
-import at.logic.calculi.lk.propositionalRules.ImpRightRule._
 
 //import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
@@ -227,7 +223,7 @@ object applySchemaSubstitution2 {
 
   def apply( proof: LKProof, subst: SchemaSubstitution1[HOLExpression] , cnt: Int, trs: dbTRS) : LKProof = {
 //    println("\n"+proof.rule)
-    println("cnt = "+cnt)
+//    println("cnt = "+cnt)
 
     proof match {
       case SchemaProofLinkRule( seq, link, ind::_ ) => {
@@ -301,20 +297,20 @@ object applySchemaSubstitution2 {
       }
 
       case Axiom(_) => {
-        println("\n"+proof.rule)
+//        println("\n"+proof.rule)
         val res = handleRule( proof, Nil, subst, trs )
 //        println("\nafter : "+res.rule)
         res
       }
       case UnaryLKProof(_, p, _, _, _) => {
-        println("\n"+proof.rule)
+//        println("\n"+proof.rule)
         val res = handleRule( proof, apply( p, subst, cnt, trs )::Nil, subst, trs )
 //        println("\nafter : "+res.rule)
         res
       }
 
       case OrLeftRule(p1, p2, s, a1, a2, m) => {
-        println("\n"+proof.rule)
+//        println("\n"+proof.rule)
         val pr1 = apply( p1, subst, cnt, trs )
         val pr2 = apply( p2, subst, cnt, trs )
    //     println("\n"+proof.rule)
@@ -327,7 +323,7 @@ object applySchemaSubstitution2 {
       }
 
       case BinaryLKProof(_, p1, p2, _, _, _, _) => {
-        println("\n"+proof.rule)
+//        println("\n"+proof.rule)
         val res = handleRule( proof, apply( p1, subst, cnt, trs )::apply( p2, subst, cnt, trs )::Nil, subst, trs )
 //        println("\nafter : "+res.rule)
         res
@@ -506,4 +502,141 @@ object CloneLKProof2 {
       }
       case _ => { println("ERROR in CloneLKProof2 : missing rule!");throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n") }
     }}
+}
+
+
+
+
+
+
+//removes the arrow rules and unfolds the sTerms
+//the proof does not contain proof-links
+object LKrwToLK {
+  def apply(p: LKProof, trs: dbTRS): LKProof = {
+    println("\nLKrwToLK Rule : "+p.rule)
+    println(printSchemaProof.sequentToString(p.root))
+
+    p match {
+      case Axiom(seq) => Axiom(seq.antecedent.map(f => unfoldSFormula(f.formula, trs)), seq.succedent.map(f => unfoldSFormula(f.formula, trs)))
+      case trsArrowLeftRule(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        apply(p, trs)
+      }
+      case trsArrowRightRule(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        apply(p, trs)
+      }
+      case WeakeningLeftRule(p, _, m) => {
+        val new_p = apply(p, trs)
+        implicit val factory = defaultFormulaOccurrenceFactory
+        WeakeningLeftRule( new_p, unfoldSFormula(m.formula,trs) )
+      }
+
+      case WeakeningRightRule(p, _, m) => {
+        val new_p = apply(p, trs)
+        implicit val factory = defaultFormulaOccurrenceFactory
+        WeakeningRightRule( new_p, unfoldSFormula(m.formula, trs) )
+      }
+
+      case CutRule( p1, p2, _, a1, a2 ) => {
+        val new_p1 = apply(p1, trs)
+        val new_p2 = apply(p2, trs)
+        CutRule(new_p1, new_p2, unfoldSFormula(a2.formula, trs))
+      }
+
+      case OrLeftRule(p1, p2, _, a1, a2, m) => {
+        val new_p1 = apply(p1, trs)
+        val new_p2 = apply(p2, trs)
+        OrLeftRule(new_p1, new_p2, unfoldSFormula(a1.formula, trs), unfoldSFormula(a2.formula, trs))
+      }
+
+      case AndRightRule(p1, p2, _, a1, a2, m) => {
+        val new_p1 = apply(p1, trs)
+        val new_p2 = apply(p2, trs)
+        AndRightRule(new_p1, new_p2, unfoldSFormula(a1.formula, trs), unfoldSFormula(a2.formula, trs))
+      }
+
+      case NegLeftRule( p, _, a, m ) => {
+        val new_p = apply(p, trs)
+        NegLeftRule( new_p, unfoldSFormula(a.formula, trs))
+      }
+
+      case AndLeft1Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case And(l, right) => right }
+        //      println("AndLeft1Rule : "+printSchemaProof.sequentToString(new_p.root))
+        //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
+        //    println(printSchemaProof.formulaToString(a2))
+        AndLeft1Rule( new_p, unfoldSFormula(a.formula, trs), unfoldSFormula(a2.asInstanceOf[HOLFormula], trs))
+      }
+
+      case AndLeft2Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case And(l, _) => l }
+        //     println("AndLeft2Rule : "+printSchemaProof.sequentToString(new_p.root))
+        //     println("aux : \n"+printSchemaProof.formulaToString(a.formula))
+        //     println(printSchemaProof.formulaToString(a2))
+        AndLeft2Rule( new_p, unfoldSFormula(a2.asInstanceOf[HOLFormula], trs), unfoldSFormula(a.formula, trs) )
+      }
+
+      case OrRight1Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case Or(_, r) => r }
+        //            println("\np or:r1 = "+p.root)
+        //            println("\nnew_p or:r1 = "+new_p.root)
+        //            println("\nor:r1 a = "+a.formula)
+        //            println("\nor:r1 m = "+m.formula)
+        OrRight1Rule( new_p, unfoldSFormula(a.formula, trs), unfoldSFormula(a2.asInstanceOf[HOLFormula], trs))
+      }
+
+      case OrRight2Rule(p, r, a, m) =>  {
+        val new_p = apply(p, trs)
+        val a2 = m.formula  match { case Or(l, _) => l }
+        //            println("\np or:r2 = "+p.root)
+        //            println("\nnew_p or:r2 = "+new_p.root)
+        //          println("\nor:r2 a = "+a.formula)
+        //            println("\nor:r2 m = "+m.formula)
+        OrRight2Rule( new_p, unfoldSFormula(a2.asInstanceOf[HOLFormula], trs), unfoldSFormula(a.formula, trs))
+      }
+
+      case NegRightRule( p, _, a, m ) => {
+        val new_p = apply(p, trs)
+        NegRightRule( new_p, unfoldSFormula(a.formula, trs) )
+      }
+
+      case ContractionLeftRule(p, _, a1, a2, m) => {
+        val new_p = apply(p, trs)
+        ContractionLeftRule( new_p, unfoldSFormula(a1.formula, trs) )
+      }
+
+      case ContractionRightRule(p, _, a1, a2, m) => {
+        val new_p = apply(p, trs)
+        //            println("\nc:r = "+new_p.root)
+        ContractionRightRule( new_p, unfoldSFormula(a1.formula, trs) )
+      }
+//(P(g(1, z(1))) ⊃ P(f(g(1, z(1)))))
+//    (P(f(z(1)))⊃P(f(f(z(1)))))
+//
+//(P(g(1, z)) ⊃ P(f(g(1, z))) != P(f(z))⊃P(f(f(z))))
+      case ForallLeftRule(p, seq, a, m, t) => {
+        val new_parent = apply(p, trs)
+        ForallLeftRule(new_parent, unfoldSFormula(a.formula, trs), unfoldSFormula(m.formula, trs), unfoldSTerm(t, trs))
+      }
+      case ForallRightRule(p, seq, a, m, v) => {
+        val new_parent = apply(p, trs)
+        ForallRightRule(new_parent, unfoldSFormula(a.formula, trs), unfoldSFormula(m.formula, trs), v)
+      }
+
+      case ImpLeftRule(p1, p2, s, a1, a2, m) => {
+        val new_parent1 = apply(p1, trs)
+        val new_parent2 = apply(p2, trs)
+        ImpLeftRule(new_parent1, new_parent2, unfoldSFormula(a1.formula, trs), unfoldSFormula(a2.formula, trs))
+      }
+      case ImpRightRule(p, s, a1, a2, m) => {
+        val new_parent = apply(p, trs)
+        ImpRightRule(new_parent, unfoldSFormula(a1.formula, trs), unfoldSFormula(a2.formula, trs))
+      }
+      case _ => { println("ERROR in LKrwToLK : missing rule! "+p.rule);throw new Exception("ERROR in rewriting: LKrwToLK: missing rule !\n"+p.rule) }
+    }
+  }
 }
