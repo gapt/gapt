@@ -20,8 +20,10 @@ import at.logic.language.lambda.typedLambdaCalculus.{AppN, LambdaExpression, Var
 import at.logic.language.lambda.types.FunctionType._
 import at.logic.language.lambda.types.To._
 import at.logic.language.lambda.types._
+import at.logic.language.hol.Atom._
+import at.logic.language.schema.foTerm._
 
-  abstract class sResolutionTerm {}
+abstract class sResolutionTerm {}
   abstract class sClauseTerm extends sResolutionTerm {}
   abstract class sClause extends sClauseTerm {
     override def toString: String
@@ -45,9 +47,13 @@ import at.logic.language.lambda.types._
   //  X
   class sClauseVar(val name:String) extends sClause {
     override def toString = Console.BOLD+this.name+Console.RESET
+    override def equals(a: Any): Boolean = a match {
+      case v:sClauseVar if this.name == v.name => true
+      case _ => false
+    }
   }
   object sClauseVar {
-    def apply(name:String): sClause = new sClauseVar(name)
+    def apply(name:String): sClauseVar = new sClauseVar(name)
     def unaply(s : sClause) = s match {
       case v:sClauseVar => Some(v.name)
       case _ => None
@@ -233,6 +239,12 @@ import at.logic.language.lambda.types._
   //indexed second-order variable of type: ind->i
   class fo2Var(override val name: VariableStringSymbol) extends HOLVar(name, ->(Tindex(),Ti()), None) {
     override def toString = name.toString+":"+this.exptype.toString
+    override def equals(a: Any): Boolean = {
+      a match {
+        case v:fo2Var if v.name.toString == this.name.toString => true
+        case _ => false
+      }
+    }
   }
   object fo2Var {
     def apply(name: VariableStringSymbol): HOLVar = {
@@ -251,6 +263,7 @@ import at.logic.language.lambda.types._
       val newMap = map + Pair(term, Tuple2(base, step))
       return new dbTRSsTermN(newMap)
     }
+    override def toString() = map.keySet.foldLeft("\n\n")((acc, s) => map.get(s).get._1._1+"  →  "+map.get(s).get._1._2+"\n"+map.get(s).get._2._1+"  →  "+map.get(s).get._2._2+"\n\n"+acc)
   }
   object dbTRSsTermN {
     def apply(term: String, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): dbTRSsTermN = {
@@ -261,7 +274,9 @@ import at.logic.language.lambda.types._
   }
 
   // dbTRS for c(k+1, x, X)clauseSchema
-  class dbTRSclauseSchema(val map: Map[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
+  class dbTRSclauseSchema(val map: Map[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]]) {
+    override def toString() = map.keySet.foldLeft("")((acc, s) => map.get(s).get._1._1+"  →  "+map.get(s).get._1._2+"\n"+map.get(s).get._2._1+"  →  "+map.get(s).get._2._2+acc)
+  }
   object dbTRSclauseSchema {
     def apply(term: String, base: Tuple2[sClause, sClause], step: Tuple2[sClause, sClause]): dbTRSclauseSchema = {
       val m = Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]] + Pair(term, Tuple2(base, step))
@@ -439,15 +454,17 @@ import at.logic.language.lambda.types._
 //        val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), FunctionType( To(), args.map( a => a.exptype ) ))
           Atom(newAtomName, args.map(x => {
 //              println("sub atom x = "+x)
-            apply(x)
+            val rez = apply(x)
+//            println("rez sub atom = "+rez)
+            rez
           }))
         }
 
 //        the indexed variable
         case HOLApp(fo2Var(name), index) if index.exptype == Tindex() => {
 //          println("HOLApp(func, arg) = "+expression)
-//          indexedFOVar(new VariableStringSymbol(func.asInstanceOf[HOLVar].name.toString()), IntZero()).asInstanceOf[HOLExpression]
-          indexedFOVar(new VariableStringSymbol("x"), IntZero()).asInstanceOf[HOLExpression]
+//          indexedFOVar(new VariableStringSymbol("x"), IntZero()).asInstanceOf[HOLExpression]
+          HOLApp(fo2Var(name), apply(index))
         }
         case sTermN(name, i, args) => {
 //          println("sTermN = "+expression)
@@ -569,6 +586,7 @@ import at.logic.language.lambda.types._
       val newMap = map + Pair(term, Tuple2(base, step))
       map = newMap
     }
+    override def toString() = map.keySet.foldLeft("")((acc, s) => map.get(s).get._1._1+"  →  "+map.get(s).get._1._2+"\n"+map.get(s).get._2._1+"  →  "+map.get(s).get._2._2+acc)
   }
   //the t.r.s. for the clause schema
   object dbTRSclauseSetTerm {
@@ -650,6 +668,7 @@ import at.logic.language.lambda.types._
   //grounded rTerm
   object resolutionDeduction {
     def apply(t: sResolutionTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]): sResolutionTerm = {
+      println("resolutionDeduction")
       t match {
         case non:nonVarSclause => non
         case r:rTerm => {
@@ -662,12 +681,13 @@ import at.logic.language.lambda.types._
             val non1Succ = r.left.asInstanceOf[nonVarSclause].succ.filter(f => f != r.atom)
             return nonVarSclause(r.left.asInstanceOf[nonVarSclause].ant ::: non2Ant, r.right.asInstanceOf[nonVarSclause].succ ::: non1Succ)
           }
-          else
-            return {
-              val left = apply(r.left, trsSclause, trsSterms, subst, mapX)
-              val right = apply(r.right, trsSclause, trsSterms, subst, mapX)
-              apply(rTerm(left, right, r.atom), trsSclause, trsSterms, subst, mapX)
-            }
+          else {
+            println("else")
+
+            val left = apply(r.left, trsSclause, trsSterms, subst, mapX)
+            val right = apply(r.right, trsSclause, trsSterms, subst, mapX)
+            apply(rTerm(left, right, r.atom), trsSclause, trsSterms, subst, mapX)
+          }
         }
         case c: clauseSchema => deComposeSClause(replace(unfoldSchemaClause(c, trsSclause, trsSterms, subst), mapX))
         case _ => {
@@ -699,6 +719,7 @@ import at.logic.language.lambda.types._
       val newMap = map + Pair(term, Tuple2(base, step))
       map = newMap
     }
+    override def toString() = map.keySet.foldLeft("")((acc, s) => map.get(s).get._1._1+"  →  "+map.get(s).get._1._2+"\n"+map.get(s).get._2._1+"  →  "+map.get(s).get._2._2+acc)
   }
   //the t.r.s. for the clause schema
   object dbTRSresolutionSchema {
@@ -745,3 +766,170 @@ import at.logic.language.lambda.types._
     }
   }
 
+  //unfolds a resolution term schema
+  object unfoldResolutionProofSchema {
+    def apply(rho: sResolutionTerm, trsResSchema: dbTRSresolutionSchema, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]): sResolutionTerm = {
+      val k = IntVar(new VariableStringSymbol("k"))
+      val l = IntVar(new VariableStringSymbol("l"))
+      val X = sClauseVar("X")
+      println("\n\nrho = "+rho)
+      rho match {
+        case rho1: ResolutionProofSchema if trsResSchema.map.contains(rho1.name) => {
+          if (rho1.args.head == IntZero()) {
+            println("i == 0")
+            val base = trsResSchema.map.get(rho1.name).get._1._2
+            val new_mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], rho1.args.last.asInstanceOf[sClause])
+            val delX = sClauseVarSubstitution(base, new_mapX)
+            val ground = unfoldingAtomsInResTerm(delX, trsSterms, subst)
+            ground
+          }
+          else {
+            val map =
+              if (subst.map.get(k).get.asInstanceOf[IntegerTerm] == IntZero())
+                subst.map
+              else {
+                ((subst.map - k) - l) + Pair(k.asInstanceOf[Var], Pred(subst.map.get(k).get.asInstanceOf[IntegerTerm]))// + Pair(l.asInstanceOf[Var], Pred(subst.map.get(l).get.asInstanceOf[IntegerTerm]))
+              }
+            val step = trsResSchema.map.get(rho1.name).get._2._2
+            var new_subst = new SchemaSubstitution3(map)
+//            println("new_subst = "+new_subst.map)
+            val new_mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], rho1.args.last.asInstanceOf[sClause])
+//            println("new_mapX = "+new_mapX)
+            val rho_new = IntVarSubstitution(step, subst)
+//            println("rho_new = "+rho_new)
+            val delX = sClauseVarSubstitution(rho_new, new_mapX)
+//            println("delX = "+delX)
+
+            apply(delX, trsResSchema, trsSclause, trsSterms, new_subst, new_mapX)
+          }
+        }
+        case r:rTerm => {
+//          println("r = "+r)
+          var left = apply(r.left, trsResSchema, trsSclause, trsSterms, subst, mapX)
+          if (left.isInstanceOf[nonVarSclause]) {
+            left = nonVarSclause(left.asInstanceOf[nonVarSclause].ant.map(f => unfoldGroundAtom(f, trsSterms, subst)) , left.asInstanceOf[nonVarSclause].succ.map(f => unfoldGroundAtom(f, trsSterms, subst)))
+          }
+//          println("left = "+left)
+          var right = apply(r.right, trsResSchema, trsSclause, trsSterms, subst, mapX)
+          if (right.isInstanceOf[nonVarSclause]) {
+            right = nonVarSclause(right.asInstanceOf[nonVarSclause].ant.map(f => unfoldGroundAtom(f, trsSterms, subst)) , right.asInstanceOf[nonVarSclause].succ.map(f => unfoldGroundAtom(f, trsSterms, subst)))
+          }
+//          println("right = "+right)
+          rTerm(left, right, unfoldGroundAtom(r.atom, trsSterms, subst))
+        }
+//        case c:clauseSchema => TODO
+//        case comp:sClauseComposition => TODO
+//        case v:sClauseVar => TODO
+        case _ => rho
+      }
+    }
+  }
+
+
+  object IntVarSubstitution {
+    def apply(r:sResolutionTerm, subst: SchemaSubstitution3): sResolutionTerm = {
+      r match {
+        case rps: ResolutionProofSchema => {
+          ResolutionProofSchema(rps.name, rps.args.map(x => 
+            if (x.isInstanceOf[IntegerTerm]) 
+              subst(x.asInstanceOf[IntegerTerm]) 
+            else
+              if (x.isInstanceOf[nonVarSclause]) {
+                nonVarSclause(x.asInstanceOf[nonVarSclause].ant.map(f => subst(f).asInstanceOf[HOLFormula]), x.asInstanceOf[nonVarSclause].succ.map(f => subst(f).asInstanceOf[HOLFormula]))
+              }
+              else
+                if (x.isInstanceOf[sClauseComposition]) {
+                  sClauseComposition(apply(x.asInstanceOf[sClauseComposition].sclause1, subst).asInstanceOf[sClause], apply(x.asInstanceOf[sClauseComposition].sclause2, subst).asInstanceOf[sClause])
+                }
+                else x))
+        }
+        case t:rTerm => rTerm(apply(t.left, subst), apply(t.right, subst), subst(t.atom).asInstanceOf[HOLFormula])
+        case non:nonVarSclause => nonVarSclause(non.ant.map(f => subst(f).asInstanceOf[HOLFormula]), non.succ.map(f => subst(f).asInstanceOf[HOLFormula]))
+        case c:sClauseComposition => sClauseComposition(apply(c.sclause1, subst).asInstanceOf[sClause], apply(c.sclause2, subst).asInstanceOf[sClause])
+        case _ => r
+      }
+    }
+  }
+
+
+  //substitution for the  sClauseVar X in a resolution term
+  object sClauseVarSubstitution {
+    def apply(rho : sResolutionTerm, mapX: Map[sClauseVar, sClause]) : sResolutionTerm = {
+//      println("sClauseVarSubstitution : "+rho+"    "+mapX)
+      rho match {
+        case x:sClauseVar if mapX.contains(x) => mapX.get(x).get
+        case r:rTerm => {
+          rTerm(apply(r.left, mapX), apply(r.right, mapX), r.atom)
+        }
+        case comp:sClauseComposition => deComposeSClause(sClauseComposition(apply(comp.sclause1, mapX).asInstanceOf[sClause], apply(comp.sclause2, mapX).asInstanceOf[sClause]))
+//        case c:clauseSchema => TODO
+        case rps:ResolutionProofSchema => ResolutionProofSchema(rps.name, rps.args.map(x =>
+          if (x.isInstanceOf[sResolutionTerm]) {
+//            println("x = "+x)
+            sClauseVarSubstitution(x.asInstanceOf[sResolutionTerm], mapX)
+          }
+          else x) )
+        case _ => {
+//          println("case _ => "+rho)
+          rho
+        }
+      }
+    }
+  }
+
+  //substitution for all variables of type ω and unfolding the sTerms
+  //it has to applied after  sClauseVarSubstitution !!!
+  object unfoldingAtomsInResTerm {
+    def apply(rho : sResolutionTerm, trs: dbTRSsTermN, subst: SchemaSubstitution3) : sResolutionTerm = {
+      rho match {
+        case x:sClauseVar => throw new Exception("Res.term "+rho+ "contains X vars !")
+        case non:nonVarSclause => {
+          val ground = nonVarSclause(non.ant.map(f => subst(f).asInstanceOf[HOLFormula]), non.succ.map(f => subst(f).asInstanceOf[HOLFormula]))
+          nonVarSclause(ground.ant.map(f => unfoldGroundAtom(f, trs, subst)), ground.succ.map(f => unfoldGroundAtom(f, trs, subst)))
+        }
+        case r:rTerm => {
+          rTerm(apply(r.left, trs, subst), apply(r.right, trs, subst), unfoldGroundAtom(subst(r.atom).asInstanceOf[HOLFormula], trs, subst))
+        }
+        case comp:sClauseComposition => sClauseComposition(apply(comp.sclause1, trs, subst).asInstanceOf[sClause], apply(comp.sclause2, trs, subst).asInstanceOf[sClause])
+        //        case c:clauseSchema => TODO
+        case _ => rho
+      }
+    }
+  }
+
+
+  // a substitution for the second-order variables of type : ω->ι
+  // it is applied after unfoldingAtomsInResTerm, i.e. after the substitution of all ω and X variables
+  object fo2VarSubstitution {
+    def apply(o: Object, mapfo2: Map[fo2Var, LambdaExpression]): Object = {
+//      println("o = "+o)
+      o match {
+        case r:rTerm => {
+          rTerm(apply(r.left, mapfo2).asInstanceOf[sResolutionTerm], apply(r.right, mapfo2).asInstanceOf[sResolutionTerm], apply(r.atom, mapfo2).asInstanceOf[HOLFormula])
+        }
+        case Atom(name, args) => {
+//                    println("Atom")
+          val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), args.reverse.map(x => x.exptype).foldRight(To().asInstanceOf[TA])((x,t) => ->(x, t)))
+          //        val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), FunctionType( To(), args.map( a => a.exptype ) ))
+          Atom(newAtomName, args.map(x => {
+            val rez = apply(x, mapfo2)
+            rez.asInstanceOf[HOLExpression]
+          }))
+        }
+                                              //&& mapfo2.contains(v.asInstanceOf[fo2Var])
+        case HOLApp(v , index) if index.exptype == Tindex()  => {
+//          println("HOLApp(v , index) = ")
+          HOLApp(mapfo2.get(v.asInstanceOf[fo2Var]).get, index)
+        }
+        case foTerm(v, arg) => {
+          //          println("foTerm")
+          foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression], mapfo2).asInstanceOf[HOLExpression]::Nil).asInstanceOf[HOLExpression]
+        }
+        case non:nonVarSclause => nonVarSclause(non.ant.map(f => apply(f, mapfo2).asInstanceOf[HOLFormula]), non.succ.map(f => apply(f, mapfo2).asInstanceOf[HOLFormula]))
+        case _ => {
+//          println("case _ => " + o +" : "+o.getClass)
+          o
+        }
+      }
+    }
+  }
