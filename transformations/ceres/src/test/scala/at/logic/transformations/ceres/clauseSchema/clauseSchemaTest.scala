@@ -5,7 +5,6 @@ import at.logic.calculi.lk.propositionalRules.{Axiom, NegLeftRule}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.algorithms.shlk._
 import java.io.File.separator
 import scala.io._
@@ -15,6 +14,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
+import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
 
 @RunWith(classOf[JUnitRunner])
 class clauseSchemaTest extends SpecificationWithJUnit {
@@ -371,7 +371,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val sigma1_rec = sTermN("σ'", Succ(k)::Nil)
       val st1 = sTermN("σ'", k::Nil)
 
-      val rewrite_base1 = a
+      val rewrite_base1 = a //indexedFOVar(new VariableStringSymbol("x"), k)
       val rewrite_step1 = HOLApp(g, st1)
       val P = HOLConst(new ConstantStringSymbol("P"), ->(Ti(), To()))
       val c = HOLConst(new ConstantStringSymbol("c"), Ti())
@@ -379,16 +379,19 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val Pc = HOLApp(P, c).asInstanceOf[HOLFormula]
       val Pa = HOLApp(P, a).asInstanceOf[HOLFormula]
       val Pb = HOLApp(P, b).asInstanceOf[HOLFormula]
-      val Px0 = HOLApp(P, indexedFOVar(new VariableStringSymbol("x"), zero)).asInstanceOf[HOLFormula]
-      val Px0copy = HOLApp(P, indexedFOVar(new VariableStringSymbol("x"), zero)).asInstanceOf[HOLFormula]
-//      print("Px0 == Px0copy  ->  ");println(Px0 == Px0copy)
-      val Pgx1 = HOLApp(P, HOLApp(g, indexedFOVar(new VariableStringSymbol("x"), one))).asInstanceOf[HOLFormula]
-      val r1 = nonVarSclause(Px0::Pgx1::Nil, Pb::Nil)
-      val r2 = nonVarSclause(Pb::Nil, Pc::Nil)
+//      val Px0 = HOLApp(P, indexedFOVar(new VariableStringSymbol("x"), zero)).asInstanceOf[HOLFormula]
+//      val Px0copy = HOLApp(P, indexedFOVar(new VariableStringSymbol("x"), zero)).asInstanceOf[HOLFormula]
+//      val Pgx1 = HOLApp(P, HOLApp(g, indexedFOVar(new VariableStringSymbol("x"), one))).asInstanceOf[HOLFormula]
+//      val Px0 = HOLApp(P, HOLApp(x, zero)).asInstanceOf[HOLFormula]
+//      val Px0copy = HOLApp(P, HOLApp(x, zero)).asInstanceOf[HOLFormula]
+//      val Pgx1 = HOLApp(P, HOLApp(g, HOLApp(x, one))).asInstanceOf[HOLFormula]
+//      val r1 = nonVarSclause(Px0::Pgx1::Nil, Pb::Nil)
+//      val r2 = nonVarSclause(Pb::Nil, Pc::Nil)
       val sigma_base = sTermN("σ", zero::x::l::Nil)
       val sigma_rec = sTermN("σ", Succ(k)::x::l::Nil)
       val st = sTermN("σ", k::x::l::Nil)
-      val rewrite_base = indexedFOVar(new VariableStringSymbol("x"), l)
+//      val rewrite_base = indexedFOVar(new VariableStringSymbol("x"), l)
+      val rewrite_base = HOLApp(x, l)
       val rewrite_step = HOLApp(g, st)
       var trsSigma = dbTRSsTermN("σ", Pair(sigma_base, rewrite_base), Pair(sigma_rec, rewrite_step))
 
@@ -419,6 +422,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       println("\n\n")
 
       val mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
+      
 //      val mapFO2Var = Map[HOLVar, HOLExpression]() + Pair(x, HOLAbs(y, ))
       val clause3 = applySubToSclauseOrSclauseTerm(subst, trsClauseSch.map.get("c").get._2._1).asInstanceOf[sClause]
       val de = deComposeSClause(unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst))
@@ -427,17 +431,45 @@ class clauseSchemaTest extends SpecificationWithJUnit {
 
 
 //      val r = rTerm(sClauseComposition(nonVarSclause(Psig1::Nil, Pc::Nil), nonVarSclause(Nil, Pb::Nil))  , rTerm(rTerm(r1, r2, Pb), nonVarSclause(Pc::Nil, Nil), Pc), Pc)
-      val r = rTerm( clause3 , rTerm(rTerm(r1, r2, Pb), nonVarSclause(Pc::Nil, Nil), Pc), Px0copy)
-      println("r = "+r)
-      println("\n\n")
-      println("resDeduction(r) = "+resolutionDeduction(r, trsClauseSch, trsSigma, subst, mapX))
+//      val r = rTerm( clause3 , rTerm(rTerm(r1, r2, Pb), nonVarSclause(Pc::Nil, Nil), Pc), Px0copy)
+//      println("\n\nr = "+r)
+//      println("\n\n")
+//      println("resDeduction(r) = "+resolutionDeduction(r, trsClauseSch, trsSigma, subst, mapX))
+//      println("\n\n")
+
+      val rhoBase = ResolutionProofSchema("ρ", zero::x::X::Nil)
+      val rhoStep = ResolutionProofSchema("ρ", Succ(k)::x::X::Nil)
+      val rwBase = rTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
+      val rwStep = rTerm(ResolutionProofSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
+      val trsRes = dbTRSresolutionSchema("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      println("\ntrsResolutionSchema :\n"+trsRes )
+      val base = trsRes.map.get("ρ").get._1._2
+//      val step = trsRes.map.get("ρ").get._2._1
+      var step = ResolutionProofSchema("ρ", three::x::X::Nil)
+      step = sClauseVarSubstitution(step, mapX).asInstanceOf[ResolutionProofSchema]
+//      println("base = "+base)
+      println("step = "+step)
+//      val rez1 = sClauseVarSubstitution(base, mapX)
+//      val rez1 = sClauseVarSubstitution(step, mapX)
+//      println("\nrez1 = "+rez1)
+      val rez2 = unfoldingAtomsInResTerm(step, trsSigma, subst)
+      println("\nrez2 = "+rez2)
+      val rez3 = unfoldResolutionProofSchema(rez2, trsRes, trsClauseSch, trsSigma, subst, mapX)
+      println("\nrez3 = "+rez3)
+
+      println("trsSigma = \n"+trsSigma)
+
+      val h = HOLAbs(k, sTermN("σ'", k::Nil))
+      val mapfo2 = Map[fo2Var, LambdaExpression]() + Pair(x.asInstanceOf[fo2Var], h)
+
+      val fo2sub = fo2VarSubstitution(rez3, mapfo2)
+      println("fo2sub = "+fo2sub)
       println("\n\n")
 
-
+//     println("Xsubst = "+sClauseVarSubstitution(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X), mapX))
 //      resolutionDeduction(r) must beEqualTo (nonVarSclause(Pa::Nil, Pb::Nil))
                       ok
     }
-
   }
 }
 
