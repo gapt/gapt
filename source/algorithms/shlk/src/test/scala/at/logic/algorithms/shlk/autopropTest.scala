@@ -140,13 +140,15 @@ class autopropTest extends SpecificationWithJUnit {
       val seq13 = FSequent(Pc2::Nil, orPc2Pd2::Nil)
       val seq14 = FSequent(andPc2Pd2::Nil, orPc2Pd2::Nil)
       val seq15 = FSequent(Pc2::impPc2Pd2::imp_andPc2Pd2_Pe2::Nil, Pe2::Nil)
+      val seq16 = FSequent(Pc2::Nil, Pd2::Nil)
 
 
 //      printSchemaProof(Autoprop(seq11))
 //      printSchemaProof(Autoprop(seq12))
 //      printSchemaProof(Autoprop(seq13))
 //      printSchemaProof(Autoprop(seq14))
-//      printSchemaProof(Autoprop(seq15))
+
+      ContinueAutoProp(seq16) must beEqualTo (None)
 
       Success()
     }
