@@ -107,19 +107,21 @@ class sFOparserTest extends SpecificationWithJUnit {
       def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
       def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
       val k = IntVar(new VariableStringSymbol("k"))
-      val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
+      val x = foVar("x")//hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
       val db = dbTRS(g, base, step)
       val varphi = applySchemaSubstitution2("\\sigma",2, db)
-      println("\nvarphi = "+varphi.root)
+//      println("\nvarphi = "+varphi.root)
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
 
     }
 
 
-    "parse correctly the simple.slk example" in {
+    "parse correctly the journal example" in {
+      println(Console.RED+"\n---- applySchemaSubstitution ----\n"+Console.RESET)
+
       val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
       val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
       val ax1  = at.logic.calculi.lk.propositionalRules.Axiom(var3::Nil, var3::Nil)
@@ -159,7 +161,8 @@ class sFOparserTest extends SpecificationWithJUnit {
       //          p.root.toString must beEqualTo ("(i.((¬(A(i)) ∨ A(s(i)))) ⋀ 0)(s(k)), A(0) :- A(s(s(k)))")
       //          val s = Source.fromFile("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/input1.lks").toList.foldLeft("")((ch,res) => ch + res)
 //      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple.lks"))
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
+//      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
+            val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
 
       //      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
       //      val map1 = ParseQMON.parseProof(s1)
@@ -193,15 +196,16 @@ class sFOparserTest extends SpecificationWithJUnit {
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
       val db = dbTRS(g, base, step)
-      val sigma = applySchemaSubstitution2("\\sigma",2, db)
+//      val sigma = applySchemaSubstitution2("\\sigma",2, db)
+      val sigma = applySchemaSubstitution2("\\varphi",3, db)
       println("\n\n")
 //      val a = foVar("a")
 //      val t = sTerm(g, Succ(IntZero()), a::Nil)
 //      println("\n\nunfold sTerm = "+unfoldSTerm(t, db))
 //      printSchemaProof(sigma)
-      println("\n\n"+printSchemaProof.sequentToString(sigma.root))
-      println("\n\nremoving ↠ rules")
-      printSchemaProof(LKrwToLK(sigma, db))
+//      println("\n\n"+printSchemaProof.sequentToString(sigma.root))
+//      println("\n\nremoving ↠ rules")
+//      printSchemaProof(LKrwToLK(sigma, db))
 
       Success()
 

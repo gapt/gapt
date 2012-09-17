@@ -72,11 +72,14 @@ object dbTRS {
 //TODO : needs improvement for the step case
 object unfoldSTerm {
   def apply(t: HOLExpression, trs: dbTRS): HOLExpression = {
+//    println("trs : "+trs.map)
     val k = IntVar(new VariableStringSymbol("k"))
+    val x = foVar("x")
+//    println("t = "+t)
     t match {
       case sTerm(func, i, arg) if trs.map.contains(func.asInstanceOf[HOLConst]) =>
         if (i == IntZero()) {
-          val x = foVar("x")
+
           val base = trs.map.get(func.asInstanceOf[HOLConst]).get._1
           val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg)
           val subst = new SchemaSubstitution2[HOLExpression](new_map)
@@ -85,12 +88,15 @@ object unfoldSTerm {
         else
           if (i == k)
             t
-          else
+          else {
             trs.map.get(func.asInstanceOf[HOLConst]).get._2 match {
               case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg::Nil), trs)::Nil)
             }
+          }
       case sTerm(func, i, arg) => t
-      case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs)::Nil)
+      case foTerm(holvar, arg) => {
+        foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs)::Nil)
+      }
       case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
     }
   }
