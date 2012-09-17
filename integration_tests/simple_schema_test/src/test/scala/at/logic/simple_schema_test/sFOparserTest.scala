@@ -129,7 +129,9 @@ class sFOparserTest extends SpecificationWithJUnit {
 //      val varphi = applySchemaSubstitution2("\\varphi",1, db)
 //      va
 // l varphi = applySchemaSubstitution2("\\tau",1, db)
-      val varphi = applySchemaSubstitution2("\\sigma",5, db)
+//      val varphi = applySchemaSubstitution2("\\sigma",5, db)
+      val varphi = applySchemaSubstitution2("\\sigma",5)
+
 //      Main.display("varphi", varphi);
 //      println("\n\nremoving ↠ rules")
 //      val sigmarw = LKrwToLK(varphi, db)

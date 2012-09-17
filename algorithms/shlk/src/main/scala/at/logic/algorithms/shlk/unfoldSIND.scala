@@ -692,6 +692,10 @@ object applySchemaSubstitution2 {
 
 
   //************************************************************************************
+  def apply( proof_name: String, number: Int ): LKProof = {
+    apply(proof_name, number, new dbTRS(dbTRS.map1))
+  }
+
   def apply( proof_name: String, number: Int, trs: dbTRS ): LKProof = {
     if (number < 1) {
       println("\nproof_name = "+proof_name)
