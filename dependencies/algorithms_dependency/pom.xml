@@ -57,5 +57,10 @@
       <artifactId>cutIntroduction</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>interpolation</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>

@@ -39,7 +39,7 @@
   </build>
 
   <dependencies>
-<dependency>
+  <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-compiler</artifactId>
       <version>${scala.version}</version>
