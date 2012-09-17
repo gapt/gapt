@@ -22,8 +22,8 @@ class DrawExpansionTree(val expansionTree: Sequent, private val fSize: Int) exte
   //private val height = toolkit.getScreenSize.height - 150
   preferredSize = calculateOptimalSize
   dividerLocation = preferredSize.width / 2
-  leftComponent = new SplitedExpansionTree(expansionTree.antecedent, "Negative content", ft)
-  rightComponent = new SplitedExpansionTree(expansionTree.succedent, "Positive content", ft)
+  leftComponent = new SplitedExpansionTree(expansionTree.antecedent, "Antecedents", ft)
+  rightComponent = new SplitedExpansionTree(expansionTree.succedent, "Consequents", ft)
 
   def calculateOptimalSize = {
     val width = Main.top.size.width
