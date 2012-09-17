@@ -30,10 +30,11 @@ import _root_.at.logic.utils.traits.Occurrence
   case object ExistsRightRuleType extends UnaryRuleTypeA
 
   object ForallLeftRule {
-    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof =
+    def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula.")
+      }
     }
 
     def computeAux( main: HOLFormula, term: HOLExpression ) = main match {
@@ -195,13 +196,10 @@ import _root_.at.logic.utils.traits.Occurrence
             assert( ( s1.antecedent ++ (s1.succedent.filterNot(_ == aux_fo)) ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
               "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.toStringSimple )
             // correct auxiliary formula
-
-            //println("ForallRightRule")
-            //println(sub)
-            //println(eigen_var)
-            //println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
-            //println("aux: " + aux_fo.formula)
-
+//            println("ForallRightRule")
+//            println("eigen_var = "+eigen_var)
+//            println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
+//            println("aux_fo: " + aux_fo.formula)
             assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
             aux_fo 
           }
