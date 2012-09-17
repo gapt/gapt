@@ -32,6 +32,8 @@ import scala.Predef._
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
 //import at.logic.language.schema.SchemaSubstitution
 
+class UnfoldException(msg: String) extends Exception(msg)
+
 object applySchemaSubstitution {
   def handleSchemaEquivalenceRule ( new_parent: LKProof,
                                     subst: SchemaSubstitution1[HOLExpression],
@@ -440,7 +442,18 @@ import at.logic.language.hol._
 //            println("\nc:r = "+new_p.root)
             ContractionRightRule( new_p, a1.formula )
         }
-        case _ => { println("ERROR in CloneLKProof : missing rule!");throw new Exception("ERROR in unfolding: CloneLKProof") }
+
+        case ImpLeftRule(p1, p2, _, a1, a2, m) => {
+          val new_p1 = apply(p1)
+          val new_p2 = apply(p2)
+          ImpLeftRule(new_p1, new_p2, a1.formula, a2.formula)
+        }
+
+        case ImpRightRule(p, _, a1, a2, m) => {
+          val new_p = apply(p)
+          ImpRightRule(new_p, a1.formula, a2.formula)
+        }
+        case _ => { println("ERROR in CloneLKProof : missing rule!"); throw new UnfoldException("Rule is missing!") }
     }}
 }
 

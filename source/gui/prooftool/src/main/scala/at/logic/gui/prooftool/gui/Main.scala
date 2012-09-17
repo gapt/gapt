@@ -33,7 +33,7 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.ProjectionTermCreators
-import at.logic.algorithms.shlk.applySchemaSubstitution
+import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLFormula
 
@@ -709,7 +709,11 @@ object Main extends SimpleSwingApplication {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       val number = if (input.size > 10) input.dropRight(10).toInt else input.toInt
       val name = body.getContent.getData.get._1
-      val proof = applySchemaSubstitution(name, number)
+      val proof = try { // This is hack! In the future these two functions should be merged.
+        applySchemaSubstitution(name, number)
+      } catch {
+        case e: UnfoldException => applySchemaSubstitution2(name, number)
+      }
       db.addProofs((name + "_" + number, proof)::Nil)
       body.contents = new Launcher(Some(name + "_" + number, proof), 12)
       body.cursor = java.awt.Cursor.getDefaultCursor
