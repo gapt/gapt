@@ -60,11 +60,12 @@ object foTerm {
 class dbTRS(val map: scala.collection.mutable.Map[HOLConst, Tuple2[HOLExpression, HOLExpression]])
 
 object dbTRS {
+  var map1 = scala.collection.mutable.Map.empty[HOLConst, Tuple2[HOLExpression, HOLExpression]]
   def apply(term: HOLConst, base: HOLExpression, step: HOLExpression): dbTRS = {
     val m = scala.collection.mutable.Map.empty[HOLConst, Tuple2[HOLExpression, HOLExpression]] + Pair(term, Tuple2(base, step))
+    map1 = m
     new dbTRS(m)
   }
-
   def apply() = new dbTRS(scala.collection.mutable.Map.empty[HOLConst, Tuple2[HOLExpression, HOLExpression]])
 }
 
