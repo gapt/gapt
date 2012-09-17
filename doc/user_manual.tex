@@ -5,6 +5,8 @@
 \usepackage{amsmath}
 \usepackage{url}
 
+\newcommand{\seq}{\vdash}	% the sequent sign
+
 % Using a report without chapters
 \renewcommand*\thesection{\arabic{section}}
 
@@ -274,6 +276,31 @@ see~\cite{Dunchev12System} for details.
 
 \paragraph{\textbf{skolemize: LKProof $\rightarrow$ LKProof}}
 {\color{red}TODO}
+
+\paragraph{\textbf{extractInterpolant: ( p: LKProof, npart: Set[FormulaOccurrence],
+ppart: Set[FormulaOccurrence] ) $\rightarrow$ HOLFormula}}
+
+Extracts an interpolant from a cut-free proof in the sequent calculus. The
+implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
+a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a 
+``negative part'' $\Gamma_1\seq\Delta_1$ and a ``positive part'' $\Gamma_2 \seq \Delta_2$.
+It returns a formula $I$ s.t.\ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$
+are provable and $I$ contains only such predicate symbols that appear in both, $\Gamma_1\seq\Delta_1$
+and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq p, q$
+by a single $\lor$-left inference, then you can compute an interpolant as follows:
+\begin{lstlisting}
+scala> val s = pr.root
+s: at.logic.calculi.lk.base.Sequent = (p:o $\lor$ q:o) :- p:o, q:o
+
+scala> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
+npart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set((p:o $\lor$ q:o)[10005], p:o[10006])
+
+scala> val ppart = Set( s.succedent( 1 ) )
+ppart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set(q:o[10007])
+
+scala> val I = extractInterpolant( pr, npart, ppart )
+I: at.logic.language.hol.HOLFormula = ($\bot$:o $\lor$ q:o)
+\end{lstlisting}
 
 \subsection{Cut-Elimination by Resolution}
 

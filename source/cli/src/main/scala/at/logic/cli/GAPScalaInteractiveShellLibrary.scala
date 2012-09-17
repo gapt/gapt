@@ -34,6 +34,7 @@ import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lksk.base._
 import at.logic.algorithms.subsumption._
+import at.logic.algorithms.interpolation._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.struct._
 import at.logic.algorithms.fol.hol2fol._
@@ -326,7 +327,11 @@ object loadProofDB {
   }
 
   object cutIntro {
-    def apply(p : LKProof) = cutIntroduction(p)
+    def apply( p: LKProof ) = cutIntroduction( p )
+  }
+
+  object extractInterpolant {
+    def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = ExtractInterpolant( p, npart, ppart )
   }
 
   // atp support
@@ -712,7 +717,8 @@ object loadProofDB {
       println("")
       println("Proof Theory:")
       println("  skolemize: LKProof => LKProof - skolemize the input proof")
-      // TODO: add herbrand sequent extraction to the top level and put it here
+      println("  extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant")
+      // TODO: add expansion tree extraction to the top level and put it here
       println("")
       println("Cut-Elimination by Resolution:")
       println("  extractStruct: LKProof => Struct")

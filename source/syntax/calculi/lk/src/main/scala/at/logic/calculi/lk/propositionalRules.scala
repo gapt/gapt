@@ -42,7 +42,7 @@ import collection.immutable.Seq
 
 
   // lk proofs
-  // rules are extracted in the form (UpperSequent(s), LowerSequent, AuxialiaryFormula(s), PrincipalFormula(s))
+  // rules are extracted in the form (UpperSequent(s), LowerSequent, AuxiliaryFormula(s), PrincipalFormula(s))
 
   // actual rule extractor/factories
   // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
@@ -503,13 +503,13 @@ import collection.immutable.Seq
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ => throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
       }
     }
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
       val term2op = s2.antecedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
