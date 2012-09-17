@@ -20,6 +20,20 @@ import at.logic.utils.ds.trees.LeafTree
 import collection.immutable
 import at.logic.language.lambda.types.{Ti, Tindex}
 
+//convenient method for the iCERES project
+object ContinueAutoProp {
+  def apply(seq: FSequent): Option[LKProof] = {
+    try {
+      Some(Autoprop(seq))
+    } catch {
+      case e:Exception => {
+        println("\n"+seq+" is not a propositional tautology !\n")
+        None
+      }
+    }
+  }
+}
+
 // continue autopropositional
 object Autoprop {
   // This method is used in prooftool to test autopropositional feature.
