@@ -22,6 +22,7 @@ import at.logic.language.lambda.types.To._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.Atom._
 import at.logic.language.schema.foTerm._
+import at.logic.language.lambda.BetaReduction
 
 abstract class sResolutionTerm {}
   abstract class sClauseTerm extends sResolutionTerm {}
@@ -772,11 +773,10 @@ abstract class sResolutionTerm {}
       val k = IntVar(new VariableStringSymbol("k"))
       val l = IntVar(new VariableStringSymbol("l"))
       val X = sClauseVar("X")
-      println("\n\nrho = "+rho)
       rho match {
         case rho1: ResolutionProofSchema if trsResSchema.map.contains(rho1.name) => {
           if (rho1.args.head == IntZero()) {
-            println("i == 0")
+//            println("i == 0")
             val base = trsResSchema.map.get(rho1.name).get._1._2
             val new_mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], rho1.args.last.asInstanceOf[sClause])
             val delX = sClauseVarSubstitution(base, new_mapX)
@@ -919,7 +919,7 @@ abstract class sResolutionTerm {}
                                               //&& mapfo2.contains(v.asInstanceOf[fo2Var])
         case HOLApp(v , index) if index.exptype == Tindex()  => {
 //          println("HOLApp(v , index) = ")
-          HOLApp(mapfo2.get(v.asInstanceOf[fo2Var]).get, index)
+          BetaReduction.betaReduce(HOLApp(mapfo2.get(v.asInstanceOf[fo2Var]).get, index))(BetaReduction.StrategyOuterInner.Innermost, BetaReduction.StrategyLeftRight.Leftmost)
         }
         case foTerm(v, arg) => {
           //          println("foTerm")

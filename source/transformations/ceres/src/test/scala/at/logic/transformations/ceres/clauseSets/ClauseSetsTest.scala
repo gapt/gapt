@@ -43,9 +43,10 @@ class ClauseSetsTest extends SpecificationWithJUnit {
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
       val map = ParseQMON.parseProof(s)
       println(Console.GREEN+"\n\n-------- schematic struct --------\n\n"+Console.RESET)
-      val p = map.get("\\varphi").get._2.get("root").get
+      val p = map.get("\\psi").get._2.get("root").get
       println(StructCreators.extract(p))
-
+//      val str =
+      println("\n\n\n\n")
       ok
     }
   }
