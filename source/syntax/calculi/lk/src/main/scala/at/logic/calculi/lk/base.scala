@@ -42,6 +42,11 @@ import collection.immutable
       }
 
       override def toString() = FSequent.toString((x:HOLFormula) => x.toString, this)
+
+      /*
+       compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
+      */
+      def compose(other: FSequent) = FSequent(antecedent ++ other.antecedent, succedent ++ other.succedent)
     }
   }
 
@@ -166,9 +171,6 @@ import collection.immutable
         checkLambdaExpression_(t, scope + v)
       case _ => throw new Exception("Unhandled Lambda Term Type (not var, abs nor app)")
     }
-
-
-
   }
 
   object Sequent {

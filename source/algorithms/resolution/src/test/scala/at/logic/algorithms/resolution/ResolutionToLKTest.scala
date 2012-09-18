@@ -14,7 +14,6 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.resolution.robinson._
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader
-import at.logic.algorithms.resolution.RobinsonToLK
 
 // we compare toStrings as proofs have only pointer equality. This needs to be changed by allowing syntaxEquals in graphs and vertices should
 // have syntaxEquals as well

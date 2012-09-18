@@ -73,13 +73,43 @@ object StripNeg {
   }
 }
 
+/**
+ * the sequences are actually multisets, as can be seen from the equal method
+ */
+trait FClause {
+  def neg:Seq[Formula]
+  def pos:Seq[Formula]
+  def multisetEquals(f : FClause, g : FClause) : Boolean =
+    f.neg.diff(g.neg).isEmpty && f.pos.diff(g.pos).isEmpty &&
+      g.neg.diff(f.neg).isEmpty && g.pos.diff(f.pos).isEmpty
+
+  override def equals(o: Any) = o match {
+    case s: FClause => multisetEquals(this,s)
+    case _ => false
+  }
+  override def hashCode = neg.size + pos.size
+  override def toString = neg.foldLeft("")((s,x) => s + ", " + x.toString) + " |- "+ pos.foldLeft("")((s,x) => s + ", " + x.toString)
+  /*
+   compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
+   should be moved to FSequent once FSequent is called Sequent (see Issue 201)
+  */
+  def compose(other: FClause) = new FClause{def neg = FClause.this.neg ++ other.neg; def pos =  FClause.this.pos ++ other.pos}
+}
+
+// a default factory
+object FClause {
+ def apply(n:Seq[Formula], p:Seq[Formula]): FClause = new FClause {def neg = n; def pos = p}
+}
+
 // the boolean represent isPositive as the negation is stripped from the literals
 class Clause(val literals: Seq[Pair[FormulaOccurrence,Boolean]]) extends Sequent(
   literals.filter(!_._2).map(_._1),
   literals.filter(_._2).map(_._1)
-) with CNF {
+) with CNF with FClause {
   def negative = antecedent
   def positive = succedent
+  def neg = negative.map(_.formula)
+  def pos = negative.map(_.formula)
 }
 
 object Clause {
