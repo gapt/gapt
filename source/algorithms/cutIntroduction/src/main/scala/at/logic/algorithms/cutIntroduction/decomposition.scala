@@ -11,6 +11,8 @@ import at.logic.language.fol._
 import at.logic.calculi.occurrences._
 import scala.collection.mutable._
 import at.logic.language.hol.logicSymbols._
+import at.logic.utils.dssupport.ListSupport._
+import at.logic.utils.dssupport.MapSupport._
 
 class DecompositionException(msg: String) extends Exception(msg)
 
@@ -43,32 +45,6 @@ class DeltaTable() {
   : List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])] = {
 
     val allFormulas = terms.keys
-
-    // TODO: the next two or three functions should really be somewhere else...
-
-    // Find all subsets (could not find a built-in scala function)
-    def subsets[T](s : List[T]) : List[List[T]] = {
-      if (s.size == 0) List(List()) 
-      else { 
-        val tailSubsets = subsets(s.tail); 
-        tailSubsets ++ tailSubsets.map(s.head :: _) 
-      }
-    }
-
-    // Cartesian product of an arbitrary list of lists
-    def product[T](l: List[List[T]]): List[List[T]] = l match {
-      case Nil => List(Nil)
-      case h :: t => for(eh <- h; et <- product(t)) yield eh :: et
-    }
-
-    // TODO: parametrize the types.
-    def mapProduct(m: Map[FormulaOccurrence, List[List[FOLTerm]]]): List[Map[FormulaOccurrence, List[FOLTerm]]] = {
-      val forms = m.keySet.toList
-      forms match {
-        case Nil => List(Map.empty)
-        case h :: t => for(eh <- m(h); et <- mapProduct(m - (h))) yield et + (h -> eh)
-      }
-    }
 
     def findFormulaDecompositions(s: List[FOLTerm], f: FormulaOccurrence) = {
       var pairs = table(s)(f)
