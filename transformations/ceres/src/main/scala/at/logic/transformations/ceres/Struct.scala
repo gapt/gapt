@@ -222,13 +222,13 @@ import at.logic.language.schema.SchemaFormula
 
     override def toString() = {
       val nice_name:String = name match {
-        case s:String if s == "\\psi" || s == "psi" => "ψ"
-        case s:String if s == "\\chi" || s == "chi" => "χ"
-        case s:String if s == "\\varphi" || s == "varphi" => "φ"
-        case s:String if s == "\\phi" || s == "phi" => "ϕ"
-        case s:String if s == "\\rho" || s == "rho" => "ρ"
-        case s:String if s == "\\sigma" || s == "sigma" => "σ"
-        case s:String if s == "\\tau" || s == "tau" => "τ"
+        case "\\psi" | "psi" => "ψ"
+        case "\\chi" | "chi" => "χ"
+        case "\\varphi" |"varphi" => "φ"
+        case "\\phi" |"phi" => "ϕ"
+        case "\\rho" |"rho" => "ρ"
+        case "\\sigma" |"sigma" => "σ"
+        case "\\tau" | "tau" => "τ"
         case _ => name
       }
       Console.BOLD+"CL^{("+Console.RESET+ cutConfToString(cut_occs) + ")," + Console.BOLD+Console.WHITE_B+nice_name+Console.RESET +Console.BOLD+"}"+Console.RESET
