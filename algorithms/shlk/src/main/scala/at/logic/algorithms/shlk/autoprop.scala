@@ -24,16 +24,17 @@ import at.logic.language.lambda.types.{Ti, Tindex}
 object ContinueAutoProp {
   def apply(seq: FSequent): Option[LKProof] = {
     try {
-      Some(Autoprop(seq))
+      Some(Autoprop.apply1(seq))
     } catch {
-      case e:Exception => {
-        println("\n"+seq+" is not a propositional tautology !\n")
+      case e:NoneException => {
+        println("\n"+seq+" cannot be proved by propositional rules !\n")
         None
       }
     }
   }
 }
 
+class NoneException(s: String) extends Exception(s) {}
 // continue autopropositional
 object Autoprop {
   // This method is used in prooftool to test autopropositional feature.
@@ -62,6 +63,7 @@ object Autoprop {
       val (f, rest) = getAxiomfromSeq(seq)
       return WeakeningRuleN(Axiom(f::Nil, f::Nil), rest)
     }
+
     if (getNonAtomicFAnt(seq) != None) {
       val f = getNonAtomicFAnt(seq).get._1
 //      println("\nant f = "+printSchemaProof.formulaToString(f) )
@@ -117,8 +119,12 @@ object Autoprop {
       }
     }
 
-    if (getNonAtomicFSucc(seq) == None)
-      throw new Exception("\nError in Autoprop SUCC !\n")
+    if (getNonAtomicFSucc(seq) == None) {
+      //throw new Exception("\nError in Autoprop SUCC !\n")
+      throw new NoneException("None")
+    }
+
+
     val f = getNonAtomicFSucc(seq).get._1
 //    println("\nsucc f = "+printSchemaProof.formulaToString(f) )
     val rest = getNonAtomicFSucc(seq).get._2
