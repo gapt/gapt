@@ -62,5 +62,10 @@
       <artifactId>interpolation</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>utils</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>
