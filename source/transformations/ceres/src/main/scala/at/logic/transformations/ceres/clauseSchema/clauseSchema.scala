@@ -933,3 +933,29 @@ abstract class sResolutionTerm {}
       }
     }
   }
+
+  object ResDeductionToLKTree {
+    def apply(r: sResolutionTerm): LKProof = {
+      r match {
+        case non:nonVarSclause =>
+          Axiom(non.ant, non.succ)
+        case t:rTerm => {
+          val up1 = apply(t.left)
+          val up2 = apply(t.right)
+          if(up1.root.succedent.map(fo => fo.formula).contains(t.atom) && up2.root.antecedent.map(fo => fo.formula).contains(t.atom)) {
+            val left = up1.root.succedent.filter(fo => fo.formula == t.atom).tail.foldLeft(up1)((acc, fo) => ContractionRightRule(acc, fo.formula))
+            val right = up2.root.antecedent.filter(fo => fo.formula == t.atom).tail.foldLeft(up2)((acc, fo) => ContractionLeftRule(acc, fo.formula))
+//            printSchemaProof(left)
+//            printSchemaProof(right)
+            return CutRule(left, right, t.atom)
+          }
+          val right = up1.root.antecedent.filter(fo => fo.formula == t.atom).tail.foldLeft(up1)((acc, fo) => ContractionLeftRule(acc, fo.formula))
+          val left = up2.root.succedent.filter(fo => fo.formula == t.atom).tail.foldLeft(up2)((acc, fo) => ContractionRightRule(acc, fo.formula))
+//          printSchemaProof(left)
+//          printSchemaProof(right)
+          return CutRule(left, right, t.atom)
+        }
+        case _ => throw new Exception("\nError in ResDeductionToLKTree !\n")
+      }
+    }
+  }
