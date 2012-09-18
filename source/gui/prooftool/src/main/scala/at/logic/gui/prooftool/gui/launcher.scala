@@ -56,7 +56,18 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
       }
-      val bd: TitledBorder = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 2), " "+name+" ")
+//      val bd: TitledBorder = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 2), " "+name+" ")
+      val nice_name:String = name match {
+        case s:String if s == "\\psi" || s == "psi" => "ψ"
+        case s:String if s == "\\chi" || s == "chi" => "χ"
+        case s:String if s == "\\varphi" || s == "varphi" => "φ"
+        case s:String if s == "\\phi" || s == "phi" => "ϕ"
+        case s:String if s == "\\rho" || s == "rho" => "ρ"
+        case s:String if s == "\\sigma" || s == "sigma" => "σ"
+        case s:String if s == "\\tau" || s == "tau" => "τ"
+        case _ => name
+      }
+      val bd: TitledBorder = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 2), " "+nice_name+" ")
       bd.setTitleFont(new Font(SANS_SERIF, BOLD, 16))
       border = bd
     case _ =>

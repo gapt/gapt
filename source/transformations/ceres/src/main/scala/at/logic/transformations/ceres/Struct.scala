@@ -35,6 +35,8 @@ import clauseSets.StandardClauseSet._
 
 package struct {
 
+import at.logic.algorithms.shlk._
+
 trait Struct
 
   // Times is done as an object instead of a case class since
@@ -53,12 +55,24 @@ trait Struct
     }
   }
 
-  class Times(val left: Struct, val right: Struct, val auxFOccs: List[FormulaOccurrence]) extends Struct
-  case class Plus(left: Struct, right: Struct) extends Struct
-  case class Dual(sub: Struct) extends Struct
-  case class A(formula: FormulaOccurrence) extends Struct // Atomic Struct
-  case class EmptyTimesJunction() extends Struct
-  case class EmptyPlusJunction() extends Struct
+  class Times(val left: Struct, val right: Struct, val auxFOccs: List[FormulaOccurrence]) extends Struct {
+    override def toString(): String = Console.RED+"("+Console.RESET+left+Console.RED+" ⊗ "+Console.RESET+right+Console.RED+")"+Console.RESET
+  }
+  case class Plus(left: Struct, right: Struct) extends Struct {
+    override def toString(): String = Console.BLUE+"("+Console.RESET+left+Console.BLUE+" ⊕ "+Console.RESET+right+Console.BLUE+")"+Console.RESET
+  }
+  case class Dual(sub: Struct) extends Struct {
+    override def toString(): String = Console.GREEN+"~("+Console.RESET+sub+Console.GREEN+")"+Console.RESET
+  }
+  case class A(fo: FormulaOccurrence) extends Struct {// Atomic Struct
+    override def toString(): String = printSchemaProof.formulaToString(fo.formula)
+  }
+  case class EmptyTimesJunction() extends Struct {
+    override def toString(): String = Console.RED+"ε"+Console.RESET
+  }
+  case class EmptyPlusJunction() extends Struct {
+    override def toString(): String = Console.BLUE+"ε"+Console.RESET
+  }
 
   // since case classes may be DAGs, we give a method to convert to a tree
   // (for, e.g. displaying purposes)
@@ -206,11 +220,21 @@ import at.logic.language.schema.SchemaFormula
       // TODO: implement
       throw new Exception
 
-    override def toString() =
-      "CL^{(" + cutConfToString(cut_occs) + ")," + name +"}"
-
+    override def toString() = {
+      val nice_name:String = name match {
+        case s:String if s == "\\psi" || s == "psi" => "ψ"
+        case s:String if s == "\\chi" || s == "chi" => "χ"
+        case s:String if s == "\\varphi" || s == "varphi" => "φ"
+        case s:String if s == "\\phi" || s == "phi" => "ϕ"
+        case s:String if s == "\\rho" || s == "rho" => "ρ"
+        case s:String if s == "\\sigma" || s == "sigma" => "σ"
+        case s:String if s == "\\tau" || s == "tau" => "τ"
+        case _ => name
+      }
+      Console.BOLD+"CL^{("+Console.RESET+ cutConfToString(cut_occs) + ")," + Console.BOLD+Console.WHITE_B+nice_name+Console.RESET +Console.BOLD+"}"+Console.RESET
+    }
     private def cutConfToString( cc : CutConfiguration ) = {
-      def str( m : Multiset[HOLFormula] ) = m.foldLeft( "" )( (s, f) => s + f.toStringSimple )
+      def str( m : Multiset[HOLFormula] ) = m.foldLeft( "" )( (s, f) => s + printSchemaProof.formulaToString(f) )
       str( cc._1 ) + "|" + str( cc._2 )
     }
   }
