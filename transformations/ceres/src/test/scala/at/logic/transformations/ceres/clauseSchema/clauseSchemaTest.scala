@@ -1,7 +1,5 @@
 package at.logic.transformations.ceres.clauseSchema
 
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk.propositionalRules.{Axiom, NegLeftRule}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
@@ -15,6 +13,9 @@ import org.specs2.execute.Success
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
+import at.logic.calculi.lk.base.{LKProof, FSequent}
+import at.logic.calculi.lk.propositionalRules.ContractionLeftRule._
+import at.logic.calculi.lk.propositionalRules.{ContractionLeftRule, Axiom, NegLeftRule}
 
 @RunWith(classOf[JUnitRunner])
 class clauseSchemaTest extends SpecificationWithJUnit {
@@ -472,15 +473,18 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val rez3 = unfoldResolutionProofSchema(rez2, trsRes, trsClauseSch, trsSigma, subst, mapX)
       println(Console.BOLD+"\n\ngenerating resolution term: \n\n"+Console.RESET+rez3)
 
-      val fo2sub = fo2VarSubstitution(rez3, mapfo2)
+      val fo2sub = fo2VarSubstitution(rez3, mapfo2).asInstanceOf[sResolutionTerm]
       println(Console.BOLD+"\n\napplying second-order substitution:\n\n"+Console.RESET+fo2sub)
 
-      val rez4 = resolutionDeduction(fo2sub.asInstanceOf[sResolutionTerm], trsClauseSch, trsSigma, subst, mapX)
+      val rez4 = resolutionDeduction(fo2sub, trsClauseSch, trsSigma, subst, mapX)
       println(Console.BOLD+"\n\nDeduction: \n\n"+Console.RESET+rez4)
       println("\n\n\n\n\n")
 
 
 
+      println("\n\n\nc* = ")
+      printSchemaProof(ResDeductionToLKTree(fo2sub))
+      println("\n\n\n")
 //     println("Xsubst = "+sClauseVarSubstitution(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X), mapX))
 //      resolutionDeduction(r) must beEqualTo (nonVarSclause(Pa::Nil, Pb::Nil))
                       ok
