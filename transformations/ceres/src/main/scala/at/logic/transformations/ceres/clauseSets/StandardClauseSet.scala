@@ -63,8 +63,8 @@ object StandardClauseSet {
     def isDual(s:Struct):Boolean = s match {case x: Dual => true; case _ => false}
     val literals = getLiterals(struct)
     val (negative,positive) = literals.partition(x => isDual(x))
-    val negativeFO: Seq[FormulaOccurrence] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].formula) // extracting the formula occurrences from the negative literal structs
-    val positiveFO: Seq[FormulaOccurrence] = positive.map(x => x.asInstanceOf[A].formula)     // extracting the formula occurrences from the positive atomic struct
+    val negativeFO: Seq[FormulaOccurrence] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].fo) // extracting the formula occurrences from the negative literal structs
+    val positiveFO: Seq[FormulaOccurrence] = positive.map(x => x.asInstanceOf[A].fo)     // extracting the formula occurrences from the positive atomic struct
     def convertListToSet[T](list:List[T]):Set[T] = list match {
       case x::rest => convertListToSet(rest)+x
       case Nil => new HashSet[T]
