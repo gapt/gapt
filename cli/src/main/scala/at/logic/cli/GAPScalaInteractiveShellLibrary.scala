@@ -411,6 +411,7 @@ object loadProofDB {
 
   object Robinson2LK {
     def apply(resProof: ResolutionProof[Clause]): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof])
+    def apply(resProof: ResolutionProof[Clause], seq: FSequent): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof],seq)
   }
 
   object replay {
