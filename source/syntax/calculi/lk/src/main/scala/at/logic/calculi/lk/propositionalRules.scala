@@ -18,7 +18,7 @@ package propositionalRules {
 
 import collection.immutable.Seq
 
-// axioms
+  // axioms
   case object InitialRuleType extends NullaryRuleTypeA
 
   // structural rules
