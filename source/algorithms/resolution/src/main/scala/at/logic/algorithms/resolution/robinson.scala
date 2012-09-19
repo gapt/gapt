@@ -17,16 +17,23 @@ import at.logic.language.fol.{Equation, FOLTerm, FOLFormula, FOLExpression}
 import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Var, App}
-import at.logic.calculi.resolution.base.Clause
-import collection.immutable.HashSet
+import at.logic.calculi.resolution.base.{FClause, Clause}
+import at.logic.algorithms.lk.applySubstitution
 
 object RobinsonToLK {
-  def apply(resproof: RobinsonResolutionProof): LKProof = recConvert(resproof, Substitution[FOLExpression]())
+  // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
+  def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof = recConvert(resproof, Substitution[FOLExpression](), s)
+
+
+  def apply(resproof: RobinsonResolutionProof): LKProof = recConvert(resproof, Substitution[FOLExpression](), FSequent(List(),List()))
 
   // sub is the aggregated substitution in the resolution proof which must be applied to the lk proof,
   // do we need to ground free variables as well?
-  private def recConvert(proof: RobinsonResolutionProof, sub: Substitution[FOLExpression]): LKProof = proof match {
-    case InitialClause(cls) => Axiom(cls.negative.map(fo => sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]), cls.positive.map(fo => sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]))
+  private def recConvert(proof: RobinsonResolutionProof, sub: Substitution[FOLExpression], seq: FSequent): LKProof = proof match {
+    case InitialClause(cls) => if (seq.antecedent.isEmpty && seq.succedent.isEmpty)
+      Axiom(cls.negative.map(fo => sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]), cls.positive.map(fo => sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]))
+      // use projections
+      else applySubstitution(PCNF(seq, cls.toFClause), sub.asInstanceOf[Substitution[at.logic.language.hol.HOLExpression]])._1
     case Factor(r, p, a, s) => {
       // obtain the set of removed occurrences for each side
       val leftSet = r.antecedent.map(_.formula)
@@ -35,7 +42,7 @@ object RobinsonToLK {
       val rightContracted = p.root.succedent.filterNot(fo => rightSet.contains(fo.formula))
       // obtain upper proof recursively
       val curSub = sub.compose(s)
-      var res = recConvert(p, curSub)
+      var res = recConvert(p, curSub, seq)
       // create a contraction for each side, for each contracted formula with a._1 and a._2 (if exists)
       // note that sub must be applied to all formulas in the lk proof
       // var hasLeft = false
@@ -50,18 +57,18 @@ object RobinsonToLK {
       }
       res
     }
-    case Variant(r, p, s) => recConvert(p, sub.compose(s)) // the construction of an LK proof makes sure we create a tree out of the agraph
+    case Variant(r, p, s) => recConvert(p, sub.compose(s), seq) // the construction of an LK proof makes sure we create a tree out of the agraph
     case Resolution(r, p1, p2, a1, a2, s) => {
       val curSub = sub.compose(s)
-      val u1: LKProof = recConvert(p1, curSub)
-      val u2: LKProof = recConvert(p2, curSub)
+      val u1: LKProof = recConvert(p1, curSub, seq)
+      val u2: LKProof = recConvert(p2, curSub, seq)
 
       CutRule(u1, u2, curSub(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula])
     }
     case Paramodulation(r, p1, p2, a1, a2, s) => {
       val curSub = sub.compose(s)
-      val u1 = recConvert(p1, curSub)
-      val u2 = recConvert(p2, curSub)
+      val u1 = recConvert(p1, curSub, seq)
+      val u2 = recConvert(p2, curSub, seq)
       val Atom(_, s0 :: _) = a1.formula
       val s1 = curSub(s0.asInstanceOf[FOLExpression]).asInstanceOf[FOLTerm]
       // locate principal formula

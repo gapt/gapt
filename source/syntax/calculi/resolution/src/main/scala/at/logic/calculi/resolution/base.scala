@@ -88,7 +88,25 @@ trait FClause {
     case _ => false
   }
   override def hashCode = neg.size + pos.size
-  override def toString = neg.foldLeft("")((s,x) => s + ", " + x.toString) + " |- "+ pos.foldLeft("")((s,x) => s + ", " + x.toString)
+  override def toString = {
+    var sb = new scala.StringBuilder()
+    var first = true
+    for (f <- neg) {
+      if (! first) sb.append(", ")
+      else first = false
+
+      sb.append(f)
+    }
+    sb.append(" :- ")
+    first =true
+    for (f <- pos) {
+      if (! first) sb.append(", ")
+      else first = false
+      sb.append(f)
+
+    }
+    sb.toString
+  }
   /*
    compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
    should be moved to FSequent once FSequent is called Sequent (see Issue 201)
@@ -105,11 +123,10 @@ object FClause {
 class Clause(val literals: Seq[Pair[FormulaOccurrence,Boolean]]) extends Sequent(
   literals.filter(!_._2).map(_._1),
   literals.filter(_._2).map(_._1)
-) with CNF with FClause {
+) with CNF {
   def negative = antecedent
   def positive = succedent
-  def neg = negative.map(_.formula)
-  def pos = negative.map(_.formula)
+  def toFClause = FClause(negative.map(_.formula), positive.map(_.formula))
 }
 
 object Clause {
