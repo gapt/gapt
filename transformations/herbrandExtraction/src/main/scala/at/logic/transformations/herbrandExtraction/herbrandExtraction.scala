@@ -6,6 +6,8 @@
  * is maintained and can be discovered.
  */
 
+package at.logic.transformations.herbrandExtraction
+
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
@@ -15,11 +17,9 @@ import at.logic.calculi.occurrences._
 import scala.collection.immutable._
 import at.logic.calculi.lk.base.types._
 
-package herbrandExtraction {
-
 class HerbrandExtractionException(msg: String) extends Exception(msg)
 
-object herbrandExtraction {
+object ExtractHerbrandSequent {
 
   def apply(proof: LKProof) : FSequent = {
     val hs = buildHerbrand(proof)
@@ -51,7 +51,11 @@ object herbrandExtraction {
     case Neg(a) => expand(a).map(x => Neg(x))
     case HArray(a, b) => expand(a) ++ expand(b)
     case Atom(_, _) => f::Nil
-    case _ => throw new HerbrandExtractionException("Illegal formula on Herbrand sequent.")
+    // TODO: ignoring quantified formulas that eventually ended up in the
+    // Herbrand sequent. Is this the correct way to treat it??
+    case AllVar(_, _) => Nil
+    case ExVar(_, _) => Nil
+    case _ => throw new HerbrandExtractionException("Illegal formula on Herbrand sequent: " + f.toString)
   }
 
   private def getOccSamePosition(s1: Seq[FormulaOccurrence], f: FormulaOccurrence, s2: Seq[FormulaOccurrence]) = {
@@ -244,4 +248,4 @@ object herbrandExtraction {
     }
   }
 }
-}
+

@@ -64,6 +64,7 @@ import at.logic.gui.prooftool.gui.Main
 import  at.logic.calculi.lk.base.types._
 
 import at.logic.algorithms.cutIntroduction._
+import at.logic.transformations.herbrandExtraction._
 
 package GAPScalaInteractiveShellLibrary {
 import java.io.IOException
@@ -332,6 +333,10 @@ object loadProofDB {
 
   object extractInterpolant {
     def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = ExtractInterpolant( p, npart, ppart )
+  }
+
+  object extractHerbrandSequent {
+    def apply( p: LKProof ) = ExtractHerbrandSequent(p)
   }
 
   // atp support
@@ -719,6 +724,7 @@ object loadProofDB {
       println("Proof Theory:")
       println("  skolemize: LKProof => LKProof - skolemize the input proof")
       println("  extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant")
+      println("  extractHerbrandSequent: LKProof => Sequent - extract the Herbrand sequent from a proof without quantified cuts.")
       // TODO: add expansion tree extraction to the top level and put it here
       println("")
       println("Cut-Elimination by Resolution:")
