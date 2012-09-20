@@ -129,7 +129,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         /*val lkProof1 = applySubstitution(PCNF(FSequent(List(f1),List()), cls1), Substitution(new Map1(x, a).asInstanceOf[Map[Var, FOLExpression]]))._1
         val lkProof2 = PCNF(FSequent(List(),List(Pa)), cls2)
         val lkProof = CutRule(lkProof1,lkProof2, Pa) */
-        RobinsonToLK(resProof, seq).root.toFSequent.toString must beEqualTo(FSequent(List(f1,f1),List(Pa,Pa)).toString)
+        RobinsonToLK(resProof, seq).root.toFSequent.toString must beEqualTo(FSequent(List(f1),List(Pa)).toString)
       }
       /*"containing a factorized clause" in {
         val Pfa = new MyParser("P(f(a))").getTerm.asInstanceOf[FOLFormula]
