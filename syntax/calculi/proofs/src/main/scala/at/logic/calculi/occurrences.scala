@@ -29,6 +29,10 @@ trait HasAncestors {
       println("Cloning ID: "+id)
       super.clone()
     }
+    // returns true if o is an ancestor of the current occurrence
+    def isAncestor(o: FormulaOccurrence): Boolean =
+      if (this == o) true
+      else ancestors.exists(_.isAncestor(o))
   }
   implicit def focc2f(fo: FormulaOccurrence): Formula = fo.formula
 

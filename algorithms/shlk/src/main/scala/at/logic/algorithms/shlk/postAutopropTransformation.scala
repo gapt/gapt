@@ -256,7 +256,7 @@
 //          apply(s, up)
 //      }
 //      case UnaryLKProof(_, up, _, _, _) => apply(s, up)
-//      case BinaryLKProof(_, up1, up2, _, _, _, _) => apply(s, up1) || apply (s, up2)
+//      case BinaryLKProof(_, up1, up2, _, _, _, _changing case of lenovo t520) => apply(s, up1) || apply (s, up2)
 //      case AndEquivalenceRule1(up, _, _, _) => apply(s, up)
 //      case OrEquivalenceRule1(up, _, _, _) => apply(s, up)
 //      case AndEquivalenceRule3(up, _, _, _) => apply(s, up)
