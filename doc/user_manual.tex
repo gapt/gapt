@@ -156,6 +156,7 @@ from where it is possile to run the operations GAPT provides. You can see all of
 them by typing \texttt{ceresHelp} and pressing enter. Here they are (as of
 28/08/2012):
 
+%% TODO: update
 \begin{lstlisting}
 Available commands:
 
@@ -301,6 +302,38 @@ ppart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurr
 scala> val I = extractInterpolant( pr, npart, ppart )
 I: at.logic.language.hol.HOLFormula = ($\bot$:o $\lor$ q:o)
 \end{lstlisting}
+
+\paragraph{\textbf{extractHerbrandSequent: LKProof $\rightarrow$ Sequent}}
+
+A proof in first order logic can be concisely represented with a Herbrand
+sequent. Since this sequent is purely propositional, this is a way of reducing
+first order logic to propositional logic. In short, if $\varphi$ is a proof and
+$H$ is its Herbrand sequent, then $H$ contains all instances of the formulas in
+the end-sequent of $\varphi$ and $H$ is a tautology. It is important to note
+that $\varphi$ may not have strong quantifiers nor cuts on quantified formulas.
+A more detailed explanation of Herbrand sequent extraction can be found in
+\ref{Hetzl2008}. 
+
+This method extracts a Herbrand sequent from a proof $\varphi$ that satisfies
+the constraints. 
+An execution and output of this command is shown below. The proof $p$ used is the
+``Linear Example Proof'' for $n=4$\footnote{For the example proofs that are
+automatically generated in the system, see Section \ref{sec:exampleproofs}.},
+which is a proof without cuts of the end sequent:
+
+$$P0, \forall x. (Px \rightarrow Psx) \vdash Ps^4 0$$
+
+\begin{lstlisting}
+scala> var hs = extractHerbrandSequent(p)
+hs: at.logic.calculi.lk.base.types.FSequent =
+([(P(s(s(s(0))))->P(s(s(s(s(0)))))), (P(s(s(0)))->P(s(s(s(0))))),
+(P(s(0))->P(s(s(0)))), (P(0)->P(s(0))), P(0)], [P(s(s(s(s(0)))))])
+\end{lstlisting}
+
+Observe that this sequent (represented by two lists, one for the antecedent and
+one for the succedent) is a tautology, is propositional and contains all
+instances of $\forall x. (Px \rightarrow Psx)$ that must be used in a cut-free
+proof.
 
 \subsection{Cut-Elimination by Resolution}
 
