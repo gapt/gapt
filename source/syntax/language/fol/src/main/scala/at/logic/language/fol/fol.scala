@@ -93,20 +93,43 @@ trait FOLExpression extends HOLExpression with FOL {
       //case HArray(f1, f2) => "HArray(" + f1.toCode + ", " + f2.toCode + ")"
     }
   }
-trait FOLFormula extends FOLExpression with HOLFormula
+
 //trait FOLFormula extends HOLFormula with FOL
+trait FOLFormula extends FOLExpression with HOLFormula {
+
+  // Substitutes a term in a quantified formula (using the first quantifier).
+  def substitute(t: FOLTerm) = this match {
+    case AllVar(v, form) => FOLSubstitution(form, v, t)
+    case ExVar(v, form) => FOLSubstitution(form, v, t)
+    case _ => throw new Exception("ERROR: trying to replace variables in a formula without quantifier.") 
+  }
+
+  // Substitutes all quantifiers of the formula with the terms in lst.
+  // OBS: the number of quantifiers in the formula must be the same as the
+  // number of terms in lst.
+  def substituteAll(lst: List[FOLTerm]) : FOLFormula = {
+  lst match {
+    case Nil => this
+    case h :: t => this.substitute(h).substituteAll(t)
+    }
+  }
+
+}
+
 // the companion object converts HOL formulas into fol if the hol version has fol type
 object FOLFormula {
- def apply(f: HOLFormula): FOLFormula = f match {
-   case HOLNeg(x) => Neg(FOLFormula(x))
-   case HOLOr(x,y) => Or(FOLFormula(x), FOLFormula(y))
-   case HOLAnd(x,y) => And(FOLFormula(x), FOLFormula(y))
-   case HOLImp(x,y) => Imp(FOLFormula(x), FOLFormula(y))
-   case HOLAtom(nm: ConstantSymbolA, ls) if ls.forall(_.isInstanceOf[HOLExpression]) => Atom(nm, ls.map(x => FOLTerm(x.asInstanceOf[HOLExpression])))
-   case HOLExVar(HOLVar(n,t),s) if (t == Ti()) => ExVar(FOLVar(n), FOLFormula(s))
-   case HOLAllVar(HOLVar(n,t),s) if (t == Ti()) => AllVar(FOLVar(n), FOLFormula(s))
-   case _ => throw new IllegalArgumentException("Cannot extract FOLFormula from higher order epxression: " + f.toString)
- }
+ 
+  def apply(f: HOLFormula): FOLFormula = f match {
+    case HOLNeg(x) => Neg(FOLFormula(x))
+    case HOLOr(x,y) => Or(FOLFormula(x), FOLFormula(y))
+    case HOLAnd(x,y) => And(FOLFormula(x), FOLFormula(y))
+    case HOLImp(x,y) => Imp(FOLFormula(x), FOLFormula(y))
+    case HOLAtom(nm: ConstantSymbolA, ls) if ls.forall(_.isInstanceOf[HOLExpression]) => Atom(nm, ls.map(x => FOLTerm(x.asInstanceOf[HOLExpression])))
+    case HOLExVar(HOLVar(n,t),s) if (t == Ti()) => ExVar(FOLVar(n), FOLFormula(s))
+    case HOLAllVar(HOLVar(n,t),s) if (t == Ti()) => AllVar(FOLVar(n), FOLFormula(s))
+    case _ => throw new IllegalArgumentException("Cannot extract FOLFormula from higher order epxression: " + f.toString)
+  }
+
 }
 
 trait FOLTerm extends FOLExpression

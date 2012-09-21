@@ -76,6 +76,7 @@ object cutIntroduction {
    
     val impl = Imp(xalpha, bigConj)
 
+/*
     // TODO: maybe these substitution methods should be put somewhere else...
     // Substitutes a term in a quantified formula (using the first quantifier).
     def substitute(f: FOLFormula, t: FOLTerm) = f match {
@@ -90,19 +91,19 @@ object cutIntroduction {
       case h :: t => substituteAll(substitute(f, h), t)
     }
   }
-
+*/
     // Replace the terms from U in the proper formula
     val alphaFormulasL = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
       f.formula.asInstanceOf[FOLFormula] match {
         case AllVar(_, _) => 
-          (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+          (for(e <- setU) yield f.formula.asInstanceOf[FOLFormula].substituteAll(e)) ++ acc
         case _ => acc
       }
     }
     val alphaFormulasR = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
       f.formula.asInstanceOf[FOLFormula] match {
         case ExVar(_, _) => 
-          (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+          (for(e <- setU) yield f.formula.asInstanceOf[FOLFormula].substituteAll(e)) ++ acc
         case _ => acc
       }
     }
@@ -114,7 +115,7 @@ object cutIntroduction {
     }
     
     val xFormulas = ux.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
-      (for(e <- setU) yield substituteAll(f.formula.asInstanceOf[FOLFormula], e)) ++ acc
+      (for(e <- setU) yield f.formula.asInstanceOf[FOLFormula].substituteAll(e)) ++ acc
     }
 
     val ehsant = (impl :: alphaFormulasL) ++ ant
@@ -133,19 +134,19 @@ object cutIntroduction {
     
     val cutFormula = AllVar(xvar, conj)
     
-    val cutLeft = substitute(cutFormula, alpha)
+    val cutLeft = cutFormula.substitute(alpha)
     val cutRight = s.foldRight(List[FOLFormula]()) { case (t, acc) =>
-      substitute(cutFormula, t) :: acc
+      cutFormula.substitute(t) :: acc
     }
 
     // Instantiates all the terms of a quantified formula sequentially
     def genWeakQuantRules(f: FOLFormula, lst: List[FOLTerm], ax: LKProof) : LKProof = (f, lst) match {
       case (_, Nil) => ax
       case(AllVar(_,_), h::t) => 
-        val newForm = substitute(f, h)
+        val newForm = f.substitute(h)
         ForallLeftRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
       case(ExVar(_,_), h::t) =>
-        val newForm = substitute(f, h)
+        val newForm = f.substitute(h)
         ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
     }
 
@@ -181,11 +182,11 @@ object cutIntroduction {
     s.foldRight(ax) { case (t, ax) =>
       if(first) {
         first = false
-        val scf = substitute(cf, t)
+        val scf = cf.substitute(t)
         ForallLeftRule(ax, scf, cf, t)
       }
       else {
-        val scf = substitute(cf, t)
+        val scf = cf.substitute(t)
         ContractionLeftRule(ForallLeftRule(ax, scf, cf, t), cf)
       }
     }
