@@ -21,7 +21,7 @@ import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.Definitions._
-import herbrandExtraction._
+import at.logic.transformations.herbrandExtraction._
 
 @RunWith(classOf[JUnitRunner])
 class herbrandExtractionTest extends SpecificationWithJUnit {
@@ -33,7 +33,7 @@ class herbrandExtractionTest extends SpecificationWithJUnit {
       val x = HOLVar("x", i)
       val ax = HOLAppFormula(a, x)
       val axm = Axiom(ax::Nil, ax::Nil)
-      val hs = herbrandExtraction(axm)
+      val hs = ExtractHerbrandSequent(axm)
 
       (hs) must beEqualTo (axm.root.toFSequent)
     }
@@ -54,7 +54,7 @@ class herbrandExtractionTest extends SpecificationWithJUnit {
         val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
         val ax = Axiom(aux::Nil, Nil)
         val rule = ForallLeftRule(ax, aux, main, subst)
-        val hs = herbrandExtraction(rule)
+        val hs = ExtractHerbrandSequent(rule)
 
         (hs) must beEqualTo (ax.root.toFSequent)
       }
@@ -73,7 +73,7 @@ class herbrandExtractionTest extends SpecificationWithJUnit {
         val main = ExVar( z, Or( pz, za ) )    // exists lambda z. p(z) or z(a)
         val ax = Axiom(Nil, aux::Nil)
         val rule = ExistsRightRule(ax, aux, main, subst)
-        val hs = herbrandExtraction(rule)
+        val hs = ExtractHerbrandSequent(rule)
 
         (hs) must beEqualTo (ax.root.toFSequent)
       }
@@ -90,7 +90,7 @@ class herbrandExtractionTest extends SpecificationWithJUnit {
         val exRule = ExistsRightRule(axiom, pa, right, a)
         val allRule = ForallLeftRule(exRule, pa, left, a)
 
-        val hs = herbrandExtraction(allRule)
+        val hs = ExtractHerbrandSequent(allRule)
 
         (hs) must beEqualTo (axiom.root.toFSequent)
       }
@@ -121,7 +121,7 @@ class herbrandExtractionTest extends SpecificationWithJUnit {
         val contr = ContractionLeftRule(andrght, all_px)
         val andlft = AndLeft1Rule(contr, all_px, qa)
 
-        val hs = herbrandExtraction(andlft)
+        val hs = ExtractHerbrandSequent(andlft)
 
         val expected = new FSequent(And(pa, qa)::And(pb, qa)::Nil, And(pa, pb)::Nil)
 
@@ -149,7 +149,7 @@ class herbrandExtractionTest extends SpecificationWithJUnit {
         val contr = ContractionRightRule(orlft, ex_px)
         val orrght = OrRight1Rule(contr, ex_px, qa)
 
-        val hs = herbrandExtraction(orrght)
+        val hs = ExtractHerbrandSequent(orrght)
 
         val expected = new FSequent(Or(pa, pb)::Nil, Or(pa, qa)::Or(pb, qa)::Nil)
 
