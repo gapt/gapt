@@ -29,8 +29,14 @@ object termsExtraction {
   // If all the quantified formulas have only one quantifier, each list of
   // the list will have only one element
   def apply(proof: LKProof) : Map[FormulaOccurrence, List[List[FOLTerm]]] = {
-    val map = extractTerms(proof)
-    map
+    val es = proof.root
+    val formulas = es.antecedent ++ es.succedent
+    // Check if all formulas are prenex.
+    if( formulas.forall(f => f.formula.isPrenex) ) {
+      val map = extractTerms(proof)
+      map
+    }
+    else throw new TermsExtractionException("ERROR: Trying to extract the terms of a proof with non-prenex formulas: " + es.toString)
   }
   
   private def extractTerms(proof: LKProof) : Map[FormulaOccurrence, List[List[FOLTerm]]] = proof match {
@@ -73,7 +79,7 @@ object termsExtraction {
         val auxmap = map - (a2)
         auxmap += (prin -> t)
       }
-      else if (anc1.length > 0 && anc2.length > 1) {
+      else if (anc1.length > 1 || anc2.length > 1) {
         throw new TermsExtractionException("ERROR: More than one ancestor was instantiated.")
       }
       else map
@@ -85,7 +91,6 @@ object termsExtraction {
       // Gets all the ancestors that are keys in the hashmap
       val anc1 = keys.filter(x => ancestorsAux1.contains(x)).toList
       val anc2 = keys.filter(x => ancestorsAux2.contains(x)).toList
-
       if (anc1.length == 1 && anc2.length == 1) {
         val a1 = anc1(0)
         val a2 = anc2(0)
@@ -106,7 +111,7 @@ object termsExtraction {
         val auxmap = map - (a2)
         auxmap += (prin -> t)
       }
-      else if (anc1.length > 0 && anc2.length > 1) {
+      else if (anc1.length > 1 || anc2.length > 1) {
         throw new TermsExtractionException("ERROR: More than one ancestor was instantiated.")
       }
       else map
@@ -200,7 +205,7 @@ object termsExtraction {
     /* STRONG QUANTIFIER RULES */
     // Should not occur
     case ExistsLeftRule(_, _, _, _, _) | ForallRightRule(_, _, _, _, _) =>
-      throw new TermsExtractionException("ERROR: Found strong quantifier rule while extracting terms.")
+      throw new TermsExtractionException("ERROR: Found strong quantifier while extracting terms.")
 
   }
 }

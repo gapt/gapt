@@ -39,8 +39,6 @@ object Utils {
     }
   }
 
-
-
   def isFirstOrderType( exptype: TA ) = isFunctionType( exptype ) || isPredicateType( exptype )
 
   def isFunctionType( exptype: TA ) = checkType( exptype, Ti(), Ti() )
@@ -139,6 +137,9 @@ object Utils {
     }
   }
 
+  // TODO: maybe these functions should go to listSupport in dssupport in the
+  // utils project.
+
   def removeDoubles[T](l : List[T]) : List[T] = {
     removeDoubles_(l.reverse).reverse
   }
@@ -176,6 +177,5 @@ object Utils {
     else
       lower :: between (lower+1, upper)
   }
-
 
 }
