@@ -100,8 +100,17 @@ class DeltaTable() {
       else decompositions
     }
   }
-
 }
+
+/*
+class Decomposition() {
+
+  // TODO: can I declare these fields without initializing them??
+  val u = new HashMap[FormulaOccurrence, List[List[FOLTerm]]]
+  val s_lst = new List[FOLTerm]
+  val alphas = new List[VariableStringSymbol]
+}
+*/
 
 object decomposition {
 

@@ -110,6 +110,19 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case App(l, r) => l.asInstanceOf[HOLExpression].containsQuantifier || r.asInstanceOf[HOLExpression].containsQuantifier
     }
 
+    def isPrenex : Boolean = this match {
+      case Var(_,_) => true
+      case Atom(_,_) => true
+      case Neg(f) => !f.containsQuantifier
+      case And(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
+      case Or(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
+      case Equation(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
+      case Imp(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
+      case ExVar(v,f) => f.isPrenex
+      case AllVar(v,f) => f.isPrenex
+      case _ => throw new Exception("ERROR: Unknow operator encountered while checking for prenex formula: " + this)
+    }
+
     def subTerms: Seq[HOLExpression] = this match {
       case Var(_,_) => List(this)
       case Atom(_, args) =>  this +: args.flatMap(_.subTerms)
