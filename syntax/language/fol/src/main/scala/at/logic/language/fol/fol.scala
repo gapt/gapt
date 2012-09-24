@@ -105,7 +105,7 @@ trait FOLFormula extends FOLExpression with HOLFormula {
   }
 
   // Substitutes all quantifiers of the formula with the terms in lst.
-  // OBS: the number of quantifiers in the formula must be the same as the
+  // OBS: the number of quantifiers in the formula must greater of equal then the
   // number of terms in lst.
   def substituteAll(lst: List[FOLTerm]) : FOLFormula = {
   lst match {
