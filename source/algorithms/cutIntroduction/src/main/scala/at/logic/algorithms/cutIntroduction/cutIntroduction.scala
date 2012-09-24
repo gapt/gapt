@@ -17,6 +17,8 @@ import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
+import at.logic.algorithms.shlk._
+import at.logic.algorithms.interpolation._
 
 class CutIntroException(msg: String) extends Exception(msg)
 
@@ -34,8 +36,9 @@ object cutIntroduction {
 
     println("\nQuantified formulas: " + quantFormulas)
 
-    val ant = endSequent.antecedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
-    val succ = endSequent.succedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
+    // Propositional part of antecedent and succedent of the end sequent
+    val propAnt = endSequent.antecedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
+    val propSucc = endSequent.succedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
 
     println("\nTerm set: {" + terms + "}")
     println("of size " + terms.size)
@@ -52,6 +55,7 @@ object cutIntroduction {
       println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
     }
 
+    // TODO: how to choose the best decomposition?
     val smallestDec = decompositions.head
     // This is a map from formula occurrence to a list of terms
     val u = smallestDec._1
@@ -76,22 +80,8 @@ object cutIntroduction {
    
     val impl = Imp(xalpha, bigConj)
 
-/*
-    // TODO: maybe these substitution methods should be put somewhere else...
-    // Substitutes a term in a quantified formula (using the first quantifier).
-    def substitute(f: FOLFormula, t: FOLTerm) = f match {
-      case AllVar(v, form) => FOLSubstitution(form, v, t)
-      case ExVar(v, form) => FOLSubstitution(form, v, t)
-      case _ => throw new CutIntroException("Error in replacing variables.") 
-    }
-
-    def substituteAll(f: FOLFormula, lst: List[FOLTerm]) : FOLFormula = {
-    lst match {
-      case Nil => f
-      case h :: t => substituteAll(substitute(f, h), t)
-    }
-  }
-*/
+    // TODO: replace this names....
+    // TODO: divide into terms with and without alpha?? (Assuming that they all contain alpha)
     // Replace the terms from U in the proper formula
     val alphaFormulasL = u.foldRight(List[FOLFormula]()) { case ((f, setU), acc) =>
       f.formula.asInstanceOf[FOLFormula] match {
@@ -118,8 +108,8 @@ object cutIntroduction {
       (for(e <- setU) yield f.formula.asInstanceOf[FOLFormula].substituteAll(e)) ++ acc
     }
 
-    val ehsant = (impl :: alphaFormulasL) ++ ant
-    val ehssucc = alphaFormulasR ++ succ
+    val ehsant = (impl :: alphaFormulasL) ++ propAnt
+    val ehssucc = alphaFormulasR ++ propSucc
 
     val conj = genConjunction(xFormulas)
 
@@ -132,8 +122,40 @@ object cutIntroduction {
     // Building up the final proof with cut
     println("\nGenerating final proof with cut\n")
     
+    //val cutFormula0 = AllVar(xvar, conj)
     val cutFormula = AllVar(xvar, conj)
+
+/* TODO: uncomment when fixed.
+    // Computing the interpolant
     
+    // A[s_i] forall i
+    val asi = s.map(t => cutFormula0.substitute(t))
+    val cutConj = genConjunction(asi)
+
+    // Negative part
+    val gamma = alphaFormulasL
+    val delta = alphaFormulasR
+    val npart = gamma ++ delta
+
+    // Positive part
+    val pi = propAnt :+ cutConj
+    val lambda = propSucc
+    val ppart = pi ++ lambda
+
+    // Proof
+    val interpProof = Autoprop(FSequent(gamma++pi, delta++lambda))
+
+    // Getting the formula occurrences...
+    val occurrences = interpProof.root.antecedent ++ interpProof.root.succedent
+    val npart_occ = occurrences.filter(x => npart.contains(x.formula))
+    val ppart_occ = occurrences.filter(x => ppart.contains(x.formula))
+
+    val interpolant = ExtractInterpolant(interpProof, npart_occ.toSet, ppart_occ.toSet)
+
+    // Adding interpolant to cut formula
+    val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
+*/
+
     val cutLeft = cutFormula.substitute(alpha)
     val cutRight = s.foldRight(List[FOLFormula]()) { case (t, acc) =>
       cutFormula.substitute(t) :: acc
@@ -142,10 +164,10 @@ object cutIntroduction {
     // Instantiates all the terms of a quantified formula sequentially
     def genWeakQuantRules(f: FOLFormula, lst: List[FOLTerm], ax: LKProof) : LKProof = (f, lst) match {
       case (_, Nil) => ax
-      case(AllVar(_,_), h::t) => 
+      case (AllVar(_,_), h::t) => 
         val newForm = f.substitute(h)
         ForallLeftRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
-      case(ExVar(_,_), h::t) =>
+      case (ExVar(_,_), h::t) =>
         val newForm = f.substitute(h)
         ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
     }
@@ -174,39 +196,79 @@ object cutIntroduction {
       }
     }
 
-    val axiomL = Axiom((alphaFormulasL ++ ant), (cutLeft +: (succ ++ alphaFormulasR)))
-    val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
+    //val axiomL = Axiom((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR)))
+    //val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
+    val proofLeft = Autoprop(FSequent((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR))))
+    val leftBranch = ForallRightRule(uPart(u, proofLeft), cutLeft, cutFormula, alpha)
 
-    def sPart(cf: FOLFormula, s: List[FOLTerm], ax: LKProof) = {
+    def sPart(cf: FOLFormula, s: List[FOLTerm], p: LKProof) = {
     var first = true;
-    s.foldRight(ax) { case (t, ax) =>
+    s.foldRight(p) { case (t, p) =>
       if(first) {
         first = false
         val scf = cf.substitute(t)
-        ForallLeftRule(ax, scf, cf, t)
+        ForallLeftRule(p, scf, cf, t)
       }
       else {
         val scf = cf.substitute(t)
-        ContractionLeftRule(ForallLeftRule(ax, scf, cf, t), cf)
+        ContractionLeftRule(ForallLeftRule(p, scf, cf, t), cf)
       }
     }
     }
 
-    val axiomR = Axiom((cutRight ++ alphaFormulasL ++ ant), (succ ++ alphaFormulasR))
-    val rightBranch = uPart(u, sPart(cutFormula, s, axiomR))
+    //val axiomR = Axiom((cutRight ++ alphaFormulasL ++ ant), (succ ++ alphaFormulasR))
+    //val rightBranch = uPart(u, sPart(cutFormula, s, axiomR))
+    val proofRight = Autoprop(FSequent(cutRight ++ propAnt, propSucc))
+    val rightBranch = sPart(cutFormula, s, proofRight)
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
 
-    // Contracting the end sequent formulas that were duplicated to be splitted 
-    // at the cut rule
+    // Contracting the end sequent formulas that are propositional (they go to
+    // both branches when the cut is applied)
 
     val contractAnt = endSequent.antecedent.foldRight(untilCut.asInstanceOf[LKProof]) { case (f, premise) =>
-      ContractionLeftRule(premise, f.formula.asInstanceOf[FOLFormula])
+      if(!f.formula.containsQuantifier) {
+        ContractionLeftRule(premise, f.formula.asInstanceOf[FOLFormula])
+      }
+      else premise
     }
 
+    //val contractions = endSequent.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
     endSequent.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
-      ContractionRightRule(premise, f.formula.asInstanceOf[FOLFormula])
+      if(!f.formula.containsQuantifier) {
+        ContractionRightRule(premise, f.formula.asInstanceOf[FOLFormula])
+      }
+      else premise
     }
   }
+
+  // Quantifier inferences are applied as early as possible
+  // TODO: check if the variables are available for the multiple cut case
+  /*
+  u.foldRight(contractions) {
+    case ((f, setU), contractions) => var first = true; 
+      f.formula.asInstanceOf[FOLFormula] match { 
+        case AllVar(_, _) => setU.foldRight(contractions) { case (terms, contractions) =>
+          if(first) {
+            first = false
+            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions)
+          }
+          else
+            ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions), f.formula.asInstanceOf[FOLFormula])
+        }
+        case ExVar(_, _) => setU.foldRight(ax) { case (terms, contractions) =>
+          if(first) {
+            first = false
+            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions)
+          }
+          else
+            ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions), f.formula.asInstanceOf[FOLFormula])
+        }
+      }
+    }
+  }
+  */
+
+
 }
 

@@ -43,7 +43,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val hgalpha = Function(h, galpha::Nil)
         val common = Function(f, hgalpha::galpha::Nil)
       
-        val dec = delta(f1::f2::Nil)
+        val dec = delta(f1::f2::Nil, alpha)
       
         (dec) must beEqualTo (common, gc::c::Nil)
       }
@@ -68,7 +68,7 @@ class decompositionTest extends SpecificationWithJUnit {
       
         val alpha = FOLVar(new VariableStringSymbol("α"))
       
-        val dec = delta(f1::f2::Nil)
+        val dec = delta(f1::f2::Nil, alpha)
       
         (dec) must beEqualTo (alpha, f1::f2::Nil)
  
@@ -96,7 +96,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val hgalpha = Function(h, galpha::Nil)
         val common = Function(f, hgalpha::ga::Nil)
       
-        val dec = delta(f1::f2::Nil)
+        val dec = delta(f1::f2::Nil, alpha)
       
         (dec) must beEqualTo (common, gc::c::Nil)
  
@@ -115,7 +115,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val alpha = FOLVar(new VariableStringSymbol("α"))
         val falpha = Function(f, alpha::Nil)
 
-        val dec = delta(fa::f2a::f3a::Nil)
+        val dec = delta(fa::f2a::f3a::Nil, alpha)
 
         (dec) must beEqualTo (falpha, a::fa::f2a::Nil)
       }

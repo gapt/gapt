@@ -22,5 +22,15 @@ object ListSupport {
     }
   }
 
+  // Computes the transpose of a matrix implemented as a list of lists.
+  def transpose[T](m: List[List[T]]) : List[List[T]] = m match {
+    case Nil => Nil
+    case (Nil) :: tl => Nil
+    case hd :: tl => 
+      val heads = m.foldRight(List[T]()) ( (lst, acc) => lst.head :: acc )
+      val tails = m.foldRight(List[List[T]]()) ( (lst, acc) => lst.tail :: acc )
+      heads::transpose(tails)             
+  }
+
 }
 

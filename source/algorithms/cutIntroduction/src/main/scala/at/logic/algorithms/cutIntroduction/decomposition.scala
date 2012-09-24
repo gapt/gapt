@@ -102,13 +102,19 @@ class DeltaTable() {
   }
 }
 
-/*
+/* TODO: think about how to implement this.
+// Single decomposition UoS
 class Decomposition() {
 
-  // TODO: can I declare these fields without initializing them??
   val u = new HashMap[FormulaOccurrence, List[List[FOLTerm]]]
-  val s_lst = new List[FOLTerm]
-  val alphas = new List[VariableStringSymbol]
+  val s = new List[FOLTerm]
+  val alpha = new FOLVar
+
+  def apply(u0: HashMap[FormulaOccurrence, List[List[FOLTerm]]], s0: List[FOLTerm], ev: FOLVar) = {
+    u = u0
+    s = s0
+    alpha = ev
+  }
 }
 */
 
@@ -119,10 +125,16 @@ object decomposition {
   def apply(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) 
   : List[(Map[FormulaOccurrence, List[List[FOLTerm]]], List[FOLTerm])] = {
     
+    // TODO: when iterating for the case of multiple cuts, change this variable.
+    val eigenvariable = FOLVar(new VariableStringSymbol("α"))
+    
+    // Transforming tuples of symbols into terms.
+    // E.g.: F -> {(a,b), (c,d)} becomes
+    // F -> {tuple(a,b), tuple(c,d)}
     val newterms = terms.foldRight(Map[FormulaOccurrence, List[FOLTerm]]()) {
       case ((f, tuples), newmap) => newmap + (f -> tuplesToTerms(tuples)) 
     }
-    val deltatable = fillDeltaTable(newterms)
+    val deltatable = fillDeltaTable(newterms, eigenvariable)
     
 
     val decompositions = deltatable.findValidDecompositions(newterms)
@@ -133,7 +145,7 @@ object decomposition {
     }
   }
 
-  val tupleFunctionSymbol = ConstantStringSymbol("##")
+  val tupleFunctionSymbol = ConstantStringSymbol("tuple")
   def tuplesToTerms(terms: List[List[FOLTerm]]) : List[FOLTerm] = {
     terms.foldRight(List[FOLTerm]()) { 
       case (t, acc) => Function(tupleFunctionSymbol, t) :: acc
@@ -143,18 +155,18 @@ object decomposition {
     terms.foldRight(List[List[FOLTerm]]()) {
       case (t, acc) => t match {
         case Function(tupleFunctionSymbol, lst) => lst :: acc
-        case _ => throw new DecompositionException("Tuple symbol not used.")
+        case _ => throw new DecompositionException("ERROR: Tuple symbol not used.")
       }
     }
   }
 
-  def fillDeltaTable(terms: Map[FormulaOccurrence, List[FOLTerm]]) = {
+  def fillDeltaTable(terms: Map[FormulaOccurrence, List[FOLTerm]], eigenvariable: FOLVar) = {
 
     var deltaTable = new DeltaTable()
 
     terms.foreach { case (f, t) =>
       // Initialize with trivial decompositions of size 1
-      t.foreach(e => deltaTable.add(f, e::Nil, e::Nil, FOLVar(new VariableStringSymbol("α"))) )
+      t.foreach(e => deltaTable.add(f, e::Nil, e::Nil, eigenvariable) )
 
       for (n <- 2 until t.length+1) {
         // Take only the decompositions of term sets of size (n-1) from the current delta table
@@ -174,7 +186,7 @@ object decomposition {
               // Compute delta of the incremented list
               termsToAdd.foreach {case e =>
                 val incrementedtermset = ti :+ e
-                val p = delta(incrementedtermset)
+                val p = delta(incrementedtermset, eigenvariable)
            
                 // If non-trivial
                 if (p._2 != (incrementedtermset)) {
@@ -192,15 +204,13 @@ object decomposition {
     deltaTable
   }
 
-  // TODO: the alpha variable should be declared globally somewhere else
-
-  def delta(terms: List[FOLTerm]) : (FOLTerm, List[FOLTerm]) = terms.head match {
+  def delta(terms: List[FOLTerm], eigenvariable: FOLVar) : (FOLTerm, List[FOLTerm]) = terms.head match {
     // If the variables are reached
     case FOLVar(s) =>
       // If all variables are equal
       if ( terms.forall(t => t =^ terms.head) ) { return (FOLVar(s), Nil) }
       // If there are different variables 
-      else { return (FOLVar(new VariableStringSymbol("α")), terms) }
+      else { return (eigenvariable, terms) }
 
     // If the terms are functions
     case Function(h, args) =>
@@ -214,27 +224,18 @@ object decomposition {
         // Compute a list of list of arguments
         val allargs = terms.foldRight(List[List[FOLTerm]]()) ( (t, acc) => t match {
             case Function(x, args) => args :: acc
-            case _ => throw new DecompositionException("Mal-formed terms list.")
+            case _ => throw new DecompositionException("ERROR: Mal-formed terms list.")
           })
 
         // The list above is a list of lists of arguments. Assume that each list
         // of arguments has elements from 1 to n. A function should be called
-        // for a list containing all elements in position i in every list. In
-        // order to do this, this function will invert this list of lists. If
-        // the list of lists was implemented with a matrix, all I had to do
-        // would be to call the function on the columns of the matrix, but since
-        // this is not the case I implemented this inverse function. 
-        def inverse(args: List[List[FOLTerm]]) : List[List[FOLTerm]] = args match {
-          case Nil => Nil
-          case (Nil) :: tl => Nil
-          case hd :: tl => 
-            val heads = args.foldRight(List[FOLTerm]()) ( (lst, acc) => lst.head :: acc )
-            val tails = args.foldRight(List[List[FOLTerm]]()) ( (lst, acc) => lst.tail :: acc )
-            heads::inverse(tails)             
-        }
-
-        val listOfArgs = inverse(allargs)
-        val deltaOfArgs = listOfArgs.foldRight(List[(FOLTerm, List[FOLTerm])]()) ((a, acc) => delta(a) :: acc)
+        // for a list of all elements in position i. If this was a matrix, this 
+        // is a function on the column of the matrix.
+        // By computing the transpose of this matrix, the columns are now the 
+        // rows, i.e., the inner lists. So we can just use fold to apply the
+        // function to every such list.
+        val listOfArgs = transpose(allargs)
+        val deltaOfArgs = listOfArgs.foldRight(List[(FOLTerm, List[FOLTerm])]()) ((a, acc) => delta(a, eigenvariable) :: acc)
        
         // A delta vector can be constructed only if the lists returned from the arguments are all the same
         
@@ -268,12 +269,12 @@ object decomposition {
           }
           // The terms returned from the arguments are different
           else {
-            return (FOLVar(new VariableStringSymbol("α")), terms)
+            return (eigenvariable, terms)
           }
         }
       }
       // If head terms are different
-      else { return (FOLVar(new VariableStringSymbol("α")), terms) }
+      else { return (eigenvariable, terms) }
   }
   
 }
