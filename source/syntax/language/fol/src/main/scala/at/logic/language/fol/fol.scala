@@ -114,6 +114,66 @@ trait FOLFormula extends FOLExpression with HOLFormula {
     }
   }
 
+  // Transforms a formula to negation normal form (transforming also
+  // implications into disjunctions)
+  def toNNF : FOLFormula = this match {
+    case Atom(_,_) => this
+    case Function(_,_) => this
+    case Imp(f1,f2) => Or((Neg(f1)).toNNF, f2.toNNF)
+    case And(f1,f2) => And(f1.toNNF, f2.toNNF)
+    case Or(f1,f2) => Or(f1.toNNF, f2.toNNF)
+    case ExVar(x,f) => ExVar(x, f.toNNF)
+    case AllVar(x,f) => AllVar(x, f.toNNF)
+    case Neg(f) => f match {
+      case Atom(_,_) => Neg(f)
+      case Function(_,_) => Neg(f)
+      case Neg(f1) => f1.toNNF
+      case Imp(f1,f2) => And(f1.toNNF, Neg(f2.toNNF))
+      case And(f1,f2) => Or(f1.toNNF, f2.toNNF)
+      case Or(f1,f2) => And(f1.toNNF, f2.toNNF)
+      case ExVar(x,f) => AllVar(x, f.toNNF)
+      case AllVar(x,f) => ExVar(x, f.toNNF)
+      case _ => throw new Exception("ERROR: Unexpected case while transforming to negation normal form.")
+    }
+    case _ => throw new Exception("ERROR: Unexpected case while transforming to negation normal form.")
+  }
+
+  // NOTE: The formula should be skolemized
+  def removeUniversalQuantifiers : FOLFormula = this match {
+    case Atom(_,_) => this
+    case Function(_,_) => this
+    case Imp(f1,f2) => Imp(f1.removeUniversalQuantifiers, f2.removeUniversalQuantifiers)
+    case And(f1,f2) => And(f1.removeUniversalQuantifiers, f2.removeUniversalQuantifiers)
+    case Or(f1,f2) => Or(f1.removeUniversalQuantifiers, f2.removeUniversalQuantifiers)
+    case Neg(f1) => Neg(f1.removeUniversalQuantifiers)
+    case ExVar(x,f1) => throw new Exception("ERROR: Not skolemized formula while removing universal quantifiers.")
+    case AllVar(x,f1) => f1.removeUniversalQuantifiers
+    case _ => throw new Exception("ERROR: Unexpected case while removing universal quantifiers.")
+  }
+
+  // Distribute Ors over Ands
+  def distribute : FOLFormula = this match {
+    case Atom(_,_) => this
+    case Function(_,_) => this
+    // Negation has only atomic scope
+    case Neg(Atom(_,_)) => this
+    case Neg(Function(_,_)) => this
+    case And(f1, f2) => And(f1.distribute, f2.distribute)
+    case Or(f1, And(f2,f3)) => And(Or(f1,f2).distribute, Or(f1,f3).distribute)
+    case Or(And(f1,f2), f3) => And(Or(f1,f3).distribute, Or(f2,f3).distribute)
+    case Or(f1, f2) => Or(f1.distribute, f2.distribute).distribute
+    case _ => throw new Exception("ERROR: Unexpected case while distributing Ors over Ands.")
+  }
+
+  // Transforms a formula to conjunctive normal form
+  // 1. Transform to negation normal form
+  // 2. Skolemize the formula  TODO
+  // 3. Remove universal quantifiers
+  // 4. Distribute Ors over Ands
+  // OBS: Assuming that the formula is skolemized.
+  // TODO: tests for this
+  def toCNF : FOLFormula = this.toNNF.removeUniversalQuantifiers.distribute
+
 }
 
 // the companion object converts HOL formulas into fol if the hol version has fol type

@@ -198,7 +198,8 @@ object cutIntroduction {
 
     //val axiomL = Axiom((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR)))
     //val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
-    val proofLeft = Autoprop(FSequent((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR))))
+    val proofLeft0 = Autoprop(FSequent((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR))))
+    val proofLeft = StructuralOptimizationAfterAutoprop(proofLeft0)
     val leftBranch = ForallRightRule(uPart(u, proofLeft), cutLeft, cutFormula, alpha)
 
     def sPart(cf: FOLFormula, s: List[FOLTerm], p: LKProof) = {
@@ -218,7 +219,8 @@ object cutIntroduction {
 
     //val axiomR = Axiom((cutRight ++ alphaFormulasL ++ ant), (succ ++ alphaFormulasR))
     //val rightBranch = uPart(u, sPart(cutFormula, s, axiomR))
-    val proofRight = Autoprop(FSequent(cutRight ++ propAnt, propSucc))
+    val proofRight0 = Autoprop(FSequent(cutRight ++ propAnt, propSucc))
+    val proofRight = StructuralOptimizationAfterAutoprop(proofRight0)
     val rightBranch = sPart(cutFormula, s, proofRight)
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
@@ -269,6 +271,22 @@ object cutIntroduction {
   }
   */
 
+  // The canonical solution computed already has only the quantified formulas 
+  // from the end-sequent (propositional part is ignored).
+  def improveCanonicalSolution(sol: FOLFormula) : FOLFormula = {
 
+    // Remove quantifier
+    val f = sol match {
+      case AllVar(_, form) => form
+      case _ => throw new CutIntroException("ERROR: Canonical solution is not quantified.")
+    }
+
+    // Transform to conjunctive normal form
+    val cnf = f.toCNF
+
+    // Exhaustive search over the resolvents TODO
+
+    cnf
+  }
 }
 
