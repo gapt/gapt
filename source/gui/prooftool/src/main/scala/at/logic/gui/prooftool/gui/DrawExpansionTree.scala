@@ -9,7 +9,7 @@ package at.logic.gui.prooftool.gui
 
 import at.logic.calculi.lk.base.Sequent
 import swing._
-import event.MouseClicked
+import event.{UIElementResized, MouseClicked}
 import java.awt.{Font, Dimension, Color}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import java.awt.Font._
@@ -31,6 +31,13 @@ class DrawExpansionTree(val expansionTree: Sequent, private val fSize: Int) exte
     if (width > 100 && height > 200)
       new Dimension(Main.top.size.width - 70, Main.top.size.height - 150)
     else new Dimension(width, height)
+  }
+
+  listenTo(Main.top)
+  reactions += {
+    case UIElementResized(Main.top) =>
+      preferredSize = calculateOptimalSize
+      revalidate
   }
 }
 
