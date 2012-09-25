@@ -106,7 +106,7 @@ class resolutionSchemataTest extends SpecificationWithJUnit {
 
 
       println("\n\n")
-      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], two) + Pair(l.asInstanceOf[Var], three)
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], three) + Pair(l.asInstanceOf[Var], Succ(three))
       val subst = new SchemaSubstitution3(map)
 
       val sig1 = subst(trsSigma.map.get("σ'").get._2._1)
@@ -174,7 +174,7 @@ class resolutionSchemataTest extends SpecificationWithJUnit {
 
       val rez4 = resolutionDeduction(fo2sub, trsClauseSch, trsSigma, subst, mapX)
       println(Console.BOLD+"\n\nDeduction: \n\n"+Console.RESET+rez4)
-      println("\n\n\n\n\n")
+      println("\n")
 
       println("\n\n\ntransofrmation to tree:\n")
       val t = ResDeductionToLKTree(fo2sub)
