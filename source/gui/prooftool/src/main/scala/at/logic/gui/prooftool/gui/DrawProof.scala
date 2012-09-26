@@ -31,7 +31,6 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   private val bd = Swing.EmptyBorder(0,fSize*2,0,fSize*2)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   private val labelFont = new Font(SANS_SERIF, ITALIC, fSize-2)
-//  private var hideRules = false
   private var drawLines = true
   // The following is a hack to be able to apply searching to the end-sequent. Think about better solution.
   // The problem is that I need to "recalculate" end-sequent and need def for this reason.
@@ -45,8 +44,6 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
         case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
         case e: MouseExited => ds.contents.foreach(x => x.foreground = black)
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(proof, this, e.point.x, e.point.y)
-//        case e: HideStructural if e.proof == proof => println("Hiding: " + e.proof.rule)
-//          ds.visible = false
       }
       ds
     case _ => new Label(proof.root.toString) {
@@ -63,14 +60,22 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
       Main.body.peer.dispatchEvent(e.peer)
-    case HideStructuralRules => // hideStructuralRules
+    case HideStructuralRules =>  //Fix: line is not drawn when a weakening is followed by a contraction.
       proof.rule match {
-        case ContractionLeftRuleType | ContractionRightRuleType | WeakeningLeftRuleType | WeakeningRightRuleType =>
+        case WeakeningLeftRuleType | WeakeningRightRuleType =>
           drawLines = false
           tx.visible = false
+        case ContractionLeftRuleType | ContractionRightRuleType =>
+          drawLines = false
+          val dp = layout.find(_._2 == Position.Center).get._1.asInstanceOf[DrawProof]
+          dp.tx.visible = false
+          dp.border = Swing.EmptyBorder(0,0,3,0)
         case _ =>
       }
-    case ShowAllRules => showAllRules
+    case e: ShowAllRules if e.proof == proof =>
+      drawLines = true
+      initialize
+      revalidate
     case e: ShowProof if e.proof == proof =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
@@ -81,18 +86,6 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
 
   initialize
   // end of constructor
-
-  def showAllRules {
-  //  hideRules = false
-    initialize
-    revalidate
-  }
-
-//  def hideStructuralRules {
-//    hideRules = true
-//    initialize
-//    revalidate
-//  }
 
   def setColoredOccurrences(s : Set[FormulaOccurrence]) {
     colored_occurrences = s
@@ -110,11 +103,6 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   def initialize : Unit = proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
-//      if (hideRules) p.rule match {
-//        case ContractionLeftRuleType | ContractionRightRuleType | WeakeningLeftRuleType | WeakeningRightRuleType =>
-//          ProofToolPublisher.publish(new HideStructural(p.uProof.asInstanceOf[TreeProof[_]]))
-//        case _ =>
-//      }
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences, str)) = Position.Center
       layout(tx) = Position.South
     case p: BinaryTreeProof[_] =>
