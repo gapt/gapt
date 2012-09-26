@@ -246,14 +246,14 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  // Used for ShowProof menu, loads proof directly
+  // Used for PopupMenu, loads proof directly
   def loadProof(proof: LKProof) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(Some(proof.name, proof), 14)
+    body.contents = new Launcher(Some(proof.name, proof), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  // Used for ShowProof menu
+  // Used for ViewProof menu
   def loadProof(proof: (String, TreeProof[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(proof), 12)
