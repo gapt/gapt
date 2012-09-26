@@ -54,6 +54,10 @@ class LKTest extends SpecificationWithJUnit {
   val a3 = Axiom(f2::f2::f3::Nil, f2::f2::f3::Nil)
   val ap = Axiom(f1::f1::Nil, Nil)
   val a4 = ap
+  val pr = WeakeningRightRule( ax, f1 )
+  val pr1 = OrRightRule( pr, f1, f1 )
+  val pr2 = WeakeningLeftRule( ax, f1 )
+  val pr3 = AndLeftRule( pr2, f1, f1 )
 
   "The factories/extractors for LK" should {
 
@@ -216,6 +220,14 @@ class LKTest extends SpecificationWithJUnit {
         (a.root.antecedent) must not (contain(f1))
         (a.root.antecedent) must not (contain(f3))
       }
+
+      "- Principal formula is created correctly when auxiliary formulas are equal" in {
+        (pr3.prin.head.formula) must beEqualTo (And(f1,f1))
+      }
+
+      "- Lower sequent must not contain the auxiliary formulas when auxiliary formulas are equal" in {
+        (pr3.root.antecedent) must not (contain(f1))
+      }
     }
 
     "work for OrLeftRule" in {
@@ -251,6 +263,16 @@ class LKTest extends SpecificationWithJUnit {
             case None => ko
           }
         }
+      }
+    }
+
+    "work for OrRightRule" in {
+      "- Principal formula is created correctly when auxiliary formulas are equal" in {
+        (pr1.prin.head.formula) must beEqualTo (Or(f1,f1))
+      }
+
+      "- Lower sequent must not contain the auxiliary formulas when auxiliary formulas are equal" in {
+        (pr1.root.succedent) must not (contain(f1))
       }
     }
 
