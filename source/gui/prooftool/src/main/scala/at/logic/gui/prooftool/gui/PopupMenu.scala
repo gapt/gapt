@@ -12,6 +12,7 @@ import javax.swing.JPopupMenu
 import swing._
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
+import at.logic.gui.prooftool.parser.{ProofToolPublisher, ShowProof, HideProof}
 
 
 class PopupMenu extends Component with Wrapper {
@@ -24,18 +25,16 @@ object PopupMenu {
 
   // PopupMenu for LKProofs.
   def apply(tproof: TreeProof[_], component: Component, x: Int, y: Int) {
-    val proof = Some(tproof.asInstanceOf[LKProof])
+    lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
-      contents += new MenuItem(Action("Apply Gentzen's Method") { Main.gentzen(proof.get) })
-      contents += new MenuItem(Action("Export Subproof in XML") { Main.fSaveProof(proof.get) })
-      contents += new MenuItem(Action("Export Subproof in TeX") { Main.fExportProofToTex(proof.get, false) })
-      /*  This functions can be added later:
-          contents += new MenuItem("Compute Clause Set")
-          contents += new MenuItem("Compute Clause Term")
-          contents += new Separator
-          contents += new MenuItem("Show Proof Above")
-          contents += new MenuItem("Hide Proof Above")
-      */
+      contents += new MenuItem(Action("Apply Gentzen's Method") { Main.gentzen(proof) })
+      contents += new MenuItem(Action("Export Subproof in XML") { Main.fSaveProof(proof) })
+      contents += new MenuItem(Action("Export Subproof in TeX") { Main.fExportProofToTex(proof, false) })
+    //  contents += new MenuItem(Action("Compute Clause Set") {} )
+    //  contents += new MenuItem(Action("Compute Clause Term") {} )
+      contents += new Separator
+      contents += new MenuItem(Action("Show Proof Above") { ProofToolPublisher.publish(new ShowProof(tproof)) } )
+      contents += new MenuItem(Action("Hide Proof Above") { ProofToolPublisher.publish(new HideProof(tproof)) } )
     }
     popupMenu.show(component, x, y)
   }
