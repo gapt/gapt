@@ -12,7 +12,7 @@ import javax.swing.JPopupMenu
 import swing._
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
-import at.logic.gui.prooftool.parser.{ProofToolPublisher, ShowProof, HideProof}
+import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher, ShowProof, HideProof}
 
 
 class PopupMenu extends Component with Wrapper {
@@ -35,6 +35,12 @@ object PopupMenu {
       contents += new Separator
       contents += new MenuItem(Action("Show Proof Above") { ProofToolPublisher.publish(new ShowProof(tproof)) } )
       contents += new MenuItem(Action("Hide Proof Above") { ProofToolPublisher.publish(new HideProof(tproof)) } )
+      contents += new Separator
+      contents += new MenuItem(Action("Split Proof") {
+        Main.db.addProofs((proof.name,proof)::Nil)
+        Main.loadProof(proof)
+        ProofToolPublisher.publish(ProofDbChanged)
+      })
     }
     popupMenu.show(component, x, y)
   }
