@@ -373,7 +373,7 @@ object Main extends SimpleSwingApplication {
       }
       contents += new Separator
       contents += new MenuItem(Action("Hide Structural Rules") {
-        warningMessage("This feature is under development and might not work properly!")
+      //  warningMessage("This feature is under development and might not work properly!")
         ProofToolPublisher.publish(HideStructuralRules)
       }) {
         border = customBorder
@@ -384,7 +384,9 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
-      contents += new MenuItem(Action("Show All Rules") { ProofToolPublisher.publish(ShowAllRules) }) {
+      contents += new MenuItem(Action("Show All Rules") {
+        ProofToolPublisher.publish(new ShowAllRules(body.getContent.getData.get._2.asInstanceOf[TreeProof[_]]))
+      }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)

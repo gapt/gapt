@@ -435,7 +435,7 @@ object regularize {
         val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( vname ) ) // rename eigenvariable
         {
           // FIXME: casts!?
-          val new_var_name = (x:Int) => v.name.toString.replaceAll("_.*$","_{")+x+"}" // {} are obligatory for prooftool
+          val new_var_name = (x:Int) => v.name.toString.replaceAll("_.*$","")+"_{"+x+"}" // {} are obligatory for prooftool
           val new_var = freshVar.get( v.exptype, blacklist, new_var_name, v.factory ).asInstanceOf[HOLVar]
           val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
           val new_map = new_parent._3.clone
@@ -452,7 +452,7 @@ object regularize {
         val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( vname ) ) // rename eigenvariable
         {
           // FIXME: casts!?
-          val new_var_name = (x:Int) => v.name.toString.replaceAll("_.*$","_{")+x+"}" // {} are obligatory for prooftool
+          val new_var_name = (x:Int) => v.name.toString.replaceAll("_.*$","")+"_{"+x+"}" // {} are obligatory for prooftool
           val new_var = freshVar.get( v.exptype, blacklist, new_var_name, v.factory ).asInstanceOf[HOLVar]
           val new_new_parent = applySubstitution( new_parent._1, Substitution[HOLExpression]( v, new_var ) )
           val new_map = new_parent._3.clone

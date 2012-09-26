@@ -21,7 +21,6 @@ case object ShowLeaf extends Event
 case object HideLeaf extends Event
 case object HideTree extends Event
 case object HideStructuralRules extends Event
-case object ShowAllRules extends Event
-case class HideStructural(proof: TreeProof[_]) extends Event
+case class ShowAllRules(proof: TreeProof[_]) extends Event
 case class HideProof(proof: TreeProof[_]) extends Event
 case class ShowProof(proof: TreeProof[_]) extends Event
