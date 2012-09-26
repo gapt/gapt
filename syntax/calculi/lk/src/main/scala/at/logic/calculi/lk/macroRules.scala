@@ -26,8 +26,10 @@ package macroRules {
     // convenient method to choose the first formula
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       val x1 = s1.root.antecedent.find( _.formula == term1 )
-      val x2 = s1.root.antecedent.find( x => x.formula == term2 && x != x1 )
-      if (x1 == None || x2 == None )
+      if (x1 == None)
+        throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      val x2 = s1.root.antecedent.find( x => x.formula == term2 && x != x1.get )
+      if (x2 == None)
         throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       apply(s1, x1.get, x2.get)
     }
@@ -43,8 +45,10 @@ package macroRules {
     // convenient method to choose the first formula
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       val x1 = s1.root.succedent.find( _.formula == term1 )
-      val x2 = s1.root.succedent.find( x => x.formula == term2 && x != x1 )
-      if (x1 == None || x2 == None )
+      if (x1 == None)
+        throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      val x2 = s1.root.succedent.find( x => x.formula == term2 && x != x1.get )
+      if (x2 == None)
         throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       apply(s1, x1.get, x2.get)
     }
