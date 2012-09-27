@@ -1,3 +1,5 @@
+/*** wtf? ***/
+
 //package at.logic.algorithms.shlk
 //
 //import at.logic.calculi.lk.base._

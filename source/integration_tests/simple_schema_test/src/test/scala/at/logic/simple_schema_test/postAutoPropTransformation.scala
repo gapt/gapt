@@ -82,6 +82,7 @@ class autopropTest extends SpecificationWithJUnit {
 
       val p = Autoprop.apply1(fseq) //UNCOMMENT !
       //      println(Console.RED+"\n\n\nautopropositional : "+Console.RESET+printSchemaProof.sequentToString(p.root) )
+/*
       println("\n\n\nautopropositional, size = "+rulesNumber(p))
       printSchemaProof(p)
 //      Main.display("p", p);
@@ -119,7 +120,7 @@ class autopropTest extends SpecificationWithJUnit {
       //      println("\n\n\nautoprop minimal form, size = "+rulesNumber(pauto))
       //      printSchemaProof(pauto)
       //      println("\n\n")
-
+*/
       Autoprop(FSequent(Neg(And(Neg(A), Neg(B))) :: Nil, Or(A , B) :: Nil))
       Autoprop(FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil))
       Autoprop(FSequent(And(A , B) :: Nil, Neg(Or(Neg(A), Neg(B))) :: Nil))

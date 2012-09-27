@@ -568,7 +568,7 @@ import collection.immutable.Seq
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None) throw new LKRuleCreationException("Auxialiary formula is not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         term1

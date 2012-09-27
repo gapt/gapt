@@ -14,6 +14,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
+import at.logic.language.fol.Utils._
 import at.logic.language.lambda.typedLambdaCalculus._
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
@@ -23,6 +24,8 @@ import at.logic.algorithms.interpolation._
 class CutIntroException(msg: String) extends Exception(msg)
 
 object cutIntroduction {
+
+  val ehs = new ExtendedHerbrandSequent()
 
   def apply(proof: LKProof) : LKProof = {
 
@@ -63,12 +66,14 @@ object cutIntroduction {
     val s = smallestDec._2
 
     println("\nDecomposition chosen: {" + smallestDec._1 + "} o {" + smallestDec._2 + "}")
-    
+
+/*
     def genConjunction(forms: List[FOLFormula]) : FOLFormula = forms match {
       case Nil => throw new CutIntroException("The set S of the decomposition should not be empty.")
       case f :: Nil => f
       case f :: t => And(genConjunction(t), f)
     }
+*/
 
     val x = ConstantStringSymbol("X")
     val alpha = FOLVar(new VariableStringSymbol("α"))
@@ -76,7 +81,7 @@ object cutIntroduction {
 
     // X[s_i] forall i
     val xs = s.map(t => Atom(x, t::Nil))
-    val bigConj = genConjunction(xs)
+    val bigConj = conjunction(xs)
    
     val impl = Imp(xalpha, bigConj)
 
@@ -111,7 +116,7 @@ object cutIntroduction {
     val ehsant = (impl :: alphaFormulasL) ++ propAnt
     val ehssucc = alphaFormulasR ++ propSucc
 
-    val conj = genConjunction(xFormulas)
+    val conj = conjunction(xFormulas)
 
     println("\nExtended Herbrand sequent: \n" + ehsant + " |- " + ehssucc)
     // FIXME: very bad hack for showing the results in order to avoid working
@@ -126,11 +131,11 @@ object cutIntroduction {
     val cutFormula = AllVar(xvar, conj)
 
 /* TODO: uncomment when fixed.
-    // Computing the interpolant
+    // Computing the interpolant (transform this into a separate function later)
     
     // A[s_i] forall i
     val asi = s.map(t => cutFormula0.substitute(t))
-    val cutConj = genConjunction(asi)
+    val cutConj = conjunction(asi)
 
     // Negative part
     val gamma = alphaFormulasL
@@ -152,7 +157,10 @@ object cutIntroduction {
 
     val interpolant = ExtractInterpolant(interpProof, npart_occ.toSet, ppart_occ.toSet)
 
+    println("Interpolant: " + interpolant.toPrettyString + "\n")
+
     // Adding interpolant to cut formula
+    // TODO: casting does not work here.
     val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
 */
 
@@ -198,8 +206,7 @@ object cutIntroduction {
 
     //val axiomL = Axiom((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR)))
     //val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
-    val proofLeft0 = Autoprop(FSequent((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR))))
-    val proofLeft = StructuralOptimizationAfterAutoprop(proofLeft0)
+    val proofLeft = Autoprop(FSequent((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR))))
     val leftBranch = ForallRightRule(uPart(u, proofLeft), cutLeft, cutFormula, alpha)
 
     def sPart(cf: FOLFormula, s: List[FOLTerm], p: LKProof) = {
@@ -219,8 +226,7 @@ object cutIntroduction {
 
     //val axiomR = Axiom((cutRight ++ alphaFormulasL ++ ant), (succ ++ alphaFormulasR))
     //val rightBranch = uPart(u, sPart(cutFormula, s, axiomR))
-    val proofRight0 = Autoprop(FSequent(cutRight ++ propAnt, propSucc))
-    val proofRight = StructuralOptimizationAfterAutoprop(proofRight0)
+    val proofRight = Autoprop(FSequent(cutRight ++ propAnt, propSucc))
     val rightBranch = sPart(cutFormula, s, proofRight)
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
@@ -244,49 +250,39 @@ object cutIntroduction {
     }
   }
 
-  // Quantifier inferences are applied as early as possible
-  // TODO: check if the variables are available for the multiple cut case
-  /*
-  u.foldRight(contractions) {
-    case ((f, setU), contractions) => var first = true; 
-      f.formula.asInstanceOf[FOLFormula] match { 
-        case AllVar(_, _) => setU.foldRight(contractions) { case (terms, contractions) =>
-          if(first) {
-            first = false
-            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions)
-          }
-          else
-            ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions), f.formula.asInstanceOf[FOLFormula])
-        }
-        case ExVar(_, _) => setU.foldRight(ax) { case (terms, contractions) =>
-          if(first) {
-            first = false
-            genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions)
-          }
-          else
-            ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, contractions), f.formula.asInstanceOf[FOLFormula])
-        }
-      }
-    }
-  }
-  */
-
+/* TODO: uncomment and use once resolve is implemented
   // The canonical solution computed already has only the quantified formulas 
   // from the end-sequent (propositional part is ignored).
   def improveCanonicalSolution(sol: FOLFormula) : FOLFormula = {
 
-    // Remove quantifier
-    val f = sol match {
-      case AllVar(_, form) => form
+    // Remove quantifier 
+    val (x, f) = sol match {
+      case AllVar(x, form) => (x, form)
       case _ => throw new CutIntroException("ERROR: Canonical solution is not quantified.")
     }
 
     // Transform to conjunctive normal form
     val cnf = f.toCNF
 
-    // Exhaustive search over the resolvents TODO
+    // Exhaustive search over the resolvents (depth-first search)
+    // TODO: implement resolve (takes a formula and returns a list of resolvents
+    // of that formula)
+    def searchMinSolution(f: FOLFormula) : FOLFormula = resolve(f) match {
+      case Nil => f
+      case resolvents => 
+        val l = resolvents.foldRight(List[FOLFormula]()) (r, acc => 
+          // Should I insert this quantifier by hand?
+          if(ehs.isValidWith(AllVar(x,r))) {
+            searchMinSolution(r) :+ acc
+          }
+          else acc
+        )
+        // Return the minimum resolvent
+        l.sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)._1
+    }
 
-    cnf
+    searchMinSolution(cnf)
   }
+*/
 }
 
