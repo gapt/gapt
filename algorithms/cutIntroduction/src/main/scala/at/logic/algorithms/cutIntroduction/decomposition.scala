@@ -102,21 +102,29 @@ class DeltaTable() {
   }
 }
 
-/* TODO: think about how to implement this.
-// Single decomposition UoS
-class Decomposition() {
+// TODO: separate the decomposition from the delta table file?
+// NOTE: Single decomposition UoS
+class Decomposition {
 
-  val u = new HashMap[FormulaOccurrence, List[List[FOLTerm]]]
-  val s = new List[FOLTerm]
-  val alpha = new FOLVar
+  var u = HashMap[FormulaOccurrence, List[List[FOLTerm]]]()
+  var s : List[FOLTerm] = Nil
+  var alpha : FOLVar = FOLVar(new VariableStringSymbol(""))
 
   def apply(u0: HashMap[FormulaOccurrence, List[List[FOLTerm]]], s0: List[FOLTerm], ev: FOLVar) = {
     u = u0
     s = s0
     alpha = ev
   }
+
+  def getUTermsOfFormula(f: FormulaOccurrence) : List[List[FOLTerm]] = u.get(f) match {
+    case Some(lst) => lst
+    case None => throw new DecompositionException("ERROR: The formula has no instances on the decomposition.")
+  }
+
+  def getSTerms : List[FOLTerm] = s
+
+  def getVariable : FOLVar = alpha
 }
-*/
 
 object decomposition {
 

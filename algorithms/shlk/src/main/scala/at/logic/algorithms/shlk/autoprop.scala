@@ -24,7 +24,7 @@ import at.logic.language.lambda.types.{Ti, Tindex}
 object ContinueAutoProp {
   def apply(seq: FSequent): Option[LKProof] = {
     try {
-      Some(Autoprop.apply1(seq))
+      Some(Autoprop.apply(seq))
     } catch {
       case e:NoneException => {
         println("\n"+seq+" cannot be proved by propositional rules !\n")
@@ -35,40 +35,34 @@ object ContinueAutoProp {
 }
 
 class NoneException(s: String) extends Exception(s) {}
+
 // continue autopropositional
 object Autoprop {
+  
   // This method is used in prooftool to test autopropositional feature.
   def apply(s: String): List[LKProof] = if (s.isEmpty) {
     val auto1 = apply1(test.apply())
-    val auto2 = StructuralOptimizationAfterAutoprop(auto1)
-//    val auto3 = StructuralOptimizationAfterAutoprop(auto2)
-//    val auto = apply(test.apply())
-    List(auto1,auto2)//,auto3,auto)
+    val auto2 = cleanStructuralRules(auto1)
+    List(auto1,auto2)
   } else {
     val seq = SHLK.parseSequent(s)
     apply( seq ) :: Nil
   }
 
   def apply(seq: FSequent): LKProof = {
-//    println("\n\nseq = "+seq)
     var p = apply1(seq)
-//    while (rulesNumber(p) != rulesNumber(StructuralOptimizationAfterAutoprop(p)))
-//      p = StructuralOptimizationAfterAutoprop(p)
-    p
+    cleanStructuralRules(p)
   }
 
   def apply1(seq: FSequent): LKProof = {
     if (isSeqTautology(seq)) {
-//      println("\n\ntaut = "+seq)
       val (f, rest) = getAxiomfromSeq(seq)
       return WeakeningRuleN(Axiom(f::Nil, f::Nil), rest)
     }
 
     if (getNonAtomicFAnt(seq) != None) {
       val f = getNonAtomicFAnt(seq).get._1
-//      println("\nant f = "+printSchemaProof.formulaToString(f) )
       val rest = getNonAtomicFAnt(seq).get._2
-//      println("\nrest = "+rest )
       f match {
         case Neg(f1) => return NegLeftRule(apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent)), f1.asInstanceOf[HOLFormula])
         case Imp(f1, f2)=> {
@@ -120,13 +114,11 @@ object Autoprop {
     }
 
     if (getNonAtomicFSucc(seq) == None) {
-      //throw new Exception("\nError in Autoprop SUCC !\n")
       throw new NoneException("None")
     }
 
 
     val f = getNonAtomicFSucc(seq).get._1
-//    println("\nsucc f = "+printSchemaProof.formulaToString(f) )
     val rest = getNonAtomicFSucc(seq).get._2
     f match {
       case Neg(f1) => return NegRightRule(apply1(new FSequent(f1.asInstanceOf[HOLFormula] +: rest.antecedent, rest.succedent)), f1.asInstanceOf[HOLFormula])
@@ -143,9 +135,6 @@ object Autoprop {
         val t1 = apply1(new FSequent(rest.antecedent, f1.asInstanceOf[HOLFormula] +: rest.succedent))
         val t2 = apply1(new FSequent(rest.antecedent, f2.asInstanceOf[HOLFormula] +: rest.succedent))
         val up = AndRightRule(t1, t2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-//        print("\nsucc And(f1, f2) = ")
-//        println (printSchemaProof.formulaToString(f))
-//        println(printSchemaProof.sequentToString(up.root))
         return ContractionRuleN(up, rest)
       }
       case BigAnd(i, iter, from, to) => {
@@ -182,58 +171,33 @@ object Autoprop {
     throw new Exception("Error in Autoprop - missing case !")
   }
 
-//  def ContractionRuleN(p : LKProof, seq: FSequent) : LKProof = {
-////    println("\nContrN proof:\n"+printSchemaProof(p))
-////    val up = seq.antecedent.foldLeft(p)((res, f) => ContractionLeftRule(res, f))
-////    seq.succedent.foldLeft(up)((res, f) => {
-////      println("contracted f-la right = "+printSchemaProof.formulaToString (f))
-////      ContractionRightRule(res, f)
-////    })
-//  }
+  def getListOfFormulasToContractAnt(seq: FSequent): Set[HOLFormula] = {
+    seq.antecedent.filter(f => seq.antecedent.count(x => x == f) > 1).toSet
+  }
+  def getListOfFormulasToContractSucc(seq: FSequent): Set[HOLFormula] = {
+    seq.succedent.filter(f => seq.succedent.count(x => x == f) > 1).toSet
+  }
 
-    def getListOfFormulasToContractAnt(seq: FSequent): Set[HOLFormula] = {
-      seq.antecedent.filter(f => seq.antecedent.count(x => x == f) > 1).toSet
+  def ContractionRuleN(p : LKProof, seq: FSequent) : LKProof = {
+    var l1 = getListOfFormulasToContractAnt(p.root.toFSequent()).toList
+    var up = p
+    while(l1.length > 0) {
+      up = l1.foldLeft(up)((res, f) => ContractionLeftRule(res, f))
+      l1 = getListOfFormulasToContractAnt(up.root.toFSequent()).toList
     }
-    def getListOfFormulasToContractSucc(seq: FSequent): Set[HOLFormula] = {
-      seq.succedent.filter(f => seq.succedent.count(x => x == f) > 1).toSet
+    var l2 = getListOfFormulasToContractSucc(p.root.toFSequent()).toList
+
+    var up2 = up
+    var i=1
+    while(l2.length > 0) {
+      i = i+1
+      up2 = l2.foldLeft(up2)((res, f) => {
+        ContractionRightRule(res, f)
+      })
+      l2 = getListOfFormulasToContractSucc(up2.root.toFSequent()).toList
     }
-
-    def ContractionRuleN(p : LKProof, seq: FSequent) : LKProof = {
-//      println("\nContrN proof:\n"+printSchemaProof(p))
-      var l1 = getListOfFormulasToContractAnt(p.root.toFSequent()).toList
-      var up = p
-      while(l1.length > 0) {
-//        println("\n\n ANT\n\n")
-        up = l1.foldLeft(up)((res, f) => ContractionLeftRule(res, f))
-        l1 = getListOfFormulasToContractAnt(up.root.toFSequent()).toList
-      }
-      var l2 = getListOfFormulasToContractSucc(p.root.toFSequent()).toList
-//      println("\n\n\n\n\n")
-
-//      seq.succedent.foreach(f => println("fseq = "+printSchemaProof.formulaToString(f) ))
-      var up2 = up
-      var i=1
-      while(l2.length > 0) {
-//        println("\n\n i = "+i)
-        i = i+1
-//        l2.foreach(f => println(printSchemaProof.formulaToString(f)))
-//        print("seq = ")
-//        println(printSchemaProof.sequentToString(up2.root))
-        up2 = l2.foldLeft(up2)((res, f) => {
-//          println("\napply contrr to = " +printSchemaProof.sequentToString(up2.root) )
-//          println("\nformula = "+printSchemaProof.formulaToString(f) )
-          ContractionRightRule(res, f)
-        })
-        l2 = getListOfFormulasToContractSucc(up2.root.toFSequent()).toList
-      }
-      up2
-    }
-
-//    def ContractionRuleN(p : LKProof, seq: FSequent) : LKProof = {
-//      println("\nContrN proof:\n"+printSchemaProof(p))
-//      val up = seq.antecedent.foldLeft(p)((res, f) => ContractionLeftRule(res, f))
-//      seq.succedent.foldLeft(up)((res, f) => ContractionRightRule(res, f))
-//    }
+    up2
+  }
 
   def WeakeningRuleN(p : LKProof, seq: FSequent) : LKProof = {
     val up = seq.antecedent.foldLeft(p)((res, f) => WeakeningLeftRule(res, f))
@@ -244,7 +208,6 @@ object Autoprop {
   def getNonAtomicFAnt(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.antecedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
-//      case HOLConst(_,_)  => return Some(f, removeFfromSeqAnt(seq, f))
       case Atom(_ , arg) => {
         if ( arg.head.exptype == Ti())
           {  }
@@ -258,7 +221,6 @@ object Autoprop {
   def getNonAtomicFSucc(seq: FSequent) : Option[(HOLFormula, FSequent)] = {
     seq.succedent.foreach(f => f match {
       case IndexedPredicate(_, _) => {}
-//      case HOLConst(_,_)  => return Some(f, removeFfromSeqSucc(seq, f))
       case Atom(_ , arg) => {
         if ( arg.head.exptype == Ti() )
           {  }
@@ -305,9 +267,323 @@ object Autoprop {
     }
     else throw new Exception("\nError in else-autoprop.getAxiomfromSeq !\n")
   }
+
+  // Removes the redundant weakenings and contractions generated by automatic
+  // proving propositional sequents.
+  // Traverse the proof top-down.
+  // When a contraction is encountered, check if the formulas are later weakened
+  // and remove both rules (contraction and weakening)
+  def cleanStructuralRules(proof: LKProof) : LKProof = proof match {
+    // Base case: axiom
+    case Axiom(s) => proof 
+
+    // Structural rules:
+    case WeakeningLeftRule(p, _, m) =>
+      val new_proof = cleanStructuralRules(p)
+      WeakeningLeftRule(new_proof, m.formula)
+    
+    case WeakeningRightRule(p, _, m) =>
+      val new_proof = cleanStructuralRules(p)
+      WeakeningRightRule(new_proof, m.formula)
+
+    case ContractionLeftRule(p, _, a1, a2, m) =>
+      // Assuming that above this contraction there are no more redundant
+      // contractions (it is the top most)
+      val new_proof = cleanStructuralRules(p)
+
+      // Finding corresponding occurrences on the new proof (both should be there!!!)
+      val new_a1 = new_proof.root.antecedent.filter(x => x =^ a1)(0)
+      val new_a2 = new_proof.root.antecedent.filter(x => x =^ a2)(1)
+
+      val w1 = isWeakened(new_a1, new_proof)
+      val w2 = isWeakened(new_a2, new_proof)
+      
+      // Both formulas are weakened at some point
+      if(w1 && w2) {
+        // Only remove the weakening of one of those
+        // NOTE: By returning this proof, the contraction rule is automatically
+        // removed.
+        removeWeakeningOn(new_a1, new_proof)
+      }
+      // Only one formula is weakened
+      else if(w1) {
+        removeWeakeningOn(new_a1, new_proof)
+      }
+      else if (w2) {
+        removeWeakeningOn(new_a2, new_proof)
+      }
+      // No formulas are weakened, leave contraction there
+      else ContractionLeftRule(new_proof, a1.formula)
+
+    case ContractionRightRule(p, _, a1, a2, m) =>
+      // Assuming that above this contraction there are no more redundant
+      // contractions (it is the top most)
+      val new_proof = cleanStructuralRules(p)
+      
+      // Finding corresponding occurrences on the new proof (both should be there!!!)
+      val new_a1 = new_proof.root.succedent.filter(x => x =^ a1)(0)
+      val new_a2 = new_proof.root.succedent.filter(x => x =^ a2)(1)
+
+      val w1 = isWeakened(new_a1, new_proof)
+      val w2 = isWeakened(new_a2, new_proof)
+      
+      // Both formulas are weakened at some point
+      if(w1 && w2) {
+        // Only remove the weakening of one of those
+        // NOTE: By returning this proof, the contraction rule is automatically
+        // removed.
+        removeWeakeningOn(new_a1, new_proof)
+      }
+      // Only one formula is weakened
+      else if(w1) {
+        removeWeakeningOn(new_a1, new_proof)
+      }
+      else if (w2) {
+        removeWeakeningOn(new_a2, new_proof)
+      }
+      // No formulas are weakened, leave contraction there
+      else ContractionRightRule(new_proof, a1.formula)
+
+    // Logical rules:
+    case OrLeftRule(p1, p2, _, a1, a2, m) =>
+      val new_proof1 = cleanStructuralRules(p1)
+      val new_proof2 = cleanStructuralRules(p2)
+      OrLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
+    
+    case AndRightRule(p1, p2, _, a1, a2, m) =>
+      val new_proof1 = cleanStructuralRules(p1)
+      val new_proof2 = cleanStructuralRules(p2)
+      AndRightRule(new_proof1, new_proof2, a1.formula, a2.formula)
+    
+    case NegLeftRule(p, _, a, m) =>
+      val new_proof = cleanStructuralRules(p)
+      NegLeftRule(new_proof, a.formula)
+    
+    case AndLeft1Rule(p, _, a, m) =>
+      val new_proof = cleanStructuralRules(p)
+      val a2 = m.formula match {case And(_,r) => r}
+      AndLeft1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
+    
+    case AndLeft2Rule(p, _, a, m) =>
+      val new_proof = cleanStructuralRules(p)
+      val a2 = m.formula match {case And(l,_) => l}
+      AndLeft2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
+    
+    case OrRight1Rule(p, _, a, m) =>
+      val new_proof = cleanStructuralRules(p)
+      val a2 = m.formula match {case Or(_,r) => r}
+      OrRight1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
+    
+    case OrRight2Rule(p, _, a, m) =>
+      val new_proof = cleanStructuralRules(p)
+      val a2 = m.formula match {case Or(l,_) => l}
+      OrRight2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
+    
+    case NegRightRule(p, _, a, m) =>
+      val new_proof = cleanStructuralRules(p)
+      NegRightRule(new_proof, a.formula)
+    
+    case ImpLeftRule(p1, p2, _, a1, a2, m) =>
+      val new_proof1 = cleanStructuralRules(p1)
+      val new_proof2 = cleanStructuralRules(p2)
+      ImpLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
+    
+    case ImpRightRule(p, _, a1, a2, m) =>
+      val new_proof = cleanStructuralRules(p)
+      ImpRightRule(new_proof, a1.formula, a2.formula)
+
+    // Schema rules:
+    case AndLeftEquivalenceRule1(p, _, a, m) => 
+      val new_proof = cleanStructuralRules(p)
+      AndLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+
+    case AndRightEquivalenceRule1(p, _, a, m) => 
+      val new_proof = cleanStructuralRules(p)
+      AndRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrLeftEquivalenceRule1(p, _, a, m) => 
+      val new_proof = cleanStructuralRules(p)
+      OrLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrRightEquivalenceRule1(p, _, a, m) => 
+      val new_proof = cleanStructuralRules(p)
+      OrRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case AndLeftEquivalenceRule3(p, _, a, m) => 
+      val new_proof = cleanStructuralRules(p)
+      AndLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case AndRightEquivalenceRule3(p, _, a, m) => 
+      val new_proof = cleanStructuralRules(p)
+      AndRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrLeftEquivalenceRule3(p, _, a, m) =>
+      val new_proof = cleanStructuralRules(p)
+      OrLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrRightEquivalenceRule3(p, _, a, m) => 
+      val new_proof = cleanStructuralRules(p)
+      OrRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+
+
+    case _ => throw new Exception("ERROR: Unexpected case while cleaning redundant structural rules.")
+
+  }
+
+  // Checks if a formula is weakened in a proof
+  def isWeakened(f: FormulaOccurrence, proof: LKProof) : Boolean = proof match {
+    // Base case: axiom
+    case Axiom(s) => false 
+
+    // Structural rules:
+    case WeakeningLeftRule(p, _, m) =>
+      if(getAncestors(f).contains(m) && f =^ m) true
+      else isWeakened(f, p) 
+    case WeakeningRightRule(p, _, m) =>
+      if(getAncestors(f).contains(m) && f =^ m) true
+      else isWeakened(f, p) 
+    case ContractionLeftRule(p, _, _, _, _) => isWeakened(f, p)
+    case ContractionRightRule(p, _, _, _, _) => isWeakened(f, p)
+
+    // Logical rules:
+    case NegLeftRule(p, _, _, _) => isWeakened(f, p)
+    case NegRightRule(p, _, _, _) => isWeakened(f, p)
+    case AndLeft1Rule(p, _, _, _) => isWeakened(f, p)
+    case AndLeft2Rule(p, _, _, _) => isWeakened(f, p)
+    case AndRightRule(p1, p2, _, _, _, _) => isWeakened(f, p1) || isWeakened(f, p2)
+    case OrRight1Rule(p, _, _, _) => isWeakened(f, p)
+    case OrRight2Rule(p, _, _, _) => isWeakened(f, p)
+    case OrLeftRule(p1, p2, _, _, _, _) => isWeakened(f, p1) || isWeakened(f, p2)
+    case ImpLeftRule(p1, p2, _, _, _, _) => isWeakened(f, p1) || isWeakened(f, p2)
+    case ImpRightRule(p, _, _, _, _) => isWeakened(f, p)
+
+    // Schema rules:
+    case AndLeftEquivalenceRule1(p, _, a, m) => isWeakened(f, p)
+    case AndRightEquivalenceRule1(p, _, a, m) => isWeakened(f, p) 
+    case OrLeftEquivalenceRule1(p, _, a, m) => isWeakened(f, p)
+    case OrRightEquivalenceRule1(p, _, a, m) => isWeakened(f, p)
+    case AndLeftEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
+    case AndRightEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
+    case OrLeftEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
+    case OrRightEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
+    
+    case _ => throw new Exception("ERROR: Unexpected rule while checking if a formula is weakened in a proof.")
+  }
+
+  // Removes the weakening on some ancestor of f (such that it is not a proper
+  // subformula of f)
+  def removeWeakeningOn(f: FormulaOccurrence, proof: LKProof) : LKProof = proof match {
+     case Axiom(s) => proof
+
+    // Structural rules:
+    case WeakeningLeftRule(p, _, m) => 
+      if(getAncestors(f).contains(m) && f =^ m) p
+      else {
+        val new_proof = removeWeakeningOn(f, p) 
+        WeakeningLeftRule(new_proof, m.formula)
+      }
+    case WeakeningRightRule(p, _, m) =>
+      if(getAncestors(f).contains(m) && f =^ m) p
+      else {
+        val new_proof = removeWeakeningOn(f, p) 
+        WeakeningRightRule(new_proof, m.formula)
+      }
+
+    case ContractionLeftRule(p, _, a1, a2, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      ContractionLeftRule(new_proof, a1.formula)
+    case ContractionRightRule(p, _, a1, a2, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      ContractionRightRule(new_proof, a1.formula)
+
+    // Logical rules:
+    case NegLeftRule(p, _, a, m ) => 
+      val new_proof = removeWeakeningOn(f, p)
+      NegLeftRule(new_proof, a.formula)
+
+    case NegRightRule(p, _, a, m ) =>
+      val new_proof = removeWeakeningOn(f, p)
+      NegRightRule(new_proof, a.formula)
+
+    case AndLeft1Rule(p, _, a, m) =>
+      val new_proof = removeWeakeningOn(f, p)
+      val a2 = m.formula match {case And(_,r) => r}
+      AndLeft1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
+
+    case AndLeft2Rule(p, _, a, m) =>
+      val new_proof = removeWeakeningOn(f, p)
+      val a2 = m.formula match {case And(l,_) => l}
+      AndLeft2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
+
+    case AndRightRule(p1, p2, _, a1, a2, m) => 
+      val new_proof1 = removeWeakeningOn(f, p1)
+      val new_proof2 = removeWeakeningOn(f, p2)
+      AndRightRule(new_proof1, new_proof2, a1.formula, a2.formula)
+
+    case OrRight1Rule(p, _, a, m) =>
+      val new_proof = removeWeakeningOn(f, p)
+      val a2 = m.formula match {case Or(_,r) => r}
+      OrRight1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
+
+    case OrRight2Rule(p, _, a, m) =>
+      val new_proof = removeWeakeningOn(f, p)
+      val a2 = m.formula match {case Or(l,_) => l}
+      OrRight2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
+
+    case OrLeftRule(p1, p2, _, a1, a2, m) => 
+      val new_proof1 = removeWeakeningOn(f, p1) 
+      val new_proof2 = removeWeakeningOn(f, p2)
+      OrLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
+
+    case ImpLeftRule(p1, p2, _, a1, a2, m) => 
+      val new_proof1 = removeWeakeningOn(f, p1)
+      val new_proof2 = removeWeakeningOn(f, p2)
+      ImpLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
+
+    case ImpRightRule(p, _, a1, a2, m) =>
+      val new_proof = removeWeakeningOn(f, p)
+      ImpRightRule(new_proof, a1.formula, a2.formula)
+
+    // Schema rules:
+    case AndLeftEquivalenceRule1(p, _, a, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      AndLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+
+    case AndRightEquivalenceRule1(p, _, a, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      AndRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrLeftEquivalenceRule1(p, _, a, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      OrLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrRightEquivalenceRule1(p, _, a, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      OrRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case AndLeftEquivalenceRule3(p, _, a, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      AndLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case AndRightEquivalenceRule3(p, _, a, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      AndRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrLeftEquivalenceRule3(p, _, a, m) =>
+      val new_proof = removeWeakeningOn(f, p)
+      OrLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+    
+    case OrRightEquivalenceRule3(p, _, a, m) => 
+      val new_proof = removeWeakeningOn(f, p)
+      OrRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+
+    case _ => throw new Exception("ERROR: Unexpected rule while removing weakening of a formula.")
+  }
+
 }
 
-
+/* Inspiration for the code above.
+   This should be eventually removed.
 
 //delete from an SLKProof those weakening inefernces whose aux. f-las go to a contraction inference
 object StructuralOptimizationAfterAutoprop {
@@ -320,7 +596,8 @@ object StructuralOptimizationAfterAutoprop {
   def apply(p : LKProof, p_old : LKProof): LKProof = p match {
     case ax: NullaryLKProof => p
     case ContractionLeftRule(up, _, a1, a2, _)  => {
-      val anc1 = getAncestors(a1);val anc2 = getAncestors(a2)
+      val anc1 = getAncestors(a1)
+      val anc2 = getAncestors(a2)
       val b1 = isDescentanfOfAuxFOccOfWeakRule(anc1, p_old)
       val b2 = isDescentanfOfAuxFOccOfWeakRule(anc2, p_old)
       val wfo = getWeakFOccs(up)
@@ -379,6 +656,7 @@ object StructuralOptimizationAfterAutoprop {
         return ContractionRightRule(p2, a1.formula)
       }
     }
+
     case AndLeftEquivalenceRule1(p, s, a, m) => {
       //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
       val new_p = apply(p, p_old)
@@ -417,6 +695,7 @@ object StructuralOptimizationAfterAutoprop {
       val new_p = apply(p, p_old)
       OrRightEquivalenceRule3(new_p, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
     }
+
     case WeakeningLeftRule(p, _, m) => {
       val new_p = apply(p, p_old)
       implicit val factory = defaultFormulaOccurrenceFactory
@@ -489,7 +768,8 @@ object StructuralOptimizationAfterAutoprop {
       ImpRightRule(new_p, a1.formula, a2.formula )
     }
     case _ => { println("ERROR in StructuralOptimizationAfterAutoprop : missing rule!");throw new Exception("ERROR in autoprop: StructuralOptimizationAfterAutoprop") }
-  }   
+  }
+
 }
 
 
@@ -726,8 +1006,10 @@ object delSuperfluousRules {
     }
   }
 }
+*/
 
 //**************************************************************************
+// TODO: maybe it makes sense this is implemented directly in the LKProof class
 object rulesNumber {
   def apply(p: LKProof) : Int = p match {
     case ax: NullaryLKProof  => 0
@@ -737,7 +1019,7 @@ object rulesNumber {
     case OrEquivalenceRule1(up, _, _, _) => apply(up) + 1
     case AndEquivalenceRule3(up, _, _, _) => apply(up) + 1
     case OrEquivalenceRule3(up, _, _, _) => apply(up) + 1
-    case _ => { println("ERROR in delSuperfluousWeakening : missing rule!");throw new Exception("ERROR in rulesNumber") }
+    case _ =>  throw new Exception("ERROR: Unexpected rule while computing the number of rules of a proof.")
   }
 }
 

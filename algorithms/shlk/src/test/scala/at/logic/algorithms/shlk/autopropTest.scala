@@ -84,14 +84,15 @@ class autopropTest extends SpecificationWithJUnit {
       println("\n\n\nautopropositional, size = "+rulesNumber(p))
       printSchemaProof(p)
 
+/*
       val p1 = StructuralOptimizationAfterAutoprop(p)
       println("\n\n\niteration 1, size = :"+rulesNumber(p1))
       printSchemaProof(p1)
-//
+
       val p2 = StructuralOptimizationAfterAutoprop(p1)
       println("\n\n\niteration 2, size = :"+rulesNumber(p2))
       printSchemaProof(p2)
-////
+
       val p3 = StructuralOptimizationAfterAutoprop(p2)
       println("\n\n\niteration 3, size = :"+rulesNumber(p3))
 //      printSchemaProof(p3)
@@ -111,7 +112,7 @@ class autopropTest extends SpecificationWithJUnit {
 //      println("\n\n\nautoprop minimal form, size = "+rulesNumber(pauto))
 //      printSchemaProof(pauto)
 //      println("\n\n")
-
+*/
       Autoprop(FSequent(Neg(And(Neg(A), Neg(B))) :: Nil, Or(A , B) :: Nil))
       Autoprop(FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil))
       Autoprop(FSequent(And(A , B) :: Nil, Neg(Or(Neg(A), Neg(B))) :: Nil))

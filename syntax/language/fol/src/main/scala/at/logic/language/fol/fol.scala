@@ -138,19 +138,6 @@ trait FOLFormula extends FOLExpression with HOLFormula {
     case _ => throw new Exception("ERROR: Unexpected case while transforming to negation normal form.")
   }
 
-  // NOTE: The formula should be skolemized
-  def removeUniversalQuantifiers : FOLFormula = this match {
-    case Atom(_,_) => this
-    case Function(_,_) => this
-    case Imp(f1,f2) => Imp(f1.removeUniversalQuantifiers, f2.removeUniversalQuantifiers)
-    case And(f1,f2) => And(f1.removeUniversalQuantifiers, f2.removeUniversalQuantifiers)
-    case Or(f1,f2) => Or(f1.removeUniversalQuantifiers, f2.removeUniversalQuantifiers)
-    case Neg(f1) => Neg(f1.removeUniversalQuantifiers)
-    case ExVar(x,f1) => throw new Exception("ERROR: Not skolemized formula while removing universal quantifiers.")
-    case AllVar(x,f1) => f1.removeUniversalQuantifiers
-    case _ => throw new Exception("ERROR: Unexpected case while removing universal quantifiers.")
-  }
-
   // Distribute Ors over Ands
   def distribute : FOLFormula = this match {
     case Atom(_,_) => this
@@ -167,12 +154,22 @@ trait FOLFormula extends FOLExpression with HOLFormula {
 
   // Transforms a formula to conjunctive normal form
   // 1. Transform to negation normal form
-  // 2. Skolemize the formula  TODO
-  // 3. Remove universal quantifiers
-  // 4. Distribute Ors over Ands
-  // OBS: Assuming that the formula is skolemized.
+  // 2. Distribute Ors over Ands
+  // OBS: works for propositional formulas only
   // TODO: tests for this
-  def toCNF : FOLFormula = this.toNNF.removeUniversalQuantifiers.distribute
+  def toCNF : FOLFormula = this.toNNF.distribute
+
+  def numOfAtoms : Int = this match {
+    case Atom(_,_) => 1
+    case Function(_,_) => 1
+    case Imp(f1,f2) => f1.numOfAtoms + f2.numOfAtoms
+    case And(f1,f2) => f1.numOfAtoms + f2.numOfAtoms
+    case Or(f1,f2) => f1.numOfAtoms + f2.numOfAtoms
+    case ExVar(x,f) => f.numOfAtoms
+    case AllVar(x,f) => f.numOfAtoms
+    case Neg(f) => f.numOfAtoms
+    case _ => throw new Exception("ERROR: Unexpected case while counting the number of atoms.")
+  }
 
 }
 
