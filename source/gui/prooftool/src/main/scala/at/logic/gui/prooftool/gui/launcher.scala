@@ -16,6 +16,7 @@ import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, Stru
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.types.FSequent
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)

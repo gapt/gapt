@@ -15,7 +15,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 //import at.logic.language.fol.{FOLConst, FOLFactory}
 import at.logic.language.lambda.types.Ti
-
+import at.logic.algorithms.lk.statistics._
 
 @RunWith(classOf[JUnitRunner])
 class autopropTest extends SpecificationWithJUnit {
@@ -81,7 +81,7 @@ class autopropTest extends SpecificationWithJUnit {
 
       val p = Autoprop.apply1(fseq) //UNCOMMENT !
 //      println(Console.RED+"\n\n\nautopropositional : "+Console.RESET+printSchemaProof.sequentToString(p.root) )
-      println("\n\n\nautopropositional, size = "+rulesNumber(p))
+      println("\n\n\nautopropositional, size = " + rulesNumber(p))
       printSchemaProof(p)
 
 /*

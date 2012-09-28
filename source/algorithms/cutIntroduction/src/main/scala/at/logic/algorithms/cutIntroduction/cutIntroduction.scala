@@ -18,6 +18,7 @@ import at.logic.language.fol.Utils._
 import at.logic.language.lambda.typedLambdaCalculus._
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
+import at.logic.algorithms.lk._
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.interpolation._
 
@@ -37,14 +38,14 @@ object cutIntroduction {
 
     val quantFormulas = terms.keys.toList.map(fo => fo.formula)
 
-    println("\nQuantified formulas: " + quantFormulas)
+    //println("\nQuantified formulas: " + quantFormulas)
 
     // Propositional part of antecedent and succedent of the end sequent
     val propAnt = endSequent.antecedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
     val propSucc = endSequent.succedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
 
-    println("\nTerm set: {" + terms + "}")
-    println("of size " + terms.size)
+    //println("\nTerm set: {" + terms + "}")
+    //println("of size " + terms.size)
 
     val decompositions = decomposition(terms).sortWith((d1, d2) =>
       (d1._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + d1._2.length
@@ -52,11 +53,15 @@ object cutIntroduction {
       (d2._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + d2._2.length
     )
 
+/*
     println("\nThe decompositions found were:")
     decompositions.foreach{dec =>
     val l = (dec._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + dec._2.length
       println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
     }
+*/
+
+    println("Number of decompositions in total: " + decompositions.length)
 
     // TODO: how to choose the best decomposition?
     val smallestDec = decompositions.head
@@ -65,15 +70,7 @@ object cutIntroduction {
     // This is a list of terms
     val s = smallestDec._2
 
-    println("\nDecomposition chosen: {" + smallestDec._1 + "} o {" + smallestDec._2 + "}")
-
-/*
-    def genConjunction(forms: List[FOLFormula]) : FOLFormula = forms match {
-      case Nil => throw new CutIntroException("The set S of the decomposition should not be empty.")
-      case f :: Nil => f
-      case f :: t => And(genConjunction(t), f)
-    }
-*/
+    //println("\nDecomposition chosen: {" + smallestDec._1 + "} o {" + smallestDec._2 + "}")
 
     val x = ConstantStringSymbol("X")
     val alpha = FOLVar(new VariableStringSymbol("α"))
@@ -125,7 +122,7 @@ object cutIntroduction {
 
     
     // Building up the final proof with cut
-    println("\nGenerating final proof with cut\n")
+    println("\nGenerating final proof with cut...\n")
     
     //val cutFormula0 = AllVar(xvar, conj)
     val cutFormula = AllVar(xvar, conj)
@@ -242,12 +239,14 @@ object cutIntroduction {
     }
 
     //val contractions = endSequent.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
-    endSequent.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
+    val finalProof = endSequent.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
       if(!f.formula.containsQuantifier) {
         ContractionRightRule(premise, f.formula.asInstanceOf[FOLFormula])
       }
       else premise
     }
+
+    cleanStructuralRules(finalProof)
   }
 
 /* TODO: uncomment and use once resolve is implemented
