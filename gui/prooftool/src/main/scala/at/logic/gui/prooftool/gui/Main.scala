@@ -521,7 +521,7 @@ object Main extends SimpleSwingApplication {
     contents += new Menu("Tests") {
       mnemonic = Key.T
       contents += new MenuItem(Action("Test Expansion Tree") {
-        body.contents = new Launcher(Some(("Expansion Tree", db.getProofs.head._2.root.asInstanceOf[Sequent])), 12)
+        body.contents = new Launcher(Some(("Expansion Tree", db.getProofs.head._2.root.asInstanceOf[Sequent].toFSequent)), 12)
       }) { border = customBorder }
     }
   }
