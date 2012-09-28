@@ -7,15 +7,15 @@ package at.logic.gui.prooftool.gui
  * Time: 12:51 PM
  */
 
-import at.logic.calculi.lk.base.Sequent
 import swing._
 import event.{UIElementResized, MouseClicked}
 import java.awt.{Font, Dimension, Color}
-import at.logic.calculi.occurrences.FormulaOccurrence
 import java.awt.Font._
 import java.awt.event.MouseEvent
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.language.hol.HOLFormula
 
-class DrawExpansionTree(val expansionTree: Sequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
+class DrawExpansionTree(val expansionTree: FSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   //private val width = toolkit.getScreenSize.width - 150
@@ -41,7 +41,7 @@ class DrawExpansionTree(val expansionTree: Sequent, private val fSize: Int) exte
   }
 }
 
-class SplitedExpansionTree(val formulas: Seq[FormulaOccurrence], val label: String, private val ft: Font) extends BoxPanel(Orientation.Vertical) {
+class SplitedExpansionTree(val formulas: Seq[HOLFormula], val label: String, private val ft: Font) extends BoxPanel(Orientation.Vertical) {
   contents += new Label(label) {
     font = ft.deriveFont(Font.BOLD)
     opaque = true
@@ -52,8 +52,8 @@ class SplitedExpansionTree(val formulas: Seq[FormulaOccurrence], val label: Stri
     peer.getHorizontalScrollBar.setUnitIncrement( 20 )
     contents = new BoxPanel(Orientation.Vertical) {
       background = new Color(255,255,255)
-      formulas.foreach( fo => {
-        val lbl = DrawSequent.formulaToLabel(fo.formula, ft)
+      formulas.foreach( f => {
+        val lbl = DrawSequent.formulaToLabel(f, ft)
         lbl.border = Swing.EmptyBorder(10)
         lbl.reactions += {
           case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(lbl, e.point.x, e.point.y)

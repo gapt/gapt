@@ -489,7 +489,7 @@ object loadProofDB {
   }
 
   object prooftool {
-    def apply[V <: Sequent](p: at.logic.calculi.treeProofs.TreeProof[V]) = Main.display("proof", p)
+    def apply(p: AnyRef) = Main.display("proof", p)
   }
 
   object findDefinitions {

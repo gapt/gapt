@@ -15,7 +15,7 @@ import javax.swing.border.TitledBorder
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
-import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.base.types.FSequent
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -47,12 +47,12 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           layout(new DrawList(list, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
-        case expansionTree: Sequent =>
+        case expansionTree: FSequent =>
           layout(new DrawExpansionTree(expansionTree, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
         case _ =>
-          layout(new Label("Can't match case: "+option.get._2.getClass.toString)) = c
+          layout(new Label("Can't match case: "+option.get._2.getClass.toString + "\n\n" + option.get._2)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
       }
