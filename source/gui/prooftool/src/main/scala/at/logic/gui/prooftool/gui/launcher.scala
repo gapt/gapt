@@ -16,7 +16,6 @@ import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, Stru
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.types.FSequent
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -53,7 +52,9 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
         case _ =>
-          layout(new Label("Can't match case: "+option.get._2.getClass.toString + "\n\n" + option.get._2)) = c
+          layout(new Label("Cannot match the "+option.get._2.getClass.toString + " : " + option.get._2){
+            font = new Font(SANS_SERIF, BOLD, 16)
+          }) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
       }
