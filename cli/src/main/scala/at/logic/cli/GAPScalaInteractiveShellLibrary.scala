@@ -118,7 +118,18 @@ object loadProofDB {
 }
 
   object printProofStats {
-    def apply(p: LKProof) = {val stats = getStatistics( p ); println("unary: " + stats.unary); println("binary: " + stats.binary); println("cuts: " + stats.cuts)}
+    def apply(p: LKProof) = {
+      val stats = getStatistics( p )
+      val total = rulesNumber(p)
+      val quant = quantRulesNumber(p)
+      //println("unary: " + stats.unary)
+      //println("binary: " + stats.binary)
+      println("---------- Number of rules -------------")
+      println("Cuts: " + stats.cuts)
+      println("Quantifiers: " + quant)
+      //println("Total: " + total)
+      println("----------------------------------------")
+    }
   }
   object lkTolksk {
     def apply(p: LKProof) = LKtoLKskc( p )
