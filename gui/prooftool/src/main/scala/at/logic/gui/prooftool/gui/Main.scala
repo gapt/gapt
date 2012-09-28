@@ -45,9 +45,9 @@ object Main extends SimpleSwingApplication {
 
   def showFrame {
     top.pack
-    top.location = new Point(100,50)
     top.size = new Dimension(700,500)
-    top.visible = true
+    top.centerOnScreen
+    top.open
   }
 
   lazy val top = new MainFrame {
@@ -200,7 +200,10 @@ object Main extends SimpleSwingApplication {
     case _ =>
   }
 
-  def fExit : Unit = System.exit(0)
+  // This function is changed to dispose for cli.
+  // When called from cli, sys.exit forces also cli to exit.
+  // The default close button still does sys.exit as it should do.
+  def fExit : Unit = top.dispose //System.exit(0)
 
   def zoomIn {
     val content = body.getContent
@@ -341,6 +344,7 @@ object Main extends SimpleSwingApplication {
       contents += new Separator
       contents += new MenuItem(Action("Exit") { fExit }) {
         mnemonic = Key.X
+        peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, JActionEvent.CTRL_MASK))
         border = customBorder
       }
     }

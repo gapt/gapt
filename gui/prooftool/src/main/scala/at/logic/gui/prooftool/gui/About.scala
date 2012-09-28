@@ -9,17 +9,26 @@ package at.logic.gui.prooftool.gui
 
 import scala.swing._
 import event._
+import java.awt.Point
 
 object About {
-  private val d = new Dialog {
-    resizable = false
-    setLocationRelativeTo(Main.mBar)
+  private lazy val d = new Dialog {
     title = "About Prooftool"
+    resizable = false
     modal = true
-  }
+    location = new Point(Main.top.location.x + 100,Main.top.location.y + 100)
+    //setLocationRelativeTo(Main.mBar)
+    peer.setDefaultCloseOperation(2) //DISPOSE_ON_CLOSE
 
-  def apply() {
-    d.contents = new GridBagPanel { grid =>
+    defaultButton = new Button(Action("OK") { dispose }) {
+      //  border = Swing.MatteBorder(0,140,0,0, background)
+      listenTo(keys)
+      reactions += {
+        case e: KeyPressed if e.key == Key.Enter => doClick
+      }
+    }
+
+    contents = new GridBagPanel { grid =>
       import GridBagPanel._
       import javax.swing.ImageIcon
 
@@ -66,20 +75,15 @@ object About {
             this.cursor = new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR)
           case e: MouseClicked if e.source.eq(this) =>
             java.awt.Desktop.getDesktop().browse(new java.net.URI(uri))
-            d.close
+            dispose
         }
       }) = c
       c.grid = (2,3)
       c.ipady = 3
       c.insets.set(15, 5, 5, 5)
-      layout(new Button(Action("OK") { d.close }) {
-      //  border = Swing.MatteBorder(0,140,0,0, background)
-        listenTo(keys)
-        reactions += {
-          case e: KeyPressed if e.key == Key.Enter => this.doClick
-        }
-      }) = c
+      layout(defaultButton.get) = c
     }
-    d.open
   }
+
+  def apply() = d.open
 }
