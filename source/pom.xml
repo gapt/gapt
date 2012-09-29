@@ -173,9 +173,18 @@
 	<reporting>
 		<plugins>
 			<plugin>
-                                <groupId>org.scala-tools</groupId>
-                                <artifactId>maven-scala-plugin</artifactId>
-                        </plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <version>${maven-scala-plugin.version}</version>
+        <!--configuration>
+          <jvmArgs>
+            <jvmArg>-Xmx1024m</jvmArg>
+          </jvmArgs>
+          <args>
+            <arg>-deprecation</arg>
+          </args>
+        </configuration-->
+      </plugin>
 
 			<plugin>
 				<groupId>net.alchim31.maven</groupId>

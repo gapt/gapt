@@ -104,7 +104,8 @@ class DeltaTable() {
 
 // TODO: separate the decomposition from the delta table file?
 // NOTE: Single decomposition UoS
-class Decomposition {
+// TODO: change this name
+class DecompositionC {
 
   var u = HashMap[FormulaOccurrence, List[List[FOLTerm]]]()
   var s : List[FOLTerm] = Nil

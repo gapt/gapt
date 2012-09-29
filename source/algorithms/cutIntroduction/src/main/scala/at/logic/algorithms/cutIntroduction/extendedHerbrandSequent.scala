@@ -31,10 +31,10 @@ class ExtendedHerbrandSequent {
   var prop_r : List[FOLFormula] = Nil
 
   var cutFormula : FOLFormula = null
-  var decomposition : Decomposition = null
+  var decomposition : DecompositionC = null
  
   // NOTE: s should be prenex and skolemized 
-  def apply(s: Sequent, d: Decomposition) = {
+  def apply(s: Sequent, d: DecompositionC) = {
 
     decomposition = d
     // From ".map" on are lots of castings just to make the data structure right :-|
