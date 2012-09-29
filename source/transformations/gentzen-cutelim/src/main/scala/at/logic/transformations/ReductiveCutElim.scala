@@ -16,7 +16,7 @@ import at.logic.calculi.lk.base._
 import at.logic.language.hol._
 import at.logic.calculi.occurrences._
 import at.logic.language.lambda.substitutions.Substitution
-import at.logic.algorithms.lk.{regularize, applySubstitution}
+import at.logic.algorithms.lk.{cleanStructuralRules, regularize, applySubstitution}
 
 class ReductiveCutElimException(msg: String) extends Exception(msg)
 
@@ -32,7 +32,8 @@ object ReductiveCutElim {
     proofList = proof::Nil
     var pr = regularize(proof)._1
     while (! isCutFree(pr)) {
-      pr = cutElim(pr)
+      val p = cutElim(pr)
+      pr = cleanStructuralRules(p)
       if (steps) proofList = proofList:::(pr::Nil)
     }
     if (! steps) proofList = proofList:::(pr::Nil)

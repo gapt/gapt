@@ -60,13 +60,14 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
       Main.body.peer.dispatchEvent(e.peer)
-    case HideStructuralRules =>  //Fix: line is not drawn when a weakening is followed by a contraction.
+    case HideStructuralRules =>  //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof.rule match {
         case WeakeningLeftRuleType | WeakeningRightRuleType =>
           drawLines = false
           tx.visible = false
         case ContractionLeftRuleType | ContractionRightRuleType =>
-          drawLines = false
+          val rule = proof.asInstanceOf[UnaryTreeProof[_]].uProof.rule
+          if (rule != WeakeningLeftRuleType && rule != WeakeningRightRuleType) drawLines = false
           val dp = layout.find(_._2 == Position.Center).get._1.asInstanceOf[DrawProof]
           dp.tx.visible = false
           dp.border = Swing.EmptyBorder(0,0,3,0)

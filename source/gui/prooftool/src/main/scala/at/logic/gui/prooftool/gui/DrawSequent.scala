@@ -106,15 +106,15 @@ object DrawSequent {
             font = ft.deriveFont(Font.PLAIN, 14)
             listenTo(mouse.clicks)
             reactions += {
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => this.copy()
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => copy
             }
           }
         //  modal = true
           reactions += {
-            case e: WindowDeactivated if (e.source == this) => this.close
+            case e: WindowDeactivated if (e.source == this) => dispose
           }
         }
-        d.location = this.locationOnScreen.getLocation
+        d.location = locationOnScreen
         d.open
     }
   }

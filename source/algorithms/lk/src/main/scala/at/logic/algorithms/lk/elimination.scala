@@ -141,7 +141,7 @@ object cleanStructuralRules {
       }
       // No formulas are weakened, leave contraction there
       else ContractionRightRule(new_proof, a1.formula)
-   
+
     case CutRule(p1, p2, _, a1, a2) =>
       val new_proof1 = cleanStructuralRules(p1)
       val new_proof2 = cleanStructuralRules(p2)
@@ -210,6 +210,35 @@ object cleanStructuralRules {
     case ExistsRightRule(p, _, a, m, t) => 
       val new_proof = cleanStructuralRules(p)
       ExistsRightRule(new_proof, a.formula, m.formula, t)
+
+    case EquationLeft1Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = cleanStructuralRules(p1)
+      val new_proof2 = cleanStructuralRules(p2)
+      EquationLeft1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case EquationLeft2Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = cleanStructuralRules(p1)
+      val new_proof2 = cleanStructuralRules(p2)
+      EquationLeft2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case EquationRight1Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = cleanStructuralRules(p1)
+      val new_proof2 = cleanStructuralRules(p2)
+      EquationRight1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case EquationRight2Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = cleanStructuralRules(p1)
+      val new_proof2 = cleanStructuralRules(p2)
+      EquationRight2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case DefinitionLeftRule(p1,_,o1,o2) =>
+      val new_proof = cleanStructuralRules(p1)
+      DefinitionLeftRule(new_proof,o1.formula,o2.formula)
+
+    case DefinitionRightRule(p1,_,o1,o2) =>
+      val new_proof = cleanStructuralRules(p1)
+      DefinitionRightRule(new_proof,o1.formula,o2.formula)
+
 
     // Schema rules:
     case AndLeftEquivalenceRule1(p, _, a, m) => 
@@ -280,7 +309,13 @@ object cleanStructuralRules {
     case ForallRightRule(p, _, _, _, _) => isWeakened(f, p) 
     case ExistsLeftRule(p, _, _, _, _) => isWeakened(f, p)
     case ExistsRightRule(p, _, _, _, _) => isWeakened(f, p)
- 
+    case EquationLeft1Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
+    case EquationLeft2Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
+    case EquationRight1Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
+    case EquationRight2Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
+    case DefinitionLeftRule(p1,_,_,_) => isWeakened(f, p1)
+    case DefinitionRightRule(p1,_,_,_) => isWeakened(f, p1)
+
     // Schema rules:
     case AndLeftEquivalenceRule1(p, _, a, m) => isWeakened(f, p)
     case AndRightEquivalenceRule1(p, _, a, m) => isWeakened(f, p) 
@@ -388,8 +423,37 @@ object cleanStructuralRules {
     case ExistsRightRule(p, _, a, m, t) => 
       val new_proof = removeWeakeningOn(f, p)
       ExistsRightRule(new_proof, a.formula, m.formula, t)
- 
-    // Schema rules:
+
+    case EquationLeft1Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = removeWeakeningOn(f, p1)
+      val new_proof2 = removeWeakeningOn(f, p2)
+      EquationLeft1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case EquationLeft2Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = removeWeakeningOn(f, p1)
+      val new_proof2 = removeWeakeningOn(f, p2)
+      EquationLeft2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case EquationRight1Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = removeWeakeningOn(f, p1)
+      val new_proof2 = removeWeakeningOn(f, p2)
+      EquationRight1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case EquationRight2Rule(p1,p2,_,o1,o2,o3) =>
+      val new_proof1 = removeWeakeningOn(f, p1)
+      val new_proof2 = removeWeakeningOn(f, p2)
+      EquationRight2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
+
+    case DefinitionLeftRule(p1,_,o1,o2) =>
+      val new_proof = removeWeakeningOn(f, p1)
+      DefinitionLeftRule(new_proof,o1.formula,o2.formula)
+
+    case DefinitionRightRule(p1,_,o1,o2) =>
+      val new_proof = removeWeakeningOn(f, p1)
+      DefinitionRightRule(new_proof,o1.formula,o2.formula)
+
+
+     // Schema rules:
     case AndLeftEquivalenceRule1(p, _, a, m) => 
       val new_proof = removeWeakeningOn(f, p)
       AndLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
