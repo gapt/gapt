@@ -18,7 +18,6 @@
     <module>resolution</module>
    <module>slk</module>
    <module>lk_modulo</module>
-   <module>decompositions</module>
   </modules>
   
   <dependencies>
