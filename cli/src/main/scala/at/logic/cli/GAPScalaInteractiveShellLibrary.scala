@@ -710,7 +710,30 @@ object loadProofDB {
 //      while(true){}
     }
   }
-  
+
+object hol2fol {
+  // TODO: the counter, emptymap initialization is copied from
+  // other uses of reduceHolToFol in this file. Maybe a convenience
+  // method should be supplied by the hol2fol package where these
+  // (standard?) values are initialized. On the other hand, maybe
+  // a different version of hol2fol (which does not introduce new
+  // symbols, and hence does not require these parameters) should
+  // be implemented and used here.
+
+  val counter = new {private var state = 0; def nextId = { state = state +1; state}}
+  val emptymap = Map[LambdaExpression, ConstantStringSymbol]()
+
+  def apply(term: HOLExpression) : FOLExpression = {
+    reduceHolToFol( term, emptymap, counter )
+  }
+
+  def apply(term: HOLFormula) : FOLFormula = {
+    reduceHolToFol( term, emptymap, counter )
+  }
+
+}
+
+ 
 
   object ceresHelp {
     def apply() = {
@@ -759,6 +782,8 @@ object loadProofDB {
       println("  prooftool: LKProof => Unit - visualize proof in prooftool")
       println("")
       println("Uncategorized:") // this section should ideally converge to empty by distributing all functions described here in reasonable categories above
+      println("  hol2fol: HOLExpression => FOLExpression")
+      println("  hol2fol: HOLFormula => FOLFormula")
       println("  regularize: LKProof => LKProof")
       println("  printProofStats: LKProof => Unit")
       println("  lkTolksk: LKProof => LKProof")
