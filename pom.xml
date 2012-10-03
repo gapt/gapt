@@ -176,14 +176,14 @@
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
         <version>${maven-scala-plugin.version}</version>
-        <!--configuration>
-          <jvmArgs>
+        <configuration>
+          <!--jvmArgs>
             <jvmArg>-Xmx1024m</jvmArg>
-          </jvmArgs>
+          </jvmArgs-->
           <args>
             <arg>-deprecation</arg>
           </args>
-        </configuration-->
+        </configuration>
       </plugin>
 
 			<plugin>

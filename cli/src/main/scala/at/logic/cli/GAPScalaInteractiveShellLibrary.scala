@@ -127,7 +127,7 @@ object loadProofDB {
       println("---------- Number of rules -------------")
       println("Cuts: " + stats.cuts)
       println("Quantifiers: " + quant)
-      //println("Total: " + total)
+      println("Total: " + total)
       println("----------------------------------------")
     }
   }
