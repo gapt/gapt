@@ -241,7 +241,17 @@ proof: List[(String, at.logic.calculi.lk.base.LKProof)] = List((p,ExistsRightRul
 {\color{red}TODO}
 
 \paragraph{\textbf{exportXML: List[Proof], List[String], String $\rightarrow$ Unit}}
-{\color{red}TODO}
+Exports several proofs to an XML file. The first argument is the list of proofs,
+the second is the list of the names of the proofs and the third is the name of
+the file that will be written. The file path can also be specified and it's
+relative to where the program is being executed.
+
+The code below exports the proofs in the variables $p1$ and $p2$ to the file
+\texttt{result.xml} with names ``First proof'' and ``Second proof'',
+respectively.
+\begin{lstlisting}
+scala> exportXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
+\end{lstlisting}
 
 \paragraph{\textbf{exportTPTP: List[Proof], List[String], String $\rightarrow$ Unit}}
 {\color{red}TODO}
