@@ -161,11 +161,11 @@ object cleanStructuralRules {
 
       if(w1) {
         val new_proof12 = removeWeakeningOn(new_a1, new_proof1)
-        addWeakenings(new_proof12, proof.root)
+        addWeakenings(new_proof12, proof.root.toFSequent)
       }
       else if(w2) {
         val new_proof22 = removeWeakeningOn(new_a2, new_proof2)
-        addWeakenings(new_proof22, proof.root)
+        addWeakenings(new_proof22, proof.root.toFSequent)
       }
       else OrLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
     
@@ -182,11 +182,11 @@ object cleanStructuralRules {
 
       if(w1) {
         val new_proof12 = removeWeakeningOn(new_a1, new_proof1)
-        addWeakenings(new_proof12, proof.root)
+        addWeakenings(new_proof12, proof.root.toFSequent)
       }
       else if(w2) {
         val new_proof22 = removeWeakeningOn(new_a2, new_proof2)
-        addWeakenings(new_proof22, proof.root)
+        addWeakenings(new_proof22, proof.root.toFSequent)
       }
       else AndRightRule(new_proof1, new_proof2, a1.formula, a2.formula)
     
@@ -291,11 +291,11 @@ object cleanStructuralRules {
 
       if(w1) {
         val new_proof12 = removeWeakeningOn(new_a1, new_proof1)
-        addWeakenings(new_proof12, proof.root)
+        addWeakenings(new_proof12, proof.root.toFSequent)
       }
       else if(w2) {
         val new_proof22 = removeWeakeningOn(new_a2, new_proof2)
-        addWeakenings(new_proof22, proof.root)
+        addWeakenings(new_proof22, proof.root.toFSequent)
       }
       else ImpLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
     
@@ -637,29 +637,4 @@ object cleanStructuralRules {
     case _ => throw new Exception("ERROR: Unexpected rule while removing weakening of a formula.")
   }
 
-  // Adds weakenings to p in order to obtain the sequent s as the end-sequent.
-  // Note: s should be a super-set of p's end-sequent.
-  private def addWeakenings(p: LKProof, s: Sequent) = {
-
-    // Getting rid of FormulaOccurrence wrappers...
-    val root_ant = p.root.antecedent.map(x => x.formula)
-    val root_suc = p.root.succedent.map(x => x.formula)
-    val s_ant = s.antecedent.map(x => x.formula)
-    val s_suc = s.succedent.map(x => x.formula)
-
-    assert(root_ant.forall(e => s_ant.contains(e)) && root_suc.forall(e => s_suc.contains(e)))
-
-    // Take formulas that occur in s and do not occur in p's end-sequent
-    val diff_ant = s_ant.diff(root_ant) 
-    val diff_suc = s_suc.diff(root_suc)
-
-    // Add weakenings left
-    val wl = diff_ant.foldRight(p) {case (f, proof) =>
-      WeakeningLeftRule(proof, f)
-    }
-    // Add weakenings right
-    diff_suc.foldRight(wl) {case (f, proof) =>
-      WeakeningRightRule(proof, f)
-    }
-  }
 }

@@ -19,6 +19,7 @@ import at.logic.language.schema.IndexedPredicate
 import at.logic.language.schema.IntVar
 import at.logic.language.schema.IntZero
 import at.logic.language.schema.IntegerTerm
+import at.logic.language.schema.SchemaSubstitution1
 import at.logic.calculi.slk._
 import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
 import at.logic.calculi.lk.propositionalRules._

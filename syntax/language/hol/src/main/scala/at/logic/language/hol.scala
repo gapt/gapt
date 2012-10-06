@@ -123,6 +123,11 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case _ => throw new Exception("ERROR: Unknow operator encountered while checking for prenex formula: " + this)
     }
 
+    def isAtom : Boolean = this match {
+      case Atom(_,_) => true
+      case _ => false
+    }
+
     def subTerms: Seq[HOLExpression] = this match {
       case Var(_,_) => List(this)
       case Atom(_, args) =>  this +: args.flatMap(_.subTerms)

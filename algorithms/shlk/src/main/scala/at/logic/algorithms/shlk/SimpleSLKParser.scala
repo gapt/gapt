@@ -23,8 +23,6 @@ import at.logic.language.schema.{sTerm, SchemaFormula, BigAnd, BigOr, IntVar, In
 import at.logic.calculi.lk.base.FSequent._
 import at.logic.calculi.lk.base.{FSequent, types, Sequent, LKProof}
 
-
-
 object SHLK {
 
   def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
@@ -631,6 +629,9 @@ object SHLK {
   }
 }
 
+/* Moved to schema.scala in languages package. After checking is everything is
+ * fine, delete this from here.
+
 class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
   import at.logic.language.schema._
 
@@ -675,6 +676,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
     FSequent(fseq._1.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]),fseq._2.map(f => apply(f.asInstanceOf[T]).asInstanceOf[HOLFormula]))
   }
 }
+*/
 
 
 //                    This copy has types. This is why it is kept !

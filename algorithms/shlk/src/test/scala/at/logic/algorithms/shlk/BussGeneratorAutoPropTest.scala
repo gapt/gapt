@@ -8,18 +8,16 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.{Sequent, FSequent}
 import at.logic.algorithms.shlk._
 
-//import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._
 
-//import at.logic.transformations.ceres.projections.printSchemaProof
 import java.io.File.separator
 import scala.io._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
-//import at.logic.language.fol.{FOLConst, FOLFactory}
 import at.logic.language.lambda.types.Ti
+import at.logic.algorithms.lk._
 
 
 @RunWith(classOf[JUnitRunner])
@@ -42,9 +40,7 @@ class BussGeneratorAutoPropTest extends SpecificationWithJUnit {
       val imp_Pc1_or_Pd1_Pc2__or__imp_Pc1_or_Pd1_Pd2 = at.logic.language.hol.Or(imp_Pc1_or_Pd1_Pc2, imp_Pc1_or_Pd1_Pd2)
 //      val fs = FSequent(imp_Pc1_or_Pd1_Pc2__or__imp_Pc1_or_Pd1_Pd2 :: Pc1_or_Pd1 :: Nil , Pc2::Pd2::Nil)
       val fs = BussTautology(2)
-      println("\n\n\nfseq = "+fs)
-      val bussGen = Autoprop(fs)
-      //      printSchemaProof(bussGen)
+      val bussGen = solvePropositional(fs)
 
       Success()
     }

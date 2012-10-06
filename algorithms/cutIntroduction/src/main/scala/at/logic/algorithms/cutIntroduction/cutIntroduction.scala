@@ -28,7 +28,7 @@ object cutIntroduction {
 
   val ehs = new ExtendedHerbrandSequent()
 
-  def apply(proof: LKProof) : LKProof = {
+  def apply(proof: LKProof) : Option[LKProof] = {
 
     val endSequent = proof.root
 
@@ -62,6 +62,12 @@ object cutIntroduction {
 */
 
     println("Number of decompositions in total: " + decompositions.length)
+
+    if(decompositions.length == 0) {
+      println("\nNo decompositions found." + 
+        " The proof cannot be compressed using a cut with one universal quantifier.\n")
+      return None
+    }
 
     // TODO: how to choose the best decomposition?
     val smallestDec = decompositions.head
@@ -145,7 +151,7 @@ object cutIntroduction {
     val ppart = pi ++ lambda
 
     // Proof
-    val interpProof = Autoprop(FSequent(gamma++pi, delta++lambda))
+    val interpProof = solvePropositional(FSequent(gamma++pi, delta++lambda))
 
     // Getting the formula occurrences...
     val occurrences = interpProof.root.antecedent ++ interpProof.root.succedent
@@ -203,8 +209,11 @@ object cutIntroduction {
 
     //val axiomL = Axiom((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR)))
     //val leftBranch = ForallRightRule(uPart(u, axiomL), cutLeft, cutFormula, alpha)
-    val proofLeft = Autoprop(FSequent((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR))))
-    val leftBranch = ForallRightRule(uPart(u, proofLeft), cutLeft, cutFormula, alpha)
+    val proofLeft = solvePropositional(FSequent((alphaFormulasL ++ propAnt), (cutLeft +: (propSucc ++ alphaFormulasR))))
+    val leftBranch = proofLeft match {
+      case Some(proofLeft1) => ForallRightRule(uPart(u, proofLeft1), cutLeft, cutFormula, alpha)
+      case None => throw new CutIntroException("ERROR: propositional part is not provable.")
+    }
 
     def sPart(cf: FOLFormula, s: List[FOLTerm], p: LKProof) = {
     var first = true;
@@ -223,8 +232,11 @@ object cutIntroduction {
 
     //val axiomR = Axiom((cutRight ++ alphaFormulasL ++ ant), (succ ++ alphaFormulasR))
     //val rightBranch = uPart(u, sPart(cutFormula, s, axiomR))
-    val proofRight = Autoprop(FSequent(cutRight ++ propAnt, propSucc))
-    val rightBranch = sPart(cutFormula, s, proofRight)
+    val proofRight = solvePropositional(FSequent(cutRight ++ propAnt, propSucc))
+    val rightBranch = proofRight match {
+      case Some(proofRight1) => sPart(cutFormula, s, proofRight1)
+      case None => throw new CutIntroException("ERROR: propositional part is not provable.")
+    }
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
 
@@ -246,7 +258,7 @@ object cutIntroduction {
       else premise
     }
 
-    cleanStructuralRules(finalProof)
+    Some(cleanStructuralRules(finalProof))
   }
 
 /* TODO: uncomment and use once resolve is implemented
