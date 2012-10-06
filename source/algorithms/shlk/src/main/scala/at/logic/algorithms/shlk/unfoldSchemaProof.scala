@@ -479,12 +479,20 @@ object checkProofLinks1 {
 //        require( ps.seq.succedent.map(fo => fo.formula).toSet == so.succedent.map(fo => sub(fo.formula)).toSet)
 //        if(ps.seq != substitute(sub , so.toFSequent()))
 
-        if(sub(ps.seq)._1.toSet != so.toFSequent()._1.toSet || sub(ps.seq)._2.toSet != so.toFSequent()._2.toSet)
+        // Apply substitution to the whole sequent
+        val sub_ant = ps.seq.antecedent.map(f => sub(f))
+        val sub_suc = ps.seq.succedent.map(f => sub(f))
+        //val new_seq = FSequent(sub_ant, sub_suc)
+
+        //if(sub(ps.seq)._1.toSet != so.toFSequent()._1.toSet || sub(ps.seq)._2.toSet != so.toFSequent()._2.toSet)
+        if(sub_ant.toSet != so.toFSequent()._1.toSet || sub_suc.toSet != so.toFSequent()._2.toSet)
         {
           println("\n checkProofLinks1 for proof "+ name +" FAIL")
           ps.seq._1.foreach(f => println("\n"+f))
                     println("\n\n")
-          sub(so.toFSequent())._1.foreach(f => println("\n"+f))
+          //sub(so.toFSequent())._1.foreach(f => println("\n"+f))
+          val ant = so.toFSequent.antecedent.map(f => sub(f))
+          ant.foreach(f => println("\n"+f))
 
         }
         else

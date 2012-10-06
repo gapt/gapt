@@ -19,6 +19,7 @@ import at.logic.language.hol.{Or => HOLOr, Neg => HOLNeg, And => HOLAnd, _}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.ImplicitConverters._
+import at.logic.language.schema.SchemaSubstitution1
 import at.logic.calculi.lksk.{Axiom => LKskAxiom,
 WeakeningLeftRule => LKskWeakeningLeftRule,
 WeakeningRightRule => LKskWeakeningRightRule,

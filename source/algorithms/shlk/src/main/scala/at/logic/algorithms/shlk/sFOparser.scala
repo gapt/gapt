@@ -22,7 +22,7 @@ import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
-
+import at.logic.algorithms.lk._
 
 object ParseQMON {
 
@@ -721,7 +721,7 @@ object ParseQMON {
       }
 
       def autoprop: Parser[LKProof] = "autoprop(" ~ sequent ~ ")" ^^ {
-        case "autoprop(" ~ seq ~ ")" => Autoprop(seq.toFSequent())
+        case "autoprop(" ~ seq ~ ")" => solvePropositional.autoProp(seq.toFSequent())
       }
       
       def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {

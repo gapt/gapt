@@ -445,7 +445,7 @@ object loadProofDB {
 
   // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
   object proveProp {
-    def apply( seq: FSequent ) : Option[LKProof] = Some( Autoprop( seq ) )
+    def apply( seq: FSequent ) : Option[LKProof] = solvePropositional(seq)
   }
 
   object format {
