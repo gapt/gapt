@@ -324,6 +324,14 @@ object loadProofDB {
     def apply( n : Int) = at.logic.testing.SumExampleProof( n )
   }
 
+  object LinearEqExampleProof {
+    def apply( n : Int) = at.logic.testing.LinearEqExampleProof( n )
+  }
+
+  object SumOfOnesExampleProof {
+    def apply( n : Int) = at.logic.testing.SumOfOnesExampleProof( n )
+  }
+
   object termsExtraction {
     def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p )
   }
@@ -777,6 +785,8 @@ object hol2fol {
       println("  SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
       println("  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
       println("  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
+      println("  LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation")
+      println("  SumofOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction")
       println("")
       println("Visualization:")
       println("  prooftool: LKProof => Unit - visualize proof in prooftool")
