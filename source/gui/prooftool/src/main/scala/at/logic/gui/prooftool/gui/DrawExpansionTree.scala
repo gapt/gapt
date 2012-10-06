@@ -13,7 +13,7 @@ import java.awt.{Font, Dimension, Color}
 import java.awt.Font._
 import java.awt.event.MouseEvent
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.language.hol.HOLFormula
+import at.logic.language.hol._
 
 class DrawExpansionTree(val expansionTree: FSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
@@ -53,13 +53,76 @@ class SplitedExpansionTree(val formulas: Seq[HOLFormula], val label: String, pri
     contents = new BoxPanel(Orientation.Vertical) {
       background = new Color(255,255,255)
       formulas.foreach( f => {
-        val lbl = DrawSequent.formulaToLabel(f, ft)
-        lbl.border = Swing.EmptyBorder(10)
-        lbl.reactions += {
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(lbl, e.point.x, e.point.y)
-        }
-        contents += lbl
+        val comp = formulaToComponent(f)
+        comp.border = Swing.EmptyBorder(10)
+        contents += comp
       })
     }
+  }
+
+  def formulaToComponent(t: HOLFormula): Component = t match {
+    case Neg(f) => new BoxPanel(Orientation.Horizontal) {
+      background = new Color(255,255,255)
+      yLayoutAlignment = 0.5
+      contents += label("¬",ft)
+      contents += formulaToComponent(f)
+    }
+    case And(f1,f2) => new BoxPanel(Orientation.Horizontal) {
+      background = new Color(255,255,255)
+      yLayoutAlignment = 0.5
+      contents += label("(",ft)
+      contents += formulaToComponent(f1)
+      contents += label("∧",ft)
+      contents += formulaToComponent(f2)
+      contents += label(")",ft)
+    }
+    case Or(f1,f2) => new BoxPanel(Orientation.Horizontal) {
+      background = new Color(255,255,255)
+      yLayoutAlignment = 0.5
+      contents += label("(",ft)
+      contents += formulaToComponent(f1)
+      contents += label("∨",ft)
+      contents += formulaToComponent(f2)
+      contents += label(")",ft)
+    }
+    case Imp(f1,f2) => new BoxPanel(Orientation.Horizontal) {
+      background = new Color(255,255,255)
+      yLayoutAlignment = 0.5
+      contents += label("(",ft)
+      contents += formulaToComponent(f1)
+      contents += label("⊃",ft)
+      contents += formulaToComponent(f2)
+      contents += label(")",ft)
+    }
+    case ExVar(v, f) => new BoxPanel(Orientation.Horizontal) {
+      background = new Color(255,255,255)
+      yLayoutAlignment = 0.5
+      val lbl = DrawSequent.latexToLabel("(" + """\exists """ + DrawSequent.formulaToLatexString(v) + ")",ft)
+      lbl.reactions += {
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(lbl, e.point.x, e.point.y)
+      }
+      contents += lbl
+      contents += formulaToComponent(f)
+    }
+    case AllVar(v, f) => new BoxPanel(Orientation.Horizontal) {
+      background = new Color(255,255,255)
+      yLayoutAlignment = 0.5
+      val lbl = DrawSequent.latexToLabel("(" + """\forall """ + DrawSequent.formulaToLatexString(v) + ")",ft)
+      lbl.reactions += {
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(lbl, e.point.x, e.point.y)
+      }
+      contents += lbl
+      contents += formulaToComponent(f)
+    }
+    case _ => val lbl = DrawSequent.formulaToLabel(t,ft)
+      lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks)
+      lbl
+  }
+
+  def label(s: String, fnt: Font) = new Label(s) {
+    background = new Color(255,255,255)
+    yLayoutAlignment = 0.5
+    opaque = true
+    font = fnt
   }
 }
