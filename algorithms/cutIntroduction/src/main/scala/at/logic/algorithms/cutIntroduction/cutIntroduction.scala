@@ -258,7 +258,7 @@ object cutIntroduction {
       else premise
     }
 
-    Some(cleanStructuralRules(finalProof))
+    Some(CleanStructuralRules(finalProof))
   }
 
 /* TODO: uncomment and use once resolve is implemented
