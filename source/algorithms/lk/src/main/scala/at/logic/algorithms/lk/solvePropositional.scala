@@ -14,16 +14,16 @@ import at.logic.language.hol.{HOLConst, Atom, HOLExpression, HOLFormula}
 import at.logic.language.lambda.types.{Ti, Tindex}
 
 object solvePropositional {
-  
+
   def apply(seq: FSequent): Option[LKProof] = prove(seq) match {
-    case Some(p) => Some(cleanStructuralRules(p))
+    case Some(p) => Some(CleanStructuralRules(p))
     case None => None
   }
 
   // Method that throws an exception instead of returning None
   // Used in sFOparser.
   def autoProp(seq: FSequent) : LKProof = prove(seq) match {
-    case Some(p) => cleanStructuralRules(p)
+    case Some(p) => CleanStructuralRules(p)
     case None => throw new Exception("Sequent is not provable.")
   }
 

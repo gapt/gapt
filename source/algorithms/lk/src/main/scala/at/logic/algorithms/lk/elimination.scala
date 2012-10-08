@@ -67,7 +67,7 @@ object WeakeningsElimination {
 // Traverse the proof top-down.
 // When a contraction is encountered, check if the formulas are later weakened
 // and remove both rules (contraction and weakening)
-object cleanStructuralRules {
+object CleanStructuralRules {
 
   def apply(p: LKProof) : LKProof = cleanStructuralRules(p)
 
