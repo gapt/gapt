@@ -17,6 +17,7 @@ import at.logic.calculi.resolution.base.FClause
       case Neg(f2) => CNFn(f2)
       case And(f1,f2) => CNFp(f1) union CNFp(f2)
       case Or(f1,f2) => times(CNFp(f1),CNFp(f2))
+      case Imp(f1,f2) => times(CNFn(f1),CNFp(f2))
       case AllVar(_,f2) => CNFp(f2)
       case _ => throw new IllegalArgumentException("unknown head of formula: " + f.toString)
     }
@@ -33,6 +34,7 @@ import at.logic.calculi.resolution.base.FClause
       case Neg(f2) => CNFp(f2)
       case And(f1,f2) => times(CNFn(f1),CNFn(f2))
       case Or(f1,f2) => CNFn(f1) union CNFn(f2)
+      case Imp(f1,f2) => CNFp(f1) union CNFn(f2)
       case ExVar(_,f2) => CNFn(f2)
       case _ => throw new IllegalArgumentException("unknown head of formula: " + f.toString)
     }
