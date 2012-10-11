@@ -67,6 +67,9 @@ object PCNF {
     case Or(f1,f2) =>
       if (CNFn(f1).contains(a)) OrRight1Rule(PCNFn(f1,a),f1,f2)
       else OrRight2Rule(PCNFn(f2,a),f1,f2)
+    case Imp(f1,f2) =>
+      if (CNFp(f1).contains(a)) ImpRightRule(WeakeningRightRule(PCNFp(f1,a), f2), f1,f2)
+      else ImpRightRule(WeakeningLeftRule(PCNFn(f2,a), f1), f1, f2)
     case ExVar(v,f2) => ExistsRightRule(PCNFn(f2, a), f2 ,f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)
   }
@@ -92,6 +95,16 @@ object PCNF {
       val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
       // create the proof
       OrLeftRule(PCNFp(f1,par._1), PCNFp(f2,par._2), f1, f2)
+    }
+    case Imp(f1,f2) => {
+      // get all possible partitions of the ant and suc of the clause a
+      val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
+      // find the right partition
+      val cnf1 = CNFn(f1)
+      val cnf2 = CNFp(f2)
+      val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
+      // create the proof
+      ImpLeftRule(PCNFn(f1,par._1), PCNFp(f2,par._2), f1, f2)
     }
     case AllVar(v,f2) => ForallLeftRule(PCNFp(f2, a), f2, f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)
