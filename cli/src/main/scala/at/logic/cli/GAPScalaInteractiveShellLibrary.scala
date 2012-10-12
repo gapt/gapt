@@ -347,7 +347,7 @@ object loadProofDB {
   }
 
   object cutIntro {
-    def apply( p: LKProof ) = cutIntroduction( p )
+    def apply( p: LKProof ) : Option[LKProof] = cutIntroduction(p)
   }
 
   object extractInterpolant {
@@ -775,7 +775,7 @@ object hol2fol {
       println("  structToLabelledClausesList: Struct => List[LabelledSequent]")
       println("")
       println("Cut-Introduction:")
-      println("  cutIntro: LKProof => LKProof")
+      println("  cutIntro: LKProof => Option[LKProof]")
       println("  termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof")
       println("  termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
       println("")

@@ -76,28 +76,40 @@ class DeltaTable() {
         t.forall(e => p._2.contains(e))
       )
 
-      // Return all the U sets
-      valid.foldRight(List[List[FOLTerm]]()) ((p, acc) => p._1 :: acc)
+      // Return all the U sets and the terms covered
+      val us = valid.foldRight(List[List[FOLTerm]]()) ((p, acc) => p._1 :: acc)
+      val ts = valid.foldRight(List[FOLTerm]()) ((p, acc) => p._2 ++ acc)
+
+      (us, ts)
     }
+
+    // These are all the terms that should be covered by the decomposition
+    val allterms = terms.foldRight(List[FOLTerm]()) { case ((f, t), acc) => acc ++ t}
 
     table.foldRight(List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])]()) {case ((s, forms), decompositions) =>
 
-      if(allFormulas.forall(f => forms.keySet.contains(f))) {
-        val setsOfUi = forms.keys.foldRight(Map[FormulaOccurrence, List[List[FOLTerm]]]()) { (f, acc) =>
-          acc + (f -> findFormulaDecompositions(s, f))
-        }
+      //if(allFormulas.forall(f => forms.keySet.contains(f))) {
+      var termsCovered : List[FOLTerm] = Nil
+      val setsOfUi = forms.keys.foldRight(Map[FormulaOccurrence, List[List[FOLTerm]]]()) { (f, acc) =>
+        val (us, ts) = findFormulaDecompositions(s, f)
+        termsCovered = termsCovered ++ ts
+        acc + (f -> us)
+        //acc + (f -> findFormulaDecompositions(s, f))
+      }
 
-        if(!setsOfUi.isEmpty) {
-          val uSets = mapProduct(setsOfUi)
+      // Make sure that U is not empty and that the terms covered by this U
+      // are all needed
+      if(!setsOfUi.isEmpty && allterms.forall(t => termsCovered.contains(t))) {
+        val uSets = mapProduct(setsOfUi)
   
-          val dec = uSets.foldRight(List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])]()) { (u, acc) =>
-            (u, s) :: acc 
-          }
-          dec ++ decompositions
+        val dec = uSets.foldRight(List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])]()) { (u, acc) =>
+          (u, s) :: acc 
         }
-        else decompositions
+        dec ++ decompositions
       }
       else decompositions
+      //}
+      //else decompositions
     }
   }
 }
@@ -144,6 +156,9 @@ object decomposition {
       case ((f, tuples), newmap) => newmap + (f -> tuplesToTerms(tuples)) 
     }
     val deltatable = fillDeltaTable(newterms, eigenvariable)
+
+    //println("\n************The delta-table is: ")
+    //println(deltatable.table)
     
 
     val decompositions = deltatable.findValidDecompositions(newterms)

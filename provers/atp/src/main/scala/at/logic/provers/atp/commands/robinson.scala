@@ -84,6 +84,21 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
     override def toString = "ResolveCommand("+alg.getClass+")"
   }
 
+/* TODO: finish this implementation
+  // this command implements ``forgetful resolution´´ as in the cut-intro paper
+  case class ForgetfulResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
+    def apply(state: State, data: Any) = {
+      val ((p1,_)::(p2,_)::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
+      val ret = new ResolveCommand(alg).apply(state, data)
+      val ret2 = new InsertResolventCommand().apply(ret._1, ret._2)
+
+      val cur_state = ret2._1
+      cur_state("clauses") -= p1 -= p2
+      List((cur_state, ret2._2))
+    }
+  }
+*/
+
   // this command should be used when the target clause is not the empty clause and should be called before Resolution is called
   case class ClauseFactorCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     // computes all subsets
