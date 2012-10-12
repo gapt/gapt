@@ -46,6 +46,7 @@ package trees {
     require {isTree} // important, read remark above
     private[trees] def isTree: Boolean // TODO optimize isTree (in binaryTree)
     val vertex: V
+    def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T
     def name: String // used to contain more information about the tree, like rule names in LK
     def leaves: Set[LeafTree[V]]
   }
@@ -54,6 +55,7 @@ package trees {
     private[trees] def isTree: Boolean = true // any leaf is a tree
     def leaves = new HashSet() + this
     val node = vertex
+    def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = leafF(vertex)
   }
   object LeafTree {
     def apply[V](vertex: V) = new LeafTree[V](vertex)
@@ -69,6 +71,7 @@ package trees {
     def leaves = t.leaves
     val node = vertex
     val parents = List(Pair(t,()))
+    def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = unaryF(t.fold(leafF)(unaryF)(binaryF), vertex)
   }
   object UnaryTree {
     def apply[V](vertex: V, t: Tree[V]) = new UnaryTree[V](vertex, t)
@@ -88,6 +91,8 @@ package trees {
     def leaves = t1.leaves ++ t2.leaves
     val node = vertex
     val parents = List(Pair(t1,()),Pair(t2,()))
+    def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = binaryF(t1.fold(leafF)(unaryF)(binaryF),
+      t2.fold(leafF)(unaryF)(binaryF), vertex)
   }
   object BinaryTree {
     def apply[V](vertex: V, t1: Tree[V], t2: Tree[V]) = new BinaryTree[V](vertex, t1, t2)
@@ -105,6 +110,7 @@ package trees {
     def isTree = true //TOFIX!!!
     val node = vertex
     val parents = (restParents :+ lastParent).flatMap(_.leaves).map(Pair(_,()))
+    def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = throw new UnsupportedOperationException("fold is not implemented for ArbitraryTrees")
   }
 
   object ArbitraryTree extends Logger {
