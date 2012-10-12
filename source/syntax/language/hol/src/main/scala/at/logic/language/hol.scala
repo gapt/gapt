@@ -99,7 +99,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case Atom(x, args) => false
       // case Function(x, args, tpe) => x.containsQuantifier || args.exists(y => y.asInstanceOf[HOLExpression].containsQuantifier)  // I think this case is not really necessary, because it is covered by the last case...
       case And(x,y) => x.containsQuantifier || y.containsQuantifier
-      case Equation(x,y) => x.containsQuantifier || y.containsQuantifier
       case Or(x,y) => x.containsQuantifier || y.containsQuantifier
       case Imp(x,y) => x.containsQuantifier || y.containsQuantifier
       case HArray(x,y) => x.containsQuantifier || y.containsQuantifier
@@ -116,7 +115,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case Neg(f) => !f.containsQuantifier
       case And(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
       case Or(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
-      case Equation(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
       case Imp(f1,f2) => !f1.containsQuantifier && !f2.containsQuantifier
       case ExVar(v,f) => f.isPrenex
       case AllVar(v,f) => f.isPrenex
@@ -318,7 +316,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
         case And(left,right) => Some( (left,right) )
         case Or(left,right) => Some( (left,right) )
         case Imp(left,right) => Some( (left,right) )
-        case Equation(left,right) => Some( (left,right) )
         case _ => None
     }
   }
