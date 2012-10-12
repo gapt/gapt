@@ -44,8 +44,8 @@ object cutIntroduction {
     val propAnt = endSequent.antecedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
     val propSucc = endSequent.succedent.map(f => f.formula.asInstanceOf[FOLFormula]).filter(x => !quantFormulas.contains(x))
 
-    //println("\nTerm set: {" + terms + "}")
-    //println("of size " + terms.size)
+    println("\nTerm set: {" + terms + "}")
+    println("of size " + terms.size)
 
     val decompositions = decomposition(terms).sortWith((d1, d2) =>
       (d1._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + d1._2.length
@@ -53,13 +53,12 @@ object cutIntroduction {
       (d2._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + d2._2.length
     )
 
-/*
-    println("\nThe decompositions found were:")
-    decompositions.foreach{dec =>
-    val l = (dec._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + dec._2.length
-      println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
-    }
-*/
+
+    //println("\nThe decompositions found were:")
+    //decompositions.foreach{dec =>
+    //val l = (dec._1.foldRight(0) ( (d, acc) => d._2.length + acc)) + dec._2.length
+    //  println("{ " + dec._1 + " } o { " + dec._2 + " }  of size " + l)
+    //}
 
     println("Number of decompositions in total: " + decompositions.length)
 
@@ -261,7 +260,8 @@ object cutIntroduction {
     Some(CleanStructuralRules(finalProof))
   }
 
-/* TODO: uncomment and use once resolve is implemented
+/*
+  // TODO: uncomment and use once resolve is implemented
   // The canonical solution computed already has only the quantified formulas 
   // from the end-sequent (propositional part is ignored).
   def improveCanonicalSolution(sol: FOLFormula) : FOLFormula = {
@@ -278,7 +278,7 @@ object cutIntroduction {
     // Exhaustive search over the resolvents (depth-first search)
     // TODO: implement resolve (takes a formula and returns a list of resolvents
     // of that formula)
-    def searchMinSolution(f: FOLFormula) : FOLFormula = resolve(f) match {
+    def searchMinSolution(f: FOLFormula) : FOLFormula = ForgetfulResolve(f) match {
       case Nil => f
       case resolvents => 
         val l = resolvents.foldRight(List[FOLFormula]()) (r, acc => 
