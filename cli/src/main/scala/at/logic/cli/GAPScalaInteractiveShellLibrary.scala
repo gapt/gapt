@@ -531,7 +531,7 @@ object loadProofDB {
   }
 
   object extractExpansionTrees {
-    type TreeType = at.logic.transformations.herbrandExtraction.extractExpansionTrees.TreeType
+    type TreeType = at.logic.transformations.herbrandExtraction.extractExpansionTrees.TreeTypeA
     def apply(proof: LKProof): Tuple2[Seq[TreeType],Seq[TreeType]] = at.logic.transformations.herbrandExtraction.extractExpansionTrees(proof)
   }
 
