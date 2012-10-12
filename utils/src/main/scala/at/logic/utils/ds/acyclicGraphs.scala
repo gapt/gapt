@@ -62,7 +62,8 @@ package acyclicGraphs {
       case t: AGraph[_] => None
     }
   }
-  class ArbitraryAGraph[+V] protected (val vertex: V, val lastParent: AGraph[V], val restParents: List[AGraph[V]], graph: Graph[V]) extends EdgeGraph[V](lastParent.vertex, vertex, UnionGraph[V](graph, lastParent)) with AGraph[V] {
+  class ArbitraryAGraph[+V] protected (val vertex: V, val lastParent: AGraph[V], val restParents: List[AGraph[V]], graph: Graph[V])
+    extends EdgeGraph[V](lastParent.vertex, vertex, UnionGraph[V](graph, lastParent)) with AGraph[V] {
     override def hashCode = vertex.hashCode + (lastParent::restParents).hashCode
     override def toString = vertex.toString + " (" + (lastParent::restParents) + ")"
     def name = "Arbitrary"

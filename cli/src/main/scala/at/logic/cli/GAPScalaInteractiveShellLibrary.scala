@@ -94,7 +94,7 @@ import at.logic.language.hol.Definitions._
 import at.logic.transformations.ceres.clauseSchema.sTermN._
 
 object loadProofs {
-    def apply(file: String) = 
+    def apply(file: String) =
       try {
         (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)))) with XMLProofDatabaseParser).getProofDatabase().proofs
       }
@@ -139,7 +139,7 @@ object loadProofDB {
   }
   object structToClausesList {
     def apply(s: Struct) = StandardClauseSet.transformStructToClauseSet(s)
-  } 
+  }
   object structToLabelledClausesList {
     def apply(s: Struct) = StandardClauseSet.transformStructToLabelledClauseSet(s)
   }
@@ -161,7 +161,7 @@ object loadProofDB {
        case Atom(ConstantStringSymbol(sym), List(x,y)) => sym == "=" && x == y
        case _ => false
      } ))
-    
+
     def isEquationalTautology( e: EequalityA, f: HOLFormula) = f match {
       case Atom(ConstantStringSymbol(sym), List(x,y)) =>
         val s : FOLTerm = reduceHolToFol(x, emptymap, counter ).asInstanceOf[FOLTerm]
@@ -211,7 +211,7 @@ object loadProofDB {
     def apply(ls: List[Sequent], outputFile: String) = {
       // maps original types and definitions of abstractions
       val sectionsPre = ("Types", getTypeInformation(ls).toList.sortWith((x,y) => x.toString < y.toString))::Nil
-      
+
       val sections = try {
         // convert to fol and obtain map of definitons
         val imap = Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
@@ -266,7 +266,7 @@ object loadProofDB {
     }
 
   }
-  
+
   object createEquality {
     def apply(fs : List[String], cs : List[String]) =
       new MulACUEquality(fs map (new ConstantStringSymbol(_)), cs map (new ConstantStringSymbol(_)))
@@ -339,7 +339,7 @@ object loadProofDB {
   object termsExtractionFlat {
     def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p ).
     //foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
-      foldRight(List[FOLTerm]()) ( (t, acc) => 
+      foldRight(List[FOLTerm]()) ( (t, acc) =>
         t._2.foldRight(acc) ((lst, ac) =>
           lst ++ ac
         )
@@ -439,8 +439,8 @@ object loadProofDB {
   }
 
   object replay {
-    def apply( clauses: Seq[FSequent] ) = prover9.apply( clauses ) 
-    def apply( clauses: List[Sequent] ) = prover9.apply( clauses ) 
+    def apply( clauses: Seq[FSequent] ) = prover9.apply( clauses )
+    def apply( clauses: List[Sequent] ) = prover9.apply( clauses )
   }
 
   // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
@@ -513,7 +513,7 @@ object loadProofDB {
 
   object findDefinitions {
     def apply(p: LKProof) = definitions_(p, collection.immutable.Map[HOLFormula, HOLFormula]())
-    
+
     def definitions_(p: LKProof, m : collection.immutable.Map[HOLFormula, HOLFormula])
       : collection.immutable.Map[HOLFormula, HOLFormula] = p match {
         case DefinitionLeftRule(proof, root, a, p) =>
@@ -530,6 +530,10 @@ object loadProofDB {
     }
   }
 
+  object extractExpansionTrees {
+    type TreeType = at.logic.transformations.herbrandExtraction.extractExpansionTrees.TreeType
+    def apply(proof: LKProof): Tuple2[Seq[TreeType],Seq[TreeType]] = at.logic.transformations.herbrandExtraction.extractExpansionTrees(proof)
+  }
 
 
 
@@ -618,7 +622,7 @@ object loadProofDB {
       val X = sClauseVar("X")
       val g = HOLVar(new VariableStringSymbol("g"), ->(Ti(),Ti()))
       val x = fo2Var(new VariableStringSymbol("x"))
-      
+
       val a = HOLVar(new VariableStringSymbol("a"), Ti())
       val sigma1_base = sTermN("σ'", zero::Nil)
       val sigma1_rec = sTermN("σ'", Succ(k)::Nil)
@@ -741,7 +745,7 @@ object hol2fol {
 
 }
 
- 
+
 
   object ceresHelp {
     def apply() = {
