@@ -30,11 +30,11 @@ object extractExpansionTrees {
                          r.succedent.map(fo => (fo, TerminalNode[V,E](fo.formula))): _*)
     case WeakeningRightRule(up,r,p) => {
       val map = extract(up)
-      (getMapOfContext(r,map) + Pair(p, TerminalNode[V,E](p.formula)))
+      (getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map) + Pair(p, TerminalNode[V,E](p.formula)))
     }
     case WeakeningLeftRule(up,r,p) => {
       val map = extract(up)
-      getMapOfContext(r,map) + Pair(p, TerminalNode[V,E](p.formula))
+      getMapOfContext((r.antecedent ++ r.succedent).toSet - p,map) + Pair(p, TerminalNode[V,E](p.formula))
     }
     case ForallLeftRule(up,r,a,p,st) => handleQuantifier(up,r,a,p,st,false)
     case ExistsRightRule(up,r,a,p,st) => handleQuantifier(up,r,a,p,st,false)
