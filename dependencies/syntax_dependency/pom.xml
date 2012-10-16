@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>syntax_dependency</artifactId>
-  <packaging>pom</packaging>  
+  <packaging>pom</packaging>
   <name>Grouped dependencies for the syntax module</name>
 
   <dependencies>
@@ -55,6 +55,11 @@
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>resolution</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>expansion_trees</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

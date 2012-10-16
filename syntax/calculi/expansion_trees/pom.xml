@@ -3,28 +3,18 @@
 
   <parent>
   <groupId>at.logic</groupId>
-  <artifactId>syntax</artifactId>
+  <artifactId>calculi</artifactId>
   <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>calculi</artifactId>
-  <packaging>pom</packaging>
-  <name>Core Calculi</name>
-
-  <modules>
-    <module>lk</module>
-   <module>lksk</module>
-    <module>proofs</module>
-    <module>resolution</module>
-   <module>slk</module>
-   <module>lk_modulo</module>
-   <module>expansion_trees</module>
-  </modules>
+  <artifactId>expansion_trees</artifactId>
+  <packaging>jar</packaging>
+  <name>Expansion Trees and Proofs</name>
 
   <dependencies>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>hol</artifactId>
+      <artifactId>proofs</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>

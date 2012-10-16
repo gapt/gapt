@@ -7,7 +7,7 @@
 
 package at.logic.utils.ds.algebraic
 
-import at.logic.utils.ds.trees.{TreeA,NoneTerminalNodeA,TerminalNodeA}
+import at.logic.utils.ds.trees.{TreeA,NonTerminalNodeA,TerminalNodeA}
 
 package trees {
   trait Tree[+V,+E] extends TreeA[V,E]{
@@ -15,5 +15,5 @@ package trees {
   }
 
   case class TerminalNode[+V,+E](node: V) extends Tree[V,E] with TerminalNodeA[V,E]
-  case class NoneTerminalNode[+V,+E](node: V, parents: Seq[Tuple2[Tree[V,E],E]]) extends Tree[V, E] with NoneTerminalNodeA[V,E]
+  case class NonTerminalNode[+V,+E](node: V, children: Seq[Tuple2[Tree[V,E],E]]) extends Tree[V, E] with NonTerminalNodeA[V,E]
 }

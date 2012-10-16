@@ -21,7 +21,7 @@ package trees {
    */
   trait TreeA[+V,+E]
   trait TerminalNodeA[+V,+E] extends TreeA[V,E] { val node:V}
-  trait NoneTerminalNodeA[+V,+E] extends TreeA[V,E] {val node:V; val parents:Seq[Tuple2[TreeA[V,E],E]]}
+  trait NonTerminalNodeA[+V,+E] extends TreeA[V,E] {val node:V; val children:Seq[Tuple2[TreeA[V,E],E]]}
 
   object TerminalNodeA {
     def unapply[V,E](tree: TreeA[V,E]) = tree match {
@@ -30,9 +30,9 @@ package trees {
     }
   }
 
-  object NoneTerminalNodeA {
+  object NonTerminalNodeA {
     def unapply[V,E](tree: TreeA[V,E]) = tree match {
-      case t: NoneTerminalNodeA[_,_] => Some(t.node,t.parents)
+      case t: NonTerminalNodeA[_,_] => Some(t.node,t.children)
       case _ => None
     }
   }
@@ -66,11 +66,11 @@ package trees {
   }
 
   class UnaryTree[V](override val vertex: V, override val t: Tree[V]) extends UnaryAGraph[V](vertex, t) with Tree[V] with
-  NoneTerminalNodeA[V,Unit]{
+  NonTerminalNodeA[V,Unit]{
     private[trees] def isTree: Boolean = true // any unary tree is a tree if its child component is a tree, therefore, as we accept a valid tree as argument, nothing should be done here.
     def leaves = t.leaves
     val node = vertex
-    val parents = List(Pair(t,()))
+    val children = List(Pair(t,()))
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = unaryF(t.fold(leafF)(unaryF)(binaryF), vertex)
   }
   object UnaryTree {
@@ -81,7 +81,7 @@ package trees {
     }
   }
   class BinaryTree[V](override val vertex: V, override val t1: Tree[V], override val t2: Tree[V]) extends BinaryAGraph[V](vertex,t1,t2) with
-  Tree[V] with NoneTerminalNodeA[V,Unit]{
+  Tree[V] with NonTerminalNodeA[V,Unit]{
 
     // we must check that no subtree in one sub component is equal to a subtree in the other component
     // it is enough to check leaves only
@@ -90,7 +90,7 @@ package trees {
 
     def leaves = t1.leaves ++ t2.leaves
     val node = vertex
-    val parents = List(Pair(t1,()),Pair(t2,()))
+    val children = List(Pair(t1,()),Pair(t2,()))
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = binaryF(t1.fold(leafF)(unaryF)(binaryF),
       t2.fold(leafF)(unaryF)(binaryF), vertex)
   }
@@ -103,13 +103,13 @@ package trees {
   }
 
   class ArbitraryTree[V] private (override val vertex: V, override val lastParent: Tree[V], override val restParents: List[Tree[V]], graph: Graph[V])
-    extends ArbitraryAGraph[V](vertex,lastParent,restParents,graph) with Tree[V] with NoneTerminalNodeA[V,Unit]{
+    extends ArbitraryAGraph[V](vertex,lastParent,restParents,graph) with Tree[V] with NonTerminalNodeA[V,Unit]{
     // TODO add a require so it remains a tree (check no vertex repeats and new vertex is new)
 
     def leaves = (restParents :+ lastParent).flatMap(_.leaves).toSet
     def isTree = true //TOFIX!!!
     val node = vertex
-    val parents = (restParents :+ lastParent).flatMap(_.leaves).map(Pair(_,()))
+    val children = (restParents :+ lastParent).flatMap(_.leaves).map(Pair(_,()))
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = throw new UnsupportedOperationException("fold is not implemented for ArbitraryTrees")
   }
 
