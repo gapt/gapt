@@ -1,0 +1,6 @@
+formulas(sos).
+-A | -B | -C.  [assumption].
+A.  [assumption].
+B.  [assumption].
+C.  [assumption].
+end_of_list.
