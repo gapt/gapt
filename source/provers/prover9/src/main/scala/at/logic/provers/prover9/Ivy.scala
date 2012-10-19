@@ -1,131 +1,150 @@
-package at.logic.provers.prover9
+package at.logic.provers.prover9.ivy
 
 import scala.util.parsing.combinator.{RegexParsers, JavaTokenParsers}
 import scala.collection.immutable
-import at.logic.provers.prover9.Lisp.SExpression
-import java.io.{FileReader, FileInputStream}
-import scala.util.parsing.input.{PagedSeqReader, StreamReader}
-import scala.collection.immutable.PagedSeq
+import at.logic.provers.prover9.lisp.SExpression
+import at.logic.provers.prover9.lisp
+import at.logic.language.lambda.typedLambdaCalculus.{App, AppN, LambdaExpression}
+import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
+import at.logic.language.lambda.symbols.{VariableStringSymbol, SymbolA}
+import at.logic.language.fol
+import at.logic.calculi.resolution.base.{FClause, Clause}
+import at.logic.calculi.lk.base.FSequent
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.occurrences
+import at.logic.calculi.lk.base.types.FSequent
 
 /**
- * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ . What is done here is a basic LISP
- * S-expression parser, without quote character, macros or other fancy stuff. Atoms have a reduced namespace and need to
- * be extended if necessary.
- *
- * Some remarks:
- * (1) regexp parsers eat whitespace and newlines
- * (2) recursive cases have to be put first
+ * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
+ * TODO: transofrmation to Robinson resolution
  */
 
-/* Basic Lisp Datastructures: Atom, Cons and List -- be careful with namespace collisions in scala.*.List.
- * Printing a Datastructure should output valid Lisp.
- */
-object Lisp {
-  sealed class SExpression
-
-  case class Atom(name : String) extends SExpression {
-    override def toString = name
-  }
-
-  case class List(elements : immutable.List[SExpression] ) extends SExpression {
-    def ::(head : SExpression) = Lisp.List(head::elements)
-    def ++(list2 : Lisp.List) = Lisp.List(elements ++ list2.elements)
-
-    def lst2string[T](fun:(T=>String), seperator: String, l:immutable.List[T]) : String = l match {
-      case immutable.Nil => ""
-      case immutable.List(x) => fun(x)
-      case x :: xs => fun(x)  + seperator + lst2string(fun, seperator, xs)
-    }
-
-    override def toString = "("+ lst2string(((x:Any) => x.toString), " ", elements) + ")"
-    //def prepend(head : SExpression, list : Lisp.List) = Lisp.List(head::list.list)
-  }
-  case class Cons(car: SExpression, cdr : SExpression) extends SExpression {
-    override def toString = "( " + car + " . " + cdr + ")"
-  }
-
-}
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
-object Ivy {
-  object IvyParser extends IvyParser {
-    def apply(fn : String) : List[SExpression] = {
-      val fis = new FileReader(fn)
-      val pagedseq = new PagedSeq(fis.read)
-      val reader = new PagedSeqReader(pagedseq)
-      parseAll(lisp_file, reader) match {
-        case Success(result, _) => result
-        case NoSuccess(msg, _) =>
-          throw new Exception("Ivy Parser Failed: "+msg)
+object IvyParser {
+
+  /*
+  case class Position(path:List[Int]) { }
+
+  class Hole[T <: LambdaExpression](val exp : T, val pos : Position) {
+    def term_in_hole : T = term_in_hole(exp,pos.path)
+    def term_in_hole(exp : T, pos : List[Int]) : T = pos match {
+      case Nil => exp
+      case p::ps => exp match {
+        case AppN(f, args) if ((p>0) && (p <= args.size)  ) => term_in_hole(args(p-1), ps)
       }
+
+    }
+
+  } */
+
+  // the type synoyms should make the parsing functions more readable
+  type ProofId = String
+  type ProofMap = immutable.Map[ProofId, IvyResolutionProof]
+
+
+  //decompose the proof object to a list and hand it to parse(exp: List[SExpression], found_steps : ProofMap )
+  def parse(exp: SExpression ) : IvyResolutionProof =  exp match {
+    case lisp.List(Nil) => throw new Exception("Trying to parse an empty proof!")
+    case lisp.List(l) => parse(l, immutable.Map[String, IvyResolutionProof]() ) // extract the list of inferences from exp
+    case _ => throw new Exception("Parsing error: The proof object is not a list!")
+  }
+
+  /* traverses the list of inference sexpressions and returns an IvyResolution proof - this can then be translated to
+   * our resolution calculus (i.e. where instantiation is contained in the substitution) */
+  def parse(exp: List[SExpression], found_steps : ProofMap ) : IvyResolutionProof =  exp match {
+    case List(last) =>
+      val (lastid , found_steps_) = parse_step(last, found_steps);
+      found_steps_(lastid)
+
+    case head::tail =>
+      val (_ , found_steps_) = parse_step(head, found_steps);
+      parse(tail, found_steps_);
+    case _ => throw new Exception("Cannot create an object for an empty proof (list of inferences is empty).")
+  }
+
+  /* parses an inference step and updates the proof map */
+  def parse_step(exp : SExpression, found_steps : ProofMap) : (ProofId, ProofMap) = {
+    exp match {
+      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("input")::Nil) :: clause :: rest  )  => {
+        val fclause = parse_clause(clause, is_ladrstyle_variable)
+
+        val inference = InitialClause(clause,
+          Clause(fclause.antecedent map (new FormulaOccurrence(_, Nil, occurrences.factory)) ,
+                 fclause.succedent map (new FormulaOccurrence(_, Nil, occurrences.factory))))
+
+        (id, found_steps + ((id, inference)) )
+      }
+
+        //TODO: implement rules for flip, resolution, paramodulation
     }
   }
 
-  /* The actual Parser, lexing and parsing is mixed which makes the grammar look a bit ugly sometimes */
-  class IvyParser extends RegexParsers {
-    def debug(s:String) = ()
-    // --- parser transformers for putting elements into lists, concatenating parsing results, etc
-    def wrap[T](s:T) = { debug("wrapping: '"+s+"'"); immutable.List(s) }
-    def prepend[T](l : ~[T, immutable.List[T]]) : immutable.List[T] = { debug("prepending: '"+l+"'"); l match { case ~(l1,l2) => l1 :: l2  } }
-    def prepend2[T](l : ~[~[T,T],immutable.List[T]]) : immutable.List[T] = { debug("prepending: '"+l+"'"); l match { case l1 ~ l2 ~ l3 => l1 :: l2 :: l3 } }
-    def concat[T](l : ~[immutable.List[T],immutable.List[T]]) : immutable.List[T] = { debug("concatenating: '"+l+"'"); l match { case ~(l1,l2) => l1 ++ l2  } }
 
-    def prepend_tolisplist(l : ~[SExpression, SExpression]) : Lisp.List = {
-      l match { case ~(l1,Lisp.List(l2)) => Lisp.List(l1 :: l2)
-                case _ => throw new Exception("Somethings wrong in the parser implementation!")
-      }
-    }
-    def concat_lisplists(l : ~[SExpression,SExpression]) : Lisp.List = {
-      l match { case ~(Lisp.List(l1),Lisp.List(l2)) => Lisp.List(l1 ++ l2)
-                case _ => throw new Exception("Somethings wrong in the parser implementation!")
-      }
+  /* create_ladrstyle_symbol and create_prologstyle_symbol implement the logic for the prover9 and prolog style
+   * variable naming convention -- both are possible in prover9;
+   * see also http://www.cs.unm.edu/~mccune/mace4/manual/2009-11A/syntax.html
+   */
+  val ladr_variable_regexp = """^[u-z].*$""".r
+  def is_ladrstyle_variable(s:String) = ladr_variable_regexp.findFirstIn(s) match {
+      case None => false
+      case _ => true
     }
 
-    def debugrule[T](t:T) : T = { println("dr: "+t.toString) ; t}
 
-    def wrap_inlisplist(s:SExpression) = {  Lisp.List(s::Nil) }
+  val prolog_variable_regexp = """^[A-Z].*$""".r
+  def is_prologstyle_variable(s: String) = ladr_variable_regexp.findFirstIn(s) match {
+      case None => false
+      case _ => true
+    }
 
-    // ------------ start of grammar --------------------
 
-    //def eof : Parser[String] = """\z""".r
-    //def non_delimiter : Parser[String] = """[^,\(\)\[\]]([^,\.\(\)\[\]+])?""".r
-    def comment : Parser[String] = """;;.*""".r
-    def comments : Parser[String] = comment ~ comments ^^ ((x : ~[String,String]) => {val ~(s1,s2) = x; s1 + s2}) | comment
+  /* parses a clause sexpression to a fclause -- the structure is (or lit1 (or lit2 .... (or litn-1 litn)...)) */
+  def parse_clause(exp:SExpression, is_variable_symbol : String => Boolean) : FSequent = exp match {
 
-    //    def word : Parser[IvyToken] = """[^,\(\)\[\]\s]([^,\.\(\)\[\]\s]+)?""".r ^^ IvyToken
-    //def word : Parser[IvyToken] = """[^,\.\(\)\[\]\s]*[^,\(\)\[\]\s][^,\.\(\)\[\]\s]*""".r ^^ IvyToken.apply
-    //TODO: extend definition of word
-    def word : Parser[SExpression] = """[a-zA-Z0-9=_+\-*/]+""".r ^^ Lisp.Atom   //contains only very restricted strings
-    def string :Parser[SExpression] = """"[^"]*"""".r ^^ Lisp.Atom              //arbitrary strings wrapped in " "
+    case lisp.List( lisp.Atom("or") :: left :: right :: Nil ) =>
+      //fol.Or(parse_clause(left, is_variable_symbol), parse_clause(right, is_variable_symbol)  )
+      //val letftclause = parse_clause(left, is_variable_symbol)
+      val rightclause = parse_clause(right, is_variable_symbol)
+      left match {
+        case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
+          FSequent(parse_atom(name, args, is_variable_symbol)::Nil, Nil)
+        case lisp.List( lisp.Atom(name) :: args) =>
+          FSequent(Nil, parse_atom(name, args, is_variable_symbol)::Nil)
+      }
 
-    def atom : Parser[SExpression] = string | word
 
-    def nil : Parser[SExpression] = (("(") ~> (")") | """[nN][iI][lL]""".r) ^^ ((x:Any) => Lisp.List(Nil)) //empty list
+    case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
+      //fol.Neg(parse_clause(formula, is_variable_symbol) )
+      FSequent(parse_atom(name, args, is_variable_symbol)::Nil, Nil)
 
-    def list : Parser[SExpression] = (nil | ("(") ~> list_ <~ (")"))            // arbitrary list
-    def list_ : Parser[SExpression] =  ( (sexpression ^^ wrap_inlisplist) ~ list_ ) ^^ concat_lisplists |
-                                       ( (sexpression ^^ wrap_inlisplist))
+    case lisp.List( lisp.Atom(name) :: args) =>
+      FSequent(Nil, parse_atom(name, args, is_variable_symbol)::Nil)
 
-    // cons: cons'es are converted to lists if possible (second argument is a list)
-    def cons : Parser[SExpression] = (("(") ~> sexpression) ~ (".") ~ (sexpression <~ (")")) ^^ (
-      (exp: ~[~[SExpression, String], SExpression]) => {
-        val car ~ _ ~ cdr = exp;
-        cdr match {
-          case Lisp.List(elems) => Lisp.List(car::elems)
-          case _ => Lisp.Cons(car,cdr)
-        }
 
-      })
+    case _ => throw new Exception("Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object.")
+  }
 
-    //parsing of comments is a bit expensive :(
-    def sexpression_ : Parser[SExpression] =  ( list | atom | cons)
-    def sexpression : Parser[SExpression] =  opt(comments) ~> sexpression_ <~ opt(comments)
+  def parse_atom(name: String, args : List[SExpression],is_variable_symbol : String => Boolean) = {
+    if (is_variable_symbol(name)) throw new Exception("Parsing Error: Predicate name "+name+" does not conform to naming conventions.")
+    val sym = new ConstantStringSymbol(name)
+    val argterms = args map (parse_term(_, is_variable_symbol))
 
-    //a file is a list of sexpressions
-    def lisp_file : Parser[List[SExpression]] = rep(sexpression) ^^ debugrule
+    fol.Atom(sym, argterms)
 
-    // ------------ end of grammar --------------------
+  }
 
+  def parse_term(ts : SExpression, is_variable_symbol : String => Boolean) : fol.FOLTerm = ts match {
+    case lisp.Atom(name) =>
+      if (is_variable_symbol(name))
+        fol.FOLVar(new VariableStringSymbol(name))
+      else
+        fol.FOLConst(new ConstantStringSymbol(name))
+    case lisp.List(lisp.Atom(name)::args) =>
+      if (is_variable_symbol(name)) throw new Exception("Parsing Error: Function name "+name+" does not conform to naming conventions.")
+      fol.Function(new ConstantStringSymbol(name), args.map(parse_term(_, is_variable_symbol)) )
+    case _ =>
+      throw new Exception("Parsing Error: Unexpected expression "+ts+" in parsing of a term.")
   }
 
 
