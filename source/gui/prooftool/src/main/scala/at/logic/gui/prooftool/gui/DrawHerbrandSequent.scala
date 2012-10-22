@@ -1,0 +1,66 @@
+package at.logic.gui.prooftool.gui
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: mrukhaia
+ * Date: 10/22/12
+ * Time: 3:22 PM
+ * To change this template use File | Settings | File Templates.
+ */
+
+// This file is created to display FSequent, like Herbrand Sequent for example.
+// It is a less involved version of DrawExpansionTree.
+
+import at.logic.calculi.lk.base.types.FSequent
+import swing._
+import java.awt.{Dimension, Font, Color}
+import java.awt.Font._
+import swing.event.UIElementResized
+import at.logic.language.hol.HOLFormula
+
+
+class DrawHerbrandSequent(val expansionTree: FSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
+  background = new Color(255,255,255)
+  private val ft = new Font(SANS_SERIF, PLAIN, fSize)
+  //private val width = toolkit.getScreenSize.width - 150
+  //private val height = toolkit.getScreenSize.height - 150
+  preferredSize = calculateOptimalSize
+  dividerLocation = preferredSize.width / 2
+  leftComponent = side(expansionTree.antecedent, "Antecedent", ft)
+  rightComponent = side(expansionTree.succedent, "Consequent", ft)
+
+  listenTo(Main.top)
+  reactions += {
+    case UIElementResized(Main.top) =>
+      preferredSize = calculateOptimalSize
+      revalidate
+  }
+
+  def calculateOptimalSize = {
+    val width = Main.top.size.width
+    val height = Main.top.size.height
+    if (width > 100 && height > 200)
+      new Dimension(Main.top.size.width - 70, Main.top.size.height - 150)
+    else new Dimension(width, height)
+  }
+
+  def side(formulas: Seq[HOLFormula], label: String, ft: Font) = new BoxPanel(Orientation.Vertical) {
+    contents += new Label(label) {
+      font = ft.deriveFont(Font.BOLD)
+      opaque = true
+      border = Swing.EmptyBorder(10)
+    }
+    contents += new ScrollPane {
+      peer.getVerticalScrollBar.setUnitIncrement( 20 )
+      peer.getHorizontalScrollBar.setUnitIncrement( 20 )
+      contents = new BoxPanel(Orientation.Vertical) {
+        background = new Color(255,255,255)
+        formulas.foreach( f => {
+          val comp = DrawSequent.formulaToLabel(f,ft)
+          comp.border = Swing.EmptyBorder(10)
+          contents += comp
+        })
+      }
+    }
+  }
+}

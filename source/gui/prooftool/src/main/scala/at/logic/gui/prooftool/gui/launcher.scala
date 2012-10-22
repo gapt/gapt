@@ -16,6 +16,7 @@ import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, Stru
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.expansionTrees.ExpansionTree
 
 class MyScrollPane extends ScrollPane {
   background = new Color(255,255,255)
@@ -47,7 +48,11 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           layout(new DrawList(list, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
-        case expansionTree: FSequent =>
+        case herbrandSequent: FSequent =>
+          layout(new DrawHerbrandSequent(herbrandSequent, fSize)) = c
+          ProofToolPublisher.publish(UnLoaded)
+          StructPublisher.publish(UnLoaded)
+        case expansionTree: (Seq[ExpansionTree],Seq[ExpansionTree]) =>
           layout(new DrawExpansionTree(expansionTree, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)

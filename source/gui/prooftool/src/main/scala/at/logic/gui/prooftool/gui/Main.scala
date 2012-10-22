@@ -35,7 +35,7 @@ import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedund
 import at.logic.transformations.ceres.ProjectionTermCreators
 import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
-import at.logic.language.hol.HOLFormula
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -524,8 +524,12 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Tests") {
       mnemonic = Key.T
+      contents += new MenuItem(Action("Test Herbrand Sequent") {
+        body.contents = new Launcher(Some(("Herbrand Sequent", db.getProofs.head._2.root.asInstanceOf[Sequent].toFSequent)), 12)
+      }) { border = customBorder }
       contents += new MenuItem(Action("Test Expansion Tree") {
-        body.contents = new Launcher(Some(("Expansion Tree", db.getProofs.head._2.root.asInstanceOf[Sequent].toFSequent)), 12)
+        body.contents = new Launcher(Some(("Expansion Tree",
+          extractExpansionTrees(body.getContent.getData.get._2.asInstanceOf[LKProof]))), 12)
       }) { border = customBorder }
     }
   }
