@@ -12,18 +12,19 @@ import event.{UIElementResized, MouseClicked}
 import java.awt.{Font, Dimension, Color}
 import java.awt.Font._
 import java.awt.event.MouseEvent
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.hol._
+import at.logic.calculi.expansionTrees.ExpansionTree
+import at.logic.utils.ds.trees.{NonTerminalNodeA}
 
-class DrawExpansionTree(val expansionTree: FSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
+class DrawExpansionTree(val expansionTree: (Seq[ExpansionTree],Seq[ExpansionTree]), private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   //private val width = toolkit.getScreenSize.width - 150
   //private val height = toolkit.getScreenSize.height - 150
   preferredSize = calculateOptimalSize
   dividerLocation = preferredSize.width / 2
-  leftComponent = new SplitedExpansionTree(expansionTree.antecedent, "Antecedent", ft)
-  rightComponent = new SplitedExpansionTree(expansionTree.succedent, "Consequent", ft)
+  leftComponent = new SplitedExpansionTree(expansionTree._1, "Antecedent", ft)
+  rightComponent = new SplitedExpansionTree(expansionTree._2, "Consequent", ft)
 
   def calculateOptimalSize = {
     val width = Main.top.size.width
@@ -41,7 +42,7 @@ class DrawExpansionTree(val expansionTree: FSequent, private val fSize: Int) ext
   }
 }
 
-class SplitedExpansionTree(val formulas: Seq[HOLFormula], val label: String, private val ft: Font) extends BoxPanel(Orientation.Vertical) {
+class SplitedExpansionTree(val formulas: Seq[ExpansionTree], val label: String, private val ft: Font) extends BoxPanel(Orientation.Vertical) {
   contents += new Label(label) {
     font = ft.deriveFont(Font.BOLD)
     opaque = true
@@ -53,7 +54,7 @@ class SplitedExpansionTree(val formulas: Seq[HOLFormula], val label: String, pri
     contents = new BoxPanel(Orientation.Vertical) {
       background = new Color(255,255,255)
       formulas.foreach( f => {
-        val comp = formulaToComponent(f)
+        val comp = formulaToComponent(f.asInstanceOf[NonTerminalNodeA[Option[HOLFormula],_]].node.get)
         comp.border = Swing.EmptyBorder(10)
         contents += comp
       })
