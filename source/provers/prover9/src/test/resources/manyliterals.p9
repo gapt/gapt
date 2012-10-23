@@ -1,0 +1,7 @@
+formulas(sos).
+ Q.
+ P(0).
+ P(x) -> P(f(x)).
+ P(f(f(x))) -> P(g(x)).
+ - ( P(g(0)) & P(f(0)) & P(g(g(x))) & P(f(g(x))) & Q).
+end_of_list.

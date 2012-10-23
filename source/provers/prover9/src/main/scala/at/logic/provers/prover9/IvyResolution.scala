@@ -5,6 +5,9 @@ import at.logic.calculi.agraphProofs.{NullaryAGraphProof, UnaryAGraphProof, Bina
 import at.logic.calculi.resolution.base.Clause
 import at.logic.utils.ds.acyclicGraphs.{LeafAGraph, UnaryAGraph, BinaryAGraph}
 import at.logic.provers.prover9.lisp.SExpression
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.fol.FOLTerm
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 /**** Implementation of Ivy's Resolution Calculus ***
  * Ivy has it's own variation of resolution which only resolves over identical literals but has an instantiation rule.
@@ -22,49 +25,57 @@ case object ResolutionType extends BinaryRuleTypeA{ override def toString = "Res
 case object FlipType extends UnaryRuleTypeA{ override def toString = "Flip"};
 
 abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
+  val id : String;
   val clause_exp : SExpression;
 };
 
 //inheritance of BinaryAGraph is necessary becauseBinaryAGraphProof does not provide a constructor
 //  adding the constructor would introduce another override and use up unneccessary memory, we probably need
 //  to discuss this
-case class InitialClause(clause_exp : SExpression,
+case class InitialClause(id: String,
+                         clause_exp : SExpression,
                          override val vertex: Clause)
   extends LeafAGraph[Clause](vertex) with NullaryAGraphProof[Clause] with IvyResolutionProof {
 
   def rule = InitialClauseType;
-  override def name = "Initial Clause"
-
-
+//  override def name = "Initial Clause"
 };
 
-case class Instantiate(clause_exp : SExpression, override val vertex : Clause, override val t : IvyResolutionProof)
+case class Instantiate(id: String,
+                       clause_exp : SExpression,
+                       substitution : Substitution[FOLTerm],
+                       override val vertex : Clause, override val t : IvyResolutionProof)
   extends UnaryAGraph(vertex, t) with UnaryAGraphProof[Clause] with IvyResolutionProof {
   def rule = InstantiateType
-  override def name = "Instantiate"
+//  override def name = "Instantiate"
 };
 
-case class Flip(clause_exp : SExpression, override val vertex : Clause, override val t : IvyResolutionProof)
+case class Flip(id: String,
+                clause_exp : SExpression, override val vertex : Clause, override val t : IvyResolutionProof)
   extends UnaryAGraph(vertex, t) with UnaryAGraphProof[Clause] with IvyResolutionProof {
   def rule = FlipType
-  override def name = "Flip"
+//  override def name = "Flip"
 };
 
-case class Paramodulation(clause_exp : SExpression,
+case class Paramodulation(id: String,
+                          clause_exp : SExpression,
                           override val vertex: Clause,
                           override val t1: IvyResolutionProof,
                           override val t2: IvyResolutionProof)
   extends BinaryAGraph(vertex, t1, t2) with BinaryAGraphProof[Clause] with IvyResolutionProof {
   def rule = InstantiateType
-  override def name = "Paramodulation"
+//  override def name = "Paramodulation"
 };
 
-case class Resolution(clause_exp : SExpression,
+case class Resolution(id: String,
+                      clause_exp : SExpression,
+                      lit1 : FormulaOccurrence,  //resolved literal in t1
+                      lit2 : FormulaOccurrence,  //resolved literal in t2
                       override val vertex: Clause,
                       override val t1: IvyResolutionProof,
                       override val t2: IvyResolutionProof)
   extends BinaryAGraph(vertex, t1, t2) with BinaryAGraphProof[Clause] with IvyResolutionProof {
-  def rule = InstantiateType
-  override def name = "Resolution"
+  def rule = ResolutionType
+//  override def name = "Resolution"
 };
 /** end of calculus defintion **/
