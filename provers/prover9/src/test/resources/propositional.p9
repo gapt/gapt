@@ -1,6 +1,6 @@
 formulas(sos).
--A | -B | -C.  [assumption].
-A.  [assumption].
-B.  [assumption].
-C.  [assumption].
+-A | -B | -C.
+A.
+B.
+C.
 end_of_list.

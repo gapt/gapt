@@ -1,0 +1,21 @@
+;; ============================== prooftrans ============================
+;; Prover9 (64) version 2009-11A, November 2009.
+;; Process 9279 was started by marty on kushiel,
+;; Mon Oct  8 15:07:49 2012
+;; The command was "prover9".
+;; ============================== end of head ===========================
+
+;; BEGINNING OF PROOF OBJECT
+(
+(1 (input) (= (f v0) (g v0)) NIL)
+(2 (input) (or (not (P v0)) (P (f v0))) NIL)
+(8 (instantiate 1 ()) (= (f v0) (g v0)) NIL)
+(3 (input) (or (not (P v0)) (P (g v0))) NIL)
+(4 (input) (P (a)) NIL)
+(5 (input) (not (P (g (a)))) NIL)
+(9 (instantiate 3 ((v0 . (a)))) (or (not (P (a))) (P (g (a)))) NIL)
+(6 (input) (P (g (a))) NIL)
+(7 (input) false NIL)
+(10 (input) (or (not (P w0)) (or (not (P v0)) (P (f v0)))) NIL)
+)
+;; END OF PROOF OBJECT

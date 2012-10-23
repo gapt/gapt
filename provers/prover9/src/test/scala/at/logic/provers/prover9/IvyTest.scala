@@ -245,6 +245,8 @@ class IvyTest extends SpecificationWithJUnit {
             println(pinput1)
             val pinput2 = IvyParser.parse(lisp.List(input2 :: Nil))
             println(pinput2)
+            val pinput3 = IvyParser.parse(lisp.List(input1 :: instantiate8 :: Nil))
+            println(pinput3)
 
           case _ =>
 //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -257,6 +259,83 @@ class IvyTest extends SpecificationWithJUnit {
         println("Exception parsing simple.ivy: "+e.getMessage)
         "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
           e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
+
+      }
+    }
+
+    " parse the test file instantiations.ivy " in {
+      try {
+        val result = SExpressionParser("target" + separator + "test-classes" + separator +"instantiations.ivy")
+        result must not beEmpty
+        val proof = result.head
+        proof match {
+          case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: instantiate10 :: Nil) =>
+            val pinput3 = IvyParser.parse(lisp.List(paramod3 :: instantiate9 :: Nil))
+            println(pinput3)
+            val pinput4 = IvyParser.parse(lisp.List(instantiate10 :: Nil))
+            println(pinput4)
+
+          case _ =>
+            //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
+            "The proof in simple.ivy must have 9 inferences" must beEqualTo("failed")
+        }
+
+        true must beEqualTo(true)
+      } catch {
+        case e:Exception =>
+          println("Exception parsing simple.ivy: "+e.getMessage)
+          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
+            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
+
+      }
+    }
+
+    " parse the test file resulution.ivy " in {
+      try {
+        val result = SExpressionParser("target" + separator + "test-classes" + separator +"resolution.ivy")
+        result must not beEmpty
+        val proof = result.head
+        proof match {
+          case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil) =>
+            val pinput = IvyParser.parse(proof)
+            println("resolution: "+pinput)
+
+          case _ =>
+            //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
+            "The proof in resolution.ivy must have 9 inferences" must beEqualTo("failed")
+        }
+
+        true must beEqualTo(true)
+      } catch {
+        case e:Exception =>
+          println("Exception parsing simple.ivy: "+e.getMessage)
+          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
+            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
+
+      }
+    }
+
+    " parse the test file manyliterals.ivy " in {
+      try {
+        val result = SExpressionParser("target" + separator + "test-classes" + separator +"manyliterals.ivy")
+        result must not beEmpty
+        val proof = result.head
+        proof match {
+          case lisp.List(_) =>
+            val pinput = IvyParser.parse(proof)
+            println("resolution: "+pinput)
+
+          case _ =>
+            //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
+            "The proof in manyliterals.ivy must have some inferences" must beEqualTo("failed")
+        }
+
+        true must beEqualTo(true)
+      } catch {
+        case e:Exception =>
+          println("Exception parsing simple.ivy: "+e.getMessage)
+          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
+            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
 
       }
     }
