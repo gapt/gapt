@@ -94,6 +94,7 @@ import at.logic.language.hol.Definitions._
 import at.logic.transformations.ceres.clauseSchema.sTermN._
 import at.logic.provers.prover9.lisp.SExpressionParser
 import at.logic.provers.prover9.ivy.{IvyParser, IvyResolutionProof}
+import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 
 object loadProofs {
     def apply(file: String) =
@@ -361,12 +362,11 @@ object loadProofDB {
   }
 
   object loadIvyProof {
-    def apply(fn : String) : IvyResolutionProof = {
+    def apply(fn : String) : RobinsonResolutionProof = {
       val seproof = SExpressionParser(fn)
       if (seproof.isEmpty) throw new Exception("Cannot parse proof: proof expression is empty!")
       val ivyproof = IvyParser.parse(seproof(0))
-
-      ivyproof
+      IvyToRobinson(ivyproof)
     }
   }
 
@@ -764,7 +764,7 @@ object hol2fol {
       println("File Input/Output:")
       println("  loadProofDB: String => ProofDatabase - load proofdatabase from xml file")
       println("  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs")
-      println("  loadIvyProof: String => IvyResolutionProof - load a proof in the ivy proof checker format")
+      println("  loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format")
       println("  exportXML: List[Proof], List[String], String => Unit")
       println("  exportTPTP: List[Proof], List[String], String => Unit")
       println("")
