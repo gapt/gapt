@@ -112,6 +112,8 @@ object RobinsonToLK {
         else EquationRight2Rule(u1, u2, aux1, aux2, rof)
       }
     }
+    // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
+    case at.logic.calculi.resolution.instance.Instance(_,p,s) => recConvert(p, sub.compose(s), seq)
   }
 
   // in order to distinguish between rule 1 and rule 2 in equation rules we search for the substituted formula in the obtained one
