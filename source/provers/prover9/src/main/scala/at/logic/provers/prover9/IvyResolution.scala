@@ -27,9 +27,10 @@ case object FlipType extends UnaryRuleTypeA{ override def toString = "Flip"};
 abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
   val id : String;
   val clause_exp : SExpression;
+//  val vertex : Clause;
 };
 
-//inheritance of BinaryAGraph is necessary becauseBinaryAGraphProof does not provide a constructor
+//inheritance of BinaryAGraph is necessary because BinaryAGraphProof does not provide a constructor
 //  adding the constructor would introduce another override and use up unneccessary memory, we probably need
 //  to discuss this
 case class InitialClause(id: String,

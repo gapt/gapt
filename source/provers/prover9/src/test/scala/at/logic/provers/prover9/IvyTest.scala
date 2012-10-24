@@ -1,5 +1,6 @@
 package at.logic.provers.prover9.ivy
 
+import conversion.IvyToRobinson
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
@@ -324,6 +325,8 @@ class IvyTest extends SpecificationWithJUnit {
           case lisp.List(_) =>
             val pinput = IvyParser.parse(proof)
             println("resolution: "+pinput)
+            val rinput = IvyToRobinson(pinput)
+            println("robinson: "+rinput)
 
           case _ =>
             //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
