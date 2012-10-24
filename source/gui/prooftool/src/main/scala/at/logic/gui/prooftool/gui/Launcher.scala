@@ -18,17 +18,6 @@ import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.expansionTrees.ExpansionTree
 
-class MyScrollPane extends ScrollPane {
-  background = new Color(255,255,255)
-
-  peer.getVerticalScrollBar.setUnitIncrement( 20 )
-  peer.getHorizontalScrollBar.setUnitIncrement( 20 )
-
-  def getContent: Launcher = contents.last.asInstanceOf[Launcher]
-//  def content_=(c : Component) { viewportView = c }
-//  def content = viewportView.get.asInstanceOf[Launcher]
-}
-
 class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel with MouseMotionListener {
   option match {
     case Some((name: String, obj: AnyRef)) =>
