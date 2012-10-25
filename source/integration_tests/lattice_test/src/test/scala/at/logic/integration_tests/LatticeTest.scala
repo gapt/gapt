@@ -104,9 +104,14 @@ class LatticeTest extends SpecificationWithJUnit {
 
 
       // refute it with prover9
-      Prover9.refute( cs ) must beEqualTo( true )
-
-      Prover9.refute( prf ) must beEqualTo( true )
+      Prover9.refute( prf ) match {
+        case None => "" must beEqualTo("refutation of proof profile failed")
+        case Some(_) => true must beEqualTo(true)
+      }
+      Prover9.refute( cs ) match {
+        case None => "" must beEqualTo("refutation of struct cs in tptp format failed")
+        case Some(_) => true must beEqualTo(true)
+      }
 
       val projs = Projections( proof_sk )
       val path = "target" + separator + "test-classes" + separator + "lattice-sk.xml"

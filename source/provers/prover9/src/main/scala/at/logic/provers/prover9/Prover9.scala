@@ -17,6 +17,9 @@ import scala.io.Source
 import scala.util.matching.Regex
 import scala.collection.immutable.HashMap
 import at.logic.calculi.lk.base.types.FSequent
+import at.logic.provers.prover9.ivy.IvyParser
+import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
+import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionProof}
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -67,7 +70,13 @@ object Prover9 {
     ret._1
   }
 
-  def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Boolean = 
+  def p9_to_ivy( input_file: String, output_file: String ) : Int = {
+    val ret = exec("prooftrans ivy", input_file )
+    writeToFile( ret._2, output_file )
+    ret._1
+  }
+
+  def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
   {
     val tmp_file = File.createTempFile( "gapt-prover9", ".tptp", null )
     writeProblem( named_sequents, tmp_file )
@@ -78,44 +87,60 @@ object Prover9 {
     // find out which symbols have been renamed
     // this information should eventually be used when
     // parsing the prover9 proof
-    val regexp = new Regex("""%\s*\(arity \d+\)\s*'(.*?)'\s*(ladr\d+)""")
+    val regexp = new Regex("""%\s*\(arity (\d+)\)\s*'(.*?)'\s*(ladr\d+)""")
    
     val str_ladr = Source.fromInputStream( new FileInputStream( input_file ) ).mkString
 
-    val map = str_ladr.split(System.getProperty("line.separator")).foldLeft(new HashMap[String, String])( (m, l) => 
+    val map = str_ladr.split(System.getProperty("line.separator")).foldLeft(new HashMap[String, (Int,String)])( (m, l) =>
       l match {
-        case regexp( orig, repl ) => m.updated( orig, repl )
+        case regexp(arity, orig, repl ) => m.updated( orig, (arity.toInt , repl) )
         case _ => m
     })
 
-    //println( "translation map: " )
-    //println( map )
+    println( "translation map: " )
+    println( map )
 
     val ret = refute( input_file, output_file )
     ret match {
-      case 0 => true
+      case 0 =>
+        Some(parse_prover9(output_file))
       case 1 => throw new Prover9Exception("A fatal error occurred (user's syntax error or Prover9's bug).")
-      case 2 => false // Prover9 ran out of things to do (sos list exhausted).
-      case 3 => false // The max_megs (memory limit) parameter was exceeded. 
-      case 4 => false // The max_seconds parameter was exceeded.
-      case 5 => false // The max_given parameter was exceeded. 
-      case 6 => false // The max_kept parameter was exceeded. 
-      case 7 => false // A Prover9 action terminated the search.
+      case 2 => None // Prover9 ran out of things to do (sos list exhausted).
+      case 3 => None // The max_megs (memory limit) parameter was exceeded.
+      case 4 => None // The max_seconds parameter was exceeded.
+      case 5 => None // The max_given parameter was exceeded.
+      case 6 => None // The max_kept parameter was exceeded.
+      case 7 => None // A Prover9 action terminated the search.
       case 101 => throw new Prover9Exception("Prover9 received an interrupt signal.")
       case 102 => throw new Prover9Exception("Prover9 crashed, most probably due to a bug.")
     }
   }
 
-  def refute( sequents: List[FSequent], input_file: String, output_file: String ) : Boolean = 
+  def refute( sequents: List[FSequent], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
     refuteNamed( sequents.zipWithIndex.map( p => ("sequent" + p._2, p._1) ), input_file, output_file )
 
-  def refute( sequents: List[FSequent] ) : Boolean = {
+  def refute( sequents: List[FSequent] ) : Option[RobinsonResolutionProof] = {
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
     val ret = refute( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath )
     in_file.delete
     out_file.delete
     ret
+  }
+
+  def parse_prover9(p9_file : String) : RobinsonResolutionProof = {
+    val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
+    try {
+      p9_to_ivy(p9_file, ivy_file.getCanonicalPath)
+      val iproof = IvyParser(ivy_file.getCanonicalPath)
+      val rproof = IvyToRobinson(iproof)
+      ivy_file.delete
+      rproof
+    } catch {
+      case e : Exception =>
+        println("Warning: Prover9 run successfully but conversion to resolution proof failed!")
+        InitialClause(Nil,Nil)
+    }
   }
 
 }

@@ -136,11 +136,15 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
-
-      if (refute)
-      {
-        Prover9.refute( cs ) must beEqualTo( true )
-        Prover9.refute( prf ) must beEqualTo( true )
+      if (refute) {
+        Prover9.refute( prf ) match {
+          case None => "" must beEqualTo("refutation of proof profile failed")
+          case Some(_) => true must beEqualTo(true)
+        }
+        Prover9.refute( cs ) match {
+          case None => "" must beEqualTo("refutation of struct cs in tptp format failed")
+          case Some(_) => true must beEqualTo(true)
+        }
       }
 
       saveXML( Pair("prime1-" + n + "-sk", proof_sk) ::

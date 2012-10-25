@@ -95,6 +95,7 @@ import at.logic.transformations.ceres.clauseSchema.sTermN._
 import at.logic.provers.prover9.lisp.SExpressionParser
 import at.logic.provers.prover9.ivy.{IvyParser, IvyResolutionProof}
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
+import at.logic.provers.prover9.Prover9
 
 object loadProofs {
     def apply(file: String) =
@@ -422,7 +423,7 @@ object loadProofDB {
         refute(Stream.cons(SetClausesCommand(clauses), stream)).next
   }
 
-  object prover9 {
+  object replay {
     private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
     def apply1(clauses: String): Option[ResolutionProof[Clause]] = {
       apply(new MyParser(clauses).getClauseList)
@@ -450,9 +451,14 @@ object loadProofDB {
     def apply(resProof: ResolutionProof[Clause], seq: FSequent): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof],seq)
   }
 
-  object replay {
-    def apply( clauses: Seq[FSequent] ) = prover9.apply( clauses )
-    def apply( clauses: List[Sequent] ) = prover9.apply( clauses )
+  object prover9 {
+    //we have to refute
+    def apply( clauses: Seq[FSequent] ) : Option[RobinsonResolutionProof] = Prover9.refute( clauses.toList )
+    def apply( clauses: List[Sequent] ) : Option[RobinsonResolutionProof]= Prover9.refute( clauses map (_.toFSequent))
+  }
+
+  object loadProver9Proof {
+    def apply(filename : String) : RobinsonResolutionProof = Prover9.parse_prover9(filename)
   }
 
   // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
@@ -765,6 +771,7 @@ object hol2fol {
       println("  loadProofDB: String => ProofDatabase - load proofdatabase from xml file")
       println("  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs")
       println("  loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format")
+      println("  loadProver9Proof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format")
       println("  exportXML: List[Proof], List[String], String => Unit")
       println("  exportTPTP: List[Proof], List[String], String => Unit")
       println("")

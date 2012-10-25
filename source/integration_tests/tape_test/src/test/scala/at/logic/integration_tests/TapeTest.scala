@@ -93,8 +93,14 @@ class TapeTest extends SpecificationWithJUnit {
 
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
-      Prover9.refute( cs ) must beEqualTo( true )
-      Prover9.refute( prf ) must beEqualTo( true )
+      Prover9.refute( prf ) match {
+        case None => "" must beEqualTo("refutation of proof profile failed")
+        case Some(_) => true must beEqualTo(true)
+      }
+      Prover9.refute( cs ) match {
+        case None => "" must beEqualTo("refutation of struct cs in tptp format failed")
+        case Some(_) => true must beEqualTo(true)
+      }
 
 
       saveXML( Pair("tape-sk", proof_sk) ::
@@ -103,7 +109,7 @@ class TapeTest extends SpecificationWithJUnit {
       (new java.io.File( path ) ).exists() must beEqualTo( true )
     }
     "apply prover9 to the tape proof clause set" in {
-      Prover9.refute(List()) must not(throwA[IOException]).orSkip
+      checkForProverOrSkip
 
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)

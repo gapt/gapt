@@ -20,7 +20,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.mock.Mockito
 import org.mockito.Matchers._
 import java.io.IOException
-import at.logic.calculi.resolution.robinson.Formatter
+import at.logic.calculi.resolution.robinson.{Formatter, RobinsonResolutionProof}
 
 import at.logic.calculi.occurrences.factory
 import at.logic.parsing.language.tptp.TPTPFOLExporter
@@ -166,7 +166,7 @@ class Prover9Test extends SpecificationWithJUnit {
       val s3 = FSequent(Nil,List(idem))
       val s4 = FSequent(List(ncomm), Nil)
       (getRefutation2(List(s1,s2,s3,s4)) match {
-        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) =>
+        case Some(a) if a.asInstanceOf[RobinsonResolutionProof].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) =>
           println(Formatter.asHumanReadableString(a)   )
           println("======= GraphViz output: =======\n" + Formatter.asGraphViz(a)   )
           true
@@ -183,8 +183,14 @@ class Prover9Test extends SpecificationWithJUnit {
       val p = Atom(new ConstantStringSymbol("P"), Nil)
       val s1 = FSequent(Nil, p::Nil)
       val s2 = FSequent(p::Nil, Nil)
-      val result : Boolean = Prover9.refute( s1::s2::Nil )
-      result must beEqualTo( true )
+      val result : Option[RobinsonResolutionProof] = Prover9.refute( s1::s2::Nil )
+      result match {
+        case Some(proof) =>
+          println(Formatter.asHumanReadableString(proof))
+          true must beEqualTo(true)
+        case None => "" must beEqualTo( "Refutation failed!" )
+      }
+
     }
   }
 
@@ -202,8 +208,13 @@ class Prover9Test extends SpecificationWithJUnit {
       val s2 = FSequent(Nil, List(k))
       val s3 = FSequent(Nil, List(s))
       val t1 = FSequent(List(skk_i),Nil)
-      val result : Boolean = Prover9.refute( List(s1,s2,s3,t1) )
-      result must beEqualTo( true )
+      val result : Option[RobinsonResolutionProof] = Prover9.refute( List(s1,s2,s3,t1) )
+      result match {
+        case Some(proof) =>
+          println(Formatter.asHumanReadableString(proof))
+          true must beEqualTo(true)
+        case None => "" must beEqualTo( "Refutation failed!" )
+      }
     }
   }
 
@@ -240,8 +251,13 @@ class Prover9Test extends SpecificationWithJUnit {
 
       val s1 = FSequent(Nil, List(parse("P")))
       val t1 = FSequent(List(parse("Q")),Nil)
-      val result : Boolean = Prover9.refute( List(s1,t1) )
-      result must beEqualTo( false )
+      val result  : Option[RobinsonResolutionProof] = Prover9.refute( List(s1,t1) )
+      result match {
+        case Some(proof) =>
+          "" must beEqualTo( "Refutation found although clause set satisfyable!" )
+
+        case None => true must beEqualTo(true)
+      }
     }
   }
 
