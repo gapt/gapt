@@ -43,6 +43,7 @@ object IvyParser {
     }
 
   } */
+  private def debug(a:Any) = { }
 
   // the type synoyms should make the parsing functions more readable
   type ProofId = String
@@ -92,9 +93,6 @@ object IvyParser {
         val sub : Substitution[FOLTerm] = parse_substitution(subst_exp, is_variable_symbol)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
 
-        //val ants  = parent_proof.vertex.antecedent zip (fclause.antecedent)
-        //val succs  = parent_proof.vertex.succedent zip (fclause.succedent)
-
         def connect(ancestors: immutable.Seq[FormulaOccurrence], formulas: immutable.Seq[HOLFormula]) :
         immutable.Seq[FormulaOccurrence] =
           (ancestors zip formulas) map ( (v: (FormulaOccurrence, HOLFormula)) =>
@@ -117,6 +115,7 @@ object IvyParser {
         val parent_proof2 = found_steps(parent_id2)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
 
+        try {
         val (occ1, polarity1, _) = get_literal_by_position(parent_proof1.vertex, position1, parent_proof1.clause_exp, is_variable_symbol)
         val (occ2, polarity2, _) = get_literal_by_position(parent_proof2.vertex, position2, parent_proof2.clause_exp, is_variable_symbol)
 
@@ -137,7 +136,7 @@ object IvyParser {
                   val focc = new FormulaOccurrence(x, c2.antecedent(pos2).ancestors, c2.antecedent(pos2).factory  )
                   val rec = connect(c1, Clause(c2.antecedent.filterNot(_ == c2.antecedent(pos2)), c2.succedent), FSequent(xs,ys))
                   Clause(focc :: rec.antecedent.toList, rec.succedent)
-                } else throw new Exception("Error in parsing resolution inference: resolved literal not found!")
+                } else throw new Exception("Error in parsing resolution inference: resolved literal "+x+" not found!")
               }
             //then succedent
             case FSequent(Nil, y::ys ) =>
@@ -147,12 +146,12 @@ object IvyParser {
                 val rec = connect(Clause(c1.antecedent, c1.succedent.filterNot(_ == c1.succedent(pos1))), c2, FSequent(Nil,ys))
                 Clause(rec.antecedent, focc :: rec.succedent.toList)
               } else {
-                val pos2 = c2.antecedent indexWhere (_.formula == y)
+                val pos2 = c2.succedent indexWhere (_.formula == y)
                 if (pos2 >= 0) {
-                  val focc = new FormulaOccurrence(y, c2.antecedent(pos2).ancestors, c2.antecedent(pos2).factory  )
+                  val focc = new FormulaOccurrence(y, c2.succedent(pos2).ancestors, c2.succedent(pos2).factory  )
                   val rec = connect(c1, Clause(c2.antecedent, c2.succedent.filterNot(_ == c2.succedent(pos2))), FSequent(Nil,ys))
                   Clause(rec.antecedent, focc :: rec.succedent.toList)
-                } else throw new Exception("Error in parsing resolution inference: resolved literal not found!")
+                } else throw new Exception("Error in parsing resolution inference: resolved literal "+y+" not found!")
               }
             //base case
             case FSequent(Nil,Nil) => Clause(Nil,Nil)
@@ -177,13 +176,95 @@ object IvyParser {
             throw new Exception("Error parsing resolution inference: must resolve over a positive and a negative literal!")
         }
 
-
+        } catch {
+          case e : Exception =>
+            debug("Exception in id "+id)
+            debug(parent_proof1)
+            debug(parent_proof2)
+            debug(position1)
+            debug(position2)
+          throw e
+        }
 
       }
 
       //case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("flip")::Nil) :: clause :: rest  )  =>
 
         //TODO: implement rules for flip, paramodulation
+
+      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("propositional")::lisp.Atom(parent_id)::Nil) :: clause :: rest  )  => {
+        val parent_proof = found_steps(parent_id)
+        val fclause : FSequent = parse_clause(clause, is_variable_symbol)
+
+        def list_withoutn[A](l : List[A], n:Int) : List[A] = l match {
+          case x::xs =>
+            if (n==0) xs else x::list_withoutn(xs,n-1)
+          case Nil => Nil
+        }
+
+        //connects ancestors to formulas
+        def connect(ancestors: immutable.List[FormulaOccurrence], formulas: immutable.List[HOLFormula]) :
+          List[FormulaOccurrence] = {
+          //find ancestor for every formula in conclusion clause
+          debug("connecting "+formulas+" to ancestors "+ancestors)
+          val (occs, rem) = connect_(ancestors, formulas)
+          debug("connected  "+occs+" remaining: "+rem)
+          //now connect the contracted formulas
+          val connected : List[FormulaOccurrence] = connect_missing(occs, rem)
+          debug("connected2 "+connected)
+          connected
+        }
+
+        //connects each formula to an ancestor, returns a pair of connected formulas and unconnected ancestors
+        def connect_(ancestors: immutable.List[FormulaOccurrence], formulas: immutable.List[HOLFormula]) :
+            (immutable.List[FormulaOccurrence], immutable.List[FormulaOccurrence]) = {
+          formulas match {
+            case x::xs =>
+              val index = ancestors.indexWhere(_.formula == x)
+              val anc = ancestors(index)
+              val occ = new FormulaOccurrence(x, anc::Nil , anc.factory )
+              val (occs, rem) = connect_(list_withoutn(ancestors, index), xs)
+
+              (occ :: occs, rem)
+
+            case Nil => (Nil, ancestors)
+          }
+        }
+
+        //connects unconnected (missing) ancestors to list of potential targets, returns list of updated targets
+        def connect_missing(targets : immutable.List[FormulaOccurrence], missing : immutable.List[FormulaOccurrence])
+           : immutable.List[FormulaOccurrence] = missing match {
+          case x::xs =>
+            debug("trying to append "+x+" to possibilities "+targets)
+            val targets_ = connect_missing_(targets, x)
+            connect_missing(targets_, xs)
+          case Nil =>
+            targets
+        }
+
+        //connects one missing occurence to possible tagets, returns list of updated targets
+        def connect_missing_(targets : immutable.List[FormulaOccurrence], missing : FormulaOccurrence)
+           : immutable.List[FormulaOccurrence] = targets match {
+          case x::xs =>
+            if (missing.formula == x.formula)
+              immutable.List(new FormulaOccurrence(x.formula, immutable.List(missing) ++ x.ancestors, x.factory)) ++ xs
+            else
+              immutable.List(x) ++ connect_missing_(xs, missing)
+          case Nil =>
+            throw new Exception("Error connecting factorized literal, no suitable successor found!")
+        }
+        val inference = Propositional(id,clause,
+          Clause(connect(parent_proof.vertex.antecedent.toList, fclause.antecedent.toList),
+            connect(parent_proof.vertex.succedent.toList, fclause.succedent.toList)), parent_proof)
+
+        (id, found_steps + ((id, inference)) )
+
+
+      }
+
+
+
+      case _ => throw new Exception("Error parsing inference rule in expression "+exp)
     }
   }
 

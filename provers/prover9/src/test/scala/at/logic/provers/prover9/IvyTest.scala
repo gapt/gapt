@@ -25,15 +25,17 @@ class IvyTest extends SpecificationWithJUnit {
     println()
   }
 
+  def debug(s:String) = {}
+
   "The Ivy Parser " should {
        " parse an empty list " in {
          val parser = new SExpressionParser
          parser.parseAll(parser.list,"()") match {
            case parser.Success(result, rest) =>
-//             println("parsing ok!")
+//             debug("parsing ok!")
              true must beEqualTo(true)
            case parser.NoSuccess(msg, rest) =>
-//             println("parser failed: "+msg)
+//             debug("parser failed: "+msg)
              true must beEqualTo(false)
          }
        }
@@ -42,10 +44,10 @@ class IvyTest extends SpecificationWithJUnit {
       val parser = new SExpressionParser
       parser.parseAll(parser.atom,"a1") match {
         case parser.Success(result, rest) =>
-//          println("parsing ok!")
+//          debug("parsing ok!")
           true must beEqualTo(true)
         case parser.NoSuccess(msg, rest) =>
-//          println("parser failed: "+msg)
+//          debug("parser failed: "+msg)
           true must beEqualTo(false)
       }
     }
@@ -55,10 +57,10 @@ class IvyTest extends SpecificationWithJUnit {
       val parser = new SExpressionParser
       parser.parseAll(parser.word  ,"a2    ") match {
         case parser.Success(result, rest) =>
-          //          println("parsing ok!)
+          //          debug("parsing ok!)
           true must beEqualTo(true)
         case parser.NoSuccess(msg, rest) =>
-          //          println("parsing wrong!")
+          //          debug("parsing wrong!")
           true must beEqualTo(false)
       }
     }
@@ -68,10 +70,10 @@ class IvyTest extends SpecificationWithJUnit {
       val parser = new SExpressionParser
       parser.parseAll(parser.string ,""""a b c"""") match {
         case parser.Success(result, rest) =>
-          //          println("parsing ok!)
+          //          debug("parsing ok!)
           true must beEqualTo(true)
         case parser.NoSuccess(msg, rest) =>
-          //          println("parsing wrong!")
+          //          debug("parsing wrong!")
           true must beEqualTo(false)
       }
     }
@@ -87,7 +89,7 @@ class IvyTest extends SpecificationWithJUnit {
                            lisp.Atom("c")::Nil) =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
-              println(result)
+              debug(result)
               dumpreader(rest)
               "matched correct list" must beEqualTo("failed")
           }
@@ -105,7 +107,7 @@ class IvyTest extends SpecificationWithJUnit {
             case lisp.Atom("c4") =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
-              println(result)
+              debug(result)
               "matched correct list" must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
@@ -121,19 +123,19 @@ class IvyTest extends SpecificationWithJUnit {
             case ";;comment 1;;comment 2" =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
-              println("correct result:")
-              println(result)
+              debug("correct result:")
+              debug(result)
               "matched correct list" must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
-          println(msg)
+          debug(msg)
           dumpreader(rest)
           "parser returned success" must beEqualTo("failed")
       }
     }
 
     " parse the list ;;comment\nc5" in {
-      println(" parse the list ;;comment\nc5")
+      debug(" parse the list ;;comment\nc5")
       val parser = new SExpressionParser
       parser.parseAll(parser.sexpression,";;comment\nc5") match {
         case parser.Success(result, rest) =>
@@ -141,11 +143,11 @@ class IvyTest extends SpecificationWithJUnit {
             case lisp.Atom("c5") =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
-              println(result)
+              debug(result)
               "matched correct list" must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
-          println(msg)
+          debug(msg)
           dumpreader(rest)
           "parser returned success" must beEqualTo("failed")
       }
@@ -161,7 +163,7 @@ class IvyTest extends SpecificationWithJUnit {
               lisp.Atom("c")::Nil) =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
-              println(result)
+              debug(result)
               "matched correct list" must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
@@ -179,7 +181,7 @@ class IvyTest extends SpecificationWithJUnit {
               lisp.Atom("c")::Nil) =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
-              println(result)
+              debug(result)
               "matched correct list" must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
@@ -192,10 +194,10 @@ class IvyTest extends SpecificationWithJUnit {
       val parser = new SExpressionParser
       parser.parseAll(parser.sexpression,"(c1 \"c2 c2\" c)") match {
         case parser.Success(result, rest) =>
-          //          println("parsing ok!")
+          //          debug("parsing ok!")
           true must beEqualTo(true)
         case parser.NoSuccess(msg, rest) =>
-          //          println("parser failed: "+msg)
+          //          debug("parser failed: "+msg)
           true must beEqualTo(false)
       }
     }
@@ -205,10 +207,10 @@ class IvyTest extends SpecificationWithJUnit {
       val parser = new SExpressionParser
       parser.parseAll(parser.list_,"a1 b") match {
         case parser.Success(result, rest) =>
-//          println("parsing ok!")
+//          debug("parsing ok!")
           true must beEqualTo(true)
         case parser.NoSuccess(msg, rest) =>
-//          println("parser failed: "+msg)
+//          debug("parser failed: "+msg)
           true must beEqualTo(false)
       }
     }
@@ -223,12 +225,12 @@ class IvyTest extends SpecificationWithJUnit {
               lisp.Atom("c")::Nil) :: Nil =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
-              println(result)
+              debug(result)
               dumpreader(rest)
               "matched correct list" must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
-          println(msg)
+          debug(msg)
           dumpreader(rest)
           "parser returned success" must beEqualTo("failed")
       }
@@ -243,11 +245,11 @@ class IvyTest extends SpecificationWithJUnit {
         proof match {
           case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil) =>
             val pinput1 = IvyParser.parse(lisp.List(input1 :: Nil))
-            println(pinput1)
+            debug(pinput1)
             val pinput2 = IvyParser.parse(lisp.List(input2 :: Nil))
-            println(pinput2)
+            debug(pinput2)
             val pinput3 = IvyParser.parse(lisp.List(input1 :: instantiate8 :: Nil))
-            println(pinput3)
+            debug(pinput3)
 
           case _ =>
 //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -257,7 +259,7 @@ class IvyTest extends SpecificationWithJUnit {
         true must beEqualTo(true)
       } catch {
         case e:Exception =>
-        println("Exception parsing simple.ivy: "+e.getMessage)
+        debug("Exception parsing simple.ivy: "+e.getMessage)
         "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
           e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
 
@@ -272,9 +274,9 @@ class IvyTest extends SpecificationWithJUnit {
         proof match {
           case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: instantiate10 :: Nil) =>
             val pinput3 = IvyParser.parse(lisp.List(paramod3 :: instantiate9 :: Nil))
-            println(pinput3)
+            debug(pinput3)
             val pinput4 = IvyParser.parse(lisp.List(instantiate10 :: Nil))
-            println(pinput4)
+            debug(pinput4)
 
           case _ =>
             //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -284,7 +286,7 @@ class IvyTest extends SpecificationWithJUnit {
         true must beEqualTo(true)
       } catch {
         case e:Exception =>
-          println("Exception parsing simple.ivy: "+e.getMessage)
+          debug("Exception parsing simple.ivy: "+e.getMessage)
           "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
             e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
 
@@ -299,7 +301,7 @@ class IvyTest extends SpecificationWithJUnit {
         proof match {
           case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil) =>
             val pinput = IvyParser.parse(proof)
-            println("resolution: "+pinput)
+            debug("resolution: "+pinput)
 
           case _ =>
             //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -309,12 +311,53 @@ class IvyTest extends SpecificationWithJUnit {
         true must beEqualTo(true)
       } catch {
         case e:Exception =>
-          println("Exception parsing simple.ivy: "+e.getMessage)
+          debug("Exception parsing simple.ivy: "+e.getMessage)
           "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
             e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
 
       }
     }
+
+
+    " parse the test files factor.ivy and factor2.ivy " in {
+      try {
+        val result = SExpressionParser("target" + separator + "test-classes" + separator +"factor.ivy")
+        result must not beEmpty
+        val proof = result.head
+        proof match {
+          case lisp.List(_) =>
+            val pinput = IvyParser.parse(proof)
+            debug("resolution: "+pinput)
+            val rinput = IvyToRobinson(pinput)
+            debug("robinson: "+rinput)
+
+          case _ =>
+            "The proof in factor.ivy must have some inferences" must beEqualTo("failed")
+        }
+
+        val result2 = SExpressionParser("target" + separator + "test-classes" + separator +"factor2.ivy")
+        result2 must not beEmpty
+        val proof2 = result2.head
+        proof2 match {
+          case lisp.List(_) =>
+            val pinput = IvyParser.parse(proof2)
+            debug("resolution: "+pinput)
+            val rinput = IvyToRobinson(pinput)
+            debug("robinson: "+rinput)
+
+          case _ =>
+            "The proof in factor.ivy must have some inferences" must beEqualTo("failed")
+        }
+        true must beEqualTo(true)
+      } catch {
+        case e:Exception =>
+          debug("Exception parsing factor(2).ivy: "+e.getMessage)
+          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + "\n"+
+            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
+
+      }
+    }
+
 
     " parse the test file manyliterals.ivy " in {
       try {
@@ -324,9 +367,9 @@ class IvyTest extends SpecificationWithJUnit {
         proof match {
           case lisp.List(_) =>
             val pinput = IvyParser.parse(proof)
-            println("resolution: "+pinput)
+            debug("resolution: "+pinput)
             val rinput = IvyToRobinson(pinput)
-            println("robinson: "+rinput)
+            debug("robinson: "+rinput)
 
           case _ =>
             //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -336,7 +379,7 @@ class IvyTest extends SpecificationWithJUnit {
         true must beEqualTo(true)
       } catch {
         case e:Exception =>
-          println("Exception parsing simple.ivy: "+e.getMessage)
+          debug("Exception parsing simple.ivy: "+e.getMessage)
           "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
             e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
 
@@ -349,7 +392,7 @@ class IvyTest extends SpecificationWithJUnit {
         true must beEqualTo(true)
       } catch {
         case e:Exception =>
-          println("Exception parsing simple.ivy: "+e.getMessage)
+          debug("Exception parsing simple.ivy: "+e.getMessage)
           true must beEqualTo(false)
 
       }
@@ -363,7 +406,7 @@ class IvyTest extends SpecificationWithJUnit {
       true must beEqualTo(true)
     } catch {
       case e:Exception =>
-        println("Exception parsing simple.ivy: "+e.getMessage)
+        debug("Exception parsing simple.ivy: "+e.getMessage)
         true must beEqualTo(false)
 
     }

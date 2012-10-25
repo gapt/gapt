@@ -1,13 +1,15 @@
 package at.logic.provers.prover9.ivy.conversion
-import at.logic.provers.prover9.ivy.{InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, IvyResolutionProof, Flip}
-
-import at.logic.calculi.resolution.robinson.{InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof}
+import at.logic.provers.prover9.ivy.{InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution,
+                                 Paramodulation => IParamodulation, IvyResolutionProof, Flip, Propositional => IPropositional}
+import at.logic.calculi.resolution.robinson.{InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor,
+  Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof}
 import at.logic.language.fol.{FOLExpression, FOLTerm, FOLFormula}
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, VariantGenerator, Var}
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.resolution.instance.{Instance => RInstantiate}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.resolution.base.Clause
+import collection.immutable
 
 /**
  * Converts Ivy Proofs into Robinson Resolution Proofs
@@ -47,6 +49,65 @@ object IvyToRobinson {
         case _ => throw new Exception("Error in processing ivy proof: resolved literals "+lit1+" and "+lit2+
                                       " do not have different polarity!")
       }
+
+    case IPropositional(id, exp, clause, parent) =>
+      def remove_first(el:FormulaOccurrence, l:immutable.List[FormulaOccurrence])
+         : (FormulaOccurrence, immutable.List[FormulaOccurrence]) = l match {
+        case x::Nil =>
+          if (x.formula == el.formula)
+            (x, Nil)
+          else {
+            throw new Exception("Error: element "+el+" to remove not contained in list!")
+          }
+        case x::xs =>
+          if (x.formula == el.formula)
+            (x, xs)
+          else {
+            val (removed, rest) = remove_first(el,xs)
+            (removed, x::rest)
+          }
+        case Nil => throw new Exception("Error: want to remove element "+el+" from an empty list!")
+      }
+
+      def remove_firsts(fs:immutable.List[FormulaOccurrence], l:immutable.List[FormulaOccurrence]) :
+       (immutable.List[FormulaOccurrence], immutable.List[FormulaOccurrence]) = {
+        fs match {
+          case x::xs =>
+            val (el, rest) = remove_first(x,l)
+            val (r1,r2) = remove_firsts(xs, rest)
+            (el::r1, r2)
+          case Nil => (Nil, l)
+        }
+      }
+
+      def connect(ivy : immutable.List[FormulaOccurrence], robinson : immutable.List[FormulaOccurrence])
+           : immutable.List[FormulaOccurrence] = ivy match {
+        case x::xs =>
+          val (rancs, rem) = remove_firsts(x.ancestors.toList, robinson)
+          new FormulaOccurrence(x.formula, rancs, x.factory) :: connect(xs, rem)
+
+        case Nil => Nil
+      }
+
+      def find_matching(what:immutable.List[FormulaOccurrence], where : immutable.List[FormulaOccurrence])
+            : immutable.List[FormulaOccurrence]= what match {
+        case x::xs =>
+          val (y, rest) = remove_first(x,where)
+          y :: find_matching(xs, rest)
+        case Nil => Nil
+      }
+
+      val rparent = IvyToRobinson(parent)
+      val contracted  = (clause.antecedent ++ clause.succedent) filter (_.ancestors.size >1)
+      require(contracted.size == 1, "Error: only one aux formula may have been factored!")
+      val ianc = contracted(0).ancestors
+      val aux::deleted = find_matching(ianc.toList, (rparent.vertex.antecedent ++ rparent.vertex.succedent).toList)
+
+
+      RFactor(rparent, aux, deleted, Substitution[FOLExpression]())
+
+
+
 
     /*
         case IResolution(id, exp, lit1, lit2, clause, parent1, parent2) =>

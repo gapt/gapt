@@ -1,0 +1,5 @@
+formulas(sos).
+P(x) | P(x) | Q(u) | Q(u).
+-P(y) | -P(x).
+-Q(y) | -Q(x).
+end_of_list.
