@@ -2,8 +2,8 @@ package at.logic.provers.prover9.ivy
 
 import scala.util.parsing.combinator.{RegexParsers, JavaTokenParsers}
 import scala.collection.immutable
-import at.logic.provers.prover9.lisp.SExpression
 import at.logic.provers.prover9.lisp
+import at.logic.provers.prover9.lisp.{SExpressionParser, SExpression}
 import at.logic.language.lambda.typedLambdaCalculus.{App, AppN, LambdaExpression}
 import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import at.logic.language.lambda.symbols.{VariableStringSymbol, SymbolA}
@@ -18,7 +18,6 @@ import at.logic.language.hol.HOLFormula
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import fol.{FOLVar, FOLTerm}
-import java.awt.peer.ListPeer
 
 /**
  * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
@@ -28,6 +27,12 @@ import java.awt.peer.ListPeer
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
 object IvyParser {
+  //calls the sexpression parser on the given file and parses it
+  def apply(fn : String) : IvyResolutionProof = {
+    val exp = SExpressionParser(fn)
+    require(exp.length == 1, "An ivy proof may contain only exactly one proof object!")
+    parse(exp(0))
+  }
 
   /*
   case class Position(path:List[Int]) { }
