@@ -1,116 +1,177 @@
 package at.logic.gui.prooftool.gui
 
 /**
- * Created with IntelliJ IDEA.
- * User: mrukhaia
- * Date: 9/13/12
- * Time: 12:51 PM
- */
+* Created with IntelliJ IDEA.
+* User: mrukhaia
+* Date: 9/13/12
+* Time: 12:51 PM
+*/
 
 import swing._
 import event.{UIElementResized, MouseClicked}
 import java.awt.{Font, Dimension, Color}
 import java.awt.Font._
 import java.awt.event.MouseEvent
-import at.logic.language.hol._
-import at.logic.calculi.expansionTrees.ExpansionTree
+import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NotET, Atom => AtomET}
 import at.logic.utils.ds.trees.{NonTerminalNodeA}
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.image.BufferedImage
+import at.logic.language.hol._
 
-class DrawExpansionTree(val expansionTree: (Seq[ExpansionTree],Seq[ExpansionTree]), private val fSize: Int) extends SplitPane(Orientation.Vertical) {
-  background = new Color(255,255,255)
-  private val ft = new Font(SANS_SERIF, PLAIN, fSize)
-  //private val width = toolkit.getScreenSize.width - 150
-  //private val height = toolkit.getScreenSize.height - 150
-  preferredSize = calculateOptimalSize
-  dividerLocation = preferredSize.width / 2
-  leftComponent = new SplitedExpansionTree(expansionTree._1, "Antecedent", ft)
-  rightComponent = new SplitedExpansionTree(expansionTree._2, "Consequent", ft)
-
-  def calculateOptimalSize = {
-    val width = Main.top.size.width
-    val height = Main.top.size.height
-    if (width > 100 && height > 200)
-      new Dimension(Main.top.size.width - 70, Main.top.size.height - 150)
-    else new Dimension(width, height)
-  }
-
-  listenTo(Main.top)
-  reactions += {
-    case UIElementResized(Main.top) =>
-      preferredSize = calculateOptimalSize
-      revalidate
-  }
+object ExpansionTreeState extends Enumeration {
+  val Closed, Opened, Expanded = Value
 }
 
-class SplitedExpansionTree(val formulas: Seq[ExpansionTree], val label: String, private val ft: Font) extends BoxPanel(Orientation.Vertical) {
-  contents += new Label(label) {
-    font = ft.deriveFont(Font.BOLD)
-    opaque = true
-    border = Swing.EmptyBorder(10)
-  }
-  contents += new ScrollPane {
-    peer.getVerticalScrollBar.setUnitIncrement( 20 )
-    peer.getHorizontalScrollBar.setUnitIncrement( 20 )
-    contents = new BoxPanel(Orientation.Vertical) {
-      background = new Color(255,255,255)
-      formulas.foreach( f => {
-        val comp = formulaToComponent(f.asInstanceOf[NonTerminalNodeA[Option[HOLFormula],_]].node.get)
-        comp.border = Swing.EmptyBorder(10)
-        contents += comp
-      })
-    }
+class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: ExpansionTreeState.Value, private val ft: Font) extends BoxPanel(Orientation.Horizontal) {
+  import ExpansionTreeState._
+  background = new Color(255,255,255)
+  yLayoutAlignment = 0.5
+  initialize
+
+  def initialize = expansionTree match {
+    case WeakQuantifier(f, seq_et_t) =>
+      contents += formulaToComponent(f, state, seq_et_t.map(pair => pair._2))
+    case StrongQuantifier(f, v, et1) =>
+      contents += formulaToComponent(f, state, Seq(v))
+    case AndET(left, right) =>
+      val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
+      contents += parenthesis._1
+      contents += new DrawExpansionTree(left,state,ft)
+      contents += label("∧",ft)
+      contents += new DrawExpansionTree(right,state,ft)
+      contents += parenthesis._2
+    case OrET(left, right) =>
+      val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
+      contents += parenthesis._1
+      contents += new DrawExpansionTree(left,state,ft)
+      contents += label("∨",ft)
+      contents += new DrawExpansionTree(right,state,ft)
+      contents += parenthesis._2
+    case ImpET(left, right) =>
+      val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
+      contents += parenthesis._1
+      contents += new DrawExpansionTree(left,state,ft)
+      contents += label("⊃",ft)
+      contents += new DrawExpansionTree(right,state,ft)
+      contents += parenthesis._2
+    case NotET(tree) =>
+      contents += label("¬",ft)
+      contents += new DrawExpansionTree(tree,state,ft)
+    case AtomET(f) =>
+      contents += formulaToComponent(f, state, Seq())
   }
 
-  def formulaToComponent(t: HOLFormula): BoxPanel = new BoxPanel(Orientation.Horizontal) {
+  def closed {
+    contents.clear
+    state = Closed
+    initialize
+    revalidate
+  }
+
+  def opened {
+    contents.clear
+    state = Opened
+    initialize
+    revalidate
+  }
+
+  def expanded {
+
+  }
+
+//  def quantifierToComponent(t: HOLFormula, st: ExpansionTreeState.Value, seq: Seq[HOLExpression]) = new BoxPanel(Orientation.Horizontal) {
+//    background = new Color(255,255,255)
+//    yLayoutAlignment = 0.5
+//
+//    t match {
+//      case ExVar(v, f) =>
+//        val lbl = DrawSequent.latexToLabel("(" + """\exists """ + DrawSequent.formulaToLatexString(v) + ")",ft)
+//        lbl.reactions += {
+//          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
+//        }
+//        contents += lbl
+//        if (st == Opened) contents += drawTerms(seq)
+//        contents += formulaToComponent(f,Closed,Seq())
+//      case AllVar(v, f) =>
+//        val lbl = DrawSequent.latexToLabel("(" + """\forall """ + DrawSequent.formulaToLatexString(v) + ")",ft)
+//        lbl.reactions += {
+//          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
+//        }
+//        contents += lbl
+//        if (st == Opened) contents += drawTerms(seq)
+//        contents += formulaToComponent(f,Closed,Seq())
+//      case _ => throw new Exception("Something went wrong in DrawExpansionTree")
+//    }
+//  }
+
+  def formulaToComponent(t: HOLFormula, st: ExpansionTreeState.Value, seq: Seq[HOLExpression]): BoxPanel = new BoxPanel(Orientation.Horizontal) {
     background = new Color(255,255,255)
     yLayoutAlignment = 0.5
 
     t match {
       case Neg(f) =>
         contents += label("¬",ft)
-        contents += formulaToComponent(f)
+        contents += formulaToComponent(f,st,seq)
       case And(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1)
+        contents += formulaToComponent(f1,st,seq)
         contents += label("∧",ft)
-        contents += formulaToComponent(f2)
+        contents += formulaToComponent(f2,st,seq)
         contents += parenthesis._2
       case Or(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1)
+        contents += formulaToComponent(f1,st,seq)
         contents += label("∨",ft)
-        contents += formulaToComponent(f2)
+        contents += formulaToComponent(f2,st,seq)
         contents += parenthesis._2
       case Imp(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1)
+        contents += formulaToComponent(f1,st,seq)
         contents += label("⊃",ft)
-        contents += formulaToComponent(f2)
+        contents += formulaToComponent(f2,st,seq)
         contents += parenthesis._2
       case ExVar(v, f) =>
         val lbl = DrawSequent.latexToLabel("(" + """\exists """ + DrawSequent.formulaToLatexString(v) + ")",ft)
         lbl.reactions += {
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(lbl, e.point.x, e.point.y)
+          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
         }
         contents += lbl
-        contents += formulaToComponent(f)
+        if (st == Opened) contents += drawTerms(seq)
+        contents += formulaToComponent(f,Closed,Seq())
       case AllVar(v, f) =>
         val lbl = DrawSequent.latexToLabel("(" + """\forall """ + DrawSequent.formulaToLatexString(v) + ")",ft)
         lbl.reactions += {
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(lbl, e.point.x, e.point.y)
+          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
         }
         contents += lbl
-        contents += formulaToComponent(f)
+        if (st == Opened) contents += drawTerms(seq)
+        contents += formulaToComponent(f,Closed,Seq())
       case _ =>
         val lbl = DrawSequent.formulaToLabel(t,ft)
         lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks)
         contents += lbl
     }
+  }
+
+  def drawTerms(seq: Seq[HOLExpression]) = new BoxPanel(Orientation.Horizontal) {
+    background = new Color(255,255,255)
+    yLayoutAlignment = 0.5
+
+    contents += label("\\langle",ft)
+    var first = true
+    for (t <- seq) {
+      if (! first) {
+        val lbl = label(",",ft)
+        lbl.yLayoutAlignment = 0
+        contents += lbl
+      }
+      else first = false
+      contents += label(DrawSequent.formulaToLatexString(t),ft)
+    }
+    contents += label("\\rangle",ft)
   }
 
   def label(s: String, fnt: Font) = new MyLabel {
