@@ -78,7 +78,7 @@ class SExpressionParser extends RegexParsers {
     }
   }
 
-  def debugrule[T](t:T) : T = { println("dr: "+t.toString) ; t}
+  def debugrule[T](t:T) : T = { debug("dr: "+t.toString) ; t}
 
   def wrap_inlisplist(s:SExpression) = {  lisp.List(s::Nil) }
 

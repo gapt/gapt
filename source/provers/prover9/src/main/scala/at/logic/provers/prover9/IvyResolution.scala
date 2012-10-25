@@ -23,6 +23,7 @@ case object InstantiateType extends UnaryRuleTypeA{ override def toString = "Ins
 case object ParamodulationType extends BinaryRuleTypeA{ override def toString = "Paramodulation"};
 case object ResolutionType extends BinaryRuleTypeA{ override def toString = "Resolution"};
 case object FlipType extends UnaryRuleTypeA{ override def toString = "Flip"};
+case object PropositionalType extends UnaryRuleTypeA{ override def toString = "Propositional"};
 
 abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
   val id : String;
@@ -57,6 +58,13 @@ case class Flip(id: String,
   def rule = FlipType
 //  override def name = "Flip"
 };
+
+case class Propositional(id : String, clause_exp : SExpression, override val vertex : Clause, override val t : IvyResolutionProof)
+  extends UnaryAGraph(vertex, t) with UnaryAGraphProof[Clause] with IvyResolutionProof {
+  def rule = PropositionalType
+
+};
+
 
 case class Paramodulation(id: String,
                           clause_exp : SExpression,
