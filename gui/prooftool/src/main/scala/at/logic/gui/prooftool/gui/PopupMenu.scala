@@ -46,11 +46,11 @@ object PopupMenu {
   }
 
   // PopupMenu for Expansion Trees.
-  def apply(component: Component, x: Int, y: Int) {
+  def apply(det: DrawExpansionTree, component: Component, x: Int, y: Int) {
     val popupMenu = new PopupMenu {
-      contents += new MenuItem(Action("Close") {  })
-      contents += new MenuItem(Action("Open") {  })
-      contents += new MenuItem(Action("Expand") {  })
+      contents += new MenuItem(Action("Close") { det.closed })
+      contents += new MenuItem(Action("Open") { det.opened })
+      contents += new MenuItem(Action("Expand") { det.expanded })
     }
     popupMenu.show(component, x, y)
   }

@@ -26,7 +26,7 @@ class MyScrollPane extends ScrollPane {
   //  def content = viewportView.get.asInstanceOf[Launcher]
 }
 
-// This component is used in SplitedExpansionTree
+// This component is used in DrawExpansionTree
 class MyLabel extends Label {
   private var varBackgroundColor = Color.cyan
   def backgroundColor = varBackgroundColor

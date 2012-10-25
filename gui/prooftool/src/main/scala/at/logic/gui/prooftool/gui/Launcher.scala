@@ -17,6 +17,7 @@ import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.expansionTrees.ExpansionTree
+import at.logic.language.hol.HOLFormula
 
 class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel with MouseMotionListener {
   option match {
@@ -37,12 +38,12 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           layout(new DrawList(list, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
-        case herbrandSequent: FSequent =>
-          layout(new DrawHerbrandSequent(herbrandSequent, fSize)) = c
+        case fSequent: FSequent =>
+          layout(new DrawHerbrandSequent[HOLFormula]((fSequent.antecedent,fSequent.succedent), fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
-        case expansionTree: (Seq[ExpansionTree],Seq[ExpansionTree]) =>
-          layout(new DrawExpansionTree(expansionTree, fSize)) = c
+        case expTrees: (Seq[ExpansionTree],Seq[ExpansionTree]) =>
+          layout(new DrawHerbrandSequent[ExpansionTree](expTrees, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
         case _ =>

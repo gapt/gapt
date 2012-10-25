@@ -8,26 +8,26 @@ package at.logic.gui.prooftool.gui
  * To change this template use File | Settings | File Templates.
  */
 
-// This file is created to display FSequent, like Herbrand Sequent for example.
-// It is a less involved version of DrawExpansionTree.
+// This file displays pairs of sequences.
+// Mainly used to display FSequent and ExpansionTrees.
 
-import at.logic.calculi.lk.base.types.FSequent
 import swing._
 import java.awt.{Dimension, Font, Color}
 import java.awt.Font._
 import swing.event.UIElementResized
 import at.logic.language.hol.HOLFormula
+import at.logic.calculi.expansionTrees.ExpansionTree
 
 
-class DrawHerbrandSequent(val expansionTree: FSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
+class DrawHerbrandSequent[T](val hSequent: (Seq[T], Seq[T]), private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   //private val width = toolkit.getScreenSize.width - 150
   //private val height = toolkit.getScreenSize.height - 150
   preferredSize = calculateOptimalSize
   dividerLocation = preferredSize.width / 2
-  leftComponent = side(expansionTree.antecedent, "Antecedent", ft)
-  rightComponent = side(expansionTree.succedent, "Consequent", ft)
+  leftComponent = side(hSequent._1, "Antecedent", ft)
+  rightComponent = side(hSequent._2, "Consequent", ft)
 
   listenTo(Main.top)
   reactions += {
@@ -44,7 +44,7 @@ class DrawHerbrandSequent(val expansionTree: FSequent, private val fSize: Int) e
     else new Dimension(width, height)
   }
 
-  def side(formulas: Seq[HOLFormula], label: String, ft: Font) = new BoxPanel(Orientation.Vertical) {
+  def side(hFormulas: Seq[T], label: String, ft: Font) = new BoxPanel(Orientation.Vertical) {
     contents += new Label(label) {
       font = ft.deriveFont(Font.BOLD)
       opaque = true
@@ -55,12 +55,21 @@ class DrawHerbrandSequent(val expansionTree: FSequent, private val fSize: Int) e
       peer.getHorizontalScrollBar.setUnitIncrement( 20 )
       contents = new BoxPanel(Orientation.Vertical) {
         background = new Color(255,255,255)
-        formulas.foreach( f => {
-          val comp = DrawSequent.formulaToLabel(f,ft)
-          comp.border = Swing.EmptyBorder(10)
-          contents += comp
-        })
+        hFormulas.foreach( f => contents += draw(f) )
       }
+    }
+  }
+
+  def draw(hFormula: T) = hFormula match {
+    case f: HOLFormula =>
+      val comp = DrawSequent.formulaToLabel(f,ft)
+      comp.border = Swing.EmptyBorder(10)
+      comp
+    case et: ExpansionTree =>
+      import ExpansionTreeState._
+      new DrawExpansionTree(et,Closed,ft)
+    case _ => new Label(hFormula.toString) {
+      font = ft
     }
   }
 }
