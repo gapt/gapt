@@ -91,7 +91,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
   def mouseMoved(e: MouseEvent) {}
   def mouseDragged(e: MouseEvent) {
     //The user is dragging us, so scroll!
-    val r = new Rectangle(e.getX(), e.getY(), 1, 1);
-    this.peer.scrollRectToVisible(r);
+    val r = new Rectangle(e.getX, e.getY, 1, 1)
+    this.peer.scrollRectToVisible(r)
   }
 }

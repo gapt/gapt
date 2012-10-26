@@ -8,12 +8,10 @@ package at.logic.gui.prooftool.gui
 */
 
 import swing._
-import event.{UIElementResized, MouseClicked}
-import java.awt.{Font, Dimension, Color}
-import java.awt.Font._
+import event.MouseClicked
+import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
 import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NotET, Atom => AtomET}
-import at.logic.utils.ds.trees.{NonTerminalNodeA}
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.image.BufferedImage
 import at.logic.language.hol._
@@ -61,21 +59,21 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
       contents += formulaToComponent(f, state, Seq())
   }
 
-  def closed {
-    contents.clear
+  def closed() {
+    contents.clear()
     state = Closed
     initialize
-    revalidate
+    revalidate()
   }
 
-  def opened {
-    contents.clear
+  def opened() {
+    contents.clear()
     state = Opened
     initialize
-    revalidate
+    revalidate()
   }
 
-  def expanded {
+  def expanded() {
 
   }
 
@@ -182,10 +180,10 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
 
     val formula = new TeXFormula(s)
     val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, fnt.getSize)
-    val myimage = new BufferedImage(myicon.getIconWidth(), myicon.getIconHeight(), BufferedImage.TYPE_INT_ARGB)
+    val myimage = new BufferedImage(myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB)
     val g2 = myimage.createGraphics()
     g2.setColor(Color.white)
-    g2.fillRect(0,0,myicon.getIconWidth(),myicon.getIconHeight())
+    g2.fillRect(0,0,myicon.getIconWidth,myicon.getIconHeight)
     myicon.paintIcon(peer, g2, 0, 0)
 
     icon = myicon

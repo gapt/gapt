@@ -18,7 +18,7 @@ import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher, ShowPr
 class PopupMenu extends Component with Wrapper {
   override lazy val peer : JPopupMenu = new JPopupMenu
 
-  def show(invoker: Component, x: Int, y: Int): Unit = peer.show(invoker.peer, x, y)
+  def show(invoker: Component, x: Int, y: Int) { peer.show(invoker.peer, x, y) }
 }
 
 object PopupMenu {
@@ -29,7 +29,7 @@ object PopupMenu {
     val popupMenu = new PopupMenu {
       contents += new MenuItem(Action("Apply Gentzen's Method") { Main.gentzen(proof) })
       contents += new MenuItem(Action("Export Subproof in XML") { Main.fSaveProof(proof) })
-      contents += new MenuItem(Action("Export Subproof in TeX") { Main.fExportProofToTex(proof, false) })
+      contents += new MenuItem(Action("Export Subproof in TeX") { Main.fExportProofToTex(proof, ask = false) })
     //  contents += new MenuItem(Action("Compute Clause Set") {} )
     //  contents += new MenuItem(Action("Compute Clause Term") {} )
       contents += new Separator
@@ -48,9 +48,9 @@ object PopupMenu {
   // PopupMenu for Expansion Trees.
   def apply(det: DrawExpansionTree, component: Component, x: Int, y: Int) {
     val popupMenu = new PopupMenu {
-      contents += new MenuItem(Action("Close") { det.closed })
-      contents += new MenuItem(Action("Open") { det.opened })
-      contents += new MenuItem(Action("Expand") { det.expanded })
+      contents += new MenuItem(Action("Close") { det.closed() })
+      contents += new MenuItem(Action("Open") { det.opened() })
+      contents += new MenuItem(Action("Expand") { det.expanded() })
     }
     popupMenu.show(component, x, y)
   }

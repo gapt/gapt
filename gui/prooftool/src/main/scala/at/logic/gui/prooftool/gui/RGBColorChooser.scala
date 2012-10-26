@@ -5,7 +5,6 @@ package at.logic.gui.prooftool.gui
  * User: mrukhaia
  * Date: 10/23/12
  * Time: 12:38 PM
- * To change this template use File | Settings | File Templates.
  */
 
 import swing._
@@ -28,15 +27,15 @@ object RGBColorChooser extends Dialog {
 
   private val CancelButton = new Button(Action("Cancel") {
     optionColor = None
-    dispose
+    dispose()
   })
   private val OKButton = new Button(Action("OK") {
     optionColor = Some(new Color(red.value,green.value,blue.value))
-    dispose
+    dispose()
   }) {
     listenTo(keys)
     reactions += {
-      case e: KeyPressed if e.key == Key.Enter => doClick
+      case e: KeyPressed if e.key == Key.Enter => doClick()
     }
   }
 
