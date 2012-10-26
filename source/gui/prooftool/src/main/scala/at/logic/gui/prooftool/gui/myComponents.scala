@@ -5,7 +5,6 @@ package at.logic.gui.prooftool.gui
  * User: mrukhaia
  * Date: 10/23/12
  * Time: 12:29 PM
- * To change this template use File | Settings | File Templates.
  */
 
 import swing.{Swing, Component, Label, ScrollPane}
@@ -45,7 +44,7 @@ class Spinner[T](model: SpinnerModel) extends Component {
   }
 
   protected override def onFirstSubscribe() {
-    super.onFirstSubscribe
+    super.onFirstSubscribe()
     peer.addChangeListener(changeListener)
     peer.addFocusListener(new FocusAdapter {
       override def focusLost(e: java.awt.event.FocusEvent) { publish(new ValueChanged(Spinner.this)) }
@@ -53,7 +52,7 @@ class Spinner[T](model: SpinnerModel) extends Component {
   }
 
   protected override def onLastUnsubscribe() {
-    super.onLastUnsubscribe
+    super.onLastUnsubscribe()
     peer.removeChangeListener(changeListener)
   }
 }

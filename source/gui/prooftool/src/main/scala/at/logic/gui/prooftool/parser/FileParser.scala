@@ -50,7 +50,7 @@ class FileParser {
     //  println("parsing took " + (end - start).toString)
   }
 
-  def parseFile(path: String): Unit = try {
+  def parseFile(path: String) { try {
     if (path.endsWith(".lks")) lksFileReader(fileStreamReader(path))
     else if (path.endsWith(".lks.gz")) lksFileReader(gzFileStreamReader(path))
     else if (path.endsWith(".xml")) try {
@@ -76,7 +76,7 @@ class FileParser {
   } catch {
       case err: Throwable =>
         Main.errorMessage("Could not load file: " + path + "!\n\n" + Main.getExceptionString(err))
-  }
+  }}
 
   def addProofs(proofs: List[(String, LKProof)]) {
     proofdb = new ProofDatabase(proofdb.Definitions, proofdb.proofs ::: proofs, proofdb.axioms, proofdb.sequentLists)

@@ -16,16 +16,16 @@ import swing.{FlowPanel, GridPanel, Label}
 class DrawList(val list: List[_], val fontSize: Int) extends GridPanel(0, 1) {
   background = new Color(255,255,255)
   private var str: String = ""
-  initialize
+  initialize()
 
   def search_=(string: String) {
     str = string
-    contents.clear
-    initialize
+    contents.clear()
+    initialize()
   }
   def search = str
 
-  def initialize {
+  def initialize() {
     val ft = new Font(SANS_SERIF, PLAIN, fontSize)
     var first = true
     for (x <- list)

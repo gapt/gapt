@@ -20,11 +20,11 @@ object About {
     //setLocationRelativeTo(Main.mBar)
     peer.setDefaultCloseOperation(2) //DISPOSE_ON_CLOSE
 
-    defaultButton = new Button(Action("OK") { dispose }) {
+    defaultButton = new Button(Action("OK") { dispose() }) {
       //  border = Swing.MatteBorder(0,140,0,0, background)
       listenTo(keys)
       reactions += {
-        case e: KeyPressed if e.key == Key.Enter => doClick
+        case e: KeyPressed if e.key == Key.Enter => doClick()
       }
     }
 
@@ -74,8 +74,8 @@ object About {
           case e: MouseMoved if e.source.eq(this) =>
             this.cursor = new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR)
           case e: MouseClicked if e.source.eq(this) =>
-            java.awt.Desktop.getDesktop().browse(new java.net.URI(uri))
-            dispose
+            java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
+            dispose()
         }
       }) = c
       c.grid = (2,3)
@@ -85,5 +85,5 @@ object About {
     }
   }
 
-  def apply() = d.open
+  def apply() { d.open() }
 }

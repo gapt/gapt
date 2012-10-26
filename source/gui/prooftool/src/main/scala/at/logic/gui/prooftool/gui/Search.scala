@@ -10,8 +10,8 @@ package at.logic.gui.prooftool.gui
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.base.{BinaryLKProof, UnaryLKProof, NullaryLKProof}
-import at.logic.utils.ds.trees.{BinaryTree, UnaryTree, LeafTree, Tree}
-import at.logic.language.hol.HOLExpression
+//import at.logic.utils.ds.trees.{BinaryTree, UnaryTree, LeafTree, Tree}
+//import at.logic.language.hol.HOLExpression
 
 
 object Search {

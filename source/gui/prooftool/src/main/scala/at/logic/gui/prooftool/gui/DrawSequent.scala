@@ -83,10 +83,10 @@ object DrawSequent {
     val latexText = ls
     val formula = new TeXFormula(ls)
     val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, ft.getSize)
-    val myimage = new BufferedImage(myicon.getIconWidth(), myicon.getIconHeight(), BufferedImage.TYPE_INT_ARGB)
+    val myimage = new BufferedImage(myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB)
     val g2 = myimage.createGraphics()
 	  g2.setColor(Color.white)
-	  g2.fillRect(0,0,myicon.getIconWidth(),myicon.getIconHeight())
+	  g2.fillRect(0,0,myicon.getIconWidth,myicon.getIconHeight)
 	  myicon.paintIcon(peer, g2, 0, 0)
 
     icon = myicon
@@ -106,16 +106,16 @@ object DrawSequent {
             font = ft.deriveFont(Font.PLAIN, 14)
             listenTo(mouse.clicks)
             reactions += {
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => copy
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => copy()
             }
           }
         //  modal = true
           reactions += {
-            case e: WindowDeactivated if (e.source == this) => dispose
+            case e: WindowDeactivated if (e.source == this) => dispose()
           }
         }
         d.location = locationOnScreen
-        d.open
+        d.open()
     }
   }
 
@@ -160,21 +160,21 @@ object DrawSequent {
         "pr^{" + pr.name +",(" + pr.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
           pr.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
       }  //or return the predicate symbol
-      else nameToLatexString(constant.name.toString)
+      else nameToLatexString(constant.name.toString())
       } + {if (indices.isEmpty) "" else indices.map(x => formulaToLatexString(x)).mkString("_{",",","}")}
     case t : IntegerTerm  => parseIntegerTerm(t, 0)
     case Atom(name, args) =>
-      if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
-        "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString) + formulaToLatexString(args.last) + ")"
-      else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
+      if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
+        "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
+      else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
     case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index) + "}"
-    case Var(name, _) => name.toString
+    case Var(name, _) => name.toString()
     case Function(name, args, _) =>
-      if (args.size == 1) parseNestedUnaryFunction(name.toString, args.head, 1)
-      else if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
-        "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString) + formulaToLatexString(args.last) + ")"
-      else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
-    case Abs(v, t) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(t) + ")"
+      if (args.size == 1) parseNestedUnaryFunction(name.toString(), args.head, 1)
+      else if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
+        "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
+      else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
+    case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(s) + ")"
   }
 
   // Add more unicode symbols if necessary
@@ -199,8 +199,8 @@ object DrawSequent {
     case v : IntVar => if (n > 0)
         v.toStringSimple + "+" + n.toString
       else
-        v.toStringSimple
-    case Succ(t) => parseIntegerTerm( t, n + 1 )
+        v.toStringSimple()
+    case Succ(s) => parseIntegerTerm( s, n + 1 )
     case _ => throw new Exception("Error in parseIntegerTerm(..) in gui")
   }
 

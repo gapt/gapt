@@ -19,7 +19,6 @@ import at.logic.gui.prooftool.parser.{StructPublisher, ShowLeaf, HideLeaf, HideT
 import at.logic.transformations.ceres.struct.structToExpressionTree.{TimesC, PlusC}
 import at.logic.transformations.ceres.PStructToExpressionTree.{PWeakC, PTimesC, PPlusC}
 import at.logic.calculi.lk.base.Sequent
-import javax.swing.Icon
 import java.awt.event.{MouseMotionListener, MouseEvent}
 
 class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: String) extends BorderPanel with MouseMotionListener {
@@ -36,15 +35,15 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
   }
   private var drawLines = true
 
-  initialize
+  initialize()
 
   def search_=(s: String) {
     str = s
-    initialize
+    initialize()
   }
   def search = str
 
-  def initialize = tree match {
+  def initialize() { tree match {
     case utree: UnaryTree[_] =>
       val mylabel = utree.vertex match {
         case PWeakC(_) => latexToLabel(tx, ft)
@@ -180,7 +179,7 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
           }
       }
       layout(mylabel) = Position.North
-  }
+  }}
 
   override def paintComponent(g: Graphics2D) {
     super.paintComponent(g)
@@ -230,7 +229,7 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
   def mouseMoved(e: MouseEvent) {}
   def mouseDragged(e: MouseEvent) {
     //The user is dragging us, so scroll!
-    val r = new Rectangle(e.getX(), e.getY(), 1, 1);
-    this.peer.scrollRectToVisible(r);
+    val r = new Rectangle(e.getX, e.getY, 1, 1)
+    this.peer.scrollRectToVisible(r)
   }
 }

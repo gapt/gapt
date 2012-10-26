@@ -5,7 +5,6 @@ package at.logic.gui.prooftool.gui
  * User: mrukhaia
  * Date: 10/22/12
  * Time: 3:22 PM
- * To change this template use File | Settings | File Templates.
  */
 
 // This file displays pairs of sequences.
@@ -33,7 +32,7 @@ class DrawHerbrandSequent[T](val hSequent: (Seq[T], Seq[T]), private val fSize: 
   reactions += {
     case UIElementResized(Main.top) =>
       preferredSize = calculateOptimalSize
-      revalidate
+      revalidate()
   }
 
   def calculateOptimalSize = {

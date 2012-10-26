@@ -16,7 +16,7 @@ import java.awt.event.{MouseMotionListener, MouseEvent}
 import at.logic.calculi.slk.SchemaProofLinkRule
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.occurrences.FormulaOccurrence
-import java.awt.{RenderingHints, BasicStroke}
+import java.awt.RenderingHints
 import at.logic.gui.prooftool.parser._
 import at.logic.calculi.lk.propositionalRules._
 
@@ -75,8 +75,8 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
       }
     case e: ShowAllRules if e.proof == proof =>
       drawLines = true
-      initialize
-      revalidate
+      initialize()
+      revalidate()
     case e: ShowProof if e.proof == proof =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
@@ -85,23 +85,23 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
       layout.foreach( pair => if (pair._2 != Position.South) pair._1.visible = false )
   }
 
-  initialize
+  initialize()
   // end of constructor
 
   def setColoredOccurrences(s : Set[FormulaOccurrence]) {
     colored_occurrences = s
     tx = tx1
-    initialize
+    initialize()
   }
 
   def setVisibleOccurrences(s : Set[FormulaOccurrence]) {
     visible_occurrences = s
     // tx = tx1 // Uncomment this line if you want to include the end-sequent.
-    initialize
-    repaint
+    initialize()
+    repaint()
   }
 
-  def initialize : Unit = proof match {
+  def initialize() { proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, visible_occurrences, str)) = Position.Center
@@ -130,7 +130,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
         tx.border = Swing.EmptyBorder(0,fSize,0,fSize)
         layout(tx) = Position.South
     }
-  }
+  }}
 
   def getSequentWidth(g: Graphics2D) = tx match {
     case label: Label => g.getFontMetrics(ft).stringWidth(label.text)
@@ -143,9 +143,9 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
 
   def search = str
 
-  def searchNotInLKProof {
+  def searchNotInLKProof() {
     tx = tx1
-    initialize
+    initialize()
   }
 
   override def paintComponent(g: Graphics2D) {
@@ -154,7 +154,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     super.paintComponent(g)
 
     val metrics = g.getFontMetrics(labelFont)
-    val em = metrics.charWidth('M')
+    // val em = metrics.charWidth('M')
     g.setFont(labelFont)
     // g.setStroke(new BasicStroke(fSize / 25))
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
@@ -193,7 +193,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   def mouseMoved(e: MouseEvent) {}
   def mouseDragged(e: MouseEvent) {
     //The user is dragging us, so scroll!
-    val r = new Rectangle(e.getX(), e.getY(), 1, 1);
-    this.peer.scrollRectToVisible(r);
+    val r = new Rectangle(e.getX, e.getY, 1, 1)
+    this.peer.scrollRectToVisible(r)
   }
 }
