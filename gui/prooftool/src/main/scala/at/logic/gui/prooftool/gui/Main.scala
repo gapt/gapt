@@ -47,6 +47,7 @@ object Main extends SimpleSwingApplication {
     top.pack()
     top.size = new Dimension(700,500)
     top.centerOnScreen()
+    top.maximize()
     top.open()
   }
 
