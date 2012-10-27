@@ -24,13 +24,14 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
   import ExpansionTreeState._
   background = new Color(255,255,255)
   yLayoutAlignment = 0.5
+  xLayoutAlignment = 0
   initialize
 
   def initialize = expansionTree match {
-    case WeakQuantifier(f, seq_et_t) =>
-      contents += formulaToComponent(f, state, seq_et_t.map(pair => pair._2))
+    case WeakQuantifier(f, seq) =>
+      contents += formulaToComponent(f, state, extractTerms(expansionTree))
     case StrongQuantifier(f, v, et1) =>
-      contents += formulaToComponent(f, state, Seq(v))
+      contents += formulaToComponent(f, state, extractTerms(expansionTree))
     case AndET(left, right) =>
       val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
       contents += parenthesis._1
@@ -56,7 +57,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
       contents += label("¬",ft)
       contents += new DrawExpansionTree(tree,state,ft)
     case AtomET(f) =>
-      contents += formulaToComponent(f, state, Seq())
+      contents += formulaToComponent(f, state, Nil)
   }
 
   def closed() {
@@ -77,98 +78,125 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
 
   }
 
-//  def quantifierToComponent(t: HOLFormula, st: ExpansionTreeState.Value, seq: Seq[HOLExpression]) = new BoxPanel(Orientation.Horizontal) {
-//    background = new Color(255,255,255)
-//    yLayoutAlignment = 0.5
-//
-//    t match {
-//      case ExVar(v, f) =>
-//        val lbl = DrawSequent.latexToLabel("(" + """\exists """ + DrawSequent.formulaToLatexString(v) + ")",ft)
-//        lbl.reactions += {
-//          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
-//        }
-//        contents += lbl
-//        if (st == Opened) contents += drawTerms(seq)
-//        contents += formulaToComponent(f,Closed,Seq())
-//      case AllVar(v, f) =>
-//        val lbl = DrawSequent.latexToLabel("(" + """\forall """ + DrawSequent.formulaToLatexString(v) + ")",ft)
-//        lbl.reactions += {
-//          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
-//        }
-//        contents += lbl
-//        if (st == Opened) contents += drawTerms(seq)
-//        contents += formulaToComponent(f,Closed,Seq())
-//      case _ => throw new Exception("Something went wrong in DrawExpansionTree")
-//    }
-//  }
+  // Extracts lists of terms from the expansion tree.
+  def extractTerms(et: ExpansionTree): List[List[HOLExpression]] = et match {
+    case WeakQuantifier(f, seq) =>
+      val r: List[List[HOLExpression]] = Nil
+      seq.foldLeft(r)((r, pair) => r ::: {
+        val tmp = extractTerms(pair._1)
+        if (tmp == Nil) List(List(pair._2))
+        else tmp.map(l => pair._2 :: l)
+      })
+    case StrongQuantifier(f, v, et1) =>
+      val tmp = extractTerms(et1)
+      if (tmp == Nil) List(List(v))
+      else tmp.map(l => List(v) ::: l)
+    case AndET(left, right) =>
+      extractTerms(left) ::: extractTerms(right)
+    case OrET(left, right) =>
+      extractTerms(left) ::: extractTerms(right)
+    case ImpET(left, right) =>
+      extractTerms(right) ::: extractTerms(left)
+    case NotET(tree) => extractTerms(tree)
+    case AtomET(f) => Nil
+  }
 
-  def formulaToComponent(t: HOLFormula, st: ExpansionTreeState.Value, seq: Seq[HOLExpression]): BoxPanel = new BoxPanel(Orientation.Horizontal) {
+  def formulaToComponent(holF: HOLFormula, st: ExpansionTreeState.Value, list: List[List[HOLExpression]]): BoxPanel = new BoxPanel(Orientation.Horizontal) {
     background = new Color(255,255,255)
     yLayoutAlignment = 0.5
 
-    t match {
+    holF match {
       case Neg(f) =>
         contents += label("¬",ft)
-        contents += formulaToComponent(f,st,seq)
+        contents += formulaToComponent(f,st,list)
       case And(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,st,seq)
+        contents += formulaToComponent(f1,st,list)
         contents += label("∧",ft)
-        contents += formulaToComponent(f2,st,seq)
+        contents += formulaToComponent(f2,st,list)
         contents += parenthesis._2
       case Or(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,st,seq)
+        contents += formulaToComponent(f1,st,list)
         contents += label("∨",ft)
-        contents += formulaToComponent(f2,st,seq)
+        contents += formulaToComponent(f2,st,list)
         contents += parenthesis._2
       case Imp(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,st,seq)
+        contents += formulaToComponent(f1,st,list)
         contents += label("⊃",ft)
-        contents += formulaToComponent(f2,st,seq)
+        contents += formulaToComponent(f2,st,list)
         contents += parenthesis._2
-      case ExVar(v, f) =>
-        val lbl = DrawSequent.latexToLabel("(" + """\exists """ + DrawSequent.formulaToLatexString(v) + ")",ft)
+      case ExVar(_,_) | AllVar(_,_) =>
+        val (quantifiers, number, formula) = analyzeFormula(holF)
+        val (list1, list2) = splitList(number,list)
+        val lbl = DrawSequent.latexToLabel(quantifiers, ft)
         lbl.reactions += {
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
+          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+            PopupMenu(DrawExpansionTree.this, lbl, e.point.x, e.point.y)
         }
         contents += lbl
-        if (st == Opened) contents += drawTerms(seq)
-        contents += formulaToComponent(f,Closed,Seq())
-      case AllVar(v, f) =>
-        val lbl = DrawSequent.latexToLabel("(" + """\forall """ + DrawSequent.formulaToLatexString(v) + ")",ft)
-        lbl.reactions += {
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(DrawExpansionTree.this,lbl, e.point.x, e.point.y)
-        }
-        contents += lbl
-        if (st == Opened) contents += drawTerms(seq)
-        contents += formulaToComponent(f,Closed,Seq())
+        if (st == Opened) contents += drawTerms(list1)
+        contents += formulaToComponent(formula, Closed, list2)
       case _ =>
-        val lbl = DrawSequent.formulaToLabel(t,ft)
+        val lbl = DrawSequent.formulaToLabel(holF,ft)
         lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks)
         contents += lbl
     }
   }
 
-  def drawTerms(seq: Seq[HOLExpression]) = new BoxPanel(Orientation.Horizontal) {
+  // String represents the first n quantifiers in a raw,
+  // Int is the number n,
+  // HOLFormula is the rest of formula
+  def analyzeFormula(formula: HOLFormula): (String,Int,HOLFormula) = formula match {
+    case ExVar(v,f) =>
+      val tuple = analyzeFormula(f)
+      ("(" + "\\exists " + DrawSequent.formulaToLatexString(v) + ")" + tuple._1, tuple._2 + 1, tuple._3)
+    case AllVar(v,f) =>
+      val tuple = analyzeFormula(f)
+      ("(" + "\\forall " + DrawSequent.formulaToLatexString(v) + ")" + tuple._1, tuple._2 + 1, tuple._3)
+    case _ => ("",0,formula)
+  }
+
+  // Splits each list of terms at the position n in the list of lists of terms.
+  // This is necessary for nested quantifiers in formulas.
+  def splitList(n: Int, list: List[List[HOLExpression]]) = {
+    val tmp = list.map(l =>
+      if (l.size >= n) l.splitAt(n)
+      else throw new Exception("Something went wrong in DrawExpansionTree!")
+    )
+    val list1 = tmp.map(pair => pair._1)
+    val list2 = tmp.filter(pair => pair._2 != Nil).map(pair => pair._2)
+    (list1, list2)
+  }
+
+  // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
+  // List of terms are separated by ; and terms in a list by ,
+  def drawTerms(list: List[List[HOLExpression]]) = new BoxPanel(Orientation.Horizontal) {
     background = new Color(255,255,255)
     yLayoutAlignment = 0.5
 
     contents += label("\\langle",ft)
-    var first = true
-    for (t <- seq) {
-      if (! first) {
-        val lbl = label(",",ft)
-        lbl.yLayoutAlignment = 0
+    var firstList = true
+    list.foreach(l => {
+      if (! firstList) {
+        val lbl = label("\\; ; \\;",ft)
+        lbl.yLayoutAlignment = 0.35
         contents += lbl
-      }
-      else first = false
-      contents += label(DrawSequent.formulaToLatexString(t),ft)
-    }
+      } else firstList = false
+      var firstTerm = true
+      l.foreach(t => {
+        if (! firstTerm) {
+          val lbl = label(",",ft)
+          lbl.yLayoutAlignment = 0
+          contents += lbl
+        } else firstTerm = false
+        contents += label(DrawSequent.formulaToLatexString(t),ft)
+      })
+    })
     contents += label("\\rangle",ft)
   }
 
