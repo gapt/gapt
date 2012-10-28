@@ -1,0 +1,13 @@
+set(prolog_style_variables).
+
+formulas(assumptions).
+(all A all B all C (red(A,B) & red(B,C) & red(A,C) -> goal)) # label(red_clique) # label(axiom).
+(all A all B all C (green(A,B) & green(B,C) & green(A,C) -> goal)) # label(green_clique) # label(axiom).
+less_than(n1,n2) & less_than(n2,n3) & less_than(n3,n4) & less_than(n4,n5) & less_than(n5,n6) # label(ordering) # label(axiom).
+(all A all B all C (less_than(A,B) & less_than(B,C) -> less_than(A,C))) # label(less_than_transitive) # label(axiom).
+(all A all B (less_than(A,B) -> red(A,B) | green(A,B))) # label(partition) # label(axiom).
+end_of_list.
+
+formulas(goals).
+goal # label(goal_to_be_proved) # label(conjecture).
+end_of_list.
