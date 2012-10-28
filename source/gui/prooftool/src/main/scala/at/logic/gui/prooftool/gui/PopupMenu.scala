@@ -13,6 +13,7 @@ import swing._
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
 import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher, ShowProof, HideProof}
+import at.logic.language.hol.HOLFormula
 
 
 class PopupMenu extends Component with Wrapper {
@@ -46,11 +47,11 @@ object PopupMenu {
   }
 
   // PopupMenu for Expansion Trees.
-  def apply(det: DrawExpansionTree, component: Component, x: Int, y: Int) {
+  def apply(det: DrawExpansionTree, f: HOLFormula, component: Component, x: Int, y: Int) {
     val popupMenu = new PopupMenu {
-      contents += new MenuItem(Action("Close") { det.closed() })
-      contents += new MenuItem(Action("Open") { det.opened() })
-      contents += new MenuItem(Action("Expand") { det.expanded() })
+      contents += new MenuItem(Action("Close") { det.close(f) })
+      contents += new MenuItem(Action("Open") { det.open(f) })
+      contents += new MenuItem(Action("Expand") { det.expand(f) })
     }
     popupMenu.show(component, x, y)
   }

@@ -17,72 +17,76 @@ import java.awt.image.BufferedImage
 import at.logic.language.hol._
 
 object ExpansionTreeState extends Enumeration {
-  val Closed, Opened, Expanded = Value
+  val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: ExpansionTreeState.Value, private val ft: Font) extends BoxPanel(Orientation.Horizontal) {
+class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) extends BoxPanel(Orientation.Horizontal) {
   import ExpansionTreeState._
   background = new Color(255,255,255)
   yLayoutAlignment = 0.5
   xLayoutAlignment = 0
+  private val state = scala.collection.mutable.Map.empty[HOLFormula,ExpansionTreeState.Value]
   initialize
 
   def initialize = expansionTree match {
     case WeakQuantifier(f, seq) =>
-      contents += formulaToComponent(f, state, extractTerms(expansionTree))
+      contents += formulaToComponent(f, extractTerms(expansionTree))
     case StrongQuantifier(f, v, et1) =>
-      contents += formulaToComponent(f, state, extractTerms(expansionTree))
+      contents += formulaToComponent(f, extractTerms(expansionTree))
     case AndET(left, right) =>
       val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
       contents += parenthesis._1
-      contents += new DrawExpansionTree(left,state,ft)
+      contents += new DrawExpansionTree(left,ft)
       contents += label("∧",ft)
-      contents += new DrawExpansionTree(right,state,ft)
+      contents += new DrawExpansionTree(right,ft)
       contents += parenthesis._2
     case OrET(left, right) =>
       val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
       contents += parenthesis._1
-      contents += new DrawExpansionTree(left,state,ft)
+      contents += new DrawExpansionTree(left,ft)
       contents += label("∨",ft)
-      contents += new DrawExpansionTree(right,state,ft)
+      contents += new DrawExpansionTree(right,ft)
       contents += parenthesis._2
     case ImpET(left, right) =>
       val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
       contents += parenthesis._1
-      contents += new DrawExpansionTree(left,state,ft)
+      contents += new DrawExpansionTree(left,ft)
       contents += label("⊃",ft)
-      contents += new DrawExpansionTree(right,state,ft)
+      contents += new DrawExpansionTree(right,ft)
       contents += parenthesis._2
     case NotET(tree) =>
       contents += label("¬",ft)
-      contents += new DrawExpansionTree(tree,state,ft)
+      contents += new DrawExpansionTree(tree,ft)
     case AtomET(f) =>
-      contents += formulaToComponent(f, state, Nil)
+      contents += formulaToComponent(f, Nil)
   }
 
-  def closed() {
+  def close(f: HOLFormula) {
     contents.clear()
-    state = Closed
+    state += ((f, Close))
     initialize
     revalidate()
   }
 
-  def opened() {
+  def open(f: HOLFormula) {
     contents.clear()
-    state = Opened
+    state += ((f, Open))
     initialize
     revalidate()
   }
 
-  def expanded() {
-
+  def expand(f: HOLFormula) {
+    contents.clear()
+    state += ((f, Expand))
+    initialize
+    revalidate()
   }
 
-  // Extracts lists of terms from the expansion tree.
+  // Extracts list of lists of terms from the expansion tree.
+  // Each list of terms corresponds to an instantiation of all quantifiers.
   def extractTerms(et: ExpansionTree): List[List[HOLExpression]] = et match {
     case WeakQuantifier(f, seq) =>
-      val r: List[List[HOLExpression]] = Nil
-      seq.foldLeft(r)((r, pair) => r ::: {
+      seq.foldLeft(List.empty[List[HOLExpression]])((r, pair) => r ::: {
         val tmp = extractTerms(pair._1)
         if (tmp == Nil) List(List(pair._2))
         else tmp.map(l => pair._2 :: l)
@@ -96,56 +100,95 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
     case OrET(left, right) =>
       extractTerms(left) ::: extractTerms(right)
     case ImpET(left, right) =>
-      extractTerms(right) ::: extractTerms(left)
+      extractTerms(left) ::: extractTerms(right)
     case NotET(tree) => extractTerms(tree)
     case AtomET(f) => Nil
   }
 
-  def formulaToComponent(holF: HOLFormula, st: ExpansionTreeState.Value, list: List[List[HOLExpression]]): BoxPanel = new BoxPanel(Orientation.Horizontal) {
+  // Extracts list of formulas from the expansion tree.
+  def extractFormulas(et: ExpansionTree): List[HOLFormula] = et match {
+    case WeakQuantifier(f, seq) =>
+      seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: f :: extractFormulas(pair._1))
+    case StrongQuantifier(f, v, et1) =>
+      f :: extractFormulas(et1)
+    case AndET(left, right) =>
+      val ll = extractFormulas(left)
+      val rl = extractFormulas(right)
+      ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => And(f1,f2)))
+    case OrET(left, right) =>
+      val ll = extractFormulas(left)
+      val rl = extractFormulas(right)
+      ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Or(f1,f2)))
+    case ImpET(left, right) =>
+      val ll = extractFormulas(left)
+      val rl = extractFormulas(right)
+      ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Imp(f1,f2)))
+    case NotET(tree) => extractFormulas(tree).map(f => Neg(f))
+    case AtomET(f) => List(f)
+  }
+
+  def formulaToComponent(holF: HOLFormula, list: List[List[HOLExpression]]): BoxPanel = new BoxPanel(Orientation.Horizontal) {
     background = new Color(255,255,255)
     yLayoutAlignment = 0.5
 
     holF match {
       case Neg(f) =>
         contents += label("¬",ft)
-        contents += formulaToComponent(f,st,list)
+        contents += formulaToComponent(f,list)
       case And(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,st,list)
+        contents += formulaToComponent(f1,list)
         contents += label("∧",ft)
-        contents += formulaToComponent(f2,st,list)
+        contents += formulaToComponent(f2,list)
         contents += parenthesis._2
       case Or(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,st,list)
+        contents += formulaToComponent(f1,list)
         contents += label("∨",ft)
-        contents += formulaToComponent(f2,st,list)
+        contents += formulaToComponent(f2,list)
         contents += parenthesis._2
       case Imp(f1,f2) =>
         val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,st,list)
+        contents += formulaToComponent(f1,list)
         contents += label("⊃",ft)
-        contents += formulaToComponent(f2,st,list)
+        contents += formulaToComponent(f2,list)
         contents += parenthesis._2
       case ExVar(_,_) | AllVar(_,_) =>
         val (quantifiers, number, formula) = analyzeFormula(holF)
-        val (list1, list2) = splitList(number,list)
-        val lbl = DrawSequent.latexToLabel(quantifiers, ft)
-        lbl.reactions += {
-          case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-            PopupMenu(DrawExpansionTree.this, lbl, e.point.x, e.point.y)
+        if ( state.get(holF) != Some(Expand) ) {
+          val (list1, list2) = splitList(number,list)
+          val lbl = DrawSequent.latexToLabel(quantifiers, ft)
+          lbl.reactions += {
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+              PopupMenu(DrawExpansionTree.this, holF, lbl, e.point.x, e.point.y)
+          }
+          contents += lbl
+          if ( state.get(holF) == Some(Open) ) contents += drawTerms(list1)
+          contents += formulaToComponent(formula, list2)
+        } else { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
+
+          println("entered")
+          contents += label(getMatrixSymbol(holF),ft)
+          println("label drawn")
+          val fs = extractFormulas(expansionTree)
+          println("fs extracted")
+          contents += drawMatrix(fs) // At this point wrong list is passed and this causes the cycle
+          println("matrix drawn")
         }
-        contents += lbl
-        if (st == Opened) contents += drawTerms(list1)
-        contents += formulaToComponent(formula, Closed, list2)
       case _ =>
         val lbl = DrawSequent.formulaToLabel(holF,ft)
         lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks)
         contents += lbl
     }
+  }
+
+  def getMatrixSymbol(formula: HOLFormula) = formula match {
+    case ExVar(v,f) => "\\bigvee"
+    case AllVar(v,f) => "\\bigwedge"
+    case _ => throw new Exception("Something went wrong in DrawExpansionTree!")
   }
 
   // String represents the first n quantifiers in a raw,
@@ -200,6 +243,46 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
     contents += label("\\rangle",ft)
   }
 
+  // Draws list of formulas like single column matrix surrounded by < >.
+  def drawMatrix(list: List[HOLFormula]) = new BoxPanel(Orientation.Vertical) {
+    background = new Color(255,255,255)
+    yLayoutAlignment = 0.5
+    border = Swing.EmptyBorder(0,ft.getSize,0,ft.getSize)
+
+    list.foreach(f => {
+      val lbl = label(DrawSequent.formulaToLatexString(f),ft) // this is temporary solution until I get correct list of formulas.
+        //formulaToComponent(f,Nil)) // TODO: instead of Nil maybe real list of terms should be passed.
+      lbl.border = Swing.EmptyBorder(3)
+      lbl.opaque = false
+      contents += lbl
+    })
+
+    override def paintComponent(g: Graphics2D) {
+      import java.awt.{BasicStroke,RenderingHints}
+      super.paintComponent(g)
+
+      val strokeSize = if (ft.getSize / 25 < 1) 1 else ft.getSize / 25
+
+      g.setStroke(new BasicStroke(strokeSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND))
+      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
+
+      val leftAngleNodeX = location.x - ft.getSize
+      val rightAngleNodeX = location.x + size.width - 8 - ft.getSize
+      val anglesNodeY = location.y + size.height / 2
+
+      val leftAngleEdgesX = location.x
+      val rightAngleEdgesX = location.x + size.width - 8 - 2 * ft.getSize
+      val anglesEdge1Y = location.y
+      val anglesEdge2Y = location.y + size.height
+
+      g.drawLine(leftAngleNodeX, anglesNodeY, leftAngleEdgesX, anglesEdge1Y)
+      g.drawLine(leftAngleNodeX, anglesNodeY, leftAngleEdgesX, anglesEdge2Y)
+
+      g.drawLine(rightAngleNodeX, anglesNodeY, rightAngleEdgesX, anglesEdge1Y)
+      g.drawLine(rightAngleNodeX, anglesNodeY, rightAngleEdgesX, anglesEdge2Y)
+    }
+  }
+
   def label(s: String, fnt: Font) = new MyLabel {
     background = Color.white
     yLayoutAlignment = 0.5
@@ -215,7 +298,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
     myicon.paintIcon(peer, g2, 0, 0)
 
     icon = myicon
-    if (s == "(" || s == ")")
+    if (s == "(" || s == ")") {
       tooltip = "Click to mark/unmark."
       listenTo(mouse.clicks)
       reactions += {
@@ -226,6 +309,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private var state: Exp
             peer.dispatchEvent(new MouseEvent(peer,e.peer.getID,e.peer.getWhen,e.modifiers,e.point.x,e.point.y,e.clicks,e.triggersPopup,MouseEvent.BUTTON1))
           }
       }
+    }
   }
 
   def connectParenthesis(left: MyLabel, right: MyLabel) = {

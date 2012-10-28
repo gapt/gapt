@@ -572,13 +572,15 @@ object Main extends SimpleSwingApplication {
         val b = HOLVar("b", i)
         val q = HOLVar("q", i -> o)
         val x = HOLVar("x", i)
+        val y = HOLVar("y", i)
         val px = HOLAppFormula(p, x) // p(x)
         val pa = HOLAppFormula(p, a) // p(a)
         val pb = HOLAppFormula(p, b) // p(b)
-        val qa = HOLAppFormula(q, a) // q(a)
+        val qy = HOLAppFormula(q, y) // q(a)
         val substa = a // x -> a
         val substb = b // x -> b
         val ex_px = ExVar(x, px) // exists x. p(x)
+        val ex_qy = ExVar(y, qy)
 
         val axm1 = Axiom(pa::Nil, pa::Nil)
         val axm2 = Axiom(pb::Nil, pb::Nil)
@@ -586,9 +588,41 @@ object Main extends SimpleSwingApplication {
         val exists2 = ExistsRightRule(axm2, pb, ex_px, substb)
         val orlft = OrLeftRule(exists1, exists2, pa, pb)
         val contr = ContractionRightRule(orlft, ex_px)
-        val orrght = OrRight1Rule(contr, ex_px, qa)
+        val orrght = OrRight1Rule(contr, ex_px, ex_qy)
 
         body.contents = new Launcher(Some(("Proof", orrght)), 12)
+      }) { border = customBorder }
+      contents += new MenuItem(Action("Nested Proof 1") {
+        import at.logic.language.lambda.types.Definitions._
+        import at.logic.language.lambda.symbols.ImplicitConverters._
+        import at.logic.language.hol._
+        import at.logic.calculi.lk.propositionalRules._
+        import at.logic.calculi.lk.quantificationRules._
+        val p = HOLVar("p", i -> o)
+        val a = HOLVar("a", i)
+        val b = HOLVar("b", i)
+        val q = HOLVar("q", i -> o)
+        val x = HOLVar("x", i)
+        val y = HOLVar("y", i)
+        val px = HOLAppFormula(p, x) // p(x)
+        val pa = HOLAppFormula(p, a) // p(a)
+        val pb = HOLAppFormula(p, b) // p(b)
+        val qa = HOLAppFormula(q, a) // q(a)
+        val qy = HOLAppFormula(q, y) // q(a)
+        val substa = a // x -> a
+        val substb = b // x -> b
+        val all_px = AllVar(x, px) // forall x. p(x)
+
+        val axm1 = Axiom(pa::Nil, pa::Nil)
+        val axm2 = Axiom(pb::Nil, pb::Nil)
+        val all1 = ForallLeftRule(axm1, pa, all_px, substa)
+        val all2 = ForallLeftRule(axm2, pb, all_px, substb)
+        val andrght = AndRightRule(all1, all2, pa, pb)
+        val contr = ContractionLeftRule(andrght, all_px)
+        val andlft = AndLeft1Rule(contr, all_px, qa)
+        val all3 = ForallLeftRule(andlft, And(all_px,qa), AllVar(y, And(all_px,qy)),a)
+
+        body.contents = new Launcher(Some(("Proof", all3)), 12)
       }) { border = customBorder }
     }
   }

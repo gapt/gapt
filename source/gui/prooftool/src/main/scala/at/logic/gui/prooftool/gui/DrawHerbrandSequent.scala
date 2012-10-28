@@ -65,8 +65,7 @@ class DrawHerbrandSequent[T](val hSequent: (Seq[T], Seq[T]), private val fSize: 
       comp.border = Swing.EmptyBorder(10)
       comp
     case et: ExpansionTree =>
-      import ExpansionTreeState._
-      val comp = new DrawExpansionTree(et,Closed,ft)
+      val comp = new DrawExpansionTree(et,ft)
       comp.border = Swing.EmptyBorder(10)
       comp
     case _ => new Label(hFormula.toString) {
