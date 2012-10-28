@@ -15,17 +15,13 @@ import at.logic.language.lambda.symbols.SymbolA
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.lambda.types.ImplicitConverters.fromString
-import at.logic.language.schema.IndexedPredicate
-import at.logic.language.schema.IntVar
-import at.logic.language.schema.IntZero
-import at.logic.language.schema.IntegerTerm
-import at.logic.language.schema.SchemaSubstitution1
 import at.logic.calculi.slk._
 import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
 import at.logic.calculi.lk.propositionalRules._
+import clauseSchema.SchemaSubstitution3
+import at.logic.language.schema._
 
 //import at.logic.language.schema.SchemaFormula
-import at.logic.language.schema.Succ
 import at.logic.algorithms.shlk._
 import at.logic.utils.ds.Multisets
 import at.logic.utils.ds.Multisets.Multiset
@@ -396,7 +392,6 @@ object ProjectionTermCreators {
         extract(p, omega, cut_ancs)
       else
         throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
-
     }
     case ExistsLeftRule( p, _, a, m, _ ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
@@ -536,13 +531,14 @@ object PStructToExpressionTree {
 //      val cut_omega_anc = getCutAncestors(SchemaProofDB.get(proof_name).rec) ++ getAncestors(omega)
       val cut_omega_anc = ccanc ++ getAncestors(omega)
       val seq1 = SchemaProofDB.get(proof_name).rec.root
-      val len = StepMinusOne.lengthVar(index)
+      val k = IntVar(new VariableStringSymbol("k"))
+//      val len = StepMinusOne.lengthVar(index)
+      val len = StepMinusOne.length(index, k)
 //      val foccsInSeq = (seq.antecedent ++ seq.succedent).filter(fo => cut_omega_anc.contains(fo))
       val foccsInSeqAnt = seq.antecedent.filter(fo => cut_omega_anc.contains(fo))
       val foccsInSeqSucc = seq.succedent.filter(fo => cut_omega_anc.contains(fo))
       var new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm]
       var strant = "";var str1ant = "";var strsucc = "";var str1succ = "";
-      val k = IntVar(new VariableStringSymbol("k"))
       val trans_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntVar(new VariableStringSymbol("n")) )
       val trans_sub = new SchemaSubstitution1[HOLExpression](trans_map)
       var f1 = Seq.empty[HOLExpression];var f2 = Seq.empty[HOLExpression];
@@ -626,7 +622,7 @@ object PStructToExpressionTree {
         print(Console.GREEN )
       print(" "+vert)
       print(Console.RESET)
-      printTree(up)
+      printTree(up.asInstanceOf[Tree[String]])
     }
 
 //    case BinaryTreeWeak12(vert, up1, up2, w1, w2) => {
@@ -646,7 +642,7 @@ object PStructToExpressionTree {
         print(Console.RED)
       print("(")
       print(Console.RESET)
-      printTree(up1)
+      printTree(up1.asInstanceOf[Tree[String]])
       if (vert == PPlusSymbol.toString) {
         print(Console.BLUE)
         print("\n\n                                   "+vert+"\n\n")
@@ -657,7 +653,7 @@ object PStructToExpressionTree {
       }
 
       print(Console.RESET)
-      printTree(up2)
+      printTree(up2.asInstanceOf[Tree[String]])
       if (vert == PPlusSymbol.toString)
         print(Console.BLUE)
       else
@@ -674,3 +670,82 @@ object PStructToExpressionTree {
 //  }
 //}
 
+
+// returns a ground projection term for a given instance of the parameter k
+  object GroundingProjectionTerm {
+    def apply(t: ProjectionTerm, subst: SchemaSubstitution3): ProjectionTerm = {
+      t match {
+        case times: pTimes => {
+          val left = GroundingProjectionTerm(times.left, subst)
+          val right = GroundingProjectionTerm(times.right, subst)
+          pTimes(times.rho, left, right)
+        }
+        case plus: pPlus => {
+          val left = GroundingProjectionTerm(plus.left, subst)
+          val right = GroundingProjectionTerm(plus.right, subst)
+          val ant1 = plus.seq1.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val succ1 = plus.seq1.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val ant2 = plus.seq2.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val succ2 = plus.seq2.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val want1 = plus.w1.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val wsucc1 = plus.w1.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val want2 = plus.w2.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val wsucc2 = plus.w2.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+//          println("w: l = "+printSchemaProof.sequentToString(Sequent(ant1, succ1)) )
+          pPlus(Sequent(ant1, succ1), Sequent(ant2, succ2), left, right, Sequent(want1, wsucc1), Sequent(want2, wsucc2))
+        }
+        case unary: pUnary => {
+//          println("unary.rho = "+unary.rho)
+          pUnary(unary.rho, GroundingProjectionTerm(unary.upper, subst))
+        }
+        case pProofLinkTerm( seq, omega, proof_name, index, canc ) => {
+          pProofLinkTerm( seq, omega, proof_name, subst(index).asInstanceOf[IntegerTerm], canc )
+        }
+
+        case ax: pAxiomTerm => {
+          val ant = ax.seq.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          val succ = ax.seq.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          pAxiomTerm(Sequent(ant, succ))
+        }
+      }
+    }
+  }
+
+  object UnfoldProjectionTerm {
+    def apply(t: ProjectionTerm): ProjectionTerm = {
+      t match {
+        case pProofLinkTerm( seq, omega, proof_name, index, canc ) => {
+          if(index == IntZero()){
+            val omegaAnc = omega.foldLeft(Set.empty[FormulaOccurrence])((x, acc) => getAncestors(x) + acc)
+            val p = SchemaProofDB.get(proof_name).base
+            val omega1 = Set.empty[FormulaOccurrence] +p.root.succedent.head
+            val omega1Anc = getAncestors(omega1.head)
+            return ProjectionTermCreators.extract(p, omega1, omega1Anc)
+          }
+          val p = SchemaProofDB.get(proof_name).rec
+//          val omegaAnc = omega.foldLeft(Set.empty[FormulaOccurrence])((x, acc) => getAncestors(x) + acc)
+          val omega1 = Set.empty[FormulaOccurrence] +p.root.succedent.head
+          val omega1Anc = getAncestors(omega1.head)
+//          val pterm = ProjectionTermCreators.extract(p, omega, omegaAnc ++ getCutAncestors(p))
+          val pterm = ProjectionTermCreators.extract(p, omega1, omega1Anc ++ getCutAncestors(p))
+          val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(index) )
+          var sub = new SchemaSubstitution3(new_map)
+          val ground = GroundingProjectionTerm(pterm, sub)
+          UnfoldProjectionTerm(ground)
+        }
+        case times: pTimes => {
+          val left = UnfoldProjectionTerm(times.left)
+          val right = UnfoldProjectionTerm(times.right)
+          pTimes(times.rho, left, right)
+        }
+        case plus: pPlus => {
+          val left = UnfoldProjectionTerm(plus.left)
+          val right = UnfoldProjectionTerm(plus.right)
+          pPlus(plus.seq1, plus.seq2, left, right, plus.w1, plus.w2)
+        }
+        case unary: pUnary => pUnary(unary.rho, UnfoldProjectionTerm(unary.upper))
+        case ax: pAxiomTerm => ax
+        case _ => throw new Exception("\n\nERROR in UnfoldProjectionTerm !\n")
+      }
+    }
+  }

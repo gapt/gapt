@@ -7,6 +7,7 @@ import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrence
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.algorithms.shlk._
+import clauseSchema.SchemaSubstitution3
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -106,44 +107,89 @@ class ProjectionTermTest extends SpecificationWithJUnit {
        }
 
 
-    "should extract proj.term for the journal paper" in {
-      println("\n\nProjectionTerm for the journal paper\n\n")
-      SchemaProofDB.clear
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
-      val map = ParseQMON.parseProof(s)
-//      val p2 = map.get("\\psi").get._2.get("root").get
-      val proof_name = "\\varphi"
-      val p2 = map.get(proof_name).get._2.get("root").get
-      val p1 = map.get("\\psi").get._2.get("root").get
-      val p1b = map.get("\\psi").get._1.get("root").get
+      "should extract proj.term for the journal paper" in {
+        println("\n\nProjectionTerm for the journal paper\n\n")
+        SchemaProofDB.clear
+        val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
+        val map = ParseQMON.parseProof(s)
+  //      val p2 = map.get("\\psi").get._2.get("root").get
+        val proof_name = "\\varphi"
+        val p2 = map.get(proof_name).get._2.get("root").get
+        val p1 = map.get("\\psi").get._2.get("root").get
+        val p1b = map.get("\\psi").get._1.get("root").get
 
-      println("\n\n")
-      printSchemaProof(p2)
-      println("\n\n")
-      val f = p2.root.succedent.head
-//      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence]+f, getCutAncestors(p2))
-//      val t = PStructToExpressionTree.applyConsole(pterm)
-//      PStructToExpressionTree.printTree(t)
-      ProjectionTermCreators.relevantProj(proof_name)
-//      val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
-//      val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
-//      ProjectionTermCreators.genCCProofToolBase("\\varphi")
-//      ProjectionTermCreators.genCCProofToolBase("\\psi")
-//      val l = ProjectionTermCreators.getCC(p2, p2.root.succedent.head::Nil, p2)
-//      println("\nl = "+l)
-//      println("\ncclist2 = "+cclist2)
-//      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
-//      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
-//      var sub = new SchemaSubstitution1[HOLExpression](new_map)
-//      val fo = p1.root.succedent.head
-//      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
-//      println("\nfo = "+fo.formula)
-//      println("\nfosub = "+fosub)
-      Success()
-    }
+        println("\n\n")
+        printSchemaProof(p2)
+        println("\n\n")
+        val f = p2.root.succedent.head
+  //      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence]+f, getCutAncestors(p2))
+  //      val t = PStructToExpressionTree.applyConsole(pterm)
+  //      PStructToExpressionTree.printTree(t)
+        ProjectionTermCreators.relevantProj(proof_name)
+  //      val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
+  //      val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
+  //      ProjectionTermCreators.genCCProofToolBase("\\varphi")
+  //      ProjectionTermCreators.genCCProofToolBase("\\psi")
+  //      val l = ProjectionTermCreators.getCC(p2, p2.root.succedent.head::Nil, p2)
+  //      println("\nl = "+l)
+  //      println("\ncclist2 = "+cclist2)
+  //      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+  //      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+  //      var sub = new SchemaSubstitution1[HOLExpression](new_map)
+  //      val fo = p1.root.succedent.head
+  //      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
+  //      println("\nfo = "+fo.formula)
+  //      println("\nfosub = "+fosub)
+        Success()
+      }
 
+      "should extract proj.term for the sEXP.lks" in {
+        println(Console.BLUE+"\n\n------- ProjectionTerm for the sEXP.lks ------- "+Console.RESET)
+        SchemaProofDB.clear
+        val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
+        val map = ParseQMON.parseProof(s)
+        //      val p2 = map.get("\\psi").get._2.get("root").get
+        val proof_name = "\\psi"
+        val p2 = map.get(proof_name).get._2.get("root").get
+//        val p1 = map.get("\\psi").get._2.get("root").get
+//        val p1b = map.get("\\psi").get._1.get("root").get
 
-
+        println("\n\n")
+        printSchemaProof(p2)
+        println("\n\n")
+        val f = p2.root.succedent.head
+        val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence], getCutAncestors(p2))
+        val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+        var sub = new SchemaSubstitution3(new_map)
+        println("\n------ proj.term: \n\n")
+        val t = PStructToExpressionTree.applyConsole(pterm)
+        PStructToExpressionTree.printTree(t)
+        println("\n\n\n------ ground: \n\n")
+        val ground = GroundingProjectionTerm(pterm, sub)
+        val t_ground = PStructToExpressionTree.applyConsole(ground)
+        PStructToExpressionTree.printTree(t_ground)
+        println("\n\n\n------ unfold ground: \n\n")
+        val ground_unfold = UnfoldProjectionTerm(ground)
+        val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
+        PStructToExpressionTree.printTree(t_ground_unfold)
+        //        ProjectionTermCreators.relevantProj(proof_name)
+//        val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
+//        val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
+//        ProjectionTermCreators.genCCProofToolBase("\\varphi")
+//        ProjectionTermCreators.genCCProofToolBase("\\psi")
+//        val l = ProjectionTermCreators.getCC(p2, p2.root.succedent.head::Nil, p2)
+//        println("\nl = "+l)
+//        println("\ncclist2 = "+cclist2)
+        //      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+        //      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+        //      var sub = new SchemaSubstitution1[HOLExpression](new_map)
+        //      val fo = p1.root.succedent.head
+        //      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
+        //      println("\nfo = "+fo.formula)
+        //      println("\nfosub = "+fosub)
+        println("\n\n--- END ---\n\n")
+        Success()
+      }
   }
 }
 

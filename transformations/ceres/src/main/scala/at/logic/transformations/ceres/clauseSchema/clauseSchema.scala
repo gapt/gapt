@@ -220,8 +220,9 @@ abstract class sResolutionTerm {}
     //the l.head should be of type Tindex() !
     def apply(f: String, l: List[HOLExpression]): HOLExpression = {
       require(l.head.exptype == Tindex())
-      val typ = l.reverse.map(x => x.exptype).foldRight(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
+      val typ = l.map(x => x.exptype).foldRight(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
       val func = HOLConst(new ConstantStringSymbol(f), typ)
+//      println("func = "+func)
       return Function(func, l)
     }
     def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
@@ -443,8 +444,8 @@ abstract class sResolutionTerm {}
   //      case Or(l @ left, r @ right) => Or(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
   //      case And(l @ left, r @ right) => And(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula], apply(r.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
   //      case Neg(l @ left) => Neg(apply(l.asInstanceOf[T]).asInstanceOf[SchemaFormula]).asInstanceOf[T]
-  //      case Imp(l, r) => Imp(apply(l.asInstanceOf[T]).asInstanceOf[HOLFormula], apply(r.asInstanceOf[T]).asInstanceOf[HOLFormula]).asInstanceOf[T]
-  //      case AllVar(v, f) => AllVar(v, apply(f.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]).asInstanceOf[HOLExpression]
+        case at.logic.language.hol.Imp(l, r) => at.logic.language.hol.Imp(apply(l.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula], apply(r.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]).asInstanceOf[HOLExpression]
+        case AllVar(v, f) => AllVar(v, apply(f.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]).asInstanceOf[HOLExpression]
         case ifo: indexedFOVar => {
 //          println("indexedFOVar")
           indexedFOVar(ifo.name, apply(ifo.index).asInstanceOf[IntegerTerm])
