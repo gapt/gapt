@@ -8,7 +8,7 @@ import collection.immutable
 import at.logic.provers.prover9.lisp
 import java.io.File.separator
 import util.parsing.input.Reader
-import at.logic.provers.prover9.lisp.SExpressionParser
+import lisp.{SExpressionParser}
 
 /**
  * Test for the Ivy interface.
@@ -25,12 +25,12 @@ class IvyTest extends SpecificationWithJUnit {
     println()
   }
 
-  def debug(s:String) = {}
+  def debug(s:String) = {println("Debug: "+s)}
 
   "The Ivy Parser " should {
        " parse an empty list " in {
          val parser = new SExpressionParser
-         parser.parseAll(parser.list,"()") match {
+         parser.parse("()") match {
            case parser.Success(result, rest) =>
 //             debug("parsing ok!")
              true must beEqualTo(true)
@@ -42,7 +42,7 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the atom a1" in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.atom,"a1") match {
+      parser.parse("a1") match {
         case parser.Success(result, rest) =>
 //          debug("parsing ok!")
           true must beEqualTo(true)
@@ -55,7 +55,7 @@ class IvyTest extends SpecificationWithJUnit {
     " parse the atom a2(space)" in {
       //this test passes because regexpparsers strip whitespace!
       val parser = new SExpressionParser
-      parser.parseAll(parser.word  ,"a2    ") match {
+      parser.parse("a2    ") match {
         case parser.Success(result, rest) =>
           //          debug("parsing ok!)
           true must beEqualTo(true)
@@ -68,7 +68,7 @@ class IvyTest extends SpecificationWithJUnit {
     """ parse the atom "a b c" """ in {
       //this test passes because regexpparsers strip whitespace!
       val parser = new SExpressionParser
-      parser.parseAll(parser.string ,""""a b c"""") match {
+      parser.parse(""""a b c"""") match {
         case parser.Success(result, rest) =>
           //          debug("parsing ok!)
           true must beEqualTo(true)
@@ -81,12 +81,12 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the list (c1 (c2 c2) c) " in {
         val parser = new SExpressionParser
-      parser.parseAll(parser.list,"(c1 (c2 c2) c)") match {
+      parser.parse("(c1 (c2 c2) c)") match {
         case parser.Success(result, rest) =>
           result match {
             case lisp.List(lisp.Atom("c1")::
                            lisp.List(lisp.Atom("c2"):: lisp.Atom("c2"):: Nil)::
-                           lisp.Atom("c")::Nil) =>
+                           lisp.Atom("c")::Nil)::Nil =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               debug(result)
@@ -101,10 +101,10 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the list c4;;comment" in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.sexpression,"c4;;comment") match {
+      parser.parse("c4;;comment") match {
         case parser.Success(result, rest) =>
           result match {
-            case lisp.Atom("c4") =>
+            case lisp.Atom("c4")::Nil =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               debug(result)
@@ -117,10 +117,10 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the comments ;;comment 1\n;;comment 2" in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.comments,";;comment 1\n;;comment 2\n") match {
+      parser.parse(";;comment 1\n;;comment 2\n") match {
         case parser.Success(result, rest) =>
           result match {
-            case ";;comment 1;;comment 2" =>
+            case Nil =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               debug("correct result:")
@@ -137,10 +137,10 @@ class IvyTest extends SpecificationWithJUnit {
     " parse the list ;;comment\nc5" in {
       debug(" parse the list ;;comment\nc5")
       val parser = new SExpressionParser
-      parser.parseAll(parser.sexpression,";;comment\nc5") match {
+      parser.parse(";;comment\nc5") match {
         case parser.Success(result, rest) =>
           result match {
-            case lisp.Atom("c5") =>
+            case lisp.Atom("c5")::Nil =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               debug(result)
@@ -155,12 +155,12 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the list (c1 (c2 c2) c) ;;comment" in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.sexpression,"(c1 (c2 c2) c);;comment") match {
+      parser.parse("(c1 (c2 c2) c);;comment") match {
         case parser.Success(result, rest) =>
           result match {
             case lisp.List(lisp.Atom("c1")::
               lisp.List(lisp.Atom("c2"):: lisp.Atom("c2"):: Nil)::
-              lisp.Atom("c")::Nil) =>
+              lisp.Atom("c")::Nil)::Nil =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               debug(result)
@@ -173,12 +173,12 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the list (c1 (c2 c2)  ;;comment\nc)" in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.sexpression,"(c1 (c2 c2) c);;comment") match {
+      parser.parse("(c1 (c2 c2) c);;comment") match {
         case parser.Success(result, rest) =>
           result match {
             case lisp.List(lisp.Atom("c1")::
               lisp.List(lisp.Atom("c2"):: lisp.Atom("c2"):: Nil)::
-              lisp.Atom("c")::Nil) =>
+              lisp.Atom("c")::Nil)::Nil =>
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               debug(result)
@@ -192,7 +192,7 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the list (c1 \"c2 c2\" c) " in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.sexpression,"(c1 \"c2 c2\" c)") match {
+      parser.parse("(c1 \"c2 c2\" c)") match {
         case parser.Success(result, rest) =>
           //          debug("parsing ok!")
           true must beEqualTo(true)
@@ -205,7 +205,7 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the list_ a1 b " in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.list_,"a1 b") match {
+      parser.parse("a1 b") match {
         case parser.Success(result, rest) =>
 //          debug("parsing ok!")
           true must beEqualTo(true)
@@ -217,7 +217,7 @@ class IvyTest extends SpecificationWithJUnit {
 
     " parse the list ;;comment 1\n(c1 (c2 c2)  ;;comment 2\nc)" in {
       val parser = new SExpressionParser
-      parser.parseAll(parser.lisp_file, "(\n;;comment 1\nc1 (c2 c2) c);;comment 2") match {
+      parser.parse("(\n;;comment 1\nc1 (c2 c2) c);;comment 2") match {
         case parser.Success(result, rest) =>
           result match {
             case lisp.List(lisp.Atom("c1")::
@@ -400,7 +400,6 @@ class IvyTest extends SpecificationWithJUnit {
   }
 
   " parse the test file prime1-0sk.ivy (clause set of the ) " in {
-    skipped("too time consuming")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"prime1-0sk.ivy")
       true must beEqualTo(true)
@@ -411,5 +410,18 @@ class IvyTest extends SpecificationWithJUnit {
 
     }
   }
+
+  " parse the test file GRA014+1.ivy (clause set of the ) " in {
+    try {
+      val result = SExpressionParser("target" + separator + "test-classes" + separator +"GRA014+1.ivy")
+      true must beEqualTo(true)
+    } catch {
+      case e:Exception =>
+        debug("Exception parsing GRA014+1.ivy: "+e.getMessage)
+        true must beEqualTo(false)
+
+    }
+  }
+
 }
 
