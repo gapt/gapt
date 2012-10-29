@@ -16,43 +16,58 @@ import collection.immutable
  */
 object IvyToRobinson {
   val generator : VariantGenerator = new VariantGenerator( new {var c = 10000; def nextId = {c = c+1; c}} , "iv" )
+  type ProofMap = immutable.Map[String, RobinsonResolutionProof]
 
-  def apply(iproof : IvyResolutionProof) : RobinsonResolutionProof = iproof match {
+  def apply(iproof : IvyResolutionProof) : RobinsonResolutionProof = apply(iproof, immutable.Map[String, RobinsonResolutionProof]())._1
+  def apply(iproof : IvyResolutionProof, map :  ProofMap) : (RobinsonResolutionProof, ProofMap) = iproof match {
     case IInitialClause(id, exp, clause) =>
-      RInitialClause(clause.negative map (_.formula.asInstanceOf[FOLFormula]), clause.positive map (_.formula.asInstanceOf[FOLFormula]))
+      map.get(id) match {
+        case Some(proof) => (proof, map)
+        case None =>
+          val rproof = RInitialClause(clause.negative map (_.formula.asInstanceOf[FOLFormula]), clause.positive map (_.formula.asInstanceOf[FOLFormula]))
+          (rproof, map + ((id,rproof)))
+      }
+
     case IInstantiate(id, exp, sub, clause, parent) =>
-      RInstantiate(IvyToRobinson(parent), sub.asInstanceOf[Substitution[FOLExpression]])
+      map.get(id) match {
+        case Some(proof) => (proof, map)
+        case None =>
+          val (pproof, parentmap) = IvyToRobinson(parent, map)
+          val rproof = RInstantiate(pproof, sub.asInstanceOf[Substitution[FOLExpression]])
+          (rproof, parentmap + ((id, rproof)))
+      }
     case IResolution(id, exp, lit1, lit2, clause, parent1, parent2) =>
-      val rparent1 = IvyToRobinson(parent1)
-      val rparent2 = IvyToRobinson(parent2)
-      val (polarity1, _, index1) = getIndex(lit1, parent1.vertex, rparent1.vertex)
-      val (polarity2, _, index2) = getIndex(lit2, parent2.vertex, rparent2.vertex)
+      map.get(id) match {
+        case Some(proof) => (proof, map)
+        case None =>
+          val (rparent1, parentmap1) = IvyToRobinson(parent1, map)
+          val (rparent2, parentmap2) = IvyToRobinson(parent2, parentmap1)
+          val (polarity1, _, index1) = getIndex(lit1, parent1.vertex, rparent1.vertex)
+          val (polarity2, _, index2) = getIndex(lit2, parent2.vertex, rparent2.vertex)
 
-      //println("Resolved clauses left:  "+parent1.vertex + " - "+rparent1.vertex)
-      //println("Resolved clauses right: "+parent2.vertex + " - "+rparent2.vertex)
-      //println("Resolution literals:"+lit1 +" "+lit2)
-      //println("Resolution indices: "+ ((polarity1, index1)) + ((polarity2, index2)))
+          (polarity1, polarity2) match {
+            case (true,false) =>
+              require(rparent1.vertex.succedent(index1).formula == lit1.formula, "Left parent literal must be correctly found!")
+              require(rparent2.vertex.antecedent(index2).formula == lit2.formula,
+                "Right parent literal "+lit2+" at pos "+ index2 +" must be correctly found!" + rparent2.vertex)
 
-      (polarity1, polarity2) match {
-        case (true,false) =>
-          require(rparent1.vertex.succedent(index1).formula == lit1.formula, "Left parent literal must be correctly found!")
-          require(rparent2.vertex.antecedent(index2).formula == lit2.formula,
-            "Right parent literal "+lit2+" at pos "+ index2 +" must be correctly found!" + rparent2.vertex)
+              val rproof = RResolution(rparent1, rparent2, rparent1.vertex.succedent(index1), rparent2.vertex.antecedent(index2), Substitution[FOLExpression]())
+              (rproof, parentmap2 + ((id, rproof)))
+            case (false,true) =>
+              require(rparent1.vertex.antecedent(index1).formula == lit1.formula, "Left parent literal must be correctly found!")
+              require(rparent2.vertex.succedent(index2).formula == lit2.formula,
+                "Right parent literal "+lit2+" at pos "+ index2 +" must be correctly found!" + rparent2.vertex)
 
-          RResolution(rparent1, rparent2, rparent1.vertex.succedent(index1), rparent2.vertex.antecedent(index2), Substitution[FOLExpression]())
-        case (false,true) =>
-          require(rparent1.vertex.antecedent(index1).formula == lit1.formula, "Left parent literal must be correctly found!")
-          require(rparent2.vertex.succedent(index2).formula == lit2.formula,
-            "Right parent literal "+lit2+" at pos "+ index2 +" must be correctly found!" + rparent2.vertex)
-
-          RResolution(rparent2, rparent1, rparent2.vertex.succedent(index2), rparent1.vertex.antecedent(index1), Substitution[FOLExpression]())
-        case _ => throw new Exception("Error in processing ivy proof: resolved literals "+lit1+" and "+lit2+
-                                      " do not have different polarity!")
+              val rproof = RResolution(rparent2, rparent1, rparent2.vertex.succedent(index2), rparent1.vertex.antecedent(index1), Substitution[FOLExpression]())
+              (rproof, parentmap2 + ((id, rproof)))
+            case _ => throw new Exception("Error in processing ivy proof: resolved literals "+lit1+" and "+lit2+
+                                          " do not have different polarity!")
+          }
       }
 
     case IPropositional(id, exp, clause, parent) =>
-      def remove_first(el:FormulaOccurrence, l:immutable.List[FormulaOccurrence])
-         : (FormulaOccurrence, immutable.List[FormulaOccurrence]) = l match {
+      def remove_first(el:FormulaOccurrence, l:immutable.Seq[FormulaOccurrence])
+         : (FormulaOccurrence, immutable.List[FormulaOccurrence]) = l.toList match {
         case x::Nil =>
           if (x.formula == el.formula)
             (x, Nil)
@@ -69,18 +84,16 @@ object IvyToRobinson {
         case Nil => throw new Exception("Error: want to remove element "+el+" from an empty list!")
       }
 
-      def remove_firsts(fs:immutable.List[FormulaOccurrence], l:immutable.List[FormulaOccurrence]) :
-       (immutable.List[FormulaOccurrence], immutable.List[FormulaOccurrence]) = {
-        fs match {
-          case x::xs =>
-            val (el, rest) = remove_first(x,l)
-            val (r1,r2) = remove_firsts(xs, rest)
+      def remove_firsts(fs:immutable.Seq[FormulaOccurrence], l:immutable.Seq[FormulaOccurrence]) :
+       (immutable.List[FormulaOccurrence], immutable.Seq[FormulaOccurrence]) = {
+        if (fs.isEmpty) { (Nil, l) } else {
+            val (el, rest) = remove_first(fs.head,l)
+            val (r1,r2) = remove_firsts(fs.tail, rest)
             (el::r1, r2)
-          case Nil => (Nil, l)
         }
       }
 
-      def connect(ivy : immutable.List[FormulaOccurrence], robinson : immutable.List[FormulaOccurrence])
+      def connect(ivy : immutable.List[FormulaOccurrence], robinson : immutable.Seq[FormulaOccurrence])
            : immutable.List[FormulaOccurrence] = ivy match {
         case x::xs =>
           val (rancs, rem) = remove_firsts(x.ancestors.toList, robinson)
@@ -97,14 +110,18 @@ object IvyToRobinson {
         case Nil => Nil
       }
 
-      val rparent = IvyToRobinson(parent)
-      val contracted  = (clause.antecedent ++ clause.succedent) filter (_.ancestors.size >1)
-      require(contracted.size == 1, "Error: only one aux formula may have been factored!")
-      val ianc = contracted(0).ancestors
-      val aux::deleted = find_matching(ianc.toList, (rparent.vertex.antecedent ++ rparent.vertex.succedent).toList)
+      map.get(id) match {
+        case Some(proof) => (proof, map)
+        case None =>
 
-
-      RFactor(rparent, aux, deleted, Substitution[FOLExpression]())
+          val (rparent, parentmap) = IvyToRobinson(parent, map)
+          val contracted  = (clause.antecedent ++ clause.succedent) filter (_.ancestors.size >1)
+          require(contracted.size == 1, "Error: only one aux formula may have been factored!")
+          val ianc = contracted(0).ancestors
+          val aux::deleted = find_matching(ianc.toList, (rparent.vertex.antecedent ++ rparent.vertex.succedent).toList)
+          val rproof = RFactor(rparent, aux, deleted, Substitution[FOLExpression]())
+          (rproof, parentmap + ((id, rproof)))
+      }
 
 
 
