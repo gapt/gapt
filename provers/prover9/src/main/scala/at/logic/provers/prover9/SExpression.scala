@@ -7,6 +7,7 @@ import util.parsing.input.{NoPosition, Position, Reader, PagedSeqReader}
 import util.parsing.combinator.Parsers
 import util.parsing.combinator.RegexParsers
 import at.logic.provers.prover9.lisp
+import util.parsing.combinator.PackratParsers
 
 /**** Lisp SExpression Datatypes and Parser
  * This is a basic LISP S-expression parser, without quote character, macros or other fancy stuff.
@@ -127,11 +128,12 @@ object ListReader {
 class ListReader(val list : immutable.List[tokens.Token], val full : immutable.List[tokens.Token])
   extends Reader[tokens.Token] {
   //lazy val rest-full = (rest, full) //used as index in the hashtable
+  lazy val position = IntPosition(full.size-list.size)
   def atEnd = list.isEmpty
-  def first : tokens.Token = { if (atEnd) tokens.EOF else list.head}
-  def rest : ListReader = if (atEnd) this else ListReader(list.tail, full)
+  def first : tokens.Token = { if (atEnd) tokens.EOF else list.head }
+  def rest : ListReader = { if (atEnd) this else ListReader(list.tail, full) }
   def pos : Position =
-    if (list.isEmpty) NoPosition else IntPosition(full.size-list.size)
+    if (list.isEmpty) NoPosition else position
 
 }
 
@@ -161,10 +163,10 @@ class IntPosition(val i:Int) extends Position {
 class Tokenizer extends RegexParsers {
   import at.logic.provers.prover9.lisp.tokens._
 
-  def debug(s:String) = {println("DEBUG: "+s)}
-  def debugrule[T](t:T) : T = { debug("dr: "+t.toString) ; t}
+  //def debug(s:String) = {println("DEBUG: "+s)}
+  //def debugrule[T](t:T) : T = { debug("dr: "+t.toString) ; t}
 
-  def token : Parser[Token] = """"[^"]*"""".r ^^ STRING |
+  lazy val token : Parser[Token] = """"[^"]*"""".r ^^ STRING |
                               """[nN][iI][lL]""".r ^^ (x => NIL) |
                               """[a-zA-Z0-9=_+\-*/]+""".r ^^ WORD |
                               "." ^^ (x => DOT) |
@@ -172,7 +174,7 @@ class Tokenizer extends RegexParsers {
                               ")" ^^ (x => RBRACK) |
                               """;;.*""".r ^^ (x => COMMENT)
 
-  def tokens : Parser[immutable.List[Token]] = rep(token)
+  lazy val tokens : Parser[immutable.List[Token]] = rep(token)
 }
 
 class SExpressionParser2 extends Parsers {
@@ -190,22 +192,39 @@ class SExpressionParser2 extends Parsers {
       }
     }
 
-  def LB : Parser[String] = accept("(", {case LBRACK => "("} )
-  def RB : Parser[String] = accept("(", {case RBRACK => ")"} )
-  def D : Parser[String] = accept(".", {case DOT => "."} )
-  def N : Parser[String] = accept("nil", {case NIL => "nil"} )
+  lazy val LB : Parser[String] = accept("(", {case LBRACK => "("} )
+  lazy val RB : Parser[String] = accept("(", {case RBRACK => ")"} )
+  lazy val D : Parser[String] = accept(".", {case DOT => "."} )
+  lazy val N : Parser[String] = accept("nil", {case NIL => "nil"} )
 
-  def atom :Parser[lisp.Atom] = accept("word", {case WORD(n) => lisp.Atom(n)}) |
+  lazy val atom :Parser[SExpression] = nil |
+                                  accept("word", {case WORD(n) => lisp.Atom(n)}) |
                                   accept("string", {case STRING(n) => lisp.Atom(n)})
 
-  def nil : Parser[lisp.List] =  (LB ~ RB) ^^ (x => lisp.List(Nil)) |
+  lazy val nil : Parser[lisp.List] =  (LB ~! RB) ^^ (x => lisp.List(Nil)) |
                                  (N) ^^ (x => lisp.List(Nil))
 
-  def list : Parser[lisp.List] = LB ~> (rep(sexp) ^^ lisp.List) <~ RB | nil
-  def list_ : Parser[lisp.List] = ((sexp ^^ ((x:SExpression) => lisp.List( x :: Nil))) <~ RB) |
-                                   (((sexp ~ list_) ^^ prepend_tolisplist) <~ RB)
 
-  def dot : Parser[SExpression] =  (LBRACK ~> sexp ~ D ~ sexp <~ RBRACK) ^^ (
+
+  lazy val lcprefix : Parser[SExpression] = LB ~> (sexp ~ list_or_cons) ^^
+    { case x ~ ((is_cons, lisp.List(xs))) => if (is_cons) {
+      xs match {
+        case lisp.List(elems)::Nil => lisp.List(x::elems)
+        case cdr::Nil => lisp.Cons(x,cdr)
+        case Nil => throw new Exception("Error during cons parsing - subrule didn't pass cdr!")
+      }
+    } else {
+      lisp.List(x::xs)
+    } }
+
+  lazy val list_or_cons : Parser[(Boolean,lisp.List)] =
+      DOT ~> sexp <~ RB ^^ { (l : SExpression) => (true,  lisp.List(l::Nil)) }|
+      rep(sexp) <~ RB ^^   { (l : immutable.List[SExpression]) => (false, lisp.List(l)) }
+
+
+  //lazy val list : Parser[lisp.List] = LB ~> (rep1(sexp) ^^ lisp.List) <~ RB |  nil
+/*
+  lazy val dot : Parser[SExpression] =  (LBRACK ~> sexp ~! D ~! sexp <~ RBRACK) ^^ (
     (exp: ~[~[SExpression, String], SExpression]) => {
       val car ~ _ ~ cdr = exp
       cdr match {
@@ -214,15 +233,16 @@ class SExpressionParser2 extends Parsers {
       }
 
     })
-
-  def sexp : Parser[SExpression] = list | dot | atom
-  def lisp_file : Parser[immutable.List[SExpression]] = rep(sexp) <~ EOF
+  */
+  lazy val sexp : Parser[SExpression] = lcprefix | atom
+  lazy val lisp_file : Parser[immutable.List[SExpression]] = rep(sexp) <~ EOF
 
 
   def parse(in : CharSequence) = {
     tokenizer.parseAll(tokenizer.tokens, in) match {
       case tokenizer.Success(result,_) =>
         val r = result filter (_ match { case COMMENT => false; case _ => true} )
+        //val s : Scanners
         //println(r)
         phrase(lisp_file)(ListReader(r))
     }
