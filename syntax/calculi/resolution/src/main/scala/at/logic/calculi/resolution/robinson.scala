@@ -27,6 +27,7 @@ import _root_.at.logic.language.lambda.types.->
 import _root_.at.logic.utils.traits.Occurrence
 import collection.immutable.Seq
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.resolution.instance._
 
   object createContext {
     def apply(set: Seq[FormulaOccurrence], sub: Substitution[FOLExpression]): Seq[FormulaOccurrence] =
@@ -283,6 +284,13 @@ object Formatter {
       else
         (m1 + ((clause, h1+1)), h1+1)
 
+    case Instance(clause, p1, sub) =>
+      val (m1,h1) = createMap(p1, i, map)
+      if (m1 contains clause)
+        (m1,h1)
+      else
+        (m1 + ((clause, h1+1)), h1+1)
+
     case InitialClause(clause) =>
       if (map contains clause)
         (map,i)
@@ -398,6 +406,16 @@ object Formatter {
       else
         (str1 +
           "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Variant "+ sub.toString().replaceFirst("Map","") + "\"];\n\n",
+          triple :: e1)
+
+    case Instance(clause, p1, sub) =>
+      val (str1, e1) = gv( p1, ids, edges)
+      val triple = List(ids(clause), ids(p1.vertex))
+      if (e1 contains (triple))
+        (str1, e1)
+      else
+        (str1 +
+          "v"+ids(p1.vertex)+" -> v"+ids(clause) + "[label=\"Instance "+ sub.toString().replaceFirst("Map","") + "\"];\n\n",
           triple :: e1)
 
     case InitialClause(clause) => ("", edges) //"v" + ids(clause) +" [label=\""+clause+"\"];\n\n"

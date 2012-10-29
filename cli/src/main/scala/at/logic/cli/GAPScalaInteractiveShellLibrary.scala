@@ -96,6 +96,7 @@ import at.logic.provers.prover9.lisp.SExpressionParser
 import at.logic.provers.prover9.ivy.{IvyParser, IvyResolutionProof}
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.provers.prover9.Prover9
+import collection.immutable
 
 object loadProofs {
     def apply(file: String) =
@@ -363,12 +364,41 @@ object loadProofDB {
   }
 
   object loadIvyProof {
+    import at.logic.provers.prover9.ivy
     def apply(fn : String) : RobinsonResolutionProof = {
+      IvyToRobinson(intoIvyResolution(fn))
+    }
+
+    def intoIvyResolution(fn : String) : IvyResolutionProof = {
       val seproof = SExpressionParser(fn)
       if (seproof.isEmpty) throw new Exception("Cannot parse proof: proof expression is empty!")
+      println("parsing sexpression!")
       val ivyproof = IvyParser.parse(seproof(0))
-      IvyToRobinson(ivyproof)
+      println("done")
+
+      ivyproof
     }
+
+    def printNodes(p:IvyResolutionProof, m : immutable.List[String]) : immutable.List[String] = p match {
+      case ivy.InitialClause(id, _, clause) => if (! m.contains(id)) { println(id + " : "+clause); id::m } else m
+      case ivy.Instantiate(id,_, sub, clause, parent) => if (! m.contains(id)) { val l = printNodes(parent, m); println(id + " : "+clause); id::l } else m
+      case ivy.Propositional(id,_, clause, parent) => if (! m.contains(id)) { val l1 = printNodes(parent,m); println(id + " : "+clause); id::l1 } else m
+      case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) => if (! m.contains(id)) {
+          val l1 = printNodes(parent1,m);
+          val l2 = printNodes(parent2,l1);
+          println(id + " : "+clause); id::l2 }
+        else m
+      case _ => println("rule not implemented"); m
+    }
+
+    def collectIds(p:IvyResolutionProof) : immutable.List[String] = p match {
+      case ivy.InitialClause(id, _, clause) => id::Nil
+      case ivy.Instantiate(id,_, sub, clause, parent) => id::collectIds(parent)
+      case ivy.Propositional(id,_, clause, parent) => id::collectIds(parent)
+      case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) => id::(collectIds(parent1) ++ collectIds(parent2))
+      case _ => println("rule not implemented"); Nil
+    }
+
   }
 
   // atp support
