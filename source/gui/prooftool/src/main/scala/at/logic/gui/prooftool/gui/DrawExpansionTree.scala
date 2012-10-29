@@ -105,31 +105,47 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
     case AtomET(f) => Nil
   }
 
-  // Extracts list of formulas from the expansion tree.
-  def extractFormulas(et: ExpansionTree): List[HOLFormula] = et match {
+  // Extracts list of formulas from the expansion tree at depth n.
+  def extractFormulas(et: ExpansionTree, formula: HOLFormula, n: Int, start: Boolean): List[HOLFormula] = et match {
     case WeakQuantifier(f, seq) =>
-      seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: f :: extractFormulas(pair._1))
+      if (f == formula) seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: extractFormulas(pair._1,formula,n,start = true))
+      else if (f.subTerms.contains(formula)) seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: extractFormulas(pair._1,formula,n,start))
+      else if (n > 1) seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: extractFormulas(pair._1,formula,n-1,start))
+      else if (start) List(f)
+      else Nil
     case StrongQuantifier(f, v, et1) =>
-      f :: extractFormulas(et1)
+      if (f == formula) extractFormulas(et1,formula,n,start = true)
+      else if (f.subTerms.contains(formula)) extractFormulas(et1,formula,n,start)
+      else if (n > 1) extractFormulas(et1,formula,n-1,start)
+      else if (start) List(f)
+      else Nil
     case AndET(left, right) =>
-      val ll = extractFormulas(left)
-      val rl = extractFormulas(right)
-      ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => And(f1,f2)))
+      val ll = extractFormulas(left,formula,n,start)
+      val rl = extractFormulas(right,formula,n,start)
+      if (ll == Nil) rl
+      else if (rl == Nil) ll
+      else ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => And(f1,f2)))
     case OrET(left, right) =>
-      val ll = extractFormulas(left)
-      val rl = extractFormulas(right)
-      ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Or(f1,f2)))
+      val ll = extractFormulas(left,formula,n,start)
+      val rl = extractFormulas(right,formula,n,start)
+      if (ll == Nil) rl
+      else if (rl == Nil) ll
+      else ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Or(f1,f2)))
     case ImpET(left, right) =>
-      val ll = extractFormulas(left)
-      val rl = extractFormulas(right)
-      ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Imp(f1,f2)))
-    case NotET(tree) => extractFormulas(tree).map(f => Neg(f))
-    case AtomET(f) => List(f)
+      val ll = extractFormulas(left,formula,n,start)
+      val rl = extractFormulas(right,formula,n,start)
+      if (ll == Nil) rl
+      else if (rl == Nil) ll
+      else ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Imp(f1,f2)))
+    case NotET(tree) =>
+      extractFormulas(tree,formula,n,start).map(f => Neg(f))
+    case AtomET(f) => if (start) List(f) else Nil
   }
 
   def formulaToComponent(holF: HOLFormula, list: List[List[HOLExpression]]): BoxPanel = new BoxPanel(Orientation.Horizontal) {
     background = new Color(255,255,255)
     yLayoutAlignment = 0.5
+    opaque = false
 
     holF match {
       case Neg(f) =>
@@ -158,8 +174,8 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
         contents += parenthesis._2
       case ExVar(_,_) | AllVar(_,_) =>
         val (quantifiers, number, formula) = analyzeFormula(holF)
+        val (list1, list2) = splitList(number,list)
         if ( state.get(holF) != Some(Expand) ) {
-          val (list1, list2) = splitList(number,list)
           val lbl = DrawSequent.latexToLabel(quantifiers, ft)
           lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -168,15 +184,21 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
           contents += lbl
           if ( state.get(holF) == Some(Open) ) contents += drawTerms(list1)
           contents += formulaToComponent(formula, list2)
-        } else { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
-
-          println("entered")
-          contents += label(getMatrixSymbol(holF),ft)
-          println("label drawn")
-          val fs = extractFormulas(expansionTree)
-          println("fs extracted")
-          contents += drawMatrix(fs) // At this point wrong list is passed and this causes the cycle
-          println("matrix drawn")
+        } else {
+          val formulas = extractFormulas(expansionTree,holF,number,start = false)
+          if (formulas.size > 1) { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
+            val lbl = DrawSequent.latexToLabel(getMatrixSymbol(holF), ft)
+            lbl.reactions += {
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+                PopupMenu(DrawExpansionTree.this, holF, lbl, e.point.x, e.point.y)
+            }
+            contents += lbl
+            contents += drawMatrix(formulas,list2)
+          } else if (formulas.size == 1) contents += formulaToComponent(formulas.head,list2)
+          else { // If formulas are empty, quantified formula comes from weakening so leave it unchanged.
+            state -= holF
+            contents += formulaToComponent(holF,list2)
+          }
         }
       case _ =>
         val lbl = DrawSequent.formulaToLabel(holF,ft)
@@ -186,8 +208,8 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
   }
 
   def getMatrixSymbol(formula: HOLFormula) = formula match {
-    case ExVar(v,f) => "\\bigvee"
-    case AllVar(v,f) => "\\bigwedge"
+    case ExVar(_,_) => "\\bigvee"
+    case AllVar(_,_) => "\\bigwedge"
     case _ => throw new Exception("Something went wrong in DrawExpansionTree!")
   }
 
@@ -244,34 +266,33 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
   }
 
   // Draws list of formulas like single column matrix surrounded by < >.
-  def drawMatrix(list: List[HOLFormula]) = new BoxPanel(Orientation.Vertical) {
+  def drawMatrix(list: List[HOLFormula], lTerm: List[List[HOLExpression]]) = new BoxPanel(Orientation.Vertical) {
     background = new Color(255,255,255)
     yLayoutAlignment = 0.5
     border = Swing.EmptyBorder(0,ft.getSize,0,ft.getSize)
 
     list.foreach(f => {
-      val lbl = label(DrawSequent.formulaToLatexString(f),ft) // this is temporary solution until I get correct list of formulas.
-        //formulaToComponent(f,Nil)) // TODO: instead of Nil maybe real list of terms should be passed.
-      lbl.border = Swing.EmptyBorder(3)
-      lbl.opaque = false
-      contents += lbl
+      val bp = formulaToComponent(f,lTerm)
+      bp.border = Swing.EmptyBorder(3)
+      contents += bp
     })
 
     override def paintComponent(g: Graphics2D) {
       import java.awt.{BasicStroke,RenderingHints}
       super.paintComponent(g)
 
-      val strokeSize = if (ft.getSize / 25 < 1) 1 else ft.getSize / 25
+      val fSize = ft.getSize
+      val strokeSize = if (fSize / 25 < 1) 1 else ft.getSize / 25
 
       g.setStroke(new BasicStroke(strokeSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND))
       g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
 
-      val leftAngleNodeX = location.x - ft.getSize
-      val rightAngleNodeX = location.x + size.width - 8 - ft.getSize
+      val leftAngleNodeX = location.x - fSize
+      val rightAngleNodeX = location.x + size.width - 2 * fSize
       val anglesNodeY = location.y + size.height / 2
 
-      val leftAngleEdgesX = location.x
-      val rightAngleEdgesX = location.x + size.width - 8 - 2 * ft.getSize
+      val leftAngleEdgesX = location.x - fSize / 2
+      val rightAngleEdgesX = location.x + size.width - 5 * (fSize / 2)
       val anglesEdge1Y = location.y
       val anglesEdge2Y = location.y + size.height
 
@@ -286,7 +307,6 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
   def label(s: String, fnt: Font) = new MyLabel {
     background = Color.white
     yLayoutAlignment = 0.5
-    opaque = true
     font = fnt
 
     val formula = new TeXFormula(s)
@@ -299,6 +319,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
 
     icon = myicon
     if (s == "(" || s == ")") {
+      opaque = true
       tooltip = "Click to mark/unmark."
       listenTo(mouse.clicks)
       reactions += {
