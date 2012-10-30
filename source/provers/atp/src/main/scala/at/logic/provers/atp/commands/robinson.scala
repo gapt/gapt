@@ -18,6 +18,8 @@ import at.logic.language.fol.FOLFormula
 import at.logic.language.hol.replacements.{getAllPositions, Replacement}
 import at.logic.calculi.lk.base.types.FSequent
 
+import sequents._
+
 /**
  * Created by IntelliJ IDEA.
  * User: shaolin
@@ -73,7 +75,7 @@ import scala.Some
     override def toString = "VariantsCommand()"
   }
 
-case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
+  case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
       val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
       val mgus = alg.unify(lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression])
@@ -84,20 +86,27 @@ case class ResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends Data
     override def toString = "ResolveCommand("+alg.getClass+")"
   }
 
-/* TODO: finish this implementation
   // this command implements ``forgetful resolution´´ as in the cut-intro paper
   case class ForgetfulResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
+      println("********** ForgetfulResolveCommand ************")
       val ((p1,_)::(p2,_)::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
+      println("Resolving on clauses: ")
+      println(p1.root)
+      println(p2.root)
       val ret = new ResolveCommand(alg).apply(state, data)
-      val ret2 = new InsertResolventCommand().apply(ret._1, ret._2)
-
-      val cur_state = ret2._1
-      cur_state("clauses") -= p1 -= p2
-      List((cur_state, ret2._2))
+      val ret2 = new InsertResolventCommand().apply(ret.head._1, ret.head._2)
+      println("Result: ")
+      println(ret2.head._2.asInstanceOf[RobinsonResolutionProof].root)
+      var cur_state = ret2.head._1
+      // Remove (forget) resolved clauses.
+      cur_state("clauses").asInstanceOf[PublishingBuffer[RobinsonResolutionProof]] -= p1 -= p2
+      println("***********************************************")
+      List((cur_state, ret2.head._2))
     }
+    
+    override def toString = "ForgetfulResolveCommand("+alg.getClass+")"
   }
-*/
 
   // this command should be used when the target clause is not the empty clause and should be called before Resolution is called
   case class ClauseFactorCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
