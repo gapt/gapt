@@ -69,6 +69,20 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1c)))))))
   def streamc: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1c))
+
+  def forgetful1 : Stream[Command[Clause]] = Stream.cons(SimpleRefinementGetCommand[Clause],
+    Stream.cons(VariantsCommand,
+    Stream.cons(/*DeterministicAndCommand[Clause]((
+      List(*/
+      ApplyOnAllPolarizedLiteralPairsCommand[Clause], Stream.cons(ForgetfulResolveCommand(FOLUnificationAlgorithm), /*FactorCommand(FOLUnificationAlgorithm)),
+      List(ParamodulationCommand(FOLUnificationAlgorithm)))),*/
+    /*Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),*/
+    Stream.cons(InsertResolventCommand[Clause],
+    Stream.cons(RefutationReachedCommand[Clause], forgetful1))))))
+
+  def forgetfulStream : Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], forgetful1))
+
   def stream1d: Stream[Command[Clause]] =  Stream.cons(SimpleRefinementGetCommand[Clause],
     Stream.cons(VariantsCommand,
     Stream.cons(DeterministicAndCommand[Clause]((
@@ -103,6 +117,17 @@ class ProverTest extends SpecificationWithJUnit {
     }
 
   "Prover" should {
+    "1-step forgetful resolution should work" in {
+      println("===================> Starting forgetful resolution test")
+      var what = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser("P(x). -P(x).").getClauseList), forgetfulStream ) )
+      what.next.get.root.setEquals(Clause(List(),List())) must beTrue
+/*      what.next must beLike {
+        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => ok
+        case _ => ko
+      }*/
+      println("=======================================================")
+    }
+
     "in case it has only one clause return it if it is the empty clause" in {
       getRefutation(".") must beTrue    
     }

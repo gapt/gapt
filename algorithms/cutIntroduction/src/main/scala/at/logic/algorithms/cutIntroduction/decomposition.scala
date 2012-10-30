@@ -64,7 +64,10 @@ class DeltaTable() {
 
       // Join the pairs of each subset
       val subsetpairs = allsubsets.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {(subset, acc1) =>
-        val d = subset.foldRight(List[FOLTerm](), List[FOLTerm]()) ( (el, acc2) => (el._1 :: acc2._1, el._2 ++ acc2._2))
+        val d = subset.foldRight(List[FOLTerm](), List[FOLTerm]()) ( (el, acc2) => el._1 match {
+          case null => acc2
+          case _ => (el._1 :: acc2._1, el._2 ++ acc2._2)
+        })
         d :: acc1
       }
 
@@ -77,29 +80,31 @@ class DeltaTable() {
       )
 
       // Return all the U sets and the terms covered
-      val us = valid.foldRight(List[List[FOLTerm]]()) ((p, acc) => p._1 :: acc)
-      val ts = valid.foldRight(List[FOLTerm]()) ((p, acc) => p._2 ++ acc)
+      valid.foldRight(List[List[FOLTerm]]()) ((p, acc) => p._1 :: acc)
+      //val ts = valid.foldRight(List[FOLTerm]()) ((p, acc) => p._2 ++ acc)
 
-      (us, ts)
+      //(us, ts)
     }
 
+    // THIS SOLUTION DOES NOT WORK
     // These are all the terms that should be covered by the decomposition
-    val allterms = terms.foldRight(List[FOLTerm]()) { case ((f, t), acc) => acc ++ t}
+    //val allterms = terms.foldRight(List[FOLTerm]()) { case ((f, t), acc) => acc ++ t}
 
     table.foldRight(List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])]()) {case ((s, forms), decompositions) =>
 
-      //if(allFormulas.forall(f => forms.keySet.contains(f))) {
-      var termsCovered : List[FOLTerm] = Nil
+      if(allFormulas.forall(f => forms.keySet.contains(f))) {
+      //var termsCovered : List[FOLTerm] = Nil
       val setsOfUi = forms.keys.foldRight(Map[FormulaOccurrence, List[List[FOLTerm]]]()) { (f, acc) =>
-        val (us, ts) = findFormulaDecompositions(s, f)
-        termsCovered = termsCovered ++ ts
-        acc + (f -> us)
-        //acc + (f -> findFormulaDecompositions(s, f))
+        //val (us, ts) = findFormulaDecompositions(s, f)
+        //termsCovered = termsCovered ++ ts
+        //acc + (f -> us)
+        acc + (f -> findFormulaDecompositions(s, f))
       }
 
       // Make sure that U is not empty and that the terms covered by this U
       // are all needed
-      if(!setsOfUi.isEmpty && allterms.forall(t => termsCovered.contains(t))) {
+      //if(!setsOfUi.isEmpty && allterms.forall(t => termsCovered.contains(t))) {
+      if(!setsOfUi.isEmpty) {
         val uSets = mapProduct(setsOfUi)
   
         val dec = uSets.foldRight(List[(Map[FormulaOccurrence, List[FOLTerm]], List[FOLTerm])]()) { (u, acc) =>
@@ -108,8 +113,8 @@ class DeltaTable() {
         dec ++ decompositions
       }
       else decompositions
-      //}
-      //else decompositions
+      }
+      else decompositions
     }
   }
 }
@@ -190,11 +195,15 @@ object decomposition {
 
     terms.foreach { case (f, t) =>
       // Initialize with trivial decompositions of size 1
-      t.foreach(e => deltaTable.add(f, e::Nil, e::Nil, eigenvariable) )
+      //t.foreach(e => deltaTable.add(f, e::Nil, e::Nil, eigenvariable) )
+      // Initialize with empty decomposition
+      deltaTable.add(f, Nil, Nil, null)
 
-      for (n <- 2 until t.length+1) {
+      for (n <- 1 until t.length+1) {
+        //println("n = " + n)
         // Take only the decompositions of term sets of size (n-1) from the current delta table
         val one_less = deltaTable.getDecompositionsOfSize(n-1)
+        //println("Number of decompositions of size " + (n-1) + " is " + one_less.size)
 
         one_less.foreach { case (s, forms) =>
           // If this formula's terms have a decomposition with this s
@@ -211,10 +220,13 @@ object decomposition {
               termsToAdd.foreach {case e =>
                 val incrementedtermset = ti :+ e
                 val p = delta(incrementedtermset, eigenvariable)
-           
-                // If non-trivial
-                if (p._2 != (incrementedtermset)) {
+
+                // If non-trivial or equal to 1 (for the term set of size
+                // 1, the decomposition is always trivial and should be added)
+                if (p._2.size == 1 || p._2 != (incrementedtermset)) {
                   // Update delta-table
+                  //println("Adding to delta-table: ")
+                  //println(p._1 + " o " + p._2)
                   deltaTable.add(f, incrementedtermset, p._2, p._1)
                 }
               }
@@ -228,7 +240,11 @@ object decomposition {
     deltaTable
   }
 
-  def delta(terms: List[FOLTerm], eigenvariable: FOLVar) : (FOLTerm, List[FOLTerm]) = terms.head match {
+  def delta(terms: List[FOLTerm], eigenvariable: FOLVar) : (FOLTerm, List[FOLTerm]) = terms.size match {
+    // IMPORTANT!!!!
+    // With this, the constant decomposition is not found. Without this, the constant decomposition is the only one found.
+    case 1 => return (eigenvariable, terms)
+    case _ => terms.head match {
     // If the variables are reached
     case FOLVar(s) =>
       // If all variables are equal
@@ -299,6 +315,7 @@ object decomposition {
       }
       // If head terms are different
       else { return (eigenvariable, terms) }
+  }
   }
   
 }

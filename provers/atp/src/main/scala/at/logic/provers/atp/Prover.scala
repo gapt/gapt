@@ -73,12 +73,14 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
     }
     else {
       //if (!conf.commands.head.toString.matches("(VariantsCommand|IsGuidedNotFoundCommand|SimpleRefinementGetCommand|ClauseFactorCommand).*"))
-          println("\nProver Executing command: "+Console.RED+conf.commands.head.getClass+Console.RESET+" :: "+conf.commands.head.toString+"\n")
+      //println("\nProver Executing command: "+Console.RED+conf.commands.head.getClass+Console.RESET+" :: "+conf.commands.head.toString+"\n")
 
       conf.commands.head match {
         case com: InitialCommand[_] => com(conf.state).map(x => new MyConfiguration(x._1, conf.commands.tail, x._2))
         case com: DataCommand[_] => {
           val res = com(conf.state, conf.data)
+          //println("==> Command: " + com.toString)
+          //println("Result of data command: " + res)
           if (res.isEmpty) List(new MyConfiguration(conf.state, skipNonInit(conf.commands.tail), ()))
           else res.map(x => new MyConfiguration(x._1, conf.commands.tail, x._2))
         }
