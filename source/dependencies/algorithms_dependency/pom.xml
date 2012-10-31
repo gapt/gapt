@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>algorithms_dependency</artifactId>
-  <packaging>pom</packaging>  
+  <packaging>pom</packaging>
   <name>Grouped dependencies for the algorithms module</name>
 
   <dependencies>
@@ -50,6 +50,11 @@
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>folalgorithms</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>expansionTreesAlgorithms</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
