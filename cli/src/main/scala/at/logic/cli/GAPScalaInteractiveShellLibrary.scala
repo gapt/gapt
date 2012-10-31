@@ -58,6 +58,7 @@ import at.logic.provers.atp.Prover
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.expansionTrees.ExpansionTree
+import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
 
 import at.logic.gui.prooftool.gui.Main
 
@@ -583,7 +584,9 @@ object loadProofDB {
     def apply(proof: LKProof): Tuple2[Seq[ExpansionTree],Seq[ExpansionTree]] = at.logic.transformations.herbrandExtraction.extractExpansionTrees(proof)
   }
 
-
+ object compressExpansionTree {
+   def apply(tree: ExpansionTree): MultiExpansionTree = at.logic.algorithms.expansionTrees.compressQuantifiers(tree)
+ }
 
   object definitions {
   }
@@ -822,6 +825,7 @@ object hol2fol {
       println("  extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant")
       println("  extractHerbrandSequent: LKProof => Sequent - extract the Herbrand sequent from a proof without quantified cuts.")
       println("  extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree) - extract the expansion trees of all formulas in the end sequent from a skolemized proof.")
+      println("  compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.")
       // TODO: add expansion tree extraction to the top level and put it here
       println("")
       println("Cut-Elimination by Resolution:")

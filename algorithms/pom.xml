@@ -23,6 +23,7 @@
     <module>rewriting</module>
     <module>cutIntroduction</module>
     <module>interpolation</module>
+    <module>expansionTrees</module>
   </modules>
 
   <packaging>pom</packaging>
@@ -57,7 +58,7 @@
       <groupId>at.logic</groupId>
       <artifactId>simple_parsing</artifactId>
       <version>1.0-SNAPSHOT</version>
-    </dependency>    
+    </dependency>
   </dependencies>
-  
+
 </project>
