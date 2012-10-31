@@ -20,6 +20,7 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.provers.prover9.ivy.IvyParser
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionProof}
+import java.io.File
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -72,6 +73,8 @@ object Prover9 {
 
   def p9_to_ivy( input_file: String, output_file: String ) : Int = {
     val ret = exec("prooftrans ivy", input_file )
+//    println("prooftrans output:")
+//    println(ret._2)
     writeToFile( ret._2, output_file )
     ret._1
   }
@@ -83,7 +86,11 @@ object Prover9 {
 
     tptpToLadr( tmp_file.getAbsolutePath, input_file )
     tmp_file.delete
-    
+    refuteLadr(input_file, output_file)
+  }
+
+
+    def refuteLadr( input_file: String, output_file: String ) : Option[RobinsonResolutionProof] = {
     // find out which symbols have been renamed
     // this information should eventually be used when
     // parsing the prover9 proof
@@ -128,6 +135,14 @@ object Prover9 {
     ret
   }
 
+  def refute( filename : String ) : Option[RobinsonResolutionProof] = {
+    val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
+    val ret = refuteLadr(new File(filename).getAbsolutePath, out_file.getAbsolutePath )
+    out_file.delete
+    ret
+  }
+
+
   def parse_prover9(p9_file : String) : RobinsonResolutionProof = {
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
     try {
@@ -138,7 +153,7 @@ object Prover9 {
       rproof
     } catch {
       case e : Exception =>
-        println("Warning: Prover9 run successfully but conversion to resolution proof failed!")
+        println("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
         InitialClause(Nil,Nil)
     }
   }

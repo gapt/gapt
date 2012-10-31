@@ -483,6 +483,7 @@ object loadProofDB {
 
   object prover9 {
     //we have to refute
+    def apply( filename : String) : Option[RobinsonResolutionProof] = Prover9.refute(filename)
     def apply( clauses: Seq[FSequent] ) : Option[RobinsonResolutionProof] = Prover9.refute( clauses.toList )
     def apply( clauses: List[Sequent] ) : Option[RobinsonResolutionProof]= Prover9.refute( clauses map (_.toFSequent))
   }
