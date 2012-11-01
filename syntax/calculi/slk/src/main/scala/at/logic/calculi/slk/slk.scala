@@ -980,6 +980,23 @@ object OrEquivalenceRule1 {
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the trsArrowRightRule with the given formula")
       }
     }
+    def apply(s1: LKProof, a: HOLFormula, main: HOLFormula) = {
+      val auxf = (s1.root.succedent).filter(x => x.formula == a).head
+      val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
+      def createSide( s : Seq[FormulaOccurrence] ) =
+        if ( s.contains(auxf) )
+          prinFormula +: createContext( s.filter(_ != auxf) )
+        else
+          createContext(s)
+
+      new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = trsArrowRuleType
+        def aux = (auxf::Nil)::Nil
+        def prin = prinFormula::Nil
+        override def name = "\u21A0:r"
+      }
+    }
     def unapply(proof: LKProof) = if (proof.rule == trsArrowRuleType) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
       val ((a1::Nil)::Nil) = r.aux
@@ -1000,6 +1017,23 @@ object OrEquivalenceRule1 {
       ((s1.root.antecedent).filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(auxf, trs))).toList match {
         case (x::_) => trsArrowRule.apply(s1, x, trs)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the left side found for application of the trsArrowLeftRule with the given formula")
+      }
+    }
+    def apply(s1: LKProof, a: HOLFormula, main: HOLFormula) = {
+      val auxf = (s1.root.antecedent).filter(x => x.formula == a).head
+      val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
+      def createSide( s : Seq[FormulaOccurrence] ) =
+        if ( s.contains(auxf) )
+          prinFormula +: createContext( s.filter(_ != auxf) )
+        else
+          createContext(s)
+
+      new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+        with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+        def rule = trsArrowRuleType
+        def aux = (auxf::Nil)::Nil
+        def prin = prinFormula::Nil
+        override def name = "\u21A0:l"
       }
     }
     def unapply(proof: LKProof) = if (proof.rule == trsArrowRuleType) {

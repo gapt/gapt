@@ -38,19 +38,19 @@ import struct.cutOccConfigToCutConfig
 
 trait ProjectionTerm
 
-class pTimes(val rho: String, val left: ProjectionTerm, val right: ProjectionTerm) extends ProjectionTerm
+class pTimes(val rho: String, val left: ProjectionTerm, val right: ProjectionTerm,  val aux1: HOLFormula, val aux2: HOLFormula) extends ProjectionTerm
 class pPlus(val seq1: Sequent, val seq2: Sequent, val left: ProjectionTerm, val right: ProjectionTerm, val w1: Sequent, val w2: Sequent) extends ProjectionTerm
-class pUnary(val rho: String, val upper: ProjectionTerm) extends ProjectionTerm
+class pUnary(val rho: String, val upper: ProjectionTerm, val auxl: List[HOLExpression]) extends ProjectionTerm
 class pProofLinkTerm(val seq: Sequent, val omega: Set[FormulaOccurrence], val proof_name: String, val index: IntegerTerm, val ccanc: Set[FormulaOccurrence]) extends ProjectionTerm
 class pAxiomTerm(val seq: Sequent) extends ProjectionTerm
 
 
 object pTimes {
-  def apply(rho: String, left: ProjectionTerm, right: ProjectionTerm) : pTimes = {
-    new pTimes(rho, left, right)
+  def apply(rho: String, left: ProjectionTerm, right: ProjectionTerm,  aux1: HOLFormula,  aux2: HOLFormula) : pTimes = {
+    new pTimes(rho, left, right, aux1, aux2)
   }
   def unapply(term : ProjectionTerm) = term match {
-    case t : pTimes => Some((t.rho, t.left, t.right))
+    case t : pTimes => Some((t.rho, t.left, t.right, t.aux1, t.aux2))
     case _ => None
   }
 }
@@ -66,11 +66,11 @@ object pPlus {
 }
 
 object pUnary {
-  def apply(rho: String, upper: ProjectionTerm) = {
-    new pUnary(rho, upper)
+  def apply(rho: String, upper: ProjectionTerm, auxl: List[HOLExpression]) = {
+    new pUnary(rho, upper, auxl)
   }
   def unapply(term : ProjectionTerm) = term match {
-    case t : pUnary => Some((t.rho, t.upper))
+    case t : pUnary => Some((t.rho, t.upper, t.auxl))
     case _ => None
   }
 }
@@ -272,7 +272,7 @@ object ProjectionTermCreators {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), m.formula::Nil)
     }
     case SchemaProofLinkRule( seq, link, ind::_ ) => {
       pProofLinkTerm( seq, omega, link, ind, cut_ancs)
@@ -281,7 +281,7 @@ object ProjectionTermCreators {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), m.formula::Nil)
     }
     case CutRule( p1, p2, _, a1, a2 ) => {
       val omega_ancs = getAncestors(omega)
@@ -301,7 +301,7 @@ object ProjectionTermCreators {
         pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
       }
       else
-        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs))
+        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
     }
     case AndRightRule(p1, p2, _, a1, a2, m) => {
       val omega_ancs = getAncestors(omega)
@@ -313,49 +313,49 @@ object ProjectionTermCreators {
         pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
       }
       else
-        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs))
+        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
     }
     case NegLeftRule( p, _, a, m ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::Nil)
     }
     case AndLeft1Rule(p, r, a, m) =>  {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
     }
     case AndLeft2Rule(p, r, a, m) =>  {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
     }
     case OrRight1Rule(p, r, a, m) =>  {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
     }
     case OrRight2Rule(p, r, a, m) =>  {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
     }
     case NegRightRule( p, _, a, m ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::Nil)
     }
-    case ImpRightRule( p, _, _, _, m ) => {
+    case ImpRightRule( p, _, a1, a2, m ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
     }
     case ImpLeftRule(p1, p2, _, a1, a2, m) => {
       val omega_ancs = getAncestors(omega)
@@ -367,25 +367,25 @@ object ProjectionTermCreators {
         pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
       }
       else
-        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs))
+        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
     }
     case ContractionLeftRule(p, _, a1, a2, m) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
     }
     case ContractionRightRule(p, _, a1, a2, m) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
     }
-    case ForallLeftRule( p, _, a, m, _ ) => {
+    case ForallLeftRule( p, _, a, m, t ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t::Nil)
     }
     case ForallRightRule( p, _, a, m, _ ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
@@ -399,53 +399,59 @@ object ProjectionTermCreators {
       else
         throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
     }
-    case ExistsRightRule( p, _, a, m, _ ) => {
+    case ExistsRightRule( p, _, a, m, t ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t.asInstanceOf[HOLFormula]::Nil)
     }
     case AndEquivalenceRule1(up, r, aux, main) =>  {
       if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
         extract(up, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(up, omega, cut_ancs))
+        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
     }
     case AndEquivalenceRule2(up, r, aux, main) =>  {
       if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
         extract(up, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(up, omega, cut_ancs))
+        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
     }
     case AndEquivalenceRule3(up, r, aux, main) =>  {
       if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
         extract(up, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(up, omega, cut_ancs))
+        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
     }
     case OrEquivalenceRule1(up, r, aux, main) =>  {
       if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
         extract(up, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(up, omega, cut_ancs))
+        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
     }
     case OrEquivalenceRule2(up, r, aux, main) =>  {
       if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
         extract(up, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(up, omega, cut_ancs))
+        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
     }
     case OrEquivalenceRule3(up, r, aux, main) =>  {
       if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
         extract(up, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(up, omega, cut_ancs))
+        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
     }
-    case trsArrowRule( p, _, a, m ) => {
+    case trsArrowLeftRule( p, _, a, m ) => {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs))
+        pUnary(pr.name+":l", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+    }
+    case trsArrowRightRule( p, _, a, m ) => {
+      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+        extract(p, omega, cut_ancs)
+      else
+        pUnary(pr.name+":r", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
     }
 
 
@@ -464,7 +470,7 @@ object ProjectionTermCreators {
 object PStructToExpressionTree {
 
   def apply(s: ProjectionTerm) : Tree[AnyRef] = s match {
-    case pTimes(rho, left, right) => BinaryTree(new PTimesC(rho), apply(left), apply(right))
+    case pTimes(rho, left, right, aux1, aux2) => BinaryTree(new PTimesC(rho), apply(left), apply(right))
     case pPlus(seq1, seq2, left, right, w1, w2) => {
 //      BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), apply(left), apply(right), w1, w2)
       val t1 = if (w1.antecedent.isEmpty && w1.succedent.isEmpty) apply(left)
@@ -474,7 +480,7 @@ object PStructToExpressionTree {
       BinaryTree(PPlusC, t1, t2)
 
     }
-    case pUnary(rho, upper) => UnaryTree(rho, apply(upper))
+    case pUnary(rho, upper, auxl) => UnaryTree(rho, apply(upper))
     case pAxiomTerm(seq) => {
       LeafTree(seq)
     }
@@ -513,15 +519,14 @@ object PStructToExpressionTree {
 // for nice printing in console - the braces are with different colors and such things
   def applyConsole(s: ProjectionTerm) : Tree[String] = s match {
 
-    case pTimes(rho, left, right) => BinaryTree[String](printSchemaProof.formulaToString(new PTimesC(""))+rho, applyConsole(left), applyConsole(right))
+    case pTimes(rho, left, right, a1, a2) => BinaryTree[String](printSchemaProof.formulaToString(new PTimesC(""))+rho, applyConsole(left), applyConsole(right))
     case pPlus(seq1, seq2, left, right, w1, w2) => {
 //      BinaryTreeWeak12(printSchemaProof.formulaToString(pPlusC), applyapply(left), applyapply(right), w1, w2)
       val t1 = UnaryTree[String]("w^{"+ printSchemaProof.sequentToString(w1) +"}", applyConsole(left))
       val t2 = UnaryTree[String]("w^{"+ printSchemaProof.sequentToString(w2) +"}", applyConsole(right))
       BinaryTree[String](printSchemaProof.formulaToString(PPlusC), t1, t2)
-
     }
-    case pUnary(rho, upper) => UnaryTree[String](rho, applyConsole(upper))
+    case pUnary(rho, upper, l) => UnaryTree[String](rho, applyConsole(upper))
 //    case pProofLinkTerm(omega, proof_name, index) => LeafTree(new pProjSymbol(omega, index))
     case pAxiomTerm(seq) => {
 //      println("pAxiomTerm "+ printSchemaProof.sequentToString(seq))
@@ -678,7 +683,7 @@ object PStructToExpressionTree {
         case times: pTimes => {
           val left = GroundingProjectionTerm(times.left, subst)
           val right = GroundingProjectionTerm(times.right, subst)
-          pTimes(times.rho, left, right)
+          pTimes(times.rho, left, right, subst(times.aux1).asInstanceOf[HOLFormula], subst(times.aux2).asInstanceOf[HOLFormula])
         }
         case plus: pPlus => {
           val left = GroundingProjectionTerm(plus.left, subst)
@@ -696,7 +701,7 @@ object PStructToExpressionTree {
         }
         case unary: pUnary => {
 //          println("unary.rho = "+unary.rho)
-          pUnary(unary.rho, GroundingProjectionTerm(unary.upper, subst))
+          pUnary(unary.rho, GroundingProjectionTerm(unary.upper, subst), unary.auxl.map(f => subst(f)))
         }
         case pProofLinkTerm( seq, omega, proof_name, index, canc ) => {
           pProofLinkTerm( seq, omega, proof_name, subst(index).asInstanceOf[IntegerTerm], canc )
@@ -711,11 +716,13 @@ object PStructToExpressionTree {
     }
   }
 
+//unfolds (normalizes) a projection term, i.e. removes the "pr" symbols according to the rewriting rules (see the journal paper)
   object UnfoldProjectionTerm {
     def apply(t: ProjectionTerm): ProjectionTerm = {
       t match {
         case pProofLinkTerm( seq, omega, proof_name, index, canc ) => {
           if(index == IntZero()){
+            //TODO: compute the CC !!!!!!!!!!!!
             val omegaAnc = omega.foldLeft(Set.empty[FormulaOccurrence])((x, acc) => getAncestors(x) + acc)
             val p = SchemaProofDB.get(proof_name).base
             val omega1 = Set.empty[FormulaOccurrence] +p.root.succedent.head
@@ -725,6 +732,10 @@ object PStructToExpressionTree {
           val p = SchemaProofDB.get(proof_name).rec
 //          val omegaAnc = omega.foldLeft(Set.empty[FormulaOccurrence])((x, acc) => getAncestors(x) + acc)
           val omega1 = Set.empty[FormulaOccurrence] +p.root.succedent.head
+          if (!omega.isEmpty)                  {
+            println("\n\nomega"+omega.head.formula)
+          }
+
           val omega1Anc = getAncestors(omega1.head)
 //          val pterm = ProjectionTermCreators.extract(p, omega, omegaAnc ++ getCutAncestors(p))
           val pterm = ProjectionTermCreators.extract(p, omega1, omega1Anc ++ getCutAncestors(p))
@@ -736,16 +747,91 @@ object PStructToExpressionTree {
         case times: pTimes => {
           val left = UnfoldProjectionTerm(times.left)
           val right = UnfoldProjectionTerm(times.right)
-          pTimes(times.rho, left, right)
+          pTimes(times.rho, left, right, times.aux1, times.aux2)
         }
         case plus: pPlus => {
           val left = UnfoldProjectionTerm(plus.left)
           val right = UnfoldProjectionTerm(plus.right)
           pPlus(plus.seq1, plus.seq2, left, right, plus.w1, plus.w2)
         }
-        case unary: pUnary => pUnary(unary.rho, UnfoldProjectionTerm(unary.upper))
+        case unary: pUnary => pUnary(unary.rho, UnfoldProjectionTerm(unary.upper), unary.auxl)
         case ax: pAxiomTerm => ax
         case _ => throw new Exception("\n\nERROR in UnfoldProjectionTerm !\n")
+      }
+    }
+  }
+
+//creates a set of proof projections from an unfolded (normalized) projection term
+  object ProjectionTermToSetOfProofs {
+    private def WeakLeftRight(p: LKProof, seq: Sequent): LKProof = {
+      val p1 = seq.antecedent.foldLeft(p)((res, fo) => WeakeningLeftRule(res, fo.formula))
+      seq.succedent.foldLeft(p1)((res, fo) => WeakeningRightRule(res, fo.formula))
+    }
+
+    def apply(t: ProjectionTerm): Set[LKProof] = {
+      t match {
+        case ax: pAxiomTerm => Set.empty[LKProof] + Axiom(ax.seq)
+        case plus: pPlus => {
+//          println("w1 = "+printSchemaProof.sequentToString(plus.w1))
+//          println("w2 = "+printSchemaProof.sequentToString(plus.w2))
+          val s1 = ProjectionTermToSetOfProofs(plus.left)
+          val s2 = ProjectionTermToSetOfProofs(plus.right)
+          s1.map(p => WeakLeftRight(p, plus.w1)) ++ s2.map(p => WeakLeftRight(p, plus.w2))
+        }
+        case unary: pUnary => {
+          val set = ProjectionTermToSetOfProofs(unary.upper)
+          unary.rho match {
+            case "w:l" => set.map(p => WeakeningLeftRule(p, unary.auxl.head.asInstanceOf[HOLFormula]))
+            case "w:r" => set.map(p => WeakeningRightRule(p, unary.auxl.head.asInstanceOf[HOLFormula]))
+            case "c:l" => set.map(p => ContractionLeftRule(p, unary.auxl.head.asInstanceOf[HOLFormula]))
+            case "c:r" => set.map(p => ContractionRightRule(p, unary.auxl.head.asInstanceOf[HOLFormula]))
+            case "\u00ac:l" => set.map(p => NegLeftRule(p, unary.auxl.head.asInstanceOf[HOLFormula]))
+            case "\u00ac:r" => set.map(p => NegRightRule(p, unary.auxl.head.asInstanceOf[HOLFormula]))
+            case "\u2200:l" => set.map(p => ForallLeftRule(p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.tail.head.asInstanceOf[HOLFormula], unary.auxl.last))
+            case "\u2203:r" => set.map(p => ExistsRightRule(p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.tail.head.asInstanceOf[HOLFormula], unary.auxl.last))
+            case "\u2283:r" => set.map(p => ImpRightRule(p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.last.asInstanceOf[HOLFormula]))
+            case "\u2227:l1" => {
+              val a = unary.auxl.last match {
+                case And(f1, f2) => f1.asInstanceOf[HOLFormula]
+              }
+              set.map(p => AndLeft1Rule(p, a, unary.auxl.head.asInstanceOf[HOLFormula]))
+            }
+            case "\u2227:l2" => {
+              val a = unary.auxl.last match {
+                case And(f1, f2) => f2.asInstanceOf[HOLFormula]
+              }
+              set.map(p => AndLeft2Rule(p, a, unary.auxl.head.asInstanceOf[HOLFormula]))
+            }
+            case "\u2228:r1" => {
+              val a = unary.auxl.last match {
+                case Or(f1, f2) => f1.asInstanceOf[HOLFormula]
+              }
+              set.map(p => OrRight1Rule(p, a, unary.auxl.head.asInstanceOf[HOLFormula]))
+            }
+            case "\u2228:r2" => {
+              val a = unary.auxl.last match {
+                case Or(f1, f2) => f2.asInstanceOf[HOLFormula]
+              }
+              set.map(p => OrRight2Rule(p, a, unary.auxl.head.asInstanceOf[HOLFormula]))
+            }
+            case "\u21A0:l" => set.map(p => trsArrowLeftRule(p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.last.asInstanceOf[HOLFormula]))
+            case "\u21A0:r" => set.map(p => trsArrowRightRule(p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.last.asInstanceOf[HOLFormula]))
+            case _ => throw new Exception("\n\nmissing case in pUnary in ProjectionTermToSetOfProofs !\n\n")
+          }
+        }
+        case times: pTimes => {
+          val s1 = ProjectionTermToSetOfProofs(times.left)
+          val s2 = ProjectionTermToSetOfProofs(times.right)
+          //cartesian product
+          val S1xS2 = s1.map(x => s2.map(y => (x, y))).flatten
+          times.rho match {
+            case "\u2283:l" => S1xS2.map(pair => ImpLeftRule(pair._1, pair._2, times.aux1, times.aux2))
+            case "\u2228:l" => S1xS2.map(pair => OrLeftRule(pair._1, pair._2, times.aux1, times.aux2))
+            case "\u2227:r" => S1xS2.map(pair => AndRightRule(pair._1, pair._2, times.aux1, times.aux2))
+            case _ => throw new Exception("\n\n missing case in times in ProjectionTermToSetOfProofs !\n\n")
+          }
+        }
+        case _ => throw new Exception("\n\nThe projection term is not normalized/unfolded !\n\n")
       }
     }
   }
