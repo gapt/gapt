@@ -32,7 +32,7 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
-import at.logic.transformations.ceres.ProjectionTermCreators
+import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
 import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
@@ -476,9 +476,9 @@ object Main extends SimpleSwingApplication {
         listenTo(ProofToolPublisher)
         reactions += {
           case ProofDbChanged =>
-            val l = db.getStructTrees
+            val l = db.getTermTrees
             contents.clear()
-            for (i <- l) contents += new MenuItem(Action(i._1) { loadStruct(i) }) { border = customBorder }
+            for (i <- l) contents += new MenuItem(Action(i._1) { loadStruct((i._1,i._3)) }) { border = customBorder }
         }
       }
     }
@@ -505,16 +505,34 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("LKS Proof") {
       mnemonic = Key.P
-      enabled = false
-      listenTo(ProofToolPublisher)
-      reactions += {
-        case Loaded => enabled = true
-        case UnLoaded => enabled = false
+      contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
       }
-      contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet() }) { border = customBorder }
-      contents += new MenuItem(Action("Compute Struct") { computeSchematicStruct() }) { border = customBorder }
-      contents += new MenuItem(Action("Compute Projection Term") { computeSchematicProjectionTerm() }) { border = customBorder }
-      contents += new MenuItem(Action("Compute Proof Instance") { computeProofInstance() } )  { border = customBorder }
+      contents += new MenuItem(Action("Compute Struct") { computeSchematicStruct() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
+      }
+      contents += new MenuItem(Action("Compute Projection Term") { computeSchematicProjectionTerm() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
+      }
+      contents += new MenuItem(Action("Compute Instance") { computeInstance() } )  { border = customBorder }
     }
     contents += new Menu("Help") {
       mnemonic = Key.H
@@ -671,8 +689,8 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val n = IntVar(new VariableStringSymbol("n"))
     val s = StructCreators.extractRelevantStruct( body.getContent.getData.get._1, n)
-    val structs_base = s._2.map(pair => (pair._1, structToExpressionTree.prunedTree(pair._2)) )
-    val structs_step = s._1.map(pair => (pair._1, structToExpressionTree.prunedTree(pair._2)) )
+    val structs_base = s._2.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
+    val structs_step = s._1.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
     db.addTrees( structs_step ::: structs_base )
     body.contents = new Launcher(Some(structs_step.head._1,structs_step.head._2),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -685,7 +703,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_name = body.getContent.getData.get._1
     val pterms = ProjectionTermCreators(proof_name)
-    db.addTrees( pterms )
+    db.addTrees( pterms.map(pair => (pair._1, db.TermType.ProjectionTerm, pair._2)) )
     body.contents = new Launcher(Some( pterms.head ),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
@@ -710,7 +728,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk ) )
-    db.addStructTree( s )
+    db.addTermTree( s )
     body.contents = new Launcher(Some("Struct",s),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
@@ -723,7 +741,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
     val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
-    db.addStructTree( s )
+    db.addTermTree( s )
     body.contents = new Launcher(Some("Struct",s),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
@@ -803,7 +821,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def computeProofInstance() {
+  def computeInstance() {
     val input = inputMessage("Please enter number of the instance:", Seq()) match {
       case Some(str) => str.replaceAll("""[a-z,A-Z]*""","")
       case _ => ""
@@ -811,19 +829,29 @@ object Main extends SimpleSwingApplication {
     if (! input.isEmpty) try {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       val number = if (input.size > 10) input.dropRight(10).toInt else input.toInt
-      val name = body.getContent.getData.get._1
-      val proof = try { // This is hack! In the future these two functions should be merged.
-        applySchemaSubstitution(name, number)
-      } catch {
-        case e: UnfoldException => applySchemaSubstitution2(name, number)
+      body.getContent.getData.get match {
+        case (name: String, p: LKProof) =>
+          val proof = try { // This is a hack! In the future these two functions should be merged.
+            applySchemaSubstitution(name, number)
+          } catch {
+            case e: UnfoldException => applySchemaSubstitution2(name, number)
+          }
+          db.addProofs((name + "↓" + number, proof)::Nil)
+          body.contents = new Launcher(Some(name + "_" + number, proof), 12)
+        case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ProjectionTerm) != None =>
+          val (term,list) = UnfoldProjectionTerm(name,number)
+          db.addTermTree( name + "↓" + number, term )
+          db.addProofs(list)
+          body.contents = new Launcher(Some(name + "↓" + number, term), 12)
+          infoMessage("The proof projections, corresponding to this term, are also computed.\n" +
+            "They can be found in the View Proof menu!")
+        case _ => errorMessage("Cannot instantiate the object!")
       }
-      db.addProofs((name + "_" + number, proof)::Nil)
-      body.contents = new Launcher(Some(name + "_" + number, proof), 12)
       body.cursor = java.awt.Cursor.getDefaultCursor
       ProofToolPublisher.publish(ProofDbChanged)
     } catch {
       case e: Throwable =>
-        errorMessage("Could not construct proof instance!\n\n" + getExceptionString(e))
+        errorMessage("Could not construct the instance!\n\n" + getExceptionString(e))
     }
   }
 
