@@ -31,19 +31,19 @@ class FileParser {
 
   def ceresFileReader(input: InputStreamReader) {
     proofs = Nil
-    structs = Nil
+    termTrees = Nil
     proofdb = (new XMLReader(input) with XMLProofDatabaseParser).getProofDatabase()
   }
 
   def stabFileReader(input: InputStreamReader) {
-    structs = Nil
+    termTrees = Nil
     proofdb = new ProofDatabase(Map(), Nil, Nil, Nil)
     proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
   }
 
   def lksFileReader(input: InputStreamReader) {
     proofs = Nil
-    structs = Nil
+    termTrees = Nil
     //  val start = System.currentTimeMillis()
     proofdb = new ProofDatabase(Map(), ParseQMON.parseProofs(input), Nil, Nil)
     //  val end = System.currentTimeMillis()
@@ -91,12 +91,16 @@ class FileParser {
       (name + proofdb.sequentLists.size.toString, seqList) :: proofdb.sequentLists)
   }
 
-  def addStructTree(struct: Tree[_]) {
-    structs = ("struct " + structs.size.toString, struct) :: structs
+  def addTermTree(struct: Tree[_]) {
+    termTrees = ("struct " + termTrees.size.toString, TermType.Unknown, struct) :: termTrees
   }
 
-  def addTrees(list: List[(String, Tree[_])]) {
-    structs = list ::: structs
+  def addTermTree(name: String, term: Tree[_]) {
+    termTrees = (name, TermType.Unknown, term) :: termTrees
+  }
+
+  def addTrees(list: List[(String, TermType.Value, Tree[_])]) {
+    termTrees = list ::: termTrees
   }
 
   def getDefinitions: List[(HOLFormula, HOLFormula)] = proofdb.Definitions.toList //._1.toList ::: proofdb.Definitions._2.toList ::: proofdb.Definitions._3.toList
@@ -107,9 +111,13 @@ class FileParser {
 
   def getProofDB = proofdb
 
-  def getStructTrees = structs
+  def getTermTrees = termTrees
 
   private var proofdb = new ProofDatabase(Map(), Nil, Nil, Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil
-  private var structs: List[(String, Tree[_])] = Nil
+  private var termTrees: List[(String, TermType.Value, Tree[_])] = Nil
+
+  object TermType extends Enumeration {
+    val ClauseTerm, ProjectionTerm, Unknown = Value
+  }
 }

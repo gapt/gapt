@@ -103,9 +103,9 @@ object ProjectionTermCreators {
     val spt = Utils.removeDoubles3(SchemaProofDB.toList.map(pair => genCCProofTool(pair._1)).flatten)
     val sptb = Utils.removeDoubles3(SchemaProofDB.toList.map(pair => genCCProofToolBase(pair._1)).flatten)
 //    println("size = "+sptb.size)
-    val sl    = (main_proof, PStructToExpressionTree.applyConsole(extract(SchemaProofDB.get(main_proof).rec, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))), Set.empty[FormulaOccurrence]) :: s.flatten //for console
-    val slpt  = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).rec,  Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))) , Set.empty[FormulaOccurrence]) :: spt
-    val slptb = (main_proof, PStructToExpressionTree(extract(SchemaProofDB.get(main_proof).base, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).base))), (Set.empty[FormulaOccurrence], Set.empty[FormulaOccurrence])) :: sptb
+    // val sl    = (main_proof, PStructToExpressionTree.applyConsole(extract(SchemaProofDB.get(main_proof).rec, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec))), Set.empty[FormulaOccurrence]) :: s.flatten //for console
+    val slpt  = (main_proof, extract(SchemaProofDB.get(main_proof).rec,  Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).rec)) , Set.empty[FormulaOccurrence]) :: spt
+    val slptb = (main_proof, extract(SchemaProofDB.get(main_proof).base, Set.empty[FormulaOccurrence], getCutAncestors(SchemaProofDB.get(main_proof).base)), (Set.empty[FormulaOccurrence], Set.empty[FormulaOccurrence])) :: sptb
     println("\n\n\n"+slpt.size)
 //    slpt.foreach(tri => { println("\n"+tri._1); //print(" ( ");
 //                                                tri._3.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
@@ -127,7 +127,9 @@ object ProjectionTermCreators {
 //      print("\n\n\n")
 //      ms22.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
-      ("\u039e("+ tri._1 +"_step, ("+cutConfToString( (ms11,ms22) ) + "))", tri._2)
+      val name = "\u039e("+ tri._1 +"_step, ("+cutConfToString( (ms11,ms22) ) + "))"
+      ProjectionTermDB.put(name, tri._2)
+      (name, PStructToExpressionTree(tri._2))
     }) ::: slptb.map(tri => {
       val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
       val trans1_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, IntVar(new VariableStringSymbol("n")) )
@@ -143,7 +145,9 @@ object ProjectionTermCreators {
 //      print("\n\n\n")
 //      ms22.foreach(f => println(printSchemaProof.formulaToString(f)))
 //      print("\n\n\n")
-      ("\u039e("+ tri._1 +"_base, ("+cutConfToString( (ms11,ms22) ) + "))", tri._2)
+      val name = "\u039e("+ tri._1 +"_base, ("+cutConfToString( (ms11,ms22) ) + "))"
+      ProjectionTermDB.put(name, tri._2)
+      (name, PStructToExpressionTree(tri._2))
     })
   //  println("\nl.size = "+l.size)
   //  l.foreach(x => println(x._1))
@@ -190,7 +194,7 @@ object ProjectionTermCreators {
   }
 
   //for ProofTool printing
-  def genCCProofTool(proof_name: String): List[(String, Tree[AnyRef], Set[FormulaOccurrence])] = {
+  def genCCProofTool(proof_name: String): List[(String, ProjectionTerm, Set[FormulaOccurrence])] = {
     val p_rec = SchemaProofDB.get(proof_name).rec
     val cclist = getCC(p_rec, List.empty[FormulaOccurrence], p_rec)
     val cclistproof_name = cclist.filter(pair => pair._1 == proof_name)
@@ -201,10 +205,10 @@ object ProjectionTermCreators {
     //  tri._2._1.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
     //  tri._2._2.foreach(fo => println(printSchemaProof.formulaToString(fo.formula)))
     // })
-    l.map(pair => (pair._1, PStructToExpressionTree(extract(SchemaProofDB.get(pair._1).rec, (pair._2._1 ::: pair._2._2).toSet, getCutAncestors(SchemaProofDB.get(pair._1).rec))), (pair._2._1 ::: pair._2._2).toSet ))
+    l.map(pair => (pair._1, extract(SchemaProofDB.get(pair._1).rec, (pair._2._1 ::: pair._2._2).toSet, getCutAncestors(SchemaProofDB.get(pair._1).rec)), (pair._2._1 ::: pair._2._2).toSet ))
   }
 
-  def genCCProofToolBase(proof_name: String): List[(String, Tree[AnyRef], (Set[FormulaOccurrence], Set[FormulaOccurrence]))] = {
+  def genCCProofToolBase(proof_name: String): List[(String, ProjectionTerm, (Set[FormulaOccurrence], Set[FormulaOccurrence]))] = {
     val p_base = SchemaProofDB.get(proof_name).base
     val p_rec = SchemaProofDB.get(proof_name).rec
     val cclist = getCC(p_rec, List.empty[FormulaOccurrence], p_rec)
@@ -228,7 +232,7 @@ object ProjectionTermCreators {
 //    })
     Utils.removeDoubles(cclistbase).filter(pair =>
       pair._2._1.nonEmpty || pair._2._2.nonEmpty).map(pair =>
-      (pair._1, PStructToExpressionTree(extract(SchemaProofDB.get(pair._1).base, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors(SchemaProofDB.get(pair._1).base))), (pair._2._1.toSet, pair._2._2.toSet) ))
+      (pair._1, extract(SchemaProofDB.get(pair._1).base, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors(SchemaProofDB.get(pair._1).base)), (pair._2._1.toSet, pair._2._2.toSet) ))
   }
 
   //from cut occurrence configuration gives a cut configuration omega with (ant |- succ)
@@ -716,8 +720,31 @@ object PStructToExpressionTree {
     }
   }
 
+object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with TraversableOnce[(String, ProjectionTerm)] {
+  val terms = new scala.collection.mutable.HashMap[String, ProjectionTerm]
+
+  def clear = terms.clear
+  def get(name: String) = terms(name)
+  def put(name: String, term: ProjectionTerm) = terms.put(name, term)
+  def iterator = terms.iterator
+}
+
 //unfolds (normalizes) a projection term, i.e. removes the "pr" symbols according to the rewriting rules (see the journal paper)
   object UnfoldProjectionTerm {
+
+    // This method is used in ProofTool.
+    // It should return unfolded term as a tree and the list of projections
+    def apply(name: String, number: Int): (Tree[_], List[(String,LKProof)]) = {
+      val new_map = Map((IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], applySchemaSubstitution.toIntegerTerm(number)))
+      val sub = new SchemaSubstitution3(new_map)
+      val pt = UnfoldProjectionTerm(GroundingProjectionTerm(ProjectionTermDB.get(name),sub))
+      val tree = PStructToExpressionTree(pt)
+      val l = ProjectionTermToSetOfProofs(pt).toList
+      val proof_name = name.replace("Ξ(","").replace("_base","\n").replace("_step","\n").takeWhile(c => !c.equals('\n'))
+      val list = l.map(p => (proof_name + "↓" + number + "_proj_" + l.indexOf(p),p))
+      (tree,list)
+    }
+
     def apply(t: ProjectionTerm): ProjectionTerm = {
       t match {
         case pProofLinkTerm( seq, omega, proof_name, index, canc ) => {
