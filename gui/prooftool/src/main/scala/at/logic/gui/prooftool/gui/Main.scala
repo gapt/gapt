@@ -837,7 +837,7 @@ object Main extends SimpleSwingApplication {
             case e: UnfoldException => applySchemaSubstitution2(name, number)
           }
           db.addProofs((name + "↓" + number, proof)::Nil)
-          body.contents = new Launcher(Some(name + "_" + number, proof), 12)
+          body.contents = new Launcher(Some(name + "↓" + number, proof), 12)
         case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ProjectionTerm) != None =>
           val (term,list) = UnfoldProjectionTerm(name,number)
           db.addTermTree( name + "↓" + number, term )
