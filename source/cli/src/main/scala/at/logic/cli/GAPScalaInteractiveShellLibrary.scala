@@ -365,18 +365,18 @@ object loadProofDB {
   }
 
   object loadIvyProof {
+    var naming_style : IvyParser.VariableNamingConvention = IvyParser.IvyStyleVariables
+    def set_ivy_naming = { naming_style = IvyParser.IvyStyleVariables }
+    def set_ladr_naming = { naming_style = IvyParser.LadrStyleVariables }
+    def set_prolog_naming = { naming_style = IvyParser.LadrStyleVariables }
+
     import at.logic.provers.prover9.ivy
     def apply(fn : String) : RobinsonResolutionProof = {
       IvyToRobinson(intoIvyResolution(fn))
     }
 
     def intoIvyResolution(fn : String) : IvyResolutionProof = {
-      val seproof = SExpressionParser(fn)
-      if (seproof.isEmpty) throw new Exception("Cannot parse proof: proof expression is empty!")
-      println("parsing sexpression!")
-      val ivyproof = IvyParser.parse(seproof(0))
-      println("done")
-
+      val ivyproof = IvyParser.apply(fn, naming_style)
       ivyproof
     }
 
@@ -805,6 +805,9 @@ object hol2fol {
       println("  loadProofDB: String => ProofDatabase - load proofdatabase from xml file")
       println("  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs")
       println("  loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format")
+//      println("      loadIvyProof.set_ivy_naming: selects ivy style symbol naming convention (default)")
+//      println("      loadIvyProof.set_ladr_naming: selects ladr style symbol naming convention")
+//      println("      loadIvyProof.set_ladr_naming: selects prolog style symbol naming convention")
       println("  loadProver9Proof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format")
       println("  exportXML: List[Proof], List[String], String => Unit")
       println("  exportTPTP: List[Proof], List[String], String => Unit")

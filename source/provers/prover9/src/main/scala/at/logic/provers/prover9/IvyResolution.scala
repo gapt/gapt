@@ -8,6 +8,7 @@ import at.logic.provers.prover9.lisp.SExpression
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.fol.FOLTerm
 import at.logic.calculi.occurrences.FormulaOccurrence
+import collection.immutable
 
 /**** Implementation of Ivy's Resolution Calculus ***
  * Ivy has it's own variation of resolution which only resolves over identical literals but has an instantiation rule.
@@ -29,6 +30,47 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
   val id : String;
   val clause_exp : SExpression;
 //  val vertex : Clause;
+
+
+  override def toString = { val b = new StringBuilder; printNodes(this, Nil, b); b.toString }
+  def printNodes(p:IvyResolutionProof, m : immutable.List[String], out: StringBuilder) : List[String]  = p match {
+    case InitialClause(id, _, clause) =>
+      if (! m.contains(id)) {
+        out.append(id + " : Input("+clause+")\n"); id::m } else m
+    case Instantiate(id,_, sub, clause, parent) =>
+      if (! m.contains(id)) {
+        val l = printNodes(parent, m, out);
+        out.append(id + " : Instance("+clause+") by " + parent.id + "\n"); id::l
+      } else m
+    case Propositional(id,_, clause, parent) =>
+      if (! m.contains(id)) {
+        val l1 = printNodes(parent,m, out);
+        out.append(id + " : Propositional("+clause+") by "+ parent.id +"\n");
+        id::l1
+      } else m
+    case Flip(id,_, clause, parent) =>
+      if (! m.contains(id)) {
+        val l1 = printNodes(parent,m, out);
+        out.append(id + " : Flip("+clause+") by "+ parent.id +"\n");
+        id::l1
+      } else m
+    case Resolution(id, _, lit1, lit2, clause, parent1, parent2) =>
+      if (! m.contains(id)) {
+        val l1 = printNodes(parent1,m, out);
+        val l2 = printNodes(parent2,l1, out);
+        out.append(id + " : Resolution("+clause+") by " + parent1.id + " and " + parent2.id + "\n");
+        id::l2
+      } else m
+    case Paramodulation(id, _, pos, lit, clause, parent1, parent2) =>
+      if (! m.contains(id)) {
+        val l1 = printNodes(parent1,m, out);
+        val l2 = printNodes(parent2,l1, out);
+        out.append(id + " : Paramodulation("+clause+") by " + parent1.id + " and " + parent2.id + "\n")
+        id::l2
+      } else m
+    //case _ => out.append("rule not implemented"); m
+  }
+
 };
 
 //inheritance of BinaryAGraph is necessary because BinaryAGraphProof does not provide a constructor
@@ -68,11 +110,13 @@ case class Propositional(id : String, clause_exp : SExpression, override val ver
 
 case class Paramodulation(id: String,
                           clause_exp : SExpression,
+                          position : List[Int],
+                          lit : FormulaOccurrence,
                           override val vertex: Clause,
                           override val t1: IvyResolutionProof,
                           override val t2: IvyResolutionProof)
   extends BinaryAGraph(vertex, t1, t2) with BinaryAGraphProof[Clause] with IvyResolutionProof {
-  def rule = InstantiateType
+  def rule = ParamodulationType
 //  override def name = "Paramodulation"
 };
 

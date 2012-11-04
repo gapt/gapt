@@ -21,6 +21,7 @@ import at.logic.provers.prover9.ivy.IvyParser
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionProof}
 import java.io.File
+import at.logic.provers.prover9.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -110,7 +111,13 @@ object Prover9 {
     val ret = refute( input_file, output_file )
     ret match {
       case 0 =>
-        Some(parse_prover9(output_file))
+        try  {
+          Some(parse_prover9(output_file))
+        } catch {
+          case e : Exception =>
+            println("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
+            Some(InitialClause(Nil,Nil))
+        }
       case 1 => throw new Prover9Exception("A fatal error occurred (user's syntax error or Prover9's bug).")
       case 2 => None // Prover9 ran out of things to do (sos list exhausted).
       case 3 => None // The max_megs (memory limit) parameter was exceeded.
@@ -145,17 +152,27 @@ object Prover9 {
 
   def parse_prover9(p9_file : String) : RobinsonResolutionProof = {
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
-    try {
-      p9_to_ivy(p9_file, ivy_file.getCanonicalPath)
-      val iproof = IvyParser(ivy_file.getCanonicalPath)
-      val rproof = IvyToRobinson(iproof)
-      ivy_file.delete
-      rproof
-    } catch {
-      case e : Exception =>
-        println("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
-        InitialClause(Nil,Nil)
-    }
+    p9_to_ivy(p9_file, ivy_file.getCanonicalPath)
+    def debugline(s:String) = { println(s); true}
+
+    /* //this was autodetection code for naming conventions, but apparently ivy has its own anyway
+    val variablestyle_matcher = """prolog_style_variables""".r
+    val str_p9 = Source.fromInputStream( new FileInputStream( p9_file ) ).mkString
+    val set_prolog_style_variables = for (line <- str_p9.split(System.getProperty("line.separator"));
+         if ( debugline(line) && variablestyle_matcher.findFirstIn(line).isDefined)) yield line
+
+    val iproof = if (set_prolog_style_variables.isEmpty) {
+                    println("Detected Ladr Naming Style!")
+                    IvyParser(ivy_file.getCanonicalPath, LadrStyleVariables)
+                  }
+                  else {
+                    println("Detected Prolog Naming Style!")
+                    IvyParser(ivy_file.getCanonicalPath, PrologStyleVariables)
+                  }*/
+    val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
+    val rproof = IvyToRobinson(iproof)
+    ivy_file.delete
+    rproof
   }
 
 }

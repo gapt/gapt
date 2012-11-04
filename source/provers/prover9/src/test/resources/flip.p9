@@ -1,0 +1,4 @@
+formulas(sos).
+a = b.
+b != a.
+end_of_list.
