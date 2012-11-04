@@ -43,6 +43,9 @@ import collection.immutable
 
       override def toString() = FSequent.toString((x:HOLFormula) => x.toString, this)
 
+      def setEquals(g:FSequent) = FSequent.setEquals(this, g)
+      def multiSetEquals(g:FSequent) = FSequent.multiSetEquals(this, g)
+
       /*
        compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
       */
@@ -68,6 +71,10 @@ import collection.immutable
 
     def toStringSimple(formulas : Seq[HOLFormula])  : String = toString( (x:HOLFormula) => x.toStringSimple, formulas.toList )
     def toStringSimple(f : FSequent)  : String  = toString((x:HOLFormula) => x.toStringSimple,f )
+
+    def setEquals(f: FSequent, g: FSequent) : Boolean =
+        immutable.Set(f._1) == immutable.Set(g._1) &&
+        immutable.Set(f._2) == immutable.Set(g._2)
 
     def multiSetEquals(f : FSequent, g : FSequent) : Boolean =
           f._1.diff(g._1).isEmpty && f._2.diff(g._2).isEmpty &&

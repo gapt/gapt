@@ -5,7 +5,7 @@ import scala.collection.immutable
 import at.logic.provers.prover9.lisp
 import at.logic.provers.prover9.lisp.{SExpressionParser, SExpression}
 import at.logic.language.lambda.typedLambdaCalculus.{App, AppN, LambdaExpression}
-import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
+import at.logic.language.hol.logicSymbols.{EqSymbol, ConstantSymbolA, ConstantStringSymbol}
 import at.logic.language.lambda.symbols.{VariableStringSymbol, SymbolA}
 import at.logic.language.fol
 import at.logic.calculi.resolution.base.{FClause, Clause}
@@ -17,7 +17,7 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.hol.HOLFormula
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import fol.{FOLVar, FOLTerm}
+import fol.{FOLFormula, FOLVar, FOLTerm}
 
 /**
  * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
@@ -27,11 +27,26 @@ import fol.{FOLVar, FOLTerm}
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
 object IvyParser {
-  //calls the sexpression parser on the given file and parses it
-  def apply(fn : String) : IvyResolutionProof = {
+  //easy parametrization to choose naming conventions (there is no information about this in the ivy format)
+  sealed abstract class VariableNamingConvention;
+  case object PrologStyleVariables extends VariableNamingConvention;
+  case object LadrStyleVariables extends VariableNamingConvention;
+  case object IvyStyleVariables extends VariableNamingConvention;
+
+  //calls the sexpression parser on the given file and parses it, needs a naming convention
+  def apply(fn : String, naming_convention : VariableNamingConvention) : IvyResolutionProof = {
+    naming_convention match {
+      case PrologStyleVariables => apply_(fn, is_prologstyle_variable)
+      case LadrStyleVariables => apply_(fn, is_ladrstyle_variable)
+      case IvyStyleVariables => apply_(fn, is_ivy_variable)
+    }
+  }
+
+  //calls the sexpression parser on the given file and parses it, needs a naming convention
+  def apply_(fn : String, is_variable_symbol : (String => Boolean) ): IvyResolutionProof = {
     val exp = SExpressionParser(fn)
     require(exp.length == 1, "An ivy proof may contain only exactly one proof object!")
-    parse(exp(0))
+    parse(exp(0), is_variable_symbol)
   }
 
   /*
@@ -57,17 +72,17 @@ object IvyParser {
 
 
   //decompose the proof object to a list and hand it to parse(exp: List[SExpression], found_steps : ProofMap )
-  def parse(exp: SExpression ) : IvyResolutionProof =  exp match {
+  def parse(exp: SExpression, is_variable_symbol : (String => Boolean) ) : IvyResolutionProof =  exp match {
     case lisp.List(Nil) => throw new Exception("Trying to parse an empty proof!")
-    case lisp.List(l) => parse(l, immutable.Map[String, IvyResolutionProof]() ) // extract the list of inferences from exp
+    case lisp.List(l) => parse(l, immutable.Map[String, IvyResolutionProof](), is_variable_symbol ) // extract the list of inferences from exp
     case _ => throw new Exception("Parsing error: The proof object is not a list!")
   }
 
   /* traverses the list of inference sexpressions and returns an IvyResolution proof - this can then be translated to
    * our resolution calculus (i.e. where instantiation is contained in the substitution)
    * note: requires that an if inference a references inference b, then a occurs before b in the list */
-  def parse(exp: List[SExpression], found_steps : ProofMap ) : IvyResolutionProof =  {
-    val is_variable_symbol : (String => Boolean) = is_ladrstyle_variable
+  def parse(exp: List[SExpression], found_steps : ProofMap, is_variable_symbol : String => Boolean )
+    : IvyResolutionProof =  {
     exp match {
       case List(last) =>
         val (lastid , found_steps_) = parse_step(last, found_steps, is_variable_symbol);
@@ -75,7 +90,7 @@ object IvyParser {
 
       case head::tail =>
         val (_ , found_steps_) = parse_step(head, found_steps, is_variable_symbol);
-        parse(tail, found_steps_);
+        parse(tail, found_steps_, is_variable_symbol);
       case _ => throw new Exception("Cannot create an object for an empty proof (list of inferences is empty).")
     }
   }
@@ -193,9 +208,105 @@ object IvyParser {
 
       }
 
-      //case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("flip")::Nil) :: clause :: rest  )  =>
+      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("flip")::lisp.Atom(parent_id)::lisp.List(position)::Nil) :: clause :: rest  )  =>
+        val parent_proof = found_steps(parent_id)
+        val fclause = parse_clause(clause, is_variable_symbol)
+        val (occ, polarity, _) = get_literal_by_position(parent_proof.root, position, parent_proof.clause_exp, is_variable_symbol)
+        //require(polarity == true, "Flipped literals must be positive!"+parent_proof.clause_exp+" -> "+clause)
 
-        //TODO: implement rules for flip, paramodulation
+        occ.formula match {
+          case fol.Equation(left,right) =>
+            //the negative literals are the same
+            def connect_directly(x:FormulaOccurrence) = new FormulaOccurrence(x.formula, x::Nil, x.factory)
+
+            polarity match {
+              case true =>
+                val neglits = parent_proof.root.negative map connect_directly
+                val (pos1, pos2) = parent_proof.root.positive.splitAt( parent_proof.root.positive.indexOf(occ))
+                val (pos1_, pos2_) = (pos1 map connect_directly, pos2 map  connect_directly)
+                val flipped = new FormulaOccurrence(fol.Equation(right, left), occ::Nil, occ.factory)
+                val inference = Flip(id, clause, Clause(neglits, pos1_ ++ List(flipped) ++ pos2_.tail ), parent_proof)
+                require(fclause setEquals inference.root.toFSequent,
+                  "Error parsing flip rule: inferred clause "+inference.root.toFSequent +
+                    " is not the same as given clause "+ fclause)
+                //println("new Flip rule: "+id+ " : "+inference)
+                (id, found_steps + ((id, inference)))
+
+              case false =>
+                val poslits = parent_proof.root.positive map connect_directly
+                val (neg1, neg2) = parent_proof.root.negative.splitAt( parent_proof.root.negative.indexOf(occ))
+                val (neg1_, neg2_) = (neg1 map connect_directly, neg2 map  connect_directly)
+                val flipped = new FormulaOccurrence(fol.Equation(right, left), occ::Nil, occ.factory)
+                val inference = Flip(id, clause, Clause(neg1_ ++ List(flipped) ++ neg2_.tail, poslits ), parent_proof)
+                require(fclause setEquals inference.root.toFSequent,
+                  "Error parsing flip rule: inferred clause "+inference.root.toFSequent +
+                    " is not the same as given clause "+ fclause)
+                //println("new Flip rule: "+id+ " : "+inference)
+                (id, found_steps + ((id, inference)))
+            }
+
+          case _ =>
+            throw new Exception("Error parsing position in flip rule: literal "+occ.formula+" is not the equality predicate.")
+
+        }
+
+      case lisp.List( lisp.Atom(id)::
+                      lisp.List(lisp.Atom("paramod")::lisp.Atom(modulant_id)::lisp.List(mposition)::
+                                                      lisp.Atom(parent_id)::  lisp.List(pposition):: Nil) ::
+                      clause :: rest  )  =>
+        val modulant_proof = found_steps(modulant_id)
+        val parent_proof = found_steps(parent_id)
+        val fclause = parse_clause(clause, is_variable_symbol)
+        val (mocc, mpolarity, _) = get_literal_by_position(modulant_proof.root, mposition, modulant_proof.clause_exp, is_variable_symbol)
+        require(mpolarity == true, "Paramodulated literal must be positive!")
+        val (pocc, polarity, termpos) = get_literal_by_position(parent_proof.root, pposition, parent_proof.clause_exp, is_variable_symbol)
+
+        mocc.formula match {
+          case fol.Equation(left,right) =>
+            def connect_directly(x:FormulaOccurrence) = new FormulaOccurrence(x.formula, x::Nil, x.factory)
+            println(polarity)
+            polarity match {
+              case true =>
+                val neglits = parent_proof.root.negative map connect_directly
+                val (pos1, pos2) = parent_proof.root.positive.splitAt( parent_proof.root.positive.indexOf(pocc))
+                val (pos1_, pos2_) = (pos1 map connect_directly, pos2 map  connect_directly)
+
+                val int_position = parse_position(termpos)
+                println("remaining position: "+termpos+" / "+int_position+ " full position "+pposition)
+                println("replace: "+left+" by "+right+" in "+pocc.formula)
+                val paraformula = replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
+                val para = new FormulaOccurrence(paraformula,  mocc::pocc::Nil, pocc.factory)
+                val inferred_clause = Clause(neglits, pos1_ ++ List(para) ++ pos2_.tail)
+
+                val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
+
+                println("new Paramod rule: "+id+ " : "+inference)
+                (id, found_steps + ((id, inference)))
+
+              case false =>
+                val poslits = parent_proof.root.positive map connect_directly
+                val (neg1, neg2) = parent_proof.root.negative.splitAt( parent_proof.root.negative.indexOf(pocc))
+                val (neg1_, neg2_) = (neg1 map connect_directly, neg2 map  connect_directly)
+
+                //since negative literals have the negation explicit in the term, we have to drop the first position
+                val int_position = parse_position(termpos)
+                println("remaining position: "+termpos+" / "+int_position+ " full position "+pposition)
+                println("replace: "+left+" by "+right+" in "+pocc.formula)
+                val paraformula = replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
+                val para = new FormulaOccurrence(paraformula,  mocc::pocc::Nil, pocc.factory)
+                val inferred_clause = Clause(neg1_ ++ List(para) ++ neg2_.tail, poslits)
+
+                val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
+
+                println("new Paramod rule: "+id+ " : "+inference)
+                (id, found_steps + ((id, inference)))
+            }
+
+
+          case _ =>
+            throw new Exception("Error parsing position in paramod rule: literal "+mocc.formula+" is not the equality predicate.")
+
+        }
 
       case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("propositional")::lisp.Atom(parent_id)::Nil) :: clause :: rest  )  => {
         val parent_proof = found_steps(parent_id)
@@ -273,11 +384,9 @@ object IvyParser {
     }
   }
 
-  //def get_literal_by_position(c:Clause, pos:Position)
-
   //extracts a literal from a clause - since the clause seperates positive and negative clauses,
   // we also need the original SEXpression to make sense of the position.
-  // paramdoulation continues inside the term, so we return the remaining position together with the occurrence
+  // paramodulation continues inside the term, so we return the remaining position together with the occurrence
   // the boolean indicates a positive or negative formula
   def get_literal_by_position(c:Clause, pos: List[SExpression],
                               clauseexp : SExpression, is_variable_symbol : String => Boolean )
@@ -308,14 +417,16 @@ object IvyParser {
 
   }
 
-  def get_literal_by_position_(pos:List[SExpression], clauseexp : List[HOLFormula], index : Int) : (Int, List[SExpression]) = {
+  def get_literal_by_position_(pos:List[SExpression], clauseexp : List[HOLFormula], index : Int) : (Int, immutable.List[SExpression]) = {
     clauseexp match {
       case Nil =>
         throw new Exception("Error parsing position in SExpression!")
       case x::xs =>
         pos match {
           case Nil => (index, pos) //TODO:check if this is really correct
-          case lisp.Atom("1") :: rest => (index, rest)
+          case lisp.Atom("1") :: rest =>
+           // get_literal_by_position_(rest, List(x), index+1)
+            (index, rest)
           case lisp.Atom("2") :: Nil =>
             (index+1, Nil)
           case lisp.Atom("2") :: rest =>
@@ -326,6 +437,40 @@ object IvyParser {
             throw new Exception("Error parsing position in SExpression!")
         }
     }
+  }
+
+  //term replacement
+  //TODO: refactor replacement for lambda expressions
+  def replaceTerm_by_in_at(what : FOLTerm, by : FOLTerm, exp : fol.FOLExpression, pos : immutable.List[Int] )
+    : fol.FOLExpression = pos match {
+      case p::ps =>
+        exp match {
+          case fol.Atom(sym, args) =>
+            require(p < args.length, "Error in parsing replacement: invalid argument position in atom!")
+            val (args1, rterm::args2) = args.splitAt(p-1)
+            fol.Atom(sym, (args1 ++ List(replaceTerm_by_in_at(what,by,rterm, ps ).asInstanceOf[FOLTerm]) ++ args2))
+          case fol.Function(sym, args) =>
+            require(p < args.length, "Error in parsing replacement: invalid argument position in function!")
+            val (args1, rterm::args2) = args.splitAt(p-1)
+            fol.Function(sym, (args1 ++ List(replaceTerm_by_in_at(what,by,rterm, ps ).asInstanceOf[FOLTerm]) ++ args2))
+          case _ => throw new Exception("Error in parsing replacement: unexpected (sub)term "+exp+ " )")
+        }
+
+      case Nil =>
+        if (exp == what) by else throw new Exception("Error in parsing replacement: (sub)term "+exp+ " is not the expected term "+what)
+      //throw new Exception("Error in parsing replacement: cannot replace at formula level!")
+    }
+
+
+  def parse_position(l : immutable.List[SExpression]) : immutable.List[Int] = l match {
+    case lisp.Atom(x)::xs => try {
+      x.toInt :: parse_position(xs)
+    } catch {
+      case e:Exception => throw new Exception("Error parsing position: cannot convert atom "+x+" to integer!")
+    }
+    case Nil => Nil
+    case x::_ => throw new Exception("Error parsing position: unexpected expression "+x)
+    case _ => throw new Exception("Error parsing position: unexpected expression "+l)
   }
 
   def parse_substitution(exp : SExpression, is_variable_symbol : String => Boolean) : Substitution[FOLTerm] = exp match {
@@ -375,10 +520,16 @@ object IvyParser {
 
 
   val prolog_variable_regexp = """^[A-Z].*$""".r
-  def is_prologstyle_variable(s: String) = ladr_variable_regexp.findFirstIn(s) match {
+  def is_prologstyle_variable(s: String) = prolog_variable_regexp.findFirstIn(s) match {
       case None => false
       case _ => true
     }
+
+  val ivy_variable_regexp = """^v[0-9]+$""".r
+  def is_ivy_variable(s: String) = ivy_variable_regexp.findFirstIn(s) match {
+    case None => false
+    case _ => true
+  }
 
 
   /* parses a clause sexpression to a fclause -- the structure is (or lit1 (or lit2 .... (or litn-1 litn)...)) */
@@ -437,8 +588,12 @@ object IvyParser {
     if (is_variable_symbol(name)) throw new Exception("Parsing Error: Predicate name "+name+" does not conform to naming conventions.")
     val sym = new ConstantStringSymbol(name)
     val argterms = args map (parse_term(_, is_variable_symbol))
-
-    fol.Atom(sym, argterms)
+    if (name == "=") {
+      require(args.length == 2, "Error parsing equality: = must be a binary predicate!")
+      fol.Equation(argterms(0), argterms(1))
+    } else {
+      fol.Atom(sym, argterms)
+    }
 
   }
 
@@ -452,7 +607,7 @@ object IvyParser {
                                              ("meet_for_ivy","^"))
   def rewrite_name(s:String) : String = if (ivy_escape_table contains s) ivy_escape_table(s) else s
 
-  def parse_term(ts : SExpression, is_variable_symbol : String => Boolean) : fol.FOLTerm = ts match {
+  def parse_term(ts : SExpression, is_variable_symbol : String => Boolean) : FOLTerm = ts match {
     case lisp.Atom(name) =>
       val rname = rewrite_name(name)
       if (is_variable_symbol(rname))

@@ -1,0 +1,18 @@
+;; ============================== prooftrans ============================
+;; Prover9 (64) version 2009-11A, November 2009.
+;; Process 1843 was started by marty on kushiel,
+;; Sun Nov  4 09:57:33 2012
+;; The command was "prover9".
+;; ============================== end of head ===========================
+
+;; BEGINNING OF PROOF OBJECT
+(
+(0 (input) (= v0 v0) NIL)
+(1 (input) (= (a) (b)) NIL)
+(2 (flip 1 ()) (= (b) (a)) NIL)
+(3 (input) (not (= (b) (a))) NIL)
+(4A (paramod 2 (1) 3 (1 1)) (not (= (a) (a))) NIL)
+(6 (instantiate 0 ((v0 . (a)))) (= (a) (a)) NIL)
+(4 (resolve 4A () 6 ()) false NIL)
+)
+;; END OF PROOF OBJECT
