@@ -20,6 +20,7 @@ import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule,
 import at.logic.calculi.lk.propositionalRules._
 import clauseSchema.SchemaSubstitution3
 import at.logic.language.schema._
+import at.logic.algorithms.lk.getAncestors._
 
 //import at.logic.language.schema.SchemaFormula
 import at.logic.algorithms.shlk._
@@ -407,7 +408,7 @@ object ProjectionTermCreators {
       if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
         extract(p, omega, cut_ancs)
       else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t.asInstanceOf[HOLFormula]::Nil)
+        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t::Nil)
     }
     case AndEquivalenceRule1(up, r, aux, main) =>  {
       if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
@@ -722,7 +723,6 @@ object PStructToExpressionTree {
 
 object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with TraversableOnce[(String, ProjectionTerm)] {
   val terms = new scala.collection.mutable.HashMap[String, ProjectionTerm]
-
   def clear = terms.clear
   def get(name: String) = terms(name)
   def put(name: String, term: ProjectionTerm) = terms.put(name, term)
@@ -731,7 +731,6 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
 
 //unfolds (normalizes) a projection term, i.e. removes the "pr" symbols according to the rewriting rules (see the journal paper)
   object UnfoldProjectionTerm {
-
     // This method is used in ProofTool.
     // It should return unfolded term as a tree and the list of projections
     def apply(name: String, number: Int): (Tree[_], List[(String,LKProof)]) = {
@@ -747,24 +746,31 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
 
     def apply(t: ProjectionTerm): ProjectionTerm = {
       t match {
-        case pProofLinkTerm( seq, omega, proof_name, index, canc ) => {
+        case pProofLinkTerm( seq0, omega, proof_name, index, canc ) => {
           if(index == IntZero()){
-            //TODO: compute the CC !!!!!!!!!!!!
             val omegaAnc = omega.foldLeft(Set.empty[FormulaOccurrence])((x, acc) => getAncestors(x) + acc)
             val p = SchemaProofDB.get(proof_name).base
-            val omega1 = Set.empty[FormulaOccurrence] +p.root.succedent.head
-            val omega1Anc = getAncestors(omega1.head)
+            val seq = p.root
+            val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+            val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+            var sub = new SchemaSubstitution1[HOLExpression](new_map)
+            val omega_sub = omega.map(fo => sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])))
+            val omega1 = (seq.antecedent ++ seq.succedent).toSet.filter(fo => omega_sub.contains(fo.formula))
+            val omega1Anc = omega1.foldLeft(Set.empty[FormulaOccurrence])((acc, fo)=> acc ++ getAncestors(fo))
             return ProjectionTermCreators.extract(p, omega1, omega1Anc)
           }
           val p = SchemaProofDB.get(proof_name).rec
-//          val omegaAnc = omega.foldLeft(Set.empty[FormulaOccurrence])((x, acc) => getAncestors(x) + acc)
-          val omega1 = Set.empty[FormulaOccurrence] +p.root.succedent.head
-          if (!omega.isEmpty)                  {
-            println("\n\nomega"+omega.head.formula)
+          val seq = p.root
+          val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+          val new_map1 = index match {
+            case Succ(_) => scala.collection.immutable.Map.empty[Var, IntegerTerm]
+            case _ => scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(k.asInstanceOf[IntegerTerm]).asInstanceOf[IntegerTerm] )
           }
-
-          val omega1Anc = getAncestors(omega1.head)
-//          val pterm = ProjectionTermCreators.extract(p, omega, omegaAnc ++ getCutAncestors(p))
+          var sub1 = new SchemaSubstitution1[HOLExpression](new_map1)
+          val omega1 = (seq0.antecedent ++ seq0.succedent).toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
+          val omega1_sub = omega1.map(fo => sub1(fo.formula))
+          val endSeqOcc = (seq.antecedent ++ seq.succedent).toSet.filter(fo => omega1_sub.contains(fo.formula))
+          val omega1Anc = endSeqOcc.foldLeft(Set.empty[FormulaOccurrence])((acc, fo)=> acc ++ getAncestors(fo))
           val pterm = ProjectionTermCreators.extract(p, omega1, omega1Anc ++ getCutAncestors(p))
           val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(index) )
           var sub = new SchemaSubstitution3(new_map)
