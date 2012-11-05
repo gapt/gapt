@@ -271,196 +271,206 @@ object ProjectionTermCreators {
   }
 
 
-  def extract(pr: LKProof, omega: Set[FormulaOccurrence], cut_ancs: Set[FormulaOccurrence]): ProjectionTerm = pr match {
-    case Axiom(ro) => pAxiomTerm(ro)
-    case WeakeningLeftRule(p, _, m) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), m.formula::Nil)
-    }
-    case SchemaProofLinkRule( seq, link, ind::_ ) => {
-      pProofLinkTerm( seq, omega, link, ind, cut_ancs)
-    }
-    case WeakeningRightRule(p, _, m) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), m.formula::Nil)
-    }
-    case CutRule( p1, p2, _, a1, a2 ) => {
-      val omega_ancs = getAncestors(omega)
-      val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo)),
-                       p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo)))
-      val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo)),
-                       p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo)))
-      pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
-    }
-    case OrLeftRule(p1, p2, _, a1, a2, m) => {
-      val omega_ancs = getAncestors(omega)
-      if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
-        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
-                         p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
-        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
-                         p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+  def extract(pr: LKProof, omega: Set[FormulaOccurrence], cut_ancs: Set[FormulaOccurrence]): ProjectionTerm = {
+    pr match {
+      case Axiom(ro) => pAxiomTerm(ro)
+      case WeakeningLeftRule(p, _, m) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), m.formula::Nil)
+      }
+      case SchemaProofLinkRule( seq, link, ind::_ ) => {
+        pProofLinkTerm( seq, omega, link, ind, cut_ancs)
+      }
+      case WeakeningRightRule(p, _, m) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), m.formula::Nil)
+      }
+      case CutRule( p1, p2, _, a1, a2 ) => {
+        val omega_ancs = getAncestors(omega)
+//        println("\nomega = "+omega)
+//        println("succ.head = "+p2.root.succedent.head)
+        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo)),
+          p2.root.succedent.filter(fo => !omega_ancs.contains(fo)))
+        val w2 = Sequent(p1.root.antecedent.filter(fo => !omega_ancs.contains(fo)),
+          p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo)))
+//        println("cut : w1 = "+printSchemaProof.sequentToString(w1) )
+//        println("cut : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
         pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
       }
-      else
-        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
-    }
-    case AndRightRule(p1, p2, _, a1, a2, m) => {
-      val omega_ancs = getAncestors(omega)
-      if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
-        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
-                         p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
-        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
-                         p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
-        pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
+      case OrLeftRule(p1, p2, _, a1, a2, m) => {
+        val omega_ancs = getAncestors(omega)
+        if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
+          val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+            p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+          val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+            p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+//          println("or:l : w1 = "+printSchemaProof.sequentToString(w1) )
+//          println("or:l : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
+          pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
+        }
+        else
+          pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
       }
-      else
-        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
-    }
-    case NegLeftRule( p, _, a, m ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::Nil)
-    }
-    case AndLeft1Rule(p, r, a, m) =>  {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
-    }
-    case AndLeft2Rule(p, r, a, m) =>  {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
-    }
-    case OrRight1Rule(p, r, a, m) =>  {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
-    }
-    case OrRight2Rule(p, r, a, m) =>  {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
-    }
-    case NegRightRule( p, _, a, m ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::Nil)
-    }
-    case ImpRightRule( p, _, a1, a2, m ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
-    }
-    case ImpLeftRule(p1, p2, _, a1, a2, m) => {
-      val omega_ancs = getAncestors(omega)
-      if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
-        val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
-          p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
-        val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
-          p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
-        pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
+      case AndRightRule(p1, p2, _, a1, a2, m) => {
+        val omega_ancs = getAncestors(omega)
+        if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
+          val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+            p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+          val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+            p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+//          println("and:r : w1 = "+printSchemaProof.sequentToString(w1) )
+//          println("and:r : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
+          pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
+        }
+        else
+          pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
       }
-      else
-        pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
+      case NegLeftRule( p, _, a, m ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::Nil)
+      }
+      case AndLeft1Rule(p, r, a, m) =>  {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+      }
+      case AndLeft2Rule(p, r, a, m) =>  {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+      }
+      case OrRight1Rule(p, r, a, m) =>  {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+      }
+      case OrRight2Rule(p, r, a, m) =>  {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+      }
+      case NegRightRule( p, _, a, m ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::Nil)
+      }
+      case ImpRightRule( p, _, a1, a2, m ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
+      }
+      case ImpLeftRule(p1, p2, _, a1, a2, m) => {
+        val omega_ancs = getAncestors(omega)
+        if (omega_ancs.contains(m) || cut_ancs.contains(m)) {
+          val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+            p2.root.succedent.filter(fo => fo != a2 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+          val w2 = Sequent(p1.root.antecedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)),
+            p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo) && !cut_ancs.contains(fo)))
+//          println("imp:l : w1 = "+printSchemaProof.sequentToString(w1) )
+//          println("imp:l : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
+          pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
+        }
+        else
+          pTimes(pr.name, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), a1.formula, a2.formula)
+      }
+      case ContractionLeftRule(p, _, a1, a2, m) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
+      }
+      case ContractionRightRule(p, _, a1, a2, m) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
+      }
+      case ForallLeftRule( p, _, a, m, t ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t::Nil)
+      }
+      case ForallRightRule( p, _, a, m, _ ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
+      }
+      case ExistsLeftRule( p, _, a, m, _ ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
+      }
+      case ExistsRightRule( p, _, a, m, t ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t::Nil)
+      }
+      case AndEquivalenceRule1(up, r, aux, main) =>  {
+        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+          extract(up, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+      }
+      case AndEquivalenceRule2(up, r, aux, main) =>  {
+        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+          extract(up, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+      }
+      case AndEquivalenceRule3(up, r, aux, main) =>  {
+        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+          extract(up, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+      }
+      case OrEquivalenceRule1(up, r, aux, main) =>  {
+        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+          extract(up, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+      }
+      case OrEquivalenceRule2(up, r, aux, main) =>  {
+        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+          extract(up, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+      }
+      case OrEquivalenceRule3(up, r, aux, main) =>  {
+        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+          extract(up, omega, cut_ancs)
+        else
+          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+      }
+      case trsArrowLeftRule( p, _, a, m ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name+":l", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+      }
+      case trsArrowRightRule( p, _, a, m ) => {
+        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+          extract(p, omega, cut_ancs)
+        else
+          pUnary(pr.name+":r", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+      }
+      case _ => { println("ERROR in extraction of projection term : missing rule! "+pr.rule);throw new Exception("ERROR in extract: ProjectionTermCreators "+pr.rule) }
     }
-    case ContractionLeftRule(p, _, a1, a2, m) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
-    }
-    case ContractionRightRule(p, _, a1, a2, m) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a1.formula::a2.formula::Nil)
-    }
-    case ForallLeftRule( p, _, a, m, t ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t::Nil)
-    }
-    case ForallRightRule( p, _, a, m, _ ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
-    }
-    case ExistsLeftRule( p, _, a, m, _ ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        throw new Exception("\nProjection term can not be computed - the proof is not skolemized!\n")
-    }
-    case ExistsRightRule( p, _, a, m, t ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t::Nil)
-    }
-    case AndEquivalenceRule1(up, r, aux, main) =>  {
-      if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
-        extract(up, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
-    }
-    case AndEquivalenceRule2(up, r, aux, main) =>  {
-      if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
-        extract(up, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
-    }
-    case AndEquivalenceRule3(up, r, aux, main) =>  {
-      if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
-        extract(up, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
-    }
-    case OrEquivalenceRule1(up, r, aux, main) =>  {
-      if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
-        extract(up, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
-    }
-    case OrEquivalenceRule2(up, r, aux, main) =>  {
-      if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
-        extract(up, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
-    }
-    case OrEquivalenceRule3(up, r, aux, main) =>  {
-      if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
-        extract(up, omega, cut_ancs)
-      else
-        pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
-    }
-    case trsArrowLeftRule( p, _, a, m ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name+":l", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
-    }
-    case trsArrowRightRule( p, _, a, m ) => {
-      if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
-        extract(p, omega, cut_ancs)
-      else
-        pUnary(pr.name+":r", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
-    }
-
-
-    case _ => { println("ERROR in extraction of projection term : missing rule! "+pr.rule);throw new Exception("ERROR in extract: ProjectionTermCreators "+pr.rule) }
   }
 
   def omegaPrime(p: LKProof, seq: Sequent, omega: Set[FormulaOccurrence]): Set[FormulaOccurrence] = {
@@ -635,16 +645,6 @@ object PStructToExpressionTree {
       printTree(up.asInstanceOf[Tree[String]])
     }
 
-//    case BinaryTreeWeak12(vert, up1, up2, w1, w2) => {
-//      print(Console.BLUE+" ("+Console.RESET+" w^{"+Console.YELLOW+printSchemaProof.sequentToString(w1)+Console.RESET+"}")
-//      printTree(up1)
-//      print(" "+Console.BLUE)
-//      print("\n\n                                  "+vert+"\n\n")
-//      print(Console.RESET+" w^{"+Console.YELLOW+printSchemaProof.sequentToString(w2)+Console.RESET+"}")
-//      printTree(up2)
-//      print(Console.BLUE+")"+Console.RESET)
-//    }
-
     case BinaryTree(vert, up1, up2) => {
       if (vert == PPlusSymbol.toString)
         print(Console.BLUE)
@@ -697,6 +697,7 @@ object PStructToExpressionTree {
           val succ1 = plus.seq1.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
           val ant2 = plus.seq2.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
           val succ2 = plus.seq2.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
+          //w1 and w2
           val want1 = plus.w1.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
           val wsucc1 = plus.w1.succedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
           val want2 = plus.w2.antecedent.map(x => {x.factory.createFormulaOccurrence(subst(x.formula).asInstanceOf[HOLFormula], Nil)})
@@ -747,8 +748,7 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
     def apply(t: ProjectionTerm): ProjectionTerm = {
       t match {
         case pProofLinkTerm( seq0, omega, proof_name, index, canc ) => {
-          if(index == IntZero()){
-            val omegaAnc = omega.foldLeft(Set.empty[FormulaOccurrence])((x, acc) => getAncestors(x) + acc)
+          if(index == IntZero()) {
             val p = SchemaProofDB.get(proof_name).base
             val seq = p.root
             val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
@@ -771,7 +771,7 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
           val omega1_sub = omega1.map(fo => sub1(fo.formula))
           val endSeqOcc = (seq.antecedent ++ seq.succedent).toSet.filter(fo => omega1_sub.contains(fo.formula))
           val omega1Anc = endSeqOcc.foldLeft(Set.empty[FormulaOccurrence])((acc, fo)=> acc ++ getAncestors(fo))
-          val pterm = ProjectionTermCreators.extract(p, omega1, omega1Anc ++ getCutAncestors(p))
+          val pterm = ProjectionTermCreators.extract(p, endSeqOcc, omega1Anc ++ getCutAncestors(p))
           val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(index) )
           var sub = new SchemaSubstitution3(new_map)
           val ground = GroundingProjectionTerm(pterm, sub)
@@ -783,6 +783,8 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
           pTimes(times.rho, left, right, times.aux1, times.aux2)
         }
         case plus: pPlus => {
+//          println("\nw1 = "+printSchemaProof.sequentToString(plus.w1) )
+//          println("w2 = "+printSchemaProof.sequentToString(plus.w2))
           val left = UnfoldProjectionTerm(plus.left)
           val right = UnfoldProjectionTerm(plus.right)
           pPlus(plus.seq1, plus.seq2, left, right, plus.w1, plus.w2)
