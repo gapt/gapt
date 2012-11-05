@@ -1,43 +1,58 @@
-proof \psi proves
-    Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k,x)))
+g(0,x) -> x
+g(k+1,x) -> f(g(k,x))
+
+
+proof \varphi  proves
+Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(f(g(k,x))))
 
 base {
-    root: ax( Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(0,x))) )
+    1:      ax(P(z(0)) |- P(z(0)))
+    2:      ax(P(f(g(0,z(0)))) |- P(f(g(0,z(0)))))
+    3:      arrowL(2, P(f(g(0,z(0)))))
+    4:      impL(1, 3, P(z(0)), P(f(z(0))))
+    5:      impR(4, P(z(0)), P(f(g(0,z(0)))))
+    6:      allL(5, Imp P(z(0)) P(f(z(0))), Forall x (Imp P(x) P(f(x))), z(0))
+    root:   allR(6, Imp P(z(0)) P(f(g(0,z(0)))), Forall x (Imp P(x) P(f(g(0,x)))), z(0))
 }
 
 step {
-    1:      pLink(   (\psi, k)
-                    Forall x (Imp P(x) P(f(x)))
-                        |-
-                    Forall x (Imp P(x) P(g(k,x)))
+    0:      pLink(   (\varphi, k)
+                Forall x (Imp P(x) P(f(x)))
+                    |-
+                Forall x (Imp P(x) P(f(g(k,x))))
                 )
-    2:      ax( P(z(0)) |- P(z(0)) )
-    3:      ax( P(g(k,z(0))) |- P(g(k,z(0))) )
-    4:      impL( 2, 3, P(z(0)), P(g(k,z(0))) )
-    5:      ax( P(g(k+1,z(0))) |- P(g(k+1,z(0))) )
-    6:      impL( 4, 5, P(g(k,z(0))), P(g(k+1,z(0))) )
-    7:      impR( 6, P(z(0)), P(g(k+1,z(0))) )
-    8:      allL(7, Imp P(z(0)) P(g(k,z(0))), Forall x (Imp P(x) P(g(k,x))), z(0) )
-    9:      allL(8, Imp P(g(k,z(0))) P(g(k+1,z(0))), Forall x (Imp P(g(k,x)) P(g(k+1,x))), z(0) )
-    10:     allR(9, Imp P(z(0)) P(g(k+1,z(0))), Forall x (Imp P(x) P(g(k+1,x))), z(0) )
-    root:   cut( 1, 10, Forall x (Imp P(x) P(g(k,x))) )
+    1:      ax( P(g(k+1,z(k+1)))  |- P(g(k+1,z(k+1)))  )
+    111:    arrowL(1, P(g(k+1,z(k+1))))
+    2:      ax( P(f(g(k+1,z(k+1))))  |- P(f(g(k+1,z(k+1))))  )
+    3:      impL( 111, 2, P(g(k+1,z(k+1))), P(f(g(k+1,z(k+1)))) )
+    4:      ax( P(z(k+1))  |- P(z(k+1)) )
+    5:      impL( 4, 3, P(z(k+1)), P(f(g(k,z(k+1)))) )
+    6:      impR( 5, P(z(k+1)), P(f(g(k+1,z(k+1)))) )
+    7:      allL(6, Imp P(g(k+1,z(k+1))) P(f(g(k+1,z(k+1)))), Forall x (Imp P(x) P(f(x))), g(k+1,z(k+1)))
+    8:      allL(7, Imp P(z(k+1)) P(f(g(k,z(k+1)))), Forall x (Imp P(x) P(f(g(k,x)))), z(k+1) )
+    10:     allR(8, Imp P(z(k+1)) P(f(g(k+1,z(k+1)))), Forall x (Imp P(x) P(f(g(k+1,x)))), z(k+1) )
+    40:      cut( 0, 10, Forall x (Imp P(x) P(f(g(k,x)))) )
+    root:      contrL( 40 , Forall x (Imp P(x) P(f(x))) )
 }
 
-proof \varphi proves
-  P(y), Forall x (Imp P(x) P(f(x))) |- P(g(k, y))
+proof \psi proves
+  P(a), Forall x (Imp P(x) P(f(x))) |- P(f(g(k, a)))
 
 base {
-  3: ax( P(f(y)) |- P(g(0,y)) )
-  2: ax( P(y)  |- P(y) )
-  1: impL(2, 3, P(y), P(f(y)))
-  root: allL(1, Imp P(y) P(f(y)), Forall x (Imp P(x) P(f(x))), y)
+  1:    ax( P(f(g(0,a))) |- P(f(g(0,a))) )
+  2:    arrowL(1, P(f(g(0,a))) )
+  3:    ax( P(a) |- P(a) )
+  4:    impL(3, 2, P(a), P(f(a)))
+  root: allL(4, Imp P(a) P(f(a)), Forall x (Imp P(x) P(f(x))), a)
 }
 
 step {
-  1: pLink( (\psi, k+1)
-             Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k+1,x)))
+  1:    pLink( (\varphi, k+1)
+             Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(f(g(k+1,x))))
           )
-  3: ax(P(y), Imp P(y) P(g(k+1,y)) |- P(g(k+1,y)))
-  2: allL(3, Imp P(y) P(g(k+1,y)), Forall x (Imp P(x) P(g(k+1,x))), y )
-  root: cut(1, 2, Forall x (Imp P(x) P(g(k+1,x))))
+  2:    ax( P(a) |- P(a))
+  21:   ax( P(f(g(k+1,a))) |- P(f(g(k+1,a))))
+  3:    impL(2, 21, P(a), P(f(g(k+1,a))))
+  4:    allL(3, Imp P(a) P(f(g(k+1,a))), Forall x (Imp P(x) P(f(g(k+1,x)))), a )
+  root: cut(1, 4, Forall x (Imp P(x) P(f(g(k+1,x)))))
 }
