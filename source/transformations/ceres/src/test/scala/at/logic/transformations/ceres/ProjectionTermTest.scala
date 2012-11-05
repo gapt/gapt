@@ -108,7 +108,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
 
       "should extract proj.term for the journal paper" in {
-        println("\n\nProjectionTerm for the journal paper\n\n")
+        println(Console.RED+"\n\n---- ProjectionTerm for the journal paper ----"+Console.RESET)
         SchemaProofDB.clear
         val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
         val map = ParseQMON.parseProof(s)
@@ -117,14 +117,25 @@ class ProjectionTermTest extends SpecificationWithJUnit {
         val p2 = map.get(proof_name).get._2.get("root").get
         val p1 = map.get("\\psi").get._2.get("root").get
         val p1b = map.get("\\psi").get._1.get("root").get
+//        val f = p2.root.succedent.head
+        println("\n------ proj.term: \n\n")
+        val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence], getCutAncestors(p2))
+        val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+        var sub = new SchemaSubstitution3(new_map)
+        val t = PStructToExpressionTree.applyConsole(pterm)
+        PStructToExpressionTree.printTree(t)
 
-        println("\n\n")
-        printSchemaProof(p2)
-        println("\n\n")
-        val f = p2.root.succedent.head
-  //      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence]+f, getCutAncestors(p2))
-  //      val t = PStructToExpressionTree.applyConsole(pterm)
-  //      PStructToExpressionTree.printTree(t)
+        println("\n\n\n------ ground: \n\n")
+        val ground = GroundingProjectionTerm(pterm, sub)
+        val t_ground = PStructToExpressionTree.applyConsole(ground)
+        PStructToExpressionTree.printTree(t_ground)
+
+        println("\n\n\n------ unfold ground: \n\n")
+        val ground_unfold = UnfoldProjectionTerm(ground)
+        val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
+        PStructToExpressionTree.printTree(t_ground_unfold)
+
+
         ProjectionTermCreators.relevantProj(proof_name)
   //      val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
   //      val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
@@ -157,7 +168,6 @@ class ProjectionTermTest extends SpecificationWithJUnit {
         println("\n\n")
         printSchemaProof(p2)
         println("\n\n")
-        val f = p2.root.succedent.head
         val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence], getCutAncestors(p2))
         val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
         var sub = new SchemaSubstitution3(new_map)
@@ -178,16 +188,16 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
         val projSet = ProjectionTermToSetOfProofs(ground_unfold)
         println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
-        println(Console.GREEN+"\n1: "+Console.RESET)
-        printSchemaProof(projSet.head)
-        println(Console.GREEN+"\n2: "+Console.RESET)
-        printSchemaProof(projSet.tail.head)
-        println(Console.GREEN+"\n3: "+Console.RESET)
-        printSchemaProof(projSet.tail.tail.head)
-        println(Console.GREEN+"\n4: "+Console.RESET)
-        printSchemaProof(projSet.tail.tail.tail.head)
-        println(Console.GREEN+"\n5: "+Console.RESET)
-        printSchemaProof(projSet.last)
+//        println(Console.GREEN+"\n1: "+Console.RESET)
+//        printSchemaProof(projSet.head)
+//        println(Console.GREEN+"\n2: "+Console.RESET)
+//        printSchemaProof(projSet.tail.head)
+//        println(Console.GREEN+"\n3: "+Console.RESET)
+//        printSchemaProof(projSet.tail.tail.head)
+//        println(Console.GREEN+"\n4: "+Console.RESET)
+//        printSchemaProof(projSet.tail.tail.tail.head)
+//        println(Console.GREEN+"\n5: "+Console.RESET)
+//        printSchemaProof(projSet.last)
         //        ProjectionTermCreators.relevantProj(proof_name)
 //        val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
 //        val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
