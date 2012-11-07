@@ -441,8 +441,8 @@ class IvyTest extends SpecificationWithJUnit {
     }
   }
 
-  " parse the test file prime1-0sk.ivy (clause set of the ) " in {
-    skipped("paramodulation still has problems")
+  " parse the test file prime1-0sk.ivy (clause set of the 0 instance of the prime proof) " in {
+    //skipped("paramodulation still has problems")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"prime1-0sk.ivy")
       result must not beEmpty
@@ -462,12 +462,13 @@ class IvyTest extends SpecificationWithJUnit {
     } catch {
       case e:Exception =>
         debug("Exception parsing prime1-0sk.ivy: "+e.getMessage)
+        debug("Stacktrace:"+e.getStackTraceString)
         true must beEqualTo(false)
 
     }
   }
 
-  " parse the test file GRA014+1.ivy (clause set of the ) " in {
+  " parse the test file GRA014+1.ivy " in {
     //skipped("out of memory")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"GRA014+1.ivy")
@@ -477,7 +478,7 @@ class IvyTest extends SpecificationWithJUnit {
         case lisp.List(_) =>
           val pinput = IvyParser.parse(proof, IvyParser.is_ivy_variable)
           debug("resolution: "+pinput)
-          //val rinput = IvyToRobinson(pinput)
+          val rinput = IvyToRobinson(pinput)
           //debug("robinson: "+rinput)
 
         case _ =>
@@ -489,10 +490,38 @@ class IvyTest extends SpecificationWithJUnit {
     } catch {
       case e:Exception =>
         debug("Exception parsing GRA014+1.ivy: "+e.getMessage)
+        debug("Stacktrace:"+e.getStackTraceString)
         true must beEqualTo(false)
 
     }
   }
 
+  " parse the test file GEO037-2.ivy " in {
+    //skipped("out of memory")
+    try {
+      val result = SExpressionParser("target" + separator + "test-classes" + separator +"GEO037-2.ivy")
+      result must not beEmpty
+      val proof = result.head
+      proof match {
+        case lisp.List(_) =>
+          val pinput = IvyParser.parse(proof, IvyParser.is_ivy_variable)
+          debug("resolution: "+pinput)
+          val rinput = IvyToRobinson(pinput)
+        //debug("robinson: "+rinput)
+
+        case _ =>
+          //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
+          "The proof in GEO037-2.ivy must have some inferences" must beEqualTo("failed")
+      }
+      (true) must beEqualTo(true)
+
+    } catch {
+      case e:Exception =>
+        debug("Exception parsing GEO037-2.ivy: "+e.getMessage)
+        debug("Stacktrace:"+e.getStackTraceString)
+        true must beEqualTo(false)
+
+    }
+  }
 }
 

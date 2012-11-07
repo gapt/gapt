@@ -48,7 +48,7 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
         out.append(id + " : Propositional("+clause+") by "+ parent.id +"\n");
         id::l1
       } else m
-    case Flip(id,_, clause, parent) =>
+    case Flip(id,_, flipped, clause, parent) =>
       if (! m.contains(id)) {
         val l1 = printNodes(parent,m, out);
         out.append(id + " : Flip("+clause+") by "+ parent.id +"\n");
@@ -95,7 +95,8 @@ case class Instantiate(id: String,
 };
 
 case class Flip(id: String,
-                clause_exp : SExpression, override val vertex : Clause, override val t : IvyResolutionProof)
+                clause_exp : SExpression, flipped : FormulaOccurrence,
+                override val vertex : Clause, override val t : IvyResolutionProof)
   extends UnaryAGraph(vertex, t) with UnaryAGraphProof[Clause] with IvyResolutionProof {
   def rule = FlipType
 //  override def name = "Flip"

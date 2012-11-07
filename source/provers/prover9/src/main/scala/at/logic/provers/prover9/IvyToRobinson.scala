@@ -9,7 +9,9 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.resolution.instance.{Instance => RInstantiate}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.resolution.base.Clause
+import at.logic.language.fol
 import collection.immutable
+import at.logic.language.lambda.symbols.VariableStringSymbol
 
 /**
  * Converts Ivy Proofs into Robinson Resolution Proofs
@@ -123,32 +125,97 @@ object IvyToRobinson {
           (rproof, parentmap + ((id, rproof)))
       }
 
+    case Flip(id, exp, flipped, clause, parent) =>
+      map.get(id) match {
+        case Some(proof) => (proof, map)
+        case None =>
+          val (rparent, parentmap) = IvyToRobinson(parent, map)
+
+          //there is no robinson rule for flip, so we simulate it: from P :- Q, s=t and :- s=s prove P :- Q, t=s by paramod
+          val fol.Equation(s,t) = flipped.formula
+
+          //create a proof of s=s
+          val x = fol.FOLVar(new VariableStringSymbol("x"))
+          val xx = RInitialClause(Nil, fol.Equation(x,x)::Nil)
+          val ss = RInstantiate(xx, Substitution[FOLExpression]((x,t)))
+          //val ts = fol.Equation(s,t)
+
+
+          //println("translating inference "+id)
+          //require((rparent.root.antecedent ++ rparent.root.succedent) contains (flipped.ancestors(0)),
+          //  "Error translating flip rule: "+flipped+" anc: "+flipped.ancestors(0) + " not contained in "+ ((rparent.root.antecedent ++ rparent.root.succedent) map (_.id)) )
+
+          val flippend_ancestor = flipped.ancestors(0).formula
+          val rflipped = (rparent.root.negative ++ rparent.root.positive) find (_.formula == flippend_ancestor)
+          require(rflipped.nonEmpty, "Error: cannot find flipped formula in translation of parent proof!")
+
+          val rproof = RParamodulation(ss, rparent, ss.root.positive(0), rflipped.get, flipped.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())
+          (rproof, parentmap + ((id, rproof)))
+      }
+
+    case IParamodulation(id, exp, pos, lit, clause, parent1, parent2) =>
+      map.get(id) match {
+        case Some(proof) => (proof, map)
+        case None =>
+          val (rparent1, parentmap1) = IvyToRobinson(parent1, map)
+          val (rparent2, parentmap2) = IvyToRobinson(parent2, parentmap1)
+          println("translating inference "+id+ " from "+parent1.id+" and "+parent2.id)
+          require(lit.ancestors.length == 2, "Error in converting a paramodulation inference: need two ancestors")
+          if (rparent1 == rparent2) {
+            //TODO:wrong auxiliary formulas
+            val rproof = RParamodulation(rparent1, rparent2, lit.ancestors(0), lit.ancestors(1), lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]() )
+            (rproof, parentmap2 + ((id, rproof)))
+          } else {
+            require(parent1.id != parent2.id, "Parents need to be different!")
+            val p1lits = (rparent1.root.negative ++ rparent1.root.positive)
+            val p2lits = (rparent2.root.negative ++ rparent2.root.positive)
+            val p1litsf = (rparent1.root.negative ++ rparent1.root.positive) map (_.formula)
+            val p2litsf = (rparent2.root.negative ++ rparent2.root.positive) map (_.formula)
+            println(lit.ancestors)
+            println(parent1.root.antecedent + " :- "+parent1.root.succedent)
+            println(rparent1.root.antecedent + " :- "+rparent1.root.succedent)
+            println(rparent2.root.antecedent + " :- "+rparent2.root.succedent)
+            val anc1 = lit.ancestors filter (p1litsf contains _.formula)
+            val anc2 = lit.ancestors filter (p2litsf contains _.formula)
+            require(anc1.length + anc2.length >= 2, "Error in converting a paramodulation inference: sum of ancestors in parents needs to be 2 not"+anc1.length + " "+anc2.length)
+            require(anc1.length >= 1, "Error in converting a paramodulation inference: need exactly one ancestor in first parent!")
+            require(anc2.length >= 1, "Error in converting a paramodulation inference: need exactly one ancestor in second parent!")
+            val anc1occ = p1lits( p1litsf.indexOf(anc1(0).formula) )
+            val anc2occ = p2lits( p2litsf.indexOf(anc2(0).formula) )
+            val rproof = RParamodulation(rparent1, rparent2, anc1occ, anc2occ, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]() )
+
+            (rproof, parentmap2 + ((id, rproof)))
+          }
+      }
 
 
 
-    /*
-        case IResolution(id, exp, lit1, lit2, clause, parent1, parent2) =>
-          (parent1,parent2) match {
-            case (IInstantiate(id1,exp1,sub1, clause1, parent1), IInstantiate(id2,exp2,sub2, clause2, parent2) ) =>
-              val shared_vars : Set[Var] = sub1.map.keySet.intersect(sub2.map.keySet)
 
-              val new_vars : Map[Var,FOLTerm]=
-                Map[Var,FOLTerm]() ++ (shared_vars map ((x:Var) => (x,x.variant(generator).asInstanceOf[FOLTerm])))
 
-              val sub2_ = for ((key,value) <-  sub2.map) yield {
-                if (shared_vars contains key)
-                  (new_vars(key), value)
-                else
-                  (key,value)
+
+        /*
+            case IResolution(id, exp, lit1, lit2, clause, parent1, parent2) =>
+              (parent1,parent2) match {
+                case (IInstantiate(id1,exp1,sub1, clause1, parent1), IInstantiate(id2,exp2,sub2, clause2, parent2) ) =>
+                  val shared_vars : Set[Var] = sub1.map.keySet.intersect(sub2.map.keySet)
+
+                  val new_vars : Map[Var,FOLTerm]=
+                    Map[Var,FOLTerm]() ++ (shared_vars map ((x:Var) => (x,x.variant(generator).asInstanceOf[FOLTerm])))
+
+                  val sub2_ = for ((key,value) <-  sub2.map) yield {
+                    if (shared_vars contains key)
+                      (new_vars(key), value)
+                    else
+                      (key,value)
+                  }
+
+                  val variant_sub = Substitution[FOLTerm](new_vars.toList)
+
+                  apply(iproof)
+
               }
 
-              val variant_sub = Substitution[FOLTerm](new_vars.toList)
-
-              apply(iproof)
-
-          }
-
-    */
+        */
   }
 
   def getIndex(fo : FormulaOccurrence, c : Clause, d : Clause) : (Boolean, Int, Int) = {
