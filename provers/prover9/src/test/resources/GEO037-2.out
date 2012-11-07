@@ -1,0 +1,534 @@
+============================== Prover9 ===============================
+Prover9 (64) version 2009-11A, November 2009.
+Process 19811 was started by stefan on chello080108223247,
+Thu Nov  1 17:44:22 2012
+The command was "prover9".
+============================== end of head ===========================
+
+============================== INPUT =================================
+set(prolog_style_variables).
+
+formulas(assumptions).
+equidistant(X,Y,Y,X) # label(reflexivity_for_equidistance) # label(axiom).
+-equidistant(X,Y,Z,V) | -equidistant(X,Y,V2,W) | equidistant(Z,V,V2,W) # label(transitivity_for_equidistance) # label(axiom).
+-equidistant(X,Y,Z,Z) | X = Y # label(identity_for_equidistance) # label(axiom).
+between(X,Y,extension(X,Y,W,V)) # label(segment_construction1) # label(axiom).
+equidistant(Y,extension(X,Y,W,V),W,V) # label(segment_construction2) # label(axiom).
+-equidistant(X,Y,X1,Y1) | -equidistant(Y,Z,Y1,Z1) | -equidistant(X,V,X1,V1) | -equidistant(Y,V,Y1,V1) | -between(X,Y,Z) | -between(X1,Y1,Z1) | X = Y | equidistant(Z,V,Z1,V1) # label(outer_five_segment) # label(axiom).
+-between(X,Y,X) | X = Y # label(identity_for_betweeness) # label(axiom).
+-between(U,V,W) | -between(Y,X,W) | between(V,inner_pasch(U,V,W,X,Y),Y) # label(inner_pasch1) # label(axiom).
+-between(U,V,W) | -between(Y,X,W) | between(X,inner_pasch(U,V,W,X,Y),U) # label(inner_pasch2) # label(axiom).
+-between(lower_dimension_point_1,lower_dimension_point_2,lower_dimension_point_3) # label(lower_dimension1) # label(axiom).
+-between(lower_dimension_point_2,lower_dimension_point_3,lower_dimension_point_1) # label(lower_dimension2) # label(axiom).
+-between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2) # label(lower_dimension3) # label(axiom).
+-equidistant(X,W,X,V) | -equidistant(Y,W,Y,V) | -equidistant(Z,W,Z,V) | between(X,Y,Z) | between(Y,Z,X) | between(Z,X,Y) | W = V # label(upper_dimension) # label(axiom).
+-between(U,W,Y) | -between(V,W,X) | U = W | between(U,V,euclid1(U,V,W,X,Y)) # label(euclid1) # label(axiom).
+-between(U,W,Y) | -between(V,W,X) | U = W | between(U,X,euclid2(U,V,W,X,Y)) # label(euclid2) # label(axiom).
+-between(U,W,Y) | -between(V,W,X) | U = W | between(euclid1(U,V,W,X,Y),Y,euclid2(U,V,W,X,Y)) # label(euclid3) # label(axiom).
+-equidistant(U,V,U,V1) | -equidistant(U,X,U,X1) | -between(U,V,X) | -between(V,W,X) | between(V1,continuous(U,V,V1,W,X,X1),X1) # label(continuity1) # label(axiom).
+-equidistant(U,V,U,V1) | -equidistant(U,X,U,X1) | -between(U,V,X) | -between(V,W,X) | equidistant(U,W,U,continuous(U,V,V1,W,X,X1)) # label(continuity2) # label(axiom).
+v = extension(u,v,lower_dimension_point_1,lower_dimension_point_2) | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)) | -between(u,v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2)) # label(prove_lengthen) # label(negated_conjecture).
+end_of_list.
+
+formulas(goals).
+end_of_list.
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+equidistant(A,B,B,A) # label(reflexivity_for_equidistance) # label(axiom).  [assumption].
+-equidistant(A,B,C,D) | -equidistant(A,B,E,F) | equidistant(C,D,E,F) # label(transitivity_for_equidistance) # label(axiom).  [assumption].
+-equidistant(A,B,C,C) | A = B # label(identity_for_equidistance) # label(axiom).  [assumption].
+between(A,B,extension(A,B,C,D)) # label(segment_construction1) # label(axiom).  [assumption].
+equidistant(A,extension(B,A,C,D),C,D) # label(segment_construction2) # label(axiom).  [assumption].
+-equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,V6,C,V7) | -equidistant(B,V6,D,V7) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,V6,F,V7) # label(outer_five_segment) # label(axiom).  [assumption].
+-between(A,B,A) | A = B # label(identity_for_betweeness) # label(axiom).  [assumption].
+-between(A,B,C) | -between(D,E,C) | between(B,inner_pasch(A,B,C,E,D),D) # label(inner_pasch1) # label(axiom).  [assumption].
+-between(A,B,C) | -between(D,E,C) | between(E,inner_pasch(A,B,C,E,D),A) # label(inner_pasch2) # label(axiom).  [assumption].
+-between(lower_dimension_point_1,lower_dimension_point_2,lower_dimension_point_3) # label(lower_dimension1) # label(axiom).  [assumption].
+-between(lower_dimension_point_2,lower_dimension_point_3,lower_dimension_point_1) # label(lower_dimension2) # label(axiom).  [assumption].
+-between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2) # label(lower_dimension3) # label(axiom).  [assumption].
+-equidistant(A,B,A,C) | -equidistant(D,B,D,C) | -equidistant(E,B,E,C) | between(A,D,E) | between(D,E,A) | between(E,A,D) | B = C # label(upper_dimension) # label(axiom).  [assumption].
+-between(A,B,C) | -between(D,B,E) | A = B | between(A,D,euclid1(A,D,B,E,C)) # label(euclid1) # label(axiom).  [assumption].
+-between(A,B,C) | -between(D,B,E) | A = B | between(A,E,euclid2(A,D,B,E,C)) # label(euclid2) # label(axiom).  [assumption].
+-between(A,B,C) | -between(D,B,E) | A = B | between(euclid1(A,D,B,E,C),C,euclid2(A,D,B,E,C)) # label(euclid3) # label(axiom).  [assumption].
+-equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | between(C,continuous(A,B,C,F,D,E),E) # label(continuity1) # label(axiom).  [assumption].
+-equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | equidistant(A,F,A,continuous(A,B,C,F,D,E)) # label(continuity2) # label(axiom).  [assumption].
+v = extension(u,v,lower_dimension_point_1,lower_dimension_point_2) | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)) | -between(u,v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2)) # label(prove_lengthen) # label(negated_conjecture).  [assumption].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+No predicates eliminated.
+
+============================== end predicate elimination =============
+
+Auto_denials:  (non-Horn, no changes).
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ =, between, equidistant ]).
+Function symbol precedence:  function_order([ v, lower_dimension_point_1, lower_dimension_point_2, u, x, w, lower_dimension_point_3, extension, euclid1, euclid2, inner_pasch, continuous ]).
+After inverse_order:  (no changes).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+  % set(binary_resolution).  % (non-Horn)
+  % set(neg_ur_resolution).  % (non-Horn, less than 100 clauses)
+
+Auto_process settings:
+  % set(factor).  % (non-Horn)
+  % set(unit_deletion).  % (non-Horn)
+
+kept:      1 equidistant(A,B,B,A) # label(reflexivity_for_equidistance) # label(axiom).  [assumption].
+kept:      2 -equidistant(A,B,C,D) | -equidistant(A,B,E,F) | equidistant(C,D,E,F) # label(transitivity_for_equidistance) # label(axiom).  [assumption].
+kept:      3 -equidistant(A,B,C,C) | A = B # label(identity_for_equidistance) # label(axiom).  [assumption].
+kept:      4 between(A,B,extension(A,B,C,D)) # label(segment_construction1) # label(axiom).  [assumption].
+kept:      5 equidistant(A,extension(B,A,C,D),C,D) # label(segment_construction2) # label(axiom).  [assumption].
+kept:      6 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,V6,C,V7) | -equidistant(B,V6,D,V7) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,V6,F,V7) # label(outer_five_segment) # label(axiom).  [assumption].
+kept:      7 -between(A,B,A) | A = B # label(identity_for_betweeness) # label(axiom).  [assumption].
+kept:      8 -between(A,B,C) | -between(D,E,C) | between(B,inner_pasch(A,B,C,E,D),D) # label(inner_pasch1) # label(axiom).  [assumption].
+kept:      9 -between(A,B,C) | -between(D,E,C) | between(E,inner_pasch(A,B,C,E,D),A) # label(inner_pasch2) # label(axiom).  [assumption].
+kept:      10 -between(lower_dimension_point_1,lower_dimension_point_2,lower_dimension_point_3) # label(lower_dimension1) # label(axiom).  [assumption].
+kept:      11 -between(lower_dimension_point_2,lower_dimension_point_3,lower_dimension_point_1) # label(lower_dimension2) # label(axiom).  [assumption].
+kept:      12 -between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2) # label(lower_dimension3) # label(axiom).  [assumption].
+kept:      13 -equidistant(A,B,A,C) | -equidistant(D,B,D,C) | -equidistant(E,B,E,C) | between(A,D,E) | between(D,E,A) | between(E,A,D) | B = C # label(upper_dimension) # label(axiom).  [assumption].
+kept:      14 -between(A,B,C) | -between(D,B,E) | A = B | between(A,D,euclid1(A,D,B,E,C)) # label(euclid1) # label(axiom).  [assumption].
+kept:      15 -between(A,B,C) | -between(D,B,E) | A = B | between(A,E,euclid2(A,D,B,E,C)) # label(euclid2) # label(axiom).  [assumption].
+kept:      16 -between(A,B,C) | -between(D,B,E) | A = B | between(euclid1(A,D,B,E,C),C,euclid2(A,D,B,E,C)) # label(euclid3) # label(axiom).  [assumption].
+kept:      17 -equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | between(C,continuous(A,B,C,F,D,E),E) # label(continuity1) # label(axiom).  [assumption].
+kept:      18 -equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | equidistant(A,F,A,continuous(A,B,C,F,D,E)) # label(continuity2) # label(axiom).  [assumption].
+           19 v = extension(u,v,lower_dimension_point_1,lower_dimension_point_2) | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)) | -between(u,v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2)) # label(prove_lengthen) # label(negated_conjecture).  [assumption].
+kept:      20 extension(u,v,lower_dimension_point_1,lower_dimension_point_2) = v | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)).  [copy(19),flip(a),unit_del(c,4)].
+kept:      21 -equidistant(A,B,C,D) | equidistant(C,D,C,D).  [factor(2,a,b)].
+kept:      22 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(B,B,D,D) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,B,F,D).  [factor(6,a,c)].
+kept:      23 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,E,C,F) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,E,F,F).  [factor(6,b,d)].
+kept:      24 -equidistant(A,B,A,B) | -equidistant(B,C,B,C) | -equidistant(A,D,A,E) | -equidistant(B,D,B,E) | -between(A,B,C) | A = B | equidistant(C,D,C,E).  [factor(6,e,f)].
+kept:      25 -between(A,B,C) | between(B,inner_pasch(A,B,C,B,A),A).  [factor(8,a,b)].
+kept:      26 -equidistant(A,B,A,C) | -equidistant(D,B,D,C) | between(A,A,D) | between(A,D,A) | between(D,A,A) | B = C.  [factor(13,a,b)].
+kept:      27 -equidistant(A,B,A,C) | between(A,A,A) | B = C.  [factor(13,d,e),merge(b),merge(c),merge(e)].
+kept:      28 -between(A,B,C) | A = B | between(A,A,euclid1(A,A,B,C,C)).  [factor(14,a,b)].
+kept:      29 -between(A,B,C) | A = B | between(A,C,euclid2(A,A,B,C,C)).  [factor(15,a,b)].
+kept:      30 -between(A,B,C) | A = B | between(euclid1(A,A,B,C,C),C,euclid2(A,A,B,C,C)).  [factor(16,a,b)].
+kept:      31 -equidistant(A,B,A,C) | -between(A,B,B) | -between(B,D,B) | between(C,continuous(A,B,C,D,B,C),C).  [factor(17,a,b)].
+kept:      32 -equidistant(A,A,A,B) | -equidistant(A,C,A,D) | -between(A,A,C) | between(B,continuous(A,A,B,A,C,D),D).  [factor(17,c,d)].
+kept:      33 -equidistant(A,B,A,C) | -between(A,B,B) | -between(B,D,B) | equidistant(A,D,A,continuous(A,B,C,D,B,C)).  [factor(18,a,b)].
+kept:      34 -equidistant(A,A,A,B) | -equidistant(A,C,A,D) | -between(A,A,C) | equidistant(A,A,A,continuous(A,A,B,A,C,D)).  [factor(18,c,d)].
+kept:      35 -equidistant(A,B,A,B) | -equidistant(B,C,B,C) | -between(A,B,C) | A = B | equidistant(C,B,C,B).  [factor(22,d,e),unit_del(c,1)].
+kept:      36 -equidistant(A,A,A,B) | -between(A,A,A) | between(B,continuous(A,A,B,A,A,B),B).  [factor(31,b,c)].
+kept:      37 -equidistant(A,A,A,B) | -between(A,A,A) | equidistant(A,A,A,continuous(A,A,B,A,A,B)).  [factor(33,b,c)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+1 equidistant(A,B,B,A) # label(reflexivity_for_equidistance) # label(axiom).  [assumption].
+2 -equidistant(A,B,C,D) | -equidistant(A,B,E,F) | equidistant(C,D,E,F) # label(transitivity_for_equidistance) # label(axiom).  [assumption].
+3 -equidistant(A,B,C,C) | A = B # label(identity_for_equidistance) # label(axiom).  [assumption].
+4 between(A,B,extension(A,B,C,D)) # label(segment_construction1) # label(axiom).  [assumption].
+5 equidistant(A,extension(B,A,C,D),C,D) # label(segment_construction2) # label(axiom).  [assumption].
+6 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,V6,C,V7) | -equidistant(B,V6,D,V7) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,V6,F,V7) # label(outer_five_segment) # label(axiom).  [assumption].
+7 -between(A,B,A) | A = B # label(identity_for_betweeness) # label(axiom).  [assumption].
+8 -between(A,B,C) | -between(D,E,C) | between(B,inner_pasch(A,B,C,E,D),D) # label(inner_pasch1) # label(axiom).  [assumption].
+9 -between(A,B,C) | -between(D,E,C) | between(E,inner_pasch(A,B,C,E,D),A) # label(inner_pasch2) # label(axiom).  [assumption].
+10 -between(lower_dimension_point_1,lower_dimension_point_2,lower_dimension_point_3) # label(lower_dimension1) # label(axiom).  [assumption].
+11 -between(lower_dimension_point_2,lower_dimension_point_3,lower_dimension_point_1) # label(lower_dimension2) # label(axiom).  [assumption].
+12 -between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2) # label(lower_dimension3) # label(axiom).  [assumption].
+13 -equidistant(A,B,A,C) | -equidistant(D,B,D,C) | -equidistant(E,B,E,C) | between(A,D,E) | between(D,E,A) | between(E,A,D) | B = C # label(upper_dimension) # label(axiom).  [assumption].
+14 -between(A,B,C) | -between(D,B,E) | A = B | between(A,D,euclid1(A,D,B,E,C)) # label(euclid1) # label(axiom).  [assumption].
+15 -between(A,B,C) | -between(D,B,E) | A = B | between(A,E,euclid2(A,D,B,E,C)) # label(euclid2) # label(axiom).  [assumption].
+16 -between(A,B,C) | -between(D,B,E) | A = B | between(euclid1(A,D,B,E,C),C,euclid2(A,D,B,E,C)) # label(euclid3) # label(axiom).  [assumption].
+17 -equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | between(C,continuous(A,B,C,F,D,E),E) # label(continuity1) # label(axiom).  [assumption].
+18 -equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | equidistant(A,F,A,continuous(A,B,C,F,D,E)) # label(continuity2) # label(axiom).  [assumption].
+20 extension(u,v,lower_dimension_point_1,lower_dimension_point_2) = v | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)).  [copy(19),flip(a),unit_del(c,4)].
+21 -equidistant(A,B,C,D) | equidistant(C,D,C,D).  [factor(2,a,b)].
+22 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(B,B,D,D) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,B,F,D).  [factor(6,a,c)].
+23 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,E,C,F) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,E,F,F).  [factor(6,b,d)].
+24 -equidistant(A,B,A,B) | -equidistant(B,C,B,C) | -equidistant(A,D,A,E) | -equidistant(B,D,B,E) | -between(A,B,C) | A = B | equidistant(C,D,C,E).  [factor(6,e,f)].
+25 -between(A,B,C) | between(B,inner_pasch(A,B,C,B,A),A).  [factor(8,a,b)].
+26 -equidistant(A,B,A,C) | -equidistant(D,B,D,C) | between(A,A,D) | between(A,D,A) | between(D,A,A) | B = C.  [factor(13,a,b)].
+27 -equidistant(A,B,A,C) | between(A,A,A) | B = C.  [factor(13,d,e),merge(b),merge(c),merge(e)].
+28 -between(A,B,C) | A = B | between(A,A,euclid1(A,A,B,C,C)).  [factor(14,a,b)].
+29 -between(A,B,C) | A = B | between(A,C,euclid2(A,A,B,C,C)).  [factor(15,a,b)].
+30 -between(A,B,C) | A = B | between(euclid1(A,A,B,C,C),C,euclid2(A,A,B,C,C)).  [factor(16,a,b)].
+31 -equidistant(A,B,A,C) | -between(A,B,B) | -between(B,D,B) | between(C,continuous(A,B,C,D,B,C),C).  [factor(17,a,b)].
+32 -equidistant(A,A,A,B) | -equidistant(A,C,A,D) | -between(A,A,C) | between(B,continuous(A,A,B,A,C,D),D).  [factor(17,c,d)].
+33 -equidistant(A,B,A,C) | -between(A,B,B) | -between(B,D,B) | equidistant(A,D,A,continuous(A,B,C,D,B,C)).  [factor(18,a,b)].
+34 -equidistant(A,A,A,B) | -equidistant(A,C,A,D) | -between(A,A,C) | equidistant(A,A,A,continuous(A,A,B,A,C,D)).  [factor(18,c,d)].
+35 -equidistant(A,B,A,B) | -equidistant(B,C,B,C) | -between(A,B,C) | A = B | equidistant(C,B,C,B).  [factor(22,d,e),unit_del(c,1)].
+36 -equidistant(A,A,A,B) | -between(A,A,A) | between(B,continuous(A,A,B,A,A,B),B).  [factor(31,b,c)].
+37 -equidistant(A,A,A,B) | -between(A,A,A) | equidistant(A,A,A,continuous(A,A,B,A,A,B)).  [factor(33,b,c)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.01 seconds.
+
+given #1 (I,wt=5): 1 equidistant(A,B,B,A) # label(reflexivity_for_equidistance) # label(axiom).  [assumption].
+
+given #2 (I,wt=15): 2 -equidistant(A,B,C,D) | -equidistant(A,B,E,F) | equidistant(C,D,E,F) # label(transitivity_for_equidistance) # label(axiom).  [assumption].
+
+given #3 (I,wt=8): 3 -equidistant(A,B,C,C) | A = B # label(identity_for_equidistance) # label(axiom).  [assumption].
+
+given #4 (I,wt=8): 4 between(A,B,extension(A,B,C,D)) # label(segment_construction1) # label(axiom).  [assumption].
+
+given #5 (I,wt=9): 5 equidistant(A,extension(B,A,C,D),C,D) # label(segment_construction2) # label(axiom).  [assumption].
+
+given #6 (I,wt=36): 6 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,V6,C,V7) | -equidistant(B,V6,D,V7) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,V6,F,V7) # label(outer_five_segment) # label(axiom).  [assumption].
+
+given #7 (I,wt=7): 7 -between(A,B,A) | A = B # label(identity_for_betweeness) # label(axiom).  [assumption].
+
+given #8 (I,wt=17): 8 -between(A,B,C) | -between(D,E,C) | between(B,inner_pasch(A,B,C,E,D),D) # label(inner_pasch1) # label(axiom).  [assumption].
+
+given #9 (I,wt=17): 9 -between(A,B,C) | -between(D,E,C) | between(E,inner_pasch(A,B,C,E,D),A) # label(inner_pasch2) # label(axiom).  [assumption].
+
+given #10 (I,wt=4): 10 -between(lower_dimension_point_1,lower_dimension_point_2,lower_dimension_point_3) # label(lower_dimension1) # label(axiom).  [assumption].
+
+given #11 (I,wt=4): 11 -between(lower_dimension_point_2,lower_dimension_point_3,lower_dimension_point_1) # label(lower_dimension2) # label(axiom).  [assumption].
+
+given #12 (I,wt=4): 12 -between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2) # label(lower_dimension3) # label(axiom).  [assumption].
+
+given #13 (I,wt=30): 13 -equidistant(A,B,A,C) | -equidistant(D,B,D,C) | -equidistant(E,B,E,C) | between(A,D,E) | between(D,E,A) | between(E,A,D) | B = C # label(upper_dimension) # label(axiom).  [assumption].
+
+given #14 (I,wt=20): 14 -between(A,B,C) | -between(D,B,E) | A = B | between(A,D,euclid1(A,D,B,E,C)) # label(euclid1) # label(axiom).  [assumption].
+
+given #15 (I,wt=20): 15 -between(A,B,C) | -between(D,B,E) | A = B | between(A,E,euclid2(A,D,B,E,C)) # label(euclid2) # label(axiom).  [assumption].
+
+given #16 (I,wt=25): 16 -between(A,B,C) | -between(D,B,E) | A = B | between(euclid1(A,D,B,E,C),C,euclid2(A,D,B,E,C)) # label(euclid3) # label(axiom).  [assumption].
+
+given #17 (I,wt=28): 17 -equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | between(C,continuous(A,B,C,F,D,E),E) # label(continuity1) # label(axiom).  [assumption].
+
+given #18 (I,wt=29): 18 -equidistant(A,B,A,C) | -equidistant(A,D,A,E) | -between(A,B,D) | -between(B,F,D) | equidistant(A,F,A,continuous(A,B,C,F,D,E)) # label(continuity2) # label(axiom).  [assumption].
+
+given #19 (I,wt=20): 20 extension(u,v,lower_dimension_point_1,lower_dimension_point_2) = v | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)).  [copy(19),flip(a),unit_del(c,4)].
+
+given #20 (I,wt=10): 21 -equidistant(A,B,C,D) | equidistant(C,D,C,D).  [factor(2,a,b)].
+
+given #21 (I,wt=31): 22 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(B,B,D,D) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,B,F,D).  [factor(6,a,c)].
+
+given #22 (I,wt=31): 23 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,E,C,F) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,E,F,F).  [factor(6,b,d)].
+
+given #23 (I,wt=13): 25 -between(A,B,C) | between(B,inner_pasch(A,B,C,B,A),A).  [factor(8,a,b)].
+
+given #24 (I,wt=25): 26 -equidistant(A,B,A,C) | -equidistant(D,B,D,C) | between(A,A,D) | between(A,D,A) | between(D,A,A) | B = C.  [factor(13,a,b)].
+
+given #25 (I,wt=12): 27 -equidistant(A,B,A,C) | between(A,A,A) | B = C.  [factor(13,d,e),merge(b),merge(c),merge(e)].
+
+given #26 (I,wt=16): 28 -between(A,B,C) | A = B | between(A,A,euclid1(A,A,B,C,C)).  [factor(14,a,b)].
+
+given #27 (I,wt=16): 29 -between(A,B,C) | A = B | between(A,C,euclid2(A,A,B,C,C)).  [factor(15,a,b)].
+
+given #28 (I,wt=21): 30 -between(A,B,C) | A = B | between(euclid1(A,A,B,C,C),C,euclid2(A,A,B,C,C)).  [factor(16,a,b)].
+
+given #29 (I,wt=23): 31 -equidistant(A,B,A,C) | -between(A,B,B) | -between(B,D,B) | between(C,continuous(A,B,C,D,B,C),C).  [factor(17,a,b)].
+
+given #30 (I,wt=24): 32 -equidistant(A,A,A,B) | -equidistant(A,C,A,D) | -between(A,A,C) | between(B,continuous(A,A,B,A,C,D),D).  [factor(17,c,d)].
+
+given #31 (I,wt=24): 33 -equidistant(A,B,A,C) | -between(A,B,B) | -between(B,D,B) | equidistant(A,D,A,continuous(A,B,C,D,B,C)).  [factor(18,a,b)].
+
+given #32 (I,wt=25): 34 -equidistant(A,A,A,B) | -equidistant(A,C,A,D) | -between(A,A,C) | equidistant(A,A,A,continuous(A,A,B,A,C,D)).  [factor(18,c,d)].
+
+given #33 (I,wt=19): 36 -equidistant(A,A,A,B) | -between(A,A,A) | between(B,continuous(A,A,B,A,A,B),B).  [factor(31,b,c)].
+
+given #34 (I,wt=20): 37 -equidistant(A,A,A,B) | -between(A,A,A) | equidistant(A,A,A,continuous(A,A,B,A,A,B)).  [factor(33,b,c)].
+
+given #35 (A,wt=10): 38 -equidistant(A,B,C,D) | equidistant(B,A,C,D).  [resolve(2,a,1,a)].
+
+given #36 (T,wt=5): 87 equidistant(A,B,A,B).  [resolve(21,a,5,a)].
+
+given #37 (T,wt=7): 40 extension(A,B,C,C) = B.  [resolve(5,a,3,a),flip(a)].
+
+given #38 (T,wt=4): 122 between(A,B,B).  [para(40(a,1),4(a,3))].
+
+given #39 (T,wt=5): 123 equidistant(A,A,B,B).  [para(40(a,1),5(a,2))].
+
+given #40 (A,wt=10): 39 -equidistant(A,B,C,D) | equidistant(C,D,B,A).  [resolve(2,b,1,a)].
+
+given #41 (T,wt=9): 106 equidistant(extension(A,B,C,D),B,C,D).  [resolve(38,a,5,a)].
+
+given #42 (T,wt=9): 141 between(A,inner_pasch(B,A,A,A,B),B).  [resolve(122,a,25,a)].
+
+given #43 (T,wt=8): 180 inner_pasch(A,A,A,A,A) = A.  [resolve(141,a,7,a),flip(a)].
+
+given #44 (T,wt=9): 157 equidistant(A,B,extension(C,D,A,B),D).  [resolve(39,a,5,a)].
+
+given #45 (A,wt=14): 41 -equidistant(A,extension(B,A,C,D),E,F) | equidistant(E,F,C,D).  [resolve(5,a,2,b)].
+
+given #46 (T,wt=9): 158 equidistant(A,B,C,extension(D,C,A,B)).  [resolve(106,a,39,a)].
+
+given #47 (T,wt=9): 181 equidistant(extension(A,B,C,D),B,D,C).  [resolve(157,a,39,a)].
+
+given #48 (T,wt=9): 182 equidistant(A,B,extension(C,D,B,A),D).  [resolve(157,a,38,a)].
+
+given #49 (T,wt=9): 192 equidistant(A,extension(B,A,C,D),D,C).  [resolve(158,a,39,a)].
+
+given #50 (A,wt=14): 42 -equidistant(A,extension(B,A,C,D),E,F) | equidistant(C,D,E,F).  [resolve(5,a,2,a)].
+
+given #51 (T,wt=9): 193 equidistant(A,B,C,extension(D,C,B,A)).  [resolve(158,a,38,a)].
+
+given #52 (T,wt=10): 121 -equidistant(A,B,C,D) | equidistant(C,D,A,B).  [resolve(87,a,2,b)].
+
+given #53 (T,wt=10): 128 between(A,continuous(A,A,A,A,A,A),A).  [back_unit_del(102),unit_del(a,122)].
+
+given #54 (T,wt=9): 271 continuous(A,A,A,A,A,A) = A.  [resolve(128,a,7,a),flip(a)].
+
+given #55 (A,wt=47): 43 -equidistant(extension(A,B,C,D),E,D,F) | -equidistant(B,V6,C,V7) | -equidistant(extension(A,B,C,D),V6,D,V7) | -between(B,extension(A,B,C,D),E) | -between(C,D,F) | extension(A,B,C,D) = B | equidistant(E,V6,F,V7).  [resolve(6,a,5,a),flip(f)].
+
+given #56 (T,wt=10): 155 -equidistant(A,A,B,C) | equidistant(B,C,D,D).  [resolve(123,a,2,b)].
+
+given #57 (T,wt=10): 156 -equidistant(A,A,B,C) | equidistant(D,D,B,C).  [resolve(123,a,2,a)].
+
+given #58 (T,wt=12): 139 A = B | between(A,B,euclid2(A,A,B,B,B)).  [resolve(122,a,29,a)].
+
+given #59 (T,wt=12): 140 A = B | between(A,A,euclid1(A,A,B,B,B)).  [resolve(122,a,28,a)].
+
+given #60 (A,wt=31): 44 -equidistant(A,B,C,D) | -equidistant(C,E,A,F) | -equidistant(A,E,C,F) | -between(C,A,B) | -between(A,C,D) | C = A | equidistant(B,E,D,F).  [resolve(6,a,1,a)].
+
+given #61 (T,wt=13): 95 between(A,inner_pasch(B,A,extension(B,A,C,D),A,B),B).  [resolve(25,a,4,a)].
+
+given #62 (T,wt=12): 350 inner_pasch(A,A,extension(A,A,B,C),A,A) = A.  [resolve(95,a,7,a),flip(a)].
+
+given #63 (T,wt=13): 148 -between(A,B,C) | between(C,inner_pasch(A,B,C,C,D),A).  [resolve(122,a,9,b)].
+
+given #64 (T,wt=9): 354 between(A,inner_pasch(B,A,A,A,C),B).  [resolve(148,a,122,a)].
+
+given #65 (A,wt=39): 45 -equidistant(A,B,C,D) | -equidistant(A,E,C,F) | -equidistant(B,E,D,F) | -between(A,B,extension(V6,B,D,V7)) | -between(C,D,V7) | A = B | equidistant(extension(V6,B,D,V7),E,V7,F).  [resolve(6,b,5,a)].
+
+given #66 (T,wt=8): 372 inner_pasch(A,A,A,A,B) = A.  [resolve(354,a,7,a),flip(a)].
+
+given #67 (T,wt=13): 149 -between(A,B,C) | between(B,inner_pasch(D,C,C,B,A),D).  [resolve(122,a,9,a)].
+
+given #68 (T,wt=13): 150 -between(A,B,C) | between(B,inner_pasch(A,B,C,C,D),D).  [resolve(122,a,8,b)].
+
+given #69 (T,wt=9): 410 between(A,inner_pasch(B,A,A,A,C),C).  [resolve(150,a,122,a)].
+
+given #70 (A,wt=31): 46 -equidistant(A,B,C,D) | -equidistant(A,E,C,F) | -equidistant(B,E,D,F) | -between(A,B,D) | -between(C,D,B) | A = B | equidistant(D,E,B,F).  [resolve(6,b,1,a)].
+
+given #71 (T,wt=4): 431 between(A,A,B).  [para(372(a,1),410(a,2))].
+
+given #72 (T,wt=8): 430 inner_pasch(A,B,B,B,B) = B.  [resolve(410,a,7,a),flip(a)].
+
+given #73 (T,wt=9): 471 between(A,inner_pasch(A,A,B,B,C),C).  [resolve(431,a,150,a)].
+
+given #74 (T,wt=8): 498 inner_pasch(A,A,B,B,A) = A.  [resolve(471,a,7,a),flip(a)].
+
+given #75 (A,wt=39): 47 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(B,extension(V6,A,C,V7),D,V7) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,extension(V6,A,C,V7),F,V7).  [resolve(6,c,5,a)].
+
+given #76 (T,wt=9): 472 between(A,inner_pasch(B,C,C,A,A),B).  [resolve(431,a,149,a)].
+
+given #77 (T,wt=8): 537 inner_pasch(A,B,B,A,A) = A.  [resolve(472,a,7,a),flip(a)].
+
+given #78 (T,wt=9): 473 between(A,inner_pasch(B,B,A,A,C),B).  [resolve(431,a,148,a)].
+
+given #79 (T,wt=9): 474 between(A,inner_pasch(A,A,B,A,A),A).  [resolve(431,a,25,a)].
+
+given #80 (A,wt=31): 48 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(B,C,D,A) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,C,F,A).  [resolve(6,c,1,a)].
+
+given #81 (T,wt=8): 569 inner_pasch(A,A,B,A,A) = A.  [resolve(474,a,7,a),flip(a)].
+
+given #82 (T,wt=13): 151 -between(A,B,C) | between(C,inner_pasch(D,C,C,B,A),A).  [resolve(122,a,8,a)].
+
+given #83 (T,wt=9): 598 between(A,inner_pasch(B,A,A,C,C),C).  [resolve(151,a,431,a)].
+
+given #84 (T,wt=13): 190 equidistant(extension(A,B,C,extension(D,C,E,F)),B,E,F).  [resolve(41,a,157,a)].
+
+given #85 (A,wt=39): 49 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,extension(V6,B,D,V7),C,V7) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,extension(V6,B,D,V7),F,V7).  [resolve(6,d,5,a)].
+
+given #86 (T,wt=13): 191 equidistant(A,extension(B,A,C,extension(D,C,E,F)),E,F).  [resolve(158,a,41,a)].
+
+given #87 (T,wt=13): 215 equidistant(extension(A,B,extension(C,D,E,F),D),B,E,F).  [resolve(182,a,41,a)].
+
+given #88 (T,wt=13): 237 equidistant(A,B,extension(C,D,extension(E,F,A,B),F),D).  [resolve(42,a,182,a)].
+
+given #89 (T,wt=13): 238 equidistant(A,B,C,extension(D,C,E,extension(F,E,A,B))).  [resolve(42,a,158,a)].
+
+given #90 (A,wt=31): 50 -equidistant(A,B,C,D) | -equidistant(B,E,D,F) | -equidistant(A,D,C,B) | -between(A,B,E) | -between(C,D,F) | A = B | equidistant(E,D,F,B).  [resolve(6,d,1,a)].
+
+given #91 (T,wt=13): 239 equidistant(A,B,extension(C,D,E,extension(F,E,A,B)),D).  [resolve(42,a,157,a)].
+
+given #92 (T,wt=13): 240 equidistant(A,B,C,extension(D,C,extension(E,F,A,B),F)).  [resolve(193,a,42,a)].
+
+given #93 (T,wt=13): 241 equidistant(A,extension(B,A,extension(C,D,E,F),D),E,F).  [resolve(193,a,41,a)].
+
+given #94 (T,wt=13): 478 -between(A,B,C) | between(D,inner_pasch(A,B,C,D,D),A).  [resolve(431,a,9,b)].
+
+given #95 (A,wt=21): 60 -between(A,B,extension(C,D,E,F)) | between(D,inner_pasch(C,D,extension(C,D,E,F),B,A),A).  [resolve(8,a,4,a)].
+
+given #96 (T,wt=9): 926 between(A,inner_pasch(B,B,C,A,A),B).  [resolve(478,a,431,a)].
+
+given #97 (T,wt=13): 479 -between(A,B,C) | between(B,inner_pasch(D,D,C,B,A),D).  [resolve(431,a,9,a)].
+
+given #98 (T,wt=13): 480 -between(A,B,C) | between(B,inner_pasch(A,B,C,D,D),D).  [resolve(431,a,8,b)].
+
+given #99 (T,wt=9): 974 between(A,inner_pasch(A,A,B,C,C),C).  [resolve(480,a,431,a)].
+
+given #100 (A,wt=21): 61 -between(A,B,extension(C,D,E,F)) | between(B,inner_pasch(A,B,extension(C,D,E,F),D,C),C).  [resolve(8,b,4,a)].
+
+given #101 (T,wt=13): 481 -between(A,B,C) | between(D,inner_pasch(D,D,C,B,A),A).  [resolve(431,a,8,a)].
+
+given #102 (T,wt=13): 736 equidistant(extension(A,B,extension(C,D,E,F),D),B,F,E).  [resolve(237,a,39,a)].
+
+given #103 (T,wt=13): 737 equidistant(A,B,extension(C,D,extension(E,F,B,A),F),D).  [resolve(237,a,38,a)].
+
+given #104 (T,wt=13): 764 equidistant(A,extension(B,A,C,extension(D,C,E,F)),F,E).  [resolve(238,a,39,a)].
+
+given #105 (A,wt=21): 62 -between(A,B,extension(C,D,E,F)) | between(B,inner_pasch(C,D,extension(C,D,E,F),B,A),C).  [resolve(9,a,4,a)].
+
+given #106 (T,wt=13): 765 equidistant(A,B,C,extension(D,C,E,extension(F,E,B,A))).  [resolve(238,a,38,a)].
+
+given #107 (T,wt=13): 840 equidistant(extension(A,B,C,extension(D,C,E,F)),B,F,E).  [resolve(239,a,39,a)].
+
+given #108 (T,wt=13): 841 equidistant(A,B,extension(C,D,E,extension(F,E,B,A)),D).  [resolve(239,a,38,a)].
+
+given #109 (T,wt=13): 870 equidistant(A,extension(B,A,extension(C,D,E,F),D),F,E).  [resolve(240,a,39,a)].
+
+given #110 (A,wt=21): 63 -between(A,B,extension(C,D,E,F)) | between(D,inner_pasch(A,B,extension(C,D,E,F),D,C),A).  [resolve(9,b,4,a)].
+
+given #111 (T,wt=13): 871 equidistant(A,B,C,extension(D,C,extension(E,F,B,A),F)).  [resolve(240,a,38,a)].
+
+given #112 (T,wt=13): 931 between(A,inner_pasch(B,C,extension(B,C,D,E),A,A),B).  [resolve(478,a,4,a)].
+
+given #113 (T,wt=12): 1317 inner_pasch(A,B,extension(A,B,C,D),A,A) = A.  [resolve(931,a,7,a),flip(a)].
+
+given #114 (T,wt=13): 936 between(A,inner_pasch(B,A,extension(B,A,C,D),E,E),E).  [resolve(60,a,431,a)].
+
+given #115 (A,wt=37): 64 -equidistant(A,extension(B,C,C,D),A,D) | -equidistant(E,extension(B,C,C,D),E,D) | between(C,A,E) | between(A,E,C) | between(E,C,A) | extension(B,C,C,D) = D.  [resolve(13,a,5,a)].
+
+given #116 (T,wt=12): 1343 inner_pasch(A,B,extension(A,B,C,D),B,B) = B.  [resolve(936,a,7,a),flip(a)].
+
+given #117 (T,wt=13): 968 between(A,inner_pasch(B,B,extension(C,A,D,E),A,C),B).  [resolve(479,a,4,a)].
+
+given #118 (T,wt=12): 1369 inner_pasch(A,A,extension(B,A,C,D),A,B) = A.  [resolve(968,a,7,a),flip(a)].
+
+given #119 (T,wt=13): 1006 between(A,inner_pasch(A,A,extension(B,C,D,E),C,B),B).  [resolve(61,a,431,a)].
+
+given #120 (A,wt=20): 67 -between(A,B,C) | D = B | between(D,A,euclid1(D,A,B,C,extension(D,B,E,F))).  [resolve(14,a,4,a)].
+
+given #121 (T,wt=12): 1395 inner_pasch(A,A,extension(A,B,C,D),B,A) = A.  [resolve(1006,a,7,a),flip(a)].
+
+given #122 (T,wt=14): 124 -between(A,B,A) | between(A,continuous(C,A,A,B,A,A),A).  [back_unit_del(110),unit_del(a,122)].
+
+given #123 (T,wt=10): 1413 between(A,continuous(B,A,A,A,A,A),A).  [resolve(124,a,1006,a),rewrite([1395(2)])].
+
+given #124 (T,wt=9): 1440 continuous(A,B,B,B,B,B) = B.  [resolve(1413,a,7,a),flip(a)].
+
+given #125 (A,wt=20): 68 -between(A,B,C) | A = B | between(A,D,euclid1(A,D,B,extension(D,B,E,F),C)).  [resolve(14,b,4,a)].
+
+given #126 (T,wt=14): 163 -equidistant(extension(A,B,C,D),B,E,F) | equidistant(E,F,C,D).  [resolve(106,a,2,b)].
+
+given #127 (T,wt=14): 164 -equidistant(extension(A,B,C,D),B,E,F) | equidistant(C,D,E,F).  [resolve(106,a,2,a)].
+
+given #128 (T,wt=14): 187 -equidistant(A,B,C,D) | equidistant(C,D,extension(E,F,A,B),F).  [resolve(157,a,2,b)].
+
+given #129 (T,wt=13): 1469 equidistant(A,extension(B,A,C,D),extension(E,F,D,C),F).  [resolve(187,a,193,a)].
+
+given #130 (A,wt=20): 69 -between(A,B,C) | D = B | between(D,C,euclid2(D,A,B,C,extension(D,B,E,F))).  [resolve(15,a,4,a)].
+
+given #131 (T,wt=13): 1470 equidistant(extension(A,B,C,D),B,extension(E,F,D,C),F).  [resolve(187,a,182,a)].
+
+given #132 (T,wt=13): 1471 equidistant(A,extension(B,A,C,D),extension(E,F,C,D),F).  [resolve(187,a,158,a)].
+
+given #133 (T,wt=13): 1472 equidistant(extension(A,B,C,D),B,extension(E,F,C,D),F).  [resolve(187,a,157,a)].
+
+given #134 (T,wt=13): 1474 equidistant(extension(A,B,C,D),B,E,extension(F,E,D,C)).  [resolve(1469,a,121,a)].
+
+given #135 (A,wt=24): 70 -between(A,B,C) | A = B | between(A,extension(D,B,E,F),euclid2(A,D,B,extension(D,B,E,F),C)).  [resolve(15,b,4,a)].
+
+given #136 (T,wt=13): 1559 equidistant(extension(A,B,C,D),B,E,extension(F,E,C,D)).  [resolve(1471,a,121,a)].
+
+given #137 (T,wt=7): 1715 extension(u,v,lower_dimension_point_1,lower_dimension_point_2) = v.  [back_unit_del(20),unit_del(b,1703)].
+
+given #138 (T,wt=5): 1727 equidistant(A,A,lower_dimension_point_1,lower_dimension_point_2).  [para(1715(a,1),190(a,1,4)),rewrite([40(3)])].
+
+given #139 (T,wt=5): 1729 equidistant(lower_dimension_point_1,lower_dimension_point_2,A,A).  [para(1715(a,1),237(a,3,3)),rewrite([40(5)])].
+
+============================== PROOF =================================
+
+% Proof 1 at 12.76 (+ 0.00) seconds.
+% Length of proof is 29.
+% Level of proof is 10.
+% Maximum clause weight is 20.000.
+% Given clauses 139.
+
+1 equidistant(A,B,B,A) # label(reflexivity_for_equidistance) # label(axiom).  [assumption].
+2 -equidistant(A,B,C,D) | -equidistant(A,B,E,F) | equidistant(C,D,E,F) # label(transitivity_for_equidistance) # label(axiom).  [assumption].
+3 -equidistant(A,B,C,C) | A = B # label(identity_for_equidistance) # label(axiom).  [assumption].
+4 between(A,B,extension(A,B,C,D)) # label(segment_construction1) # label(axiom).  [assumption].
+5 equidistant(A,extension(B,A,C,D),C,D) # label(segment_construction2) # label(axiom).  [assumption].
+12 -between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2) # label(lower_dimension3) # label(axiom).  [assumption].
+19 v = extension(u,v,lower_dimension_point_1,lower_dimension_point_2) | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)) | -between(u,v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2)) # label(prove_lengthen) # label(negated_conjecture).  [assumption].
+20 extension(u,v,lower_dimension_point_1,lower_dimension_point_2) = v | -equidistant(v,extension(u,v,lower_dimension_point_1,lower_dimension_point_2),x,extension(w,x,lower_dimension_point_1,lower_dimension_point_2)).  [copy(19),flip(a),unit_del(c,4)].
+21 -equidistant(A,B,C,D) | equidistant(C,D,C,D).  [factor(2,a,b)].
+38 -equidistant(A,B,C,D) | equidistant(B,A,C,D).  [resolve(2,a,1,a)].
+39 -equidistant(A,B,C,D) | equidistant(C,D,B,A).  [resolve(2,b,1,a)].
+40 extension(A,B,C,C) = B.  [resolve(5,a,3,a),flip(a)].
+42 -equidistant(A,extension(B,A,C,D),E,F) | equidistant(C,D,E,F).  [resolve(5,a,2,a)].
+87 equidistant(A,B,A,B).  [resolve(21,a,5,a)].
+106 equidistant(extension(A,B,C,D),B,C,D).  [resolve(38,a,5,a)].
+121 -equidistant(A,B,C,D) | equidistant(C,D,A,B).  [resolve(87,a,2,b)].
+122 between(A,B,B).  [para(40(a,1),4(a,3))].
+157 equidistant(A,B,extension(C,D,A,B),D).  [resolve(39,a,5,a)].
+158 equidistant(A,B,C,extension(D,C,A,B)).  [resolve(106,a,39,a)].
+182 equidistant(A,B,extension(C,D,B,A),D).  [resolve(157,a,38,a)].
+187 -equidistant(A,B,C,D) | equidistant(C,D,extension(E,F,A,B),F).  [resolve(157,a,2,b)].
+237 equidistant(A,B,extension(C,D,extension(E,F,A,B),F),D).  [resolve(42,a,182,a)].
+1471 equidistant(A,extension(B,A,C,D),extension(E,F,C,D),F).  [resolve(187,a,158,a)].
+1559 equidistant(extension(A,B,C,D),B,E,extension(F,E,C,D)).  [resolve(1471,a,121,a)].
+1703 equidistant(A,extension(B,A,C,D),E,extension(F,E,C,D)).  [resolve(1559,a,39,a)].
+1715 extension(u,v,lower_dimension_point_1,lower_dimension_point_2) = v.  [back_unit_del(20),unit_del(b,1703)].
+1729 equidistant(lower_dimension_point_1,lower_dimension_point_2,A,A).  [para(1715(a,1),237(a,3,3)),rewrite([40(5)])].
+1799 lower_dimension_point_2 = lower_dimension_point_1.  [resolve(1729,a,3,a),flip(a)].
+1804 $F.  [back_rewrite(12),rewrite([1799(3)]),unit_del(a,122)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=139. Generated=3318. Kept=1802. proofs=1.
+Usable=114. Sos=1435. Demods=12. Limbo=5, Disabled=267. Hints=0.
+Kept_by_rule=0, Deleted_by_rule=0.
+Forward_subsumed=1515. Back_subsumed=106.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=16 (0 lex), Back_demodulated=110. Back_unit_deleted=32.
+Demod_attempts=28680. Demod_rewrites=730.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=164118. Nonunit_bsub_feature_tests=109728.
+Megabytes=3.40.
+User_CPU=12.76, System_CPU=0.00, Wall_clock=13.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 19811 exit (max_proofs) Thu Nov  1 17:44:35 2012
