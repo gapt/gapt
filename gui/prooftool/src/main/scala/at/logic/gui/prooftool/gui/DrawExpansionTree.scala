@@ -180,13 +180,16 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
           lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
               PopupMenu(DrawExpansionTree.this, holF, lbl, e.point.x, e.point.y)
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
+              if (state.get(holF) == Some(Open)) expand(holF)
+              else open(holF)
           }
           contents += lbl
           if ( state.get(holF) == Some(Open) ) contents += drawTerms(list1)
           contents += formulaToComponent(formula, list2)
         } else {
           val formulas = extractFormulas(expansionTree,holF,number,start = false)
-          if (formulas.size > 1) { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
+          if (formulas != Nil) { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
             val lbl = DrawSequent.latexToLabel(getMatrixSymbol(holF), ft)
             lbl.reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -194,8 +197,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
             }
             contents += lbl
             contents += drawMatrix(formulas,list2)
-          } else if (formulas.size == 1) contents += formulaToComponent(formulas.head,list2)
-          else { // If formulas are empty, quantified formula comes from weakening so leave it unchanged.
+          } else { // If formulas are empty, quantified formula comes from weakening so leave it unchanged.
             state -= holF
             contents += formulaToComponent(holF,list2)
           }
