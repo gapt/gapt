@@ -12,15 +12,16 @@ import scala.collection.mutable.HashMap
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.fol._
-import termsExtraction._
-import decomposition._
+import TermsExtraction._
+import Decomposition._
 
 @RunWith(classOf[JUnitRunner])
-class decompositionTest extends SpecificationWithJUnit {
+class DecompositionTest extends SpecificationWithJUnit {
 
 // On the comments of the examples below, consider A as α
 
   "The decomposition" should {
+    
     "compute the delta-vector correctly" in {
       "initial example" in {
         // f(hggc, ggc), f(hgc, gc) --> (f(hgA, gA), {gc, c})
@@ -121,7 +122,6 @@ class decompositionTest extends SpecificationWithJUnit {
       }
     }
 
-/* TODO: rewritte these tests with the new data structure
     "compute the delta-table correctly" in {
       "for the f^i(a) set of terms (i = 1 to 4)" in {
         // fa, f²a, f³a, f⁴a
@@ -140,6 +140,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
 
         val expected = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
+        expected += ( (Nil) -> ((null, Nil)::Nil) )
         expected += ( (fa::Nil) -> ((alpha, fa::Nil)::Nil) )
         expected += ( (f2a::Nil) -> ((alpha, f2a::Nil)::Nil) )
         expected += ( (f3a::Nil) -> ((alpha, f3a::Nil)::Nil) )
@@ -152,13 +153,13 @@ class decompositionTest extends SpecificationWithJUnit {
         expected += ( (a::f2a::f3a::Nil) -> ((falpha, fa::f3a::f4a::Nil)::Nil) )
         expected += ( (a::fa::f2a::f3a::Nil) -> ((falpha, fa::f2a::f3a::f4a::Nil)::Nil) )
 
-        val deltatable = fillDeltaTable(fa::f2a::f3a::f4a::Nil)
+        val deltatable = new DeltaTable(fa::f2a::f3a::f4a::Nil, alpha)
 
         // Note: if elements in the inner lists are not on the same order, 
         // this returns false.
-        (deltatable) must haveTheSameElementsAs (expected)
+        (deltatable.table) must haveTheSameElementsAs (expected)
       }
-      
+
       "for Stefan's example" in {
         // t1 = f(c, gc)
         // t2 = f(c, g²c)
@@ -193,6 +194,7 @@ class decompositionTest extends SpecificationWithJUnit {
         val f_alpha_g2c = Function(f, alpha::g2c::Nil)
         
         val expected = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
+        expected += ( (Nil) -> ((null, Nil)::Nil) )
         expected += ( (t1::Nil) -> ((alpha, t1::Nil)::Nil) )
         expected += ( (t2::Nil) -> ((alpha, t2::Nil)::Nil) )
         expected += ( (t3::Nil) -> ((alpha, t3::Nil)::Nil) )
@@ -204,11 +206,11 @@ class decompositionTest extends SpecificationWithJUnit {
         expected += ( (c::g3c::Nil) -> ((f_alpha_g2c, t2::t6::Nil)::Nil) )
         expected += ( (c::gc::g2c::Nil) -> ((f_galpha_alpha, t4::t5::t6::Nil)::(f_c_galpha, t1::t2::t3::Nil)::Nil) )
 
-        val deltatable = fillDeltaTable(t1::t2::t3::t4::t5::t6::Nil)
+        val deltatable = new DeltaTable(t1::t2::t3::t4::t5::t6::Nil, alpha)
 
         // Note: if elements in the inner lists are not on the same order, 
         // this returns false.
-        (deltatable) must haveTheSameElementsAs (expected)
+        (deltatable.table) must haveTheSameElementsAs (expected)
       }
     }
 
@@ -236,7 +238,7 @@ class decompositionTest extends SpecificationWithJUnit {
         expected = expected :+ (f2alpha::falpha::Nil, a::fa::f2a::Nil)
         expected = expected :+ (falpha::Nil, a::fa::f2a::f3a::Nil)
 
-        val d = decomposition(fa::f2a::f3a::f4a::Nil)
+        val d = Decomposition(fa::f2a::f3a::f4a::Nil)
 
         (d) must haveTheSameElementsAs (expected)
 
@@ -279,7 +281,7 @@ class decompositionTest extends SpecificationWithJUnit {
         expected = expected :+ (f_c_g2alpha::f_galpha_alpha::f_g2alpha_galpha::f_c_galpha::Nil, c::gc::Nil)
         expected = expected :+ (f_galpha_alpha::f_c_galpha::Nil, c::gc::g2c::Nil)
 
-        val d = decomposition(t1::t2::t3::t4::t5::t6::Nil)
+        val d = Decomposition(t1::t2::t3::t4::t5::t6::Nil)
 
         (d) must haveTheSameElementsAs (expected)
          
@@ -301,16 +303,65 @@ class decompositionTest extends SpecificationWithJUnit {
         val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
 
         var expected : List[(List[FOLTerm], List[FOLTerm])] = Nil
-        expected = expected :+ (f2alpha::alpha::Nil, a::fa::Nil)
-        expected = expected :+ (f2alpha::falpha::alpha::Nil, a::fa::Nil)
-        expected = expected :+ (falpha::alpha::Nil, a::f2a::Nil)
-        expected = expected :+ (falpha::alpha::Nil, a::fa::f2a::Nil)
+        expected = expected :+ (alpha::f2alpha::Nil, a::fa::Nil)
+        expected = expected :+ (alpha::f2alpha::falpha::Nil, a::fa::Nil)
+        expected = expected :+ (alpha::falpha::Nil, a::f2a::Nil)
+        expected = expected :+ (alpha::falpha::Nil, a::fa::f2a::Nil)
 
-        val d = decomposition(a::fa::f2a::f3a::Nil)
+        val d = Decomposition(a::fa::f2a::f3a::Nil)
 
         (d) must haveTheSameElementsAs (expected)
       }
+
+      "issue 206!!" in {
+        // LinearEqExampleProof(4)
+        // Term set for three formulas:
+        // F1 (1 quant.) -> (a)
+        // F2 (1 quant.) -> (a, fa, f²a, f³a)
+        // F3 (3 quant.) -> ([fa, a, a], [f²a, fa, a], [f³a, f²a, a], [f⁴a, f³a, a])
+
+        val f = ConstantStringSymbol("f")
+        val a = FOLConst(new ConstantStringSymbol("a"))
+        val alpha = FOLVar(new VariableStringSymbol("α"))
+        
+        val fa = Function(f, a::Nil)
+        val f2a = Function(f, (Function(f, a::Nil))::Nil)
+        val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
+        val f4a = Function(f, Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)::Nil)
+
+        // Tuple function symbols:
+        val tuple1 = ConstantStringSymbol("tuple1")
+        val tuple2 = ConstantStringSymbol("tuple2")
+        val tuple3 = ConstantStringSymbol("tuple3")
+
+        // Termset for F1
+        val t11 = Function(tuple1, a::Nil)
+        val ts1 = t11::Nil
+
+        // Termset for F2
+        val t21 = Function(tuple2, a::Nil)
+        val t22 = Function(tuple2, fa::Nil)
+        val t23 = Function(tuple2, f2a::Nil)
+        val t24 = Function(tuple2, f3a::Nil)
+        val ts2 = t21::t22::t23::t24::Nil
+
+        // Termset for F3
+        val t31 = Function(tuple3, fa::a::a::Nil)
+        val t32 = Function(tuple3, f2a::fa::a::Nil)
+        val t33 = Function(tuple3, f3a::f2a::a::Nil)
+        val t34 = Function(tuple3, f4a::f3a::a::Nil)
+        val ts3 = t31::t32::t33::t34::Nil
+
+        val termset = ts1 ++ ts2 ++ ts3
+
+        val d = Decomposition(termset)
+
+        val t2alpha = Function(tuple2, alpha::Nil)
+        val t3alpha = Function(tuple3, Function(f, alpha::Nil)::alpha::a::Nil)
+        val criticalDecomposition = (t2alpha::t3alpha::t11::Nil, a::fa::f2a::f3a::Nil)
+
+        d must contain (criticalDecomposition)
+      }
     }
-  */
   }
 }

@@ -24,7 +24,7 @@ import at.logic.algorithms.lk._
 
 class TermsExtractionException(msg: String) extends Exception(msg)
 
-object termsExtraction {
+object TermsExtraction {
 
   // If all the quantified formulas have only one quantifier, each list of
   // the list will have only one element

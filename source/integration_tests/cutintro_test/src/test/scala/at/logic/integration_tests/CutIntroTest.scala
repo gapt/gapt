@@ -30,13 +30,13 @@ class CutIntroTest extends SpecificationWithJUnit {
       val proof = LinearExampleProof( 4 )
 
       //val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
-      val termset = termsExtraction(proof).foldRight(List[FOLTerm]()) ( (t, acc) => 
+      val termset = TermsExtraction(proof).foldRight(List[FOLTerm]()) ( (t, acc) => 
         t._2.foldRight(acc) ((lst, ac) =>
           lst ++ ac
         )
       )
 
-      cutIntroduction(proof)
+      CutIntroduction(proof)
 
       termset must haveTheSameElementsAs ( LinearExampleTermset( 4 ) )
     }
