@@ -280,8 +280,16 @@ object ProjectionTermCreators {
         else
           pUnary(pr.name, extract(p, omega, cut_ancs), m.formula::Nil)
       }
-      case SchemaProofLinkRule( seq, link, index::_ ) => {
-        pProofLinkTerm( seq, omega, link, index, cut_ancs)
+      case SchemaProofLinkRule( seq0, link, index::_ ) => {
+//        val omega1 = (seq0.antecedent ++ seq0.succedent).toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
+//        val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+//        val new_map1 = index match {
+//          case Succ(_) => scala.collection.immutable.Map.empty[Var, IntegerTerm]
+//          case _ => scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(k.asInstanceOf[IntegerTerm]).asInstanceOf[IntegerTerm] )
+//        }
+//        var sub1 = new SchemaSubstitution1[HOLExpression](new_map1)
+
+        pProofLinkTerm( seq0, omega, link, index, cut_ancs)
       }
       case WeakeningRightRule(p, _, m) => {
         if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
@@ -291,14 +299,14 @@ object ProjectionTermCreators {
       }
       case CutRule( p1, p2, _, a1, a2 ) => {
         val omega_ancs = getAncestors(omega)
-//        println("\nomega = "+omega)
-//        println("p1.succ.head = "+p1.root.succedent.head)
+        println("\nomega = "+omega)
+        println("p1.succ.head = "+p1.root.succedent.head)
         val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo)),
           p2.root.succedent.filter(fo => !omega_ancs.contains(fo)))
         val w2 = Sequent(p1.root.antecedent.filter(fo => !omega_ancs.contains(fo)),
           p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo)))
-//        println("cut : w1 = "+printSchemaProof.sequentToString(w1) )
-//        println("cut : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
+        println("cut : w1 = "+printSchemaProof.sequentToString(w1) )
+        println("cut : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
         pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
       }
       case OrLeftRule(p1, p2, _, a1, a2, m) => {
@@ -742,7 +750,12 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
       val gr = GroundingProjectionTerm(ProjectionTermDB.get(name),sub)
       val pt = UnfoldProjectionTerm(gr)
       val tree = PStructToExpressionTree(pt)
-      val l = ProjectionTermToSetOfProofs(pt).toList
+      val l = ProjectionTermToSetOfProofs(pt).toList.filter(p =>
+        ! p.root.antecedent.exists(f1 =>
+            p.root.succedent.exists(f2 =>
+              f1.formula == f2.formula
+            )
+        ))
       val proof_name = name.replace("Ξ(","").replace("_base","\n").replace("_step","\n").takeWhile(c => !c.equals('\n'))
       val list = l.map(p => (proof_name + "↓" + number + "_proj_" + l.indexOf(p),p))
       (tree,list)
@@ -751,6 +764,10 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
     def apply(t: ProjectionTerm): ProjectionTerm = {
       t match {
         case pProofLinkTerm( seq0, omega, proof_name, index, canc ) => {
+          println("\nproof_name = "+proof_name)
+          println("index = "+printSchemaProof.formulaToString (index))
+          println("omega = "+omega)
+
           if(index == IntZero()) {
             val p = SchemaProofDB.get(proof_name).base
             val seq = p.root
@@ -765,14 +782,30 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
           val p = SchemaProofDB.get(proof_name).rec
           val seq = p.root
           val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
-          val new_map1 = index match {
-            case Succ(_) => scala.collection.immutable.Map.empty[Var, IntegerTerm]
-            case _ => scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(k.asInstanceOf[IntegerTerm]).asInstanceOf[IntegerTerm] )
+          val omega1 = (seq0.antecedent ++ seq0.succedent).toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
+          println("omega1 = "+omega1)
+          println("canc = "+canc)
+
+
+          val omega1ant = seq0.antecedent.toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
+          val omega1succ = seq0.succedent.toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
+          val mapFind = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(k.asInstanceOf[IntegerTerm]).asInstanceOf[IntegerTerm] )
+          var subFind = new SchemaSubstitution1[HOLExpression](mapFind)
+          /*next lines are related with the index of the proof-link.
+            We have to map the configuration in the proof-link to the
+            corresponding occurrences in the end-sequent.
+            The proof-links are of the form (φ,k+1) or (φ,k).
+            When the term is grounded this is not immediately visible.
+           */
+          val b = omega1ant.forall(fo => seq.antecedent.map(fo =>fo.formula).contains(subFind(fo.formula))) && omega1succ.forall(fo => seq.succedent.map(fo =>fo.formula).contains(subFind(fo.formula)))
+          val new_map1 = b match {
+            case false => scala.collection.immutable.Map.empty[Var, IntegerTerm]
+            case true => scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(k.asInstanceOf[IntegerTerm]).asInstanceOf[IntegerTerm] )
           }
           var sub1 = new SchemaSubstitution1[HOLExpression](new_map1)
-          val omega1 = (seq0.antecedent ++ seq0.succedent).toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
           val omega1_sub = omega1.map(fo => sub1(fo.formula))
           val endSeqOcc = (seq.antecedent ++ seq.succedent).toSet.filter(fo => omega1_sub.contains(fo.formula)) ++ getAncestors(omega)
+          println("endSeqOcc = "+endSeqOcc+"\n")
           val omega1Anc = endSeqOcc.foldLeft(Set.empty[FormulaOccurrence])((acc, fo)=> acc ++ getAncestors(fo))
           val pterm = ProjectionTermCreators.extract(p, endSeqOcc, omega1Anc ++ getCutAncestors(p))
           val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(index) )
