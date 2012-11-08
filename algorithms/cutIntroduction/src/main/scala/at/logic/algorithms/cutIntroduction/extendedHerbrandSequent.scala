@@ -18,6 +18,7 @@ import at.logic.algorithms.shlk._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 
+/*
 // NOTE: implemented for the one cut case.
 class ExtendedHerbrandSequent {
   
@@ -55,7 +56,7 @@ class ExtendedHerbrandSequent {
     }
   }
 
-/* TODO: uncomment and use once Autoprop returns Option[LKProof]
+ TODO: uncomment and use once Autoprop returns Option[LKProof]
   // Checks if the sequent is a tautology using f as the cut formula
   def isValidWith(f: FOLFormula) : Boolean = {
 
@@ -76,6 +77,7 @@ class ExtendedHerbrandSequent {
       case None => false
     }
   }
-*/
+
 }
+*/
 

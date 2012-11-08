@@ -339,11 +339,11 @@ object loadProofDB {
   }
 
   object termsExtraction {
-    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p )
+    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.TermsExtraction( p )
   }
 
   object termsExtractionFlat {
-    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.termsExtraction( p ).
+    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.TermsExtraction( p ).
     //foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
       foldRight(List[FOLTerm]()) ( (t, acc) =>
         t._2.foldRight(acc) ((lst, ac) =>
@@ -353,7 +353,7 @@ object loadProofDB {
   }
 
   object cutIntro {
-    def apply( p: LKProof ) : Option[LKProof] = cutIntroduction(p)
+    def apply( p: LKProof ) : Option[LKProof] = CutIntroduction(p)
   }
 
   object extractInterpolant {
