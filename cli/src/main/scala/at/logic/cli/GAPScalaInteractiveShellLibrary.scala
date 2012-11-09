@@ -848,7 +848,7 @@ object hol2fol {
       println("  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
       println("  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
       println("  LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation")
-      println("  SumofOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction")
+      println("  SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction")
       println("")
       println("Visualization:")
       println("  prooftool: LKProof => Unit - visualize proof in prooftool")
