@@ -642,6 +642,41 @@ object Main extends SimpleSwingApplication {
 
         body.contents = new Launcher(Some(("Proof", all3)), 12)
       }) { border = customBorder }
+      contents += new MenuItem(Action("Nested Expansion Tree") {
+        import at.logic.language.lambda.types.Definitions._
+        import at.logic.language.lambda.symbols.ImplicitConverters._
+        import at.logic.language.hol._
+        import at.logic.calculi.expansionTrees.{WeakQuantifier, And => AndET, Atom => AtomET}
+        val p = HOLVar("p", i -> o)
+        val a = HOLVar("a", i)
+        val b = HOLVar("b", i)
+        val a1 = HOLVar("a_1", i)
+        val b1 = HOLVar("b_1", i)
+        val a2 = HOLVar("a_2", i)
+        val b2 = HOLVar("b_2", i)
+        val q = HOLVar("q", i -> o)
+        val x = HOLVar("x", i)
+        val y = HOLVar("y", i)
+        val px = HOLAppFormula(p, x) // p(x)
+        val pa1 = HOLAppFormula(p, a1) // p(a1)
+        val pb1 = HOLAppFormula(p, b1) // p(b1)
+        val pa2 = HOLAppFormula(p, a2) // p(a2)
+        val pb2 = HOLAppFormula(p, b2) // p(b2)
+        val qb = HOLAppFormula(q, b) // q(b)
+        val qa = HOLAppFormula(q, a) // q(a)
+        val qy = HOLAppFormula(q, y) // q(a)
+        val all_px = AllVar(x, px) // forall x. p(x)
+        val all_px_and_qy = And(all_px,qy) // forall x. p(x) /\ q(y)
+        val all_all_px_and_qy = AllVar(y,all_px_and_qy) // forall y. (forall x. p(x) /\ q(y))
+
+        val expTree11 = new WeakQuantifier(all_px,Seq((AtomET(pa1),a1),(AtomET(pb1),b1)))
+        val expTree21 = new WeakQuantifier(all_px,Seq((AtomET(pa2),a2),(AtomET(pb2),b2)))
+        val expTree1 = new AndET(expTree11,AtomET(qa))
+        val expTree2 = new AndET(expTree21,AtomET(qb))
+        val expTree = new WeakQuantifier(all_all_px_and_qy,Seq((expTree1,a),(expTree2,b)))
+
+        body.contents = new Launcher(Some(("Expansion Tree", (Seq(expTree),Seq()))), 12)
+      }) { border = customBorder }
     }
   }
 
