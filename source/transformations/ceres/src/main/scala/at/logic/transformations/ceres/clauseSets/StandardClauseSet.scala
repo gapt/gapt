@@ -10,10 +10,13 @@ package at.logic.transformations.ceres.clauseSets
 import at.logic.transformations.ceres.struct._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lksk.base._
-import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable._
-import at.logic.language.hol.HOLFormula
+import at.logic.language.schema.IndexedPredicate
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.types.{To, Tindex}
+import at.logic.language.hol.{HOLApp, HOLConst, HOLFormula}
+import types.FSequent
 
 object StandardClauseSet {
   def normalize(struct:Struct):Struct = struct match {
@@ -75,5 +78,59 @@ object StandardClauseSet {
   def clausify(struct: Struct): List[Sequent] = {
     val timesJunctions = getTimesJunctions(struct)
     timesJunctions.map(x => clausifyTimesJunctions(x))
+  }
+}
+
+object renameCLsymbols {
+  def createMap(cs: List[Sequent]): Map[HOLConst, String] = {
+    var i: Int = 1
+    var map = Map.empty[HOLConst, String]
+    cs.foreach(seq => {
+      (seq.antecedent ++ seq.succedent).foreach(fo => {
+        fo.formula match {
+          case IndexedPredicate(constant, indices) if (constant.name.isInstanceOf[ClauseSetSymbol]) => {
+            if (!map.contains(constant)) {
+              map = map + Pair(constant, i.toString)
+              i = i + 1
+            }
+          }
+          case _ => {}
+        }
+      })
+    })
+    return map
+  }
+  
+  def apply(cs: List[Sequent]): List[FSequent] = {
+    val map = createMap(cs)
+    cs.map(seq => {
+      val ant = seq.antecedent.map(fo => {
+        fo.formula match {
+          case IndexedPredicate(constant, indices) if (constant.name.isInstanceOf[ClauseSetSymbol]) => {
+            if (map.contains(constant)) {
+              val c = HOLConst(new ConstantStringSymbol("CL"+map.get(constant).get), Tindex()->To())
+              HOLApp(c, indices.head)
+            }
+            else
+              throw new Exception("\nError in renameCLsymbols.apply !\n")
+          }
+          case _ => fo.formula
+        }
+      })
+      val succ = seq.succedent.map(fo => {
+        fo.formula match {
+          case IndexedPredicate(constant, indices) if (constant.name.isInstanceOf[ClauseSetSymbol]) => {
+            if (map.contains(constant)) {
+              val c = HOLConst(new ConstantStringSymbol("CL"+map.get(constant).get), Tindex()->To())
+              HOLApp(c, indices.head)
+            }
+            else
+              throw new Exception("\nError in renameCLsymbols.apply !\n")
+          }
+          case _ => fo.formula
+        }
+      })
+      FSequent(ant.asInstanceOf[List[HOLFormula]], succ.asInstanceOf[List[HOLFormula]])
+    })
   }
 }
