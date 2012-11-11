@@ -692,7 +692,7 @@ object Main extends SimpleSwingApplication {
     val structs_base = s._2.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
     val structs_step = s._1.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
     db.addTrees( structs_step ::: structs_base )
-    body.contents = new Launcher(Some(structs_step.head._1,structs_step.head._2),12)
+    body.contents = new Launcher(Some(structs_step.head._1,structs_step.head._3),12)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: Throwable =>
