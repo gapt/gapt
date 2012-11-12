@@ -26,7 +26,7 @@ import logicSymbols.ConstantSymbolA
 object XMLExporter {
 
   def apply(path: String, proofName: String, proof: LKProof) : Unit =
-    apply(path, new ProofDatabase(Map[HOLFormula,HOLFormula](),
+    apply(path, new ProofDatabase(Map[HOLExpression,HOLExpression](),
                                    List((proofName, proof)),
                                    Nil, Nil))
 

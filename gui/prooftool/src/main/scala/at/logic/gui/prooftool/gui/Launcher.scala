@@ -34,7 +34,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           layout(new DrawTree(tree, fSize, "")) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(Loaded)
-        case list: List[_] =>
+        case list: List[AnyRef] =>
           layout(new DrawList(list, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)

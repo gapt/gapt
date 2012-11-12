@@ -29,7 +29,7 @@ import at.logic.parsing.language.xml.XMLExporter
 import at.logic.parsing.writers.FileWriter
 import at.logic.transformations.ReductiveCutElim
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.transformations.ceres.clauseSets.{renameCLsymbols, StandardClauseSet}
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
@@ -711,9 +711,11 @@ object Main extends SimpleSwingApplication {
 
     val s = StructCreators.extractStruct( body.getContent.getData.get._1, n)
     val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
+    val pair = renameCLsymbols( cs )
 
-    db.addSeqList(cs.map(x => x.toFSequent()))
-    body.contents = new Launcher(Some("Schematic Clause Set",cs),16)
+    db.addSeqList(pair._1) //.map(x => x.toFSequent()))
+    db.addDefinitions(pair._2)
+    body.contents = new Launcher(Some("Schematic Clause Set",pair._1),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
       case e: Throwable =>

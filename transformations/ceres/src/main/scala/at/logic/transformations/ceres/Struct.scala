@@ -231,7 +231,9 @@ import at.logic.language.schema.SchemaFormula
         case "\\tau" | "tau" => "τ"
         case _ => name
       }
-      Console.BOLD+"CL^{("+Console.RESET+ cutConfToString(cut_occs) + ")," + Console.BOLD+Console.WHITE_B+nice_name+Console.RESET +Console.BOLD+"}"+Console.RESET
+      // It is really problematic for prooftool to have these Console characters in the string, so please avoid them.
+      // Console.BOLD+"CL^{("+Console.RESET+ cutConfToString(cut_occs) + ")," + Console.BOLD+Console.WHITE_B+nice_name+Console.RESET +Console.BOLD+"}"+Console.RESET
+      "cl^{"+ nice_name + ",(" + cutConfToString(cut_occs) + ")}"
     }
     private def cutConfToString( cc : CutConfiguration ) = {
       def str( m : Multiset[HOLFormula] ) = m.foldLeft( "" )( (s, f) => s + printSchemaProof.formulaToString(f) )
