@@ -20,7 +20,7 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
 import at.logic.algorithms.shlk.ParseQMON
 import at.logic.utils.ds.trees.Tree
-import at.logic.language.hol.HOLFormula
+import at.logic.language.hol.HOLExpression
 import at.logic.gui.prooftool.gui.Main
 
 class FileParser {
@@ -103,7 +103,12 @@ class FileParser {
     termTrees = list ::: termTrees
   }
 
-  def getDefinitions: List[(HOLFormula, HOLFormula)] = proofdb.Definitions.toList //._1.toList ::: proofdb.Definitions._2.toList ::: proofdb.Definitions._3.toList
+  def addDefinitions(defs: Map[HOLExpression, HOLExpression]) {
+    val map = proofdb.Definitions ++ defs
+    proofdb = new ProofDatabase(map, proofdb.proofs, proofdb.axioms, proofdb.sequentLists)
+  }
+
+  def getDefinitions: List[(HOLExpression, HOLExpression)] = proofdb.Definitions.toList //._1.toList ::: proofdb.Definitions._2.toList ::: proofdb.Definitions._3.toList
 
   def getSequentLists = proofdb.sequentLists
 
