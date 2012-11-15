@@ -15,7 +15,7 @@ import swing.Swing.EmptyIcon
 import scala.collection.immutable.Seq
 import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, File}
 import javax.swing.filechooser.FileFilter
-import at.logic.algorithms.lk.{cutformulaExtraction, getAuxFormulas, getCutAncestors, replaceSubproof}
+import at.logic.algorithms.lk._
 import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.{Sequent, LKProof}
@@ -36,6 +36,7 @@ import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreat
 import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.skolemization.skolemize
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -502,6 +503,8 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(body.getContent.getData.get._2.asInstanceOf[LKProof]) }) { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK() }) { border = customBorder }
+      contents += new MenuItem(Action("Skolemize") { skolemizeProof() }) { border = customBorder }
+      contents += new MenuItem(Action("Regularize") { regularizeProof() }) { border = customBorder }
     }
     contents += new Menu("LKS Proof") {
       mnemonic = Key.P
@@ -679,6 +682,30 @@ object Main extends SimpleSwingApplication {
       }) { border = customBorder }
     }
   }
+
+  def skolemizeProof() {  try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val data = body.getContent.getData.get
+    val proof = skolemize(data._2.asInstanceOf[LKProof])
+    db.addProofs((data._1+"_sk", proof)::Nil)
+    body.contents = new Launcher(Some(data._1+"_sk",proof),14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+    case e: Throwable =>
+      errorMessage("Couldn't extract CutFormula List!\n\n" + getExceptionString(e))
+  } finally ProofToolPublisher.publish(ProofDbChanged) }
+
+  def regularizeProof() {  try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val data = body.getContent.getData.get
+    val proof = regularize(data._2.asInstanceOf[LKProof])._1
+    db.addProofs((data._1+"_reg", proof)::Nil)
+    body.contents = new Launcher(Some(data._1+"_reg",proof),14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+    case e: Throwable =>
+      errorMessage("Couldn't extract CutFormula List!\n\n" + getExceptionString(e))
+  } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def extractCutFormulas() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -929,6 +956,15 @@ object Main extends SimpleSwingApplication {
       }
 
       def getDescription: String = ".gz"
+    }
+
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".ivy") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".ivy"
     }
 
     fileFilter = new FileFilter {
