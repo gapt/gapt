@@ -1,6 +1,6 @@
 /**
  * Interface to the Prover9 first-order theorem prover.
- * Needs the command-line tools prover9 and tptp_to_ladr
+ * Needs the command-line tools prover9, prooftool and tptp_to_ladr
  * to work.
  */
 
@@ -74,11 +74,16 @@ object Prover9 {
 
   def p9_to_ivy( input_file: String, output_file: String ) : Int = {
     val ret = exec("prooftrans ivy", input_file )
-//    println("prooftrans output:")
-//    println(ret._2)
     writeToFile( ret._2, output_file )
     ret._1
   }
+
+  def p9_to_p9( input_file: String, output_file: String ) : Int = {
+    val ret = exec("prooftrans", input_file )
+    writeToFile( ret._2, output_file )
+    ret._1
+  }
+
 
   def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
   {
@@ -151,8 +156,10 @@ object Prover9 {
 
 
   def parse_prover9(p9_file : String) : RobinsonResolutionProof = {
+    val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
+    p9_to_p9(p9_file, pt_file.getCanonicalPath)
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
-    p9_to_ivy(p9_file, ivy_file.getCanonicalPath)
+    p9_to_ivy(pt_file.getCanonicalPath, ivy_file.getCanonicalPath)
     def debugline(s:String) = { println(s); true}
 
     /* //this was autodetection code for naming conventions, but apparently ivy has its own anyway
@@ -171,6 +178,7 @@ object Prover9 {
                   }*/
     val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
     val rproof = IvyToRobinson(iproof)
+    pt_file.delete
     ivy_file.delete
     rproof
   }
