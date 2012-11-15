@@ -16,66 +16,24 @@
 
   <packaging>pom</packaging>
   <dependencies>
-      <dependency>
-          <groupId>org.scala-lang</groupId>
-          <artifactId>scala-swing</artifactId>
-          <version>${scala.version}</version>
-      </dependency>
-      <!--
-      <dependency>
-          <groupId>jgraph</groupId>
-          <artifactId>jgraph</artifactId>
-          <version>5.13.0.0</version>
-      </dependency>
-  	<dependency>
-  		<groupId>jgrapht</groupId>
-  		<artifactId>jgrapht</artifactId>
-  		<version>0.7.3</version>
-  	</dependency>
-     -->
-     <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>schema</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-     <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>fol</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>hol</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>lambda</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lk</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lksk</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>unification</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>skolemization</artifactId>
+      <artifactId>arithmetic_parsing</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>ceres</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>ceres_xml_parsing</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>fol</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
@@ -88,14 +46,26 @@
       <artifactId>herbrandExtraction</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
+    <!--
+    <dependency>
+      <groupId>jgraph</groupId>
+      <artifactId>jgraph</artifactId>
+      <version>5.13.0.0</version>
+    </dependency>
+    <dependency>
+    <groupId>jgrapht</groupId>
+    <artifactId>jgrapht</artifactId>
+    <version>0.7.3</version>
+    </dependency>
+    -->
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>ceres_xml_parsing</artifactId>
+      <artifactId>hol</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>arithmetic_parsing</artifactId>
+      <artifactId>lambda</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
@@ -105,11 +75,49 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
+      <artifactId>lk</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>lksk</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>prover9</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>resolutionalgorithms</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-swing</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>schema</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>skolemization</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
       <artifactId>tptp_parsing</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
-
-
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>unification</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
 </project>

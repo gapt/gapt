@@ -19,9 +19,12 @@ import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
 import at.logic.algorithms.shlk.ParseQMON
+import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.utils.ds.trees.Tree
 import at.logic.language.hol.HOLExpression
 import at.logic.gui.prooftool.gui.Main
+import at.logic.provers.prover9.ivy.IvyParser
+import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 
 class FileParser {
 
@@ -50,6 +53,13 @@ class FileParser {
     //  println("parsing took " + (end - start).toString)
   }
 
+  def ivyFileReader(path: String) {
+    val ivy = IvyToRobinson(IvyParser.apply(path, IvyParser.IvyStyleVariables))
+    proofs = Nil
+    termTrees = Nil
+    proofdb = new ProofDatabase(Map(), ("ivy_proof", RobinsonToLK(ivy))::Nil, Nil, Nil)
+  }
+
   def parseFile(path: String) { try {
     if (path.endsWith(".lks")) lksFileReader(fileStreamReader(path))
     else if (path.endsWith(".lks.gz")) lksFileReader(gzFileStreamReader(path))
@@ -71,6 +81,8 @@ class FileParser {
           case _ =>
         }
     }
+    else if (path.endsWith(".ivy")) ivyFileReader(path)
+  //  else if (path.endsWith(".ivy.gz")) ivyFileReader(path) // This will be added later
     else throw new Exception("Can not recognize file extension!")
     ProofToolPublisher.publish(ProofDbChanged)
   } catch {
