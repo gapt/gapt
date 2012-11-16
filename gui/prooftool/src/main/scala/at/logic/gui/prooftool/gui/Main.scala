@@ -35,7 +35,7 @@ import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedund
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
 import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
 import at.logic.transformations.skolemization.skolemize
 
 object Main extends SimpleSwingApplication {
@@ -502,6 +502,7 @@ object Main extends SimpleSwingApplication {
       contents += new Separator
       contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(body.getContent.getData.get._2.asInstanceOf[LKProof]) }) { border = customBorder }
       contents += new Separator
+      contents += new MenuItem(Action("Extract Herbrand Sequent") { herbrandSequent() }) { border = customBorder }
       contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK() }) { border = customBorder }
       contents += new MenuItem(Action("Skolemize") { skolemizeProof() }) { border = customBorder }
       contents += new MenuItem(Action("Regularize") { regularizeProof() }) { border = customBorder }
@@ -683,7 +684,17 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def skolemizeProof() {  try {
+  def herbrandSequent() { try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val hs = ExtractHerbrandSequent(body.getContent.getData.get._2.asInstanceOf[LKProof])
+    body.contents = new Launcher(Some("Herbrand Sequent",hs),14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+    case e: Throwable =>
+      errorMessage("Couldn't extract Herbrand Sequent!\n\n" + getExceptionString(e))
+  }}
+
+  def skolemizeProof() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val data = body.getContent.getData.get
     val proof = skolemize(data._2.asInstanceOf[LKProof])
@@ -692,10 +703,10 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
-      errorMessage("Couldn't extract CutFormula List!\n\n" + getExceptionString(e))
+      errorMessage("Cannot skolemize the proof!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
-  def regularizeProof() {  try {
+  def regularizeProof() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val data = body.getContent.getData.get
     val proof = regularize(data._2.asInstanceOf[LKProof])._1
@@ -704,7 +715,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
-      errorMessage("Couldn't extract CutFormula List!\n\n" + getExceptionString(e))
+      errorMessage("Cannot regularize the proof!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def extractCutFormulas() { try {
