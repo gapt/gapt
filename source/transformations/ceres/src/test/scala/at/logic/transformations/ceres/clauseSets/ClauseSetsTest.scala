@@ -74,14 +74,14 @@ class ClauseSetsTest extends SpecificationWithJUnit {
       println("\n\n")
       println(StructCreators.extract(p2b, getAncestors(p2b.root.succedent.head)))
       println("\n\n")
-      println("rename cl symbols to CL_i(k): ")
+//      println("rename cl symbols to CL_i(k): ")
       val n = IntVar(new VariableStringSymbol("n"))
       val struct = StructCreators.extractStruct( "\\psi", n)
       val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(struct) ))
       val pair = renameCLsymbols(cs)
-      println("map:\n" + pair._2)
-      println("\n\n\n\n")
-      println("rename:\n" + pair._1)
+//      println("map:\n" + pair._2)
+//      println("\n\n\n\n")
+//      println("rename:\n" + pair._1)
       println("\n\n\n\n")
       ok
     }
