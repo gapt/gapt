@@ -125,7 +125,8 @@ class sFOparserTest extends SpecificationWithJUnit {
       val x = foVar("x")//hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      val db = dbTRS(g, base, step)
+      dbTRS.clear
+      dbTRS.add(g, base, step)
 //      val varphi = applySchemaSubstitution2("\\varphi",1, db)
 //      va
 // l varphi = applySchemaSubstitution2("\\tau",1, db)

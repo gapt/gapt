@@ -715,23 +715,17 @@ abstract class sResolutionTerm {}
     }
   }
 
-
-  class dbTRSresolutionSchema(var map: Map[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]]) {
-    def add(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]): Unit = {
-      val newMap = map + Pair(term, Tuple2(base, step))
-      map = newMap
+  //the t.r.s. for the resolution schema (global object)
+  object dbTRSresolutionSchema extends Iterable[(String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]])] with TraversableOnce[(String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]])] {
+    val map = new scala.collection.mutable.HashMap[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]]
+    def get(name: String) = map(name)
+    def clear = map.clear
+    def add(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]) = {
+      map.put(term, Tuple2(base, step))
     }
     override def toString() = map.keySet.foldLeft("")((acc, s) => map.get(s).get._1._1+"  →  "+map.get(s).get._1._2+"\n"+map.get(s).get._2._1+"  →  "+map.get(s).get._2._2+acc)
+    def iterator = map.iterator
   }
-  //the t.r.s. for the clause schema
-  object dbTRSresolutionSchema {
-    def apply(term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm]): dbTRSresolutionSchema = {
-      val m = Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]] + Pair(term, Tuple2(base, step))
-      new dbTRSresolutionSchema(m)
-    }
-    def apply() = new dbTRSresolutionSchema( Map.empty[String, Tuple2[Tuple2[sResolutionTerm, sResolutionTerm], Tuple2[sResolutionTerm, sResolutionTerm]]])
-  }
-
 
   object RewriteClauseSchemaInSclauseTerm {
     def apply(cst: sClauseTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]) : sClauseTerm = {
@@ -770,15 +764,15 @@ abstract class sResolutionTerm {}
 
   //unfolds a resolution term schema
   object unfoldResolutionProofSchema {
-    def apply(rho: sResolutionTerm, trsResSchema: dbTRSresolutionSchema, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]): sResolutionTerm = {
+    def apply(rho: sResolutionTerm, trsSclause: dbTRSclauseSchema, trsSterms: dbTRSsTermN, subst: SchemaSubstitution3, mapX: Map[sClauseVar, sClause]): sResolutionTerm = {
       val k = IntVar(new VariableStringSymbol("k"))
       val l = IntVar(new VariableStringSymbol("l"))
       val X = sClauseVar("X")
       rho match {
-        case rho1: ResolutionProofSchema if trsResSchema.map.contains(rho1.name) => {
+        case rho1: ResolutionProofSchema if dbTRSresolutionSchema.map.contains(rho1.name) => {
           if (rho1.args.head == IntZero()) {
 //            println("i == 0")
-            val base = trsResSchema.map.get(rho1.name).get._1._2
+            val base = dbTRSresolutionSchema.map.get(rho1.name).get._1._2
             val new_mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], rho1.args.last.asInstanceOf[sClause])
             val delX = sClauseVarSubstitution(base, new_mapX)
             val ground = unfoldingAtomsInResTerm(delX, trsSterms, subst)
@@ -791,7 +785,7 @@ abstract class sResolutionTerm {}
               else {
                 ((subst.map - k) - l) + Pair(k.asInstanceOf[Var], Pred(subst.map.get(k).get.asInstanceOf[IntegerTerm]))// + Pair(l.asInstanceOf[Var], Pred(subst.map.get(l).get.asInstanceOf[IntegerTerm]))
               }
-            val step = trsResSchema.map.get(rho1.name).get._2._2
+            val step = dbTRSresolutionSchema.map.get(rho1.name).get._2._2
             var new_subst = new SchemaSubstitution3(map)
 //            println("new_subst = "+new_subst.map)
             val new_mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], rho1.args.last.asInstanceOf[sClause])
@@ -801,17 +795,17 @@ abstract class sResolutionTerm {}
             val delX = sClauseVarSubstitution(rho_new, new_mapX)
 //            println("delX = "+delX)
 
-            apply(delX, trsResSchema, trsSclause, trsSterms, new_subst, new_mapX)
+            apply(delX, trsSclause, trsSterms, new_subst, new_mapX)
           }
         }
         case r:rTerm => {
 //          println("r = "+r)
-          var left = apply(r.left, trsResSchema, trsSclause, trsSterms, subst, mapX)
+          var left = apply(r.left, trsSclause, trsSterms, subst, mapX)
           if (left.isInstanceOf[nonVarSclause]) {
             left = nonVarSclause(left.asInstanceOf[nonVarSclause].ant.map(f => unfoldGroundAtom(f, trsSterms, subst)) , left.asInstanceOf[nonVarSclause].succ.map(f => unfoldGroundAtom(f, trsSterms, subst)))
           }
 //          println("left = "+left)
-          var right = apply(r.right, trsResSchema, trsSclause, trsSterms, subst, mapX)
+          var right = apply(r.right, trsSclause, trsSterms, subst, mapX)
           if (right.isInstanceOf[nonVarSclause]) {
             right = nonVarSclause(right.asInstanceOf[nonVarSclause].ant.map(f => unfoldGroundAtom(f, trsSterms, subst)) , right.asInstanceOf[nonVarSclause].succ.map(f => unfoldGroundAtom(f, trsSterms, subst)))
           }

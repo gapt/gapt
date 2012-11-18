@@ -197,7 +197,7 @@ object ParseQMON {
 //    sp2.parseAll(sp2.line, txt)
     val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
     val mapPredicateToArity = Map.empty[String, Int]
-    var trssys: dbTRS = dbTRS.apply()
+    dbTRS.clear
     lazy val sp = new SimpleSLKParser
 
     //    var proofName = ""
@@ -273,8 +273,7 @@ object ParseQMON {
               t2 match {
                 case sTerm(func2, i2, arg2) => {
 //                  if(func1 == func2) {
-                    val db = dbTRS(func1.asInstanceOf[HOLConst], base, step)
-                    trssys = db
+                    dbTRS.add(func1.asInstanceOf[HOLConst], base, step)
 //                  }
                 }
               }
@@ -710,13 +709,13 @@ object ParseQMON {
 
       def arrowL: Parser[LKProof] = "arrowL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "arrowL(" ~ label ~ "," ~ f1 ~  ")" => {
-          trsArrowLeftRule(map.get(label).get, f1, trssys)
+          trsArrowLeftRule(map.get(label).get, f1)
         }
       }
 
       def arrowR: Parser[LKProof] = "arrowR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "arrowR(" ~ label ~ "," ~ f1 ~  ")" => {
-          trsArrowRightRule(map.get(label).get, f1, trssys)
+          trsArrowRightRule(map.get(label).get, f1)
         }
       }
 

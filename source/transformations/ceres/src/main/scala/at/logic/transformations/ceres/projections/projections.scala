@@ -480,7 +480,7 @@ object Projections {
     }
   }
 
-  def handleTrsArrowRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, constructor: (LKProof, HOLFormula, dbTRS) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
+  def handleTrsArrowRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, constructor: (LKProof, HOLFormula) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[(LKProof, Map[FormulaOccurrence, FormulaOccurrence])] = {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     println("\nprojecting : "+proof.rule)
     if (cut_ancs.contains( a ) )
@@ -489,19 +489,19 @@ object Projections {
       s.map( pm => {
         //   println("\nauxf = "+printSchemaProof.formulaToString(pm._2( a ).formula))
         //printSchemaProof(pm._1)
-        val new_p = constructor( pm._1, pm._2( a ).formula, getTRS() )
+        val new_p = constructor( pm._1, pm._2( a ).formula )
         (new_p, copyMapToDescendant( proof, new_p, pm._2) )
       } )
   }
 
   //just for testing reasons. It should be removed.
-  private def getTRS(): dbTRS = {
+  private def getTRS(): Unit = {
     def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
     val k = IntVar(new VariableStringSymbol("k"))
     val x = foVar("x")
     val base = x
     val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-    dbTRS(g, base, step)
+    dbTRS.add(g, base, step)
   }
 
 

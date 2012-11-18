@@ -110,8 +110,9 @@ class sFOparserTest extends SpecificationWithJUnit {
       val x = foVar("x")//hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      val db = dbTRS(g, base, step)
-      val varphi = applySchemaSubstitution2("\\sigma",2, db)
+      dbTRS.clear
+      dbTRS.add(g, base, step)
+      val varphi = applySchemaSubstitution2("\\sigma",2)
 //      println("\nvarphi = "+varphi.root)
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
@@ -195,9 +196,10 @@ class sFOparserTest extends SpecificationWithJUnit {
       val x = foVar("x")//hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      val db = dbTRS(g, base, step)
+      dbTRS.clear
+      dbTRS.add(g, base, step)
 //      val sigma = applySchemaSubstitution2("\\sigma",2, db)
-      val sigma = applySchemaSubstitution2("\\varphi",3, db)
+      val sigma = applySchemaSubstitution2("\\varphi",3)
       println("\n\n")
 //      val a = foVar("a")
 //      val t = sTerm(g, Succ(IntZero()), a::Nil)

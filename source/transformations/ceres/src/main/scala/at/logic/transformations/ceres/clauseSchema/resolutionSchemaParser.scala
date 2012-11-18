@@ -16,9 +16,6 @@ import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
-import at.logic.algorithms.lk._
-
-
 
 object ParseResSchema {
 
@@ -29,10 +26,9 @@ object ParseResSchema {
     var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     //    lazy val sp2 = new ParserTxt
     //    sp2.parseAll(sp2.line, txt)
-    val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
     val mapPredicateToArity = Map.empty[String, Int]
-    var trssys: dbTRS = dbTRS.apply()
-    var trsResSch: dbTRSresolutionSchema = dbTRSresolutionSchema.apply()
+    dbTRS.clear
+    dbTRSresolutionSchema.clear
     lazy val sp = new SimpleResolutionSchemaParser
 
     sp.parseAll(sp.resSchema, txt) match {
@@ -59,8 +55,7 @@ object ParseResSchema {
               t2 match {
                 case sTerm(func2, i2, arg2) => {
                   //                  if(func1 == func2) {
-                  trssys = dbTRS(func1.asInstanceOf[HOLConst], base, step)
-                  println(trssys.map)
+                  dbTRS.add(func1.asInstanceOf[HOLConst], base, step)
                   //                  }
                 }
               }
@@ -107,7 +102,7 @@ object ParseResSchema {
           ResolutionProofSchema(str, ind::fo2v::Nil)
       }
 
-      def fo2var: Parser[HOLVar] = "x" ^^ {
+      def fo2var: Parser[HOLVar] = "z" ^^ {
         case str => fo2Var(new VariableStringSymbol(str))
       }
 
@@ -121,8 +116,8 @@ object ParseResSchema {
               rho2 match {
                 case ResolutionProofSchema(name1, arg2) => {
                   //                  if(name == name1) {
-                  trsResSch = dbTRSresolutionSchema(name, Tuple2(rho1, base), Tuple2(rho2, step))
-                  println(trsResSch.map)
+                  dbTRSresolutionSchema.add(name, Tuple2(rho1, base), Tuple2(rho2, step))
+                  println(dbTRSresolutionSchema.map)
                   //                  }
                 }
               }

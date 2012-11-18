@@ -752,8 +752,8 @@ object OrEquivalenceRule1 {
   }
 
   object sCutRule {
-    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
-      val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc, trs)
+    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc)
       val sequent = getSequent(s1.root, s2.root, term1, term2)
 
       new BinaryTree[Sequent](sequent, s1, s2)
@@ -763,22 +763,22 @@ object OrEquivalenceRule1 {
         override def name = "cut"
       }
     }
-    def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
-      val (term1, term2) = getTerms(s1, s2, term1oc, term2oc, trs)
+    def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+      val (term1, term2) = getTerms(s1, s2, term1oc, term2oc)
       getSequent(s1, s2, term1, term2)
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, s2: LKProof, term: HOLFormula, trs: dbTRS): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas  = {
-      val succ = s1.root.succedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term, trs)).toList
-      val ant = s2.root.antecedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term, trs)).toList
+    def apply(s1: LKProof, s2: LKProof, term: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas  = {
+      val succ = s1.root.succedent.filter(x => unfoldSFormula(x.formula) == unfoldSFormula(term)).toList
+      val ant = s2.root.antecedent.filter(x => unfoldSFormula(x.formula) == unfoldSFormula(term)).toList
   //    println("\n\nant = "+ant)
   //    println("succ = "+succ)
       (succ, ant) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y, trs)
+        case ((x::_),(y::_)) => apply(s1, s2, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
-    private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
+    private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.antecedent.find(_ == term2oc)
       if (term1op == None || term2op == None) {
@@ -792,7 +792,7 @@ object OrEquivalenceRule1 {
       else {
         val term1 = term1op.get
         val term2 = term2op.get
-        if (unfoldSFormula(term1.formula, trs) != unfoldSFormula(term2.formula,trs)) throw new LKRuleCreationException("Formulas to be cut are not identical")
+        if (unfoldSFormula(term1.formula) != unfoldSFormula(term2.formula)) throw new LKRuleCreationException("Formulas to be cut are not identical")
         else {
           (term1, term2)
         }
@@ -818,8 +818,8 @@ object OrEquivalenceRule1 {
 
 
   object sContractionLeftRule {
-    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
-      val (term1, term2) = getTerms(s1.root, term1oc, term2oc, trs)
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val (term1, term2) = getTerms(s1.root, term1oc, term2oc)
       val prinFormula = getPrinFormula(term1, term2)
       val sequent = getSequent(s1.root, term1, term2, prinFormula)
 
@@ -831,26 +831,26 @@ object OrEquivalenceRule1 {
         override def name = "c:l"
       }
     }
-    def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
-      val (term1, term2) = getTerms(s1, term1oc, term2oc, trs)
+    def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+      val (term1, term2) = getTerms(s1, term1oc, term2oc)
       val prinFormula = getPrinFormula(term1, term2)
       getSequent(s1, term1, term2, prinFormula)
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, term1: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      (s1.root.antecedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term1,trs))).toList match {
-        case (x::y::_) => apply(s1, x, y, trs)
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      (s1.root.antecedent.filter(x => unfoldSFormula(x.formula) == unfoldSFormula(term1))).toList match {
+        case (x::y::_) => apply(s1, x, y)
         case _ => throw new LKRuleCreationException("No matching formulas found to contract.")
       }
     }
-    private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs:dbTRS) = {
+    private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
       val term2op = s1.antecedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
-        if (unfoldSFormula(term1.formula, trs) != unfoldSFormula(term2.formula, trs)) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
+        if (unfoldSFormula(term1.formula) != unfoldSFormula(term2.formula)) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
         else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
         else {
           (term1, term2)
@@ -878,8 +878,8 @@ object OrEquivalenceRule1 {
 
 
   object sContractionRightRule {
-    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
-      val (term1, term2) = getTerms(s1.root, term1oc, term2oc, trs)
+    def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+      val (term1, term2) = getTerms(s1.root, term1oc, term2oc)
       val prinFormula = getPrinFormula(term1, term2)
       val sequent = getSequent(s1.root, term1, term2, prinFormula)
 
@@ -891,26 +891,26 @@ object OrEquivalenceRule1 {
         override def name = "c:r"
       }
     }
-    def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence, trs: dbTRS) = {
-      val (term1, term2) = getTerms(s1, term1oc, term2oc, trs)
+    def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+      val (term1, term2) = getTerms(s1, term1oc, term2oc)
       val prinFormula = getPrinFormula(term1, term2)
       getSequent(s1, term1, term2, prinFormula)
     }
     // convenient method to choose the first two formulas
-    def apply(s1: LKProof, term1: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      (s1.root.succedent.filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(term1, trs))).toList match {
-        case (x::y::_) => apply(s1, x, y, trs)
+    def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
+      (s1.root.succedent.filter(x => unfoldSFormula(x.formula) == unfoldSFormula(term1))).toList match {
+        case (x::y::_) => apply(s1, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
-    private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence, trs: dbTRS) = {
+    private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s1.succedent.find(_ == term2oc)
       if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
-        if (unfoldSFormula(term1.formula, trs) != unfoldSFormula(term2.formula, trs)) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
+        if (unfoldSFormula(term1.formula) != unfoldSFormula(term2.formula)) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
         else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
         else {
           (term1, term2)
@@ -940,8 +940,8 @@ object OrEquivalenceRule1 {
   //----------------------- trsArrowRule ------------------
 
   object trsArrowRule {
-    def apply(s1: LKProof, auxf: FormulaOccurrence, trs: dbTRS) = {
-      val prinFormula = factory.createFormulaOccurrence( unfoldSFormula(auxf.formula, trs), auxf  +: Seq.empty[FormulaOccurrence] )
+    def apply(s1: LKProof, auxf: FormulaOccurrence) = {
+      val prinFormula = factory.createFormulaOccurrence( unfoldSFormula(auxf.formula), auxf  +: Seq.empty[FormulaOccurrence] )
       def createSide( s : Seq[FormulaOccurrence] ) =
         if ( s.contains(auxf) )
           prinFormula +: createContext( s.filter(_ != auxf) )
@@ -957,9 +957,9 @@ object OrEquivalenceRule1 {
       }
     }
 
-    def apply(s1: LKProof, auxf: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      ((s1.root.antecedent ++ s1.root.succedent).filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(auxf, trs))).toList match {
-        case (x::_) => apply(s1, x, trs)
+    def apply(s1: LKProof, auxf: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.antecedent ++ s1.root.succedent).filter(x => unfoldSFormula(x.formula) == unfoldSFormula(auxf))).toList match {
+        case (x::_) => apply(s1, x)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the trsArrowRule with the given formula")
       }
     }
@@ -974,9 +974,9 @@ object OrEquivalenceRule1 {
   }
 
   object trsArrowRightRule {
-    def apply(s1: LKProof, auxf: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      ((s1.root.succedent).filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(auxf, trs))).toList match {
-        case (x::_) => trsArrowRule.apply(s1, x, trs)
+    def apply(s1: LKProof, auxf: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent).filter(x => unfoldSFormula(x.formula) == unfoldSFormula(auxf))).toList match {
+        case (x::_) => trsArrowRule.apply(s1, x)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the right side found for application of the trsArrowRightRule with the given formula")
       }
     }
@@ -1011,11 +1011,11 @@ object OrEquivalenceRule1 {
   }
 
   object trsArrowLeftRule {
-    def apply(s1: LKProof, auxf: HOLFormula, trs: dbTRS): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    def apply(s1: LKProof, auxf: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
 //      println("\n\ns1 = "+s1.root)
 //      println("\n\nauxf = "+auxf)
-      ((s1.root.antecedent).filter(x => unfoldSFormula(x.formula, trs) == unfoldSFormula(auxf, trs))).toList match {
-        case (x::_) => trsArrowRule.apply(s1, x, trs)
+      ((s1.root.antecedent).filter(x => unfoldSFormula(x.formula) == unfoldSFormula(auxf))).toList match {
+        case (x::_) => trsArrowRule.apply(s1, x)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences in the left side found for application of the trsArrowLeftRule with the given formula")
       }
     }

@@ -77,19 +77,20 @@ class SLKTest extends SpecificationWithJUnit {
       val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      val db = dbTRS(g, base, step)
+      dbTRS.clear
+      dbTRS.add(g, base, step)
       val term1 = sTerm(g, Succ(Succ(k)), x::Nil)
       val term2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      println("\n\nterm1 = "+unfoldSTerm(term1, db))
-      println("term2 = "+unfoldSTerm(term2, db))
+      println("\n\nterm1 = "+unfoldSTerm(term1))
+      println("term2 = "+unfoldSTerm(term2))
       val f1 = Atom(new ConstantStringSymbol("P"), term1::Nil)
       val f2 = Atom(new ConstantStringSymbol("P"), term2::Nil)
-      println("\n\nf1 = "+unfoldSFormula(f1, db))
-      println("f2 = "+unfoldSFormula(f2, db))
+      println("\n\nf1 = "+unfoldSFormula(f1))
+      println("f2 = "+unfoldSFormula(f2))
 
       val ax1  = Axiom(f1::Nil, f1::Nil)
       val ax2  = Axiom(f2::Nil, f2::Nil)
-      val cut = sCutRule(ax1, ax2, f1, db)
+      val cut = sCutRule(ax1, ax2, f1)
       println("\n\nroot = "+cut.root)
       Success()
     }

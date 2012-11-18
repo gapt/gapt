@@ -18,10 +18,10 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
     "should parse correctly the resolution schema in resSchema1.rs" in {
       println(Console.BLUE+"\n\n\n\n------- Resolution schema for the resSchema1.rs ------- \n\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
-      val map = ParseResSchema(s)
-
-//      val proof_name = "\\sigma"
-//      val p1 = map.get(proof_name).get._2.get("root").get
+      ParseResSchema(s)
+      println("\ndbTRS:\n"+dbTRS.map)
+      println("\n\ndbTRSresolutionSchema:\n"+dbTRSresolutionSchema.map)
+//      val rez2 = unfoldingAtomsInResTerm(step, trsSigma, subst)
 
       println("\n\n")
 

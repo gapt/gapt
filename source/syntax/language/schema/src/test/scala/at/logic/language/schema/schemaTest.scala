@@ -120,12 +120,13 @@ class SchemaTest extends SpecificationWithJUnit {
       val z0 = indexedFOVar(new VariableStringSymbol("z"), IntZero())
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      val db = dbTRS(g, base, step)
+      dbTRS.clear
+      dbTRS.add(g, base, step)
       val term = sTerm(g, Succ(Succ(k)), x::Nil)
       val term1 = sTerm(g, Succ(IntZero()), z::Nil)
       val term2 = sTerm(g, IntZero(), z0::Nil)
 
-      val unf = unfoldSTerm(term2, db)
+      val unf = unfoldSTerm(term2)
       println("\n\nterm = "+term2)
       println("unfold = "+unf)
       println()

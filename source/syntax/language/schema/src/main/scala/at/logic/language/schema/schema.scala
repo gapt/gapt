@@ -57,31 +57,29 @@ object foTerm {
 }
 
 //database for trs
-class dbTRS(val map: scala.collection.mutable.Map[HOLConst, Tuple2[HOLExpression, HOLExpression]])
-
-object dbTRS {
-  var map1 = scala.collection.mutable.Map.empty[HOLConst, Tuple2[HOLExpression, HOLExpression]]
-  def apply(term: HOLConst, base: HOLExpression, step: HOLExpression): dbTRS = {
-    val m = scala.collection.mutable.Map.empty[HOLConst, Tuple2[HOLExpression, HOLExpression]] + Pair(term, Tuple2(base, step))
-    map1 = m
-    new dbTRS(m)
+object dbTRS extends Iterable[(HOLConst, Tuple2[HOLExpression, HOLExpression])] {
+  val map = new scala.collection.mutable.HashMap[HOLConst, Tuple2[HOLExpression, HOLExpression]]
+  def get(name: HOLConst) = map(name)
+  def clear = map.clear
+  def add(term: HOLConst, base: HOLExpression, step: HOLExpression): Unit = {
+    map.put(term, Tuple2(base, step))
   }
-  def apply() = new dbTRS(scala.collection.mutable.Map.empty[HOLConst, Tuple2[HOLExpression, HOLExpression]])
+  def iterator = map.iterator
 }
 
 
 //TODO : needs improvement for the step case
 object unfoldSTerm {
-  def apply(t: HOLExpression, trs: dbTRS): HOLExpression = {
+  def apply(t: HOLExpression): HOLExpression = {
 //    println("trs : "+trs.map)
     val k = IntVar(new VariableStringSymbol("k"))
     val x = foVar("x")
 //    println("t = "+t)
     t match {
-      case sTerm(func, i, arg) if trs.map.contains(func.asInstanceOf[HOLConst]) =>
+      case sTerm(func, i, arg) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) =>
         if (i == IntZero()) {
 
-          val base = trs.map.get(func.asInstanceOf[HOLConst]).get._1
+          val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1
           val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg)
           val subst = new SchemaSubstitution2[HOLExpression](new_map)
           subst(base)
@@ -90,13 +88,13 @@ object unfoldSTerm {
           if (i == k)
             t
           else {
-            trs.map.get(func.asInstanceOf[HOLConst]).get._2 match {
-              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg::Nil), trs)::Nil)
+            dbTRS.map.get(func.asInstanceOf[HOLConst]).get._2 match {
+              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg::Nil))::Nil)
             }
           }
       case sTerm(func, i, arg) => t
       case foTerm(holvar, arg) => {
-        foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs)::Nil)
+        foTerm(holvar.asInstanceOf[HOLVar], apply(arg)::Nil)
       }
       case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
     }
@@ -104,18 +102,18 @@ object unfoldSTerm {
 }
 
 object unfoldSFormula {
-  def apply(f: HOLFormula, trs: dbTRS): HOLFormula = {
+  def apply(f: HOLFormula): HOLFormula = {
 //    println("\nnunfolding formula : "+f)
     f match {
       //case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
       case Atom(name, args) => {
-        val ff = Atom(name, args.map(t => unfoldSTerm(t, trs)))
+        val ff = Atom(name, args.map(t => unfoldSTerm(t)))
 //        println("ff = "+ff)
         ff
       }
-      case Imp(f1, f2) => Imp(apply(f1.asInstanceOf[HOLFormula], trs), apply(f2.asInstanceOf[HOLFormula], trs))
-      case ExVar(v, f) => ExVar(v, apply(f, trs))
-      case AllVar(v, f) => AllVar(v, apply(f, trs))
+      case Imp(f1, f2) => Imp(apply(f1.asInstanceOf[HOLFormula]), apply(f2.asInstanceOf[HOLFormula]))
+      case ExVar(v, f) => ExVar(v, apply(f))
+      case AllVar(v, f) => AllVar(v, apply(f))
 //      case BigAnd(v, formula, init, end) => BigAnd(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
 //      case BigOr(v, formula, init, end) =>   BigOr(v, formula, apply(init.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(end.asInstanceOf[T]).asInstanceOf[IntegerTerm] ).asInstanceOf[T]
 //      case Succ(n) => Succ(apply(n.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
