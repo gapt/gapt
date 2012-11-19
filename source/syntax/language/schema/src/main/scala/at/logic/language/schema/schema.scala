@@ -78,7 +78,6 @@ object unfoldSTerm {
     t match {
       case sTerm(func, i, arg) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) =>
         if (i == IntZero()) {
-
           val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1
           val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg)
           val subst = new SchemaSubstitution2[HOLExpression](new_map)

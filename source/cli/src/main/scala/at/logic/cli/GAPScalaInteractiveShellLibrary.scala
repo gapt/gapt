@@ -749,7 +749,6 @@ object loadProofDB {
       dbTRSresolutionSchema.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
       println("\ntrsRes = "+dbTRSresolutionSchema.map )
       println("\n\n")
-
     }
   }
 

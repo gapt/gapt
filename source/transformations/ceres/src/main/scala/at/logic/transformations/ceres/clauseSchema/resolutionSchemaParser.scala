@@ -1,9 +1,7 @@
 package at.logic.transformations.ceres.clauseSchema
 
-import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.slk._
 import at.logic.calculi.lk.base.{Sequent, LKProof}
-import at.logic.calculi.lk.propositionalRules._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import at.logic.language.hol._
@@ -14,14 +12,12 @@ import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
-import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 
 object ParseResSchema {
 
   def apply(txt: InputStreamReader): Unit = {
     var map  = Map.empty[String, LKProof]
-    var baseORstep: Int = 1
     SchemaProofDB.clear
     var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     //    lazy val sp2 = new ParserTxt
@@ -63,24 +59,9 @@ object ParseResSchema {
         }
       }
 
-      //c(k+1, x1,...,X1,...)
-      def c_term: Parser[clauseSchema] = "c" ~ "(" ~ index ~ "," ~ fo2var ~ "," ~ sclause_var ~ ")" ^^ {
-        case "c" ~ "(" ~ ind ~ "," ~ fo ~ "," ~ sclvar ~ ")" => {
-          clauseSchema("c", ind::fo::sclvar::Nil)
-        }
-      }
-
-      //clause schema inductive definition: clauses, X, c(k+1, x1,...,X1,...), composition
-      def clause_schema: Parser[sClause] = c_term | sclause_var | non_varSclause | composition
-
       // a usual clause
       def non_varSclause: Parser[sClause] = rep(atom) ~ "|-" ~ rep(atom) ^^ {
         case ant ~ "|-" ~ succ => nonVarSclause(ant, succ)
-      }
-
-      //composition of clauses
-      def composition: Parser[sClause] = "(" ~ clause_schema ~ "o" ~ clause_schema ~ ")" ^^ {
-        case "(" ~ c1 ~ "o" ~ c2  ~ ")" => sClauseComposition(c1, c2)
       }
 
       // clause variable
@@ -89,7 +70,7 @@ object ParseResSchema {
       }
 
       //resolution term inductive definition
-      def res_term: Parser[sResolutionTerm] = r_term | clause_schema
+      def res_term: Parser[sResolutionTerm] = r_term | non_varSclause
 
       //rTerm
       def r_term: Parser[sResolutionTerm] = "r" ~ "(" ~ rho_term ~ ";" ~ non_varSclause ~ ";" ~ atom ~ ")" ^^ {
@@ -103,13 +84,16 @@ object ParseResSchema {
       }
 
       def fo2var: Parser[HOLVar] = "z" ^^ {
-        case str => fo2Var(new VariableStringSymbol(str))
+        case str => {
+//          println("fo2var")
+          fo2Var(new VariableStringSymbol(str))
+        }
       }
 
       def r_term_OR_clause: Parser[sResolutionTerm] = non_varSclause | r_term
 
       //term-rewriting system for r-terms
-      def resTRS: Parser[Unit] = rho_term ~ "->" ~ r_term_OR_clause ~ rho_term ~ "->" ~ r_term ^^ {
+      def resTRS: Parser[Any] = rho_term ~ "->" ~ r_term_OR_clause ~ rho_term ~ "->" ~ r_term ^^ {
         case rho1 ~ "->" ~ base ~ rho2 ~ "->" ~ step => {
           rho1 match {
             case ResolutionProofSchema(name, arg1) =>
@@ -117,7 +101,6 @@ object ParseResSchema {
                 case ResolutionProofSchema(name1, arg2) => {
                   //                  if(name == name1) {
                   dbTRSresolutionSchema.add(name, Tuple2(rho1, base), Tuple2(rho2, step))
-                  println(dbTRSresolutionSchema.map)
                   //                  }
                 }
               }
@@ -176,7 +159,7 @@ object ParseResSchema {
       }
 
 
-      def define: Parser[Unit]  = indPred ~ ":=" ~ schemaFormula ^^ {
+      def define: Parser[Any]  = indPred ~ ":=" ~ schemaFormula ^^ {
         case indpred ~ ":=" ~ sf => {
           indpred match {
             case IndexedPredicate(f,ls) => {
@@ -225,8 +208,9 @@ object ParseResSchema {
           foTerm(name, arg::Nil)
         }
       }
-      def indexedVar: Parser[HOLVar] = regex(new Regex("[z]")) ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedVar: Parser[HOLVar] = "z" ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
+//          println("indexedFOVar")
           indexedFOVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
       }
