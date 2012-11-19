@@ -745,8 +745,9 @@ object loadProofDB {
       val rhoStep = ResolutionProofSchema("ρ", Succ(k)::x::X::Nil)
       val rwBase = rTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
       val rwStep = rTerm(ResolutionProofSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
-      val trsRes = dbTRSresolutionSchema("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
-      println("\ntrsRes = "+trsRes.map )
+      dbTRSresolutionSchema.clear
+      dbTRSresolutionSchema.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      println("\ntrsRes = "+dbTRSresolutionSchema.map )
       println("\n\n")
 
     }
@@ -764,11 +765,12 @@ object loadProofDB {
       val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
       val base = x
       val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      val db = dbTRS(g, base, step)
+      dbTRS.clear
+      dbTRS.add(g, base, step)
       //      val varphi = applySchemaSubstitution2("\\varphi",1, db)
       //      va
       // l varphi = applySchemaSubstitution2("\\tau",1, db)
-      val sigma = applySchemaSubstitution2("\\sigma",i, db)
+      val sigma = applySchemaSubstitution2("\\sigma",i)
 //      Main.display("sigma", sigma);
 //      while(true){}
     }
