@@ -114,7 +114,7 @@ class resolutionSchemataTest extends SpecificationWithJUnit {
       val sigma13 = unfoldSTermN(sig1, trsSigma)
       println("\n\nsigma13 = "+sigma13)
       val f = HOLApp(P, sig1).asInstanceOf[HOLFormula]
-      val Psig1 = unfoldGroundAtom(f, trsSigma, subst)
+      val Psig1 = unfoldGroundAtom(f, trsSigma)
       println("\n\nPsig1 = "+Psig1)
       println("\n\n")
 
