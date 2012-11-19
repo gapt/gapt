@@ -13,7 +13,7 @@ import event.Key
 import swing.Dialog.Message
 import swing.Swing.EmptyIcon
 import scala.collection.immutable.Seq
-import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, File}
+import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File}
 import javax.swing.filechooser.FileFilter
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lksk.eliminateDefinitions
@@ -536,6 +536,7 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => enabled = false
         }
       }
+      contents += new MenuItem(Action("Specify Resolution Schema") { specifyResolutionSchema() } )  { border = customBorder }
       contents += new MenuItem(Action("Compute Instance") { computeInstance() } )  { border = customBorder }
     }
     contents += new Menu("Help") {
@@ -681,6 +682,19 @@ object Main extends SimpleSwingApplication {
 
         body.contents = new Launcher(Some(("Expansion Tree", (Seq(expTree),Seq()))), 12)
       }) { border = customBorder }
+    }
+  }
+
+  def specifyResolutionSchema() {
+    val t = TextAreaDialog("Please enter resolution proof schema:")
+    if (t != None && t.get != "") try {
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      db.rsFileReader(new InputStreamReader(new ByteArrayInputStream(t.get.getBytes("UTF-8"))))
+      body.contents = new Launcher(Some(db.getProofs.last),14)
+      body.cursor = java.awt.Cursor.getDefaultCursor
+    } catch {
+      case e: Throwable =>
+        errorMessage("Cannot parse the specified resolution schema!\n\n" + getExceptionString(e))
     }
   }
 
@@ -994,6 +1008,15 @@ object Main extends SimpleSwingApplication {
       }
 
       def getDescription: String = ".pdf"
+    }
+
+    fileFilter = new FileFilter {
+      def accept(f: File): Boolean = {
+        if (f.getName.endsWith(".rs") || f.isDirectory) true
+        else false
+      }
+
+      def getDescription: String = ".rs"
     }
 
     fileFilter = new FileFilter {

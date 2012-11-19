@@ -25,6 +25,8 @@ import at.logic.language.hol.HOLExpression
 import at.logic.gui.prooftool.gui.Main
 import at.logic.provers.prover9.ivy.IvyParser
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
+import at.logic.language.schema.dbTRS
+import at.logic.transformations.ceres.clauseSchema.ParseResSchema
 
 class FileParser {
 
@@ -47,10 +49,19 @@ class FileParser {
   def lksFileReader(input: InputStreamReader) {
     proofs = Nil
     termTrees = Nil
+    val defs = Map.empty[HOLExpression,HOLExpression] //TODO: change this line to get defs from dbTRS.
     //  val start = System.currentTimeMillis()
-    proofdb = new ProofDatabase(Map(), ParseQMON.parseProofs(input), Nil, Nil)
+    proofdb = new ProofDatabase(defs, ParseQMON.parseProofs(input), Nil, Nil)
     //  val end = System.currentTimeMillis()
     //  println("parsing took " + (end - start).toString)
+  }
+
+  def rsFileReader(input: InputStreamReader) {
+    ParseResSchema(input)
+    val rs = Nil  //TODO: change this line to get resolution terms as TreeProofs from ResolutionProofSchema.
+    proofs = proofs:::rs
+    val defs = Map.empty[HOLExpression,HOLExpression] //TODO: change this line to get defs from dbTRS.
+    addDefinitions(defs)
   }
 
   def ivyFileReader(path: String) {
@@ -63,6 +74,8 @@ class FileParser {
   def parseFile(path: String) { try {
     if (path.endsWith(".lks")) lksFileReader(fileStreamReader(path))
     else if (path.endsWith(".lks.gz")) lksFileReader(gzFileStreamReader(path))
+    else if (path.endsWith(".rs")) rsFileReader(fileStreamReader(path))
+    else if (path.endsWith(".rs.gz")) rsFileReader(gzFileStreamReader(path))
     else if (path.endsWith(".xml")) try {
       ceresFileReader(fileStreamReader(path))
     } catch {
