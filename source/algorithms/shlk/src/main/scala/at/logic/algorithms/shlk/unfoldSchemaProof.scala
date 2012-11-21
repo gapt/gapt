@@ -563,7 +563,7 @@ import at.logic.language.hol._
       }
       case ifo: indexedFOVar => indexedFOVar(ifo.name, minusOne(ifo.index, k).asInstanceOf[IntegerTerm])
       case st @ sTerm(name, i, args) => {
-        sTerm(name.asInstanceOf[HOLConst], minusOne(i, k).asInstanceOf[IntegerTerm], args::Nil)
+        sTerm(name.asInstanceOf[HOLConst], minusOne(i, k).asInstanceOf[IntegerTerm], args)
       }
       case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], minusOne(arg, k)::Nil)
       case _ => {

@@ -14,7 +14,10 @@ import at.logic.language.hol.HOLAbs._
 import at.logic.language.hol.HOLVar._
 import at.logic.language.lambda.types.Ti._
 import at.logic.language.lambda.types.Ti
-import at.logic.language.hol.{HOLVar, HOLAbs, HOLExpression}
+import at.logic.language.schema.sTerm._
+import at.logic.algorithms.shlk._
+import at.logic.calculi.lk.base.Sequent
+import at.logic.language.hol.{HOLFormula, HOLVar, HOLAbs, HOLExpression}
 
 @RunWith(classOf[JUnitRunner])
 class resolutionSchemaParserTest extends SpecificationWithJUnit {
@@ -27,22 +30,30 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       ParseResSchema(s)
       println("\ndbTRS:\n"+dbTRS.map)
       println("\n\ndbTRSresolutionSchema:\n")
-      dbTRSresolutionSchema.map.foreach(m => println(m))
+      resolutionProofSchemaDB.map.foreach(m => println(m))
       val k = IntVar(new VariableStringSymbol("k"))
-      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(Succ(IntZero())))
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
       val subst = new SchemaSubstitution3(map)
-      val r = unfoldResolutionProofSchema2(dbTRSresolutionSchema.map.get("ρ1").get._2._1, subst)
-      println("\n\n")
+      val rho1 = resolutionProofSchemaDB.map.get("ρ1").get._2._1
+      val rho1step1 = IntVarSubstitution(rho1, subst)
+      println("rho1step1 = "+rho1step1)
+      val r = unfoldResolutionProofSchema2(rho1step1)
       println("r = "+r)
-      println("\n\n")
+
       val z = fo2Var(new VariableStringSymbol("z"))
       val a = HOLVar(new VariableStringSymbol("a"), Ti())
-      val h = HOLAbs(k, a)
+//      val h = HOLAbs(k, a)
+//      val sterm1 = dbTRS.map.head._2._2._1
+      val sterm1 = sIndTerm("m", k)//
+      val sterm = sTerm("g", sterm1, a::Nil)
+      val h = HOLAbs(k, sterm)
       val mapfo2 = Map[fo2Var, LambdaExpression]() + Pair(z.asInstanceOf[fo2Var], h)
       val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
-      println(Console.BOLD+"applying second-order substitution:\n\n"+Console.RESET+fo2sub)
+      println(Console.BOLD+"applying second-order substitution:\n\n"+Console.RESET)
+      println("fo2sub = "+fo2sub)
 
-
+      println("\n\nresolution deduction tree:")
+      printSchemaProof(ResDeductionToLKTree(fo2sub))
 
       println("\n\n--- END ---\n\n")
       ok

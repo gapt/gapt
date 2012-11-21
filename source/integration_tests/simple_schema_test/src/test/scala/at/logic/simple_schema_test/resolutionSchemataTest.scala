@@ -40,7 +40,7 @@ import at.logic.transformations.ceres.clauseSchema.deComposeSClause._
 import at.logic.transformations.ceres.clauseSchema.unfoldSchemaClause._
 import at.logic.transformations.ceres.clauseSchema.ResolutionProofSchema._
 import at.logic.transformations.ceres.clauseSchema.rTerm._
-import at.logic.transformations.ceres.clauseSchema.dbTRSresolutionSchema._
+import at.logic.transformations.ceres.clauseSchema.resolutionProofSchemaDB._
 import at.logic.transformations.ceres.clauseSchema.sClauseVarSubstitution._
 import at.logic.transformations.ceres.clauseSchema.unfoldingAtomsInResTerm._
 import at.logic.transformations.ceres.clauseSchema.unfoldResolutionProofSchema._
@@ -138,10 +138,10 @@ class resolutionSchemataTest extends SpecificationWithJUnit {
       val rhoStep = ResolutionProofSchema("ρ", Succ(k)::x::X::Nil)
       val rwBase = rTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
       val rwStep = rTerm(ResolutionProofSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
-      dbTRSresolutionSchema.clear
-      dbTRSresolutionSchema.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
-      println(Console.BOLD+"\nresolution-rewriting system:\n\n"+Console.RESET+dbTRSresolutionSchema.map )
-      val base = dbTRSresolutionSchema.map.get("ρ").get._1._2
+      resolutionProofSchemaDB.clear
+      resolutionProofSchemaDB.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      println(Console.BOLD+"\nresolution-rewriting system:\n\n"+Console.RESET+resolutionProofSchemaDB.map )
+      val base = resolutionProofSchemaDB.map.get("ρ").get._1._2
       //      val step = trsRes.map.get("ρ").get._2._1
       var step = ResolutionProofSchema("ρ", three::x::X::Nil)
       step = sClauseVarSubstitution(step, mapX).asInstanceOf[ResolutionProofSchema]

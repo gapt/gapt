@@ -108,10 +108,12 @@ class sFOparserTest extends SpecificationWithJUnit {
       def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
       val k = IntVar(new VariableStringSymbol("k"))
       val x = foVar("x")//hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
-      val base = x
-      val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val base2 = x
+      val step2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val base1 = sTerm(g, IntZero(), x::Nil)
+      val step1 = sTerm(g, Succ(k), x::Nil)
       dbTRS.clear
-      dbTRS.add(g, base, step)
+      dbTRS.add(g, Tuple2(base1, base2), Tuple2(step1, step2))
       val varphi = applySchemaSubstitution2("\\sigma",2)
 //      println("\nvarphi = "+varphi.root)
       // specs2 require a least one Result, see org.specs2.specification.Example
@@ -194,10 +196,12 @@ class sFOparserTest extends SpecificationWithJUnit {
       def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
       val k = IntVar(new VariableStringSymbol("k"))
       val x = foVar("x")//hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
-      val base = x
-      val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val base2 = x
+      val step2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val base1 = sTerm(g, IntZero(), x::Nil)
+      val step1 = sTerm(g, Succ(k), x::Nil)
       dbTRS.clear
-      dbTRS.add(g, base, step)
+      dbTRS.add(g, Tuple2(base1, base2), Tuple2(step1, step2))
 //      val sigma = applySchemaSubstitution2("\\sigma",2, db)
       val sigma = applySchemaSubstitution2("\\varphi",3)
       println("\n\n")

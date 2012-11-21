@@ -213,10 +213,10 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val rhoStep = ResolutionProofSchema("ρ", Succ(k)::x::X::Nil)
       val rwBase = rTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
       val rwStep = rTerm(ResolutionProofSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
-//      val trsRes = dbTRSresolutionSchema("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
-      dbTRSresolutionSchema.clear
-      dbTRSresolutionSchema.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
-      println("\ntrsRes = "+dbTRSresolutionSchema.map )
+//      val trsRes = resolutionProofSchema("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      resolutionProofSchemaDB.clear
+      resolutionProofSchemaDB.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      println("\ntrsRes = "+resolutionProofSchemaDB.map )
       println("\n\n")
       ok
     }
@@ -445,10 +445,10 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val rwBase = rTerm(sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil)::Nil), X), nonVarSclause(Atom(P, sTermN("σ'", zero::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", zero::x::zero::Nil)::Nil))
       val rwStep = rTerm(ResolutionProofSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
 //      val trsRes = dbTRSresolutionSchema("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
-      dbTRSresolutionSchema.clear
-      dbTRSresolutionSchema.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
-      println(Console.BOLD+"\nresolution-rewriting system:\n\n"+Console.RESET+dbTRSresolutionSchema.map )
-      val base = dbTRSresolutionSchema.map.get("ρ").get._1._2
+      resolutionProofSchemaDB.clear
+      resolutionProofSchemaDB.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
+      println(Console.BOLD+"\nresolution-rewriting system:\n\n"+Console.RESET+resolutionProofSchemaDB.map )
+      val base = resolutionProofSchemaDB.map.get("ρ").get._1._2
 //      val step = trsRes.map.get("ρ").get._2._1
       var step = ResolutionProofSchema("ρ", three::x::X::Nil)
       step = sClauseVarSubstitution(step, mapX).asInstanceOf[ResolutionProofSchema]

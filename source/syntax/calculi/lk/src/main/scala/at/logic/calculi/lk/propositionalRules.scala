@@ -260,7 +260,7 @@ import collection.immutable.Seq
     }
      // convenient method to choose the first two formulas
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas  = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term1)).toList) match {
+      ((s1.root.succedent.filter(x => x.formula.syntaxEquals(term1))).toList,(s2.root.antecedent.filter(x => x.formula.syntaxEquals(term1))).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
         case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
@@ -279,7 +279,7 @@ import collection.immutable.Seq
       else {
         val term1 = term1op.get
         val term2 = term2op.get
-        if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be cut are not identical")
+        if (!term1.formula.syntaxEquals(term2.formula)) throw new LKRuleCreationException("Formulas to be cut are not identical")
         else {
           (term1, term2)
         }

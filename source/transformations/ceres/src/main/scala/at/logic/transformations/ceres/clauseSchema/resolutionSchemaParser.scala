@@ -12,7 +12,7 @@ import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
-import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+import at.logic.language.schema.{sIndTerm, foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 
 object ParseResSchema {
 
@@ -24,7 +24,8 @@ object ParseResSchema {
     //    sp2.parseAll(sp2.line, txt)
     val mapPredicateToArity = Map.empty[String, Int]
     dbTRS.clear
-    dbTRSresolutionSchema.clear
+//    dbTRSresolutionSchema.clear
+    resolutionProofSchemaDB.clear
     lazy val sp = new SimpleResolutionSchemaParser
 
     sp.parseAll(sp.resSchema, txt) match {
@@ -44,14 +45,22 @@ object ParseResSchema {
       }
 
       //term-rewriting system for s-terms
-      def trs: Parser[Unit] = s_term ~ "->" ~ term ~ s_term ~ "->" ~ term ^^ {
+      def trs: Parser[Unit] = (s_term | s_ind_term) ~ "->" ~ term ~ (s_term | s_ind_term) ~ "->" ~ term ^^ {
         case t1 ~ "->" ~ base ~ t2 ~ "->" ~ step => {
           t1 match {
             case sTerm(func1, i1, arg1) =>
               t2 match {
                 case sTerm(func2, i2, arg2) => {
                   //                  if(func1 == func2) {
-                  dbTRS.add(func1.asInstanceOf[HOLConst], base, step)
+                  dbTRS.add(func1.asInstanceOf[HOLConst], Tuple2(t1,base), Tuple2(t2, step))
+                  //                  }
+                }
+              }
+            case sIndTerm(func1, i1) =>
+              t2 match {
+                case sIndTerm(func2, i2) => {
+                  //                  if(func1 == func2) {
+                  dbTRS.add(func1.asInstanceOf[HOLConst], Tuple2(t1,base), Tuple2(t2, step))
                   //                  }
                 }
               }
@@ -100,7 +109,7 @@ object ParseResSchema {
               rho2 match {
                 case ResolutionProofSchema(name1, arg2) => {
                   //                  if(name == name1) {
-                  dbTRSresolutionSchema.add(name, Tuple2(rho1, base), Tuple2(rho2, step))
+                  resolutionProofSchemaDB.add(name, Tuple2(rho1, base), Tuple2(rho2, step))
                   //                  }
                 }
               }
@@ -193,15 +202,38 @@ object ParseResSchema {
           })
         }
       }
-      def non_formula: Parser[HOLExpression] = (fo_term | s_term | indexedVar | abs | variable | constant | var_func | const_func)
-      def s_term: Parser[HOLExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ non_formula ~ ")" ^^ {
-        case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
+      
+//      def predicate_symbol : Parser[String] = ps_regexp.r
+      def non_formula: Parser[HOLExpression] = (fo_term | s_ind_term | s_term | indexedVar | abs | variable | index | constant | var_func | const_func )
+
+      def s_term: Parser[HOLExpression] = """[g,h]""".r ~ "(" ~ intTerm ~ s_term_rest ^^ {
+        case name ~ "(" ~ i ~ args => {
           //          println("\n\nsTerm\n)")
           //          println("args = "+args)
           //          println("args.extype = "+args.exptype)
-          sTerm(name, i.asInstanceOf[IntegerTerm], args::Nil)
+          sTerm(name.asInstanceOf[String], i, args.asInstanceOf[List[HOLExpression]])
         }
       }
+
+      def s_ind_term: Parser[HOLExpression] = "m" ~ "(" ~ intTerm ~ ")" ^^ {
+        case name ~ "(" ~ i ~ ")" => {
+          println("\n\nsIndTerm\n)")
+          //          println("args = "+args)
+          //          println("args.extype = "+args.exptype)
+          sIndTerm(name.asInstanceOf[String], i.asInstanceOf[IntegerTerm])
+        }
+      }
+
+      def s_term_rest: Parser[List[HOLExpression]] = s_term_rest_end | s_term_rest_args
+
+      def s_term_rest_end: Parser[List[HOLExpression]] = ")" ^^ {
+        case ")" => Nil
+      }
+
+      def s_term_rest_args: Parser[List[HOLExpression]] = "," ~ repsep(non_formula, ",") ~ ")" ^^ {
+        case "," ~ l ~ ")" => l.asInstanceOf[List[HOLExpression]]
+      }
+      
       def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ non_formula ~ ")" ^^ {
         case name ~ "(" ~ arg ~ ")" => {
           //          println("\n\nfoTerm\n arg.extype = "+arg.exptype)

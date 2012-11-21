@@ -118,10 +118,12 @@ class SchemaTest extends SpecificationWithJUnit {
       val x = foVar("x")
       val z = indexedFOVar(new VariableStringSymbol("z"), Succ(IntZero()))
       val z0 = indexedFOVar(new VariableStringSymbol("z"), IntZero())
-      val base = x
-      val step = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
+      val base1 = sTerm(g, IntZero(), x::Nil)
+      val step1 = sTerm(g, Succ(k), x::Nil)
+      val base2 = x
+      val step2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
       dbTRS.clear
-      dbTRS.add(g, base, step)
+      dbTRS.add(g, Tuple2(base1, base2), Tuple2(step1, step2))
       val term = sTerm(g, Succ(Succ(k)), x::Nil)
       val term1 = sTerm(g, Succ(IntZero()), z::Nil)
       val term2 = sTerm(g, IntZero(), z0::Nil)

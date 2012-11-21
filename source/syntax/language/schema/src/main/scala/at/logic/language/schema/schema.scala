@@ -57,11 +57,11 @@ object foTerm {
 }
 
 //database for trs
-object dbTRS extends Iterable[(HOLConst, Tuple2[HOLExpression, HOLExpression])] {
-  val map = new scala.collection.mutable.HashMap[HOLConst, Tuple2[HOLExpression, HOLExpression]]
+object dbTRS extends Iterable[(HOLConst, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]])] {
+  val map = new scala.collection.mutable.HashMap[HOLConst, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]]
   def get(name: HOLConst) = map(name)
   def clear = map.clear
-  def add(term: HOLConst, base: HOLExpression, step: HOLExpression): Unit = {
+  def add(term: HOLConst, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): Unit = {
     map.put(term, Tuple2(base, step))
   }
   def iterator = map.iterator
@@ -78,19 +78,38 @@ object unfoldSTerm {
     t match {
       case sTerm(func, i, arg) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) =>
         if (i == IntZero()) {
-          val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1
-          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg)
+//          println("i == IntZero()")
+          val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1._2
+          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg.head)
           val subst = new SchemaSubstitution2[HOLExpression](new_map)
           subst(base)
         }
         else
           if (i == k)
             t
-          else {
-            dbTRS.map.get(func.asInstanceOf[HOLConst]).get._2 match {
-              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg::Nil))::Nil)
-            }
-          }
+          else
+            i match {
+              case Succ(_) => {
+//                println("case Succ(_)")
+                dbTRS.map.get(func.asInstanceOf[HOLConst]).get._2._2 match {
+                  case foTerm(name, arg1) => {
+                    //                println("i = "+i)
+
+                    val rez = foTerm(name.asInstanceOf[HOLVar], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg))::Nil)
+//                    println("rez = "+rez)
+                    rez
+                  }
+                }
+              }
+              case _ => {
+//                println("m(.)")
+                  val j = unfoldSINDTerm(i)
+//                  println("j = "+j)
+                  val rez = apply(sTerm(func.asInstanceOf[HOLConst], j, arg))
+//                  println("rez = "+rez)
+                  rez
+                }
+              }
       case sTerm(func, i, arg) => t
       case foTerm(holvar, arg) => {
         foTerm(holvar.asInstanceOf[HOLVar], apply(arg)::Nil)
@@ -99,6 +118,39 @@ object unfoldSTerm {
     }
   }
 }
+
+object unfoldSINDTerm {
+  def apply(t: HOLExpression): HOLExpression = {
+    //    println("trs : "+trs.map)
+    val k = IntVar(new VariableStringSymbol("k"))
+    t match {
+      case sIndTerm(func, i) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) => {
+//        println("t = "+t)
+        if (i == IntZero()) {
+          val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1._2
+          base
+          //          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg.head)
+          //          val subst = new SchemaSubstitution2[HOLExpression](new_map)
+          //          subst(base)
+        }
+        else
+        if (i == k)
+          t
+        else {
+          val step = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._2._2
+          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, Pred(i.asInstanceOf[IntegerTerm]))
+          val subst = new SchemaSubstitution2[HOLExpression](new_map)
+          subst(step)
+        }
+      }
+      case _ => {
+//        println("case _ => ")
+        t
+      }//throw new Exception("\nno such case in schema/unfoldSTerm")
+    }
+  }
+}
+
 
 object unfoldSFormula {
   def apply(f: HOLFormula): HOLFormula = {
@@ -127,17 +179,28 @@ object unfoldSFormula {
 
 object sTerm {
   //the i should be of type Tindex() !
-  def apply(f: String, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
+  def apply(f: String, i: HOLExpression, l: List[HOLExpression]): HOLExpression = {
+    require(i.exptype == Tindex())
 //    AppN(HOLConst(new ConstantStringSymbol(f), ->(Tindex() , ->(Ti(), Ti()))), i::l).asInstanceOf[schemaTerm]
-    val func = HOLConst(new ConstantStringSymbol(f), ->(Tindex() , ->(Ti(), Ti())))
-    return HOLApp(HOLApp(func, i), l.head).asInstanceOf[HOLExpression]
+    if(l.isEmpty) {
+      val func = HOLConst(new ConstantStringSymbol(f), ->(Tindex() , Ti()))
+      return HOLApp(func, i).asInstanceOf[HOLExpression]
+    }
+    else {
+      val func = HOLConst(new ConstantStringSymbol(f), ->(Tindex() , ->(Ti(), Ti())))
+      return HOLApp(HOLApp(func, i), l.head).asInstanceOf[HOLExpression]
+    }
   }
-  def apply(f: HOLConst, i: IntegerTerm, l: List[HOLExpression]): HOLExpression = {
-    HOLApp(HOLApp(f, i), l.head).asInstanceOf[HOLExpression]
+  def apply(f: HOLConst, i: HOLExpression, l: List[HOLExpression]): HOLExpression = {
+    require(i.exptype == Tindex())
+    if(l.isEmpty)
+      HOLApp(f, i).asInstanceOf[HOLExpression]
+    else
+      HOLApp(HOLApp(f, i), l.head).asInstanceOf[HOLExpression]
   }
   def unapply(s : HOLExpression) = s match {
-    //for the parser. Should be removed soon.
-    case HOLApp(HOLApp(func, i), arg) if i.exptype == Tindex() => Some( ( func, i, arg ) )
+    case HOLApp(HOLApp(func, i), arg) if i.exptype == Tindex() => Some( ( func, i, arg::Nil ) )
+    case HOLApp(func, i) if i.exptype == Tindex() => Some( ( func, i, Nil ) )
     //Should remain only this one if it is OK
 //    case Function(name, args, typ) if typ == Ti() && args.head.exptype == Tindex() => {
 //      val typ = args.map(x => x.exptype).foldLeft(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
@@ -147,6 +210,20 @@ object sTerm {
     case _ => None
   }
 }
+
+//indexed s-term of type ω->ω
+object sIndTerm {
+  //the i should be of type Tindex() !
+  def apply(f: String, i: IntegerTerm): HOLExpression = {
+    val func = HOLConst(new ConstantStringSymbol(f), ->(Tindex() , Tindex()))
+    return HOLApp(func, i).asInstanceOf[HOLExpression]
+  }
+  def unapply(s : HOLExpression) = s match {
+    case HOLApp(func, i) if i.exptype == Tindex() => Some( ( func.asInstanceOf[HOLConst], i) )
+    case _ => None
+  }
+}
+
 
 class sTermRewriteSys(val func: HOLConst, val base: HOLExpression, val rec: HOLExpression) {
 }
@@ -204,8 +281,8 @@ object Pred {
 //    println("Pred : "+t)
     t match {
       case Succ(t1) => t1
-//      case IntVar(v) => t
 //      case z:IntZero => t
+//      case IntVar(v) => t
       case _ => throw new Exception("ERROR in Predecessor")
     }
   }
@@ -503,7 +580,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
     }
     case ifo: indexedFOVar => indexedFOVar(ifo.name, apply(ifo.index.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
     case st @ sTerm(name, i, args) => {
-      sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(args.asInstanceOf[T])::Nil).asInstanceOf[T]
+      sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], args.map(x => apply(x.asInstanceOf[T]))).asInstanceOf[T]
     }
     case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
     case _ => {
@@ -565,7 +642,9 @@ class SchemaSubstitution2[T <: HOLExpression](val map: scala.collection.immutabl
         sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(args.asInstanceOf[T])::Nil).asInstanceOf[T]
       }
       case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
-
+      case sIndTerm(func, i) => {
+        sIndTerm(func.toString, apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
+      }
       case _ => {
         //      println("\ncase _ =>")
         //      println(expression)

@@ -273,7 +273,7 @@ object ParseQMON {
               t2 match {
                 case sTerm(func2, i2, arg2) => {
 //                  if(func1 == func2) {
-                    dbTRS.add(func1.asInstanceOf[HOLConst], base, step)
+                    dbTRS.add(func1.asInstanceOf[HOLConst], Tuple2(t1, base), Tuple2(t2, step))
 //                  }
                 }
               }
@@ -334,7 +334,7 @@ object ParseQMON {
       }
 
 
-      def define: Parser[Unit]  = indPred ~ ":=" ~ schemaFormula ^^ {
+      def define: Parser[Any]  = indPred ~ ":=" ~ schemaFormula ^^ {
         case indpred ~ ":=" ~ sf => {
           indpred match {
             case IndexedPredicate(f,ls) => {
@@ -374,7 +374,7 @@ object ParseQMON {
 //          println("\n\nsTerm\n)")
 //          println("args = "+args)
 //          println("args.extype = "+args.exptype)
-          sTerm(name, i.asInstanceOf[IntegerTerm], args::Nil)
+          sTerm(name, i, args::Nil)
         }
       }
       def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ non_formula ~ ")" ^^ {
