@@ -52,11 +52,10 @@ object Prover9 {
     ( p.exitValue, str )
   }
 
-  def tptpToLadr( tptp: String, ladr: String ) = {
-    val ret = exec("tptp_to_ladr", tptp)
-    //println( "writing ladr to: " + ladr )
+  def exec_in_out( cmd : String, in: String, out: String ) = {
+    val ret = exec(cmd, in)
     val str_ladr = ret._2
-    writeToFile( str_ladr, ladr )
+    writeToFile( str_ladr, out )
     ret._1
   }
 
@@ -66,23 +65,13 @@ object Prover9 {
     out.close
   }
 
-  def refute( input_file: String, output_file: String ) : Int = {
-    val ret = exec("prover9", input_file )
-    writeToFile( ret._2, output_file )
-    ret._1
-  }
+  /* these are shortcuts for executing the programs; all take an input and an output file and
+     return the exit status of the tool used */
+  def tptpToLadr(in:String, out:String) = exec_in_out("tptp_to_ladr",in,out)
+  def refute(in:String, out:String) = exec_in_out("prover9",in,out)
+  def p9_to_ivy(in:String, out:String) = exec_in_out("prooftrans ivy",in,out)
+  def p9_to_p9(in:String, out:String) = exec_in_out("prooftrans",in,out)
 
-  def p9_to_ivy( input_file: String, output_file: String ) : Int = {
-    val ret = exec("prooftrans ivy", input_file )
-    writeToFile( ret._2, output_file )
-    ret._1
-  }
-
-  def p9_to_p9( input_file: String, output_file: String ) : Int = {
-    val ret = exec("prooftrans", input_file )
-    writeToFile( ret._2, output_file )
-    ret._1
-  }
 
 
   def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
@@ -152,6 +141,14 @@ object Prover9 {
     val ret = refuteLadr(new File(filename).getAbsolutePath, out_file.getAbsolutePath )
     out_file.delete
     ret
+  }
+
+  def refuteTPTP(fn : String) : Option[RobinsonResolutionProof] = {
+    val out_file = File.createTempFile( "gapt-prover9", ".ladr", null )
+    tptpToLadr(fn, out_file.getAbsolutePath )
+    val proof = refute(out_file.getAbsolutePath)
+    out_file.delete
+    proof
   }
 
 

@@ -283,6 +283,7 @@ object IvyParser {
                 val inferred_clause = Clause(pneg ++ neglits, ppos ++ pos1_ ++ List(para) ++ pos2_.tail)
 
                 val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
+                require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
 
                 //println("new Paramod rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
@@ -301,6 +302,7 @@ object IvyParser {
 
                 val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
 
+                require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
                 //println("new Paramod rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
             }

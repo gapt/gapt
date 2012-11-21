@@ -487,7 +487,9 @@ object loadProofDB {
     def apply( filename : String) : Option[RobinsonResolutionProof] = Prover9.refute(filename)
     def apply( clauses: Seq[FSequent] ) : Option[RobinsonResolutionProof] = Prover9.refute( clauses.toList )
     def apply( clauses: List[Sequent] ) : Option[RobinsonResolutionProof]= Prover9.refute( clauses map (_.toFSequent))
+    def refuteTPTP(fn:String) = Prover9.refuteTPTP(fn)
   }
+
 
   object loadProver9Proof {
     def apply(filename : String) : RobinsonResolutionProof = Prover9.parse_prover9(filename)
@@ -825,6 +827,8 @@ object hol2fol {
       println("  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP")
       println("  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
       println("  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9")
+      println("  prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file")
+      println("  prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file")
       println("  proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic")
       println("")
       println("Proof Theory:")

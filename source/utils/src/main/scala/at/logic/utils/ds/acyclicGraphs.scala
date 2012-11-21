@@ -16,11 +16,59 @@ import at.logic.utils.logging.Logger
 // roots should be compared and the object equals behave as expected (no need to override it)
 // 2) in case a different behavior is expected, the different agraphs should be extended and the equals method be override, but again, as we deal with immutable objects, only the roots should be compared.
 package acyclicGraphs {
-  trait AGraph[+V] extends Graph[V] {
+
+import collection.immutable
+
+trait AGraph[+V] extends Graph[V] {
+  import collection.mutable
+  import collection.immutable
+
     val vertex: V
     def name: String // used to contain more information about the AGraph, like rule names in LK
     def contains[T >: AGraph[V]](sub: T): Boolean
-  }
+
+  /* collects all subnodes visiting each node only once */
+  def nodes[_ >: V] () : immutable.HashSet[AGraph[_]] = nodes(immutable.HashSet[AGraph[_]]())
+  def nodes[_ >: V](visited : immutable.HashSet[AGraph[_]]) : immutable.HashSet[AGraph[_]] =
+    if (visited contains this)
+      visited
+    else this match {
+      case LeafAGraph(v) => visited + this
+      case UnaryAGraph(v, child) =>
+        child.nodes(visited) + this
+    case BinaryAGraph(v, child1, child2) =>
+      val nvisited1 = child1.nodes(visited)
+      val nvisited2 = child2.nodes(nvisited1)
+      nvisited2 + this
+    case ArbitraryAGraph(v, children) =>
+      children.foldLeft(visited)((vs, child) => child.nodes(vs)) + this
+    }
+
+  /* number of different nodes in the proof */
+  def unique_size = nodes.size
+
+  /* number of nodes in proof */
+  def size[_ >: V] () : Int = size(immutable.HashMap[AGraph[_], Int]())(this)
+  def size[_ >: V](visited : immutable.Map[AGraph[_], Int]) : immutable.Map[AGraph[_],Int] =
+    if (visited contains this)
+      visited
+    else this match {
+      case LeafAGraph(v) => visited + ((this, 1))
+      case UnaryAGraph(v, child) =>
+        val nvisited = child.size(visited)
+        nvisited + ((this, nvisited(child)+1))
+      case BinaryAGraph(v, child1, child2) =>
+        val nvisited1 = child1.size(visited)
+        val nvisited2 = child2.size(nvisited1)
+        nvisited2 + ((this, nvisited2(child1) + nvisited2(child2) +1))
+      case ArbitraryAGraph(v, children) =>
+        val nvisited = children.foldLeft(visited)((vs, child) => child.size(vs))
+        val nsize = children.foldLeft(1)((s, child) => s + nvisited(child))
+        nvisited + ((this,nsize))
+    }
+
+
+}
 
   class LeafAGraph[+V](val vertex: V) extends VertexGraph[V](vertex, EmptyGraph[V]) with AGraph[V] {
     override def hashCode = vertex.hashCode

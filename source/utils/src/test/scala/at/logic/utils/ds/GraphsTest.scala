@@ -32,6 +32,7 @@ class GraphsTest extends SpecificationWithJUnit {
         case _ => false
       }) must beEqualTo (true)
     }
+
     /*"maintain subgraph property with vertices" in {
       (g3.graph.vertexSet().size()) must beEqualTo (2)
       (g2.graph.vertexSet().size()) must beEqualTo (1)
