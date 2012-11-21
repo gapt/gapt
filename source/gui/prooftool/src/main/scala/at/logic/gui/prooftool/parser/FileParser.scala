@@ -20,13 +20,13 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
 import at.logic.algorithms.shlk.ParseQMON
 import at.logic.algorithms.resolution.RobinsonToLK
-import at.logic.utils.ds.trees.Tree
+import at.logic.utils.ds.trees.{LeafTree, BinaryTree, Tree}
 import at.logic.language.hol.HOLExpression
-import at.logic.gui.prooftool.gui.Main
+import at.logic.gui.prooftool.gui.{DrawSequent, Main}
 import at.logic.provers.prover9.ivy.IvyParser
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
-import at.logic.transformations.ceres.clauseSchema.ParseResSchema
+import at.logic.transformations.ceres.clauseSchema._
 
 class FileParser {
 
@@ -49,19 +49,34 @@ class FileParser {
   def lksFileReader(input: InputStreamReader) {
     proofs = Nil
     termTrees = Nil
-    val defs = Map.empty[HOLExpression,HOLExpression] //TODO: change this line to get defs from dbTRS.
+    val ps = ParseQMON.parseProofs(input) // constructs dbTRS as side effect.
+    val defs = dbTRS.map.map(p => p._2._1::p._2._2::Nil).flatten.toMap[HOLExpression,HOLExpression]
     //  val start = System.currentTimeMillis()
-    proofdb = new ProofDatabase(defs, ParseQMON.parseProofs(input), Nil, Nil)
+    proofdb = new ProofDatabase(defs, ps, Nil, Nil)
     //  val end = System.currentTimeMillis()
     //  println("parsing took " + (end - start).toString)
   }
 
   def rsFileReader(input: InputStreamReader) {
-    ParseResSchema(input)
-    val rs = Nil  //TODO: change this line to get resolution terms as TreeProofs from ResolutionProofSchema.
-    proofs = proofs:::rs
-    val defs = Map.empty[HOLExpression,HOLExpression] //TODO: change this line to get defs from dbTRS.
+    ParseResSchema(input) // constructs resolutionProofSchemaDB and dbTRS as side effect.
+    // val rs = Nil
+//    termTrees = resolutionProofSchemaDB.map.map(p => {
+//        val p212 = p._2._1._2
+//        val p222 = p._2._2._2
+//        (p._1, TermType.Unknown, rTermToTree(p212))::(p._1, TermType.Unknown, rTermToTree(p222))::Nil
+//      }).flatten.toList
+    // proofs = proofs:::rs
+    val defs = dbTRS.map.map(p => p._2._1::p._2._2::Nil).flatten.toMap[HOLExpression,HOLExpression]
     addDefinitions(defs)
+  }
+
+  // This does not work!!! Should be improved and moved to other place!
+  def rTermToTree(term: sResolutionTerm): Tree[AnyRef] = term match {
+    case rTerm(t1,t2,f) =>
+      val p1 = rTermToTree(t1)
+      val p2 = rTermToTree(t2)
+      new BinaryTree[AnyRef]("Resolve "+f.toStringSimple, p1, p2)
+    case _ => new LeafTree[AnyRef]( term.toString )
   }
 
   def ivyFileReader(path: String) {

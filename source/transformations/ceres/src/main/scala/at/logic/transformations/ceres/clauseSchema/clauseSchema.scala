@@ -1078,12 +1078,8 @@ abstract class sResolutionTerm {}
   }
 
   object DisplayResSchema {
-    def apply(inst: Int): LKProof = {
-      val i = if (inst == 1)
-        Succ(IntZero()) else if (inst == 2)
-          Succ(Succ(IntZero())) else if (inst == 3)
-            Succ(Succ(Succ(IntZero()))) else if (inst == 4)
-              Succ(Succ(Succ(Succ(IntZero()))))
+    def apply(inst: Int): (String,LKProof) = {
+      val i = applySchemaSubstitution.toIntegerTerm(inst)
       val k = IntVar(new VariableStringSymbol("k"))
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], i.asInstanceOf[IntegerTerm])
       val subst = new SchemaSubstitution3(map)
@@ -1094,6 +1090,8 @@ abstract class sResolutionTerm {}
       val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
       println("\n\n\n------ ProofTool --------")
       printSchemaProof(ResDeductionToLKTree(fo2sub))
-      ResDeductionToLKTree(fo2sub)
+      val proof = ResDeductionToLKTree(fo2sub)
+      val name = "ρ1↓" + inst
+      (name,proof)
     }
   }

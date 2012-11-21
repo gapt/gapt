@@ -37,6 +37,8 @@ import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, appl
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
 import at.logic.transformations.skolemization.skolemize
+import at.logic.transformations.ceres.clauseSchema.DisplayResSchema
+import at.logic.language.hol.HOLExpression
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -690,8 +692,9 @@ object Main extends SimpleSwingApplication {
     if (t != None && t.get != "") try {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       db.rsFileReader(new InputStreamReader(new ByteArrayInputStream(t.get.getBytes("UTF-8"))))
-      body.contents = new Launcher(Some(db.getProofs.last),14)
+      body.contents = new Launcher(Some(("Definition List", db.getDefinitions)),14)
       body.cursor = java.awt.Cursor.getDefaultCursor
+      ProofToolPublisher.publish(ProofDbChanged)
     } catch {
       case e: Throwable =>
         errorMessage("Cannot parse the specified resolution schema!\n\n" + getExceptionString(e))
@@ -934,6 +937,11 @@ object Main extends SimpleSwingApplication {
           body.contents = new Launcher(Some(name + "↓" + number, term), 12)
           infoMessage("The proof projections, corresponding to this term, are also computed.\n" +
             "They can be found in the View Proof menu!")
+        // This line should be changed later to match on resolution terms
+        case (name: String, list: List[(HOLExpression,HOLExpression)]) =>
+          val proof = DisplayResSchema(number)
+          db.addProofs(proof::Nil)
+          body.contents = new Launcher(Some(proof), 12)
         case _ => errorMessage("Cannot instantiate the object!")
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
