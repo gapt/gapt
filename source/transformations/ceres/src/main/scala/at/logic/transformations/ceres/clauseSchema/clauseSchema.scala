@@ -895,6 +895,17 @@ abstract class sResolutionTerm {}
     }
   }
 
+  object fo2SubstDB extends Iterable[(fo2Var, LambdaExpression)] {
+    val map = new scala.collection.mutable.HashMap[fo2Var, LambdaExpression]
+    def get(name: fo2Var) = map(name)
+    def clear = map.clear
+    def add(v: fo2Var, term: LambdaExpression): Unit = {
+      map.put(v, term)
+    }
+    def iterator = map.iterator
+
+
+  }
 
   // a substitution for the second-order variables of type : ω->ι
   // it is applied after unfoldingAtomsInResTerm, i.e. after the substitution of all ω and X variables
@@ -1063,5 +1074,26 @@ abstract class sResolutionTerm {}
         }
         case _ => rho
       }
+    }
+  }
+
+  object DisplayResSchema {
+    def apply(inst: Int): LKProof = {
+      val i = if (inst == 1)
+        Succ(IntZero()) else if (inst == 2)
+          Succ(Succ(IntZero())) else if (inst == 3)
+            Succ(Succ(Succ(IntZero()))) else if (inst == 4)
+              Succ(Succ(Succ(Succ(IntZero()))))
+      val k = IntVar(new VariableStringSymbol("k"))
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], i.asInstanceOf[IntegerTerm])
+      val subst = new SchemaSubstitution3(map)
+      val rho1 = resolutionProofSchemaDB.map.get("ρ1").get._2._1
+      val rho1step1 = IntVarSubstitution(rho1, subst)
+      val r = unfoldResolutionProofSchema2(rho1step1)
+      val mapfo2 = Map[fo2Var, LambdaExpression]() + fo2SubstDB.map.head
+      val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
+      println("\n\n\n------ ProofTool --------")
+      printSchemaProof(ResDeductionToLKTree(fo2sub))
+      ResDeductionToLKTree(fo2sub)
     }
   }

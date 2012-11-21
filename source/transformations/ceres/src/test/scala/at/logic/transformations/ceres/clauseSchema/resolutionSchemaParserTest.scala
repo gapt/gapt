@@ -54,7 +54,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 
       println("\n\nresolution deduction tree:")
       printSchemaProof(ResDeductionToLKTree(fo2sub))
-
+      DisplayResSchema(2)
       println("\n\n--- END ---\n\n")
       ok
     }

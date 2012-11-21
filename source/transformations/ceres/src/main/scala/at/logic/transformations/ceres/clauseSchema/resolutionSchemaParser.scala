@@ -18,12 +18,12 @@ object ParseResSchema {
 
   def apply(txt: InputStreamReader): Unit = {
     var map  = Map.empty[String, LKProof]
-    SchemaProofDB.clear
+//    SchemaProofDB.clear
     var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     //    lazy val sp2 = new ParserTxt
     //    sp2.parseAll(sp2.line, txt)
     val mapPredicateToArity = Map.empty[String, Int]
-    dbTRS.clear
+//    dbTRS.clear
 //    dbTRSresolutionSchema.clear
     resolutionProofSchemaDB.clear
     lazy val sp = new SimpleResolutionSchemaParser
@@ -39,11 +39,17 @@ object ParseResSchema {
 
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
 
-      def resSchema: Parser[Unit] =  rep(trs) ~ rep(resTRS) ^^ {
+      def resSchema: Parser[Unit] =  rep(subst) ~ rep(trs) ~ rep(resTRS) ^^ {
         case rw_trs ~ res_trs  => {
         }
       }
 
+      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ s_term ~ "}" ^^ {
+        case "{" ~ z ~ "<-" ~ "\\lambda" ~ k ~ "." ~ sterm ~ "}" => {
+          val h = HOLAbs(k.asInstanceOf[Var], sterm)
+          fo2SubstDB.add(z.asInstanceOf[fo2Var], h)
+        }
+      }
       //term-rewriting system for s-terms
       def trs: Parser[Unit] = (s_term | s_ind_term) ~ "->" ~ term ~ (s_term | s_ind_term) ~ "->" ~ term ^^ {
         case t1 ~ "->" ~ base ~ t2 ~ "->" ~ step => {
@@ -205,8 +211,8 @@ object ParseResSchema {
       
 //      def predicate_symbol : Parser[String] = ps_regexp.r
       def non_formula: Parser[HOLExpression] = (fo_term | s_ind_term | s_term | indexedVar | abs | variable | index | constant | var_func | const_func )
-
-      def s_term: Parser[HOLExpression] = """[g,h]""".r ~ "(" ~ intTerm ~ s_term_rest ^^ {
+      def first: Parser[HOLExpression] = s_ind_term | index
+      def s_term: Parser[HOLExpression] = """[g,h]""".r ~ "(" ~ first ~ s_term_rest ^^ {
         case name ~ "(" ~ i ~ args => {
           //          println("\n\nsTerm\n)")
           //          println("args = "+args)
