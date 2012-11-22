@@ -1,4 +1,4 @@
-package at.logic.provers.prover9.ivy
+/*package at.logic.provers.prover9.ivy
 
 import conversion.IvyToRobinson
 import org.junit.runner.RunWith
@@ -524,4 +524,4 @@ class IvyTest extends SpecificationWithJUnit {
     }
   }
 }
-
+*/

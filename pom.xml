@@ -42,11 +42,11 @@
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>
-		<scala.version>2.9.2</scala.version>
+		<scala.version>2.10.0-RC2</scala.version>
 		<slf4j.version>1.6.6</slf4j.version>
 		<junit.version>4.10</junit.version>
-		<specs2.version>1.12</specs2.version>
-		<scalatest.version>1.8</scalatest.version>
+		<specs2.version>1.12.2</specs2.version>
+		<scalatest.version>2.0.M4-B2</scalatest.version>
 		<mockito.version>1.9.0</mockito.version>
 		<scalacheck.version>1.10.0</scalacheck.version>
 
@@ -56,6 +56,8 @@
 		<scala-maven-plugin.version>3.1.0</scala-maven-plugin.version>
 		<maven-surefire-plugin.version>2.12.2</maven-surefire-plugin.version>
 		<maven-release-plugin.version>2.3.2</maven-release-plugin.version>
+		<maven-plugin-plugin.version>2.9</maven-plugin-plugin.version>
+		<build-helper-maven-plugin.version>1.7</build-helper-maven-plugin.version>		
 	</properties>
 
 	<dependencies>
@@ -114,78 +116,66 @@
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
 		<testSourceDirectory>src/test/scala</testSourceDirectory>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>${maven-compiler-plugin.version}</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-assembly-plugin</artifactId>
-					<version>${maven-assembly-plugin.version}</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>${maven-jar-plugin.version}</version>
-				</plugin>
-				<plugin>
-					<groupId>net.alchim31.maven</groupId>
-					<artifactId>scala-maven-plugin</artifactId>
-					<version>${scala-maven-plugin.version}</version>
-					<configuration>
-						<recompileMode>incremental</recompileMode>
-						<useZincServer>true</useZincServer>
-					</configuration>
-					<executions>
-						<execution>
-							<goals>
-								<goal>add-source</goal>
-								<goal>compile</goal>
-								<goal>testCompile</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
-				<plugin>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>${maven-surefire-plugin.version}</version>
-					<configuration>
-						<useFile>false</useFile>
-						<includes>
-							<include>**/*Test.*</include>
-							<include>**/*Suite.*</include>
-							<include>**/*Spec.*</include>
-						</includes>
-					</configuration>
-				</plugin>
-				<plugin>
-					<artifactId>maven-release-plugin</artifactId>
-					<version>${maven-release-plugin.version}</version>
-					<configuration>
-						<autoVersionSubmodules>true</autoVersionSubmodules>
-						<tagNameFormat>@{project.version}</tagNameFormat>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>build-helper-maven-plugin</artifactId>
-					<version>${build-helper-maven-plugin.version}</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-plugin-plugin</artifactId>
-					<version>${maven-plugin-plugin.version}</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 		<plugins>
 			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>${maven-assembly-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>${maven-jar-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>net.alchim31.maven</groupId>
+				<artifactId>scala-maven-plugin</artifactId>
+				<version>${scala-maven-plugin.version}</version>
+				<configuration>
+					<recompileMode>incremental</recompileMode>
+					<useZincServer>true</useZincServer>
+				</configuration>				
+				<executions>
+					<execution>
+						<goals>
+							<goal>add-source</goal>
+							<goal>compile</goal>
+							<goal>testCompile</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${maven-surefire-plugin.version}</version>
+				<configuration>
+					<argline>-Xmx1024m -XX:MaxPermSize=512m</argline>
+					<useFile>false</useFile>
+					<includes>
+						<include>**/*Test.*</include>
+						<include>**/*Suite.*</include>
+						<include>**/*Spec.*</include>
+					</includes>
+				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-release-plugin</artifactId>
+				<version>${maven-release-plugin.version}</version>
+				<configuration>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<tagNameFormat>@{project.version}</tagNameFormat>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>${build-helper-maven-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-plugin-plugin</artifactId>
+				<version>${maven-plugin-plugin.version}</version>
 			</plugin>
 		</plugins>
 	</build>

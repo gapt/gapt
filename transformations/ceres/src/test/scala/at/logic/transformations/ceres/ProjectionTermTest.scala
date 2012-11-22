@@ -24,6 +24,7 @@ import at.logic.calculi.lk.base.{Sequent, LKProof}
 class ProjectionTermTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   import at.logic.language.schema._
+  sequential
   "ProjectionTermTest" should {
     "create a ProjectionTerm" in {
       println("\n\nProjectionTerm for the Adder.lks\n\n")

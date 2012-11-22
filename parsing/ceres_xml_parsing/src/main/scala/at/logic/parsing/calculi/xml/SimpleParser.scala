@@ -26,7 +26,7 @@ trait SimpleXMLProofParser extends XMLNodeParser {
   def getNamedTrees[V](n : Node )(implicit parser: (String => V) ) : List[(String, TreeProof[V])] =
     trim(n) match {
       case <prooftrees>{ns @ _* }</prooftrees> => {
-        ns.toList.map( getNamedTree(_) )
+        ns.toList.map( getNamedTree(_)(parser: (String => V)) )
       }
       case _ => throw new ParsingException("Could not parse XML: " + n.toString)
     }
@@ -46,7 +46,7 @@ trait SimpleXMLProofParser extends XMLNodeParser {
         }
         case <rule><conclusion>{ c @ _ }</conclusion>{ ns @ _* }</rule> => {
  //         val prems = ns.filter( n => n.label == "rule" ).map( n => getTreeRec( n ) ).toList
-          val prems = ns.map( n => getTreeRec( n ) ).toList
+          val prems = ns.map( getTreeRec(_)(parser: (String => V)) ).toList
           val conc = parser(c.head.text)
           if ( prems.size == 0 )
             new LeafTree[V]( conc ) with NullaryTreeProof[V] {

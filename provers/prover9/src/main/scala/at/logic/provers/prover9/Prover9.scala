@@ -159,7 +159,7 @@ object Prover9 {
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
     p9_to_p9(p9_file, pt_file.getCanonicalPath)
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
-    p9_to_ivy(pt_file.getCanonicalPath, ivy_file.getCanonicalPath)
+    //p9_to_ivy(pt_file.getCanonicalPath, ivy_file.getCanonicalPath)
     def debugline(s:String) = { println(s); true}
 
     /* //this was autodetection code for naming conventions, but apparently ivy has its own anyway
