@@ -694,6 +694,7 @@ object IvyParser {
                                              ("meet_for_ivy","^"))
   def rewrite_name(s:String) : String = if (ivy_escape_table contains s) ivy_escape_table(s) else s
 
+  val symbol_nil = new ConstantStringSymbol("nil")
   def parse_term(ts : SExpression, is_variable_symbol : String => Boolean) : FOLTerm = ts match {
     case lisp.Atom(name) =>
       val rname = rewrite_name(name)
@@ -701,6 +702,10 @@ object IvyParser {
         fol.FOLVar(new VariableStringSymbol(rname))
       else
         fol.FOLConst(new ConstantStringSymbol(rname))
+    //the proof might contain the constant nil which is parsed to an empty lisp.List. in this case the empty list
+    //corresponds to a constant
+    case lisp.List(lisp.List(Nil)::Nil) =>
+      fol.FOLConst(symbol_nil)
     case lisp.List(lisp.Atom(name)::args) =>
       val rname = rewrite_name(name)
       if (is_variable_symbol(rname)) throw new Exception("Parsing Error: Function name "+rname+" does not conform to naming conventions.")
