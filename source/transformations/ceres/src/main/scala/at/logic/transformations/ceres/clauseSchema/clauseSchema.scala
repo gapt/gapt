@@ -1083,7 +1083,7 @@ abstract class sResolutionTerm {}
       val k = IntVar(new VariableStringSymbol("k"))
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], i.asInstanceOf[IntegerTerm])
       val subst = new SchemaSubstitution3(map)
-      val rho1 = resolutionProofSchemaDB.map.get("ρ1").get._2._1
+      val rho1 = resolutionProofSchemaDB.map.get("\\rho1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
       val r = unfoldResolutionProofSchema2(rho1step1)
       val mapfo2 = Map[fo2Var, LambdaExpression]() + fo2SubstDB.map.head
