@@ -23,10 +23,10 @@ import at.logic.algorithms.lk.{CleanStructuralRules, applySubstitution}
 object RobinsonToLK {
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof = CleanStructuralRules(introduceContractions(recConvert(resproof,
-    Substitution[FOLExpression](), s),s))
+    Substitution[FOLExpression](), s)._1,s))
 
 
-  def apply(resproof: RobinsonResolutionProof): LKProof = recConvert(resproof, Substitution[FOLExpression](), FSequent(List(),List()))
+  def apply(resproof: RobinsonResolutionProof): LKProof = recConvert(resproof, Substitution[FOLExpression](), FSequent(List(),List()))._1
 
   /**
    * apply contractions so, when considering the literals of both s and the end sequent of resp as multisets,  s is a sub-multiset of the
@@ -42,18 +42,19 @@ object RobinsonToLK {
           ContractionRightRule(q,f) ))
   }
 
-  private def recConvert(proof: RobinsonResolutionProof, sub: Substitution[FOLExpression], seq: FSequent): LKProof = proof match {
+  private def recConvert(proof: RobinsonResolutionProof, sub: Substitution[FOLExpression], seq: FSequent): Pair[LKProof,Substitution[FOLExpression]] = proof match {
     case InitialClause(cls) => if (seq.antecedent.isEmpty && seq.succedent.isEmpty)
-      Axiom(cls.negative.map(fo => sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]), cls.positive.map(fo => sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]))
+      Pair(Axiom(cls.negative.map(fo => sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]), cls.positive.map(fo =>
+          sub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula])),sub)
       // use projections
-      else applySubstitution(PCNF(seq, cls.toFClause), sub.asInstanceOf[Substitution[at.logic.language.hol.HOLExpression]])._1
+      else Pair(applySubstitution(PCNF(seq, cls.toFClause), sub.asInstanceOf[Substitution[at.logic.language.hol.HOLExpression]])._1,sub)
     case Factor(r, p, a, s) => {
       // obtain the multiset of removed occurrences for each side
       val leftContracted = p.root.antecedent.filterNot(fo => r.antecedent.exists(o => o.ancestors.contains(fo)))
       val rightContracted = p.root.succedent.filterNot(fo => r.succedent.exists(o => o.ancestors.contains(fo)))
       // obtain upper proof recursively
-      val curSub = sub.compose(s)
-      var res = recConvert(p, curSub, seq)
+      val Pair(res2,curSub) = recConvert(p,sub.compose(s) , seq)
+      var res = res2
       // create a contraction for each side, for each contracted formula with a._1 and a._2 (if exists)
       // note that sub must be applied to all formulas in the lk proof
       // var hasLeft = false
@@ -66,38 +67,34 @@ object RobinsonToLK {
         // val rightAux = if (hasLeft) a(1) else a(0)
         res = rightContracted.foldLeft(res)((p, fo) => ContractionRightRule(p, curSub(fo.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]))
       }
-      res
+      (res,curSub)
     }
     case Variant(r, p, s) => recConvert(p, sub.compose(s), seq) // the construction of an LK proof makes sure we create a tree out of the agraph
     case Resolution(r, p1, p2, a1, a2, s) => {
-      val curSub = sub.compose(s)
-      val u1: LKProof = recConvert(p1, curSub, seq)
-      val u2: LKProof = recConvert(p2, curSub, seq)
-
-      CutRule(u1, u2, curSub(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula])
+      val sub2 = sub.compose(s)
+      val Pair(u1, curSub1) = recConvert(p1, sub2, seq)
+      val Pair(u2, curSub2) = recConvert(p2, sub2, seq)
+      val curSub = curSub1 compose curSub2
+      (CutRule(u1, u2, curSub(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula]),curSub)
     }
     case Paramodulation(r, p1, p2, a1, a2, s) => {
-      println("r: " + r)
-      println("p1: " + p1.root)
-      println("p2: " + p2.root)
-      println("a1: " + a1)
-      println("a2: " + a2)
-      println("sub: " + s)
-      println("------------")
 
-      val curSub = sub.compose(s)
-      println("cursub: " + curSub)
+      val sub2 = sub.compose(s)
 
-      val u1 = recConvert(p1, curSub, seq)
-      val u2 = recConvert(p2, curSub, seq)
+      val Pair(u1, curSub1) = recConvert(p1, sub2, seq)
+      val Pair(u2, curSub2) = recConvert(p2, sub2, seq)
 
-      println("u1: " + u1.root)
-      println("u2: " + u2.root)
+      // TODO: remove after solving bug 212
+      assert(
+        (curSub1.map.keySet & curSub2.map.keySet).forall(v =>
+            (curSub1(v.asInstanceOf[FOLExpression]) == curSub2(v.asInstanceOf[FOLExpression])))
+      )
+
+      val curSub = curSub1 compose curSub2
 
       val Atom(_, s0 :: _) = a1.formula
       val s1 = curSub(s0.asInstanceOf[FOLExpression]).asInstanceOf[FOLTerm]
 
-      println("s1: " + s1)
 
       // locate principal formula
       val lo = r.antecedent.find(_.ancestors.contains(a2))
@@ -106,32 +103,26 @@ object RobinsonToLK {
       if (ro == None) {
         val lof = lo.get.formula.asInstanceOf[FOLFormula]
         // locate aux formulae
-        val aux1 = u1.root.succedent.find(_.formula == curSub(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
-        val aux2 = u2.root.antecedent.find(_.formula == curSub(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
+        val aux1 = u1.root.succedent.find(_.formula == curSub1(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
+        val aux2 = u2.root.antecedent.find(_.formula == curSub2(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
         // rule 1
-        if (isRule1(lof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationLeft1Rule(u1, u2, aux1, aux2, lof)
+        if (isRule1(lof, aux2.formula.asInstanceOf[FOLFormula], s1)) (EquationLeft1Rule(u1, u2, aux1, aux2, lof),curSub)
         // rule 2
-        else EquationLeft2Rule(u1, u2, aux1, aux2, lof)
+        else (EquationLeft2Rule(u1, u2, aux1, aux2, lof),curSub)
       }
       // right rule
       else {
         val rof = ro.get.formula.asInstanceOf[FOLFormula]
         // locate aux formulae
 
-        println("a1s: " + curSub(a1.formula.asInstanceOf[FOLExpression]))
         val a2s = curSub(a2.formula.asInstanceOf[FOLExpression])
-        println("a2s: " + curSub(a2.formula.asInstanceOf[FOLExpression]))
 
-        println("1: " + u2.root.succedent(0))
-        println("2: " + a2s)
-        println("1 = 2: " + (u2.root.succedent(0) == a2s))
-
-        val aux1 = u1.root.succedent.find(_.formula == curSub(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
-        val aux2 = u2.root.succedent.find(_.formula == curSub(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
+        val aux1 = u1.root.succedent.find(_.formula == curSub1(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
+        val aux2 = u2.root.succedent.find(_.formula == curSub2(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
         // rule 1
-        if (isRule1(rof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationRight1Rule(u1, u2, aux1, aux2, rof)
+        if (isRule1(rof, aux2.formula.asInstanceOf[FOLFormula], s1)) (EquationRight1Rule(u1, u2, aux1, aux2, rof),curSub)
         // rule 2
-        else EquationRight2Rule(u1, u2, aux1, aux2, rof)
+        else (EquationRight2Rule(u1, u2, aux1, aux2, rof),curSub)
       }
     }
     // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
