@@ -675,6 +675,9 @@ object Main extends SimpleSwingApplication {
         val all_px = AllVar(x, px) // forall x. p(x)
         val all_px_and_qy = And(all_px,qy) // forall x. p(x) /\ q(y)
         val all_all_px_and_qy = AllVar(y,all_px_and_qy) // forall y. (forall x. p(x) /\ q(y))
+        val ex_px = ExVar(x, px) // exists x. p(x)
+        val ex_px_and_qy = And(ex_px,qy) // exists x. p(x) /\ q(y)
+        val ex_ex_px_and_qy = ExVar(y,ex_px_and_qy) // exists y. (exists x. p(x) /\ q(y))
 
         val expTree11 = new WeakQuantifier(all_px,Seq((AtomET(pa1),a1),(AtomET(pb1),b1)))
         val expTree21 = new WeakQuantifier(all_px,Seq((AtomET(pa2),a2),(AtomET(pb2),b2)))
@@ -682,7 +685,15 @@ object Main extends SimpleSwingApplication {
         val expTree2 = new AndET(expTree21,AtomET(qb))
         val expTree = new WeakQuantifier(all_all_px_and_qy,Seq((expTree1,a),(expTree2,b)))
 
-        body.contents = new Launcher(Some(("Expansion Tree", (Seq(expTree),Seq()))), 12)
+        val expT11 = new WeakQuantifier(ex_px,Seq((AtomET(pa1),a1),(AtomET(pb1),b1)))
+        val expT21 = new WeakQuantifier(ex_px,Seq((AtomET(pa2),a2),(AtomET(pb2),b2)))
+        val expT1 = new AndET(expT11,AtomET(qa))
+        val expT2 = new AndET(expT21,AtomET(qb))
+        val expT = new WeakQuantifier(ex_ex_px_and_qy,Seq((expT1,a),(expT2,b)))
+
+        val et = (Seq(expTree,expTree),Seq(expT,expT))
+
+        body.contents = new Launcher(Some(("Expansion Tree", et)), 12)
       }) { border = customBorder }
     }
   }
