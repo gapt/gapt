@@ -1,0 +1,160 @@
+package at.logic.algorithms.rewriting
+
+import collection.immutable
+import collection.mutable
+import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, Var, LambdaExpression}
+import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
+import at.logic.language.lambda.types._
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.resolution.robinson.{Factor, Resolution, InitialClause, RobinsonResolutionProof}
+import at.logic.calculi.resolution.base.Clause
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.hol.HOLFormula
+import at.logic.language.fol.{FOLExpression, FOLTerm, FOLFormula}
+
+/**
+ * performs renaming of constants, functions and predicate symbols
+ */
+object NameReplacement {
+
+  def apply[T <: LambdaExpression](exp : T, map : SymbolMap) : T = rename_symbols(exp, map)
+  def apply(fs: FSequent, map : SymbolMap) = rename_fsequent(fs,map)
+
+  // map from sumbol name to pair of Arity and replacement symbol name
+  type SymbolMap = immutable.Map[String, (Int,String)]
+
+  //gives the airty of a function - simple types have arity 0, complex types have 1 + arity of return value (because
+  // of currying)
+  def arity(t:TA) : Int = t match {
+    case t1 -> t2 => 1 + arity(t2)
+    case _ => 0
+  }
+
+  def rename_symbols[T <: LambdaExpression](exp : T, map : SymbolMap) : T = exp match {
+    case Var(symbol, exptype) =>
+      symbol match {
+        case ConstantStringSymbol(name) => map.get(name) match {
+          case Some((rarity,rname)) =>
+
+            if (arity(exptype) == rarity) {
+              //println("replacing "+name+" by "+map(name))
+              exp.factory.createVar(new ConstantStringSymbol(rname), exptype).asInstanceOf[T]
+            }
+            else {
+              exp
+            }
+          case None => exp
+        }
+        case _ => exp
+      }
+
+    case App(exp1,exp2) =>
+      exp.factory.createApp(rename_symbols(exp1, map), rename_symbols(exp2,map)).asInstanceOf[T]
+    case Abs(v, exp1) =>
+      // abstractions are always over variables
+      exp.factory.createAbs(v, rename_symbols(exp1, map)).asInstanceOf[T]
+  }
+  def rename_fsequent(fs: FSequent, map : SymbolMap) = FSequent(fs.antecedent map (rename_symbols(_,map)), fs.succedent map (rename_symbols(_,map)))
+  def rename_substitution[T <: LambdaExpression](sub : Substitution[T], map : SymbolMap) : Substitution[T] = {
+    Substitution[T](for ( (key,value) <- sub.map) yield { (key, apply(value, map)) } )
+  }
+
+  type OccMap = immutable.Map[FormulaOccurrence, FormulaOccurrence]
+  def rename_resproof(p : RobinsonResolutionProof, smap : SymbolMap)  : (OccMap, RobinsonResolutionProof) = p match {
+    case InitialClause(clause) =>
+      //rename literals
+      val negp : immutable.List[FOLFormula] = clause.negative.toList map ((fo : FormulaOccurrence) =>apply(fo.formula.asInstanceOf[FOLFormula], smap))
+      val posp : immutable.List[FOLFormula] = clause.positive.toList map ((fo : FormulaOccurrence) =>apply(fo.formula.asInstanceOf[FOLFormula], smap))
+      val inference = InitialClause(negp, posp)
+      //create map form original iteral occs to renamed literal occs
+      val negm : immutable.Map[FormulaOccurrence, FOLFormula] = immutable.Map[FormulaOccurrence, FOLFormula]() ++ (clause.negative zip negp)
+      val posm : immutable.Map[FormulaOccurrence, FOLFormula] = immutable.Map[FormulaOccurrence, FOLFormula]() ++ (clause.positive zip posp)
+      def nmatcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = negm(o) == t.formula
+      def pmatcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = posm(o) == t.formula
+
+      //println(negm ++ posm)
+      //println(clause)
+      //println(inference.root)
+      val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, nmatcher) ++
+                  find_matching(clause.positive.toList, inference.root.positive.toList, pmatcher)
+
+      (rsmap, inference)
+
+    case Resolution(clause, parent1, parent2, lit1, lit2, sub) =>
+      val (rmap1, rparent1) = rename_resproof(parent1, smap)
+      val (rmap2, rparent2) = rename_resproof(parent2, smap)
+      val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
+      val inference = Resolution(rparent1, rparent2, rmap1(lit1), rmap2(lit2), nsub)
+      val rmap = rmap1 ++ rmap2
+
+      def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
+        //println("anc matcher")
+        //println(o); println(o.ancestors)
+        //println(t); println(t.ancestors)
+        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        //println(anc_correspondences)
+        t.formula == apply(o.formula, smap) &&
+        anc_correspondences.diff(t.ancestors).isEmpty &&
+        t.ancestors.diff(anc_correspondences).isEmpty
+      }
+
+      val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
+                  find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
+
+      (rsmap, inference)
+
+      /*
+    case Factor(clause, parent1, lits, sub) =>
+      val (rmap1, rparent1) = rename_resproof(parent1, smap)
+      val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
+      var inference :RobinsonResolutionProof = null;
+      lits match {
+        case lit1 :: Nil =>
+          Factor(rparent1, rmap1(lit1), rmap2(lit2), nsub)
+        case lit1::lit2::Nil =>
+          Factor(rparent1, rmap1(lit1), rmap2(lit2), nsub)
+      }
+
+      val rmap = rmap1
+
+      def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
+        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        t.formula == apply(o.formula, smap) &&
+          anc_correspondences.diff(t.ancestors).isEmpty &&
+          t.ancestors.diff(anc_correspondences).isEmpty
+      }
+
+      val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
+        find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
+
+      (rsmap, inference)
+
+      */
+
+
+  }
+
+
+  def find_matching[A,B](objects : immutable.List[A], targets : immutable.List[B], matches : (A,B) => Boolean  ) : immutable.Map[A,B] = {
+    objects match {
+      case x::xs =>
+        val (prefix, suffix) = targets.span(!matches(x,_))
+        suffix match {
+          case el::rest => find_matching(xs, prefix ++ rest, matches) + ((x,el))
+          case Nil =>  throw new Exception("Can not find a match for element "+x+" in "+targets)
+        }
+
+      case Nil =>
+        if (targets.isEmpty)
+          immutable.Map[A,B]()
+        else
+          throw new Exception("Want to create a matching of sets of different size! remaining elements: "+targets)
+    }
+  }
+
+  /*
+  */
+}

@@ -67,7 +67,7 @@ import collection.immutable
 
     def toString(formatter: HOLFormula => String,formulas : Seq[HOLFormula]) : String = lst2string( formatter, ", ", formulas.toList )
 
-    def toString(formatter : HOLFormula => String ,f : FSequent)  : String  = "([" + toString(formatter,f._1) + "], ["  + toString(formatter,f._2) + "])"
+    def toString(formatter : HOLFormula => String ,f : FSequent)  : String  = "(" + toString(formatter,f._1) + " :- "  + toString(formatter,f._2) + ")"
 
     def toStringSimple(formulas : Seq[HOLFormula])  : String = toString( (x:HOLFormula) => x.toStringSimple, formulas.toList )
     def toStringSimple(f : FSequent)  : String  = toString((x:HOLFormula) => x.toStringSimple,f )
