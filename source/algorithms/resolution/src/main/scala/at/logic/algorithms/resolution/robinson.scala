@@ -49,12 +49,21 @@ object RobinsonToLK {
       // use projections
       else Pair(applySubstitution(PCNF(seq, cls.toFClause), sub.asInstanceOf[Substitution[at.logic.language.hol.HOLExpression]])._1,sub)
     case Factor(r, p, a, s) => {
-      // obtain the multiset of removed occurrences for each side
-      val leftContracted = p.root.antecedent.filterNot(fo => r.antecedent.exists(o => o.ancestors.contains(fo)))
-      val rightContracted = p.root.succedent.filterNot(fo => r.succedent.exists(o => o.ancestors.contains(fo)))
+      // obtain the set of removed occurrences for each side
+      val (leftContracted, rightContracted) =
+        if (a.size ==1)
+          if (p.root.antecedent.contains(a(0).head)) (a(0).tail, Nil)
+          else (Nil, a(0).tail)
+        else
+          if (a.size ==2)
+            if (p.root.antecedent.contains(a(0).head)) (a(0).tail, a(1).tail)
+            else (a(1).tail, a(0).tail)
+          else throw new Exception("Unexpected number of auxiliary formulas!")
+
       // obtain upper proof recursively
       val Pair(res2,curSub) = recConvert(p,sub.compose(s) , seq)
       var res = res2
+
       // create a contraction for each side, for each contracted formula with a._1 and a._2 (if exists)
       // note that sub must be applied to all formulas in the lk proof
       // var hasLeft = false

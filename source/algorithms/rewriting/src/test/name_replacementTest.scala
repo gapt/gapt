@@ -154,9 +154,16 @@ class name_replacementTest extends SpecificationWithJUnit {
       )
 
       val (_,proof) = NameReplacement.rename_resproof(proof1.p7, map)
+      println
       proof4.q0.root.negative map println
+      println
       proof4.q1.root.negative map println
-      (proof4.q1.root.negative diff proof4.q0.root.negative) map println
+      //println
+      //(proof4.q1.root.negative diff proof4.q0.root.negative) map println
+      println
+
+      //def find_lost_ancestors()
+
       proof4.q1 match { case Factor(c,p,aux,s) => aux map println}
 
       checkTree(proof, proof2.q7) must beEmpty

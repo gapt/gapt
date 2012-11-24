@@ -442,7 +442,7 @@ class IvyTest extends SpecificationWithJUnit {
   }
 
   " parse the test file prime1-0sk.ivy (clause set of the 0 instance of the prime proof) " in {
-    skipped("paramodulation still has problems")
+    //skipped("paramodulation still has problems")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"prime1-0sk.ivy")
       result must not beEmpty
