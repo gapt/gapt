@@ -96,7 +96,9 @@ object RobinsonToLK {
       // TODO: remove after solving bug 212
       assert(
         (curSub1.map.keySet & curSub2.map.keySet).forall(v =>
-            (curSub1(v.asInstanceOf[FOLExpression]) == curSub2(v.asInstanceOf[FOLExpression])))
+            (curSub1(v.asInstanceOf[FOLExpression]) == curSub2(v.asInstanceOf[FOLExpression]))),
+        "There may be substitution conflicts!" + (curSub1.map.keySet & curSub2.map.keySet).map(x => "Var: "+x+" s1="+curSub1(x.asInstanceOf[FOLExpression])+" s2="+curSub2(x.asInstanceOf[FOLExpression])) +
+        "\n root="+ ((r.antecedent ++r.succedent) map (_.id)) +" p1="+p1+" p2="+p2
       )
 
       val curSub = curSub1 compose curSub2

@@ -1,7 +1,7 @@
 package at.logic.algorithms.resolution
 
 import at.logic.calculi.lk.equationalRules.{EquationLeft2Rule, EquationLeft1Rule}
-import at.logic.language.fol.{FOLExpression, FOLVar, FOLFormula}
+import at.logic.language.fol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression}
 import collection.immutable.Map.{Map1, Map2}
@@ -12,6 +12,7 @@ import org.specs2.runner.JUnitRunner
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.resolution.robinson._
+import at.logic.calculi.resolution.instance.Instance
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader
 import at.logic.calculi.resolution.base.FClause
@@ -23,6 +24,57 @@ import at.logic.algorithms.lk.applySubstitution
 @RunWith(classOf[JUnitRunner])
 class ResolutionToLKTest extends SpecificationWithJUnit {
   private class MyParser(str: String) extends StringReader(str) with SimpleFOLParser
+
+  object UNSproof {
+    def fparse(s:String) = new MyParser(s).getTerm.asInstanceOf[FOLFormula]
+    def tparse(s:String) = new MyParser(s).getTerm.asInstanceOf[FOLTerm]
+    val c1 = fparse("=(multiply(v0, v1), multiply(v1, v0))")
+    val c2 = fparse("=(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))")
+    val c3 = fparse("=(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))")
+    val List(v0,v1,v2) = List("v0","v1","v2").map(tparse(_).asInstanceOf[FOLVar])
+    val addv0v1 = tparse("add(v0,v1)")
+    val sub = Substitution[FOLExpression]((v0,v2), (v1, addv0v1))
+
+    val p1 = InitialClause(Nil, c1::Nil)
+    val p2 = Instance(p1,sub )
+    val p3 = InitialClause(Nil, c2::Nil)
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution[FOLExpression]())
+
+  }
+  object UNSproofFreshvars {
+    def fparse(s:String) = new MyParser(s).getTerm.asInstanceOf[FOLFormula]
+    def tparse(s:String) = new MyParser(s).getTerm.asInstanceOf[FOLTerm]
+    val c1 = fparse("=(multiply(v0_, v1_), multiply(v1_, v0_))")
+    val c2 = fparse("=(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))")
+    val c3 = fparse("=(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))")
+    val List(v0,v1,v2) = List("v0_","v1_","v2").map(tparse(_).asInstanceOf[FOLVar])
+    val addv0v1 = tparse("add(v0,v1)")
+    val sub = Substitution[FOLExpression]((v0,v2), (v1, addv0v1))
+
+    val p1 = InitialClause(Nil, c1::Nil)
+    val p2 = Instance(p1,sub )
+    val p3 = InitialClause(Nil, c2::Nil)
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution[FOLExpression]())
+
+  }
+  object UNSproofVariant {
+    def fparse(s:String) = new MyParser(s).getTerm.asInstanceOf[FOLFormula]
+    def tparse(s:String) = new MyParser(s).getTerm.asInstanceOf[FOLTerm]
+    val c1 = fparse("=(multiply(v0, v1), multiply(v1, v0))")
+    val c2 = fparse("=(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))")
+    val c3 = fparse("=(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))")
+    val List(v0,v1,v0_, v1_, v2) = List("v0","v1","v0_","v1_","v2").map(tparse(_).asInstanceOf[FOLVar])
+    val addv0v1 = tparse("add(v0,v1)")
+    val sub1 = Substitution[FOLExpression]((v0,v0_), (v1, v1_))
+    val sub2 = Substitution[FOLExpression]((v0_,v2), (v1_, addv0v1))
+
+    val p1 = InitialClause(Nil, c1::Nil)
+    val p1_ = Variant(p1,sub1 )
+    val p2 = Instance(p1,sub2 )
+    val p3 = InitialClause(Nil, c2::Nil)
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution[FOLExpression]())
+
+  }
 
   "RobinsonToLK" should {
     "transform the following resolution proof into an LK proof of the empty sequent" in {
@@ -130,6 +182,24 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val lkProof2 = PCNF(FSequent(List(),List(Pa)), cls2)
         val lkProof = CutRule(lkProof1,lkProof2, Pa) */
         RobinsonToLK(resProof, seq).root.toFSequent.toString must beEqualTo(FSequent(List(f1),List(Pa)).toString)
+      }
+      "transform the original subproof of the UNS example" in {
+        val r = RobinsonToLK(UNSproof.p4).root
+        r.antecedent must beEmpty
+        r.succedent.size mustEqual(1)
+        r.succedent(0).formula mustEqual(UNSproof.c3)
+      }
+      "transform the subproof of the UNS example with unique variables" in {
+        val r = RobinsonToLK(UNSproofFreshvars.p4).root
+        r.antecedent must beEmpty
+        r.succedent.size mustEqual(1)
+        r.succedent(0).formula mustEqual(UNSproofFreshvars.c3)
+      }
+      "transform the subproof of the UNS example with introduced variant" in {
+        val r = RobinsonToLK(UNSproofVariant.p4).root
+        r.antecedent must beEmpty
+        r.succedent.size mustEqual(1)
+        r.succedent(0).formula mustEqual(UNSproofVariant.c3)
       }
       /*"containing a factorized clause" in {
         val Pfa = new MyParser("P(f(a))").getTerm.asInstanceOf[FOLFormula]
