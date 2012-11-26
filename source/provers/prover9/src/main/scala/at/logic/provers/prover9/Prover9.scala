@@ -22,6 +22,7 @@ import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionProof}
 import java.io.File
 import at.logic.provers.prover9.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
+import at.logic.algorithms.rewriting.NameReplacement
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -93,20 +94,24 @@ object Prover9 {
    
     val str_ladr = Source.fromInputStream( new FileInputStream( input_file ) ).mkString
 
-    val map = str_ladr.split(System.getProperty("line.separator")).foldLeft(new HashMap[String, (Int,String)])( (m, l) =>
+    val symbol_map = str_ladr.split(System.getProperty("line.separator")).foldLeft(new HashMap[String, (Int,String)])( (m, l) =>
       l match {
-        case regexp(arity, orig, repl ) => m.updated( orig, (arity.toInt , repl) )
+        case regexp(arity, orig, repl ) => m.updated( repl , (arity.toInt , orig) )
         case _ => m
     })
 
-    println( "translation map: " )
-    println( map )
+//    println( "translation map: " )
+//    println( symbol_map )
 
     val ret = refute( input_file, output_file )
     ret match {
       case 0 =>
         try  {
-          Some(parse_prover9(output_file))
+          val p9proof = parse_prover9(output_file)
+          val tp9proof = NameReplacement(p9proof, symbol_map)
+          println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
+
+          Some(tp9proof)
         } catch {
           case e : Exception =>
             println("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)

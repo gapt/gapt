@@ -39,6 +39,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
     val p2 = Instance(p1,sub )
     val p3 = InitialClause(Nil, c2::Nil)
     val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution[FOLExpression]())
+    //val p5 = Paramodulation(p1,p3, p1.root.succedent(0), p3.root.succedent(0), c3, sub)
 
   }
   object UNSproofFreshvars {

@@ -8,12 +8,16 @@ import at.logic.language.lambda.types._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.resolution.robinson.{Factor, Resolution, InitialClause, RobinsonResolutionProof}
+import at.logic.calculi.resolution.robinson._
 import at.logic.calculi.resolution.base.Clause
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.hol.HOLFormula
 import at.logic.language.fol.{FOLExpression, FOLTerm, FOLFormula}
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import scala.Some
+import at.logic.language.lambda.types.->
+import at.logic.calculi.resolution.instance.Instance
 
 /**
  * performs renaming of constants, functions and predicate symbols
@@ -22,6 +26,7 @@ object NameReplacement {
 
   def apply[T <: LambdaExpression](exp : T, map : SymbolMap) : T = rename_symbols(exp, map)
   def apply(fs: FSequent, map : SymbolMap) = rename_fsequent(fs,map)
+  def apply(p : RobinsonResolutionProof, map : SymbolMap) : RobinsonResolutionProof = rename_resproof(p, map)._2
 
   // map from sumbol name to pair of Arity and replacement symbol name
   type SymbolMap = immutable.Map[String, (Int,String)]
@@ -83,6 +88,47 @@ object NameReplacement {
 
       (rsmap, inference)
 
+    case Factor(clause, parent1, aux, sub) =>
+      val (rmap, rparent1) = rename_resproof(parent1, smap)
+      val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
+      var inference :RobinsonResolutionProof = aux match {
+        case lit1 :: Nil =>
+          Factor(rparent1, rmap(lit1.head), lit1.tail map rmap, nsub)
+        case lit1::lit2::Nil =>
+          Factor(rparent1, rmap(lit1.head), lit1.tail map rmap, rmap(lit2.head), lit2.tail map rmap, nsub)
+        case _ => throw new Exception("Factor rule for "+p.root+" does not have one or two primary formulas! aux="+aux)
+      }
+
+      def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
+        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        t.formula == apply(o.formula, smap) &&
+          anc_correspondences.diff(t.ancestors).isEmpty &&
+          t.ancestors.diff(anc_correspondences).isEmpty
+      }
+
+      val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
+        find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
+
+      (rsmap, inference)
+
+    case Instance(clause, parent1, sub) =>
+      val (rmap, rparent1) = rename_resproof(parent1, smap)
+      val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
+      var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
+
+      def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
+        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        t.formula == apply(o.formula, smap) &&
+          anc_correspondences.diff(t.ancestors).isEmpty &&
+          t.ancestors.diff(anc_correspondences).isEmpty
+      }
+
+      val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
+        find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
+
+      (rsmap, inference)
+
+
     case Resolution(clause, parent1, parent2, lit1, lit2, sub) =>
       val (rmap1, rparent1) = rename_resproof(parent1, smap)
       val (rmap2, rparent2) = rename_resproof(parent2, smap)
@@ -106,22 +152,25 @@ object NameReplacement {
 
       (rsmap, inference)
 
-      /*
-    case Factor(clause, parent1, lits, sub) =>
-      val (rmap1, rparent1) = rename_resproof(parent1, smap)
-      val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
-      var inference :RobinsonResolutionProof = null;
-      lits match {
-        case lit1 :: Nil =>
-          Factor(rparent1, rmap1(lit1), rmap2(lit2), nsub)
-        case lit1::lit2::Nil =>
-          Factor(rparent1, rmap1(lit1), rmap2(lit2), nsub)
-      }
 
-      val rmap = rmap1
+
+    case Paramodulation(clause, parent1, parent2, lit1, lit2, sub) =>
+      val (rmap1, rparent1) = rename_resproof(parent1, smap)
+      val (rmap2, rparent2) = rename_resproof(parent2, smap)
+      val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
+
+      val Some(prim) = clause.literals.map(_._1).find( occ => occ.ancestors == List(lit1,lit2) || occ.ancestors == List(lit2,lit1) )
+      val nformula = apply(prim.formula, smap).asInstanceOf[FOLFormula]
+
+      val inference = Paramodulation(rparent1, rparent2, rmap1(lit1), rmap2(lit2), nformula, nsub)
+      val rmap = rmap1 ++ rmap2
 
       def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
+        //println("anc matcher")
+        //println(o); println(o.ancestors)
+        //println(t); println(t.ancestors)
         val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        //println(anc_correspondences)
         t.formula == apply(o.formula, smap) &&
           anc_correspondences.diff(t.ancestors).isEmpty &&
           t.ancestors.diff(anc_correspondences).isEmpty
@@ -132,7 +181,8 @@ object NameReplacement {
 
       (rsmap, inference)
 
-      */
+
+
 
 
   }

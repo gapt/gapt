@@ -98,6 +98,7 @@ import at.logic.provers.prover9.ivy.{IvyParser, IvyResolutionProof}
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.provers.prover9.Prover9
 import collection.immutable
+import at.logic.algorithms.rewriting.NameReplacement
 
 object loadProofs {
     def apply(file: String) =
@@ -512,6 +513,12 @@ object loadProofDB {
     def help = ceresHelp.apply
   }
 
+  object rename {
+    def apply[T <: LambdaExpression](exp : T, map : NameReplacement.SymbolMap) : T = NameReplacement(exp, map)
+    def apply(fs: FSequent, map : NameReplacement.SymbolMap) = NameReplacement(fs,map)
+    def apply(p : RobinsonResolutionProof, map : NameReplacement.SymbolMap) : RobinsonResolutionProof = NameReplacement(p, map)
+  }
+
   object proofs {
     def simple1() : LKProof = {
       val x = HOLVar(new VariableStringSymbol("x"), i)
@@ -864,7 +871,9 @@ object hol2fol {
       println("Uncategorized:") // this section should ideally converge to empty by distributing all functions described here in reasonable categories above
       println("  hol2fol: HOLExpression => FOLExpression")
       println("  hol2fol: HOLFormula => FOLFormula")
-      println("  regularize: LKProof => LKProof")
+      println("  regularize: LKProof => LKProof - regularize the given LK proof")
+      println("  rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression - use map from oldname to (arity, newname) to rename constants in a given LambdaExpressions")
+      println("  rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof - the same for resolution proofs")
       println("  printProofStats: LKProof => Unit")
       println("  lkTolksk: LKProof => LKProof")
       println("  createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")

@@ -74,8 +74,8 @@ class name_replacementTest extends SpecificationWithJUnit {
     val List(x,a,fl) = List("x","a","f(ladr0)") map (parse folterm)
     val s1 = Substitution[FOLExpression]((x.asInstanceOf[FOLVar], a))
     val s2 = Substitution[FOLExpression]((x.asInstanceOf[FOLVar], fl))
-    val p0 = InitialClause(List(c1,c1), List(c3))
-    val p1 = Factor(p0, p0.root.negative(0), p0.root.negative(1)::Nil, s1)
+    val p0 = InitialClause(List(c1,c2), List(c3))
+    val p1 = Factor(p0, p0.root.negative(1), p0.root.negative(0)::Nil, Substitution[FOLExpression]())
     val p2 = InitialClause(Nil, List(c2))
     val p3 = InitialClause(List(c4), Nil)
     val p5 = Resolution(p2, p1, p2.root.positive(0), p1.root.negative(0), s1)
@@ -87,14 +87,30 @@ class name_replacementTest extends SpecificationWithJUnit {
     val List(x,a,hc) = List("x","a","h(c0)") map (parse folterm)
     val r1 = Substitution[FOLExpression]((x.asInstanceOf[FOLVar], a))
     val r2 = Substitution[FOLExpression]((x.asInstanceOf[FOLVar], hc))
-    val q0 = InitialClause(List(d1,d1), List(d3))
-    val q1 = Factor(q0, q0.root.negative(0), q0.root.negative(1)::Nil, r1)
+    val q0 = InitialClause(List(d1,d2), List(d3))
+    val q1 = Factor(q0, q0.root.negative(1), q0.root.negative(0)::Nil, Substitution[FOLExpression]())
     val q2 = InitialClause(Nil, List(d2))
     val q3 = InitialClause(List(d4), Nil)
     val q5 = Resolution(q2, q1, q2.root.positive(0), q1.root.negative(0), r1)
     val q6 = Resolution(q5, q3, q5.root.positive(0) ,q3.root.negative(0), r2)
 
   }
+
+
+  object proof5 {
+    val List(c1,c2,c3,c4) = List("P(g(a))", "P(g(x))","P(g(y))", "P(z)") map (parse fol)
+    val List(d1,d2,d3,d4) = List("R(f(a))", "R(f(x))","R(f(y))", "R(z)") map (parse fol)
+    val List(x,a,y) = List("x","a","y") map (parse folterm)
+    /*
+    val s1 = Substitution[FOLExpression]((x.asInstanceOf[FOLVar], a))
+    val p0 = InitialClause(List(c1,c1), List(c3))
+    val p1 = Factor(p0, p0.root.negative(0), p0.root.negative(1)::Nil, s1)
+    val p2 = InitialClause(Nil, List(c2))
+    val p5 = Resolution(p2, p1, p2.root.positive(0), p1.root.negative(0), s1)
+    */
+  }
+
+
 
   def checkClause(c: Clause, d:Clause) = c.toFSequent multiSetEquals(d.toFSequent)
   def checkTree(r : AGraph[Clause], o : AGraph[Clause]) : Option[(AGraph[Clause], AGraph[Clause])] = {
@@ -164,9 +180,14 @@ class name_replacementTest extends SpecificationWithJUnit {
 
       //def find_lost_ancestors()
 
-      proof4.q1 match { case Factor(c,p,aux,s) => aux map println}
+      //proof4.q1 match { case Factor(c,p,aux,s) => aux map println}
 
       checkTree(proof, proof2.q7) must beEmpty
+
+      val (_,fproof) = NameReplacement.rename_resproof(proof3.p6, map)
+      fproof.nodes map println
+      checkTree(fproof, proof4.q6) must beEmpty
+
 
     }
 
