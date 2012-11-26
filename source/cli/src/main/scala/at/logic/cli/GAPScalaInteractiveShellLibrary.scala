@@ -813,78 +813,82 @@ object hol2fol {
 
   object ceresHelp {
     def apply() = {
-      println("Available commands:\n")
-      println("File Input/Output:")
-      println("  loadProofDB: String => ProofDatabase - load proofdatabase from xml file")
-      println("  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs")
-      println("  loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format")
-//      println("      loadIvyProof.set_ivy_naming: selects ivy style symbol naming convention (default)")
-//      println("      loadIvyProof.set_ladr_naming: selects ladr style symbol naming convention")
-//      println("      loadIvyProof.set_ladr_naming: selects prolog style symbol naming convention")
-      println("  loadProver9Proof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format")
-      println("  exportXML: List[Proof], List[String], String => Unit")
-      println("  exportTPTP: List[Proof], List[String], String => Unit")
-      println("")
-      println("Parsing:")
-      println("  parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"")
-      println("  parse.hol: String => HOLExpression")
-      println("  parse.slk: String => Map[String, Pair[LKProof, LKProof]]")
-      println("")
-      println("Automated Deduction:")
-      println("  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP")
-      println("  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation")
-      println("  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9")
-      println("  prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file")
-      println("  prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file")
-      println("  proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic")
-      println("")
-      println("Proof Theory:")
-      println("  skolemize: LKProof => LKProof - skolemize the input proof")
-      println("  extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant")
-      println("  extractHerbrandSequent: LKProof => Sequent - extract the Herbrand sequent from a proof without quantified cuts.")
-      println("  extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree) - extract the expansion trees of all formulas in the end sequent from a skolemized proof.")
-      println("  compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.")
-      // TODO: add expansion tree extraction to the top level and put it here
-      println("")
-      println("Cut-Elimination by Resolution:")
-      println("  extractStruct: LKProof => Struct")
-      println("  structToClausesList: Struct => List[Sequent]")
-      println("  structToLabelledClausesList: Struct => List[LabelledSequent]")
-      println("")
-      println("Cut-Introduction:")
-      println("  cutIntro: LKProof => Option[LKProof]")
-      println("  termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof")
-      println("  termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)")
-      println("")
-      println("Proof Examples:")
-      println("  LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction")
-      println("  LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction")
-      println("  SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction")
-      println("  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction")
-      println("  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction")
-      println("  LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation")
-      println("  SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction")
-      println("")
-      println("Visualization:")
-      println("  prooftool: LKProof => Unit - visualize proof in prooftool")
-      println("")
-      println("Uncategorized:") // this section should ideally converge to empty by distributing all functions described here in reasonable categories above
-      println("  hol2fol: HOLExpression => FOLExpression")
-      println("  hol2fol: HOLFormula => FOLFormula")
-      println("  regularize: LKProof => LKProof - regularize the given LK proof")
-      println("  rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression - use map from oldname to (arity, newname) to rename constants in a given LambdaExpressions")
-      println("  rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof - the same for resolution proofs")
-      println("  printProofStats: LKProof => Unit")
-      println("  lkTolksk: LKProof => LKProof")
-      println("  createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))")
-      println("  fsequent2sequent: FSequent => Sequent")
-      println("  deleteTautologies: List[FSequent] => List[FSequent]")
-      println("  removeDuplicates: List[FSequent] => List[FSequent]")
-      println("  unitResolve: List[FSequent] => List[FSequent]")
-      println("  removeSubsumed: List[FSequent] => List[FSequent]")
-      println("  normalizeClauses: List[FSequent] => List[FSequent]")
-      println("  writeLatex: List[FSequent], String => Unit")
-      println("  writeLabelledSequentListLatex: List[LabelledSequent], String => Unit")
+      val msg =
+        """
+     | Available commands:
+     |
+     | File Input/Output:
+     |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
+     |   loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
+     |   loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format
+     |   loadProver9Proof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format
+     |   exportXML: List[Proof], List[String], String => Unit
+     |   exportTPTP: List[Proof], List[String], String => Unit
+     |
+     | Parsing:
+     |   parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"
+     |   parse.hol: String => HOLExpression
+     |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
+     |
+     | Automated Deduction:
+     |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
+     |   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
+     |   prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
+     |   prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file
+     |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
+     |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
+     |
+     | Proof Theory:
+     |   skolemize: LKProof => LKProof - skolemize the input proof
+     |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
+     |   extractHerbrandSequent: LKProof => Sequent - extract the Herbrand sequent from a proof without quantified cuts.
+     |   extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree) - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
+     |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
+     |
+     | Cut-Elimination by Resolution:
+     |   extractStruct: LKProof => Struct
+     |   structToClausesList: Struct => List[Sequent]
+     |   structToLabelledClausesList: Struct => List[LabelledSequent]
+     |
+     | Cut-Introduction:
+     |   cutIntro: LKProof => Option[LKProof]
+     |   termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof
+     |   termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)
+     |
+     | Proof Examples:
+     |   LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction
+     |   LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction
+     |   SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction
+     |   SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction
+     |   SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
+     |   LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation
+     |   SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction
+     |
+     | Visualization:
+     |   prooftool: LKProof => Unit - visualize proof in prooftool
+     |
+     | Uncategorized:
+     |   hol2fol: HOLExpression => FOLExpression
+     |   hol2fol: HOLFormula => FOLFormula
+     |   regularize: LKProof => LKProof - regularize the given LK proof
+     |   rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression - use map from oldname to (arity, newname) to rename constants in a given LambdaExpressions
+     |   rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof - the same for resolution proofs
+     |   printProofStats: LKProof => Unit
+     |   lkTolksk: LKProof => LKProof
+     |   createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))
+     |   fsequent2sequent: FSequent => Sequent
+     |   deleteTautologies: List[FSequent] => List[FSequent]
+     |   removeDuplicates: List[FSequent] => List[FSequent]
+     |   unitResolve: List[FSequent] => List[FSequent]
+     |   removeSubsumed: List[FSequent] => List[FSequent]
+     |   normalizeClauses: List[FSequent] => List[FSequent]
+     |   writeLatex: List[FSequent], String => Unit
+     |   writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
+        """.stripMargin
+
+      println(msg)
+
+
     }
   }
 }
