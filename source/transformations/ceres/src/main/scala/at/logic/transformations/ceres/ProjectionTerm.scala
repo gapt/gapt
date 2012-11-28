@@ -299,14 +299,14 @@ object ProjectionTermCreators {
       }
       case CutRule( p1, p2, _, a1, a2 ) => {
         val omega_ancs = getAncestors(omega)
-        println("\nomega = "+omega)
-        println("p1.succ.head = "+p1.root.succedent.head)
+//        println("\nomega = "+omega)
+//        println("p1.succ.head = "+p1.root.succedent.head)
         val w1 = Sequent(p2.root.antecedent.filter(fo => fo != a2 && !omega_ancs.contains(fo)),
           p2.root.succedent.filter(fo => !omega_ancs.contains(fo)))
         val w2 = Sequent(p1.root.antecedent.filter(fo => !omega_ancs.contains(fo)),
           p1.root.succedent.filter(fo => fo != a1 && !omega_ancs.contains(fo)))
-        println("cut : w1 = "+printSchemaProof.sequentToString(w1) )
-        println("cut : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
+//        println("cut : w1 = "+printSchemaProof.sequentToString(w1) )
+//        println("cut : w2 = "+printSchemaProof.sequentToString(w2) +"\n")
         pPlus(p1.root, p2.root, extract(p1, omega, cut_ancs), extract(p2, omega, cut_ancs), w1, w2)
       }
       case OrLeftRule(p1, p2, _, a1, a2, m) => {
@@ -766,7 +766,7 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
         case pProofLinkTerm( seq0, omega, proof_name, index, canc ) => {
           println("\nproof_name = "+proof_name)
           println("index = "+printSchemaProof.formulaToString (index))
-          println("omega = "+omega)
+//          println("omega = "+omega)
 
           if(index == IntZero()) {
             val p = SchemaProofDB.get(proof_name).base
@@ -783,8 +783,8 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
           val seq = p.root
           val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
           val omega1 = (seq0.antecedent ++ seq0.succedent).toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
-          println("omega1 = "+omega1)
-          println("canc = "+canc)
+//          println("omega1 = "+omega1)
+//          println("canc = "+canc)
 
 
           val omega1ant = seq0.antecedent.toSet.filter(fo => canc.contains(fo) || getAncestors(omega).contains(fo))
@@ -805,7 +805,7 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
           var sub1 = new SchemaSubstitution1[HOLExpression](new_map1)
           val omega1_sub = omega1.map(fo => sub1(fo.formula))
           val endSeqOcc = (seq.antecedent ++ seq.succedent).toSet.filter(fo => omega1_sub.contains(fo.formula)) ++ getAncestors(omega)
-          println("endSeqOcc = "+endSeqOcc+"\n")
+//          println("endSeqOcc = "+endSeqOcc+"\n")
           val omega1Anc = endSeqOcc.foldLeft(Set.empty[FormulaOccurrence])((acc, fo)=> acc ++ getAncestors(fo))
           val pterm = ProjectionTermCreators.extract(p, endSeqOcc, omega1Anc ++ getCutAncestors(p))
           val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(index) )
@@ -903,6 +903,45 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
           }
         }
         case _ => throw new Exception("\n\nThe projection term is not normalized/unfolded !\n\n")
+      }
+    }
+  }
+
+  
+  //removes the ↠:l and ↠:r inferences, i.e. normalizes the formulas in term level
+  object RemoveArrowRules {
+    private def NormalizeSequent(seq: Sequent): Sequent = {
+      Sequent(seq.antecedent.map(fo => fo.factory.createFormulaOccurrence(unfoldSFormula(fo.formula), Nil)), seq.succedent.map(fo => fo.factory.createFormulaOccurrence(unfoldSFormula(fo.formula), Nil)))
+    }
+    def apply(t: ProjectionTerm): ProjectionTerm = {
+      t match {
+        case ax: pAxiomTerm => pAxiomTerm(NormalizeSequent(ax.seq))
+        case times: pTimes => {
+          val left = RemoveArrowRules(times.left)
+          val right = RemoveArrowRules(times.right)
+          pTimes(times.rho, left, right, unfoldSFormula(times.aux1), unfoldSFormula(times.aux2))
+        }
+        case plus: pPlus => {
+          val left = RemoveArrowRules(plus.left)
+          val right = RemoveArrowRules(plus.right)
+          pPlus(NormalizeSequent(plus.seq1), NormalizeSequent(plus.seq2), left, right, NormalizeSequent(plus.w1), NormalizeSequent(plus.w2))
+        }
+        case unary: pUnary => unary.rho match {
+          case "\u21A0:l" => RemoveArrowRules(unary.upper)
+          case "\u21A0:r" => RemoveArrowRules(unary.upper)
+          case _ => pUnary(unary.rho, RemoveArrowRules(unary.upper),
+            if (unary.auxl.length < 3)
+              unary.auxl.map(t => unfoldSFormula(t.asInstanceOf[HOLFormula]))
+            else
+              unfoldSFormula(unary.auxl.head.asInstanceOf[HOLFormula])::unfoldSFormula(unary.auxl.tail.head.asInstanceOf[HOLFormula]):: {
+                unary.auxl.last match {
+                  case sIndTerm(_, _) => unfoldSINDTerm(unary.auxl.last)
+                  case sTerm(_, _, _) => unfoldSTerm(unary.auxl.last)
+                  case _ => unary.auxl.last
+                }
+              }::Nil)
+        }
+        case _ => throw new Exception("\n\nERROR in UnfoldProjectionTerm !\n")
       }
     }
   }
