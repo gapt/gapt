@@ -85,11 +85,11 @@ object ParseResSchema {
       }
 
       //resolution term inductive definition
-      def res_term: Parser[sResolutionTerm] = r_term | non_varSclause
+      def res_term: Parser[sResolutionTerm] = r_term | non_varSclause | rho_term
 
       //rTerm
-      def r_term: Parser[sResolutionTerm] = "r" ~ "(" ~ rho_term ~ ";" ~ non_varSclause ~ ";" ~ atom ~ ")" ^^ {
-        case "r" ~ "(" ~ rho_t ~ ";" ~ non_varScl ~ ";" ~ at ~ ")" => rTerm(rho_t, non_varScl, at)
+      def r_term: Parser[sResolutionTerm] = "r" ~ "(" ~ res_term ~ ";" ~ res_term ~ ";" ~ atom ~ ")" ^^ {
+        case "r" ~ "(" ~ res_term1 ~ ";" ~ res_term2 ~ ";" ~ at ~ ")" => rTerm(res_term1, res_term2, at)
       }
 
       // TODO: X is missing
@@ -223,7 +223,7 @@ object ParseResSchema {
 
       def s_ind_term: Parser[HOLExpression] = "m" ~ "(" ~ intTerm ~ ")" ^^ {
         case name ~ "(" ~ i ~ ")" => {
-          println("\n\nsIndTerm\n)")
+//          println("\n\nsIndTerm\n")
           //          println("args = "+args)
           //          println("args.extype = "+args.exptype)
           sIndTerm(name.asInstanceOf[String], i.asInstanceOf[IntegerTerm])
