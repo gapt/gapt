@@ -130,7 +130,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       PStructToExpressionTree.printTree(t_ground)
 
       println("\n\n\n------ unfold ground: \n\n")
-      val ground_unfold = UnfoldProjectionTerm(ground)
+      val ground_unfold = RemoveArrowRules(UnfoldProjectionTerm(ground))
       val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
       PStructToExpressionTree.printTree(t_ground_unfold)
 
@@ -257,7 +257,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       PStructToExpressionTree.printTree(t_ground)
 
       println("\n\n\n------ unfold ground: \n\n")
-      val ground_unfold = UnfoldProjectionTerm(ground)
+      val ground_unfold = RemoveArrowRules(UnfoldProjectionTerm(ground))
       val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
       PStructToExpressionTree.printTree(t_ground_unfold)
 
