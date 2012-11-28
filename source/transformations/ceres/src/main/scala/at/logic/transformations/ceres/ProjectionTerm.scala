@@ -430,52 +430,52 @@ object ProjectionTermCreators {
           pUnary(pr.name, extract(p, omega, cut_ancs), a.formula::m.formula::t::Nil)
       }
       case AndEquivalenceRule1(up, r, aux, main) =>  {
-        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+//        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
           extract(up, omega, cut_ancs)
-        else
-          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+//        else
+//          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
       }
       case AndEquivalenceRule2(up, r, aux, main) =>  {
-        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+//        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
           extract(up, omega, cut_ancs)
-        else
-          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+//        else
+//          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
       }
       case AndEquivalenceRule3(up, r, aux, main) =>  {
-        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+//        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
           extract(up, omega, cut_ancs)
-        else
-          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+//        else
+//          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
       }
       case OrEquivalenceRule1(up, r, aux, main) =>  {
-        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+//        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
           extract(up, omega, cut_ancs)
-        else
-          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+//        else
+//          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
       }
       case OrEquivalenceRule2(up, r, aux, main) =>  {
-        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+//        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
           extract(up, omega, cut_ancs)
-        else
-          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+//        else
+//          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
       }
       case OrEquivalenceRule3(up, r, aux, main) =>  {
-        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
+//        if (getAncestors(omega).contains(main) || cut_ancs.contains(main))
           extract(up, omega, cut_ancs)
-        else
-          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
+//        else
+//          pUnary(pr.name, extract(up, omega, cut_ancs), aux.formula::main.formula::Nil)
       }
       case trsArrowLeftRule( p, _, a, m ) => {
-        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+//        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
           extract(p, omega, cut_ancs)
-        else
-          pUnary(pr.name+":l", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+//        else
+//          pUnary(pr.name+":l", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
       }
       case trsArrowRightRule( p, _, a, m ) => {
-        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
+//        if (getAncestors(omega).contains(m) || cut_ancs.contains(m))
           extract(p, omega, cut_ancs)
-        else
-          pUnary(pr.name+":r", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
+//        else
+//          pUnary(pr.name+":r", extract(p, omega, cut_ancs), a.formula::m.formula::Nil)
       }
       case _ => { println("ERROR in extraction of projection term : missing rule! "+pr.rule);throw new Exception("ERROR in extract: ProjectionTermCreators "+pr.rule) }
     }
