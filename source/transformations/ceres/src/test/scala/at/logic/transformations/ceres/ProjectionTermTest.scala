@@ -110,7 +110,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       println(Console.RED+"\n\n---- ProjectionTerm for the journal paper ----"+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
-      val map = ParseQMON.parseProof(s)
+      val map = sFOParser.parseProof(s)
 //      val p2 = map.get("\\psi").get._2.get("root").get
       val proof_name = "\\varphi"
       val p2 = map.get(proof_name).get._2.get("root").get
@@ -157,7 +157,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       println(Console.BLUE+"\n\n------- ProjectionTerm for the sEXP.lks ------- "+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
-      val map = ParseQMON.parseProof(s)
+      val map = sFOParser.parseProof(s)
       //      val p2 = map.get("\\psi").get._2.get("root").get
       val proof_name = "\\psi"
       val p1 = map.get(proof_name).get._2.get("root").get
@@ -189,7 +189,12 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
       PStructToExpressionTree.printTree(t_ground_unfold)
 
-      val projSet = ProjectionTermToSetOfProofs(ground_unfold)
+      println("\n\n\n------ remove ↠ from proj.term: \n\n")
+      val rm_arrow_ground_unfold = RemoveArrowRules(ground_unfold)
+      val t_rm_arrow_ground_unfold = PStructToExpressionTree.applyConsole(rm_arrow_ground_unfold)
+      PStructToExpressionTree.printTree(t_rm_arrow_ground_unfold)
+
+      val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold)
       println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
 //        println(Console.GREEN+"\n1: "+Console.RESET)
 //        printSchemaProof(projSet.head)
@@ -224,7 +229,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       println(Console.MAGENTA+"\n\n------- ProjectionTerm for the sINDauto.lks ------- "+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
-      val map = ParseQMON.parseProof(s)
+      val map = sFOParser.parseProof(s)
       //      val p2 = map.get("\\psi").get._2.get("root").get
       val proof_name = "\\sigma"
       val p1 = map.get(proof_name).get._2.get("root").get

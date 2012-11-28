@@ -748,7 +748,7 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
       println(name)
       println(ProjectionTermDB.get(name))
       val gr = GroundingProjectionTerm(ProjectionTermDB.get(name),sub)
-      val pt = UnfoldProjectionTerm(gr)
+      val pt = RemoveArrowRules(UnfoldProjectionTerm(gr))
       val tree = PStructToExpressionTree(pt)
       val l = ProjectionTermToSetOfProofs(pt).toList.filter(p =>
         ! p.root.antecedent.exists(f1 =>

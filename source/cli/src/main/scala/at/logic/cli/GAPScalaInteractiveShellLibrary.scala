@@ -300,7 +300,7 @@ object loadProofDB {
     }
 
     def slk(file:String) = {
-      ParseQMON.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
+      sFOParser.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
     }
 
     def help() = {
@@ -765,7 +765,7 @@ object loadProofDB {
   object unfoldProof {
     def apply(i: Int): Unit = {
       val s = new InputStreamReader(new FileInputStream("/home/cvetan/gapt-trunk/source/integration_tests/simple_schema_test/src/test/resources/sINDauto.lks"))
-      val map = ParseQMON.parseProof(s)
+      val map = sFOParser.parseProof(s)
       def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
       def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
       def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))

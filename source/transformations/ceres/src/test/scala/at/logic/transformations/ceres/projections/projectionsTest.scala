@@ -315,7 +315,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
       import java.io.File.separator
       import java.io.{FileInputStream, InputStreamReader}
       val input = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
-      val map = ParseQMON.parseProof(input)
+      val map = sFOParser.parseProof(input)
 //      val step = map.get("\\varphi").get._2.get("root").get
       val step = map.get("\\psi").get._2.get("root").get
 

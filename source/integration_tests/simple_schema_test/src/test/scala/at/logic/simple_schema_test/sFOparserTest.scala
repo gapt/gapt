@@ -46,7 +46,7 @@ class sFOparserTest extends SpecificationWithJUnit {
       val negl = NegLeftRule(ax1, var3)
       val proof  = OrLeftRule(negl, ax2, var3, var4)
 
-      //          ParseQMON.parseProof( "1 : ax(x3: o |- x3: o)  " +
+      //          sFOParser.parseProof( "1 : ax(x3: o |- x3: o)  " +
       //                            "2 : negL( 1 , x3:o)" +
       //                            "3 : ax(x4: o |- x4: o)" +
       //                            "4 : orL(2, 3, x3:o, x4:o)", "4").toString must beEqualTo (proof.toString)
@@ -59,15 +59,15 @@ class sFOparserTest extends SpecificationWithJUnit {
       val ax11 = at.logic.calculi.lk.propositionalRules.Axiom(A0::Nil, A0::Nil)
       //          println("\n\n"+ax11.root.toString)
 
-      //          ParseQMON.parseProof( "1 : ax(A(i+2) |- And A(0) BigAnd(i,0,s(i),A(i)))" +
+      //          sFOParser.parseProof( "1 : ax(A(i+2) |- And A(0) BigAnd(i,0,s(i),A(i)))" +
       //                           "2 : negR(1,A(i+2))","2").root.toString
 
-      //          ParseQMON.parseProof( "1 : pLink((psi,k+1) , A(0) |- A(0))","1").root.toString
+      //          sFOParser.parseProof( "1 : pLink((psi,k+1) , A(0) |- A(0))","1").root.toString
       //          println("\n\n")
 
 
 
-      //          val p = ParseQMON.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \\/ A(i+1) ) ) |- A(k+1))" +
+      //          val p = sFOParser.parseProof(  "1 : pLink((psi,k)  A(0), BigAnd(i=0..k , (~A(i) \\/ A(i+1) ) ) |- A(k+1))" +
       //                                    "2 : ax(A(k+1) |- A(k+1))" +
       //                                    "3 : negL(2, A(k+1))" +
       //                                    "4 : ax(A(k+2) |- A(k+2))" +
@@ -81,7 +81,7 @@ class sFOparserTest extends SpecificationWithJUnit {
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
 //      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
 
-      val map = ParseQMON.parseProof(s)
+      val map = sFOParser.parseProof(s)
       //          println("\n\np = "+  map.get("chi").get._1.get("root").get.root.toString()  )
       //                       val p = map.get("chi").get._2.get("root").get
       //          println("\n\npsi_b = "+  map.get("psi").get._1.get("root").get.root.toString()  )
@@ -95,8 +95,8 @@ class sFOparserTest extends SpecificationWithJUnit {
       //          Main.display("phi", map.get("phi").get._2.get("root").get) ;
 
 
-      //          val seq = ParseQMON.parseSequent("P(n,f(0,x)) |- ")
-      //          val seq = ParseQMON.parseSequent("Forall x P(f(k,x)), P(x(k)) |- ")
+      //          val seq = sFOParser.parseSequent("P(n,f(0,x)) |- ")
+      //          val seq = sFOParser.parseSequent("Forall x P(f(k,x)), P(x(k)) |- ")
       //          println(seq)
 
       println(Console.RED+"\n\n-------- sFO --------\n\n"+Console.RESET)

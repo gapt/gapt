@@ -24,11 +24,11 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 import at.logic.algorithms.lk._
 
-object ParseQMON {
+object sFOParser {
 
   def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
 //    ("p",parseProof(input, "root"))::Nil
-    val m = ParseQMON.parseProof(input)
+    val m = sFOParser.parseProof(input)
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
 
@@ -43,7 +43,7 @@ object ParseQMON {
         return res.result.toFSequent()
       }
       case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
-        throw new Exception("Error in ParseQMON.parseSequent : "+x.toString)
+        throw new Exception("Error in sFOParser.parseSequent : "+x.toString)
     }
     class SequentParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
@@ -161,7 +161,7 @@ object ParseQMON {
         }
       }
     }
-    throw new Exception("\nError in ParseQMON.parseSequent function !\n")
+    throw new Exception("\nError in sFOParser.parseSequent function !\n")
   }
 
 
