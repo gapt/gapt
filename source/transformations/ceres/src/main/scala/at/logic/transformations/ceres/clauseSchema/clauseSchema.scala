@@ -1077,21 +1077,21 @@ abstract class sResolutionTerm {}
     }
   }
 
-  object DisplayResSchema {
-    def apply(inst: Int): (String,LKProof) = {
+  // It seems that this object is only used for ProofTool,
+  // so it was renamed to a proper name and removed from tests!
+  object InstantiateResSchema {
+    def apply(term_name:String, inst: Int): (String,LKProof) = {
       val i = applySchemaSubstitution.toIntegerTerm(inst)
       val k = IntVar(new VariableStringSymbol("k"))
-      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], i.asInstanceOf[IntegerTerm])
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], i)
       val subst = new SchemaSubstitution3(map)
-      val rho1 = resolutionProofSchemaDB.map.get("\\rho1").get._2._1
+      val rho1 = resolutionProofSchemaDB.map.get(term_name).get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
       val r = unfoldResolutionProofSchema2(rho1step1)
       val mapfo2 = Map[fo2Var, LambdaExpression]() + fo2SubstDB.map.head
       val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
-      println("\n\n\n------ ProofTool --------")
-      printSchemaProof(ResDeductionToLKTree(fo2sub))
       val proof = ResDeductionToLKTree(fo2sub)
-      val name = "ρ1↓" + inst
+      val name = term_name + "↓" + inst
       (name,proof)
     }
   }

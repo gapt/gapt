@@ -93,7 +93,7 @@ object ParseResSchema {
       }
 
       // TODO: X is missing
-      def rho_term: Parser[sResolutionTerm] = "\\rho"~"""[0,1,2,3,4,5,6,7]*""".r ~ "(" ~ index ~ "," ~ fo2var ~ ")" ^^ {
+      def rho_term: Parser[sResolutionTerm] = "\\rho"~"""[_]*[0-9]*""".r ~ "(" ~ index ~ "," ~ fo2var ~ ")" ^^ {
         case "\\rho"~str ~ "(" ~ ind ~ "," ~ fo2v ~ ")" =>
           ResolutionProofSchema("\\rho"+str, ind::fo2v::Nil)
       }

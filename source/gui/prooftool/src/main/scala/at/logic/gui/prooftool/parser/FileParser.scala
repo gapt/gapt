@@ -59,24 +59,22 @@ class FileParser {
 
   def rsFileReader(input: InputStreamReader) {
     ParseResSchema(input) // constructs resolutionProofSchemaDB and dbTRS as side effect.
-    // val rs = Nil
-//    termTrees = resolutionProofSchemaDB.map.map(p => {
-//        val p212 = p._2._1._2
-//        val p222 = p._2._2._2
-//        (p._1, TermType.Unknown, rTermToTree(p212))::(p._1, TermType.Unknown, rTermToTree(p222))::Nil
-//      }).flatten.toList
-    // proofs = proofs:::rs
+    termTrees = resolutionProofSchemaDB.map.map(p => {
+        val p212 = p._2._1._2
+        val p222 = p._2._2._2
+        (p._1, TermType.ResolutionTerm, rTermToTree(p212))::(p._1, TermType.ResolutionTerm, rTermToTree(p222))::Nil
+      }).flatten.toList ::: termTrees
     val defs = dbTRS.map.map(p => p._2._1::p._2._2::Nil).flatten.toMap[HOLExpression,HOLExpression]
     addDefinitions(defs)
   }
 
-  // This does not work!!! Should be improved and moved to other place!
+  // This function should be improved and probably moved to some other place!
   def rTermToTree(term: sResolutionTerm): Tree[AnyRef] = term match {
     case rTerm(t1,t2,f) =>
       val p1 = rTermToTree(t1)
       val p2 = rTermToTree(t2)
-      new BinaryTree[AnyRef]("Resolve "+f.toStringSimple, p1, p2)
-    case _ => new LeafTree[AnyRef]( term.toString )
+      new BinaryTree[AnyRef]("Resolve "+DrawSequent.formulaToLatexString(f), p1, p2)
+    case _ => new LeafTree[AnyRef]( term.toString.replace(Console.RED+" \u22a2 "+Console.RESET, " \\vdash ") )
   }
 
   def ivyFileReader(path: String) {
@@ -163,6 +161,6 @@ class FileParser {
   private var termTrees: List[(String, TermType.Value, Tree[_])] = Nil
 
   object TermType extends Enumeration {
-    val ClauseTerm, ProjectionTerm, Unknown = Value
+    val ClauseTerm, ProjectionTerm, ResolutionTerm, Unknown = Value
   }
 }

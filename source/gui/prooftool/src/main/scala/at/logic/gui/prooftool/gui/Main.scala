@@ -37,8 +37,7 @@ import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, appl
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
 import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.clauseSchema.DisplayResSchema
-import at.logic.language.hol.HOLExpression
+import at.logic.transformations.ceres.clauseSchema.InstantiateResSchema
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -505,6 +504,8 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(body.getContent.getData.get._2.asInstanceOf[LKProof]) }) { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("Extract Herbrand Sequent") { herbrandSequent() }) { border = customBorder }
+      contents += new MenuItem(Action("Extract Expansion Tree") { expansionTree() }) { border = customBorder }
+      contents += new Separator
       contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK() }) { border = customBorder }
       contents += new MenuItem(Action("Skolemize") { skolemizeProof() }) { border = customBorder }
       contents += new MenuItem(Action("Regularize") { regularizeProof() }) { border = customBorder }
@@ -550,13 +551,6 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Tests") {
       mnemonic = Key.T
-      contents += new MenuItem(Action("Test Herbrand Sequent") {
-        body.contents = new Launcher(Some(("Herbrand Sequent", db.getProofs.head._2.root.asInstanceOf[Sequent].toFSequent())), 12)
-      }) { border = customBorder }
-      contents += new MenuItem(Action("Test Expansion Tree") {
-        body.contents = new Launcher(Some(("Expansion Tree",
-          extractExpansionTrees(body.getContent.getData.get._2.asInstanceOf[LKProof]))), 12)
-      }) { border = customBorder }
       contents += new MenuItem(Action("Non-Prenex Proof 1") {
         import at.logic.language.lambda.types.Definitions._
         import at.logic.language.lambda.symbols.ImplicitConverters._
@@ -703,7 +697,8 @@ object Main extends SimpleSwingApplication {
     if (t != None && t.get != "") try {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       db.rsFileReader(new InputStreamReader(new ByteArrayInputStream(t.get.getBytes("UTF-8"))))
-      body.contents = new Launcher(Some(("Definition List", db.getDefinitions)),14)
+      val tp = db.getTermTrees.head
+      body.contents = new Launcher(Some((tp._1,tp._3)),14)
       body.cursor = java.awt.Cursor.getDefaultCursor
       ProofToolPublisher.publish(ProofDbChanged)
     } catch {
@@ -719,7 +714,17 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
-      errorMessage("Couldn't extract Herbrand Sequent!\n\n" + getExceptionString(e))
+      errorMessage("Cannot extract Herbrand Sequent!\n\n" + getExceptionString(e))
+  }}
+
+  def expansionTree() { try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val et = extractExpansionTrees(body.getContent.getData.get._2.asInstanceOf[LKProof])
+    body.contents = new Launcher(Some("Expansion Tree",et),14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+    case e: Throwable =>
+      errorMessage("Cannot extract Expansion Tree!\n\n" + getExceptionString(e))
   }}
 
   def skolemizeProof() { try {
@@ -948,9 +953,9 @@ object Main extends SimpleSwingApplication {
           body.contents = new Launcher(Some(name + "↓" + number, term), 12)
           infoMessage("The proof projections, corresponding to this term, are also computed.\n" +
             "They can be found in the View Proof menu!")
-        // This line should be changed later to match on resolution terms
-        case (name: String, list: List[(HOLExpression,HOLExpression)]) =>
-          val proof = DisplayResSchema(number)
+        case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ClauseTerm) != None => errorMessage("Not yet implemented!")
+        case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ResolutionTerm) != None =>
+          val proof = InstantiateResSchema(name,number)
           db.addProofs(proof::Nil)
           body.contents = new Launcher(Some(proof), 12)
         case _ => errorMessage("Cannot instantiate the object!")

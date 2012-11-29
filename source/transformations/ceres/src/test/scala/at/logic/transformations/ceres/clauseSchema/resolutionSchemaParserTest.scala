@@ -34,7 +34,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       val k = IntVar(new VariableStringSymbol("k"))
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
       val subst = new SchemaSubstitution3(map)
-      val rho1 = resolutionProofSchemaDB.map.get("\\rho1").get._2._1
+      val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
       println("rho1step1 = "+rho1step1)
       val r = unfoldResolutionProofSchema2(rho1step1)
@@ -54,7 +54,6 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 
       println("\n\nresolution deduction tree:")
       printSchemaProof(ResDeductionToLKTree(fo2sub))
-      DisplayResSchema(2)
       println("\n\n--- END ---\n\n")
       ok
     }
@@ -90,7 +89,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 //
 //      println("\n\nresolution deduction tree:")
 //      printSchemaProof(ResDeductionToLKTree(fo2sub))
-//      DisplayResSchema(2)
+//      InstantiateResSchema("\\rho1",2)
       println("\n\n--- END ---\n\n")
       ok
     }
