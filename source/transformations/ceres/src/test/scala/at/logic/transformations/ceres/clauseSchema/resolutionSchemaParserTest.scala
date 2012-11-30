@@ -95,3 +95,4 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
     }
   }
 }
+

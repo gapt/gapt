@@ -7,7 +7,8 @@ import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrence
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.algorithms.shlk._
-import clauseSchema.SchemaSubstitution3
+import clauseSchema._
+import clauseSchema.ParseResSchema._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -157,7 +158,10 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       println(Console.BLUE+"\n\n------- ProjectionTerm for the sEXP.lks ------- "+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
+      val res = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
       val map = sFOParser.parseProof(s)
+      ParseResSchema(res)
+      println("dbTRS = "+dbTRS.map )
       //      val p2 = map.get("\\psi").get._2.get("root").get
       val proof_name = "\\psi"
       val p1 = map.get(proof_name).get._2.get("root").get
@@ -174,6 +178,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //        val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence] + fo, getCutAncestors(p2))
       val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(Succ(IntZero())).asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution3(new_map)
+      println("dbTRS = "+dbTRS.map )
 
       println("\n------ proj.term: \n\n")
       val t = PStructToExpressionTree.applyConsole(pterm)
@@ -194,8 +199,22 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val t_rm_arrow_ground_unfold = PStructToExpressionTree.applyConsole(rm_arrow_ground_unfold)
       PStructToExpressionTree.printTree(t_rm_arrow_ground_unfold)
 
-      val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold)
+      val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold).toList.filter(p =>
+        ! p.root.antecedent.exists(f1 =>
+          p.root.succedent.exists(f2 =>
+            f1.formula == f2.formula
+          )
+        ))
+
       println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
+
+      val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap))
+      println("ground_proj_set:")
+      printSchemaProof(ground_proj_set.head)
+      printSchemaProof(ground_proj_set.tail.head)
+      printSchemaProof(ground_proj_set.tail.tail.head)
+      printSchemaProof(ground_proj_set.tail.tail.tail.head)
+
 //        println(Console.GREEN+"\n1: "+Console.RESET)
 //        printSchemaProof(projSet.head)
 //        println(Console.GREEN+"\n2: "+Console.RESET)

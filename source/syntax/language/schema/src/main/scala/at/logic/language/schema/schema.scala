@@ -71,12 +71,13 @@ object dbTRS extends Iterable[(HOLConst, Tuple2[Tuple2[HOLExpression, HOLExpress
 //TODO : needs improvement for the step case
 object unfoldSTerm {
   def apply(t: HOLExpression): HOLExpression = {
-//    println("trs : "+trs.map)
     val k = IntVar(new VariableStringSymbol("k"))
     val x = foVar("x")
-//    println("t = "+t)
+//    println("\nunfoldSTerm = "+t)
+//    println("trs : "+dbTRS.map)
     t match {
-      case sTerm(func, i, arg) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) =>
+      case sTerm(func, i, arg) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) => {
+//        println("sTerm, i = "+i)
         if (i == IntZero()) {
 //          println("i == IntZero()")
           val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1._2
@@ -110,8 +111,13 @@ object unfoldSTerm {
                   rez
                 }
               }
-      case sTerm(func, i, arg) => t
+      }
+      case sTerm(func, i, arg) => {
+//        println("sTerm BAD")
+        t
+      }
       case foTerm(holvar, arg) => {
+//        println("foTerm = "+t)
         foTerm(holvar.asInstanceOf[HOLVar], apply(arg)::Nil)
       }
       case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
@@ -121,11 +127,12 @@ object unfoldSTerm {
 
 object unfoldSINDTerm {
   def apply(t: HOLExpression): HOLExpression = {
-    //    println("trs : "+trs.map)
+//    println("\nunfoldSINDTerm")
+//    println("trs : "+dbTRS.map)
     val k = IntVar(new VariableStringSymbol("k"))
     t match {
       case sIndTerm(func, i) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) => {
-//        println("t = "+t)
+//        println("sIndTerm = "+t)
         if (i == IntZero()) {
           val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1._2
           base

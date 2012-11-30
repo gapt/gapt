@@ -425,7 +425,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       println("\n\n")
 
       val mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
-      
+
 //      val mapFO2Var = Map[HOLVar, HOLExpression]() + Pair(x, HOLAbs(y, ))
       val clause3 = applySubToSclauseOrSclauseTerm(subst, trsClauseSch.map.get("c").get._2._1).asInstanceOf[sClause]
       val de = deComposeSClause(unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst))
@@ -482,10 +482,6 @@ class clauseSchemaTest extends SpecificationWithJUnit {
 
       val rez4 = resolutionDeduction(fo2sub, trsClauseSch, trsSigma, subst, mapX)
       println(Console.BOLD+"\n\nDeduction: \n\n"+Console.RESET+rez4)
-      println("\n\n\n\n\n")
-
-
-
       println("\n\n\nc* = ")
       printSchemaProof(ResDeductionToLKTree(fo2sub))
       println("\n\n\n")

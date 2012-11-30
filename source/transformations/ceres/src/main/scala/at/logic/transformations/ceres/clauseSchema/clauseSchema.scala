@@ -5,7 +5,6 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.calculi.lk.macroRules._
-import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.calculi.slk._
 import at.logic.calculi.slk.AndEquivalenceRule1._
@@ -23,6 +22,8 @@ import at.logic.language.hol.Atom._
 import at.logic.language.schema.foTerm._
 import at.logic.language.lambda.BetaReduction
 import at.logic.language.schema._
+import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk.quantificationRules._
 
 abstract class sResolutionTerm {}
   abstract class sClauseTerm extends sResolutionTerm {}
@@ -903,15 +904,14 @@ abstract class sResolutionTerm {}
       map.put(v, term)
     }
     def iterator = map.iterator
-
-
   }
 
   // a substitution for the second-order variables of type : ω->ι
   // it is applied after unfoldingAtomsInResTerm, i.e. after the substitution of all ω and X variables
   object fo2VarSubstitution {
     def apply(o: Object, mapfo2: Map[fo2Var, LambdaExpression]): Object = {
-//      println("o = "+o)
+//      println("\no = "+o)
+//      println("o.getClass = "+o.getClass)
       o match {
         case r:rTerm => {
           rTerm(apply(r.left, mapfo2).asInstanceOf[sResolutionTerm], apply(r.right, mapfo2).asInstanceOf[sResolutionTerm], apply(r.atom, mapfo2).asInstanceOf[HOLFormula])
@@ -919,22 +919,39 @@ abstract class sResolutionTerm {}
         case Atom(name, args) => {
 //          println("Atom")
           val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), args.reverse.map(x => x.exptype).foldRight(To().asInstanceOf[TA])((x,t) => ->(x, t)))
-          unfoldGroundAtom2(Atom(newAtomName, args.map(x => {
+          val unfAtom = unfoldGroundAtom2(Atom(newAtomName, args.map(x => {
             val rez = apply(x, mapfo2)
             rez.asInstanceOf[HOLExpression]
           })) )
+//          println("unfAtom = "+unfAtom)
+          unfAtom
         }
-                                              //&& mapfo2.contains(v.asInstanceOf[fo2Var])
+        case at.logic.language.hol.Imp(f1, f2) =>
+          at.logic.language.hol.Imp(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
+
+        case at.logic.language.hol.And(f1, f2) =>
+          at.logic.language.hol.And(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
+
+        case at.logic.language.hol.Or(f1, f2) =>
+          at.logic.language.hol.Or(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
+
         case HOLApp(v , index) if index.exptype == Tindex()  => {
-//          println("HOLApp(v , index) = ")
-          BetaReduction.betaReduce(HOLApp(mapfo2.get(v.asInstanceOf[fo2Var]).get, index))(BetaReduction.StrategyOuterInner.Innermost, BetaReduction.StrategyLeftRight.Leftmost)
+//          println("HOLApp(v , index) = "+o)
+          val exp = HOLApp(mapfo2.get(v.asInstanceOf[fo2Var]).get, index)
+//          println("exp = "+exp)
+          val beta = BetaReduction.betaReduce(exp)(BetaReduction.StrategyOuterInner.Innermost, BetaReduction.StrategyLeftRight.Leftmost)
+//          println("beta = "+unfoldSTerm(beta.asInstanceOf[HOLExpression]))
+          unfoldSTerm(beta.asInstanceOf[HOLExpression])
         }
         case foTerm(v, arg) => {
-//          println("foTerm")
-          foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression], mapfo2).asInstanceOf[HOLExpression]::Nil).asInstanceOf[HOLExpression]
+//          println("foTerm = "+o)
+          val t = foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression], mapfo2).asInstanceOf[HOLExpression]::Nil).asInstanceOf[HOLExpression]
+//          println("t = "+t)
+          t
         }
         case non: nonVarSclause => nonVarSclause(non.ant.map(f => apply(f, mapfo2).asInstanceOf[HOLFormula]), non.succ.map(f => apply(f, mapfo2).asInstanceOf[HOLFormula]))
         case indFOvar: indexedFOVar => {
+//          println("indexedFOVar = "+o)
           val z = fo2Var(new VariableStringSymbol(indFOvar.name.toString()))
           apply(HOLApp(z, indFOvar.index), mapfo2)
         }
@@ -1036,6 +1053,7 @@ abstract class sResolutionTerm {}
 
   object unfoldGroundAtom2 {
     def apply(f: HOLFormula): HOLFormula = {
+//      println("unfoldGroundAtom2 = "+f)
       f match {
         case Atom(name, args) => Atom(name, args.map(x => unfoldSTerm(x)))
         case _ => f
@@ -1093,5 +1111,42 @@ abstract class sResolutionTerm {}
       val proof = ResDeductionToLKTree(fo2sub)
       val name = term_name + "↓" + inst
       (name,proof)
+    }
+  }
+
+  //grounds a LKS-proof with respect to the variables of type: ω->ι
+  object GroundingProjections {
+    def apply(p: LKProof, mapfo2: Map[fo2Var, LambdaExpression]): LKProof = {
+      p match {
+        case Axiom(seq) => Axiom(Sequent(seq.antecedent.map(fo => fo.factory.createFormulaOccurrence(fo2VarSubstitution(fo.formula, mapfo2).asInstanceOf[HOLFormula], Nil)), seq.succedent.map(fo => fo.factory.createFormulaOccurrence(fo2VarSubstitution(fo.formula, mapfo2).asInstanceOf[HOLFormula], Nil)) ))
+        case WeakeningLeftRule(up, _, p1) => WeakeningLeftRule(apply(up,mapfo2), fo2VarSubstitution(p1.formula, mapfo2).asInstanceOf[HOLFormula])
+        case WeakeningRightRule(up, _, p1) => WeakeningRightRule(apply(up,mapfo2), fo2VarSubstitution(p1.formula, mapfo2).asInstanceOf[HOLFormula])
+        case ContractionLeftRule(up, _, a1, a2, _) => ContractionLeftRule(apply(up,mapfo2), fo2VarSubstitution(a1.formula, mapfo2).asInstanceOf[HOLFormula])
+        case ContractionRightRule(up, _, a1, a2, _) => ContractionRightRule(apply(up,mapfo2), fo2VarSubstitution(a1.formula, mapfo2).asInstanceOf[HOLFormula])
+        case AndLeft1Rule(up, _, a, p) => AndLeft1Rule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(p.formula, mapfo2).asInstanceOf[HOLFormula])
+        case AndLeft2Rule(up, _, a, p) => AndLeft2Rule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(p.formula, mapfo2).asInstanceOf[HOLFormula])
+        case AndRightRule(up1, up2, _, a1, a2, _) => AndRightRule(apply(up1,mapfo2), apply(up2,mapfo2), fo2VarSubstitution(a1.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(a2.formula, mapfo2).asInstanceOf[HOLFormula])
+        case OrLeftRule(up1, up2, _, a1, a2, _) => OrLeftRule(apply(up1,mapfo2), apply(up2,mapfo2), fo2VarSubstitution(a1.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(a2.formula, mapfo2).asInstanceOf[HOLFormula])
+        case OrRight1Rule(up, _, a, p) => OrRight1Rule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(p.formula, mapfo2).asInstanceOf[HOLFormula])
+        case OrRight2Rule(up, _, a, p) => OrRight2Rule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(p.formula, mapfo2).asInstanceOf[HOLFormula])
+        case ImpRightRule(up, _, a1, a2, _) => ImpRightRule(apply(up,mapfo2), fo2VarSubstitution(a1.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(a2.formula, mapfo2).asInstanceOf[HOLFormula])
+        case ImpLeftRule(up1, up2, _, a1, a2, _) => ImpLeftRule(apply(up1,mapfo2), apply(up2,mapfo2), fo2VarSubstitution(a1.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(a2.formula, mapfo2).asInstanceOf[HOLFormula])
+        case NegLeftRule(up, _, a, p) => NegLeftRule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula])
+        case NegRightRule(up, _, a, p) => NegRightRule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula])
+        case ForallLeftRule(up, _, a, p, t) => ForallLeftRule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(p.formula, mapfo2).asInstanceOf[HOLFormula],  unfoldSTerm(fo2VarSubstitution(t, mapfo2).asInstanceOf[HOLExpression]))
+        case ExistsRightRule(up, _, a, p, t) => ExistsRightRule(apply(up,mapfo2), fo2VarSubstitution(a.formula, mapfo2).asInstanceOf[HOLFormula], fo2VarSubstitution(p.formula, mapfo2).asInstanceOf[HOLFormula], unfoldSTerm(fo2VarSubstitution(t, mapfo2).asInstanceOf[HOLExpression]))
+        case _ => throw new Exception("\nMissing case in GroundingProjections !\n"+p.rule)
+      }
+    }
+  }
+
+  object getAxioms {
+    def apply(p: LKProof): List[Sequent] = {
+      p match {
+        case Axiom(seq) => seq::Nil
+        case UnaryLKProof(_, up, _, _, _) => apply(up)
+        case BinaryLKProof(_, up1, up2, _, _, _, _) => apply(up1) ::: apply(up2)
+        case _ => throw new Exception("\nMissing case in GroundingProjections !\n"+p.rule)
+      }
     }
   }
