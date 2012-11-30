@@ -31,7 +31,7 @@ import at.logic.transformations.ReductiveCutElim
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.clauseSets.{renameCLsymbols, StandardClauseSet}
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
-import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
+import at.logic.transformations.ceres.projections.{Projections, DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
 import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
@@ -500,6 +500,7 @@ object Main extends SimpleSwingApplication {
         contents += new MenuItem(Action("All Cuts") { computeStruct() }) { border = customBorder }
         contents += new MenuItem(Action("Only Quantified Cuts") { computeStructOnlyQuantifiedCuts() }) { border = customBorder }
       }
+      contents += new MenuItem(Action("Compute Projections") { computeProjections() }) { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(body.getContent.getData.get._2.asInstanceOf[LKProof]) }) { border = customBorder }
       contents += new Separator
@@ -760,6 +761,21 @@ object Main extends SimpleSwingApplication {
   } catch {
       case e: Throwable =>
         errorMessage("Couldn't extract CutFormula List!\n\n" + getExceptionString(e))
+  } finally ProofToolPublisher.publish(ProofDbChanged) }
+
+  def computeProjections() { try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val proof = body.getContent.getData.get
+    val proof_projs = Projections(proof._2.asInstanceOf[LKProof]).filterNot(p =>
+      p.root.antecedent.exists(fo1 => p.root.succedent.exists(fo2 => fo1.formula == fo2.formula))
+    ).toList
+    val proofs = proof_projs.map(p => (proof._1 + "_prj_" + proof_projs.indexOf(p), p))
+    db.addProofs( proofs )
+    body.contents = new Launcher(Some( proofs.head ),12)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  } catch {
+    case e: Throwable =>
+      errorMessage("Cannot compute Projections!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def computeClList() { try {

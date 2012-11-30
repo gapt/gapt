@@ -308,7 +308,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
     }
   }
   */
-
+  /*
   "ProjectionsTest" should {
     "create projections for journal example" in {
       import scala.io._
@@ -330,6 +330,6 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
       Projections(step, s).toList.foreach(p => {println("\nNext projection:\n");printSchemaProof( p._1 )})
       true must beEqualTo (true)
     }
-  }
+  } */
 }
 

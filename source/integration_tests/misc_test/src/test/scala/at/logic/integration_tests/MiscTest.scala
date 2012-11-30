@@ -89,7 +89,8 @@ class MiscTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
       val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
       val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
-      saveXML( projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
+      saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
+        projs.toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
         Pair("cs", cs)::Pair("prf", prf)::Nil, path )
     }
 
