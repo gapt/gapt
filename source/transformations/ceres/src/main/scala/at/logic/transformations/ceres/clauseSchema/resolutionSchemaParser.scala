@@ -25,6 +25,7 @@ object ParseResSchema {
     val mapPredicateToArity = Map.empty[String, Int]
 //    dbTRS.clear
 //    dbTRSresolutionSchema.clear
+    fo2SubstDB.clear
     resolutionProofSchemaDB.clear
     lazy val sp = new SimpleResolutionSchemaParser
 
@@ -44,9 +45,9 @@ object ParseResSchema {
         }
       }
 
-      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ s_term ~ "}" ^^ {
-        case "{" ~ z ~ "<-" ~ "\\lambda" ~ k ~ "." ~ sterm ~ "}" => {
-          val h = HOLAbs(k.asInstanceOf[Var], sterm)
+      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ ( s_term | FOVariable )~ "}" ^^ {
+        case "{" ~ z ~ "<-" ~ "\\lambda" ~ k ~ "." ~ sterm_or_fovar ~ "}" => {
+          val h = HOLAbs(k.asInstanceOf[Var], sterm_or_fovar)
           fo2SubstDB.add(z.asInstanceOf[fo2Var], h)
         }
       }

@@ -20,6 +20,7 @@ import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.hol.{HOLExpression, HOLFormula, HOLVarFormula}
 import at.logic.utils.ds.trees.BinaryTree
 import at.logic.calculi.lk.base.{Sequent, LKProof}
+import at.logic.language.hol.Atom
 
 @RunWith(classOf[JUnitRunner])
 class ProjectionTermTest extends SpecificationWithJUnit {
@@ -28,8 +29,6 @@ class ProjectionTermTest extends SpecificationWithJUnit {
   "ProjectionTermTest" should {
     "create a ProjectionTerm" in {
       println("\n\nProjectionTerm for the Adder.lks\n\n")
-
-
       val k = IntVar(new VariableStringSymbol("k"))
       val real_n = IntVar(new VariableStringSymbol("n"))
       val n = k
@@ -108,10 +107,12 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
 
     "should extract proj.term for the journal paper" in {
-      println(Console.RED+"\n\n---- ProjectionTerm for the journal paper ----"+Console.RESET)
+      println(Console.RED+"\n\n\n\n---- ProjectionTerm for the journal paper example ----\n\n"+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
+      val res = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
       val map = sFOParser.parseProof(s)
+      ParseResSchema(res)
 //      val p2 = map.get("\\psi").get._2.get("root").get
       val proof_name = "\\varphi"
       val p2 = map.get(proof_name).get._2.get("root").get
@@ -131,12 +132,33 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       PStructToExpressionTree.printTree(t_ground)
 
       println("\n\n\n------ unfold ground: \n\n")
+      val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema3.rs"))
+      ParseResSchema(new_z_subst)
       val ground_unfold = RemoveArrowRules(UnfoldProjectionTerm(ground))
       val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
       PStructToExpressionTree.printTree(t_ground_unfold)
 
+      val projSet = ProjectionTermToSetOfProofs(ground_unfold).toList.filter(p =>
+        ! p.root.antecedent.exists(f1 =>
+          p.root.succedent.exists(f2 =>
+            f1.formula == f2.formula
+          )
+        ))
 
-      ProjectionTermCreators.relevantProj(proof_name)
+      println(Console.BLUE+"\n\nprojSet.size = "+projSet.size)
+      projSet.foreach(p => {
+        println("\n\n")
+        printSchemaProof(p)
+      })
+
+      println("\n\n\n\nground_proj_set:\n\n")
+      val ground_proj_set = projSet.map(proof => GroundingProjections(proof, fo2SubstDB.map.toMap))
+      ground_proj_set.foreach(p => {
+        println("\n\n")
+        printSchemaProof(p)
+      })
+
+
 //      val cclist1 = ProjectionTermCreators.getCC(p1, List.empty[FormulaOccurrence], p1)
 //      val cclist2 = ProjectionTermCreators.getCC(p2, List.empty[FormulaOccurrence], p2)
 //      ProjectionTermCreators.genCCProofToolBase("\\varphi")
@@ -153,9 +175,9 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //      println("\nfosub = "+fosub)
       Success()
     }
-
+         /*
     "should extract proj.term for the sEXP.lks" in {
-      println(Console.BLUE+"\n\n------- ProjectionTerm for the sEXP.lks ------- "+Console.RESET)
+      println(Console.BLUE+"\n\n\n\n------- ProjectionTerm for the sEXP.lks ------- \n\n"+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
       val res = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
@@ -210,10 +232,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
       val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap))
       println("ground_proj_set:")
-      printSchemaProof(ground_proj_set.head)
-      printSchemaProof(ground_proj_set.tail.head)
-      printSchemaProof(ground_proj_set.tail.tail.head)
-      printSchemaProof(ground_proj_set.tail.tail.tail.head)
+      ground_proj_set.foreach(p => printSchemaProof(p))
 
 //        println(Console.GREEN+"\n1: "+Console.RESET)
 //        printSchemaProof(projSet.head)
@@ -309,6 +328,6 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       //      println("\nfosub = "+fosub)
       println("\n\n--- END ---\n\n")
       Success()
-    }
+    }      */
   }
 }

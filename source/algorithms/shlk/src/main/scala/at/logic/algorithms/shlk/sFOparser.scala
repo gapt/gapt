@@ -371,7 +371,7 @@ object sFOParser {
       def non_formula: Parser[HOLExpression] = (fo_term | s_term | indexedVar | abs | variable | constant | var_func | const_func)
       def s_term: Parser[HOLExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ non_formula ~ ")" ^^ {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
-//          println("\n\nsTerm\n)")
+//          println("\nsTerm : "+name+"("+i+","+args+")")
 //          println("args = "+args)
 //          println("args.extype = "+args.exptype)
           sTerm(name, i, args::Nil)

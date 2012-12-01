@@ -926,15 +926,9 @@ abstract class sResolutionTerm {}
 //          println("unfAtom = "+unfAtom)
           unfAtom
         }
-        case at.logic.language.hol.Imp(f1, f2) =>
-          at.logic.language.hol.Imp(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
-
-        case at.logic.language.hol.And(f1, f2) =>
-          at.logic.language.hol.And(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
-
-        case at.logic.language.hol.Or(f1, f2) =>
-          at.logic.language.hol.Or(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
-
+        case at.logic.language.hol.Imp(f1, f2) => at.logic.language.hol.Imp(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
+        case at.logic.language.hol.And(f1, f2) => at.logic.language.hol.And(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
+        case at.logic.language.hol.Or(f1, f2) =>  at.logic.language.hol.Or(apply(f1, mapfo2).asInstanceOf[HOLFormula], apply(f2, mapfo2).asInstanceOf[HOLFormula])
         case HOLApp(v , index) if index.exptype == Tindex()  => {
 //          println("HOLApp(v , index) = "+o)
           val exp = HOLApp(mapfo2.get(v.asInstanceOf[fo2Var]).get, index)
@@ -943,11 +937,21 @@ abstract class sResolutionTerm {}
 //          println("beta = "+unfoldSTerm(beta.asInstanceOf[HOLExpression]))
           unfoldSTerm(beta.asInstanceOf[HOLExpression])
         }
-        case foTerm(v, arg) => {
+        case foTerm(v, arg) if v.exptype == ->(Ti(),Ti()) => {
 //          println("foTerm = "+o)
+//          println("v.getClass = "+v.getClass)
+//          println("v = "+v)
+//          println("arg = "+arg)
           val t = foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression], mapfo2).asInstanceOf[HOLExpression]::Nil).asInstanceOf[HOLExpression]
-//          println("t = "+t)
+          //          println("t = "+t)
           t
+        }
+        case sTerm(v, i, args) => {
+//          println("sTerm = "+o)
+//          val t = foTerm(v.asInstanceOf[HOLVar], apply(args.asInstanceOf[HOLExpression], mapfo2).asInstanceOf[HOLExpression]::Nil).asInstanceOf[HOLExpression]
+//          //          println("t = "+t)
+//          t
+          unfoldSTerm(o.asInstanceOf[HOLExpression])
         }
         case non: nonVarSclause => nonVarSclause(non.ant.map(f => apply(f, mapfo2).asInstanceOf[HOLFormula]), non.succ.map(f => apply(f, mapfo2).asInstanceOf[HOLFormula]))
         case indFOvar: indexedFOVar => {
@@ -955,6 +959,7 @@ abstract class sResolutionTerm {}
           val z = fo2Var(new VariableStringSymbol(indFOvar.name.toString()))
           apply(HOLApp(z, indFOvar.index), mapfo2)
         }
+//        case v: foVar =>
         case _ => {
 //          println("case _ => " + o +" : "+o.getClass)
           o
@@ -1117,6 +1122,7 @@ abstract class sResolutionTerm {}
   //grounds a LKS-proof with respect to the variables of type: ω->ι
   object GroundingProjections {
     def apply(p: LKProof, mapfo2: Map[fo2Var, LambdaExpression]): LKProof = {
+//      println("p.rule = "+p.rule)
       p match {
         case Axiom(seq) => Axiom(Sequent(seq.antecedent.map(fo => fo.factory.createFormulaOccurrence(fo2VarSubstitution(fo.formula, mapfo2).asInstanceOf[HOLFormula], Nil)), seq.succedent.map(fo => fo.factory.createFormulaOccurrence(fo2VarSubstitution(fo.formula, mapfo2).asInstanceOf[HOLFormula], Nil)) ))
         case WeakeningLeftRule(up, _, p1) => WeakeningLeftRule(apply(up,mapfo2), fo2VarSubstitution(p1.formula, mapfo2).asInstanceOf[HOLFormula])
@@ -1146,7 +1152,8 @@ abstract class sResolutionTerm {}
         case Axiom(seq) => seq::Nil
         case UnaryLKProof(_, up, _, _, _) => apply(up)
         case BinaryLKProof(_, up1, up2, _, _, _, _) => apply(up1) ::: apply(up2)
-        case _ => throw new Exception("\nMissing case in GroundingProjections !\n"+p.rule)
+        case SchemaProofLinkRule(_,_,_) => Nil
+        case _ => throw new Exception("\nMissing case in getAxioms !\n"+p.rule)
       }
     }
   }

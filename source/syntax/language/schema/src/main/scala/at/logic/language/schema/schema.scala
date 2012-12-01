@@ -51,7 +51,8 @@ object foTerm {
     HOLApp(v, args.head).asInstanceOf[HOLExpression]
   }
   def unapply(s: HOLExpression) = s match {
-    case HOLApp(v, arg) if s.exptype == Ti() => Some(v, arg)
+//    case HOLApp(v, arg) if s.exptype == Ti() && v.exptype == ->(Ti(),Ti()) => Some(v, arg)
+    case AppN(v, arg) if s.exptype == Ti() && v.exptype == ->(Ti(),Ti()) => Some(v, arg.head.asInstanceOf[HOLExpression])
     case _ => None
   }
 }
