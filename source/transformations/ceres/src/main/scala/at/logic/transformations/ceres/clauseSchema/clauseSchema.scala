@@ -824,7 +824,7 @@ abstract class sResolutionTerm {}
     }
   }
 
-
+  //substitute a variable of type ω in a resolution term
   object IntVarSubstitution {
     def apply(r:sResolutionTerm, subst: SchemaSubstitution3): sResolutionTerm = {
       r match {
@@ -1103,13 +1103,26 @@ abstract class sResolutionTerm {}
   // It seems that this object is only used for ProofTool,
   // so it was renamed to a proper name and removed from tests!
   object InstantiateResSchema {
-    def apply(term_name:String, inst: Int): (String,LKProof) = {
-      val i = applySchemaSubstitution.toIntegerTerm(inst)
+    def getCorrectTermAndSubst(term_name:String, inst: Int): (sResolutionTerm, SchemaSubstitution3) = {
       val k = IntVar(new VariableStringSymbol("k"))
-      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], i)
-      val subst = new SchemaSubstitution3(map)
-      val rho1 = resolutionProofSchemaDB.map.get(term_name).get._2._1
-      val rho1step1 = IntVarSubstitution(rho1, subst)
+      if(inst == 0) {
+        val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], IntZero())
+        val subst = new SchemaSubstitution3(map)
+        val rho1 = resolutionProofSchemaDB.map.get(term_name).get._1._1
+        (rho1, subst)
+      }
+      else {
+        val i = applySchemaSubstitution.toIntegerTerm(inst-1)
+        val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], i)
+        val subst = new SchemaSubstitution3(map)
+        val rho1 = resolutionProofSchemaDB.map.get(term_name).get._2._1
+        (rho1, subst)
+      }
+    }
+
+    def apply(term_name:String, inst: Int): (String,LKProof) = {
+      val pair = getCorrectTermAndSubst(term_name,inst)
+      val rho1step1 = IntVarSubstitution(pair._1, pair._2)
       val r = unfoldResolutionProofSchema2(rho1step1)
       val mapfo2 = Map[fo2Var, LambdaExpression]() + fo2SubstDB.map.head
       val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]

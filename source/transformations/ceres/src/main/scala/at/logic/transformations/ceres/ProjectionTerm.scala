@@ -691,6 +691,22 @@ object PStructToExpressionTree {
 
 // returns a ground projection term for a given instance of the parameter k
   object GroundingProjectionTerm {
+    def apply(pair: Tuple2[ProjectionTerm,ProjectionTerm], i: Int): ProjectionTerm = {
+      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+      if(i < 0)
+        throw new Exception("\n\nThe instance for computing projections is not a natural number !\n")
+      if(i == 0) {
+        val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero() )
+        val subst = new SchemaSubstitution3(new_map)
+        apply(pair._1, subst)
+      }
+      else {
+        val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], applySchemaSubstitution.toIntegerTerm(i-1))
+        val subst = new SchemaSubstitution3(new_map)
+        apply(pair._2, subst)
+      }
+    }
+
     def apply(t: ProjectionTerm, subst: SchemaSubstitution3): ProjectionTerm = {
       t match {
         case times: pTimes => {
@@ -743,11 +759,9 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
     // This method is used in ProofTool.
     // It should return unfolded term as a tree and the list of projections
     def apply(name: String, number: Int): (Tree[_], List[(String,LKProof)]) = {
-      val new_map = Map((IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], applySchemaSubstitution.toIntegerTerm(number)))
-      val sub = new SchemaSubstitution3(new_map)
-      println(name)
-      println(ProjectionTermDB.get(name))
-      val gr = GroundingProjectionTerm(ProjectionTermDB.get(name),sub)
+     // println(name)
+     // println(ProjectionTermDB.get(name))
+      val gr = GroundingProjectionTerm((ProjectionTermDB.get(name.replace("step", "base")),ProjectionTermDB.get(name.replace("base", "step"))),number)
       val pt = RemoveArrowRules(UnfoldProjectionTerm(gr))
       val tree = PStructToExpressionTree(pt)
       val l = ProjectionTermToSetOfProofs(pt).toList.filter(p =>

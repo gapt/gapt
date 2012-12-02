@@ -68,16 +68,17 @@ object ACNF {
 
   //for the CERESs method
   def apply(proof_name: String, res_schema_name: String, n: Int): LKProof = {
-    val i = applySchemaSubstitution.toIntegerTerm(n)
     val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+    //the resolution proof
     val resDeduction = InstantiateResSchema(res_schema_name, n)._2
     println("resDeduction :")
     printSchemaProof(resDeduction)
-    val p1 = SchemaProofDB.get(proof_name).rec
-    val pterm = ProjectionTermCreators.extract(p1, Set.empty[FormulaOccurrence], getCutAncestors(p1))
-    val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, i.asInstanceOf[IntegerTerm] )
-    var sub = new SchemaSubstitution3(new_map)
-    val ground = GroundingProjectionTerm(pterm, sub)
+    //computing the projections
+    val p1base = SchemaProofDB.get(proof_name).base
+    val p1rec = SchemaProofDB.get(proof_name).rec
+    val ptermBase = ProjectionTermCreators.extract(p1base, Set.empty[FormulaOccurrence], getCutAncestors(p1base))
+    val ptermRec = ProjectionTermCreators.extract(p1rec, Set.empty[FormulaOccurrence], getCutAncestors(p1rec))
+    val ground = GroundingProjectionTerm((ptermBase, ptermRec), n)
     val ground_unfold = UnfoldProjectionTerm(ground)
     val rm_arrow_ground_unfold = RemoveArrowRules(ground_unfold)
     val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold).toList.filter(p =>
@@ -93,10 +94,17 @@ object ACNF {
     ParseResSchema(new_z_subst)
     val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap)).toSet
     ground_proj_set.foreach(p => println(printSchemaProof.sequentToString(p.root)))
-    val ro = p1.root
-    val new_map1 = scala.collection.immutable.Map.empty[Var, HOLExpression] + Pair(k, i.asInstanceOf[IntegerTerm] )
-    var subst = new SchemaSubstitution1(new_map1)
-    val end_seq = FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])))
+    val end_seq = if (n == 0) {
+      val ro = p1base.root
+      val new_map1 = scala.collection.immutable.Map.empty[Var, HOLExpression] + Pair(k, IntZero() )
+      var subst = new SchemaSubstitution1(new_map1)
+      FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])))
+    } else {
+      val ro = p1rec.root
+      val new_map1 = scala.collection.immutable.Map.empty[Var, HOLExpression] + Pair(k, applySchemaSubstitution.toIntegerTerm(n-1) )
+      var subst = new SchemaSubstitution1(new_map1)
+      FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])))
+    }
     apply(resDeduction, ground_proj_set, end_seq)
   }
 }

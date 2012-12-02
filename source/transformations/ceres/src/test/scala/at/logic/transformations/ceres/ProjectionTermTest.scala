@@ -115,21 +115,30 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       ParseResSchema(res)
 //      val p2 = map.get("\\psi").get._2.get("root").get
       val proof_name = "\\varphi"
-      val p2 = map.get(proof_name).get._2.get("root").get
-      val p1 = map.get("\\psi").get._2.get("root").get
-      val p1b = map.get("\\psi").get._1.get("root").get
+      val p2base = map.get(proof_name).get._1.get("root").get
+      val p2rec = map.get(proof_name).get._2.get("root").get
+      val p1rec = map.get("\\psi").get._2.get("root").get
+      val p1base = map.get("\\psi").get._1.get("root").get
 //        val f = p2.root.succedent.head
+
       println("\n------ proj.term: \n\n")
-      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence], getCutAncestors(p2))
+      val ptermBase = ProjectionTermCreators.extract(p2base, Set.empty[FormulaOccurrence], getCutAncestors(p2base))
+      val ptermRec = ProjectionTermCreators.extract(p2rec, Set.empty[FormulaOccurrence], getCutAncestors(p2rec))
       val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(IntZero()).asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution3(new_map)
-      val t = PStructToExpressionTree.applyConsole(pterm)
+      val t = PStructToExpressionTree.applyConsole(ptermRec)
       PStructToExpressionTree.printTree(t)
 
       println("\n\n\n------ ground: \n\n")
-      val ground = GroundingProjectionTerm(pterm, sub)
+//      val ground = GroundingProjectionTerm(pterm, sub)
+      val ground = GroundingProjectionTerm((ptermBase, ptermRec), 0)
+      val ground1 = GroundingProjectionTerm((ptermBase, ptermRec), 1)
       val t_ground = PStructToExpressionTree.applyConsole(ground)
+      val t_ground1 = PStructToExpressionTree.applyConsole(ground1)
+      println("\nfor 0 : ")
       PStructToExpressionTree.printTree(t_ground)
+      println("\nfor 1 : ")
+      PStructToExpressionTree.printTree(t_ground1)
 
       println("\n\n\n------ unfold ground: \n\n")
       val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "trs.sys"))

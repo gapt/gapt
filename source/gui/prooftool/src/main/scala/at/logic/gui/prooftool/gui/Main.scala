@@ -964,9 +964,10 @@ object Main extends SimpleSwingApplication {
           body.contents = new Launcher(Some(name + "↓" + number, proof), 12)
         case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ProjectionTerm) != None =>
           val (term,list) = UnfoldProjectionTerm(name,number)
-          db.addTermTree( name + "↓" + number, term )
+          val gterm_name = name.replace("_step","").replace("_base","")  + "↓" + number
+          db.addTermTree( gterm_name, term )
           db.addProofs(list)
-          body.contents = new Launcher(Some(name + "↓" + number, term), 12)
+          body.contents = new Launcher(Some(gterm_name, term), 12)
           infoMessage("The proof projections, corresponding to this term, are also computed.\n" +
             "They can be found in the View Proof menu!")
         case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ClauseTerm) != None => errorMessage("Not yet implemented!")
