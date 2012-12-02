@@ -132,7 +132,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       PStructToExpressionTree.printTree(t_ground)
 
       println("\n\n\n------ unfold ground: \n\n")
-      val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema3.rs"))
+      val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "trs.sys"))
       ParseResSchema(new_z_subst)
       val ground_unfold = RemoveArrowRules(UnfoldProjectionTerm(ground))
       val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)

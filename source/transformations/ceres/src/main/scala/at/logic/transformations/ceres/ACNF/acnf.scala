@@ -89,7 +89,7 @@ object ACNF {
 
     projSet.foreach(p => println(printSchemaProof.sequentToString(p.root)))
     println("\n\n")
-    val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema3.rs"))
+    val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "trs.sys"))
     ParseResSchema(new_z_subst)
     val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap)).toSet
     ground_proj_set.foreach(p => println(printSchemaProof.sequentToString(p.root)))
