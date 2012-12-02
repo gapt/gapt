@@ -694,12 +694,10 @@ object applySchemaSubstitution2 {
   //************************************************************************************
 
   def apply( proof_name: String, number: Int ): LKProof = {
-    if (number < 1) {
+    if (number == 0) {
       println("\nproof_name = "+proof_name)
       println("number = "+number)
-
-      //      RemoveEqRulesFromGroundSchemaProof(SchemaProofDB.get(proof_name).base)
-      SchemaProofDB.get(proof_name).base
+      CloneLKProof2(SchemaProofDB.get(proof_name).base)
     }
     else {
       println("\nproof_name = "+proof_name)

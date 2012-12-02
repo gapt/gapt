@@ -729,7 +729,7 @@ import at.logic.language.hol._
 //            println("\nc:r = "+new_p.root)
           ContractionRightRule( new_p, minusOne(a1.formula, k).asInstanceOf[HOLFormula] )
       }
-      case _ => { println("ERROR in StepMinusOne : missing rule!");throw new Exception("ERROR in unfolding: StepMinusOne") }
+      case _ => { println("ERROR in StepMinusOne : missing rule!");throw new UnfoldException("ERROR in unfolding: StepMinusOne") }
     }
   }
 }
@@ -877,7 +877,7 @@ import at.logic.language.hol._
 //            println("\nc:r = "+new_p.root)
             ContractionRightRule( new_p, RemoveEqRulesFromGroundSchemaProof.unfoldGroundSchF(a1.formula ))
         }
-        case _ => { println("ERROR in object RemoveEqRulesFromGroundSchemaProof : missing rule!");throw new Exception("ERROR in unfolding: object RemoveEqRulesFromGroundSchemaProof") }
+        case _ => { println("ERROR in object RemoveEqRulesFromGroundSchemaProof : missing rule!");throw new UnfoldException("ERROR in unfolding: object RemoveEqRulesFromGroundSchemaProof") }
       }
     }
 
