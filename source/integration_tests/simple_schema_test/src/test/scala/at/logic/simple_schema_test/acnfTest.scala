@@ -33,8 +33,32 @@ class ACNFTest extends SpecificationWithJUnit {
       val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
-      val p = ACNF("\\varphi", "\\rho_1", 1)
+      val p = ACNF("\\varphi", "\\rho_1", 2)
 //      printSchemaProof(p)
+//      Main.display("ACNF", p) ; while(true){}
+      println("\n\n--- END ---\n\n")
+      ok
+    }
+
+    "should create correctly the ACNF for sEXP.lks" in {
+      println(Console.BLUE+"\n\n\n\n------- ACNF for the sEXP ------- \n\n"+Console.RESET)
+      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
+      val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema_sEXP.rs"))
+      val map = sFOParser.parseProof(s1)
+      ParseResSchema(s2)
+      val p = ACNF("\\psi", "\\rho_1", 2)
+      //      printSchemaProof(p)
+
+      //      val pair = InstantiateResSchema.getCorrectTermAndSubst("\\rho_1",1)
+      //      val rho1step1 = IntVarSubstitution(pair._1, pair._2)
+      //      val r = unfoldResolutionProofSchema2(rho1step1)
+      //      println("r = "+r)
+      //
+      //      val mapfo2 = Map[fo2Var, LambdaExpression]() + fo2SubstDB.map.head
+      //      val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
+      ////      val proof = ResDeductionToLKTree(fo2sub)
+      //      println("\n\nfo2sub = "+fo2sub)
+
 //      Main.display("ACNF", p) ; while(true){}
       println("\n\n--- END ---\n\n")
       ok

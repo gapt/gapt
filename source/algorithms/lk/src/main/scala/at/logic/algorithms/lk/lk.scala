@@ -680,7 +680,7 @@ object addContractions {
     assert(s_ant.forall(e => root_ant.contains(e)) && s_suc.forall(e => root_suc.contains(e)))
 
     // Take formulas that occur in p's end sequent and do not occur in s
-    val diff_ant = root_ant.diff(s_ant) 
+    val diff_ant = root_ant.diff(s_ant)
     val diff_suc = root_suc.diff(s_suc)
 
     // Add contractions left

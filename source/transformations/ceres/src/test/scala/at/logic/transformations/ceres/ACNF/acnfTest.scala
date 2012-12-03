@@ -30,8 +30,8 @@ class ACNFTest extends SpecificationWithJUnit {
       val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
-      val p = ACNF("\\varphi", "\\rho_1", 2)
-      printSchemaProof(p)
+//      val p = ACNF("\\varphi", "\\rho_1", 2)
+//      printSchemaProof(p)
       println("\n\n--- END ---\n\n")
       ok
     }
@@ -43,7 +43,7 @@ class ACNFTest extends SpecificationWithJUnit {
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
       val p = ACNF("\\psi", "\\rho_1", 1)
-      printSchemaProof(p)
+//      printSchemaProof(p)
 
 //      val pair = InstantiateResSchema.getCorrectTermAndSubst("\\rho_1",1)
 //      val rho1step1 = IntVarSubstitution(pair._1, pair._2)

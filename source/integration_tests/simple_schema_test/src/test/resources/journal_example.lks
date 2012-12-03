@@ -10,13 +10,11 @@ base {
     3:      impR(2, P(z(0)), P(g(0,z(0))) )
     4:      allR(3, Imp P(z(0)) P(g(0,z(0))), Forall x (Imp P(x) P(g(0,x))), z(0) )
     root:   weakL(4, Forall x (Imp P(x) P(f(x))) )
-
 }
 
 step {
     1:   pLink((\psi, k)
             Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(g(k,x))) )
-
     2:      ax( P(g(k,z(k+1))) |- P(g(k,z(k+1)))  )
     3:      ax( P(g(k+1,z(k+1))) |- P(g(k+1,z(k+1))) )
     4:      arrowL(3, P(g(k+1,z(k+1))))
@@ -52,3 +50,6 @@ step {
     3: allL(2, Imp P(a) P(g(k+1,a)), Forall x (Imp P(x) P(g(k+1,x))), a )
     root: cut( 1, 3, Forall x (Imp P(x) P(g(k+1,x))) )
 }
+
+
+

@@ -27,7 +27,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   import at.logic.language.schema._
   "ProjectionTermTest" should {
-   /* "create a ProjectionTerm" in {
+    "create a ProjectionTerm" in {
       println("\n\nProjectionTerm for the Adder.lks\n\n")
       val k = IntVar(new VariableStringSymbol("k"))
       val real_n = IntVar(new VariableStringSymbol("n"))
@@ -103,7 +103,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
-    }     */
+    }
 
            /*
     "should extract proj.term for the journal paper" in {
@@ -230,12 +230,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val t_rm_arrow_ground_unfold = PStructToExpressionTree.applyConsole(rm_arrow_ground_unfold)
       PStructToExpressionTree.printTree(t_rm_arrow_ground_unfold)
 
-      val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold).toList.filter(p =>
-        ! p.root.antecedent.exists(f1 =>
-          p.root.succedent.exists(f2 =>
-            f1.formula == f2.formula
-          )
-        ))
+      val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold)
 
       println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
 
@@ -271,7 +266,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       println("\n\n--- END ---\n\n")
       Success()
     }
-             /*
+
     "should extract proj.term for the sINDauto.lks" in {
       println(Console.MAGENTA+"\n\n------- ProjectionTerm for the sINDauto.lks ------- "+Console.RESET)
       SchemaProofDB.clear
@@ -337,6 +332,6 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       //      println("\nfosub = "+fosub)
       println("\n\n--- END ---\n\n")
       Success()
-    }      */
+    }
   }
 }

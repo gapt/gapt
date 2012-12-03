@@ -63,7 +63,7 @@ object ACNF {
   //for the usual CERES method
   def apply(resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: FSequent): LKProof = {
     val p = plugProjections(resRefutation, groun_proj_set)
-    addContractions(p, end_seq)
+    contractionNormalForm(p)
   }
 
   //for the CERESs method
@@ -113,5 +113,25 @@ object ACNF {
       FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])))
     }
     apply(resDeduction, ground_proj_set, end_seq)
+  }
+}
+
+//apply contractions to the proof with formula repetitions
+object contractionNormalForm {
+  def apply(p: LKProof): LKProof = {
+    val ant = p.root.antecedent.map(x => x.formula)
+    val suc = p.root.succedent.map(x => x.formula)
+
+    val ant1 = ant.map(f => ant.filter(f1 => f1 ==f)).filter(l => l.length > 1)
+    val suc1 = suc.map(f => suc.filter(f1 => f1 ==f)).filter(l => l.length > 1)
+    if(ant1.isEmpty && suc1.isEmpty)
+      return p
+    else
+      if(ant1.isEmpty) {
+        apply(ContractionRightRule(p, suc1.head.head))
+      }
+      else {
+        apply(ContractionLeftRule(p, ant1.head.head))
+      }
   }
 }
