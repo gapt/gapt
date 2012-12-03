@@ -81,17 +81,24 @@ object ACNF {
     val ground = GroundingProjectionTerm((ptermBase, ptermRec), n)
     val ground_unfold = UnfoldProjectionTerm(ground)
     val rm_arrow_ground_unfold = RemoveArrowRules(ground_unfold)
-    val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold).toList.filter(p =>
-      ! p.root.antecedent.exists(f1 =>
-        p.root.succedent.exists(f2 =>
-          f1.formula.syntaxEquals(f2.formula)
-        )
-      ))
+    val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold)
+//      .toList.filter(p =>
+//      ! p.root.antecedent.exists(f1 =>
+//        p.root.succedent.exists(f2 =>
+//          f1.formula.syntaxEquals(f2.formula)
+//        )
+//      ))
 
     projSet.foreach(p => println(printSchemaProof.sequentToString(p.root)))
     println("\n\n")
-    val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "trs.sys"))
-    ParseResSchema(new_z_subst)
+//    val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "trs.sys"))
+//    ParseResSchema(new_z_subst)
+    //hard-coded the substitution for projections : {z -> \lambda k. a}
+    fo2SubstDB.clear
+    val z = fo2Var(new VariableStringSymbol("z"))
+    val a = foVar("a")
+    val h = HOLAbs(k.asInstanceOf[Var], a)
+    fo2SubstDB.add(z.asInstanceOf[fo2Var], h)
     val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap)).toSet
     ground_proj_set.foreach(p => println(printSchemaProof.sequentToString(p.root)))
     val end_seq = if (n == 0) {

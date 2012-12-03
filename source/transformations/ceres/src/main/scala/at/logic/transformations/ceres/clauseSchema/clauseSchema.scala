@@ -920,7 +920,7 @@ abstract class sResolutionTerm {}
 //          println("Atom")
           val newAtomName = HOLConst(new ConstantStringSymbol(name.toString()), args.reverse.map(x => x.exptype).foldRight(To().asInstanceOf[TA])((x,t) => ->(x, t)))
           val unfAtom = unfoldGroundAtom2(Atom(newAtomName, args.map(x => {
-            val rez = apply(x, mapfo2)
+            val rez = apply(apply(x, mapfo2), mapfo2)
             rez.asInstanceOf[HOLExpression]
           })) )
 //          println("unfAtom = "+unfAtom)
@@ -1027,6 +1027,7 @@ abstract class sResolutionTerm {}
             if(left.root.antecedent.map(fo=>fo.formula).head.syntaxEquals(t.atom))
               println("NO 3")
             println(left.root.antecedent.map(fo=>fo.formula).head)
+            println(right.root.succedent.map(fo=>fo.formula).head)
             println(t.atom)
 
             val cut = CutRule(right, left, t.atom)

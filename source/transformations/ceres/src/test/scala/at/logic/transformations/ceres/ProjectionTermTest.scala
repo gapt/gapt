@@ -27,7 +27,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   import at.logic.language.schema._
   "ProjectionTermTest" should {
-    "create a ProjectionTerm" in {
+   /* "create a ProjectionTerm" in {
       println("\n\nProjectionTerm for the Adder.lks\n\n")
       val k = IntVar(new VariableStringSymbol("k"))
       val real_n = IntVar(new VariableStringSymbol("n"))
@@ -103,9 +103,9 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
-    }
+    }     */
 
-
+           /*
     "should extract proj.term for the journal paper" in {
       println(Console.RED+"\n\n\n\n---- ProjectionTerm for the journal paper example ----\n\n"+Console.RESET)
       SchemaProofDB.clear
@@ -183,8 +183,8 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //      println("\nfo = "+fo.formula)
 //      println("\nfosub = "+fosub)
       Success()
-    }
-         /*
+    }    */
+
     "should extract proj.term for the sEXP.lks" in {
       println(Console.BLUE+"\n\n\n\n------- ProjectionTerm for the sEXP.lks ------- \n\n"+Console.RESET)
       SchemaProofDB.clear
@@ -271,7 +271,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       println("\n\n--- END ---\n\n")
       Success()
     }
-
+             /*
     "should extract proj.term for the sINDauto.lks" in {
       println(Console.MAGENTA+"\n\n------- ProjectionTerm for the sINDauto.lks ------- "+Console.RESET)
       SchemaProofDB.clear
