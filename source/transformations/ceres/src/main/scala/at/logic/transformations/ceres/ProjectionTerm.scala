@@ -2,8 +2,7 @@ package at.logic.transformations.ceres
 
 import at.logic.algorithms.lk.getAncestors
 import at.logic.algorithms.lk.getCutAncestors
-import at.logic.calculi.lk.base.LKProof
-import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.base.{FSequent, LKProof, Sequent}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.fol.Utils
 import at.logic.language.hol.HOLConst
@@ -21,6 +20,8 @@ import at.logic.calculi.lk.propositionalRules._
 import clauseSchema.SchemaSubstitution3
 import at.logic.language.schema._
 import at.logic.algorithms.lk.getAncestors._
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.types.FSequent
 
 //import at.logic.language.schema.SchemaFormula
 import at.logic.algorithms.shlk._
@@ -759,21 +760,29 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
     // This method is used in ProofTool.
     // It should return unfolded term as a tree and the list of projections
     def apply(name: String, number: Int): (Tree[_], List[(String,LKProof)]) = {
-     // println(name)
-     // println(ProjectionTermDB.get(name))
       val gr = GroundingProjectionTerm((ProjectionTermDB.get(name.replace("step", "base")),ProjectionTermDB.get(name.replace("base", "step"))),number)
       val pt = RemoveArrowRules(UnfoldProjectionTerm(gr))
       val tree = PStructToExpressionTree(pt)
-      val l = ProjectionTermToSetOfProofs(pt).toList.filter(p =>
-        ! p.root.antecedent.exists(f1 =>
-            p.root.succedent.exists(f2 =>
-              f1.formula == f2.formula
-            )
-        ))
+      val l = ProjectionTermToSetOfProofs(pt).toList
       val proof_name = name.replace("Ξ(","").replace("_base","\n").replace("_step","\n").takeWhile(c => !c.equals('\n'))
-      val list = l.map(p => (proof_name + "↓" + number + "_proj_" + l.indexOf(p),p))
+      val fl = filterProjectionSet(l,getEndSequent(proof_name, number))
+      val list = fl.map(p => (proof_name + "↓" + number + "_proj_" + fl.indexOf(p),p))
       (tree,list)
     }
+
+  // Maybe this function can be used also in other places???
+    def getEndSequent(proof: String, number: Int): FSequent = {
+      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
+      val seq = SchemaProofDB.get(proof).seq
+      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k, applySchemaSubstitution.toIntegerTerm(number))
+      val sub = new SchemaSubstitution3(new_map)
+      FSequent(seq.antecedent.map(f => unfoldSFormula(sub(f).asInstanceOf[HOLFormula])), seq.succedent.map(f => unfoldSFormula(sub(f).asInstanceOf[HOLFormula])))
+    }
+
+    def filterProjectionSet(proofs: List[LKProof], end_seq: FSequent): List[LKProof] = proofs.filter(proof => {
+      val proj_end_seq = proof.root.toFSequent()
+      proj_end_seq.antecedent.diff(end_seq.antecedent).intersect(proj_end_seq.succedent.diff(end_seq.succedent)).isEmpty
+    })
 
     def apply(t: ProjectionTerm): ProjectionTerm = {
       t match {
