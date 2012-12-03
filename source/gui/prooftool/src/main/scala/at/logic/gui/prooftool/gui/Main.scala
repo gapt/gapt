@@ -37,7 +37,9 @@ import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, appl
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
 import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.clauseSchema.InstantiateResSchema
+import at.logic.transformations.ceres.clauseSchema.{resolutionProofSchemaDB, InstantiateResSchema}
+import at.logic.transformations.ceres.ACNF.ACNF
+import at.logic.calculi.slk.SchemaProofDB
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -540,6 +542,15 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => enabled = false
         }
       }
+      contents += new MenuItem(Action("Compute ACNF") { computeACNF() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
+      }
       contents += new MenuItem(Action("Specify Resolution Schema") { specifyResolutionSchema() } )  { border = customBorder }
       contents += new MenuItem(Action("Compute Instance") { computeInstance() } )  { border = customBorder }
     }
@@ -985,7 +996,28 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def inputMessage(message: String, values: Seq[String]) =
+  def computeACNF() {
+    if (resolutionProofSchemaDB.map.isEmpty || SchemaProofDB.proofs.isEmpty)
+      warningMessage("Either resolution resfutation schema or proof schema is missing!")
+    else try {
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+      val result = ACNFDialog(SchemaProofDB.proofs.map( pair => pair._1 ).toSeq,
+        resolutionProofSchemaDB.map.map( pair => pair._1 ).toSeq)
+      if (result != None) {
+        val input = result.get
+        val proof = ACNF(input._1, input._2, input._3)
+        db.addProofs((input._1 + "↓" + input._3 + "_acnf", proof)::Nil)
+        body.contents = new Launcher(Some(input._1 + "↓" + input._3 + "_acnf", proof), 12)
+      }
+      body.cursor = java.awt.Cursor.getDefaultCursor
+      ProofToolPublisher.publish(ProofDbChanged)
+    } catch {
+      case e: Throwable =>
+        errorMessage("Could not construct the ACNF!\n\n" + getExceptionString(e))
+    }
+  }
+
+      def inputMessage(message: String, values: Seq[String]) =
     Dialog.showInput[String](body, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values,
       if (values.isEmpty) "" else values.head)
 
