@@ -96,8 +96,8 @@ class AdderTest extends SpecificationWithJUnit {
       val ccs = cs_pruned_psi ::: cs_pruned_varphi ::: cs_pruned_phi ::: cs_pruned_chi
 
       (new FileWriter("target" + separator + "test-classes" + separator + "ccs_pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ccs.map(_.toFSequent), Nil).close
-      // specs2 require a least one Result, see org.specs2.specification.Example 
+      // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
-    }.pendingUntilFixed("needs too much memory to pass")
+    }//.pendingUntilFixed("needs too much memory to pass")
   }
 }
