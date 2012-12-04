@@ -339,6 +339,7 @@ trait LambdaFactoryProvider {
     }
   }
 
+  /* creates a fresh variable according to a given function implementing a naming convention and with a blacklist */
   object freshVar {
     //convenience method for the naming convention #number
     def apply[V <: Var](exptype: TA, disallowedVariables: Set[V], dummy: LambdaExpression) :Var =

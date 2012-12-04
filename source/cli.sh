@@ -4,7 +4,7 @@
 # the CLI jar package and runs the scala interpreter
 # (preference is given to the development version)
 
-export JARNAME="cli-1.0-SNAPSHOT-jar-with-dependencies.jar"
+export JARNAME="cli-1.2-SNAPSHOT-jar-with-dependencies.jar"
 export SCP=""
 export POSSIBLE_PATHS=`echo $PATH | sed s/:/\\ /g`
 

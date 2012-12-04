@@ -149,6 +149,7 @@ import collection.immutable
     // checks whether this sequent is of the form F :- F
     def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head.formula == succedent.head.formula
 
+    def occurrences = antecedent ++ succedent
 
     //sanity checks for free and bound variables
     def checkFormulaOccurrences(l : Seq[FormulaOccurrence]) = {

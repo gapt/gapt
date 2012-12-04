@@ -188,6 +188,8 @@ object NameReplacement {
   }
 
 
+  /* creates a mapping from elements in objects to targets. the predicate matches indicates when two elements should
+     be considered to match each */
   def find_matching[A,B](objects : immutable.List[A], targets : immutable.List[B], matches : (A,B) => Boolean  ) : immutable.Map[A,B] = {
     objects match {
       case x::xs =>
