@@ -31,69 +31,69 @@ class AdderTest extends SpecificationWithJUnit {
 
       val n = IntVar(new VariableStringSymbol("n"))
 
-      val s = StructCreators.extractStruct( "psi", n)
-      val cs : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
+      val s = StructCreators.extractStruct( "\\psi", n)
+      val ccs : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s)
 
-      val m_empty = HashMultiset[HOLFormula]()
-      var cc: at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration = (m_empty, m_empty)
-
-      val cs_pruned_psi = cs.filter( s => s.antecedent.isEmpty || s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc && sym.name == "psi"
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "varphi" => cc = sym.cut_occs
-        case _ => false
-      }
-      case _ => false
-    } ))
-
-      val cs_pruned_varphi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-       cs_pruned_varphi.foreach( s => s.succedent.foreach( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "phi" => cc = sym.cut_occs
-        case _ => false
-      }
-      case _ => false
-    } ))
-
-       val cs_pruned_phi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol if sym.name == "chi" => cc = sym.cut_occs
-        case _ => false
-      }
-      case _ => false
-    } ))
-
-      val cs_pruned_chi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
-      case IndexedPredicate(pred, _) => pred.name match {
-        case sym : ClauseSetSymbol => sym.cut_occs == cc
-        case _ => false
-      }
-      case _ => false
-    } ) )
-
-      val ccs = cs_pruned_psi ::: cs_pruned_varphi ::: cs_pruned_phi ::: cs_pruned_chi
+//      val m_empty = HashMultiset[HOLFormula]()
+//      var cc: at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration = (m_empty, m_empty)
+//
+//      val cs_pruned_psi = cs.filter( s => s.antecedent.isEmpty || s.antecedent.exists( fo => fo.formula match {
+//      case IndexedPredicate(pred, _) => pred.name match {
+//        case sym : ClauseSetSymbol => sym.cut_occs == cc && sym.name == "psi"
+//        case _ => false
+//      }
+//      case _ => false
+//    } ) )
+//
+//      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
+//      case IndexedPredicate(pred, _) => pred.name match {
+//        case sym : ClauseSetSymbol if sym.name == "varphi" => cc = sym.cut_occs
+//        case _ => false
+//      }
+//      case _ => false
+//    } ))
+//
+//      val cs_pruned_varphi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
+//      case IndexedPredicate(pred, _) => pred.name match {
+//        case sym : ClauseSetSymbol => sym.cut_occs == cc
+//        case _ => false
+//      }
+//      case _ => false
+//    } ) )
+//
+//       cs_pruned_varphi.foreach( s => s.succedent.foreach( fo => fo.formula match {
+//      case IndexedPredicate(pred, _) => pred.name match {
+//        case sym : ClauseSetSymbol if sym.name == "phi" => cc = sym.cut_occs
+//        case _ => false
+//      }
+//      case _ => false
+//    } ))
+//
+//       val cs_pruned_phi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
+//      case IndexedPredicate(pred, _) => pred.name match {
+//        case sym : ClauseSetSymbol => sym.cut_occs == cc
+//        case _ => false
+//      }
+//      case _ => false
+//    } ) )
+//
+//      cs_pruned_psi.foreach( s => s.succedent.foreach( fo => fo.formula match {
+//      case IndexedPredicate(pred, _) => pred.name match {
+//        case sym : ClauseSetSymbol if sym.name == "chi" => cc = sym.cut_occs
+//        case _ => false
+//      }
+//      case _ => false
+//    } ))
+//
+//      val cs_pruned_chi = cs.filter( s => s.antecedent.exists( fo => fo.formula match {
+//      case IndexedPredicate(pred, _) => pred.name match {
+//        case sym : ClauseSetSymbol => sym.cut_occs == cc
+//        case _ => false
+//      }
+//      case _ => false
+//    } ) )
+//
+//      val ccs = cs_pruned_psi ::: cs_pruned_varphi ::: cs_pruned_phi ::: cs_pruned_chi
 
       (new FileWriter("target" + separator + "test-classes" + separator + "ccs_pruned.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ccs.map(_.toFSequent), Nil).close
       // specs2 require a least one Result, see org.specs2.specification.Example
