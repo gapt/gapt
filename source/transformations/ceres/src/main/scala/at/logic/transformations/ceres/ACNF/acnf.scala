@@ -35,9 +35,12 @@ import java.io.File.separator
 
 
 object ACNF {
-    def plugProjections(resRefutation: LKProof, groun_proj_set: Set[LKProof]): LKProof = {
+    def plugProjections(resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: FSequent): LKProof = {
       resRefutation match {
         case Axiom(seq) => {
+          if(seq.antecedent.isEmpty && seq.succedent.isEmpty) {
+            return groun_proj_set.find(p => p.root.toFSequent == end_seq).get
+          }
           println("seq = "+printSchemaProof.sequentToString(seq))
           if(seq.antecedent.isEmpty) {
             val set = groun_proj_set.filter(p => p.root.succedent.map(fo => fo.formula).intersect(seq.succedent.map(fo => fo.formula)).nonEmpty)
@@ -53,16 +56,26 @@ object ACNF {
               set
             }
         }
-        case CutRule(up1, up2, _, a1, a2) => CutRule(plugProjections(up1, groun_proj_set), plugProjections(up2, groun_proj_set), a1.formula)
-        case ContractionLeftRule(up1, _, a1, a2, p) => ContractionLeftRule(plugProjections(up1, groun_proj_set), a1.formula)
-        case ContractionRightRule(up1, _, a1, a2, p) => ContractionRightRule(plugProjections(up1, groun_proj_set), a1.formula)
+        case CutRule(up1, up2, _, a1, a2) => {
+          val pr1 = plugProjections(up1, groun_proj_set, end_seq)
+          val pr2 = plugProjections(up2, groun_proj_set, end_seq)
+          println("pr1:")
+          printSchemaProof(pr1)
+          println("pr2:")
+          printSchemaProof(pr2)
+          CutRule(pr1, pr2, a1.formula)
+        }
+        case ContractionLeftRule(up1, _, a1, a2, p) => ContractionLeftRule(plugProjections(up1, groun_proj_set, end_seq), a1.formula)
+        case ContractionRightRule(up1, _, a1, a2, p) => ContractionRightRule(plugProjections(up1, groun_proj_set, end_seq), a1.formula)
         case _ => throw new Exception("\nMissing case in acnf !\n")
       }
     }
 
   //for the usual CERES method
-  def apply(resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: FSequent): LKProof = {
-    val p = plugProjections(resRefutation, groun_proj_set)
+  //TODO: The way it constructs the ACNF should be slightly changed in a way that it should use mapping from a clause to a projection
+  def apply(resRefutation: LKProof, ground_proj_set: Set[LKProof], end_seq: FSequent): LKProof = {
+    val filtered_ground_proj_set = filterProjectionSet(ground_proj_set.toList, end_seq).toSet
+    val p = plugProjections(resRefutation, filtered_ground_proj_set, end_seq)
     contractionNormalForm(p)
   }
 

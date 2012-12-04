@@ -27,26 +27,37 @@ import at.logic.gui.prooftool.gui.Main
 class ACNFTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   "ACNFTest" should {
-    "integration test should create correctly the ACNF for journal_example.lks" in {
-      println(Console.BLUE+"\n\n\n\n------- ACNF for the journal example ------- \n\n"+Console.RESET)
+    "should create correctly the ACNF for journal_example.lks" in {
+      println(Console.BLUE+"\n\n\n\n------- ACNF for the journal example instance  > 0 ------- \n\n"+Console.RESET)
       val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
       val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
       val p = ACNF("\\varphi", "\\rho_1", 2)
-//      printSchemaProof(p)
-//      Main.display("ACNF", p) ; while(true){}
+      //      printSchemaProof(p)
+      println("\n\n--- END ---\n\n")
+      ok
+    }
+
+    "should create correctly the ACNF for journal_example.lks" in {
+      println(Console.BLUE+"\n\n\n\n------- ACNF for the journal example instance = 0 ------- \n\n"+Console.RESET)
+      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
+      val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
+      val map = sFOParser.parseProof(s1)
+      ParseResSchema(s2)
+      val p = ACNF("\\varphi", "\\rho_1", 0)
+      printSchemaProof(p)
       println("\n\n--- END ---\n\n")
       ok
     }
 
     "should create correctly the ACNF for sEXP.lks" in {
-      println(Console.BLUE+"\n\n\n\n------- ACNF for the sEXP ------- \n\n"+Console.RESET)
+      println(Console.BLUE+"\n\n\n\n------- ACNF for the sEXP instance > 0 ------- \n\n"+Console.RESET)
       val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
       val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema_sEXP.rs"))
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
-      val p = ACNF("\\psi", "\\rho_1", 2)
+      val p = ACNF("\\psi", "\\rho_1", 1)
       //      printSchemaProof(p)
 
       //      val pair = InstantiateResSchema.getCorrectTermAndSubst("\\rho_1",1)
@@ -58,8 +69,18 @@ class ACNFTest extends SpecificationWithJUnit {
       //      val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
       ////      val proof = ResDeductionToLKTree(fo2sub)
       //      println("\n\nfo2sub = "+fo2sub)
+      println("\n\n--- END ---\n\n")
+      ok
+    }
 
-//      Main.display("ACNF", p) ; while(true){}
+    "should create correctly the ACNF for sEXP.lks" in {
+      println(Console.BLUE+"\n\n\n\n------- ACNF for the sEXP instance = 0 ------- \n\n"+Console.RESET)
+      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
+      val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema_sEXP.rs"))
+      val map = sFOParser.parseProof(s1)
+      ParseResSchema(s2)
+      val p = ACNF("\\psi", "\\rho_1", 0)
+      //      printSchemaProof(p)
       println("\n\n--- END ---\n\n")
       ok
     }
