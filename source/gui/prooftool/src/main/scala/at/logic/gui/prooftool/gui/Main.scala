@@ -276,6 +276,8 @@ object Main extends SimpleSwingApplication {
     if (proofs.size > 0) body.contents = new Launcher(Some(proofs.head), fontSize)
     else if (db.getSequentLists.size > 0)
       body.contents = new Launcher(Some(db.getSequentLists.head), fontSize)
+    else if (db.getTermTrees.size > 0)
+      body.contents = new Launcher(Some((db.getTermTrees.head._1,db.getTermTrees.head._3)), fontSize)
     else body.contents = new Launcher(None, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -542,15 +544,7 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => enabled = false
         }
       }
-      contents += new MenuItem(Action("Compute ACNF") { computeACNF() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
-        }
-      }
+      contents += new MenuItem(Action("Compute ACNF") { computeACNF() }) { border = customBorder }
       contents += new MenuItem(Action("Specify Resolution Schema") { specifyResolutionSchema() } )  { border = customBorder }
       contents += new MenuItem(Action("Compute Instance") { computeInstance() } )  { border = customBorder }
     }
@@ -997,12 +991,16 @@ object Main extends SimpleSwingApplication {
   }
 
   def computeACNF() {
-    if (resolutionProofSchemaDB.map.isEmpty || SchemaProofDB.proofs.isEmpty)
-      warningMessage("Either resolution resfutation schema or proof schema is missing!")
+    if (SchemaProofDB.proofs.isEmpty)
+      warningMessage("Proof schema is missing!")
+    else if (resolutionProofSchemaDB.map.isEmpty) {
+      warningMessage("Please specify the resolution refutation schema!")
+      specifyResolutionSchema()
+    }
     else try {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      val result = ACNFDialog(SchemaProofDB.proofs.map( pair => pair._1 ).toSeq,
-        resolutionProofSchemaDB.map.map( pair => pair._1 ).toSeq)
+      val result = ACNFDialog(SchemaProofDB.proofs.map( pair => pair._1 ).toSeq.reverse,
+        resolutionProofSchemaDB.map.map( pair => pair._1 ).toSeq.reverse)
       if (result != None) {
         val input = result.get
         val proof = ACNF(input._1, input._2, input._3)

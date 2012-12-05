@@ -27,6 +27,7 @@ import at.logic.provers.prover9.ivy.IvyParser
 import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
 import at.logic.transformations.ceres.clauseSchema._
+import at.logic.calculi.slk.SchemaProofDB
 
 class FileParser {
 
@@ -35,21 +36,26 @@ class FileParser {
   def gzFileStreamReader(f: String) = new InputStreamReader(new GZIPInputStream(new FileInputStream(f)), "UTF8")
 
   def ceresFileReader(input: InputStreamReader) {
+    SchemaProofDB.clear
+    resolutionProofSchemaDB.clear
     proofs = Nil
     termTrees = Nil
     proofdb = (new XMLReader(input) with XMLProofDatabaseParser).getProofDatabase()
   }
 
   def stabFileReader(input: InputStreamReader) {
+    SchemaProofDB.clear
+    resolutionProofSchemaDB.clear
     termTrees = Nil
     proofdb = new ProofDatabase(Map(), Nil, Nil, Nil)
     proofs = (new XMLReader(input) with SimpleXMLProofParser).getNamedTrees()
   }
 
   def lksFileReader(input: InputStreamReader) {
+    resolutionProofSchemaDB.clear
     proofs = Nil
     termTrees = Nil
-    val ps = sFOParser.parseProofs(input) // constructs dbTRS as side effect.
+    val ps = sFOParser.parseProofs(input) // constructs dbTRS as a side effect.
     val defs = dbTRS.map.map(p => p._2._1::p._2._2::Nil).flatten.toMap[HOLExpression,HOLExpression]
     //  val start = System.currentTimeMillis()
     proofdb = new ProofDatabase(defs, ps, Nil, Nil)
@@ -58,12 +64,12 @@ class FileParser {
   }
 
   def rsFileReader(input: InputStreamReader) {
-    ParseResSchema(input) // constructs resolutionProofSchemaDB and dbTRS as side effect.
+    ParseResSchema(input) // constructs resolutionProofSchemaDB and dbTRS as a side effect.
     termTrees = resolutionProofSchemaDB.map.map(p => {
         val p212 = p._2._1._2
         val p222 = p._2._2._2
         (p._1, TermType.ResolutionTerm, rTermToTree(p212))::(p._1, TermType.ResolutionTerm, rTermToTree(p222))::Nil
-      }).flatten.toList ::: termTrees
+      }).flatten.toList ::: termTrees.filterNot(tpl => tpl._2 == TermType.ResolutionTerm) // The filter removes old resolution terms.
     val defs = dbTRS.map.map(p => p._2._1::p._2._2::Nil).flatten.toMap[HOLExpression,HOLExpression]
     addDefinitions(defs)
   }
