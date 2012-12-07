@@ -76,6 +76,8 @@ object StripNeg {
 /**
  * the sequences are actually multisets, as can be seen from the equal method
  */
+// TODO: make a class out of this?? (That extends sequent, maybe) I did not manage to reuse it where I wanted... 
+// Too many castings and adaptations had to be done (seqs to sets or lists, Formulas to FOLFormulas, etc) :(
 trait FClause {
   def neg:Seq[Formula]
   def pos:Seq[Formula]

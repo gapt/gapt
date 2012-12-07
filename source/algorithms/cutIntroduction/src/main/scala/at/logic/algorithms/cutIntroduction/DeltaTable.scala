@@ -19,7 +19,7 @@ class DeltaTableException(msg: String) extends Exception(msg)
 
 class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
    
-  var table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
+  val table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
 
   // Fills the delta table with some terms
 

@@ -137,13 +137,21 @@ object Utils {
     }
   }
 
-  // Generates a conjunction from a list of formulas
-  def conjunction(forms: List[FOLFormula]) : FOLFormula = forms match {
-    case Nil => throw new Exception("ERROR: Cannot generate a conjunction of an empty list.")
-    case f :: Nil => f
-    case f :: t => And(conjunction(t), f)
+  // Iterated disjunction
+  // Assume that fs is nonempty
+  def orN(fs: List[FOLFormula]) : FOLFormula = fs match {
+    case Nil => throw new Exception("ERROR: Cannot generate a disjunction of an empty list.")
+    case f::Nil => f
+    case f::rest => Or(f, orN( rest ) )
   }
-
+  
+  // Iterated conjunction
+  // Assume that fs is nonempty
+  def andN(fs: List[FOLFormula]) : FOLFormula = fs match {
+    case Nil => throw new Exception("ERROR: Cannot generate a conjunction of an empty list.")
+    case f::Nil => f
+    case f::rest => And(f, andN( rest ) )
+  }
 
   // TODO: maybe these functions should go to listSupport in dssupport in the
   // utils project.

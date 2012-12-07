@@ -12,28 +12,29 @@ import scala.collection.mutable.HashMap
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.fol._
-import TermsExtraction._
-import Decomposition._
+import CutIntroduction._
 
-/*
 @RunWith(classOf[JUnitRunner])
 class ForgetfulResolutionTest extends SpecificationWithJUnit {
 
   "Forgetful Resolution Should" should {
     
     "compute a single resolvent successfully" in {
-      val a = Atom(new ConstantStringSymbol("A"))
-      val b = Atom(new ConstantStringSymbol("B"))
-      val c = Atom(new ConstantStringSymbol("C"))
-      val d = Atom(new ConstantStringSymbol("D"))
-      val e = Atom(new ConstantStringSymbol("E"))
+      val a = Atom(new ConstantStringSymbol("A"), Nil)
+      val b = Atom(new ConstantStringSymbol("B"), Nil)
+      val c = Atom(new ConstantStringSymbol("C"), Nil)
+      val d = Atom(new ConstantStringSymbol("D"), Nil)
+      val e = Atom(new ConstantStringSymbol("E"), Nil)
 
       val f = And(And(Or(a,Or(b,c)), Or(Neg(b), d)), e)
 
       val res = ForgetfulResolve(f)
 
-      res.size mustBe( 1 )
+      //println("Formula (in CNF): " + f)
+      //println("Resolvent: " + res)
+
+      res.size must beEqualTo(2) // It was 1... isn't it 2?
     }
   }
 }
-*/
+

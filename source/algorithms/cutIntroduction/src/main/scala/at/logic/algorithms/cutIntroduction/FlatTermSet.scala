@@ -36,16 +36,14 @@ class FlatTermSet(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) {
   var formulaFunction = new HashMap[ConstantStringSymbol, FormulaOccurrence]
   var termset : List[FOLTerm] = Nil
 
-  //def apply(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) = {
-    terms.foreach{
-      case (f, lst) =>
-        val functionSymbol = new TupleFunction
-        formulaFunction += (functionSymbol.symbol -> f)
-        termset = lst.foldRight(termset) {
-          case (tuple, acc) => Function(functionSymbol.symbol, tuple) :: acc
-        }
-    }
-  //}
+  terms.foreach{
+    case (f, lst) =>
+      val functionSymbol = new TupleFunction
+      formulaFunction += (functionSymbol.symbol -> f)
+      termset = lst.foldRight(termset) {
+        case (tuple, acc) => Function(functionSymbol.symbol, tuple) :: acc
+      }
+  }
 
   def getFormula(t: FOLTerm) = t match {
     case Function(symbol, _) => formulaFunction(symbol.asInstanceOf[ConstantStringSymbol])

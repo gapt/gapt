@@ -25,8 +25,6 @@ import at.logic.calculi.resolution.base.FClause
 
   /**
    * computes the set CNF^-
-   * Formulas must be regular and weakly quantified
-   * (see Issue 196)
    */
   object CNFn {
     def apply(f: HOLFormula): Set[FClause] = f match {

@@ -167,9 +167,9 @@ object TermsExtraction {
       val anc = keys.filter(x => ancestorsAux.contains(x)).toList
       if(anc.length == 1){
         val a = anc(0)
-        var terms = map(a)
+        val terms = map(a)
         // Append the new terms to every list in terms
-        var newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
+        val newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
         val auxmap = map - a
         auxmap += (prin -> newterms)
       }
@@ -186,7 +186,7 @@ object TermsExtraction {
         val a = anc(0)
         val terms = map(a)
         // Append the new terms to every list in terms
-        var newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
+        val newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
         val auxmap = map - a
         auxmap += (prin -> newterms)
       }
