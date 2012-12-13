@@ -85,7 +85,7 @@ object ACNF {
     //the resolution proof
     val resDeduction = InstantiateResSchema(res_schema_name, n)._2
     println("resDeduction :")
-    printSchemaProof(resDeduction)
+//    printSchemaProof(resDeduction)
     //computing the projections
     val p1base = SchemaProofDB.get(proof_name).base
     val p1rec = SchemaProofDB.get(proof_name).rec
@@ -102,7 +102,7 @@ object ACNF {
 //        )
 //      ))
 
-    projSet.foreach(p => println(printSchemaProof.sequentToString(p.root)))
+//    projSet.foreach(p => println(printSchemaProof.sequentToString(p.root)))
     println("\n\n")
 //    val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "trs.sys"))
 //    ParseResSchema(new_z_subst)
@@ -113,7 +113,7 @@ object ACNF {
     val h = HOLAbs(k.asInstanceOf[Var], a)
     fo2SubstDB.add(z.asInstanceOf[fo2Var], h)
     val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap)).toSet
-    ground_proj_set.foreach(p => println(printSchemaProof.sequentToString(p.root)))
+//    ground_proj_set.foreach(p => println(printSchemaProof.sequentToString(p.root)))
     val end_seq = if (n == 0) {
       val ro = p1base.root
       val new_map1 = scala.collection.immutable.Map.empty[Var, HOLExpression] + Pair(k, IntZero() )

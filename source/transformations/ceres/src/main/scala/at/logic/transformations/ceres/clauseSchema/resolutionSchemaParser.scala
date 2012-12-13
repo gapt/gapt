@@ -45,7 +45,7 @@ object ParseResSchema {
         }
       }
 
-      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ ( s_term | FOVariable )~ "}" ^^ {
+      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ ( s_term | FOVariable | indexedVar | fo_term)~ "}" ^^ {
         case "{" ~ z ~ "<-" ~ "\\lambda" ~ k ~ "." ~ sterm_or_fovar ~ "}" => {
           val h = HOLAbs(k.asInstanceOf[Var], sterm_or_fovar)
           fo2SubstDB.add(z.asInstanceOf[fo2Var], h)

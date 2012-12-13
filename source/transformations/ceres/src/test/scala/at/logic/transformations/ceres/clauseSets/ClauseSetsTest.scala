@@ -21,8 +21,11 @@ import at.logic.calculi.slk.SchemaProofDB
 import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.lk.base.Sequent
-import at.logic.language.schema.IntVar
 import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
+import at.logic.language.lambda.typedLambdaCalculus.Var
+import at.logic.language.schema.Pred._
+import at.logic.transformations.ceres.clauseSchema.SchemaSubstitution3
+import at.logic.language.schema._
 
 @RunWith(classOf[JUnitRunner])
 class ClauseSetsTest extends SpecificationWithJUnit {
@@ -76,12 +79,22 @@ class ClauseSetsTest extends SpecificationWithJUnit {
       println("\n\n")
 //      println("rename cl symbols to CL_i(k): ")
       val n = IntVar(new VariableStringSymbol("n"))
-      val struct = StructCreators.extractStruct( "\\psi", n)
+//      val struct = StructCreators.extractStruct( "\\psi", n)
+      val struct = StructCreators.extract(p1s, getCutAncestors(p1s))
       val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(struct) ))
       val pair = renameCLsymbols(cs)
 //      println("map:\n" + pair._2)
 //      println("\n\n\n\n")
 //      println("rename:\n" + pair._1)
+      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(IntZero()) )
+      var subst = new SchemaSubstitution3(new_map)
+      val gr = groundStruct(struct, subst)
+      println("\nground struct : \n"+gr)
+      val unfold_gr = unfoldGroundStruct(gr)
+      println("\nunfold ground struct : \n"+unfold_gr)
+
+      val cs_gr = StandardClauseSet.transformStructToClauseSet(gr)
+//      println("\nground struct : \n"+cs_gr)
       println("\n\n\n\n")
       ok
     }

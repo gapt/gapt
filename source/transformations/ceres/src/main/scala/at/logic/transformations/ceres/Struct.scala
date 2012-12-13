@@ -9,7 +9,7 @@ package at.logic.transformations.ceres
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.{HOLConst, HOLFormula,HOLExpression}
+import at.logic.language.hol.{HOLConst, HOLFormula,HOLExpression, HOLApp}
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
@@ -36,6 +36,9 @@ import clauseSets.StandardClauseSet._
 package struct {
 
 import at.logic.algorithms.shlk._
+import clauseSchema.SchemaSubstitution3
+import at.logic.language.hol.HOLAppFormula
+import at.logic.language.schema.Pred
 
 trait Struct
 
@@ -522,4 +525,82 @@ import at.logic.language.schema.SchemaFormula
 //      case s1::tail => new Times() with Labeled {type T = LKProof, def label: LKProof =  }
     }
   }
+
+
+  //returns an arithmetically ground struct
+  object groundStruct {
+    def apply(s: Struct, subst: SchemaSubstitution3) : Struct = {
+      s match {
+        case A(fo) => {
+//          println("\nfo.formula = "+fo.formula)
+//          println("fo.formula.getClass = "+fo.formula.getClass)
+          fo.formula match {
+            case IndexedPredicate(f,l) => f.name match {
+              case clsym: ClauseSetSymbol => {
+//                println("clsym = ("+clsym.name+","+l.head+")")
+                return A(fo.factory.createFormulaOccurrence(subst(fo.formula).asInstanceOf[HOLFormula], Nil))
+              }
+              case _ => {}//println("IndexedPredicate")
+            }
+            case _ => {}//println("complex f-la")
+          }
+          A(fo.factory.createFormulaOccurrence(subst(fo.formula).asInstanceOf[HOLFormula], Nil))
+        }
+        case Dual(sub) => Dual(apply(sub, subst))
+        case Times(left, right, foList) => Times(apply(left, subst), apply(right, subst), foList.map(fo => fo.factory.createFormulaOccurrence(subst(fo.formula).asInstanceOf[HOLFormula], Nil)))
+        case Plus(left, right) => Plus(apply(left, subst), apply(right, subst))
+        case _ => s
+      }
+    }
+  }
+
+
+  //unfolds an arithmetically ground struct
+  object unfoldGroundStruct {
+    def apply(s: Struct) : Struct = {
+      s match {
+        case A(fo) => {
+          println("\n\nfo.formula = "+fo.formula)
+//          println("fo.formula.getClass = "+fo.formula.getClass)
+          fo.formula match {
+            case HOLApp(f,l) => f.asInstanceOf[HOLConst].name match {
+//            case IndexedPredicate(f,l) => f.name match {
+              case clsym: ClauseSetSymbol => {
+                if(l == IntZero()) {
+                  val base = SchemaProofDB.get(clsym.name).base
+                  //TODO: take into account the omega-ancestors
+                  return StructCreators.extract(base, getCutAncestors(base))
+                }
+                println("clsym = ("+clsym.name+","+l+")")
+                val step = SchemaProofDB.get(clsym.name).rec
+                //TODO: take into account the omega-ancestors
+                val struct = StructCreators.extract(step, getCutAncestors(step))
+                println("struct : "+struct)
+                val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(l.asInstanceOf[IntegerTerm]))
+                val new_subst = new SchemaSubstitution3(new_map)
+                val gr_struct = groundStruct(struct, new_subst)
+                println("ground struct : "+gr_struct)
+                return unfoldGroundStruct(gr_struct)
+              }
+              case _ => {
+                println("f.name = "+f.asInstanceOf[HOLConst].name)
+                if(f.asInstanceOf[HOLConst].name.toString().contains("cl^"))
+                  println("proof_name = "+f.asInstanceOf[HOLConst].name.asInstanceOf[ClauseSetSymbol].name)
+                println("isClauseSetSym = "+f.asInstanceOf[HOLConst].name)
+                println("IndexedPredicate")
+              }
+            }
+            case _ => println("complex f-la")
+          }
+          A(fo.factory.createFormulaOccurrence(fo.formula, Nil))
+        }
+        case Dual(sub) => Dual(apply(sub))
+        case Times(left, right, foList) => Times(apply(left), apply(right), foList.map(fo => fo.factory.createFormulaOccurrence(fo.formula, Nil)))
+        case Plus(left, right) => Plus(apply(left), apply(right))
+        case _ => s
+      }
+    }
+  }
 }
+
+

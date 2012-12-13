@@ -43,7 +43,7 @@ class ACNFTest extends SpecificationWithJUnit {
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
       val p = ACNF("\\varphi", "\\rho_1", 0)
-      printSchemaProof(p)
+//      printSchemaProof(p)
       println("\n\n--- END ---\n\n")
       ok
     }

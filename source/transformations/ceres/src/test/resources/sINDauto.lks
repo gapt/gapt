@@ -5,13 +5,13 @@ proof \varphi  proves
 Forall x (Imp P(x) P(f(x))) |- Forall x (Imp P(x) P(f(g(k,x))))
 
 base {
-    1:      ax(P(a) |- P(a))
-    2:      ax(P(f(g(0,a))) |- P(f(g(0,a))))
-    3:      arrowL(2, P(f(g(0,a))))
-    4:      impL(1, 3, P(a), P(f(a)))
-    5:      impR(4, P(a), P(f(g(0,a))))
-    6:      allL(5, Imp P(a) P(f(a)), Forall x (Imp P(x) P(f(x))), a)
-    root:   allR(6, Imp P(a) P(f(g(0,a))), Forall x (Imp P(x) P(f(g(0,x)))), a)
+    1:      ax(P(z(0)) |- P(z(0)))
+    2:      ax(P(f(g(0,z(0)))) |- P(f(g(0,z(0)))))
+    3:      arrowL(2, P(f(g(0,z(0)))))
+    4:      impL(1, 3, P(z(0)), P(f(z(0))))
+    5:      impR(4, P(z(0)), P(f(g(0,z(0)))))
+    6:      allL(5, Imp P(z(0)) P(f(z(0))), Forall x (Imp P(x) P(f(x))), z(0))
+    root:   allR(6, Imp P(z(0)) P(f(g(0,z(0)))), Forall x (Imp P(x) P(f(g(0,x)))), z(0))
 }
 
 step {
