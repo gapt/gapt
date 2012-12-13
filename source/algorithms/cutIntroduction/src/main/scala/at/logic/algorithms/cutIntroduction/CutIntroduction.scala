@@ -224,7 +224,7 @@ object CutIntroduction {
   {
     val clauses = CNFp(f).map(c => toMyFClause(c))
     clauses.foldLeft(List[FOLFormula]())( (list, c1) => 
-      list ::: (clauses - c1).foldLeft(List[FOLFormula]())( (list2, c2) => 
+      list ::: clauses.dropWhile( _ != c1).foldLeft(List[FOLFormula]())( (list2, c2) => 
         if (resolvable(c1, c2))
           CNFtoFormula( (clauses.filterNot(c => c == c1 || c == c2 ) + resolve(c1, c2)).toList )::list2
         else

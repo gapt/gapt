@@ -33,7 +33,7 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       //println("Formula (in CNF): " + f)
       //println("Resolvent: " + res)
 
-      res.size must beEqualTo(2) // It was 1... isn't it 2?
+      res.size must beEqualTo(1)
     }
   }
 }
