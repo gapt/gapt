@@ -45,9 +45,20 @@ object Main {
     Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
   def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
   def main(args: Array[String]) {
+    if (args.length < 1) {
+      println(helpmsg)
+      return
+    }
     val prover = new Prover[Clause]{}
     prover.refute(Stream.cons(SetClausesCommand((new FileReader(args(0)) with SimpleResolutionParserFOL).getClauseList), stream)).next
   }
+
+  val helpmsg =
+    """
+      |usage: java -Xss2m -Xmx2g -cp $PATH_TO_JAR -jar atp-1.0-SNAPSHOT-main.jar filename
+    """.stripMargin
+
+
 }
 
 class ProverException(msg: String) extends Exception(msg)
