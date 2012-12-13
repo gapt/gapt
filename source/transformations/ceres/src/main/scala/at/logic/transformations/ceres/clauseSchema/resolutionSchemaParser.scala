@@ -13,6 +13,7 @@ import at.logic.language.lambda.types.Definitions._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.language.schema.{sIndTerm, foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+import at.logic.algorithms.shlk.{StepMinusOne, applySchemaSubstitution}
 
 object ParseResSchema {
 
@@ -58,17 +59,17 @@ object ParseResSchema {
             case sTerm(func1, i1, arg1) =>
               t2 match {
                 case sTerm(func2, i2, arg2) => {
-                  //                  if(func1 == func2) {
-                  dbTRS.add(func1.asInstanceOf[HOLConst], Tuple2(t1,base), Tuple2(t2, step))
-                  //                  }
+                  if (dbTRS.getOption(func1.asInstanceOf[HOLConst]) == None || dbTRS.get(func1.asInstanceOf[HOLConst]) == ((t1,base), (t2, step))) {
+                    dbTRS.add(func1.asInstanceOf[HOLConst], Tuple2(t1,base), Tuple2(t2, step))
+                  } else throw new Exception("Cannot (re)define the function "+func1.asInstanceOf[HOLConst].name.toString())
                 }
               }
             case sIndTerm(func1, i1) =>
               t2 match {
                 case sIndTerm(func2, i2) => {
-                  //                  if(func1 == func2) {
-                  dbTRS.add(func1.asInstanceOf[HOLConst], Tuple2(t1,base), Tuple2(t2, step))
-                  //                  }
+                  if (dbTRS.getOption(func1) == None || dbTRS.get(func1) == ((t1,base), (t2, step))) {
+                    dbTRS.add(func1, Tuple2(t1,base), Tuple2(t2, step))
+                  } else throw new Exception("Cannot (re)define the function "+func1.name.toString())
                 }
               }
           }
@@ -99,7 +100,7 @@ object ParseResSchema {
           ResolutionProofSchema("\\rho"+str, ind::fo2v::Nil)
       }
 
-      def fo2var: Parser[HOLVar] = "z" ^^ {
+      def fo2var: Parser[HOLVar] = """[z][_]*[0-9]*""".r ^^ {
         case str => {
 //          println("fo2var")
           fo2Var(new VariableStringSymbol(str))
@@ -130,20 +131,21 @@ object ParseResSchema {
       def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
       def intTerm: Parser[HOLExpression] = index //| schemaFormula
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
-      def intConst: Parser[IntegerTerm] = (intZero | intOne | intTwo | intThree)
-      def intOne :  Parser[IntegerTerm] = "1".r ^^ { case x => {  Succ(IntZero())}}
-      def intTwo :  Parser[IntegerTerm] = "2".r ^^ { case x => {  Succ(Succ(IntZero()))}}
-      def intThree: Parser[IntegerTerm] = "3".r ^^ { case x => {  Succ(Succ(Succ(IntZero())))}}
-      def intZero:  Parser[IntegerTerm] = "0".r ^^ { case x => {  IntZero()}
-      }
+      def intConst: Parser[IntegerTerm] = """[0-9]+""".r ^^ { case x => { applySchemaSubstitution.toIntegerTerm(x.toInt) }} //(intZero | intOne | intTwo | intThree)
+//      def intOne :  Parser[IntegerTerm] = "1".r ^^ { case x => {  Succ(IntZero())}}
+//      def intTwo :  Parser[IntegerTerm] = "2".r ^^ { case x => {  Succ(Succ(IntZero()))}}
+//      def intThree: Parser[IntegerTerm] = "3".r ^^ { case x => {  Succ(Succ(Succ(IntZero())))}}
+//      def intZero:  Parser[IntegerTerm] = "0".r ^^ { case x => {  IntZero()}}
 
       def sum : Parser[IntegerTerm] = intVar ~ "+" ~ intConst ^^ {case indV ~ "+" ~ indC => {
         //        println("\n\nsum")
-        indC match {
-          case Succ(IntZero()) => Succ(indV)
-          case Succ(Succ(IntZero())) => Succ(Succ(indV))
-          case Succ(Succ(Succ(IntZero()))) => Succ(Succ(Succ(indV)))
-        }}}
+//        indC match {
+//          case Succ(IntZero()) => Succ(indV)
+//          case Succ(Succ(IntZero())) => Succ(Succ(indV))
+//          case Succ(Succ(Succ(IntZero()))) => Succ(Succ(Succ(indV)))
+//        }
+        StepMinusOne.indVarPlusIndConst(indV, indC)
+      }}
 
       def intVar: Parser[IntVar] = "[i,j,m,n,k,x]".r ^^ {
         case x => { /*println("\n\nintVar");*/ IntVar(new VariableStringSymbol(x))}

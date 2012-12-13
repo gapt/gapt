@@ -61,6 +61,7 @@ object foTerm {
 object dbTRS extends Iterable[(HOLConst, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]])] {
   val map = new scala.collection.mutable.HashMap[HOLConst, Tuple2[Tuple2[HOLExpression, HOLExpression], Tuple2[HOLExpression, HOLExpression]]]
   def get(name: HOLConst) = map(name)
+  def getOption(name: HOLConst) = map.get(name)
   def clear = map.clear
   def add(term: HOLConst, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): Unit = {
     map.put(term, Tuple2(base, step))

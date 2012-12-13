@@ -591,6 +591,12 @@ import at.logic.language.hol._
       }
     }
 
+  def indVarPlusIndConst(v: IntVar, c: IntegerTerm): IntegerTerm = c match {
+    case IntZero() => v
+    case Succ(i) => Succ(indVarPlusIndConst(v, i))
+    case _ => throw new Exception(c.toString + " is not a constant!")
+  }
+
 
 //----------------------
 
