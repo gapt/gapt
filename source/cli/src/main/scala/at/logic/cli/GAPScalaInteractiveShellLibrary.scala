@@ -99,6 +99,7 @@ import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.provers.prover9.Prover9
 import collection.immutable
 import at.logic.algorithms.rewriting.NameReplacement
+import at.logic.algorithms.resolution._
 
 object loadProofs {
     def apply(file: String) =
@@ -343,6 +344,33 @@ object loadProofDB {
     def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.TermsExtraction( p )
   }
 
+  object smallestDecomposition {
+    def apply ( terms : List[FOLTerm] ) = {
+      val decompositions = Decomposition(terms).sortWith((d1, d2) =>
+        d1._1.length + d1._2.length < d2._1.length + d2._2.length
+      )
+
+      // TODO: this throws an expection if no decomposition is found
+      decompositions.head
+    }
+  }
+
+  object termsExtractionFlat {
+    def apply( p: LKProof ) = 
+      new FlatTermSet(TermsExtraction(p))
+  }
+
+  object EHSFromDecomp {
+    def apply( es: Sequent, d: (List[FOLTerm], List[FOLTerm]), flatterms: FlatTermSet ) =
+      new ExtendedHerbrandSequent(es, d, flatterms)
+  }
+  
+  object improveCanonicalSolution {
+    def apply( ehs: ExtendedHerbrandSequent ) =
+      CutIntroduction.improveSolution(ehs.canonicalSol, ehs)
+  }
+  
+  /*
   object termsExtractionFlat {
     def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.TermsExtraction( p ).
     //foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
@@ -351,6 +379,11 @@ object loadProofDB {
           lst ++ ac
         )
       )
+  }
+  */
+
+  object toClauses {
+    def apply( f: HOLFormula ) = CNFp(f)
   }
 
   object cutIntro {
@@ -567,7 +600,7 @@ object loadProofDB {
   }
 
   object prooftool {
-    def apply(p: AnyRef) = Main.display("proof", p)
+    def apply(x: AnyRef) = Main.display("From CLI", x)
   }
 
   object findDefinitions {
@@ -837,6 +870,7 @@ object hol2fol {
      |   prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file
      |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
      |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
+     |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
      |
      | Proof Theory:
      |   skolemize: LKProof => LKProof - skolemize the input proof
@@ -853,7 +887,10 @@ object hol2fol {
      | Cut-Introduction:
      |   cutIntro: LKProof => Option[LKProof]
      |   termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof
-     |   termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)
+     |   termsExtractionFlat: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)
+     |   smallestDecomposition: List[FOLTerm] => List[(List[FOLTerm], List[FOLTerm])] - computes the smallest decomposition (wrt symbolic complexity) of the given list of terms
+     |   EHSFromDecomp: Sequent,(List[FOLTerm], List[FOLTerm]), FlatTermSet => ExtendedHerbrandSequent - computes a Extended Herbrand Sequent from the given data
+     |   improveCanonicalSolution: ExtendedHerbrandSequent => List[FOLFormula] - produces the list of solutions that can be derived from the canonical solution by forgetful resolution.
      |
      | Proof Examples:
      |   LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction

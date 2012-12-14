@@ -38,6 +38,14 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
           layout(new DrawList(list, fSize)) = c
           ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
+        case set: Set[AnyRef] => // use the case for lists for sets, too
+          layout(new DrawList(set.toList, fSize)) = c
+          ProofToolPublisher.publish(UnLoaded)
+          StructPublisher.publish(UnLoaded)
+        case formula: HOLFormula => // use the case for lists for single formulas, too
+          layout(new DrawList(formula::Nil, fSize)) = c
+          ProofToolPublisher.publish(UnLoaded)
+          StructPublisher.publish(UnLoaded)
         case fSequent: FSequent =>
           layout(new DrawHerbrandSequent[HOLFormula]((fSequent.antecedent,fSequent.succedent), fSize)) = c
           ProofToolPublisher.publish(UnLoaded)

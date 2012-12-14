@@ -141,14 +141,14 @@ trait FOLFormula extends FOLExpression with HOLFormula {
   // Distribute Ors over Ands
   def distribute : FOLFormula = this match {
     case Atom(_,_) => this
-    case Function(_,_) => this
+    //case Function(_,_) => this
     // Negation has only atomic scope
     case Neg(Atom(_,_)) => this
-    case Neg(Function(_,_)) => this
+    //case Neg(Function(_,_)) => this
     case And(f1, f2) => And(f1.distribute, f2.distribute)
     case Or(f1, And(f2,f3)) => And(Or(f1,f2).distribute, Or(f1,f3).distribute)
     case Or(And(f1,f2), f3) => And(Or(f1,f3).distribute, Or(f2,f3).distribute)
-    case Or(f1, f2) => Or(f1.distribute, f2.distribute).distribute
+    case Or(f1, f2) => Or(f1.distribute, f2.distribute)
     case _ => throw new Exception("ERROR: Unexpected case while distributing Ors over Ands.")
   }
 

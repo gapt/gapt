@@ -264,7 +264,10 @@ object CutIntroduction {
   // TODO: not beeing used currently
   // The canonical solution computed already has only the quantified formulas 
   // from the end-sequent (propositional part is ignored).
-  def improveCanonicalSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : FOLFormula = {
+  //
+  // returns the list of improved solutions found by the forgetful resolution
+  // algorithm.
+  def improveSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : List[FOLFormula] = {
 
     // Remove quantifier 
     val (x, f) = sol match {
@@ -275,23 +278,22 @@ object CutIntroduction {
     // Transform to conjunctive normal form
     val cnf = f.toCNF
 
-    // Exhaustive search over the resolvents (depth-first search)
-    def searchMinSolution(f: FOLFormula) : FOLFormula = ForgetfulResolve(f) match {
-      case Nil => f
-      case resolvents => 
-        val l = resolvents.foldRight(List[FOLFormula]()) ( (r, acc) => 
+    // Exhaustive search over the resolvents (depth-first search),
+    // returns the list of all solutions found.
+    def searchSolution(f: FOLFormula) : List[FOLFormula] =
+      f :: ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) => 
           // Should I insert this quantifier by hand?
           if(ehs.isValidWith(AllVar(x,r))) {
-            searchMinSolution(r) :: acc
+            searchSolution(r) ::: acc
           }
           else acc
         )
-        // Return the minimum resolvent
-        l.sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
-    }
 
-    searchMinSolution(cnf)
+    searchSolution(cnf)
   }
+
+  def minimalImprovedSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : FOLFormula =
+    improveSolution(sol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
 
 }
 
