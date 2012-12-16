@@ -406,7 +406,8 @@ object loadProofDB {
 
     import at.logic.provers.prover9.ivy
     def apply(fn : String) : RobinsonResolutionProof = {
-      IvyToRobinson(intoIvyResolution(fn))
+      val rp = IvyToRobinson(intoIvyResolution(fn))
+      InstantiateElimination(rp)
     }
 
     def intoIvyResolution(fn : String) : IvyResolutionProof = {
@@ -434,6 +435,10 @@ object loadProofDB {
       case _ => println("rule not implemented"); Nil
     }
 
+  }
+
+  object eliminateInstaces {
+    def apply(p:RobinsonResolutionProof) = InstantiateElimination.apply(p)
   }
 
   // atp support

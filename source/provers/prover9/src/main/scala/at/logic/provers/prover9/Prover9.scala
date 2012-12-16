@@ -23,6 +23,7 @@ import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionPr
 import java.io.File
 import at.logic.provers.prover9.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
 import at.logic.algorithms.rewriting.NameReplacement
+import at.logic.algorithms.resolution.InstantiateElimination
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -180,9 +181,10 @@ object Prover9 {
                   }*/
     val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
     val rproof = IvyToRobinson(iproof)
+    val mproof = InstantiateElimination(rproof)
     pt_file.delete
     ivy_file.delete
-    rproof
+    mproof
   }
 
 }
