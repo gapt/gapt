@@ -13,6 +13,7 @@ import at.logic.calculi.resolution.base.Clause
 import at.logic.language.lambda.types.Ti
 import scala.Some
 import at.logic.calculi.lk.base.Sequent
+import collection.mutable
 
 /**
  * Eliminates the insantiate rule from a RobinsonResolutionProof
@@ -47,6 +48,7 @@ object InstantiateElimination {
   def extract_renaming(s:Substitution[FOLExpression], forbidden: VarSet) : (Substitution[FOLExpression], Substitution[FOLExpression], VarSet) = {
     val vars = s.map.keySet
     val (olds,news)= generate_freshvars(vars, forbidden)
+
     val olds_new = olds zip news.asInstanceOf[List[FOLExpression]]
     val r = Substitution[FOLExpression](olds_new )
     val t = Substitution[FOLExpression](s.map.map( (el : (Var, FOLExpression)) => (r(el._1.asInstanceOf[FOLVar]).asInstanceOf[Var], el._2) ))
@@ -107,13 +109,15 @@ object InstantiateElimination {
     input proof. */
   def remove(p:RobinsonResolutionProof, forbidden : VarSet, pmap : ProofMap) : (ProofMap, OccMap, VarSet, RobinsonResolutionProof) = {
     if (pmap contains p) return extend_to_quadruple(pmap(p), pmap)
+    println("forbidden: "+forbidden)
+    println("clause: "+p.root)
 
     p match {
       case InitialClause(clause) =>
         //no change for initial clause
         extend_pmap(emptyOccMap  ++ (clause.occurrences zip clause.occurrences), forbidden ++ getVars(clause, forbidden), p, pmap )
       case Instance(clause, parent, sub) =>
-        val (rpmap, rmap, rforbidden, rparent) = remove(parent, forbidden, pmap)
+        val (rpmap, rmap, rforbidden, rparent) = remove(parent, getVars(clause,forbidden), pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
 
         val inference = Instance(rparent, sub)
@@ -125,9 +129,10 @@ object InstantiateElimination {
         extend_pmap(nmap, getVars(clause, rforbidden), inference, rpmap)
 
       case Factor(clause, Instance(iclause, iparent, isub), aux, sub) =>
-        val (rpmap, rmap, rforbidden, rparent) = remove(iparent, forbidden, pmap)
+        val (rpmap, rmap, rforbidden, rparent) = remove(iparent, getVars(clause,forbidden), pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
-        val (renaming, nsub, _) = extract_renaming(isub, rforbidden)
+        val (renaming, nsub, nvars) = extract_renaming(isub, rforbidden)
+
         val ivariant = Variant(rparent, renaming)
         def isuccessor(fo: FormulaOccurrence) = successor(rmap(fo), ivariant.root, rparent.root)
         aux match {
@@ -137,7 +142,7 @@ object InstantiateElimination {
               rparent.root.occurrences.toList,
               inference.root.occurrences.toList,
               occancmatcher(_,_,rmap))
-            extend_pmap(nmap, getVars(clause::ivariant.root::Nil, rforbidden), inference , rpmap)
+            extend_pmap(nmap, getVars(ivariant.root, rforbidden ++ nvars), inference , rpmap)
 
           case List(a::as, b::bs) =>
             val inference = Factor(ivariant, isuccessor(a), as map isuccessor, isuccessor(b), bs map isuccessor,nsub )
@@ -145,13 +150,13 @@ object InstantiateElimination {
               clause.occurrences.toList,
               inference.root.occurrences.toList,
               occancmatcher(_,_,rmap))
-            extend_pmap(nmap, getVars(clause::ivariant.root::Nil, rforbidden), inference, rpmap)
+            extend_pmap(nmap, getVars(ivariant.root, rforbidden ++ nvars), inference, rpmap)
           case _ =>
             throw new Exception("Unexpected auxiliary occurrences in handling of Factor rule during instantiation removal!")
         }
 
       case Factor(clause, parent, aux, sub) =>
-        val (rpmap, rmap, rforbidden, rparent) = remove(parent, forbidden, pmap)
+        val (rpmap, rmap, rforbidden, rparent) = remove(parent, getVars(clause,forbidden), pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
         aux match {
           case List(a::as) =>
@@ -174,13 +179,15 @@ object InstantiateElimination {
         }
 
       case Resolution(clause, Instance(iclause1, iparent1, isub1), Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
 
-        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden2)
-        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden2 ++ nvars1)
+        val rforbidden = rforbidden1 ++ rforbidden2
+
+        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden)
+        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden ++ nvars1)
 
         val vinf1 = Variant(rparent1, renaming1)
         val vinf2 = Variant(rparent2, renaming2)
@@ -197,15 +204,17 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2 ++ nvars1 ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1 ++ nvars2), inference, rpmap2)
 
       case Resolution(clause, Instance(iclause1, iparent1, isub1), parent2, occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
 
-        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden2)
+        val rforbidden = rforbidden1 ++ rforbidden2
+
+        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden)
         val vinf1 = Variant(rparent1, renaming1)
         val rsmap1 = successormap(rmap1, iclause1 , vinf1.root )
 
@@ -218,15 +227,17 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2 ++ nvars1), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1), inference, rpmap2)
 
       case Resolution(clause, parent1, Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
 
-        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden2)
+        val rforbidden = rforbidden1 ++ rforbidden2
+
+        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden)
         val vinf2 = Variant(rparent2, renaming2)
         val rsmap2 = successormap(rmap2, iclause2 , vinf2.root )
 
@@ -239,13 +250,15 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2 ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars2), inference, rpmap2)
 
       case Resolution(clause, parent1, parent2, occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
+
+        val rforbidden = rforbidden1 ++ rforbidden2
 
         val inference = Resolution(rparent1, rparent2,
           rmap1(occ1),
@@ -256,17 +269,19 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden), inference, rpmap2)
 
 
       case Paramodulation(clause, Instance(iclause1, iparent1, isub1), Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
 
-        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden2)
-        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden2 ++ nvars1)
+        val rforbidden = rforbidden1 ++ rforbidden2
+
+        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden)
+        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden ++ nvars1)
 
         val vinf1 = Variant(rparent1, renaming1)
         val vinf2 = Variant(rparent2, renaming2)
@@ -286,13 +301,16 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2 ++ nvars1 ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1 ++ nvars2), inference, rpmap2)
 
       case Paramodulation(clause, Instance(iclause1, iparent1, isub1), parent2, occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
+
+        val rforbidden = rforbidden1 ++ rforbidden2
+
         /*
         println("*--*")
         println("iparent1 "+iparent1.root.occurrences)
@@ -301,7 +319,7 @@ object InstantiateElimination {
         println("iparent2 "+rparent2.root.occurrences)
           */
 
-        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden2)
+        val (renaming1, nsub1, nvars1) = extract_renaming(isub1, rforbidden)
         val vinf1 = Variant(rparent1, renaming1)
         //println("vinf1    "+vinf1.root.occurrences)
 
@@ -319,15 +337,17 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2 ++ nvars1), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1), inference, rpmap2)
 
       case Paramodulation(clause, parent1, Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
 
-        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden2)
+        val rforbidden = rforbidden1 ++ rforbidden2
+
+        val (renaming2, nsub2, nvars2) = extract_renaming(isub2, rforbidden)
         val vinf2 = Variant(rparent2, renaming2)
         val rsmap2 = successormap(rmap2, iclause2 , vinf2.root )
 
@@ -342,13 +362,16 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2 ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars2), inference, rpmap2)
 
       case Paramodulation(clause, parent1, parent2, occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1, forbidden, pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
+
+        val rforbidden = rforbidden1 ++ rforbidden2
+
         val primary = successor(List(occ1,occ2), clause)
         val inference = Paramodulation(rparent1, rparent2,
           rmap1(occ1),
@@ -360,7 +383,7 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden2), inference, rpmap2)
+        extend_pmap(nmap, getVars(clause,rforbidden), inference, rpmap2)
 
 
       case _ => throw new Exception("Unhandled inference: "+p)
@@ -514,11 +537,18 @@ object InstantiateElimination {
      }
   }
 
+  private var generated = immutable.Set[Var]()
+
   /* for each element v in vl generate a fresh variable f, return a list of pairs (v,f) */
-  def generate_freshvars(vl:VarSet, forbidden : VarSet) : (List[Var], List[Var]) =
-    vl.foldLeft((List[Var](), forbidden.toList))((xs:(List[Var], List[Var]), v:Var) =>
-      (v::xs._1, freshVar(Ti(), xs._2.toSet, (x:Int) => "x_{"+x.toString+"}" , v.factory ) :: xs._2)
-    )
+  def generate_freshvars(vl:VarSet, forbidden : VarSet) : (List[Var], List[Var]) = {
+    val (olds,news) = vl.foldLeft((List[Var](), forbidden.toList ++ generated))((xs:(List[Var], List[Var]), v:Var) => {
+      val fresh = freshVar(Ti(), xs._2.toSet, (x:Int) => "x_{"+x.toString+"}" , v.factory )
+      //require(! (generated contains fresh), "Error in creating blacklist!")
+      generated = generated+fresh
+      (v::xs._1, fresh :: xs._2)
+     } )
+    (olds,news)
+  }
 
   def commonvars[T <: LambdaExpression](s1:Substitution[T], s2: Substitution[T]) : immutable.Set[Var] = {
     val k1 = s1.map.keySet
