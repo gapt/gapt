@@ -444,8 +444,17 @@ object InstantiateElimination {
         extend_pmap(emptyOccMap  ++ (clause.occurrences zip clause.occurrences), emptyVarSet, p, pmap )
 
       case Instance(clause, parent, sub) =>
-        val (rpmap, rmap, _, rparent) = imerge(parent, pmap)
+        val (rpmap, rmap, f, rparent) = imerge(parent, pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
+
+        if (sub.map.isEmpty) {
+          val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
+            clause.occurrences.toList,
+            rparent.root.occurrences.toList,
+            _.formula syntaxEquals _.formula)
+
+          return (rpmap + ((p, (nmap, f, rparent))), nmap, f, rparent)
+        }
 
         rparent match {
           //merging
