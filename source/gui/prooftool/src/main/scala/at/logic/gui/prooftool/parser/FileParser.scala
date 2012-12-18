@@ -19,7 +19,6 @@ import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
 import at.logic.algorithms.shlk.sFOParser
-import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.utils.ds.trees.{LeafTree, BinaryTree, Tree}
 import at.logic.language.hol.HOLExpression
 import at.logic.gui.prooftool.gui.{DrawSequent, Main}
@@ -28,6 +27,7 @@ import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
 import at.logic.transformations.ceres.clauseSchema._
 import at.logic.calculi.slk.SchemaProofDB
+import at.logic.calculi.proofs.Proof
 
 class FileParser {
 
@@ -87,7 +87,8 @@ class FileParser {
     val ivy = IvyToRobinson(IvyParser.apply(path, IvyParser.IvyStyleVariables))
     proofs = Nil
     termTrees = Nil
-    proofdb = new ProofDatabase(Map(), ("ivy_proof", RobinsonToLK(ivy))::Nil, Nil, Nil)
+    // proofdb = new ProofDatabase(Map(), ("ivy_proof", RobinsonToLK(ivy))::Nil, Nil, Nil)
+    resProofs = ("ivy_proof", ivy)::Nil
   }
 
   def parseFile(path: String) { try {
@@ -158,6 +159,8 @@ class FileParser {
 
   def getProofs = proofdb.proofs ::: proofs
 
+  def getResolutionProofs = resProofs
+
   def getProofDB = proofdb
 
   def getTermTrees = termTrees
@@ -165,6 +168,7 @@ class FileParser {
   private var proofdb = new ProofDatabase(Map(), Nil, Nil, Nil)
   private var proofs: List[(String, TreeProof[_])] = Nil
   private var termTrees: List[(String, TermType.Value, Tree[_])] = Nil
+  private var resProofs: List[(String, Proof[_])] = Nil
 
   object TermType extends Enumeration {
     val ClauseTerm, ProjectionTerm, ResolutionTerm, Unknown = Value

@@ -18,6 +18,7 @@ import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.expansionTrees.ExpansionTree
 import at.logic.language.hol.HOLFormula
+import at.logic.calculi.proofs.Proof
 
 class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel with MouseMotionListener {
   option match {
@@ -29,6 +30,10 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
         case proof: TreeProof[_] =>
           layout(new DrawProof(proof, fSize, Set(), Set(), "")) = c
           ProofToolPublisher.publish(Loaded)
+          StructPublisher.publish(UnLoaded)
+        case resProof: Proof[_] =>
+          layout(new DrawResolutionProof(resProof, fSize, Set(), Set(), "")) = c
+          ProofToolPublisher.publish(UnLoaded)
           StructPublisher.publish(UnLoaded)
         case tree: Tree[_] =>
           layout(new DrawTree(tree, fSize, "")) = c

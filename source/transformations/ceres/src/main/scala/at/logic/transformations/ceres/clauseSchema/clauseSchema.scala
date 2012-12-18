@@ -1128,7 +1128,7 @@ abstract class sResolutionTerm {}
       val mapfo2 = Map[fo2Var, LambdaExpression]() + fo2SubstDB.map.head
       val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
       val proof = ResDeductionToLKTree(fo2sub)
-      val name = term_name + "↓" + inst
+      val name = term_name + "↓" + inst + "_lk"
       (name,proof)
     }
   }

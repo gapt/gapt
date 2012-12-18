@@ -40,6 +40,7 @@ import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.clauseSchema.{resolutionProofSchemaDB, InstantiateResSchema}
 import at.logic.transformations.ceres.ACNF.ACNF
 import at.logic.calculi.slk.SchemaProofDB
+import at.logic.calculi.proofs.Proof
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -239,13 +240,18 @@ object Main extends SimpleSwingApplication {
           if (dp.proof.root.isInstanceOf[Sequent]) dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof))
           else dp.searchNotInLKProof()
           dp.revalidate()
+        case dp: DrawResolutionProof =>
+          dp.search = input_str
+          if (dp.proof.root.isInstanceOf[Sequent]) dp.setColoredOccurrences(Search.inResolutionProof(input_str, dp.proof))
+          else dp.searchNotInLKProof()
+          dp.revalidate()
         case dt: DrawTree =>
           dt.search = input_str
           dt.revalidate()
         case dl: DrawList =>
           dl.search = input_str
           dl.revalidate()
-        case _ => throw new Exception("Can not search in this object!")
+        case _ => throw new Exception("Cannot search in this object!")
       }
     } catch {
         case e: Throwable => errorMessage(getExceptionString(e))
@@ -268,6 +274,13 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
+  // Used for ViewResolutionProof menu
+  def loadResolutionProof(proof: (String, Proof[_])) {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.contents = new Launcher(Some(proof), 14)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
   // Used by startup and open dialog
   def loadProof(path: String, fontSize: Int) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -278,6 +291,8 @@ object Main extends SimpleSwingApplication {
       body.contents = new Launcher(Some(db.getSequentLists.head), fontSize)
     else if (db.getTermTrees.size > 0)
       body.contents = new Launcher(Some((db.getTermTrees.head._1,db.getTermTrees.head._3)), fontSize)
+    else if (db.getResolutionProofs.size > 0)
+      body.contents = new Launcher(Some(db.getResolutionProofs.head), fontSize)
     else body.contents = new Launcher(None, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -469,6 +484,18 @@ object Main extends SimpleSwingApplication {
             val l = db.getSequentLists
             contents.clear()
             for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
+        }
+      }
+      contents += new Menu("View Resolution Proof") {
+        MenuScroller.setScrollerFor(this.peer)
+        mnemonic = Key.P
+        border = customBorder
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case ProofDbChanged =>
+            val l = db.getResolutionProofs
+            contents.clear()
+            for (i <- l) contents += new MenuItem(Action(i._1) { loadResolutionProof(i) }) { border = customBorder }
         }
       }
       contents += new MenuItem(Action("View Definition List") { loadClauseSet(("Definition List", db.getDefinitions)) }) {
