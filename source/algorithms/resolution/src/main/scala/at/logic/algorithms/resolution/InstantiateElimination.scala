@@ -447,7 +447,7 @@ object InstantiateElimination {
         val (rpmap, rmap, f, rparent) = imerge(parent, pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
 
-        if (sub.map.isEmpty) {
+        if (sub.isIdentity) {
           val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
             clause.occurrences.toList,
             rparent.root.occurrences.toList,

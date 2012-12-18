@@ -23,6 +23,10 @@ import collection.immutable.HashSet
       case s: Substitution[_] => map.equals(s.map)
       case _ => false
     }
+
+    //an identity function maps all terms to themselves
+    def isIdentity = map.filterNot((p : (Var,T)) => p._1 == p._2).isEmpty
+
     override def hashCode() = map.hashCode
     override def toString = map.toString
 
