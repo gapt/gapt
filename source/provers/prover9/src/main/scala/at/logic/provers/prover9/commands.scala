@@ -220,11 +220,12 @@ object Prover9TermParser extends JavaTokenParsers {
 
   def allformula: Parser[FOLFormula]   = ("("~> "all"    ~> variable ~ formula <~ ")") ^^ { case v ~ f => fol.AllVar(v,f) }
   def exformula: Parser[FOLFormula]    = ("("~> "exists" ~> variable ~ formula <~ ")") ^^ { case v ~ f => fol.ExVar(v,f) }
-  def conjunction: Parser[FOLFormula]  = ("("~> formula ~ ("&"   ~> formula <~ ")")) ^^ { case  f1 ~  f2  => fol.And(f1,f2) }
-  def disjunction: Parser[FOLFormula]  = ("("~> formula ~ ("|"   ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.Or(f1,f2) }
-  def implication: Parser[FOLFormula]  = ("("~> formula ~ ("->"  ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.Imp(f1,f2) }
-  def rimplication: Parser[FOLFormula] = ("("~> formula ~ ("<-"  ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.Imp(f2,f1) }
-  def lequivalence: Parser[FOLFormula] = ("("~> formula ~ ("<->" ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.And(fol.Imp(f1,f2), fol.Imp(f2,f1)) }
+  def conjunction: Parser[FOLFormula]  = ("("~> rep1sep(formula, "&") <~ ")")   ^^ { (fs : List[FOLFormula]) => createNOp(fs,And.apply) }
+  def disjunction: Parser[FOLFormula]  = ("("~> rep1sep(formula, "|") <~ ")")   ^^ { (fs : List[FOLFormula]) => createNOp(fs,Or.apply) }
+  def implication: Parser[FOLFormula]  = ("("~> rep1sep(formula, "->") <~ ")")  ^^ { (fs : List[FOLFormula]) => createNOp(fs,Imp.apply) }
+  def rimplication: Parser[FOLFormula] = ("("~> rep1sep(formula, "<-") <~ ")")  ^^ { (fs : List[FOLFormula]) => createNOp(fs,(f1,f2) => Imp(f2,f1)) }
+  def lequivalence: Parser[FOLFormula] = ("("~> rep1sep(formula, "<->") <~ ")")
+                    ^^ { (fs : List[FOLFormula]) => createNOp(fs, (f1,f2) => fol.And(fol.Imp(f1,f2), fol.Imp(f2,f1))) }
 
   def literal: Parser[FOLFormula] = negeq | poseq | negatom | posatom
   def posatom: Parser[FOLFormula] = atom
@@ -240,6 +241,12 @@ object Prover9TermParser extends JavaTokenParsers {
   def function: Parser[FOLTerm] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
   def constant: Parser[FOLConst] = conssymb ^^ {case x => FOLFactory.createVar(new ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
   def variable: Parser[FOLVar] = varsymb ^^ {case x => FOLFactory.createVar(new VariableStringSymbol(x), Ti()).asInstanceOf[FOLVar]}
+
+  def createNOp(fs:List[FOLFormula], constructor : (FOLFormula, FOLFormula) => FOLFormula ) : FOLFormula = {
+     //if (fs.size < 2) failure("Binary operator needs to occur at least once!") else
+    fs.reduceRight( (f:FOLFormula, g:FOLFormula) => constructor(f,g)   )
+  }
+
 }
 
 

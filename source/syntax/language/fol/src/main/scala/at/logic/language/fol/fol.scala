@@ -274,6 +274,7 @@ object Function {
   }
 }
 // TODO put on wiki these are constants representing symbols in the logic.
+case object TopC extends HOLConst(TopSymbol, "o") with FOLFormula
 case object BottomC extends HOLConst(BottomSymbol, "o") with FOLFormula
 case object NegC extends HOLConst(NegSymbol, "(o -> o)") with FOL
 case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))") with FOL
@@ -306,6 +307,10 @@ object Neg {
 }
 
 object And {
+  def apply(fs: Seq[FOLFormula]) : FOLFormula = fs match {
+    case Nil => TopC
+    case f::fs => fs.foldLeft(f)( (d, f) => And(d, f) )
+  }
   def apply(left: FOLFormula, right: FOLFormula) = (App(App(AndC,left),right)).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(AndC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
