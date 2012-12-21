@@ -224,8 +224,8 @@ object Prover9TermParser extends JavaTokenParsers {
   def disjunction: Parser[FOLFormula]  = ("("~> rep1sep(formula, "|") <~ ")")   ^^ { (fs : List[FOLFormula]) => createNOp(fs,Or.apply) }
   def implication: Parser[FOLFormula]  = ("("~> rep1sep(formula, "->") <~ ")")  ^^ { (fs : List[FOLFormula]) => createNOp(fs,Imp.apply) }
   def rimplication: Parser[FOLFormula] = ("("~> rep1sep(formula, "<-") <~ ")")  ^^ { (fs : List[FOLFormula]) => createNOp(fs,(f1,f2) => Imp(f2,f1)) }
-  def lequivalence: Parser[FOLFormula] = ("("~> rep1sep(formula, "<->") <~ ")")
-                    ^^ { (fs : List[FOLFormula]) => createNOp(fs, (f1,f2) => fol.And(fol.Imp(f1,f2), fol.Imp(f2,f1))) }
+  def lequivalence: Parser[FOLFormula] = ("("~> rep1sep(formula, "<->") <~ ")") ^^ { (fs : List[FOLFormula]) => createNOp(fs, (f1,f2) =>
+                                                                                        fol.And(fol.Imp(f1,f2), fol.Imp(f2,f1))) }
 
   def literal: Parser[FOLFormula] = negeq | poseq | negatom | posatom
   def posatom: Parser[FOLFormula] = atom
