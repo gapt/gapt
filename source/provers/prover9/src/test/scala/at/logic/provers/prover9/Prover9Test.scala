@@ -13,7 +13,7 @@ import _root_.at.logic.provers.atp.commands.base.{SetStreamCommand, PrependComma
 import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause
 import _root_.at.logic.provers.atp.Prover
 import at.logic.calculi.lk.base.FSequent
-import commands.Prover9InitCommand
+import at.logic.provers.prover9.commands.{Prover9TermParser, Prover9InitCommand}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -31,6 +31,7 @@ private class MyParser(str: String) extends StringReader(str) with SimpleResolut
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base.types.FSequent
+import java.io.File.separator
 
 @RunWith(classOf[JUnitRunner])
 class Prover9Test extends SpecificationWithJUnit {
@@ -261,4 +262,43 @@ class Prover9Test extends SpecificationWithJUnit {
     }
   }
 
+
+  "The Prover9 interface" should {
+    "successfully load the goat puzzle PUZ047+1.out" in {
+      try {
+        val endsequent =
+          """((p(south,south,south,south,start) &
+((all A (p(south,north,south,north,A) -> p(north,north,south,north,go_alone(A)))) &
+((all B (p(north,north,south,north,B) -> p(south,north,south,north,go_alone(B)))) &
+((all C (p(south,south,north,south,C) -> p(north,south,north,south,go_alone(C)))) &
+((all D (p(north,south,north,south,D) -> p(south,south,north,south,go_alone(D)))) &
+((all E (p(south,south,south,north,E) -> p(north,north,south,north,take_wolf(E)))) &
+((all F (p(north,north,south,north,F) -> p(south,south,south,north,take_wolf(F)))) &
+((all V6 (p(south,south,north,south,V6) -> p(north,north,north,south,take_wolf(V6)))) &
+((all V7 (p(north,north,north,south,V7) -> p(south,south,north,south,take_wolf(V7)))) &
+((all V8 (all V9 (all V10 (p(south,V8,south,V9,V10) -> p(north,V8,north,V9,take_goat(V10)))))) &
+((all V11 (all V12 (all V13 (p(north,V11,north,V12,V13) -> p(south,V11,south,V12,take_goat(V13)))))) &
+((all V14 (p(south,north,south,south,V14) -> p(north,north,south,north,take_cabbage(V14)))) &
+((all V15 (p(north,north,south,north,V15) -> p(south,north,south,south,take_cabbage(V15)))) &
+((all V16 (p(south,south,north,south,V16) -> p(north,south,north,north,take_cabbage(V16)))) &
+(all V17 (p(north,south,north,north,V17) -> p(south,south,north,south,take_cabbage(V17)))))))))))))))))) -> (exists V18 p(north,north,north,north,V18)))""".stripMargin
+
+
+        Prover9TermParser.parseAll(Prover9TermParser.formula, endsequent) match {
+          case Prover9TermParser.Success(result, _ ) =>
+            println(result.toCode)
+          case Prover9TermParser.NoSuccess(msg, input) =>
+            throw new Exception("Could not parse endsequent! "+msg+ " "+input.pos)
+        }
+
+
+        Prover9.parse_prover9("target" + separator + "test-classes" + separator +"PUZ047+1.out")
+        "success" must beEqualTo("success")
+      } catch {
+        case e:Exception =>
+          e.printStackTrace
+        "success" must beEqualTo(e.getMessage )
+      }
+    }
+  }
 }

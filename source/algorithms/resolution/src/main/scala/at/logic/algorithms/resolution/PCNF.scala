@@ -28,7 +28,7 @@ object PCNF {
 
     // compute CNF and confirm a <- CNF(-s)
     val cnf = CNFp(form)
-    if (!cnf.contains(a)) throw new IllegalArgumentException("Clause a [" + a.toString + "] is not contained in CNF(-s) [" + cnf + "]")
+    if (!cnf.contains(a)) throw new IllegalArgumentException("Clause a [" + a.toString + "] is not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
 
     // find the right formula and compute the proof
     val (p,f,inAntecedent) = s.antecedent.find(x => CNFp(x).contains(a)) match {

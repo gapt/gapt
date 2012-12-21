@@ -30,6 +30,7 @@ object NameReplacement {
 
   // map from sumbol name to pair of Arity and replacement symbol name
   type SymbolMap = immutable.Map[String, (Int,String)]
+  val emptySymbolMap = immutable.Map[String, (Int,String)]()
 
   //gives the airty of a function - simple types have arity 0, complex types have 1 + arity of return value (because
   // of currying)
@@ -87,6 +88,26 @@ object NameReplacement {
                   find_matching(clause.positive.toList, inference.root.positive.toList, pmatcher)
 
       (rsmap, inference)
+
+
+
+    case Variant(clause, parent1, sub) =>
+      val (rmap, rparent1) = rename_resproof(parent1, smap)
+      val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
+      var inference :RobinsonResolutionProof = Variant(rparent1, nsub)
+
+      def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
+        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        t.formula == apply(o.formula, smap) &&
+          anc_correspondences.diff(t.ancestors).isEmpty &&
+          t.ancestors.diff(anc_correspondences).isEmpty
+      }
+
+      val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
+        find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
+
+      (rsmap, inference)
+
 
     case Factor(clause, parent1, aux, sub) =>
       val (rmap, rparent1) = rename_resproof(parent1, smap)

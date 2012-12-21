@@ -24,6 +24,9 @@ import java.io.File
 import at.logic.provers.prover9.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
 import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.algorithms.resolution.InstantiateElimination
+import at.logic.provers.prover9.commands.InferenceExtractor
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -157,12 +160,36 @@ object Prover9 {
     proof
   }
 
+  def getVar(t:LambdaExpression, l:Set[(Int,String)]) : Set[(Int,String)] = t match {
+    case Var(ConstantStringSymbol(s),_) => l+((0,s)) ;
+    case Var(_,_) => l;
+    case AppN(Var(ConstantStringSymbol(s),_),ts) => ts.foldLeft(l)((x: Set[(Int,String)], y:LambdaExpression) => x ++ getVar(y, x) ) + ((ts.size,s))
+    case App(s,t) => getVar(s, getVar(t,l))
+    //case AppN(s,ts) => getVar(s, ts.foldLeft(l)((x: Set[(Int,String)], y:LambdaExpression) => x ++ getVar(y, x) ))
+    case Abs(_,s) => getVar(s,l)
+  }
+
+
+
+  def escape_constants(r:RobinsonResolutionProof) = {
+    val names : Set[(Int,String)] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map((fo:FormulaOccurrence) => getVar(fo.formula,Set[(Int,String)]()))).flatten.flatten
+    val pairs : Set[(String, (Int,String))] = (names.map((x:(Int,String)) =>
+      (x._2, ((x._1, x._2.replaceAll("_","\\\\_")))   ))
+      )
+
+    val mapping = NameReplacement.emptySymbolMap ++ (pairs)
+    NameReplacement.apply(r, mapping)
+  }
+
 
   def parse_prover9(p9_file : String) : RobinsonResolutionProof = {
+    println((new File(".")).getCanonicalPath)
+
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
     p9_to_p9(p9_file, pt_file.getCanonicalPath)
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
     p9_to_ivy(pt_file.getCanonicalPath, ivy_file.getCanonicalPath)
+
     def debugline(s:String) = { println(s); true}
 
     /* //this was autodetection code for naming conventions, but apparently ivy has its own anyway
@@ -184,6 +211,9 @@ object Prover9 {
     val mproof = InstantiateElimination(rproof)
     pt_file.delete
     ivy_file.delete
+
+    InferenceExtractor(p9_file)
+    //escape_constants(mproof)
     mproof
   }
 

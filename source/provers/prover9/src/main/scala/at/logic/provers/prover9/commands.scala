@@ -15,6 +15,7 @@ import _root_.at.logic.calculi.lk.base.types.FSequent
 import _root_.at.logic.calculi.occurrences.FormulaOccurrence
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
 import _root_.at.logic.calculi.resolution.base.{ResolutionProof, Clause}
+import _root_.at.logic.language.fol
 import _root_.at.logic.language.fol._
 import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import _root_.at.logic.language.hol.replacements.getAtPosition
@@ -107,7 +108,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
           val ResolveRE = new Regex("""\[resolve\((\d+\w*),(\w+),(\d+\w*),(\w+)\)\]\.""")
           val ParaRE = new Regex("""\[para\((\d+\w*)\((\w+),(\d+)\),(\d+\w*)\((\w+),(\d+( d+)*)\)\)\]\.""")
           val CopyRE = new Regex("""\[copy\((\d+\w*)\).*\]\.""")
-          cmnds = cmnds ++ assumption("0", List(MyParser.parseAll(MyParser.literal, "X=X").get)) // to support the xx rules
+          cmnds = cmnds ++ assumption("0", List(Prover9TermParser.parseAll(Prover9TermParser.literal, "X=X").get)) // to support the xx rules
 
 
           val X = FOLFactory.createVar(new VariableStringSymbol("X"), Ti()).asInstanceOf[FOLVar]
@@ -152,9 +153,9 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
     private def returnAndPrint[T](x:T) = {println("Scheduling P9 Command:"+x); x }
 
     // the second value is the literals permutation from prover9 order to fsequent (as we have positive and negative
-    private def getLiterals(e: Node): Seq[FOLFormula] = {
+    def getLiterals(e: Node): Seq[FOLFormula] = {
       if ((e \\ "literal").text.trim == "$F") List()
-      else (e \\ "literal").map(l => MyParser.parseAll(MyParser.literal, l.text).get)
+      else (e \\ "literal").map(l => Prover9TermParser.parseAll(Prover9TermParser.literal, l.text).get)
     }
 
     private def literals2FSequent(lits: Seq[FOLFormula]): FSequent = {
@@ -168,7 +169,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
             case Neg(_) => false
             case _ => true}))
     }
-    val INT_CHAR = 97
+    val INTq_CHAR = 97
 
     private def getParents(e: Node): Iterable[String] = { println((e \\ "@parents").foldLeft("")((s:String, n:Node) => if (s.isEmpty) n.text else s + " " + n.text)  ); (e \\ "@parents").foldLeft("")((s:String, n:Node) =>if (s.isEmpty) n.text else s + " " + n.text).split(" ") }
 
@@ -210,23 +211,37 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
       List(ReplayCommand("0" :: parentIds.toList, id, literals2FSequent(cls)), InsertResolventCommand[Clause])
     }
 
-    object MyParser extends JavaTokenParsers {
-      def literal: Parser[FOLFormula] = negeq | poseq | negatom | posatom
-      def posatom: Parser[FOLFormula] = atom
-      def negatom: Parser[FOLFormula] = "-" ~ atom  ^^ {case "-" ~ a => Neg(a)}
-      def atom: Parser[FOLFormula] = atom1 | atom2
-      def atom1: Parser[FOLFormula] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
-      def atom2: Parser[FOLFormula] = conssymb ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
-      def poseq: Parser[FOLFormula] = term ~ "=" ~ term ^^ {case t1 ~ "=" ~ t2 => Equation(t1,t2)}
-      def negeq: Parser[FOLFormula] = term ~ "!=" ~ term ^^ {case t1 ~ "!=" ~ t2 => Neg(Equation(t1,t2))}
-      def conssymb: Parser[String] = """[a-z][a-zA-Z0-9]*""".r
-      def varsymb: Parser[String] = """[A-Z][a-zA-Z0-9]*""".r
-      def term: Parser[FOLTerm] = function | constant | variable
-      def function: Parser[FOLTerm] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
-      def constant: Parser[FOLTerm] = conssymb ^^ {case x => FOLFactory.createVar(new ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
-      def variable: Parser[FOLTerm] = varsymb ^^ {case x => FOLFactory.createVar(new VariableStringSymbol(x), Ti()).asInstanceOf[FOLVar]}
-    }
   }
+
+object Prover9TermParser extends JavaTokenParsers {
+  def formula: Parser[FOLFormula] = atom | allformula | exformula |
+                                    conjunction | disjunction | implication |
+                                    rimplication | lequivalence
+
+  def allformula: Parser[FOLFormula]   = ("("~> "all"    ~> variable ~ formula <~ ")") ^^ { case v ~ f => fol.AllVar(v,f) }
+  def exformula: Parser[FOLFormula]    = ("("~> "exists" ~> variable ~ formula <~ ")") ^^ { case v ~ f => fol.ExVar(v,f) }
+  def conjunction: Parser[FOLFormula]  = ("("~> formula ~ ("&"   ~> formula <~ ")")) ^^ { case  f1 ~  f2  => fol.And(f1,f2) }
+  def disjunction: Parser[FOLFormula]  = ("("~> formula ~ ("|"   ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.Or(f1,f2) }
+  def implication: Parser[FOLFormula]  = ("("~> formula ~ ("->"  ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.Imp(f1,f2) }
+  def rimplication: Parser[FOLFormula] = ("("~> formula ~ ("<-"  ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.Imp(f2,f1) }
+  def lequivalence: Parser[FOLFormula] = ("("~> formula ~ ("<->" ~> formula <~ ")")) ^^ { case f1 ~ f2 => fol.And(fol.Imp(f1,f2), fol.Imp(f2,f1)) }
+
+  def literal: Parser[FOLFormula] = negeq | poseq | negatom | posatom
+  def posatom: Parser[FOLFormula] = atom
+  def negatom: Parser[FOLFormula] = "-" ~ atom  ^^ {case "-" ~ a => Neg(a)}
+  def atom: Parser[FOLFormula] = atom1 | atom2
+  def atom1: Parser[FOLFormula] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  def atom2: Parser[FOLFormula] = conssymb ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
+  def poseq: Parser[FOLFormula] = term ~ "=" ~ term ^^ {case t1 ~ "=" ~ t2 => Equation(t1,t2)}
+  def negeq: Parser[FOLFormula] = term ~ "!=" ~ term ^^ {case t1 ~ "!=" ~ t2 => Neg(Equation(t1,t2))}
+  def conssymb: Parser[String] = """[a-z][a-zA-Z0-9_]*""".r
+  def varsymb: Parser[String] = """[A-Z][a-zA-Z0-9_]*""".r
+  def term: Parser[FOLTerm] = function | constant | variable
+  def function: Parser[FOLTerm] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  def constant: Parser[FOLConst] = conssymb ^^ {case x => FOLFactory.createVar(new ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
+  def variable: Parser[FOLVar] = varsymb ^^ {case x => FOLFactory.createVar(new VariableStringSymbol(x), Ti()).asInstanceOf[FOLVar]}
+}
+
 
   // in prover9, negated equations are considered to be one application and in gapt it is considered a negation of an equation, so two applications
   case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
@@ -245,5 +260,61 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
         case _ => pos.head::translate (getAtPosition(f, pos.head::Nil), pos.tail)
       }
     }
+  }
+
+
+
+  //TODO: refactor shared code with Prover9Init
+  object InferenceExtractor {
+    def apply(fn: String) = {
+      println("==== Extracting Inferences ======")
+      val buffer = new Array[ Byte ]( 1024 )
+      val tptpIS = new FileInputStream(fn)
+
+
+      // here we parse the given xml
+      val pio = new ProcessIO(
+        stdin => {Stream.continually(tptpIS.read(buffer)).takeWhile(_ != -1).foreach(stdin.write(buffer,0,_));stdin.flush;stdin.close}, //writing tptp to program
+        stdout => {
+          val f = SAXParserFactory.newInstance()
+          f.setValidating(false)
+          f.setNamespaceAware(false)
+          f.setFeature("http://xml.org/sax/features/namespaces", false)
+          f.setFeature("http://xml.org/sax/features/validation", false)
+          f.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
+          f.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+          val xml = XML.loadXML(new InputSource(stdout),f.newSAXParser())
+
+          var lastParents = new ListBuffer[String]() // this is used to monitor if the last rule by prover9 triggers a replay or not. If not, we must call replay with the parents here.
+          (xml \\ "clause").foreach(e => {
+            //val cls = getLiterals(e)
+            val inference_type = (e \\ "justification" \\ "@jstring")
+            val id = (e\"@id").text
+            println(inference_type)
+            println((e \\ "literal").text)
+            lastParents = new ListBuffer[String]()
+          })
+        },
+        stderr => {val err:String = scala.io.Source.fromInputStream(stderr).mkString; if (!err.isEmpty) throw new Prover9Exception(err)}
+      )
+
+      //      val p  = "tptp_to_ladr" #| "prover9" #| "prooftrans xml expand"
+      val p  = "prooftrans xml"
+      val proc = p.run(pio)
+      val exitValue = proc.exitValue
+
+      tptpIS.close()
+
+      println("==== End of Inferences ======")
+
+    }
+
+    // the second value is the literals permutation from prover9 order to fsequent (as we have positive and negative
+    def getLiterals(e: Node): Seq[FOLFormula] = {
+      if ((e \\ "literal").text.trim == "$F") List()
+      else (e \\ "literal").map(l => Prover9TermParser.parseAll(Prover9TermParser.literal, l.text).get)
+    }
+
+
   }
 }
