@@ -3,7 +3,7 @@ package at.logic.transformations.herbrandExtraction
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.definitionRules._
+import at.logic.calculi.lk.equationalRules._
 import at.logic.language.hol._
 import at.logic.utils.ds.algebraic.trees._
 import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier => WQTree, StrongQuantifier => SQTree, And => AndTree, Or => OrTree, Imp => ImpTree,
@@ -51,6 +51,10 @@ object extractExpansionTrees {
         case ImpLeftRule(_,_,_,_,_,_) => ImpTree(map(a1),map(a2))
         case OrLeftRule(_,_,_,_,_,_) => OrTree(map(a1),map(a2))
         case AndRightRule(_,_,_,_,_,_) => AndTree(map(a1),map(a2))
+        case EquationLeft1Rule(_,_,_,_,_,_) => map(a2)
+        case EquationLeft2Rule(_,_,_,_,_,_) => map(a2)
+        case EquationRight1Rule(_,_,_,_,_,_) => map(a2)
+        case EquationRight2Rule(_,_,_,_,_,_) => map(a2)
       }))
     }
     case _ => throw new IllegalArgumentException("unsupported proof rule: " + proof)
