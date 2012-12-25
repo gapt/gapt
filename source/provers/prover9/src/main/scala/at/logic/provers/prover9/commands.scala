@@ -41,6 +41,7 @@ import javax.xml.parsers.SAXParserFactory
 import util.parsing.combinator.JavaTokenParsers
 import util.matching.Regex
 import collection.mutable.{ListBuffer, Map}
+import at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression, App, Abs}
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -245,6 +246,21 @@ object Prover9TermParser extends JavaTokenParsers {
   def createNOp(fs:List[FOLFormula], constructor : (FOLFormula, FOLFormula) => FOLFormula ) : FOLFormula = {
      //if (fs.size < 2) failure("Binary operator needs to occur at least once!") else
     fs.reduceRight( (f:FOLFormula, g:FOLFormula) => constructor(f,g)   )
+  }
+
+  def normalizeFormula[T <: LambdaExpression](f:T) : T = normalizeFormula(f,0)._1
+  def normalizeFormula[T <: LambdaExpression](f:T, i:Int) : (T, Int) = f match {
+    case Var(name, exptype) => (f, i)
+    case App(s, t) =>
+      val (s_, i_) = normalizeFormula(s,i)
+      val (t_, j) = normalizeFormula(t,i)
+      (s.factory.createApp(s_, t_).asInstanceOf[T], j)
+    case Abs(x, s) =>
+      val x_ = x.factory.createVar(new VariableStringSymbol("v"+i), x.exptype)
+      val sub = Substitution[LambdaExpression]((x, x_))
+      val (s_, j) = normalizeFormula(sub(s).asInstanceOf[T], i+1)
+      (s.factory.createAbs(x_, s_).asInstanceOf[T], j)
+    case _ => throw new Exception("Unhandled expression type in variable normalization!")
   }
 
 }
