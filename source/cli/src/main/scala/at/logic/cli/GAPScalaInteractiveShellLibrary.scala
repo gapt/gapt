@@ -831,7 +831,7 @@ object loadProofDB {
 
     def endsequent = formula match {
       case Imp(left, right) => // FSequent(Prover9TermParser.normalizeFormula(left)::Nil, Prover9TermParser.normalizeFormula(right)::Nil) ;
-        FSequent(decomposeLeftAnd(Prover9TermParser.normalizeFormula(left)), decomposeLeftAnd(Prover9TermParser.normalizeFormula(right))) ;
+        FSequent(decomposeLeftAnd(Prover9TermParser.normalizeFormula(left)), Prover9TermParser.normalizeFormula(right)::Nil) ;
       case _ => FSequent(Nil, formula::Nil)
     }
 
