@@ -215,27 +215,41 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
   }
 
 object Prover9TermParser extends JavaTokenParsers {
-  def formula: Parser[FOLFormula] = atom | allformula | exformula |
-                                    conjunction | disjunction | implication |
-                                    rimplication | lequivalence
+  def pformula : Parser[FOLFormula] = parens(formula) | formula
+  def formula: Parser[FOLFormula] = parens(allformula | exformula) |
+                                    atomWeq |  negation | disjunction | conjunction |
+                                    implication |  rimplication | lequivalence
 
-  def allformula: Parser[FOLFormula]   = ("("~> "all"    ~> variable ~ formula <~ ")") ^^ { case v ~ f => fol.AllVar(v,f) }
-  def exformula: Parser[FOLFormula]    = ("("~> "exists" ~> variable ~ formula <~ ")") ^^ { case v ~ f => fol.ExVar(v,f) }
-  def conjunction: Parser[FOLFormula]  = ("("~> rep1sep(formula, "&") <~ ")")   ^^ { (fs : List[FOLFormula]) => createNOp(fs,And.apply) }
-  def disjunction: Parser[FOLFormula]  = ("("~> rep1sep(formula, "|") <~ ")")   ^^ { (fs : List[FOLFormula]) => createNOp(fs,Or.apply) }
-  def implication: Parser[FOLFormula]  = ("("~> rep1sep(formula, "->") <~ ")")  ^^ { (fs : List[FOLFormula]) => createNOp(fs,Imp.apply) }
-  def rimplication: Parser[FOLFormula] = ("("~> rep1sep(formula, "<-") <~ ")")  ^^ { (fs : List[FOLFormula]) => createNOp(fs,(f1,f2) => Imp(f2,f1)) }
-  def lequivalence: Parser[FOLFormula] = ("("~> rep1sep(formula, "<->") <~ ")") ^^ { (fs : List[FOLFormula]) => createNOp(fs, (f1,f2) =>
-                                                                                        fol.And(fol.Imp(f1,f2), fol.Imp(f2,f1))) }
+
+  def allformula: Parser[FOLFormula]   = ("all"    ~> variable ~ (pformula | allformula | exformula) ) ^^ { case v ~ f => fol.AllVar(v,f) }
+  def exformula: Parser[FOLFormula]    = ("exists" ~> variable ~ (pformula | allformula | exformula) ) ^^ { case v ~ f => fol.ExVar(v,f) }
+  //precedence 800
+  def pdfc:Parser[FOLFormula] = parens(formula) | dis_or_con
+  def implication: Parser[FOLFormula]  = (pdfc ~ ("->" ~> pdfc))   ^^ { case f ~ g  => Imp(f,g) }
+  def rimplication: Parser[FOLFormula] = (pdfc ~ ("<-"   ~> pdfc)) ^^ { case f~g => Imp(g,f) }
+  def lequivalence: Parser[FOLFormula] = (pdfc ~ ("<->"  ~> pdfc)) ^^ { case f~g =>
+    fol.And(fol.Imp(f,g), fol.Imp(g,f)) }
+
+  def dis_or_con: Parser[FOLFormula] = disjunction | conjunction | negation | atom
+  //precedence 790
+  def disjunction: Parser[FOLFormula]  = (rep1sep(parens(formula) | conjunction | negation  | atom , "|"))   ^^ { (fs : List[FOLFormula]) => createNOp(fs,Or.apply) }
+  //precedence 780
+  def conjunction: Parser[FOLFormula]  = (rep1sep(parens(formula) | negation | atom, "&"))   ^^ { (fs : List[FOLFormula]) => createNOp(fs,And.apply) }
+  //precedence 300
+  def negation:Parser[FOLFormula] = "-" ~> parens(formula) | atomWeq
+
+  def parens[T](p:Parser[T]) : Parser[T] = "(" ~> p <~ ")"
 
   def literal: Parser[FOLFormula] = negeq | poseq | negatom | posatom
   def posatom: Parser[FOLFormula] = atom
   def negatom: Parser[FOLFormula] = "-" ~ atom  ^^ {case "-" ~ a => Neg(a)}
+  def atomWeq: Parser[FOLFormula] =  negeq | poseq | atom
   def atom: Parser[FOLFormula] = atom1 | atom2
-  def atom1: Parser[FOLFormula] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
-  def atom2: Parser[FOLFormula] = conssymb ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
+  def atom1: Parser[FOLFormula] = atomsymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  def atom2: Parser[FOLFormula] = atomsymb ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
   def poseq: Parser[FOLFormula] = term ~ "=" ~ term ^^ {case t1 ~ "=" ~ t2 => Equation(t1,t2)}
   def negeq: Parser[FOLFormula] = term ~ "!=" ~ term ^^ {case t1 ~ "!=" ~ t2 => Neg(Equation(t1,t2))}
+  def atomsymb: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*""".r
   def conssymb: Parser[String] = """[a-z][a-zA-Z0-9_]*""".r
   def varsymb: Parser[String] = """[A-Z][a-zA-Z0-9_]*""".r
   def term: Parser[FOLTerm] = function | constant | variable
