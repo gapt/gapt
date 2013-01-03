@@ -208,6 +208,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
           if (formulas != Nil) { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
             val lbl = DrawSequent.latexToLabel(getMatrixSymbol(holF), ft)
             lbl.reactions += {
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close(holF)
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
                 PopupMenu(DrawExpansionTree.this, holF, lbl, e.point.x, e.point.y)
             }
