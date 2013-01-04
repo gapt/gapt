@@ -171,14 +171,15 @@ object Prover9 {
 
 
 
-  def escape_constants(r:RobinsonResolutionProof) = {
+  def escape_constants[T<:LambdaExpression](r:RobinsonResolutionProof, f:T) : (RobinsonResolutionProof,T) = {
     val names : Set[(Int,String)] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map((fo:FormulaOccurrence) => getVar(fo.formula,Set[(Int,String)]()))).flatten.flatten
     val pairs : Set[(String, (Int,String))] = (names.map((x:(Int,String)) =>
       (x._2, ((x._1, x._2.replaceAll("_","\\\\_")))   ))
       )
 
     val mapping = NameReplacement.emptySymbolMap ++ (pairs)
-    NameReplacement.apply(r, mapping)
+
+    (NameReplacement.apply(r, mapping), NameReplacement(f,mapping))
   }
 
 
@@ -208,7 +209,8 @@ object Prover9 {
                   }*/
     val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
     val rproof = IvyToRobinson(iproof)
-    val mproof = InstantiateElimination(rproof)
+    //val mproof = InstantiateElimination(rproof)
+    val mproof = rproof
     pt_file.delete
     ivy_file.delete
 

@@ -85,7 +85,6 @@ class Prover9ParserTest extends SpecificationWithJUnit {
         "(P(x) <-> P(b))", "(A<->B)", //"(X<->Y<->Z)", "(q(x) <->q(x) <-> p(y))",
         "q(x) &(q(x) & p(y))", "(X&Y)&Z",
         "(all X p(X))","(exists X p(X))"
-
       )
 
       cases map ( (s:String) =>
