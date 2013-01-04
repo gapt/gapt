@@ -215,28 +215,43 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
   }
 
 object Prover9TermParser extends JavaTokenParsers {
+  /* debug transformers
+  def d(s:String,f:FOLFormula) : FOLFormula = { println(s+": "+f); f }
+  def dq : (FOLFormula => FOLFormula) = d("Quant",_)
+  def di : (FOLFormula => FOLFormula) = d("Imp",_)
+  def dr : (FOLFormula => FOLFormula) = d("Rimp",_)
+  def dl : (FOLFormula => FOLFormula) = d("Iff",_)
+  def dd : (FOLFormula => FOLFormula) = d("Or",_)
+  def dc : (FOLFormula => FOLFormula) = d("And",_)
+  def da : (FOLFormula => FOLFormula) = d("Atom",_)
+  def dn : (FOLFormula => FOLFormula) = d("Not",_)
+    */
+
   def pformula : Parser[FOLFormula] = parens(formula) | formula
-  def formula: Parser[FOLFormula] = parens(allformula | exformula) |
-                                    atomWeq |  negation | disjunction | conjunction |
-                                    implication |  rimplication | lequivalence
-
-
-  def allformula: Parser[FOLFormula]   = ("all"    ~> variable ~ (pformula | allformula | exformula) ) ^^ { case v ~ f => fol.AllVar(v,f) }
-  def exformula: Parser[FOLFormula]    = ("exists" ~> variable ~ (pformula | allformula | exformula) ) ^^ { case v ~ f => fol.ExVar(v,f) }
+  def formula: Parser[FOLFormula] = implication
   //precedence 800
-  def pdfc:Parser[FOLFormula] = parens(formula) | dis_or_con
-  def implication: Parser[FOLFormula]  = (pdfc ~ ("->" ~> pdfc))   ^^ { case f ~ g  => Imp(f,g) }
-  def rimplication: Parser[FOLFormula] = (pdfc ~ ("<-"   ~> pdfc)) ^^ { case f~g => Imp(g,f) }
-  def lequivalence: Parser[FOLFormula] = (pdfc ~ ("<->"  ~> pdfc)) ^^ { case f~g =>
-    fol.And(fol.Imp(f,g), fol.Imp(g,f)) }
+  def implication: Parser[FOLFormula]  = (dis_or_con ~ ("<->"|"->"|"<-") ~ dis_or_con) ^^ { _ match {
+    case f ~ "->"  ~ g => fol.Imp(f,g)
+    case f ~ "<-"  ~ g => fol.Imp(g,f)
+    case f ~ "<->" ~ g => fol.And(fol.Imp(f,g), fol.Imp(g,f))
+  }} | dis_or_con
 
-  def dis_or_con: Parser[FOLFormula] = disjunction | conjunction | negation | atom
+  def dis_or_con: Parser[FOLFormula] = (disjunction | conlit )
   //precedence 790
-  def disjunction: Parser[FOLFormula]  = (rep1sep(parens(formula) | conjunction | negation  | atom , "|"))   ^^ { (fs : List[FOLFormula]) => createNOp(fs,Or.apply) }
+  def disjunction: Parser[FOLFormula]  = (conlit ~ ("|" ~> disjunction) ^^ {case f ~ g => fol.Or(f,g)}) | conlit
   //precedence 780
-  def conjunction: Parser[FOLFormula]  = (rep1sep(parens(formula) | negation | atom, "&"))   ^^ { (fs : List[FOLFormula]) => createNOp(fs,And.apply) }
+  def conlit: Parser[FOLFormula] =  (conjunction| qliteral )
+  def conjunction: Parser[FOLFormula]  = ( qliteral ~ ("&" ~> conjunction)   ^^ { case f ~ g => fol.And(f,g) }) | qliteral
+  //precedence 750
+  def qliteral : Parser[FOLFormula] = allformula | exformula | literal2
+  def allformula : Parser[FOLFormula] = parens(allformula_)
+  def exformula : Parser[FOLFormula] = parens(exformula_)
+  def allformula_ : Parser[FOLFormula]   = ("all"    ~> variable ~ ( allformula_ | exformula_ | literal2) ) ^^ { case v ~ f => fol.AllVar(v,f) }
+  def exformula_ : Parser[FOLFormula]    = ("exists" ~> variable ~ ( allformula_ | exformula_ | literal2) ) ^^ { case v ~ f => fol.ExVar(v,f) }
   //precedence 300
-  def negation:Parser[FOLFormula] = "-" ~> parens(formula) | atomWeq
+  def literal2:Parser[FOLFormula] = parens(formula) | atomWeq | negation
+  def negation:Parser[FOLFormula] = "-" ~> (parens(formula) | atomWeq)
+
 
   def parens[T](p:Parser[T]) : Parser[T] = "(" ~> p <~ ")"
 
