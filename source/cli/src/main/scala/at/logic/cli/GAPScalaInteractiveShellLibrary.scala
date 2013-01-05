@@ -531,10 +531,19 @@ object loadProofDB {
 
 
   object loadProver9Proof {
-    def apply(filename : String) : RobinsonResolutionProof = Prover9.parse_prover9(filename)
+    def apply(filename : String) : (RobinsonResolutionProof, FSequent) = Prover9.parse_prover9(filename)
   }
 
-  // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
+  object loadProver9LKProof {
+    def apply(filename : String) : LKProof = {
+      val (proof, endsequent) = Prover9.parse_prover9(filename)
+      Robinson2LK(proof,endsequent)
+    }
+  }
+
+
+
+// called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
   object proveProp {
     def apply( seq: FSequent ) : Option[LKProof] = solvePropositional(seq)
   }
@@ -825,20 +834,21 @@ object loadProofDB {
     }
   }
 
-
   object goat {
     import at.logic.language.fol._
 
-    lazy val proof = loadProver9Proof( "provers/prover9/src/test/resources/PUZ047+1.out")
-    lazy val (escaped_proof, escaped_formula) = Prover9.escape_constants(proof, formula)
-    lazy val lkproof = Robinson2LK(escaped_proof, endsequent)
+    lazy val (proof, endsequent) = loadProver9Proof( "provers/prover9/src/test/resources/PUZ047+1.out")
+    //lazy val (escaped_proof, escaped_formula) = Prover9.escape_constants(proof, formula)
+    lazy val lkproof = Robinson2LK(proof, endsequent)
 
 
+    /*
     def endsequent = escaped_formula match {
       case Imp(left, right) => // FSequent(Prover9TermParser.normalizeFormula(left)::Nil, Prover9TermParser.normalizeFormula(right)::Nil) ;
         FSequent(decomposeLeftAnd(Prover9TermParser.normalizeFormula(left)), Prover9TermParser.normalizeFormula(right)::Nil) ;
       case _ => FSequent(Nil, formula::Nil)
     }
+    */
 
     def formula : FOLFormula =  Prover9TermParser.parseAll(Prover9TermParser.formula, formulastring) match {
       case Prover9TermParser.Success(formula, _) => formula
@@ -887,7 +897,8 @@ object hol2fol {
      |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
      |   loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
      |   loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format
-     |   loadProver9Proof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format
+     |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
+     |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
      |   exportXML: List[Proof], List[String], String => Unit
      |   exportTPTP: List[Proof], List[String], String => Unit
      |

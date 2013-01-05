@@ -24,7 +24,7 @@ import java.io.File
 import at.logic.provers.prover9.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
 import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.algorithms.resolution.InstantiateElimination
-import at.logic.provers.prover9.commands.InferenceExtractor
+import at.logic.provers.prover9.commands.{Prover9TermParser, InferenceExtractor}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.occurrences.FormulaOccurrence
 
@@ -111,8 +111,8 @@ object Prover9 {
     ret match {
       case 0 =>
         try  {
-          val p9proof = parse_prover9(output_file)
-          val tp9proof = NameReplacement(p9proof, symbol_map)
+          val p9proof = parse_prover9(output_file, false)
+          val tp9proof = NameReplacement(p9proof._1, symbol_map)
           println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
 
           Some(tp9proof)
@@ -170,8 +170,8 @@ object Prover9 {
   }
 
 
-
-  def escape_constants[T<:LambdaExpression](r:RobinsonResolutionProof, f:T) : (RobinsonResolutionProof,T) = {
+  //def escape_constants[T<:LambdaExpression](r:RobinsonResolutionProof, f:T) : (RobinsonResolutionProof,T) = {}
+  def escape_constants(r:RobinsonResolutionProof, f:FSequent) : (RobinsonResolutionProof,FSequent) = {
     val names : Set[(Int,String)] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map((fo:FormulaOccurrence) => getVar(fo.formula,Set[(Int,String)]()))).flatten.flatten
     val pairs : Set[(String, (Int,String))] = (names.map((x:(Int,String)) =>
       (x._2, ((x._1, x._2.replaceAll("_","\\\\_")))   ))
@@ -183,7 +183,8 @@ object Prover9 {
   }
 
 
-  def parse_prover9(p9_file : String) : RobinsonResolutionProof = {
+  /* Takes the output of prover9, extracts a resolution proof and the endsequent. */
+  def parse_prover9(p9_file : String, escape_underscore : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
     println((new File(".")).getCanonicalPath)
 
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
@@ -214,9 +215,12 @@ object Prover9 {
     pt_file.delete
     ivy_file.delete
 
-    InferenceExtractor(p9_file)
-    //escape_constants(mproof)
-    mproof
+    val fs = Prover9TermParser.normalizeFSequent(InferenceExtractor(p9_file))
+    println("normalized formula: "+fs)
+    if (escape_underscore)
+      escape_constants(mproof, fs)
+    else
+      (mproof, fs)
   }
 
 }

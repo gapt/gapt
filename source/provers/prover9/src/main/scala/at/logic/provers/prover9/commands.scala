@@ -42,6 +42,7 @@ import util.parsing.combinator.JavaTokenParsers
 import util.matching.Regex
 import collection.mutable.{ListBuffer, Map}
 import at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression, App, Abs}
+import collection.immutable
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -102,7 +103,7 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
           f.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
           f.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
           val xml = XML.loadXML(new InputSource(stdout),f.newSAXParser())
-          println(xml)
+          //println(xml)
 	  // prover9 justifications. We translate the regular ones (factor, res and assumption) and replay the rest
           val AssumptionRE = new Regex("""\[(assumption)\]\.""")
           val FactorRE = new Regex("""\[factor\((\d+\w*),(\w+),(\w+)\)\]\.""")
@@ -226,6 +227,12 @@ object Prover9TermParser extends JavaTokenParsers {
   def da : (FOLFormula => FOLFormula) = d("Atom",_)
   def dn : (FOLFormula => FOLFormula) = d("Not",_)
     */
+  /* The main entry point to the parser for prover9 formulas. To parse literals, use literal as the entry point. */
+  def parseFormula(s:String) : FOLFormula = parseAll(formula, s) match {
+    case Success(result, _) => result
+    case NoSuccess(msg, input) =>
+      throw new Exception("Error parsing prover9 formula '"+s+"' at position "+input.pos+". Error message: "+msg)
+  }
 
   def pformula : Parser[FOLFormula] = parens(formula) | formula
   def formula: Parser[FOLFormula] = implication
@@ -277,6 +284,10 @@ object Prover9TermParser extends JavaTokenParsers {
     fs.reduceRight( (f:FOLFormula, g:FOLFormula) => constructor(f,g)   )
   }
 
+  def normalizeFSequent(f:FSequent) =
+    FSequent(f.antecedent.map(normalizeFormula[HOLFormula](_)),
+             f.succedent.map(normalizeFormula[HOLFormula](_)))
+
   def normalizeFormula[T <: LambdaExpression](f:T) : T = normalizeFormula(f,0)._1
   def normalizeFormula[T <: LambdaExpression](f:T, i:Int) : (T, Int) = f match {
     case Var(name, exptype) => (f, i)
@@ -318,10 +329,12 @@ object Prover9TermParser extends JavaTokenParsers {
 
   //TODO: refactor shared code with Prover9Init
   object InferenceExtractor {
-    def apply(fn: String) = {
-      println("==== Extracting Inferences ======")
+    def apply(fn: String) : FSequent = {
+      //println("==== Extracting Inferences ======")
       val buffer = new Array[ Byte ]( 1024 )
       val tptpIS = new FileInputStream(fn)
+      var goals = List[FOLFormula]()
+      var assumptions = List[FOLFormula]()
 
 
       // here we parse the given xml
@@ -338,14 +351,24 @@ object Prover9TermParser extends JavaTokenParsers {
           val xml = XML.loadXML(new InputSource(stdout),f.newSAXParser())
 
           var lastParents = new ListBuffer[String]() // this is used to monitor if the last rule by prover9 triggers a replay or not. If not, we must call replay with the parents here.
+
           (xml \\ "clause").foreach(e => {
             //val cls = getLiterals(e)
             val inference_type = (e \\ "justification" \\ "@jstring")
+            val literal = (e \\ "literal").text
+            inference_type.text match {
+              case "[assumption]." => assumptions = Prover9TermParser.parseFormula(literal)::assumptions
+              case "[goal]." => goals = Prover9TermParser.parseFormula(literal)::goals
+              case _ => ; //println("skipping: "+inference_type.text); //ignore other rules
+            }
             val id = (e\"@id").text
             println(inference_type)
-            println((e \\ "literal").text)
+            println()
             lastParents = new ListBuffer[String]()
           })
+
+
+
         },
         stderr => {val err:String = scala.io.Source.fromInputStream(stderr).mkString; if (!err.isEmpty) throw new Prover9Exception(err)}
       )
@@ -356,9 +379,19 @@ object Prover9TermParser extends JavaTokenParsers {
       val exitValue = proc.exitValue
 
       tptpIS.close()
-
-      println("==== End of Inferences ======")
-
+/*
+      println("assumptions:")
+      assumptions map println
+      println("goals:")
+      goals map println
+      println
+      println("fsequent:")
+      */
+      val fs = createFSequent(assumptions, goals)
+/*      println(fs)
+      println()
+      println("==== End of Inferences ======") */
+      fs
     }
 
     // the second value is the literals permutation from prover9 order to fsequent (as we have positive and negative
@@ -367,6 +400,38 @@ object Prover9TermParser extends JavaTokenParsers {
       else (e \\ "literal").map(l => Prover9TermParser.parseAll(Prover9TermParser.literal, l.text).get)
     }
 
+    /* fixed point of createFSequent_ */
+    def createFSequent(assumptions : immutable.Seq[FOLFormula], goals : immutable.Seq[FOLFormula]) : FSequent = {
+      val fs = createFSequent_(assumptions, goals)
+      if ((assumptions.length >= fs.antecedent.length ) && (goals.length >= fs.succedent.length))
+        fs
+      else
+        createFSequent(fs.antecedent.asInstanceOf[immutable.Seq[FOLFormula]], fs.succedent.asInstanceOf[immutable.Seq[FOLFormula]])
+    }
+
+    /* given a list of assumptions and goals, if a goal is of the form A -> B, put A into the
+    *  antecedent and B into the succedent. if a goal is a disjunction B1,...,Bn, put B1 to Bn into the succedent
+    *  instead. is an assumption is a conjunction A1,...,Am, put them into the antecedent instead.*/
+    def createFSequent_(assumptions : immutable.Seq[FOLFormula], goals : immutable.Seq[FOLFormula]) = {
+      val fs = goals.map(implications).foldLeft(FSequent(assumptions, Nil))((f:FSequent,g:FSequent) => f.compose(g))
+      FSequent(fs.antecedent.asInstanceOf[immutable.Seq[FOLFormula]].map(conjunctions).flatten,
+               fs.succedent.asInstanceOf[immutable.Seq[FOLFormula]].map(disjunctions).flatten)
+    }
+
+    def implications(f:FOLFormula) : FSequent = f match {
+      case fol.Imp(f1,f2) => FSequent(conjunctions(f1),disjunctions(f2))
+      case _ => FSequent(Nil, f::Nil)
+    }
+
+    def disjunctions(f:FOLFormula) : immutable.List[FOLFormula] = f match {
+      case fol.Or(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
+      case _ => immutable.List[FOLFormula](f)
+    }
+
+    def conjunctions(f:FOLFormula) : List[FOLFormula] = f match {
+      case fol.And(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
+      case _ => immutable.List[FOLFormula](f)
+    }
 
   }
 }

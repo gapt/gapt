@@ -90,7 +90,7 @@ class Prover9ParserTest extends SpecificationWithJUnit {
       cases map ( (s:String) =>
         Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
           case Prover9TermParser.Success(result, _) =>
-            println(result)
+            //println(result)
             true must beEqualTo(true)
           case Prover9TermParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " +  msg)
@@ -110,7 +110,7 @@ class Prover9ParserTest extends SpecificationWithJUnit {
       cases map ( (s:String) =>
         Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
           case Prover9TermParser.Success(result, _) =>
-            println(result)
+            //println(result)
             true must beEqualTo(true)
           case Prover9TermParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " +  msg)
@@ -140,7 +140,7 @@ class Prover9ParserTest extends SpecificationWithJUnit {
 
       Prover9TermParser.parseAll(Prover9TermParser.formula, oendsequent) match {
         case Prover9TermParser.Success(result, _ ) =>
-          println(result)
+          //println(result)
           "success" must beEqualTo("success")
         case Prover9TermParser.NoSuccess(msg, input) =>
           throw new Exception("Could not parse endsequent! "+msg+ " "+input.pos)
