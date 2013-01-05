@@ -220,7 +220,7 @@ class Prover9Test extends SpecificationWithJUnit {
   }
 
   "The Prover9 interface" should {
-    "find a refutation for a simple clause set }" in {
+    "find a refutation for a simple clause set " in {
       //checks, if the execution of prover9 works, o.w. skip test
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
       println("==== SIMPLE EXAMPLE ====")
@@ -266,8 +266,6 @@ class Prover9Test extends SpecificationWithJUnit {
   "The Prover9 interface" should {
     "successfully load the goat puzzle PUZ047+1.out" in {
       try {
-
-
         Prover9.parse_prover9("target" + separator + "test-classes" + separator +"PUZ047+1.out")
         "success" must beEqualTo("success")
       } catch {
@@ -276,5 +274,17 @@ class Prover9Test extends SpecificationWithJUnit {
         "success" must beEqualTo(e.getMessage )
       }
     }
+
+    "successfully load the expansion proof paper example cade13example.out" in {
+      try {
+        Prover9.parse_prover9("target" + separator + "test-classes" + separator +"cade13example.out")
+        "success" must beEqualTo("success")
+      } catch {
+        case e:Exception =>
+          e.printStackTrace
+          "success" must beEqualTo(e.getMessage )
+      }
+    }
   }
+
 }

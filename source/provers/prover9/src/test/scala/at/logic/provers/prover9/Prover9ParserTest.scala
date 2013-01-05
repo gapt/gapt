@@ -103,7 +103,9 @@ class Prover9ParserTest extends SpecificationWithJUnit {
         "(all X (P(X) & Q(X)))", "(all X (P(X) & Q(X) & R(X,X)))",
         "(exists X (P(X) & Q(X)))", "(exists X (P(X) & Q(X) & R(X,X)))",
         "(all X (P(X) | Q(X)))", "(all X (P(X) | Q(X) | R(X,X)))",
-        "(exists X (P(X) | Q(X)))", "(exists X (P(X) | Q(X) | R(X,X)))"
+        "(exists X (P(X) | Q(X)))", "(exists X (P(X) | Q(X) | R(X,X)))",
+        //"(all x (q(x,f(x)) | q(x,g(x))))",
+        "(all X (q(X,f(X)) | q(X,g(X))))"
 
       )
 
