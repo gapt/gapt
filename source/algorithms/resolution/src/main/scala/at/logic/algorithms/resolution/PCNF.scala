@@ -55,6 +55,7 @@ object PCNF {
     case Atom(_,_) => Axiom(List(f),List(f))
     case Neg(f2) => NegRightRule(PCNFp(f2,a), f2)
     case And(f1,f2) => {
+      /* see Or in PCNFp
       // get all possible partitions of the ant and suc of the clause a
       val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
       // find the right partition
@@ -63,6 +64,8 @@ object PCNF {
       val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
       // create the proof
       AndRightRule(PCNFn(f1,par._1), PCNFn(f2,par._2), f1, f2)
+      */
+      AndRightRule(PCNFn(f1,a), PCNFn(f2,a), f1, f2)
     }
     case Or(f1,f2) =>
       if (CNFn(f1).contains(a)) OrRight1Rule(PCNFn(f1,a),f1,f2)
@@ -87,6 +90,7 @@ object PCNF {
       if (CNFp(f1).contains(a)) AndLeft1Rule(PCNFp(f1,a),f1,f2)
       else AndLeft2Rule(PCNFp(f2,a),f1,f2)
     case Or(f1,f2) => {
+      /* the following is an inefficient way to compute the exact context sequents
       // get all possible partitions of the ant and suc of the clause a
       val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
       // find the right partition
@@ -95,6 +99,8 @@ object PCNF {
       val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
       // create the proof
       OrLeftRule(PCNFp(f1,par._1), PCNFp(f2,par._2), f1, f2)
+      we just take the whole context and apply weakenings later */
+      OrLeftRule(PCNFp(f1,a), PCNFp(f2,a), f1, f2)
     }
     case Imp(f1,f2) => {
       // get all possible partitions of the ant and suc of the clause a
