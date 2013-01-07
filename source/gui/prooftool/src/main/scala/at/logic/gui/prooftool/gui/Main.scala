@@ -722,6 +722,53 @@ object Main extends SimpleSwingApplication {
 
         body.contents = new Launcher(Some(("Expansion Tree", et)), 12)
       }) { border = customBorder }
+      contents += new MenuItem(Action("Nested Expansion Tree 1") {
+        import at.logic.language.lambda.types.Definitions._
+        import at.logic.language.lambda.symbols.ImplicitConverters._
+        import at.logic.language.hol._
+        import at.logic.calculi.expansionTrees.{WeakQuantifier, And => AndET, Atom => AtomET}
+        val p = HOLVar("P", i -> i -> o)
+        val a = HOLVar("a", i)
+        val b = HOLVar("b", i)
+        val f = HOLVar("f", i -> i)
+        val g = HOLVar("g", i -> i)
+        val q = HOLVar("Q", i -> i -> o)
+        val x = HOLVar("x", i)
+        val y = HOLVar("y", i)
+        val px = Atom(p, x::Nil) // p(x)
+        val pa = Atom(p, a::Nil) // p(a)
+        val pb = Atom(p, b::Nil) // p(b)
+        val fx = Function(f, x::Nil)
+        val fa = Function(f, a::Nil)
+        val fb = Function(f, b::Nil)
+        val gx = Function(g, x::Nil)
+        val ga = Function(g, a::Nil)
+        val gb = Function(g, b::Nil)
+        val qxfx = Atom(q, x::fx::Nil) // q(b,f(b))
+        val qxgx = Atom(q, x::gx::Nil) // q(b,f(b))
+        val qbfb = Atom(q, b::fb::Nil) // q(b,f(b))
+        val qafa = Atom(q, a::fa::Nil) // q(a,f(a))
+        val qbgb = Atom(q, b::gb::Nil) // q(b,g(b))
+        val qaga = Atom(q, a::ga::Nil) // q(a,g(a))
+        val qxy = Atom(q, x::y::Nil) // q(x,y)
+        val ant1F = Or(pa,pb)
+        val ant2F = AllVar(x, Or(qxfx,qxgx))
+        val conF = ExVar(x, And(px, ExVar(y, qxy)))
+        val ex_qay = ExVar(y, Atom(q, a::y::Nil))
+        val ex_qby = ExVar(y, Atom(q, b::y::Nil))
+
+        val ant1ET = AtomET(ant1F)
+        val ant2ET = AtomET(ant2F)
+        val expT11 = new WeakQuantifier(ex_qay,Seq((AtomET(qafa),fa),(AtomET(qaga),ga)))
+        val expT21 = new WeakQuantifier(ex_qby,Seq((AtomET(qbfb),fb),(AtomET(qbgb),gb)))
+        val expT1 = new AndET(AtomET(pa), expT11)
+        val expT2 = new AndET(AtomET(pb), expT21)
+        val conET = new WeakQuantifier(conF,Seq((expT1,a),(expT2,b)))
+
+        val et = (Seq(ant1ET,ant2ET),Seq(conET))
+
+        body.contents = new Launcher(Some(("Expansion Tree", et)), 12)
+      }) { border = customBorder }
     }
   }
 
