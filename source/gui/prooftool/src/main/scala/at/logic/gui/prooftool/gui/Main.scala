@@ -727,7 +727,7 @@ object Main extends SimpleSwingApplication {
         import at.logic.language.lambda.symbols.ImplicitConverters._
         import at.logic.language.hol._
         import at.logic.calculi.expansionTrees.{WeakQuantifier, And => AndET, Atom => AtomET}
-        val p = HOLVar("P", i -> i -> o)
+        val p = HOLVar("P", i -> o)
         val a = HOLVar("a", i)
         val b = HOLVar("b", i)
         val f = HOLVar("f", i -> i)
