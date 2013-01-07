@@ -77,7 +77,7 @@ object CutIntroduction {
     println("\nGenerating final proof with cut...\n")
     
     //val cutFormula0 = AllVar(xvar, conj)
-    val cutFormula = ehs.canonicalSol
+    val cutFormula0 = ehs.canonicalSol
 
 /* TODO: uncomment when fixed.
     // Computing the interpolant (transform this into a separate function later)
@@ -112,6 +112,14 @@ object CutIntroduction {
     // TODO: casting does not work here.
     val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
 */
+
+    println("Canonical Solution: ")
+    println(cutFormula0)
+
+    val cutFormula = minimalImprovedSolution(cutFormula0, ehs)
+
+    println("Improved solution: ")
+    println(cutFormula)
 
     val alpha = FOLVar(new VariableStringSymbol("α"))
     val cutLeft = cutFormula.substitute(alpha)
@@ -208,7 +216,7 @@ object CutIntroduction {
 
   //------------------------ FORGETFUL RESOLUTION -------------------------//
 
-  class MyFClause(val pos: List[FOLFormula], val neg: List[FOLFormula])
+  class MyFClause(val neg: List[FOLFormula], val pos: List[FOLFormula])
  
   def toMyFClause(c: FClause) = {
     val neg = c.neg.toList.map(x => x.asInstanceOf[FOLFormula])
@@ -238,7 +246,7 @@ object CutIntroduction {
   // clause
   def CNFtoFormula( cls : List[MyFClause] ) : FOLFormula =
   {
-    andN(cls.map( c => orN(c.pos ++ c.neg.map( l => l)) ))
+    andN(cls.map( c => orN(c.pos ++ c.neg.map( l => Neg(l) )) ))
   }
 
   // Checks if complementary literals exist.
@@ -261,7 +269,6 @@ object CutIntroduction {
   
   //-----------------------------------------------------------------------//
 
-  // TODO: not beeing used currently
   // The canonical solution computed already has only the quantified formulas 
   // from the end-sequent (propositional part is ignored).
   //
@@ -282,14 +289,16 @@ object CutIntroduction {
     // returns the list of all solutions found.
     def searchSolution(f: FOLFormula) : List[FOLFormula] =
       f :: ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) => 
-          // Should I insert this quantifier by hand?
           if(ehs.isValidWith(AllVar(x,r))) {
             searchSolution(r) ::: acc
           }
-          else acc
+          else {
+            //println("This is not a solution for the ehs: " + r)
+            acc 
+          }
         )
 
-    searchSolution(cnf)
+    searchSolution(cnf).map(s => AllVar(x, s))
   }
 
   def minimalImprovedSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : FOLFormula =

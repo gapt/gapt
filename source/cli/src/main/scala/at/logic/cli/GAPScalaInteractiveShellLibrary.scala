@@ -344,14 +344,29 @@ object loadProofDB {
     def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.TermsExtraction( p )
   }
 
+  object getDecompositions {
+    def apply(terms: List[FOLTerm]) = {
+      val d = Decomposition(terms).sortWith((d1, d2) =>
+        d1._1.length + d1._2.length < d2._1.length + d2._2.length
+      )
+
+      d.size match {
+        case 0 => throw new Exception("No decompositions found for this list of terms.")
+        case _ => d
+      }
+    }
+  }
+
   object smallestDecomposition {
     def apply ( terms : List[FOLTerm] ) = {
       val decompositions = Decomposition(terms).sortWith((d1, d2) =>
         d1._1.length + d1._2.length < d2._1.length + d2._2.length
       )
 
-      // TODO: this throws an expection if no decomposition is found
-      decompositions.head
+      decompositions.size match {
+        case 0 => throw new Exception("No decompositions found for this list of terms.")
+        case _ => decompositions.head
+      }
     }
   }
 
@@ -367,21 +382,10 @@ object loadProofDB {
   
   object improveCanonicalSolution {
     def apply( ehs: ExtendedHerbrandSequent ) =
-      CutIntroduction.improveSolution(ehs.canonicalSol, ehs)
+      //CutIntroduction.improveSolution(ehs.canonicalSol, ehs)
+      CutIntroduction.improveSolution(ehs.canonicalSol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)
   }
   
-  /*
-  object termsExtractionFlat {
-    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.TermsExtraction( p ).
-    //foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
-      foldRight(List[FOLTerm]()) ( (t, acc) =>
-        t._2.foldRight(acc) ((lst, ac) =>
-          lst ++ ac
-        )
-      )
-  }
-  */
-
   object toClauses {
     def apply( f: HOLFormula ) = CNFp(f)
   }
@@ -932,7 +936,8 @@ object hol2fol {
      |   cutIntro: LKProof => Option[LKProof]
      |   termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof
      |   termsExtractionFlat: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)
-     |   smallestDecomposition: List[FOLTerm] => List[(List[FOLTerm], List[FOLTerm])] - computes the smallest decomposition (wrt symbolic complexity) of the given list of terms
+     |   getDecompositions: List[FOLTerm] => List[(List[FOLTerm], List[FOLTerm])] - computes all the decompositions of a given list of terms (returns a list ordered by size)
+     |   smallestDecomposition: List[FOLTerm] => (List[FOLTerm], List[FOLTerm]) - computes the smallest decomposition (wrt symbolic complexity) of the given list of terms
      |   EHSFromDecomp: Sequent,(List[FOLTerm], List[FOLTerm]), FlatTermSet => ExtendedHerbrandSequent - computes a Extended Herbrand Sequent from the given data
      |   improveCanonicalSolution: ExtendedHerbrandSequent => List[FOLFormula] - produces the list of solutions that can be derived from the canonical solution by forgetful resolution.
      |
