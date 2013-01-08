@@ -1,0 +1,4 @@
+#!/bin/awk -f
+BEGIN                    { start = 0 }
+                         { if ( start == 1 ) { sub(/^% /, ""); print } }
+/ORIGINAL SYSTEM OUTPUT/ { start = 1 }
