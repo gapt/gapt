@@ -86,8 +86,6 @@ trait FClause {
       g.neg.diff(f.neg).isEmpty && g.pos.diff(f.pos).isEmpty
 
 
-  def toFormula =
-
   override def equals(o: Any) = o match {
     case s: FClause => multisetEquals(this,s)
     case _ => false
