@@ -85,6 +85,9 @@ trait FClause {
     f.neg.diff(g.neg).isEmpty && f.pos.diff(g.pos).isEmpty &&
       g.neg.diff(f.neg).isEmpty && g.pos.diff(f.pos).isEmpty
 
+
+  def toFormula =
+
   override def equals(o: Any) = o match {
     case s: FClause => multisetEquals(this,s)
     case _ => false
@@ -119,6 +122,7 @@ trait FClause {
 // a default factory
 object FClause {
  def apply(n:Seq[Formula], p:Seq[Formula]): FClause = new FClause {def neg = n; def pos = p}
+ def unapply(fc : FClause) = Some((fc.neg,fc.pos))
 }
 
 // the boolean represent isPositive as the negation is stripped from the literals

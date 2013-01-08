@@ -25,6 +25,7 @@ import at.logic.parsing.readers.StringReader
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
+import at.logic.language.fol
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base.types.FSequent
@@ -48,7 +49,8 @@ import scala.collection.immutable.HashSet
 import at.logic.algorithms.unification.hol._
 
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-import at.logic.calculi.resolution.base.Clause
+import at.logic.calculi.resolution.base._
+import at.logic.calculi.resolution.robinson._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.language.fol.{FOLExpression, FOLTerm}
 import at.logic.calculi.resolution.base.ResolutionProof
@@ -100,6 +102,8 @@ import at.logic.provers.prover9.Prover9
 import collection.immutable
 import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.algorithms.resolution._
+import at.logic.calculi.resolution.base.FClause
+import fol.FOLVar
 
 object loadProofs {
     def apply(file: String) =
@@ -541,8 +545,25 @@ object loadProofDB {
   object loadProver9LKProof {
     def apply(filename : String) : LKProof = {
       val (proof, endsequent) = Prover9.parse_prover9(filename)
-      Robinson2LK(proof,endsequent)
+      if (skolemize(endsequent).multiSetEquals(endsequent)) {
+        Robinson2LK(proof,endsequent)
+      } else {
+        println("End-sequent is not skolemized, using initial clauses instead.")
+        val fclauses : Set[FClause]  = proof.nodes.map( _ match {
+          case InitialClause(clause) => clause.toFClause;
+          case _ => FClause(Nil,Nil) }
+        ).filter( (x:FClause) => x match { case FClause(Nil,Nil) => false; case _ => true } )
+        val clauses = fclauses.map( c => univclosure(fol.Or(c.neg.map(f => fol.Neg(f.asInstanceOf[FOLFormula])) ++ c.pos.map(f => f.asInstanceOf[FOLFormula])))  )
+        val clauses_ = clauses.partition(_ match { case fol.Neg(_) => false; case _ => true})
+        //val cendsequent = FSequent(clauses.toList, Nil)
+        val cendsequent2 = FSequent(clauses_._1.toList, clauses_._2.map(_ match {case fol.Neg(x) => x} ).toList)
+        println("new endsequent: "+cendsequent2)
+
+        Robinson2LK(proof,cendsequent2)
+      }
     }
+
+    def univclosure(f:FOLFormula) = f.getFreeAndBoundVariables._1.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
   }
 
 

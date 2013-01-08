@@ -38,7 +38,7 @@ object RobinsonToLK {
    // for each formula F in s, count its occurrences in s and resp and apply contractions on resp until we reach the same number
    val p1 = resp.root.antecedent.map(_.formula).toSet.foldLeft(resp)((p,f) =>
        ((1).to(p.root.antecedent.filter(_.formula == f).size - s.antecedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
-           ContractionLeftRule(q,f) ))
+       {println("n="+n+" sequent: "+p.root.antecedent.filter(_.formula == f) + " contracting: "+f); ContractionLeftRule(q,f)} ))
    p1.root.succedent.map(_.formula).toSet.foldLeft(p1)((p,f) =>
        ((1).to(p.root.succedent.filter(_.formula == f).size - s.succedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
           ContractionRightRule(q,f) ))

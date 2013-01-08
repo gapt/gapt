@@ -8,7 +8,7 @@
 package at.logic.transformations.skolemization
 
 import at.logic.calculi.lk.base.{LKProof, Sequent}
-import at.logic.calculi.lk.lkSpecs.beMultisetEqual
+import at.logic.calculi.lk.lkSpecs.{beSyntacticMultisetEqual, beMultisetEqual}
 
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -98,7 +98,6 @@ class SkolemizationTest extends SpecificationWithJUnit {
     }
 
     "work for a cut-free proof (1)" in {
-      (1 === 2).orSkip //workaround to simulate specs1 skip 
       /* Proof is:
                  R(a,b) :- R(a,b)
                  ----------------------   Ex,r
@@ -149,9 +148,10 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val skolemized_proof : LKProof = skolemize( proof )
       println("=== endsequent skolemized ===")
       println(skolemized_proof.root)
+      println(proof_sk.root)
 
-      skolemized_proof.root must beMultisetEqual (proof_sk.root)
-  }.pendingUntilFixed("still not working")
+      skolemized_proof.root must beSyntacticMultisetEqual (proof_sk.root)
+  }
 
 
 
