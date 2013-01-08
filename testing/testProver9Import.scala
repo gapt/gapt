@@ -2,10 +2,10 @@ import java.io._
 import scala.io.Source
 
 /**********
- * test script for prover9 import, usage example:
+ * test script for prover9 import, usage example from CLI:
  *
  * scala> :load ../testing/testProver9Import.scala
- * scala> testIvyImport( "../testing/prover9-TSTP/ALG/", 5 )
+ * scala> testProver9Import( "../testing/prover9-TSTP/ALG/", 5 )
  **********/
 
 /**
@@ -25,7 +25,7 @@ class MyFile(file: File) {
  * takes a directory name and a timeout (in seconds) as argument,
  * processes all .out-files below the given directory
  **/
-object testIvyImport {
+object testProver9Import {
   def apply( dir: String, to: Long  ) {
     println( "Testing ivy-import with timeout " + to + "s:" )
     var n_total = 0
