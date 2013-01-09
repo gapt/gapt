@@ -280,7 +280,7 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
   def posatom: Parser[FOLFormula] = atom
   def negatom: Parser[FOLFormula] = "-" ~ atom  ^^ {case "-" ~ a => Neg(a)}
   def atomWeq: Parser[FOLFormula] =  negeq | poseq | atom
-  def atom: Parser[FOLFormula] = atom1 | atom2
+  def atom: Parser[FOLFormula] = atom1 | atom2 | topbottom
   def atom1: Parser[FOLFormula] = atomsymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
   def atom2: Parser[FOLFormula] = atomsymb ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
   def poseq: Parser[FOLFormula] = term ~ "=" ~ term ^^ {case t1 ~ "=" ~ t2 => Equation(t1,t2)}
@@ -290,17 +290,32 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
   def function: Parser[FOLTerm] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
   def constant: Parser[FOLConst] = conssymb ^^ {case x => FOLFactory.createVar(new ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
   def variable: Parser[FOLVar] = varsymb ^^ {case x => FOLFactory.createVar(new VariableStringSymbol(x), Ti()).asInstanceOf[FOLVar]}
+  def topbottom: Parser[FOLFormula] = "$" ~> ( "T" ^^ (x=> topformula) | "F" ^^ (x => bottomformula) )
+
+  //we don't have top and bottom in the algorithms, so we simulate it
+  val topformula = { fol.And( fol.TopC, fol.Neg(fol.TopC)  ) }
+  val bottomformula = { fol.Or( fol.BottomC, fol.Neg(fol.BottomC)  ) }
+
 
   def createNOp(fs:List[FOLFormula], constructor : (FOLFormula, FOLFormula) => FOLFormula ) : FOLFormula = {
     //if (fs.size < 2) failure("Binary operator needs to occur at least once!") else
     fs.reduceRight( (f:FOLFormula, g:FOLFormula) => constructor(f,g)   )
   }
 
-  def normalizeFSequent(f:FSequent) =
-    FSequent(f.antecedent.map(normalizeFormula[HOLFormula](_)),
-      f.succedent.map(normalizeFormula[HOLFormula](_)))
+  def normalizeFSequent(f:FSequent) = {
+    require( (f.antecedent ++ f.succedent).forall(_.isInstanceOf[FOLFormula]), "normalization only works on FOL formulas" )
+    FSequent(f.antecedent.map(x => normalizeFormula(x.asInstanceOf[FOLFormula])),
+             f.succedent.map(x => normalizeFormula(x.asInstanceOf[FOLFormula])))
+  }
 
-  def normalizeFormula[T <: LambdaExpression](f:T) : T = normalizeFormula(f,0)._1
+  def normalizeFormula(f:FOLFormula) : HOLFormula = {
+    val freevars = f.getFreeAndBoundVariables._1.toList
+    val pairs : List[(Var,FOLExpression)] = (freevars zip (0 to (freevars.size-1))) map (x => (x._1,  x._1.factory.createVar(new VariableStringSymbol("v"+x._2), x._1.exptype).asInstanceOf[FOLExpression]) )
+    val nf : FOLFormula = Substitution(pairs)(f).asInstanceOf[FOLFormula]
+
+    normalizeFormula(nf,freevars.size)._1
+  }
+
   def normalizeFormula[T <: LambdaExpression](f:T, i:Int) : (T, Int) = f match {
     case Var(name, exptype) => (f, i)
     case App(s, t) =>
