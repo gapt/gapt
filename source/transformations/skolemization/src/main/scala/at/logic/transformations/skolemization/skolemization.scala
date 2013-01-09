@@ -13,6 +13,8 @@ import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base.{FSequent, LKProof, Sequent, PrincipalFormulas}
 import at.logic.language.hol._
+import at.logic.language.hol
+import at.logic.language.fol
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
 import at.logic.language.lambda.substitutions._
@@ -26,6 +28,7 @@ import typedLambdaCalculus.{AbsInScope, App, Var, LambdaExpression}
 import at.logic.calculi.slk.{trsArrowLeftRule, SchemaProofLinkRule}
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.types.FSequent
+import fol.{FOLTerm, FOL}
 
 
 object skolemize {
@@ -443,8 +446,15 @@ object skolemize {
       if (pol == 1)
       {
         //println( "skolemizing ExQ")
-        val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
+        val sf : HOLExpression = if (x.isInstanceOf[FOL]) {
+          println("FOL skolemization!")
+          fol.Function( symbols.head, terms.asInstanceOf[List[FOLTerm]] )
+        } else{
+          println("HOL skolemization!")
+          hol.Function( symbols.head, terms, x.exptype )
+        }
 
+        val sub = Substitution[HOLExpression](x, sf)
         //println( "substitution: " + sub )
         //println( "before: " + f )
         //println( "after: " + sub( f ) )
@@ -457,7 +467,14 @@ object skolemize {
       if (pol == 0)
       {
         //println( "skolemizing AllQ")
-        val sub = Substitution(x, Function( symbols.head, terms, x.exptype ) )
+        val sf : HOLExpression = if (x.isInstanceOf[FOL]) {
+          println("FOL skolemization!")
+          fol.Function( symbols.head, terms.asInstanceOf[List[FOLTerm]] )
+        } else{
+          println("HOL skolemization!")
+          hol.Function( symbols.head, terms, x.exptype )
+        }
+        val sub = Substitution[HOLExpression](x, sf)
         //println( "substitution: " + sub )
         //println( f )
         //println( sub( f ) )

@@ -25,7 +25,9 @@ import at.logic.parsing.readers.StringReader
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
+import at.logic.language.{hol => lhol}
 import at.logic.language.fol
+import at.logic.language.lambda.{typedLambdaCalculus => lambda }
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base.types.FSequent
@@ -545,7 +547,12 @@ object loadProofDB {
   object loadProver9LKProof {
     def apply(filename : String) : LKProof = {
       val (proof, endsequent) = Prover9.parse_prover9(filename)
-      if (skolemize(endsequent).multiSetEquals(endsequent)) {
+      //println("skolemizing endsequent: "+endsequent)
+      //val sendsequent = skolemize(endsequent)
+      //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
+      //println("done: "+folsendsequent)
+      if (!containsStrongQuantifiers(endsequent)) {
+        println("End-sequent is skolemized.")
         Robinson2LK(proof,endsequent)
       } else {
         println("End-sequent is not skolemized, using initial clauses instead.")
@@ -564,6 +571,22 @@ object loadProofDB {
     }
 
     def univclosure(f:FOLFormula) = f.getFreeAndBoundVariables._1.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
+
+    def containsStrongQuantifiers(fs:FSequent) : Boolean =
+      fs.antecedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],false)) ||
+      fs.succedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],true))
+
+    def containsStrongQuantifiers(f:FOLFormula, pol : Boolean) : Boolean = f match {
+      case fol.Atom(_,_) => false
+      case fol.And(s,t) => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
+      case fol.Or(s,t)  => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
+      case fol.Imp(s,t) => containsStrongQuantifiers(s, !pol) || containsStrongQuantifiers(t,pol)
+      case fol.Neg(s)   => containsStrongQuantifiers(s, !pol)
+      case fol.AllVar(x,s) => if (pol == true) true else containsStrongQuantifiers(s, pol)
+      case fol.ExVar(x,s)  => if (pol == false) true else containsStrongQuantifiers(s, pol)
+      case _ => throw new Exception("Unhandled case!")
+    }
+
   }
 
 

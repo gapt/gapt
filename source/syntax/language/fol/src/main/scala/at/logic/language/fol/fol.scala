@@ -62,7 +62,10 @@ trait FOLExpression extends HOLExpression with FOL {
       case Neg(x) => NegSymbol + x.toString
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
-      case _ => throw new Exception("Unknown FOL expression: " + super.toString)
+      /* TODO: this method usually fails if layers got mixed (a fol structure contains a hol structure). the cli
+       *       throws this exception when it tries to print such a malformed structure, but this is hard to see.
+       *       should we print a warning instead? */
+      case _ => throw new Exception("String conversion of FOL expression failed: " + super.toString)
     }
 
   /**
