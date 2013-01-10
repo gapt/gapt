@@ -189,7 +189,7 @@ object solvePropositional {
           val rest = new FSequent(seq.antecedent.diff(f::Nil), seq.succedent)
           f match {
             
-            case Imp(f1, f2)=> 
+            case Imp(f1, f2)=>
               val p_ant1 = rest.antecedent
               val p_suc1 = f1.asInstanceOf[HOLFormula] +: rest.succedent
               val p_ant2 = f2.asInstanceOf[HOLFormula] +: rest.antecedent

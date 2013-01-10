@@ -346,58 +346,65 @@ object loadProofDB {
     def apply( n : Int) = at.logic.testing.SumOfOnesExampleProof( n )
   }
 
-  object termsExtraction {
-    def apply( p : LKProof) = at.logic.algorithms.cutIntroduction.TermsExtraction( p )
+  object extractTerms {
+    def apply( p: LKProof ) = { 
+      val ts = new FlatTermSet(TermsExtraction(p))
+      println("The term set contains " + ts.termset.size + " terms.\n")
+      ts
+    }
   }
 
-  object getDecompositions {
-    def apply(terms: List[FOLTerm]) = {
-      val d = Decomposition(terms).sortWith((d1, d2) =>
-        d1._1.length + d1._2.length < d2._1.length + d2._2.length
-      )
-
-      d.size match {
-        case 0 => throw new Exception("No decompositions found for this list of terms.")
-        case _ => d
+  object computeGrammars {
+    def apply(terms: FlatTermSet) = {
+      val g = ComputeGrammars(terms)
+      g.size match {
+        case 0 => throw new Exception("No grammars found for this list of terms.")
+        case n => println(n + " grammars found.\n"); g
       }
     }
   }
 
-  object smallestDecomposition {
-    def apply ( terms : List[FOLTerm] ) = {
-      val decompositions = Decomposition(terms).sortWith((d1, d2) =>
-        d1._1.length + d1._2.length < d2._1.length + d2._2.length
-      )
-
-      decompositions.size match {
-        case 0 => throw new Exception("No decompositions found for this list of terms.")
-        case _ => decompositions.head
+  object seeNFirstGrammars {
+    def apply(lst: List[Grammar], n: Int) = {
+      for(i <- 0 to n-1) {
+        println(i + ". " + lst(i).toPrettyString + "(size = " + lst(i).size + ")"  )
       }
+      println("\nNote that the function symbols 'tuplei' are inserted by the system as part of the algorithm.")
     }
   }
 
-  object termsExtractionFlat {
-    def apply( p: LKProof ) = 
-      new FlatTermSet(TermsExtraction(p))
+  object generateExtendedHerbrandSequent {
+    def apply( es: Sequent, g: Grammar, flatterms: FlatTermSet ) =
+      new ExtendedHerbrandSequent(es, g, flatterms)
   }
 
-  object EHSFromDecomp {
-    def apply( es: Sequent, d: (List[FOLTerm], List[FOLTerm]), flatterms: FlatTermSet ) =
-      new ExtendedHerbrandSequent(es, d, flatterms)
+  object computeCanonicalSolution {
+    def apply(ehs: ExtendedHerbrandSequent) = ehs.canonicalSol
   }
   
-  object improveCanonicalSolution {
+  object computeImprovedSolutions {
     def apply( ehs: ExtendedHerbrandSequent ) =
-      //CutIntroduction.improveSolution(ehs.canonicalSol, ehs)
       CutIntroduction.improveSolution(ehs.canonicalSol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)
   }
-  
-  object toClauses {
-    def apply( f: HOLFormula ) = CNFp(f)
+
+  object computeMinimalSolution {
+    def apply(ehs: ExtendedHerbrandSequent) = CutIntroduction.minimalImprovedSolution(ehs.canonicalSol, ehs)
   }
 
+  object buildProofWithCut {
+    def apply(ehs: ExtendedHerbrandSequent, g: Grammar, cf: FOLFormula, ts: FlatTermSet, es: Sequent) = 
+      CutIntroduction.buildFinalProof(ehs, g, cf, ts, es) match {
+        case Some(proof) => proof
+        case None => throw new Exception("Could not construct a proof with cut.")
+      }
+  }
+  
   object cutIntro {
     def apply( p: LKProof ) : Option[LKProof] = CutIntroduction(p)
+  }
+
+  object toClauses {
+    def apply( f: HOLFormula ) = CNFp(f)
   }
 
   object extractInterpolant {
@@ -980,12 +987,14 @@ object hol2fol {
      |
      | Cut-Introduction:
      |   cutIntro: LKProof => Option[LKProof]
-     |   termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof
-     |   termsExtractionFlat: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)
-     |   getDecompositions: List[FOLTerm] => List[(List[FOLTerm], List[FOLTerm])] - computes all the decompositions of a given list of terms (returns a list ordered by size)
-     |   smallestDecomposition: List[FOLTerm] => (List[FOLTerm], List[FOLTerm]) - computes the smallest decomposition (wrt symbolic complexity) of the given list of terms
-     |   EHSFromDecomp: Sequent,(List[FOLTerm], List[FOLTerm]), FlatTermSet => ExtendedHerbrandSequent - computes a Extended Herbrand Sequent from the given data
-     |   improveCanonicalSolution: ExtendedHerbrandSequent => List[FOLFormula] - produces the list of solutions that can be derived from the canonical solution by forgetful resolution.
+     |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
+     |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
+     |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
+     |   generateExtendedHerbrandSequent: Sequent, Grammar, FlatTermSet => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof, a term set and the grammar that generates these terms
+     |   computeCanonicalSolution: ExtendedHerbrandSequent => FOLFormula - computes the canonical solution for the cut-introduction problem
+     |   computeImprovedSolutions: ExtendedHerbrandSequent => List[FOLFormula] - computes all the solutions found (returns a list ordered by symbolic complexity)
+     |   computeMinimalSolution: ExtendedHerbrandSequent => FOLFormula - computed the minimal solution (wrt symbolic complexity)
+     |   buildProofWithCut: ExtendedHerbrandSequent, Grammar, FOLFormula, FlatTermSet, Sequent => LKProof - builds a proof of Sequent with cut formula FOLFormula
      |
      | Proof Examples:
      |   LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction

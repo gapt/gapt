@@ -39,10 +39,9 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
     "improve the solution correctly" in {
       val p = at.logic.testing.LinearExampleProof(8)
       val ts = new FlatTermSet(TermsExtraction(p))
-      val d = Decomposition(ts.termset)
-      val ds = d.sortWith((d1,d2) => d1._1.length + d1._2.length < d2._1.length + d2._2.length )
-      val decomp = ds(2)
-      val ehs = new ExtendedHerbrandSequent(p.root, decomp, ts)
+      val g = ComputeGrammars(ts)
+      val grm = g(2)
+      val ehs = new ExtendedHerbrandSequent(p.root, grm, ts)
       val improv = improveSolution(ehs.canonicalSol, ehs)
 
       // TODO: type the expected value correctly

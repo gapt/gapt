@@ -38,40 +38,27 @@ object CutIntroduction {
 
     // Assign a fresh function symbol to each quantified formula in order to
     // transform tuples into terms.
-    val flatterms = new FlatTermSet(termsTuples)
-    val terms = flatterms.termset
-    val formulaFunctionSymbol = flatterms.formulaFunction
+    val terms = new FlatTermSet(termsTuples)
 
-    println("\nTerm set: {" + terms + "}")
-    println("of size " + terms.size)
+    println("\nTerm set: {" + terms.termset + "}")
+    println("of size " + terms.termset.size)
 
-    val decompositions = Decomposition(terms).sortWith((d1, d2) =>
-      d1._1.length + d1._2.length < d2._1.length + d2._2.length
-    )
+    val grammars = ComputeGrammars(terms)
 
-    println("Number of decompositions in total: " + decompositions.length)
+    println("Number of decompositions in total: " + grammars.length)
 
-    //decompositions.foreach(d =>
-    //  if(d._1.size + d._2.size < terms.size)
-    //    println(d._1 + " o " + d._2)
-    //)
-
-    if(decompositions.length == 0) {
-      println("\nNo decompositions found." + 
+    if(grammars.length == 0) {
+      println("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier.\n")
       return None
     }
 
     // TODO: how to choose the best decomposition?
-    val smallestDec = decompositions.head
-    // This is a map from formula occurrence to a list of terms
-    val u = smallestDec._1
-    // This is a list of terms
-    val s = smallestDec._2
+    val smallestGrm = grammars.head
 
-    println("\nDecomposition chosen: {" + smallestDec._1 + "} o {" + smallestDec._2 + "}")
+    println("\nGrammar chosen: {" + smallestGrm.u + "} o {" + smallestGrm.s + "}")
 
-    val ehs = new ExtendedHerbrandSequent(endSequent, smallestDec, flatterms)
+    val ehs = new ExtendedHerbrandSequent(endSequent, smallestGrm, terms)
     
     // Building up the final proof with cut
     println("\nGenerating final proof with cut...\n")
@@ -121,21 +108,27 @@ object CutIntroduction {
     println("Improved solution: ")
     println(cutFormula)
 
+    buildFinalProof(ehs, smallestGrm, cutFormula, terms, endSequent)
+  }
+
+  // TODO: see if I can reduce the number of parameters of this function
+  def buildFinalProof(ehs: ExtendedHerbrandSequent, grammar: Grammar, cutFormula: FOLFormula, flatterms: FlatTermSet, endSequent: Sequent) : Option[LKProof] = {
+    
     val alpha = FOLVar(new VariableStringSymbol("α"))
     val cutLeft = cutFormula.substitute(alpha)
-    val cutRight = s.foldRight(List[FOLFormula]()) { case (t, acc) =>
+    val cutRight = grammar.s.foldRight(List[FOLFormula]()) { case (t, acc) =>
       cutFormula.substitute(t) :: acc
     }
 
     val proofLeft = solvePropositional(FSequent((ehs.inst_l ++ ehs.prop_l), (cutLeft +: (ehs.prop_r ++ ehs.inst_r))))
     val leftBranch = proofLeft match {
-      case Some(proofLeft1) => ForallRightRule(uPart(u, proofLeft1, flatterms), cutLeft, cutFormula, alpha)
+      case Some(proofLeft1) => ForallRightRule(uPart(grammar.u, proofLeft1, flatterms), cutLeft, cutFormula, alpha)
       case None => throw new CutIntroException("ERROR: propositional part is not provable.")
     }
 
     val proofRight = solvePropositional(FSequent(cutRight ++ ehs.prop_l, ehs.prop_r))
     val rightBranch = proofRight match {
-      case Some(proofRight1) => sPart(cutFormula, s, proofRight1)
+      case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
       case None => throw new CutIntroException("ERROR: propositional part is not provable.")
     }
 
@@ -172,6 +165,7 @@ object CutIntroduction {
       val newForm = f.substitute(h)
       ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
   }
+
   def uPart(u: List[FOLTerm], ax: LKProof, flatterms: FlatTermSet) : LKProof = {
     u.foldRight(ax) {
       case (term, ax) => 

@@ -1,5 +1,5 @@
 /*
- * Implements the Delta Table used to store and find valid decompositions of a
+ * Implements the Delta Table used to store and find valid decompositions (grammars) of a
  * term set.
  *
  * Implements the delta-different of a set of terms 
@@ -14,6 +14,8 @@ import at.logic.calculi.occurrences._
 import scala.collection.mutable._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
+
+// TODO: should I use grammars instead of pairs here?
 
 class DeltaTableException(msg: String) extends Exception(msg)
 

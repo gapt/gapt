@@ -1,6 +1,10 @@
 /*
- * Computes a decomposition for a list of terms T
+ * Grammar that generates a list of terms T
  * 
+ * NOTE: This is not the implementation of a grammar in the usual sense.
+ * Here we keep only two sets, U and S, for the grammar with start symbol 'τ',
+ * non-terminal 'α' and production rules 
+ * P = { τ -> u | u in U} union { α -> s | s in S } 
  */
 
 package at.logic.algorithms.cutIntroduction
@@ -13,13 +17,23 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
 
-class DecompositionException(msg: String) extends Exception(msg)
+class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
 
-object Decomposition {
+  val u = u0
+  val s = s0
+  val eigenvariable = ev
 
-  // Input: a hashmap of formulas pointing to a list of tuples of terms
-  // Output: a list of decompositions for each formula.
-  def apply(terms: List[FOLTerm]) : List[(List[FOLTerm], List[FOLTerm])] = {
+  def size = u.size + s.size
+
+  def toPrettyString = "{ " + u.foldRight("")((ui, str) => str + ui + ", ") + " } o { " + s.foldRight("") ((si, str) => str + si + ", " ) + " }" 
+
+}
+
+object ComputeGrammars {
+
+  def apply(terms: FlatTermSet) : List[Grammar] = apply(terms.termset)
+
+  def apply(terms: List[FOLTerm]) : List[Grammar] = {
 
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = FOLVar(new VariableStringSymbol("α"))
@@ -32,16 +46,18 @@ object Decomposition {
     //  println("VALUES: " + pairs + "\n")
     //}
     
-    findValidDecompositions(terms, deltatable, eigenvariable)
+    findValidGrammars(terms, deltatable, eigenvariable).sortWith((g1, g2) =>
+      g1.size < g2.size
+    )
     
   }
   
-  def findValidDecompositions(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLTerm) : List[(List[FOLTerm], List[FOLTerm])] = {
+  def findValidGrammars(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar) : List[Grammar] = {
 
-    deltatable.table.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {case ((s, pairs), decompositions) =>
+    deltatable.table.foldRight(List[Grammar]()) {case ((s, pairs), grammars) =>
 
       // Ignoring entries where s.size == 1 because they are trivial
-      // decompositions with the function symbol on the right.
+      // grammars with the function symbol on the right.
       if(s.size != 1) {
 
         // Add the trivial decomposition {alpha} o s
@@ -63,30 +79,30 @@ object Decomposition {
           d :: acc1
         }
        
-        // Generate valid decompositions
+        // Generate valid grammars
         // Note: each pair is ({u_1, ..., u_k}, {t_1, ..., t_j}) and for this to
         // be a valid decomposition, {t_1, ..., t_j} must contain all terms or
         // adding the missing terms to U should not exceed the size of the term
         // set.
         val ssize = s.size
-        subsetpairs.foldRight(decompositions) {
+        subsetpairs.foldRight(grammars) {
           case (p, acc) =>
             val termsCovered = p._2
             val difference = terms.diff(termsCovered)
        
-            // The decomposition covers all the terms
+            // The grammar generates all the terms
             if(difference.size == 0) {
-              (p._1, s) :: acc
+              (new Grammar(p._1, s, ev)) :: acc
             }
             // Some constants are added to U and this is still reasonably small
             else if(p._1.size + difference.size + ssize < terms.size) {
-              (p._1 ++ difference, s) :: acc
+              (new Grammar(p._1 ++ difference, s, ev)) :: acc
             }
             // No good
             else acc
         }
       }
-      else decompositions
+      else grammars
     }
   }
 }
