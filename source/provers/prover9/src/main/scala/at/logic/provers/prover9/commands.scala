@@ -248,7 +248,7 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
       throw new Exception("Error parsing prover9 formula '"+s+"' at position "+input.pos+". Error message: "+msg)
   }
 
-  def pformula : Parser[FOLFormula] = parens(formula) | formula
+  def pformula : Parser[FOLFormula] = parens(formula) | allformula | exformula
   def formula: Parser[FOLFormula] = implication
   //precedence 800
   def implication: Parser[FOLFormula]  = (dis_or_con ~ ("<->"|"->"|"<-") ~ dis_or_con) ^^ { _ match {
@@ -270,8 +270,8 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
   def allformula_ : Parser[FOLFormula]   = ("all"    ~> variable ~ ( allformula_ | exformula_ | literal2) ) ^^ { case v ~ f => fol.AllVar(v,f) }
   def exformula_ : Parser[FOLFormula]    = ("exists" ~> variable ~ ( allformula_ | exformula_ | literal2) ) ^^ { case v ~ f => fol.ExVar(v,f) }
   //precedence 300
-  def literal2:Parser[FOLFormula] = parens(formula) | atomWeq | negation
-  def negation:Parser[FOLFormula] = "-" ~> (parens(formula) | atomWeq)
+  def literal2:Parser[FOLFormula] = pformula | atomWeq | negation
+  def negation:Parser[FOLFormula] = "-" ~> (pformula | atomWeq)
 
 
   def parens[T](p:Parser[T]) : Parser[T] = "(" ~> p <~ ")"
