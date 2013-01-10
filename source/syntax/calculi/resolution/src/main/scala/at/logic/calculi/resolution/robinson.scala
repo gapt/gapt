@@ -79,26 +79,28 @@ object createContext {
               a1: FormulaOccurrence, a2: FormulaOccurrence, sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
       val term1op = p1.root.succedent.find(_ == a1)
       val term2op = p2.root.antecedent.find(_ == a2)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the correct part of the sequent (first argument positive, second negative)")
-      else {
-        val term1 = term1op.get
-        val term2 = term2op.get
-        if (sub(term1.formula.asInstanceOf[FOLFormula]) != sub(term2.formula.asInstanceOf[FOLFormula]))
-          throw new LKRuleCreationException("Formulas to be cut are not identical (modulo the given substitution)")
-        else {
-          new BinaryAGraph[Clause](Clause(
+
+      (term1op,term2op) match {
+        case (Some(term1), Some(term2)) =>
+          if (sub(term1.formula.asInstanceOf[FOLFormula]) != sub(term2.formula.asInstanceOf[FOLFormula]))
+            throw new LKRuleCreationException("Formulas to be cut are not identical (modulo the given substitution)")
+          else {
+            new BinaryAGraph[Clause](Clause(
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub),
               createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent, sub))
-            , p1, p2)
-            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof {
-                def rule = ResolutionType
-                def aux = (term1::Nil)::(term2::Nil)::Nil
-                def substitution = sub
-                override def toString = "Res(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
-                override def name = "res"
-                def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
+              , p1, p2)
+              with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof {
+              def rule = ResolutionType
+              def aux = (term1::Nil)::(term2::Nil)::Nil
+              def substitution = sub
+              override def toString = "Res(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
+              override def name = "res"
+              def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
             }
-        }
+          }
+
+        case _ =>
+          throw new LKRuleCreationException("Auxiliary formulas are not contained in the correct part of the sequent (first argument positive, second negative)")
       }
     }
    def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution[FOLExpression]) = if (proof.rule == ResolutionType) {
@@ -122,11 +124,11 @@ object createContext {
       val term1op = p1.root.succedent.find(_ == a1)
       val term2opAnt = p2.root.antecedent.find(_ == a2)
       val term2opSuc = p2.root.succedent.find(_ == a2)
-      if (term1op == None || (term2opAnt == None && term2opSuc == None)) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
-      else {
-        val term1 = term1op.get
-        if (term2opAnt != None) {
-          val term2 = term2opAnt.get
+
+      (term1op, term2opAnt, term2opSuc) match {
+        case (None, _ , _ ) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+        case (_ ,None,None) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+        case (Some(term1), Some(term2), _ ) =>
           val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
           new BinaryAGraph[Clause](Clause(
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub) :+ prinFormula,
@@ -140,8 +142,8 @@ object createContext {
                 override def name = "pmod"
                 def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
             }
-        }
-        else {
+
+        case (Some(term1), _ , Some(term2)) =>
           val term2 = term2opSuc.get
           val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
           new BinaryAGraph[Clause](Clause(
@@ -157,7 +159,6 @@ object createContext {
                 def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
             }
         }
-      }
     }
     
     def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution[FOLExpression]) = if (proof.rule == ParamodulationType) {

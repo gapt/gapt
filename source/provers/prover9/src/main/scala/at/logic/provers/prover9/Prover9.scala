@@ -194,20 +194,6 @@ object Prover9 {
 
     def debugline(s:String) = { println(s); true}
 
-    /* //this was autodetection code for naming conventions, but apparently ivy has its own anyway
-    val variablestyle_matcher = """prolog_style_variables""".r
-    val str_p9 = Source.fromInputStream( new FileInputStream( p9_file ) ).mkString
-    val set_prolog_style_variables = for (line <- str_p9.split(System.getProperty("line.separator"));
-         if ( debugline(line) && variablestyle_matcher.findFirstIn(line).isDefined)) yield line
-
-    val iproof = if (set_prolog_style_variables.isEmpty) {
-                    println("Detected Ladr Naming Style!")
-                    IvyParser(ivy_file.getCanonicalPath, LadrStyleVariables)
-                  }
-                  else {
-                    println("Detected Prolog Naming Style!")
-                    IvyParser(ivy_file.getCanonicalPath, PrologStyleVariables)
-                  }*/
     val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
     val rproof = IvyToRobinson(iproof)
     //val mproof = InstantiateElimination(rproof)

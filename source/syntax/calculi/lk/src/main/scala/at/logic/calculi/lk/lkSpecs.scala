@@ -18,4 +18,9 @@ package lkSpecs {
       result(s.syntacticMultisetEquals(o.value), "successful syntactic multisetEquals", s.toString + " not syntactic multisetEquals " + o, o)
   }
 
+case class beSyntacticFSequentEqual(s: FSequent) extends Matcher[FSequent]() {
+  def apply[S <: FSequent](o: Expectable[S]) =
+    result(s.multiSetEquals(o.value), "successful syntactic multisetEquals", s.toString + " not the same multiset as fsequent " + o, o)
+}
+
 }

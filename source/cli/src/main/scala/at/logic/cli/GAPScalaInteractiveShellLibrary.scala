@@ -884,6 +884,8 @@ object loadProofDB {
 
   object goat {
     import at.logic.language.fol._
+    import java.util
+
 
     lazy val (proof, endsequent) = loadProver9Proof( "provers/prover9/src/test/resources/PUZ047+1.out")
     //lazy val (escaped_proof, escaped_formula) = Prover9.escape_constants(proof, formula)

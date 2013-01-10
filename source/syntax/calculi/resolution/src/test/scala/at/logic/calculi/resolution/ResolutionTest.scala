@@ -15,7 +15,7 @@ import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.substitutions._
 import at.logic.calculi.occurrences._
 import at.logic.language.hol._
-import at.logic.language.fol.{FOLExpression, FOLVar, FOLConst, FOLFormula, Function => FOLFunction, Atom => FOLAtom}
+import at.logic.language.fol.{FOLExpression, FOLVar, FOLConst, FOLFormula, Function => FOLFunction, Atom => FOLAtom, Equation => FOLEquation}
 import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
@@ -29,6 +29,7 @@ import at.logic.calculi.lk.base._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import collection.immutable.Map.Map1
+import at.logic.calculi.lk.lkSpecs._
 
 //import robinson._
 //import andrews._
@@ -68,6 +69,21 @@ class ResolutionTest extends SpecificationWithJUnit {
       //println(p)
       //p must beEqual (p)
     }
+
+    "correctly keep the context of demodulated formulas " in {
+      val P = ConstantStringSymbol("P")
+      val x = VariableStringSymbol("x")
+      val List(a,b,c,d,e,f) = List("a","b","c","d","e","f") map (x => FOLConst(ConstantStringSymbol(x)))
+      val List(e1,e2,e3,p,q) = List(FOLEquation(a,b), FOLEquation(c,d), FOLEquation(e,f), FOLAtom(P,a::Nil), FOLAtom(P,b::Nil)  )
+      val p1 = InitialClause(Nil, List(e1, e2 ))
+      val p2 = InitialClause(Nil, List(e3, p))
+      val p3 = Paramodulation(p1,p2, p1.root.succedent(0), p2.root.succedent(1), q, Substitution[FOLExpression]())
+      val expected_root = FSequent(Nil, List(e2,e3,q))
+      println(p3.root)
+      println(expected_root)
+
+      p3.root.toFSequent must beSyntacticFSequentEqual(expected_root)
+    }
   }
   "extrator on Resolution rule" should {
     "work properly" in {
@@ -81,6 +97,8 @@ class ResolutionTest extends SpecificationWithJUnit {
       res must beLike { case Resolution(_,_,_,_,_,_) => ok }
     }
   }
+
+
  /* "Andrews Resolution" should {
     implicit val factory = PointerFOFactoryInstance
 

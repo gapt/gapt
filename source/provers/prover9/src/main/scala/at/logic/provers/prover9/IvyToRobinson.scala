@@ -20,6 +20,8 @@ object IvyToRobinson {
   val generator : VariantGenerator = new VariantGenerator( new {var c = 10000; def nextId = {c = c+1; c}} , "iv" )
   type ProofMap = immutable.Map[String, RobinsonResolutionProof]
 
+  def debug(s:String) = {}
+
   def apply(iproof : IvyResolutionProof) : RobinsonResolutionProof = apply(iproof, immutable.Map[String, RobinsonResolutionProof]())._1
   def apply(iproof : IvyResolutionProof, map :  ProofMap) : (RobinsonResolutionProof, ProofMap) = iproof match {
     case IInitialClause(id, exp, clause) =>
@@ -47,9 +49,9 @@ object IvyToRobinson {
           //try {
           val (rparent1, parentmap1) = IvyToRobinson(parent1, map)
           val (rparent2, parentmap2) = IvyToRobinson(parent2, parentmap1)
-          println("conclusion:"+clause)
-          println("resolving over 1:"+parent1.root+"/"+rparent1.root)
-          println("resolving over 2:"+parent2.root+"/"+rparent2.root)
+          debug("conclusion:"+clause)
+          debug("resolving over 1:"+parent1.root+"/"+rparent1.root)
+          debug("resolving over 2:"+parent2.root+"/"+rparent2.root)
           val (polarity1, _, index1) = getIndex(lit1, parent1.vertex, rparent1.vertex)
           val (polarity2, _, index2) = getIndex(lit2, parent2.vertex, rparent2.vertex)
 
@@ -131,10 +133,10 @@ object IvyToRobinson {
         case None =>
 
           val (rparent, parentmap) = IvyToRobinson(parent, map)
-          val contracted  = (clause.antecedent ++ clause.succedent) filter (_.ancestors.size >1)
+          val contracted  = (clause.occurrences) filter (_.ancestors.size >1)
           require(contracted.size == 1, "Error: only one aux formula may have been factored!")
           val ianc = contracted(0).ancestors
-          val aux::deleted = find_matching(ianc.toList, (rparent.vertex.antecedent ++ rparent.vertex.succedent).toList)
+          val aux::deleted = find_matching(ianc.toList, (rparent.root.occurrences).toList)
           val rproof = RFactor(rparent, aux, deleted, Substitution[FOLExpression]())
           require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating propoistional rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
           (rproof, parentmap + ((id, rproof)))
@@ -153,24 +155,24 @@ object IvyToRobinson {
           val x = fol.FOLVar(new VariableStringSymbol("x"))
           val xx = RInitialClause(Nil, fol.Equation(x,x)::Nil)
           val ss = RInstantiate(xx, Substitution[FOLExpression]((x,t)))
-          println("instantiate "+ss)
+          debug("instantiate "+ss)
           //val ts = fol.Equation(s,t)
 
 
-          //println("translating inference "+id)
+          //debug("translating inference "+id)
           //require((rparent.root.antecedent ++ rparent.root.succedent) contains (flipped.ancestors(0)),
           //  "Error translating flip rule: "+flipped+" anc: "+flipped.ancestors(0) + " not contained in "+ ((rparent.root.antecedent ++ rparent.root.succedent) map (_.id)) )
 
           val flippend_ancestor = flipped.ancestors(0).formula
-          val rflipped = (rparent.root.negative ++ rparent.root.positive) find (_.formula == flippend_ancestor)
+          val rflipped = (rparent.root.occurrences) find (_.formula == flippend_ancestor)
           require(rflipped.nonEmpty, "Error: cannot find flipped formula in translation of parent proof!")
 
-          println("flipping: "+flipped.ancestors(0)+" transformed flipped "+rflipped.get)
+          debug("flipping: "+flipped.ancestors(0)+" transformed flipped "+rflipped.get)
 
           val rproof = RParamodulation(ss, rparent, ss.root.positive(0), rflipped.get, flipped.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())
-          println("from: "+flipped.ancestors(0)+" tfrom to "+rflipped.get )
-          println("flipped formula: "+flipped.formula)
-          require((rproof.root.antecedent ++ rproof.root.succedent).map(_.formula).contains(flipped.formula), "flipped formula must occur in translated clause "+rproof.root)
+          debug("from: "+flipped.ancestors(0)+" tfrom to "+rflipped.get )
+          debug("flipped formula: "+flipped.formula)
+          require((rproof.root.occurrences).map(_.formula).contains(flipped.formula), "flipped formula must occur in translated clause "+rproof.root)
           require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating flip rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
           (rproof, parentmap + ((id, rproof)))
       }
@@ -181,45 +183,39 @@ object IvyToRobinson {
         case None =>
           val (rparent1, parentmap1) = IvyToRobinson(parent1, map)
           val (rparent2, parentmap2) = IvyToRobinson(parent2, parentmap1)
-          println("translating inference "+id+ " from "+parent1.id+" and "+parent2.id)
+          debug("translating inference "+id+ " from "+parent1.id+" and "+parent2.id)
           require(lit.ancestors.length == 2, "Error in converting a paramodulation inference: need two ancestors")
-          if (rparent1 == rparent2) {
-            //TODO:wrong auxiliary formulas
-            val rproof = RParamodulation(rparent1, rparent2, lit.ancestors(0), lit.ancestors(1), lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]() )
-            (rproof, parentmap2 + ((id, rproof)))
+          require(parent1.root.occurrences contains lit.ancestors(0), "First parent must contain first ancestor occurrence!")
+          require(parent2.root.occurrences contains lit.ancestors(1), "Second parent must contain second ancestor occurrence!")
+
+          val anc1 = lit.ancestors(0)
+          val anc2 = lit.ancestors(1)
+          val Some(anc1occ) = if (parent1.root.antecedent contains (anc1)) {
+            rparent1.root.antecedent.find(x => x.formula == anc1.formula )
           } else {
-            require(parent1.id != parent2.id, "Parents need to be different!")
-            val p1lits = (rparent1.root.negative ++ rparent1.root.positive)
-            val p2lits = (rparent2.root.negative ++ rparent2.root.positive)
-            val p1litsf = (rparent1.root.negative ++ rparent1.root.positive) map (_.formula)
-            val p2litsf = (rparent2.root.negative ++ rparent2.root.positive) map (_.formula)
-            println(lit.ancestors)
-            println(parent1.root.antecedent + " :- "+parent1.root.succedent)
-            println(rparent1.root.antecedent + " :- "+rparent1.root.succedent)
-            println(rparent2.root.antecedent + " :- "+rparent2.root.succedent)
-            val anc1 = lit.ancestors filter (p1litsf contains _.formula)
-            val anc2 = lit.ancestors filter (p2litsf contains _.formula)
-            require(anc1.length + anc2.length >= 2, "Error in converting a paramodulation inference: sum of ancestors in parents needs to be 2 not"+anc1.length + " "+anc2.length)
-            require(anc1.length >= 1, "Error in converting a paramodulation inference: need exactly one ancestor in first parent!")
-            require(anc2.length >= 1, "Error in converting a paramodulation inference: need exactly one ancestor in second parent!")
-            val anc1occ = p1lits( p1litsf.indexOf(anc1(0).formula) )
-            val anc2occ = p2lits( p2litsf.indexOf(anc2(0).formula) )
-            val rproof = RParamodulation(rparent1, rparent2, anc1occ, anc2occ, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]() )
-
-            println("root     :" +iproof.root)
-            println("troot    :" +rproof.root)
-            println("parent  1: "+parent1.root)
-            println("tparent 1: "+rparent1.root)
-            println("parent  2: "+parent2.root)
-            println("tparent 2: "+rparent2.root)
-            println("lit ancestors: "+lit.ancestors)
-            println("a1: "+anc1occ)
-            println("a2: "+anc2occ)
-
-
-            require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating para rule "+ id + ", expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
-            (rproof, parentmap2 + ((id, rproof)))
+            rparent1.root.succedent.find(x => x.formula == anc1.formula )
           }
+          val Some(anc2occ) = if (parent2.root.antecedent contains (anc2)) {
+            rparent2.root.antecedent.find(x => x.formula == anc2.formula )
+          } else {
+            rparent2.root.succedent.find(x => x.formula == anc2.formula )
+          }
+
+          val rproof = RParamodulation(rparent1, rparent2, anc1occ, anc2occ, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]() )
+
+          debug("root     :" +iproof.root)
+          debug("troot    :" +rproof.root)
+          debug("parent  1: "+parent1.root.occurrences)
+          debug("tparent 1: "+rparent1.root.occurrences)
+          debug("parent  2: "+parent2.root.occurrences)
+          debug("tparent 2: "+rparent2.root.occurrences)
+          debug("lit ancestors: "+lit.ancestors)
+          debug("a1: "+anc1occ)
+          debug("a2: "+anc2occ)
+
+          require(rproof.root.occurrences.size == clause.occurrences.size, "Error translating para rule"+ id + ", number of uccurrences in expected endsequent "+clause+" is not the same as in "+rproof.root)
+          require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating para rule "+ id + ", expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
+          (rproof, parentmap2 + ((id, rproof)))
       }
 
 

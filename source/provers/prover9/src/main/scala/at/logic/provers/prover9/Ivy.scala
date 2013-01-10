@@ -102,6 +102,7 @@ object IvyParser {
       case _ => ()
     }
     exp match {
+      /* ================== Atom ========================== */
       case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("input")::Nil) :: clause :: _  )  => {
         val fclause = parse_clause(clause, is_variable_symbol)
 
@@ -109,9 +110,11 @@ object IvyParser {
           Clause(fclause.antecedent map (new FormulaOccurrence(_, Nil, occurrences.factory)) ,
                  fclause.succedent map (new FormulaOccurrence(_, Nil, occurrences.factory))))
 
+        require(inference.root.toFSequent setEquals fclause, "Error in Atom parsing: required result="+fclause+" but got: "+inference.root)
         (id, found_steps + ((id, inference)) )
       }
 
+      /* ================== Instance ========================== */
       case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("instantiate")::lisp.Atom(parent_id):: subst_exp::Nil) :: clause :: rest  )  => {
         val parent_proof = found_steps(parent_id)
         val sub : Substitution[FOLTerm] = parse_substitution(subst_exp, is_variable_symbol)
@@ -126,11 +129,13 @@ object IvyParser {
           Clause(connect(parent_proof.vertex.antecedent, fclause.antecedent),
                  connect(parent_proof.vertex.succedent, fclause.succedent)), parent_proof)
 
+        require(inference.root.toFSequent setEquals fclause, "Error in Instance parsing: required result="+fclause+" but got: "+inference.root)
         (id, found_steps + ((id, inference)) )
 
 
       }
 
+      /* ================== Resolution ========================== */
       case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("resolve")::
                          lisp.Atom(parent_id1):: lisp.List(position1) ::
                          lisp.Atom(parent_id2):: lisp.List(position2) :: Nil) ::
@@ -188,12 +193,16 @@ object IvyParser {
             val clause1 = Clause(parent_proof1.vertex.antecedent, parent_proof1.vertex.succedent filterNot (_ == occ1) )
             val clause2 = Clause(parent_proof2.vertex.antecedent filterNot (_ == occ2), parent_proof2.vertex.succedent )
             val inference = Resolution(id,clause, occ1, occ2, connect(clause1, clause2, fclause), parent_proof1, parent_proof2)
+
+            require(inference.root.toFSequent setEquals fclause, "Error in Resolution parsing: required result="+fclause+" but got: "+inference.root)
             (id, found_steps + ((id, inference)) )
 
           case (false,true) =>
             val clause1 = Clause(parent_proof1.vertex.antecedent filterNot (_ == occ1), parent_proof1.vertex.succedent )
             val clause2 = Clause(parent_proof2.vertex.antecedent, parent_proof2.vertex.succedent filterNot (_ == occ2) )
             val inference = Resolution(id,clause, occ1, occ2, connect(clause1, clause2, fclause), parent_proof1, parent_proof2)
+
+            require(inference.root.toFSequent setEquals fclause, "Error in Resolution parsing: required result="+fclause+" but got: "+inference.root)
             (id, found_steps + ((id, inference)) )
 
           case _ =>
@@ -212,6 +221,7 @@ object IvyParser {
 
       }
 
+      /* ================== Flip ========================== */
       case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("flip")::lisp.Atom(parent_id)::lisp.List(position)::Nil) :: clause :: rest  )  =>
         val parent_proof = found_steps(parent_id)
         val fclause = parse_clause(clause, is_variable_symbol)
@@ -254,6 +264,7 @@ object IvyParser {
 
         }
 
+      /* ================== Paramodulation ========================== */
       case lisp.List( lisp.Atom(id)::
                       lisp.List(lisp.Atom("paramod")::lisp.Atom(modulant_id)::lisp.List(mposition)::
                                                       lisp.Atom(parent_id)::  lisp.List(pposition):: Nil) ::
@@ -262,13 +273,15 @@ object IvyParser {
         val parent_proof = found_steps(parent_id)
         val fclause = parse_clause(clause, is_variable_symbol)
         val (mocc, mpolarity, _) = get_literal_by_position(modulant_proof.root, mposition, modulant_proof.clause_exp, is_variable_symbol)
+        debug("found occurrence of equation: "+mocc+" at pos "+mposition)
         require(mpolarity == true, "Paramodulated literal must be positive!")
         val (pocc, polarity, int_position) = get_literal_by_position(parent_proof.root, pposition, parent_proof.clause_exp, is_variable_symbol)
+        debug("found occurrence of target formula:"+pocc+" at pos "+pposition)
 
         mocc.formula match {
           case fol.Equation(left,right) =>
             def connect_directly(x:FormulaOccurrence) = new FormulaOccurrence(x.formula, x::Nil, x.factory)
-            println(polarity)
+            debug(polarity)
             polarity match {
               case true =>
                 val neglits = parent_proof.root.negative map connect_directly
@@ -276,16 +289,23 @@ object IvyParser {
                 val (pos1, pos2) = parent_proof.root.positive.splitAt( parent_proof.root.positive.indexOf(pocc))
                 val (pos1_, pos2_) = (pos1 map connect_directly, pos2 map  connect_directly)
 
-                println("remaining position: "+int_position+ " full position "+pposition)
-                println("replace: "+left+" by "+right+" in "+pocc.formula)
+                debug("remaining position: "+int_position+ " full position "+pposition)
+                debug("replace: "+left+" by "+right+" in "+pocc.formula)
                 val paraformula = replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
                 val para = new FormulaOccurrence(paraformula,  mocc::pocc::Nil, pocc.factory)
+                /*debug("Context is:" +ppos)
+                debug("Context is:" +pos1_)
+                debug("Context is:" +pos2_)
+                debug("Together:"+ (ppos ++ pos1_  ++ pos2_.tail)) */
+
                 val inferred_clause = Clause(pneg ++ neglits, ppos ++ pos1_ ++ List(para) ++ pos2_.tail)
+                debug("inferred clause: " + inferred_clause)
 
                 val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
+                debug("paramod root:    "+ inference.root)
                 require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
 
-                //println("new Paramod rule: "+id+ " : "+inference)
+                //debug("new Paramod rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
 
               case false =>
@@ -294,8 +314,8 @@ object IvyParser {
                 val (neg1, neg2) = parent_proof.root.negative.splitAt( parent_proof.root.negative.indexOf(pocc))
                 val (neg1_, neg2_) = (neg1 map connect_directly, neg2 map  connect_directly)
 
-                println("remaining position: "+int_position+ " full position "+pposition)
-                println("replace: "+left+" by "+right+" in "+pocc.formula)
+                debug("remaining position: "+int_position+ " full position "+pposition)
+                debug("replace: "+left+" by "+right+" in "+pocc.formula)
                 val paraformula = replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
                 val para = new FormulaOccurrence(paraformula,  mocc::pocc::Nil, pocc.factory)
                 val inferred_clause = Clause(pneg ++ neg1_ ++ List(para) ++ neg2_.tail, ppos ++ poslits)
@@ -303,7 +323,7 @@ object IvyParser {
                 val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
 
                 require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
-                //println("new Paramod rule: "+id+ " : "+inference)
+                //debug("new Paramod rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
             }
 
@@ -313,6 +333,7 @@ object IvyParser {
 
         }
 
+      /* ================== Propositional ========================== */
       case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("propositional")::lisp.Atom(parent_id)::Nil) :: clause :: rest  )  => {
         val parent_proof = found_steps(parent_id)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
@@ -381,6 +402,7 @@ object IvyParser {
           Clause(connect(parent_proof.vertex.antecedent.toList, fclause.antecedent.toList),
             connect(parent_proof.vertex.succedent.toList, fclause.succedent.toList)), parent_proof)
 
+        require(inference.root.toFSequent setEquals fclause, "Error in Propositional parsing: required result="+fclause+" but got: "+inference.root)
         (id, found_steps + ((id, inference)) )
 
 
