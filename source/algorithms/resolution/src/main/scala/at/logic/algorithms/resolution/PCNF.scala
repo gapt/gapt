@@ -7,6 +7,7 @@ import at.logic.language.hol._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ForallLeftRule}
 import at.logic.calculi.lk.base.types.FSequent
+  import at.logic.language.lambda.substitutions.Substitution
 import scala.Some
 import scala.Tuple2
 
@@ -26,30 +27,39 @@ object PCNF {
     else
       s.succedent.tail.foldLeft(Neg(s.succedent.head))((f1,f2) => And(f1,Neg(f2)))
 
-    // compute CNF and confirm a <- CNF(-s)
+    // compute CNF and confirm a <- CNF(-s) up to variable renaming
     val cnf = CNFp(form)
-    val (p,f,inAntecedent) = if (cnf.contains(a)) {
-      // find the right formula and compute the proof
-      s.antecedent.find(x => CNFp(x).contains(a)) match {
-        case Some(f) => (PCNFp(f,a),f,true)
-        case _ => {
-          val f = s.succedent.find(x => CNFn(x).contains(a)).get
-          (PCNFn(f,a),f,false)
+    var sub = Substitution[HOLExpression]()
+    val op = cnf.find(y => getVariableRenaming(y,a) match {
+      case Some(s) => {sub = s; true}
+      case _ => false
+    })
+    val (p,f,inAntecedent) = op match {
+      case Some(f2) =>
+        // find the right formula and compute the proof
+        s.antecedent.find(x => CNFp(x).contains(f2)) match {
+          case Some(f) => (PCNFp(sub(f).asInstanceOf[HOLFormula],a),f,true)
+          case _ => {
+            val f = s.succedent.find(x => CNFn(x).contains(f2)).get
+            (PCNFn(sub(f).asInstanceOf[HOLFormula],a),f,false)
+          }
         }
-      }
-    // check for reflexivity
-    } else a.pos.find(f => f match {
-      case Equation(a,b) if a == b => true
-      case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
-      case  _ => false
-    }) match {
-      case Some(f) => (Axiom(List(),List(f)),f.asInstanceOf[HOLFormula],false)
-      case _ => throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
+      case None =>
+        // check for reflexivity
+        a.pos.find(f => f match {
+          case Equation(a,b) if a == b => true
+          case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
+          case  _ => false
+        }) match {
+          case Some(f) => (Axiom(List(),List(f)),f.asInstanceOf[HOLFormula],false)
+          case _ => throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
+        }
     }
     // apply weakenings
     (if (!inAntecedent) removeFirst(s.succedent,f) else s.succedent).foldLeft(
-      (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f) => WeakeningLeftRule(pr,f))
-    )((pr,f) => WeakeningRightRule(pr,f))
+      (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f)
+        => WeakeningLeftRule(pr,sub(f).asInstanceOf[HOLFormula]))
+    )((pr,f) => WeakeningRightRule(pr,sub(f).asInstanceOf[HOLFormula]))
   }
 
   /**
@@ -123,7 +133,31 @@ object PCNF {
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)
   }
 
-  // we need to compute the power set of the literals of the clause in order to find the right division of them in and right and or left
+  def getVariableRenaming(f1: FClause, f2: FClause): Option[Substitution[HOLExpression]] = {
+    if (f1.neg.size != f2.neg.size || f1.pos.size != f2.pos.size) None
+    else {
+      val pairs = (f1.neg.asInstanceOf[Seq[HOLExpression]].zip(f2.neg.asInstanceOf[Seq[HOLExpression]])
+        ++ f1.pos.asInstanceOf[Seq[HOLExpression]].zip(f2.pos.asInstanceOf[Seq[HOLExpression]]))
+      try {
+        val sub = pairs.foldLeft(Substitution[HOLExpression]())((sb,p) =>
+            sb simultaneousCompose computeSub(p))
+        if (pairs.forall(p => sub(p._1) == p._2)) Some(sub) else None
+      } catch {
+        case e: Exception => None
+      }
+    }
+  }
+  def computeSub(p: Pair[HOLExpression,HOLExpression]): Substitution[HOLExpression] = (p._1, p._2) match {
+    case (HOLVar(a,_), HOLVar(b,_)) if a == b =>Substitution[HOLExpression]()
+    case (v1: HOLVar, v2: HOLVar) => Substitution(v1,v2)
+    case (c1: HOLConst, c2: HOLConst) => Substitution[HOLExpression]()
+    case (HOLApp(a1,b1),HOLApp(a2,b2)) =>
+      computeSub((a1,a2)) simultaneousCompose computeSub(b1,b2)
+    case (HOLAbs(v1,a1), HOLAbs(v2,a2)) => Substitution(computeSub(a1,a2).map - v1)
+    case _ => throw new Exception()
+  }
+
+  // we need to compute (Not anymore)) the power set of the literals of the clause in order to find the right division of them in and right and or left
   def power[A](lst: List[A]): List[Tuple2[List[A],List[A]]] = {
     @annotation.tailrec
     def pwr(s: List[A], acc: List[Tuple2[List[A],List[A]]]): List[Tuple2[List[A],List[A]]] = s match {

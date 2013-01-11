@@ -64,8 +64,8 @@ import collection.immutable.HashSet
       }
       case x:Var => {
         if (map.contains( x ) )
-          println("WARNING: trying to substitute for a bound variable, ignoring!") 
-       expression 
+          println("WARNING: trying to substitute for a bound variable, ignoring!")
+       expression
       }
       case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T], protectedVars), applyWithChangeDBIndices(n.asInstanceOf[T], protectedVars)).asInstanceOf[T]
       case abs: Abs => Abs(abs.variable, applyWithChangeDBIndices(abs.expression.asInstanceOf[T],abs.variable::protectedVars)).asInstanceOf[T]
@@ -75,6 +75,9 @@ import collection.immutable.HashSet
     // make sure the overriden keys are of the applying sub
     // note: compose is in function application notation i.e. (sigma compose tau) apply x = sigma(tau(x)) = x.tau.sigma
     def compose(sub: Substitution[T]): Substitution[T] = Substitution(map ++ sub.map.map(x => (x._1, apply(x._2))))
+
+    // like compose but do not apply the first sub to the second not that the sub might not be idempotent
+    def simultaneousCompose(sub: Substitution[T]): Substitution[T] = Substitution(map ++ sub.map)
 
     def isRenaming = map.forall( p => p._2.isInstanceOf[Var] )
   }
