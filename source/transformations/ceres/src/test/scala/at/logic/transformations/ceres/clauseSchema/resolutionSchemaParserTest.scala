@@ -124,21 +124,21 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       ok
     }
 
-//    "should parse correctly the resolution schema in test.rs" in {
-//      println(Console.RED+"\n\n\n\n------- Resolution schema for the test.rs ------- \n\n"+Console.RESET)
-//      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test.rs"))
-//      ParseResSchema(s)
-//      //      println("\ndbTRS:\n"+dbTRS.map)
-//      println("\n\ndbTRSresolutionSchema:\n")
-//      resolutionProofSchemaDB.map.foreach(m => println(m+"\n"))
-//      println("\n")
-//      val k = IntVar(new VariableStringSymbol("k"))
-//      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
-//      val subst = new SchemaSubstitution3(map)
-//      val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
-//      val rho1step1 = IntVarSubstitution(rho1, subst)
-//      println("rho1step1 = "+rho1step1)
-//      println("\nfo2SubstDB = "+fo2SubstDB.map.head )
+    "should parse correctly the resolution schema in test.rs" in {
+      println(Console.RED+"\n\n\n\n------- Resolution schema for the test.rs ------- \n\n"+Console.RESET)
+      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test.rs"))
+      ParseResSchema(s)
+      //      println("\ndbTRS:\n"+dbTRS.map)
+      println("\n\ndbTRSresolutionSchema:\n")
+      resolutionProofSchemaDB.map.foreach(m => println(m+"\n"))
+      println("\n")
+      val k = IntVar(new VariableStringSymbol("k"))
+      val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
+      val subst = new SchemaSubstitution3(map)
+      val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
+      val rho1step1 = IntVarSubstitution(rho1, subst)
+      println("rho1step1 = "+rho1step1)
+      println("\nfo2SubstDB = "+fo2SubstDB.map.head )
 ////      val r = unfoldResolutionProofSchema2(rho1step1)
 ////      println("r = "+r)
 //
@@ -157,9 +157,9 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 //      //      println("\n\nresolution deduction tree:")
 //      //      printSchemaProof(ResDeductionToLKTree(fo2sub))
 //      //      InstantiateResSchema("\\rho1",2)
-//      println("\n\n--- END ---\n\n")
-//      ok
-//    }
+      println("\n\n--- END ---\n\n")
+      ok
+    }
   }
 }
 

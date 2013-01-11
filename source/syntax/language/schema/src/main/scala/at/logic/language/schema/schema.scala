@@ -278,6 +278,7 @@ object Succ extends HOLConst(new ConstantStringSymbol("s"), ->(Tindex(), Tindex(
     case _ => "ERROR in Succ"
   }
   def apply(t: IntegerTerm): IntegerTerm  = SchemaFactory.createApp(Succ, t).asInstanceOf[IntegerTerm]
+  def apply(t: HOLExpression): HOLExpression  = HOLApp(Succ, t).asInstanceOf[HOLExpression]
   def unapply(p: IntegerTerm) = p match {
     case App(Succ, t : IntegerTerm) => Some(t)
     case _ => None
@@ -528,7 +529,7 @@ class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map
   }
 }
 
-class indexedFOVar(override val name: VariableStringSymbol, val index: IntegerTerm) extends HOLVar(name, Ti(), None) {
+class indexedFOVar(override val name: VariableStringSymbol, val index: HOLExpression) extends HOLVar(name, Ti(), None) {
   override def toString = name.toString+"("+index+")"+":"+exptype.toString
   override def equals(a: Any): Boolean = a match {
     case v:indexedFOVar if v.name.toString() == this.name.toString() && v.index == this.index => true
@@ -537,7 +538,7 @@ class indexedFOVar(override val name: VariableStringSymbol, val index: IntegerTe
 }
 
 object indexedFOVar {
-  def apply(name: VariableStringSymbol, i: IntegerTerm): HOLVar = {
+  def apply(name: VariableStringSymbol, i: HOLExpression): HOLVar = {
     new indexedFOVar(name, i)
   }
   def unapply(s: HOLExpression) = s match {

@@ -16,8 +16,10 @@ import at.logic.language.schema.{sIndTerm, foVar, dbTRS, foTerm, indexedFOVar, s
 import at.logic.algorithms.shlk.{StepMinusOne, applySchemaSubstitution}
 
 object ParseResSchema {
+  def debugr[T<:Any](a:T) : T = { println("Debug: "+a); a}
 
   def apply(txt: InputStreamReader): Unit = {
+
     var map  = Map.empty[String, LKProof]
 //    SchemaProofDB.clear
     var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
@@ -46,7 +48,7 @@ object ParseResSchema {
         }
       }
 
-      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ ( s_term | FOVariable | indexedVar | fo_term)~ "}" ^^ {
+      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ ( s_term | FOVariable | indexedVar | fo_term) ~ "}" ^^ {
         case "{" ~ z ~ "<-" ~ "\\lambda" ~ k ~ "." ~ sterm_or_fovar ~ "}" => {
           val h = HOLAbs(k.asInstanceOf[Var], sterm_or_fovar)
           fo2SubstDB.add(z.asInstanceOf[fo2Var], h)
@@ -128,9 +130,12 @@ object ParseResSchema {
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = ( non_formula | formula)
-      def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
-      def intTerm: Parser[HOLExpression] = index //| schemaFormula
-      def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
+      def formula: Parser[HOLFormula] = (atom | neg | /*big |*/ and | or | /*indPred |*/ imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
+      def intTerm: Parser[HOLExpression] = index | sumIntTerm | s_ind_term    //| schemaFormula
+      def sumIntTerm: Parser[HOLExpression] = s_ind_term ~ "+" ~ intConst ^^ {
+          case t ~ "+" ~ c => Succ(t)
+        }
+      def index: Parser[HOLExpression] = (sum | intConst | intVar | succ )
       def intConst: Parser[IntegerTerm] = """[0-9]+""".r ^^ { case x => { applySchemaSubstitution.toIntegerTerm(x.toInt) }} //(intZero | intOne | intTwo | intThree)
 //      def intOne :  Parser[IntegerTerm] = "1".r ^^ { case x => {  Succ(IntZero())}}
 //      def intTwo :  Parser[IntegerTerm] = "2".r ^^ { case x => {  Succ(Succ(IntZero()))}}
@@ -147,70 +152,70 @@ object ParseResSchema {
         StepMinusOne.indVarPlusIndConst(indV, indC)
       }}
 
-      def intVar: Parser[IntVar] = "[i,j,m,n,k,x]".r ^^ {
+      def intVar: Parser[IntVar] = "[i,j,n,k,x]".r ^^ {
         case x => { /*println("\n\nintVar");*/ IntVar(new VariableStringSymbol(x))}
       }
-      def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
-        case "s(" ~ intTerm ~ ")" => Succ(intTerm.asInstanceOf[IntegerTerm])
+      def succ: Parser[HOLExpression] = "s(" ~ intTerm ~ ")" ^^ {
+        case "s(" ~ intTerm ~ ")" => Succ(intTerm)
       }
 
       def schemaFormula = formula
 
-      def indPred : Parser[HOLFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
-        case x ~ "(" ~ l ~ ")" => {
-          if (! mapPredicateToArity.isDefinedAt(x.toString) )
-            mapPredicateToArity.put(x.toString, l.size)
-          else if (mapPredicateToArity.get(x.toString).get != l.size ) {
-            println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n\n")
-            throw new Exception("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n")
-          }
-          //          println("\n\nIndexedPredicate");
-
-          //          val map: scala.collection.immutable.Map[Var, T])
-          //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
-          //          val new_ind = subst(ind)
-          //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
-          //          val new_subst = new SchemaSubstitution1(new_map)
-
-          IndexedPredicate(new ConstantStringSymbol(x), l)
-        }
-      }
-
-
-      def define: Parser[Any]  = indPred ~ ":=" ~ schemaFormula ^^ {
-        case indpred ~ ":=" ~ sf => {
-          indpred match {
-            case IndexedPredicate(f,ls) => {
-              defMap.put(f, Tuple2(ls.asInstanceOf[List[IntegerTerm]],sf.asInstanceOf[SchemaFormula]))
-            }
-          }
-        }
-      }
+//      def indPred : Parser[HOLFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
+//        case x ~ "(" ~ l ~ ")" => {
+//          if (! mapPredicateToArity.isDefinedAt(x.toString) )
+//            mapPredicateToArity.put(x.toString, l.size)
+//          else if (mapPredicateToArity.get(x.toString).get != l.size ) {
+//            println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n\n")
+//            throw new Exception("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n")
+//          }
+//          //          println("\n\nIndexedPredicate");
+//
+//          //          val map: scala.collection.immutable.Map[Var, T])
+//          //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
+//          //          val new_ind = subst(ind)
+//          //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
+//          //          val new_subst = new SchemaSubstitution1(new_map)
+//
+//          IndexedPredicate(new ConstantStringSymbol(x), l)
+//        }
+//      }
 
 
-      // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
-      def prefix : Parser[Tuple4[Boolean, IntVar, IntegerTerm, IntegerTerm]] = """[BigAnd]*[BigOr]*""".r ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
-        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
-          //          println("\n\nprefix\n\n")
-          Tuple4(true, intVar1, ind1, ind2)
-        }
-        case "BigOr" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
-          //          println("\n\nprefix\n\n")
-          Tuple4(false, intVar1, ind1, ind2)
-        }
-      }
+//      def define: Parser[Any]  = indPred ~ ":=" ~ schemaFormula ^^ {
+//        case indpred ~ ":=" ~ sf => {
+//          indpred match {
+//            case IndexedPredicate(f,ls) => {
+//              defMap.put(f, Tuple2(ls.asInstanceOf[List[IntegerTerm]],sf.asInstanceOf[SchemaFormula]))
+//            }
+//          }
+//        }
+//      }
 
-      def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
-        case l ~ schemaFormula  => {
-          //          println("Works?")
-          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => {
-            if (triple._1)
-              BigAnd(triple._2, res, triple._3, triple._4)
-            else
-              BigOr(triple._2, res, triple._3, triple._4)
-          })
-        }
-      }
+
+//      // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
+//      def prefix : Parser[Tuple4[Boolean, IntVar, IntegerTerm, IntegerTerm]] = """[BigAnd]*[BigOr]*""".r ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
+//        case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
+//          //          println("\n\nprefix\n\n")
+//          Tuple4(true, intVar1, ind1, ind2)
+//        }
+//        case "BigOr" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
+//          //          println("\n\nprefix\n\n")
+//          Tuple4(false, intVar1, ind1, ind2)
+//        }
+//      }
+
+//      def big : Parser[HOLFormula] = rep1(prefix) ~ schemaFormula ^^ {
+//        case l ~ schemaFormula  => {
+//          //          println("Works?")
+//          l.reverse.foldLeft(schemaFormula.asInstanceOf[SchemaFormula])((res, triple) => {
+//            if (triple._1)
+//              BigAnd(triple._2, res, triple._3, triple._4)
+//            else
+//              BigOr(triple._2, res, triple._3, triple._4)
+//          })
+//        }
+//      }
       
 //      def predicate_symbol : Parser[String] = ps_regexp.r
       def non_formula: Parser[HOLExpression] = (fo_term | s_ind_term | s_term | indexedVar | abs | variable | index | constant | var_func | const_func )
@@ -249,10 +254,10 @@ object ParseResSchema {
           foTerm(name, arg::Nil)
         }
       }
-      def indexedVar: Parser[HOLVar] = "z" ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedVar: Parser[HOLVar] = "z"  ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
-//          println("indexedFOVar")
-          indexedFOVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
+          println("indexedFOVar")
+          indexedFOVar(new VariableStringSymbol(x), index)
         }
       }
 

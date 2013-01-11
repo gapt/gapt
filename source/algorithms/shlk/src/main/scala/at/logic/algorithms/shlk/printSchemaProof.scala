@@ -46,7 +46,7 @@ object printSchemaProof {
       }
       case _ => formulaToString(x) +"("+ formulaToString(y) +")"
     }
-    case ifo:indexedFOVar => ifo.name.toString() + "_{"+ parseIntegerTerm(ifo.index, 0)+"}"
+    case ifo:indexedFOVar => ifo.name.toString() + "_{"+ parseIntegerTerm(ifo.index.asInstanceOf[IntegerTerm], 0)+"}"
     case fo:foVar => fo.name.toString()
     case Var(name,t) => name.toString()
     case Abs(x,y) => formulaToString(y)

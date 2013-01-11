@@ -1,4 +1,4 @@
-{z <- \lambda k. g(m(k),z(k)) }
+{z <- \lambda k. z(m(k)+1) }
 
 g(0,x) -> x
 g(k+1,x) -> f(g(k,x))
