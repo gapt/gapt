@@ -42,14 +42,12 @@ object PCNF {
         (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f) => WeakeningLeftRule(pr,f))
       )((pr,f) => WeakeningRightRule(pr,f))
     // check for reflexivity
-    } else a.pos.find(f => f match {
+    } else if (a.pos.exists(f => f match {
       case Equation(a,b) if a == b => true
       case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
       case  _ => false
-    }) match {
-      case Some(f) => Axiom(List(),List(f))
-      case _ => throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
-    }
+    })) Axiom(a.neg,a.pos)
+    else throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
   }
 
   /**
