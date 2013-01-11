@@ -28,21 +28,28 @@ object PCNF {
 
     // compute CNF and confirm a <- CNF(-s)
     val cnf = CNFp(form)
-    if (!cnf.contains(a)) throw new IllegalArgumentException("Clause a [" + a.toString + "] is not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
-
-    // find the right formula and compute the proof
-    val (p,f,inAntecedent) = s.antecedent.find(x => CNFp(x).contains(a)) match {
-      case Some(f) => (PCNFp(f,a),f,true)
-      case _ => {
-        val f = s.succedent.find(x => CNFn(x).contains(a)).get
-        (PCNFn(f,a),f,false)
+    if (cnf.contains(a)) {
+      // find the right formula and compute the proof
+      val (p,f,inAntecedent) = s.antecedent.find(x => CNFp(x).contains(a)) match {
+        case Some(f) => (PCNFp(f,a),f,true)
+        case _ => {
+          val f = s.succedent.find(x => CNFn(x).contains(a)).get
+          (PCNFn(f,a),f,false)
+        }
       }
+      // apply weakenings
+      (if (!inAntecedent) removeFirst(s.succedent,f) else s.succedent).foldLeft(
+        (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f) => WeakeningLeftRule(pr,f))
+      )((pr,f) => WeakeningRightRule(pr,f))
+    // check for reflexivity
+    } else a.pos.find(f => f match {
+      case Equation(a,b) if a == b => true
+      case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
+      case  _ => false
+    }) match {
+      case Some(f) => Axiom(List(),List(f))
+      case _ => throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
     }
-
-    // apply weakenings
-    (if (!inAntecedent) removeFirst(s.succedent,f) else s.succedent).foldLeft(
-      (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f) => WeakeningLeftRule(pr,f))
-    )((pr,f) => WeakeningRightRule(pr,f))
   }
 
   /**
@@ -130,5 +137,6 @@ object PCNF {
     val index = s.indexOf(a)
     s.take(index) ++ s.takeRight(s.size-index-1)
   }
+
 }
 
