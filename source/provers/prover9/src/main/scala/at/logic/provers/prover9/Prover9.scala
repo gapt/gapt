@@ -184,7 +184,7 @@ object Prover9 {
 
 
   /* Takes the output of prover9, extracts a resolution proof and the endsequent. */
-  def parse_prover9(p9_file : String, escape_underscore : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
+  def parse_prover9(p9_file : String, escape_underscore : Boolean = true, newimpl : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
     println((new File(".")).getCanonicalPath)
 
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
@@ -201,8 +201,9 @@ object Prover9 {
     pt_file.delete
     ivy_file.delete
 
-    val fs = Prover9TermParser.normalizeFSequent(InferenceExtractor(p9_file))
-    println("normalized formula: "+fs)
+//    val fs = Prover9TermParser.normalizeFSequent(InferenceExtractor(p9_file))
+    val fs = InferenceExtractor(p9_file)
+    println("extracted formula: "+fs)
     if (escape_underscore)
       escape_constants(mproof, fs)
     else

@@ -548,12 +548,13 @@ object loadProofDB {
 
 
   object loadProver9Proof {
-    def apply(filename : String) : (RobinsonResolutionProof, FSequent) = Prover9.parse_prover9(filename)
+    def apply(filename : String, escape_underscore : Boolean = true, newimpl : Boolean = true) :
+      (RobinsonResolutionProof, FSequent) = Prover9.parse_prover9(filename, escape_underscore, newimpl)
   }
 
   object loadProver9LKProof {
-    def apply(filename : String) : LKProof = {
-      val (proof, endsequent) = Prover9.parse_prover9(filename)
+    def apply(filename : String, newimpl : Boolean = true) : LKProof = {
+      val (proof, endsequent) = Prover9.parse_prover9(filename, true, newimpl)
       //println("skolemizing endsequent: "+endsequent)
       //val sendsequent = skolemize(endsequent)
       //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))

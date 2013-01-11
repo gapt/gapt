@@ -42,7 +42,7 @@ import util.parsing.combinator.JavaTokenParsers
 import util.matching.Regex
 import collection.mutable.{ListBuffer, Map}
 import at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression, App, Abs}
-import collection.immutable
+import collection.{mutable, immutable}
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -356,7 +356,9 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
 
 //TODO: refactor shared code with Prover9Init
 object InferenceExtractor {
-  def apply(fn: String) : FSequent = {
+  def apply(s:String) : FSequent = viaXML(s)
+
+  def viaXML(fn: String) : FSequent = {
     //println("==== Extracting Inferences ======")
     val buffer = new Array[ Byte ]( 1024 )
     val tptpIS = new FileInputStream(fn)
@@ -373,6 +375,8 @@ object InferenceExtractor {
     println(if (set_prolog_style_variables) "prolog style variables!" else "normal style variables!")
 
     val parser = if (set_prolog_style_variables) Prover9TermParser else Prover9TermParserLadrStyle
+
+
 
     // here we parse the given xml
     val pio = new ProcessIO(
@@ -394,8 +398,9 @@ object InferenceExtractor {
           val inference_type = (e \\ "justification" \\ "@jstring")
           inference_type.text match {
             case "[assumption]." =>
-              //println("assumption:"+literal);
+              (e\\"literal") map (x=> println("assumption:" + x))
               val formula : FOLFormula = fol.Or((e \\ "literal").map( x => parser.parseFormula(x.text)))
+              println("parsed formula: "+formula)
               assumptions = formula :: assumptions
             case "[goal]." =>
               //println("goal:"+literal);
@@ -405,8 +410,8 @@ object InferenceExtractor {
             case _ => ; //println("skipping: "+inference_type.text); //ignore other rules
           }
           val id = (e\"@id").text
-          println(inference_type)
-          println()
+          //println(inference_type)
+          //println()
           lastParents = new ListBuffer[String]()
         })
 
@@ -430,12 +435,47 @@ object InferenceExtractor {
     println
     println("fsequent:")
     */
+
+
+
     val fs = createFSequent(assumptions, goals)
     /*      println(fs)
     println()
     println("==== End of Inferences ======") */
     fs
   }
+
+  def viaLADR(fn : String) : FSequent = {
+    import scala.io.Source
+
+    val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r
+    val rassumption = """(\d+) ([^#\.]+).*\[assumption\].""".r
+    val rgoal = """(\d+) ([^#\.]+).*\[goal\].""".r
+    val proof_start = """=+ (PROOF) =+""".r
+    val proof_end = """=+ (end) of proof =+""".r
+    // with_proof starts at 0, will be increased to 1 after matching proof_start and to 2 after proof_end
+    // because there might be more than one proof in the file
+    var within_proof = 0
+    var parser : Prover9TermParserA = Prover9TermParserLadrStyle
+
+    val str_ladr = Source.fromInputStream( new FileInputStream( fn ) ).mkString
+
+    val (assumptions, goals) = str_ladr.split(System.getProperty("line.separator")).foldLeft((List[FOLFormula](), List[FOLFormula]()))((m, l) => {
+       val (as,gs) = m;
+       l match {
+        case rassumption(id, formula ) => if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
+        case rgoal(id, formula )       => if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
+        case variablestyle_matcher(_) => println("enabling prolog style variables!"); parser = Prover9TermParser;  m
+        case proof_start(_) => println(); within_proof = 1; m
+        case proof_end(_) => within_proof = 2; m
+        case _ => m
+      }
+    })
+
+    createFSequent(assumptions, goals)
+
+  }
+
 
   // the second value is the literals permutation from prover9 order to fsequent (as we have positive and negative
   def getLiterals(e: Node): Seq[FOLFormula] = {
