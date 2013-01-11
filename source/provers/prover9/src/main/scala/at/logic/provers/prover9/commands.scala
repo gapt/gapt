@@ -271,7 +271,7 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
   def exformula_ : Parser[FOLFormula]    = ("exists" ~> variable ~ ( allformula_ | exformula_ | literal2) ) ^^ { case v ~ f => fol.ExVar(v,f) }
   //precedence 300
   def literal2:Parser[FOLFormula] = pformula | atomWeq | negation
-  def negation:Parser[FOLFormula] = "-" ~> (pformula | atomWeq)
+  def negation:Parser[FOLFormula] = "-" ~> (pformula | negation |atomWeq) ^^ { x => fol.Neg(x) }
 
 
   def parens[T](p:Parser[T]) : Parser[T] = "(" ~> p <~ ")"
