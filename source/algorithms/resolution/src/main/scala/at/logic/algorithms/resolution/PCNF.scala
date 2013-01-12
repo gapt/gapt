@@ -7,12 +7,19 @@ import at.logic.language.hol._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ForallLeftRule}
 import at.logic.calculi.lk.base.types.FSequent
-  import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.substitutions.Substitution
 import scala.Some
 import scala.Tuple2
+import at.logic.algorithms.lk.{applySubstitution => applySub}
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)
+ * Note about checking containmenet up to variables renaming:
+ * we compute the variable renaming from the lk proof to the resolution proof for a specific clause. We cannot apply it to the formula in s
+ * as it might be quantified over this variables so we apply it to the resulted lk proof. We must apply it as otherwise the substitution in
+ * the resolution to lk transformation will not be applied to these clauses. In the weakenings application at the end of this method we try
+ * to apply it to the formulas as well as if it is quantified over these variables, it will be also quantified in the proof so no damage
+ * done.
  */
 object PCNF {
   /**
@@ -38,10 +45,16 @@ object PCNF {
       case Some(f2) =>
         // find the right formula and compute the proof
         s.antecedent.find(x => CNFp(x).contains(f2)) match {
-          case Some(f) => (PCNFp(sub(f).asInstanceOf[HOLFormula],a),f,true)
+          case Some(f3) => {
+            //println("sub = " + sub)
+            //println("a = " + a)
+            (applySub(PCNFp(f3,a),sub)._1,f3,true)
+          }
           case _ => {
-            val f = s.succedent.find(x => CNFn(x).contains(f2)).get
-            (PCNFn(sub(f).asInstanceOf[HOLFormula],a),f,false)
+            val f3 = s.succedent.find(x => CNFn(x).contains(f2)).get
+            //println("sub = " + sub)
+            //println("a = " + a)
+            (applySub(PCNFn(f3,a),sub)._1,f3,false)
           }
         }
       case None =>
@@ -120,6 +133,7 @@ object PCNF {
       OrLeftRule(PCNFp(f1,a), PCNFp(f2,a), f1, f2)
     }
     case Imp(f1,f2) => {
+      /*
       // get all possible partitions of the ant and suc of the clause a
       val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
       // find the right partition
@@ -128,6 +142,8 @@ object PCNF {
       val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
       // create the proof
       ImpLeftRule(PCNFn(f1,par._1), PCNFp(f2,par._2), f1, f2)
+      */
+      ImpLeftRule(PCNFn(f1,a), PCNFp(f2,a), f1, f2)
     }
     case AllVar(v,f2) => ForallLeftRule(PCNFp(f2, a), f2, f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)

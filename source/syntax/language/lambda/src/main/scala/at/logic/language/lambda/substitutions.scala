@@ -64,7 +64,8 @@ import collection.immutable.HashSet
       }
       case x:Var => {
         if (map.contains( x ) )
-          println("WARNING: trying to substitute for a bound variable, ignoring!")
+          // this can happen as the proofs may not be regular and in general we would like to ignore in this case
+          //println("WARNING: trying to substitute for a bound variable, ignoring!")
        expression
       }
       case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T], protectedVars), applyWithChangeDBIndices(n.asInstanceOf[T], protectedVars)).asInstanceOf[T]
