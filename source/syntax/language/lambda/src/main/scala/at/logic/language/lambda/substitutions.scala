@@ -63,7 +63,7 @@ import collection.immutable.HashSet
         }
       }
       case x:Var => {
-        if (map.contains( x ) )
+        //if (map.contains( x ) )
           // this can happen as the proofs may not be regular and in general we would like to ignore in this case
           //println("WARNING: trying to substitute for a bound variable, ignoring!")
        expression
