@@ -27,7 +27,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof =
-    CleanStructuralRules(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof]()),s))
+    introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof]()),s)
 
 
   def apply(resproof: RobinsonResolutionProof): LKProof = recConvert(resproof, FSequent(List(),List()), scala.collection.mutable.Map[FClause,LKProof]())
@@ -38,12 +38,15 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
    */
   def introduceContractions(resp: LKProof, s: FSequent): LKProof= {
    // for each formula F in s, count its occurrences in s and resp and apply contractions on resp until we reach the same number
+   println("before contraction introduction")
    val p1 = resp.root.antecedent.map(_.formula).toSet.foldLeft(resp)((p,f) =>
        ((1).to(p.root.antecedent.filter(_.formula == f).size - s.antecedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
         ContractionLeftRule(q,f) ))
-   p1.root.succedent.map(_.formula).toSet.foldLeft(p1)((p,f) =>
+   val p2 = p1.root.succedent.map(_.formula).toSet.foldLeft(p1)((p,f) =>
        ((1).to(p.root.succedent.filter(_.formula == f).size - s.succedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
     ContractionRightRule(q,f) ))
+   println("after contraction introduction. After this message the method returns (but sometimes takes a lot of time?!")
+   p2
   }
 
   private def recConvert(proof: RobinsonResolutionProof, seq: FSequent, map: mapT): LKProof = if (map.contains(proof.root.toFClause))
@@ -53,7 +56,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
     case InitialClause(cls) => if (seq.antecedent.isEmpty && seq.succedent.isEmpty)
       Axiom(cls.negative.map(_.formula), cls.positive.map(_.formula))
       // use projections
-      else {val pcnf = PCNF(seq, cls.toFClause); println("computed a proof of " + pcnf.root + " from " + seq + " and " + cls.toFClause);pcnf}
+      else PCNF(seq, cls.toFClause)
     case Factor(r, p, a, s) => {
 
       // obtain the set of removed occurrences for each side

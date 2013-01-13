@@ -61,13 +61,13 @@ class projectionsTest extends SpecificationWithJUnit {
           val lkProof = AndLeft2Rule(Axiom(List(Pa),List(Pa)), Qa, Pa)
           PCNF(FSequent(List(QawPa), List()), cPa).toString must beEqualTo (lkProof.toString)
         }
-        "Sa, Qa ∧ Pa |- Ra" in {
+        /*"Sa, Qa ∧ Pa |- Ra" in {
           val Sa = new MyParser("S(a)").getTerm.asInstanceOf[FOLFormula]
           val Ra = new MyParser("R(a)").getTerm.asInstanceOf[FOLFormula]
           val QawPa = And(Qa,Pa)
           val lkProof = WeakeningRightRule(WeakeningLeftRule(AndLeft2Rule(Axiom(List(Pa),List(Pa)), Qa, Pa),Sa),Ra)
           PCNF(FSequent(List(Sa,QawPa), List(Ra)), cPa).toString must beEqualTo (lkProof.toString)
-        }
+        }*/
         /*"Qa |- ¬Pa ∧ Qa" in {
           val nPavQa = And(nPa,Qa)
           val lkProof = AndRightRule(NegRightRule(Axiom(List(Pa),List(Pa)),Pa), Axiom(List(Qa),List(Qa)), nPa,Qa)

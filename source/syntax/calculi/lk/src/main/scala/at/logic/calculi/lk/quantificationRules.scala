@@ -76,9 +76,9 @@ import _root_.at.logic.utils.traits.Occurrence
       }
       else {
         val aux_fo = term1op.get
-        val aux_form = computeAux(main, term)
-        assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toString + " is not equal to the formula " + aux_fo.formula.toString + " at the given occurrence ("+aux_form.toPrettyString + " != " + aux_fo.formula.toPrettyString+")")
-        (aux_fo, aux_form)
+        //val aux_form = computeAux(main, term)
+        // assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toString + " is not equal to the formula " + aux_fo.formula.toString + " at the given occurrence ("+aux_form.toPrettyString + " != " + aux_fo.formula.toPrettyString+")")
+        (aux_fo, aux_fo.formula)
       }
     }
     private def getPrinFormula(main: HOLFormula, aux_fo: FormulaOccurrence) = {
@@ -89,7 +89,7 @@ import _root_.at.logic.utils.traits.Occurrence
       val antecedent = ant :+ prinFormula
       val succedent = createContext(s1.succedent)
       Sequent(antecedent, succedent)
-    } 
+    }
     def unapply(proof: LKProof) = if (proof.rule == ForallLeftRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
         val ((a1::Nil)::Nil) = r.aux
@@ -115,7 +115,7 @@ import _root_.at.logic.utils.traits.Occurrence
 
     def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
       val aux_fo = getTerms(s1.root, term1oc, main, term)
-      val prinFormula = getPrinFormula(main, aux_fo) 
+      val prinFormula = getPrinFormula(main, aux_fo)
       val sequent = getSequent(s1.root, aux_fo, prinFormula)
 
       new UnaryTree[Sequent](sequent, s1 )
@@ -129,7 +129,7 @@ import _root_.at.logic.utils.traits.Occurrence
     }
     def apply(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
       val aux_fo = getTerms(s1, term1oc, main, term)
-      val prinFormula = getPrinFormula(main, aux_fo) 
+      val prinFormula = getPrinFormula(main, aux_fo)
       getSequent(s1, aux_fo, prinFormula)
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
@@ -137,7 +137,7 @@ import _root_.at.logic.utils.traits.Occurrence
       if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val aux_fo = term1op.get
-        assert( computeAux( main, term ) == aux_fo.formula, computeAux( main, term ).toStringSimple + " is not " + aux_fo.formula.toStringSimple )
+        //assert( computeAux( main, term ) == aux_fo.formula, computeAux( main, term ).toStringSimple + " is not " + aux_fo.formula.toStringSimple )
         aux_fo
       }
     }
@@ -149,7 +149,7 @@ import _root_.at.logic.utils.traits.Occurrence
       val suc = createContext(s1.succedent.filterNot(_ == aux_fo))
       val succedent = suc :+ prinFormula
       Sequent(antecedent, succedent)
-    } 
+    }
     def unapply(proof: LKProof) = if (proof.rule == ExistsRightRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
         val ((a1::Nil)::Nil) = r.aux
@@ -201,7 +201,7 @@ import _root_.at.logic.utils.traits.Occurrence
 //            println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
 //            println("aux_fo: " + aux_fo.formula)
             assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
-            aux_fo 
+            aux_fo
           }
           case _ => throw new LKRuleCreationException("Main formula of ForallRightRule must have a universal quantifier as head symbol.")
         }
@@ -215,7 +215,7 @@ import _root_.at.logic.utils.traits.Occurrence
       val suc = createContext(s1.succedent.filterNot(_ == aux_fo))
       val succedent = suc :+ prinFormula
       Sequent(antecedent, succedent)
-    } 
+    }
     def unapply(proof: LKProof) = if (proof.rule == ForallRightRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable]
         val ((a1::Nil)::Nil) = r.aux
@@ -277,7 +277,7 @@ import _root_.at.logic.utils.traits.Occurrence
       val antecedent = ant :+ prinFormula
       val succedent = createContext((s1.succedent))
       Sequent(antecedent, succedent)
-    } 
+    }
     def unapply(proof: LKProof) = if (proof.rule == ExistsLeftRuleType) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable]
       val ((a1::Nil)::Nil) = r.aux

@@ -347,7 +347,7 @@ object loadProofDB {
   }
 
   object extractTerms {
-    def apply( p: LKProof ) = { 
+    def apply( p: LKProof ) = {
       val ts = new FlatTermSet(TermsExtraction(p))
       println("The term set contains " + ts.termset.size + " terms.\n")
       ts
@@ -381,7 +381,7 @@ object loadProofDB {
   object computeCanonicalSolution {
     def apply(ehs: ExtendedHerbrandSequent) = ehs.canonicalSol
   }
-  
+
   object computeImprovedSolutions {
     def apply( ehs: ExtendedHerbrandSequent ) =
       CutIntroduction.improveSolution(ehs.canonicalSol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)
@@ -392,13 +392,13 @@ object loadProofDB {
   }
 
   object buildProofWithCut {
-    def apply(ehs: ExtendedHerbrandSequent, g: Grammar, cf: FOLFormula, ts: FlatTermSet, es: Sequent) = 
+    def apply(ehs: ExtendedHerbrandSequent, g: Grammar, cf: FOLFormula, ts: FlatTermSet, es: Sequent) =
       CutIntroduction.buildFinalProof(ehs, g, cf, ts, es) match {
         case Some(proof) => proof
         case None => throw new Exception("Could not construct a proof with cut.")
       }
   }
-  
+
   object cutIntro {
     def apply( p: LKProof ) : Option[LKProof] = CutIntroduction(p)
   }
@@ -535,7 +535,8 @@ object loadProofDB {
 
   object Robinson2LK {
     def apply(resProof: ResolutionProof[Clause]): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof])
-    def apply(resProof: ResolutionProof[Clause], seq: FSequent): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof],seq)
+    def apply(resProof: ResolutionProof[Clause], seq: FSequent): LKProof =
+      at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[at.logic.calculi.resolution.robinson.RobinsonResolutionProof],seq)
   }
 
   object prover9 {
@@ -553,17 +554,19 @@ object loadProofDB {
   }
 
   object loadProver9LKProof {
-    def apply(filename : String, newimpl : Boolean = true) : LKProof = {
+    def apply(filename : String, newimpl : Boolean = true, forceSkolemization: Boolean = false) : LKProof = {
       val (proof, endsequent) = Prover9.parse_prover9(filename, true, newimpl)
       //println("skolemizing endsequent: "+endsequent)
       //val sendsequent = skolemize(endsequent)
       //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
       //println("done: "+folsendsequent)
-      if (!containsStrongQuantifiers(endsequent)) {
+      if (!forceSkolemization && !containsStrongQuantifiers(endsequent)) {
         println("End-sequent is skolemized.")
         Robinson2LK(proof,endsequent)
       } else {
-        println("End-sequent is not skolemized, using initial clauses instead.")
+        if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
+        else println("End-sequent is not skolemized, using initial clauses instead.")
+
         val fclauses : Set[FClause]  = proof.nodes.map( _ match {
           case InitialClause(clause) => clause.toFClause;
           case _ => FClause(Nil,Nil) }
@@ -575,9 +578,9 @@ object loadProofDB {
         println("new endsequent: "+cendsequent2)
 
         Robinson2LK(proof,cendsequent2)
+
       }
     }
-
     def univclosure(f:FOLFormula) = f.getFreeAndBoundVariables._1.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
 
     def containsStrongQuantifiers(fs:FSequent) : Boolean =
