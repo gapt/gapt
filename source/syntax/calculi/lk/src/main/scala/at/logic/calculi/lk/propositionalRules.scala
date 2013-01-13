@@ -147,7 +147,8 @@ import collection.immutable.Seq
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("No matching formulas found to contract.")
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
+          " for application of the rule with the given formula: " + term1)
       }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
@@ -206,7 +207,8 @@ import collection.immutable.Seq
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.succedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found in " + s1.root.succedent.map(_.formula) +
+          " for application of the rule with the given formula: " + term1)
       }
     }
     private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence) = {

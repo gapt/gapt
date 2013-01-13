@@ -24,7 +24,7 @@ object applySubstitution {
                        constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
      val new_proof = constructor( new_parent._1, subst.applyAndBetaNormalize(m.formula).asInstanceOf[HOLFormula] )
-    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )  
+    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )
   }
   def handleContraction( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
                          old_parent: LKProof,
@@ -88,7 +88,7 @@ object applySubstitution {
         val new_p1 = new_parents.head
         val new_p2 = new_parents.last
         val new_proof = CutRule( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
-        ( new_proof, computeMap( 
+        ( new_proof, computeMap(
           p1.root.antecedent ++ (p1.root.succedent.filter(_ != a1)) ++
           (p2.root.antecedent.filter(_ != a2)) ++ p2.root.succedent,
           proof, new_proof, new_p1._2 ++ new_p2._2 ) )
@@ -155,19 +155,19 @@ object applySubstitution {
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case EquationLeft1Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationLeft1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
+        handleEquationRule( EquationLeft1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case EquationLeft2Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationLeft2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
+        handleEquationRule( EquationLeft2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case EquationRight1Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationRight1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
+        handleEquationRule( EquationRight1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case EquationRight2Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationRight2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s, 
+        handleEquationRule( EquationRight2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           subst.applyAndBetaNormalize( m.formula ).asInstanceOf[HOLFormula] )
       case ForallLeftRule( p, s, a, m, t ) => {
@@ -204,11 +204,11 @@ object applySubstitution {
     }
 
   // TODO: a very similar method is used in LKtoLKskc, refactor!?
-  def computeMap( occs: Seq[FormulaOccurrence], old_proof: LKProof, 
+  def computeMap( occs: Seq[FormulaOccurrence], old_proof: LKProof,
                   new_proof: LKProof, old_map : Map[FormulaOccurrence, FormulaOccurrence]) =
   {
     val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
-    occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get, 
+    occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get,
       new_proof.getDescendantInLowerSequent( old_map(fo) ).get ) )
     map
   }
