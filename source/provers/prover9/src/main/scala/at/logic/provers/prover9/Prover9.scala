@@ -202,7 +202,8 @@ object Prover9 {
     ivy_file.delete
 
 //    val fs = Prover9TermParser.normalizeFSequent(InferenceExtractor(p9_file))
-    val fs = InferenceExtractor(p9_file)
+
+    val fs = if (newimpl) InferenceExtractor.viaLADR(p9_file) else InferenceExtractor.viaXML(p9_file)
     println("extracted formula: "+fs)
     if (escape_underscore)
       escape_constants(mproof, fs)

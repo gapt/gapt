@@ -477,12 +477,6 @@ object InferenceExtractor {
   }
 
 
-  // the second value is the literals permutation from prover9 order to fsequent (as we have positive and negative
-  def getLiterals(e: Node): Seq[FOLFormula] = {
-    if ((e \\ "literal").text.trim == "$F") List()
-    else (e \\ "literal").map(l => Prover9TermParser.parseAll(Prover9TermParser.literal, l.text).get)
-  }
-
   /* fixed point of createFSequent_ */
   def createFSequent(assumptions : immutable.Seq[FOLFormula], goals : immutable.Seq[FOLFormula]) : FSequent = {
     val fs = createFSequent_(assumptions, goals)
