@@ -554,7 +554,7 @@ object loadProofDB {
   }
 
   object loadProver9LKProof {
-    def apply(filename : String, newimpl : Boolean = true, forceSkolemization: Boolean = true) : LKProof = {
+    def apply(filename : String, newimpl : Boolean = true, forceSkolemization: Boolean = false) : LKProof = {
       val (proof, endsequent) = Prover9.parse_prover9(filename, true, newimpl)
       //println("skolemizing endsequent: "+endsequent)
       //val sendsequent = skolemize(endsequent)

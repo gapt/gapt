@@ -36,28 +36,58 @@ object PCNF {
 
     // compute CNF and confirm a <- CNF(-s) up to variable renaming
     val cnf = CNFp(form)
-    if (cnf.contains(a)) {
-      // find the right formula and compute the proof
-      s.antecedent.find(x => CNFp(x).contains(a)) match {
-        case Some(f) => PCNFp(f,a)
-        case _ => {
-          val f = s.succedent.find(x => CNFn(x).contains(a)).get
-          PCNFn(f,a)
+    var sub = Substitution[HOLExpression]()
+    val op = cnf.find(y => getVariableRenaming(y,a) match {
+      case Some(s) => {sub = s; true}
+      case _ => false
+    })
+    val (p,f,inAntecedent) = op match {
+      case Some(f2) =>
+        // find the right formula and compute the proof
+        s.antecedent.find(x => CNFp(x).contains(f2)) match {
+          case Some(f3) => {
+            //println("sub = " + sub)
+            //println("a = " + a)
+            (applySub(PCNFp(f3,a),sub)._1,f3,true)
+          }
+          case _ => {
+            val f3 = s.succedent.find(x => CNFn(x).contains(f2)).get
+            //println("sub = " + sub)
+            //println("a = " + a)
+            (applySub(PCNFn(f3,a),sub)._1,f3,false)
+          }
         }
-      }
-      // apply weakenings
-      /*(if (!inAntecedent) removeFirst(s.succedent,f) else s.succedent).foldLeft(
-        (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f) => WeakeningLeftRule(pr,f))
-      )((pr,f) => WeakeningRightRule(pr,f))*/
-    // check for reflexivity
-    } else if (a.pos.exists(f => f match {
-      case Equation(a,b) if a == b => true
-      case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
-      case  _ => false
-    })) Axiom(a.neg,a.pos)
-    else throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
+      case None =>
+        // check for reflexivity
+        a.pos.find(f => f match {
+          case Equation(a,b) if a == b => true
+          case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
+          case  _ => false
+        }) match {
+          case Some(f) => (Axiom(List(),List(f)),f.asInstanceOf[HOLFormula],false)
+          case _ => throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
+        }
+    }
+    // apply weakenings
+    /*(if (!inAntecedent) removeFirst(s.succedent,f) else s.succedent).foldLeft(
+      (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f)
+        => WeakeningLeftRule(pr,sub(f).asInstanceOf[HOLFormula]))
+    )((pr,f) => WeakeningRightRule(pr,sub(f).asInstanceOf[HOLFormula]))*/
+
+    // apply contractions on the formulas of a, since we duplicate the context on every binary rule
+    introduceContractions(p,a)
   }
 
+  def introduceContractions(resp: LKProof, s: FClause): LKProof= {
+   // for each formula F in s, count its occurrences in s and resp and apply contractions on resp until we reach the same number
+   val p1 = s.neg.toSet.foldLeft(resp)((p,f) =>
+       ((1).to(p.root.antecedent.filter(_.formula == f).size - s.neg.filter(_ == f).size)).foldLeft(p)((q,n) =>
+        ContractionLeftRule(q,f.asInstanceOf[HOLFormula]) ))
+   val p2 = s.pos.toSet.foldLeft(p1)((p,f) =>
+       ((1).to(p.root.succedent.filter(_.formula == f).size - s.pos.filter(_ == f).size)).foldLeft(p)((q,n) =>
+    ContractionRightRule(q,f.asInstanceOf[HOLFormula]) ))
+   p2
+  }
   /**
    * assuming a in CNF^-(f) we give a proof of a o |- f
    * @param f
@@ -68,6 +98,7 @@ object PCNF {
     case Atom(_,_) => Axiom(List(f),List(f))
     case Neg(f2) => NegRightRule(PCNFp(f2,a), f2)
     case And(f1,f2) => {
+      /* see Or in PCNFp
       // get all possible partitions of the ant and suc of the clause a
       val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
       // find the right partition
@@ -76,6 +107,8 @@ object PCNF {
       val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
       // create the proof
       AndRightRule(PCNFn(f1,par._1), PCNFn(f2,par._2), f1, f2)
+      */
+      AndRightRule(PCNFn(f1,a), PCNFn(f2,a), f1, f2)
     }
     case Or(f1,f2) =>
       if (CNFn(f1).contains(a)) OrRight1Rule(PCNFn(f1,a),f1,f2)
@@ -100,6 +133,7 @@ object PCNF {
       if (CNFp(f1).contains(a)) AndLeft1Rule(PCNFp(f1,a),f1,f2)
       else AndLeft2Rule(PCNFp(f2,a),f1,f2)
     case Or(f1,f2) => {
+      /* the following is an inefficient way to compute the exact context sequents
       // get all possible partitions of the ant and suc of the clause a
       val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
       // find the right partition
@@ -108,8 +142,11 @@ object PCNF {
       val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
       // create the proof
       OrLeftRule(PCNFp(f1,par._1), PCNFp(f2,par._2), f1, f2)
+      we just take the whole context and apply weakenings later */
+      OrLeftRule(PCNFp(f1,a), PCNFp(f2,a), f1, f2)
     }
     case Imp(f1,f2) => {
+      /*
       // get all possible partitions of the ant and suc of the clause a
       val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
       // find the right partition
@@ -118,6 +155,8 @@ object PCNF {
       val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
       // create the proof
       ImpLeftRule(PCNFn(f1,par._1), PCNFp(f2,par._2), f1, f2)
+      */
+      ImpLeftRule(PCNFn(f1,a), PCNFp(f2,a), f1, f2)
     }
     case AllVar(v,f2) => ForallLeftRule(PCNFp(f2, a), f2, f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)

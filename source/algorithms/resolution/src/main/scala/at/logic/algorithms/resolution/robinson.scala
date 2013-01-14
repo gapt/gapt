@@ -38,14 +38,12 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
    */
   def introduceContractions(resp: LKProof, s: FSequent): LKProof= {
    // for each formula F in s, count its occurrences in s and resp and apply contractions on resp until we reach the same number
-   println("before contraction introduction")
-   val p1 = resp.root.antecedent.map(_.formula).toSet.foldLeft(resp)((p,f) =>
+   val p1 = s.antecedent.toSet.foldLeft(resp)((p,f) =>
        ((1).to(p.root.antecedent.filter(_.formula == f).size - s.antecedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
         ContractionLeftRule(q,f) ))
-   val p2 = p1.root.succedent.map(_.formula).toSet.foldLeft(p1)((p,f) =>
+   val p2 = s.succedent.toSet.foldLeft(p1)((p,f) =>
        ((1).to(p.root.succedent.filter(_.formula == f).size - s.succedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
     ContractionRightRule(q,f) ))
-   println("after contraction introduction. After this message the method returns (but sometimes takes a lot of time?!")
    p2
   }
 
