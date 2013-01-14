@@ -41,7 +41,8 @@ object testProver9Import {
     var n_none = 0
     var n_OK = 0
 
-    val map_failure =scala.collection.mutable.Map[String,List[Pair[String,Option[Exception]]]]()
+    var list_succ = List[String]()
+    val map_failure = scala.collection.mutable.Map[String,List[Pair[String,Option[Exception]]]]()
 
     def addOrUpdate(map: MyMap, err: String, value: String, ex: Option[Exception]) = {
       try {
@@ -74,11 +75,14 @@ object testProver9Import {
         case _ => {
           n_OK += 1
           println ("[ OK ]" )
+          list_succ = file.getCanonicalPath() :: list_succ
         }
       }
     }
 
     println( "\nTotal Stats: " + n_OK + "/" + n_total + " OK" )
+    println( "Successes:" )
+    list_succ.foreach( e => println ( "  " + e ) )
     println( "Failures:" )
     map_failure.keySet.foreach( e => println( "  " + e + " -> " + map_failure(e).size))
     map_failure.values.flatMap(x => x).foreach( e => {println( "  " + e._1); (e._2 match {case None => (); case Some(ex) => ex.printStackTrace})})
