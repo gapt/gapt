@@ -561,11 +561,14 @@ object loadProofDB {
       //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
       //println("done: "+folsendsequent)
       if (!forceSkolemization && !containsStrongQuantifiers(endsequent)) {
-        println("End-sequent is skolemized.")
-        Robinson2LK(proof,endsequent)
+        println("End-sequent does not contain strong quantifiers!.")
+        val closure = FSequent(endsequent.antecedent map (x => univclosure( x.asInstanceOf[FOLFormula])),
+                               endsequent.succedent map (x => existsclosure( x.asInstanceOf[FOLFormula])))
+
+        Robinson2LK(proof,closure)
       } else {
         if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
-        else println("End-sequent is not skolemized, using initial clauses instead.")
+        else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
 
         val fclauses : Set[FClause]  = proof.nodes.map( _ match {
           case InitialClause(clause) => clause.toFClause;
@@ -582,6 +585,7 @@ object loadProofDB {
       }
     }
     def univclosure(f:FOLFormula) = f.getFreeAndBoundVariables._1.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
+    def existsclosure(f:FOLFormula) = f.getFreeAndBoundVariables._1.foldRight(f)((v,g) => fol.ExVar(v.asInstanceOf[FOLVar],g))
 
     def containsStrongQuantifiers(fs:FSequent) : Boolean =
       fs.antecedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],false)) ||
