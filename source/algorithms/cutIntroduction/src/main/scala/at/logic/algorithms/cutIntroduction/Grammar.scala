@@ -23,6 +23,9 @@ class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
   val s = s0
   val eigenvariable = ev
 
+  // Is this the best solution?
+  var flatterms: FlatTermSet = null
+
   def size = u.size + s.size
 
   def toPrettyString = "{ " + u.foldRight("")((ui, str) => str + ui + ", ") + " } o { " + s.foldRight("") ((si, str) => str + si + ", " ) + " }" 
@@ -31,7 +34,8 @@ class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
 
 object ComputeGrammars {
 
-  def apply(terms: FlatTermSet) : List[Grammar] = apply(terms.termset)
+  // This looks ugly :(
+  def apply(terms: FlatTermSet) : List[Grammar] = apply(terms.termset).map{ case g => g.flatterms = terms; g }
 
   def apply(terms: List[FOLTerm]) : List[Grammar] = {
 

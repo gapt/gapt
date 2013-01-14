@@ -14,7 +14,8 @@ import java.io._
 
 object CLIMain {
 
-  val script = """  import at.logic.cli.GAPScalaInteractiveShellLibrary._
+  val script = """  
+  import at.logic.cli.GAPScalaInteractiveShellLibrary._
   import at.logic.language.lambda.types._
   import at.logic.language.lambda.typedLambdaCalculus._
   import at.logic.language.hol._
@@ -28,13 +29,12 @@ object CLIMain {
   import at.logic.transformations.skolemization.skolemize
   import at.logic.algorithms.lk.regularize
   import at.logic.calculi.occurrences.FormulaOccurrence
-
-  import ceresHelp.{apply => ceresHelp}
+  import help.{apply => help}
 
   println()
   println("    *************************************")
   println("    *    Welcome to the GAPT shell!     *")
-  println("    *  See ceresHelp for the commands.  *")
+  println("    *  See help for a list of commands. *")
   println("    *************************************")
   println()
   """

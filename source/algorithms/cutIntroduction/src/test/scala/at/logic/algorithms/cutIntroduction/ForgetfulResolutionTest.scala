@@ -36,6 +36,7 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       res.size must beEqualTo(1)
     }
 
+/*
     "improve the solution correctly" in {
       val p = at.logic.testing.LinearExampleProof(8)
       val ts = new FlatTermSet(TermsExtraction(p))
@@ -49,6 +50,7 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       //improv must
       success
     }
+*/
   }
 }
 

@@ -19,6 +19,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 import at.logic.algorithms.lk._
+import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.interpolation._
 import at.logic.algorithms.resolution._
@@ -28,7 +29,7 @@ class CutIntroException(msg: String) extends Exception(msg)
 
 object CutIntroduction {
 
-  def apply(proof: LKProof) : Option[LKProof] = {
+  def apply(proof: LKProof) : LKProof = {
 
     val endSequent = proof.root
     println("\nEnd sequent: " + endSequent)
@@ -48,24 +49,45 @@ object CutIntroduction {
     println("Number of decompositions in total: " + grammars.length)
 
     if(grammars.length == 0) {
-      println("\nNo grammars found." + 
+      throw new CutIntroException("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier.\n")
-      return None
     }
 
-    // TODO: how to choose the best decomposition?
-    val smallestGrm = grammars.head
+    // Compute the proofs for each of the smallest grammars
+    val smallest = grammars.head.size
+    val smallestGrammars = grammars.filter(g => g.size == smallest)
 
-    println("\nGrammar chosen: {" + smallestGrm.u + "} o {" + smallestGrm.s + "}")
+    val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
 
-    val ehs = new ExtendedHerbrandSequent(endSequent, smallestGrm, terms)
+      val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
-    // Building up the final proof with cut
-    println("\nGenerating final proof with cut...\n")
+      val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+      
+      val cutFormula = minimalImprovedSolution(cutFormula0, ehs)
+      ehs.cutFormula = cutFormula
     
-    //val cutFormula0 = AllVar(xvar, conj)
-    val cutFormula0 = ehs.canonicalSol
+      // Building up the final proof with cut
+      buildFinalProof(ehs) match {
+        case Some(p) => (p, ehs) :: acc
+        case None => acc
+      }
+    }
 
+    // Sort the list by size of proofs
+    val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
+
+    val smallestProof = sorted.head._1
+    val ehs = sorted.head._2
+
+    val grammar = ehs.grammar
+    println("\nGrammar chosen: {" + grammar.u + "} o {" + grammar.s + "}")  
+
+    val cutFormula = ehs.cutFormula
+    println("Improved solution: ")
+    println(cutFormula)
+
+    smallestProof
+      
 /* TODO: uncomment when fixed.
     // Computing the interpolant (transform this into a separate function later)
     
@@ -99,20 +121,35 @@ object CutIntroduction {
     // TODO: casting does not work here.
     val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
 */
-
-    println("Canonical Solution: ")
-    println(cutFormula0)
-
-    val cutFormula = minimalImprovedSolution(cutFormula0, ehs)
-
-    println("Improved solution: ")
-    println(cutFormula)
-
-    buildFinalProof(ehs, smallestGrm, cutFormula, terms, endSequent)
   }
 
-  // TODO: see if I can reduce the number of parameters of this function
-  def buildFinalProof(ehs: ExtendedHerbrandSequent, grammar: Grammar, cutFormula: FOLFormula, flatterms: FlatTermSet, endSequent: Sequent) : Option[LKProof] = {
+  def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
+   
+    val flatterms = g.flatterms
+
+    val xvar = FOLVar(new VariableStringSymbol("x"))
+    val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
+      val freeVars = term.getFreeAndBoundVariables._1
+      // Taking only the terms that contain alpha
+      if( freeVars.contains(g.eigenvariable) ) {
+        val terms = flatterms.getTermTuple(term)
+        val f = flatterms.getFormula(term)
+        val xterms = terms.map(e => FOLSubstitution(e, g.eigenvariable, xvar))
+        val fsubst = f.formula.asInstanceOf[FOLFormula].substituteAll(xterms)
+        f.formula.asInstanceOf[FOLFormula].substituteAll(xterms) :: acc
+      }
+      else acc
+    }
+ 
+    AllVar(xvar, andN(xFormulas))
+  }
+
+  def buildFinalProof(ehs: ExtendedHerbrandSequent) : Option[LKProof] = {
+
+    val endSequent = ehs.endSequent
+    val cutFormula = ehs.cutFormula
+    val grammar = ehs.grammar
+    val flatterms = grammar.flatterms
     
     val alpha = FOLVar(new VariableStringSymbol("α"))
     val cutLeft = cutFormula.substitute(alpha)
@@ -122,14 +159,15 @@ object CutIntroduction {
 
     val proofLeft = solvePropositional(FSequent((ehs.inst_l ++ ehs.prop_l), (cutLeft +: (ehs.prop_r ++ ehs.inst_r))))
     val leftBranch = proofLeft match {
-      case Some(proofLeft1) => ForallRightRule(uPart(grammar.u, proofLeft1, flatterms), cutLeft, cutFormula, alpha)
+      case Some(proofLeft1) => 
+        ForallRightRule(uPart(grammar.u, proofLeft1, flatterms), cutLeft, cutFormula, alpha)
       case None => throw new CutIntroException("ERROR: propositional part is not provable.")
     }
 
     val proofRight = solvePropositional(FSequent(cutRight ++ ehs.prop_l, ehs.prop_r))
     val rightBranch = proofRight match {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
-      case None => throw new CutIntroException("ERROR: propositional part is not provable.")
+      case None => throw new CutIntroException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.prop_l, ehs.prop_r))
     }
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
@@ -167,26 +205,44 @@ object CutIntroduction {
   }
 
   def uPart(u: List[FOLTerm], ax: LKProof, flatterms: FlatTermSet) : LKProof = {
+    //var first = true;
     u.foldRight(ax) {
       case (term, ax) => 
-        var first = true;
         val terms = flatterms.getTermTuple(term)
         val f = flatterms.getFormula(term)
         f.formula.asInstanceOf[FOLFormula] match { 
           case AllVar(_, _) =>
+            try {
+              ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
+            }
+            catch {
+              // Not able to contract the formula because it was the last
+              // substitution
+              case e: LKRuleCreationException => genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+            }
+            /*
             if(first) {
               first = false
               genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
             }
             else
               ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
+            */
           case ExVar(_, _) =>
+            try {
+              ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
+            }
+            catch {
+              case e: LKRuleCreationException => genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+            }
+            /*
             if(first) {
               first = false
               genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
             }
             else
               ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
+            */
         }
     }
   }

@@ -374,33 +374,33 @@ object loadProofDB {
   }
 
   object generateExtendedHerbrandSequent {
-    def apply( es: Sequent, g: Grammar, flatterms: FlatTermSet ) =
-      new ExtendedHerbrandSequent(es, g, flatterms)
+    def apply( es: Sequent, g: Grammar) =
+      new ExtendedHerbrandSequent(es, g)
   }
 
   object computeCanonicalSolution {
-    def apply(ehs: ExtendedHerbrandSequent) = ehs.canonicalSol
+    def apply(s: Sequent, g: Grammar) = CutIntroduction.computeCanonicalSolution(s, g)
   }
 
   object computeImprovedSolutions {
-    def apply( ehs: ExtendedHerbrandSequent ) =
-      CutIntroduction.improveSolution(ehs.canonicalSol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)
+    def apply(ehs: ExtendedHerbrandSequent ) =
+      CutIntroduction.improveSolution(ehs.cutFormula, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)
   }
 
   object computeMinimalSolution {
-    def apply(ehs: ExtendedHerbrandSequent) = CutIntroduction.minimalImprovedSolution(ehs.canonicalSol, ehs)
+    def apply(ehs: ExtendedHerbrandSequent) = CutIntroduction.minimalImprovedSolution(ehs.cutFormula, ehs)
   }
 
   object buildProofWithCut {
-    def apply(ehs: ExtendedHerbrandSequent, g: Grammar, cf: FOLFormula, ts: FlatTermSet, es: Sequent) =
-      CutIntroduction.buildFinalProof(ehs, g, cf, ts, es) match {
+    def apply(ehs: ExtendedHerbrandSequent) =
+      CutIntroduction.buildFinalProof(ehs) match {
         case Some(proof) => proof
         case None => throw new Exception("Could not construct a proof with cut.")
       }
   }
 
   object cutIntro {
-    def apply( p: LKProof ) : Option[LKProof] = CutIntroduction(p)
+    def apply( p: LKProof ) : LKProof = CutIntroduction(p)
   }
 
   object toClauses {
@@ -619,9 +619,9 @@ object loadProofDB {
     def asTex(p:ResolutionProof[Clause]) = Formatter.asTex(p)
   }
 
-  object ceres {
-    def help = ceresHelp.apply
-  }
+  //object help {
+  //  def help = helpText.apply
+  //}
 
   object rename {
     def apply[T <: LambdaExpression](exp : T, map : NameReplacement.SymbolMap) : T = NameReplacement(exp, map)
@@ -952,7 +952,7 @@ object hol2fol {
 
 
 
-  object ceresHelp {
+  object help {
     def apply() = {
       val msg =
         """

@@ -20,8 +20,11 @@ import at.logic.language.hol.logicSymbols._
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, flatterms: FlatTermSet) {
-  
+class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
+ 
+  val endSequent = seq
+  val flatterms = g.flatterms
+
   // From ".map" on are lots of castings just to make the data structure right :-|
   // FormulaOccurrence to HOLFormula to FOLFormula and Seq to List...
   
@@ -49,21 +52,10 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, flatterms: FlatTermSet) 
       case ExVar(_, _) => f.formula.asInstanceOf[FOLFormula].substituteAll(terms) :: acc
       case _ => acc
     }
-  } 
- 
-
-  // Canonical solution  
-  //val alpha = FOLVar(new VariableStringSymbol("α"))
-  val xvar = FOLVar(new VariableStringSymbol("x"))
-  val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
-    val terms = flatterms.getTermTuple(term)
-    val f = flatterms.getFormula(term)
-    val xterms = terms.map(e => FOLSubstitution(e, grammar.eigenvariable, xvar))
-    f.formula.asInstanceOf[FOLFormula].substituteAll(xterms) :: acc
   }
 
-  val canonicalSol : FOLFormula = AllVar(xvar, andN(xFormulas))
- 
+  var cutFormula = if(cf == null) CutIntroduction.computeCanonicalSolution(seq, g) else cf
+
   // For printing Xα -> ^ Xsi (not used for practical purposes)
   //val x = ConstantStringSymbol("X")
   //val alpha = FOLVar(new VariableStringSymbol("α"))
