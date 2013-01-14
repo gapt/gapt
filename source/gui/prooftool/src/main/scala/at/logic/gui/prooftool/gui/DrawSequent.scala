@@ -172,7 +172,8 @@ object DrawSequent {
       val cl = name.asInstanceOf[ClauseSetSymbol]
       "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
         cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
-    } else name.toString()
+    } else if (t.asInstanceOf[Var].isBound) "z_{" + t.asInstanceOf[Var].dbIndex.get + "}" // This line is added for debugging reasons!!!
+      else name.toString()
     case Function(name, args, _) =>
       if (args.size == 1) parseNestedUnaryFunction(name.toString(), args.head, 1)
       else if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
