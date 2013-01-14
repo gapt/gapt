@@ -388,11 +388,26 @@ object ExQ {
       case _ => None
     }
   }
+  object ExVarInScope {
+    def apply(variable: Var, sub: HOLFormula) = Ex(Abs(variable, sub))
+    def unapply(expression: LambdaExpression) = expression match {
+      case Ex(AbsInScope(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
+      case _ => None
+    }
+  }
 
   object AllVar {
     def apply(variable: Var, sub: HOLFormula) = All(Abs(variable, sub))
     def unapply(expression: LambdaExpression) = expression match {
       case All(Abs(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
+      case _ => None
+    }
+  }
+
+  object AllVarInScope {
+    def apply(variable: Var, sub: HOLFormula) = All(Abs(variable, sub))
+    def unapply(expression: LambdaExpression) = expression match {
+      case All(AbsInScope(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }
