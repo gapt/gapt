@@ -144,8 +144,8 @@ object DrawSequent {
     case And(f1,f2) => "(" + formulaToLatexString(f1) + """ \wedge """ + formulaToLatexString(f2) + ")"
     case Or(f1,f2) => "(" + formulaToLatexString(f1) + """ \vee """ + formulaToLatexString(f2) + ")"
     case Imp(f1,f2) => "(" + formulaToLatexString(f1) + """ \supset """ + formulaToLatexString(f2) + ")"
-    case ExVar(v, f) => "(" + """\exists """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
-    case AllVar(v, f) => "(" + """\forall """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+    case ExVarInScope(v, f) => "(" + """\exists """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+    case AllVarInScope(v, f) => "(" + """\forall """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
     case BigAnd(v, formula, init, end) =>
       """ \bigwedge_{ """ + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
     case BigOr(v, formula, init, end) =>
@@ -179,7 +179,7 @@ object DrawSequent {
       else if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
         "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
       else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
-    case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(s) + ")"
+    case AbsInScope(v, s) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(s) + ")"
   }
 
   // Add more unicode symbols if necessary
