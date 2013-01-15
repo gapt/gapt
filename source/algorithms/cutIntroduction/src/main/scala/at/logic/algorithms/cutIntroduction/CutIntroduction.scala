@@ -41,12 +41,11 @@ object CutIntroduction {
     // transform tuples into terms.
     val terms = new FlatTermSet(termsTuples)
 
-    println("\nTerm set: {" + terms.termset + "}")
-    println("of size " + terms.termset.size)
+    println("\nTerm set: {" + terms.termset + "} of size " + terms.termset.size)
 
     val grammars = ComputeGrammars(terms)
 
-    println("Number of decompositions in total: " + grammars.length)
+    println("\nNumber of decompositions in total: " + grammars.length)
 
     if(grammars.length == 0) {
       throw new CutIntroException("\nNo grammars found." + 
@@ -62,10 +61,8 @@ object CutIntroduction {
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-      
-      val cutFormula = minimalImprovedSolution(cutFormula0, ehs)
-      ehs.cutFormula = cutFormula
-    
+      ehs.minimizeSolution
+
       // Building up the final proof with cut
       buildFinalProof(ehs) match {
         case Some(p) => (p, ehs) :: acc
@@ -79,12 +76,8 @@ object CutIntroduction {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
-    val grammar = ehs.grammar
-    println("\nGrammar chosen: {" + grammar.u + "} o {" + grammar.s + "}")  
-
-    val cutFormula = ehs.cutFormula
-    println("Improved solution: ")
-    println(cutFormula)
+    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    println("\nCut formula: " + ehs.cutFormula + "\n")
 
     smallestProof
       
@@ -298,41 +291,6 @@ object CutIntroduction {
   }
   
   //-----------------------------------------------------------------------//
-
-  // The canonical solution computed already has only the quantified formulas 
-  // from the end-sequent (propositional part is ignored).
-  //
-  // returns the list of improved solutions found by the forgetful resolution
-  // algorithm.
-  def improveSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : List[FOLFormula] = {
-
-    // Remove quantifier 
-    val (x, f) = sol match {
-      case AllVar(x, form) => (x, form)
-      case _ => throw new CutIntroException("ERROR: Canonical solution is not quantified.")
-    }
-
-    // Transform to conjunctive normal form
-    val cnf = f.toCNF
-
-    // Exhaustive search over the resolvents (depth-first search),
-    // returns the list of all solutions found.
-    def searchSolution(f: FOLFormula) : List[FOLFormula] =
-      f :: ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) => 
-          if(ehs.isValidWith(AllVar(x,r))) {
-            searchSolution(r) ::: acc
-          }
-          else {
-            //println("This is not a solution for the ehs: " + r)
-            acc 
-          }
-        )
-
-    searchSolution(cnf).map(s => AllVar(x, s))
-  }
-
-  def minimalImprovedSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : FOLFormula =
-    improveSolution(sol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
 
 }
 

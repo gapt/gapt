@@ -382,13 +382,17 @@ object loadProofDB {
     def apply(s: Sequent, g: Grammar) = CutIntroduction.computeCanonicalSolution(s, g)
   }
 
-  object computeImprovedSolutions {
-    def apply(ehs: ExtendedHerbrandSequent ) =
-      CutIntroduction.improveSolution(ehs.cutFormula, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)
-  }
+  //object computeImprovedSolutions {
+  //  def apply(ehs: ExtendedHerbrandSequent ) =
+  //    CutIntroduction.improveSolution(ehs.cutFormula, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms)
+  //}
 
-  object computeMinimalSolution {
-    def apply(ehs: ExtendedHerbrandSequent) = CutIntroduction.minimalImprovedSolution(ehs.cutFormula, ehs)
+  object minimizeSolution {
+    def apply(ehs: ExtendedHerbrandSequent) = {
+      println("Previous solution: " + ehs.cutFormula)
+      ehs.minimizeSolution
+      println("Improved solution: " + ehs.cutFormula)
+    }
   }
 
   object buildProofWithCut {

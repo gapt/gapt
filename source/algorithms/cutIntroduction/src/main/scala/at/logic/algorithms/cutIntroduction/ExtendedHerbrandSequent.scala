@@ -93,5 +93,44 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
     }
   }
 
+  // The canonical solution computed already has only the quantified formulas 
+  // from the end-sequent (propositional part is ignored).
+  //
+  // returns the list of improved solutions found by the forgetful resolution
+  // algorithm.
+  private def improveSolution : List[FOLFormula] = {
+
+    // Remove quantifier 
+    val (x, f) = cutFormula match {
+      case AllVar(x, form) => (x, form)
+      case _ => throw new CutIntroException("ERROR: Canonical solution is not quantified.")
+    }
+
+    // Transform to conjunctive normal form
+    val cnf = f.toCNF
+
+    // Exhaustive search over the resolvents (depth-first search),
+    // returns the list of all solutions found.
+    def searchSolution(f: FOLFormula) : List[FOLFormula] =
+      f :: CutIntroduction.ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) => 
+          if(this.isValidWith(AllVar(x,r))) {
+            searchSolution(r) ::: acc
+          }
+          else {
+            //println("This is not a solution for the ehs: " + r)
+            acc 
+          }
+        )
+
+    searchSolution(cnf).map(s => AllVar(x, s))
+  }
+
+  //def minimalImprovedSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : FOLFormula =
+  //  this.improveSolution(sol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
+
+  def minimizeSolution = {
+    val minimalSol = this.improveSolution.sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
+    this.cutFormula = minimalSol
+  }
 }
 
