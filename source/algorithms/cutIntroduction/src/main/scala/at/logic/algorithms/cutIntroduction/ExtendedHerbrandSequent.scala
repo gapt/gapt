@@ -117,16 +117,12 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
             searchSolution(r) ::: acc
           }
           else {
-            //println("This is not a solution for the ehs: " + r)
             acc 
           }
         )
 
     searchSolution(cnf).map(s => AllVar(x, s))
   }
-
-  //def minimalImprovedSolution(sol: FOLFormula, ehs: ExtendedHerbrandSequent) : FOLFormula =
-  //  this.improveSolution(sol, ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
 
   def minimizeSolution = {
     val minimalSol = this.improveSolution.sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head

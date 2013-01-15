@@ -998,15 +998,14 @@ object hol2fol {
      |   structToLabelledClausesList: Struct => List[LabelledSequent]
      |
      | Cut-Introduction:
-     |   cutIntro: LKProof => Option[LKProof]
+     |   cutIntro: LKProof => LKProof
      |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
      |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
      |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
-     |   generateExtendedHerbrandSequent: Sequent, Grammar, FlatTermSet => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof, a term set and the grammar that generates these terms
-     |   computeCanonicalSolution: ExtendedHerbrandSequent => FOLFormula - computes the canonical solution for the cut-introduction problem
-     |   computeImprovedSolutions: ExtendedHerbrandSequent => List[FOLFormula] - computes all the solutions found (returns a list ordered by symbolic complexity)
-     |   computeMinimalSolution: ExtendedHerbrandSequent => FOLFormula - computed the minimal solution (wrt symbolic complexity)
-     |   buildProofWithCut: ExtendedHerbrandSequent, Grammar, FOLFormula, FlatTermSet, Sequent => LKProof - builds a proof of Sequent with cut formula FOLFormula
+     |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
+     |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
+     |   minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
+     |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
      |
      | Proof Examples:
      |   LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction
