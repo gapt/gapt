@@ -24,19 +24,18 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
  
   val endSequent = seq
   val flatterms = g.flatterms
+  val grammar = g
 
   // From ".map" on are lots of castings just to make the data structure right :-|
   // FormulaOccurrence to HOLFormula to FOLFormula and Seq to List...
   
   // Propositional formulas on the left
-  val prop_l : List[FOLFormula] = seq.antecedent.filter(x => !x.formula.containsQuantifier).map(x => x.formula.asInstanceOf[FOLFormula]).toList
+  private val prop_l : List[FOLFormula] = seq.antecedent.filter(x => !x.formula.containsQuantifier).map(x => x.formula.asInstanceOf[FOLFormula]).toList
   // Propositional formulas on the right
-  val prop_r : List[FOLFormula] = seq.succedent.filter(x => !x.formula.containsQuantifier).map(x => x.formula.asInstanceOf[FOLFormula]).toList
- 
-  val grammar : Grammar = g
- 
+  private val prop_r : List[FOLFormula] = seq.succedent.filter(x => !x.formula.containsQuantifier).map(x => x.formula.asInstanceOf[FOLFormula]).toList
+  
   // Instanciated (previously univ. quantified) formulas on the left
-  val inst_l : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
+  private val inst_l : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
     f.formula.asInstanceOf[FOLFormula] match {
@@ -45,7 +44,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
     }
   }
   // Instanciated (previously ex. quantified) formulas on the right
-  val inst_r : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
+  private val inst_r : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
     f.formula.asInstanceOf[FOLFormula] match {
@@ -53,6 +52,12 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
       case _ => acc
     }
   }
+
+  // Separating the formulas that contain or not the eigenvariable
+  val antecedent = prop_l ++ inst_l.filter(f => !f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
+  val antecedent_alpha = inst_l.filter(f => f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
+  val succedent = prop_r ++ inst_r.filter(f => !f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
+  val succedent_alpha = inst_r.filter(f => f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
 
   var cutFormula = if(cf == null) CutIntroduction.computeCanonicalSolution(seq, g) else cf
 

@@ -157,37 +157,34 @@ object CutIntroduction {
       cutFormula.substitute(t) :: acc
     }
 
-    val proofLeft = solvePropositional(FSequent((ehs.inst_l ++ ehs.prop_l), (cutLeft +: (ehs.prop_r ++ ehs.inst_r))))
+    val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
-        ForallRightRule(uPart(grammar.u, proofLeft1, flatterms), cutLeft, cutFormula, alpha)
+        ForallRightRule(uPart(grammar.u.filter(t => t.getFreeAndBoundVariables._1.contains(grammar.eigenvariable)), proofLeft1, flatterms), cutLeft, cutFormula, alpha)
       case None => throw new CutIntroException("ERROR: propositional part is not provable.")
     }
 
-    val proofRight = solvePropositional(FSequent(cutRight ++ ehs.prop_l, ehs.prop_r))
+    val proofRight = solvePropositional(FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     val rightBranch = proofRight match {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
-      case None => throw new CutIntroException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.prop_l, ehs.prop_r))
+      case None => throw new CutIntroException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     }
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
 
-    // Contracting the end sequent formulas that are propositional (they go to
-    // both branches when the cut is applied)
 
-    val contractAnt = endSequent.antecedent.foldRight(untilCut.asInstanceOf[LKProof]) { case (f, premise) =>
-      if(!f.formula.containsQuantifier) {
-        ContractionLeftRule(premise, f.formula.asInstanceOf[FOLFormula])
-      }
-      else premise
+    // Contracting the formulas that go to both branches of the cut
+
+    val contractAnt = ehs.antecedent.foldRight(untilCut.asInstanceOf[LKProof]) { case (f, premise) =>
+      ContractionLeftRule(premise, f)
     }
 
-    val finalProof = endSequent.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
-      if(!f.formula.containsQuantifier) {
-        ContractionRightRule(premise, f.formula.asInstanceOf[FOLFormula])
-      }
-      else premise
+    val contractSucc = ehs.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
+      ContractionRightRule(premise, f)
     }
+   
+    // Instantiating constant terms from U
+    val finalProof = uPart(grammar.u.filter(t => !t.getFreeAndBoundVariables._1.contains(grammar.eigenvariable)), contractSucc, flatterms)
 
     Some(CleanStructuralRules(finalProof))
   }
@@ -205,7 +202,6 @@ object CutIntroduction {
   }
 
   def uPart(u: List[FOLTerm], ax: LKProof, flatterms: FlatTermSet) : LKProof = {
-    //var first = true;
     u.foldRight(ax) {
       case (term, ax) => 
         val terms = flatterms.getTermTuple(term)
@@ -220,14 +216,6 @@ object CutIntroduction {
               // substitution
               case e: LKRuleCreationException => genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
             }
-            /*
-            if(first) {
-              first = false
-              genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
-            }
-            else
-              ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
-            */
           case ExVar(_, _) =>
             try {
               ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
@@ -235,14 +223,6 @@ object CutIntroduction {
             catch {
               case e: LKRuleCreationException => genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
             }
-            /*
-            if(first) {
-              first = false
-              genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
-            }
-            else
-              ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
-            */
         }
     }
   }
