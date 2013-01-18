@@ -4,7 +4,7 @@ import at.logic.provers.prover9.ivy.{InitialClause => IInitialClause, Instantiat
 import at.logic.calculi.resolution.robinson.{InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor,
   Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof}
 import at.logic.language.fol.{FOLExpression, FOLTerm, FOLFormula}
-import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, VariantGenerator, Var}
+import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, VariantGenerator, Var, App, Abs}
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.resolution.instance.{Instance => RInstantiate}
 import at.logic.calculi.occurrences.FormulaOccurrence
@@ -268,5 +268,6 @@ object IvyToRobinson {
       (false, index, dindex )
     }
   }
+
 
 }

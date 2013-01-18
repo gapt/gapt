@@ -282,6 +282,12 @@ object CutIntroduction {
   {
     val cl = l.pos.find( f => r.neg.contains(f) )
     if (cl != None)
+      /*TODO: the - method will be dropped from Seq in scala >= 2.10 as its semantics are not well defined
+        (will it remove all copies of cl.get or just the first -- but first is not well defined
+         because seqs might give different orders on multiple iterations etc. )
+         the scala team proposes to replace - with filterNot(_ == cl.get), but this removes all formulas.
+         another solution would be to work with FormulaOccurrences
+       */
       new MyFClause( l.neg ++ (r.neg - cl.get) , (l.pos - cl.get) ++ r.pos )
     else
     {

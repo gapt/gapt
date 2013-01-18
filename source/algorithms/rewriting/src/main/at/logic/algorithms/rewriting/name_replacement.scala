@@ -228,6 +228,27 @@ object NameReplacement {
     }
   }
 
-  /*
-  */
+}
+
+object TermReplacement{
+  /* replaces all occurences of term "what" by term "by" in term "term" -- be careful with replacing variables,
+     there is no scope checking */
+  def apply[T <: LambdaExpression](what : T, by : T, term : T) : T = {
+    require(what.exptype == by.exptype)
+    apply_(what,by,term)
+  }
+
+  def apply_[T <: LambdaExpression](what : T, by : T, term : T) : T = {
+    term match {
+      case Var(s, t) =>
+        if (what == term) by else term
+      case App(s,t) =>
+        val s_ = if (s == what) by else apply_(what, by, s)
+        val t_ = if (t == what) by else apply_(what, by, t)
+        what.factory.createApp(s_, t_).asInstanceOf[T]
+      case Abs(x,t) =>
+        val t_ = if (t == what) by else apply_(what, by, t)
+        what.factory.createAbs(x, t_).asInstanceOf[T]
+    }
+  }
 }

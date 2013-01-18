@@ -6,7 +6,7 @@ import at.logic.calculi.resolution.base.Clause
 import at.logic.utils.ds.acyclicGraphs.{LeafAGraph, UnaryAGraph, BinaryAGraph}
 import at.logic.provers.prover9.lisp.SExpression
 import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.fol.FOLTerm
+import at.logic.language.fol.{FOLConst, FOLTerm}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import collection.immutable
 
@@ -25,6 +25,7 @@ case object ParamodulationType extends BinaryRuleTypeA{ override def toString = 
 case object ResolutionType extends BinaryRuleTypeA{ override def toString = "Resolution"};
 case object FlipType extends UnaryRuleTypeA{ override def toString = "Flip"};
 case object PropositionalType extends UnaryRuleTypeA{ override def toString = "Propositional"};
+case object NewSymbolType extends UnaryRuleTypeA{ override def toString = "NewSymbol"};
 
 abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
   val id : String;
@@ -132,4 +133,16 @@ case class Resolution(id: String,
   def rule = ResolutionType
 //  override def name = "Resolution"
 };
+
+
+case class NewSymbol(id: String,
+                       clause_exp : SExpression,
+                       new_symbol : FOLConst,
+                       replacement_term : FOLTerm,
+                       override val vertex : Clause, override val t : IvyResolutionProof)
+  extends UnaryAGraph(vertex, t) with UnaryAGraphProof[Clause] with IvyResolutionProof {
+  def rule = NewSymbolType
+  //  override def name = "Instantiate"
+};
 /** end of calculus defintion **/
+

@@ -45,6 +45,7 @@ import collection.immutable
 
       def setEquals(g:FSequent) = FSequent.setEquals(this, g)
       def multiSetEquals(g:FSequent) = FSequent.multiSetEquals(this, g)
+      def formulas : Seq[HOLFormula] = antecedent ++ succedent
 
       /*
        compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes

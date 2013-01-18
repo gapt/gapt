@@ -69,6 +69,7 @@ object SExpressionParser extends SExpressionParser {
         val parser = new SExpressionParser
         parser.parse(r) match {
           case parser.Success(sexp, _) =>
+            println("sexp="+sexp)
             sexp
           case parser.NoSuccess(msg,_) =>
             dumpreader(r)
