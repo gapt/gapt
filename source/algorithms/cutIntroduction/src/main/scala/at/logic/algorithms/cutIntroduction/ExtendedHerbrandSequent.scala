@@ -61,16 +61,25 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
 
   var cutFormula = if(cf == null) CutIntroduction.computeCanonicalSolution(seq, g) else cf
 
-  // For printing Xα -> ^ Xsi (not used for practical purposes)
-  //val x = ConstantStringSymbol("X")
-  //val alpha = FOLVar(new VariableStringSymbol("α"))
-  //val xalpha = Atom(x, alpha::Nil)
-  // X[s_i] forall i
-  //val xs = s.map(t => Atom(x, t::Nil))
-  //val bigConj = andN(xs)
-  // Implication parametrized with second order variable X (is this needed except for printing purposes??)
-  //val implication : FOLFormula = Imp(xalpha, bigConj)
+  override def toString = {
 
+    // For printing Xα -> ^ Xsi
+    val x = ConstantStringSymbol("X")
+    val alpha = FOLVar(new VariableStringSymbol("α"))
+    val xalpha = Atom(x, alpha::Nil)
+    // X[s_i] forall i
+    val xs = grammar.s.map(t => Atom(x, t::Nil))
+    val bigConj = andN(xs)
+    // Implication parametrized with second order variable X (is this needed except for printing purposes??)
+    val implication : FOLFormula = Imp(xalpha, bigConj)
+
+    val str0 = antecedent_alpha.foldRight("") ( (f, acc) => acc + f + ", ")
+    val str1 = antecedent.foldRight("") ( (f, acc) => acc + f + ", ")
+    val str2 = succedent_alpha.foldRight("") ( (f, acc) => acc + f + ", ")
+    val str3 = succedent.foldRight("") ( (f, acc) => acc + f + ", ")
+
+    (str1 + str0 + implication + " :- " + str3 + str2)
+  }
 
   // Checks if the sequent is a tautology using f as the cut formula
   def isValidWith(f: FOLFormula) : Boolean = {

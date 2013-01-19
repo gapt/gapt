@@ -137,12 +137,12 @@ object loadProofDB {
       val stats = getStatistics( p )
       val total = rulesNumber(p)
       val quant = quantRulesNumber(p)
-      //println("unary: " + stats.unary)
-      //println("binary: " + stats.binary)
-      println("---------- Number of rules -------------")
+      val weakQuant = weakQuantRulesNumber(p)
+      println("------------- Statistics ---------------")
       println("Cuts: " + stats.cuts)
-      println("Quantifiers: " + quant)
-      println("Total: " + total)
+      println("Number of quantifier rules: " + quant)
+      println("Number of rules: " + total)
+      println("Quantifier complexity: " + weakQuant)
       println("----------------------------------------")
     }
   }
@@ -380,7 +380,10 @@ object loadProofDB {
   }
 
   object computeCanonicalSolution {
-    def apply(s: Sequent, g: Grammar) = CutIntroduction.computeCanonicalSolution(s, g)
+    def apply(s: Sequent, g: Grammar) = {
+      println("Note that the clauses that do not contain the eigenvariable were already removed.");
+      CutIntroduction.computeCanonicalSolution(s, g)
+    }
   }
 
   //object computeImprovedSolutions {
