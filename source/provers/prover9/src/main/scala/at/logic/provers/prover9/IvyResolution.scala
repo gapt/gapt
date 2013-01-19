@@ -69,7 +69,7 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
         out.append(id + " : Paramodulation("+clause+") by " + parent1.id + " and " + parent2.id + "\n")
         id::l2
       } else m
-    case NewSymbol(id, _, symbol, term, clause, parent ) =>
+    case NewSymbol(id, _, lit, symbol, term, clause, parent ) =>
       if (! m.contains(id)) {
         val l1 = printNodes(parent,m, out);
         out.append(id + " : NewSymbol("+clause+") by "+ parent.id +"\n");
@@ -145,6 +145,7 @@ case class Resolution(id: String,
 
 case class NewSymbol(id: String,
                        clause_exp : SExpression,
+                       lit : FormulaOccurrence,
                        new_symbol : FOLConst,
                        replacement_term : FOLTerm,
                        override val vertex : Clause, override val t : IvyResolutionProof)

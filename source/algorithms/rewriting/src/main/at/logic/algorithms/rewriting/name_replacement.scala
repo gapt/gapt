@@ -69,7 +69,17 @@ object NameReplacement {
   }
 
   type OccMap = immutable.Map[FormulaOccurrence, FormulaOccurrence]
-  def rename_resproof(p : RobinsonResolutionProof, smap : SymbolMap)  : (OccMap, RobinsonResolutionProof) = p match {
+  type ProofMap = immutable.Map[RobinsonResolutionProof, (OccMap, RobinsonResolutionProof)]
+  val emptyProofMap = immutable.Map[RobinsonResolutionProof, (OccMap, RobinsonResolutionProof)]()
+
+  def extendw_pmap(index: RobinsonResolutionProof, p:ProofMap, o : OccMap, i : RobinsonResolutionProof) = (p + ((index,(o,i))), o, i)
+  def add_pmap(pmap : ProofMap, parent: RobinsonResolutionProof) : (ProofMap, OccMap, RobinsonResolutionProof) = { val x=pmap(parent); (pmap, x._1, x._2) }
+
+  def rename_resproof(p : RobinsonResolutionProof, smap : SymbolMap) : (OccMap, RobinsonResolutionProof) = rename_resproof(p, smap, emptyProofMap)._1(p)
+
+  def rename_resproof(p : RobinsonResolutionProof, smap : SymbolMap, pmap : ProofMap)  : (ProofMap, OccMap, RobinsonResolutionProof) = {
+    if (pmap contains p) add_pmap(pmap,p) else
+    p match {
     case InitialClause(clause) =>
       //rename literals
       val negp : immutable.List[FOLFormula] = clause.negative.toList map ((fo : FormulaOccurrence) =>apply(fo.formula.asInstanceOf[FOLFormula], smap))
@@ -87,12 +97,12 @@ object NameReplacement {
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, nmatcher) ++
                   find_matching(clause.positive.toList, inference.root.positive.toList, pmatcher)
 
-      (rsmap, inference)
+      extendw_pmap(p, pmap, rsmap, inference)
 
 
 
     case Variant(clause, parent1, sub) =>
-      val (rmap, rparent1) = rename_resproof(parent1, smap)
+      val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, smap, pmap)
       val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
       var inference :RobinsonResolutionProof = Variant(rparent1, nsub)
 
@@ -106,11 +116,11 @@ object NameReplacement {
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
         find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
 
-      (rsmap, inference)
+      extendw_pmap(p, rpmap, rsmap, inference)
 
 
     case Factor(clause, parent1, aux, sub) =>
-      val (rmap, rparent1) = rename_resproof(parent1, smap)
+      val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, smap, pmap)
       val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
       var inference :RobinsonResolutionProof = aux match {
         case lit1 :: Nil =>
@@ -130,10 +140,10 @@ object NameReplacement {
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
         find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
 
-      (rsmap, inference)
+      extendw_pmap(p, rpmap, rsmap, inference)
 
     case Instance(clause, parent1, sub) =>
-      val (rmap, rparent1) = rename_resproof(parent1, smap)
+      val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, smap, pmap)
       val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
       var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
 
@@ -147,12 +157,12 @@ object NameReplacement {
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
         find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
 
-      (rsmap, inference)
+      extendw_pmap(p, rpmap, rsmap, inference)
 
 
     case Resolution(clause, parent1, parent2, lit1, lit2, sub) =>
-      val (rmap1, rparent1) = rename_resproof(parent1, smap)
-      val (rmap2, rparent2) = rename_resproof(parent2, smap)
+      val (rpmap1, rmap1, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, smap, pmap)
+      val (rpmap2, rmap2, rparent2) = if (pmap contains parent2) add_pmap(pmap, parent2) else rename_resproof(parent2, smap, rpmap1)
       val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
       val inference = Resolution(rparent1, rparent2, rmap1(lit1), rmap2(lit2), nsub)
       val rmap = rmap1 ++ rmap2
@@ -171,13 +181,14 @@ object NameReplacement {
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
                   find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
 
-      (rsmap, inference)
+      extendw_pmap(p, rpmap2, rsmap, inference)
 
 
 
     case Paramodulation(clause, parent1, parent2, lit1, lit2, sub) =>
-      val (rmap1, rparent1) = rename_resproof(parent1, smap)
-      val (rmap2, rparent2) = rename_resproof(parent2, smap)
+      val (rpmap1, rmap1, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, smap, pmap)
+      val (rpmap2, rmap2, rparent2) = if (pmap contains parent2) add_pmap(pmap, parent2) else rename_resproof(parent2, smap, rpmap1)
+
       val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
 
       val Some(prim) = clause.literals.map(_._1).find( occ => occ.ancestors == List(lit1,lit2) || occ.ancestors == List(lit2,lit1) )
@@ -200,13 +211,11 @@ object NameReplacement {
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
         find_matching(clause.positive.toList, inference.root.positive.toList, matcher)
 
-      (rsmap, inference)
-
-
-
-
+      extendw_pmap(p, rpmap2, rsmap, inference)
 
   }
+  }
+
 
 
   /* creates a mapping from elements in objects to targets. the predicate matches indicates when two elements should
@@ -228,27 +237,4 @@ object NameReplacement {
     }
   }
 
-}
-
-object TermReplacement{
-  /* replaces all occurences of term "what" by term "by" in term "term" -- be careful with replacing variables,
-     there is no scope checking */
-  def apply[T <: LambdaExpression](what : T, by : T, term : T) : T = {
-    require(what.exptype == by.exptype)
-    apply_(what,by,term)
-  }
-
-  def apply_[T <: LambdaExpression](what : T, by : T, term : T) : T = {
-    term match {
-      case Var(s, t) =>
-        if (what == term) by else term
-      case App(s,t) =>
-        val s_ = if (s == what) by else apply_(what, by, s)
-        val t_ = if (t == what) by else apply_(what, by, t)
-        what.factory.createApp(s_, t_).asInstanceOf[T]
-      case Abs(x,t) =>
-        val t_ = if (t == what) by else apply_(what, by, t)
-        what.factory.createAbs(x, t_).asInstanceOf[T]
-    }
-  }
 }

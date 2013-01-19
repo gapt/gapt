@@ -427,8 +427,12 @@ object IvyParser {
 
         val parent_proof = found_steps(parent_id)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
+        println("New Symbol Rule: "+fclause)
+        println("Parent Rule:     "+parent_proof.root)
         require(fclause.antecedent.isEmpty, "Expecting only positive equations in parsing of new_symbol rule "+id)
         require(fclause.succedent.size == 1, "Expecting exactly one positive equation in parsing of new_symbol rule "+id)
+
+        val Equation(pl,pr) = parent_proof.root.toFSequent.succedent(0)
         val Equation(l,r) = fclause.succedent(0)
 
         def vars(exp : LambdaExpression) : Set[Var] = exp match {
@@ -445,9 +449,10 @@ object IvyParser {
 
         val symvar= FOLVar(VariableStringSymbol(constsym.name.toString))
         val r_ : FOLTerm = TermReplacement[FOLTerm](constsym, symvar, r)
-        val matching = FOLMatchingAlgorithm.matchTerm(r_, l, List())
+        val matching = FOLMatchingAlgorithm.matchTerm(r_, pr, List())
 
         require(! matching.isEmpty, "Could not match "+r_ +" to "+l+" in parsing of new_symbol rule "+id)
+        debug("replacement term="+ matching.get.apply(symvar))
 
         def connect_with_same_name(parent_occ: FormulaOccurrence, f: FOLFormula) = {
           parent_occ.factory.createFormulaOccurrence(f, parent_occ::Nil)
@@ -455,7 +460,7 @@ object IvyParser {
 
         val Some(m) = matching
         val nclause = Clause(Nil, connect_with_same_name(parent_proof.root.succedent(0), fclause.succedent(0).asInstanceOf[FOLFormula])::Nil)
-        val inference = NewSymbol(id, clause, constsym, m(symvar).asInstanceOf[FOLTerm], nclause, parent_proof)
+        val inference = NewSymbol(id, clause, nclause.succedent(0), constsym, m(symvar).asInstanceOf[FOLTerm], nclause, parent_proof)
 
         (id, found_steps +((id,inference)))
 

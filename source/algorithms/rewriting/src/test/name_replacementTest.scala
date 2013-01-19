@@ -196,8 +196,8 @@ class name_replacementTest extends SpecificationWithJUnit {
       val List(r1,r2) = List("g(f(g(x),c),f(x,x))","term(hihi(x),term(a),term(a),hihi(x))") map (parse.folterm)
       val List(t1,t2,t3,t4) = List("f","x","term(x)","hihi(x)") map (parse.folterm)
 
-      val rt1 = TermReplacement(t1,t2,o1)
-      val rt2 = TermReplacement(t3,t4,o2)
+      val rt1 = TermReplacement(o1, t1,t2)
+      val rt2 = TermReplacement(o2, t3,t4)
       println(rt1)
       println(rt2)
       rt1 must be_==(r1)
