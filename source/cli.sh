@@ -10,7 +10,7 @@ export RELEASE="gapt-cli-$VERSION.jar"
 export SCP=""
 export RCP=""
 #export POSSIBLE_PATHS="$(echo $PATH | sed "s/:/\" \"/"g | sed "s/^/\"/" |sed "s/$/\"/")"
-export JAVA_OPTS="-Xss2m -Xmx2g"
+export JAVA_OPTS="-Xss20m -Xmx2g"
 export OLDIFS="$IFS"
 export IFS=":"
 #echo $POSSIBLE_PATHS

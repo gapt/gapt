@@ -177,7 +177,11 @@ object IvyToRobinson {
           (rproof, parentmap + ((id, rproof)))
       }
 
-    case IParamodulation(id, exp, pos, lit, clause, parent1, parent2) =>
+    /*TODO: orientation is so far ignored. this is no problem because the paramodulation datastructure is flexible enough.
+            there might be some code which expects the left hand side to be replaced, so perhaps it is better to insert
+            a flip of the formula here (actually prooftrans ivy should do that, but doesnt always)
+    */
+    case IParamodulation(id, exp, pos, lit, orientation, clause, parent1, parent2) =>
       map.get(id) match {
         case Some(proof) => (proof, map)
         case None =>
@@ -219,33 +223,6 @@ object IvyToRobinson {
       }
 
 
-
-
-
-
-        /*
-            case IResolution(id, exp, lit1, lit2, clause, parent1, parent2) =>
-              (parent1,parent2) match {
-                case (IInstantiate(id1,exp1,sub1, clause1, parent1), IInstantiate(id2,exp2,sub2, clause2, parent2) ) =>
-                  val shared_vars : Set[Var] = sub1.map.keySet.intersect(sub2.map.keySet)
-
-                  val new_vars : Map[Var,FOLTerm]=
-                    Map[Var,FOLTerm]() ++ (shared_vars map ((x:Var) => (x,x.variant(generator).asInstanceOf[FOLTerm])))
-
-                  val sub2_ = for ((key,value) <-  sub2.map) yield {
-                    if (shared_vars contains key)
-                      (new_vars(key), value)
-                    else
-                      (key,value)
-                  }
-
-                  val variant_sub = Substitution[FOLTerm](new_vars.toList)
-
-                  apply(iproof)
-
-              }
-
-        */
   }
 
   /* params: fo ... occurrence in c, d ... clause to search

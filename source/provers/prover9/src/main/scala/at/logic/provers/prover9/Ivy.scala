@@ -22,7 +22,6 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
 /**
  * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
- * TODO: transofrmation to Robinson resolution
  */
 
 
@@ -66,7 +65,7 @@ object IvyParser {
 
   } */
 
-  var debug : Boolean = true
+  var debug : Boolean = false
   private def debug(a:Any) : Unit = if (debug) { println("Debug: "+a.toString) }
 
   // the type synoyms should make the parsing functions more readable
@@ -265,7 +264,6 @@ object IvyParser {
 
           case _ =>
             throw new Exception("Error parsing position in flip rule: literal "+occ.formula+" is not the equality predicate.")
-
         }
 
       /* ================== Paramodulation ========================== */
@@ -276,7 +274,10 @@ object IvyParser {
         val modulant_proof = found_steps(modulant_id)
         val parent_proof = found_steps(parent_id)
         val fclause = parse_clause(clause, is_variable_symbol)
-        val (mocc, mpolarity, _) = get_literal_by_position(modulant_proof.root, mposition, modulant_proof.clause_exp, is_variable_symbol)
+        val (mocc, mpolarity, direction) = get_literal_by_position(modulant_proof.root, mposition, modulant_proof.clause_exp, is_variable_symbol)
+        require(direction == List(1) || direction == List(2), "Must indicate if paramod or demod!")
+        val orientation = if (direction.head == 1) true else false //true = paramod (left to right), false = demod (right to left)
+
         debug("found occurrence of equation: "+mocc+" at pos "+mposition)
         require(mpolarity == true, "Paramodulated literal must be positive!")
         val (pocc, polarity, int_position) = get_literal_by_position(parent_proof.root, pposition, parent_proof.clause_exp, is_variable_symbol)
@@ -295,7 +296,10 @@ object IvyParser {
 
                 debug("remaining position: "+int_position+ " full position "+pposition)
                 debug("replace: "+left+" by "+right+" in "+pocc.formula)
-                val paraformula = replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
+                val paraformula = if (orientation)
+                                    replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
+                                  else
+                                    replaceTerm_by_in_at(right, left, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
                 val para = pocc.factory.createFormulaOccurrence(paraformula,  mocc::pocc::Nil)
                 /*debug("Context is:" +ppos)
                 debug("Context is:" +pos1_)
@@ -305,7 +309,7 @@ object IvyParser {
                 val inferred_clause = Clause(pneg ++ neglits, ppos ++ pos1_ ++ List(para) ++ pos2_.tail)
                 debug("inferred clause: " + inferred_clause)
 
-                val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
+                val inference = Paramodulation(id, clause, int_position, para, orientation, inferred_clause, modulant_proof, parent_proof)
                 debug("paramod root:    "+ inference.root)
                 require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
 
@@ -320,11 +324,15 @@ object IvyParser {
 
                 debug("remaining position: "+int_position+ " full position "+pposition)
                 debug("replace: "+left+" by "+right+" in "+pocc.formula)
-                val paraformula = replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
+                val paraformula = if (orientation)
+                  replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
+                else
+                  replaceTerm_by_in_at(right, left, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
+
                 val para = pocc.factory.createFormulaOccurrence(paraformula,  mocc::pocc::Nil)
                 val inferred_clause = Clause(pneg ++ neg1_ ++ List(para) ++ neg2_.tail, ppos ++ poslits)
 
-                val inference = Paramodulation(id, clause, int_position, para, inferred_clause, modulant_proof, parent_proof)
+                val inference = Paramodulation(id, clause, int_position, para, orientation, inferred_clause, modulant_proof, parent_proof)
 
                 require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
                 //debug("new Paramod rule: "+id+ " : "+inference)
@@ -455,6 +463,7 @@ object IvyParser {
     }
   }
 
+
   //extracts a literal from a clause - since the clause seperates positive and negative clauses,
   // we also need the original SEXpression to make sense of the position.
   // paramodulation continues inside the term, so we return the remaining position together with the occurrence
@@ -463,130 +472,29 @@ object IvyParser {
   def get_literal_by_position(c:Clause, pos: List[SExpression],
                               clauseexp : SExpression, is_variable_symbol : String => Boolean )
   : (FormulaOccurrence, Boolean, List[Int]) = {
-      val expformulas = parse_clause_(clauseexp, is_variable_symbol)
-      val ipos = parse_position(pos)
-      val (findex, termpos) = index_at(expformulas, ipos)
-      var cpos = 0
-      var cneg = 0
-      val clause_indices =
-        for ( f <- expformulas ) yield f match {
-          case fol.Neg(_) => cneg = cneg +1; cneg
-          case _ => cpos = cpos +1; cpos
-        }
-      val clause_position = clause_indices(findex)
-      expformulas(findex) match {
-        case fol.Neg(_) => (c.negative(clause_position-1), false, termpos)
-        case _ => (c.positive(clause_position-1), true, termpos)
-      }
-  }
-
-  def heading_twos(l:List[Int], twos : Int) : (Int, List[Int]) = l match {
-    case 2::xs => heading_twos(xs, 1+twos)
-    case _ => (twos, l)
-  }
-
-  def index_at(formulas : List[HOLFormula], pos : List[Int]) : (Int, List[Int]) = {
-    val (twos, rest) = heading_twos(pos,0)
-    /* there is an ambuguity: the first 1 after the twos might be an index into the literal or select head of the list there*/
-    if (twos < formulas.length -1) {
-      //we did not choose the last element
-      val dropped = pos drop (twos)
-      dropped match {
-        case 1::1::ys =>
-          formulas(twos) match {
-            case fol.Neg(_) => (twos, ys)
-            case _ => (twos, 1::ys)
+    val ipos = parse_position(pos)
+    val (iformula, termpos) = parse_clause_frompos(clauseexp, ipos, is_variable_symbol)
+    //Remark: we actually return the first occurrence of the formula, not the one at the position indicated as
+    //        it should not make a difference. (if f occurs twice in the clause, it might be derived differently
+    //        but we usually don't care for that)
+    iformula match {
+      case a@Atom(sym, args) =>
+        c.positive.find(_.formula == a) match {
+          case Some(occ) =>
+            (occ, true, termpos)
+          case None =>
+            throw new Exception("Error in getting literal by position! Could not find "+iformula+" in "+c)
         }
 
-        case 1::xs =>
-          (twos, xs)
-        case _ => throw new Exception("Error parsing position - expected the remaininng position "+pos+" to start with 1.")
-      }
-
-    } else if (twos == formulas.length -1) {
-      //we choose the last element, but have to check the next one
-      val lastpos = formulas.length-1
-      val dropped = pos drop (lastpos)
-      dropped match {
-        case Nil => (lastpos, rest)
-        case 1::xs => formulas(lastpos) match {
-          case fol.Neg(_) => (lastpos, xs)
-          case _ => (lastpos, 1::xs)
-        }
-        case _ => (lastpos, dropped)
-      }
-    } else /* twos >= length */{
-      //means we chose the last element, since the next one is a two, the position cannot denote the inside of a negation
-      ( formulas.size-1, pos drop (formulas.length -1) )
-    }
-
-  }
-
-  /*
-  def index_at(formulas : List[HOLFormula], pos : List[Int], offset : Int) : (Int, List[Int]) = (formulas, pos) match {
-    case (_, Nil) => (offset, Nil)
-    case (x::y::Nil, p::ps) => p match {
-      //this case, 1 means
-      case 1 => x match {
-        case fol.Neg(_) =>
-      }
-
-    }
-  }
-    */
-
-/*
-  def get_literal_by_position(c:Clause, pos: List[SExpression],
-   clauseexp : SExpression, is_variable_symbol : String => Boolean )
-  : (FormulaOccurrence, Boolean, List[SExpression]) = {
-    //first convert the sexpression to a list of formulas, convert the index expression to an index in the list
-    val lit_list = parse_clause_(clauseexp, is_variable_symbol)
-    val (index, remainder) = get_literal_by_position_(pos, lit_list, 0)
-    val withindices = lit_list zip (0 to (lit_list.size -1))
-
-    //since a clause is split into negative and positive literals (with order preserved), we need to map the index from
-    //the original list to the index in Clause.positive/Clause.negative
-    var index_pos = 0
-    var index_neg = 0
-
-    for ( (lit,index) <- withindices.take(index+1)) {
-      lit match {
-        case fol.Atom(_,_) => index_pos = index_pos +1
-        case fol.Neg(fol.Atom(_,_)) => index_neg = index_neg +1
-        case _ => throw new Exception("Error in resolving position, parsed clause contains non-literal "+lit)
-      }
-    }
-
-    lit_list(index) match {
-      case fol.Atom(_,_) => (c.positive(index_pos-1), true, remainder)
-      case fol.Neg(fol.Atom(_,_)) => (c.negative(index_neg-1), false, remainder)
-      case _ => throw new Exception("Error in resolving position, parsed clause contains non-literal "+lit_list(index))
-    }
-
-  }
-*/
-  /*
-  def get_literal_by_position_(pos:List[SExpression], clauseexp : List[HOLFormula], index : Int) : (Int, immutable.List[SExpression]) = {
-    clauseexp match {
-      case Nil =>
-        throw new Exception("Error parsing position in SExpression!")
-      case x::xs =>
-        pos match {
-          case Nil => (index, pos) //TODO:check if this is really correct
-          case lisp.Atom("1") :: rest =>
-           // get_literal_by_position_(rest, List(x), index+1)
-            (index, rest)
-          case lisp.Atom("2") :: Nil =>
-            (index+1, Nil)
-          case lisp.Atom("2") :: rest =>
-            get_literal_by_position_(rest, xs, index+1 )
-          case lisp.Atom(_) :: rest => //this is a position within a term
-            (index+1, pos) //TODO:check if this is really correct
-          case _ =>
-            throw new Exception("Error parsing position in SExpression!")
+      case Neg(a@Atom(sym,args)) =>
+        c.negative.find(_.formula == a) match {
+          case Some(occ) =>
+            (occ, false, termpos)
+          case None =>
+            throw new Exception("Error in getting literal by position! Could not find "+iformula+" in "+c)
         }
     }
-  } */
+  }
 
 
   //term replacement
@@ -705,6 +613,41 @@ object IvyParser {
     //the literals were prepended to the list, so we have to reverse them to get the original order
     FSequent(neg.reverse, pos.reverse)
   }
+
+
+
+  //TODO: merge code with parse_clause_
+  def parse_clause_frompos(exp:SExpression, pos : List[Int], is_variable_symbol : String => Boolean) : (HOLFormula, List[Int]) = exp match {
+    case lisp.List( lisp.Atom("or") :: left :: right :: Nil ) =>
+      pos match {
+        case 1::rest =>
+          left match {
+            case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
+              val npos = if (rest.isEmpty) rest else rest.tail //if we point to a term we have to strip the indicator for neg
+              (fol.Neg(parse_atom(name, args, is_variable_symbol)), npos )
+            case lisp.List( lisp.Atom(name) :: args) =>
+              (parse_atom(name, args, is_variable_symbol), rest)
+            case _ => throw new Exception("Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object.")
+          }
+        case 2::rest =>
+          parse_clause_frompos(right, rest, is_variable_symbol)
+        case _ => throw new Exception("pos "+pos+" did not point to a literal!")
+      }
+
+    case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
+      val npos = if (pos.isEmpty) pos else pos.tail //if we point to a term we have to strip the indicator for neg
+      (fol.Neg(parse_atom(name, args, is_variable_symbol)), npos)
+
+    case lisp.List( lisp.Atom(name) :: args) =>
+      (parse_atom(name, args, is_variable_symbol), pos)
+
+    //the empty clause is denoted by false
+    case lisp.Atom("false") =>
+      throw new Exception("Parsing Error: want to extract literal from empty clause!")
+
+    case _ => throw new Exception("Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object.")
+  }
+
 
   //directly converts a clause as nested or expression into a list with the literals in the same order
   def parse_clause_(exp:SExpression, is_variable_symbol : String => Boolean) : List[HOLFormula] = exp match {

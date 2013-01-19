@@ -62,13 +62,20 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
         out.append(id + " : Resolution("+clause+") by " + parent1.id + " and " + parent2.id + "\n");
         id::l2
       } else m
-    case Paramodulation(id, _, pos, lit, clause, parent1, parent2) =>
+    case Paramodulation(id, _, pos, lit, orientation, clause, parent1, parent2) =>
       if (! m.contains(id)) {
         val l1 = printNodes(parent1,m, out);
         val l2 = printNodes(parent2,l1, out);
         out.append(id + " : Paramodulation("+clause+") by " + parent1.id + " and " + parent2.id + "\n")
         id::l2
       } else m
+    case NewSymbol(id, _, symbol, term, clause, parent ) =>
+      if (! m.contains(id)) {
+        val l1 = printNodes(parent,m, out);
+        out.append(id + " : NewSymbol("+clause+") by "+ parent.id +"\n");
+        id::l1
+      } else m
+
     //case _ => out.append("rule not implemented"); m
   }
 
@@ -114,6 +121,7 @@ case class Paramodulation(id: String,
                           clause_exp : SExpression,
                           position : List[Int],
                           lit : FormulaOccurrence,
+                          is_demodulation : Boolean, // if the formula should be left to right or right to left
                           override val vertex: Clause,
                           override val t1: IvyResolutionProof,
                           override val t2: IvyResolutionProof)
