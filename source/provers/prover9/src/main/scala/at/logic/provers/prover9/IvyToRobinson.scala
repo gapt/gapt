@@ -16,6 +16,7 @@ import scala.Some
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.provers.prover9.ivy.NewSymbol
 import at.logic.provers.prover9.ivy.Flip
+import at.logic.algorithms.rewriting.TermReplacement
 
 /**
  * Converts Ivy Proofs into Robinson Resolution Proofs
@@ -33,11 +34,9 @@ object IvyToRobinson {
         case NewSymbol(id, _, _, sym, rt ,_,_) => (set._1 + (pmap(id)), set._2 + ((sym,rt)))
         case _ => set} )
 
-
-
     println("mapping: "+mapping)
-
-    proof
+    val trproof = TermReplacement.rename_resproof(proof, newsymbol_rules, TermReplacement.emptySymbolMap ++ mapping)
+    trproof
   }
 
 

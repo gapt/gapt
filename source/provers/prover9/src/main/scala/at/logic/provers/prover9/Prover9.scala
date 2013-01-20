@@ -205,10 +205,11 @@ object Prover9 {
 
     val fs = if (newimpl) InferenceExtractor.viaLADR(p9_file) else InferenceExtractor.viaXML(p9_file)
     println("extracted formula: "+fs)
-    if (escape_underscore)
-      escape_constants(mproof, fs)
-    else
-      (mproof, fs)
+    val (eproof, efs) = if (escape_underscore) escape_constants(mproof, fs)  else (mproof, fs)
+
+
+    (eproof, efs)
+
   }
 
 }

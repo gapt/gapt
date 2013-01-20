@@ -26,7 +26,10 @@ object NameReplacement {
 
   def apply[T <: LambdaExpression](exp : T, map : SymbolMap) : T = rename_symbols(exp, map)
   def apply(fs: FSequent, map : SymbolMap) = rename_fsequent(fs,map)
-  def apply(p : RobinsonResolutionProof, map : SymbolMap) : RobinsonResolutionProof = rename_resproof(p, map)._2
+  def apply(p : RobinsonResolutionProof, map : SymbolMap) : RobinsonResolutionProof = {
+    //don't process the proof if there is nothing to do
+    if (map.isEmpty) p else rename_resproof(p, map)._2
+  }
 
   // map from sumbol name to pair of Arity and replacement symbol name
   type SymbolMap = immutable.Map[String, (Int,String)]
