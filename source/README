@@ -1,0 +1,45 @@
+*******************************************************
+*        GAPT: General Architecture for Proofs        *
+*******************************************************
+
+GAPT is a proof theory framework. The framework aims at
+ creating data types, algorithms, parsers, transformations 
+and other components common in proof theory in general 
+and mechanized proof theory in particular. 
+
+ Website: http://www.logic.at/gapt
+ Contact: gapt@logic.at
+
+Requirements:
+* Unix-compatible environment (Linux, MacOsX[2])
+* Java 1.6 or later (tested with Oracle's JVM)
+* Prover9 (the binaries prover9, prooftrans and 
+   tptp_to_ladr must be present in the path [1])
+  available at: http://www.cs.unm.edu/~mccune/mace4/download 
+
+Running:
+* The scripts cli.sh and prooftool.sh look for 
+  their respective jar files in the path and the current
+  directory and set Java's memory limits to something
+  we found useful over time
+
+* Alternatively, you can run the jar files directly by calling
+  'java -Xss2m -Xmx2g -jar gapt-cli-1.4.jar' 
+  and 
+  'java -Xss2m -Xmx2g -jar prooftool-1.4.jar' 
+
+
+License: GAPT is free software licensed under the GNU General
+ Public  License Version 3. See the file COPYING for details.
+
+ Instructions on downloading the sources can be found at:
+  http://code.google.com/p/gapt/source/checkout
+
+ Compilation Instructions can be found at:
+  http://code.google.com/p/gapt/wiki/Installation
+
+Notes:
+
+[1] Ubuntu Linux' prover9 package does not contain tptp_to_ladr,
+    please also install the ladr4-apps package
+[2] (description of how to get Unicode configuration for MacOsX)
