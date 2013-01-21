@@ -1,11 +1,11 @@
-*******************************************************
-*        GAPT: General Architecture for Proofs        *
-*******************************************************
+ *******************************************************
+*      GAPT: General Architecture for Proof Theory      *
+ *******************************************************
 
 GAPT is a proof theory framework. The framework aims at
  creating data types, algorithms, parsers, transformations 
 and other components common in proof theory in general 
-and mechanized proof theory in particular. 
+and atomated proof theory in particular. 
 
  Website: http://www.logic.at/gapt
  Contact: gapt@logic.at
