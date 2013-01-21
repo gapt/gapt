@@ -4,31 +4,76 @@
 # the prooftool jar package and runs the scala interpreter
 # (preference is given to the development version)
 
-export JARNAME="prooftool-1.0-SNAPSHOT-jar-with-dependencies.jar"
+export VERSION="1.4"
+export JARNAME="prooftool-$VERSION-SNAPSHOT-jar-with-dependencies.jar"
+export RELEASE="prooftool-$VERSION.jar"
 export SCP=""
-export POSSIBLE_PATHS=`echo $PATH | sed s/:/\\ /g`
+export RCP=""
+#export POSSIBLE_PATHS="$(echo $PATH | sed "s/:/\" \"/"g | sed "s/^/\"/" |sed "s/$/\"/")"
+export JAVA_OPTS="-Xss20m -Xmx2g"
+export OLDIFS="$IFS"
+export IFS=":"
+#echo $POSSIBLE_PATHS
 
-for I in ${POSSIBLE_PATHS} .; do
-    if test -f $I/${JARNAME};
+if test _$1_ = _-h_ -o _$1_ = _--help_ ; then
+  echo "GAPT Command Line Interface"
+  echo "  searches the path and current directory for a release or development version of the "
+  echo "  GAPT jar and executes it."
+  echo ""
+  echo "usage: gui.sh [-d]"
+  echo ""
+  echo "   -d : prefer development version over release version"
+  exit 1
+fi
+
+if [ ! -f "$JAVA_HOME"/bin/java ] ; then
+ echo "java executable not found, please check your path and set JAVA_HOME correctly"
+ exit 1
+fi
+
+for I in ${PATH} .; do
+    if [ -f "$I/${JARNAME}" ];
     then
 	export SCP=$I
 	break
     fi
 done
 
-for I in ${POSSIBLE_PATHS} .; do
-    if test -f $I/gui/prooftool/target/${JARNAME};
+for I in ${PATH} .; do
+    if [ -f "$I/gui/prooftool/target/${JARNAME}" ];
     then
 	export SCP="$I/gui/prooftool/target"
 	break
     fi
 done
 
-if test _${SCP}_ = __ ; then 
-    echo "Could not find ${JARNAME}!"
+for I in $PATH .; do
+    if [ -f "$I/${RELEASE}" ];
+    then
+        export RCP="$I"
+        break
+    fi
+done
+
+export IFS=$OLDIFS
+
+if test _$1_ = _-d_ ; then echo "forcing development version!" ; fi
+
+if test "_${RCP}_" = __ -o _$1_ = _-d_ ; then 
+if test "_${SCP}_" = __ ; then 
+    echo "Could not find ${JARNAME} nor ${RELEASE} in path or current directory!"
 else
     echo found ${JARNAME} in ${SCP}!
-    export JAVA_OPTS="-Xss2m -Xmx2g"
-    #scala -classpath ${SCP}/${JARNAME} -i cli-script.scala
-    $JAVA_HOME/bin/java -jar ${SCP}/${JARNAME} $*
+#    export JAVA_OPTS="-Xss2m -Xmx2g"
+    "$JAVA_HOME"/bin/java -jar ${SCP}/${JARNAME} $1
 fi
+else
+    echo "found release version ${RELEASE} in ${RCP}"
+    "$JAVA_HOME"/bin/java -jar "${RCP}"/${RELEASE} $1
+fi
+
+# workaround because jline somehow mixes up the terminal
+#reset
+
+
+

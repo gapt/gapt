@@ -4,7 +4,7 @@
 # the CLI jar package and runs the scala interpreter
 # (preference is given to the development version)
 
-export VERSION="1.2"
+export VERSION="1.4"
 export JARNAME="cli-$VERSION-SNAPSHOT-jar-with-dependencies.jar"
 export RELEASE="gapt-cli-$VERSION.jar"
 export SCP=""
@@ -47,7 +47,7 @@ for I in ${PATH} .; do
     fi
 done
 
-for I in $PATH:.; do
+for I in $PATH .; do
     if [ -f "$I/${RELEASE}" ];
     then
         export RCP="$I"
@@ -64,7 +64,7 @@ if test "_${SCP}_" = __ ; then
     echo "Could not find ${JARNAME} nor ${RELEASE} in path or current directory!"
 else
     echo found ${JARNAME} in ${SCP}!
-    export JAVA_OPTS="-Xss2m -Xmx2g"
+#    export JAVA_OPTS="-Xss2m -Xmx2g"
     "$JAVA_HOME"/bin/java -jar ${SCP}/${JARNAME}
 fi
 else

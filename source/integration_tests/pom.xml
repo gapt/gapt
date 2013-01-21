@@ -80,7 +80,7 @@
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>prooftool</artifactId>
-      <version>1.3-SNAPSHOT</version>
+      <version>${prooftool.version}-SNAPSHOT</version>
     </dependency>
   </dependencies>
 

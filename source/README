@@ -21,7 +21,7 @@ Running:
 * The scripts cli.sh and prooftool.sh look for 
   their respective jar files in the path and the current
   directory and set Java's memory limits to something
-  we found useful over time
+  we found useful over time.
 
 * Alternatively, you can run the jar files directly by calling
   'java -Xss2m -Xmx2g -jar gapt-cli-1.4.jar' 

@@ -39,8 +39,13 @@
 	</repositories>
 
 	<properties>
+
+	  <prooftool.version>1.4</prooftool.version>
+	  <cli.version>1.4</cli.version>
+
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
+
 		<encoding>UTF-8</encoding>
 		<scala.version>2.9.2</scala.version>
 		<slf4j.version>1.6.4</slf4j.version>
