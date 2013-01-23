@@ -5,7 +5,7 @@
 GAPT is a proof theory framework. The framework aims at
  creating data types, algorithms, parsers, transformations 
 and other components common in proof theory in general 
-and atomated proof theory in particular. 
+and automated proof theory in particular. 
 
  Website: http://www.logic.at/gapt
  Contact: gapt@logic.at
@@ -42,4 +42,6 @@ Notes:
 
 [1] Ubuntu Linux' prover9 package does not contain tptp_to_ladr,
     please also install the ladr4-apps package
-[2] (description of how to get Unicode configuration for MacOsX)
+[2] On some MacOS X installation there might be some additional configuration done, 
+    details are at https://code.google.com/p/gapt/wiki/Installation#MacOS_X_Specifics
+    
