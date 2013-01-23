@@ -26,11 +26,23 @@ if test _$1_ = _-h_ -o _$1_ = _--help_ ; then
   exit 1
 fi
 
-if [ ! -f "$JAVA_HOME"/bin/java ] ; then
+
+# look for java
+
+export JAVA="java"
+if [ -f "$JAVA_HOME/bin/java" ] ; then
+  JAVA="$JAVA_HOME/bin/java"
+fi
+
+export WHICH_JAVA=`which "$JAVA" 2> /dev/null`
+
+if [ _${WHICH_JAVA}_ = __  ] ; then
  echo "java executable not found, please check your path and set JAVA_HOME correctly"
  exit 1
 fi
 
+
+# look for development version
 for I in ${PATH} .; do
     if [ -f "$I/${JARNAME}" ];
     then
@@ -47,6 +59,7 @@ for I in ${PATH} .; do
     fi
 done
 
+#look for release
 for I in $PATH .; do
     if [ -f "$I/${RELEASE}" ];
     then
@@ -65,11 +78,11 @@ if test "_${SCP}_" = __ ; then
 else
     echo found ${JARNAME} in ${SCP}!
 #    export JAVA_OPTS="-Xss2m -Xmx2g"
-    "$JAVA_HOME"/bin/java -jar ${SCP}/${JARNAME} $1
+    "$JAVA" -jar ${SCP}/${JARNAME} $1
 fi
 else
     echo "found release version ${RELEASE} in ${RCP}"
-    "$JAVA_HOME"/bin/java -jar "${RCP}"/${RELEASE} $1
+    "$JAVA" -jar "${RCP}"/${RELEASE} $1
 fi
 
 # workaround because jline somehow mixes up the terminal
