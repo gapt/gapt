@@ -152,6 +152,12 @@ object TermReplacement{
           val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
           var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
+          println("sub="+sub)
+          println("nsub="+nsub)
+          println("inference: "+clause)
+          println("ninference: "+inference.root)
+          println("parent:    "+parent1.root)
+          println("rparent:    "+rparent1.root)
 
           def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
             val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
@@ -225,6 +231,11 @@ object TermReplacement{
           // this is the rule containing the introduction
           if (irules contains parent1) {
             //TODO: add code for removing unneccesary parents: rewriting l to r, if the intrudoction rule was l=r before, it s now r=r and we can drop it
+            println("axiom rule 1 after replacement: "+rparent1)
+          }
+          if (irules contains parent2) {
+            //TODO: add code for removing unneccesary parents: rewriting l to r, if the intrudoction rule was l=r before, it s now r=r and we can drop it
+            println("axiom rule 2 after replacement: "+rparent2)
           }
 
 

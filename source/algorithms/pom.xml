@@ -19,6 +19,7 @@
     <module>resolution</module>
     <module>lksk</module>
     <module>fol</module>
+    <module>hlk</module>
     <module>shlk</module>
     <module>rewriting</module>
     <module>cutIntroduction</module>

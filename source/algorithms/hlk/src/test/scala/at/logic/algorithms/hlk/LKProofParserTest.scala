@@ -53,29 +53,17 @@ class LKParserTest extends SpecificationWithJUnit {
       println(Console.BLUE+"\n---- START ----\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "proof1.lk"))
       val map = LKProofParser.parseProof(s)
-      //          println("\n\np = "+  map.get("chi").get._1.get("root").get.root.toString()  )
-      //                       val p = map.get("chi").get._2.get("root").get
-                println("\n\nend_seq = "+  map.get("\\psi").get._1.get("root").get.root.toString()  )
-      //          println("\n\npsi_s = "+  map.get("psi").get._2.get("root").get.root.toString()  )
-      //          println("\n\nchi_b = "+  map.get("chi").get._1.get("root").get.root.toString()  )
-      //          println("\n\nchi_s = "+  map.get("chi").get._2.get("root").get.root.toString()  )
-      //          println("\n\nphi_b = "+  map.get("phi").get._1.get("root").get.root.toString()  )
-      //          println("\n\nphi_s = "+  map.get("phi").get._2.get("root").get.root.toString()  )
-      //          Main.display("Proof", map.head._2._1) ; while(true){}
 
-      //          Main.display("phi", map.get("phi").get._2.get("root").get) ;
-
-
-      //          val seq = sFOParser.parseSequent("P(n,f(0,x)) |- ")
-      //          val seq = sFOParser.parseSequent("Forall x P(f(k,x)), P(x(k)) |- ")
-      //          println(seq)
-
-      //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
+      println("\n\nend_seq = "+  map.get("\\psi").get._1.get("root").get.root.toString()  )
       println(Console.BLUE+"\n--------\n"+Console.RESET)
+      Success()
+    }
 
 
-      //      println("\nvarphi = "+varphi.root)
-      // specs2 require a least one Result, see org.specs2.specification.Example
+    " parse a fol proof of all n all x all y. x+y = " in {
+
+
+
       Success()
     }
   }
