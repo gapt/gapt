@@ -113,8 +113,8 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
         cmnds = cmnds ++ assumption("0", List(Prover9TermParser.parseAll(Prover9TermParser.literal, "X=X").get)) // to support the xx rules
 
 
-        val X = FOLFactory.createVar(new VariableStringSymbol("X"), Ti()).asInstanceOf[FOLVar]
-        val Y = FOLFactory.createVar(new VariableStringSymbol("Y"), Ti()).asInstanceOf[FOLVar]
+        val X = FOLFactory.createVar(VariableStringSymbol("X"), Ti()).asInstanceOf[FOLVar]
+        val Y = FOLFactory.createVar(VariableStringSymbol("Y"), Ti()).asInstanceOf[FOLVar]
         val eq1 = Neg(Equation(X, Y))
         val eq2 = Equation(Y, X)
         cmnds = cmnds ++ assumption("999999", eq1::eq2::Nil) // symmetry
@@ -217,14 +217,14 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
 
 //Prolog Style Term Parser
 object Prover9TermParser extends Prover9TermParserA {
-  override def conssymb: Parser[String] = """[a-z][a-zA-Z0-9_]*""".r
+  override def conssymb: Parser[String] = """([a-z][a-zA-Z0-9_]*)|([0-9]+)]""".r
   override def varsymb: Parser[String] =  """[A-Z][a-zA-Z0-9_]*""".r
 
 }
 
 //LADR Style Term Parser
 object Prover9TermParserLadrStyle extends Prover9TermParserA {
-  override def conssymb: Parser[String] = """[a-tA-Z][a-zA-Z0-9_]*""".r
+  override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)]""".r
   override def varsymb: Parser[String] =  """[u-z][a-zA-Z0-9_]*""".r
 
 }
@@ -269,6 +269,7 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
   def exformula : Parser[FOLFormula] = parens(exformula_)
   def allformula_ : Parser[FOLFormula]   = ("all"    ~> variable ~ ( allformula_ | exformula_ | literal2) ) ^^ { case v ~ f => fol.AllVar(v,f) }
   def exformula_ : Parser[FOLFormula]    = ("exists" ~> variable ~ ( allformula_ | exformula_ | literal2) ) ^^ { case v ~ f => fol.ExVar(v,f) }
+
   //precedence 300
   def literal2:Parser[FOLFormula] = pformula | atomWeq | negation
   def negation:Parser[FOLFormula] = "-" ~> (pformula | negation |atomWeq) ^^ { x => fol.Neg(x) }
@@ -276,20 +277,33 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
 
   def parens[T](p:Parser[T]) : Parser[T] = "(" ~> p <~ ")"
 
-  def literal: Parser[FOLFormula] = negeq | poseq | negatom | posatom
+  def literal: Parser[FOLFormula] = iatom | negatom | posatom
   def posatom: Parser[FOLFormula] = atom
   def negatom: Parser[FOLFormula] = "-" ~ atom  ^^ {case "-" ~ a => Neg(a)}
-  def atomWeq: Parser[FOLFormula] =  negeq | poseq | atom
+  def atomWeq: Parser[FOLFormula] =  iatom | atom
   def atom: Parser[FOLFormula] = atom1 | atom2 | topbottom
-  def atom1: Parser[FOLFormula] = atomsymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
-  def atom2: Parser[FOLFormula] = atomsymb ^^ {case x => Atom(new ConstantStringSymbol(x), Nil)}
+  def atom1: Parser[FOLFormula] = atomsymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  def atom2: Parser[FOLFormula] = atomsymb ^^ {case x => Atom(ConstantStringSymbol(x), Nil)}
+
+  //infixatom
+  def iatom : Parser[FOLFormula] = term ~ """((<|>)=?)|(!?=)""".r  ~ term ^^ {
+    _ match {
+      case t1 ~ "=" ~ t2 => Equation(t1,t2)
+      case t1 ~ "!=" ~ t2 => Neg(Equation(t1,t2))
+      case t1 ~ sym ~ t2 => fol.Atom(ConstantStringSymbol(sym), List(t1,t2))
+    }
+  }
+  /*
+  def iatom: Parser[FOLFormula] = poseq | negeq
   def poseq: Parser[FOLFormula] = term ~ "=" ~ term ^^ {case t1 ~ "=" ~ t2 => Equation(t1,t2)}
   def negeq: Parser[FOLFormula] = term ~ "!=" ~ term ^^ {case t1 ~ "!=" ~ t2 => Neg(Equation(t1,t2))}
+  def orderings : Parser[FOLFormula] = term ~ """(<|>)=?""".r  ~ term ^^ { case t1 ~ sym ~ t2 => fol.Atom(ConstantStringSymbol(sym), List(t1,t2))}
+  */
   def atomsymb: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*""".r
   def term: Parser[FOLTerm] = function | constant | variable
-  def function: Parser[FOLTerm] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(new ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
-  def constant: Parser[FOLConst] = conssymb ^^ {case x => FOLFactory.createVar(new ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
-  def variable: Parser[FOLVar] = varsymb ^^ {case x => FOLFactory.createVar(new VariableStringSymbol(x), Ti()).asInstanceOf[FOLVar]}
+  def function: Parser[FOLTerm] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
+  def constant: Parser[FOLConst] = conssymb ^^ {case x => FOLFactory.createVar(ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
+  def variable: Parser[FOLVar] = varsymb ^^ {case x => FOLFactory.createVar(VariableStringSymbol(x), Ti()).asInstanceOf[FOLVar]}
   def topbottom: Parser[FOLFormula] = "$" ~> ( "T" ^^ (x=> topformula) | "F" ^^ (x => bottomformula) )
 
   //we don't have top and bottom in the algorithms, so we simulate it
@@ -310,7 +324,7 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
 
   def normalizeFormula(f:FOLFormula) : HOLFormula = {
     val freevars = f.getFreeAndBoundVariables._1.toList
-    val pairs : List[(Var,FOLExpression)] = (freevars zip (0 to (freevars.size-1))) map (x => (x._1,  x._1.factory.createVar(new VariableStringSymbol("v"+x._2), x._1.exptype).asInstanceOf[FOLExpression]) )
+    val pairs : List[(Var,FOLExpression)] = (freevars zip (0 to (freevars.size-1))) map (x => (x._1,  x._1.factory.createVar(VariableStringSymbol("v"+x._2), x._1.exptype).asInstanceOf[FOLExpression]) )
     val nf : FOLFormula = Substitution(pairs)(f).asInstanceOf[FOLFormula]
 
     normalizeFormula(nf,freevars.size)._1
@@ -323,7 +337,7 @@ abstract class Prover9TermParserA extends JavaTokenParsers {
       val (t_, j) = normalizeFormula(t,i)
       (s.factory.createApp(s_, t_).asInstanceOf[T], j)
     case Abs(x, s) =>
-      val x_ = x.factory.createVar(new VariableStringSymbol("v"+i), x.exptype)
+      val x_ = x.factory.createVar(VariableStringSymbol("v"+i), x.exptype)
       val sub = Substitution[LambdaExpression]((x, x_))
       val (s_, j) = normalizeFormula(sub(s).asInstanceOf[T], i+1)
       (s.factory.createAbs(x_, s_).asInstanceOf[T], j)
@@ -461,16 +475,18 @@ object InferenceExtractor {
     val str_ladr = Source.fromInputStream( new FileInputStream( fn ) ).mkString
 
     val (assumptions, goals) = str_ladr.split(System.getProperty("line.separator")).foldLeft((List[FOLFormula](), List[FOLFormula]()))((m, l) => {
+
        val (as,gs) = m;
        l match {
-        case rassumption(id, formula ) => if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
-        case rgoal(id, formula )       => if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
+        case rassumption(id, formula ) => println("ass "+id+" "+formula); if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
+        case rgoal(id, formula )       => println("goal"); if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
         case variablestyle_matcher(_) => println("enabling prolog style variables!"); parser = Prover9TermParser;  m
-        case proof_start(_) => println(); within_proof = 1; m
-        case proof_end(_) => within_proof = 2; m
-        case _ => m
+        case proof_start(_) => println("start"); within_proof = 1; m
+        case proof_end(_) => println("stop"); within_proof = 2; m
+        case _ => print("."); m
       }
     })
+    println("done")
 
     createFSequent(assumptions, goals)
 

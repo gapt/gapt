@@ -169,7 +169,7 @@ class Tokenizer extends RegexParsers {
 
   lazy val token : Parser[Token] = """"[^"]*"""".r ^^ STRING |
                               """[nN][iI][lL]""".r ^^ (x => NIL) |
-                              """[a-zA-Z0-9=_+\-*/]+""".r ^^ WORD |
+                              """[a-zA-Z0-9=_+\-*/<>]+""".r ^^ WORD |
                               "." ^^ (x => DOT) |
                               "(" ^^ (x => LBRACK) |
                               ")" ^^ (x => RBRACK) |
