@@ -285,6 +285,20 @@ class Prover9Test extends SpecificationWithJUnit {
           "success" must beEqualTo(e.getMessage )
       }
     }
+
+    "successfully load a proof with new_symbol" in {
+      try {
+        val p = Prover9.parse_prover9("target" + separator + "test-classes" + separator +"ALG138+1.out")
+        println("")
+        Formatter.asHumanReadableString(p._1)
+        "success" must beEqualTo("success")
+      } catch {
+        case e:Exception =>
+          e.printStackTrace
+          "success" must beEqualTo(e.getMessage )
+      }
+    }
+
   }
 
 }

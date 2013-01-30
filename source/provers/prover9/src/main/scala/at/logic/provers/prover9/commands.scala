@@ -217,14 +217,14 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
 
 //Prolog Style Term Parser
 object Prover9TermParser extends Prover9TermParserA {
-  override def conssymb: Parser[String] = """([a-z][a-zA-Z0-9_]*)|([0-9]+)]""".r
+  override def conssymb: Parser[String] = """([a-z][a-zA-Z0-9_]*)|([0-9]+)""".r
   override def varsymb: Parser[String] =  """[A-Z][a-zA-Z0-9_]*""".r
 
 }
 
 //LADR Style Term Parser
 object Prover9TermParserLadrStyle extends Prover9TermParserA {
-  override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)]""".r
+  override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)""".r
   override def varsymb: Parser[String] =  """[u-z][a-zA-Z0-9_]*""".r
 
 }
@@ -372,6 +372,8 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
 object InferenceExtractor {
   def apply(s:String) : FSequent = viaXML(s)
 
+  private def debug(s:String) : Unit = { }
+
   def viaXML(fn: String) : FSequent = {
     //println("==== Extracting Inferences ======")
     val buffer = new Array[ Byte ]( 1024 )
@@ -478,12 +480,12 @@ object InferenceExtractor {
 
        val (as,gs) = m;
        l match {
-        case rassumption(id, formula ) => println("ass "+id+" "+formula); if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
-        case rgoal(id, formula )       => println("goal"); if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
+        case rassumption(id, formula ) => debug("ass "+id+" "+formula); if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
+        case rgoal(id, formula )       => debug("goal"); if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
         case variablestyle_matcher(_) => println("enabling prolog style variables!"); parser = Prover9TermParser;  m
-        case proof_start(_) => println("start"); within_proof = 1; m
-        case proof_end(_) => println("stop"); within_proof = 2; m
-        case _ => print("."); m
+        case proof_start(_) => debug("start"); within_proof = 1; m
+        case proof_end(_) => debug("stop"); within_proof = 2; m
+        case _ => debug("."); m
       }
     })
     println("done")

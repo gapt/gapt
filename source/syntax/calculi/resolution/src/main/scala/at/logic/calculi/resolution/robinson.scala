@@ -52,7 +52,7 @@ object createContext {
   }
 
   object InitialClause {
-    def apply(ant: Seq[FOLFormula], suc: Seq[FOLFormula]) (implicit factory: FOFactory): RobinsonResolutionProof = {
+    def apply(ant: immutable.Seq[FOLFormula], suc: immutable.Seq[FOLFormula]) (implicit factory: FOFactory): RobinsonResolutionProof = {
       val left: Seq[FormulaOccurrence] = ant.map(factory.createFormulaOccurrence(_,Nil))
       val right: Seq[FormulaOccurrence] = suc.map(factory.createFormulaOccurrence(_,Nil))
       new LeafAGraph[Clause](Clause(left, right)) with NullaryResolutionProof[Clause]  with RobinsonResolutionProof {
@@ -463,6 +463,9 @@ object Formatter {
         apply("  "+indent, p1, ids)
     case Variant(clause, p1, sub) =>
       indent + "(" + ids(clause) + ") Variant(["+clause+"])\n" +
+        apply("  "+indent, p1, ids)
+    case Instance(clause, p1, sub ) =>
+      indent + "(" + ids(clause) + ") Instance(["+clause+"] sub=" +sub+ ")\n" +
         apply("  "+indent, p1, ids)
     case InitialClause(clause) => indent+ "(" + ids(clause) +") InitialClause(["+clause+"])\n\n"
 
