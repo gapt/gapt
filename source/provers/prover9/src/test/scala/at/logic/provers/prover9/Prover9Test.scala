@@ -13,7 +13,7 @@ import _root_.at.logic.provers.atp.commands.base.{SetStreamCommand, PrependComma
 import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause
 import _root_.at.logic.provers.atp.Prover
 import at.logic.calculi.lk.base.FSequent
-import at.logic.provers.prover9.commands.{Prover9TermParser, Prover9InitCommand}
+import at.logic.provers.prover9.commands.Prover9InitCommand
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

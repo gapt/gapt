@@ -1,19 +1,10 @@
-package at.logic.provers.prover9
+package at.logic.parsing.language.prover9
 
 /**
  * Tests for the LADR language parser
  */
 
-import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.base.Clause
-import _root_.at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-import _root_.at.logic.parsing.language.simple.SimpleFOLParser
-import _root_.at.logic.parsing.readers.StringReader
-import _root_.at.logic.provers.atp.commands.base.{SetStreamCommand, PrependCommand}
-import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause
-import _root_.at.logic.provers.atp.Prover
 import at.logic.calculi.lk.base.FSequent
-import at.logic.provers.prover9.commands.{Prover9TermParser, Prover9InitCommand}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -23,7 +14,6 @@ import java.io.IOException
 import at.logic.calculi.resolution.robinson.{Formatter, RobinsonResolutionProof}
 
 import at.logic.calculi.occurrences.factory
-import at.logic.parsing.language.tptp.TPTPFOLExporter
 import util.parsing.input.Position
 
 // to use matchers like anyInt()
