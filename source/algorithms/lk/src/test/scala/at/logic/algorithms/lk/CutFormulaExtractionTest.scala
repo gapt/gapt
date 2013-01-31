@@ -31,7 +31,7 @@ class CutFormulaExtractionTest extends SpecificationWithJUnit {
     def toSequent(aux:FormulaOccurrence) = Sequent(Nil, List(aux))
 
     "apply correctly to a proof with one cut" in {
-      val cutproofs = cutformulaExtraction.getCutsAsProofs(proof)
+      val cutproofs = getCutsAsProofs(proof)
       val cutformulas = cutformulaExtraction(proof)
       println(cutformulas)
       cutproofs must beEqualTo (List(proof))
@@ -41,7 +41,7 @@ class CutFormulaExtractionTest extends SpecificationWithJUnit {
       val proof2 = CutRule(proof, proof_ , proof.root.succedent.head,  proof_.root.antecedent.head )
       val prooflist : List[BinaryLKProof] = List(proof, proof_, proof2)
 
-      val cutproofs = cutformulaExtraction.getCutsAsProofs(proof2)
+      val cutproofs = getCutsAsProofs(proof2)
       val cutformulas = cutformulaExtraction(proof2)
 
       println(cutformulas)

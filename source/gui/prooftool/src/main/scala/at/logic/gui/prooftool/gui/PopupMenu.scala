@@ -28,6 +28,8 @@ object PopupMenu {
   def apply(tproof: TreeProof[_], component: Component, x: Int, y: Int) {
     lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
+    //  contents += new MenuItem(Action("Scroll to this sequent") { Main.scrollToProof(proof) })
+      contents += new MenuItem(Action("Apply Gentzen's Method (new)") { Main.newgentzen(proof) })
       contents += new MenuItem(Action("Apply Gentzen's Method") { Main.gentzen(proof) })
       contents += new MenuItem(Action("Export Subproof in XML") { Main.fSaveProof(proof) })
       contents += new MenuItem(Action("Export Subproof in TeX") { Main.fExportProofToTex(proof, ask = false) })

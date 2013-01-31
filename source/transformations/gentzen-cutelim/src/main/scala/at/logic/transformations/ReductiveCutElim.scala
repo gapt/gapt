@@ -21,21 +21,31 @@ import at.logic.algorithms.lk.{CleanStructuralRules, regularize, applySubstituti
 class ReductiveCutElimException(msg: String) extends Exception(msg)
 
 object ReductiveCutElim {
+  // This list stores a list of subproofs that are reduced
+  // during the run of the algorithm.
   private var proofList: List[LKProof] = Nil
   private var steps = false
+  private var one_step = false
 
   def proofs = proofList
   def proofs_=(plist: List[LKProof]) = proofList = plist
 
-  def apply(proof: LKProof, b: Boolean): LKProof = {
-    steps = b
+  // FIXME: one_step added by Daniel. It implies "steps".
+  // TODO: generalize Mikheil's and my code with steps: Int,
+  // doing "steps" cut-elimination steps.
+  def apply(proof: LKProof, _steps: Boolean, _one_step: Boolean): LKProof = {
+    steps = _steps
+    one_step = _one_step
+    if (one_step)
+      steps = true
+
     proofList = proof::Nil
     var pr = regularize(proof)._1
-    while (! isCutFree(pr)) {
-      val p = cutElim(pr)
+    do  {
+      val p = cutElim(pr)(one_step)
       pr = CleanStructuralRules(p)
       if (steps) proofList = proofList:::(pr::Nil)
-    }
+    } while (! isCutFree(pr) && !one_step)
     if (! steps) proofList = proofList:::(pr::Nil)
     pr
   }
@@ -48,7 +58,7 @@ object ReductiveCutElim {
       else isCutFree(p.uProof1) && isCutFree(p.uProof2)
   }
 
-  private def cutElim(proof: LKProof): LKProof = proof match {
+  private def cutElim(proof: LKProof)(implicit one_step: Boolean) : LKProof = proof match {
     case Axiom(_) => proof
     case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule(cutElim(up), pf.formula)
     case WeakeningRightRule(up, _, pf) => WeakeningRightRule(cutElim(up), pf.formula)
@@ -93,7 +103,10 @@ object ReductiveCutElim {
         if (steps) proofList = proofList:::(proof::Nil)
         val p = reduceCut(up1, up2, a1.formula, a2.formula)
         if (steps) proofList = proofList:::(p::Nil)
-        cutElim(p)
+        if (one_step)
+          p
+        else
+          cutElim(p)
       }
       else if (isCutFree1) CutRule(up1, cutElim(up2), a1.formula)
       else CutRule(cutElim(up1), up2, a1.formula)

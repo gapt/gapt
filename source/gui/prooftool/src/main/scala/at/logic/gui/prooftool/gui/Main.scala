@@ -260,6 +260,16 @@ object Main extends SimpleSwingApplication {
     }
   }
 
+  def scrollToProof(proof: TreeProof[_]) =
+  {
+    val launcher = body.contents.head.asInstanceOf[Launcher]
+    val pos = launcher.getLocationOfProof(proof).get
+    println("body.bounds: " + body.bounds)
+    val centered = new Rectangle( pos.x - body.bounds.width/2, pos.y - body.bounds.height, body.bounds.width, body.bounds.height )
+    println("centered = " + centered )
+    launcher.peer.scrollRectToVisible( centered )
+  }
+
   // Used for PopupMenu, loads proof directly
   def loadProof(proof: LKProof) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -272,6 +282,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(proof), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
+    resetCuts
   }
 
   // Used for ViewResolutionProof menu
@@ -316,6 +327,16 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(option, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  // Used by "Cycle through cuts"
+  var cuts : List[LKProof] = null
+  var current_cut : Iterator[LKProof] = null
+
+  // Should be called whenever the proof is changed.
+  def resetCuts = {
+    cuts = null
+    current_cut = null
   }
 
   val mBar: MenuBar = new MenuBar() {
@@ -461,6 +482,30 @@ object Main extends SimpleSwingApplication {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, JActionEvent.ALT_MASK))
         border = customBorder
       }
+      contents += new MenuItem(Action("Jump To End-sequent") { scrollToProof(body.getContent.getData.get._2.asInstanceOf[LKProof])}) {
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, JActionEvent.ALT_MASK))
+        border = customBorder
+      }
+      contents += new MenuItem(Action("Cycle through cuts") { 
+        // TODO: reset cuts when loading a proof
+        if ( cuts == null )
+        {
+          cuts = getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof])
+          println("cuts found: " + cuts.size)
+        }
+        if ( current_cut == null || !current_cut.hasNext )
+        {
+          println("resetting current cut")
+          current_cut = cuts.iterator
+        }
+
+        val cut = current_cut.next
+        println("scrolling to cut with end-sequent " + cut.root)
+        scrollToProof(cut)
+      }) {
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
+        border = customBorder
+      }
       contents += new Separator
       contents += new Menu("View Proof") {
         MenuScroller.setScrollerFor(this.peer)
@@ -523,6 +568,7 @@ object Main extends SimpleSwingApplication {
         case Loaded => enabled = true
         case UnLoaded => enabled = false
       }
+      
       contents += new Menu("Compute Clause Set") {
         contents += new MenuItem(Action("All Cuts") { computeClList() }) { border = customBorder }
         contents += new MenuItem(Action("Only Quantified Cuts") { computeClListOnlyQuantifiedCuts() }) { border = customBorder }
@@ -976,13 +1022,34 @@ object Main extends SimpleSwingApplication {
         errorMessage("Couldn't eliminate definitions!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
+  def newgentzen(proof: LKProof) { try {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val newSubproof = ReductiveCutElim(proof, true, true)
+    val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
+    val newProof = replaceSubproof(oldProof, proof, newSubproof)
+    //if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
+    loadProof(("Gentzen Result:", newProof))
+    top.repaint
+    body.repaint
+    // FIXME: scrolling does not work!
+    
+    scrollToProof(newProof)
+  } catch {
+      case e: Throwable =>
+        errorMessage("Couldn't eliminate all cuts!\n\n" + getExceptionString(e))
+  } finally {
+    db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
+    body.cursor = java.awt.Cursor.getDefaultCursor
+    ProofToolPublisher.publish(ProofDbChanged)
+  }}
+
   def gentzen(proof: LKProof) { try {
     val steps = questionMessage("Do you want to see intermediary steps?") match {
       case Dialog.Result.Yes => true
       case _ => false
     }
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val newSubproof = ReductiveCutElim(proof, steps)
+    val newSubproof = ReductiveCutElim(proof, steps, false)
     val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
     val newProof = replaceSubproof(oldProof, proof, newSubproof)
     if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)

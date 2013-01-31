@@ -101,10 +101,21 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
   this.peer.setAutoscrolls(true)
   this.peer.addMouseMotionListener(this)
 
-  def mouseMoved(e: MouseEvent) {}
+  def mouseMoved(e: MouseEvent) {
+    println("mouse: " + e.getX + "/" + e.getY)
+  }
   def mouseDragged(e: MouseEvent) {
     //The user is dragging us, so scroll!
     val r = new Rectangle(e.getX, e.getY, 1, 1)
     this.peer.scrollRectToVisible(r)
+  }
+
+  // returns the location of the end-sequent
+  // of a proof
+  def getLocationOfProof[S](proof: TreeProof[S]) = 
+  {
+    println("getting location")
+    val dp = contents.head.asInstanceOf[DrawProof]
+    dp.getLocationOfProof(proof)
   }
 }

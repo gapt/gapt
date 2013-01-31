@@ -619,21 +619,25 @@ object replaceSubproof {
   }
 }
 
-object cutformulaExtraction {
-  def apply(p:LKProof) = getCutFormulas(p)
-
-  def getCutsAsProofs(p : LKProof) : List[LKProof] = p match {
-    case CutRule(p1,p2,root,aux1,aux2) => getCutsAsProofs(p1) ++ getCutsAsProofs(p2) ++ List(p)
+// returns a List[LKProof] of all the cuts
+// in an LKProof
+object getCutsAsProofs {
+  def apply(p:LKProof) : List[LKProof] = p match {
+    case CutRule(p1,p2,root,aux1,aux2) => apply(p1) ++ apply(p2) ++ List(p)
     case x : NullaryLKProof => Nil
-    case UnaryLKProof(_, p1, _, _, _ ) => getCutsAsProofs(p1)
-    case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutsAsProofs(p1) ++ getCutsAsProofs(p2)
+    case UnaryLKProof(_, p1, _, _, _ ) => apply(p1)
+    case BinaryLKProof(_, p1, p2, _, _, _, _) => apply(p1) ++ apply(p2)
     // support LKsk
-    case UnaryLKskProof(_,p,_,_,_) => getCutsAsProofs(p)
+    case UnaryLKskProof(_,p,_,_,_) => apply(p)
     // support SLK
-    case UnarySchemaProof(_,p,_,_,_) => getCutsAsProofs(p)
+    case UnarySchemaProof(_,p,_,_,_) => apply(p)
     case SchemaProofLinkRule(_, _, _) => Nil
     case _ => throw new Exception("Unkown LK rule in extraction of cut-forumlas from proof! ")
   }
+}
+
+object cutformulaExtraction {
+  def apply(p:LKProof) = getCutFormulas(p)
 
   def getCutFormulas(p:LKProof) : List[Sequent] = {
     getCutsAsProofs(p) map ((x: LKProof) =>
