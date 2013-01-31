@@ -33,6 +33,9 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
+import at.logic.algorithms.cutIntroduction._
+import at.logic.transformations.ReductiveCutElim
+import at.logic.testing._
 
 @RunWith(classOf[JUnitRunner])
 class MiscTest extends SpecificationWithJUnit {
@@ -61,6 +64,7 @@ class MiscTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       println("skolemized proof:")
       println(proof_sk)
+      Success()
     }
 
     "skolemize a proof with a simple definition" in {
@@ -70,6 +74,7 @@ class MiscTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       println("skolemized proof:")
       println(proof_sk)
+      Success()
     }
 
     "skolemize a proof with a complex definition" in {
@@ -79,7 +84,9 @@ class MiscTest extends SpecificationWithJUnit {
       val proof_sk = skolemize( proof )
       println("skolemized proof:")
       println(proof_sk)
+      Success()
     }
+
     "extract projections and clause set from a skolemized proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
@@ -92,6 +99,7 @@ class MiscTest extends SpecificationWithJUnit {
       saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
         projs.toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
         Pair("cs", cs)::Pair("prf", prf)::Nil, path )
+      Success()
     }
 
     //Cvetan
@@ -123,6 +131,16 @@ class MiscTest extends SpecificationWithJUnit {
       // specs2 require a least one Result, see org.specs2.specification.Example 
       Success()
       // TODO: check if profile is really as expected.
+    }
+
+    "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
+      val p = LinearExampleProof( 4 )
+      val pi = CutIntroduction(p)
+      val pe = ReductiveCutElim.eliminateAllByUppermost(pi, false)
+
+      ReductiveCutElim.isCutFree(p) must beEqualTo( true )
+      ReductiveCutElim.isCutFree(pi) must beEqualTo( false )
+      ReductiveCutElim.isCutFree(pe) must beEqualTo( true )
     }
   }
 }

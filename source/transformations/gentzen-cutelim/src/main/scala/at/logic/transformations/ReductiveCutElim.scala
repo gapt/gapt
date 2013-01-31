@@ -25,30 +25,48 @@ object ReductiveCutElim {
   // during the run of the algorithm.
   private var proofList: List[LKProof] = Nil
   private var steps = false
-  private var one_step = false
 
   def proofs = proofList
   def proofs_=(plist: List[LKProof]) = proofList = plist
 
-  // FIXME: one_step added by Daniel. It implies "steps".
-  // TODO: generalize Mikheil's and my code with steps: Int,
-  // doing "steps" cut-elimination steps.
-  def apply(proof: LKProof, _steps: Boolean, _one_step: Boolean): LKProof = {
+  // Does cut-elimination.
+  // 
+  // pred_cut decides whether a cut should be reduced,
+  // its first argument is the global proof in which we
+  // operate. Its second argument is the subproof ending
+  // in a cut which is under consideration. We reduce the
+  // cut if pred_cut returns true.
+  //
+  // pred_done gets the global proof as an argument.
+  //
+  // The algorithm loops recursive walks through the proof
+  // and reduces a cut whenever pred_cut says so. After
+  // every reduction, pred_done is checked. The algorithm
+  // terminates iff pred_done returns true or the proof is
+  // cut-free.
+  //
+  // We assume that proof is regular! Further regularization
+  // is done during cut-reduction when necessary.
+  //
+  def apply(proof: LKProof, _steps: Boolean, pred_done: LKProof => Boolean, pred_cut: (LKProof, LKProof) => Boolean): LKProof = {
     steps = _steps
-    one_step = _one_step
-    if (one_step)
-      steps = true
 
     proofList = proof::Nil
-    var pr = regularize(proof)._1
-    do  {
-      val p = cutElim(pr)(one_step)
+    // var pr = regularize(proof)._1
+    var pr = proof
+    do {
+      def pred(local: LKProof) = pred_cut(pr, local)
+      val p = cutElim(pr)(pred)
       pr = CleanStructuralRules(p)
       if (steps) proofList = proofList:::(pr::Nil)
-    } while (! isCutFree(pr) && !one_step)
+    } while (!pred_done(pr) && !isCutFree(pr))
     if (! steps) proofList = proofList:::(pr::Nil)
     pr
   }
+
+  def eliminateAllByUppermost(proof: LKProof, steps: Boolean) =
+    apply(proof, steps, {x => false}, 
+          { (_, cut) => cut match { case CutRule(p1,p2,_,_,_) => isCutFree(p1) && isCutFree(p2) } })
 
   def isCutFree(proof: LKProof): Boolean = proof match {
     case Axiom(_) => true
@@ -58,7 +76,8 @@ object ReductiveCutElim {
       else isCutFree(p.uProof1) && isCutFree(p.uProof2)
   }
 
-  private def cutElim(proof: LKProof)(implicit one_step: Boolean) : LKProof = proof match {
+  // Implements cut-elimination.
+  private def cutElim(proof: LKProof)(implicit pred: LKProof => Boolean) : LKProof = proof match {
     case Axiom(_) => proof
     case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule(cutElim(up), pf.formula)
     case WeakeningRightRule(up, _, pf) => WeakeningRightRule(cutElim(up), pf.formula)
@@ -97,19 +116,10 @@ object ReductiveCutElim {
     case EquationRight2Rule(up1, up2, _, aux1, aux2, prin) =>
       EquationRight2Rule(cutElim(up1), cutElim(up2), aux1.formula, aux2.formula, prin.formula)
     case CutRule(up1, up2, _, a1, a2) =>
-      val isCutFree1 = isCutFree(up1)
-      val isCutFree2 = isCutFree(up2)
-      if (isCutFree1 && isCutFree2) {
-        if (steps) proofList = proofList:::(proof::Nil)
-        val p = reduceCut(up1, up2, a1.formula, a2.formula)
-        if (steps) proofList = proofList:::(p::Nil)
-        if (one_step)
-          p
-        else
-          cutElim(p)
-      }
-      else if (isCutFree1) CutRule(up1, cutElim(up2), a1.formula)
-      else CutRule(cutElim(up1), up2, a1.formula)
+      if (pred(proof))
+        reduceCut(up1, up2, a1.formula, a2.formula)
+      else
+        CutRule(cutElim(up1), cutElim(up2), a1.formula)
   }
 
   private def reduceCut(left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula): LKProof =
@@ -352,7 +362,13 @@ object ReductiveCutElim {
         ImpLeftRule(up1, CutRule(up2, proof, cutFormula), aux1.formula, aux2.formula)
       else throw new ReductiveCutElimException("Can't find cut-formula!")
     //Following line is redundant when eliminating uppermost cut
-    //case CutRule(up1, up2, _, a1, a2) => CutRule(reduceCut(up1, up2, a1.formula, a2.formula), proof, cutFormula)
+    case CutRule(up1, up2, _, a1, a2) => if (up1.root.succedent.exists(x => x.formula == cutFormula) ||
+        up1.root.succedent.find(x => x.formula == cutFormula).size > 1)
+        CutRule(CutRule(up1, proof, cutFormula), up2, a1.formula)
+      else if (up2.root.succedent.exists(x => x.formula == cutFormula))
+        CutRule(up1, CutRule(up2, proof, cutFormula), a1.formula)
+      else throw new ReductiveCutElimException("Can't find cut-formula!")
+
     case _ => proof match {
       case p: UnaryLKProof => reduceUnaryRight(binary, p, cutFormula)
       case p: BinaryLKProof => reduceBinaryRight(binary, p, cutFormula)
@@ -382,7 +398,12 @@ object ReductiveCutElim {
         ImpLeftRule(up1, CutRule(proof, up2, cutFormula), aux1.formula, aux2.formula)
       else throw new ReductiveCutElimException("Can't find cut-formula!")
     //Following line is redundant when eliminating uppermost cut
-    //case CutRule(up1, up2, _, a1, a2) => CutRule(proof, reduceCut(up1, up2, a1.formula, a2.formula), cutFormula)
+    case CutRule(up1, up2, _, a1, a2) => if (up1.root.antecedent.exists(x => x.formula == cutFormula))
+        CutRule(CutRule(proof, up1, cutFormula), up2, a1.formula)
+      else if (up2.root.antecedent.exists(x => x.formula == cutFormula) ||
+        up2.root.antecedent.find(x => x.formula == cutFormula).size > 1)
+        CutRule(up1, CutRule(proof, up2, cutFormula), a1.formula)
+      else throw new ReductiveCutElimException("Can't find cut-formula!")
     case _ =>
       throw new ReductiveCutElimException("Can't match the case: Cut(" + proof.rule.toString + ", " + binary.rule.toString + ")")
   }

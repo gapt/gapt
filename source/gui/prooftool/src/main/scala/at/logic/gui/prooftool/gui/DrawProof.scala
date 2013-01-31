@@ -199,21 +199,34 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
 
   def getLocationOfProof(p: TreeProof[_]) : Option[Point] = 
   {
-    println("in DrawProof.getLocationOfProof")
+    //println("in DrawProof.getLocationOfProof")
+    //println("location: " + location)
+    //println("bounds: " + bounds)
+
     if (p == proof)
     {
-      println("proof found at: " + location)
-      println("bounds: " + bounds)
+      //println("this is the correct proof")
       val newloc = new Point(location.x + bounds.width/2, location.y + bounds.height)
 //      location.translate(bounds.width/2, bounds.height)
-      println("root of that proof at: " + newloc)
+      //println("root of this proof at: " + newloc)
       Some(newloc)
     }
     else
       {
-      println("recursive call")
+      //println("recursive call")
       contents.foldLeft[Option[Point]](None)( (res, dp) => if (res == None) dp match {
-                                                case x : DrawProof => x.getLocationOfProof(p)
+                                                case x : DrawProof => {
+                                                  x.getLocationOfProof(p) match {
+                                                    case Some(loc) => {
+                                                      // need to translate
+                                                      val newloc = new Point(loc.x + location.x, loc.y + location.y)
+                                                      //println("newloc: " + newloc)
+                                                      Some(newloc)
+                                                    }
+                                                    case _ => None
+                                                  }
+                                                  
+                                                }
                                                 case _ if dp == p => 
                                                   // this is a DrawSequent (it does not have unapply :-(
                                                   // it is a leaf on top of this, so we know the location

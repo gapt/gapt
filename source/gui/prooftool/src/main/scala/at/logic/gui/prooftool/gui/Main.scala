@@ -262,11 +262,14 @@ object Main extends SimpleSwingApplication {
 
   def scrollToProof(proof: TreeProof[_]) =
   {
-    val launcher = body.contents.head.asInstanceOf[Launcher]
+    //val launcher = body.contents.head.asInstanceOf[Launcher]
+    val launcher = body.getContent
     val pos = launcher.getLocationOfProof(proof).get
-    println("body.bounds: " + body.bounds)
+    //val location = launcher.peer.location
+    //val newpos = new Point(pos.x + location.x, pos.y + location.y)
+    //println("body.bounds: " + body.bounds)
     val centered = new Rectangle( pos.x - body.bounds.width/2, pos.y - body.bounds.height, body.bounds.width, body.bounds.height )
-    println("centered = " + centered )
+    //println("centered = " + centered )
     launcher.peer.scrollRectToVisible( centered )
   }
 
@@ -491,16 +494,16 @@ object Main extends SimpleSwingApplication {
         if ( cuts == null )
         {
           cuts = getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof])
-          println("cuts found: " + cuts.size)
+          //println("cuts found: " + cuts.size)
         }
         if ( current_cut == null || !current_cut.hasNext )
         {
-          println("resetting current cut")
+          //println("resetting current cut")
           current_cut = cuts.iterator
         }
 
         val cut = current_cut.next
-        println("scrolling to cut with end-sequent " + cut.root)
+        //println("scrolling to cut with end-sequent " + cut.root)
         scrollToProof(cut)
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
@@ -1024,7 +1027,7 @@ object Main extends SimpleSwingApplication {
 
   def newgentzen(proof: LKProof) { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val newSubproof = ReductiveCutElim(proof, true, true)
+    val newSubproof = ReductiveCutElim(proof, true, { x => true }, { (_, cut) => cut == proof } )
     val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
     val newProof = replaceSubproof(oldProof, proof, newSubproof)
     //if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
@@ -1049,7 +1052,7 @@ object Main extends SimpleSwingApplication {
       case _ => false
     }
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val newSubproof = ReductiveCutElim(proof, steps, false)
+    val newSubproof = ReductiveCutElim.eliminateAllByUppermost(proof, steps)
     val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
     val newProof = replaceSubproof(oldProof, proof, newSubproof)
     if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)

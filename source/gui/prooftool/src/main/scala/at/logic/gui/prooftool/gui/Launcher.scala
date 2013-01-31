@@ -102,7 +102,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
   this.peer.addMouseMotionListener(this)
 
   def mouseMoved(e: MouseEvent) {
-    println("mouse: " + e.getX + "/" + e.getY)
+    //println("mouse: " + e.getX + "/" + e.getY)
   }
   def mouseDragged(e: MouseEvent) {
     //The user is dragging us, so scroll!
@@ -114,7 +114,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
   // of a proof
   def getLocationOfProof[S](proof: TreeProof[S]) = 
   {
-    println("getting location")
+    //println("getting location")
     val dp = contents.head.asInstanceOf[DrawProof]
     dp.getLocationOfProof(proof)
   }
