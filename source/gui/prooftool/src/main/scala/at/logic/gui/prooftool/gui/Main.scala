@@ -15,6 +15,7 @@ import swing.Swing.EmptyIcon
 import scala.collection.immutable.Seq
 import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File}
 import javax.swing.filechooser.FileFilter
+import javax.swing.SwingUtilities
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.calculi.lk.base.types.FSequent
@@ -41,6 +42,8 @@ import at.logic.transformations.ceres.clauseSchema.{resolutionProofSchemaDB, Ins
 import at.logic.transformations.ceres.ACNF.ACNF
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
+import at.logic.algorithms.cutIntroduction.CutIntroduction
+import at.logic.testing.LinearExampleProof
 
 object Main extends SimpleSwingApplication {
   override def startup(args: Array[String]) {
@@ -267,9 +270,7 @@ object Main extends SimpleSwingApplication {
     val pos = launcher.getLocationOfProof(proof).get
     //val location = launcher.peer.location
     //val newpos = new Point(pos.x + location.x, pos.y + location.y)
-    //println("body.bounds: " + body.bounds)
     val centered = new Rectangle( pos.x - body.bounds.width/2, pos.y - body.bounds.height, body.bounds.width, body.bounds.height )
-    //println("centered = " + centered )
     launcher.peer.scrollRectToVisible( centered )
   }
 
@@ -492,18 +493,11 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Cycle through cuts") { 
         // TODO: reset cuts when loading a proof
         if ( cuts == null )
-        {
           cuts = getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof])
-          //println("cuts found: " + cuts.size)
-        }
         if ( current_cut == null || !current_cut.hasNext )
-        {
-          //println("resetting current cut")
           current_cut = cuts.iterator
-        }
 
         val cut = current_cut.next
-        //println("scrolling to cut with end-sequent " + cut.root)
         scrollToProof(cut)
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
@@ -633,6 +627,10 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Tests") {
       mnemonic = Key.T
+      contents += new MenuItem(Action("cutIntro(LinearExampleProof(4))") {
+        body.contents = new Launcher(Some(("cutIntro(LinearExampleProof(4))", CutIntroduction(LinearExampleProof(4)))), 12)
+      }) { border = customBorder }
+
       contents += new MenuItem(Action("Non-Prenex Proof 1") {
         import at.logic.language.lambda.types.Definitions._
         import at.logic.language.lambda.symbols.ImplicitConverters._
@@ -1032,11 +1030,13 @@ object Main extends SimpleSwingApplication {
     val newProof = replaceSubproof(oldProof, proof, newSubproof)
     //if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
     loadProof(("Gentzen Result:", newProof))
-    top.repaint
-    body.repaint
-    // FIXME: scrolling does not work!
-    
-    scrollToProof(newProof)
+
+    // need to scroll after UI has finished updating
+    // to get the correct coordinates.
+    SwingUtilities.invokeLater(new Runnable() {
+      def run = scrollToProof(newSubproof) 
+    })
+
   } catch {
       case e: Throwable =>
         errorMessage("Couldn't eliminate all cuts!\n\n" + getExceptionString(e))

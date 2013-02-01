@@ -114,7 +114,6 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
   // of a proof
   def getLocationOfProof[S](proof: TreeProof[S]) = 
   {
-    //println("getting location")
     val dp = contents.head.asInstanceOf[DrawProof]
     dp.getLocationOfProof(proof)
   }
