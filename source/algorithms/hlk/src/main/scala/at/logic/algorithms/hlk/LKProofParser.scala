@@ -23,6 +23,13 @@ import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 import at.logic.algorithms.lk._
+import collection.immutable.Stack
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import scala.Tuple4
+import at.logic.language.lambda.types.->
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.schema.IntZero
+import scala.Tuple2
 
 object LKProofParser {
 
@@ -49,8 +56,9 @@ object LKProofParser {
     var mapBase = Map.empty[String, LKProof]
     var mapStep = Map.empty[String, LKProof]
     var map  = Map.empty[String, LKProof]
-    var baseORstep: Int = 1
+    var definitions_map = Map.empty[String, Tuple2[HOLFormula, HOLFormula]]
     SchemaProofDB.clear
+    var stackOfProofs: Stack[LKProof] = Stack.empty[LKProof]
     var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     var error_buffer = ""
     val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
@@ -67,41 +75,40 @@ object LKProofParser {
 
     class SimpleLKParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
       def line: Parser[List[Unit]] = rep(mappingBase)
-      def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
-        case l ~ ":" ~ p => {
-          error_buffer = l
-          if (baseORstep == 2) {
-            map = Map.empty[String, LKProof]
-            baseORstep = 1
-          }
-          map.put(l,p)
-          mapBase = map
-        }
-      }
-
-      def mappingStep: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
-        case l ~ ":" ~ p => {
-          error_buffer = l
-          if (baseORstep == 1) {
-            map = Map.empty[String, LKProof]
-            baseORstep = 2
-          }
-          map.put(l,p)
-          mapStep = map
+      def mappingBase: Parser[Unit] = proof ^^ {
+        case p => {
+//          error_buffer = l
+          stackOfProofs = stackOfProofs.push(p)
+//          map.put(l,p)
+//          mapBase = map
         }
       }
 
       def name = """(\\)?[a-z0-9_]+""".r
 
-      def lkProof: Parser[Unit] = ("proof" ~> name) ~ ("proves" ~> sequent)  ~ line   ^^ {
-        case  str ~  seq ~ line1 => {
-          bigMap.put(str, Pair(mapBase, mapStep))
-          SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, Axiom(Nil,Nil)))
-          mapBase = Map.empty[String, LKProof]
-          mapStep = Map.empty[String, LKProof]
+      def definition: Parser[Tuple2[Formula, Formula]] = formula ~ ":=" ~ formula ^^ {
+        case f1 ~ ":=" ~ f2 => {
+          Tuple2(f1, f2)
         }
       }
 
+      def def_list: Parser[Unit] = "def_list"~":"~ "{" ~ rep(definition) ~ "}" ^^ {
+        case "def_list"~":"~ "{" ~ l ~ "}" => {
+
+        }
+      }
+
+//      def lkProof: Parser[Unit] = def_list ~ "proof" ~ name ~ "proves" ~ sequent  ~ "{" ~ line ~ "}"  ^^ {
+//        case                            dl ~ "proof" ~  str ~ "proves" ~  seq     ~ "{" ~ line1 ~ "}"=> {
+//          //          proofName = str
+
+      def lkProof: Parser[Unit] = ("proof" ~> name) ~ ("proves" ~> sequent)  ~ line   ^^ {
+        case  str ~  seq ~ line1 => {
+          bigMap.put(str, Pair(mapBase, mapStep))
+          SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, stackOfProofs.pop2._1, Axiom(Nil,Nil)))
+          mapBase = Map.empty[String, LKProof]
+        }
+      }
 
       def slkProofs: Parser[List[Unit]] =  rep(trs) ~ rep(define) ~ rep(lkProof) ^^ {
         case a ~ s  => {
@@ -123,7 +130,7 @@ object LKProofParser {
       }
 
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR | impL | impR | termDefL1 | termDefR1 | arrowL | arrowR | autoprop
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | allR | impL | impR | autoprop
       def label: String = """[0-9]*[root]*"""
 
       def term: Parser[HOLExpression] = ( non_formula | formula)
@@ -248,18 +255,17 @@ object LKProofParser {
       protected def symbol: Parser[String] = symbols.r
       def symbols: String = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""" // +-*/\^<>=`~?@&|!#{}';
 
-
-
       //      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
-      def sequent: Parser[Sequent] = repsep(formula,",") ~ "|-" ~ repsep(formula,",") ^^ { case lfs ~ "|-" ~ rfs => {
+      def sequent: Parser[Sequent] = repsep(formula,",") ~ "|-" ~ repsep(formula,",") ^^ {
+        case lfs ~ "|-" ~ rfs => {
         //          println("\n\nSEQUENT")
         Axiom(lfs, rfs).root
-      }
+        }
       }
 
       def ax: Parser[LKProof] = "ax(" ~ sequent ~ ")" ^^ {
         case "ax(" ~ sequent ~ ")" => {
-          //          println("\n\nAXIOM")
+//                    println("\n\nAXIOM")
           Axiom(sequent)
         }
         case _ => {println("ERROR");Axiom(List(), List())}
@@ -310,38 +316,45 @@ object LKProofParser {
         }
       }
 
-      def cut: Parser[LKProof] = "cut(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "cut(" ~ l1 ~ "," ~ l2 ~ "," ~ f ~ ")" => {
-
-          CutRule(map.get(l1).get, map.get(l2).get, f)
+      def cut: Parser[LKProof] = "cut(" ~ formula ~ ")" ^^ {
+        case "cut(" ~ f ~ ")" => {
+          val top1 = stackOfProofs.pop2._1
+          stackOfProofs = stackOfProofs.pop2._2
+          val top2 = stackOfProofs.pop2._1
+          stackOfProofs = stackOfProofs.pop2._2
+          CutRule(top2, top1, f)
         }
       }
 
-      def negL: Parser[LKProof] = "negL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "negL(" ~ label ~ "," ~ formula ~ ")" => {
-          NegLeftRule(map.get(label).get, formula)
-        }
-        case _ => {
-          println("\n\nError!")
-          sys.exit(10)
+      def negL: Parser[LKProof] = "negL(" ~ formula ~ ")" ^^ {
+        case "negL(" ~ formula ~ ")" => {
+          val top = stackOfProofs.pop2._1
+          stackOfProofs = stackOfProofs.pop2._2
+          NegLeftRule(top, formula)
         }
       }
 
-      def negR: Parser[LKProof] = "negR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "negR(" ~ label ~ "," ~ formula ~ ")" => {
-          NegRightRule(map.get(label).get, formula)
+      def negR: Parser[LKProof] = "negR(" ~ formula ~ ")" ^^ {
+        case "negR(" ~ formula ~ ")" => {
+          val top = stackOfProofs.pop2._1
+          stackOfProofs = stackOfProofs.pop2._2
+          NegRightRule(top, formula)
         }
       }
 
-      def weakR: Parser[LKProof] = "weakR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "weakR(" ~ label ~ "," ~ formula ~ ")" => {
-          WeakeningRightRule(map.get(label).get, formula)
+      def weakR: Parser[LKProof] = "weakR(" ~ formula ~ ")" ^^ {
+        case "weakR(" ~ formula ~ ")" => {
+          val top = stackOfProofs.pop2._1
+          stackOfProofs = stackOfProofs.pop2._2
+          WeakeningRightRule(top, formula)
         }
       }
 
-      def weakL: Parser[LKProof] = "weakL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "weakL(" ~ label ~ "," ~ formula ~ ")" => {
-          WeakeningLeftRule(map.get(label).get, formula)
+      def weakL: Parser[LKProof] = "weakL(" ~ formula ~ ")" ^^ {
+        case "weakL(" ~ formula ~ ")" => {
+          val top = stackOfProofs.pop2._1
+          stackOfProofs = stackOfProofs.pop2._2
+          WeakeningLeftRule(top, formula)
         }
       }
       //      def eqAnd1: Parser[LKProof] = "eqAnd1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
@@ -481,35 +494,26 @@ object LKProofParser {
         }
       }
 
-      def arrowL: Parser[LKProof] = "arrowL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "arrowL(" ~ label ~ "," ~ f1 ~  ")" => {
-          trsArrowLeftRule(map.get(label).get, f1)
-        }
-      }
-
-      def arrowR: Parser[LKProof] = "arrowR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
-        case "arrowR(" ~ label ~ "," ~ f1 ~  ")" => {
-          trsArrowRightRule(map.get(label).get, f1)
-        }
-      }
-
       def autoprop: Parser[LKProof] = "autoprop(" ~ sequent ~ ")" ^^ {
         case "autoprop(" ~ seq ~ ")" => solvePropositional.autoProp(seq.toFSequent())
       }
 
-      def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-        case "termDefL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          TermLeftEquivalenceRule1(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-        }
-      }
-
-      def termDefR1: Parser[LKProof] = "termDefR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
-        case "termDefR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          TermRightEquivalenceRule1(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-        }
-      }
     }
     bigMap
   }
 }
 
+
+object applyContr {
+  def apply(f: HOLFormula, p:LKProof): LKProof = {
+    val seq = p.root
+    val ant1 = seq.antecedent.filter(fo => fo.formula == f)
+    val succ1 = seq.succedent.filter(fo => fo.formula == f)
+    var p1: LKProof = p
+    if (ant1.size > 1)
+      p1 = ContractionLeftRule(p1,f)
+    if (succ1.size > 1)
+      p1 = ContractionRightRule(p1,f)
+    return p1
+  }
+}

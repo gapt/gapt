@@ -43,6 +43,8 @@ import at.logic.language.schema.foVar
 import at.logic.language.schema.foTerm
 import at.logic.language.schema.sTerm
 import at.logic.language.schema.dbTRS
+import collection.immutable.Stack
+import at.logic.calculi.slk.SchemaProofDB
 
 @RunWith(classOf[JUnitRunner])
 class LKParserTest extends SpecificationWithJUnit {
@@ -52,9 +54,8 @@ class LKParserTest extends SpecificationWithJUnit {
     "parse correctly a FO LK-proof" in {
       println(Console.BLUE+"\n---- START ----\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "proof1.lk"))
-      val map = LKProofParser.parseProof(s)
-
-      println("\n\nend_seq = "+  map.get("\\psi").get._1.get("root").get.root.toString()  )
+      LKProofParser.parseProof(s)
+      println("\n\nend_seq = "+  SchemaProofDB.get("\\psi").base.root  )
       println(Console.BLUE+"\n--------\n"+Console.RESET)
       Success()
     }
