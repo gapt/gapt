@@ -663,3 +663,20 @@ class SchemaSubstitution2[T <: HOLExpression](val map: scala.collection.immutabl
     }
   }
 }
+
+//object representing a schematic atom: P(i:ω, args)
+object sAtom {
+  def apply( sym: ConstantStringSymbol, args: List[HOLExpression]): HOLFormula = {
+    val pred : Var = HOLFactory.createVar( sym, FunctionType( To(), args.map( a => a.exptype ) ) )
+    apply(pred, args).asInstanceOf[HOLFormula with Schema]
+  }
+  def apply(head: Var, args: List[HOLExpression]): HOLFormula = {
+    AppN(head, args).asInstanceOf[HOLFormula with Schema]
+  }
+  def unapply( expression: LambdaExpression ) = expression match {
+    case App(Var(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
+    case App(App(Var(sym,_),_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
+    case AppN( Var( name, t ), args ) if (expression.exptype == To() && expression.isInstanceOf[Schema]) => Some( ( name, args.asInstanceOf[List[HOLExpression]] ) )
+    case _ => None
+  }
+}
