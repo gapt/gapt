@@ -18,6 +18,8 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
 trait SimpleFOLParser extends SimpleHOLParser {
+  override def goal = term
+
   override def term: Parser[HOLExpression] = (formula | non_formula)
   override def formula: Parser[HOLFormula] = (and | or | imp | neg | forall | exists | const_atom) ^? {case trm: FOLFormula => trm.asInstanceOf[FOLFormula]}
   override def non_formula: Parser[HOLExpression] = (const_func | variable | constant) ^? {case trm: FOLTerm => trm.asInstanceOf[FOLTerm]}

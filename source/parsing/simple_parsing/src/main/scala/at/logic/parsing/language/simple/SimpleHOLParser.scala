@@ -19,6 +19,8 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
 trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.language.lambda.types.Parsers {
+  def goal = term
+
   def term: Parser[HOLExpression] = (non_formula | formula)
   def formula: Parser[HOLFormula] = (neg | atom | and | or | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
   def non_formula: Parser[HOLExpression] = (abs | variable | constant | var_func | const_func)

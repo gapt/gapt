@@ -108,6 +108,7 @@ import at.logic.calculi.resolution.base.FClause
 import fol.FOLVar
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.prover9.Prover9TermParser
+import at.logic.algorithms.hlk.SchemaFormulaParser
 
 object loadProofs {
     def apply(file: String) =
@@ -294,6 +295,7 @@ object loadProofDB {
   object parse {
     private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
     private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
+    private class CLIParserSchema(input: String) extends StringReader(input) with SchemaFormulaParser
 
     def fol(string:String) = {
        new CLIParserFOL(string).getTerm.asInstanceOf[FOLFormula]
@@ -306,6 +308,10 @@ object loadProofDB {
     //this is redundant
     def hol(string:String) = {
        new CLIParserHOL(string) getTerm
+    }
+
+    def sfo(string:String) = {
+      new CLIParserSchema(string) getTerm
     }
 
     def slk(file:String) = {

@@ -11,12 +11,17 @@ import at.logic.language.hol._
 import at.logic.parsing.InputParser
 
 trait HOLParser extends InputParser {
-    def term : Parser[HOLExpression]
+    def goal : Parser[HOLExpression]
+
     def getTerm(): HOLExpression = {
         val reader = getInput()
         try
         {
-          parseAll(term, reader).get
+          parseAll(goal, reader) match {
+            case Success(expression, _) => expression
+            case NoSuccess(msg, input) =>
+              throw new Exception("Error parsing expression " + input.source + " at "+input.pos + ": "+msg)
+          }
         }
         finally
         {

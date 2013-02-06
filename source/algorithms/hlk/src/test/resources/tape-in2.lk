@@ -1,4 +1,4 @@
 proof \psi proves   A(x) :- I(0), I(1)
 
-ax(A(x) :- I(0), I(1) )
+ax( Forall x ( =(f(x), 0) \/ =(f(x), 1) ) :- I(0), I(1) )
 
