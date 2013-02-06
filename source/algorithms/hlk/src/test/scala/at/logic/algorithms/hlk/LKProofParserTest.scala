@@ -50,23 +50,24 @@ import at.logic.calculi.slk.SchemaProofDB
 class LKParserTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
   "LKParser" should {
+    val path = "target" + separator + "test-classes" + separator
 
     "parse correctly a FO LK-proof" in {
-      println(Console.BLUE+"\n---- START ----\n"+Console.RESET)
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "proof1.lk"))
+      val s = new InputStreamReader(new FileInputStream(path + "proof1.lk"))
       LKProofParser.parseProof(s)
       println("\n\nend_seq = "+  SchemaProofDB.get("\\psi").base.root  )
-      println(Console.BLUE+"\n--------\n"+Console.RESET)
       Success()
     }
 
 
-    " parse a fol proof of all n all x all y. x+y = " in {
-
-
-
+    "parse correctly the tape proof" in {
+      val s = new InputStreamReader(new FileInputStream(path + "tape-in2.lk"))
+      LKProofParser.parseProof(s)
+      println("\n\nend_seq = "+  SchemaProofDB.get("\\psi").base.root  )
       Success()
     }
+
+
   }
 }
 

@@ -1,0 +1,4 @@
+proof \psi proves   A(x) :- I(0), I(1)
+
+ax(A(x) :- I(0), I(1) )
+

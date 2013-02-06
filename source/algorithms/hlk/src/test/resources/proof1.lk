@@ -1,16 +1,16 @@
-proof \psi proves A(x), ~A(x), C(x) |- C(x), B(x), D(x)
+proof \psi proves A(x), ~A(x), C(x) :- C(x), B(x), D(x)
 
-  	ax(A(x) |- A(x))
+  	ax(A(x) :- A(x))
 	negL( A(x) )
 	weakR( B(x) )
 	weakR( A(x) )
 
-    ax(C(x) |- C(x))
+    ax(C(x) :- C(x))
     weakL( A(x) )
 
     cut( A(x) )
 
-    ax(B(x) |- B(x))
+    ax(B(x) :- B(x))
     weakR( D(x) )
 
     cut( B(x) )
