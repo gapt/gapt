@@ -32,9 +32,10 @@ import at.logic.calculi.lk.base.types.FSequent
 import collection.mutable
 import collection.immutable
 import at.logic.parsing.language.xml.ProofDatabase
+import at.logic.parsing.language.prover9.Prover9TermParserA
 
 object LKProofParser {
-  def debug(s:String) = { }
+  def debug(s:String) = { println(s) }
 
 
   def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
@@ -51,7 +52,11 @@ object LKProofParser {
   //plabel should return the proof corresponding to this label
   def parseProof(txt: InputStreamReader): ProofDatabase = {
     dbTRS.clear
-    lazy val sp = new SimpleLKParser with SchemaFormulaParser { def getInput = txt }
+    lazy val sp = new SimpleLKParser with Prover9TermParserA {
+      def getInput = txt
+      override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)""".r
+      override def varsymb: Parser[String] =  """[u-z][a-zA-Z0-9_]*""".r
+    }
 
     sp.parseAll(sp.hlk_file, txt) match {
       case sp.Success(result, input) =>
@@ -64,29 +69,45 @@ object LKProofParser {
   }
 }
 
-abstract trait SimpleLKParser extends JavaTokenParsers  {
+abstract trait HLKFormulaParser extends JavaTokenParsers {
+  //abstract parsers for formulas
+  def term: Parser[HOLExpression];
+  def formula: Parser[HOLFormula];
+  def variable: Parser[HOLVar];
+
+}
+
+abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   import LKProofParser.debug
 
   //type ProofMap = mutable.HashMap[String,LKProof]
 
   //maps to prevent passing around lots of parameters
-  var stackOfProofs: Stack[LKProof] = Stack.empty[LKProof]
+  var stackOfProofs: immutable.Stack[LKProof] = immutable.Stack.empty[LKProof]
   val proofs  = mutable.Map.empty[String, LKProof]
+  val subproofs  = mutable.Map.empty[String, LKProof]
+
+  /* automatic generation of labels */
+  private var labelcount = 100
+  private def getLabel = {
+    val labels = subproofs.keySet ++ proofs.keySet
+    while (labels.contains("l"+labelcount))
+      labelcount = labelcount +1
+    "l" + labelcount
+  }
+
 
   def getProofDB : ProofDatabase = {
+    debug("subproofs:")
+    subproofs map (x => debug(x._1 + " : " + x._2.root))
     new ProofDatabase(Map.empty[HOLExpression,HOLExpression], proofs.toList, Nil, Nil)
   }
 
-  //abstract parsers for formulas
-  def term: Parser[HOLExpression];
-  def formula: Parser[HOLFormula];
-  def non_formula: Parser[HOLExpression];
-  def variable: Parser[HOLVar];
 
   // hardcoded syntax conventions
   val proof_name : Parser[String] = """[\\]*[a-z]*[0-9]*""".r
   val name = """(\\)?[a-z0-9_]+""".r
-  val label = """[0-9]*[root]*""".r
+  val label = """[a-zA-Z0-9]+""".r
 
 
   def hlk_file: Parser[List[LKProof]] =  rep(lkProof)
@@ -96,22 +117,32 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
 
   def lkProof: Parser[LKProof] = ("proof" ~> name) ~ ("proves" ~> sequent)  ~ line   ^^ {
     case  proofname ~  endsequent ~ line => {
+      println(line)
       proofs.put(proofname, stackOfProofs.head)
+      subproofs.put(proofname, stackOfProofs.head)
       stackOfProofs.head
     }
   }
 
 
-  def proof: Parser[LKProof] = (ax | orL | orR1 | orR | orR2 |
-                               negL | negR | cut |
-                               andL | andR| andL1 | andL2 |
-                               weakL | weakR | contrL | contrR |
-                               andEqR1 | andEqR2 | andEqR3 |
-                               orEqR1 | orEqR2 | orEqR3 |
-                               andEqL1 | andEqL2 | andEqL3 |
-                               orEqL1 | orEqL2 | orEqL3 |
-                               allL | allR | impL | impR |
-                               autoprop) ^^ { p => stackOfProofs = stackOfProofs.push(p); p }
+  def proof: Parser[LKProof] = (ax | orL |
+     negL | negR | cut | andR|
+     unaryAndOr |
+     weakL | weakR | contrL | contrR |
+     allL | allR | impL | impR |
+     autoprop) ~ opt("[" ~> label <~ "]") <~ ";" ^^ { _ match {
+        case p ~ None =>
+          debug("generating label and pushing proof of "+p.root)
+          stackOfProofs = stackOfProofs.push(p);
+          subproofs.put(getLabel, p)
+          p
+        case p ~ Some(label) =>
+          debug("using label "+label+" and pushing proof of "+p.root)
+          stackOfProofs = stackOfProofs.push(p);
+          subproofs.put(label, p)
+          p
+      }
+     }
 
 
 
@@ -119,19 +150,22 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
   //      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
   def sequent: Parser[FSequent] = repsep(formula,",") ~ ":-" ~ repsep(formula,",") ^^ {
     case lfs ~ ":-" ~ rfs => {
-      //          println("\n\nSEQUENT")
+      //          println("SEQUENT")
       FSequent(lfs, rfs)
     }
   }
 
   /* ========== axiom rules ========================== */
 
-  def ax: Parser[LKProof] = "ax(" ~> sequent <~ ")" ^^ { sequent =>  Axiom(sequent.antecedent, sequent.succedent)  }
+  def ax: Parser[LKProof] = "ax(" ~> sequent <~ ")" ^^ { sequent =>
+    debug("axiom!")
+    Axiom(sequent.antecedent, sequent.succedent)
+  }
 
   /*
   def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
     case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
-      debug("\n\npLink")
+      debug("pLink")
       FOSchemaProofLinkRule(sequent, name, v::Nil)
     }
   }
@@ -152,20 +186,21 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
 
   def contrL: Parser[LKProof] = "contrL(" ~ label ~ "," ~ formula ~ ")" ^^ {
     case "contrL(" ~ l ~ "," ~ f ~ ")" => {
-      debug("\n\ncontrL")
+      debug("contrL")
       ContractionLeftRule(proofs.get(l).get, f)
     }
   }
 
   def contrR: Parser[LKProof] = "contrR(" ~ label ~ "," ~ formula ~ ")" ^^ {
     case "contrR(" ~ l ~ "," ~ f ~ ")" => {
-      debug("\n\ncontrR")
+      debug("contrR")
       ContractionRightRule(proofs.get(l).get, f)
     }
   }
 
   def weakR: Parser[LKProof] = "weakR(" ~ formula ~ ")" ^^ {
     case "weakR(" ~ formula ~ ")" => {
+      debug("weak right "+formula)
       val top = stackOfProofs.pop2._1
       stackOfProofs = stackOfProofs.pop2._2
       WeakeningRightRule(top, formula)
@@ -174,6 +209,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
 
   def weakL: Parser[LKProof] = "weakL(" ~ formula ~ ")" ^^ {
     case "weakL(" ~ formula ~ ")" => {
+      debug("weak left "+formula)
       val top = stackOfProofs.pop2._1
       stackOfProofs = stackOfProofs.pop2._2
       WeakeningLeftRule(top, formula)
@@ -198,30 +234,53 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
     }
   }
 
-  def orR1: Parser[LKProof] = "orR1(" ~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1  ~ f2 => {
-      debug("\n\norR1")
-      OrRight1Rule(proofs.get(l).get, f1, f2)
+  def unaryAndOr: Parser[LKProof] = (("and" ~ "left([12])?") |  ("or" ~ "right([12])?")  ) ~ ("by" ~> label) ~ (":" ~> formula) ~ ("," ~> formula)  ^^ { r =>
+    var parent : LKProof = null
+    r match {
+      case _ ~ _ ~ label ~ _ ~ _ =>
+        if (subproofs contains label) parent = subproofs(label)
+        if (proofs contains label) parent = proofs(label)
+        require(parent != null , "Referring to unknown label "+label)
+    }
+
+
+    r match {
+      case "or" ~ "right" ~ l ~ f1  ~ f2 =>
+        OrRightRule(parent, f1, f2)
+      case "or" ~ "right1" ~ l ~ f1  ~ f2 =>
+        OrRight1Rule(parent, f1, f2)
+      case "or" ~ "right2" ~ l ~ f1  ~ f2 =>
+        OrRight2Rule(parent, f1, f2)
+      case "and" ~ "left" ~ l ~ f1  ~ f2 =>
+        AndLeftRule(parent, f1, f2)
+      case "and" ~ "left1" ~ l ~ f1  ~ f2 =>
+        AndLeft1Rule(parent, f1, f2)
+      case "and" ~ "left2" ~ l ~ f1  ~ f2 =>
+        AndLeft2Rule(parent, f1, f2)
+
     }
   }
 
+  /*
   def orR2: Parser[LKProof] = "orR2("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
     case l ~ f1 ~ f2 => {
-      debug("\n\norR2")
+      debug("orR2")
       OrRight2Rule(proofs.get(l).get, f1, f2)
     }
   }
 
   def orR: Parser[LKProof] = "orR("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
     case l ~ f1 ~ f2 => {
-      debug("\n\norR")
+      debug("orR")
       OrRightRule(proofs.get(l).get, f1, f2)
     }
   }
+*/
+
 
   def orL: Parser[LKProof] = "orL(" ~> label ~ (","~> label) ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
     case l1 ~ l2  ~ f1 ~ f2 => {
-      debug("\n\norL")
+      debug("orL")
       OrLeftRule(proofs.get(l1).get, proofs.get(l2).get, f1, f2)
     }
   }
@@ -234,16 +293,17 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
   }
 
 
+  /*
   def andL1: Parser[LKProof] = "andL1("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
     case l ~ f1 ~ f2 => {
-      debug("\n\nandL1")
+      debug("andL1")
       AndLeft1Rule(proofs.get(l).get, f1, f2)
     }
   }
 
   def andL2: Parser[LKProof] = "andL2("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
     case l ~ f1 ~ f2 => {
-      debug("\n\nandL2")
+      debug("andL2")
       AndLeft2Rule(proofs.get(l).get, f1, f2)
     }
   }
@@ -254,78 +314,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
       p
     }
   }
-
-  def andEqR1: Parser[LKProof] = "andEqR1("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      AndRightEquivalenceRule1(proofs.get(l).get, f1, f2)
-    }
-  }
-
-  def andEqR2: Parser[LKProof] = "andEqR2("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      AndRightEquivalenceRule2(proofs.get(l).get, f1, f2)
-    }
-  }
-
-  def andEqR3: Parser[LKProof] = "andEqR3("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      AndRightEquivalenceRule3(proofs.get(l).get, f1, f2)
-    }
-  }
-
-  def andEqL1: Parser[LKProof] = "andEqL1("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      AndLeftEquivalenceRule1(proofs.get(l).get, f1, f2)
-    }
-  }
-
-  def andEqL2: Parser[LKProof] = "andEqL2("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      AndLeftEquivalenceRule2(proofs.get(l).get, f1, f2)
-    }
-  }
-
-  def andEqL3: Parser[LKProof] = "andEqL3("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      AndLeftEquivalenceRule3(proofs.get(l).get, f1, f2)
-    }
-  }
-
-  def orEqR1: Parser[LKProof] = "orEqR1("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      OrRightEquivalenceRule1(proofs.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
-    }
-  }
-
-  def orEqR2: Parser[LKProof] = "orEqR2("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      OrRightEquivalenceRule2(proofs.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
-    }
-  }
-
-  def orEqR3: Parser[LKProof] = "orEqR3("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      OrRightEquivalenceRule3(proofs.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
-    }
-  }
-
-  def orEqL1: Parser[LKProof] = "orEqL1("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      OrLeftEquivalenceRule1(proofs.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
-    }
-  }
-
-  def orEqL2: Parser[LKProof] = "orEqL2("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      OrLeftEquivalenceRule2(proofs.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
-    }
-  }
-
-  def orEqL3: Parser[LKProof] = "orEqL3("~> label ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case l ~ f1 ~ f2 => {
-      OrLeftEquivalenceRule3(proofs.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
-    }
-  }
+  */
 
 
   def impL: Parser[LKProof] = "impL(" ~> label ~ (","~> label) ~ ("," ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
@@ -341,7 +330,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
   }
 
 
-  def allL: Parser[LKProof] = "allL(" ~> label ~ ("," ~> formula) ~ ("," ~> formula) ~ ("," ~> non_formula) <~ ")" ^^ {
+  def allL: Parser[LKProof] = "allL(" ~> label ~ ("," ~> formula) ~ ("," ~> formula) ~ ("," ~> term) <~ ")" ^^ {
     case l ~ aux ~ main ~ term => {
       ForallLeftRule(proofs.get(l).get, aux, main, term)
     }
@@ -353,7 +342,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
     }
   }
 
-  def exR: Parser[LKProof] = "exR(" ~> label ~ ("," ~> formula) ~ ("," ~> formula) ~ ("," ~> non_formula) <~ ")" ^^ {
+  def exR: Parser[LKProof] = "exR(" ~> label ~ ("," ~> formula) ~ ("," ~> formula) ~ ("," ~> term) <~ ")" ^^ {
     case l ~ aux ~ main ~ term => {
       ExistsRightRule(proofs.get(l).get, aux, main, term)
     }
@@ -366,11 +355,24 @@ abstract trait SimpleLKParser extends JavaTokenParsers  {
   }
   def autoprop: Parser[LKProof] = "autoprop(" ~> sequent <~ ")" ^^ { seq  => solvePropositional.autoProp(seq)  }
 
+
+  def applyContr (f: HOLFormula, p:LKProof): LKProof = {
+    val seq = p.root
+    val ant1 = seq.antecedent.filter(fo => fo.formula == f)
+    val succ1 = seq.succedent.filter(fo => fo.formula == f)
+    var p1: LKProof = p
+    if (ant1.size > 1)
+      p1 = ContractionLeftRule(p1,f)
+    if (succ1.size > 1)
+      p1 = ContractionRightRule(p1,f)
+    return p1
+  }
+
 }
 
 
 // trying to separate formula parsing from language parsing
-trait SchemaFormulaParser extends JavaTokenParsers with HOLParser {
+trait SchemaFormulaParser extends HLKFormulaParser with HOLParser {
     import LKProofParser.debug
 
     def goal = term
@@ -415,8 +417,8 @@ trait SchemaFormulaParser extends JavaTokenParsers with HOLParser {
         if (! predicate_arities.isDefinedAt(x.toString) )
           predicate_arities.put(x.toString, l.size)
         else if (predicate_arities.get(x.toString).get != l.size ) {
-          println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+predicate_arities.get(x.toString).get+ ", but not "+l.size+" !\n\n")
-          throw new Exception("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+predicate_arities.get(x.toString).get+ ", but not "+l.size+" !\n")
+          println("Input ERROR : Indexed Predicate '"+x.toString+"' should have arity "+predicate_arities.get(x.toString).get+ ", but not "+l.size+" !")
+          throw new Exception("Input ERROR : Indexed Predicate '"+x.toString+"' should have arity "+predicate_arities.get(x.toString).get+ ", but not "+l.size+" !")
         }
 
         IndexedPredicate(new ConstantStringSymbol(x), l)
@@ -486,27 +488,14 @@ trait SchemaFormulaParser extends JavaTokenParsers with HOLParser {
     // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
     def prefix : Parser[Tuple4[Boolean, IntVar, IntegerTerm, IntegerTerm]] = """[BigAnd]*[BigOr]*""".r ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
       case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
-        debug("\n\nprefix\n\n")
+        debug("prefix")
         Tuple4(true, intVar1, ind1, ind2)
       }
       case "BigOr" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")"  => {
-        debug("\n\nprefix\n\n")
+        debug("prefix")
         Tuple4(false, intVar1, ind1, ind2)
       }
     }
 
   }
 
-object applyContr {
-  def apply(f: HOLFormula, p:LKProof): LKProof = {
-    val seq = p.root
-    val ant1 = seq.antecedent.filter(fo => fo.formula == f)
-    val succ1 = seq.succedent.filter(fo => fo.formula == f)
-    var p1: LKProof = p
-    if (ant1.size > 1)
-      p1 = ContractionLeftRule(p1,f)
-    if (succ1.size > 1)
-      p1 = ContractionRightRule(p1,f)
-    return p1
-  }
-}

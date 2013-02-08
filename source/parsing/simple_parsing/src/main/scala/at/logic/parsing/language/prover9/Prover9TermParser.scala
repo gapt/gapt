@@ -46,7 +46,7 @@ object Prover9TermParserLadrStyle extends Prover9TermParserA {
 }
 
 
-abstract class Prover9TermParserA extends JavaTokenParsers {
+abstract trait Prover9TermParserA extends JavaTokenParsers {
   /* these two rules are abstract since the variable style decides the regexp for a variable */
   def conssymb : Parser[String]
   def varsymb : Parser[String]

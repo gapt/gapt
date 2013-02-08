@@ -29,7 +29,6 @@ class LKParserTest extends SpecificationWithJUnit {
 
 
     "parse correctly the tape proof" in {
-      skipped("to do")
       val s = new InputStreamReader(new FileInputStream(path + "tape-in2.lk"))
       val db = LKProofParser.parseProof(s)
       val pmap = immutable.Map.empty[String,LKProof] ++ db.proofs
