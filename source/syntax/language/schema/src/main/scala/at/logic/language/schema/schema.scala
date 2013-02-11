@@ -680,3 +680,46 @@ object sAtom {
     case _ => None
   }
 }
+
+case object lessThanSymbol extends ConstantSymbolA {
+  override def unique = "LessThanSymbol"
+  override def toString = "<"
+  def toCode = "LessThanSymbol"
+  def compare(that: SymbolA) = that match {
+    case a: ConstantSymbolA => unique.compare( a.unique )
+  }
+}
+
+case object LeqSymbol extends ConstantSymbolA {
+  override def unique = "LeqSymbol"
+  override def toString = "≤"
+  def toCode = "LeqSymbol"
+  def compare(that: SymbolA) = that match {
+    case a: ConstantSymbolA => unique.compare( a.unique )
+  }
+}
+
+case class LessThanC(e:TA) extends HOLConst(lessThanSymbol, ->(e, ->(e,"o")))
+case class LeqC(e:TA) extends HOLConst(LeqSymbol, ->(e, ->(e,"o")))
+
+object lessThan {
+  def apply(left: HOLExpression, right: HOLExpression) = {
+    require(left.exptype == right.exptype)
+    App(App(LessThanC(left.exptype), left),right).asInstanceOf[HOLFormula]
+  }
+  def unapply(expression: LambdaExpression) = expression match {
+    case App(App(LessThanC(_),left),right) => Some( left.asInstanceOf[HOLExpression],right.asInstanceOf[HOLExpression] )
+    case _ => None
+  }
+}
+
+object leq {
+  def apply(left: HOLExpression, right: HOLExpression) = {
+    require(left.exptype == right.exptype)
+    App(App(LeqC(left.exptype), left),right).asInstanceOf[HOLFormula]
+  }
+  def unapply(expression: LambdaExpression) = expression match {
+    case App(App(LeqC(_),left),right) => Some( left.asInstanceOf[HOLExpression],right.asInstanceOf[HOLExpression] )
+    case _ => None
+  }
+}
