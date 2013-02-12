@@ -46,9 +46,13 @@ import at.logic.algorithms.cutIntroduction.CutIntroduction
 import at.logic.testing.LinearExampleProof
 
 object Main extends SimpleSwingApplication {
+  val body = new MyScrollPane
+  val db = new FileParser
+
   override def startup(args: Array[String]) {
     showFrame()
     if (args.length >= 1) loadProof(args(0),12)
+    else ProofToolPublisher.publish(DisableMenus)
   }
 
   def showFrame() {
@@ -263,8 +267,7 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def scrollToProof(proof: TreeProof[_]) =
-  {
+  def scrollToProof(proof: TreeProof[_]) {
     //val launcher = body.contents.head.asInstanceOf[Launcher]
     val launcher = body.getContent
     val pos = launcher.getLocationOfProof(proof).get
@@ -286,7 +289,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.contents = new Launcher(Some(proof), 12)
     body.cursor = java.awt.Cursor.getDefaultCursor
-    resetCuts
+    resetCuts()
   }
 
   // Used for ViewResolutionProof menu
@@ -310,6 +313,7 @@ object Main extends SimpleSwingApplication {
       body.contents = new Launcher(Some(db.getResolutionProofs.head), fontSize)
     else body.contents = new Launcher(None, fontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
+    ProofToolPublisher.publish(EnableMenus)
   }
 
   // Used by View Clause List menu
@@ -334,11 +338,11 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used by "Cycle through cuts"
-  var cuts : List[LKProof] = null
-  var current_cut : Iterator[LKProof] = null
+  private var cuts : List[LKProof] = null
+  private var current_cut : Iterator[LKProof] = null
 
   // Should be called whenever the proof is changed.
-  def resetCuts = {
+  def resetCuts() {
     cuts = null
     current_cut = null
   }
@@ -360,33 +364,65 @@ object Main extends SimpleSwingApplication {
         mnemonic = Key.P
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, JActionEvent.CTRL_MASK))
         border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
       }
       contents += new MenuItem(Action("Save All as XML") { fSaveAll() }) {
         mnemonic = Key.S
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, JActionEvent.CTRL_MASK))
         border = customBorder
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case DisableMenus => enabled = false
+          case EnableMenus => enabled = true
+        }
       }
       contents += new Separator
       contents += new MenuItem(Action("Export as PDF") { fExportPdf() }) {
         mnemonic = Key.D
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, JActionEvent.CTRL_MASK))
         border = customBorder
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case DisableMenus => enabled = false
+          case EnableMenus => enabled = true
+        }
       }
       contents += new Separator
       contents += new MenuItem(Action("Export Clause Set as TPTP") { fExportClauseSetToTPTP() }) {
         mnemonic = Key.T
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, JActionEvent.CTRL_MASK))
         border = customBorder
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case DisableMenus => enabled = false
+          case EnableMenus => enabled = true
+        }
       }
       contents += new MenuItem(Action("Export Clause Set as TeX") { fExportClauseSetToTeX() }) {
         mnemonic = Key.E
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, JActionEvent.CTRL_MASK))
         border = customBorder
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case DisableMenus => enabled = false
+          case EnableMenus => enabled = true
+        }
       }
       contents += new MenuItem(Action("Export Proof as TeX") { fExportProofToTex(body.getContent.getData.get._2, ask = true) }) {
         mnemonic = Key.A
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, JActionEvent.CTRL_MASK))
         border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
       }
       contents += new Separator
       contents += new MenuItem(Action("Exit") { fExit() }) {
@@ -397,7 +433,11 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       mnemonic = Key.E
-
+      listenTo(ProofToolPublisher)
+      reactions += {
+        case DisableMenus => enabled = false
+        case EnableMenus => enabled = true
+      }
       contents += new MenuItem(Action("Search...") { search() }) {
         mnemonic = Key.S
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, JActionEvent.CTRL_MASK))
@@ -478,6 +518,11 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("View") {
       mnemonic = Key.V
+      listenTo(ProofToolPublisher)
+      reactions += {
+        case DisableMenus => enabled = false
+        case EnableMenus => enabled = true
+      }
       contents += new MenuItem(Action("Zoom In") { zoomIn() }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP , JActionEvent.ALT_MASK))
         border = customBorder
@@ -497,7 +542,7 @@ object Main extends SimpleSwingApplication {
         if ( current_cut == null || !current_cut.hasNext )
           current_cut = cuts.iterator
 
-        val cut = current_cut.next
+        val cut = current_cut.next()
         scrollToProof(cut)
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
@@ -587,6 +632,11 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("LKS Proof") {
       mnemonic = Key.P
+      listenTo(ProofToolPublisher)
+      reactions += {
+        case DisableMenus => enabled = false
+        case EnableMenus => enabled = true
+      }
       contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet() }) {
         border = customBorder
         enabled = false
@@ -629,6 +679,7 @@ object Main extends SimpleSwingApplication {
       mnemonic = Key.T
       contents += new MenuItem(Action("cutIntro(LinearExampleProof(4))") {
         body.contents = new Launcher(Some(("cutIntro(LinearExampleProof(4))", CutIntroduction(LinearExampleProof(4)))), 12)
+        ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
 
       contents += new MenuItem(Action("Non-Prenex Proof 1") {
@@ -659,6 +710,7 @@ object Main extends SimpleSwingApplication {
         val andlft = AndLeft1Rule(contr, all_px, qa)
 
         body.contents = new Launcher(Some(("Proof", andlft)), 12)
+        ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
       contents += new MenuItem(Action("Non-Prenex Proof 2") {
         import at.logic.language.lambda.types.Definitions._
@@ -690,6 +742,7 @@ object Main extends SimpleSwingApplication {
         val orrght = OrRight1Rule(contr, ex_px, ex_qy)
 
         body.contents = new Launcher(Some(("Proof", orrght)), 12)
+        ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
       contents += new MenuItem(Action("Nested Proof 1") {
         import at.logic.language.lambda.types.Definitions._
@@ -722,6 +775,7 @@ object Main extends SimpleSwingApplication {
         val all3 = ForallLeftRule(andlft, And(all_px,qa), AllVar(y, And(all_px,qy)),a)
 
         body.contents = new Launcher(Some(("Proof", all3)), 12)
+        ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
       contents += new MenuItem(Action("Nested Expansion Tree") {
         import at.logic.language.lambda.types.Definitions._
@@ -768,6 +822,7 @@ object Main extends SimpleSwingApplication {
         val et = (Seq(expTree,expTree),Seq(expT,expT))
 
         body.contents = new Launcher(Some(("Expansion Tree", et)), 12)
+        ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
       contents += new MenuItem(Action("Nested Expansion Tree 1") {
         import at.logic.language.lambda.types.Definitions._
@@ -815,6 +870,7 @@ object Main extends SimpleSwingApplication {
         val et = (Seq(ant1ET,ant2ET),Seq(conET))
 
         body.contents = new Launcher(Some(("Expansion Tree", et)), 12)
+        ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
     }
   }
@@ -1034,7 +1090,7 @@ object Main extends SimpleSwingApplication {
     // need to scroll after UI has finished updating
     // to get the correct coordinates.
     SwingUtilities.invokeLater(new Runnable() {
-      def run = scrollToProof(newSubproof) 
+      def run() { scrollToProof(newSubproof) }
     })
 
   } catch {
@@ -1186,8 +1242,6 @@ object Main extends SimpleSwingApplication {
     else e.getStackTraceString
   }
 
-  val body = new MyScrollPane
-  val db = new FileParser
   private val chooser = new FileChooser {
     fileFilter = new FileFilter {
       def accept(f: File): Boolean = {

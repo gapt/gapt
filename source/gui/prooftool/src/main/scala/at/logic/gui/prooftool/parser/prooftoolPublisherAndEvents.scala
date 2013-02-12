@@ -17,6 +17,8 @@ object StructPublisher extends Publisher
 case object ProofDbChanged extends Event
 case object Loaded extends Event
 case object UnLoaded extends Event
+case object DisableMenus extends Event
+case object EnableMenus extends Event
 case object ShowLeaf extends Event
 case object HideLeaf extends Event
 case object HideTree extends Event
