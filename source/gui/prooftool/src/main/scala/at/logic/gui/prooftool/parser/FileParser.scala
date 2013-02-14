@@ -22,8 +22,8 @@ import at.logic.algorithms.shlk.sFOParser
 import at.logic.utils.ds.trees.{LeafTree, BinaryTree, Tree}
 import at.logic.language.hol.HOLExpression
 import at.logic.gui.prooftool.gui.{DrawSequent, Main}
-import at.logic.provers.prover9.ivy.IvyParser
-import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
+import at.logic.parsing.ivy.IvyParser
+import at.logic.parsing.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
 import at.logic.transformations.ceres.clauseSchema._
 import at.logic.calculi.slk.SchemaProofDB

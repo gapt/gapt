@@ -98,9 +98,9 @@ import at.logic.language.schema.indexedFOVar._
 import at.logic.language.schema._
 import at.logic.language.hol.Definitions._
 import at.logic.transformations.ceres.clauseSchema.sTermN._
-import at.logic.provers.prover9.lisp.SExpressionParser
-import at.logic.provers.prover9.ivy.{IvyParser, IvyResolutionProof}
-import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
+import at.logic.parsing.lisp.SExpressionParser
+import at.logic.parsing.ivy.{IvyParser, IvyResolutionProof}
+import at.logic.parsing.ivy.conversion.IvyToRobinson
 import at.logic.provers.prover9.Prover9
 import collection.immutable
 import at.logic.algorithms.rewriting.NameReplacement
@@ -110,6 +110,7 @@ import fol.FOLVar
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.prover9.Prover9TermParser
 import at.logic.algorithms.hlk.{LKProofParser, SchemaFormulaParser}
+import at.logic.parsing.ivy
 
 object loadProofs {
     def apply(file: String) =
@@ -437,7 +438,6 @@ object loadProofDB {
     def set_ladr_naming = { naming_style = IvyParser.LadrStyleVariables }
     def set_prolog_naming = { naming_style = IvyParser.LadrStyleVariables }
 
-    import at.logic.provers.prover9.ivy
     def apply(fn : String) : RobinsonResolutionProof = {
       val rp = IvyToRobinson(intoIvyResolution(fn))
       InstantiateElimination(rp)
