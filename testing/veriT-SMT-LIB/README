@@ -1,0 +1,6 @@
+This directory contains all proofs found by the veriT-solver in the
+QF_UF-section of the SMT-LIB (as of October 2012) that contain up to
+100 instantiations (counting both goal and theory axioms). Thanks
+to Pascal Fontaine for providing these files. To unpack the tarball, do:
+
+$ tar xvfz veriT-SMT-LIB-QF_UF.tar.gz
