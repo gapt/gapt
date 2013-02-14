@@ -155,7 +155,7 @@ object sFOParserCNT {
       }
 
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | allR | impL | impR | termDefL1 | termDefR1 | arrowL | arrowR | autoprop
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | allR | impL | impR | termDefL1 | termDefR1 | arrowL | arrowR | autoprop
       def label: String = """[0-9]*[root]*"""
 
       def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
@@ -265,7 +265,7 @@ object sFOParserCNT {
           })
         }
       }
-      def term: Parser[HOLExpression] = (PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | indexedwVar | abs | variable | constant | var_func | const_func)
+      def term: Parser[HOLExpression] = (PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | var_func | const_func)
       def s_term: Parser[HOLExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ term ~ ")" ^^ {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
           //          println("\nsTerm : "+name+"("+i+","+args+")")
@@ -293,8 +293,8 @@ object sFOParserCNT {
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
-      def variable: Parser[HOLVar] = (indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
+      def variable: Parser[HOLVar] = (indexedwVar | indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[t]" + word))  ^^ {
           case x => {
             hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]

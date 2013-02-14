@@ -25,10 +25,21 @@ step {
     8:      cut(6, 7, ((c(n+2) * EXP(n+2, p)) - (b(n+1) * EXP(n+1, p))) = y(n+1) )
 
     9:      andR(8, 5, (((c(n+2) * p) - b(n+1)) * EXP(n+1, p)) = y(n+1), 0 < ((c(n+2) * p) - b(n+1)) )
-
-    root:   exR(9, ((((c(n+2) * p) - b(n+1)) * EXP(n+1, p)) = y(n+1) /\ 0 < ((c(n+2) * p) - b(n+1))) ,
+    10:     exR(9, ((((c(n+2) * p) - b(n+1)) * EXP(n+1, p)) = y(n+1) /\ 0 < ((c(n+2) * p) - b(n+1))) ,
                         Exists x ((x * EXP(n+1, p)) = y(n+1) /\ 0 < x) ,
                                 ((c(n+2) * p) - b(n+1)) )
 
-    11:   ax( 0 < c(n+2), B(n+1, p, y(n+2)), (c(n+2) * EXP(n+2,p)) = y(n+2) |- )
+    11:	    pLink((\psi, n) 0 < c(n+1), B(n,p,y(n+1)), (c(n+1) * EXP(n+1,p)) = y(n+1) |- )
+    12:     andL( 11,  (c(n+1) * EXP(n+1,p)) = y(n+1),0 < c(n+1) )
+    13:	    exL( 12, ((c(n+1) * EXP(n+1,p)) = y(n+1) /\ 0 < c(n+1)), Exists x ((x * EXP(n+1, p)) = y(n+1) /\ 0 < x), c(n+1))
+    14:     cut(10, 13, Exists x ((x * EXP(n+1, p)) = y(n+1) /\ 0 < x))
+
+    15:	    ax( y(n+2) = ((b(n+1) * EXP(n+1,p)) + y(n+1)), (c(n+2) * EXP(n+2,p)) = y(n+2) |- (c(n+2) * EXP(n+2,p)) = ((b(n+1) * EXP(n+1,p)) + y(n+1)) )
+    16:     cut(15, 14, (c(n+2) * EXP(n+2,p)) = ((b(n+1) * EXP(n+1,p)) + y(n+1)))
+    17:     andL(16, (0 <= b(n+1) /\ b(n+1) < p), B(n,p,y(n+1)) )
+    18:     andL(17, y(n+2) = ((b(n+1) * EXP(n+1,p)) + y(n+1)) ,  ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,y(n+1))) )
+    19:	    exL(18, (y(n+2) = ((b(n+1) * EXP(n+1,p)) + y(n+1)) /\ ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,y(n+1)))),
+                Exists x ((y(n+2) = ((b(n+1) * EXP(n+1,p)) + x)) /\ ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,x))) , y(n+1))
+    root:   exL(19, Exists x ((y(n+2) = ((b(n+1) * EXP(n+1,p)) + x)) /\ ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,x))),
+                Exists v ( Exists x ((y(n+2) = ((v * EXP(n+1,p)) + x)) /\ ((0 <= v /\ v < p) /\ B(n,p,x)))) , b(n+1))
 }
