@@ -14,7 +14,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
-import at.logic.algorithms.lk._
+import at.logic.algorithms.lk.solvePropositional._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 
@@ -96,10 +96,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
     val antecedent = this.prop_l ++ this.inst_l :+ impl
     val succedent = this.prop_r ++ this.inst_r
 
-    solvePropositional(FSequent(antecedent, succedent)) match {
-      case Some(proof) => true
-      case None => false
-    }
+    isTautology(FSequent(antecedent, succedent))
   }
 
   // The canonical solution computed already has only the quantified formulas 

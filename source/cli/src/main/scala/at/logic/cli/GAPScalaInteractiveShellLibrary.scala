@@ -70,6 +70,7 @@ import  at.logic.calculi.lk.base.types._
 
 import at.logic.algorithms.cutIntroduction._
 import at.logic.transformations.herbrandExtraction._
+import java.io.File
 
 package GAPScalaInteractiveShellLibrary {
 import java.io.IOException
@@ -599,7 +600,7 @@ object loadProofDB {
         val clauses_ = clauses.partition(_ match { case fol.Neg(_) => false; case _ => true})
         //val cendsequent = FSequent(clauses.toList, Nil)
         val cendsequent2 = FSequent(clauses_._1.toList, clauses_._2.map(_ match {case fol.Neg(x) => x} ).toList)
-        println("new endsequent: "+cendsequent2)
+        //println("new endsequent: "+cendsequent2)
 
         Robinson2LK(proof,cendsequent2)
 

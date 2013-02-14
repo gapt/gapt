@@ -8,6 +8,7 @@ import util.parsing.combinator.Parsers
 import util.parsing.combinator.RegexParsers
 import at.logic.provers.prover9.lisp
 import util.parsing.combinator.PackratParsers
+import at.logic.calculi.lk.base.types.FSequent
 
 /**** Lisp SExpression Datatypes and Parser
  * This is a basic LISP S-expression parser, without quote character, macros or other fancy stuff.

@@ -14,6 +14,7 @@ import at.logic.calculi.occurrences._
 import scala.collection.mutable._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
+import at.logic.utils.logging.Logger
 
 // TODO: should I use grammars instead of pairs here?
 
@@ -30,7 +31,7 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
 
   for (n <- 1 until terms.length+1) {
     // Take only the decompositions of term sets of size (n-1) from the current delta table
-    val one_less = getDecompositionsOfSize(n-1)
+    val one_less = getEntriesOfSize(n-1)
 
     one_less.foreach { case (s, pairs) =>
 
@@ -78,8 +79,21 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
 
   def get(s: List[FOLTerm]) = table(s)
  
-  def getDecompositionsOfSize(n: Int) = {
+  def getEntriesOfSize(n: Int) = {
     table.filter( e => e._1.length == n)
+  }
+
+  def size = table.size
+
+  def numberOfPairs = table.foldRight(0) { case ((k, lst), acc) => lst.size + acc }
+
+  def debug(msg: String) = {
+    println("============== DEBUG: DeltaTable ===============")
+    println("Where: " + msg)
+    println("Number of entries in the table: " + size)
+    println("Each line contains pairs.")
+    println("Total number of pairs: " + numberOfPairs)
+    println("================================================")
   }
 }
 

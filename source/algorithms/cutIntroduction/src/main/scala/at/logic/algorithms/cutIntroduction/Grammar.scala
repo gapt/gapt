@@ -16,6 +16,7 @@ import scala.collection.mutable._
 import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
+import at.logic.utils.logging.Logger
 
 class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
 
@@ -27,6 +28,13 @@ class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
   var flatterms: FlatTermSet = null
 
   def size = u.size + s.size
+
+  def strictSuperGrammarOf(g : Grammar) = 
+    // U o S \supset U' o S'
+    // U \supset U' and S \supset S'
+    g.u.forall(e => u.contains(e)) && g.s.forall(e => s.contains(e)) &&
+    // |U| > |U'| or |S| > |S'|
+    (u.size > g.u.size || s.size > g.s.size)
 
   def toPrettyString = "{ " + u.foldRight("")((ui, str) => str + ui + ", ") + " } o { " + s.foldRight("") ((si, str) => str + si + ", " ) + " }" 
 
@@ -44,11 +52,7 @@ object ComputeGrammars {
     
     val deltatable = new DeltaTable(terms, eigenvariable)
 
-    //println("\n************The delta-table is: ")
-    //deltatable.table.map {case (s, pairs) =>
-    //  println("KEY: " + s)
-    //  println("VALUES: " + pairs + "\n")
-    //}
+    deltatable.debug("after filling in the deltaTable during the computation of grammars")
     
     findValidGrammars(terms, deltatable, eigenvariable).sortWith((g1, g2) =>
       g1.size < g2.size
@@ -59,6 +63,8 @@ object ComputeGrammars {
   def findValidGrammars(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar) : List[Grammar] = {
 
     deltatable.table.foldRight(List[Grammar]()) {case ((s, pairs), grammars) =>
+
+      debug("loop that goes through the delta-table and generates the grammars", grammars)
 
       // Ignoring entries where s.size == 1 because they are trivial
       // grammars with the function symbol on the right.
@@ -109,5 +115,13 @@ object ComputeGrammars {
       else grammars
     }
   }
+
+  def debug(msg: String, lst: List[Grammar]) = {
+    println("=============== DEBUG: Grammars ================")
+    println("Where: " + msg)
+    println("Number of grammars so far: " + lst.size)
+    println("================================================")
+  }
+
 }
 

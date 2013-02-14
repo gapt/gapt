@@ -20,6 +20,12 @@ object solvePropositional {
     case None => None
   }
 
+  // Returns a boolean indicating if the sequent is provable.
+  def isTautology(seq: FSequent) : Boolean = prove(seq) match {
+    case Some(p) => true
+    case None => false
+  }
+
   // Method that throws an exception instead of returning None
   // Used in sFOparser.
   def autoProp(seq: FSequent) : LKProof = prove(seq) match {

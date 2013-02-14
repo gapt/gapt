@@ -132,10 +132,10 @@ trait FOLFormula extends FOLExpression with HOLFormula {
       case Function(_,_) => Neg(f)
       case Neg(f1) => f1.toNNF
       case Imp(f1,f2) => And(f1.toNNF, Neg(f2.toNNF))
-      case And(f1,f2) => Or(f1.toNNF, f2.toNNF)
-      case Or(f1,f2) => And(f1.toNNF, f2.toNNF)
-      case ExVar(x,f) => AllVar(x, f.toNNF)
-      case AllVar(x,f) => ExVar(x, f.toNNF)
+      case And(f1,f2) => Or(Neg(f1).toNNF, Neg(f2).toNNF)
+      case Or(f1,f2) => And(Neg(f1).toNNF, Neg(f2).toNNF)
+      case ExVar(x,f) => AllVar(x, Neg(f).toNNF)
+      case AllVar(x,f) => ExVar(x, Neg(f).toNNF)
       case _ => throw new Exception("ERROR: Unexpected case while transforming to negation normal form.")
     }
     case _ => throw new Exception("ERROR: Unexpected case while transforming to negation normal form.")

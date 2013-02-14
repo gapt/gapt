@@ -207,6 +207,8 @@ object TermsExtraction {
     case ExistsLeftRule(_, _, _, _, _) | ForallRightRule(_, _, _, _, _) =>
       throw new TermsExtractionException("ERROR: Found strong quantifier while extracting terms.")
 
+    /* Any other rule... fail */
+    case _ => throw new TermsExtractionException("ERROR: Unexpected rule while extracting the term set.")
   }
 }
 
