@@ -108,7 +108,7 @@ import at.logic.calculi.resolution.base.FClause
 import fol.FOLVar
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.prover9.Prover9TermParser
-import at.logic.algorithms.hlk.SchemaFormulaParser
+import at.logic.algorithms.hlk.{LKProofParser, SchemaFormulaParser}
 
 object loadProofs {
     def apply(file: String) =
@@ -563,6 +563,12 @@ object loadProofDB {
   }
 
 
+   object loadHLK {
+    def apply(filename : String) = LKProofParser.parseProof(new InputStreamReader(new FileInputStream(filename)))
+
+  }
+
+
   object loadProver9Proof {
     def apply(filename : String, escape_underscore : Boolean = true, newimpl : Boolean = true) :
       (RobinsonResolutionProof, FSequent) = Prover9.parse_prover9(filename, escape_underscore, newimpl)
@@ -979,82 +985,83 @@ object hol2fol {
     def apply() = {
       val msg =
         """
-     | Available commands:
-     |
-     | File Input/Output:
-     |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
-     |   loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
-     |   loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format
-     |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
-     |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
-     |   exportXML: List[Proof], List[String], String => Unit
-     |   exportTPTP: List[Proof], List[String], String => Unit
-     |
-     | Parsing:
-     |   parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"
-     |   parse.hol: String => HOLExpression
-     |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
-     |
-     | Automated Deduction:
-     |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
-     |   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
-     |   prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
-     |   prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file
-     |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
-     |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
-     |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
-     |
-     | Proof Theory:
-     |   skolemize: LKProof => LKProof - skolemize the input proof
-     |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
-     |   extractHerbrandSequent: LKProof => Sequent - extract the Herbrand sequent from a proof without quantified cuts.
-     |   extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree) - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
-     |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
-     |
-     | Cut-Elimination by Resolution:
-     |   extractStruct: LKProof => Struct
-     |   structToClausesList: Struct => List[Sequent]
-     |   structToLabelledClausesList: Struct => List[LabelledSequent]
-     |
-     | Cut-Introduction:
-     |   cutIntro: LKProof => LKProof
-     |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
-     |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
-     |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
-     |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
-     |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
-     |   minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
-     |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
-     |
-     | Proof Examples:
-     |   LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction
-     |   LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction
-     |   SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction
-     |   SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction
-     |   SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
-     |   LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation
-     |   SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction
-     |
-     | Visualization:
-     |   prooftool: LKProof => Unit - visualize proof in prooftool
-     |
-     | Uncategorized:
-     |   hol2fol: HOLExpression => FOLExpression
-     |   hol2fol: HOLFormula => FOLFormula
-     |   regularize: LKProof => LKProof - regularize the given LK proof
-     |   rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression - use map from oldname to (arity, newname) to rename constants in a given LambdaExpressions
-     |   rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof - the same for resolution proofs
-     |   printProofStats: LKProof => Unit
-     |   lkTolksk: LKProof => LKProof
-     |   createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))
-     |   fsequent2sequent: FSequent => Sequent
-     |   deleteTautologies: List[FSequent] => List[FSequent]
-     |   removeDuplicates: List[FSequent] => List[FSequent]
-     |   unitResolve: List[FSequent] => List[FSequent]
-     |   removeSubsumed: List[FSequent] => List[FSequent]
-     |   normalizeClauses: List[FSequent] => List[FSequent]
-     |   writeLatex: List[FSequent], String => Unit
-     |   writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
+          | Available commands:
+          |
+          | File Input/Output:
+          |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
+          |   loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
+          |   loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format
+          |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
+          |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
+          |   loadHLK : String => LKProof - load a proof in the HLK 2 format from given filename
+          |   exportXML: List[Proof], List[String], String => Unit
+          |   exportTPTP: List[Proof], List[String], String => Unit
+          |
+          | Parsing:
+          |   parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"
+          |   parse.hol: String => HOLExpression
+          |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
+          |
+          | Automated Deduction:
+          |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
+          |   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
+          |   prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
+          |   prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file
+          |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
+          |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
+          |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
+          |
+          | Proof Theory:
+          |   skolemize: LKProof => LKProof - skolemize the input proof
+          |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
+          |   extractHerbrandSequent: LKProof => Sequent - extract the Herbrand sequent from a proof without quantified cuts.
+          |   extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree) - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
+          |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
+          |
+          | Cut-Elimination by Resolution:
+          |   extractStruct: LKProof => Struct
+          |   structToClausesList: Struct => List[Sequent]
+          |   structToLabelledClausesList: Struct => List[LabelledSequent]
+          |
+          | Cut-Introduction:
+          |   cutIntro: LKProof => LKProof
+          |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
+          |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
+          |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
+          |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
+          |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
+          |   minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
+          |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
+          |
+          | Proof Examples:
+          |   LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction
+          |   LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction
+          |   SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction
+          |   SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction
+          |   SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
+          |   LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation
+          |   SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction
+          |
+          | Visualization:
+          |   prooftool: LKProof => Unit - visualize proof in prooftool
+          |
+          | Uncategorized:
+          |   hol2fol: HOLExpression => FOLExpression
+          |   hol2fol: HOLFormula => FOLFormula
+          |   regularize: LKProof => LKProof - regularize the given LK proof
+          |   rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression - use map from oldname to (arity, newname) to rename constants in a given LambdaExpressions
+          |   rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof - the same for resolution proofs
+          |   printProofStats: LKProof => Unit
+          |   lkTolksk: LKProof => LKProof
+          |   createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))
+          |   fsequent2sequent: FSequent => Sequent
+          |   deleteTautologies: List[FSequent] => List[FSequent]
+          |   removeDuplicates: List[FSequent] => List[FSequent]
+          |   unitResolve: List[FSequent] => List[FSequent]
+          |   removeSubsumed: List[FSequent] => List[FSequent]
+          |   normalizeClauses: List[FSequent] => List[FSequent]
+          |   writeLatex: List[FSequent], String => Unit
+          |   writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
         """.stripMargin
 
       println(msg)
