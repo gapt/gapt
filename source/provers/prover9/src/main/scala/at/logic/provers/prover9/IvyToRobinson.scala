@@ -1,5 +1,6 @@
-package at.logic.provers.prover9.ivy.conversion
-import at.logic.provers.prover9.ivy.{InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip}
+package at.logic.parsing.ivy.conversion
+
+import at.logic.parsing.ivy.{InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip}
 import at.logic.calculi.resolution.robinson.{InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor,
   Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof}
 import at.logic.language.fol
@@ -14,9 +15,10 @@ import collection.immutable
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import scala.Some
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.provers.prover9.ivy.NewSymbol
-import at.logic.provers.prover9.ivy.Flip
+import at.logic.parsing.ivy.NewSymbol
+import at.logic.parsing.ivy.Flip
 import at.logic.algorithms.rewriting.TermReplacement
+import at.logic.calculi.lk.base.FSequent
 
 /**
  * Converts Ivy Proofs into Robinson Resolution Proofs
@@ -250,9 +252,11 @@ object IvyToRobinson {
             //insert a new axiom, will be later removed
             val (rparent, parentmap) = convert(parent, map)
             val newaxiom = RInitialClause(Nil, Equation(new_symbol, replacement_term)::Nil)
-            val Some(rlit) = rparent.root.succedent.find(_.formula == lit.ancestors(0).formula)
+            //val Some(rlit) = rparent.root.succedent.find(_.formula == lit.ancestors(0).formula)
 
-            val rproof = RParamodulation(newaxiom, rparent, newaxiom.root.succedent(0), rlit, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())
+            //val rproof = RParamodulation(newaxiom, rparent, newaxiom.root.succedent(0), rlit, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())
+            val FSequent(neg, pos) = clause.toFSequent
+            val rproof = RInitialClause(neg.asInstanceOf[immutable.Seq[FOLFormula]]  , pos.asInstanceOf[immutable.Seq[FOLFormula]])
             println("introduced new rule:"+rproof.root)
             println("parent1:"+newaxiom.root)
             println("parent2:"+rparent.root)

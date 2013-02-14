@@ -1,4 +1,4 @@
-package at.logic.provers.prover9.lisp
+package at.logic.parsing.lisp
 
 import collection.{mutable, immutable}
 import java.io.FileReader
@@ -6,9 +6,8 @@ import collection.immutable.PagedSeq
 import util.parsing.input.{NoPosition, Position, Reader, PagedSeqReader}
 import util.parsing.combinator.Parsers
 import util.parsing.combinator.RegexParsers
-import at.logic.provers.prover9.lisp
+import at.logic.parsing.lisp
 import util.parsing.combinator.PackratParsers
-import at.logic.calculi.lk.base.types.FSequent
 
 /**** Lisp SExpression Datatypes and Parser
  * This is a basic LISP S-expression parser, without quote character, macros or other fancy stuff.
@@ -163,7 +162,7 @@ class IntPosition(val i:Int) extends Position {
 }
 
 class Tokenizer extends RegexParsers {
-  import at.logic.provers.prover9.lisp.tokens._
+  import at.logic.parsing.lisp.tokens._
 
   //def debug(s:String) = {println("DEBUG: "+s)}
   //def debugrule[T](t:T) : T = { debug("dr: "+t.toString) ; t}

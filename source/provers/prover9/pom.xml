@@ -17,6 +17,11 @@
       <artifactId>tptp_parsing</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
+      <dependency>
+          <groupId>at.logic</groupId>
+          <artifactId>ivy</artifactId>
+          <version>1.0-SNAPSHOT</version>
+      </dependency>
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>atp</artifactId>

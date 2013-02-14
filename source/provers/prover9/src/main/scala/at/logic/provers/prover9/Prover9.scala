@@ -17,11 +17,11 @@ import scala.io.Source
 import scala.util.matching.Regex
 import scala.collection.immutable.HashMap
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.provers.prover9.ivy.IvyParser
-import at.logic.provers.prover9.ivy.conversion.IvyToRobinson
+import at.logic.parsing.ivy.IvyParser
+import at.logic.parsing.ivy.conversion.IvyToRobinson
 import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionProof}
 import java.io.File
-import at.logic.provers.prover9.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
+import at.logic.parsing.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
 import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.algorithms.resolution.InstantiateElimination
 import at.logic.provers.prover9.commands.InferenceExtractor

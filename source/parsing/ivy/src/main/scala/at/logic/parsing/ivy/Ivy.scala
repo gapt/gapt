@@ -1,8 +1,8 @@
-package at.logic.provers.prover9.ivy
+package at.logic.parsing.ivy
 
 import scala.collection.immutable
-import at.logic.provers.prover9.lisp
-import at.logic.provers.prover9.lisp.{SExpressionParser, SExpression}
+import at.logic.parsing.lisp
+import at.logic.parsing.lisp.{SExpressionParser, SExpression}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.logicSymbols.{EqSymbol, ConstantSymbolA, ConstantStringSymbol}
 import at.logic.language.lambda.symbols.{VariableStringSymbol, SymbolA}
@@ -15,8 +15,6 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.hol.HOLFormula
 import fol._
-import at.logic.algorithms.rewriting.TermReplacement
-import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
@@ -432,40 +430,30 @@ object IvyParser {
         require(fclause.antecedent.isEmpty, "Expecting only positive equations in parsing of new_symbol rule "+id)
         require(fclause.succedent.size == 1, "Expecting exactly one positive equation in parsing of new_symbol rule "+id)
 
-        val Equation(pl,pr) = parent_proof.root.toFSequent.succedent(0)
         val Equation(l,r) = fclause.succedent(0)
 
-        def vars(exp : LambdaExpression) : Set[Var] = exp match {
-          case Var(_,_) => Set(exp.asInstanceOf[Var])
-          case App(s,t) => vars(s) ++ vars(t)
-          case Abs(x,t) => vars(t) ++ Set(x)
+        val nclause = Clause(Nil, List(parent_proof.root.occurrences(0).factory.createFormulaOccurrence(fclause.succedent(0), Nil) ) )
+        val const : FOLConst = r match {
+          case f@FOLConst(_) => f.asInstanceOf[FOLConst]
+          case _ => throw new Exception("Expecting right hand side of new_symbol equation to be the introduced symbol!")
         }
 
-        val additional_syms = vars(r).diff(vars(l))
-        require(additional_syms.size == 1, "" +
-          "Expecting exactly one additional symbol in "+l+" in contrast to "+r+"! (rule id="+id+")")
-
-        val constsym = additional_syms.head.asInstanceOf[FOLConst]
-
-        val symvar= FOLVar(VariableStringSymbol(constsym.name.toString))
-        val r_ : FOLTerm = TermReplacement[FOLTerm](constsym, symvar, r)
-        val matching = FOLMatchingAlgorithm.matchTerm(r_, pr, List())
-
-        require(! matching.isEmpty, "Could not match "+r_ +" to "+l+" in parsing of new_symbol rule "+id)
-        debug("replacement term="+ matching.get.apply(symvar))
-
-        def connect_with_same_name(parent_occ: FormulaOccurrence, f: FOLFormula) = {
-          parent_occ.factory.createFormulaOccurrence(f, parent_occ::Nil)
-        }
-
-        val Some(m) = matching
-        val nclause = Clause(Nil, connect_with_same_name(parent_proof.root.succedent(0), fclause.succedent(0).asInstanceOf[FOLFormula])::Nil)
-        val inference = NewSymbol(id, clause, nclause.succedent(0), constsym, m(symvar).asInstanceOf[FOLTerm], nclause, parent_proof)
+        println("const symbol="+const + " replaced by="+l)
+        val inference = NewSymbol(id, clause, nclause.succedent(0), const, l, nclause, parent_proof )
 
         (id, found_steps +((id,inference)))
 
       case _ => throw new Exception("Error parsing inference rule in expression "+exp)
     }
+  }
+
+
+  //gets all vars in a lambda expression
+  //TODO: add as method to lambdaexpression
+  def vars(exp : LambdaExpression) : Set[Var] = exp match {
+    case Var(_,_) => Set(exp.asInstanceOf[Var])
+    case App(s,t) => vars(s) ++ vars(t)
+    case Abs(x,t) => vars(t) ++ Set(x)
   }
 
 

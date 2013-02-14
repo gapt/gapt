@@ -1,10 +1,10 @@
-package at.logic.provers.prover9.ivy
+package at.logic.parsing.ivy
 
 import at.logic.calculi.proofs.{BinaryRuleTypeA, UnaryRuleTypeA, NullaryRuleTypeA}
 import at.logic.calculi.agraphProofs.{NullaryAGraphProof, UnaryAGraphProof, BinaryAGraphProof, AGraphProof}
 import at.logic.calculi.resolution.base.Clause
 import at.logic.utils.ds.acyclicGraphs.{LeafAGraph, UnaryAGraph, BinaryAGraph}
-import at.logic.provers.prover9.lisp.SExpression
+import at.logic.parsing.lisp.SExpression
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.fol.{FOLConst, FOLTerm}
 import at.logic.calculi.occurrences.FormulaOccurrence

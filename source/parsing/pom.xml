@@ -16,6 +16,7 @@
 	  <module>simple_parsing</module>
 	  <module>ceres_xml_parsing</module>
 	  <module>tptp_parsing</module>
+	  <module>ivy</module>
     <module>latex_parsing</module>
     <module>arithmetic_parsing</module>
   </modules>
