@@ -1,18 +1,20 @@
-proof \psi proves A(x), -A(x), C(x) :- C(x), B(x), D(x)
+proof \psi proves A(x), -A(x), C(x) :- C(x), B(x), D(x) {
 
 
-    cut( B(x) ) ;
-    weak R( D(x) ) ;
-
-    ax(B(x) :- B(x)) ;
-
+    cut  ( B(x) ) ;
 
     cut( A(x) ) ;
 
-    weakL( A(x) ) ;
-    ax(C(x) :- C(x)) ;
+	weak right ( A(x) ) ;
+	weak right ( B(x) ) ;
+	neg left ( A(x) ) ;
+  	axiom(A(x) :- A(x));
 
-	weakR( A(x) ) ;
-	weakR( B(x) ) ;
-	negL( A(x) ) ;
-  	ax(A(x) :- A(x));
+    weak left ( A(x) ) ;
+    axiom(C(x) :- C(x)) ;
+
+
+    weak right( D(x) ) ;
+    axiom(B(x) :- B(x)) ;
+
+}

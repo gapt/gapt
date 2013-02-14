@@ -55,7 +55,6 @@ object LKProofParser {
 
   //plabel should return the proof corresponding to this label
   def parseProof(txt: InputStreamReader): ProofDatabase = {
-    dbTRS.clear
     lazy val sp = new SimpleLKParser with Prover9TermParserA {
       def getInput = txt
       override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)""".r
@@ -70,11 +69,9 @@ object LKProofParser {
         val db = new ProofDatabase(Map.empty, result, Nil, Nil)
         db
 
-      case x: AnyRef =>
-        throw new Exception(x.toString)
+      case sp.NoSuccess(msg, input) =>
+        throw new Exception("Parser failed at "+input.pos+ " with message: "+msg)
     }
-
-
   }
 }
 
@@ -92,7 +89,10 @@ package incomplete {
   /* incomplete.Inference captures the notion of an inference where the parents are only known by name  */
 
   import LKProofParser.ProofMap
-  sealed case class Inference(create : (ProofMap, List[(String, LKProof)]) => (LKProof, List[(String,LKProof)]) ) { }
+  import LKProofParser.LabeledProof
+
+  sealed case class Inference(name : String,
+                              create : (ProofMap, List[LabeledProof]) => (LKProof, List[LabeledProof]) ) { }
 }
 
 abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
@@ -101,20 +101,21 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   import LKProofParser.ProofMap
   import LKProofParser.emptyProofMap
 
+  //override val whiteSpace = """\s+""".r
+
 
   //maps to prevent passing around lots of parameters
-  var stackOfProofs: immutable.Stack[LKProof] = immutable.Stack.empty[LKProof]
-  val proofs  = mutable.Map.empty[String, LKProof]
-  val subproofs  = mutable.Map.empty[String, LKProof]
 
 
   /* automatic generation of labels */
+  private var labels : immutable.Set[String] = immutable.Set.empty
   private var labelcount = 100
   private def getLabel = {
-    val labels = subproofs.keySet ++ proofs.keySet
     while (labels.contains("l"+labelcount))
       labelcount = labelcount +1
-    "l" + labelcount
+    val newlabel = "l"+labelcount
+    labels = labels + newlabel
+    newlabel
   }
 
 
@@ -131,8 +132,24 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   val name = """(\\)?[a-z0-9_]+""".r
   val label = """[a-zA-Z0-9]+""".r
 
+  /* some definitions which allow easier change of the language */
+  val sleft = "left"
+  val sright ="right"
+  val saxiom = "axiom"
+  val sall = "all"
+  val sex = "exists"
+  val sand ="and"
+  val sor = "or"
+  val simpl = "impl"
+  val scontr = "contr"
+  val sweak = "weak"
+  val scut = "cut"
+  val sautoprop = "autoprop"
 
-  def hlk_file: Parser[List[LabeledProof]] =  rep(lkProof) ^^ complete_proofs
+
+
+
+  def hlk_file: Parser[List[LabeledProof]] =  rep1(lkProof) ^^ complete_proofs
 
   def line: Parser[List[incomplete.Inference]] =  proof.+
 
@@ -141,7 +158,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   def complete_proofs_(iproofs : List[(String,FSequent, List[incomplete.Inference])], global : ProofMap) : List[LabeledProof] =
     iproofs match {
       case Nil =>
-        Nil
+        throw new Exception("Empty proof lists not supported!")
       case (name, endsequent, isubproofs) :: Nil =>
         val proof = complete_proof(endsequent, isubproofs, global)
         List((name,proof))
@@ -153,7 +170,10 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
     }
 
 
-  def complete_proof(endsequent:FSequent, subproofs : List[incomplete.Inference], global : ProofMap) : LKProof = complete_proof_(endsequent, subproofs, global)._1
+  def complete_proof(endsequent:FSequent, subproofs : List[incomplete.Inference], global : ProofMap) : LKProof = {
+    println(subproofs.map(_.name).mkString(", "))
+    complete_proof_(endsequent, subproofs, global)._1
+  }
   def complete_proof_(endsequent:FSequent, subproofs : List[incomplete.Inference], global : ProofMap ) : (LKProof, List[(String,LKProof)]) = subproofs match {
     case Nil => throw new Exception("Cannot create proof, no inferences to complete!")
     case List(inf) =>
@@ -164,7 +184,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   }
 
 
-  def lkProof: Parser[(String, FSequent, List[incomplete.Inference])] = ("proof" ~> name) ~ ("proves" ~> sequent)  ~ line   ^^ {
+  def lkProof: Parser[(String, FSequent, List[incomplete.Inference])] = ("proof" ~> name) ~ ("proves" ~> sequent)  ~ ("{" ~> line <~ "}")   ^^ {
     case  proofname ~  endsequent ~ line => {
       /*
       println(line)
@@ -187,7 +207,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
           subproofs.put(label, p)
           */
           val label = getLabel
-          incomplete.Inference( (global,local) => {
+          incomplete.Inference(p.name, (global,local) => {
             val (proof, list) = p.create(global, local)
             (proof, (label,proof) :: list )
           })
@@ -198,7 +218,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
           stackOfProofs = stackOfProofs.push(p);
           subproofs.put(label, p)
           */
-          incomplete.Inference( (global,local) => {
+          incomplete.Inference(p.name, (global,local) => {
             val (proof, list) = p.create(global, local)
             (proof, (label,proof) :: list )
           })
@@ -218,9 +238,9 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
 
   /* ========== axiom rules ========================== */
 
-  def ax: Parser[incomplete.Inference] = "ax(" ~> sequent <~ ")" ^^ { sequent =>
+  def ax: Parser[incomplete.Inference] = saxiom ~> "(" ~> sequent <~ ")" ^^ { sequent =>
     debug("axiom!")
-    incomplete.Inference( (global, local) => {
+    incomplete.Inference("axiom", (global, local) => {
       val inf = Axiom(sequent.antecedent, sequent.succedent)
       (inf, local)
     } )
@@ -236,11 +256,12 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   */
 
   /* ========== structural rules ===================== */
-  def cut: Parser[incomplete.Inference] = "cut(" ~> formula <~ ")" ^^ {
+  def cut: Parser[incomplete.Inference] = scut ~> "(" ~> formula <~ ")" ^^ {
     case f => {
-      incomplete.Inference( (global, local) => {
+      incomplete.Inference("cut", (global, local) => {
+        require(local.length >= 2, "Problem in proof structure!")
         val (_,top1)::(_,top2)::rest = local
-        val inf : LKProof = CutRule(top2, top1, f)
+        val inf : LKProof = CutRule(top1, top2, f)
         (inf, rest)
       } )
 
@@ -248,16 +269,18 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   }
 
 
-  def contr: Parser[incomplete.Inference] = "contr" ~> ("L"|"R") ~ ("(" ~> formula) <~ ")" ^^ {
-    case "L" ~f  => incomplete.Inference ((global, local) => {
+  def contr: Parser[incomplete.Inference] = scontr ~> (sleft | sright) ~ ("(" ~> formula) <~ ")" ^^ {
+    case "left" ~f  => incomplete.Inference ("c:l", (global, local) => {
       debug("contrL")
+      require(local.length >= 1, "Problem in proof structure!")
       val (_,top)::rest = local
       val inf : LKProof = ContractionLeftRule(top, f)
       (inf, rest)
     })
 
-    case "R" ~ f  => incomplete.Inference ((global, local) => {
+    case "right" ~ f  => incomplete.Inference ("c:r", (global, local) => {
       debug("contrR")
+      require(local.length >= 1, "Problem in proof structure!")
       val (_,top)::rest = local
       val inf : LKProof = ContractionRightRule(top, f)
       (inf, rest)
@@ -266,17 +289,19 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   }
 
 
-  def weak: Parser[incomplete.Inference] = "weak" ~> ("R"|"L") ~ ("(" ~> formula <~ ")") ^^ {
-    case "L" ~ formula =>
+  def weak: Parser[incomplete.Inference] = sweak ~> (sright|sleft) ~ ("(" ~> formula <~ ")") ^^ {
+    case "left" ~ formula =>
       debug("weak right "+formula)
-      incomplete.Inference( (global, local) =>  {
+      incomplete.Inference("w:l", (global, local) =>  {
+        require(local.length >= 1, "Problem in proof structure!")
         val (_,top) :: rest = local
         (WeakeningLeftRule(top, formula), rest)
       })
 
-    case "R" ~ formula  =>
+    case "right" ~ formula  =>
       debug("weak right "+formula)
-      incomplete.Inference( (global, local) =>  {
+      incomplete.Inference("w:r", (global, local) =>  {
+        require(local.length >= 1, "Problem in proof structure!")
         val (_,top) :: rest = local
         (WeakeningRightRule(top, formula), rest)
       })
@@ -284,22 +309,24 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
 
   /* ================ logical rules ======================= */
 
-  def neg: Parser[incomplete.Inference] = "neg" ~> ("L"|"R") ~  ("(" ~> formula) <~ ")" ^^ {
-    case "L" ~ formula=>
-      incomplete.Inference( (global, local) => {
+  def neg: Parser[incomplete.Inference] = "neg" ~> (sleft|sright) ~  ("(" ~> formula) <~ ")" ^^ {
+    case "left" ~ formula=>
+      incomplete.Inference("n:l",  (global, local) => {
+        require(local.length >= 1, "Problem in proof structure!")
         val (_,top)::rest = local
         val inf = NegLeftRule(top, formula)
         (inf, rest)
       })
-    case "R" ~ formula =>
-      incomplete.Inference( (global, local) => {
+    case "right" ~ formula =>
+      incomplete.Inference("n:r", (global, local) => {
+        require(local.length >= 1, "Problem in proof structure!")
         val (_,top)::rest = local
         val inf = NegLeftRule(top, formula)
         (inf, rest)
       })
   }
 
-  def unaryAndOr: Parser[incomplete.Inference] = (("and" ~ "left([12])?") |  ("or" ~ "right([12])?")  ) ~ ("by" ~> label).? ~ (":" ~> formula) ~ ("," ~> formula)  ^^ { r =>
+  def unaryAndOr: Parser[incomplete.Inference] = ((sand ~ sleft ~ "([12])?".r) |  (sor ~ sright ~ "([12])?".r)  ) ~ ("by" ~> label).? ~ (":" ~> formula) ~ ("," ~> formula)  ^^ { r =>
     /*
     val (parent, rest) = r match {
       case _ ~ _ ~ Some(label) ~ _ ~ _ =>
@@ -308,21 +335,24 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
       case _ ~ _ ~ None ~ _ ~ _ =>
         require(parent != null , "Referring to unknown label "+label)
     } */
-    incomplete.Inference( (global, local) => {
+    val name : String = r match { case r ~ s ~ t ~ _ ~ _ ~ _ => List(r,s,t).mkString(" ")}
+
+    incomplete.Inference(name, (global, local) => {
+      require(local.length >= 1, "Problem in proof structure!")
       val (_,parent) :: rest = local
 
       val inf = r match {
-        case "or" ~ "right" ~ l ~ f1  ~ f2 =>
+        case "or" ~ "right" ~ "" ~ l ~ f1  ~ f2 =>
           OrRightRule(parent, f1, f2)
-        case "or" ~ "right1" ~ l ~ f1  ~ f2 =>
+        case "or" ~ "right" ~ "1" ~ l ~ f1  ~ f2 =>
           OrRight1Rule(parent, f1, f2)
-        case "or" ~ "right2" ~ l ~ f1  ~ f2 =>
+        case "or" ~ "right" ~ "2" ~ l ~ f1  ~ f2 =>
           OrRight2Rule(parent, f1, f2)
-        case "and" ~ "left" ~ l ~ f1  ~ f2 =>
+        case "and" ~ "left" ~ "" ~ l ~ f1  ~ f2 =>
           AndLeftRule(parent, f1, f2)
-        case "and" ~ "left1" ~ l ~ f1  ~ f2 =>
+        case "and" ~ "left" ~ "1" ~ l ~ f1  ~ f2 =>
           AndLeft1Rule(parent, f1, f2)
-        case "and" ~ "left2" ~ l ~ f1  ~ f2 =>
+        case "and" ~ "left" ~ "2" ~ l ~ f1  ~ f2 =>
           AndLeft2Rule(parent, f1, f2)
       }
 
@@ -331,16 +361,17 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
     })
   }
 
-  def binaryOrAnd: Parser[incomplete.Inference] = ("orL"|"andR") ~ ("(" ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case "orL" ~ f1 ~ f2  => incomplete.Inference((global, local) => {
+  def binaryOrAnd: Parser[incomplete.Inference] = ((sor ~ sleft) | (sand ~ sright)) ~ ("(" ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
+    case "or" ~ "left" ~ f1 ~ f2  => incomplete.Inference("or:l", (global, local) => {
       debug("orL")
+      require(local.length >= 2, "Problem in proof structure!")
       val (_,parent1)::(_,parent2)::rest = local
-      val ff1 : HOLFormula = f1
       val inf : LKProof = OrLeftRule(parent1, parent2, f1, f2)
       (inf,rest)
     })
-    case "andR" ~ f1 ~ f2 => incomplete.Inference((global, local) => {
+    case "and" ~ "right" ~ f1 ~ f2 => incomplete.Inference("and:r",(global, local) => {
       debug("andR")
+      require(local.length >= 2, "Problem in proof structure!")
       val (_,parent1)::(_,parent2)::rest = local
       val inf : LKProof = AndRightRule(parent1, parent2, f1, f2)
       (inf,rest)
@@ -348,16 +379,18 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   }
 
 
-  def impL: Parser[incomplete.Inference] = ("impL" ~> "(" ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
-    case f1 ~ f2  => incomplete.Inference( (global, local) => {
+  def impL: Parser[incomplete.Inference] = (simpl ~> sleft ~> "(" ~> formula) ~ ("," ~> formula) <~ ")" ^^ {
+    case f1 ~ f2  => incomplete.Inference("imp:l", (global, local) => {
+      require(local.length >= 2, "Problem in proof structure!")
       val (_, parent1)::(_, parent2) :: rest = local
       val inf = ImpLeftRule(parent1, parent2, f1, f2)
       (inf,rest)
     })
   }
 
-  def impR: Parser[incomplete.Inference] = ("impR(" ~> formula) ~ ("," ~> formula <~ ")") ^^ {
-    case f1 ~ f2 => incomplete.Inference( (global, local) => {
+  def impR: Parser[incomplete.Inference] = (simpl ~> sright ~> "(" ~> formula) ~ ("," ~> formula <~ ")") ^^ {
+    case f1 ~ f2 => incomplete.Inference("imp:r", (global, local) => {
+      require(local.length >= 1, "Problem in proof structure!")
       val (_, parent) :: rest = local
       val inf = ImpRightRule(parent, f1, f2)
       (inf, rest)
@@ -365,28 +398,32 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   }
 
 
-  def weak_quantifier: Parser[incomplete.Inference] = ("allL" | "exR") ~ ("(" ~> label) ~ ("," ~> formula) ~ ("," ~> formula) ~ ("," ~> term) <~ ")" ^^ {
-    case "allL" ~ l ~ aux ~ main ~ term =>  incomplete.Inference( (global, local) => {
+  def weak_quantifier: Parser[incomplete.Inference] = ((sall ~ sleft) | (sex ~ sright)) ~ ("(" ~> formula) ~ ("," ~> formula) ~ ("," ~> term) <~ ")" ^^ {
+    case "all" ~ "left" ~aux ~ main ~ term =>  incomplete.Inference("all:l", (global, local) => {
+      require(local.length >= 1, "Problem in proof structure!")
       val (_, parent) :: rest = local
-      val inf = ForallLeftRule(proofs.get(l).get, aux, main, term)
+      val inf = ForallLeftRule(parent, aux, main, term)
       (inf, rest)
     })
 
-    case "exR" ~ l ~ aux ~ main ~ term =>  incomplete.Inference( (global, local) => {
+    case "exists" ~ "right" ~ aux ~ main ~ term =>  incomplete.Inference("ex:r", (global, local) => {
+      require(local.length >= 1, "Problem in proof structure!")
         val (_, parent) :: rest = local
-        val inf = ExistsRightRule(proofs.get(l).get, aux, main, term)
+        val inf = ExistsRightRule(parent, aux, main, term)
         (inf,rest)
     })
 
   }
 
-  def strong_quantifier: Parser[incomplete.Inference] = ("allR"|"exL") ~  ("(" ~> formula) ~ ("," ~> formula) ~ ("," ~> (variable)) <~ ")" ^^ {
-    case "allR" ~ aux ~ main ~ v  =>  incomplete.Inference( (global, local) => {
+  def strong_quantifier: Parser[incomplete.Inference] = ((sall ~ sright) | (sex ~ sleft)) ~  ("(" ~> formula) ~ ("," ~> formula) ~ ("," ~> (variable)) <~ ")" ^^ {
+    case "all" ~ "right" ~ aux ~ main ~ v  =>  incomplete.Inference("all:r", (global, local) => {
+      require(local.length >= 1, "Problem in proof structure!")
       val (_, parent) :: rest = local
       val inf = ForallRightRule(parent, aux, main, v)
       (inf, rest)
     })
-    case "exL" ~ aux ~ main ~ v  =>  incomplete.Inference( (global, local) => {
+    case "exists" ~ "left" ~ aux ~ main ~ v  =>  incomplete.Inference("ex:l", (global, local) => {
+      require(local.length >= 1, "Problem in proof structure!")
         val (_, parent) :: rest = local
         val inf = ExistsLeftRule(parent, aux, main, v)
       (inf,rest)
@@ -394,8 +431,8 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
   }
 
 
-  def autoprop: Parser[incomplete.Inference] = "autoprop(" ~> sequent <~ ")" ^^ { seq  =>
-    incomplete.Inference( (global, local) => (solvePropositional.autoProp(seq), local)  )
+  def autoprop: Parser[incomplete.Inference] = sautoprop ~> "(" ~> sequent <~ ")" ^^ { seq  =>
+    incomplete.Inference("autoprop", (global, local) => (solvePropositional.autoProp(seq), local)  )
   }
 
 
