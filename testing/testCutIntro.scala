@@ -41,8 +41,8 @@ object testCutIntro {
       }
       catch {
         case pe: at.logic.provers.prover9.Prover9Exception => not_parsed += 1
-        case cie: CutIntroException => not_compressable += 1
-        case tee: TermsExtractionException => invalid_rules += 1
+        case cie: at.logic.algorithms.cutIntroduction.CutIntroException => not_compressable += 1
+        case tee: at.logic.algorithms.cutIntroduction.TermsExtractionException => invalid_rules += 1
         case _ => dont_know += 1
       }
     }       
