@@ -547,6 +547,25 @@ object indexedFOVar {
   }
 }
 
+class indexedOmegaVar(override val name: VariableStringSymbol, val index: HOLExpression) extends HOLVar(name, Tindex(), None) {
+  override def toString = name.toString+"("+index+")"+":"+exptype.toString
+  override def equals(a: Any): Boolean = a match {
+    case v:indexedOmegaVar if v.name.toString() == this.name.toString() && v.index == this.index => true
+    case _ => false
+  }
+}
+
+object indexedOmegaVar {
+  def apply(name: VariableStringSymbol, i: HOLExpression): HOLVar = {
+    new indexedOmegaVar(name, i)
+  }
+  def unapply(s: HOLExpression) = s match {
+    case v: indexedOmegaVar => Some(v.name, v.index)
+    case _ => None
+  }
+}
+
+
 class foVar(name: VariableStringSymbol) extends HOLVar(name, Ti(), None) {
   override def equals(a: Any): Boolean = a match {
     case v:foVar if v.name.toString() == this.name.toString() => true
@@ -555,6 +574,21 @@ class foVar(name: VariableStringSymbol) extends HOLVar(name, Ti(), None) {
 }
 object foVar{
   def apply(name: String) = (new foVar(new VariableStringSymbol(name))).asInstanceOf[HOLVar]
+  def unapply(t: HOLExpression) = t match {
+    case HOLVar(name, typ) => Some(name, typ)
+    case _ => None
+  }
+}
+
+//first-order variable of type ω
+class fowVar(name: VariableStringSymbol) extends HOLVar(name, Tindex(), None) {
+  override def equals(a: Any): Boolean = a match {
+    case v:fowVar if v.name.toString() == this.name.toString() => true
+    case _ => false
+  }
+}
+object fowVar{
+  def apply(name: String) = (new fowVar(new VariableStringSymbol(name))).asInstanceOf[HOLVar]
   def unapply(t: HOLExpression) = t match {
     case HOLVar(name, typ) => Some(name, typ)
     case _ => None
@@ -699,12 +733,12 @@ case object LeqSymbol extends ConstantSymbolA {
   }
 }
 
-case class LessThanC(e:TA) extends HOLConst(lessThanSymbol, ->(e, ->(e,"o")))
-case class LeqC(e:TA) extends HOLConst(LeqSymbol, ->(e, ->(e,"o")))
+case class LessThanC(e:TA) extends HOLConst(lessThanSymbol, ->(Tindex(), ->(Tindex(), To())))
+case class LeqC(e:TA) extends HOLConst(LeqSymbol, ->(Tindex(), ->(Tindex(), To())))
 
 object lessThan {
   def apply(left: HOLExpression, right: HOLExpression) = {
-    require(left.exptype == right.exptype)
+//    require(left.exptype == right.exptype)
     App(App(LessThanC(left.exptype), left),right).asInstanceOf[HOLFormula]
   }
   def unapply(expression: LambdaExpression) = expression match {
@@ -715,7 +749,7 @@ object lessThan {
 
 object leq {
   def apply(left: HOLExpression, right: HOLExpression) = {
-    require(left.exptype == right.exptype)
+//    require(left.exptype == right.exptype)
     App(App(LeqC(left.exptype), left),right).asInstanceOf[HOLFormula]
   }
   def unapply(expression: LambdaExpression) = expression match {

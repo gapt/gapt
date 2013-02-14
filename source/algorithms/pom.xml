@@ -21,6 +21,7 @@
     <module>fol</module>
     <module>hlk</module>
     <module>shlk</module>
+    <module>hlk</module>
     <module>rewriting</module>
     <module>cutIntroduction</module>
     <module>interpolation</module>
