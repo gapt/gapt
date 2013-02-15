@@ -293,7 +293,7 @@ object sFOParserCNT {
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v,w]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
       def variable: Parser[HOLVar] = (indexedwVar | indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[t]" + word))  ^^ {
           case x => {
