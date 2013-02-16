@@ -134,6 +134,10 @@ object printSchemaProof {
       apply(up)
       println("\n"+ p.rule + " : "+sequentToString(r))
     }
+    case foldLeftRule(up, r, _, _) =>  {
+      apply(up)
+      println("\n"+ p.rule + " : "+sequentToString(r))
+    }
     case _ => println("ERROR in printSchemaProof : "+p.rule)
   }
 }

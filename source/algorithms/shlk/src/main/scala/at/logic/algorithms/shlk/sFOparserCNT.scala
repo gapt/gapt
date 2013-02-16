@@ -155,7 +155,7 @@ object sFOParserCNT {
       }
 
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | allR | impL | impR | termDefL1 | termDefR1 | arrowL | arrowR | autoprop
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | allR | impL | impR | termDefL1 | termDefR1 | arrowL | foldL | arrowR | autoprop
       def label: String = """[0-9]*[root]*"""
 
       def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
@@ -619,6 +619,12 @@ object sFOParserCNT {
       def impR: Parser[LKProof] = "impR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "impR(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
           ImpRightRule(map.get(label).get, f1, f2)
+        }
+      }
+
+      def foldL: Parser[LKProof] = "foldL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "foldL(" ~ label ~ "," ~ aux ~ "," ~ main ~ ")" => {
+          foldLeftRule(map.get(label).get, aux, main)
         }
       }
 

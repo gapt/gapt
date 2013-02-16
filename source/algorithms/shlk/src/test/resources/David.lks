@@ -41,6 +41,7 @@ step {
     10:     exR(9, ((((c(n+2) * p) - b(n+1)) * EXP(n+1, p)) = y(n+1) /\ 0 < ((c(n+2) * p) - b(n+1))) ,
                         Exists x ((x * EXP(n+1, p)) = y(n+1) /\ 0 < x) ,
                                 ((c(n+2) * p) - b(n+1)) )
+
     11:	    pLink((\psi, n) 0 < c(n+1), B(n,p,y(n+1)), (c(n+1) * EXP(n+1,p)) = y(n+1) |- )
     12:     andL( 11,  (c(n+1) * EXP(n+1,p)) = y(n+1), 0 < c(n+1) )
     13:	    exL( 12, ((c(n+1) * EXP(n+1,p)) = y(n+1) /\ 0 < c(n+1)) , Exists x ((x * EXP(n+1, p)) = y(n+1) /\ 0 < x), c(n+1))
@@ -53,6 +54,8 @@ step {
     19:	    exL( 18, (y(n+2) = ((b(n+1) * EXP(n+1,p)) + y(n+1)) /\ ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,y(n+1)))) ,
                 Exists w ( y(n+2) = ((b(n+1) * EXP(n+1,p)) + w)      /\ ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,w))), y(n+1) )
 
-    root:   exL( 19, Exists w (y(n+2) = ((b(n+1) * EXP(n+1,p)) + w) /\ ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,w))),
-            Exists v Exists w (y(n+2) = ((v * EXP(n+1,p)) + w)      /\ ((0 <= v      /\      v < p) /\ B(n,p,w))) , b(n+1))
+    20:   exL( 19, Exists w (y(n+2) = ((b(n+1) * EXP(n+1,p)) + w) /\ ((0 <= b(n+1) /\ b(n+1) < p) /\ B(n,p,w))),
+            Exists v Exists w (y(n+2) = ((v * EXP(n+1,p)) + w)  /\ ((0 <= v /\ v < p) /\ B(n,p,w))) , b(n+1))
+
+    root: foldL( 20, Exists v Exists w (y(n+2) = ((v * EXP(n+1,p)) + w) /\ ((0 <= v /\ v < p) /\ B(n,p,w))), B(n+1,p,y(n+1)))
 }
