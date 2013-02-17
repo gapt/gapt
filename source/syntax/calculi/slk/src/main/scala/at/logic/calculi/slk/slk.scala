@@ -27,6 +27,8 @@ case object OrEquivalenceRule3Type extends UnaryRuleTypeA
 case object SchemaProofLinkRuleType extends NullaryRuleTypeA
 case object TermEquivalenceRule1Type extends UnaryRuleTypeA
 case object trsArrowRuleType extends UnaryRuleTypeA
+case object foldRuleType extends UnaryRuleTypeA
+
 
 // The following two classes are used to keep a global directory
 // of proof schemata. Their definition is somewhat ad-hoc.
@@ -1062,6 +1064,7 @@ object OrEquivalenceRule1 {
       case OrEquivalenceRule2(up, r, a, p) => Some((OrEquivalenceRule2Type, up, r, a::Nil, p))
       case OrEquivalenceRule3(up, r, a, p) => Some((OrEquivalenceRule3Type, up, r, a::Nil, p))
       case trsArrowRule(up, r, a, p)      => Some((trsArrowRuleType, up, r, a::Nil, p))
+      case foldRule(up, r, a, p)          => Some((foldRuleType, up, r, a::Nil, p))
       case _ => None
     }
   }
@@ -1091,3 +1094,104 @@ object OrEquivalenceRule1 {
       }
     }
   }
+
+
+
+//----------------------- foldRule ------------------
+
+object foldRule {
+  def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
+    val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
+    def createSide( s : Seq[FormulaOccurrence] ) =
+      if ( s.contains(auxf) )
+        prinFormula +: createContext( s.filter(_ != auxf) )
+      else
+        createContext(s)
+
+    new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+      def rule = foldRuleType
+      def aux = (auxf::Nil)::Nil
+      def prin = prinFormula::Nil
+      override def name = "↞"
+    }
+  }
+
+  def apply(s1: LKProof, auxf: HOLFormula, main: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    ((s1.root.antecedent ++ s1.root.succedent).filter(x => unfoldSFormula(x.formula) == unfoldSFormula(auxf))).toList match {
+      case (x::_) => apply(s1, x, main)
+      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the foldRule with the given formula")
+    }
+  }
+
+  def unapply(proof: LKProof) =  if (proof.rule == foldRuleType) {
+    val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+    val ((a1::Nil)::Nil) = r.aux
+    val (p1::Nil) = r.prin
+    Some((r.uProof, r.root, a1, p1))
+  }
+  else None
+}
+
+object foldRightRule {
+  def apply(s1: LKProof, a: HOLFormula, main: HOLFormula) = {
+    val auxf = (s1.root.succedent).filter(x => x.formula == a).head
+    val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
+    def createSide( s : Seq[FormulaOccurrence] ) =
+      if ( s.contains(auxf) )
+        prinFormula +: createContext( s.filter(_ != auxf) )
+      else
+        createContext(s)
+
+    new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+      def rule = foldRuleType
+      def aux = (auxf::Nil)::Nil
+      def prin = prinFormula::Nil
+      override def name = "↞:r"
+    }
+  }
+  def unapply(proof: LKProof) = if (proof.rule == foldRuleType) {
+    val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+    val ((a1::Nil)::Nil) = r.aux
+    val (p1::Nil) = r.prin
+    if (r.root.succedent.contains(p1))
+      Some((r.uProof, r.root, a1, p1))
+    else
+      None
+  }
+  else
+    None
+}
+
+object foldLeftRule {
+  def apply(s1: LKProof, a: HOLFormula, main: HOLFormula) = {
+    val auxf = (s1.root.antecedent).filter(x => x.formula == a).head
+    val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
+    def createSide( s : Seq[FormulaOccurrence] ) =
+      if ( s.contains(auxf) )
+        prinFormula +: createContext( s.filter(_ != auxf) )
+      else
+        createContext(s)
+
+    new UnaryTree[Sequent]( new Sequent( createSide(s1.root.antecedent), createSide( s1.root.succedent)), s1 )
+      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
+      def rule = foldRuleType
+      def aux = (auxf::Nil)::Nil
+      def prin = prinFormula::Nil
+      override def name = "↞:l"
+    }
+  }
+  def unapply(proof: LKProof) = if (proof.rule == foldRuleType) {
+    val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+    val ((a1::Nil)::Nil) = r.aux
+    val (p1::Nil) = r.prin
+    if (r.root.antecedent.contains(p1))
+      Some((r.uProof, r.root, a1, p1))
+    else
+      None
+  }
+  else
+    None
+}
+

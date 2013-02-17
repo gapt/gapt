@@ -30,6 +30,8 @@ import scala.io._
 import java.io.File.separator
 import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success
+import at.logic.algorithms.lk.getAncestors
+
 
 @RunWith(classOf[JUnitRunner])
 class sFOparserCNTTest extends SpecificationWithJUnit {
@@ -102,14 +104,12 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
 
       //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
       println(Console.BLUE+"\n---- Print David's Proof ----\n"+Console.RESET)
-      printSchemaProof(map.get("\\psi").get._2.get("root").get)
-
-      //      println("\nvarphi = "+varphi.root)
+      val p = map.get("\\psi").get._2.get("root").get
+      printSchemaProof(p)
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
 
     }
-
   }
 }
 
