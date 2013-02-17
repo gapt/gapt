@@ -20,7 +20,7 @@ import Decomposition._
 class DecompositionTest extends SpecificationWithJUnit {
 
 // On the comments of the examples below, consider A as α
-  sequential	
+  //sequential
   "The decomposition" should {
     
     "compute the delta-vector correctly" in {

@@ -42,11 +42,12 @@
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>
-		<scala.version>2.10.0-RC2</scala.version>
+		<scala-compiler.version>2.10.0</scala-compiler.version>
+		<scala.version>2.10</scala.version>
 		<slf4j.version>1.6.6</slf4j.version>
 		<junit.version>4.10</junit.version>
-		<specs2.version>1.12.2</specs2.version>
-		<scalatest.version>2.0.M4-B2</scalatest.version>
+		<specs2.version>1.13</specs2.version>
+		<scalatest.version>1.9.1</scalatest.version>
 		<mockito.version>1.9.0</mockito.version>
 		<scalacheck.version>1.10.0</scalacheck.version>
 
@@ -64,17 +65,17 @@
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
-			<version>${scala.version}</version>
+			<version>${scala-compiler.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>jline</artifactId>
-			<version>${scala.version}</version>
+			<version>${scala-compiler.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-compiler</artifactId>
-			<version>${scala.version}</version>
+			<version>${scala-compiler.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

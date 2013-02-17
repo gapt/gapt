@@ -1,4 +1,4 @@
-/*package at.logic.provers.prover9.ivy
+package at.logic.provers.prover9.ivy
 
 import conversion.IvyToRobinson
 import org.junit.runner.RunWith
@@ -29,7 +29,9 @@ class IvyTest extends SpecificationWithJUnit {
   def debug(s:String) = {println("Debug: "+s)}
 
   "The Ivy Parser " should {
-       " parse an empty list " in {
+
+/*
+    " parse an empty list " in {
          val parser = new SExpressionParser
          parser.parse("()") match {
            case parser.Success(result, rest) =>
@@ -237,7 +239,6 @@ class IvyTest extends SpecificationWithJUnit {
       }
     }
 
-
     " parse the test file simple.ivy " in {
       try {
         val result = SExpressionParser("target" + separator + "test-classes" + separator +"simple.ivy")
@@ -442,7 +443,7 @@ class IvyTest extends SpecificationWithJUnit {
   }
 
   " parse the test file prime1-0sk.ivy (clause set of the 0 instance of the prime proof) " in {
-    //skipped("paramodulation still has problems")
+    skipped("paramodulation still has problems")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"prime1-0sk.ivy")
       result must not beEmpty
@@ -451,8 +452,8 @@ class IvyTest extends SpecificationWithJUnit {
         case lisp.List(_) =>
           val pinput = IvyParser.parse(proof, IvyParser.is_ivy_variable)
           debug("resolution: "+pinput)
-          //val rinput = IvyToRobinson(pinput)
-          //debug("robinson: "+rinput)
+          val rinput = IvyToRobinson(pinput)
+          debug("robinson: "+rinput)
 
         case _ =>
           //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -523,5 +524,33 @@ class IvyTest extends SpecificationWithJUnit {
 
     }
   }
+
+  " parse the test file issue221.ivy " in {
+    //skipped("paramodulation still has problems")
+    try {
+      val result = SExpressionParser("target" + separator + "test-classes" + separator +"issue221.ivy")
+      result must not beEmpty
+      val proof = result.head
+      proof match {
+        case lisp.List(_) =>
+          val pinput = IvyParser.parse(proof, IvyParser.is_ivy_variable)
+          debug("resolution: "+pinput)
+          val rinput = IvyToRobinson(pinput)
+          debug("robinson: "+rinput)
+
+        case _ =>
+          //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
+          "The proof in issue221.ivy must have some inferences" must beEqualTo("failed")
+      }
+      (true) must beEqualTo(true)
+    } catch {
+      case e:Exception =>
+        debug("Exception parsing issue221.ivy: "+e.getMessage)
+        debug("Stacktrace:"+e.getStackTraceString)
+        true must beEqualTo(false)
+
+    }*/
+  }
+
 }
-*/
+
