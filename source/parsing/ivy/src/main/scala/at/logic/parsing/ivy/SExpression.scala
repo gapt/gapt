@@ -45,7 +45,6 @@ case class Cons(car: SExpression, cdr : SExpression) extends SExpression {
   override def toString = "( " + car + " . " + cdr + ")"
 }
 
-class SExpressionParser extends SExpressionParser2
 /* Parser for SExpressions  */
 object SExpressionParser extends SExpressionParser {
   def dumpreader[T](r:Reader[T]) = {
@@ -169,7 +168,7 @@ class Tokenizer extends RegexParsers {
 
   lazy val token : Parser[Token] = """"[^"]*"""".r ^^ STRING |
                               """[nN][iI][lL]""".r ^^ (x => NIL) |
-                              """[a-zA-Z0-9=_+\-*/<>]+""".r ^^ WORD |
+                              """[a-zA-Z0-9=_+\-*/<>:.]*[a-zA-Z0-9=_+\-*/<>:]+[a-zA-Z0-9=_+\-*/<>:.]*""".r ^^ WORD |
                               "." ^^ (x => DOT) |
                               "(" ^^ (x => LBRACK) |
                               ")" ^^ (x => RBRACK) |
@@ -178,7 +177,7 @@ class Tokenizer extends RegexParsers {
   lazy val tokens : Parser[immutable.List[Token]] = rep(token)
 }
 
-class SExpressionParser2 extends Parsers {
+class SExpressionParser extends Parsers {
   import tokens._
   type Elem = Token
 
@@ -258,76 +257,3 @@ class SExpressionParser2 extends Parsers {
   }
 }
 
-/* The actual Parser, lexing and parsing is mixed which makes the grammar look a bit ugly sometimes */
-class SExpressionParser1 extends RegexParsers {
-  //override val whiteSpace = """($|\s+|(\s*;;.*)*)""".r
-
-  def debug(s:String) = ()
-  // --- parser transformers for putting elements into lists, concatenating parsing results, etc
-  def wrap[T](s:T) = { debug("wrapping: '"+s+"'"); immutable.List(s) }
-  def prepend[T](l : ~[T, immutable.List[T]]) : immutable.List[T] = { debug("prepending: '"+l+"'"); l match { case ~(l1,l2) => l1 :: l2  } }
-  def prepend2[T](l : ~[~[T,T],immutable.List[T]]) : immutable.List[T] = { debug("prepending: '"+l+"'"); l match { case l1 ~ l2 ~ l3 => l1 :: l2 :: l3 } }
-  def concat[T](l : ~[immutable.List[T],immutable.List[T]]) : immutable.List[T] = { debug("concatenating: '"+l+"'"); l match { case ~(l1,l2) => l1 ++ l2  } }
-
-  def prepend_tolisplist(l : ~[SExpression, SExpression]) : lisp.List = {
-    l match { case ~(l1,lisp.List(l2)) => lisp.List(l1 :: l2)
-    case _ => throw new Exception("Somethings wrong in the parser implementation!")
-    }
-  }
-  def concat_lisplists(l : ~[SExpression,SExpression]) : lisp.List = {
-    l match { case ~(lisp.List(l1),lisp.List(l2)) => lisp.List(l1 ++ l2)
-    case _ => throw new Exception("Somethings wrong in the parser implementation!")
-    }
-  }
-
-  def debugrule[T](t:T) : T = { debug("dr: "+t.toString) ; t}
-
-  def wrap_inlisplist(s:SExpression) = {  lisp.List(s::Nil) }
-
-  // ------------ start of grammar --------------------
-
-  //def eof : Parser[String] = """\z""".r
-  //def non_delimiter : Parser[String] = """[^,\(\)\[\]]([^,\.\(\)\[\]+])?""".r
-  def comment : Parser[String] = """;;.*""".r
-  def comments : Parser[String] = comment ~ comments ^^ ((x : ~[String,String]) => {val ~(s1,s2) = x; s1 + s2}) | comment
-
-  //def comments : Parser[String] = """""".r
-
-  //    def word : Parser[IvyToken] = """[^,\(\)\[\]\s]([^,\.\(\)\[\]\s]+)?""".r ^^ IvyToken
-  //def word : Parser[IvyToken] = """[^,\.\(\)\[\]\s]*[^,\(\)\[\]\s][^,\.\(\)\[\]\s]*""".r ^^ IvyToken.apply
-  //TODO: extend definition of word
-  def word : Parser[SExpression] = """[a-zA-Z0-9=_+\-*/]+""".r ^^ lisp.Atom   //contains only very restricted strings
-  def string :Parser[SExpression] = """"[^"]*"""".r ^^ lisp.Atom              //arbitrary strings wrapped in " "
-
-  def atom : Parser[SExpression] = string | word
-
-  def nil : Parser[SExpression] = (("(") ~> (")") | """[nN][iI][lL]""".r) ^^ ((x:Any) => lisp.List(Nil)) //empty list
-
-  def list : Parser[SExpression] = (nil | ("(") ~> list_ <~ (")"))            // arbitrary list
-  def list_ : Parser[SExpression] =  ( (sexpression ^^ wrap_inlisplist) ~ list_ ) ^^ concat_lisplists |
-      ( (sexpression ^^ wrap_inlisplist))
-
-  // cons: cons'es are converted to lists if possible (second argument is a list)
-  def cons : Parser[SExpression] = (("(") ~> sexpression) ~ (".") ~ (sexpression <~ (")")) ^^ (
-    (exp: ~[~[SExpression, String], SExpression]) => {
-      val car ~ _ ~ cdr = exp
-      cdr match {
-        case lisp.List(elems) => lisp.List(car::elems)
-        case _ => lisp.Cons(car,cdr)
-      }
-
-    })
-
-  def newline : Parser[String] = "$".r ~> newline | "$".r
-  //parsing of comments is a bit expensive :(
-  def sexpression_ : Parser[SExpression] =  ( list | atom | cons)
-  def sexpression : Parser[SExpression] =  opt(comments) ~> sexpression_  <~ opt(comments)
-
-  //a file is a list of sexpressions
-  def lisp_file : Parser[immutable.List[SExpression]] = rep(sexpression)  <~ opt(comments) ^^ debugrule
-
-  def parse(in:CharSequence) = parseAll(lisp_file, in)
-  def parse(in:Reader[Char]) = parseAll(lisp_file, in)
-  // ------------ end of grammar --------------------
-
-}
