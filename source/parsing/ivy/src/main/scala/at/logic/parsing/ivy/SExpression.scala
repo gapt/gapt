@@ -47,52 +47,52 @@ case class Cons(car: SExpression, cdr : SExpression) extends SExpression {
 
 /* Parser for SExpressions  */
 object SExpressionParser extends SExpressionParser {
-  def dumpreader[T](r:Reader[T]) = {
+  def dumpreader[T](r:Reader[T]) : String = dumpreader_(r).mkString(" ")
+  private def dumpreader_[T](r:Reader[T]) : immutable.List[T] = {
     var reader = r
-    println("=== dumping reader! ===")
-    while (! reader.atEnd) {
-      print(reader.first)
-      reader = reader.rest
-    }
-    println()
+    if (reader.atEnd) Nil
+    else reader.first :: dumpreader_(reader.rest)
   }
 
-  def apply(fn : String) : immutable.List[SExpression] = {
-//    val fis = new FileReader(fn)
-//    val pagedseq = new PagedSeq(fis.read)
-//    val reader = new PagedSeqReader(pagedseq)
-//    parseAll(lisp_file, reader) match {
-//      case Success(result, _) =>
-//        fis.close()
+  def apply(fn : String) : immutable.List[SExpression] = parseFile(fn)
+
+  def parseFile(fn:String) : immutable.List[SExpression] = {
         val r = new PagedSeqReader(new PagedSeq[Char](new FileReader(fn).read))
         val parser = new SExpressionParser
         parser.parse(r) match {
           case parser.Success(sexp, _) =>
-            //println("sexp="+sexp)
             sexp
-          case parser.NoSuccess(msg,_) =>
-            dumpreader(r)
-            throw new Exception("Ivy Parser Failed: "+msg)
+          case parser.NoSuccess(msg, in) =>
+            println(dumpreader(in.rest))
+            throw new Exception("S-Expression Parser Failed: "+msg + " at "+in.pos+" with remaning input:"+dumpreader(in.rest))
         }
-//        result
-//      case NoSuccess(msg, r) =>
-//        dumpreader(r)
-//        throw new Exception("Ivy Parser Failed: "+msg)
-//    }
   }
+
+  def parseString(s:String) : immutable.List[SExpression] = {
+    val parser = new SExpressionParser
+    parser.parse(s) match {
+      case parser.Success(sexp, _) =>
+        sexp
+      case parser.NoSuccess(msg,in) =>
+        throw new Exception("S-Expression Parser Failed: "+msg + " at "+in.pos+" with remaning input: "+dumpreader(in.rest))
+    }
+
+  }
+
+
 }
 
 
 package tokens {
   sealed abstract class Token;
-  case object LBRACK extends Token;
-  case object RBRACK extends Token;
-  case object DOT extends Token;
-  case object NIL extends Token;
-  case class STRING(s:String) extends Token;
-  case class WORD(s:String) extends Token;
-  case object COMMENT extends Token;
-  case object EOF extends Token;
+  case object LBRACK extends Token { override def toString = "(" };
+  case object RBRACK extends Token { override def toString = ")" };;
+  case object DOT extends Token { override def toString = "." };
+  case object NIL extends Token { override def toString = "nil" };
+  case class STRING(s:String) extends Token { override def toString = "\""+s+"\"" };
+  case class WORD(s:String) extends Token { override def toString = s };
+  case object COMMENT extends Token { override def toString = "" };
+  case object EOF extends Token { override def toString = "" };
 }
 
 

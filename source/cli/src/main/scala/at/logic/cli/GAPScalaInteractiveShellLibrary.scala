@@ -320,6 +320,10 @@ object loadProofDB {
       sFOParser.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
     }
 
+    def lisp(string:String) = {
+      SExpressionParser.parseString(string)
+    }
+
     def help() = {
       println("folterm: String => FOLFormula")
       println("folterm: String => FOLTerm")
@@ -1002,7 +1006,8 @@ object hol2fol {
           |   parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"
           |   parse.hol: String => HOLExpression
           |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
-          |
+          |   parse.lisp: String => List[SExpression]
+          |          |
           | Automated Deduction:
           |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
           |   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
