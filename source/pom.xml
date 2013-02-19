@@ -42,9 +42,10 @@
 
 	  <prooftool.version>1.4</prooftool.version>
 	  <cli.version>1.4</cli.version>
-
+        <!--
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
+        -->
 
 		<encoding>UTF-8</encoding>
 		<scala.version>2.9.2</scala.version>
@@ -138,6 +139,7 @@
 				<version>${scala-maven-plugin.version}</version>
 				<configuration>
 				  <recompileMode>incremental</recompileMode>
+                  <useZincServer>true</useZincServer>
 				</configuration>
 				<executions>
 					<execution>
