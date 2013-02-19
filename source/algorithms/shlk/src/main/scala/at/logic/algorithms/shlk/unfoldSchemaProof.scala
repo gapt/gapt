@@ -555,15 +555,15 @@ import at.logic.language.hol._
       case Or(l @ left, r @ right) => Or(minusOne(l.asInstanceOf[HOLFormula], k).asInstanceOf[HOLFormula], minusOne(r.asInstanceOf[HOLFormula], k).asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]
       case And(l @ left, r @ right) => And(minusOne(l.asInstanceOf[HOLFormula], k).asInstanceOf[HOLFormula], minusOne(r.asInstanceOf[HOLFormula], k).asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]
       case Neg(l @ left) => Neg(minusOne(l.asInstanceOf[HOLFormula], k).asInstanceOf[SchemaFormula]).asInstanceOf[HOLFormula]
-
       case Imp(l, r) => Imp(minusOne(l, k).asInstanceOf[HOLFormula], minusOne(r, k).asInstanceOf[HOLFormula])
       case AllVar(v, f) => AllVar(v, minusOne(f, k).asInstanceOf[HOLFormula])
       case at @ Atom(name, args) => {
         Atom(name, args.map(x => minusOne(x, k).asInstanceOf[HOLExpression]))
       }
       case ifo: indexedFOVar => indexedFOVar(ifo.name, minusOne(ifo.index, k).asInstanceOf[IntegerTerm])
+      case ifo: indexedOmegaVar => indexedOmegaVar(ifo.name, minusOne(ifo.index, k).asInstanceOf[IntegerTerm])
       case st @ sTerm(name, i, args) => {
-        sTerm(name.asInstanceOf[HOLConst], minusOne(i, k).asInstanceOf[IntegerTerm], args)
+        sTerm(name.asInstanceOf[HOLConst], minusOne(i, k), args)
       }
       case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], minusOne(arg, k)::Nil)
       case _ => {

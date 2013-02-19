@@ -32,6 +32,9 @@ import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success
 import at.logic.algorithms.shlk.{printSchemaProof, sFOParserCNT}
 import at.logic.gui.prooftool.gui.Main
+import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.transformations.ceres.RelevantCC
 
 
 @RunWith(classOf[JUnitRunner])
@@ -54,6 +57,7 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
 
       val A0 = IndexedPredicate(new ConstantStringSymbol("A"), IntZero())
       val i = IntVar(new VariableStringSymbol("i"))
+      val k = IntVar(new VariableStringSymbol("k"))
       val Ai2 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(Succ(i)))
       val Ai = IndexedPredicate(new ConstantStringSymbol("A"), Succ(i))
       val f1 = at.logic.language.schema.And(A0, BigAnd(i,Ai,IntZero(),Succ(i)))
@@ -104,10 +108,15 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
       //          println(seq)
 
       //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
-      println(Console.BLUE+"\n---- Print David's Proof ----\n"+Console.RESET)
+      println(Console.BLUE+"\n\n\n---- Print David's Proof ----\n"+Console.RESET)
       printSchemaProof(map.get("\\psi").get._2.get("root").get)
-//      Main.display("\\psi", map.get("\\psi").get._2.get("root").get) ;
-//      while(true){}
+      //Main.display("\\psi", map.get("\\psi").get._2.get("root").get) ;
+      //while(true){}
+//       val struct = StructCreators.extractStruct( "\\psi", k )
+      val struct = RelevantCC("\\psi")._1.flatten
+      println("\n\nstruct = "+struct)
+      //      val cs = StandardClauseSet.transformStructToClauseSet( struct )
+
       //      println("\nvarphi = "+varphi.root)
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()

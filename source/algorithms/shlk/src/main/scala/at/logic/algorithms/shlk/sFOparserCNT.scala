@@ -270,13 +270,13 @@ object sFOParserCNT {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
           //          println("\nsTerm : "+name+"("+i+","+args+")")
           //          println("args = "+args)
-          //          println("args.extype = "+args.exptype)
+//                    println("args.extype = "+args.exptype)
           sTerm(name, i, args::Nil)
         }
       }
       def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ term ~ ")" ^^ {
         case name ~ "(" ~ arg ~ ")" => {
-          //          println("\n\nfoTerm\n arg.extype = "+arg.exptype)
+          //     println("\n\nfoTerm\n arg.extype = "+arg.exptype)
           foTerm(name, arg::Nil)
         }
       }

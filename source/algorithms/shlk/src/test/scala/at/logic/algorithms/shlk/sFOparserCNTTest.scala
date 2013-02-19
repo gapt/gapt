@@ -39,12 +39,6 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
   "sFOparserCNT" should {
 
     "parse correctly David's proof " in {
-      val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
-      val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
-      val ax1  = at.logic.calculi.lk.propositionalRules.Axiom(var3::Nil, var3::Nil)
-      val ax2  = at.logic.calculi.lk.propositionalRules.Axiom(var4::Nil, var4::Nil)
-      val negl = NegLeftRule(ax1, var3)
-      val proof  = OrLeftRule(negl, ax2, var3, var4)
 
       //          sFOParser.parseProof( "1 : ax(x3: o |- x3: o)  " +
       //                            "2 : negL( 1 , x3:o)" +
@@ -53,6 +47,7 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
 
       val A0 = IndexedPredicate(new ConstantStringSymbol("A"), IntZero())
       val i = IntVar(new VariableStringSymbol("i"))
+      val k = IntVar(new VariableStringSymbol("k"))
       val Ai2 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(Succ(i)))
       val Ai = IndexedPredicate(new ConstantStringSymbol("A"), Succ(i))
       val f1 = at.logic.language.schema.And(A0, BigAnd(i,Ai,IntZero(),Succ(i)))
@@ -106,6 +101,7 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
       println(Console.BLUE+"\n---- Print David's Proof ----\n"+Console.RESET)
       val p = map.get("\\psi").get._2.get("root").get
       printSchemaProof(p)
+
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()
 
