@@ -1,4 +1,5 @@
-proof \psi  proves  P(x) |- P(x)
+proof \psi  proves
+    0 < c(k+1), B(k+1,p,y(k+1)), (c(k+1) * EXP(k+1,p)) = y(k+1) |-
 
 
 base {

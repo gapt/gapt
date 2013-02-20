@@ -189,15 +189,17 @@ import at.logic.language.schema.SchemaFormula
 
     def getFormulaForCC( fo: FormulaOccurrence, fs: List[HOLFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
-      //println("in getFormulaForCC")
-      //println("fo.formula = " + fo.formula)
+      println("\n\nin getFormulaForCC")
+      println("fo.formula = " + fo.formula)
       val sub = Substitution[HOLExpression](params.zip(terms))
-      //println("sub = " + sub)
+      println("sub = " + sub)
+      println("fs = " + fs)
       val list = fs.filter( f => {
-        //println("f = " + f )
-        //println( "sub(f) = " + sub(f) )
-        //println( sub(f) == fo.formula )
-        sub(f) == fo.formula
+        println("f = " + f )
+        println( "sub(f) = " + sub(f) )
+        println( "fo.formula = " + fo.formula )
+        println( sub(f).syntaxEquals(fo.formula))
+        sub(f).syntaxEquals(fo.formula)
       }) 
       //println("list.size = " + list.size)
       list match {
@@ -480,6 +482,8 @@ import at.logic.language.schema.SchemaFormula
     }
 
     def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
+      println("so = "+so)
+      println("cut_occs in so = "+cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)))
       val schema = SchemaProofDB.get( name )
       val sym = new ClauseSetSymbol( name,
         cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)),
