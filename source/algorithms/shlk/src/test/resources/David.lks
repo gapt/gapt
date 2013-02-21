@@ -1,4 +1,4 @@
-proof \psi  proves
+proof \varphi  proves
     0 < c(k+1), B(k+1,p,y(k+1)), (c(k+1) * EXP(k+1,p)) = y(k+1) |-
 
 
@@ -43,7 +43,7 @@ step {
                         Exists x ((x * EXP(k+1, p)) = y(k+1) /\ 0 < x) ,
                                 ((c(k+2) * p) - b(k+1)) )
 
-    11:	    pLink((\psi, k) 0 < c(k+1), B(k,p,y(k+1)), (c(k+1) * EXP(k+1,p)) = y(k+1) |- )
+    11:	    pLink((\varphi, k) 0 < c(k+1), B(k,p,y(k+1)), (c(k+1) * EXP(k+1,p)) = y(k+1) |- )
     12:     andL( 11,  (c(k+1) * EXP(k+1,p)) = y(k+1), 0 < c(k+1) )
     13:	    exL( 12, ((c(k+1) * EXP(k+1,p)) = y(k+1) /\ 0 < c(k+1)) , Exists x ((x * EXP(k+1, p)) = y(k+1) /\ 0 < x), c(k+1))
     14:     cut(10,13, Exists x ((x * EXP(k+1, p)) = y(k+1) /\ 0 < x))
@@ -60,3 +60,31 @@ step {
 
     root: foldL( 20, Exists v Exists w (y(k+2) = ((v * EXP(k+1,p)) + w) /\ ((0 <= v /\ v < p) /\ B(k,p,w))), B(k+1,p,y(k+1)))
 }
+
+----------------------------------------
+
+proof \psi  proves
+    s(k+2) = ((a(k+1) * EXP(k+1,p)) + s(k+1)),
+    B(k,p,s(k+1)), (a(k+1) * EXP(k+1,p)) \= g |- (B(k,p,s(k+1))   /\   s(k+2) \= (g+s(k+1)))
+
+base {
+    1:      ax( B(1,p,s(2)) |- B(1,p,s(2)) )
+
+    2:      ax( s(3) = ((a(2) * EXP(2,p)) + s(2)), s(3) = (g+s(2)) |- (a(2) * EXP(2,p)) = g)
+    3:      negR(2, s(3) = (g+s(2)))
+    4:      negL(3, (a(2) * EXP(2,p)) = g)
+    5:      andR(1, 4, B(1,p,s(2)), s(3) \= (g+s(2)))
+    root:   andL(5, s(3) = ((a(2) * EXP(2,p)) + s(2)), B(1,p,s(2)))
+}
+
+step {
+    1:      ax( B(k+1,p,s(k+2)) |- B(k+1,p,s(k+2)) )
+
+    2:      ax( s(k+3) = ((a(k+2) * EXP(k+2,p)) + s(k+2)), s(k+3) = (g+s(k+2)) |- (a(k+2) * EXP(k+2,p)) = g)
+    3:      negR(2, s(k+3) = (g+s(k+2)))
+    4:      negL(3, (a(k+2) * EXP(k+2,p)) = g)
+    5:      andR(1, 4, B(k+1,p,s(k+2)), s(k+3) \= (g+s(k+2)))
+    root:   andL(5, s(k+3) = ((a(k+2) * EXP(k+2,p)) + s(k+2)), B(k+1,p,s(k+2)))
+}
+
+-----------------------------------

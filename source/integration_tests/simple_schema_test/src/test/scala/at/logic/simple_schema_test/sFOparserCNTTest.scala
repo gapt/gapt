@@ -110,10 +110,10 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
       //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
       println(Console.BLUE+"\n\n\n---- Print David's Proof ----\n"+Console.RESET)
       printSchemaProof(map.get("\\psi").get._2.get("root").get)
-      //Main.display("\\psi", map.get("\\psi").get._2.get("root").get) ;
+      //Main.display("\\varphi", map.get("\\varphi").get._2.get("root").get) ;
       //while(true){}
-      val struct = StructCreators.extractStruct( "\\psi", k )
-//      val rcc = RelevantCC("\\psi")._1.flatten
+      val struct = StructCreators.extractStruct( "\\varphi", k )
+//      val rcc = RelevantCC("\\varphi")._1.flatten
       println("\n\nstruct = "+struct)
       //      val cs = StandardClauseSet.transformStructToClauseSet( struct )
 

@@ -93,7 +93,8 @@ object sFOParserCNT {
     //    }
 
     class SimpleSLKParser extends JavaTokenParsers with at.logic.language.lambda.types.Parsers {
-      def line: Parser[List[Unit]] = rep(mappingBase)
+      def line: Parser[List[Unit]] = rep(cmappingBase)
+      def cmappingBase:Parser[Unit] = ("comment" ~ "\"[\"]*\"") ^^ { x => () } | mappingBase
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {
           error_buffer = l
@@ -121,8 +122,8 @@ object sFOParserCNT {
 
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
 
-      def slkProof: Parser[Unit] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}"  ^^ {
-        case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" => {
+      def slkProof: Parser[Any] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
+        case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
           //          proofName = str
           bigMap.put(str, Pair(mapBase, mapStep))
           SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
@@ -286,14 +287,14 @@ object sFOParserCNT {
         }
       }
       //indexed variable of type ω->ω
-      def indexedwVar: Parser[HOLVar] = regex(new Regex("[c,b,y]")) ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedwVar: Parser[HOLVar] = regex(new Regex("[c,b,y,a,s]")) ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
           indexedOmegaVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v,w]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v,w,g]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
       def variable: Parser[HOLVar] = (indexedwVar | indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[t]" + word))  ^^ {
           case x => {
@@ -305,7 +306,7 @@ object sFOParserCNT {
       def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}
       def abs: Parser[HOLExpression] = "Abs" ~ variable ~ term ^^ {case "Abs" ~ v ~ x => Abs(v,x).asInstanceOf[HOLExpression]}
       def neg: Parser[HOLFormula] = "~" ~ formula ^^ {case "~" ~ x => Neg(x)}
-      def atom: Parser[HOLFormula] = (equality | less | lessOrEqual | s_atom | var_atom | const_atom)
+      def atom: Parser[HOLFormula] = (inequality | equality | less | lessOrEqual | s_atom | var_atom | const_atom)
       def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
       def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
       def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => { Atom(new VariableStringSymbol(x), params)}}
@@ -314,6 +315,7 @@ object sFOParserCNT {
       def s_atom: Parser[HOLFormula] = regex(new Regex("[B]")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
       def equality: Parser[HOLFormula] = eq_infix |  eq_prefix // infix is problematic in higher order
       def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
+      def inequality: Parser[HOLFormula] = term ~ "\\=" ~ term ^^ {case x ~ "\\=" ~ y => Neg(Equation(x,y))}
       def eq_prefix: Parser[HOLFormula] = "=" ~ "(" ~ term ~ "," ~ term  ~ ")" ^^ {case "=" ~ "(" ~ x ~ "," ~ y  ~ ")" => Equation(x,y)}
       def less: Parser[HOLFormula] = term ~ "<" ~ term ^^ {case x ~ "<" ~ y => lessThan(x,y)}
       def lessOrEqual: Parser[HOLFormula] = term ~ "<=" ~ term ^^ {case x ~ "<=" ~ y => leq(x,y)}
