@@ -64,11 +64,11 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
   override def toString = {
 
     // For printing Xα -> ^ Xsi
-    val x = ConstantStringSymbol("X")
+    val X = ConstantStringSymbol("X")
     val alpha = FOLVar(new VariableStringSymbol("α"))
-    val xalpha = Atom(x, alpha::Nil)
+    val xalpha = Atom(X, alpha::Nil)
     // X[s_i] forall i
-    val xs = grammar.s.map(t => Atom(x, t::Nil))
+    val xs = grammar.s.map(t => Atom(X, t::Nil))
     val bigConj = andN(xs)
     // Implication parametrized with second order variable X (is this needed except for printing purposes??)
     val implication : FOLFormula = Imp(xalpha, bigConj)
@@ -77,8 +77,9 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
     val str1 = antecedent.foldRight("") ( (f, acc) => acc + f + ", ")
     val str2 = succedent_alpha.foldRight("") ( (f, acc) => acc + f + ", ")
     val str3 = succedent.foldRight("") ( (f, acc) => acc + f + ", ")
-
-    (str1 + str0 + implication + " :- " + str3 + str2)
+    val str4 = cutFormula match { case AllVar( x, f ) => "λ " + x + ". " + f }
+      
+    (str1 + str0 + implication + " :- " + str3 + str2 + " where " + X + " = " + str4)
   }
 
   // Checks if the sequent is a tautology using f as the cut formula
