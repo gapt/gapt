@@ -25,11 +25,9 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.occurrences.factory
 
 
-object LKtoLKskc {
+object LKtoLKskc extends Logger {
   implicit def sequent2fsequent(fs : Sequent) : FSequent = FSequent(fs.antecedent map (_.formula), fs.succedent map (_.formula))
   def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Nil)
-
-  def logInfo( msg: String ) = (new Logger{}).info( msg )
 
   def apply(proof: LKProof) : LKProof = apply( proof, getCutAncestors( proof ) )
 
@@ -88,7 +86,7 @@ object LKtoLKskc {
         m.formula match {
           case All(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
-            logInfo( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
+            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
             val s = Function( f, args, alpha )
             val subst = Substitution[HOLExpression]( v, s )
             val new_parent = applySubstitution( r._1, subst )
@@ -121,7 +119,7 @@ object LKtoLKskc {
         m.formula match {
           case Ex(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
-            logInfo( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
+            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
             val s = Function( f, args, alpha )
             val subst = Substitution[HOLExpression]( v, s )
             val new_parent = applySubstitution( r._1, subst )

@@ -3,7 +3,6 @@ package at.logic.transformations.skolemization
 import at.logic.language.lambda.typedLambdaCalculus.{Var,LambdaExpression}
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
-import at.logic.utils.logging.Logger
 import scala.collection.immutable.{Map,HashMap,HashSet}
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.quantificationRules._
