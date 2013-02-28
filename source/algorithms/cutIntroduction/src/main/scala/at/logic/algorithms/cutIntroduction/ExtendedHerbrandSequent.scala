@@ -17,10 +17,11 @@ import at.logic.language.fol.Utils._
 import at.logic.algorithms.lk.solvePropositional._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
+import at.logic.utils.logging.Logger
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
+class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) extends Logger {
  
   val endSequent = seq
   val flatterms = g.flatterms
@@ -119,8 +120,9 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
     // Exhaustive search over the resolvents (depth-first search),
     // returns the list of all solutions found.
     def searchSolution(f: FOLFormula) : List[FOLFormula] =
-      f :: CutIntroduction.ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) => 
-          if(this.isValidWith(AllVar(x,r))) {
+      f :: CutIntroduction.ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) =>
+          if( this.isValidWith( AllVar( x, r ))) {
+            trace( "found solution with " + r.numOfAtoms + " atoms: " + r )
             searchSolution(r) ::: acc
           }
           else {
@@ -132,6 +134,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
   }
 
   def minimizeSolution = {
+    trace( "minimizing solution " + cutFormula )
     val minimalSol = this.improveSolution.sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     this.cutFormula = minimalSol
   }

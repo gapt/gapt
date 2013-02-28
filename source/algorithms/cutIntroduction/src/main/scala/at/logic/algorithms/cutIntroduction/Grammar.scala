@@ -40,20 +40,19 @@ class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
 
 }
 
-object ComputeGrammars {
+object ComputeGrammars extends Logger {
 
   // This looks ugly :(
   def apply(terms: FlatTermSet) : List[Grammar] = apply(terms.termset).map{ case g => g.flatterms = terms; g }
 
   def apply(terms: List[FOLTerm]) : List[Grammar] = {
-
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = FOLVar(new VariableStringSymbol("α"))
     
+    debug( "computing delta-table" )
     val deltatable = new DeltaTable(terms, eigenvariable)
 
-    deltatable.debug("after filling in the deltaTable during the computation of grammars")
-    
+    debug( "reading off grammars from delta-table" )
     findValidGrammars(terms, deltatable, eigenvariable).sortWith((g1, g2) =>
       g1.size < g2.size
     )
@@ -63,9 +62,6 @@ object ComputeGrammars {
   def findValidGrammars(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar) : List[Grammar] = {
 
     deltatable.table.foldRight(List[Grammar]()) {case ((s, pairs), grammars) =>
-
-      debug("loop that goes through the delta-table and generates the grammars", grammars)
-
       // Ignoring entries where s.size == 1 because they are trivial
       // grammars with the function symbol on the right.
       if(s.size != 1) {
@@ -115,13 +111,4 @@ object ComputeGrammars {
       else grammars
     }
   }
-
-  def debug(msg: String, lst: List[Grammar]) = {
-    println("=============== DEBUG: Grammars ================")
-    println("Where: " + msg)
-    println("Number of grammars so far: " + lst.size)
-    println("================================================")
-  }
-
 }
-

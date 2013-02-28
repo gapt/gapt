@@ -24,10 +24,11 @@ import at.logic.algorithms.shlk._
 import at.logic.algorithms.interpolation._
 import at.logic.algorithms.resolution._
 import at.logic.calculi.resolution.base.FClause
+import at.logic.utils.logging.Logger
 
 class CutIntroException(msg: String) extends Exception(msg)
 
-object CutIntroduction {
+object CutIntroduction extends Logger {
 
   def apply(proof: LKProof) : LKProof = {
 
@@ -41,11 +42,12 @@ object CutIntroduction {
     // transform tuples into terms.
     val terms = new FlatTermSet(termsTuples)
 
-    println("\nTerm set: {" + terms.termset + "} of size " + terms.termset.size)
+    println( "\nTerm set: {" + terms.termset + "}" )
+    println( "Size of term set: " + terms.termset.size )
 
     val grammars = ComputeGrammars(terms)
 
-    println("\nNumber of decompositions in total: " + grammars.length)
+    println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
       throw new CutIntroException("\nNo grammars found." + 
@@ -56,7 +58,11 @@ object CutIntroduction {
     val smallest = grammars.head.size
     val smallestGrammars = grammars.filter(g => g.size == smallest)
 
+    println( "Smallest grammar-size: " + smallest )
+    println( "Number of smallest grammars: " + smallestGrammars.length )
+
     val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
+      trace( "building proof for grammar " + grammar.toPrettyString )
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
@@ -77,7 +83,7 @@ object CutIntroduction {
     val ehs = sorted.head._2
 
     println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
-    println("\nCut formula: " + ehs.cutFormula + "\n")
+    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
     smallestProof
       
