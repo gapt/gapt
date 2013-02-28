@@ -36,6 +36,14 @@ class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
     // |U| > |U'| or |S| > |S'|
     (u.size > g.u.size || s.size > g.s.size)
 
+  def strictLeftSuperGrammarOf( g : Grammar ) = 
+    g.u.forall(e => u.contains(e)) && g.s.forall(e => s.contains(e)) &&
+    u.size > g.u.size
+
+  def strictRightSuperGrammarOf( g : Grammar ) =
+    g.u.forall(e => u.contains(e)) && g.s.forall(e => s.contains(e)) &&
+    s.size > g.s.size
+
   def toPrettyString = "{ " + u.foldRight("")((ui, str) => str + ui + ", ") + " } o { " + s.foldRight("") ((si, str) => str + si + ", " ) + " }" 
 
 }
