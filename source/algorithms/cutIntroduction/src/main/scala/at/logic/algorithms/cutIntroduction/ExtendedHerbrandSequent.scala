@@ -39,8 +39,8 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
   private val inst_l : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
-    f.formula.asInstanceOf[FOLFormula] match {
-      case AllVar(_, _) => f.formula.asInstanceOf[FOLFormula].substituteAll(terms) :: acc
+    f match {
+      case AllVar(_, _) => f.substituteAll(terms) :: acc
       case _ => acc
     }
   }
@@ -48,8 +48,8 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
   private val inst_r : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
-    f.formula.asInstanceOf[FOLFormula] match {
-      case ExVar(_, _) => f.formula.asInstanceOf[FOLFormula].substituteAll(terms) :: acc
+    f match {
+      case ExVar(_, _) => f.substituteAll(terms) :: acc
       case _ => acc
     }
   }

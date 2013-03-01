@@ -31,9 +31,9 @@ import at.logic.language.hol.logicSymbols._
 
 class FlatTermSetException(msg: String) extends Exception(msg)
 
-class FlatTermSet(terms: Map[FormulaOccurrence, List[List[FOLTerm]]]) {
+class FlatTermSet(terms: Map[FOLFormula, List[List[FOLTerm]]]) {
 
-  var formulaFunction = new HashMap[ConstantStringSymbol, FormulaOccurrence]
+  var formulaFunction = new HashMap[ConstantStringSymbol, FOLFormula]
   var termset : List[FOLTerm] = Nil
 
   terms.foreach{

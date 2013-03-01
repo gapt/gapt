@@ -134,8 +134,8 @@ object CutIntroduction extends Logger {
         val terms = flatterms.getTermTuple(term)
         val f = flatterms.getFormula(term)
         val xterms = terms.map(e => FOLSubstitution(e, g.eigenvariable, xvar))
-        val fsubst = f.formula.asInstanceOf[FOLFormula].substituteAll(xterms)
-        f.formula.asInstanceOf[FOLFormula].substituteAll(xterms) :: acc
+        val fsubst = f.substituteAll(xterms)
+        f.substituteAll(xterms) :: acc
       }
       else acc
     }
@@ -205,22 +205,22 @@ object CutIntroduction extends Logger {
       case (term, ax) => 
         val terms = flatterms.getTermTuple(term)
         val f = flatterms.getFormula(term)
-        f.formula.asInstanceOf[FOLFormula] match { 
+        f match { 
           case AllVar(_, _) =>
             try {
-              ContractionLeftRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
+              ContractionLeftRule(genWeakQuantRules(f, terms, ax), f)
             }
             catch {
               // Not able to contract the formula because it was the last
               // substitution
-              case e: LKRuleCreationException => genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+              case e: LKRuleCreationException => genWeakQuantRules(f, terms, ax)
             }
           case ExVar(_, _) =>
             try {
-              ContractionRightRule(genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax), f.formula.asInstanceOf[FOLFormula])
+              ContractionRightRule(genWeakQuantRules(f, terms, ax), f)
             }
             catch {
-              case e: LKRuleCreationException => genWeakQuantRules(f.formula.asInstanceOf[FOLFormula], terms, ax)
+              case e: LKRuleCreationException => genWeakQuantRules(f, terms, ax)
             }
         }
     }

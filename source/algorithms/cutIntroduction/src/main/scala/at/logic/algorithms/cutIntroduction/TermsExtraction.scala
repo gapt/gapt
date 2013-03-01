@@ -28,7 +28,7 @@ object TermsExtraction {
 
   // If all the quantified formulas have only one quantifier, each list of
   // the list will have only one element
-  def apply(proof: LKProof) : Map[FormulaOccurrence, List[List[FOLTerm]]] = {
+  def apply(proof: LKProof) : Map[FOLFormula, List[List[FOLTerm]]] = {
     val es = proof.root
     val formulas = es.antecedent ++ es.succedent
     // Check if all formulas are prenex.
@@ -39,10 +39,10 @@ object TermsExtraction {
     else throw new TermsExtractionException("ERROR: Trying to extract the terms of a proof with non-prenex formulas: " + es.toString)
   }
   
-  private def extractTerms(proof: LKProof) : Map[FormulaOccurrence, List[List[FOLTerm]]] = proof match {
+  private def extractTerms(proof: LKProof) : Map[FOLFormula, List[List[FOLTerm]]] = proof match {
 
     /* AXIOM */
-    case Axiom(s) => new HashMap[FormulaOccurrence, List[List[FOLTerm]]] 
+    case Axiom(s) => new HashMap[FOLFormula, List[List[FOLTerm]]] 
 
     /* WEAKENING RULES */
     case WeakeningLeftRule(up, _, pf) =>
@@ -52,70 +52,10 @@ object TermsExtraction {
 
     /* CONTRACTION RULES */
     case ContractionLeftRule(up, _, aux1, aux2, prin) =>
-      val map = extractTerms(up)
-      val ancestorsAux1 = getAncestors(aux1)
-      val ancestorsAux2 = getAncestors(aux2)
-      val keys = map.keys
-      // Gets all the ancestors that are keys in the hashmap
-      val anc1 = keys.filter(x => ancestorsAux1.contains(x)).toList
-      val anc2 = keys.filter(x => ancestorsAux2.contains(x)).toList
-      if (anc1.length == 1 && anc2.length == 1) {
-        val a1 = anc1(0)
-        val a2 = anc2(0)
-        val t1 = map(a1)
-        val t2 = map(a2)
-        val auxmap = map - (a1, a2)
-        auxmap += (prin -> (t1 ++ t2))
-      }
-      else if (anc1.length == 1 && anc2.length == 0) {
-        val a1 = anc1(0)
-        val t = map(a1)
-        val auxmap = map - (a1)
-        auxmap += (prin -> t)
-      }
-      else if (anc1.length == 0 && anc2.length == 1) {
-        val a2 = anc2(0)
-        val t = map(a2)
-        val auxmap = map - (a2)
-        auxmap += (prin -> t)
-      }
-      else if (anc1.length > 1 || anc2.length > 1) {
-        throw new TermsExtractionException("ERROR: More than one ancestor was instantiated.")
-      }
-      else map
+      extractTerms(up)
+
     case ContractionRightRule(up, _, aux1, aux2, prin) =>
-      val map = extractTerms(up)
-      val ancestorsAux1 = getAncestors(aux1)
-      val ancestorsAux2 = getAncestors(aux2)
-      val keys = map.keys
-      // Gets all the ancestors that are keys in the hashmap
-      val anc1 = keys.filter(x => ancestorsAux1.contains(x)).toList
-      val anc2 = keys.filter(x => ancestorsAux2.contains(x)).toList
-      if (anc1.length == 1 && anc2.length == 1) {
-        val a1 = anc1(0)
-        val a2 = anc2(0)
-        val t1 = map(a1)
-        val t2 = map(a2)
-        val auxmap = map - (a1, a2)
-        auxmap += (prin -> (t1 ++ t2))
-      }
-      else if (anc1.length == 1 && anc2.length == 0) {
-        val a1 = anc1(0)
-        val t = map(a1)
-        val auxmap = map - (a1)
-        auxmap += (prin -> t)
-      }
-      else if (anc1.length == 0 && anc2.length == 1) {
-        val a2 = anc2(0)
-        val t = map(a2)
-        val auxmap = map - (a2)
-        auxmap += (prin -> t)
-      }
-      else if (anc1.length > 1 || anc2.length > 1) {
-        throw new TermsExtractionException("ERROR: More than one ancestor was instantiated.")
-      }
-      else map
- 
+      extractTerms(up)
 
     /* RIGHT CONJUNCTION RULE */
     case AndRightRule(up1, up2, _, aux1, aux2, _) =>
@@ -159,41 +99,47 @@ object TermsExtraction {
 
     /* WEAK QUANTIFIER RULES */
     // This is when the HashMap is filled.
-    // TODO: check the order in which elements are added to the list.
     case ForallLeftRule(up, _, aux, prin, term) =>
       val map = extractTerms(up)
-      val ancestorsAux = getAncestors(aux)
-      val keys = map.keys
-      val anc = keys.filter(x => ancestorsAux.contains(x)).toList
-      if(anc.length == 1){
-        val a = anc(0)
+      val f = prin.formula.asInstanceOf[FOLFormula]
+      val a = aux.formula.asInstanceOf[FOLFormula]
+      val newterms = if (map.contains(a) ) {
+        map -= a // side effect!!
         val terms = map(a)
         // Append the new terms to every list in terms
-        val newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
-        val auxmap = map - a
-        auxmap += (prin -> newterms)
+        terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
-        map += (prin -> ((folterm::Nil)::Nil))
+        ((folterm::Nil)::Nil)
       }
+
+      if(map.contains(f) ) {
+        val t = map(f)
+        map += (f -> (t ++ newterms) )
+      }
+      else map += (f -> newterms)
+
     case ExistsRightRule(up, _, aux, prin, term) =>
       val map = extractTerms(up)
-      val ancestorsAux = getAncestors(aux)
-      val keys = map.keys
-      val anc = keys.filter(x => ancestorsAux.contains(x)).toList
-      if(anc.length == 1){
-        val a = anc(0)
+      val f = prin.formula.asInstanceOf[FOLFormula]
+      val a = aux.formula.asInstanceOf[FOLFormula]
+      val newterms = if (map.contains(a) ) {
+        map -= a // side effect!!
         val terms = map(a)
         // Append the new terms to every list in terms
-        val newterms = terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
-        val auxmap = map - a
-        auxmap += (prin -> newterms)
+        terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
-        map += (prin -> ((folterm::Nil)::Nil))
+        ((folterm::Nil)::Nil)
       }
+
+      if(map.contains(f) ) {
+        val t = map(f)
+        map += (f -> (t ++ newterms) )
+      }
+      else map += (f -> newterms)
 
     /* CUT RULE */
     case CutRule(up1, up2, _, a1, a2) => 

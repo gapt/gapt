@@ -363,7 +363,8 @@ object loadProofDB {
   object extractTerms {
     def apply( p: LKProof ) = {
       val ts = new FlatTermSet(TermsExtraction(p))
-      println("The term set contains " + ts.termset.size + " terms.\n")
+      println( "\nTerm set: {" + ts.termset + "}" )
+      println( "Size of term set: " + ts.termset.size )
       ts
     }
   }
