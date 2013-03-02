@@ -287,14 +287,14 @@ object sFOParserCNT {
         }
       }
       //indexed variable of type ω->ω
-      def indexedwVar: Parser[HOLVar] = regex(new Regex("[c,b,y,a,s]")) ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedwVar: Parser[HOLVar] = regex(new Regex("[c,b,y,a,s, w]")) ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
           indexedOmegaVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v,w,g]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v,g]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
       def variable: Parser[HOLVar] = (indexedwVar | indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
       def constant: Parser[HOLConst] = regex(new Regex("[t]" + word))  ^^ {
           case x => {
@@ -312,7 +312,7 @@ object sFOParserCNT {
       def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => { Atom(new VariableStringSymbol(x), params)}}
       //      def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
       def const_atom: Parser[HOLFormula] = regex(new Regex("[P]")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { Atom(new ConstantStringSymbol(x), params) }}
-      def s_atom: Parser[HOLFormula] = regex(new Regex("[B]")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
+      def s_atom: Parser[HOLFormula] = regex(new Regex("[B,E]")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
       def equality: Parser[HOLFormula] = eq_infix |  eq_prefix // infix is problematic in higher order
       def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
       def inequality: Parser[HOLFormula] = term ~ "\\=" ~ term ^^ {case x ~ "\\=" ~ y => Neg(Equation(x,y))}
