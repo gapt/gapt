@@ -112,9 +112,9 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
       printSchemaProof(map.get("\\psi").get._2.get("root").get)
       //Main.display("\\varphi", map.get("\\varphi").get._2.get("root").get) ;
       //while(true){}
-      val struct = StructCreators.extractStruct( "\\varphi", k )
+//      val struct = StructCreators.extractStruct( "\\varphi", k )
 //      val rcc = RelevantCC("\\varphi")._1.flatten
-      println("\n\nstruct = "+struct)
+//      println("\n\nstruct = "+struct)
       //      val cs = StandardClauseSet.transformStructToClauseSet( struct )
 
       //      println("\nvarphi = "+varphi.root)
