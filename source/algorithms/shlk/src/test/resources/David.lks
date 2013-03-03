@@ -40,7 +40,8 @@ step {
     7:      exR( 6, (0<((c(k+2) * p) - c(k+1)) /\ (((c(k+2) * p) - c(k+1))*EXP(k+1, p)) = w(k+1)) , Exists x (0<x /\ (x*EXP(k+1, p)) = w(k+1)) , ((c(k+2) * p) - c(k+1)) )
 
     8:      pLink( (\varphi, k,w(k+1),α(k+1),c,w) E(k,p,c,w(k+1),w), 0<α(k+1), (α(k+1)*EXP(k+1,p)) = w(k+1) |- )
-    9:      andL( 8, 0<α(k+1), (α(k+1)*EXP(k+1,p)) = w(k+1) )
+    9:      andL( 8, 0<α(k+1),
+     (α(k+1)*EXP(k+1,p)) = w(k+1) )
     10:     exL( 9, (0<α(k+1) /\ (α(k+1)*EXP(k+1,p)) = w(k+1)), Exists x (0<x /\ (x*EXP(k+1,p)) = w(k+1)) , α(k+1))
 
     11:     cut(7, 10, Exists x (0<x /\ (x*EXP(k+1,p)) = w(k+1)) )

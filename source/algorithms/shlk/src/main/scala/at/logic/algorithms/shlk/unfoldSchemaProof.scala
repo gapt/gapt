@@ -608,7 +608,7 @@ import at.logic.language.hol._
       case Axiom(ro) => Axiom(ro.antecedent.map(fo => minusOne(fo.formula.asInstanceOf[HOLFormula], k).asInstanceOf[HOLFormula]),ro.succedent.map(fo => minusOne(fo.formula.asInstanceOf[HOLFormula], k).asInstanceOf[HOLFormula]))
 
       case SchemaProofLinkRule( seq, link, ind::_ ) => {
-        SchemaProofLinkRule(minusOneFSeq(seq.toFSequent, k), link, intTermMinusOne(ind, k)::Nil )
+        SchemaProofLinkRule(minusOneFSeq(seq.toFSequent, k), link, intTermMinusOne(ind.asInstanceOf[IntegerTerm], k)::Nil )
       }
 
       case AndLeftEquivalenceRule1(p, s, a, m) => {
