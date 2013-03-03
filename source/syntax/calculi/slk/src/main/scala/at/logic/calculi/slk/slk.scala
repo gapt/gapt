@@ -109,11 +109,11 @@ object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnc
 
 trait SchemaProofLink {
   def link: String
-  def indices: List[IntegerTerm]
+  def indices: List[HOLExpression]
 }
 
 object FOSchemaProofLinkRule {
-  def apply(seq: FSequent, link_name: String, indices_ : List[IntegerTerm]) = {
+  def apply(seq: FSequent, link_name: String, indices_ : List[HOLExpression]) = {
     def createSide(side : Seq[HOLFormula]) = {
       side.map(f =>factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence]))
     }

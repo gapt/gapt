@@ -266,7 +266,7 @@ object sFOParserCNT {
           })
         }
       }
-      def term: Parser[HOLExpression] = (PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | var_func | const_func)
+      def term: Parser[HOLExpression] = (PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | var_func | const_func | SOindVar)
       def s_term: Parser[HOLExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ term ~ ")" ^^ {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
           //          println("\nsTerm : "+name+"("+i+","+args+")")
@@ -287,7 +287,7 @@ object sFOParserCNT {
         }
       }
       //indexed variable of type ω->ω
-      def indexedwVar: Parser[HOLVar] = regex(new Regex("[c,b,y,a,s, w]")) ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedwVar: Parser[HOLVar] = regex(new Regex("[α,c,b,y,a,s,w]")) ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
           indexedOmegaVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
@@ -320,6 +320,7 @@ object sFOParserCNT {
       def less: Parser[HOLFormula] = term ~ "<" ~ term ^^ {case x ~ "<" ~ y => lessThan(x,y)}
       def lessOrEqual: Parser[HOLFormula] = term ~ "<=" ~ term ^^ {case x ~ "<=" ~ y => leq(x,y)}
       def var_func: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, ind->ind)}
+      def SOindVar: Parser[HOLExpression] = regex(new Regex("[c,w,s]")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->Ti())}
       /*def var_func: Parser[HOLExpression] = (var_func1 | var_funcn)
       def var_func1: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
       def var_funcn: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "^" ~ decimalNumber ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "^" ~ n ~ "(" ~ params ~ ")" ~ ":" ~ tp => genF(n.toInt, HOLVar(new VariableStringSymbol(x)), params)}
@@ -356,10 +357,10 @@ object sFOParserCNT {
       //        }
       //      }
 
-      def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
-        case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
+      def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ repsep(term,",") ~ ")"  ~ sequent ~ ")" ^^ {
+        case                       "pLink(" ~ "(" ~ name ~       "," ~   l   ~ ")"  ~ sequent ~ ")" => {
           //          println("\n\npLink")
-          FOSchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
+          FOSchemaProofLinkRule(sequent.toFSequent(), name, l)
         }
       }
 
