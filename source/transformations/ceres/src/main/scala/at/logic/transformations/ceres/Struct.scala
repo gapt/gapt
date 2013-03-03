@@ -472,7 +472,7 @@ import at.logic.language.schema.SchemaFormula
         handleBinary( upperProofLeft, upperProofRight, aux1::aux2::Nil, cut_occs )
       case UnaryLKskProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
       case UnarySchemaProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
-      case SchemaProofLinkRule(so, name, indices) => handleSchemaProofLink( so, name, indices, cut_occs )
+      case SchemaProofLinkRule(so, name, indices) => handleSchemaProofLink( so, name, indices.asInstanceOf[List[IntegerTerm]], cut_occs )
     }
 
     def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {

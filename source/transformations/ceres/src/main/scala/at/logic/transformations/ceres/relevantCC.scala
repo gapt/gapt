@@ -115,13 +115,13 @@ object RelevantCC {
     case SchemaProofLinkRule( seq, proof_name, index::_ ) => {
       val cut_omega_anc = getCutAncestors(p_old) ++ getAncestors(omega.toSet)
       val seq1 = SchemaProofDB.get(proof_name).rec.root
-      val len = StepMinusOne.lengthVar(index)
+      val len = StepMinusOne.lengthVar(index.asInstanceOf[IntegerTerm])
       val foccsInSeqAnt = seq.antecedent.filter(fo => cut_omega_anc.contains(fo))
       val foccsInSeqSucc = seq.succedent.filter(fo => cut_omega_anc.contains(fo))
       var new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm]
       var sub = new SchemaSubstitution1[HOLExpression](new_map)
       if (len == 0)
-        new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(index) )
+        new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(index.asInstanceOf[IntegerTerm]) )
       else
       if (len == 1)
         new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] //+ Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
