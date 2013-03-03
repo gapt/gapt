@@ -13,7 +13,6 @@
     <module>ceres</module>
     <module>gentzen-cutelim</module>
     <module>skolemization</module>
-    <module>misc</module>
     <module>herbrandExtraction</module>
   </modules>
 
