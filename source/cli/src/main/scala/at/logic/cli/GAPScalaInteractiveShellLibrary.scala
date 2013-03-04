@@ -367,6 +367,12 @@ object loadProofDB {
       println( "Size of term set: " + ts.termset.size )
       ts
     }
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree])) {
+      val ts = new FlatTermSet(TermsExtraction(ep))
+      println( "\nTerm set: {" + ts.termset + "}" )
+      println( "Size of term set: " + ts.termset.size )
+      ts
+    }
   }
 
   object computeGrammars {

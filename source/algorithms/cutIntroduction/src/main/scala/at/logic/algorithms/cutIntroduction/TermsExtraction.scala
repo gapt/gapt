@@ -18,9 +18,12 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
-import scala.collection.mutable._
+import scala.collection.immutable.HashMap
 import at.logic.calculi.lk.base.types._
+import at.logic.calculi.expansionTrees._
+import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti}
 import at.logic.algorithms.lk._
+import at.logic.algorithms.expansionTrees._
 
 class TermsExtractionException(msg: String) extends Exception(msg)
 
@@ -38,11 +41,37 @@ object TermsExtraction {
     }
     else throw new TermsExtractionException("ERROR: Trying to extract the terms of a proof with non-prenex formulas: " + es.toString)
   }
+
+  // An expansion proof is a pair of expansion trees, one for each formula in
+  // the antecedent and succedent of the end-sequent
+  def apply(expProof: (Seq[ExpansionTree], Seq[ExpansionTree])) : Map[FOLFormula, List[List[FOLTerm]]] = {
+  
+    // Transform to a list of MultiExpansionTrees
+    val multiExpTrees = (expProof._1.map(et => compressQuantifiers(et))) ++ (expProof._2.map(et => compressQuantifiers(et)))
+
+    // Extract the terms
+    multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
+      if(isPrenex(mTree)) {
+        mTree match {
+          case WeakQuantifierMulti(form, children) => 
+            val f = form.asInstanceOf[FOLFormula]
+            val terms = children.map{ case (tree, termsSeq) => termsSeq.map(t => t.asInstanceOf[FOLTerm]).toList}.toList
+            if(map.contains(f) ) {
+              val t = map(f)
+              map + (f -> (t ++ terms) )
+            }
+            else map + (f -> terms)
+          case _ => map
+        }
+      }
+      else throw new TermsExtractionException("ERROR: Trying to extract the terms of an expansion proof with non-prenex formulas.")
+    }
+  }
   
   private def extractTerms(proof: LKProof) : Map[FOLFormula, List[List[FOLTerm]]] = proof match {
 
     /* AXIOM */
-    case Axiom(s) => new HashMap[FOLFormula, List[List[FOLTerm]]] 
+    case Axiom(_) => new HashMap[FOLFormula, List[List[FOLTerm]]] 
 
     /* WEAKENING RULES */
     case WeakeningLeftRule(up, _, pf) =>
@@ -103,43 +132,41 @@ object TermsExtraction {
       val map = extractTerms(up)
       val f = prin.formula.asInstanceOf[FOLFormula]
       val a = aux.formula.asInstanceOf[FOLFormula]
-      val newterms = if (map.contains(a) ) {
-        map -= a // side effect!!
+      val (map2, newterms) = if (map.contains(a) ) {
         val terms = map(a)
         // Append the new terms to every list in terms
-        terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
+        ((map-a), terms.map(lst => term.asInstanceOf[FOLTerm] :: lst))
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
-        ((folterm::Nil)::Nil)
+        (map, ((folterm::Nil)::Nil))
       }
 
-      if(map.contains(f) ) {
-        val t = map(f)
-        map += (f -> (t ++ newterms) )
+      if(map2.contains(f) ) {
+        val t = map2(f)
+        map2 + (f -> (t ++ newterms) )
       }
-      else map += (f -> newterms)
+      else map2 + (f -> newterms)
 
     case ExistsRightRule(up, _, aux, prin, term) =>
       val map = extractTerms(up)
       val f = prin.formula.asInstanceOf[FOLFormula]
       val a = aux.formula.asInstanceOf[FOLFormula]
-      val newterms = if (map.contains(a) ) {
-        map -= a // side effect!!
+      val (map2, newterms) = if (map.contains(a) ) {
         val terms = map(a)
         // Append the new terms to every list in terms
-        terms.map(lst => term.asInstanceOf[FOLTerm] :: lst)
+        ((map-a), terms.map(lst => term.asInstanceOf[FOLTerm] :: lst))
       }
       else {
         val folterm = term.asInstanceOf[FOLTerm]
-        ((folterm::Nil)::Nil)
+        (map, ((folterm::Nil)::Nil))
       }
 
-      if(map.contains(f) ) {
-        val t = map(f)
-        map += (f -> (t ++ newterms) )
+      if(map2.contains(f) ) {
+        val t = map2(f)
+        map2 + (f -> (t ++ newterms) )
       }
-      else map += (f -> newterms)
+      else map2 + (f -> newterms)
 
     /* CUT RULE */
     case CutRule(up1, up2, _, a1, a2) => 

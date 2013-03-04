@@ -5,7 +5,7 @@ import at.logic.utils.ds.trees._
 
 /**
  * These trees are the same as expansion trees but consider sequential quantifiers of the same type as quantification over a vector of
- * variables. I.e. an expansion tree having two strong qantifiers over x and y will have a StrongQuantifer child over x and a Strong
+ * variables. I.e. an expansion tree having two strong quantifiers over x and y will have a StrongQuantifer child over x and a Strong
  * Quantifier grandchild over y while a multi expansion tree over the same formula will have only StrongQuantifier child over the vector
  * <x,y>
  */
