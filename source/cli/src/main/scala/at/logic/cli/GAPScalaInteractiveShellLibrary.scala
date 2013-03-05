@@ -108,7 +108,7 @@ import at.logic.algorithms.resolution._
 import at.logic.calculi.resolution.base.FClause
 import fol.FOLVar
 import at.logic.transformations.ceres.projections.Projections
-import at.logic.parsing.language.prover9.Prover9TermParser
+import at.logic.parsing.language.prover9.{Prover9TermParserLadrStyle, Prover9TermParser}
 import at.logic.algorithms.hlk.{LKProofParser, SchemaFormulaParser}
 import at.logic.parsing.ivy
 
@@ -314,6 +314,13 @@ object loadProofDB {
 
     def sfo(string:String) = {
       new CLIParserSchema(string) getTerm
+    }
+
+    def p9(string:String, use_ladr : Boolean = true) = {
+      if (use_ladr)
+        Prover9TermParserLadrStyle.parseFormula(string)
+      else
+        Prover9TermParser.parseFormula(string)
     }
 
     def slk(file:String) = {
@@ -992,7 +999,6 @@ object hol2fol {
 
   }
 
-
   object help {
     def apply() = {
       val msg =
@@ -1014,7 +1020,7 @@ object hol2fol {
           |   parse.hol: String => HOLExpression
           |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
           |   parse.lisp: String => List[SExpression]
-          |          |
+          |
           | Automated Deduction:
           |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
           |   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
@@ -1075,6 +1081,11 @@ object hol2fol {
           |   normalizeClauses: List[FSequent] => List[FSequent]
           |   writeLatex: List[FSequent], String => Unit
           |   writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
+          |
+          | General:
+          |   help    : this help text
+          |   copying : print redistribution conditions
+          |   license : print the text of GNU General Public License
         """.stripMargin
 
       println(msg)

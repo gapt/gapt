@@ -30,6 +30,7 @@ object CLIMain {
   import at.logic.algorithms.lk.regularize
   import at.logic.calculi.occurrences.FormulaOccurrence
   import help.{apply => help}
+  import at.logic.cli.GPL.{apply => copying, printLicense => license}
 
   println()
   println("    *************************************")
@@ -37,7 +38,12 @@ object CLIMain {
   println("    *  See help for a list of commands. *")
   println("    *************************************")
   println()
-  """
+  println(" GAPT Copyright (C) 2013")
+  println(" This program comes with ABSOLUTELY NO WARRANTY. This is free")
+  println(" software, and you are welcome to redistribute it under certain")
+  println(" conditions; type `copying' for details.")
+  println()
+"""
 
   def main(args: Array[String]) {
     val f = File.createTempFile("cli-script", ".scala")
