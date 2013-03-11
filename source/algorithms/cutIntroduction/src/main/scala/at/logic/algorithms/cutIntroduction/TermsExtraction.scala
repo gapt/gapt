@@ -51,7 +51,7 @@ object TermsExtraction {
 
     // Extract the terms
     multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
-      if(isPrenex(mTree)) {
+      if(shallow(mTree).isPrenex) {
         mTree match {
           case WeakQuantifierMulti(form, children) => 
             val f = form.asInstanceOf[FOLFormula]
