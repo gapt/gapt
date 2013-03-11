@@ -39,6 +39,10 @@ trait LambdaFactoryProvider {
         (mFBV._1, bound)
       }
     }
+
+    def freeVariables = getFreeAndBoundVariables._1
+    def boundVariables = getFreeAndBoundVariables._2
+
     def noUnboundedBounded: Boolean = {val ret = noUnboundedBoundedRec(Set[Var]()); if (!ret) Console.println(toStringSimple); ret} // confirms there are no unbounded bounded variables in the term
     protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean // the recursive call
     def variant(gen: => VariantGenerator): LambdaExpression
