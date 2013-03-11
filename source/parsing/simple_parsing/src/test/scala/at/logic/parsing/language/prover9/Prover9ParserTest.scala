@@ -40,7 +40,7 @@ class Prover9ParserTest extends SpecificationWithJUnit {
       for (s <- cases) {
         Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
           case Prover9TermParser.Success(result, _) =>
-            println(result)
+            //println(result)
             good = result :: good
           case Prover9TermParser.Failure(msg, input) =>
             //s must beEqualTo("Failure:"+input.pos.toString + ": " +  msg)
@@ -53,13 +53,12 @@ class Prover9ParserTest extends SpecificationWithJUnit {
 
         }
       }
-      println("===============")
+      //println("===============")
       bad map println
       bad must beEmpty
     }
 
     "handle simple formulas" in {
-      //skipped("not working yet")
       val cases = List(
         "p(X)","A","-p(y)","-p(Y)",
         "P(X)","a","-P(y)","-P(Y)",
@@ -90,7 +89,6 @@ class Prover9ParserTest extends SpecificationWithJUnit {
     }
 
     "handle complex formulas" in {
-      //skipped("not working yet")
       val cases = List(
         "(all X (P(X) & Q(X)))", "(all X (P(X) & Q(X) & R(X,X)))",
         "(exists X (P(X) & Q(X)))", "(exists X (P(X) & Q(X) & R(X,X)))",
@@ -112,7 +110,6 @@ class Prover9ParserTest extends SpecificationWithJUnit {
     }
 
     "goat puzzle endsequent" in {
-      //skipped("not working yet")
       val oendsequent =
         """p(south,south,south,south,start) &
           | (all T (p(south,north,south,north,T) -> p(north,north,south,north,go_alone(T)))) &
@@ -134,7 +131,6 @@ class Prover9ParserTest extends SpecificationWithJUnit {
 
       Prover9TermParser.parseAll(Prover9TermParser.formula, oendsequent) match {
         case Prover9TermParser.Success(result, _ ) =>
-          //println(result)
           "success" must beEqualTo("success")
         case Prover9TermParser.NoSuccess(msg, input) =>
           throw new Exception("Could not parse endsequent! "+msg+ " "+input.pos)

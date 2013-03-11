@@ -50,7 +50,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 
     // print("\n"+FOLUnificationAlgorithm.applySubToListOfPairs((new MyParser("x").getTerm.asInstanceOf[FOLExpression],new MyParser("a").getTerm.asInstanceOf[FOLExpression])::(new MyParser("x").getTerm.asInstanceOf[FOLExpression],new MyParser("b").getTerm.asInstanceOf[FOLExpression])::Nil,Substitution(new MyParser("x").getTerm.asInstanceOf[FOLVar],new MyParser("c").getTerm.asInstanceOf[FOLExpression])).toString+"\n\n\n")
 
-      val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+      val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
    //  println("\n\n\n"+"sub: "+sub.toString+"\n\n\n")
   //   sub.get.apply(term) must beEqualTo (posInstance)
     sub must beEqualTo (sub)
@@ -60,7 +60,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
      val term = new MyParser("f(x1, x2, c)").getTerm
      val posInstance = new MyParser("f(a,b,c)").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
 //     println("\n\n\nsub : "+sub.toString+"\n\n\n")
      sub.get.apply(term.asInstanceOf[FOLExpression]) must beEqualTo (posInstance)
     }
@@ -69,7 +69,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 "not match the lambda expressions f(x1, d, c) and f(a,b,c)" in {
      val term = new MyParser("f(x1, d, c)").getTerm
      val posInstance = new MyParser("f(a,b,c)").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
    //  println("\n\n\nsub : "+sub.toString+"\n\n\n")
      sub must beEqualTo (None)
     }
@@ -77,7 +77,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
   "match the lambda expressions f(x1, x2, c) and f(x1,b,c)" in {
      val term = new MyParser("f(x1, x2, c)").getTerm
      val posInstance = new MyParser("f(x1,b,c)").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
 //    println(sub.toString)
      sub.get.apply(term.asInstanceOf[FOLExpression]) must beEqualTo (posInstance)
     }
@@ -85,14 +85,14 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
   "not match the lambda expressions f(x1, x2, c, d) and f(x1,b,c)" in {
      val term = new MyParser("f(x1, x2, c, d)").getTerm
      val posInstance = new MyParser("f(x1,b,c)").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
      sub must beEqualTo (None)
     }
 
   "match the lambda expressions f(x1, x2, c) and f(x3,b,c)" in {
      val term = new MyParser("f(x1, x2, c)").getTerm
      val posInstance = new MyParser("f(x3,b,c)").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
    //  println(sub.toString)
      sub.get.apply(term.asInstanceOf[FOLExpression]) must beEqualTo (posInstance)
     }
@@ -100,7 +100,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
   "match the lambda expressions f(x1, x2, x3) and f(x3,b,x3)" in {
      val term = new MyParser("f(x1, x2, x3)").getTerm
      val posInstance = new MyParser("f(x3,b,x3)").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
   //   println(sub.toString)
      sub.get.apply(term.asInstanceOf[FOLExpression]) must beEqualTo (posInstance)
     }
@@ -109,7 +109,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 
      val term = new MyParser("f(x1, x1, x3)").getTerm
      val posInstance = new MyParser("f(x3,b,g(d))").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
    //  println("\n\n\nmatch = "+sub.toString)
      //val sub1 = FOLUnificationAlgorithm.unify(term, posInstance)
   //   println("Printing the substitution "+sub1)
@@ -155,7 +155,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 //     println("\n\n\n  term = "+term.toString+"\n\n")
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
 //     println("\n\n\n     t = "+t.toString+"\n\n")
-     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.getFreeAndBoundVariables._1.toList)
+     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.freeVariables.toList)
    //  println("\n\n\nPrinting the substitution: "+sub1+"\n\n\n")
      0 must beEqualTo (0)
     // println(sub.toString)
@@ -178,7 +178,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 //     println("\n\n\n  term = "+term.toString+"\n\n")
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
 //     println("\n\n\n     t = "+t.toString+"\n\n")
-     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.getFreeAndBoundVariables._1.toList)
+     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.freeVariables.toList)
   //   println("\n\n\nPrinting the substitution: "+sub1+"\n\n\n")
      sub1 must beEqualTo (None)
     // println(sub.toString)
@@ -205,7 +205,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
 //     println("\n\n     P1 = "+P1.toString+"\n\n")
 //     println("\n\n    P2 = "+P2.toString+"\n\n")
-     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.getFreeAndBoundVariables._1.toList)
+     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.freeVariables.toList)
 //     println("\n\nPrinting the substitution: "+sub1+"\n\n")
      sub1 must beEqualTo (None)
     // println(sub.toString)
@@ -230,7 +230,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
 //     println("\n\n     P1 = "+P1.toString+"\n\n")
 //     println("\n\n    P2 = "+P2.toString+"\n\n")
-     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.getFreeAndBoundVariables._1.toList)
+     val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2,P2.freeVariables.toList)
 //     println("\n\nPrinting the substitution: "+sub1+"\n\n")
      sub1 must beEqualTo (None)
     // println(sub.toString)
@@ -252,7 +252,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
 //      val term2 = new MyParser("n0").getTerm.asInstanceOf[FOLConst]
 //
 //
-//      val sub1 = FOLMatchingAlgorithm.matchTerm(f, term2, term2.getFreeAndBoundVariables._1.toList)
+//      val sub1 = FOLMatchingAlgorithm.matchTerm(f, term2, term2.freeVariables.toList)
 
 //      sub1 must beEqualTo (None)
       0 must beEqualTo (0)
@@ -263,7 +263,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
   "not match the lambda expressions f(x, b) and f(a,b)" in {
      val term = new MyParser("f(x,b)").getTerm
      val posInstance = new MyParser("f(a,b)").getTerm
-     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.getFreeAndBoundVariables._1.toList)
+     val sub = FOLMatchingAlgorithm.matchTerm(term.asInstanceOf[FOLExpression],posInstance.asInstanceOf[FOLExpression],posInstance.freeVariables.toList)
 //     println("\n\n\nsub : "+sub.toString+"\n\n\n")
      sub.get.apply(term.asInstanceOf[FOLTerm]) must beEqualTo (posInstance)
     }

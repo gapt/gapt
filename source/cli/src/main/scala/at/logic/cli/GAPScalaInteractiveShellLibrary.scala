@@ -624,8 +624,8 @@ object loadProofDB {
 
       }
     }
-    def univclosure(f:FOLFormula) = f.getFreeAndBoundVariables._1.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
-    def existsclosure(f:FOLFormula) = f.getFreeAndBoundVariables._1.foldRight(f)((v,g) => fol.ExVar(v.asInstanceOf[FOLVar],g))
+    def univclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
+    def existsclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.ExVar(v.asInstanceOf[FOLVar],g))
 
     def containsStrongQuantifiers(fs:FSequent) : Boolean =
       fs.antecedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],false)) ||

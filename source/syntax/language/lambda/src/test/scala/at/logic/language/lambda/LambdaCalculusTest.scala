@@ -107,8 +107,8 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
       val r = LambdaVar(VariableStringSymbol("R"), (i -> o) -> (i -> ((i -> o) -> o)))
       val a = AppN(r, x::y::z::Nil)
       val qa = Abs( x, a )
-      val free = qa.getFreeAndBoundVariables._1
-      val bound = qa.getFreeAndBoundVariables._2
+      val free = qa.freeVariables
+      val bound = qa.boundVariables
       free must not (have(_ =^ x ))
       free must have (_ =^ y )
       free must have (_ =^ z )

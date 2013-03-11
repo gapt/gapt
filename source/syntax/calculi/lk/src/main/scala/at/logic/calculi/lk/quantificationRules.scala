@@ -193,7 +193,7 @@ import _root_.at.logic.utils.traits.Occurrence
         main match {
           case All( sub, _ ) => {
             // eigenvar condition
-            assert( ( s1.antecedent ++ (s1.succedent.filterNot(_ == aux_fo)) ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
+            assert( ( s1.antecedent ++ (s1.succedent.filterNot(_ == aux_fo)) ).forall( fo => !fo.formula.freeVariables.contains( eigen_var ) ),
               "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.toStringSimple )
             // correct auxiliary formula
 //            println("ForallRightRule")
@@ -259,7 +259,7 @@ import _root_.at.logic.utils.traits.Occurrence
         main match {
           case Ex( sub, _ ) => {
             // eigenvar condition
-            assert( ( (s1.antecedent.filterNot(_ == aux_fo)) ++ s1.succedent ).forall( fo => !fo.formula.getFreeAndBoundVariables._1.contains( eigen_var ) ),
+            assert( ( (s1.antecedent.filterNot(_ == aux_fo)) ++ s1.succedent ).forall( fo => !fo.formula.freeVariables.contains( eigen_var ) ),
               "Eigenvariable " + eigen_var.toStringSimple + " occurs in context " + s1.toStringSimple )
             // correct auxiliary formula
             assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )

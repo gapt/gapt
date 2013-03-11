@@ -121,7 +121,7 @@ class ResolutionTest extends SpecificationWithJUnit {
       val a = Atom(ConstantStringSymbol("R"), x::y::z::Nil)
       val qa = AllVar( x, a )
 
-      qa.getFreeAndBoundVariables._1 must not contain( x )
+      qa.freeVariables must not contain( x )
 
       val sk = SkolemSymbolFactory.getSkolemSymbol
 

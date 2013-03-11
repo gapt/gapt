@@ -52,7 +52,7 @@ package andrews {
 
   object Definitions {
     def computeSkolemTerm( sk: SkolemSymbol, t: TA, sub: HOLExpression ) =
-      Function(sk, sub.getFreeAndBoundVariables._1.asInstanceOf[Set[HOLVar]].toList, t) //TODO: cast!?
+      Function(sk, sub.freeVariables.asInstanceOf[Set[HOLVar]].toList, t) //TODO: cast!?
   }
 
   import Definitions._

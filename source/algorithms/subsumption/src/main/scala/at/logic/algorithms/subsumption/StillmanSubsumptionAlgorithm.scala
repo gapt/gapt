@@ -24,7 +24,7 @@ trait StillmanSubsumptionAlgorithm[T <: LambdaExpression] extends SubsumptionAlg
     ST(s1._1.map(x => neg(x)) ++ s1._2.map(x => x),
       s2._1.map(x => neg(x)) ++ s2._2.map(x => x), 
       Substitution(), 
-      (s2._1.flatMap(x => x.getFreeAndBoundVariables._1) ++ s2._2.flatMap(x => x.getFreeAndBoundVariables._1)).toList)
+      (s2._1.flatMap(x => x.freeVariables) ++ s2._2.flatMap(x => x.freeVariables)).toList)
 
   def ST(ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: T => T, restrictedDomain: List[Var]): Boolean = ls1 match {
     case Nil => true // first list is exhausted

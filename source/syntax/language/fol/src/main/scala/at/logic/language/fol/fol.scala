@@ -438,7 +438,7 @@ object FOLFactory extends LambdaFactoryA {
 }
 
 object getFreeVariablesFOL {
-  def apply( f: FOLFormula ) = f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]]
+  def apply( f: FOLFormula ) = f.freeVariables.asInstanceOf[Set[FOLVar]]
 }
 
 object FOLSubstitution

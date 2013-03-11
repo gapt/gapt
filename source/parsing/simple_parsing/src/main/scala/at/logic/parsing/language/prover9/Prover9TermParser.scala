@@ -139,7 +139,7 @@ abstract trait Prover9TermParserA extends JavaTokenParsers {
   }
 
   def normalizeFormula(f:FOLFormula) : HOLFormula = {
-    val freevars = f.getFreeAndBoundVariables._1.toList
+    val freevars = f.freeVariables.toList
     val pairs : List[(Var,FOLExpression)] = (freevars zip (0 to (freevars.size-1))) map (x => (x._1,  x._1.factory.createVar(VariableStringSymbol("v"+x._2), x._1.exptype).asInstanceOf[FOLExpression]) )
     val nf : FOLFormula = Substitution(pairs)(f).asInstanceOf[FOLFormula]
 

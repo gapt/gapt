@@ -17,7 +17,7 @@ import at.logic.language.hol.logicSymbols._
 object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression] {
 
   def matchTerm(term: HOLExpression, posInstance: HOLExpression): Option[Substitution[HOLExpression]] =
-    matchTerm(term, posInstance, posInstance.getFreeAndBoundVariables._1.toList)
+    matchTerm(term, posInstance, posInstance.freeVariables.toList)
 
   // restrictedDomain: variables to be treated as constants.
   def matchTerm(term: HOLExpression, posInstance: HOLExpression, restrictedDomain: List[Var]): Option[Substitution[HOLExpression]] = 

@@ -150,19 +150,19 @@ import at.logic.language.lambda.BetaReduction
         head match {
           case (HOLVar(n1,t1), HOLVar(n2,t2)) => inPreSolvedForm(rest)
           case (v @ HOLVar(n1,t1), e: HOLExpression)   => {
-            if (e.getFreeAndBoundVariables._1.contains(v.asInstanceOf[Var]) || e.getFreeAndBoundVariables._2.contains(v.asInstanceOf[Var]))
+            if (e.freeVariables.contains(v.asInstanceOf[Var]) || e.boundVariables.contains(v.asInstanceOf[Var]))
               return false
             rest.foreach(x =>
-              if (x._1.getFreeAndBoundVariables._1.contains(v.asInstanceOf[Var]) || x._1.getFreeAndBoundVariables._2.contains(v.asInstanceOf[Var]) || x._2.getFreeAndBoundVariables._1.contains(v.asInstanceOf[Var]) || x._2.getFreeAndBoundVariables._2.contains(v.asInstanceOf[Var]))
+              if (x._1.freeVariables.contains(v.asInstanceOf[Var]) || x._1.boundVariables.contains(v.asInstanceOf[Var]) || x._2.freeVariables.contains(v.asInstanceOf[Var]) || x._2.boundVariables.contains(v.asInstanceOf[Var]))
                 return false
                         )
             inPreSolvedForm(ls.tail)
           }
           case (e: HOLExpression, v @ HOLVar(n1,t1))  =>{
-            if (e.getFreeAndBoundVariables._1.contains(v.asInstanceOf[Var]) || e.getFreeAndBoundVariables._2.contains(v.asInstanceOf[Var]))
+            if (e.freeVariables.contains(v.asInstanceOf[Var]) || e.boundVariables.contains(v.asInstanceOf[Var]))
               return false
             rest.foreach(x =>
-              if (x._1.getFreeAndBoundVariables._1.contains(v.asInstanceOf[Var]) || x._1.getFreeAndBoundVariables._2.contains(v.asInstanceOf[Var]) || x._2.getFreeAndBoundVariables._1.contains(v.asInstanceOf[Var]) || x._2.getFreeAndBoundVariables._2.contains(v.asInstanceOf[Var]))
+              if (x._1.freeVariables.contains(v.asInstanceOf[Var]) || x._1.boundVariables.contains(v.asInstanceOf[Var]) || x._2.freeVariables.contains(v.asInstanceOf[Var]) || x._2.boundVariables.contains(v.asInstanceOf[Var]))
                 return false
                         )
             inPreSolvedForm(ls.tail)
@@ -193,7 +193,7 @@ import at.logic.language.lambda.BetaReduction
       return true
 
     }
-    private[huet] def notInFreeVarsOf(v: HOLExpression, u: HOLExpression): Boolean = !u.getFreeAndBoundVariables._1.contains(v.asInstanceOf[Var])
+    private[huet] def notInFreeVarsOf(v: HOLExpression, u: HOLExpression): Boolean = !u.freeVariables.contains(v.asInstanceOf[Var])
 
 
     private[huet] def createSub(ls: List[Tuple2[HOLExpression,HOLExpression]]): Substitution[HOLExpression] = {
@@ -218,7 +218,7 @@ import at.logic.language.lambda.BetaReduction
     }
 
     private[huet] def isFreeVarIn(v : HOLExpression, t1: HOLExpression): Boolean = {
-      !t1.getFreeAndBoundVariables._2.contains(v.asInstanceOf[Var])
+      !t1.boundVariables.contains(v.asInstanceOf[Var])
     }
 
     private[huet] def isFunctionConstantSymbol(v: HOLExpression): Boolean ={
@@ -246,8 +246,8 @@ import at.logic.language.lambda.BetaReduction
       val k: HOLVar = HOLVar(VariableStringSymbol("x"), Ti()).asInstanceOf[HOLVar]
       val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
       val fv: Var = freshVar.apply1(FunctionType.apply(Ti(), (ys:::ls).map(x => x.exptype)), dv, k)
-      disAllowedVars.union(fv.getFreeAndBoundVariables._1)
-      disAllowedVars.union(fv.getFreeAndBoundVariables._2)
+      disAllowedVars.union(fv.freeVariables)
+      disAllowedVars.union(fv.boundVariables)
       disAllowedVars.+(fv)
       fv
     }
@@ -260,16 +260,16 @@ import at.logic.language.lambda.BetaReduction
            val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
            val fv = freshVar.apply1(exptype ,dv, k ).asInstanceOf[HOLVar]
            disAllowedVars.+(fv);
-           disAllowedVars.union(fv.getFreeAndBoundVariables._1)
-           disAllowedVars.union(fv.getFreeAndBoundVariables._2)
+           disAllowedVars.union(fv.freeVariables)
+           disAllowedVars.union(fv.boundVariables)
            return l1
         }
         case FunctionType(to, lsArgs ) => {
           val ls:List[HOLVar] = lsArgs.map(z => {
             val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
             val fv = freshVar.apply1(z, dv, k); disAllowedVars.+(fv);
-            disAllowedVars.union(fv.getFreeAndBoundVariables._1)
-            disAllowedVars.union(fv.getFreeAndBoundVariables._2)
+            disAllowedVars.union(fv.freeVariables)
+            disAllowedVars.union(fv.boundVariables)
             fv.asInstanceOf[HOLVar]
           })
           ls
@@ -289,8 +289,8 @@ import at.logic.language.lambda.BetaReduction
               val zHlist = generalFlexibleTermList.zip(args2.map(x => getListOfZs(x.exptype))).map(x => AbsN(x._2, x._1))
               val appzHlist = zHlist.map(x => {
                 val ev = EtaExpand.apply( AppN(x, newVarList));
-                disAllowedVars.union(ev.getFreeAndBoundVariables._1);
-                disAllowedVars.union(ev.getFreeAndBoundVariables._2);
+                disAllowedVars.union(ev.freeVariables);
+                disAllowedVars.union(ev.boundVariables);
                 ev
               })
 

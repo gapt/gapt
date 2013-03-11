@@ -121,14 +121,14 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm[FOLExpression] {
 
 
   def matchSetOfTuples3(moduloVarList: List[Var], s1: List[Tuple2[FOLExpression, FOLExpression]], s2 : List[Tuple2[FOLExpression, FOLExpression]]) : Option[(List[Tuple2[FOLExpression, FOLExpression]], List[Tuple2[FOLExpression, FOLExpression]])] = (s1,s2) match {
-    case (((x : FOLVar,v)::s), s2) if !v.getFreeAndBoundVariables._1.toList.contains(x) && !moduloVarList.contains(x) =>
+    case (((x : FOLVar,v)::s), s2) if !v.freeVariables.toList.contains(x) && !moduloVarList.contains(x) =>
       //should be add that x is not bound
       //  x does not occur in v && x is not in solved form =>
    //   print(applySubToListOfPairs(s,Substitution(x,v)).toString+"\n")
 //        matchSetOfTuples(moduloVarList, applySubToListOfPairs(s,MatchingSubstitution(moduloVarList,x,v)), (x,v)::applySubToListOfPairs(s2,MatchingSubstitution(moduloVarList,x,v)))
     matchSetOfTuples(moduloVarList, applySubToListOfPairs(s, restrictSubstitution(moduloVarList, Substitution(Substitution(x,v).map))), (x,v)::applySubToListOfPairs(s2, restrictSubstitution(moduloVarList, Substitution(Substitution(x,v).map))))
 
-    case (((x : FOLVar,v)::s), s2) if !v.getFreeAndBoundVariables._1.toList.contains(x) && moduloVarList.contains(x)  =>
+    case (((x : FOLVar,v)::s), s2) if !v.freeVariables.toList.contains(x) && moduloVarList.contains(x)  =>
       {        
         if(createSubstFromListOfPairs(s2).apply(v) != createSubstFromListOfPairs(s2).map.get(x))
             return None

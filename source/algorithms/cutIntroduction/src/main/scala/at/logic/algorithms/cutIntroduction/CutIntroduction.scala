@@ -128,7 +128,7 @@ object CutIntroduction extends Logger {
 
     val xvar = FOLVar(new VariableStringSymbol("x"))
     val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
-      val freeVars = term.getFreeAndBoundVariables._1
+      val freeVars = term.freeVariables
       // Taking only the terms that contain alpha
       if( freeVars.contains(g.eigenvariable) ) {
         val terms = flatterms.getTermTuple(term)
@@ -159,7 +159,7 @@ object CutIntroduction extends Logger {
     val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
-        ForallRightRule(uPart(grammar.u.filter(t => t.getFreeAndBoundVariables._1.contains(grammar.eigenvariable)), proofLeft1, flatterms), cutLeft, cutFormula, alpha)
+        ForallRightRule(uPart(grammar.u.filter(t => t.freeVariables.contains(grammar.eigenvariable)), proofLeft1, flatterms), cutLeft, cutFormula, alpha)
       case None => throw new CutIntroException("ERROR: propositional part is not provable.")
     }
 
@@ -183,7 +183,7 @@ object CutIntroduction extends Logger {
     }
    
     // Instantiating constant terms from U
-    val finalProof = uPart(grammar.u.filter(t => !t.getFreeAndBoundVariables._1.contains(grammar.eigenvariable)), contractSucc, flatterms)
+    val finalProof = uPart(grammar.u.filter(t => !t.freeVariables.contains(grammar.eigenvariable)), contractSucc, flatterms)
 
     Some(CleanStructuralRules(finalProof))
   }

@@ -55,10 +55,10 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
   }
 
   // Separating the formulas that contain or not the eigenvariable
-  val antecedent = prop_l ++ inst_l.filter(f => !f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
-  val antecedent_alpha = inst_l.filter(f => f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
-  val succedent = prop_r ++ inst_r.filter(f => !f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
-  val succedent_alpha = inst_r.filter(f => f.getFreeAndBoundVariables._1.contains(g.eigenvariable))
+  val antecedent = prop_l ++ inst_l.filter(f => !f.freeVariables.contains(g.eigenvariable))
+  val antecedent_alpha = inst_l.filter(f => f.freeVariables.contains(g.eigenvariable))
+  val succedent = prop_r ++ inst_r.filter(f => !f.freeVariables.contains(g.eigenvariable))
+  val succedent_alpha = inst_r.filter(f => f.freeVariables.contains(g.eigenvariable))
 
   var cutFormula = if(cf == null) CutIntroduction.computeCanonicalSolution(seq, g) else cf
 

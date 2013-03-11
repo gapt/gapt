@@ -165,7 +165,7 @@ object XMLExporter {
 
   def exportLambdaSubstitution(subst: HOLExpression) =
     <lambdasubstitution>
-      { exportVariableList( subst.getFreeAndBoundVariables._2 ) }
+      { exportVariableList( subst.boundVariables ) }
       { exportFormula( subst.subTerms(1).asInstanceOf[HOLFormula] ) /*TODO: this line is hack, should be improved */ }
     </lambdasubstitution>
 

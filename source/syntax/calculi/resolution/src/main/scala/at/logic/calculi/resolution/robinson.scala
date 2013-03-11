@@ -189,7 +189,7 @@ object createContext {
 
     def apply(p: RobinsonResolutionProof): ResolutionProof[Clause] = {
       // TODO: refactor the following into Sequent.getFreeAndBoundVariables
-      val vars = (p.root.antecedent ++ p.root.succedent).foldLeft( HashSet[Var]() )( (m, f) => m ++ f.getFreeAndBoundVariables._1.asInstanceOf[Set[FOLVar]] )
+      val vars = p.root.occurrences.foldLeft( HashSet[Var]() )( (m, f) => m ++ f.freeVariables.asInstanceOf[Set[FOLVar]] )
       // TODO: should not be necessary to pass argument Ti() here.
       // we return an actual variant only if there are free variables, otherwise we return the parent proof as it does not change
       if (vars.isEmpty) p
