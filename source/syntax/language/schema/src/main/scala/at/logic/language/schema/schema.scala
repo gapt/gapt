@@ -63,8 +63,8 @@ object dbTRS extends Iterable[(HOLConst, Tuple2[Tuple2[HOLExpression, HOLExpress
   def get(name: HOLConst) = map(name)
   def getOption(name: HOLConst) = map.get(name)
   def clear = map.clear
-  def add(term: HOLConst, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): Unit = {
-    map.put(term, Tuple2(base, step))
+  def add(name: HOLConst, base: Tuple2[HOLExpression, HOLExpression], step: Tuple2[HOLExpression, HOLExpression]): Unit = {
+    map.put(name, Tuple2(base, step))
   }
   def iterator = map.iterator
 }
@@ -78,11 +78,11 @@ object unfoldSTerm {
 //    println("\nunfoldSTerm = "+t)
 //    println("trs : "+dbTRS.map)
     t match {
-      case sTerm(func, i, arg) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) => {
+      case sTerm(func, i, arg) if dbTRS.map.contains(func) => {
 //        println("sTerm, i = "+i)
         if (i == IntZero()) {
 //          println("i == IntZero()")
-          val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1._2
+          val base = dbTRS.map.get(func).get._1._2
           val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg.head)
           val subst = new SchemaSubstitution2[HOLExpression](new_map)
           subst(base)
@@ -94,7 +94,7 @@ object unfoldSTerm {
             i match {
               case Succ(_) => {
 //                println("case Succ(_)")
-                dbTRS.map.get(func.asInstanceOf[HOLConst]).get._2._2 match {
+                dbTRS.map.get(func).get._2._2 match {
                   case foTerm(name, arg1) => {
                     //                println("i = "+i)
 
@@ -133,10 +133,10 @@ object unfoldSINDTerm {
 //    println("trs : "+dbTRS.map)
     val k = IntVar(new VariableStringSymbol("k"))
     t match {
-      case sIndTerm(func, i) if dbTRS.map.contains(func.asInstanceOf[HOLConst]) => {
+      case sIndTerm(func, i) if dbTRS.map.contains(func) => {
 //        println("sIndTerm = "+t)
         if (i == IntZero()) {
-          val base = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._1._2
+          val base = dbTRS.map.get(func).get._1._2
           base
           //          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg.head)
           //          val subst = new SchemaSubstitution2[HOLExpression](new_map)
@@ -146,7 +146,7 @@ object unfoldSINDTerm {
         if (i == k)
           t
         else {
-          val step = dbTRS.map.get(func.asInstanceOf[HOLConst]).get._2._2
+          val step = dbTRS.map.get(func).get._2._2
           val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, Pred(i.asInstanceOf[IntegerTerm]))
           val subst = new SchemaSubstitution2[HOLExpression](new_map)
           subst(step)
@@ -186,6 +186,9 @@ object unfoldSFormula {
   }
 }
 
+
+// TODO: this seems to be hardcoded for a a single parameter
+// plus 0 or 1 arguments. Generalize to simplify the code!
 object sTerm {
   //the i should be of type Tindex() !
   def apply(f: String, i: HOLExpression, l: List[HOLExpression]): HOLExpression = {
@@ -207,9 +210,10 @@ object sTerm {
     else
       HOLApp(HOLApp(f, i), l.head).asInstanceOf[HOLExpression]
   }
+
   def unapply(s : HOLExpression) = s match {
-    case HOLApp(HOLApp(func, i), arg) if i.exptype == Tindex() => Some( ( func, i, arg::Nil ) )
-    case HOLApp(func, i) if i.exptype == Tindex() => Some( ( func, i, Nil ) )
+    case HOLApp(HOLApp(func : HOLConst, i), arg) if i.exptype == Tindex() => Some( ( func, i, arg::Nil ) )
+    case HOLApp(func : HOLConst, i) if i.exptype == Tindex() => Some( ( func, i, Nil ) )
     //Should remain only this one if it is OK
 //    case Function(name, args, typ) if typ == Ti() && args.head.exptype == Tindex() => {
 //      val typ = args.map(x => x.exptype).foldLeft(Ti().asInstanceOf[TA])((x,t) => ->(x, t))
@@ -228,7 +232,7 @@ object sIndTerm {
     return HOLApp(func, i).asInstanceOf[HOLExpression]
   }
   def unapply(s : HOLExpression) = s match {
-    case HOLApp(func, i) if i.exptype == Tindex() => Some( ( func.asInstanceOf[HOLConst], i) )
+    case HOLApp(func : HOLConst, i) if i.exptype == Tindex() => Some( ( func, i) )
     case _ => None
   }
 }
