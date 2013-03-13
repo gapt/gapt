@@ -2,8 +2,6 @@ package at.logic.algorithms.hlk
 
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.macroRules._
-import at.logic.calculi.slk._
-import at.logic.language.schema.IndexedPredicate._
 import at.logic.calculi.lk.base.{FSequent, Sequent, LKProof}
 import at.logic.calculi.lk.propositionalRules._
 import scala.util.parsing.combinator._
@@ -33,6 +31,7 @@ import collection.mutable
 import collection.immutable
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.parsing.language.prover9.Prover9TermParserA
+import scala.util.parsing.combinator.Parsers
 
 object LKProofParser {
   def debug(s:String) = { println(s) }
@@ -75,7 +74,7 @@ object LKProofParser {
   }
 }
 
-abstract trait HLKFormulaParser extends JavaTokenParsers {
+abstract trait HLKFormulaParser extends Parsers {
   //abstract parsers for formulas
   def term: Parser[HOLExpression];
   def formula: Parser[HOLFormula];
