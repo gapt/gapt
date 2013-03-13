@@ -98,14 +98,14 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
       //          println(seq)
 
       //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
-      println(Console.BLUE+"\n---- Print David's Proof ----\n"+Console.RESET)
+      //println(Console.BLUE+"\n---- Print David's Proof ----\n"+Console.RESET)
 //      val p = map.get("\\varphi").get._2.get("root").get
       val p1 = map.get("\\varphi").get._2.get("root").get
       val p2 = map.get("\\psi").get._2.get("root").get
 
 
-      printSchemaProof(p1)
-      printSchemaProof(p2)
+      //printSchemaProof(p1)
+      //printSchemaProof(p2)
 
       // specs2 require a least one Result, see org.specs2.specification.Example
       Success()

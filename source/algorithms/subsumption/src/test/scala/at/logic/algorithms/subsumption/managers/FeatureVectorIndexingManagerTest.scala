@@ -115,10 +115,10 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
         }
       }
 
-      println("\n"+seq11.toString + "   " + depth(seq11))
-      println("\n"+seq21.toString + "   " + depth(seq21))
-      println("\n"+seq31.toString + "   " + depth(seq31))
-      println("\n"+seq41.toString + "   " + depth(seq41))
+      //println("\n"+seq11.toString + "   " + depth(seq11))
+      //println("\n"+seq21.toString + "   " + depth(seq21))
+      //println("\n"+seq31.toString + "   " + depth(seq31))
+      //println("\n"+seq41.toString + "   " + depth(seq41))
 
 
       var root = new TreeNode[FSequent](l)
@@ -131,13 +131,13 @@ class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
         var seqList = l;
         var tree = new Trie(l, featureList);
         tree.createTree
-        tree.print
+        //tree.print
         var features = featureList;
         def forwardSubsumption = forwardSubsumptionRec(tree.root, features, subsumedSeq)
         val matchAlg = FOLMatchingAlgorithm.asInstanceOf[MatchingAlgorithm[LambdaExpression]] //NaiveIncompleteMatchingAlgorithm.asInstanceOf[MatchingAlgorithm[LambdaExpression]]
       }
       subsumpMNGR.forwardSubsumption
-      println("\n\n\n")
+      //println("\n\n\n")
 
 //
 //      val t = new Trie[Sequent](root, f1::Nil)

@@ -18,7 +18,7 @@ import scala.collection.mutable.Map
 
   case class GetGuidedClausesCommand(parentIds: Iterable[String]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("GetGuidedClausesCommand")
+      //println("GetGuidedClausesCommand")
       val guidedMap = state("gmap").asInstanceOf[Map[String,ResolutionProof[Clause]]]
       //println("gclauses: " + parentIds.map(guidedMap(_).root))
       List((state,parentIds.map(guidedMap(_))))
@@ -29,7 +29,7 @@ import scala.collection.mutable.Map
 
   case class GetGuidedClausesLiteralsPositions(ls: Iterable[Tuple3[String, Int, Iterable[Int]]]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("GetGuidedClausesLiteralsPositions")
+      //println("GetGuidedClausesLiteralsPositions")
       val guidedMap = state("gmap").asInstanceOf[Map[String,ResolutionProof[Clause]]]
       List((state,ls.map(x => {
         val p = guidedMap(x._1)
@@ -42,7 +42,7 @@ import scala.collection.mutable.Map
 
   case class GetGuidedClausesLiterals(ls: Iterable[Tuple2[String, Int]]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("GetGuidedClausesLiterals")
+      //println("GetGuidedClausesLiterals")
       val guidedMap = state("gmap").asInstanceOf[Map[String,ResolutionProof[Clause]]]
       List((state,ls.map(x => {
         val p = guidedMap(x._1)
@@ -55,7 +55,7 @@ import scala.collection.mutable.Map
 
   case class AddGuidedInitialClauseCommand(id: String, cls: Seq[FOLFormula]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("AddGuidedInitialClauseCommand")
+      //println("AddGuidedInitialClauseCommand")
       val p = InitialClause(cls)(defaultFormulaOccurrenceFactory)
       val guidedMap = (if (state.isDefinedAt("gmap")) state("gmap").asInstanceOf[Map[String,ResolutionProof[Clause]]]
         else {
@@ -72,7 +72,7 @@ import scala.collection.mutable.Map
 
   case class AddGuidedClausesCommand(ids: Iterable[String]) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("AddGuidedClausesCommand")
+      //println("AddGuidedClausesCommand")
       val clauses = data.asInstanceOf[Iterable[ResolutionProof[Clause]]]
       val guidedMap = (if (state.isDefinedAt("gmap")) state("gmap").asInstanceOf[Map[String,ResolutionProof[Clause]]]
         else {
@@ -89,7 +89,7 @@ import scala.collection.mutable.Map
   // we add a clause which might be a variant of that we look for.
   case class AddGuidedResolventCommand(id: String) extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("AddGuidedResolventCommand")
+      //println("AddGuidedResolventCommand")
       val p = data.asInstanceOf[ResolutionProof[Clause]]
       val guidedMap = (if (state.isDefinedAt("gmap")) state("gmap").asInstanceOf[Map[String,ResolutionProof[Clause]]]
         else {
@@ -106,7 +106,7 @@ import scala.collection.mutable.Map
 
   case object IsGuidedNotFoundCommand extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("IsGuidedNotFoundCommand")
+      //println("IsGuidedNotFoundCommand")
       if (!state.isDefinedAt("guided_target_found"))
         List((state,data))
       else
@@ -117,7 +117,7 @@ import scala.collection.mutable.Map
 
   case object SetGuidedFoundCommand extends DataCommand[Clause] {
     def apply(state: State, data: Any) = {
-      println("SetGuidedFoundCommand")
+      //println("SetGuidedFoundCommand")
       state += (("guided_target_found",true))
       List((state,data))
     }

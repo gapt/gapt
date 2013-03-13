@@ -38,8 +38,8 @@ class instantiateEliminationTest extends SpecificationWithJUnit {
     val p5 = Instance(p4, sub3)
     val p6 = InitialClause(c3::Nil, Nil)
 
-    println(p5.root.occurrences)
-    println(p6.root.occurrences)
+    //println(p5.root.occurrences)
+    //println(p6.root.occurrences)
     val p7 = Resolution(p5,p6,p5.root.succedent(0), p6.root.antecedent(0), sub3)
 
     //val p5 = Paramodulation(p1,p3, p1.root.succedent(0), p3.root.succedent(0), c3, sub)
@@ -75,6 +75,7 @@ class instantiateEliminationTest extends SpecificationWithJUnit {
     "do instance removal " in {
       val mproof = InstantiateElimination.imerge(UNSproof.p7, InstantiateElimination.emptyProofMap)._4
       mproof.root must beSyntacticMultisetEqual(UNSproof.p7.root)
+      /*
       mproof.nodes.asInstanceOf[Set[RobinsonResolutionProof]] map (x => {
         println("node:        "+x.rule)
         println("occurrences: "+x.root.occurrences )
@@ -82,8 +83,9 @@ class instantiateEliminationTest extends SpecificationWithJUnit {
           println("auxiliars:   "+x.asInstanceOf[RobinsonResolutionProof with AuxiliaryFormulas].aux)
         println()
       })
+      */
 
-      println("===================================================================================")
+      //println("===================================================================================")
       val rproof = InstantiateElimination.remove(mproof, InstantiateElimination.emptyVarSet, InstantiateElimination.emptyProofMap)._4
       rproof.root must beSyntacticMultisetEqual(UNSproof.p7.root)
 

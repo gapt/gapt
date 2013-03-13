@@ -15,7 +15,7 @@ package typedLambdaCalculus {
 
 import io.BytePickle.Def
 
-trait LambdaFactoryProvider {
+  trait LambdaFactoryProvider {
     def factory : LambdaFactoryA = LambdaFactory
   }
 
@@ -24,7 +24,7 @@ trait LambdaFactoryProvider {
     def toString1(): String
     def syntaxEquals(e: LambdaExpression): Boolean
     def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
-    def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
+    private def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (HashSet(v), new HashSet())
       case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new HashSet(), HashSet(v))
       case v: Var => (new HashSet(), new HashSet())// not variables (constants in this case)
@@ -180,6 +180,8 @@ trait LambdaFactoryProvider {
     }
     def syntaxEquals(e: LambdaExpression) = e match {
       case AbsInScope(v,exp) => (v =^ variableInScope && exp =^ expressionInScope && e.exptype == exptype)
+      // TODO: check this case
+      //case Abs(v, exp) => (v =^ variableInScope && exp =^ expressionInScope && e.exptype == exptype)
       case _ => false
     }
     override def hashCode() = (41 * variableInScope.hashCode) + expressionInScope.hashCode
@@ -187,6 +189,7 @@ trait LambdaFactoryProvider {
     def variant(gen: => VariantGenerator) = Abs(variable, expressionInScope.variant(gen))
     def toString1(): String = "Abs(" + variableInScope.toString1 + "," + expressionInScope.toString1 + ")"
     def toStringSimple = "(λ" + variableInScope.toStringSimple + "." + expressionInScope.toStringSimple + ")"
+
     private def createDeBruijnIndex(vr: Var, exp: LambdaExpression, nextDBIndex: Int): LambdaExpression = exp match {
       case v: Var if vr =^ v => v.factory.createVar(v.name, v.exptype, Some(nextDBIndex)) // also does not match if v is already a bound variable (with different dbindex) due to the Var equals method
       case v: Var => v
@@ -205,6 +208,7 @@ trait LambdaFactoryProvider {
         abs // in the case the inside bvar is the same do not replace index in it
         else Abs(abs.variable, createDeBruijnIndex(vr, abs.expression, nextDBIndex))
     }
+
     // returns the highest db index, returns 0 for no index. Based on the fact that outer abs has always a bigger index than inner one.
     private def computeMaxDBIndex(exp: LambdaExpression): Int = exp match {
       case App(x,y) => scala.math.max(computeMaxDBIndex(x), computeMaxDBIndex(y))
@@ -215,13 +219,15 @@ trait LambdaFactoryProvider {
     // for trait Ordered
     def compare(that: LambdaExpression) = that match {
       case AbsInScope( v, e ) => expressionInScope.compare( e )
+      // TODO: check this case
+      //case Abs(v, e) => expressionInScope.compare(e)
       case _ => 1
     }
     def cloneTerm: LambdaExpression = factory.createAbs(variable,expression)
   }
 
   /*
-   * This extractor decompose an Abs to its two arguments without the extra bninding information added in Abs constructor
+   * This extractor decompose an Abs to its two arguments without the extra binding information added in Abs constructor
    */
   object Abs {
     def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression)
@@ -383,7 +389,8 @@ trait LambdaFactoryProvider {
     }
 
     def apply(exptype: TA, context: LambdaExpression, dummy: LambdaExpression) :Var = {
-      val (cFV, cBV) = context.getFreeAndBoundVariables
+      val cFV = context.freeVariables
+      val cBV = context.boundVariables
       // we need to use the names and not the vars, because bound variables have additional state which will make them
       // useless during disallowedNames.contains in the get method
       get(exptype, (cFV ++ cBV) map  (_.name.toString), "#"+_ ,dummy.factory)

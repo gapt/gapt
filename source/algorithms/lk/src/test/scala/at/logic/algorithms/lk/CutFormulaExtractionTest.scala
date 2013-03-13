@@ -33,7 +33,7 @@ class CutFormulaExtractionTest extends SpecificationWithJUnit {
     "apply correctly to a proof with one cut" in {
       val cutproofs = getCutsAsProofs(proof)
       val cutformulas = cutformulaExtraction(proof)
-      println(cutformulas)
+      //println(cutformulas)
       cutproofs must beEqualTo (List(proof))
     }
 
@@ -44,7 +44,7 @@ class CutFormulaExtractionTest extends SpecificationWithJUnit {
       val cutproofs = getCutsAsProofs(proof2)
       val cutformulas = cutformulaExtraction(proof2)
 
-      println(cutformulas)
+      //println(cutformulas)
       cutproofs must beEqualTo (prooflist)
     }
 

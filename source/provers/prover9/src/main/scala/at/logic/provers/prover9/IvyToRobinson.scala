@@ -36,7 +36,7 @@ object IvyToRobinson {
         case NewSymbol(id, _, _, sym, rt ,_,_) => (set._1 + (pmap(id)), set._2 + ((sym,rt)))
         case _ => set} )
 
-    println("mapping: "+mapping)
+    //println("mapping: "+mapping)
     val trproof = TermReplacement.rename_resproof(proof, newsymbol_rules, TermReplacement.emptySymbolMap ++ mapping)
     trproof
   }
@@ -257,9 +257,9 @@ object IvyToRobinson {
             //val rproof = RParamodulation(newaxiom, rparent, newaxiom.root.succedent(0), rlit, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())
             val FSequent(neg, pos) = clause.toFSequent
             val rproof = RInitialClause(neg.asInstanceOf[immutable.Seq[FOLFormula]]  , pos.asInstanceOf[immutable.Seq[FOLFormula]])
-            println("introduced new rule:"+rproof.root)
-            println("parent1:"+newaxiom.root)
-            println("parent2:"+rparent.root)
+            //println("introduced new rule:"+rproof.root)
+            //println("parent1:"+newaxiom.root)
+            //println("parent2:"+rparent.root)
             (rproof, parentmap + ((id, rproof)))
         }
 

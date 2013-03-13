@@ -86,28 +86,6 @@ import scala.Some
     override def toString = "ResolveCommand("+alg.getClass+")"
   }
 
-  // this command implements ``forgetful resolution´´ as in the cut-intro paper
-  case class ForgetfulResolveCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
-    def apply(state: State, data: Any) = {
-      println("********** ForgetfulResolveCommand ************")
-      val ((p1,_)::(p2,_)::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
-      println("Resolving on clauses: ")
-      println(p1.root)
-      println(p2.root)
-      val ret = new ResolveCommand(alg).apply(state, data)
-      val ret2 = new InsertResolventCommand().apply(ret.head._1, ret.head._2)
-      println("Result: ")
-      println(ret2.head._2.asInstanceOf[RobinsonResolutionProof].root)
-      var cur_state = ret2.head._1
-      // Remove (forget) resolved clauses.
-      cur_state("clauses").asInstanceOf[PublishingBuffer[RobinsonResolutionProof]] -= p1 -= p2
-      println("***********************************************")
-      List((cur_state, ret2.head._2))
-    }
-    
-    override def toString = "ForgetfulResolveCommand("+alg.getClass+")"
-  }
-
   // this command should be used when the target clause is not the empty clause and should be called before Resolution is called
   case class ClauseFactorCommand(alg: UnificationAlgorithm[FOLExpression]) extends DataCommand[Clause] {
     // computes all subsets
@@ -222,9 +200,9 @@ import scala.Some
         subTerm <- getAllPositions(l2.formula) // except var positions and only on positions of the same type as a or b
       } yield l1.formula match {
           case Equation(a,b) => {
-            println("\n\n\n\nEq1 = "+l1.formula)
-            println("l2 = "+l2.formula)
-            println(Console.RED+"subTerm = "+subTerm+Console.RESET)
+            //println("\n\n\n\nEq1 = "+l1.formula)
+            //println("l2 = "+l2.formula)
+            //println(Console.RED+"subTerm = "+subTerm+Console.RESET)
             val mgus1 = if (a.exptype == subTerm._2.exptype) alg.unify(a, subTerm._2.asInstanceOf[FOLExpression]) else Nil
             require(mgus1.size < 2)
             val mgus2 = if (b.exptype == subTerm._2.exptype) alg.unify(b, subTerm._2.asInstanceOf[FOLExpression]) else Nil
@@ -237,15 +215,15 @@ import scala.Some
             else if (!mgus2.isEmpty)
               List(Paramodulation(p1, p2, l1, l2, Replacement(subTerm._1, a).apply(l2.formula).asInstanceOf[FOLFormula], mgus2.head))
             else List()
-            println(Console.RESET)
-            println(mgus1)
-            print(mgus2)
-            l.foreach(y => println("\n"+Console.BLUE+y.name+"\n"+y.root+"\n"+Console.RESET+y.rule))
+            //println(Console.RESET)
+            //println(mgus1)
+            //print(mgus2)
+            //l.foreach(y => println("\n"+Console.BLUE+y.name+"\n"+y.root+"\n"+Console.RESET+y.rule))
             l
           }
           case _ => {
-            println("\n\nNot Eq2 : "+l1.formula)
-            println("l2 = "+l2.formula)
+            //println("\n\nNot Eq2 : "+l1.formula)
+            //println("l2 = "+l2.formula)
             List()
           }
         }) ++
@@ -278,12 +256,12 @@ import scala.Some
               l
             }
             case _ => {
-              println("\n\nNot Eq2 : "+l1.formula)
-              println("l2 = "+l2.formula)
+              //println("\n\nNot Eq2 : "+l1.formula)
+              //println("l2 = "+l2.formula)
               List()
             }
           }))
-      println(Console.RED)
+      //println(Console.RED)
       l
     }
 

@@ -40,6 +40,7 @@ import collection.immutable.HashSet
       case App(s,t) =>
         checkLambdaExpression_(s,scope) ++ checkLambdaExpression_(t,scope)
       case AbsInScope(v,t) =>
+      //case Abs(v,t) =>
         checkLambdaExpression_(t, scope + v)
       case _ => throw new Exception("Unhandled Lambda Term Type (not var, abs nor app)")
     }

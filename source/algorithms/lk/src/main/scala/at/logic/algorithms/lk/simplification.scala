@@ -59,7 +59,7 @@ package simplification {
       seqs.map(x => if (!x._1.isEmpty) (matchPos(posUnit, x)) else x)
     }
     private def matchPos(posUnit: List[FSequent], s: FSequent): FSequent = {
-      val restDomain = (s._1.flatMap(x => x.getFreeAndBoundVariables._1) ++ s._2.flatMap(x => x.getFreeAndBoundVariables._1)).toList
+      val restDomain = (s._1.flatMap(x => x.freeVariables) ++ s._2.flatMap(x => x.freeVariables)).toList
       val newAnt = s._1.filter(x => posUnit.forall(y => alg.matchTerm(y._2.head, x, restDomain) == None))
       if (newAnt.size == s._1.size) s else new FSequent(newAnt, s._2)
     }
@@ -69,7 +69,6 @@ package simplification {
       case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => false
       case Var(_,_) => true
       case App(a,b) => isGround(a) && isGround(b)
-      case AbsInScope(_,a) => isGround(a)
     }*/
   }
   // We first order the literals according to lexicographic order but ignoring the variables (as their names are unimportant)

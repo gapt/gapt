@@ -35,6 +35,7 @@ class SLKTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
 
   "The calculus SLK" should {
+    
     "work for a simple proof" in {
       val i = IntVar(new VariableStringSymbol("i"))
       val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
@@ -57,6 +58,7 @@ class SLKTest extends SpecificationWithJUnit {
       proof.root.toFSequent must beEqualTo (FSequent( and_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula]))
 
     }
+    
     "work for OrEquivalenceRule1" in {
       val i = IntVar(new VariableStringSymbol("i"))
       val n = IntVar(new VariableStringSymbol("n"))
@@ -69,6 +71,7 @@ class SLKTest extends SpecificationWithJUnit {
       proof.root.toFSequent must beEqualTo (FSequent( or_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula]))
 
     }
+    
     "work for sCutRule" in {
       def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
       def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
@@ -83,17 +86,17 @@ class SLKTest extends SpecificationWithJUnit {
       dbTRS.add(g, Tuple2(base1, base2), Tuple2(step1, step2))
       val term1 = sTerm(g, Succ(Succ(k)), x::Nil)
       val term2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      println("\n\nterm1 = "+unfoldSTerm(term1))
-      println("term2 = "+unfoldSTerm(term2))
+      //println("\n\nterm1 = "+unfoldSTerm(term1))
+      //println("term2 = "+unfoldSTerm(term2))
       val f1 = Atom(new ConstantStringSymbol("P"), term1::Nil)
       val f2 = Atom(new ConstantStringSymbol("P"), term2::Nil)
-      println("\n\nf1 = "+unfoldSFormula(f1))
-      println("f2 = "+unfoldSFormula(f2))
+      //println("\n\nf1 = "+unfoldSFormula(f1))
+      //println("f2 = "+unfoldSFormula(f2))
 
       val ax1  = Axiom(f1::Nil, f1::Nil)
       val ax2  = Axiom(f2::Nil, f2::Nil)
       val cut = sCutRule(ax1, ax2, f1)
-      println("\n\nroot = "+cut.root)
+      //println("\n\nroot = "+cut.root)
       Success()
     }
     /*

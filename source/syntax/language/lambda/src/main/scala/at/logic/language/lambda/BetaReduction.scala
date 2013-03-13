@@ -44,6 +44,7 @@ object BetaReduction {
 
   def betaNormalize(expression: LambdaExpression)(implicit strategy: StrategyOuterInner.Value):LambdaExpression = expression match {
     case App(AbsInScope(x,body),arg) => {
+    //case App(Abs(x, body),arg) => {
       strategy match {
         case StrategyOuterInner.Outermost => betaNormalize(replace(x, arg, body))  // If it is outermost strategy, we first reduce the current redex by applying sigma, and then we call betaNormalize recursively on the result.
         case StrategyOuterInner.Innermost => replace(x, betaNormalize(arg), betaNormalize(body))

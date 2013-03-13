@@ -27,7 +27,7 @@ class BussGeneratorAutoPropTest extends SpecificationWithJUnit {
   "BussGeneratorAutoPropTest" should {
     "continue autopropositional" in {
 
-      println("\n\nBuss generator Examples")
+      //println("\n\nBuss generator Examples")
       val a = HOLConst(new ConstantStringSymbol("a"), Ti())
 
       val Pc1 = Atom(new ConstantStringSymbol("Pc1"), a::Nil)

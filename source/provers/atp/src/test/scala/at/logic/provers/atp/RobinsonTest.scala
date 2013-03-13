@@ -23,7 +23,7 @@ class RobinsonTest extends SpecificationWithJUnit {
   "ParamodulationCommand" should  {
     "applying paramodulation command on two res.proofs" in {
       "failing replay command for prime0" in {
-        println(Console.BLUE+"\n\n\nRobinsonTest.scala, ParamodulationCommand:\n\n")
+        //println(Console.BLUE+"\n\n\nRobinsonTest.scala, ParamodulationCommand:\n\n")
         //        val a = new MyParser("=(Ladr5(ladr1(ladr8, x), ladr8), x).").getClauseList
 
         val fseq1 = new MyParser("-=(ladr2(ladr8, x), ladr6) | =(x, ladr7(ladr6, ladr5(ladr1(ladr8, x), ladr8))).").getClauseList
@@ -35,7 +35,7 @@ class RobinsonTest extends SpecificationWithJUnit {
         val rrp2 = InitialClause(Nil,  fseq2.head.succedent.map(f => f.asInstanceOf[FOLFormula]))
         val rrp2flip = InitialClause(Nil,  f2flipseq2.head.succedent.map(f => f.asInstanceOf[FOLFormula]))
         val l_para = ParamodulationCommand(FOLUnificationAlgorithm).apply(rrp1, rrp2)// must exist(c => {println(c); false})
-        println("\n\nEnd of ParamodulationCommand"+Console.RESET)
+        //println("\n\nEnd of ParamodulationCommand"+Console.RESET)
         ok
       }
     }

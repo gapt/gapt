@@ -73,7 +73,7 @@ object sFOParser {
       def schemaFormula = formula
       def indPred : Parser[HOLFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ index ~ "," ~ s_term ~ ")" ^^ {
         case x ~ "(" ~ l ~ "," ~ t ~ ")" => {
-          println("\n\nt = "+t)
+          //println("\n\nt = "+t)
           IndexedPredicate(new ConstantStringSymbol(x), l)
         }
       }
@@ -105,13 +105,13 @@ object sFOParser {
       def non_formula: Parser[HOLExpression] = (fo_term | s_term | indexedVar | abs | variable | constant | var_func | const_func)
       def s_term: Parser[HOLExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ variable ~ ")" ^^ {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
-          println("\n\nsTerm\n")
+          //println("\n\nsTerm\n")
           sTerm(name, i.asInstanceOf[IntegerTerm], args::Nil)
         }
       }
       def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ variable ~ ")" ^^ {
         case name ~ "(" ~ arg ~ ")" => {
-          println("\n\nfoTerm\n")
+          //println("\n\nfoTerm\n")
           val v = hol.createVar(new VariableStringSymbol(name), i -> i).asInstanceOf[HOLVar]
           HOLApp(v, arg).asInstanceOf[HOLExpression]
         }
@@ -318,7 +318,7 @@ object sFOParser {
           if (! mapPredicateToArity.isDefinedAt(x.toString) )
             mapPredicateToArity.put(x.toString, l.size)
           else if (mapPredicateToArity.get(x.toString).get != l.size ) {
-            println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n\n")
+            //println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n\n")
             throw new Exception("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n")
           }
 //          println("\n\nIndexedPredicate");

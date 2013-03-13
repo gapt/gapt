@@ -79,8 +79,8 @@ class ResolutionTest extends SpecificationWithJUnit {
       val p2 = InitialClause(Nil, List(e3, p))
       val p3 = Paramodulation(p1,p2, p1.root.succedent(0), p2.root.succedent(1), q, Substitution[FOLExpression]())
       val expected_root = FSequent(Nil, List(e2,e3,q))
-      println(p3.root)
-      println(expected_root)
+      //println(p3.root)
+      //println(expected_root)
 
       p3.root.toFSequent must beSyntacticFSequentEqual(expected_root)
     }

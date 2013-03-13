@@ -41,7 +41,7 @@ object ACNF {
           if(seq.antecedent.isEmpty && seq.succedent.isEmpty) {
             return groun_proj_set.find(p => p.root.toFSequent == end_seq).get
           }
-          println("seq = "+printSchemaProof.sequentToString(seq))
+          //println("seq = "+printSchemaProof.sequentToString(seq))
           if(seq.antecedent.isEmpty) {
             val set = groun_proj_set.filter(p => p.root.succedent.map(fo => fo.formula).intersect(seq.succedent.map(fo => fo.formula)).nonEmpty)
             set.head
@@ -52,17 +52,17 @@ object ACNF {
             }
             else {
               val set = groun_proj_set.filter(p => p.root.antecedent.map(fo => fo.formula).intersect(seq.antecedent.map(fo => fo.formula)).nonEmpty && p.root.succedent.map(fo => fo.formula).intersect(seq.succedent.map(fo => fo.formula)).nonEmpty).head
-              println("set.size = "+set.size)
+              //println("set.size = "+set.size)
               set
             }
         }
         case CutRule(up1, up2, _, a1, a2) => {
           val pr1 = plugProjections(up1, groun_proj_set, end_seq)
           val pr2 = plugProjections(up2, groun_proj_set, end_seq)
-          println("pr1:")
-          printSchemaProof(pr1)
-          println("pr2:")
-          printSchemaProof(pr2)
+          //println("pr1:")
+          //printSchemaProof(pr1)
+          //println("pr2:")
+          //printSchemaProof(pr2)
           CutRule(pr1, pr2, a1.formula)
         }
         case ContractionLeftRule(up1, _, a1, a2, p) => ContractionLeftRule(plugProjections(up1, groun_proj_set, end_seq), a1.formula)
@@ -84,7 +84,7 @@ object ACNF {
     val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
     //the resolution proof
     val resDeduction = InstantiateResSchema(res_schema_name, n)._2
-    println("resDeduction :")
+    //println("resDeduction :")
 //    printSchemaProof(resDeduction)
     //computing the projections
     val p1base = SchemaProofDB.get(proof_name).base
@@ -103,7 +103,7 @@ object ACNF {
 //      ))
 
 //    projSet.foreach(p => println(printSchemaProof.sequentToString(p.root)))
-    println("\n\n")
+    //println("\n\n")
 //    val new_z_subst = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "trs.sys"))
 //    ParseResSchema(new_z_subst)
     //hard-coded the substitution for projections : {z -> \lambda k. a}

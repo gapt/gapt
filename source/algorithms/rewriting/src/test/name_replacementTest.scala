@@ -164,7 +164,7 @@ class name_replacementTest extends SpecificationWithJUnit {
       checkTree(proof, proof2.q7) must beEmpty
 
       val (_,fproof) = NameReplacement.rename_resproof(proof3.p6, map)
-      fproof.nodes map println
+      //fproof.nodes map println
       checkTree(fproof, proof4.q6) must beEmpty
 
 

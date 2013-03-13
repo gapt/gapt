@@ -144,11 +144,11 @@ class SkolemizationTest extends SpecificationWithJUnit {
 
       SkolemSymbolFactory.reset
 
-      println("=== starting skolemization ===")
+      //println("=== starting skolemization ===")
       val skolemized_proof : LKProof = skolemize( proof )
-      println("=== endsequent skolemized ===")
-      println(skolemized_proof.root)
-      println(proof_sk.root)
+      //println("=== endsequent skolemized ===")
+      //println(skolemized_proof.root)
+      //println(proof_sk.root)
 
       skolemized_proof.root must beSyntacticMultisetEqual (proof_sk.root)
   }

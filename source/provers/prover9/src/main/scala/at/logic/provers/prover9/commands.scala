@@ -153,7 +153,7 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
     List((state, cmnds ++ List(RefutationReachedCommand[Clause]) ))
   }
 
-  private def returnAndPrint[T](x:T) = {println("Scheduling P9 Command:"+x); x }
+  private def returnAndPrint[T](x:T) = {/*println("Scheduling P9 Command:"+x);*/ x }
 
   // the second value is the literals permutation from prover9 order to fsequent (as we have positive and negative
   def getLiterals(e: Node): Seq[FOLFormula] = {
@@ -174,20 +174,20 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
   }
   val INTq_CHAR = 97
 
-  private def getParents(e: Node): Iterable[String] = { println((e \\ "@parents").foldLeft("")((s:String, n:Node) => if (s.isEmpty) n.text else s + " " + n.text)  ); (e \\ "@parents").foldLeft("")((s:String, n:Node) =>if (s.isEmpty) n.text else s + " " + n.text).split(" ") }
+  private def getParents(e: Node): Iterable[String] = { /*println((e \\ "@parents").foldLeft("")((s:String, n:Node) => if (s.isEmpty) n.text else s + " " + n.text)  );*/ (e \\ "@parents").foldLeft("")((s:String, n:Node) =>if (s.isEmpty) n.text else s + " " + n.text).split(" ") }
 
   private def assumption(id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
-    println("assumption")
+    //println("assumption")
     List(AddGuidedInitialClauseCommand(id, cls), InsertResolventCommand[Clause])
   }
   // here we just attach the parent to the new clause id as all other rules try to factorize the parents anyway
   //factor is copy, because we do factor when we have a replay. So, we ignore factor
   private def factor(parentId: String, lit1: String, lit2: String, id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
-    println("factor")
+    //println("factor")
     List(GetGuidedClausesCommand(List(parentId)),AddGuidedClausesCommand(List(id)))
   }
   private def copy(parentId: String, id: String): TraversableOnce[Command[Clause]] = {
-    println("copy")
+    //println("copy")
     List(GetGuidedClausesCommand(List(parentId)),AddGuidedClausesCommand(List(id)))
   }
 
@@ -197,7 +197,7 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
     List(GetGuidedClausesLiterals(List((par1Id, lit1.head.toInt - INT_CHAR), (par2Id, lit2.head.toInt - INT_CHAR))), VariantLiteralCommand, ResolveCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))
     */
     //List(ReplayCommand(List(par1Id,par2Id,"0"), id, literals2FSequent(cls)), SpawnCommand())
-    println("resolve")
+    //println("resolve")
     List(ReplayCommand(List(par1Id,par2Id,"0"), id, literals2FSequent(cls)), InsertResolventCommand[Clause] )
   }
   // we apply replay here because the order of literals might change in our proof
@@ -205,11 +205,11 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
     /*require(fromLiteral.size == 1 && toLiteral.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
     List(GetGuidedClausesLiteralsPositions(List((fromParentId, fromLiteral.head.toInt - INT_CHAR, List(fromPos)), (toParentId, toLiteral.head.toInt - INT_CHAR, toPos))), VariantLiteralPositionCommand, ParamodulationLiteralPositionCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))*/
     //      List(ReplayCommand(List(fromParentId,toParentId, "0"), id, literals2FSequent(cls)), SpawnCommand())
-    println("paramodulate")
+    //println("paramodulate")
     List(ReplayCommand(List(fromParentId,toParentId, "0"), id, literals2FSequent(cls)), InsertResolventCommand[Clause])
   }
   private def replay(parentIds: Iterable[String], id: String, cls: Seq[FOLFormula]): TraversableOnce[Command[Clause]] = {
-    println("replay")
+    //println("replay")
     //      List(ReplayCommand("0" :: parentIds.toList, id, literals2FSequent(cls)), SpawnCommand())
     List(ReplayCommand("0" :: parentIds.toList, id, literals2FSequent(cls)), InsertResolventCommand[Clause])
   }
@@ -220,7 +220,7 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
 // in prover9, negated equations are considered to be one application and in gapt it is considered a negation of an equation, so two applications
 case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
   def apply(state: State, data: Any) = {
-    println("Prover92GAPTPositionsCommand")
+    //println("Prover92GAPTPositionsCommand")
     val ls = data.asInstanceOf[Iterable[Tuple3[ResolutionProof[Clause],FormulaOccurrence,Iterable[Int]]]]
     List((state,ls.map(x => {
       (x._1,x._2,translate(x._2.formula,x._3.toList))
@@ -258,7 +258,7 @@ object InferenceExtractor {
       !(for (line <- str_p9.split(System.getProperty("line.separator"));
            if ( variablestyle_matcher.findFirstIn(line).isDefined)) yield line).isEmpty
 
-    println(if (set_prolog_style_variables) "prolog style variables!" else "normal style variables!")
+    //println(if (set_prolog_style_variables) "prolog style variables!" else "normal style variables!")
 
     val parser = if (set_prolog_style_variables) Prover9TermParser else Prover9TermParserLadrStyle
 
@@ -283,9 +283,9 @@ object InferenceExtractor {
           val inference_type = (e \\ "justification" \\ "@jstring")
           inference_type.text match {
             case "[assumption]." =>
-              (e\\"literal") map (x=> println("assumption:" + x))
+              /*(e\\"literal") map (x=> println("assumption:" + x))*/
               val formula : FOLFormula = fol.Or((e \\ "literal").map( x => parser.parseFormula(x.text)))
-              println("parsed formula: "+formula)
+              //println("parsed formula: "+formula)
               assumptions = formula :: assumptions
             case "[goal]." =>
               //println("goal:"+literal);
@@ -349,15 +349,15 @@ object InferenceExtractor {
 
        val (as,gs) = m;
        l match {
-        case rassumption(id, formula ) => debug("ass "+id+" "+formula); if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
-        case rgoal(id, formula )       => debug("goal"); if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
-        case variablestyle_matcher(_) => println("enabling prolog style variables!"); parser = Prover9TermParser;  m
-        case proof_start(_) => debug("start"); within_proof = 1; m
-        case proof_end(_) => debug("stop"); within_proof = 2; m
-        case _ => debug("."); m
+        case rassumption(id, formula ) => /*debug("ass "+id+" "+formula);*/ if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
+        case rgoal(id, formula )       => /*debug("goal");*/ if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
+        case variablestyle_matcher(_) => /*println("enabling prolog style variables!");*/ parser = Prover9TermParser;  m
+        case proof_start(_) => /*debug("start");*/ within_proof = 1; m
+        case proof_end(_) => /*debug("stop");*/ within_proof = 2; m
+        case _ => /*debug(".");*/ m
       }
     })
-    println("done")
+    //println("done")
 
     createFSequent(assumptions, goals)
 

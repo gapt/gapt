@@ -1,4 +1,5 @@
 package at.logic.provers.atp;
+// TODO: delete this file?
 /*
  * CommandsParserTest.scala
  *

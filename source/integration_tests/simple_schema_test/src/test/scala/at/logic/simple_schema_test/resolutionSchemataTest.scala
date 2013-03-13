@@ -55,8 +55,8 @@ class resolutionSchemataTest extends SpecificationWithJUnit {
   "resolutionSchemataTest" should {
     "check the correctness of the resolution schemata" in {
 
-      println(Console.YELLOW+"\n\n-------- integration tests, resolution schema --------\n\n"+Console.RESET)
-      println("\n\n")
+      //println(Console.YELLOW+"\n\n-------- integration tests, resolution schema --------\n\n"+Console.RESET)
+      //println("\n\n")
       val l = IntVar(new VariableStringSymbol("l"))
       val k = IntVar(new VariableStringSymbol("k"))
       val X = sClauseVar("X")
@@ -105,26 +105,26 @@ class resolutionSchemataTest extends SpecificationWithJUnit {
       val trsClauseSch = dbTRSclauseSchema("c", Pair(c0, clauseSchBase), Pair(ck, clauseSchRec))
 
 
-      println("\n\n")
+      //println("\n\n")
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], three) + Pair(l.asInstanceOf[Var], Succ(three))
       val subst = new SchemaSubstitution3(map)
 
       val sig1 = subst(trsSigma.map.get("σ'").get._2._1)
-      println("\n\nsig1 = "+sig1)
+      //println("\n\nsig1 = "+sig1)
       val sigma13 = unfoldSTermN(sig1, trsSigma)
-      println("\n\nsigma13 = "+sigma13)
+      //println("\n\nsigma13 = "+sigma13)
       val f = HOLApp(P, sig1).asInstanceOf[HOLFormula]
       val Psig1 = unfoldGroundAtom(f, trsSigma)
-      println("\n\nPsig1 = "+Psig1)
-      println("\n\n")
+      //println("\n\nPsig1 = "+Psig1)
+      //println("\n\n")
 
       val mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
 
       //      val mapFO2Var = Map[HOLVar, HOLExpression]() + Pair(x, HOLAbs(y, ))
       val clause3 = applySubToSclauseOrSclauseTerm(subst, trsClauseSch.map.get("c").get._2._1).asInstanceOf[sClause]
       val de = deComposeSClause(unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst))
-      println("deComposeSClause = "+de)
-      println("deComposeSClause2 = "+deComposeSClause(de))
+      //println("deComposeSClause = "+de)
+      //println("deComposeSClause2 = "+deComposeSClause(de))
 
 
       //      val r = rTerm(sClauseComposition(nonVarSclause(Psig1::Nil, Pc::Nil), nonVarSclause(Nil, Pb::Nil))  , rTerm(rTerm(r1, r2, Pb), nonVarSclause(Pc::Nil, Nil), Pc), Pc)
@@ -140,49 +140,49 @@ class resolutionSchemataTest extends SpecificationWithJUnit {
       val rwStep = rTerm(ResolutionProofSchema("ρ", k::x::sClauseComposition(nonVarSclause(Nil, Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil)::Nil), X)::Nil),              nonVarSclause(Atom(P, sTermN("σ'", Succ(k)::Nil)::Nil)::Nil , Nil) , Atom(P, sTermN("σ", Succ(k)::x::Succ(k)::Nil)::Nil))
       resolutionProofSchemaDB.clear
       resolutionProofSchemaDB.add("ρ", Pair(rhoBase, rwBase), Pair(rhoStep, rwStep))
-      println(Console.BOLD+"\nresolution-rewriting system:\n\n"+Console.RESET+resolutionProofSchemaDB.map )
+      //println(Console.BOLD+"\nresolution-rewriting system:\n\n"+Console.RESET+resolutionProofSchemaDB.map )
       val base = resolutionProofSchemaDB.map.get("ρ").get._1._2
       //      val step = trsRes.map.get("ρ").get._2._1
       var step = ResolutionProofSchema("ρ", three::x::X::Nil)
       step = sClauseVarSubstitution(step, mapX).asInstanceOf[ResolutionProofSchema]
       //      println("base = "+base)
-      println(Console.BOLD+"\n\nunfolding the ground resolution term: \n\n"+Console.RESET+step)
+      //println(Console.BOLD+"\n\nunfolding the ground resolution term: \n\n"+Console.RESET+step)
       //      val rez1 = sClauseVarSubstitution(base, mapX)
       //      val rez1 = sClauseVarSubstitution(step, mapX)
       //      println("\nrez1 = "+rez1)
       val rez2 = unfoldingAtomsInResTerm(step, trsSigma, subst)
       //      println("\nrez2 = "+rez2)
 
-      println(Console.BOLD+"\nterm-rewriting system: \n\n"+Console.RESET+trsSigma)
+      //println(Console.BOLD+"\nterm-rewriting system: \n\n"+Console.RESET+trsSigma)
 
       //      val h = HOLAbs(k, sTermN("σ'", k::Nil))
       val h = HOLAbs(k, a)
-      println("\nh.type = "+h.exptype)
+      //println("\nh.type = "+h.exptype)
       val mapfo2 = Map[fo2Var, LambdaExpression]() + Pair(x.asInstanceOf[fo2Var], h)
 
-      println(Console.BOLD+"substitutions:\n"+Console.RESET)
-      println("1) arithmetical variables  : "+map)
-      println("2) schema-clause variables : "+mapX)
-      println("3) second-order variables  : "+mapfo2)
+      //println(Console.BOLD+"substitutions:\n"+Console.RESET)
+      //println("1) arithmetical variables  : "+map)
+      //println("2) schema-clause variables : "+mapX)
+      //println("3) second-order variables  : "+mapfo2)
 
 
 
       val rez3 = unfoldResolutionProofSchema(rez2, trsClauseSch, trsSigma, subst, mapX)
-      println(Console.BOLD+"\n\ngenerating resolution term: \n\n"+Console.RESET+rez3)
+      //println(Console.BOLD+"\n\ngenerating resolution term: \n\n"+Console.RESET+rez3)
 
       val fo2sub = fo2VarSubstitution(rez3, mapfo2).asInstanceOf[sResolutionTerm]
-      println(Console.BOLD+"\n\napplying second-order substitution:\n\n"+Console.RESET+fo2sub)
+      //println(Console.BOLD+"\n\napplying second-order substitution:\n\n"+Console.RESET+fo2sub)
 
       val rez4 = resolutionDeduction(fo2sub, trsClauseSch, trsSigma, subst, mapX)
-      println(Console.BOLD+"\n\nDeduction: \n\n"+Console.RESET+rez4)
-      println("\n")
+      //println(Console.BOLD+"\n\nDeduction: \n\n"+Console.RESET+rez4)
+      //println("\n")
 
-      println("\n\n\ntransofrmation to tree:\n")
+      //println("\n\n\ntransofrmation to tree:\n")
       val t = ResDeductionToLKTree(fo2sub)
-      printSchemaProof(t)
+      //printSchemaProof(t)
 //      Main.display("resolution tree ", t);
 //      while(true){}
-      println("\n\n\n")
+      //println("\n\n\n")
       t.root must beEqualTo (Sequent(Nil, Nil))
       //      resolutionDeduction(r) must beEqualTo (nonVarSclause(Pa::Nil, Pb::Nil))
       ok

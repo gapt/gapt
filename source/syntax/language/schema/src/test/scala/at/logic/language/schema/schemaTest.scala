@@ -30,6 +30,7 @@ class SchemaTest extends SpecificationWithJUnit {
     val neg = Neg(or)
     val imp = Imp(neg.asInstanceOf[HOLFormula], and.asInstanceOf[HOLFormula])
 
+    
     "create IndexedPredicate correctly (1)" in {
       (p1) must beLike {case f: SchemaFormula => ok}
     }
@@ -41,13 +42,14 @@ class SchemaTest extends SpecificationWithJUnit {
     }
     "create SchemaFormula correctly (2)" in {
       (bigAnd) must beLike {case f: SchemaFormula => ok}
-    }
+    }    
     "create SchemaFormula correctly (3)" in {
       (bigOr) must beLike {case f: SchemaFormula => ok}
     }
     "create SchemaFormula correctly (4)" in {
       (imp) must beLike {case f: SchemaFormula => ok}
     }
+    
     "correctly deal with bound variables in the BigAnd extractor (2)" in {
       val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
       val f = BigAnd(i, pi, IntZero(), IntZero())
@@ -56,6 +58,7 @@ class SchemaTest extends SpecificationWithJUnit {
       }
       res must beEqualTo( Abs(i, pi) )
     }
+    
     "correctly deal with bound variables in the BigAnd extractor (1)" in {
       val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
       val p0 = IndexedPredicate(ConstantStringSymbol("p"), IntZero()::Nil)
@@ -65,6 +68,7 @@ class SchemaTest extends SpecificationWithJUnit {
       }
       betaNormalize( res ) must beEqualTo( p0 )
     }
+    
     "perform the unapply function in BigAnd correctly" in {
        val iformula = new SchemaAbs(i.asInstanceOf[Var], p1)
        val bigConj = BigAnd(iformula, one, two)
@@ -72,7 +76,7 @@ class SchemaTest extends SpecificationWithJUnit {
        (BigAnd.unapply(bigConj).get._2 must beEqualTo (p1)) &&
        (BigAnd.unapply(bigConj).get._3 must beEqualTo (one)) &&
        (BigAnd.unapply(bigConj).get._4 must beEqualTo (two))
-    }
+    } 
 
     "have correct BiggerThan constructor" in {
       val bt1 = BiggerThan(i, one)
@@ -105,8 +109,8 @@ class SchemaTest extends SpecificationWithJUnit {
         }
       }
 
-      print("\n\nf(4,0) = ")
-      println(f(Succ(Succ(Succ(Succ(IntZero())))), IntZero()))
+      //print("\n\nf(4,0) = ")
+      //println(f(Succ(Succ(Succ(Succ(IntZero())))), IntZero()))
       true must beEqualTo (true)
     }
 
@@ -129,13 +133,11 @@ class SchemaTest extends SpecificationWithJUnit {
       val term2 = sTerm(g, IntZero(), z0::Nil)
 
       val unf = unfoldSTerm(term2)
-      println("\n\nterm = "+term2)
-      println("unfold = "+unf)
-      println()
+      //println("\n\nterm = "+term2)
+      //println("unfold = "+unf)
+      //println()
       true must beEqualTo (true)
       
     }
-
-
   }
 }

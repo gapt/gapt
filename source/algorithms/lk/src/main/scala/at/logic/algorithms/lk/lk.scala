@@ -300,7 +300,7 @@ object eliminateDefinitions {
 object regularize {
   def apply( p: LKProof ) = {
     val blacklist = findVariableNames(p)
-    println("regularization blacklist is: "+blacklist)
+    //println("regularization blacklist is: "+blacklist)
     rec( p, blacklist )
   }
 

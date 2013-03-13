@@ -19,10 +19,10 @@ object XMLReaders {
 
   abstract class XMLReader( r: java.io.Reader ) extends XMLNodeParser {
     def getInput() : Node = {
-      println("initializing reader")
+      //println("initializing reader")
       val f = SAXParserFactory.newInstance()
       f.setNamespaceAware(false)
-      println(f.getFeature("http://xml.org/sax/features/use-entity-resolver2"))
+      //println(f.getFeature("http://xml.org/sax/features/use-entity-resolver2"))
 
       val p = f.newSAXParser()
 
@@ -34,7 +34,7 @@ object XMLReaders {
 
   object LogicAtHandler extends DefaultHandler with EntityResolver2  {
     override def  resolveEntity  (publicId: String, systemId : String) : InputSource = {
-      println("resolving entity:"+publicId+" "+systemId)
+      //println("resolving entity:"+publicId+" "+systemId)
       try {
         super.resolveEntity(publicId, systemId)
       }

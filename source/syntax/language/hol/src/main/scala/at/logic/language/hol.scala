@@ -41,7 +41,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
       case HArray(f1, f2) => "(" + f1.toString + HArraySymbol + f2.toString + ")"
-      case AbsInScope(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
+      case Abs(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
       case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
 
@@ -66,7 +66,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
       case HArray(f1, f2) =>  f1.toPrettyString_ + HArraySymbol + f2.toPrettyString_
-      case AbsInScope(v, exp) => "λ" + v.toString + "." + exp.toString
+      case Abs(v, exp) => "λ" + v.toString + "." + exp.toString
       case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
 
@@ -89,7 +89,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
       case HArray(f1, f2) => "(" + f1.toPrettyString_ + HArraySymbol + f2.toPrettyString_ + ")"
-      case AbsInScope(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
+      case Abs(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
       case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
 
@@ -105,7 +105,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case Neg(x) => x.containsQuantifier
       case ExVar(x,f) => true
       case AllVar(x,f) => true
-      case AbsInScope(v, exp) => exp.asInstanceOf[HOLExpression].containsQuantifier
+      case Abs(v, exp) => exp.asInstanceOf[HOLExpression].containsQuantifier
       case App(l, r) => l.asInstanceOf[HOLExpression].containsQuantifier || r.asInstanceOf[HOLExpression].containsQuantifier
     }
 
@@ -133,7 +133,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case BinaryFormula(x,y) => this +: (x.subTerms ++ y.subTerms)
       case Neg(x) => this +: x.subTerms
       case Quantifier(_,_,x) => this +: x.subTerms
-      case HOLAbsInScope(_, x) => this +: x.subTerms
+      case HOLAbs(_, x) => this +: x.subTerms
       case HOLApp(x, y) => this +: (x.subTerms ++ y.subTerms)
     }
   }
@@ -193,17 +193,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
     def apply(variable: Var, expression: LambdaExpression) = expression.factory.createAbs(variable, expression).asInstanceOf[HOLAbs]
     def unapply(exp: LambdaExpression) = exp match {
       case Abs(v: HOLVar, sub: HOLExpression) => Some( (v, sub) )
-      case _ => None
-    }
-  }
-
-  /*
-   * This extractor contains the binding information in the variable and in the expression
-   */
-  object HOLAbsInScope {
-    def unapply(expression: LambdaExpression) = expression match {
-      case a : Abs if a.variable.isInstanceOf[HOLVar] && a.expression.isInstanceOf[HOLExpression] =>
-        Some((a.variableInScope.asInstanceOf[HOLVar], a.expressionInScope.asInstanceOf[HOLExpression]))
       case _ => None
     }
   }
@@ -388,26 +377,11 @@ object ExQ {
       case _ => None
     }
   }
-  object ExVarInScope {
-    def apply(variable: Var, sub: HOLFormula) = Ex(Abs(variable, sub))
-    def unapply(expression: LambdaExpression) = expression match {
-      case Ex(AbsInScope(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
-      case _ => None
-    }
-  }
 
   object AllVar {
     def apply(variable: Var, sub: HOLFormula) = All(Abs(variable, sub))
     def unapply(expression: LambdaExpression) = expression match {
       case All(Abs(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
-      case _ => None
-    }
-  }
-
-  object AllVarInScope {
-    def apply(variable: Var, sub: HOLFormula) = All(Abs(variable, sub))
-    def unapply(expression: LambdaExpression) = expression match {
-      case All(AbsInScope(variable, sub), _) => Some( (variable, sub.asInstanceOf[HOLFormula]) )
       case _ => None
     }
   }

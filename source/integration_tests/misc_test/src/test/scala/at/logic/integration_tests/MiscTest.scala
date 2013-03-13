@@ -62,8 +62,8 @@ class MiscTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
-      println("skolemized proof:")
-      println(proof_sk)
+      //println("skolemized proof:")
+      //println(proof_sk)
       Success()
     }
 
@@ -72,8 +72,8 @@ class MiscTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
-      println("skolemized proof:")
-      println(proof_sk)
+      //println("skolemized proof:")
+      //println(proof_sk)
       Success()
     }
 
@@ -82,8 +82,8 @@ class MiscTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
-      println("skolemized proof:")
-      println(proof_sk)
+      //println("skolemized proof:")
+      //println(proof_sk)
       Success()
     }
 

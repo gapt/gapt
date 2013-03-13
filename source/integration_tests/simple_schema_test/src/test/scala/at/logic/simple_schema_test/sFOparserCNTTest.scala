@@ -108,8 +108,8 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
       //          println(seq)
 
       //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
-      println(Console.BLUE+"\n\n\n---- Print David's Proof ----\n"+Console.RESET)
-      printSchemaProof(map.get("\\varphi").get._2.get("root").get)
+      //println(Console.BLUE+"\n\n\n---- Print David's Proof ----\n"+Console.RESET)
+      //printSchemaProof(map.get("\\varphi").get._2.get("root").get)
       //Main.display("\\varphi", map.get("\\varphi").get._2.get("root").get) ;
       //while(true){}
 //      val struct = StructCreators.extractStruct( "\\varphi", k )

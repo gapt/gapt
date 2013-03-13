@@ -695,13 +695,13 @@ object applySchemaSubstitution2 {
 
   def apply( proof_name: String, number: Int ): LKProof = {
     if (number == 0) {
-      println("\nproof_name = "+proof_name)
-      println("number = "+number)
+      //println("\nproof_name = "+proof_name)
+      //println("number = "+number)
       CloneLKProof2(SchemaProofDB.get(proof_name).base)
     }
     else {
-      println("\nproof_name = "+proof_name)
-      println("number = "+number)
+      //println("\nproof_name = "+proof_name)
+      //println("number = "+number)
       val k = IntVar(new VariableStringSymbol("k")) ;
       val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
       val subst = new SchemaSubstitution1[HOLExpression](new_map)
@@ -718,12 +718,12 @@ object applySchemaSubstitution2 {
   }
 
   def apply( proof: LKProof, subst: SchemaSubstitution1[HOLExpression] , cnt: Int) : LKProof = {
-        println("\n"+proof.rule+" : "+printSchemaProof.sequentToString(proof.root))
+        //println("\n"+proof.rule+" : "+printSchemaProof.sequentToString(proof.root))
     //    println("cnt = "+cnt)
 
     proof match {
       case SchemaProofLinkRule( seq, link, ind::_ ) => {
-        println("\nSchemaProofLinkRule for proof "+link+" , "+ind)
+        //println("\nSchemaProofLinkRule for proof "+link+" , "+ind)
         val new_ind = subst(ind)
 
         //subst.map.toList.foreach(p => println(p._1,p._2))
@@ -731,7 +731,7 @@ object applySchemaSubstitution2 {
 
 
         if (cnt == 0) {
-          println("cnt == 0")
+          //println("cnt == 0")
           CloneLKProof2(SchemaProofDB.get(link).base)
         }
 
@@ -745,7 +745,7 @@ object applySchemaSubstitution2 {
 
         else
         if (cnt == 1) {
-          println("cnt == 1")
+          //println("cnt == 1")
           //                apply(SchemaProofDB.get(link), new_subst, cnt1)
           new_ind match {
             case y:IntZero => {
@@ -828,7 +828,7 @@ object applySchemaSubstitution2 {
         //        println("\nafter : "+res.rule)
         res
       }
-      case _ => {println("\n\n\nERROR in apply schema substitution\n"); proof}
+      case _ => throw new Exception("ERROR in apply schema substitution\n")
     }
   }
 }
@@ -1000,7 +1000,7 @@ object CloneLKProof2 {
         val new_parent = apply(p)
         ImpRightRule(new_parent, unfoldSFormula(a1.formula), unfoldSFormula(a2.formula))
       }
-      case _ => { println("ERROR in CloneLKProof2 : missing rule!");throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n") }
+      case _ => throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n")
     }}
 }
 
@@ -1013,8 +1013,8 @@ object CloneLKProof2 {
 //the proof does not contain proof-links
 object LKrwToLK {
   def apply(p: LKProof): LKProof = {
-    println("\nLKrwToLK Rule : "+p.rule)
-    println(printSchemaProof.sequentToString(p.root))
+    //println("\nLKrwToLK Rule : "+p.rule)
+    //println(printSchemaProof.sequentToString(p.root))
 
     p match {
       case Axiom(seq) => Axiom(seq.antecedent.map(f => unfoldSFormula(f.formula)), seq.succedent.map(f => unfoldSFormula(f.formula)))
@@ -1136,7 +1136,7 @@ object LKrwToLK {
         val new_parent = apply(p)
         ImpRightRule(new_parent, unfoldSFormula(a1.formula), unfoldSFormula(a2.formula))
       }
-      case _ => { println("ERROR in LKrwToLK : missing rule! "+p.rule);throw new Exception("ERROR in rewriting: LKrwToLK: missing rule !\n"+p.rule) }
+      case _ => throw new Exception("ERROR in rewriting: LKrwToLK: missing rule !\n"+p.rule) 
     }
   }
 }

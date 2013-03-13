@@ -127,7 +127,7 @@ object ForallSkLeftRule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == ForallSkLeftRuleType) {
-      println("ForallSkLeftRule Unapply")
+      //println("ForallSkLeftRule Unapply")
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
       val ((a1::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin

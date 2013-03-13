@@ -156,7 +156,7 @@ class Prover9Test extends SpecificationWithJUnit {
         </clause>
        */
 
-      println("=======AD Example: =======")
+      //println("=======AD Example: =======")
       val assoc = parse("=(*(x,*(y,z)), *(*(x,y),z) )")
       val neutr = parse("=(*(x,e), x)")
       val idem = parse("=(*(x,x), e)")
@@ -168,8 +168,8 @@ class Prover9Test extends SpecificationWithJUnit {
       val s4 = FSequent(List(ncomm), Nil)
       (getRefutation2(List(s1,s2,s3,s4)) match {
         case Some(a) if a.asInstanceOf[RobinsonResolutionProof].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) =>
-          println(Formatter.asHumanReadableString(a)   )
-          println("======= GraphViz output: =======\n" + Formatter.asGraphViz(a)   )
+          //println(Formatter.asHumanReadableString(a)   )
+          //println("======= GraphViz output: =======\n" + Formatter.asGraphViz(a)   )
           true
         case _ => false
       }) must beTrue
@@ -212,7 +212,7 @@ class Prover9Test extends SpecificationWithJUnit {
       val result : Option[RobinsonResolutionProof] = Prover9.refute( List(s1,s2,s3,t1) )
       result match {
         case Some(proof) =>
-          println(Formatter.asHumanReadableString(proof))
+          //println(Formatter.asHumanReadableString(proof))
           true must beEqualTo(true)
         case None => "" must beEqualTo( "Refutation failed!" )
       }
@@ -223,7 +223,7 @@ class Prover9Test extends SpecificationWithJUnit {
     "find a refutation for a simple clause set " in {
       //checks, if the execution of prover9 works, o.w. skip test
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
-      println("==== SIMPLE EXAMPLE ====")
+      //println("==== SIMPLE EXAMPLE ====")
       val f_eq_g = parse("=(f(x),g(x))")
       val px = parse("P(x)")
       val pfx = parse("P(f(x))")
@@ -234,12 +234,12 @@ class Prover9Test extends SpecificationWithJUnit {
       val s2 = FSequent(List(px), List(pfx))
       val s3 = FSequent(Nil, List(pa))
       val t1 = FSequent(List(goal),Nil)
-      println(TPTPFOLExporter.tptp_problem(List(s1,s2,s3,t1)))
-      println()
+      //println(TPTPFOLExporter.tptp_problem(List(s1,s2,s3,t1)))
+      //println()
       val Some(result) = getRefutation2( List(s1,s2,s3,t1) )
       //println(result)
 
-      println(Formatter.asTex(result))
+      //println(Formatter.asTex(result))
 
       true must beEqualTo( true )
     }
@@ -290,7 +290,7 @@ class Prover9Test extends SpecificationWithJUnit {
       skipped("doesnt work with the old implementation, new one is not ready yet")
       try {
         val p = Prover9.parse_prover9("target" + separator + "test-classes" + separator +"ALG138+1.out")
-        println("")
+        //println("")
         Formatter.asHumanReadableString(p._1)
         "success" must beEqualTo("success")
       } catch {

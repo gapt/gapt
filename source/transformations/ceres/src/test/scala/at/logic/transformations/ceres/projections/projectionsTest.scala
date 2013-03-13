@@ -1,3 +1,5 @@
+// TODO: can this file be deleted?
+
 package at.logic.transformations.ceres.projections
 
 import org.specs2.mutable._

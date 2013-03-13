@@ -89,19 +89,19 @@ class sCSunfoldTest extends SpecificationWithJUnit {
       val phi0 = andl
 
       val ax2 = SchemaProofLinkRule(FSequent(and_1_k2_ai::Nil, or_1_k1_ai::ak2::Nil), "\\phi", n::Nil)
-                    val ax3 = Axiom(ak2::Nil, ak2::Nil)
-                    val wl3 = WeakeningLeftRule(ax3, ak3)
-            val cut1 = CutRule(ax2, wl3, ak2)
-            val wr3 = WeakeningRightRule(cut1, and_1_k2_ai)
-                                                     val ax4 = SchemaProofLinkRule(FSequent(and_1_k2_ai::Nil, or_1_k1_ai::ak2::Nil), "\\phi", n::Nil)
-                                  val cut2 = CutRule(wr3, ax4, and_1_k2_ai)
-                                  val contr1 = ContractionRightRule(cut2, ak2)
-                                  val contr2 = ContractionRightRule(contr1, or_1_k1_ai)
-                                  val andll = AndLeftRule(contr2, and_1_k2_ai, ak3)
-                                  val biga = AndLeftEquivalenceRule1(andll, And(and_1_k2_ai, ak3), and_1_k3_ai)
-                                  val orr = OrRightRule(biga, or_1_k1_ai, ak2)
-                                  val wrr = WeakeningRightRule(orr, ak3)
-                                  val bigo = OrEquivalenceRule1(wrr, Or(or_1_k1_ai, ak2), or_1_k2_ai)
+      val ax3 = Axiom(ak2::Nil, ak2::Nil)
+      val wl3 = WeakeningLeftRule(ax3, ak3)
+      val cut1 = CutRule(ax2, wl3, ak2)
+      val wr3 = WeakeningRightRule(cut1, and_1_k2_ai)
+      val ax4 = SchemaProofLinkRule(FSequent(and_1_k2_ai::Nil, or_1_k1_ai::ak2::Nil), "\\phi", n::Nil)
+      val cut2 = CutRule(wr3, ax4, and_1_k2_ai)
+      val contr1 = ContractionRightRule(cut2, ak2)
+      val contr2 = ContractionRightRule(contr1, or_1_k1_ai)
+      val andll = AndLeftRule(contr2, and_1_k2_ai, ak3)
+      val biga = AndLeftEquivalenceRule1(andll, And(and_1_k2_ai, ak3), and_1_k3_ai)
+      val orr = OrRightRule(biga, or_1_k1_ai, ak2)
+      val wrr = WeakeningRightRule(orr, ak3)
+      val bigo = OrEquivalenceRule1(wrr, Or(or_1_k1_ai, ak2), or_1_k2_ai)
 
       val phin = bigo
 

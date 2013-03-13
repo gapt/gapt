@@ -114,7 +114,7 @@ object Prover9 {
         try  {
           val p9proof = parse_prover9(output_file, false)
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
-          println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
+          //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
 
           Some(tp9proof)
         } catch {
@@ -186,7 +186,7 @@ object Prover9 {
 
   /* Takes the output of prover9, extracts a resolution proof and the endsequent. */
   def parse_prover9(p9_file : String, escape_underscore : Boolean = true, newimpl : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
-    println((new File(".")).getCanonicalPath)
+    //println((new File(".")).getCanonicalPath)
 
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
     p9_to_p9(p9_file, pt_file.getCanonicalPath)
@@ -205,7 +205,7 @@ object Prover9 {
 //    val fs = Prover9TermParser.normalizeFSequent(InferenceExtractor(p9_file))
 
     val fs = if (newimpl) InferenceExtractor.viaLADR(p9_file) else InferenceExtractor.viaXML(p9_file)
-    println("extracted formula: "+fs)
+    //println("extracted formula: "+fs)
     val (eproof, efs) = if (escape_underscore) escape_constants(mproof, fs)  else (mproof, fs)
 
 

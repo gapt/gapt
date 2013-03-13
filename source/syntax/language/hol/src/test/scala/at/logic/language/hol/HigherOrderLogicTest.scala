@@ -101,15 +101,16 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
     val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
     val v1 = HOLVar(new VariableStringSymbol("x"), i)
     val f1 = HOLAppFormula(c1,v1)
-    "cretae a term of the right type" in {
+    "create a term of the right type" in {
       (ExVar(v1, f1).exptype) must beEqualTo (o)
     }
   }
+
   "Forall quantifier" should {
     val c1 = HOLConst(new ConstantStringSymbol("a"), i->o)
     val v1 = HOLVar(new VariableStringSymbol("x"), i)
     val f1 = HOLAppFormula(c1,v1)
-    "cretae a term of the right type" in {
+    "create a term of the right type" in {
       (AllVar(v1, f1).exptype) must beEqualTo (o)
     }
   }
@@ -119,6 +120,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       (HOLConst(new ConstantStringSymbol("P"), o)) must beLike {case Atom(ConstantStringSymbol("P"), Nil) => ok}
     }
   }
+  
   "Equation" should {
     "be of the right type" in {
       val c1 = HOLConst(new ConstantStringSymbol("f1"), i -> i)
@@ -137,6 +139,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       }
     }
   }
+  
   "Substitution" should {
     "work correctly on some testcase involving free/bound vars" in {
       val s0 = HOLConst(new ConstantStringSymbol("s_{0}"), i -> i)

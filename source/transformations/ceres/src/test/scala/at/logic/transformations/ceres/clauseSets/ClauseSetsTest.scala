@@ -49,19 +49,19 @@ class ClauseSetsTest extends SpecificationWithJUnit {
     }
 
     "test the schematic struct in journal_example.slk" in {
-      println(Console.GREEN+"\n\n-------- schematic struct in journal_example.slk --------\n\n"+Console.RESET)
+      //println(Console.GREEN+"\n\n-------- schematic struct in journal_example.slk --------\n\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
       val map = sFOParser.parseProof(s)
       val p = map.get("\\psi").get._2.get("root").get
-      println(StructCreators.extract(p))
+      //println(StructCreators.extract(p))
 //      val str =
-      println("\n\n\n\n")
+      //println("\n\n\n\n")
       ok
     }
 
 
     "test the schematic struct in sEXP.slk" in {
-      println(Console.BLUE+"\n\n---- schematic struct in sEXP.slk ----\n\n\n"+Console.RESET)
+      //println(Console.BLUE+"\n\n---- schematic struct in sEXP.slk ----\n\n\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
       SchemaProofDB.clear
       val map = sFOParser.parseProof(s)
@@ -69,14 +69,14 @@ class ClauseSetsTest extends SpecificationWithJUnit {
       val p2s = map.get("\\varphi").get._2.get("root").get
       val p1b = map.get("\\psi").get._1.get("root").get
       val p2b = map.get("\\varphi").get._1.get("root").get
-      println(StructCreators.extract(p1s, getCutAncestors(p1s)))
-      println("\n\n")
-      println(StructCreators.extract(p2s, getCutAncestors(p2s) ++ getAncestors(p2s.root.succedent.head)))
-      println("\n\n")
-      println(StructCreators.extract(p1b, Set.empty[FormulaOccurrence]))
-      println("\n\n")
-      println(StructCreators.extract(p2b, getAncestors(p2b.root.succedent.head)))
-      println("\n\n")
+      //println(StructCreators.extract(p1s, getCutAncestors(p1s)))
+      //println("\n\n")
+      //println(StructCreators.extract(p2s, getCutAncestors(p2s) ++ getAncestors(p2s.root.succedent.head)))
+      //println("\n\n")
+      //println(StructCreators.extract(p1b, Set.empty[FormulaOccurrence]))
+      //println("\n\n")
+      //println(StructCreators.extract(p2b, getAncestors(p2b.root.succedent.head)))
+      //println("\n\n")
 //      println("rename cl symbols to CL_i(k): ")
       val n = IntVar(new VariableStringSymbol("n"))
 //      val struct = StructCreators.extractStruct( "\\psi", n)
@@ -89,13 +89,13 @@ class ClauseSetsTest extends SpecificationWithJUnit {
       val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(IntZero()) )
       var subst = new SchemaSubstitution3(new_map)
       val gr = groundStruct(struct, subst)
-      println("\nground struct : \n"+gr)
+      //println("\nground struct : \n"+gr)
       val unfold_gr = unfoldGroundStruct(gr)
-      println("\nunfold ground struct : \n"+unfold_gr)
+      //println("\nunfold ground struct : \n"+unfold_gr)
 
       val cs_gr = StandardClauseSet.transformStructToClauseSet(gr)
 //      println("\nground struct : \n"+cs_gr)
-      println("\n\n\n\n")
+      //println("\n\n\n\n")
       ok
     }
   }

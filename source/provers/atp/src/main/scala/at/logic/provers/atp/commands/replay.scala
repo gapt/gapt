@@ -52,18 +52,18 @@ case class SetTargetClause2[V <: Sequent](val clause: Clause) extends DataComman
 case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
   def apply(state: State, data: Any) = {
     import Stream.cons
-    println("\nReplayCommand")
+    //println("\nReplayCommand")
     //get guided clauses mapping from id to resolution proof of id
-    println("\nTarget clause :"+id+"\nfrom "+parentIds.toList)
+    //println("\nTarget clause :"+id+"\nfrom "+parentIds.toList)
     val gmap = state("gmap").asInstanceOf[mutable.Map[String,ResolutionProof[Clause]]]
-    println("\nData="+data)
-    println("\nTarget clause="+cls)
+    //println("\nData="+data)
+    //println("\nTarget clause="+cls)
 
 
     val gproofs = (parentIds.toList).filterNot (_ == "-1") map gmap
 
     //val target : Clause = if (id == "-1") Clause(Nil,Nil) else Clause(cls.antecedent, cls.succedent)
-    println("\nTrying to prove  "+cls+"  from :")
+    //println("\nTrying to prove  "+cls+"  from :")
     gproofs map (x => println(x.root))
 
 
@@ -87,11 +87,11 @@ case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent)
 //    prover.refute(cons(SetClauseWithProofCommand(gproofs), cons(  SetTargetClause(cls), cons( SubsumedTargedSetFromClauseSetCommand(), stream1)))).next match {
     prover.refute(cons(SetClauseWithProofCommand(gproofs), cons(  SetTargetClause(cls),  stream1))).next match {
       case Some(r) =>
-        println("Found a refutation: "+r.toString)
+        //println("Found a refutation: "+r.toString)
         gmap(id) = r      //add new id to the guidance map
         List( (state, r) )
 
-      case _ => println("Replay failed!");
+      case _ => //println("Replay failed!");
         List(  ) //need to signal failure!
     } 
   }

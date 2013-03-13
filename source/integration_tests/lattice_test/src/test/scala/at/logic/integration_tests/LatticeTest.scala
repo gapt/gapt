@@ -61,7 +61,7 @@ class LatticeTest extends SpecificationWithJUnit {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
-      printStats( proof )
+      //printStats( proof )
 
       val proof_sk = LKtoLKskc( proof )
       val s = StructCreators.extract( proof_sk )

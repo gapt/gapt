@@ -23,11 +23,11 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression]
   def matchTerm(term: HOLExpression, posInstance: HOLExpression, restrictedDomain: List[Var]): Option[Substitution[HOLExpression]] = 
     {
       val res = holMatch(term, posInstance)(restrictedDomain)
-      res match {
+      /*res match {
         case None => println(term.toStringSimple + " did not match " + posInstance.toStringSimple)
         case Some(sub) => println(term.toStringSimple + " matches " + posInstance.toStringSimple + " with substitution " + sub.toString)
 
-      }
+      }*/
       res 
     }
 
@@ -38,8 +38,7 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression]
       case ( v1 : HOLVar, v2 : HOLVar ) if v1 == v2 => Some(Substitution[HOLExpression]())
       case ( v1 : HOLVar, v2 : HOLVar ) if v1 != v2 =>  None
       case ( c1 : HOLConst, c2 : HOLConst ) if c1 == c2 => Some(Substitution[HOLExpression]())
-      case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 == v2 => holMatch( e1, e2 )
-      case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 != v2 => None
+      case ( HOLAbs(v1, e1), HOLAbs(v2, e2) ) => holMatch( e1, e2 )
       case _ => None
     }
 

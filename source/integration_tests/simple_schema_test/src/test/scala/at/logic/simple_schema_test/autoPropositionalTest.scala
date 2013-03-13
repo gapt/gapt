@@ -26,7 +26,7 @@ class autoPropositionalTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   "SolvePropositionalTest" should {
     "solve the sequents" in {
-      println(Console.GREEN+"\n\n\nintegration_tests/SolvePropositionalTest.scala \n\n\n"+Console.RESET)
+      //println(Console.GREEN+"\n\n\nintegration_tests/SolvePropositionalTest.scala \n\n\n"+Console.RESET)
       val k = IntVar(new VariableStringSymbol("k"))
       val real_n = IntVar(new VariableStringSymbol("n"))
       val n = k

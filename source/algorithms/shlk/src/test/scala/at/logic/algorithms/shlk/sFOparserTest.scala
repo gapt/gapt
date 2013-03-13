@@ -101,7 +101,7 @@ class sFOparserTest extends SpecificationWithJUnit {
       //          println(seq)
 
 //      println("\n\n"+map.get("\\sigma").get._2.get("root").get.root)
-      println(Console.BLUE+"\n---- applySchemaSubstitution ----\n"+Console.RESET)
+      //println(Console.BLUE+"\n---- applySchemaSubstitution ----\n"+Console.RESET)
 
       def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
       def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
@@ -123,7 +123,7 @@ class sFOparserTest extends SpecificationWithJUnit {
 
 
     "parse correctly the journal example" in {
-      println(Console.RED+"\n---- applySchemaSubstitution ----\n"+Console.RESET)
+      //println(Console.RED+"\n---- applySchemaSubstitution ----\n"+Console.RESET)
 
       val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
       val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
@@ -204,7 +204,7 @@ class sFOparserTest extends SpecificationWithJUnit {
       dbTRS.add(g, Tuple2(base1, base2), Tuple2(step1, step2))
 //      val sigma = applySchemaSubstitution2("\\sigma",2, db)
       val sigma = applySchemaSubstitution2("\\varphi",3)
-      println("\n\n")
+      //println("\n\n")
 //      val a = foVar("a")
 //      val t = sTerm(g, Succ(IntZero()), a::Nil)
 //      println("\n\nunfold sTerm = "+unfoldSTerm(t, db))

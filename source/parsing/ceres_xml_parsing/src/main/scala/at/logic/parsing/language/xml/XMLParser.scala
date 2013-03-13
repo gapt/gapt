@@ -53,8 +53,7 @@ object Match {
         None
       }
       case ( c1 @ HOLConst(_,_), c2 @ HOLConst(_,_) ) if c1 == c2 => Some(Substitution[HOLExpression]())
-      case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 == v2 => apply( e1, e2 )
-      case ( HOLAbsInScope(v1, e1), HOLAbsInScope(v2, e2) ) if v1 != v2 => None
+      case ( HOLAbs(v1, e1), HOLAbs(v2, e2) ) => apply(e1, e2)
       case _ => None
     }
 

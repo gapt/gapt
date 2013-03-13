@@ -73,14 +73,9 @@ import at.logic.calculi.lk.base.types.FSequent
 
   case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] {
     def apply(state: State, data: Any) = {
-      println("********** RefutationReachedCommand ************")
       val target = state("targetClause").asInstanceOf[FSequent]
       val d = data.asInstanceOf[ResolutionProof[V]]
-      println("Target: " + target)
-      println("Found: " + d.root)
       if (fvarInvariantMSEquality(d.root,target)) {
-        println("They are equal.")
-        println("************************************************")
         Some(d)
       }
         //cvetan
@@ -91,8 +86,6 @@ import at.logic.calculi.lk.base.types.FSequent
 //          }
 
       else {
-        println("They are different.")
-        println("************************************************")
         None
       }
     }

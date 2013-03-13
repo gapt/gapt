@@ -66,7 +66,7 @@ class ProverException(msg: String) extends Exception(msg)
 trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
   
   def refute(commands: Stream[Command[V]]) : NDStream[ResolutionProof[V]] = {
-    println("\nrefute")
+    //println("\nrefute")
     new NDStream(new MyConfiguration(new State(), commands, ()), myFun) with BFSAlgorithm
   }
   

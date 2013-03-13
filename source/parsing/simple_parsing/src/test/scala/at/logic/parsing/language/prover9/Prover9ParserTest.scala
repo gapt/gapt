@@ -44,11 +44,11 @@ class Prover9ParserTest extends SpecificationWithJUnit {
             good = result :: good
           case Prover9TermParser.Failure(msg, input) =>
             //s must beEqualTo("Failure:"+input.pos.toString + ": " +  msg)
-            println("Failure!")
+            //println("Failure!")
             bad = (msg,input.pos) :: bad
           case Prover9TermParser.Error(msg, input) =>
             //s must beEqualTo("Error:"+input.pos.toString + ": " +  msg)
-            println("Error!")
+            //println("Error!")
             bad = (msg,input.pos) :: bad
 
         }

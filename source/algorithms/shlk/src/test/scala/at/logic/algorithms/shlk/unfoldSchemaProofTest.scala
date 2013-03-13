@@ -242,7 +242,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
 //         val projs = Projections(step, s).toList
 
           val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
-          println("\n\nunfolding TEST ")
+          //println("\n\nunfolding TEST ")
           val str = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
           val map = SHLK.parseProof(str)
           val n = IntVar(new VariableStringSymbol("n"));val n1 = Succ(n);val n2 = Succ(n1);val n3 = Succ(n2);

@@ -25,21 +25,21 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
   import at.logic.language.schema._
   "resolutionSchemaParserTest" should {
     "should parse correctly the resolution schema in resSchema1.rs" in {
-      println(Console.BLUE+"\n\n\n\n------- Resolution schema for the resSchema1.rs ------- \n\n"+Console.RESET)
+      //println(Console.BLUE+"\n\n\n\n------- Resolution schema for the resSchema1.rs ------- \n\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
       ParseResSchema(s)
-      println("\ndbTRS:\n"+dbTRS.map)
-      println("\n\ndbTRSresolutionSchema:\n")
-      resolutionProofSchemaDB.map.foreach(m => println(m))
+      //println("\ndbTRS:\n"+dbTRS.map)
+      //println("\n\ndbTRSresolutionSchema:\n")
+      //resolutionProofSchemaDB.map.foreach(m => println(m))
       val k = IntVar(new VariableStringSymbol("k"))
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
       val subst = new SchemaSubstitution3(map)
 
       val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
-      println("rho1step1 = "+rho1step1)
+      //println("rho1step1 = "+rho1step1)
       val r = unfoldResolutionProofSchema2(rho1step1)
-      println("r = "+r)
+      //println("r = "+r)
 
       val z = fo2Var(new VariableStringSymbol("z"))
       val a = HOLVar(new VariableStringSymbol("a"), Ti())
@@ -50,31 +50,31 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       val h = HOLAbs(k, sterm)
       val mapfo2 = Map[fo2Var, LambdaExpression]() + Pair(z.asInstanceOf[fo2Var], h)
       val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
-      println(Console.BOLD+"applying second-order substitution:\n\n"+Console.RESET)
-      println("fo2sub = "+fo2sub)
+      //println(Console.BOLD+"applying second-order substitution:\n\n"+Console.RESET)
+      //println("fo2sub = "+fo2sub)
 
-      println("\n\nresolution deduction tree:")
-      printSchemaProof(ResDeductionToLKTree(fo2sub))
-      println("\n\n--- END ---\n\n")
+      //println("\n\nresolution deduction tree:")
+      //printSchemaProof(ResDeductionToLKTree(fo2sub))
+      //println("\n\n--- END ---\n\n")
       ok
     }
 
     "should parse correctly the resolution schema in resSchema_sEXP.rs" in {
-      println(Console.BLUE+"\n\n\n\n------- Resolution schema for the resSchema_sEXP.rs ------- \n\n"+Console.RESET)
+      //println(Console.BLUE+"\n\n\n\n------- Resolution schema for the resSchema_sEXP.rs ------- \n\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema_sEXP.rs"))
       ParseResSchema(s)
-      println("\ndbTRS:\n"+dbTRS.map)
-      println("\n\ndbTRSresolutionSchema:\n")
-      resolutionProofSchemaDB.map.foreach(m => println(m))
+      //println("\ndbTRS:\n"+dbTRS.map)
+      //println("\n\ndbTRSresolutionSchema:\n")
+      //resolutionProofSchemaDB.map.foreach(m => println(m))
       val k = IntVar(new VariableStringSymbol("k"))
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
       val subst = new SchemaSubstitution3(map)
 
       val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
-      println("rho1step1 = "+rho1step1)
+      //println("rho1step1 = "+rho1step1)
       val r = unfoldResolutionProofSchema2(rho1step1)
-      println("r = "+r)
+      //println("r = "+r)
 
 //      val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
 //      println(Console.BOLD+"applying second-order substitution:\n\n"+Console.RESET)
@@ -89,21 +89,21 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 
 
     "should parse correctly the resolution schema in resSchema2.rs" in {
-      println(Console.RED+"\n\n\n\n------- Resolution schema for the resSchema2.rs ------- \n\n"+Console.RESET)
+      //println(Console.RED+"\n\n\n\n------- Resolution schema for the resSchema2.rs ------- \n\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema2.rs"))
       ParseResSchema(s)
 //      println("\ndbTRS:\n"+dbTRS.map)
-      println("\n\ndbTRSresolutionSchema:\n")
-      resolutionProofSchemaDB.map.foreach(m => println(m+"\n"))
-      println("\n")
+      //println("\n\ndbTRSresolutionSchema:\n")
+      //resolutionProofSchemaDB.map.foreach(m => println(m+"\n"))
+      //println("\n")
       val k = IntVar(new VariableStringSymbol("k"))
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
       val subst = new SchemaSubstitution3(map)
       val rho1 = resolutionProofSchemaDB.map.get("\\rho1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
-      println("rho1step1 = "+rho1step1)
+      //println("rho1step1 = "+rho1step1)
       val r = unfoldResolutionProofSchema2(rho1step1)
-      println("r = "+r)
+      //println("r = "+r)
 
       val z = fo2Var(new VariableStringSymbol("z"))
       val a = HOLVar(new VariableStringSymbol("a"), Ti())
@@ -114,31 +114,31 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       val h = HOLAbs(k, sterm)
       val mapfo2 = Map[fo2Var, LambdaExpression]() + Pair(z.asInstanceOf[fo2Var], h)
       val fo2sub = fo2VarSubstitution(r, mapfo2).asInstanceOf[sResolutionTerm]
-      println(Console.BOLD+"applying second-order substitution:\n\n"+Console.RESET)
-      println("fo2sub = "+fo2sub)
+      //println(Console.BOLD+"applying second-order substitution:\n\n"+Console.RESET)
+      //println("fo2sub = "+fo2sub)
 //
 //      println("\n\nresolution deduction tree:")
 //      printSchemaProof(ResDeductionToLKTree(fo2sub))
 //      InstantiateResSchema("\\rho1",2)
-      println("\n\n--- END ---\n\n")
+      //println("\n\n--- END ---\n\n")
       ok
     }
 
     "should parse correctly the resolution schema in test.rs" in {
-      println(Console.RED+"\n\n\n\n------- Resolution schema for the test.rs ------- \n\n"+Console.RESET)
+      //println(Console.RED+"\n\n\n\n------- Resolution schema for the test.rs ------- \n\n"+Console.RESET)
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test.rs"))
       ParseResSchema(s)
       //      println("\ndbTRS:\n"+dbTRS.map)
-      println("\n\ndbTRSresolutionSchema:\n")
-      resolutionProofSchemaDB.map.foreach(m => println(m+"\n"))
-      println("\n")
+      //println("\n\ndbTRSresolutionSchema:\n")
+      //resolutionProofSchemaDB.map.foreach(m => println(m+"\n"))
+      //println("\n")
       val k = IntVar(new VariableStringSymbol("k"))
       val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], Succ(IntZero()))
       val subst = new SchemaSubstitution3(map)
       val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
-      println("rho1step1 = "+rho1step1)
-      println("\nfo2SubstDB = "+fo2SubstDB.map.head )
+      //println("rho1step1 = "+rho1step1)
+      //println("\nfo2SubstDB = "+fo2SubstDB.map.head )
 ////      val r = unfoldResolutionProofSchema2(rho1step1)
 ////      println("r = "+r)
 //
@@ -157,7 +157,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 //      //      println("\n\nresolution deduction tree:")
 //      //      printSchemaProof(ResDeductionToLKTree(fo2sub))
 //      //      InstantiateResSchema("\\rho1",2)
-      println("\n\n--- END ---\n\n")
+      //println("\n\n--- END ---\n\n")
       ok
     }
   }

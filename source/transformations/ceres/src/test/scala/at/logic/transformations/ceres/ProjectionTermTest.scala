@@ -28,7 +28,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
   import at.logic.language.schema._
   "ProjectionTermTest" should {
     "create a ProjectionTerm" in {
-      println("\n\nProjectionTerm for the Adder.lks\n\n")
+      //println("\n\nProjectionTerm for the Adder.lks\n\n")
       val k = IntVar(new VariableStringSymbol("k"))
       val real_n = IntVar(new VariableStringSymbol("n"))
       val n = k
@@ -63,10 +63,10 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val ax1 = Axiom(A0 :: Nil, A0 ::Nil)
       val w1 = WeakeningRightRule(ax1, A3)
       val negl1 = NegLeftRule(w1,A0)
-               val ax2 = Axiom(A1 :: Nil, A1 ::Nil)
-          val orl1 = OrLeftRule(negl1, ax2, at.logic.language.schema.Neg(A0), A1)
-                  val ax3 = Axiom(A1 :: Nil, A1 ::Nil)
-          val root = CutRule(orl1, ax3, A1)
+      val ax2 = Axiom(A1 :: Nil, A1 ::Nil)
+      val orl1 = OrLeftRule(negl1, ax2, at.logic.language.schema.Neg(A0), A1)
+      val ax3 = Axiom(A1 :: Nil, A1 ::Nil)
+      val root = CutRule(orl1, ax3, A1)
 
 
       val str = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
@@ -88,10 +88,10 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
 //          val pterm = ProjectionTermCreators.extract(root, Set.empty[FormulaOccurrence], root)
 //          val t = pStructToExpressionTree(pterm)
-      println(printSchemaProof(map.get(proof_name).get._2.get("root").get))
-      println("\n\n\n\n\n\n\n\n\n\n")
-      PStructToExpressionTree.printTree(t)
-      println("\n\n")
+      //println(printSchemaProof(map.get(proof_name).get._2.get("root").get))
+      //println("\n\n\n\n\n\n\n\n\n\n")
+      //PStructToExpressionTree.printTree(t)
+      //println("\n\n")
 //          ProjectionTermCreators.genCC(proof_name)
 
 //          println("\n\n")
@@ -186,20 +186,20 @@ class ProjectionTermTest extends SpecificationWithJUnit {
     }    */
 
     "should extract proj.term for the sEXP.lks" in {
-      println(Console.BLUE+"\n\n\n\n------- ProjectionTerm for the sEXP.lks ------- \n\n"+Console.RESET)
+      //println(Console.BLUE+"\n\n\n\n------- ProjectionTerm for the sEXP.lks ------- \n\n"+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
       val res = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
       val map = sFOParser.parseProof(s)
       ParseResSchema(res)
-      println("dbTRS = "+dbTRS.map )
+      //println("dbTRS = "+dbTRS.map )
       //      val p2 = map.get("\\psi").get._2.get("root").get
       val proof_name = "\\psi"
       val p1 = map.get(proof_name).get._2.get("root").get
       val p2 = map.get("\\varphi").get._2.get("root").get
 //        val p1b = map.get("\\psi").get._1.get("root").get
 //        printSchemaProof(p2)
-      println("\n\n")
+      //println("\n\n")
 
       val fo = p2.root.succedent.head
 //        println("fo = "+fo+"\n")
@@ -209,34 +209,34 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //        val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence] + fo, getCutAncestors(p2))
       val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(Succ(IntZero())).asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution3(new_map)
-      println("dbTRS = "+dbTRS.map )
+      //println("dbTRS = "+dbTRS.map )
 
-      println("\n------ proj.term: \n\n")
+      //println("\n------ proj.term: \n\n")
       val t = PStructToExpressionTree.applyConsole(pterm)
-      PStructToExpressionTree.printTree(t)
+      //PStructToExpressionTree.printTree(t)
 
-      println("\n\n\n------ ground: \n\n")
+      //println("\n\n\n------ ground: \n\n")
       val ground = GroundingProjectionTerm(pterm, sub)
       val t_ground = PStructToExpressionTree.applyConsole(ground)
-      PStructToExpressionTree.printTree(t_ground)
+      //PStructToExpressionTree.printTree(t_ground)
 
-      println("\n\n\n------ unfold ground: \n\n")
+      //println("\n\n\n------ unfold ground: \n\n")
       val ground_unfold = UnfoldProjectionTerm(ground)
       val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
-      PStructToExpressionTree.printTree(t_ground_unfold)
+      //PStructToExpressionTree.printTree(t_ground_unfold)
 
-      println("\n\n\n------ remove ↠ from proj.term: \n\n")
+      //println("\n\n\n------ remove ↠ from proj.term: \n\n")
       val rm_arrow_ground_unfold = RemoveArrowRules(ground_unfold)
       val t_rm_arrow_ground_unfold = PStructToExpressionTree.applyConsole(rm_arrow_ground_unfold)
-      PStructToExpressionTree.printTree(t_rm_arrow_ground_unfold)
+      //PStructToExpressionTree.printTree(t_rm_arrow_ground_unfold)
 
       val projSet = ProjectionTermToSetOfProofs(rm_arrow_ground_unfold)
 
-      println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
+      //println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
 
       val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap))
-      println("ground_proj_set:")
-      ground_proj_set.foreach(p => printSchemaProof(p))
+      //println("ground_proj_set:")
+      //ground_proj_set.foreach(p => printSchemaProof(p))
 
 //        println(Console.GREEN+"\n1: "+Console.RESET)
 //        printSchemaProof(projSet.head)
@@ -263,12 +263,12 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       //      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
       //      println("\nfo = "+fo.formula)
       //      println("\nfosub = "+fosub)
-      println("\n\n--- END ---\n\n")
+      //println("\n\n--- END ---\n\n")
       Success()
     }
 
     "should extract proj.term for the sINDauto.lks" in {
-      println(Console.MAGENTA+"\n\n------- ProjectionTerm for the sINDauto.lks ------- "+Console.RESET)
+      //println(Console.MAGENTA+"\n\n------- ProjectionTerm for the sINDauto.lks ------- "+Console.RESET)
       SchemaProofDB.clear
       val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
       val map = sFOParser.parseProof(s)
@@ -278,7 +278,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val p2 = map.get("\\varphi").get._2.get("root").get
       //        val p1b = map.get("\\psi").get._1.get("root").get
       //        printSchemaProof(p2)
-      println("\n\n")
+      //println("\n\n")
 
       val fo = p2.root.succedent.head
       //        println("fo = "+fo+"\n")
@@ -289,22 +289,22 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(Succ(IntZero())).asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution3(new_map)
 
-      println("\n------ proj.term: \n\n")
+      //println("\n------ proj.term: \n\n")
       val t = PStructToExpressionTree.applyConsole(pterm)
-      PStructToExpressionTree.printTree(t)
+      //PStructToExpressionTree.printTree(t)
 
-      println("\n\n\n------ ground: \n\n")
+      //println("\n\n\n------ ground: \n\n")
       val ground = GroundingProjectionTerm(pterm, sub)
       val t_ground = PStructToExpressionTree.applyConsole(ground)
-      PStructToExpressionTree.printTree(t_ground)
+      //PStructToExpressionTree.printTree(t_ground)
 
-      println("\n\n\n------ unfold ground: \n\n")
+      //println("\n\n\n------ unfold ground: \n\n")
       val ground_unfold = RemoveArrowRules(UnfoldProjectionTerm(ground))
       val t_ground_unfold = PStructToExpressionTree.applyConsole(ground_unfold)
-      PStructToExpressionTree.printTree(t_ground_unfold)
+      //PStructToExpressionTree.printTree(t_ground_unfold)
 
       val projSet = ProjectionTermToSetOfProofs(ground_unfold)
-      println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
+      //println(Console.GREEN+"\n\nprojSet.size = "+projSet.size)
       //        println(Console.GREEN+"\n1: "+Console.RESET)
       //        printSchemaProof(projSet.head)
       //        println(Console.GREEN+"\n2: "+Console.RESET)
@@ -330,7 +330,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       //      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
       //      println("\nfo = "+fo.formula)
       //      println("\nfosub = "+fosub)
-      println("\n\n--- END ---\n\n")
+      //println("\n\n--- END ---\n\n")
       Success()
     }
   }

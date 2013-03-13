@@ -53,11 +53,11 @@ class schemaParserTest extends SpecificationWithJUnit {
     "schemaParserTest" should {
         "parse correctly a schema proof" in {
           val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
-                    val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
-                    val ax1  = at.logic.calculi.lk.propositionalRules.Axiom(var3::Nil, var3::Nil)
-                    val ax2  = at.logic.calculi.lk.propositionalRules.Axiom(var4::Nil, var4::Nil)
-                    val negl = NegLeftRule(ax1, var3)
-                    val proof  = OrLeftRule(negl, ax2, var3, var4)
+          val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
+          val ax1  = at.logic.calculi.lk.propositionalRules.Axiom(var3::Nil, var3::Nil)
+          val ax2  = at.logic.calculi.lk.propositionalRules.Axiom(var4::Nil, var4::Nil)
+          val negl = NegLeftRule(ax1, var3)
+          val proof  = OrLeftRule(negl, ax2, var3, var4)
 
 //          SHLK.parseProof( "1 = ax(x3: o |- x3: o)  " +
 //                            "2 = negL( 1 , x3:o)" +
@@ -75,7 +75,7 @@ class schemaParserTest extends SpecificationWithJUnit {
 //                                    "2 = negR(1,A(i+2))" +
 //                                    "3 = ax(A(0) |- A(0))","3")
 
-          println("\n\n\n---- SHLK Parser -----")
+          //println("\n\n\n---- SHLK Parser -----")
 //          val p = SHLK.parseProof( "1 : ax(A(0) |- And A(0) BigAnd(i,0,s(i),A(i)))" +
 //                                    "2 : negR(1,A(0))" +
 //                                    "3 : ax(A(0) |- A(0))","2")
@@ -109,11 +109,11 @@ class schemaParserTest extends SpecificationWithJUnit {
 //          Main.display("psi", map.get("psi").get._1.get("root").get) ;
 //          Main.display("chi", map.get("chi").get._1.get("root").get) ;
 //                             while(true){}
-          println("map.size = "+map.size)
-          map.foreach(pair => {
+          //println("map.size = "+map.size)
+          //map.foreach(pair => {
 //            Main.display(pair._1, pair._2._1.get("root").get) ;
 //            Main.display(pair._1, pair._2._2.get("root").get) ;//while(true){}
-          })
+          //})
 //          while(true){}
 //          Main.display("Proof", p) ; while(true){}
 //

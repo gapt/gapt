@@ -62,12 +62,12 @@ package at.logic.utils.ds.mutable
     private def createTreeRec(vert: TreeNode[V], features: List[V=>Int]): Unit = features match {
 //      println("\n createTreeRec\n")
       case List() => {
-        println("\nrec bottom\n")
+        //println("\nrec bottom\n")
         return }
       case _ => {
      //   val f: (String) => Int = { x => x.split("a").size}
   //      println(vert.seqList)
-        println("\nrec part\n")
+        //println("\nrec part\n")
         vert.seqList.foreach(seq => {
           val key = features.head(seq)
           vert.children.get(key) match {
