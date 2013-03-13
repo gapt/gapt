@@ -69,6 +69,7 @@ package simplification {
       case v @ Var(VariableStringSymbol(_),_) if v.asInstanceOf[Var].isFree => false
       case Var(_,_) => true
       case App(a,b) => isGround(a) && isGround(b)
+      case Abs(_,a) => isGround(a)
     }*/
   }
   // We first order the literals according to lexicographic order but ignoring the variables (as their names are unimportant)
