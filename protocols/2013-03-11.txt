@@ -2,12 +2,12 @@
 * GAPT Meeting Protocol *
  ***********************
 
-Date: 2013-03-20
+Date: 2013-03-11
 People: Giselle, David, Daniel, Stefan, Martin
 Protocol: Martin
 Begin: 12:00
 End: 13:55
-Next meeting: 2013-03-11 12:00 Menger
+Next meeting: 2013-03-20 15:00 Menger
 
 
 = Discussion of last meeteing's Topics =
