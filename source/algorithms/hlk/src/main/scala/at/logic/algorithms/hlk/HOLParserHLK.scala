@@ -50,34 +50,41 @@ object HOLParser {
 }
 
 trait HLKTokens extends Tokens {
-  abstract sealed class Tokens
-  case object LPARENS extends Tokens
-  case object RPARENS extends Tokens
-  case object LBRACK extends Tokens
-  case object RBRACK extends Tokens
-  case object COLON extends Tokens
-  case object COMMA extends Tokens
-  case object COMMENT extends Tokens
-  case object NEG extends Tokens
-  case object AND extends Tokens
-  case object OR extends Tokens
-  case object IMPL extends Tokens
-  case object ALL extends Tokens
-  case object EXISTS extends Tokens
-  case object LAMBDA extends Tokens
-  case object ARROW extends Tokens
-  case class TYPE(name : String) extends Tokens
-  case class NAME(text : String) extends Tokens
+  trait HToken extends Token {
+    //def unapply(s:String) = if (chars == s) Some(chars) else None
+  }
 
-/*
+  case object LPARENS extends HToken { def chars = "(" }
+  case object RPARENS extends HToken { def chars = ")" }
+  case object LBRACK extends HToken { def chars = "[" }
+  case object RBRACK extends HToken { def chars = "]" }
+  case object COLON extends HToken { def chars = ":" }
+  case object COMMA extends HToken { def chars = "," }
+  case object NEG extends HToken { def chars = "-" }
+  case object AND extends HToken { def chars = "&" }
+  case object OR extends HToken { def chars = "|" }
+  case object IMPL extends HToken { def chars = "->" }
+  case object ALL extends HToken { def chars = "!" }
+  case object EXISTS extends HToken { def chars = "?" }
+  case object LAMBDA extends HToken { def chars = "\\" }
+  case object ARROW extends HToken { def chars = ">" }
+  case class TYPE(chars : String) extends HToken
+  case class NAME(chars : String) extends HToken
+
   class Tokenizer extends Lexical {
-    override type Token = HLKTokens
+    override type Token = HToken
 
+    val char_re = """[a-zA-Z0-9\(\)\[\]:,\-&\|\\!\?<>]""".r
     val name_re = """[a-zA-Z0-9]+""".r
 
-    lazy val token : Parser[Tokens] =
-      (letter ^^ (_ match {
-        case name_re => NAME("")
+    def word : Parser[String] = (elem("letter, number or operator", _.toString match {
+      case char_re() => true;
+      case _ => false }
+    )+) ^^ (_.mkString(""))
+
+    override def token : Parser[Token] =
+      (word  ^^ (_ match {
+        case name_re() => NAME("")
         case "(" => LPARENS
         case ")" => RPARENS
         case "[" => LBRACK
@@ -91,15 +98,15 @@ trait HLKTokens extends Tokens {
         case "?" => EXISTS
         case "\\" => LAMBDA
         case ">" => ARROW
+        case "->" => IMPL
         case "i" => TYPE("i")
         case "o" => TYPE("o")
-      })) |
-        ((letter ~ letter) ^^ {_ match {case "-"~">" => IMPL } })
+        //case _ => errorToken("")
+      }))
 
 
 
     override def whitespace : Parser[Any] = rep(whitespaceChar)
- */
 /*
     lazy val tokens : Parser[List[Tokens]] = token.+
 
@@ -121,6 +128,6 @@ trait HLKTokens extends Tokens {
       ("""[a-zA-Z0-9]+""".r ^^ NAME) |
       ("""[io]""".r ^^ TYPE)
 
-  }
    */
+  }
 }
