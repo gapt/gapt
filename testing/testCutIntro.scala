@@ -32,11 +32,16 @@ object testCutIntro {
             case Some(p) => 
               runWithTimeout(timeout * 1000){ 
                 val ts = extractTerms(p)
-                ts.termset.size
+                val tssize = ts.termset.size
+                val n_functions = ts.formulaFunction.size
+                if(tssize > n_functions) {
+                  tssize
+                }
+                else 0
                 //cutIntro(p) 
               } match {
                 case Some(n) =>
-                  if(n >= ts_min_size) {
+                  if(n > 0) {
                     println("File: " + file.getAbsolutePath + " has term-set of size " + n)
                   }
                   //val name = file.getName + ".lk"
