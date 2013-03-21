@@ -99,7 +99,7 @@ object IvyParser {
   /* parses an inference step and updates the proof map  */
   def parse_step(exp : SExpression, found_steps : ProofMap, is_variable_symbol : String => Boolean) : (ProofId, ProofMap) = {
     exp match {
-      case lisp.List(lisp.Atom(id) :: _) => debug("processing inference "+id)
+      case lisp.List(lisp.Atom(id) :: _) => () //debug("processing inference "+id)
       case _ => ()
     }
     exp match {
@@ -425,8 +425,8 @@ object IvyParser {
 
         val parent_proof = found_steps(parent_id)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
-        println("New Symbol Rule: "+fclause)
-        println("Parent Rule:     "+parent_proof.root)
+        //println("New Symbol Rule: "+fclause)
+        //println("Parent Rule:     "+parent_proof.root)
         require(fclause.antecedent.isEmpty, "Expecting only positive equations in parsing of new_symbol rule "+id)
         require(fclause.succedent.size == 1, "Expecting exactly one positive equation in parsing of new_symbol rule "+id)
 
@@ -438,7 +438,7 @@ object IvyParser {
           case _ => throw new Exception("Expecting right hand side of new_symbol equation to be the introduced symbol!")
         }
 
-        println("const symbol="+const + " replaced by="+l)
+        //println("const symbol="+const + " replaced by="+l)
         val inference = NewSymbol(id, clause, nclause.succedent(0), const, l, nclause, parent_proof )
 
         (id, found_steps +((id,inference)))

@@ -16,6 +16,7 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
+import at.logic.calculi.lk.equationalRules._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
@@ -180,8 +181,23 @@ object TermsExtraction {
     case ExistsLeftRule(_, _, _, _, _) | ForallRightRule(_, _, _, _, _) =>
       throw new TermsExtractionException("ERROR: Found strong quantifier while extracting terms.")
 
+    /* EQUALITY RULES */
+    // Not sure how to treat them... just skipping for now but this might cause problems in the future
+    case EquationLeft1Rule(up1, up2, _, _, _, _) =>
+      println("WARNING: found equality rule.")
+      extractTerms(up1) ++ extractTerms(up2)
+    case EquationLeft2Rule(up1, up2, _, _, _, _) =>
+      println("WARNING: found equality rule.")
+      extractTerms(up1) ++ extractTerms(up2)
+    case EquationRight1Rule(up1, up2, _, _, _, _) =>
+      println("WARNING: found equality rule.")
+      extractTerms(up1) ++ extractTerms(up2)
+    case EquationRight2Rule(up1, up2, _, _, _, _) =>
+      println("WARNING: found equality rule.")
+      extractTerms(up1) ++ extractTerms(up2)
+
     /* Any other rule... fail */
-    case _ => throw new TermsExtractionException("ERROR: Unexpected rule while extracting the term set.")
+    case _ => throw new TermsExtractionException("ERROR: Unexpected rule while extracting the term set.\n" + proof.toString.substring(0, 20))
   }
 }
 

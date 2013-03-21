@@ -6,68 +6,53 @@ import scala.io.Source
  * usage example from CLI:
  *
  * scala> :load ../testing/testCutIntro.scala
- * scala> testCutIntro( "../testing/prover9-TSTP/", 5 )
+ * scala> testCutIntro( "../testing/prover9-TSTP/", 60 )
  **********/
 
 object testCutIntro {
   var total = 0
-  var not_parsed = 0
-  var not_compressable = 0
-  var invalid_rules = 0
-  var dont_know = 0
-  var time_limit_parser = 0
-  var time_limit_cutIntro = 0
+  var error_parser = 0
+  var error_term_extraction = 0
 
-  def testRec (str : String, timeout : Int, ts_min_size : Int) : Unit = {
+  def testRec (str : String, timeout : Int) : Unit = {
     val file = new File(str)
     if (file.isDirectory) {
       val children = file.listFiles
-      children.foreach(f => testRec(f.getAbsolutePath, timeout, ts_min_size))
+      children.foreach(f => testRec(f.getAbsolutePath, timeout))
     }
     else if (file.getName.endsWith(".out")) {
-      try {
-        total += 1
-        // One minute for each
-        runWithTimeout(timeout * 1000){ loadProver9LKProof(file.getAbsolutePath) } match {
-            case Some(p) => 
-              runWithTimeout(timeout * 1000){ 
-                val ts = extractTerms(p)
-                val tssize = ts.termset.size
-                val n_functions = ts.formulaFunction.size
-                if(tssize > n_functions) {
-                  tssize
-                }
-                else 0
-                //cutIntro(p) 
-              } match {
-                case Some(n) =>
-                  if(n > 0) {
-                    println("File: " + file.getAbsolutePath + " has term-set of size " + n)
-                  }
-                  //val name = file.getName + ".lk"
-                  //exportXML(List(p, p_cut), List(name, name+".lk_with_cut"), "../../../testing/resultsCutIntro/"+name)
-                case None => time_limit_cutIntro += 1
+      total += 1
+      println("\nFILE: " + file.getAbsolutePath)
+      runWithTimeout(timeout * 1000){ loadProver9LKProof(file.getAbsolutePath) } match {
+        case Some(p) => 
+          runWithTimeout(timeout * 1000){ 
+            val ts = extractTerms(p)
+            val tssize = ts.termset.size
+            val n_functions = ts.formulaFunction.size
+            if(tssize > n_functions) {
+              tssize
+            }
+            else 0
+            //cutIntro(p) 
+          } match {
+            case Some(n) =>
+              if(n > 0) {
+                println("File: " + file.getAbsolutePath + " has term-set of size " + n)
               }
-            case None => time_limit_parser += 1
+              //val name = file.getName + ".lk"
+              //exportXML(List(p, p_cut), List(name, name+".lk_with_cut"), "../../../testing/resultsCutIntro/"+name)
+            case None => error_term_extraction += 1
           }
-      }
-      catch {
-        case pe: at.logic.provers.prover9.Prover9Exception => not_parsed += 1
-        case cie: at.logic.algorithms.cutIntroduction.CutIntroException => not_compressable += 1
-        case tee: at.logic.algorithms.cutIntroduction.TermsExtractionException => invalid_rules += 1
-        case _ => dont_know += 1
+        case None => error_parser += 1
       }
     }       
   }
 
-  def apply ( str : String, timeout : Int, ts_min_size : Int) = {
-    testRec(str, timeout, ts_min_size)
+  def apply ( str : String, timeout : Int) = {
+    testRec(str, timeout)
     println("Total number of proofs: " + total)
-    println("Number of proofs that were not parsed: " + not_parsed)
-    println("Time limit exceeded during parsing: " + time_limit_parser)
-    //println("Number of proofs that were parsed but not compressed: " + not_compressable)
-    println("Time limit exceeded during terms extraction: " + time_limit_cutIntro)
-    println("Don't know what happened (maybe memory limit exceeded?): " + dont_know)
+    println("Time limit exceeded or exception during parsing: " + error_parser)
+    println("Time limit exceeded or exception during terms extraction: " + error_term_extraction)
   }
 
   /**

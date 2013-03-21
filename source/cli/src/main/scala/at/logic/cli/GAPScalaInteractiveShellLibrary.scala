@@ -143,6 +143,19 @@ package GAPScalaInteractiveShellLibrary {
     def apply(s: Struct) = at.logic.transformations.ceres.clauseSets.StandardClauseSet.transformStructToLabelledClauseSet(s)
   }
 
+  object refuteClauseList {
+    def apply(cl: List[Sequent]) : Option[RobinsonResolutionProof] = prover9(cl)
+  }
+
+  object computeProjections {
+    def apply(p: LKProof) : Set[LKProof] = at.logic.transformations.ceres.projections.Projections(p)
+  }
+
+  // TODO: the projections should already be grounded at this point... how do I do this?
+  object buildACNF {
+    def apply(ref: LKProof, projs: Set[LKProof], es: FSequent) = at.logic.transformations.ceres.ACNF.ACNF(ref, projs, es)
+  }
+
 /*************************************************************/
 
   object createHOLExpression {
@@ -587,14 +600,14 @@ package GAPScalaInteractiveShellLibrary {
       //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
       //println("done: "+folsendsequent)
       if (!forceSkolemization && !containsStrongQuantifiers(endsequent)) {
-        println("End-sequent does not contain strong quantifiers!.")
+        //println("End-sequent does not contain strong quantifiers!.")
           val closure = FSequent(endsequent.antecedent map (x => univclosure( x.asInstanceOf[FOLFormula])),
               endsequent.succedent map (x => existsclosure( x.asInstanceOf[FOLFormula])))
 
           Robinson2LK(proof,closure)
       } else {
-        if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
-        else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
+        //if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
+        //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
 
           val fclauses : Set[FClause]  = proof.nodes.map( _ match {
               case InitialClause(clause) => clause.toFClause;

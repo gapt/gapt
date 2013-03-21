@@ -87,7 +87,7 @@ else
 fi
 
 # workaround because jline somehow mixes up the terminal
-reset
+#reset
 
 
 

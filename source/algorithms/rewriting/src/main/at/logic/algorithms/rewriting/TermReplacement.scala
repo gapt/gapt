@@ -31,7 +31,7 @@ object TermReplacement{
     rename_term(term, what,by)
   }
 
-  def apply[T <: LambdaExpression](term : T, p : immutable.Map[T,T]) : T = p.foldLeft(term)((t, x) => { debug(1,"looking for "+x+" in "+t); apply(t,x._1, x._2) })
+  def apply[T <: LambdaExpression](term : T, p : immutable.Map[T,T]) : T = p.foldLeft(term)((t, x) => { /*debug(1,"looking for "+x+" in "+t);*/ apply(t,x._1, x._2) })
 
   def rename_fsequent[T <: HOLExpression](fs : FSequent, what : T, by :T  ) : FSequent =
     FSequent(fs.antecedent.map(apply(what,by,_).asInstanceOf[HOLFormula]),
@@ -152,12 +152,12 @@ object TermReplacement{
           val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
           var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
-          println("sub="+sub)
-          println("nsub="+nsub)
-          println("inference: "+clause)
-          println("ninference: "+inference.root)
-          println("parent:    "+parent1.root)
-          println("rparent:    "+rparent1.root)
+          //println("sub="+sub)
+          //println("nsub="+nsub)
+          //println("inference: "+clause)
+          //println("ninference: "+inference.root)
+          //println("parent:    "+parent1.root)
+          //println("rparent:    "+rparent1.root)
 
           def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
             val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
@@ -175,38 +175,38 @@ object TermReplacement{
         case Resolution(clause, parent1, parent2, lit1, lit2, sub) =>
           val (rpmap1, rmap1, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val (rpmap2, rmap2, rparent2) = if (pmap contains parent2) add_pmap(pmap, parent2) else rename_resproof(parent2, irules, smap, rpmap1)
-          debug(2,"processing "+p.root)
-          debug(2,"")
-          debug(2,"parent1: "+parent1.root)
-          debug(2,"parent2: "+parent2.root)
-          debug(2,"sub: "+sub)
+          //debug(2,"processing "+p.root)
+          //debug(2,"")
+          //debug(2,"parent1: "+parent1.root)
+          //debug(2,"parent2: "+parent2.root)
+          //debug(2,"sub: "+sub)
           val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => {
-            debug(2,smap)
-            debug(2,smap.keySet contains x._2)
+            //debug(2,smap)
+            //debug(2,smap.keySet contains x._2)
             val repl = apply(x._2, smap)
-            debug(2,x._2.toStringSimple+" -> "+repl)
+            //debug(2,x._2.toStringSimple+" -> "+repl)
             (x._1, repl)
           } ))
-          debug(2,"nsub: "+nsub)
-          debug(2,"lit1="+rmap1(lit1))
-          debug(2,"lit2="+rmap2(lit2))
+          //debug(2,"nsub: "+nsub)
+          //debug(2,"lit1="+rmap1(lit1))
+          //debug(2,"lit2="+rmap2(lit2))
 
           val inference = Resolution(rparent1, rparent2, rmap1(lit1), rmap2(lit2), nsub)
           val rmap = rmap1 ++ rmap2
 
-          debug(2,"inferred   "+inference.root)
-          debug(2,"rparent1: "+rparent1.root)
-          debug(2,"rparent2: "+rparent2.root)
-          debug(2,"")
+          //debug(2,"inferred   "+inference.root)
+          //debug(2,"rparent1: "+rparent1.root)
+          //debug(2,"rparent2: "+rparent2.root)
+          //debug(2,"")
 
           def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
-            debug(3,"anc matcher")
-            debug(3,o); debug(3,o.ancestors)
-            debug(3,t); debug(3,t.ancestors)
-            debug(3,"")
+            //debug(3,"anc matcher")
+            //debug(3,o); debug(3,o.ancestors)
+            //debug(3,t); debug(3,t.ancestors)
+            //debug(3,"")
             val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
-            debug(3,anc_correspondences)
-            debug(3,apply(o.formula.asInstanceOf[FOLExpression], smap))
+            //debug(3,anc_correspondences)
+            //debug(3,apply(o.formula.asInstanceOf[FOLExpression], smap))
             t.formula == apply(o.formula.asInstanceOf[FOLExpression], smap).asInstanceOf[FOLFormula] &&
                anc_correspondences.diff(t.ancestors).isEmpty &&
                t.ancestors.diff(anc_correspondences).isEmpty
@@ -231,11 +231,11 @@ object TermReplacement{
           // this is the rule containing the introduction
           if (irules contains parent1) {
             //TODO: add code for removing unneccesary parents: rewriting l to r, if the intrudoction rule was l=r before, it s now r=r and we can drop it
-            println("axiom rule 1 after replacement: "+rparent1)
+            //println("axiom rule 1 after replacement: "+rparent1)
           }
           if (irules contains parent2) {
             //TODO: add code for removing unneccesary parents: rewriting l to r, if the intrudoction rule was l=r before, it s now r=r and we can drop it
-            println("axiom rule 2 after replacement: "+rparent2)
+            //println("axiom rule 2 after replacement: "+rparent2)
           }
 
 
