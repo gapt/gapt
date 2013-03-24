@@ -40,7 +40,8 @@ step {
     7:      exR( 6, (0<((c(k+2) * p) - c(k+1)) /\ (((c(k+2) * p) - c(k+1))*EXP(k+1, p)) = w(k+1)) , Exists x (0<x /\ (x*EXP(k+1, p)) = w(k+1)) , ((c(k+2) * p) - c(k+1)) )
 
     8:      pLink( (\varphi, k,w(k+1),α(k+1),c,w) E(k,p,c,w(k+1),w), 0<α(k+1), (α(k+1)*EXP(k+1,p)) = w(k+1) |- )
-    9:      andL( 8, 0<α(k+1), (α(k+1)*EXP(k+1,p)) = w(k+1) )
+    9:      andL( 8, 0<α(k+1),
+     (α(k+1)*EXP(k+1,p)) = w(k+1) )
     10:     exL( 9, (0<α(k+1) /\ (α(k+1)*EXP(k+1,p)) = w(k+1)), Exists x (0<x /\ (x*EXP(k+1,p)) = w(k+1)) , α(k+1))
 
     11:     cut(7, 10, Exists x (0<x /\ (x*EXP(k+1,p)) = w(k+1)) )
@@ -55,27 +56,86 @@ step {
 ----------------------------------------
 
 proof \psi  proves
-    s(k+2) = ((a(k+1) * EXP(k+1,p)) + s(k+1)),
-    B(k,p,s(k+1)), (a(k+1) * EXP(k+1,p)) \= g |- (B(k,p,s(k+1))   /\   s(k+2) \= (g+s(k+1)))
+    w(k+2) = ((a(k+1) * EXP(k+1,p)) + w(k+1)),
+    E(k,p,w(k+1),w) |- (E(k,p,w(k+1),w)   /\   s(k+2) \= (g+s(k+1))), (a(k+1) * EXP(k+1,p)) = g
 
 base {
-    1:      ax( B(1,p,s(2)) |- B(1,p,s(2)) )
-
-    2:      ax( s(3) = ((a(2) * EXP(2,p)) + s(2)), s(3) = (g+s(2)) |- (a(2) * EXP(2,p)) = g)
-    3:      negR(2, s(3) = (g+s(2)))
-    4:      negL(3, (a(2) * EXP(2,p)) = g)
-    5:      andR(1, 4, B(1,p,s(2)), s(3) \= (g+s(2)))
-    root:   andL(5, s(3) = ((a(2) * EXP(2,p)) + s(2)), B(1,p,s(2)))
+    1:      ax( s(1) = (a(0) + 0), s(1) = (g + 0) |- a(0) = g )
+    root:   negR(1, s(1) = (g + 0))
 }
 
 step {
-    1:      ax( B(k+1,p,s(k+2)) |- B(k+1,p,s(k+2)) )
-
-    2:      ax( s(k+3) = ((a(k+2) * EXP(k+2,p)) + s(k+2)), s(k+3) = (g+s(k+2)) |- (a(k+2) * EXP(k+2,p)) = g)
-    3:      negR(2, s(k+3) = (g+s(k+2)))
-    4:      negL(3, (a(k+2) * EXP(k+2,p)) = g)
-    5:      andR(1, 4, B(k+1,p,s(k+2)), s(k+3) \= (g+s(k+2)))
-    root:   andL(5, s(k+3) = ((a(k+2) * EXP(k+2,p)) + s(k+2)), B(k+1,p,s(k+2)))
+    1:      pLink( (\chi, k,w(k+1),w) E(k,p,a,w(k+1),w) |- E(k,p,a,w(k+1),w) )
+    2:      ax( w(k+2) = ((a(k+1) * EXP(k+1,p)) + w(k+1)), w(k+2) = (g+w(k+1)) |- (a(k+1) * EXP(k+1,p)) = g)
+    3:      negR(2, w(k+2) = (g+w(k+1)))
+    root:   andR(1, 3, E(k,p,a,w(k+1),w), w(k+2) \= (g+w(k+1)))
 }
 
 -----------------------------------
+
+proof \omega  proves
+    1<p, 0 <= a(k+1), a(k+1)<p , s(k+2)=((a(k+1) * EXP(k+1,p)) + s(k+1)),
+    E(k,p,a,s(n+1),s), 0 <= b(k+1), b(k+1)<p, z(k+2)=((b(k+1) * EXP(k+1,p)) + z(k+1)),
+    E(k,p,b,z(k+1),z)
+        |-
+    ForallHyper m ForallHyper l Forall u Forall q ((ExistsHyper r E(m,p,r,u,k) /\ ExistsHyper f E(m,p,f,u,l)) ->
+        Exists s(k+1) Exists z(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (u+s(k+1))) \/ 0=a(k+1))
+        /\ ((E(k,p,a,s(k+1),s) /\ s(k+2) \= (u+s(k+1))) \/ 0=a(k+1))))
+
+
+base {
+    1:      ax( s(1) = (a(0) + 0), s(1) = (g + 0) |- a(0) = g )
+    root:   negR(1, s(1) = (g + 0))
+}
+
+step {
+    1:      pLink( (\varphi,k,y(k+1),a(k+1),A,y) 1<p,E(k,p,A,y(k+1),y), 0<a(k+1), (a(k+1) * EXP(k+1,p)) = y(k+1) |-  )
+    2:      weakL(1, 0=a(k+1))
+    3:      weakR(2, 0=a(k+1))
+    4:      andL(3, 0<a(k+1), 0=a(k+1))
+    5:      weakL(4, a(k+1)<p)
+    6:      andL(5, (0<a(k+1) /\ 0=a(k+1)), a(k+1)<p)
+
+    7:      pLink( (\psi,k+1,s(k+2),s(k+1),y(k+1),a(k+1),a,s) 1<p, s(k+2)=((a(k+1) * EXP(k+1,p)) + s(k+1)), E(k,p,a,s(k+1),s) |- (E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))), (a(k+1) * EXP(k+1,p)) = y(k+1)   )
+    8:      cut(7, 6, (a(k+1) * EXP(k+1,p)) = y(k+1) )
+    9:      orR(8, (E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))), 0=a(k+1))
+
+    10:      pLink( (\varphi,k,x(k+1),b(k+1),B,x) 1<p,E(k,p,B,x(k+1),x), 0<b(k+1), (b(k+1) * EXP(k+1,p)) = x(k+1) |-  )
+    11:      weakL(10, 0=b(k+1))
+    12:      weakR(11, 0=b(k+1))
+    13:      andL(12, 0<b(k+1), 0=b(k+1))
+    14:      weakL(13, b(k+1)<p)
+    15:      andL(14, (0<b(k+1) /\ 0=b(k+1)), b(k+1)<p)
+
+    16:      pLink( (\psi,k+1,z(k+2),z(k+1),x(k+1),b(k+1),b,z) 1<p, z(k+2)=((b(k+1) * EXP(k+1,p)) + z(k+1)), E(k,p,b,z(k+1),z) |- (E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))), (b(k+1) * EXP(k+1,p)) = x(k+1)   )
+    17:      cut(16, 15, (b(k+1) * EXP(k+1,p)) = x(k+1) )
+    18:      orR(17, (E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))), 0=b(k+1))
+
+
+    20:     andR(9,18, ((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)), ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))) \/ 0=b(k+1)))
+    21:     exLHyper(20, E(k,p,A,y(k+1),y), ExistsHyper r E(k,p,r,y(k+1),y), A)
+    22:     exLHyper(21, E(k,p,B,x(k+1),x), ExistsHyper f E(k,p,f,x(k+1),x), B)
+    23:     andL(22, ExistsHyper r E(k,p,r,y(k+1),y), ExistsHyper f E(k,p,f,x(k+1),x))
+    24:     exR(23, (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))) \/ 0=b(k+1))) ,
+                      Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))) \/ 0=b(k+1))) ,
+                      s(k+1) )
+    25:     exR(24, Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))) \/ 0=b(k+1))) ,
+                    Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))) \/ 0=b(k+1))) ,
+                      z(k+1) )
+    26:     impR(25, (ExistsHyper r E(k,p,r,y(k+1),y) /\ ExistsHyper f E(k,p,f,x(k+1),x)) , Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))) \/ 0=b(k+1))))
+    27:     exR(26, ((ExistsHyper r E(k,p,r,y(k+1),y) /\ ExistsHyper f E(k,p,f,x(k+1),x)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (x(k+1)+z(k+1))) \/ 0=b(k+1)))) ,
+                    Exists q ((ExistsHyper r E(k,p,r,y(k+1),y) /\ ExistsHyper f E(k,p,f,q,x)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (q+z(k+1))) \/ 0=b(k+1)))),
+                        x(k+1))
+    28:     exR(27, Exists q ((ExistsHyper r E(k,p,r,y(k+1),y) /\ ExistsHyper f E(k,p,f,q,x)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (y(k+1)+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (q+z(k+1))) \/ 0=b(k+1)))) ,
+                    Exists u Exists q ((ExistsHyper r E(k,p,r,u,y) /\ ExistsHyper f E(k,p,f,q,x)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (u+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (q+z(k+1))) \/ 0=b(k+1)))),
+                        y(k+1))
+    29:     allRHyper(28, Exists u Exists q ((ExistsHyper r E(k,p,r,u,y) /\ ExistsHyper f E(k,p,f,q,x)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (u+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (q+z(k+1))) \/ 0=b(k+1)))) ,
+                    ForallHyper l Exists u Exists q ((ExistsHyper r E(k,p,r,u,y) /\ ExistsHyper f E(k,p,f,q,l)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (u+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (q+z(k+1))) \/ 0=b(k+1)))) ,
+                        l)
+    root:     allRHyper(29, ForallHyper l Exists u Exists q ((ExistsHyper r E(k,p,r,u,y) /\ ExistsHyper f E(k,p,f,q,l)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (u+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (q+z(k+1))) \/ 0=b(k+1)))) ,
+                        ForallHyper m ForallHyper l Exists u Exists q ((ExistsHyper r E(k,p,r,u,m) /\ ExistsHyper f E(k,p,f,q,l)) -> Exists z(k+1) Exists s(k+1) (((E(k,p,a,s(k+1),s) /\ s(k+2) \= (u+s(k+1))) \/ 0=a(k+1)) /\ ((E(k,p,b,z(k+1),z) /\ z(k+2) \= (q+z(k+1))) \/ 0=b(k+1)))) ,
+                        m)
+
+}
+
+
