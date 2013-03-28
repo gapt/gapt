@@ -20,8 +20,9 @@ import at.logic.calculi.lk.base.types._
 package hol2fol {
 
 import at.logic.language.hol.HOLApp
+import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.schema.{indexedFOVar, Succ, IntegerTerm, IntZero}
+import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexedFOVar}
 
 /* Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
  *replaced by constants. Open lambda expressions are changed by functions.
@@ -38,6 +39,8 @@ import at.logic.language.schema.{indexedFOVar, Succ, IntegerTerm, IntZero}
     def apply_(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = {
       term match {
         case z:indexedFOVar => FOLVar(new VariableStringSymbol(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString))
+        case fov: foVar => FOLVar(new VariableStringSymbol(fov.name.toString))
+        case foc: foConst => FOLConst(new ConstantStringSymbol(foc.name.toString))
         case HOLNeg(n) => Neg(reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
         case HOLAnd(n1,n2) => And(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
         case HOLOr(n1,n2) => Or(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
@@ -48,6 +51,8 @@ import at.logic.language.schema.{indexedFOVar, Succ, IntegerTerm, IntZero}
         case HOLFunction(n: ConstantSymbolA, ls, _) => Function(n, ls.map(x => apply(x.asInstanceOf[HOLExpression],scope,id).asInstanceOf[FOLTerm]))
         case HOLVar(n, _) => FOLVar(n)
         case HOLConst(n, _) => FOLConst(n)
+
+          //this case is added for schema
         case HOLApp(func,arg) => {
           func match {
             case HOLVar(sym,_) => {

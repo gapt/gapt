@@ -21,8 +21,17 @@ import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+import at.logic.language.schema.{Neg => SNeg, _}
 import at.logic.algorithms.lk._
+import at.logic.language.hol.And
+import at.logic.language.hol.Or
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.hol.Imp
+import scala.Tuple4
+import at.logic.language.lambda.types.->
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.schema.IntZero
+import scala.Tuple2
 
 object sFOParser {
 
@@ -390,9 +399,10 @@ object sFOParser {
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,y,a]" + word))  ^^ {case x => foVar(x)}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,y]" + word))  ^^ {case x => foVar(x)}
+      def FOConstant: Parser[HOLConst] = regex(new Regex("[a]" + word))  ^^ {case x => foConst(x)}
       def variable: Parser[HOLVar] = (indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
-      def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
+      def constant: Parser[HOLConst] = FOConstant//regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
       def and: Parser[HOLFormula] = "(" ~ repsep(formula, "/\\") ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => And(f, res)) } }
       def or: Parser[HOLFormula]  = "(" ~ repsep(formula, """\/""" ) ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => Or(f, res)) } }
       def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}

@@ -109,7 +109,7 @@ object ACNF {
     //hard-coded the substitution for projections : {z -> \lambda k. a}
     fo2SubstDB.clear
     val z = fo2Var(new VariableStringSymbol("z"))
-    val a = foVar("a")
+    val a = foConst("a")
     val h = HOLAbs(k.asInstanceOf[Var], a)
     fo2SubstDB.add(z.asInstanceOf[fo2Var], h)
     val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap)).toSet

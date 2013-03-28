@@ -12,8 +12,14 @@ import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
-import at.logic.language.schema.{sIndTerm, foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
+import at.logic.language.schema.{Neg => SNeg, _}
 import at.logic.algorithms.shlk.{StepMinusOne, applySchemaSubstitution}
+import at.logic.language.hol.And
+import at.logic.language.hol.Imp
+import at.logic.language.hol.Or
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import scala.Tuple2
 
 object ParseResSchema {
   def debugr[T<:Any](a:T) : T = { println("Debug: "+a); a}
@@ -48,7 +54,7 @@ object ParseResSchema {
         }
       }
 
-      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ ( s_term | FOVariable | indexedVar | fo_term) ~ "}" ^^ {
+      def subst: Parser[Unit] = "{" ~ fo2var ~ "<-" ~ "\\lambda" ~ index ~ "." ~ ( s_term | FOVariable | indexedVar | fo_term | FOConstant) ~ "}" ^^ {
         case "{" ~ z ~ "<-" ~ "\\lambda" ~ k ~ "." ~ sterm_or_fovar ~ "}" => {
           val h = HOLAbs(k.asInstanceOf[Var], sterm_or_fovar)
           fo2SubstDB.add(z.asInstanceOf[fo2Var], h)
@@ -262,9 +268,10 @@ object ParseResSchema {
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,y,a]" + word))  ^^ {case x => foVar(x)}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,y]" + word))  ^^ {case x => foVar(x)}
+      def FOConstant: Parser[HOLConst] = regex(new Regex("[a]" + word))  ^^ {case x => foConst(x)}
       def variable: Parser[HOLVar] = (indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
-      def constant: Parser[HOLConst] = regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
+      def constant: Parser[HOLConst] = FOConstant//regex(new Regex("[a-tA-Z0-9]" + word))  ^^ {case x => hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}
       def and: Parser[HOLFormula] = "(" ~ repsep(formula, "/\\") ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => And(f, res)) } }
       def or: Parser[HOLFormula]  = "(" ~ repsep(formula, """\/""" ) ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { formulas.tail.foldLeft(formulas.head)((f,res) => Or(f, res)) } }
       def imp: Parser[HOLFormula] = "Imp" ~ formula ~ formula ^^ {case "Imp" ~ x ~ y => Imp(x,y)}

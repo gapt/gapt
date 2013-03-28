@@ -584,6 +584,21 @@ object foVar{
   }
 }
 
+//first-order constant
+class foConst(name: ConstantStringSymbol) extends HOLConst(name, Ti()) {
+  override def equals(a: Any): Boolean = a match {
+    case v:foConst if v.name.toString() == this.name.toString() => true
+    case _ => false
+  }
+}
+object foConst{
+  def apply(name: String) = (new foConst(new ConstantStringSymbol(name))).asInstanceOf[HOLConst]
+  def unapply(t: HOLExpression) = t match {
+    case HOLConst(name, typ) => Some(name, typ)
+    case _ => None
+  }
+}
+
 //first-order variable of type ω
 class fowVar(name: VariableStringSymbol) extends HOLVar(name, Tindex(), None) {
   override def equals(a: Any): Boolean = a match {
