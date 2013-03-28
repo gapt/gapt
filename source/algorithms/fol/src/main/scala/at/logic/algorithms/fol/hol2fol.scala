@@ -20,19 +20,24 @@ import at.logic.calculi.lk.base.types._
 package hol2fol {
 
 import at.logic.language.hol.HOLApp
-import at.logic.language.schema.indexedFOVar
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.schema.{indexedFOVar, Succ, IntegerTerm, IntZero}
 
 /* Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
  *replaced by constants. Open lambda expressions are changed by functions.
  */
   object reduceHolToFol {
+    //transforms a ground integer term to Int
+    private def intTermLength(t: IntegerTerm): Int = t match {
+      case c: IntZero => 0
+      case Succ(t1) => 1 + intTermLength(t1)
+      case _ => throw new Exception("\nError in reduceHolToFol.length(...) !\n")
+    }
+
     // scope and id are used to give the same names for new functions and constants between different calls of this method
     def apply_(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = {
       term match {
-        case z:indexedFOVar => {
-          val arg = FOLConst(new ConstantStringSymbol(z.index.toString))
-          at.logic.language.fol.Function(new ConstantStringSymbol(z.name.toString), arg::Nil)
-        }
+        case z:indexedFOVar => FOLVar(new VariableStringSymbol(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString))
         case HOLNeg(n) => Neg(reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
         case HOLAnd(n1,n2) => And(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
         case HOLOr(n1,n2) => Or(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
@@ -46,7 +51,8 @@ import at.logic.language.schema.indexedFOVar
         case HOLApp(func,arg) => {
           func match {
             case HOLVar(sym,_) => {
-              return apply_(arg, scope, id)
+              val new_arg = apply_(arg, scope, id).asInstanceOf[FOLTerm]
+              return at.logic.language.fol.Function(new ConstantStringSymbol(sym.toString), new_arg::Nil)
             }
             case _ => println("\nWARNING: FO schema term!\n")
           }
