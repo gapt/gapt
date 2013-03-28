@@ -18,29 +18,48 @@ import scala.collection.mutable.Map
 import at.logic.calculi.lk.base.types._
 
 package hol2fol {
-  /* Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
-   *replaced by constants. Open lambda expressions are changed by functions.
-   */
+
+import at.logic.language.hol.HOLApp
+import at.logic.language.schema.indexedFOVar
+
+/* Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
+ *replaced by constants. Open lambda expressions are changed by functions.
+ */
   object reduceHolToFol {
     // scope and id are used to give the same names for new functions and constants between different calls of this method
-    def apply_(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = term match {
-      case HOLNeg(n) => Neg(reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
-      case HOLAnd(n1,n2) => And(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
-      case HOLOr(n1,n2) => Or(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
-      case HOLImp(n1,n2) => Imp(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
-      case HOLAllVar(v: HOLVar,n) => AllVar(reduceHolToFol(v,scope,id).asInstanceOf[FOLVar], reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
-      case HOLExVar(v: HOLVar,n) => ExVar(reduceHolToFol(v,scope,id).asInstanceOf[FOLVar], reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
-      case HOLAtom(n: ConstantSymbolA, ls) => Atom(n, ls.map(x => apply(x.asInstanceOf[HOLExpression],scope,id).asInstanceOf[FOLTerm]))
-      case HOLFunction(n: ConstantSymbolA, ls, _) => Function(n, ls.map(x => apply(x.asInstanceOf[HOLExpression],scope,id).asInstanceOf[FOLTerm]))
-      case HOLVar(n, _) => FOLVar(n)
-      case HOLConst(n, _) => FOLConst(n)
-      // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant use the same symbol
-      case a @ AbsInScope(v, exp) => {
+    def apply_(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = {
+      term match {
+        case z:indexedFOVar => {
+          val arg = FOLConst(new ConstantStringSymbol(z.index.toString))
+          at.logic.language.fol.Function(new ConstantStringSymbol(z.name.toString), arg::Nil)
+        }
+        case HOLNeg(n) => Neg(reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
+        case HOLAnd(n1,n2) => And(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
+        case HOLOr(n1,n2) => Or(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
+        case HOLImp(n1,n2) => Imp(reduceHolToFol(n1,scope,id).asInstanceOf[FOLFormula], reduceHolToFol(n2,scope,id).asInstanceOf[FOLFormula])
+        case HOLAllVar(v: HOLVar,n) => AllVar(reduceHolToFol(v,scope,id).asInstanceOf[FOLVar], reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
+        case HOLExVar(v: HOLVar,n) => ExVar(reduceHolToFol(v,scope,id).asInstanceOf[FOLVar], reduceHolToFol(n,scope,id).asInstanceOf[FOLFormula])
+        case HOLAtom(n: ConstantSymbolA, ls) => Atom(n, ls.map(x => apply(x.asInstanceOf[HOLExpression],scope,id).asInstanceOf[FOLTerm]))
+        case HOLFunction(n: ConstantSymbolA, ls, _) => Function(n, ls.map(x => apply(x.asInstanceOf[HOLExpression],scope,id).asInstanceOf[FOLTerm]))
+        case HOLVar(n, _) => FOLVar(n)
+        case HOLConst(n, _) => FOLConst(n)
+        case HOLApp(func,arg) => {
+          func match {
+            case HOLVar(sym,_) => {
+              return apply_(arg, scope, id)
+            }
+            case _ => println("\nWARNING: FO schema term!\n")
+          }
+          throw new Exception("\nProbably unrecognized object from schema!\n")
+        }
+        // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant use the same symbol
+        case a @ AbsInScope(v, exp) => {
           val sym = scope.getOrElseUpdate(a.variant(new VariantGenerator(new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName")), ConstantStringSymbol("q_{" + id.nextId + "}"))
           val freeVarList = exp.freeVariables.toList.sortWith((x,y) => x.toString < y.toString).map(x => apply(x.asInstanceOf[HOLExpression],scope,id))
           if (freeVarList.isEmpty) FOLConst(sym) else Function(sym, freeVarList.asInstanceOf[List[FOLTerm]])
+        }
+        case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions
       }
-      case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions
     }
 
     def apply(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}) = 
