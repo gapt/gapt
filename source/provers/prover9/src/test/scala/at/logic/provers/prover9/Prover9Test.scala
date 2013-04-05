@@ -144,7 +144,7 @@ class Prover9Test extends SpecificationWithJUnit {
     }
      "prove an example from the automated deduction exercises" in {
      (1 === 2).orSkip //workaround to simulate specs1 skip
-     
+
       /* loops at derivation of clause 7:
         <clause id="7">
           <literal>

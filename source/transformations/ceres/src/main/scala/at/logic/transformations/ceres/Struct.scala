@@ -578,11 +578,11 @@ import at.logic.language.schema.SchemaFormula
                 return unfoldGroundStruct(gr_struct)
               }
               case _ => {
-                println("f.name = "+f.asInstanceOf[HOLConst].name)
+//                println("f.name = "+f.asInstanceOf[HOLConst].name)
                 if(f.asInstanceOf[HOLConst].name.toString().contains("cl^"))
                   println("proof_name = "+f.asInstanceOf[HOLConst].name.asInstanceOf[ClauseSetSymbol].name)
-                println("isClauseSetSym = "+f.asInstanceOf[HOLConst].name)
-                println("IndexedPredicate")
+//                println("isClauseSetSym = "+f.asInstanceOf[HOLConst].name)
+//                println("IndexedPredicate")
               }
             }
             case _ => println("complex f-la")

@@ -262,7 +262,7 @@ object ParseResSchema {
       }
       def indexedVar: Parser[HOLVar] = "z"  ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
-          println("indexedFOVar")
+//          println("indexedFOVar")
           indexedFOVar(new VariableStringSymbol(x), index)
         }
       }

@@ -27,7 +27,8 @@ import at.logic.algorithms.resolution.InstantiateElimination
 import at.logic.provers.prover9.commands.InferenceExtractor
 import at.logic.parsing.language.prover9._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOccurrence}
+import at.logic.calculi.lk.propositionalRules.{CutRule, Axiom}
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
