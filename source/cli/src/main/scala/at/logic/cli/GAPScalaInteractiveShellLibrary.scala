@@ -110,6 +110,9 @@ package GAPScalaInteractiveShellLibrary {
 
   import at.logic.algorithms.lk.statistics._
 import at.logic.calculi.slk.SchemaProofDB
+import at.logic.transformations.ceres.ACNF.getInstantiationsOfTheIndexedFOVars
+import at.logic.transformations.ceres.ACNF.ConvertCutsToHOLFormulasInResProof
+import at.logic.transformations.ceres.ACNF.renameIndexedVarInProjection
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -151,6 +154,11 @@ object printProofStats {
 
   object computeProjections {
     def apply(p: LKProof) : Set[LKProof] = at.logic.transformations.ceres.projections.Projections(p)
+  }
+  object computeGroundProjections {
+    def apply(projections: Set[LKProof], groundSubs: List[(HOLVar, HOLExpression)]): Set[LKProof] = {
+      groundSubs.map(subs => projections.map(pr => renameIndexedVarInProjection(pr, subs))).flatten.toSet
+    }
   }
 
   // TODO: the projections should already be grounded at this point... how do I do this?
@@ -572,6 +580,7 @@ object printProofStats {
   object Robinson2LK {
     def apply(resProof: ResolutionProof[Clause]): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[RobinsonResolutionProof])
     def apply(resProof: ResolutionProof[Clause], seq: FSequent): LKProof = at.logic.algorithms.resolution.RobinsonToLK(resProof.asInstanceOf[RobinsonResolutionProof],seq)
+    def toHOL(FOLresProofLK: LKProof): LKProof = ConvertCutsToHOLFormulasInResProof(FOLresProofLK)
   }
 
   object prover9 {
@@ -580,6 +589,10 @@ object printProofStats {
     def apply( clauses: Seq[FSequent] ) : Option[RobinsonResolutionProof] = Prover9.refute( clauses.toList )
     def apply( clauses: List[Sequent] ) : Option[RobinsonResolutionProof]= Prover9.refute( clauses map (_.toFSequent))
     def refuteTPTP(fn:String) = Prover9.refuteTPTP(fn)
+
+    //get the ground substitution of the ground resolution refutation
+    //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.
+    def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(HOLVar, HOLExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
   }
 
 

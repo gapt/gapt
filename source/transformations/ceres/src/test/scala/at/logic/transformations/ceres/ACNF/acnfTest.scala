@@ -36,7 +36,7 @@ class ACNFTest extends SpecificationWithJUnit {
       ok
     }
 
-    //TODO: fix it !
+    //TODO: fix it ! The problem is that it needs cloning before plugging in a projection into the skeleton resolution proof.
 //
 //    "should create correctly the ACNF for journal_example.lks" in {
 //      //println(Console.BLUE+"\n\n\n\n------- ACNF for the journal example instance = 0 ------- \n\n"+Console.RESET)

@@ -118,7 +118,7 @@ class ACNFTest extends SpecificationWithJUnit {
 
       val robinsonResProof: Option[RobinsonResolutionProof] = Prover9.refute(listOfSeqs.map(seq => seq.toFSequent))
 //      Main.display("robinsonResProof", robinsonResProof.get) ; while(true){}
-      val subs = getInstantiations(robinsonResProof.get)
+      val subs: List[(HOLVar, HOLExpression)] = getInstantiationsOfTheIndexedFOVars(robinsonResProof.get)
       println("\nsubs = "+subs)
 
       val robToLK = RobinsonToLK(robinsonResProof.get)

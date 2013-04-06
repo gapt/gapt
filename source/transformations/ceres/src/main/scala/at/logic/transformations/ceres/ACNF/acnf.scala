@@ -210,7 +210,17 @@ object contractionNormalForm {
   }
 }
 
-object getInstantiations {
+/*This gives a ground substitution of the indexed variables.
+  This substitution shold be applied to the projections in order
+  to obtain a set of ground projections which should be plugged into the
+  ground resolution proof (transformed to an LK proof, i.e. contains only cut inferences!)
+  TODO: This should be done automatically! The transformation
+  of the clause set to a TPTP problem renames the
+  indexed variables z(i) to v_i. Then, the v_i is
+  instantiated. This object maps manually z(i) to the corresponding ground term.
+  This mapping should be done automatically somehow.
+*/
+object getInstantiationsOfTheIndexedFOVars {
   def apply1(rp: RobinsonResolutionProof): List[(HOLVar, HOLExpression)] = {
     rp match {
       case Instance(seq, parent1, sub) => sub.map.head.asInstanceOf[(HOLVar, HOLExpression)]::apply1(parent1)
@@ -265,7 +275,7 @@ object folToSHOL {
 }
 
 
-// Converts a resolution LK proof to HOL LK proof
+// Converts a first-order resolution LK proof (i.e. with cut-inferences only) to a HOL LK proof
 object ConvertCutsToHOLFormulasInResProof {
   def apply(p: LKProof): LKProof = {
     p match {
