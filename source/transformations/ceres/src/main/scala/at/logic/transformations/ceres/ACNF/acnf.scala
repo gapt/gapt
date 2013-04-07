@@ -89,39 +89,39 @@ object ACNF {
     def plugProjections(resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: FSequent): LKProof = {
       resRefutation match {
         case Axiom(seq) => {
-          println("\nresRefutation.root = "+resRefutation.root)
+//          println("\nresRefutation.root = "+resRefutation.root)
           if(seq.antecedent.isEmpty && seq.succedent.isEmpty) {
             return groun_proj_set.find(p => p.root.toFSequent == end_seq).get
           }
-          //println("seq = "+printSchemaProof.sequentToString(seq))
+//          println("seq = "+printSchemaProof.sequentToString(seq))
           if(seq.antecedent.isEmpty) {
             val set = groun_proj_set.filter(p => p.root.succedent.map(fo => fo.formula).intersect(seq.succedent.map(fo => fo.formula)).nonEmpty)
-            println("\nant.Empty")
-            println("projection.root : "+set.head.root)
+//            println("\nant.Empty")
+//            println("projection.root : "+set.head.root)
             return set.head
           }
           else
             if(seq.succedent.isEmpty) {
               val set = groun_proj_set.filter(p => p.root.antecedent.map(fo => fo.formula).intersect(seq.antecedent.map(fo => fo.formula)).nonEmpty)
-              println("\nsucc.Empty")
-              println("projection.root : "+set.head.root)
+//              println("\nsucc.Empty")
+//              println("projection.root : "+set.head.root)
               return set.head
             }
             else {
               val set = groun_proj_set.filter(p => p.root.antecedent.map(fo => fo.formula).intersect(seq.antecedent.map(fo => fo.formula)).nonEmpty && p.root.succedent.map(fo => fo.formula).intersect(seq.succedent.map(fo => fo.formula)).nonEmpty)
-              println("\n(ant & succ)Empty")
-              println("projection.root : "+set.head.root)
+//              println("\n(ant & succ)Empty")
+//              println("projection.root : "+set.head.root)
               return set.head
             }
         }
         case CutRule(up1, up2, _, a1, a2) => {
           val pr1 = plugProjections(up1, groun_proj_set, end_seq)
           val pr2 = plugProjections(up2, groun_proj_set, end_seq)
-          println("\n\npr1:")
-          println(pr1.root)
+//          println("\n\npr1:")
+//          println(pr1.root)
 //          printSchemaProof(pr1)
-          println("pr2:")
-          println(pr2.root)
+//          println("pr2:")
+//          println(pr2.root)
 //          printSchemaProof(pr2)
           CutRule(pr1, pr2, a1.formula)
         }
@@ -240,12 +240,14 @@ object getInstantiationsOfTheIndexedFOVars {
 object renameVVarToZVar {
   def apply(l: List[(HOLVar, HOLExpression)]): List[(HOLVar, HOLExpression)] = {
     l.map(pair => {
-      val new_var = indexedFOVar(new VariableStringSymbol("z"), IntZero())
+      val new_var0 = indexedFOVar(new VariableStringSymbol("z"), IntZero())
+      val new_var1 = indexedFOVar(new VariableStringSymbol("z"), Succ(IntZero()))
+
       //TODO: Conpute the index correctly
 //      val new_name = pair._1.name.toString.tail
 //      val new_var = FOLVar(new VariableStringSymbol("z"+new_name))
-      (new_var,pair._2)
-    })
+      (new_var0,pair._2)::(new_var1,pair._2)::Nil
+    }).flatten
   }
 }
 
@@ -297,7 +299,7 @@ object ConvertCutsToHOLFormulasInResProof {
 // applies the ground substitution obtained from the resolution refutation
 object renameIndexedVarInProjection {
   def apply(p: LKProof, pair: Tuple2[Var, HOLExpression]): LKProof = {
-    //      println("p.rule = "+p.rule)
+//    println("p.rule = "+p.rule)
     p match {
       case Axiom(seq) => Axiom(Sequent(seq.antecedent.map(fo => fo.factory.createFormulaOccurrence(renameVar(fo.formula, pair), Nil)), seq.succedent.map(fo => fo.factory.createFormulaOccurrence(renameVar(fo.formula, pair), Nil) )))
       case WeakeningLeftRule(up, _, p1) => WeakeningLeftRule(apply(up,pair), renameVar(p1.formula,pair))
@@ -324,23 +326,42 @@ object renameIndexedVarInProjection {
 //renames the indexed variable in atom
 object renameVar {
   def apply1(exp: HOLExpression, pair: Tuple2[Var, HOLExpression]): HOLExpression = {
+//    println("renameVar, exp = "+exp)
     exp match {
       case v:indexedFOVar => {
+//        println("   indexedFOVar = "+exp)
         if(v.asInstanceOf[Var] == pair._1)
           return pair._2
         else
           return v
       }
-      case foc:foConst => HOLConst(new ConstantStringSymbol(foc.name.toString),Ti())
+      case foc:foConst => {
+//        println("   foConst = "+exp)
+        HOLConst(new ConstantStringSymbol(foc.name.toString),Ti())
+      }
       case at.logic.language.fol.Function(name, args) => {
+//        println("   fol.Function = "+exp)
         val func = HOLConst(new ConstantStringSymbol(name.toString()), Ti()->Ti())
         at.logic.language.hol.Function(func, args.map(f => apply1(f, pair)))
       }
-      case at.logic.language.hol.Function(name, args, _) => {
+      case Succ(arg) => {
+//        println("   Succ = "+exp)
+        Succ(apply1(arg, pair))
+      }
+      case sTerm(f,i,args) => {
+//        println("   sTerm = "+exp)
+        sTerm(f,i,args.map(x => apply1(x,pair)))
+      }
+      case at.logic.language.hol.Function(name, args, typ) if args.size > 0=> {
+//        println("   hol.Function = "+exp)
+//        println("   typ = "+typ)
         val func = HOLConst(new ConstantStringSymbol(name.toString()), Ti()->Ti())
         at.logic.language.hol.Function(func, args.map(f => apply1(f, pair)))
       }
-      case _ => exp//throw new Exception("\nThere is a missing case in folToSHOL, but it should not be!\n")
+      case _ => {
+//        println("   case _ => "+exp)
+        exp
+      }//throw new Exception("\nThere is a missing case in folToSHOL, but it should not be!\n")
     }
   }
   def apply(f: HOLFormula, pair: Tuple2[Var, HOLExpression]): HOLFormula = {
