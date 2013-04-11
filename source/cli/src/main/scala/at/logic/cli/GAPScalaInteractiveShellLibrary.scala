@@ -363,6 +363,10 @@ object printProofStats {
     def apply( n : Int) = at.logic.testing.SquareEdgesExampleProof( n )
   }
 
+  object SquareEdges2DimExampleProof {
+    def apply( n : Int) = at.logic.testing.SquareEdges2DimExampleProof( n )
+  }
+
   object SumExampleProof {
     def apply( n : Int) = at.logic.testing.SumExampleProof( n )
   }
@@ -1073,6 +1077,7 @@ object printProofStats {
           |   LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction
           |   SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction
           |   SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction
+          |   SquareEdges2DimExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction, with the x- and y-axis using different functions.
           |   SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
           |   LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation
           |   SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction

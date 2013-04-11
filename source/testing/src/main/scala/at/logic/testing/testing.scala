@@ -176,6 +176,107 @@ object SquareEdgesExampleProof
   }
 }
 
+
+// Functions to construct cut-free FOL LK proofs of the sequents
+//
+// P(a,b), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sx(y)) :- P(sx^n(a),sy^n(b))
+//
+// where n is an Integer parameter >= 0.
+//
+// The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed,
+// but unlike SquareEdgesExampleProof, different functions are used for the X- and the Y-directions.
+
+object SquareEdges2DimExampleProof
+{
+  //separate sucessor for the x- and y-directions
+  val sx = new ConstantStringSymbol("s_x")
+  val sy = new ConstantStringSymbol("s_y")
+  //0 of the x-axis
+  val a= new ConstantStringSymbol("a")
+  //0 of the y-axis
+  val b = new ConstantStringSymbol("b")
+
+
+  val p = new ConstantStringSymbol("P")
+
+  val x = FOLVar( VariableStringSymbol("x") )
+  val y = FOLVar( VariableStringSymbol("y") )
+
+  //Converts integers into terms consisting of nested application of the successor function to 0
+  def numeralX (n: Int) = Iteration.apply(a, sx, n)
+  def numeralY (n: Int) = Iteration.apply(b, sy, n)
+
+  val assx = AllVar( x, AllVar( y, Imp( Atom( p, x::y::Nil ), Atom(p, Function( sx, x::Nil )::y::Nil ) ) ) )
+  def assx_aux( k: Int ) = AllVar( y, Imp( Atom( p, numeralX(k)::y::Nil ), Atom(p, numeralX(k + 1)::y::Nil ) ) )
+
+  val assy = AllVar( x, AllVar( y, Imp( Atom( p, x::y::Nil ), Atom(p, x::Function( sy, y::Nil )::Nil ) ) ) )
+  def assy_aux( k: Int ) = AllVar( y, Imp( Atom( p, numeralX( k )::y::Nil ), Atom(p, numeralX( k )::Function( sy, y::Nil )::Nil ) ) )
+ 
+  def apply( n: Int ) = proof( 0, n )
+
+  // returns LKProof with end-sequent  P(sx^k(0),0), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sy(y)) :- P(sx^n(0),sy^n(0))
+  def proof( k: Int, n: Int ) : LKProof =
+  {
+    if ( k == n )
+    {
+      val p1 = ForallLeftRule( upper_proof( 0, n ), assy_aux( n ), assy, Numeral( n ) )
+      WeakeningLeftRule( p1, assx )
+    }
+    else
+    {
+      val pk = Atom( p, numeralX(k)::numeralY(0)::Nil )
+      val pkp1 = Atom( p, numeralX( k + 1)::numeralY(0)::Nil )
+      val impl = Imp( pk, pkp1 )
+
+      ContractionLeftRule(
+        ForallLeftRule(
+          ForallLeftRule(
+            ImpLeftRule(
+              Axiom( pk::Nil, pk::Nil ),
+              proof( k + 1, n ),
+            pk, pkp1),
+          impl, assx_aux( k ), numeralX( 0 )),  //possibly not correct -> switch?
+        assx_aux( k ), assx, numeralY( k )),    //same
+      assx )
+    }
+  }
+
+  // returns LKProof with end-sequent  P(s^n(0),s^k(0)), \ALL y . P(s^n(0),y) -> P(s^n(0),s(y)) :- P(s^n(0),s^n(0))
+  //Conjecture: this is the part that goes in the Y-direction.
+  def upper_proof( k: Int, n: Int ) : LKProof =
+  {
+    if ( k == n ) // leaf proof
+    {
+      val ax = Atom( p,  numeralX( n )::numeralY( n )::Nil )
+      WeakeningLeftRule( Axiom( ax::Nil, ax::Nil ), assy_aux( n ) )
+    }
+    else
+    {
+      val pk = Atom( p, numeralX( n )::numeralY( k )::Nil )
+      val pkp1 = Atom( p, numeralX( n )::numeralY( k + 1 )::Nil )
+      val impl = Imp( pk, pkp1 )
+
+      ContractionLeftRule(
+        ForallLeftRule(
+          ImpLeftRule(
+            Axiom( pk::Nil, pk::Nil ),
+            upper_proof( k + 1, n ),
+            pk,
+            pkp1),
+          impl,
+          assy_aux( n ),
+          numeralY( k )), //possibly not correct: switch or maybe restructure.
+        assy_aux( n ))
+    }
+  }
+}
+
+
+
+
+
+
+
 // Functions to construct the straightforward cut-free FOL LK proofs of the sequents
 //
 // P(s^n(0),0), \ALL x \ALL y . P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0))
