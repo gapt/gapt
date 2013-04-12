@@ -214,12 +214,12 @@ object SquareEdges2DimExampleProof
  
   def apply( n: Int ) = proof( 0, n )
 
-  // returns LKProof with end-sequent  P(sx^k(0),0), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sy(y)) :- P(sx^n(0),sy^n(0))
+  // returns LKProof with end-sequent  P(sx^k(a),0), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sy(y)) :- P(sx^n(a),sy^n(b))
   def proof( k: Int, n: Int ) : LKProof =
   {
     if ( k == n )
     {
-      val p1 = ForallLeftRule( upper_proof( 0, n ), assy_aux( n ), assy, Numeral( n ) )
+      val p1 = ForallLeftRule( upper_proof( 0, n ), assy_aux( n ), assy, numeralX( n ) )
       WeakeningLeftRule( p1, assx )
     }
     else
@@ -235,8 +235,8 @@ object SquareEdges2DimExampleProof
               Axiom( pk::Nil, pk::Nil ),
               proof( k + 1, n ),
             pk, pkp1),
-          impl, assx_aux( k ), numeralX( 0 )),  //possibly not correct -> switch?
-        assx_aux( k ), assx, numeralY( k )),    //same
+          impl, assx_aux( k ), numeralY( 0 )),  //possibly not correct -> switch?
+        assx_aux( k ), assx, numeralX( k )),    //same
       assx )
     }
   }
@@ -270,11 +270,6 @@ object SquareEdges2DimExampleProof
     }
   }
 }
-
-
-
-
-
 
 
 // Functions to construct the straightforward cut-free FOL LK proofs of the sequents

@@ -30,6 +30,16 @@ import _root_.at.logic.utils.traits.Occurrence
   case object ExistsRightRuleType extends UnaryRuleTypeA
 
   object ForallLeftRule {
+    /**
+     * Constructs a proof ending with a ForallLeft rule
+     *
+     * @param s1    subproof
+     * @param aux   the auxiliary formula
+     * @param main  the main formula
+     * @param term  the term whose substitution into the main formula yields the auxiliary formula
+     *
+     * @return an LKProof ending with the constructed inference
+     **/
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
