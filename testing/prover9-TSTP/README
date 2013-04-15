@@ -2,3 +2,6 @@ This directory contains all solutions prover9 finds for the TPTP library (as of 
 
 $ tar xvfz Prover9.s.tgz
 $ ./mk_s_to_out
+
+Troubleshooting:
+1) the location of awkmight not be in \bin\awk. Change location if required.
