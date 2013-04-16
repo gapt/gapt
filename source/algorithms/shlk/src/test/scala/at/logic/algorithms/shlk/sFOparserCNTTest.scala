@@ -39,6 +39,7 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
   "sFOparserCNT" should {
 
     "parse correctly David's proof " in {
+      skipped("has eigenvariable condition errors")
 
       //          sFOParser.parseProof( "1 : ax(x3: o |- x3: o)  " +
       //                            "2 : negL( 1 , x3:o)" +

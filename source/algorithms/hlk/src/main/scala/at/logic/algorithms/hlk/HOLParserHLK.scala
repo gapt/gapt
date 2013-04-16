@@ -11,15 +11,18 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import util.parsing.input.Reader
 import util.parsing.combinator.token.Tokens
 import util.parsing.combinator.lexical.{Lexical, Scanners}
-import util.parsing.combinator.syntactical.{StdTokenParsers, StandardTokenParsers}
+import util.parsing.combinator.syntactical.{TokenParsers, StdTokenParsers, StandardTokenParsers}
 
 /**
  * parser for hol formulas in the hlk format
  */
-abstract class HOLParser(symbol_map : HOLParser.SymbolMap) extends HLKFormulaParser with StdTokenParsers {
+abstract class HOLParser(symbol_map : HOLParser.SymbolMap) extends HLKFormulaParser with TokenParsers {
+  //type Tokens <: HLKTokens
+  //val lexical =
+  import lexical._
 
-/*
 
+  /*
   def term: Parser[HOLExpression] = LPARENS ^^ { case NAME(name) => symbol_map(name) }
   def formula: Parser[HOLFormula] = LPARENS ^^ { case NAME(name) => symbol_map(name).asInstanceOf[HOLFormula] }
   def variable: Parser[HOLVar] = LPARENS ^^ { case NAME(name) => symbol_map(name).asInstanceOf[HOLVar] }
@@ -31,14 +34,23 @@ abstract class HOLParser(symbol_map : HOLParser.SymbolMap) extends HLKFormulaPar
         case _ => throw new Exception("Error in hlk hol parser!")
       }
     }
+  */
 
-  def simpletype : Parser[TA] = TYPE("i") ^^ { x => Ti() } | TYPE("o") ^^ { x => To() }
+  //def bla : Parser[Elem] = accept(LPARENS)
+
+
+  //def simpletype : Parser[TA] = TYPE("i") ^^ { x => Ti() } | TYPE("o") ^^ { x => To() }
+
+
+  /*
   def complextype : Parser[TA] =   simpletype |
     (simpletype ~ (ARROW ~> simpletype)  |
      simpletype ~ (ARROW ~> LPARENS ~> complextype <~ RPARENS)  |
      (LPARENS ~> complextype <~ RPARENS) ~ (ARROW ~> simpletype) |
      (LPARENS ~> complextype <~ RPARENS) ~ (ARROW ~> LPARENS ~> complextype <~ RPARENS)) ^^ { case t1 ~ t2 => t1 -> t2 }
-  */
+
+
+    */
 }
 
 object HOLParser {
@@ -49,27 +61,28 @@ object HOLParser {
 
 }
 
-trait HLKTokens extends Tokens {
-  trait HToken extends Token {
-    //def unapply(s:String) = if (chars == s) Some(chars) else None
+trait HLKTokens  {
+  abstract trait HToken  {
+    def chars : String
+    def unapply(s:String) = if (chars == s) Some(chars) else None
   }
 
-  case object LPARENS extends HToken { def chars = "(" }
-  case object RPARENS extends HToken { def chars = ")" }
-  case object LBRACK extends HToken { def chars = "[" }
-  case object RBRACK extends HToken { def chars = "]" }
-  case object COLON extends HToken { def chars = ":" }
-  case object COMMA extends HToken { def chars = "," }
-  case object NEG extends HToken { def chars = "-" }
-  case object AND extends HToken { def chars = "&" }
-  case object OR extends HToken { def chars = "|" }
-  case object IMPL extends HToken { def chars = "->" }
-  case object ALL extends HToken { def chars = "!" }
-  case object EXISTS extends HToken { def chars = "?" }
-  case object LAMBDA extends HToken { def chars = "\\" }
-  case object ARROW extends HToken { def chars = ">" }
-  case class TYPE(chars : String) extends HToken
+  object LPARENS extends HToken { def chars = "(" }
+  object RPARENS extends HToken { def chars = ")" }
+  object LBRACK extends HToken { def chars = "[" }
+  object RBRACK extends HToken { def chars = "]" }
+  object COLON extends HToken { def chars = ":" }
+  object COMMA extends HToken { def chars = "," }
+  object NEG extends HToken { def chars = "-" }
+  object AND extends HToken { def chars = "&" }
+  object OR extends HToken { def chars = "|" }
+  object IMPL extends HToken { def chars = "->" }
+  object ALL extends HToken { def chars = "!" }
+  object EXISTS extends HToken { def chars = "?" }
+  object LAMBDA extends HToken { def chars = "\\" }
+  object ARROW extends HToken { def chars = ">" }
   case class NAME(chars : String) extends HToken
+  case object ERROR extends HToken { def chars ="ERROR"}
 
   class Tokenizer extends Lexical {
     override type Token = HToken
@@ -99,35 +112,9 @@ trait HLKTokens extends Tokens {
         case "\\" => LAMBDA
         case ">" => ARROW
         case "->" => IMPL
-        case "i" => TYPE("i")
-        case "o" => TYPE("o")
         //case _ => errorToken("")
       }))
 
-
-
     override def whitespace : Parser[Any] = rep(whitespaceChar)
-/*
-    lazy val tokens : Parser[List[Tokens]] = token.+
-
-    lazy val token : Parser[Tokens] =
-      ("(" ^^ (x => LPARENS)) |
-      (")" ^^ (x => RPARENS)) |
-      ("[" ^^ (x => LBRACK)) |
-      ("]" ^^ (x => RBRACK)) |
-      (":" ^^ (x => COLON)) |
-      ("," ^^ (x => COMMA)) |
-      ("-" ^^ (x => NEG)) |
-      ("&" ^^ (x => AND)) |
-      ("|" ^^ (x => OR)) |
-      ("!" ^^ (x => ALL)) |
-      ("?" ^^ (x => EXISTS)) |
-      ("->" ^^ (x => IMPL)) |
-      ("\\" ^^ (x => LAMBDA)) |
-      (">" ^^ (x => ARROW)) |
-      ("""[a-zA-Z0-9]+""".r ^^ NAME) |
-      ("""[io]""".r ^^ TYPE)
-
-   */
-  }
+ }
 }

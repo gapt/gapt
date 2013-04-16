@@ -89,7 +89,7 @@ import _root_.at.logic.utils.traits.Occurrence
         val aux_form = computeAux(main, term)
         //TODO: uncomment the assert. It is commented
         //because there is unfound problem in renameIndexedVarInProjection in acnf.scala
-//         assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toString + " is not equal to the formula " + aux_fo.formula.toString + " at the given occurrence ("+aux_form.toPrettyString + " != " + aux_fo.formula.toPrettyString+")")
+         assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toString + " is not equal to the formula " + aux_fo.formula.toString + " at the given occurrence ("+aux_form.toPrettyString + " != " + aux_fo.formula.toPrettyString+")")
         (aux_fo, aux_fo.formula)
       }
     }
@@ -149,7 +149,7 @@ import _root_.at.logic.utils.traits.Occurrence
       if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
       else {
         val aux_fo = term1op.get
-        assert( computeAux( main, term ).syntaxEquals( aux_fo.formula ), computeAux( main, term ).toStringSimple + " is not " + aux_fo.formula.toStringSimple )
+        assert( computeAux( main, term ) ==  aux_fo.formula , computeAux( main, term ).toStringSimple + " is not " + aux_fo.formula.toStringSimple )
         aux_fo
       }
     }
