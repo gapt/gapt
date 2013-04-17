@@ -437,5 +437,25 @@ class LKTest extends SpecificationWithJUnit {
         (succ) must not contain(aux1)
       } */
     }
+
+    "work for weak quantifier rules" in {
+      val List(x,y,z) = List(("x", i->i),("y",i->i) ,("z", i->i)) map (u => HOLVar(VariableStringSymbol(u._1),u._2))
+      val List(p,a,b) = List(("P", (i->i) -> ((i->i) -> ((i->i) -> o))),
+                             ("a", i->i) ,
+                             ("b", i->i)) map (u => HOLConst(ConstantStringSymbol(u._1),u._2))
+      val paba = Atom(p,List(a,b,a))
+      val pxba = Atom(p,List(x,b,a))
+      val expxba = ExVar(x,pxba)
+      val allpxba = AllVar(x,pxba)
+
+      val ax1 = Axiom(paba::Nil, Nil)
+      ForallLeftRule(ax1, ax1.root.occurrences(0), allpxba, a).root.occurrences(0).formula must_==(allpxba)
+
+      ForallLeftRule(ax1, ax1.root.occurrences(0), allpxba, b).root.occurrences(0).formula must_==(allpxba) must throwAn[Exception]()
+
+      val ax2 = Axiom(Nil, paba::Nil)
+      ExistsRightRule(ax2, ax2.root.occurrences(0), expxba, a).root.occurrences(0).formula must_==(expxba)
+      ExistsRightRule(ax2, ax2.root.occurrences(0), expxba, b).root.occurrences(0).formula must_==(expxba) must throwAn[Exception]()
+    }
   }
 }
