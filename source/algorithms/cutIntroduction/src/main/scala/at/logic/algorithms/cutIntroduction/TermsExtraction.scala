@@ -46,7 +46,7 @@ object TermsExtraction {
   // An expansion proof is a pair of expansion trees, one for each formula in
   // the antecedent and succedent of the end-sequent
   def apply(expProof: (Seq[ExpansionTree], Seq[ExpansionTree])) : Map[FOLFormula, List[List[FOLTerm]]] = {
-  
+    
     // Transform to a list of MultiExpansionTrees
     val multiExpTrees = (expProof._1.map(et => compressQuantifiers(et))) ++ (expProof._2.map(et => compressQuantifiers(et)))
 
@@ -68,7 +68,19 @@ object TermsExtraction {
       else throw new TermsExtractionException("ERROR: Trying to extract the terms of an expansion proof with non-prenex formulas.")
     }
   }
-  
+ 
+  // Merges maps coming from different branches adding the lists of terms of equal formulas
+  private def merge(m1: Map[FOLFormula, List[List[FOLTerm]]], m2: Map[FOLFormula, List[List[FOLTerm]]]) 
+  : Map[FOLFormula, List[List[FOLTerm]]]= {
+    val k1 = m1.keys.toSet
+    val k2 = m2.keys.toSet
+    val intersection = k1 & k2
+
+    val r1 = for(key <- intersection) yield (key -> (m1(key) ++ m2(key)) )
+    val r2 = m1.filterKeys(!intersection.contains(_)) ++ m2.filterKeys(!intersection.contains(_))
+    r2 ++ r1
+  }
+
   private def extractTerms(proof: LKProof) : Map[FOLFormula, List[List[FOLTerm]]] = proof match {
 
     /* AXIOM */
@@ -91,7 +103,7 @@ object TermsExtraction {
     case AndRightRule(up1, up2, _, aux1, aux2, _) =>
       val map1 = extractTerms(up1)
       val map2 = extractTerms(up2)
-      map1 ++ map2
+      merge(map1, map2)
 
     /* LEFT CONJUNCTION RULES */
     case AndLeft1Rule(up, _, aux, prin) =>
@@ -103,7 +115,7 @@ object TermsExtraction {
     case OrLeftRule(up1, up2, _, aux1, aux2, _) =>
       val map1 = extractTerms(up1)
       val map2 = extractTerms(up2)
-      map1 ++ map2
+      merge(map1, map2)
 
     /* RIGHT DISJUNCTION RULES */
     case OrRight1Rule(up, _, aux, prin) =>
@@ -115,7 +127,7 @@ object TermsExtraction {
     case ImpLeftRule(up1, up2, _, aux1, aux2, _) =>
       val map1 = extractTerms(up1)
       val map2 = extractTerms(up2)
-      map1 ++ map2
+      merge(map1, map2)
 
     /* RIGHT IMPLICATION RULE */
     case ImpRightRule(up, _, aux1, aux2, _) =>
@@ -173,7 +185,7 @@ object TermsExtraction {
     case CutRule(up1, up2, _, a1, a2) => 
       val map1 = extractTerms(up1)
       val map2 = extractTerms(up2)
-      map1 ++ map2
+      merge(map1, map2)
 
 
     /* STRONG QUANTIFIER RULES */
@@ -185,16 +197,16 @@ object TermsExtraction {
     // Not sure how to treat them... just skipping for now but this might cause problems in the future
     case EquationLeft1Rule(up1, up2, _, _, _, _) =>
       println("WARNING: found equality rule.")
-      extractTerms(up1) ++ extractTerms(up2)
+      merge(extractTerms(up1), extractTerms(up2))
     case EquationLeft2Rule(up1, up2, _, _, _, _) =>
       println("WARNING: found equality rule.")
-      extractTerms(up1) ++ extractTerms(up2)
+      merge(extractTerms(up1), extractTerms(up2))
     case EquationRight1Rule(up1, up2, _, _, _, _) =>
       println("WARNING: found equality rule.")
-      extractTerms(up1) ++ extractTerms(up2)
+      merge(extractTerms(up1), extractTerms(up2))
     case EquationRight2Rule(up1, up2, _, _, _, _) =>
       println("WARNING: found equality rule.")
-      extractTerms(up1) ++ extractTerms(up2)
+      merge(extractTerms(up1), extractTerms(up2))
 
     /* Any other rule... fail */
     case _ => throw new TermsExtractionException("ERROR: Unexpected rule while extracting the term set.\n" + proof.toString.substring(0, 20))
