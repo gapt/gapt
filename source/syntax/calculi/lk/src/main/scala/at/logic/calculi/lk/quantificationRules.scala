@@ -37,17 +37,22 @@ import _root_.at.logic.utils.traits.Occurrence
   case object ExistsRightRuleType extends UnaryRuleTypeA
 
   object ForallLeftRule extends WeakRuleHelper(false) {
-    /**
-     * Constructs a proof ending with a ForallLeft rule
-     *
-     * @param s1    subproof
-     * @param aux   the auxiliary formula
-     * @param main  the main formula
-     * @param term  the term whose substitution into the main formula yields the auxiliary formula
-     *
-     * @return an LKProof ending with the constructed inference
-     **/
 
+    /** <pre>Constructs a proof ending with a ForallLeft rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL, A[term/x] |- sR
+      * -------------------- (ForallLeft)
+      * sL, Forall x.A |- sR
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL, A[term/x] |- sR) as the bottommost sequent.
+      * @param aux The formula A[term/x], in which a term is to be all-quantified.
+      * @param main The resulting (Forall x.A), with some (not necessarily all) instances of term replaced by a newly introduced variable.
+      * @param term The term to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
@@ -55,7 +60,21 @@ import _root_.at.logic.utils.traits.Occurrence
       }
     }
 
-
+    /** <pre>Constructs a proof ending with a ForallLeft rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL, A[term/x] |- sR
+      * -------------------- (ForallLeft)
+      * sL, Forall x.A |- sR
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL, A[term/x] |- sR) as the bottommost sequent.
+      * @param term1oc The occurrence of the formula A[term/x], in which a term is to be all-quantified.
+      * @param main The resulting (Forall x.A), with some (not necessarily all) instances of term replaced by a newly introduced variable.
+      * @param term The term to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
       val aux_fo = getTerms(s1.root, term1oc, main, term)
       val prinFormula = getPrinFormula(main, aux_fo)
@@ -71,6 +90,22 @@ import _root_.at.logic.utils.traits.Occurrence
       }
     }
 
+    /** <pre>All-quantifies a term in a sequent.
+      * This function merely returns the resulting sequent, not a proof.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL, A[term/x] |- sR
+      * -------------------- (ForallLeft)
+      * sL, Forall x.A |- sR
+      * </pre>
+      * 
+      * @param s1 The sequent (sL, A[term/x] |- sR).
+      * @param aux The formula A[term/x], in which a term is to be all-quantified.
+      * @param main The resulting (Forall x.A), with some (not necessarily all) instances of term replaced by a newly introduced variable.
+      * @param term The term to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return The sequent (sL, Forall x.A |- sR).
+      */ 
     def apply(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
       val aux_fo = getTerms(s1, term1oc, main, term)
       val prinFormula = getPrinFormula(main, aux_fo)
@@ -87,6 +122,22 @@ import _root_.at.logic.utils.traits.Occurrence
   }
 
   object ExistsRightRule extends WeakRuleHelper(true) {
+
+    /** <pre>Constructs a proof ending with an ExistsRight rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL |- sR, A[term/x]
+      * -------------------- (ExistsRight)
+      * sL |- sR, Exists x.A
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL, A[term/x] |- sR) as the bottommost sequent.
+      * @param aux The formula A[term/x], in which a term is to be existentially quantified.
+      * @param main The resulting (Exists x.A), with some (not necessarily all) instances of term replaced by a newly introduced variable.
+      * @param term The term to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
@@ -94,7 +145,21 @@ import _root_.at.logic.utils.traits.Occurrence
         }
     }
 
-
+    /** <pre>Constructs a proof ending with an ExistsRight rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL |- sR, A[term/x]
+      * -------------------- (ExistsRight)
+      * sL |- sR, Exists x.A
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL, A[term/x] |- sR) as the bottommost sequent.
+      * @param term1oc The occurrence of the formula A[term/x], in which a term is to be existentially quantified.
+      * @param main The resulting (Exists x.A), with some (not necessarily all) instances of term replaced by a newly introduced variable.
+      * @param term The term to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
       val aux_fo = getTerms(s1.root, term1oc, main, term)
       val prinFormula = getPrinFormula(main, aux_fo)
@@ -109,11 +174,28 @@ import _root_.at.logic.utils.traits.Occurrence
         override def name = "\u2203:r"
       }
     }
+
+    /** <pre>Constructs a proof ending with an ExistsRight rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL |- sR, A[term/x]
+      * -------------------- (ForallLeft)
+      * sL |- sR, Exists x.A
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL, A[term/x] |- sR) as the bottommost sequent.
+      * @param term1oc The occurrence of the formula A[term/x], in which a term is to be all-quantified.
+      * @param main The resulting (Exists x.A), with some (not necessarily all) instances of term replaced by a newly introduced variable.
+      * @param term The term to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
       val aux_fo = getTerms(s1, term1oc, main, term)
       val prinFormula = getPrinFormula(main, aux_fo)
       getSequent(s1, aux_fo, prinFormula)
     }
+
     def unapply(proof: LKProof) = if (proof.rule == ExistsRightRuleType) {
         val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
         val ((a1::Nil)::Nil) = r.aux
@@ -124,12 +206,43 @@ import _root_.at.logic.utils.traits.Occurrence
   }
 
   object ForallRightRule extends StrongRuleHelper(true) {
+
+    /** <pre>Constructs a proof ending with a ForallRight rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL |- sR, A[y/x]
+      * -------------------- (ForallRight)
+      * sL |- sR, Forall x.A
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL |- sR, A[y/x]) as the bottommost sequent.
+      * @param aux The formula A[y/x], in which a free variable y is to be all-quantified.
+      * @param main The resulting (Forall x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
+      * @param eigen_var The eigenvariable to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: HOLVar) : LKProof =
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, eigen_var )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 
+    /** <pre>Constructs a proof ending with a ForallRight rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL |- sR, A[y/x]
+      * -------------------- (ForallRight)
+      * sL |- sR, Forall x.A
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL |- sR, A[y/x]) as the bottommost sequent.
+      * @param term1oc The occurrence of the formula A[y/x], in which a free variable y is to be all-quantified.
+      * @param main The resulting (Forall x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
+      * @param eigen_var The eigenvariable to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply( s1: LKProof, term1oc: Occurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof = {
       val aux_fo = getTerms(s1.root, term1oc, main, eigen_var)
       val prinFormula = getPrinFormula(main, aux_fo)
@@ -144,6 +257,23 @@ import _root_.at.logic.utils.traits.Occurrence
           override def name = "\u2200:r"
         }
     }
+
+    /** <pre>Constructs a proof ending with a ForallRight rule.
+      * This function merely returns the resulting sequent, not a proof.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL |- sR, A[y/x]
+      * -------------------- (ForallRight)
+      * sL |- sR, Forall x.A
+      * </pre>
+      * 
+      * @param s1 The sequent (sL |- sR, A[y/x]).
+      * @param aux The formula A[y/x], in which a free variable y is to be all-quantified.
+      * @param main The resulting (Forall x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
+      * @param eigen_var The eigenvariable to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return The sequent (sL |- sR, Forall x.A).
+      */ 
     def apply( s1: Sequent, term1oc: Occurrence, main: HOLFormula, eigen_var: HOLVar ) = {
       val aux_fo = getTerms(s1, term1oc, main, eigen_var)
       val prinFormula = getPrinFormula(main, aux_fo)
@@ -161,12 +291,43 @@ import _root_.at.logic.utils.traits.Occurrence
   }
 
   object ExistsLeftRule extends StrongRuleHelper(false) {
+
+    /** <pre>Constructs a proof ending with a ExistsLeft rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL, A[y/x] |- sR
+      * -------------------- (ExistsLeft)
+      * sL, Exists x.A |- sR
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL, A[y/x] |- sR) as the bottommost sequent.
+      * @param aux The formula A[y/x], in which a free variable y is to be existentially quantified.
+      * @param main The resulting (Exists x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
+      * @param eigen_var The eigenvariable to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: HOLVar) : LKProof =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, eigen_var )
         case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
       }
 
+    /** <pre>Constructs a proof ending with a ExistsLeft rule.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL, A[y/x] |- sR
+      * -------------------- (ExistsLeft)
+      * sL, Exists x.A |- sR
+      * </pre>
+      * 
+      * @param s1 The top proof with (sL, A[y/x] |- sR) as the bottommost sequent.
+      * @param term1oc The occurrence of the formula A[y/x], in which a free variable y is to be existentially quantified.
+      * @param main The resulting (Exists x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
+      * @param eigen_var The eigenvariable to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return An LK Proof ending with the new inference.
+      */
     def apply( s1: LKProof, term1oc: Occurrence, main: HOLFormula, eigen_var: HOLVar ) : LKProof = {
       val aux_fo = getTerms(s1.root, term1oc, main, eigen_var)
       val prinFormula = getPrinFormula(main, aux_fo)
@@ -182,6 +343,22 @@ import _root_.at.logic.utils.traits.Occurrence
       }
     }
 
+    /** <pre>Constructs a proof ending with a ExistsLeft rule.
+      * This function merely returns the resulting sequent, not a proof.
+      * 
+      * The rule: 
+      *   (rest of s1)
+      *  sL, A[y/x] |- sR
+      * -------------------- (ExistsLeft)
+      * sL, A[y/x] |- sR
+      * </pre>
+      * 
+      * @param s1 The sequent (sL, A[y/x] |- sR).
+      * @param aux The formula A[y/x], in which a free variable y is to be existentially quantified.
+      * @param main The resulting (Forall x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
+      * @param eigen_var The eigenvariable to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
+      * @return The sequent (sL, Exists x.A |- sR).
+      */ 
     def apply( s1: Sequent, term1oc: Occurrence, main: HOLFormula, eigen_var: HOLVar ) = {
       val aux_fo = getTerms(s1, term1oc, main, eigen_var)
       val prinFormula = getPrinFormula(main, aux_fo)
