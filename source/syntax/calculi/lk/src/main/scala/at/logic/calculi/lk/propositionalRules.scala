@@ -622,8 +622,8 @@ import collection.immutable.Seq
       * 
       * @param s1 The left proof with A in the succedent of its bottommost sequent.
       * @param s2 The right proof with B in the succedent of its bottommost sequent.
-      * @param term1 The left part of the disjunction in s1.
-      * @param term2 The right part of the disjunction in s2.
+      * @param term1 The left part of the conjunction in s1.
+      * @param term2 The right part of the conjunction in s2.
       * @return An LK proof with s1 & s2 as its two subtrees and (sL, tL |- sR, tR, term1 ^ term2) as its bottommost sequent.
       */ 
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryLKProof with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {

@@ -393,6 +393,139 @@ object LinearEqExampleProof
   }
 }
 
+/** Constructs the cut-free FOL LK proof of the sequent
+  * 
+  * AUX, f(0) = 0, Forall x.f(s(x)) = f(x) + s(0) |- f(s^n(0)) = s^n(0)
+  * Where AUX is {Transitivity, Symmetry, Reflexity of =,
+  *               Forall xy.x=y -> s(x) = s(y), f(0) = 0, Forall x.f(s(x)) = f(x) + s(0)}
+  */
+object SumOfOnesFExampleProof
+{
+  val eq = new ConstantStringSymbol("=")
+  val s = new ConstantStringSymbol("s")
+  val zero = new ConstantStringSymbol("0")
+  val p = new ConstantStringSymbol("+")
+  var f = new ConstantStringSymbol("f")
+
+  val x = FOLVar( VariableStringSymbol( "x" ))
+  val y = FOLVar( VariableStringSymbol( "y" ))
+  val z = FOLVar( VariableStringSymbol( "z" ))
+
+  //Helpers
+  def Fn(n: Int) = Function(f, Numeral(n)::Nil)
+
+  //Forall xyz.(x = y ^ y = z -> x = z)
+  val Trans = AllVar(x, AllVar(y, AllVar(z, Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil)))))
+  def TransX(x:FOLTerm) = AllVar(y, AllVar(z, Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil))))
+  def TransXY(x:FOLTerm, y:FOLTerm) = AllVar(z, Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil)))
+  def TransXYZ(x:FOLTerm, y:FOLTerm, z:FOLTerm) = Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil))
+
+  //Forall xy.(x=y -> s(x) = s(y))
+  val CongSucc = AllVar(x, AllVar(y, Imp( Atom(eq, x::y::Nil), Atom(eq, Function(s, x::Nil)::Function(s, y::Nil)::Nil))))
+  def CongSuccX(x:FOLTerm) = AllVar(y, Imp( Atom(eq, x::y::Nil), Atom(eq, Function(s, x::Nil)::Function(s, y::Nil)::Nil)))
+  def CongSuccXY(x:FOLTerm, y:FOLTerm) = Imp( Atom(eq, x::y::Nil), Atom(eq, Function(s, x::Nil)::Function(s, y::Nil)::Nil))
+
+  //Forall x.(x + 1 = s(x)) (reversed to avoid the application of the symmetry of =)
+  val Plus = AllVar(x, Atom(eq, Function(p, x::Numeral(1)::Nil)::Function(s, x::Nil)::Nil))
+  def PlusX(x:FOLTerm) = Atom(eq, Function(p, x::Numeral(1)::Nil)::Function(s, x::Nil)::Nil)
+
+  //Definition of f
+  //f(0) = 0
+  val FZero = Atom(eq, Function(f, Numeral(0)::Nil)::Numeral(0)::Nil)
+  //Forall x.f(s(x)) = f(x) + s(0)
+  val FSucc = AllVar(x, Atom(eq, Function(f, Function(s, x::Nil)::Nil)::Function(p, Function(f, x::Nil)::Numeral(1)::Nil)::Nil))
+  def FSuccX(x:FOLTerm) = Atom(eq, Function(f, Function(s, x::Nil)::Nil)::Function(p, Function(f, x::Nil)::Numeral(1)::Nil)::Nil)
+
+
+  //The starting axiom f(n) = n |- f(n) = n
+  def start(n: Int) = Axiom(Atom(eq, Fn(n)::Numeral(n)::Nil)::Trans::Plus::CongSucc::FSucc::Nil, Atom(eq, Fn(n)::Numeral(n)::Nil)::Nil)
+
+  def apply(n: Int) = proof(n)
+  def proof (n: Int) = TermGenProof(EqChainProof(start(n), n), 0, n)
+
+
+
+  /** Performs a proof employing transitivity.
+    *
+    * Takes a proof s2, which contains (x=z) and Trans, and extends it below, resulting in the sequent
+    * (x=y), (y=z), Trans, ... |- ...
+    * @param x X
+    * @param y Y
+    * @param z Z
+    * @param s2 The proof which contains the (x=z) which is to be shown.
+    * @return A proof wich s2 as a subtree and the formula (x=z) replaced by (x=y) and (y=z).
+    */
+  private def tr_proof (x : FOLTerm, y: FOLTerm, z: FOLTerm, s2: LKProof) : LKProof = {
+    val xy = Atom(eq, x::y::Nil)
+    val yz = Atom(eq, y::z::Nil)
+    val xz = Atom(eq, x::z::Nil)
+
+    val ax_xy = Axiom(xy::Nil, xy::Nil)
+    val ax_yz = Axiom(yz::Nil, yz::Nil)
+
+    val s1 = AndRightRule(ax_xy, ax_yz, xy, yz)
+
+    val imp = ImpLeftRule(s1, s2, And(xy, yz), xz)
+
+    //val allQZ = ForallLeftRule(imp, Imp(And(xy, yz), xz), TransXY(x, y), z)
+    val allQZ = ForallLeftRule(imp, TransXYZ(x, y, z) , TransXY(x, y), z)
+    val allQYZ = ForallLeftRule(allQZ, TransXY(x,y), TransX(x), y)
+    val allQXYZ = ForallLeftRule(allQYZ, TransX(x), Trans, x)
+
+    ContractionLeftRule(allQXYZ, Trans)
+  }
+
+  /** Generates a sequent containing, in addition to the formulas in the bottommost sequent of s1,
+    * the chain of equations f(n) = s(f(n-1)),...,f(1)=s(f(0)), f(0) = 0.s
+    * The generates proof employs only the axiom of transitivity and (x=y -> s(x) = s(y)))
+    */
+  private def EqChainProof (s1: LKProof,  n: Int) : LKProof = {
+
+    if (n <= 0) { s1 }
+    else {
+      val tr = tr_proof(Fn(n), Iteration(Fn(n-1), s, 1), Numeral(n), s1)
+
+      val ax2 = Axiom(Atom(eq, Fn(n-1)::Numeral(n-1)::Nil)::Nil, Atom(eq, Fn(n-1)::Numeral(n-1)::Nil)::Nil)
+
+      //Introduces the instantiated form of CongSuc
+      val impl = ImpLeftRule(ax2, tr, Atom(eq, Fn(n-1)::Numeral(n-1)::Nil), Atom(eq, Iteration(Fn(n-1), s, 1)::Numeral(n)::Nil))
+
+      //Quantify CongSucc
+      val cong1 = ForallLeftRule(impl, CongSuccXY(Fn(n-1), Numeral(n-1)), CongSuccX(Fn(n-1)), Numeral(n-1))
+      val cong2 = ForallLeftRule(cong1, CongSuccX(Fn(n-1)), CongSucc, Fn(n-1))
+
+      val cl = ContractionLeftRule(cong2, CongSucc)
+
+      EqChainProof(cl, n-1)
+    }
+  }
+
+  /** Given a proof s1, produced by EqChainProof, generates a proof that
+    * eliminates the chains of equasions and proves the final sequent
+    * FZero, FSucc, TR, Plus |- f(n) = n.
+    */
+  private def TermGenProof (s1: LKProof, n: Int, targetN: Int) : LKProof = {
+    if (n >= targetN) { s1 }
+    else {
+
+      val tr = tr_proof(Fn(n+1), Function(p, Fn(n)::Numeral(1)::Nil), Iteration(Fn(n), s, 1), s1)
+
+      //Quantify plus
+      val plus = ForallLeftRule(tr, PlusX(Fn(n)), Plus, Fn(n))
+      val clPlus = ContractionLeftRule(plus, Plus)
+
+      //Quantify fsucc
+      val fsucc = ForallLeftRule(clPlus, FSuccX(Numeral(n)), FSucc, Numeral(n))
+      val clFSucc = ContractionLeftRule(fsucc, FSucc)
+
+      TermGenProof(clFSucc, n+1, targetN)
+    }
+
+  }
+
+
+}
+
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
 // Refl, Trans, CongSuc, ABase, ASuc, :- sum( n ) = s^n(0)
@@ -569,11 +702,17 @@ object Numeral
   def apply( k: Int ) = Iteration.apply( z, s, k )
 }
 
-// contructs the FOLTerm f^k(a)
 object Iteration
 {
+  /** Contructs the FOLTerm f^k(a).
+    */
   def apply( a: ConstantStringSymbol, f: ConstantStringSymbol, k: Int ) : FOLTerm =
     if ( k == 0 ) FOLConst( a ) else Function( f, apply( a, f, k-1 )::Nil )
+
+  /** Construncts the FOLTerm f^k(a), where a can be FOLTerm, not just a string symbol.
+    */
+  def apply( a: FOLTerm, f: ConstantStringSymbol, k: Int ) : FOLTerm =
+    if ( k == 0 ) a else Function( f, apply( a, f, k-1 )::Nil )
 }
 
 // Workaround until there is a real FOLSubstitution

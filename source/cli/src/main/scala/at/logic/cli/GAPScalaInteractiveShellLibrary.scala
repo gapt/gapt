@@ -379,6 +379,10 @@ object printProofStats {
     def apply( n : Int) = at.logic.testing.SumOfOnesExampleProof( n )
   }
 
+  object SumOfOnesFExampleProof {
+    def apply( n : Int) = at.logic.testing.SumOfOnesFExampleProof( n )
+  }
+
 /*************************** Cut introduction algorithm **********************************/
 
   import at.logic.algorithms.cutIntroduction._
@@ -1081,6 +1085,7 @@ object printProofStats {
           |   SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
           |   LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation
           |   SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction
+          |   SumOfOnesFExampleProof: Int => LKProof - construct a variant the sum of ones example proof using a function f
           |
           | Visualization:
           |   prooftool: LKProof => Unit - visualize proof in prooftool
