@@ -1,0 +1,223 @@
+\documentclass[a4paper, 11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{alltt}
+\usepackage{multicol}
+
+\usepackage{bussproofs}
+
+\newcommand{\seq}{\vdash}
+\newcommand{\impl}{\supset}
+\renewcommand{\lnot}{\neg}
+\renewcommand{\land}{\wedge}
+\renewcommand{\lor}{\vee}
+
+% Using a report without chapters
+\renewcommand*\thesection{\arabic{section}}
+
+\newcommand{\mt}[1]{\textnormal{#1}}
+
+\newcommand{\UnaryInfCm}[1]{\UnaryInfC{$#1$}}
+\newcommand{\BinaryInfCm}[1]{\BinaryInfC{$#1$}}
+\newcommand{\RightLabelm}[1]{\RightLabel{$#1$}}
+\newcommand{\AxiomCm}[1]{\AxiomC{$#1$}}
+
+
+
+
+
+
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  frame=lines
+}
+
+\title{GAPT - Generic Architecture for Proof Transformations \\ \vspace{0.5cm}
+Calculi}
+
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This document summarizes the calculi used in GAPT and gives the mathematical definitions of their rules.
+
+\section{First-order LK}
+
+The rules of first-order LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. The constructing functions do perform sporadic checks, but in general, these do not guarantee well-formed proofs and the burden of correctness lies upon the programmer using them.
+
+\subsection*{Axioms}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Axiom})}
+\UnaryInfCm{\Gamma, A \seq \Delta, A}
+\end{prooftree}
+
+\subsection*{Cut}
+
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, A}
+	\AxiomCm{\Sigma, A \seq \Pi}
+	\RightLabelm{(\mt{cut})}
+	\BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi}
+	\end{prooftree}
+
+\subsection*{Structural rules}
+
+\begin{multicols}{2}
+
+	\subsubsection*{Left rules}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta}
+	\RightLabelm{(\mt{w:l})}
+	\UnaryInfCm{\Gamma, A \seq \Delta}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma, A, A \seq \Delta}
+	\RightLabelm{(\mt{c:l})}
+	\UnaryInfCm{\Gamma, A \seq \Delta}
+	\end{prooftree}
+	
+	\subsubsection*{Right rules}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta}
+	\RightLabelm{(\mt{w:r})}
+	\UnaryInfCm{\Gamma \seq \Delta, A}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, A, A}
+	\RightLabelm{(\mt{c:r})}
+	\UnaryInfCm{\Gamma \seq \Delta, A}
+	\end{prooftree}
+
+\end{multicols}
+
+\newpage
+
+\subsection*{Propositional rules}
+
+\begin{multicols}{2}
+
+	\subsubsection*{Left rules}
+
+	\begin{prooftree}
+	\AxiomCm{\Gamma, A \seq \Delta}
+	\RightLabelm{(\land\mt{l}_1)}
+	\UnaryInfCm{\Gamma, A \land B \seq \Delta}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma, B \seq \Delta}
+	\RightLabelm{(\land\mt{l}_2)}
+	\UnaryInfCm{\Gamma, A \land B \seq \Delta}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma, A \seq \Delta}
+	\AxiomCm{\Sigma, B \seq \Pi}
+	\RightLabelm{(\lor\mt{:l})}
+	\BinaryInfCm{\Gamma, \Sigma, A \lor B \seq \Delta, \Pi}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, A}
+	\RightLabelm{(\lnot\mt{:l})}
+	\UnaryInfCm{\Gamma, \neg A \seq \Delta}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, A}
+	\AxiomCm{\Sigma, B \seq \Pi}
+	\RightLabelm{(\impl\mt{:l})}
+	\BinaryInfCm{\Gamma, \Sigma, A \impl B \seq \Delta, \Pi}
+	\end{prooftree}
+
+	\subsubsection*{Right rules}
+
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, A}
+	\AxiomCm{\Sigma \seq \Pi, B}
+	\RightLabelm{(\land\mt{:r})}
+	\BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A \land B}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, A}
+	\RightLabelm{(\lor\mt{:r}_1)}
+	\UnaryInfCm{\Gamma \seq \Delta, A \lor B}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, B}
+	\RightLabelm{(\lor\mt{:r}_2)}
+	\UnaryInfCm{\Gamma \seq \Delta, A \lor B}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma, A\seq \Delta}
+	\RightLabelm{(\lnot\mt{:r})}
+	\UnaryInfCm{\Gamma \seq \Delta, \neg A}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma, A \seq B, \Delta}
+	\RightLabelm{(\impl\mt{:r})}
+	\UnaryInfCm{\Gamma \seq A \impl B, \Delta}
+	\end{prooftree}
+
+\end{multicols}
+
+
+
+
+\subsection*{Quantification roles}
+
+\begin{multicols}{2}
+
+	\subsubsection*{Left rules}
+
+	\begin{prooftree}
+	\AxiomCm{\Gamma, A[t/x] \seq \Delta}
+	\RightLabelm{(\forall\mt{:l})}
+	\UnaryInfCm{\Gamma, \forall x A \seq \Delta}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma, A[y/x] \seq \Delta}
+	\RightLabelm{(\exists\mt{:l})}
+	\UnaryInfCm{\Gamma, \exists x A \seq \Delta}
+	\end{prooftree}
+	
+	\subsubsection*{Right rules}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq A[y/x] \Delta}
+	\RightLabelm{(\forall\mt{:r})}
+	\UnaryInfCm{\Gamma \seq \forall x A, \Delta}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq A[t/x] \Delta}
+	\RightLabelm{(\exists\mt{:r})}
+	\UnaryInfCm{\Gamma \seq \exists x A, \Delta}
+	\end{prooftree}
+
+\end{multicols}
+
+
+
+
+
+
+
+\end{document}
