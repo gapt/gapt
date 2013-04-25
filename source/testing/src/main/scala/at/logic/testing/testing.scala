@@ -447,7 +447,9 @@ object SumOfOnesFExampleProof
 
   /** Performs a proof employing transitivity.
     *
-    * Takes a proof s2, which contains (x=z) and Trans, and extends it below, resulting in the sequent
+    * Takes a proof s2 with end-sequent of the form
+    * (x=z), Trans, ... |- ...
+    * and return one with end-sequent of the form
     * (x=y), (y=z), Trans, ... |- ...
     * @param x X
     * @param y Y
