@@ -1,0 +1,167 @@
+============================== Prover9 ===============================
+Prover9 (64) version 2009-11A, November 2009.
+Process 19714 was started by stefanhetzl on zei,
+Fri Apr 19 17:47:23 2013
+The command was "prover9".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+formulas(sos).
+x = x.
+f(x,e) = x.
+f(x,x) = e.
+f(f(x,y),z) = f(x,f(y,z)).
+f(a,b) != f(b,a).
+end_of_list.
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+x = x.  [assumption].
+f(x,e) = x.  [assumption].
+f(x,x) = e.  [assumption].
+f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+f(a,b) != f(b,a).  [assumption].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+No predicates eliminated.
+
+============================== end predicate elimination =============
+
+Auto_denials:  (no changes).
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ = ]).
+Function symbol precedence:  function_order([ e, a, b, f ]).
+After inverse_order:  (no changes).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+
+Auto_process settings:  (no changes).
+
+kept:      1 f(x,e) = x.  [assumption].
+kept:      2 f(x,x) = e.  [assumption].
+kept:      3 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+           4 f(a,b) != f(b,a).  [assumption].
+kept:      5 f(b,a) != f(a,b).  [copy(4),flip(a)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+1 f(x,e) = x.  [assumption].
+2 f(x,x) = e.  [assumption].
+3 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+5 f(b,a) != f(a,b).  [copy(4),flip(a)].
+end_of_list.
+
+formulas(demodulators).
+1 f(x,e) = x.  [assumption].
+2 f(x,x) = e.  [assumption].
+3 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.00 seconds.
+
+given #1 (I,wt=5): 1 f(x,e) = x.  [assumption].
+
+given #2 (I,wt=5): 2 f(x,x) = e.  [assumption].
+
+given #3 (I,wt=11): 3 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+
+given #4 (I,wt=7): 5 f(b,a) != f(a,b).  [copy(4),flip(a)].
+
+given #5 (A,wt=9): 6 f(x,f(e,y)) = f(x,y).  [para(1(a,1),3(a,1,1)),flip(a)].
+
+given #6 (T,wt=9): 7 f(x,f(y,f(x,y))) = e.  [para(3(a,1),2(a,1))].
+
+given #7 (T,wt=9): 8 f(e,x) = f(y,f(y,x)).  [para(2(a,1),3(a,1,1))].
+
+given #8 (T,wt=5): 11 f(e,x) = x.  [para(2(a,1),8(a,2,2)),rewrite([1(4)])].
+
+given #9 (T,wt=7): 15 f(x,f(x,y)) = y.  [para(8(a,1),6(a,1)),rewrite([11(2),11(4)])].
+
+given #10 (A,wt=13): 10 f(x,f(y,f(z,f(x,f(y,z))))) = e.  [para(7(a,1),3(a,1)),rewrite([3(3)]),flip(a)].
+
+given #11 (T,wt=7): 16 f(x,f(y,x)) = y.  [para(7(a,1),8(a,2,2)),rewrite([11(4),1(4)])].
+
+% Operation f is commutative; C redundancy checks enabled.
+
+============================== PROOF =================================
+
+% Proof 1 at 0.00 (+ 0.00) seconds.
+% Length of proof is 13.
+% Level of proof is 5.
+% Maximum clause weight is 11.000.
+% Given clauses 11.
+
+1 f(x,e) = x.  [assumption].
+2 f(x,x) = e.  [assumption].
+3 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+4 f(a,b) != f(b,a).  [assumption].
+5 f(b,a) != f(a,b).  [copy(4),flip(a)].
+6 f(x,f(e,y)) = f(x,y).  [para(1(a,1),3(a,1,1)),flip(a)].
+7 f(x,f(y,f(x,y))) = e.  [para(3(a,1),2(a,1))].
+8 f(e,x) = f(y,f(y,x)).  [para(2(a,1),3(a,1,1))].
+11 f(e,x) = x.  [para(2(a,1),8(a,2,2)),rewrite([1(4)])].
+15 f(x,f(x,y)) = y.  [para(8(a,1),6(a,1)),rewrite([11(2),11(4)])].
+16 f(x,f(y,x)) = y.  [para(7(a,1),8(a,2,2)),rewrite([11(4),1(4)])].
+22 f(x,y) = f(y,x).  [para(16(a,1),15(a,1,2))].
+23 $F.  [resolve(22,a,5,a)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=11. Generated=148. Kept=21. proofs=1.
+Usable=7. Sos=4. Demods=12. Limbo=2, Disabled=12. Hints=0.
+Kept_by_rule=0, Deleted_by_rule=0.
+Forward_subsumed=127. Back_subsumed=1.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=17 (0 lex), Back_demodulated=6. Back_unit_deleted=0.
+Demod_attempts=1062. Demod_rewrites=279.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=0. Nonunit_bsub_feature_tests=0.
+Megabytes=0.05.
+User_CPU=0.00, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 19714 exit (max_proofs) Fri Apr 19 17:47:23 2013

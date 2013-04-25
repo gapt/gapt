@@ -1,0 +1,288 @@
+============================== Prover9 ===============================
+Prover9 (64) version 2009-11A, November 2009.
+Process 18188 was started by stefanhetzl on zei,
+Fri Apr 19 17:00:22 2013
+The command was "prover9".
+============================== end of head ===========================
+
+============================== INPUT =================================
+assign(max_proofs,2).
+assign(max_seconds,60).
+
+formulas(sos).
+x = x.
+f(x,e) = x.
+f(x,i(x)) = e.
+f(x,x) = e.
+f(f(x,y),z) = f(x,f(y,z)).
+f(a,b) != f(b,a).
+end_of_list.
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+x = x.  [assumption].
+f(x,e) = x.  [assumption].
+f(x,i(x)) = e.  [assumption].
+f(x,x) = e.  [assumption].
+f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+f(a,b) != f(b,a).  [assumption].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+No predicates eliminated.
+
+============================== end predicate elimination =============
+
+Auto_denials:  (no changes).
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ = ]).
+Function symbol precedence:  function_order([ e, a, b, f, i ]).
+After inverse_order: Function symbol precedence:  function_order([ e, a, b, f, i ]).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+
+Auto_process settings:  (no changes).
+
+kept:      1 f(x,e) = x.  [assumption].
+kept:      2 f(x,i(x)) = e.  [assumption].
+kept:      3 f(x,x) = e.  [assumption].
+kept:      4 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+           5 f(a,b) != f(b,a).  [assumption].
+kept:      6 f(b,a) != f(a,b).  [copy(5),flip(a)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+1 f(x,e) = x.  [assumption].
+2 f(x,i(x)) = e.  [assumption].
+3 f(x,x) = e.  [assumption].
+4 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+6 f(b,a) != f(a,b).  [copy(5),flip(a)].
+end_of_list.
+
+formulas(demodulators).
+1 f(x,e) = x.  [assumption].
+2 f(x,i(x)) = e.  [assumption].
+3 f(x,x) = e.  [assumption].
+4 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.00 seconds.
+
+given #1 (I,wt=5): 1 f(x,e) = x.  [assumption].
+
+given #2 (I,wt=6): 2 f(x,i(x)) = e.  [assumption].
+
+given #3 (I,wt=5): 3 f(x,x) = e.  [assumption].
+
+given #4 (I,wt=11): 4 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+
+given #5 (I,wt=7): 6 f(b,a) != f(a,b).  [copy(5),flip(a)].
+
+given #6 (A,wt=9): 7 f(x,f(e,y)) = f(x,y).  [para(1(a,1),4(a,1,1)),flip(a)].
+
+given #7 (T,wt=6): 12 f(x,i(e)) = x.  [para(2(a,1),7(a,1,2)),rewrite([1(2)]),flip(a)].
+
+given #8 (T,wt=4): 13 i(e) = e.  [para(12(a,1),3(a,1))].
+
+given #9 (T,wt=9): 10 f(x,f(y,f(x,y))) = e.  [para(4(a,1),3(a,1))].
+
+given #10 (T,wt=9): 11 f(e,x) = f(y,f(y,x)).  [para(3(a,1),4(a,1,1))].
+
+given #11 (A,wt=13): 15 f(x,f(y,f(z,f(x,f(y,z))))) = e.  [para(10(a,1),4(a,1)),rewrite([4(3)]),flip(a)].
+
+given #12 (T,wt=4): 23 i(x) = x.  [back_rewrite(16),rewrite([17(3)])].
+
+given #13 (T,wt=5): 17 f(e,x) = x.  [para(3(a,1),11(a,2,2)),rewrite([1(4)])].
+
+given #14 (T,wt=7): 21 f(x,f(x,y)) = y.  [para(11(a,1),7(a,1)),rewrite([17(2),17(4)])].
+
+given #15 (T,wt=7): 22 f(x,f(y,x)) = y.  [para(10(a,1),11(a,2,2)),rewrite([17(4),1(4)])].
+
+% Operation f is commutative; C redundancy checks enabled.
+
+============================== PROOF =================================
+
+% Proof 1 at 0.00 (+ 0.00) seconds.
+% Length of proof is 13.
+% Level of proof is 5.
+% Maximum clause weight is 11.000.
+% Given clauses 15.
+
+1 f(x,e) = x.  [assumption].
+3 f(x,x) = e.  [assumption].
+4 f(f(x,y),z) = f(x,f(y,z)).  [assumption].
+5 f(a,b) != f(b,a).  [assumption].
+6 f(b,a) != f(a,b).  [copy(5),flip(a)].
+7 f(x,f(e,y)) = f(x,y).  [para(1(a,1),4(a,1,1)),flip(a)].
+10 f(x,f(y,f(x,y))) = e.  [para(4(a,1),3(a,1))].
+11 f(e,x) = f(y,f(y,x)).  [para(3(a,1),4(a,1,1))].
+17 f(e,x) = x.  [para(3(a,1),11(a,2,2)),rewrite([1(4)])].
+21 f(x,f(x,y)) = y.  [para(11(a,1),7(a,1)),rewrite([17(2),17(4)])].
+22 f(x,f(y,x)) = y.  [para(10(a,1),11(a,2,2)),rewrite([17(4),1(4)])].
+29 f(x,y) = f(y,x).  [para(22(a,1),21(a,1,2))].
+30 $F.  [resolve(29,a,6,a)].
+
+============================== end of proof ==========================
+% Redundant proof: 31 $F.  [back_rewrite(6),rewrite([29(3)]),xx(a)].
+
+% Disable descendants (x means already disabled):
+ 5x 6x
+
+given #16 (A,wt=15): 24 f(x,f(y,f(z,f(x,f(y,f(z,u)))))) = u.  [para(15(a,1),4(a,1,1)),rewrite([17(2),4(5),4(4),4(3),4(2)]),flip(a)].
+
+given #17 (T,wt=7): 29 f(x,y) = f(y,x).  [para(22(a,1),21(a,1,2))].
+
+% Operation f is associative-commutative; CAC redundancy checks enabled.
+
+given #18 (T,wt=11): 27 f(x,f(y,f(x,z))) = f(y,z).  [para(22(a,1),4(a,1,1)),rewrite([4(3)]),flip(a)].
+
+given #19 (T,wt=11): 28 f(x,f(y,f(z,x))) = f(y,z).  [para(4(a,1),22(a,1,2))].
+
+given #20 (T,wt=11): 35 f(x,f(y,z)) = f(y,f(x,z)).  [para(29(a,1),4(a,1,1)),rewrite([4(2)])].
+
+given #21 (A,wt=19): 32 f(x,f(y,f(z,f(u,f(x,f(y,f(z,f(u,w)))))))) = w.  [para(24(a,1),4(a,1)),rewrite([4(4)]),flip(a)].
+
+given #22 (T,wt=15): 36 f(x,f(y,f(z,f(x,u)))) = f(y,f(z,u)).  [para(4(a,1),27(a,1,2)),rewrite([4(6)])].
+
+given #23 (T,wt=15): 38 f(x,f(y,f(z,f(u,x)))) = f(y,f(z,u)).  [para(4(a,1),28(a,1,2,2))].
+
+given #24 (T,wt=19): 45 f(x,f(y,f(z,f(u,f(x,w))))) = f(y,f(z,f(u,w))).  [para(4(a,1),36(a,1,2,2)),rewrite([4(7)])].
+
+given #25 (T,wt=19): 47 f(x,f(y,f(z,f(u,f(w,x))))) = f(y,f(z,f(u,w))).  [para(4(a,1),38(a,1,2,2,2))].
+
+given #26 (A,wt=23): 50 f(x,f(y,f(z,f(u,f(w,f(x,v5)))))) = f(y,f(z,f(u,f(w,v5)))).  [para(4(a,1),45(a,1,2,2,2)),rewrite([4(8)])].
+
+given #27 (T,wt=23): 52 f(x,f(y,f(z,f(u,f(w,f(v5,x)))))) = f(y,f(z,f(u,f(w,v5)))).  [para(45(a,1),38(a,2,2)),rewrite([4(5),4(4),4(3),4(2),45(6)])].
+
+given #28 (T,wt=27): 56 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,x))))))) = f(y,f(z,f(u,f(w,f(v5,v6))))).  [para(45(a,1),47(a,2,2,2)),rewrite([4(5),4(4),4(3),4(2),45(6)])].
+
+given #29 (T,wt=27): 59 f(x,f(y,f(z,f(u,f(w,f(v5,f(x,v6))))))) = f(y,f(z,f(u,f(w,f(v5,v6))))).  [para(4(a,1),50(a,1,2,2,2,2)),rewrite([4(9)])].
+
+given #30 (T,wt=31): 61 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,x)))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,v7)))))).  [para(50(a,1),47(a,2,2,2)),rewrite([4(6),4(5),4(4),4(3),4(2),50(7)])].
+
+given #31 (A,wt=35): 65 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,x))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,v8))))))).  [para(50(a,1),52(a,2,2,2,2)),rewrite([4(6),4(5),4(4),4(3),4(2),50(7)])].
+
+given #32 (T,wt=31): 67 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(x,v7)))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,v7)))))).  [para(56(a,1),4(a,1,1)),rewrite([4(6),4(5),4(4),4(3),4(2),4(13),4(12),4(11),4(10),4(9),4(8)]),flip(a)].
+
+given #33 (T,wt=35): 77 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(x,v8))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,v8))))))).  [para(61(a,1),4(a,1,1)),rewrite([4(7),4(6),4(5),4(4),4(3),4(2),4(15),4(14),4(13),4(12),4(11),4(10),4(9)]),flip(a)].
+
+given #34 (T,wt=39): 71 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,x)))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,v9)))))))).  [para(50(a,1),56(a,2,2,2,2,2)),rewrite([4(6),4(5),4(4),4(3),4(2),50(7)])].
+
+given #35 (T,wt=39): 87 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(x,v9)))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,v9)))))))).  [para(65(a,1),4(a,1,1)),rewrite([4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10)]),flip(a)].
+
+given #36 (A,wt=43): 76 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,x))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,v10))))))))).  [para(56(a,1),56(a,2,2,2,2,2)),rewrite([4(7),4(6),4(5),4(4),4(3),4(2),67(8)])].
+
+given #37 (T,wt=43): 97 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(x,v10))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,v10))))))))).  [para(71(a,1),4(a,1,1)),rewrite([4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(19),4(18),4(17),4(16),4(15),4(14),4(13),4(12),4(11)]),flip(a)].
+
+given #38 (T,wt=47): 82 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,x)))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,v11)))))))))).  [para(61(a,1),56(a,2,2,2,2,2)),rewrite([4(8),4(7),4(6),4(5),4(4),4(3),4(2),77(9)])].
+
+given #39 (T,wt=47): 107 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(x,v11)))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,v11)))))))))).  [para(76(a,1),4(a,1,1)),rewrite([4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(21),4(20),4(19),4(18),4(17),4(16),4(15),4(14),4(13),4(12)]),flip(a)].
+
+given #40 (T,wt=51): 86 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,x))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,v12))))))))))).  [para(61(a,1),61(a,2,2,2,2,2,2)),rewrite([4(8),4(7),4(6),4(5),4(4),4(3),4(2),77(9)])].
+
+given #41 (A,wt=55): 92 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,x)))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,v13)))))))))))).  [para(65(a,1),61(a,2,2,2,2,2,2)),rewrite([4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),87(10)])].
+
+given #42 (T,wt=51): 117 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(x,v12))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,v12))))))))))).  [para(82(a,1),4(a,1,1)),rewrite([4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(23),4(22),4(21),4(20),4(19),4(18),4(17),4(16),4(15),4(14),4(13)]),flip(a)].
+
+given #43 (T,wt=55): 127 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(x,v13)))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,v13)))))))))))).  [para(86(a,1),4(a,1,1)),rewrite([4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(25),4(24),4(23),4(22),4(21),4(20),4(19),4(18),4(17),4(16),4(15),4(14)]),flip(a)].
+
+given #44 (T,wt=59): 96 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,x))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,v14))))))))))))).  [para(65(a,1),65(a,2,2,2,2,2,2,2)),rewrite([4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),87(10)])].
+
+given #45 (T,wt=59): 137 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(x,v14))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,v14))))))))))))).  [para(92(a,1),4(a,1,1)),rewrite([4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(27),4(26),4(25),4(24),4(23),4(22),4(21),4(20),4(19),4(18),4(17),4(16),4(15)]),flip(a)].
+
+given #46 (A,wt=63): 102 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,x)))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,v15)))))))))))))).  [para(71(a,1),65(a,2,2,2,2,2,2,2)),rewrite([4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),97(11)])].
+
+given #47 (T,wt=63): 146 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(x,v15)))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,v15)))))))))))))).  [para(96(a,1),4(a,1,1)),rewrite([4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(29),4(28),4(27),4(26),4(25),4(24),4(23),4(22),4(21),4(20),4(19),4(18),4(17),4(16)]),flip(a)].
+
+given #48 (T,wt=67): 106 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,x))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,v16))))))))))))))).  [para(71(a,1),71(a,2,2,2,2,2,2,2,2)),rewrite([4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),97(11)])].
+
+given #49 (T,wt=67): 147 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(x,v16))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,v16))))))))))))))).  [para(102(a,1),4(a,1,1)),rewrite([4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24),4(23),4(22),4(21),4(20),4(19),4(18),4(17)]),flip(a)].
+
+given #50 (T,wt=71): 112 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,x)))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,v17)))))))))))))))).  [para(76(a,1),71(a,2,2,2,2,2,2,2,2)),rewrite([4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),107(12)])].
+
+given #51 (A,wt=75): 116 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,x))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,v18))))))))))))))))).  [para(76(a,1),76(a,2,2,2,2,2,2,2,2,2)),rewrite([4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),107(12)])].
+
+given #52 (T,wt=71): 148 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(x,v17)))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,v17)))))))))))))))).  [para(106(a,1),4(a,1,1)),rewrite([4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24),4(23),4(22),4(21),4(20),4(19),4(18)]),flip(a)].
+
+given #53 (T,wt=75): 149 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(x,v18))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,v18))))))))))))))))).  [para(112(a,1),4(a,1,1)),rewrite([4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(35),4(34),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24),4(23),4(22),4(21),4(20),4(19)]),flip(a)].
+
+given #54 (T,wt=79): 122 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,x)))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,v19)))))))))))))))))).  [para(82(a,1),76(a,2,2,2,2,2,2,2,2,2)),rewrite([4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),117(13)])].
+
+given #55 (T,wt=79): 150 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(x,v19)))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,v19)))))))))))))))))).  [para(116(a,1),4(a,1,1)),rewrite([4(18),4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(37),4(36),4(35),4(34),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24),4(23),4(22),4(21),4(20)]),flip(a)].
+
+given #56 (A,wt=83): 126 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,x))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,v20))))))))))))))))))).  [para(82(a,1),82(a,2,2,2,2,2,2,2,2,2,2)),rewrite([4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),117(13)])].
+
+given #57 (T,wt=83): 151 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(x,v20))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,v20))))))))))))))))))).  [para(122(a,1),4(a,1,1)),rewrite([4(19),4(18),4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(39),4(38),4(37),4(36),4(35),4(34),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24),4(23),4(22),4(21)]),flip(a)].
+
+given #58 (T,wt=87): 132 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,x)))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,v21)))))))))))))))))))).  [para(86(a,1),82(a,2,2,2,2,2,2,2,2,2,2)),rewrite([4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),127(14)])].
+
+given #59 (T,wt=87): 152 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(x,v21)))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,v21)))))))))))))))))))).  [para(126(a,1),4(a,1,1)),rewrite([4(20),4(19),4(18),4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(41),4(40),4(39),4(38),4(37),4(36),4(35),4(34),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24),4(23),4(22)]),flip(a)].
+
+given #60 (T,wt=91): 136 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,x))))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,v22))))))))))))))))))))).  [para(86(a,1),86(a,2,2,2,2,2,2,2,2,2,2,2)),rewrite([4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),127(14)])].
+
+given #61 (A,wt=95): 142 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,f(v23,x)))))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,v23)))))))))))))))))))))).  [para(92(a,1),86(a,2,2,2,2,2,2,2,2,2,2,2)),rewrite([4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),137(15)])].
+
+given #62 (T,wt=91): 153 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(x,v22))))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,v22))))))))))))))))))))).  [para(132(a,1),4(a,1,1)),rewrite([4(21),4(20),4(19),4(18),4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(43),4(42),4(41),4(40),4(39),4(38),4(37),4(36),4(35),4(34),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24),4(23)]),flip(a)].
+
+given #63 (T,wt=95): 154 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,f(x,v23)))))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,v23)))))))))))))))))))))).  [para(136(a,1),4(a,1,1)),rewrite([4(22),4(21),4(20),4(19),4(18),4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(45),4(44),4(43),4(42),4(41),4(40),4(39),4(38),4(37),4(36),4(35),4(34),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25),4(24)]),flip(a)].
+
+given #64 (T,wt=99): 145 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,f(v23,f(v24,x))))))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,f(v23,v24))))))))))))))))))))))).  [para(92(a,1),92(a,2,2,2,2,2,2,2,2,2,2,2,2)),rewrite([4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),137(15)])].
+
+given #65 (T,wt=99): 155 f(x,f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,f(v23,f(x,v24))))))))))))))))))))))))) = f(y,f(z,f(u,f(w,f(v5,f(v6,f(v7,f(v8,f(v9,f(v10,f(v11,f(v12,f(v13,f(v14,f(v15,f(v16,f(v17,f(v18,f(v19,f(v20,f(v21,f(v22,f(v23,v24))))))))))))))))))))))).  [para(142(a,1),4(a,1,1)),rewrite([4(23),4(22),4(21),4(20),4(19),4(18),4(17),4(16),4(15),4(14),4(13),4(12),4(11),4(10),4(9),4(8),4(7),4(6),4(5),4(4),4(3),4(2),4(47),4(46),4(45),4(44),4(43),4(42),4(41),4(40),4(39),4(38),4(37),4(36),4(35),4(34),4(33),4(32),4(31),4(30),4(29),4(28),4(27),4(26),4(25)]),flip(a)].
+
+============================== STATISTICS ============================
+
+Given=65. Generated=63865. Kept=152. proofs=1.
+Usable=55. Sos=0. Demods=55. Limbo=0, Disabled=103. Hints=0.
+Kept_by_rule=0, Deleted_by_rule=8776.
+Forward_subsumed=54936. Back_subsumed=2.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=80 (2 lex), Back_demodulated=95. Back_unit_deleted=0.
+Demod_attempts=5438243. Demod_rewrites=444835.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=0. Nonunit_bsub_feature_tests=0.
+Megabytes=0.50.
+User_CPU=10.31, System_CPU=0.02, Wall_clock=10.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+SEARCH FAILED
+
+Exiting with 1 proof.
+
+Process 18188 exit (sos_empty) Fri Apr 19 17:00:32 2013

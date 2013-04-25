@@ -1,0 +1,7 @@
+formulas(sos).
+ x=x.
+ f(x,e) = x.
+ f(x,x) = e.
+ f(f(x,y),z) = f(x,f(y,z)).
+ f(a,b) != f(b,a).
+end_of_list.

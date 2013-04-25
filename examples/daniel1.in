@@ -1,0 +1,17 @@
+set(prolog_style_variables).
+
+formulas(assumptions).
+tptp2(tptp2(A,B),C) = tptp2(A,tptp2(B,C)) # label(sos) # label(axiom).
+tptp2(A,tptp3) = A # label(sos) # label(axiom).
+tptp2(A,tptp4(A)) = tptp3 # label(sos) # label(axiom).
+tptp2(A,B) = tptp2(B,A) # label(sos) # label(axiom).
+tptp1(tptp1(A,B),C) = tptp1(A,tptp1(B,C)) # label(sos) # label(axiom).
+tptp1(A,tptp2(B,C)) = tptp2(tptp1(A,B),tptp1(A,C)) # label(sos) # label(axiom).
+tptp1(tptp2(A,B),C) = tptp2(tptp1(A,C),tptp1(B,C)) # label(sos) # label(axiom).
+tptp1(A,tptp0) = A # label(sos) # label(axiom).
+tptp1(c,A) != c | A = tptp0 # label(sos) # label(axiom).
+end_of_list.
+
+formulas(goals).
+(all X0 tptp1(tptp0,X0) = X0) # label(goals) # label(conjecture).
+end_of_list.
