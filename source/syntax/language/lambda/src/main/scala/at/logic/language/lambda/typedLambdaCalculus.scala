@@ -7,15 +7,16 @@ package at.logic.language.lambda
 
 import symbols._
 import symbols.ImplicitConverters._
-import scala.collection.immutable.HashSet
+import scala.collection.immutable
 import scala.collection.mutable.Map
 import types._
 
 package typedLambdaCalculus {
 
 import io.BytePickle.Def
+import at.logic.language.lambda.substitutions.Substitution
 
-  trait LambdaFactoryProvider {
+trait LambdaFactoryProvider {
     def factory : LambdaFactoryA = LambdaFactory
   }
 
@@ -25,9 +26,9 @@ import io.BytePickle.Def
     def syntaxEquals(e: LambdaExpression): Boolean
     def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
     private def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
-      case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (HashSet(v), new HashSet())
-      case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new HashSet(), HashSet(v))
-      case v: Var => (new HashSet(), new HashSet())// not variables (constants in this case)
+      case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (immutable.HashSet(v), new immutable.HashSet())
+      case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new immutable.HashSet(), immutable.HashSet(v))
+      case v: Var => (new immutable.HashSet(), new immutable.HashSet())// not variables (constants in this case)
       case App(exp, arg) => {
         val mFBV = exp.getFreeAndBoundVariables()
         val nFBV = arg.getFreeAndBoundVariables()
@@ -50,9 +51,15 @@ import io.BytePickle.Def
     def cloneTerm: LambdaExpression
   }
 
+
+  /* Superclass for Variable Generators -- usually we want fresh variables, so at some point we will need to have a
+   * unified mechanism to prevent generation of existing vars. If this is done by handing a blacklist or a central
+   * repository is not yet decided. */
+  abstract class VariableGenerator extends (Var => Var)
+
   // Var must have as symbol VariableStringSymbol (if new symbols are added the definition of how to
   // create a variant from them should be defined here
-  class VariantGenerator(id: {def nextId: Int}, varName: String) extends (Var => Var) {
+  class VariantGenerator(id: {def nextId: Int}, varName: String) extends VariableGenerator {
     val varsMap = Map[Var, Var]()
     def apply(a: Var) = varsMap.getOrElseUpdate(a,updateVal(a))
     private def updateVal(a: Var) = a.name match {
@@ -61,7 +68,39 @@ import io.BytePickle.Def
       }
     }
   }
-  
+
+/* Normalizes Lambdaterms by renaming bound variables after a given pattern */
+object Normalization {
+  /* Normalize lambda term f by generating fresh variables "pattern"_{i} beginning with index "start".
+   * The set blacklist optionally conatains other forbidden variable names.
+   *
+   * returns: a pair of normalized expression and highest index used */
+  def apply[T <: LambdaExpression](f : T, start : Int,
+                                   pattern : String, blacklist : immutable.Set[String] = immutable.HashSet[String]() ) : (T,Int) = {
+    val gen = new {var x=start; def nextId = {x=x+1;x} }
+    val vg = new VariantGenerator(gen, pattern)
+    //TODO: add names from f to blacklist
+    (normalize_(f,vg, blacklist)._1 , gen.x)
+  }
+
+  private def normalize_[T <: LambdaExpression](f : T, gen: => VariableGenerator, bl : immutable.Set[String])
+   : (T, VariableGenerator, immutable.Set[String]) = f match {
+    case Var(name, exptype) => (f, gen, bl)
+    case App(s, t) =>
+      val (s_, g1, bl1) = normalize_(s,gen, bl)
+      val (t_, g2, bl2) = normalize_(t,g1,bl1)
+      (s.factory.createApp(s_, t_).asInstanceOf[T], g2, bl2)
+    case Abs(x, s) =>
+      var x_ =  gen(x)
+      while (bl.contains(x_.name.toString)) { x_ = gen(x) } //make sure the new variable is really fresh
+      val sub = Substitution[LambdaExpression]((x, x_))
+      val (s_, g1, bl1) = normalize_(sub(s).asInstanceOf[T], gen, bl + x_.name.toString)
+      (s.factory.createAbs(x_, s_).asInstanceOf[T], g1, bl1)
+    case _ => throw new Exception("Unhandled expression type in variable normalization!")
+  }
+}
+
+
   trait LambdaFactoryA {
     def createVar( name: SymbolA, exptype: TA ): Var = createVar(name, exptype, None)
     def createVar( name: SymbolA, exptype: TA, dbInd: Option[Int]) : Var
@@ -141,7 +180,7 @@ import io.BytePickle.Def
 
   object doesNotContainFreeBound {
     def apply( e: LambdaExpression ) : Boolean = {
-      val ret = doesNotContainFreeBound( e, new HashSet[Var] )
+      val ret = doesNotContainFreeBound( e, new immutable.HashSet[Var] )
       if (!ret)
         println(e + " contains a free bound variable!")
       ret
