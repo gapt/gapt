@@ -11,7 +11,7 @@ import at.logic.calculi.lk.base.{types, Sequent}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, IntegerTerm, IntVar, IntConst, IntZero, Succ}
+import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, indexedOmegaVar, IntegerTerm, IntVar, IntConst, IntZero, Succ}
 import at.logic.transformations.ceres.struct.ClauseSetSymbol
 import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
 import scala.collection.immutable.Seq
@@ -168,17 +168,21 @@ object DrawSequent {
         "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
       else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
     case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index) + "}"
+    case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString(vi.index) + "}"
     case Var(name, _) => if (name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
       val cl = name.asInstanceOf[ClauseSetSymbol]
       "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
         cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
     } else if (t.asInstanceOf[Var].isBound) "z_{" + t.asInstanceOf[Var].dbIndex.get + "}" // This line is added for debugging reasons!!!
       else name.toString()
-    case Function(name, args, _) =>
+    case Function(name, args, _) => {
+      if (name.toString() == "EXP")
+        return args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
       if (args.size == 1) parseNestedUnaryFunction(name.toString(), args.head, 1)
       else if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
         "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
       else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
+    }
     case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(s) + ")"
   }
 
