@@ -14,17 +14,36 @@ export JAVA_OPTS="-Xss20m -Xmx2g"
 export OLDIFS="$IFS"
 export IFS=":"
 #echo $POSSIBLE_PATHS
+export CALL_RESET="yes"
+export FORCE_DEVEL="no"
 
-if test _$1_ = _-h_ -o _$1_ = _--help_ ; then
-  echo "GAPT Command Line Interface"
-  echo "  searches the path and current directory for a release or development version of the "
-  echo "  GAPT jar and executes it."
-  echo ""
-  echo "usage: cli.sh [-d]"
-  echo ""
-  echo "   -d : prefer development version over release version"
-  exit 1
-fi
+
+while getopts dn FLAG; do
+  case $FLAG in
+    d)
+      echo "forcing development version!" 
+      export FORCE_DEVEL="yes"
+      ;;
+    n)
+      export CALL_RESET="no"
+      ;;
+    h)
+      echo "GAPT Command Line Interface"
+      echo "  searches the path and current directory for a release or development version of the "
+      echo "  GAPT jar and executes it."
+      echo ""
+      echo "usage: cli.sh [-d|-n]"
+      echo ""
+      echo "   -d : prefer development version over release version"
+      echo "   -n : do not call 'reset' after exiting (helps with debugging but the terminal will not print characters typed)"
+      exit 1
+      ;;
+  esac
+done
+
+shift $(( OPTIND - 1 ));
+
+
 
 # look for java
 
@@ -71,9 +90,9 @@ done
 
 export IFS=$OLDIFS
 
-if test _$1_ = _-d_ ; then echo "forcing development version!" ; fi
+#if test _$1_ = _-d_ ; then echo "forcing development version!" ; fi
 
-if test "_${RCP}_" = __ -o _$1_ = _-d_ ; then 
+if test "_${RCP}_" = __ -o $FORCE_DEVEL = "yes" ; then 
 if test "_${SCP}_" = __ ; then 
     echo "Could not find ${JARNAME} nor ${RELEASE} in path or current directory!"
 else
@@ -87,7 +106,9 @@ else
 fi
 
 # workaround because jline somehow mixes up the terminal
-#reset
+if test $CALL_RESET = yes; then
+    reset
+fi
 
 
 
