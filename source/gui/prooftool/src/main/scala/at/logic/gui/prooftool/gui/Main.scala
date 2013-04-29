@@ -872,6 +872,86 @@ object Main extends SimpleSwingApplication {
         body.contents = new Launcher(Some(("Expansion Tree", et)), 12)
         ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
+      contents += new MenuItem(Action("Tape Expansion Tree") { // A hack just to get a picture for the paper.
+        import at.logic.language.lambda.types.Definitions._
+        import at.logic.language.lambda.symbols.ImplicitConverters._
+        import at.logic.language.hol._
+        import at.logic.calculi.expansionTrees.{WeakQuantifier, And => AndET, Atom => AtomET}
+        val eq = HOLVar("=", i -> (i -> o))
+        // val leq = HOLVar("<=", i -> (i -> o))
+        // val max = HOLVar("max", i -> (i -> i))
+        val zero = HOLVar("0", i)
+        val O = HOLVar("O", i)
+        val I = HOLVar("I", i)
+        val f = HOLVar("f", i -> i)
+        val s = HOLVar("s", i -> i)
+        val x = HOLVar("x", i)
+        val y = HOLVar("y", i)
+        val j = HOLVar("j", i)
+
+	val sx = Function(s, x::Nil) // s(x)
+	val sy = Function(s, y::Nil) // s(y)
+	// val m = Function(max, x::y::Nil) // max(x,y)
+        val one = Function(s, zero::Nil) // s(0)
+        val two = Function(s, one::Nil) // s(s(0))
+
+        val fx = Function(f, x::Nil) // f(x)
+        val fy = Function(f, y::Nil) // f(y)
+	val f0 = Function(f, zero::Nil) // f(0)
+        val f1 = Function(f, one::Nil) // f(s(0))
+        val f2 = Function(f, two::Nil) // f(s(s(0)))
+
+        val eqfx0 = Atom(eq, fx::O::Nil) // f(x) = 0
+        val eqfx1 = Atom(eq, fx::I::Nil) // f(x) = 1
+
+	// val leqxm = Atom(leq, x::m::Nil) // x <= max(x,y)
+	// val leqym = Atom(leq, y::m::Nil) // y <= max(x,y)
+	// val leqsxy = Atom(leq, sx::y::Nil) // s(x) <= y
+	val eq0sx = Atom(eq, zero::sx::Nil) // 0 = s(x)
+        val eqsxsy = Atom(eq, sx::sy::Nil) // s(x) = s(y)
+
+        val eq0y = Atom(eq, x::one::Nil) // 0 = y
+        val eq1y = Atom(eq, x::two::Nil) // 1 = y
+        val eqxy = Atom(eq, x::y::Nil) // x = y
+        val eq01 = Atom(eq, zero::one::Nil) // 0 = 1
+        val eq02 = Atom(eq, zero::two::Nil) // 0 = 2
+        val eq12 = Atom(eq, one::two::Nil) // 1 = 2
+
+        val eqf0fy = Atom(eq, f0::fy::Nil) // f(0) = f(y)
+        val eqf1fy = Atom(eq, f1::fy::Nil) // f(1) = f(y)
+        val eqfxfy = Atom(eq, fx::fy::Nil) // f(x) = f(y)
+        val eqfxj = Atom(eq, fx::j::Nil) // f(x) = j
+        val eqfyj = Atom(eq, fy::j::Nil) // f(x) = j
+        val eqf0f1 = Atom(eq, f0::f1::Nil) // f(0) = f(1)
+        val eqf0f2 = Atom(eq, f0::f2::Nil) // f(0) = f(2)
+        val eqf1f2 = Atom(eq, f1::f2::Nil) // f(1) = f(2)
+
+	val lhs = AtomET(AllVar(x, Or(eqfx0, eqfx1))) // all x (f(x) = 0 or f(x) = 1)
+	// val lhs4 = AtomET(AllVar(x, AllVar(y, leqxm))) // all x,y (x <= max(x,y))	
+	// val lhs2 = AtomET(AllVar(x, AllVar(y, leqym))) // all x,y (y <= max(x,y))	
+	// val lhs3 = AtomET(AllVar(x, AllVar(y, Imp(leqsxy, Neg(eqxy)) ))) // all x,y (s(x) <= y impl - x = y)
+	val lhs1 = AtomET(AllVar(j, AllVar(x, AllVar(y, Imp(And(eqfxj, eqfyj), eqfxfy))))) // all j,x,y ((f(x) = j and f(y) = j) impl f(x) = f(y))	
+	val lhs2 = AtomET(AllVar(x, Neg(eq0sx))) // all x (- 0 = s(x))	
+	val lhs3 = AtomET(AllVar(x, AllVar(y, Imp(eqsxsy, eqxy) ))) // all x,y (s(x) = s(y) impl x = y)
+
+
+	val and1 = And(Neg(eq01), eqf0f1)
+	val and2 = And(Neg(eq02), eqf0f2)
+	val and3 = And(Neg(eq12), eqf1f2)
+
+        val all1 = ExVar(y, And(Neg(eq0y), eqf0fy))
+        val all2 = ExVar(y, And(Neg(eq1y), eqf1fy))
+        val all3 = ExVar(x, ExVar(y, And(Neg(eqxy), eqfxfy)))
+
+	val et1 = new WeakQuantifier(all1, Seq((AtomET(and1), one), (AtomET(and2), two)))
+	val et2 = new WeakQuantifier(all2, Seq((AtomET(and3), two)))
+	val rhs = new WeakQuantifier(all3, Seq((et1, zero), (et2, one)))
+
+        val et = (Seq(lhs, lhs1, lhs2, lhs3),Seq(rhs))
+
+        body.contents = new Launcher(Some(("Expansion Tree", et)), 12)
+        ProofToolPublisher.publish(EnableMenus)
+      }) { border = customBorder }
     }
   }
 

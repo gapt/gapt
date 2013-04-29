@@ -175,14 +175,13 @@ object DrawSequent {
         cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
     } else if (t.asInstanceOf[Var].isBound) "z_{" + t.asInstanceOf[Var].dbIndex.get + "}" // This line is added for debugging reasons!!!
       else name.toString()
-    case Function(name, args, _) => {
+    case Function(name, args, _) =>
       if (name.toString() == "EXP")
-        return args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
-      if (args.size == 1) parseNestedUnaryFunction(name.toString(), args.head, 1)
+        args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
+      else if (args.size == 1) parseNestedUnaryFunction(name.toString(), args.head, 1)
       else if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
         "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
       else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
-    }
     case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(s) + ")"
   }
 
