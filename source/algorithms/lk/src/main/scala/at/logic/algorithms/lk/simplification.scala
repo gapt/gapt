@@ -9,7 +9,6 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
 import scala.collection.mutable.Map
 import at.logic.language.lambda.typedLambdaCalculus.Var
-import at.logic.algorithms.normalization.TermNormalizer
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.types._
 
@@ -78,15 +77,18 @@ package simplification {
     def apply(sequents: List[FSequent]): List[FSequent] = {
       (sequents.foldLeft(List[FSequent]())((ls, el) => {
           var id = 0
-          val map = Map[Var,Var]()
-          def nextId = {id = id + 1; id}
-          (new FSequent(normalize(el._1,map,nextId), 
-            normalize(el._2,map,nextId)))::ls
+          //def nextId = {id = id + 1; id}
+          val antecedent = normalize(el._1,0)
+          val succedent = normalize(el._2,0)
+          val newfs = new FSequent(antecedent, succedent)
+          println(newfs)
+
+          (newfs::ls)
         })).distinct
     }
-    private def normalize(ls: Seq[HOLFormula], map: Map[Var,Var], nextId: => Int): Seq[HOLFormula] = 
-      ls.sortWith((t1,t2) => myToString(t1) < myToString(t2)).map(x => TermNormalizer(x, map,
-        nextId).asInstanceOf[HOLFormula]).distinct
+    //TODO: add blacklist to normalization (symbols contained in formula may not be reused)
+    private def normalize(ls: Seq[HOLFormula], startId : Int): Seq[HOLFormula] =
+      ls.sortWith((t1,t2) => myToString(t1) < myToString(t2)).map(x => (Normalization(x, startId, "x")._1).asInstanceOf[HOLFormula]).distinct
     private def myToString(exp: at.logic.language.lambda.typedLambdaCalculus.LambdaExpression): String = exp match {
       case v@ Var(at.logic.language.lambda.symbols.VariableStringSymbol(_),_) => ""
       case v: Var => v.toString

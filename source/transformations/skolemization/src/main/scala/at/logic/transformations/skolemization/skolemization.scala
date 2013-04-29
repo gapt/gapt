@@ -23,7 +23,7 @@ import at.logic.algorithms.lk.applySubstitution
 import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import at.logic.utils.ds.streams.Definitions._
 import scala.collection.immutable.Stream.Empty
-import typedLambdaCalculus.{AbsInScope, App, Var, LambdaExpression}
+import typedLambdaCalculus.{App, Var, LambdaExpression}
 import at.logic.calculi.slk.{trsArrowLeftRule, SchemaProofLinkRule}
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.types.FSequent

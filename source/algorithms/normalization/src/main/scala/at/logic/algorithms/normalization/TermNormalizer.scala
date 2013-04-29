@@ -13,6 +13,7 @@ import scala.collection.mutable.Map
 
 // rename variables to a fixed form
 object TermNormalizer {
+  /*
   def apply(t: LambdaExpression, map: Map[Var,Var], nextId: => Int): LambdaExpression = t match {
     case v1 @ Var(VariableStringSymbol(_),_) => map.getOrElseUpdate(v1.asInstanceOf[Var], normalizeVar(v1.asInstanceOf[Var], nextId))
     case v1: Var => v1
@@ -24,5 +25,5 @@ object TermNormalizer {
     // we dont need to take care of dbIndices here as Abs recomputes them anyway
     case Var(VariableStringSymbol(_),_) => v.factory.createVar(VariableStringSymbol("x_{" + nextId + "}"), v.exptype)
     // other cases should be treated when they are implemented
-  }
+  } */
 }

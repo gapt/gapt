@@ -9,11 +9,15 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.hol.HOLFormula
-import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, LambdaExpression, Var}
+import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.types.Ti
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.types.Ti
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import scala.collection.immutable
 
 /**
  * Parser for first order formulas in the prover 9 format.
@@ -26,7 +30,7 @@ import at.logic.language.lambda.substitutions.Substitution
  *    =, !=, <, >, , <=, >=
  *    -
  * Operators missing: +,*,@,/,\, /\, \/,'
- * Unhandled cases prover9 accepts (extended as exceptions are ancountered):
+ * Unhandled cases prover9 accepts (extended as exceptions are encountered):
  *    (all 1 P(1))
  *
  */
@@ -143,22 +147,10 @@ abstract trait Prover9TermParserA extends JavaTokenParsers {
     val pairs : List[(Var,FOLExpression)] = (freevars zip (0 to (freevars.size-1))) map (x => (x._1,  x._1.factory.createVar(VariableStringSymbol("v"+x._2), x._1.exptype).asInstanceOf[FOLExpression]) )
     val nf : FOLFormula = Substitution(pairs)(f).asInstanceOf[FOLFormula]
 
-    normalizeFormula(nf,freevars.size)._1
+    //TODO: create blacklist
+    Normalization(nf,freevars.size, "v", immutable.HashSet[String]())._1
   }
 
-  def normalizeFormula[T <: LambdaExpression](f:T, i:Int) : (T, Int) = f match {
-    case Var(name, exptype) => (f, i)
-    case App(s, t) =>
-      val (s_, i_) = normalizeFormula(s,i)
-      val (t_, j) = normalizeFormula(t,i)
-      (s.factory.createApp(s_, t_).asInstanceOf[T], j)
-    case Abs(x, s) =>
-      val x_ = x.factory.createVar(VariableStringSymbol("v"+i), x.exptype)
-      val sub = Substitution[LambdaExpression]((x, x_))
-      val (s_, j) = normalizeFormula(sub(s).asInstanceOf[T], i+1)
-      (s.factory.createAbs(x_, s_).asInstanceOf[T], j)
-    case _ => throw new Exception("Unhandled expression type in variable normalization!")
-  }
 
 }
 
