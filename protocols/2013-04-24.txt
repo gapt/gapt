@@ -3,7 +3,7 @@
  ***********************
 
 Date: 2013-04-24
-People: Cvetan, David, Stefan, Martin
+People: Cvetan, David, Stefan, Martin, Giselle
 Protocol: Martin
 Begin: 14:45
 End: 16:00
