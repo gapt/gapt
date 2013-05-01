@@ -689,7 +689,7 @@ import collection.immutable.Seq
       * </pre>
       * 
       * @param s1 The top proof with (sL, F |- sR) as the bottommost sequent.
-      * @param term1oc The occurrence of F in the antecedent of s1
+      * @param term1oc The occurrence of F in the antecedent of s1.
       * @param term2 The new term to add.
       * @return An LK Proof ending with the new inference.
       */ 

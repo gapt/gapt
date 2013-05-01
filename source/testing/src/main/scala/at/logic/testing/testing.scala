@@ -9,6 +9,8 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
+import at.logic.calculi.lk.definitionRules._
+import at.logic.calculi.lk.equationalRules._
 
 import scala.collection.immutable.HashSet
 
@@ -393,6 +395,101 @@ object LinearEqExampleProof
   }
 }
 
+object SumOfOnesF2ExampleProof
+{
+  val eq = new ConstantStringSymbol("=")
+  val s = new ConstantStringSymbol("s")
+  val zero = new ConstantStringSymbol("0")
+  val p = new ConstantStringSymbol("+")
+  var f = new ConstantStringSymbol("f")
+
+  val x = FOLVar( VariableStringSymbol( "x" ))
+  val y = FOLVar( VariableStringSymbol( "y" ))
+  val z = FOLVar( VariableStringSymbol( "z" ))
+
+  //Helpers
+  def Fn(n: Int) = Function(f, Numeral(n)::Nil)
+
+  //Forall x.(x + 1 = s(x)) (reversed to avoid the application of the symmetry of =)
+  val Plus = AllVar(x, Atom(eq, Function(p, x::Numeral(1)::Nil)::Function(s, x::Nil)::Nil))
+  def PlusX(x:FOLTerm) = Atom(eq, Function(p, x::Numeral(1)::Nil)::Function(s, x::Nil)::Nil)
+
+  //Forall xyz.(y=z -> (x+y=x+z))
+  val EqPlus = AllVar(x, AllVar(y, AllVar(z, Imp(Atom(eq, y::z::Nil), Atom(eq, Function(p, y::x::Nil)::Function(p, z::x::Nil)::Nil) ) )))
+  def EqPlusX(x:FOLTerm) = AllVar(y, AllVar(z, Imp(Atom(eq, y::z::Nil), Atom(eq, Function(p, y::x::Nil)::Function(p, z::x::Nil)::Nil) ) ))
+  def EqPlusXY(x:FOLTerm, y:FOLTerm) = AllVar(z, Imp(Atom(eq, y::z::Nil), Atom(eq, Function(p, y::x::Nil)::Function(p, z::x::Nil)::Nil) ) )
+  def EqPlusXYZ(x:FOLTerm, y:FOLTerm, z:FOLTerm) = Imp(Atom(eq, y::z::Nil), Atom(eq, Function(p, y::x::Nil)::Function(p, z::x::Nil)::Nil) )
+
+  //Forall xyz.(x = y ^ y = z -> x = z)
+  val Trans = AllVar(x, AllVar(y, AllVar(z, Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil)))))
+
+  //Definition of f
+  //f(0) = 0
+  val FZero = Atom(eq, Function(f, Numeral(0)::Nil)::Numeral(0)::Nil)
+  //Forall x.f(s(x)) = f(x) + s(0)
+  val FSucc = AllVar(x, Atom(eq, Function(f, Function(s, x::Nil)::Nil)::Function(p, Function(f, x::Nil)::Numeral(1)::Nil)::Nil))
+  def FSuccX(x:FOLTerm) = Atom(eq, Function(f, Function(s, x::Nil)::Nil)::Function(p, Function(f, x::Nil)::Numeral(1)::Nil)::Nil)
+
+  //The starting axiom f(n) = n |- f(n) = n
+  def start(n: Int) = Axiom(Atom(eq, Fn(n)::Numeral(n)::Nil)::Trans::Plus::EqPlus::FSucc::Nil, Atom(eq, Fn(n)::Numeral(n)::Nil)::Nil)
+
+  def apply(n: Int) = RecProof(start(n), n)
+
+  /** Recursively constructs the proof, starting with the proof s1.
+    */
+  def RecProof(s1: LKProof, n: Int) : LKProof = {
+    if (n <= 0) { s1 }
+    else {
+
+      val fn_eq_n = Atom(eq, Fn(n-1)::Numeral(n-1)::Nil)
+      val fn_s0 = Function(p, Fn(n-1)::Numeral(1)::Nil)
+      val n_s0 = Function(p, Numeral(n-1)::Numeral(1)::Nil)
+
+      val tr = TransRule(eq, Fn(n), n_s0, Numeral(n), s1)
+
+      val tr2 = TransRule(eq, Fn(n), fn_s0, n_s0, tr)
+
+      val impl = ImpLeftRule(Axiom(fn_eq_n::Nil, fn_eq_n::Nil), tr2, fn_eq_n, Atom(eq, fn_s0::n_s0::Nil))
+
+      //Instantiate FSucc
+      val allQFSucc = ForallLeftRule(impl, FSuccX(Numeral(n-1)) , FSucc, Numeral(n-1))
+      val clFSucc = ContractionLeftRule(allQFSucc, FSucc)
+
+      //Instantiate Plus
+      val allQPlus = ForallLeftRule(clFSucc, PlusX(Numeral(n-1)) , Plus, Numeral(n-1))
+      val clPlus = ContractionLeftRule(allQPlus, Plus)
+
+      //Instantiare EqPlus (x=(s0), y=Fn(n-1), z=n-1)
+      val eqx = Numeral(1)
+      val eqy = Fn(n-1)
+      val eqz = Numeral(n-1)
+
+      val allQEqPlusZ = ForallLeftRule(clPlus, EqPlusXYZ(eqx, eqy, eqz) , EqPlusXY(eqx, eqy), eqz)
+      val allQEqPlusYZ = ForallLeftRule(allQEqPlusZ, EqPlusXY(eqx, eqy) , EqPlusX(eqx), eqy)
+      val allQEqPlusXYZ = ForallLeftRule(allQEqPlusYZ, EqPlusX(eqx) , EqPlus, eqx)
+      val clEqPlus = ContractionLeftRule(allQEqPlusXYZ, EqPlus)
+
+      RecProof(clEqPlus, n-1)
+    }
+  }
+}
+
+object testProof {
+  def apply(n:Int) : LKProof = {
+
+    val p = new ConstantStringSymbol("P")
+    val q = new ConstantStringSymbol("Q")
+
+    val ax1 =  Axiom(Atom(p, Nil)::Nil, Atom(p, Nil)::Nil )
+    val ax2 =  Axiom(Atom(q, Nil)::Nil, Atom(q, Nil)::Nil )
+
+    val pa = Atom(p, Nil)
+    val qa = Atom(q, Nil)
+
+    EquationLeft1Rule(ax1, ax2, pa, qa, Or(pa, qa))
+  }
+}
+
 /** Constructs the cut-free FOL LK proof of the sequent
   * 
   * AUX, f(0) = 0, Forall x.f(s(x)) = f(x) + s(0) |- f(s^n(0)) = s^n(0)
@@ -416,9 +513,6 @@ object SumOfOnesFExampleProof
 
   //Forall xyz.(x = y ^ y = z -> x = z)
   val Trans = AllVar(x, AllVar(y, AllVar(z, Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil)))))
-  def TransX(x:FOLTerm) = AllVar(y, AllVar(z, Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil))))
-  def TransXY(x:FOLTerm, y:FOLTerm) = AllVar(z, Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil)))
-  def TransXYZ(x:FOLTerm, y:FOLTerm, z:FOLTerm) = Imp(And(Atom(eq, x::y::Nil) , Atom(eq, y::z::Nil) ), Atom(eq, x::z::Nil))
 
   //Forall xy.(x=y -> s(x) = s(y))
   val CongSucc = AllVar(x, AllVar(y, Imp( Atom(eq, x::y::Nil), Atom(eq, Function(s, x::Nil)::Function(s, y::Nil)::Nil))))
@@ -443,40 +537,6 @@ object SumOfOnesFExampleProof
   def apply(n: Int) = proof(n)
   def proof (n: Int) = TermGenProof(EqChainProof(start(n), n), 0, n)
 
-
-
-  /** Performs a proof employing transitivity.
-    *
-    * Takes a proof s2 with end-sequent of the form
-    * (x=z), Trans, ... |- ...
-    * and return one with end-sequent of the form
-    * (x=y), (y=z), Trans, ... |- ...
-    * @param x X
-    * @param y Y
-    * @param z Z
-    * @param s2 The proof which contains the (x=z) which is to be shown.
-    * @return A proof wich s2 as a subtree and the formula (x=z) replaced by (x=y) and (y=z).
-    */
-  private def tr_proof (x : FOLTerm, y: FOLTerm, z: FOLTerm, s2: LKProof) : LKProof = {
-    val xy = Atom(eq, x::y::Nil)
-    val yz = Atom(eq, y::z::Nil)
-    val xz = Atom(eq, x::z::Nil)
-
-    val ax_xy = Axiom(xy::Nil, xy::Nil)
-    val ax_yz = Axiom(yz::Nil, yz::Nil)
-
-    val s1 = AndRightRule(ax_xy, ax_yz, xy, yz)
-
-    val imp = ImpLeftRule(s1, s2, And(xy, yz), xz)
-
-    //val allQZ = ForallLeftRule(imp, Imp(And(xy, yz), xz), TransXY(x, y), z)
-    val allQZ = ForallLeftRule(imp, TransXYZ(x, y, z) , TransXY(x, y), z)
-    val allQYZ = ForallLeftRule(allQZ, TransXY(x,y), TransX(x), y)
-    val allQXYZ = ForallLeftRule(allQYZ, TransX(x), Trans, x)
-
-    ContractionLeftRule(allQXYZ, Trans)
-  }
-
   /** Generates a sequent containing, in addition to the formulas in the bottommost sequent of s1,
     * the chain of equations f(n) = s(f(n-1)),...,f(1)=s(f(0)), f(0) = 0.s
     * The generates proof employs only the axiom of transitivity and (x=y -> s(x) = s(y)))
@@ -485,7 +545,7 @@ object SumOfOnesFExampleProof
 
     if (n <= 0) { s1 }
     else {
-      val tr = tr_proof(Fn(n), Iteration(Fn(n-1), s, 1), Numeral(n), s1)
+      val tr = TransRule(eq, Fn(n), Iteration(Fn(n-1), s, 1), Numeral(n), s1)
 
       val ax2 = Axiom(Atom(eq, Fn(n-1)::Numeral(n-1)::Nil)::Nil, Atom(eq, Fn(n-1)::Numeral(n-1)::Nil)::Nil)
 
@@ -510,7 +570,7 @@ object SumOfOnesFExampleProof
     if (n >= targetN) { s1 }
     else {
 
-      val tr = tr_proof(Fn(n+1), Function(p, Fn(n)::Numeral(1)::Nil), Iteration(Fn(n), s, 1), s1)
+      val tr = TransRule(eq, Fn(n+1), Function(p, Fn(n)::Numeral(1)::Nil), Iteration(Fn(n), s, 1), s1)
 
       //Quantify plus
       val plus = ForallLeftRule(tr, PlusX(Fn(n)), Plus, Fn(n))
