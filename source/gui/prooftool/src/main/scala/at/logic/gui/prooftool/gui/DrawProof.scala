@@ -117,7 +117,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           background = white
           opaque = false
           border = Swing.EmptyBorder(0,fSize,0,fSize)
-          val pLink = DrawSequent.latexToLabel("(" + link + "," + DrawSequent.formulaToLatexString(indices.head) + ")", ft)
+          val pLink = DrawSequent.latexToLabel("(\\textbf{" + link+"}" + indices.foldRight("")((i,rez) => ", "+DrawSequent.formulaToLatexString(i)+rez) + ")", ft)
           pLink.xLayoutAlignment = 0.5
           pLink.opaque = false
           pLink.border = Swing.EmptyBorder(0,0,5,0)

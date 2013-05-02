@@ -34,7 +34,7 @@ import at.logic.transformations.ceres.clauseSets.{renameCLsymbols, StandardClaus
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{Projections, DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
-import at.logic.algorithms.shlk.{UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
+import at.logic.algorithms.shlk.{FixedFOccs, UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
 import at.logic.transformations.skolemization.skolemize
@@ -44,6 +44,7 @@ import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
 import at.logic.algorithms.cutIntroduction.CutIntroduction
 import at.logic.testing.LinearExampleProof
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -507,6 +508,19 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new MenuItem(Action("Extract Cut-Formulas") { extractCutFormulas() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new Separator
+      contents += new Separator
+      contents += new Separator
+      contents += new Separator
+      contents += new MenuItem(Action("Mark Cut-Ancestors") { markCutAncestors(FixedFOccs.foccs) }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -1201,6 +1215,22 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
     ProofToolPublisher.publish(ProofDbChanged)
   }}
+
+
+  //to mark cut-ancestors + another ancestors which are additionaly specified
+  def markCutAncestors(l: List[FormulaOccurrence]) {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.getContent.contents.head match {
+      case dp: DrawProof => body.getContent.getData match {
+        case Some((_, proof : LKProof) ) =>
+          dp.setColoredOccurrences(getCutAncestors(proof) ++ l.map(fo => getAncestors(fo)).flatten)//mark more than cut-ancestors
+          dp.revalidate()
+        case _ => errorMessage("This is not an LK proof!")
+      }
+      case _ => errorMessage("LK proof not found!")
+    }
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
 
   def markCutAncestors() {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)

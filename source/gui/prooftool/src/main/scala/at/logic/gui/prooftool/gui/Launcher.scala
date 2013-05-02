@@ -75,6 +75,8 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
         case s:String if s == "\\rho" || s == "rho" => "ρ"
         case s:String if s == "\\sigma" || s == "sigma" => "σ"
         case s:String if s == "\\tau" || s == "tau" => "τ"
+        case s:String if s == "\\omega" || s == "omega" => "Ω"
+
         case _ => name
       }
       val bd: TitledBorder = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 2), " "+nice_name+" ")
