@@ -45,7 +45,7 @@ Calculi}
 
 \section{Introduction}
 
-This document summarizes the calculi used in GAPT and gives the mathematical definitions of their rules.
+This document summarizes the calculi used in GAPT and gives the mathematical definitions of their rules. For the functions which serve as rule constructors, see the GAPT project wiki.
 
 \section{First-order LK}
 
@@ -213,6 +213,8 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
 	\end{prooftree}
 
 \end{multicols}
+
+The variable $y$ must not occur free in $\Gamma$ or $\Delta$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
 
 
 
