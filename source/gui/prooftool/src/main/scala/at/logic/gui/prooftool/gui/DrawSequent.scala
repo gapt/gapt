@@ -21,6 +21,13 @@ import java.awt.image.BufferedImage
 import swing._
 import event.{MouseClicked, MouseEntered, MouseExited, WindowDeactivated}
 import java.awt.event.MouseEvent
+import at.logic.language.lambda.types.Tindex
+import at.logic.language.lambda.types.Definitions._
+import scala.swing.event.WindowDeactivated
+import scala.swing.event.MouseClicked
+import scala.swing.event.MouseEntered
+import scala.swing.event.MouseExited
+import at.logic.language.schema.IntZero
 
 object DrawSequent {
 
@@ -189,7 +196,9 @@ object DrawSequent {
       "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
         cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
     } else if (t.asInstanceOf[Var].isBound) "z_{" + t.asInstanceOf[Var].dbIndex.get + "}" // This line is added for debugging reasons!!!
-      else name.toString()
+      else if (t.exptype == ind->ind)
+        "\\textbf {" + name.toString() + "}"
+      else  name.toString()
     case Function(name, args, _) =>
       if (name.toString() == "EXP")
         args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
