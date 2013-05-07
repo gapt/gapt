@@ -28,7 +28,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       c.insets.set(15, 15, 15, 15)
       obj match {
         case proof: TreeProof[_] =>
-          layout(new DrawProof(proof, fSize, Set(), Set(), "")) = c
+          layout(new DrawProof(proof, fSize, Set(), Set(), Set(), "")) = c
           ProofToolPublisher.publish(Loaded)
           StructPublisher.publish(UnLoaded)
         case resProof: Proof[_] =>

@@ -245,7 +245,7 @@ object Main extends SimpleSwingApplication {
       body.getContent.contents.head match {
         case dp: DrawProof =>
           dp.search = input_str
-          if (dp.proof.root.isInstanceOf[Sequent]) dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof))
+          if (dp.proof.root.isInstanceOf[Sequent]) dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof), Set.empty[FormulaOccurrence])
           else dp.searchNotInLKProof()
           dp.revalidate()
         case dp: DrawResolutionProof =>
@@ -520,7 +520,7 @@ object Main extends SimpleSwingApplication {
       contents += new Separator
       contents += new Separator
       contents += new Separator
-      contents += new MenuItem(Action("Mark Cut-Ancestors") { markCutAncestors(FixedFOccs.foccs) }) {
+      contents += new MenuItem(Action("Mark Cut- & Ω-Ancestors") { markCutOmegaAncestors(FixedFOccs.foccs) }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -1218,12 +1218,12 @@ object Main extends SimpleSwingApplication {
 
 
   //to mark cut-ancestors + another ancestors which are additionaly specified
-  def markCutAncestors(l: List[FormulaOccurrence]) {
+  def markCutOmegaAncestors(l: List[FormulaOccurrence]) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.getContent.contents.head match {
       case dp: DrawProof => body.getContent.getData match {
         case Some((_, proof : LKProof) ) =>
-          dp.setColoredOccurrences(getCutAncestors(proof) ++ l.map(fo => getAncestors(fo)).flatten)//mark more than cut-ancestors
+          dp.setColoredOccurrences(getCutAncestors(proof), l.map(fo => getAncestors(fo)).flatten.toSet)//mark more than cut-ancestors
           dp.revalidate()
         case _ => errorMessage("This is not an LK proof!")
       }
@@ -1237,7 +1237,7 @@ object Main extends SimpleSwingApplication {
     body.getContent.contents.head match {
       case dp: DrawProof => body.getContent.getData match {
         case Some((_, proof : LKProof) ) =>
-          dp.setColoredOccurrences(getCutAncestors(proof))
+          dp.setColoredOccurrences(getCutAncestors(proof), Set.empty[FormulaOccurrence])
           dp.revalidate()
         case _ => errorMessage("This is not an LK proof!")
       }

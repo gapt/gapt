@@ -36,7 +36,7 @@ class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private v
   private var tx = tx1
   private def tx1 = proof.root match {
     case so: Sequent =>
-      val ds = DrawSequent(so, ft, colored_occurrences, visible_occurrences)
+      val ds = DrawSequent(so, ft, colored_occurrences, Set.empty[FormulaOccurrence], visible_occurrences)
       ds.listenTo(mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher)
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
