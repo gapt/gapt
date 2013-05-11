@@ -1,6 +1,6 @@
 package at.logic.calculi.slk
 
-import at.logic.language.hol.HOLExpression
+import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
@@ -13,9 +13,10 @@ import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.Seq
-import at.logic.language.hol.{HOLFormula, And, Or}
 import at.logic.utils.traits.Occurrence
 import at.logic.calculi.lk.propositionalRules.{ContractionRightRuleType, ContractionLeftRuleType, CutRuleType, Axiom}
+import scala.Some
+import at.logic.language.schema.IntZero
 
 
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
@@ -679,7 +680,7 @@ object OrEquivalenceRule1 {
 // TODO: some preprocessing should be done, i.e. auxf.formula ->>_{\beta} main
   object TermEquivalenceRule1 {
     def apply(s1: LKProof, auxf: FormulaOccurrence, main: HOLFormula) = {
-      val prinFormula = factory.createFormulaOccurrence( main, auxf  +: Seq.empty[FormulaOccurrence] )
+      val prinFormula = factory.createFormulaOccurrence( main, auxf::Nil)
       def createSide( s : Seq[FormulaOccurrence] ) =
         if ( s.contains(auxf) )
           prinFormula +: createContext( s.filter(_ != auxf) )
@@ -1195,3 +1196,67 @@ object foldLeftRule {
     None
 }
 
+
+case object ForallHyperLeftRuleType extends UnaryRuleTypeA
+
+object ForallHyperLeftRule {
+  def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
+    s1.root.antecedent.filter( x => x.formula == aux ).toList match {
+      case (x::_) => apply( s1, x, main, term )
+      case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula.")
+    }
+  }
+
+  def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) : LKProof = {
+    val (aux_fo, aux_form) = getTerms(s1.root, term1oc, main, term)
+    val prinFormula = getPrinFormula(main, aux_fo)
+    val sequent = getSequent(s1.root, aux_fo, prinFormula)
+
+    new UnaryTree[Sequent](sequent, s1 )
+      with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+      def rule = ForallHyperLeftRuleType
+      def aux = (aux_fo::Nil)::Nil
+      def prin = prinFormula::Nil
+      def subst = term
+      override def name = "\u2200^{hyp}:l"
+    }
+  }
+  def apply(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
+    val (aux_fo, aux_form) = getTerms(s1, term1oc, main, term)
+    val prinFormula = getPrinFormula(main, aux_fo)
+    getSequent(s1, aux_fo, prinFormula)
+  }
+  private def getTerms(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
+    val term1op = s1.antecedent.find(_ == term1oc)
+    if (term1op == None) {
+      def o2s(occ:FormulaOccurrence) = occ +" formula="+occ.formula+ " ancestors="+occ.ancestors
+      println(o2s(term1oc.asInstanceOf[FormulaOccurrence]))
+      //s1.antecedent.head.ancestors foreach ( (x:FormulaOccurrence) => println(o2s(x)))
+      throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    }
+    else {
+      val aux_fo = term1op.get
+//      val aux_form = computeAux(main, term)
+      //TODO: uncomment the assert. It is commented
+      //because there is unfound problem in renameIndexedVarInProjection in acnf.scala
+      //         assert( aux_form == aux_fo.formula, "The computed auxiliary formula " + aux_form.toString + " is not equal to the formula " + aux_fo.formula.toString + " at the given occurrence ("+aux_form.toPrettyString + " != " + aux_fo.formula.toPrettyString+")")
+      (aux_fo, aux_fo.formula)
+    }
+  }
+  private def getPrinFormula(main: HOLFormula, aux_fo: FormulaOccurrence) = {
+    aux_fo.factory.createFormulaOccurrence(main, aux_fo::Nil)
+  }
+  private def getSequent(s1: Sequent, aux_fo: FormulaOccurrence, prinFormula: FormulaOccurrence) = {
+    val ant = createContext(s1.antecedent.filterNot(_ == aux_fo))
+    val antecedent = ant :+ prinFormula
+    val succedent = createContext(s1.succedent)
+    Sequent(antecedent, succedent)
+  }
+  def unapply(proof: LKProof) = if (proof.rule == ForallHyperLeftRuleType) {
+    val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+    val ((a1::Nil)::Nil) = r.aux
+    val (p1::Nil) = r.prin
+    Some((r.uProof, r.root, a1, p1, r.subst))
+  }
+  else None
+}
