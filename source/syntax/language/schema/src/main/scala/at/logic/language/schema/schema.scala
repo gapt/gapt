@@ -342,8 +342,8 @@ object SchemaAbs {
 } */
 
 object IndexedPredicate {
-  def apply(sym: ConstantSymbolA, indexTerms: List[IntegerTerm]): SchemaFormula = {
-    val pred = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.map( a => Tindex() ) ) )
+  def apply(sym: ConstantSymbolA, indexTerms: List[HOLExpression]): SchemaFormula = {
+    val pred = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.map( a => a.exptype ) ) )
     AppN(pred, indexTerms).asInstanceOf[SchemaFormula]
   }
   def apply(sym: ConstantSymbolA, indexTerm: IntegerTerm): SchemaFormula = apply(sym, indexTerm::Nil)

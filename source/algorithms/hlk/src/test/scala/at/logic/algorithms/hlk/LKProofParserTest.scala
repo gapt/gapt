@@ -9,6 +9,7 @@ import org.specs2.execute.Success
 import at.logic.parsing.readers.StringReader
 import at.logic.calculi.lk.base.LKProof
 import collection.immutable
+import at.logic.algorithms.hlk.LKProofParser
 
 @RunWith(classOf[JUnitRunner])
 class LKParserTest extends SpecificationWithJUnit {

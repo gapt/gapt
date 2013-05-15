@@ -24,19 +24,28 @@ import substitutions.Substitution
 
 
 object getCutAncestors {
-  def apply( p: LKProof )
-    : Set[FormulaOccurrence] = p match {
+  def apply( p: LKProof ): Set[FormulaOccurrence] = {
+    p match {
+      case TermEquivalenceRule1(p1, _, _, _) => return getCutAncestors( p1 )
+      //      case TermLeftEquivalenceRule1(p1, _, _, _) => getCutAncestors( p1 )
+      //      case TermRightEquivalenceRule1(p1, _, _, _) => getCutAncestors( p1 )
       case CutRule(p1, p2, _, a1, a2) => getCutAncestors( p1 ) ++ getCutAncestors( p2 ) ++
-                                         getAncestors( a1 ) ++ getAncestors( a2 )
-      case UnaryLKProof(_,p,_,_,_) => getCutAncestors( p )
+        getAncestors( a1 ) ++ getAncestors( a2 )
+      case UnaryLKProof(_,p1,_,_,_) => getCutAncestors( p1 )
       case BinaryLKProof(_, p1, p2, _, _, _, _) => getCutAncestors( p1 ) ++ getCutAncestors( p2 )
       case Axiom(_) => Set[FormulaOccurrence]()
       // support LKsk
-      case UnaryLKskProof(_,p,_,_,_) => getCutAncestors( p )
+      case UnaryLKskProof(_,p1,_,_,_) => getCutAncestors( p1 )
       // support SLK
-      case UnarySchemaProof(_,p,_,_,_) => getCutAncestors( p )
+      case UnarySchemaProof(_,p1,_,_,_) => getCutAncestors( p1 )
       case SchemaProofLinkRule(_, _, _) => Set[FormulaOccurrence]()
+      case ForallHyperLeftRule(p1, r, a, p, _) => getCutAncestors( p1 )
+      case ExistsHyperRightRule(p1, r, a, p, _) => getCutAncestors( p1 )
+      case ForallHyperRightRule(p1, r, a, p, _) => getCutAncestors( p1 )
+      case ExistsHyperLeftRule(p1, r, a, p, _) => getCutAncestors( p1 )
+      case _ => throw  new Exception("\n\nMissing rule in getCutAncestors(...) : "+p.name+"\n\n")
     }
+  }
   // This method returns only ancestors of cut-formulas that satisfy a given predicate.
   def apply( p: LKProof, predicate : HOLFormula => Boolean )
     : Set[FormulaOccurrence] = p match {
@@ -53,6 +62,7 @@ object getCutAncestors {
       // support SLK
       case UnarySchemaProof(_,p,_,_,_) => getCutAncestors( p, predicate )
       case SchemaProofLinkRule(_, _, _) => Set[FormulaOccurrence]()
+      case _ => throw  new Exception("\n\nMissing rule in getCutAncestors(...) : "+p.name+"\n\n")
     }
 }
 

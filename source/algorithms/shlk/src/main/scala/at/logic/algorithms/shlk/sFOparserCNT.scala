@@ -42,6 +42,26 @@ object sFOParserCNT {
   def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
     //    ("p",parseProof(input, "root"))::Nil
     val m = sFOParserCNT.parseProof(input)
+
+    //TODO: remove it. This is just for test marking in ProofTool
+    val map = m
+    val p1 = map.get("\\mu").get._2.get("root").get
+    val p2 = map.get("\\rho").get._2.get("root").get
+    val p3 = map.get("\\zeta").get._2.get("root").get
+    val p4 = map.get("\\omega").get._2.get("root").get
+    val p5 = map.get("\\xi").get._2.get("root").get
+    val p6 = map.get("\\varphi").get._2.get("root").get
+
+    val cc2:FormulaOccurrence = p2.root.antecedent.tail.tail.head
+    val cc_zeta_1:FormulaOccurrence = p3.root.succedent.head
+    val cc_zeta_2:FormulaOccurrence = p3.root.antecedent.tail.tail.head
+    val cc4:FormulaOccurrence = p4.root.succedent.head
+    val cc_xi_1:FormulaOccurrence = p5.root.antecedent.last
+    val cc_xi_2:FormulaOccurrence = p5.root.succedent.head
+    val cc_xi_3:FormulaOccurrence = p5.root.antecedent.tail.head
+    val cc6 = p6.root.antecedent.tail.head :: p6.root.antecedent.last ::Nil
+    FixedFOccs.foccs = cc2::cc_xi_1::cc_xi_2::cc_xi_3::cc_zeta_1::cc_zeta_2::cc4::Nil
+
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
 
@@ -204,7 +224,7 @@ object sFOParserCNT {
           case Succ(Succ(Succ(IntZero()))) => Succ(Succ(Succ(indV)))
         }}}
 
-      def intVar: Parser[IntVar] = "[i,j,n,k,p,u,q]".r ^^ {
+      def intVar: Parser[IntVar] = "[i,j,k,p,u,q]".r ^^ {
         case x => { /*println("\n\nintVar");*/ IntVar(new VariableStringSymbol(x))}
       }
       def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
@@ -292,7 +312,7 @@ object sFOParserCNT {
         }
       }
       //indexed variable of type ω->ω
-      def indexedwVar: Parser[HOLVar] = regex(new Regex("[α,c,b,y,a,x,z,s,w,h]")) ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedwVar: Parser[HOLVar] = regex(new Regex("[α,c,b,y,a,x,z,s,w,h,m,n,l]")) ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
           indexedOmegaVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
@@ -320,7 +340,7 @@ object sFOParserCNT {
       def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => { Atom(new VariableStringSymbol(x), params)}}
       //      def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
       def const_atom: Parser[HOLFormula] = regex(new Regex("[P]")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { Atom(new ConstantStringSymbol(x), params) }}
-      def s_atom: Parser[HOLFormula] = regex(new Regex("[B,E,Σ,C]")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
+      def s_atom: Parser[HOLFormula] = """[B]*[E]*[Σ]*[C]*[O]*""".r ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
       def equality: Parser[HOLFormula] = eq_infix |  eq_prefix // infix is problematic in higher order
       def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
       def inequality: Parser[HOLFormula] = term ~ "\\=" ~ term ^^ {case x ~ "\\=" ~ y => Neg(Equation(x,y))}
@@ -623,25 +643,25 @@ object sFOParserCNT {
 
       def exLHyper: Parser[LKProof] = "exLHyper(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ SOindVar ~ ")" ^^ {
         case "exLHyper(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ v ~ ")" => {
-          ExistsLeftRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
+          ExistsHyperLeftRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
         }
       }
 
       def allRHyper: Parser[LKProof] = "allRHyper(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ SOindVar ~ ")" ^^ {
         case "allRHyper(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ v ~ ")" => {
-          ForallRightRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
+          ForallHyperRightRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
         }
       }
 
       def exRHyper: Parser[LKProof] = "exRHyper(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ term ~ ")" ^^ {
         case "exRHyper(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ t ~ ")" => {
-          ExistsRightRule(map.get(l).get, aux, main, t)
+          ExistsHyperRightRule(map.get(l).get, aux, main, t)
         }
       }
 
       def allLHyper: Parser[LKProof] = "allLHyper(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ term ~ ")" ^^ {
         case "allLHyper(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ t ~ ")" => {
-          ForallLeftRule(map.get(l).get, aux, main, t)
+          ForallHyperLeftRule(map.get(l).get, aux, main, t)
         }
       }
 

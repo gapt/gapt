@@ -331,8 +331,7 @@ import at.logic.language.schema.SchemaFormula
       SchemaProofDB.get( s4 )
     }
     
-    def extractStruct(name: String, fresh_param: IntVar) : Struct =
-    {
+    def extractStruct(name: String, fresh_param: IntVar) : Struct = {
       val terms = extractRelevantStruct(name, fresh_param)
       val cs_0 = terms._2.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
           Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_base","\n").takeWhile(c => !c.equals('\n')),
@@ -351,6 +350,34 @@ import at.logic.language.schema.SchemaFormula
         fresh_param::Nil )
       Plus(A(toOccurrence(cl_n, SchemaProofDB.get(name).rec.root)), Plus( cs_0 ,cs_1) )
     }
+
+    //extracts the struct given the relevant CC
+    def extractStructRCC(name: String, fresh_param: IntVar, rcc: List[(String, Set[FormulaOccurrence])]) : Struct = {
+      val relevant_struct_list_step = rcc.map(pair => Tuple3("Θ(" + pair._1 + "_step, (" +
+        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).rec.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, Succ(IntVar(new VariableStringSymbol("k") ))::Nil ) ) + "))",
+        extractStepWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
+        pair._2))
+//      val terms = extractRelevantStruct(name, fresh_param)
+      println("\nrelevant_struct_list_step : "+relevant_struct_list_step)
+      val cs_0 = relevant_struct_list_step.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
+        Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_base","\n").takeWhile(c => !c.equals('\n')),
+          cutOccConfigToCutConfig( hackGettingProof(triple._1).base.root, triple._3, hackGettingProof(triple._1).seq, hackGettingProof(triple._1).vars, IntZero()::Nil ) ), IntZero()::Nil ), hackGettingProof(triple._1).base.root ) ) ),
+          triple._2), result) )
+
+      return cs_0
+      // assumption: all proofs in the SchemaProofDB have the
+      // same running variable "k".
+//      val k = IntVar(new VariableStringSymbol("k") )
+//      val cs_1 = terms._1.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
+//        Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_step","\n").takeWhile(c => !c.equals('\n')),
+//          cutOccConfigToCutConfig( hackGettingProof(triple._1).rec.root, triple._3, hackGettingProof(triple._1).seq, hackGettingProof(triple._1).vars, Succ(k)::Nil ) ), Succ(k)::Nil ), hackGettingProof(triple._1).rec.root ) ) ),
+//          triple._2), result) )
+
+//      val cl_n = IndexedPredicate( new ClauseSetSymbol(name, (HashMultiset[HOLFormula], HashMultiset[HOLFormula]) ),
+//        fresh_param::Nil )
+//      Plus(A(toOccurrence(cl_n, SchemaProofDB.get(name).rec.root)), Plus( cs_0 ,cs_1) )
+    }
+
 
 
     // TODO: refactor --- this method should be somewhere else
@@ -473,6 +500,12 @@ import at.logic.language.schema.SchemaFormula
       case UnaryLKskProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
       case UnarySchemaProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
       case SchemaProofLinkRule(so, name, indices) => handleSchemaProofLink( so, name, indices.asInstanceOf[List[IntegerTerm]], cut_occs )
+      case TermEquivalenceRule1(upperProof, _, _, _) => extract(upperProof, cut_occs)
+      case ForallHyperLeftRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
+      case ExistsHyperRightRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
+      case ForallHyperRightRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
+      case ExistsHyperLeftRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
+      case _ => throw new Exception("\nMissin rule in StructCreators.extract\n")
     }
 
     def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {

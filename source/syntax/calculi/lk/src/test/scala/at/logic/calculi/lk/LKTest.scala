@@ -1,9 +1,9 @@
 /*
- * LKTest.scala
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
+* LKTest.scala
+*
+* To change this template, choose Tools | Template Manager
+* and open the template in the editor.
+*/
 
 package at.logic.calculi.lk
 
@@ -28,16 +28,16 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import macroRules._
 
 /**
- * The following properties of each rule are tested:
- * 1) The right principal formula is created
- * 2) The principal formula is managed correctly
- * 3) The Auxiliaries formulas are managed in the correct way
- * 4) The context is unchanged with regard to multiset equality
- * 5) The formula occurrences are different from the upper sequents occurrences
- *
- * Still missing for each rule:
- * 1) To check that all exceptions are thrown when needed
- */
+* The following properties of each rule are tested:
+* 1) The right principal formula is created
+* 2) The principal formula is managed correctly
+* 3) The Auxiliaries formulas are managed in the correct way
+* 4) The context is unchanged with regard to multiset equality
+* 5) The formula occurrences are different from the upper sequents occurrences
+*
+* Still missing for each rule:
+* 1) To check that all exceptions are thrown when needed
+*/
 @RunWith(classOf[JUnitRunner])
 class LKTest extends SpecificationWithJUnit {
 

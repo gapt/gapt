@@ -166,8 +166,18 @@ object DrawSequent {
     case And(f1,f2) => "(" + formulaToLatexString(f1) + """ \wedge """ + formulaToLatexString(f2) + ")"
     case Or(f1,f2) => "(" + formulaToLatexString(f1) + """ \vee """ + formulaToLatexString(f2) + ")"
     case Imp(f1,f2) => "(" + formulaToLatexString(f1) + """ \supset """ + formulaToLatexString(f2) + ")"
-    case ExVar(v, f) => "(" + """\exists """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)       
-    case AllVar(v, f) => "(" + """\forall """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+    case ExVar(v, f) => {
+      if (v.exptype == ind->ind)
+        "(" + """\exists^{hyp} """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+      else
+        "(" + """\exists """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+    }
+    case AllVar(v, f) => {
+      if (v.exptype == ind->ind)
+        "(" + """\forall^{hyp} """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+      else
+        "(" + """\forall """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+    }
     case BigAnd(v, formula, init, end) =>
       """ \bigwedge_{ """ + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
     case BigOr(v, formula, init, end) =>
