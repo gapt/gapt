@@ -216,9 +216,43 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
 
 The variable $y$ must not occur free in $\Gamma$ or $\Delta$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
 
+\subsection{Equational rules}
 
+\begin{multicols}{2}
 
+	\subsubsection*{Left rules}
 
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, s=t}
+	\AxiomCm{\Sigma, A[T/s] \seq \Pi}
+	\RightLabelm{(\mt{=:l}_1)}
+	\BinaryInfCm{\Gamma, \Sigma, A[T/t] \seq \Delta, \Pi}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, s=t}
+	\AxiomCm{\Sigma, A[T/t] \seq \Pi}
+	\RightLabelm{(\mt{=:l}_2)}
+	\BinaryInfCm{\Gamma, \Sigma, A[T/s] \seq \Delta, \Pi}
+	\end{prooftree}
+	
+	\subsubsection*{Right rules}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, s=t}
+	\AxiomCm{\Sigma \seq \Pi, A[T/s]}
+	\RightLabelm{(\mt{=:r}_1)}
+	\BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[T/t]}
+	\end{prooftree}
+	
+	\begin{prooftree}
+	\AxiomCm{\Gamma \seq \Delta, s=t}
+	\AxiomCm{\Sigma, \seq \Pi, A[T/t]}
+	\RightLabelm{(\mt{=:r}_2)}
+	\BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[T/s]}
+	\end{prooftree}
+
+\end{multicols}
 
 
 

@@ -27,6 +27,30 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationLeft1Rule {
+    /** <pre>Constructs a proof ending with a EqLeft rule.
+      * In it, a formula A (marked by term2oc) is replaced by formula main.
+      *
+      * This rule does not check for the correct use of the =-symbol.
+      * The burden of correct usage is on the programmer!
+      * 
+      * The rule: 
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr, A[T1/a] |- tR
+      * ------------------------------------ (EqLeft1)
+      *      sL, A[T1/b], tL |- sR, tR
+      * </pre>
+      * 
+      * @param s1 The left proof with the equarion a=b in the succedent in its bottommost sequent.
+      * @param s2 The right proof with a formula A[T1/a] in the antecedent of its bottommost sequent,
+      *        in which some term T1 has been replaced by the term a. Note that identical terms to
+      *        T1 may occur elsewhere in A. These will not be changed.
+      *        e.g. P([f(0)]) v -P(f(0)), where f(0) occurs twice, but T1 only refers to the bracketed f(0).
+      *        This allows selective replacing of terms.
+      * @param term1oc The occurrence (a=b) in s1.
+      * @param term2oc The occurrence of A[T1/a] in s2.
+      * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
       val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -46,6 +70,32 @@ package equationalRules {
         override def name = "e:l1"
       }
     }
+
+    /** <pre>Constructs a proof ending with a EqLeft rule.
+      * In it, a formula A (marked by term2oc) is replaced by formula main.
+      * This function merely returns the resulting sequent, not a proof.
+      *
+      * This rule does not check for the correct use of the =-symbol.
+      * The burden of correct usage is on the programmer!
+      * 
+      * The rule: 
+      *     (s1)               (s2)
+      * sL |- a=b, sR    tr, A[T1/a] |- tR
+      * ------------------------------------ (EqLeft1)
+      *      sL, A[T1/b], tL |- sR, tR
+      * </pre>
+      * 
+      * @param s1 The left sequent with the equarion a=b in its succent.
+      * @param s2 The right sequent with a formula A[T1/a] in the antecedent of its bottommost sequent,
+      *        in which some term T1 has been replaced by the term a. Note that identical terms to
+      *        T1 may occur elsewhere in A. These will not be changed.
+      *        e.g. P([f(0)]) v -P(f(0)), where f(0) occurs twice, but T1 only refers to the bracketed f(0).
+      *        This allows selective replacing of terms.
+      * @param term1oc The occurrence (a=b) in s1.
+      * @param term2oc The occurrence of A[T1/a] in s2.
+      * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
+      * @return The sequent (sL, A[T1/b], tL |- sR, tR).
+      */ 
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
       val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -59,6 +109,38 @@ package equationalRules {
 
       Sequent(antecedent, succedent)
     }
+
+    /** <pre>Constructs a proof ending with a EqLeft rule.
+      * In it, a formula term2 of the form A[T1/a] is replaced by formula main.
+      *
+      * This rule does not check for the correct use of the =-symbol.
+      * The burden of correct usage is on the programmer!
+      * 
+      * The rule: 
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr, A[T1/a] |- tR
+      * ------------------------------------ (EqLeft1)
+      *      sL, A[T1/b], tL |- sR, tR
+      * </pre>
+      * 
+      * @param s1 The left proof with the equarion a=b in the succent in its bottommost sequent.
+      * @param s2 The right proof with a formula A[T1/a] in the antecedent of its bottommost sequent,
+      *        in which some term T1 has been replaced by the term a. Note that identical terms to
+      *        T1 may occur elsewhere in A. These will not be changed.
+      *        e.g. P([f(0)]) v -P(f(0)), where f(0) occurs twice, but T1 only refers to the bracketed f(0).
+      *        This allows selective replacing of terms.
+      * @param term1 The formula (a=b) in s1.
+      * @param term2 The formula A[T1/a] in s2.
+      * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
+      * @return An LK Proof ending with the new inference.
+      */ 
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.antecedent.find(_ == term2oc)
@@ -67,13 +149,6 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         (eqocc, auxocc)
-      }
-    }
-    // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
 
@@ -88,6 +163,14 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationLeft2Rule {
+    /** <pre>See EquationLeft1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
+      *
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr, A[T1/b] |- tR
+      * ------------------------------------ (EqLeft2)
+      *      sL, A[T1/a], tL |- sR, tR
+      * </pre>
+      */
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {      
       val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -107,6 +190,15 @@ package equationalRules {
         override def name = "e:l2"
       }
     }
+
+    /** <pre>See EquationLeft1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
+      *
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr, A[T1/b] |- tR
+      * ------------------------------------ (EqLeft2)
+      *      sL, A[T1/a], tL |- sR, tR
+      * </pre>
+      */
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
       val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -120,6 +212,22 @@ package equationalRules {
 
       Sequent(antecedent, succedent)
     }
+
+    /** <pre>See EquationLeft1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
+      *
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr, A[T1/b] |- tR
+      * ------------------------------------ (EqLeft2)
+      *      sL, A[T1/a], tL |- sR, tR
+      * </pre>
+      */
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.antecedent.find(_ == term2oc)
@@ -128,13 +236,6 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         (eqocc, auxocc)
-      }
-    }
-    // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
 
@@ -149,6 +250,31 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationRight1Rule {
+
+    /** <pre>Constructs a proof ending with a EqRight rule.
+      * In it, a formula A (marked by term2oc) is replaced by formula main.
+      *
+      * This rule does not check for the correct use of the =-symbol.
+      * The burden of correct usage is on the programmer!
+      * 
+      * The rule: 
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr |- tR, A[T1/a]
+      * ------------------------------------ (EqRight1)
+      *      sL, tL |- sR, tR, A[T1/b]
+      * </pre>
+      * 
+      * @param s1 The left proof with the equarion a=b in the succent in its bottommost sequent.
+      * @param s2 The right proof with a formula A[T1/a] in the succedent of its bottommost sequent,
+      *        in which some term T1 has been replaced by the term a. Note that identical terms to
+      *        T1 may occur elsewhere in A. These will not be changed.
+      *        e.g. P([f(0)]) v -P(f(0)), where f(0) occurs twice, but T1 only refers to the bracketed f(0).
+      *        This allows selective replacing of terms.
+      * @param term1oc The occurrence (a=b) in s1.
+      * @param term2oc The occurrence of A[T1/a] in s2.
+      * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
+      * @return An LK Proof ending with the new inference.
+      */ 
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {      
       val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -168,6 +294,32 @@ package equationalRules {
         override def name = "e:r1"
       }
     }
+
+    /** <pre>Constructs a proof ending with a EqLeft rule.
+      * In it, a formula A (marked by term2oc) is replaced by formula main.
+      * This function merely returns the resulting sequent, not a proof.
+      *
+      * This rule does not check for the correct use of the =-symbol.
+      * The burden of correct usage is on the programmer!
+      * 
+      * The rule: 
+      *    (s1)               (s2)
+      * sL |- a=b, sR    tr |- tR, A[T1/a]
+      * ------------------------------------ (EqRight1)
+      *      sL, tL |- sR, tR, A[T1/b]
+      * </pre>
+      * 
+      * @param s1 The left sequent with the equarion a=b in its succedent.
+      * @param s2 The right sequent with a formula A[T1/a] in the antecedent of its bottommost sequent,
+      *        in which some term T1 has been replaced by the term a. Note that identical terms to
+      *        T1 may occur elsewhere in A. These will not be changed.
+      *        e.g. P([f(0)]) v -P(f(0)), where f(0) occurs twice, but T1 only refers to the bracketed f(0).
+      *        This allows selective replacing of terms.
+      * @param term1oc The occurrence (a=b) in s1.
+      * @param term2oc The occurrence of A[T1/a] in s2.
+      * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
+      * @return The sequent (sL, A[T1/b], tL |- sR, tR).
+      */ 
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
       val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -181,6 +333,38 @@ package equationalRules {
 
       Sequent(antecedent, succedent)
     }
+
+    /** <pre>Constructs a proof ending with a EqRight rule.
+      * In it, a term2 of the form A[T1/a] is replaced by formula main.
+      *
+      * This rule does not check for the correct use of the =-symbol.
+      * The burden of correct usage is on the programmer!
+      * 
+      * The rule: 
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr |- tR, A[T1/a]
+      * ------------------------------------ (EqRight1)
+      *      sL, tL |- sR, tR, A[T1/b]
+      * </pre>
+      * 
+      * @param s1 The left proof with the equarion a=b in the succent in its bottommost sequent.
+      * @param s2 The right proof with a formula A[T1/a] in the succedent of its bottommost sequent,
+      *        in which some term T1 has been replaced by the term a. Note that identical terms to
+      *        T1 may occur elsewhere in A. These will not be changed.
+      *        e.g. P([f(0)]) v -P(f(0)), where f(0) occurs twice, but T1 only refers to the bracketed f(0).
+      *        This allows selective replacing of terms.
+      * @param term1 The formula (a=b) in s1.
+      * @param term2 The formula A[T1/a] in s2.
+      * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
+      * @return An LK Proof ending with the new inference.
+      */ 
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.succedent.find(_ == term2oc)
@@ -189,13 +373,6 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         (eqocc, auxocc)
-      }
-    }
-    // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
 
@@ -210,6 +387,15 @@ package equationalRules {
 
   // TODO: implement verification of the rule
   object EquationRight2Rule {
+
+    /** <pre>See EquationRight1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
+      *
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr |- tR, A[T1/b]
+      * ------------------------------------ (EqRight1)
+      *      sL, tL |- sR, tR, A[T1/a]
+      * </pre>
+      */
     def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {      
       val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -229,6 +415,15 @@ package equationalRules {
         override def name = "e:r2"
       }
     }
+
+    /** <pre>See EquationRight1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
+      *
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr |- tR, A[T1/b]
+      * ------------------------------------ (EqRight1)
+      *      sL, tL |- sR, tR, A[T1/a]
+      * </pre>
+      */
     def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
       val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
@@ -242,6 +437,22 @@ package equationalRules {
 
       Sequent(antecedent, succedent)
     }
+
+    /** <pre>See EquationRight1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
+      *
+      * (rest of s1)       (rest of s2)
+      * sL |- a=b, sR    tr |- tR, A[T1/b]
+      * ------------------------------------ (EqRight1)
+      *      sL, tL |- sR, tR, A[T1/a]
+      * </pre>
+      */
+    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
+        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      }
+    }
+
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.succedent.find(_ == term2oc)
@@ -250,13 +461,6 @@ package equationalRules {
         val eqocc = term1op.get
         val auxocc = term2op.get
         (eqocc, auxocc)
-      }
-    }
-    // convenient method to use formulas
-    def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-      ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
-        case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
       }
     }
 
