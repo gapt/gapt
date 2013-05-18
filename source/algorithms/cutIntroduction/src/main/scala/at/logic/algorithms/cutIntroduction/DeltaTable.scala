@@ -20,17 +20,20 @@ import at.logic.utils.logging.Logger
 
 class DeltaTableException(msg: String) extends Exception(msg)
 
-class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
+class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
    
   val table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
 
   // Fills the delta table with some terms
 
   // Initialize with empty decomposition
+  trace( "initializing delta-table" )
   add(Nil, null, Nil)
 
   for (n <- 1 until terms.length+1) {
-    // Take only the decompositions of term sets of size (n-1) from the current delta table
+    trace( "adding simple grammars for " + n + " terms to delta-table" )
+
+    // Take only the simple grammars of term sets of size (n-1) from the current delta table
     val one_less = getEntriesOfSize(n-1)
 
     one_less.foreach { case (s, pairs) =>
@@ -87,14 +90,40 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
 
   def numberOfPairs = table.foldRight(0) { case ((k, lst), acc) => lst.size + acc }
 
+  def minNumOfPairsPerLine = table.foldRight(Int.MaxValue) { case ((k, lst), acc) => acc.min( lst.size ) }
+
+  def maxNumOfPairsPerLine = table.foldRight(0) { case ((k, lst), acc) => acc.max( lst.size ) }
+
+  /**
+   * compute and print statistics about this delta-table
+   * @prln the function used for printing
+   **/
+  def printStats( prln:  String => Unit ) {
+    prln( "number of lines: " + size )
+    prln( "total number of pairs: " + numberOfPairs )
+    prln( "avg. number of pairs / line: " + ( numberOfPairs.toFloat / size ) )
+    prln( "min. number of pairs / line: " + minNumOfPairsPerLine )
+    prln( "max. number of pairs / line: " + maxNumOfPairsPerLine )
+
+    val linestats = table.foldRight( new HashMap[Int,Int]() ) {
+      case ((k, lst), acc) => acc += ( lst.size -> ( acc.getOrElse( lst.size, 0 ) + 1 ) ) 
+    }
+    prln( "  k   number of lines with k pairs" )
+    linestats.toSeq.sortBy( _._1 ).foreach{
+      case ( k, num ) => prln( "% 3d".format(k) + "   " + num )
+    }
+  }
+
+  /*
   def debug(msg: String) = {
     println("============== DEBUG: DeltaTable ===============")
     println("Where: " + msg)
-    println("Number of entries in the table: " + size)
+    println("Number of lines in the table: " + size)
     println("Each line contains pairs.")
     println("Total number of pairs: " + numberOfPairs)
     println("================================================")
   }
+  */
 }
 
 object delta {
