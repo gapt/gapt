@@ -391,6 +391,12 @@ object printProofStats {
     def apply( n : Int) = at.logic.testing.testProof( n )
   }
 
+/*************************** Formula examples **********************************/
+
+  object PigeonHolePrinciple {
+    def apply( p : Int, h : Int ) = at.logic.testing.PigeonHolePrinciple( p, h )
+  }
+
 /*************************** Cut introduction algorithm **********************************/
 
   import at.logic.algorithms.cutIntroduction._
@@ -518,6 +524,14 @@ object printProofStats {
     def apply(p:RobinsonResolutionProof) = InstantiateElimination.apply(p)
   }
 
+  object miniSATsolve {
+    def apply( f : HOLFormula ) = (new at.logic.provers.minisat.MiniSAT).solve(f)
+  }
+
+  object miniSATprove {
+    def apply ( f : HOLFormula ) = (new at.logic.provers.minisat.MiniSAT).isValid(f)
+  }
+  
   // atp support
   object refuteFOL {
       import at.logic.provers.atp.commands.base._
@@ -1057,6 +1071,8 @@ object printProofStats {
           |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
           |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
           |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
+          |   miniSATsolve: HOLFormula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT
+          |   miniSATprove: HOLFormula => Boolean - check if a quantifier-free formula is valid using MiniSAT
           |
           | Proof Theory:
           |   skolemize: LKProof => LKProof - skolemize the input proof
@@ -1095,6 +1111,9 @@ object printProofStats {
           |   SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction
           |   SumOfOnesFExampleProof: Int => LKProof - construct a variant of the sum of ones example proof using a function f
           |   SumOfOnesF2ExampleProof: Int => LKProof - construct an inductive variant of the sum of ones example proof using a function f
+          |
+          | Formula Examples:
+          |   PigeonHolePrinciple: Int, Int => FOLFormula - construct a quantifier-free formula representing the pigeon hole principle
           |
           | Visualization:
           |   prooftool: LKProof => Unit - visualize proof in prooftool

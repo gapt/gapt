@@ -1,27 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <artifactId>provers</artifactId>
   <modelVersion>4.0.0</modelVersion>
-  <name>Theorem Provers</name>
 
   <parent>
   <groupId>at.logic</groupId>
-  <artifactId>gap</artifactId>
+  <artifactId>provers</artifactId>
   <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <modules>
-    <module>atp</module>
-    <module>prover9</module>
-    <module>vampire</module>
-    <module>minisat</module>
-  </modules>
-
-  <packaging>pom</packaging>
+  <artifactId>minisat</artifactId>
+  <packaging>jar</packaging>  
+  <name>Interface to MiniSAT solver</name>
 
   <dependencies>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>syntax_dependency</artifactId>
+      <artifactId>algorithms_dependency</artifactId>
       <version>1.0-SNAPSHOT</version>
       <type>pom</type>
     </dependency>

@@ -777,6 +777,39 @@ object Iteration
     if ( k == 0 ) a else Function( f, apply( a, f, k-1 )::Nil )
 }
 
+// constructs a formula representing the pigeon hole principle.
+// Since we want to avoid empty disjunctions, we assume > 1 pigeons.
+object PigeonHolePrinciple {
+  // The binary relation symbol.
+  val rel = ConstantStringSymbol("R")
+
+  def apply( ps: Int, hs: Int ) = {
+    assert( ps > 1 )
+    Imp( and( (1 to ps).map( p => 
+            or( (1 to hs).map( h => atom(p, h) ) ) ) ),
+          or( (1 to hs).map ( h => 
+            or( (2 to ps).map( p => 
+              or( ((1 to p - 1)).map( pp => 
+                And(atom(p, h),atom(pp,h)))))))))
+  }
+
+  def atom( p: Int, h: Int ) = Atom(rel, pigeon(p)::hole(h)::Nil)
+
+  def pigeon(i: Int) = FOLConst(ConstantStringSymbol("p_" + i))
+
+  def hole(i: Int) = FOLConst(ConstantStringSymbol("h_" + i))
+
+  def or( l: Seq[FOLFormula] ) : FOLFormula = l.toList match {
+    case p::Nil => p
+    case p::tail => Or(p, or(tail))    
+  }
+
+  def and( l : Seq[FOLFormula] ) : FOLFormula = l.toList match {
+    case p::Nil => p
+    case p::tail => And(p, and(tail))
+  }
+}
+
 // Workaround until there is a real FOLSubstitution
 // applies a substitution x <- t to a formula or term f
 /*
