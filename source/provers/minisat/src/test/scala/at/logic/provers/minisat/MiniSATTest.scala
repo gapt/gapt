@@ -36,6 +36,8 @@ class MiniSATTest extends SpecificationWithJUnit {
     val pe = Atom("P", e::Nil)
       
     "find a model for an atom" in {
+      (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
+
       val clause = FClause(Nil, pc::Nil)
       
       (new MiniSAT).solve( (clause::Nil).toSet ) must beLike {
@@ -45,6 +47,8 @@ class MiniSATTest extends SpecificationWithJUnit {
     }
     
     "see that Pc and -Pc is unsat" in {
+      (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
+
       val c1 = FClause(Nil, pc::Nil)
       val c2 = FClause(pc::Nil, Nil)
       
@@ -55,14 +59,20 @@ class MiniSATTest extends SpecificationWithJUnit {
     }
     
     "see that Pc or -Pc is valid" in {
+      (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
+
       (new MiniSAT).isValid( Or(pc, Neg(pc) ) ) must beTrue
     }
     
     "see that Pc is not valid" in {
+      (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
+
       (new MiniSAT).isValid( pc ) must beFalse
     }
     
     "return a correct model" in {
+      (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
+
       val c1 = FClause(Nil, pc::Nil)
       val c2 = FClause(pc::Nil, pd::Nil)
       val c3 = FClause(pd::pe::Nil, Nil)
@@ -75,6 +85,8 @@ class MiniSATTest extends SpecificationWithJUnit {
     }
     
     "deal correctly with the pigeonhole problem" in {
+      (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
+
       (new MiniSAT).isValid(PigeonHolePrinciple(2,2)) must beFalse
       (new MiniSAT).isValid(PigeonHolePrinciple(3,3)) must beFalse
       (new MiniSAT).isValid(PigeonHolePrinciple(4,4)) must beFalse
