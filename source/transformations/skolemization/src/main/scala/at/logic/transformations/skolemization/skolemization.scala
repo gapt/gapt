@@ -297,14 +297,14 @@ object skolemize {
       cut_ancs: Set[FormulaOccurrence]
 
     ) = {
-      val new_symbol_map_left = copyMapToAncestor(symbol_map).updated( a1, even( symbol_map( m ) ) )
-      val new_symbol_map_right = copyMapToAncestor(symbol_map).updated( a2, odd( symbol_map( m ) ) )
-      val new_inst_map = copyMapToAncestor(inst_map)
-      val new_cut_ancs = copySetToAncestor( cut_ancs )
-      val new_p1 = skolemize( p1, new_symbol_map_left, new_inst_map, new_cut_ancs )
-      val new_p2 = skolemize( p2, new_symbol_map_right, new_inst_map, new_cut_ancs )
-      val ret = constructor( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
-      (ret, copyMapToDescendant( proof, ret, new_p1._2 ++ new_p2._2 ))
+    val new_symbol_map_left = copyMapToAncestor(symbol_map).updated( a1, even( symbol_map( m ) ) )
+    val new_symbol_map_right = copyMapToAncestor(symbol_map).updated( a2, odd( symbol_map( m ) ) )
+    val new_inst_map = copyMapToAncestor(inst_map)
+    val new_cut_ancs = copySetToAncestor( cut_ancs )
+    val new_p1 = skolemize( p1, new_symbol_map_left, new_inst_map, new_cut_ancs )
+    val new_p2 = skolemize( p2, new_symbol_map_right, new_inst_map, new_cut_ancs )
+    val ret = constructor( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
+    (ret, copyMapToDescendant( proof, ret, new_p1._2 ++ new_p2._2 ))
   }
 
 

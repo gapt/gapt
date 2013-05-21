@@ -66,6 +66,7 @@ trait FOLExpression extends HOLExpression with FOL {
        *       throws this exception when it tries to print such a malformed structure, but this is hard to see.
        *       should we print a warning instead? */
       case _ => throw new Exception("String conversion of FOL expression failed: " + super.toString)
+      //case _ => println("Unknown string found, returning # in its place"); " # "
     }
 
   /**
