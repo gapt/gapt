@@ -14,13 +14,19 @@ import at.logic.language.lambda.types.Ti
 import scala.Some
 import at.logic.calculi.lk.base.Sequent
 import collection.mutable
+import at.logic.utils.ds.acyclicGraphs.AGraph
 
 /**
  * Eliminates the insantiate rule from a RobinsonResolutionProof
  */
 object InstantiateElimination {
+  private var counter = 0
+
   def apply(p:RobinsonResolutionProof) = {
+    counter = 0
+    println(p.nodes.size)
     val ip = imerge(p, emptyProofMap)
+    println("imerge complete")
     val rp = remove(ip._4, emptyVarSet, emptyProofMap)
     rp._4
   }
@@ -428,7 +434,8 @@ object InstantiateElimination {
     println("proofmap: "+pmap)
     println()
      */
-    (pmap + ((p,(o,f,p))), o, f, p )
+    val r = (pmap + ((p,(o,f,p))), o, f, p )
+    r
   }
 
   //def extend_pmap2( o : OccMap,  p: RobinsonResolutionProof, pmap : ProofMap  ) = {
@@ -437,6 +444,9 @@ object InstantiateElimination {
 
 
   def imerge(p : RobinsonResolutionProof, pmap : ProofMap) : (ProofMap, OccMap, VarSet, RobinsonResolutionProof) = {
+    counter = counter +1
+    if (pmap contains p) extend_to_quadruple(pmap(p), pmap)
+
      p match {
       case InitialClause(clause) =>
         if (pmap contains p) return extend_to_quadruple(pmap(p), pmap)
@@ -466,7 +476,7 @@ object InstantiateElimination {
               inference.root.occurrences.toList,
               _.formula syntaxEquals _.formula)
 
-            extend_pmap(nmap, emptyVarSet, inference, pmap)
+            extend_pmap(nmap, emptyVarSet, inference, rpmap)
 
           case _ =>
             //don't do anything
@@ -476,7 +486,7 @@ object InstantiateElimination {
               inference.root.occurrences.toList,
               _.formula syntaxEquals _.formula)
 
-            extend_pmap(nmap, emptyVarSet, inference, pmap)
+            extend_pmap(nmap, emptyVarSet, inference, rpmap)
 
         }
 
@@ -485,12 +495,12 @@ object InstantiateElimination {
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
         occs.length match {
           case 1 =>
-            val inference = Factor(rparent, occs(0)(0), occs(0).tail, sub)
+            val inference = Factor(rparent, rmap(occs(0)(0)), occs(0).tail map rmap, sub)
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               clause.occurrences.toList,
               inference.root.occurrences.toList,
               occmatcher(_,_,rmap))
-            extend_pmap(nmap, emptyVarSet, inference, pmap)
+            extend_pmap(nmap, emptyVarSet, inference, rpmap)
 
           case 2 =>
             val inference = Factor(rparent, occs(0)(0), occs(0).tail, occs(1)(0), occs(1).tail, sub)
@@ -498,7 +508,7 @@ object InstantiateElimination {
               clause.occurrences.toList,
               inference.root.occurrences.toList,
               occmatcher(_,_,rmap))
-            extend_pmap(nmap, emptyVarSet, inference, pmap)
+            extend_pmap(nmap, emptyVarSet, inference, rpmap)
 
           case _ => throw new Exception("Unexpected auxiliary occurrences in handling of Factor rule during instantiation merge!")
         }
@@ -511,26 +521,28 @@ object InstantiateElimination {
           clause.occurrences.toList,
           inference.root.occurrences.toList,
           occmatcher(_,_,rmap))
-        extend_pmap(nmap, emptyVarSet, inference, pmap)
+        extend_pmap(nmap, emptyVarSet, inference, rpmap)
 
       case Resolution(clause, parent1, parent2, occ1, occ2, sub) =>
         val (rpmap1, rmap1, _, rparent1) = imerge(parent1, pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, _, rparent2) = imerge(parent2, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
+        require(rpmap1.size <= rpmap2.size, "proof map may not decrease in size!")
 
         val inference = Resolution(rparent1, rparent2, rmap1(occ1), rmap2(occ2), sub)
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
           occmatcher(_,_,rmap1 ++ rmap2))
-        extend_pmap(nmap, emptyVarSet, inference, pmap)
+        extend_pmap(nmap, emptyVarSet, inference, rpmap2)
 
       case Paramodulation(clause, parent1, parent2, occ1, occ2, sub) =>
         val (rpmap1, rmap1, _, rparent1) = imerge(parent1, pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, _, rparent2) = imerge(parent2, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
+        require(rpmap1.size <= rpmap2.size, "proof map may not decrease in size!")
 
         val primary_candidates = clause.occurrences.filter((fo:FormulaOccurrence) => {fo.ancestors.size == 2 && fo.ancestors.contains(occ1) && fo.ancestors.contains(occ2) })
         if (primary_candidates.isEmpty) throw new Exception("Could not find primary formula during handling of Paramodulation in instantiation merge!")
@@ -541,7 +553,7 @@ object InstantiateElimination {
           clause.occurrences.toList,
           inference.root.occurrences.toList,
           occmatcher(_,_,rmap1 ++ rmap2))
-        extend_pmap(nmap, emptyVarSet, inference, pmap)
+        extend_pmap(nmap, emptyVarSet, inference, rpmap2)
 
      }
   }
