@@ -49,6 +49,11 @@ trait LambdaFactoryProvider {
     def variant(gen: => VariantGenerator): LambdaExpression
     def toStringSimple: String
     def cloneTerm: LambdaExpression
+    def symbols: List[SymbolA]
+  }
+
+  class VariableNameGenerator(gen : () => String) extends VariableGenerator {
+    def apply(a : Var) : Var = a.factory.createVar(VariableStringSymbol(gen()), a.exptype)
   }
 
 
@@ -57,6 +62,8 @@ trait LambdaFactoryProvider {
    * repository is not yet decided. */
   abstract class VariableGenerator extends (Var => Var)
 
+  /*TODO: Variant Generator can only be used to index free variables (otherwise the same variable name may be bound in
+          different contexts)*/
   // Var must have as symbol VariableStringSymbol (if new symbols are added the definition of how to
   // create a variant from them should be defined here
   class VariantGenerator(id: {def nextId: Int}, varName: String) extends VariableGenerator {
@@ -77,14 +84,15 @@ object Normalization {
    * returns: a pair of normalized expression and highest index used */
   def apply[T <: LambdaExpression](f : T, start : Int,
                                    pattern : String, blacklist : immutable.Set[String] = immutable.HashSet[String]() ) : (T,Int) = {
-    val gen = new {var x=start; def nextId = {x=x+1;x} }
-    val vg = new VariantGenerator(gen, pattern)
+    var x=start;
+    def nextId() : String = {x=x+1; pattern + "_{" + x +"}"}
+    val vg = new VariableNameGenerator(nextId)
     //TODO: add names from f to blacklist
-    (normalize_(f,vg, blacklist)._1 , gen.x)
+    (normalize_(f,vg, blacklist)._1 , x)
   }
 
   private def normalize_[T <: LambdaExpression](f : T, gen: => VariableGenerator, bl : immutable.Set[String])
-   : (T, VariableGenerator, immutable.Set[String]) = f match {
+   : (T, VariableGenerator, immutable.Set[String]) =f match {
     case Var(name, exptype) => (f, gen, bl)
     case App(s, t) =>
       val (s_, g1, bl1) = normalize_(s,gen, bl)
@@ -164,6 +172,7 @@ object Normalization {
     }
     // cloning for vars ignore the db indices
     def cloneTerm: LambdaExpression = factory.createVar(name, exptype)
+    def symbols = List(name)
   }
   // TODO: remove!?!
   object LambdaVar {
@@ -263,6 +272,7 @@ object Normalization {
       case _ => 1
     }
     def cloneTerm: LambdaExpression = factory.createAbs(variable,expression)
+    def symbols = variable.name :: expression.symbols
   }
 
   /*
@@ -332,6 +342,7 @@ object Normalization {
       case Abs(_, _) => -1
     }
     def cloneTerm: LambdaExpression = factory.createApp(function,argument)
+    def symbols = function.symbols ++ argument.symbols
   }
 
   object App {

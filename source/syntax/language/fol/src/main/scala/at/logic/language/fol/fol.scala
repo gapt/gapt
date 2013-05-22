@@ -65,7 +65,12 @@ trait FOLExpression extends HOLExpression with FOL {
       /* TODO: this method usually fails if layers got mixed (a fol structure contains a hol structure). the cli
        *       throws this exception when it tries to print such a malformed structure, but this is hard to see.
        *       should we print a warning instead? */
-      case _ => throw new Exception("String conversion of FOL expression failed: " + super.toString)
+      /* Current status: print a warning, since algorithms for typed lambda calculus may create partial lambda terms
+         which are later completed. This only surfaces when one tries to print debug output. */
+      case _ =>
+        val r = super.toString
+        println("WARNING: Trying to do a string conversion on a term which is not a (full) FOL expression: "+r)
+        r
       //case _ => println("Unknown string found, returning # in its place"); " # "
     }
 
@@ -295,6 +300,7 @@ object ExQ {
     case _ => None
   }
 }
+
 object AllQ {
   def unapply(v: Var) = v match {
     case vo: AllQ => Some(vo.exptype)
@@ -351,7 +357,7 @@ private[fol] object Ex {
   }
 }
 
-private[fol] object All {
+object All {
   def apply(sub: LambdaExpression) = App(new AllQ(sub.exptype),sub).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
     case App(AllQ(t),sub) => Some( (sub, t) )
