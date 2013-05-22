@@ -21,6 +21,7 @@ import types.Definitions._
 import substitutions.ImplicitConverters._
 import BetaReduction._
 import ImplicitStandardStrategy._
+import org.specs2.execute.Success
 
 @RunWith(classOf[JUnitRunner])
 class SubstitutionsTest extends SpecificationWithJUnit {
@@ -170,11 +171,42 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       val term2 = Abs(LambdaVar("x",i), App(Abs(LambdaVar("x",i), App(LambdaVar("f",i->i),LambdaVar("x",i))),LambdaVar("x",i)))
       (sub(term1)) must beEqualTo (term2)
     }
+    "work correctly on subterms of abs (i.e. the variables which were bound there are no longer bound)" in {
+      val term1 = Abs(LambdaVar("F",i->i),Abs(LambdaVar("x",i), App(LambdaVar("F",i->i),LambdaVar("x",i))))
+      val sub: Substitution[LambdaExpression] = (term1.variable, Abs(LambdaVar("x",i), App(LambdaVar("f",i->i),LambdaVar("x",i))))
+      val term2 = Abs(LambdaVar("x",i), App(Abs(LambdaVar("x",i), App(LambdaVar("f",i->i),LambdaVar("x",i))),LambdaVar("x",i)))
+      (sub(term1.expression)) must beEqualTo (term2)
+    }
   }
-  "work correctly on subterms of abs (i.e. the variables which were bound there are no longer bound)" in {
-    val term1 = Abs(LambdaVar("F",i->i),Abs(LambdaVar("x",i), App(LambdaVar("F",i->i),LambdaVar("x",i))))
-    val sub: Substitution[LambdaExpression] = (term1.variable, Abs(LambdaVar("x",i), App(LambdaVar("f",i->i),LambdaVar("x",i))))
-    val term2 = Abs(LambdaVar("x",i), App(Abs(LambdaVar("x",i), App(LambdaVar("f",i->i),LambdaVar("x",i))),LambdaVar("x",i)))
-    (sub(term1.expression)) must beEqualTo (term2)
+
+  "Normalization of Lambdaterms" should {
+    val x = LambdaVar(new VariableStringSymbol("x"), Ti())
+    val y = LambdaVar(new VariableStringSymbol("y"), Ti())
+    val P = LambdaVar(new VariableStringSymbol("P"), (Ti() -> Ti()) -> ((Ti() -> Ti()) -> To()))
+    val v1 = LambdaVar(new VariableStringSymbol("v_{1}"), Ti())
+    val v2 = LambdaVar(new VariableStringSymbol("v_{2}"), Ti())
+    val v3 = LambdaVar(new VariableStringSymbol("v_{3}"), Ti())
+    val t1 = AppN(P, List(Abs(x,x), Abs(x,x)))
+    val t2 = AppN(P, List(Abs(y,y), Abs(x,x)))
+    val t3 = AppN(P, List(Abs(x,y), Abs(y,x)))
+    val t4 = AppN(P, List(Abs(y,x), Abs(x,x)))
+
+    val tn1 = AppN(P, List(Abs(v1,v1), Abs(v2,v2)))
+    val tn2 = tn1
+    val tn3 = AppN(P, List(Abs(x,y), Abs(y,x)))
+    val tn4 = AppN(P, List(Abs(y,x), Abs(x,x)))
+
+
+    "work for variables of same name but bound to different binders" in {
+      val n3 = Normalization(t3, 0, "v")._1
+      println(n3)
+      val n4 = Normalization(t4, 0, "v")._1
+      println(n4)
+      val n1 = Normalization(t1, 0, "v")._1
+      n1 must beEqualTo(tn1)
+      val n2 = Normalization(t2, 0, "v")._1
+      n2 must beEqualTo(tn2)
+    }
   }
+
 }
