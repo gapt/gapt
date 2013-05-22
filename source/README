@@ -16,6 +16,8 @@ Requirements:
 * Prover9 (the binaries prover9, prooftrans and 
    tptp_to_ladr must be present in the path [1])
   available at: http://www.cs.unm.edu/~mccune/mace4/download 
+* MiniSAT (the binary minisat mist be present in the path)
+  available at: http://minisat.se/MiniSat.html
 
 Running:
 * The scripts cli.sh and prooftool.sh look for 
