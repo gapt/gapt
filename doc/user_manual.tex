@@ -156,57 +156,91 @@ To quit the interactive shell, just type \texttt{:quit} and press enter.
 After executing the client (\texttt{cli.sh}), you will get to an interactive \texttt{scala} shell 
 from where it is possile to run the operations GAPT provides. You can see all of
 them by typing \texttt{ceresHelp} and pressing enter. Here they are (as of
-28/08/2012):
+22/05/2013):
 
-%% TODO: update
 \begin{lstlisting}
 Available commands:
 
-File Input/Output:
-  loadProofDB: String => ProofDatabase - load proofdatabase from xml file
-  loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
-  exportXML: List[Proof], List[String], String => Unit
-  exportTPTP: List[Proof], List[String], String => Unit
-
-Parsing:
-  parse.fol: String => FOLFormula - example: "Forall x Imp P(x,f(x)) Exists y P(x,y)"
-  parse.hol: String => HOLExpression
-  parse.slk: String => Map[String, Pair[LKProof, LKProof]]
-
-Automated Deduction:
-  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
-  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
-  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
-  proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
-
-Proof Theory:
-  skolemize: LKProof => LKProof - skolemize the input proof
+File Input/Output:                                                                                                          
+  loadProofDB: String => ProofDatabase
+  loadProofs: String => List[(String, LKProof)]
+  loadIvyProof: String => RobinsonResolutionProof
+  loadProver9Proof: String => (RobinsonResolutionProof, FSequent)
+  loadProver9LKProof: String => LKProof
+  loadHLK : String => LKProof
+  exportXML: List[Proof], List[String], String => Unit                                                                      
+  exportTPTP: List[Proof], List[String], String => Unit                                                                     
+                                                                                                                            
+Parsing:                                                                                                                    
+  parse.fol: String => FOLFormula
+  parse.hol: String => HOLExpression                                                                                        
+  parse.slk: String => Map[String, Pair[LKProof, LKProof]]                                                                  
+  parse.lisp: String => List[SExpression]                                                                                   
+                                                                                                                            
+Automated Deduction:                                                                                                        
+  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]
+  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]]
+  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]]
+  prover9: String => Option[ResolutionProof[Clause]]
+  prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]]
+  proveProp: FSequent => Option[LKProof]
+  toClauses: HOLFormula => Set[FClause]
+  miniSATsolve: HOLFormula => Option[Interpretation]
+  miniSATprove: HOLFormula => Boolean
+                                                                                                                            
+Proof Theory:                                                                                                               
+  skolemize: LKProof => LKProof
+  extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula
+  extractHerbrandSequent: LKProof => Sequent
+  extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree)
+  compressExpansionTree: ExpansionTree => MultiExpansionTree
 
 Cut-Elimination by Resolution:
   extractStruct: LKProof => Struct
   structToClausesList: Struct => List[Sequent]
   structToLabelledClausesList: Struct => List[LabelledSequent]
 
+Proof Schemata:
+  parse.slk: String => Map[String, Pair[LKProof, LKProof]]
+  unfoldProof: (String, Int) => LKProof
+
 Cut-Introduction:
   cutIntro: LKProof => LKProof
-  termsExtraction: LKProof => Map[FormulaOccurrence, List[List[FOLTerm]]] - extract the witnesses of the existential quantifiers of the end-sequent of a proof
-  termsExtractionFlat: LKProof => Set[FOLTerm] - extract the witnesses of the existential quantifiers of the end-sequent of a proof (as a ,,flat'' set)
+  extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
+  computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
+  seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
+  generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
+  computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
+  minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
+  buildProofWithCut: ExtendedHerbrandSequent => LKProof 
 
 Proof Examples:
-  LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction
-  LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction
-  SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction
-  SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction
-  SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
+  LinearExampleTermset: Int => Set[FOLTerm] 
+  LinearExampleProof: Int => LKProof 
+  SquareDiagonalExampleProof: Int => LKProof 
+  SquareEdgesExampleProof: Int => LKProof 
+  SquareEdges2DimExampleProof: Int => LKProof 
+  SumExampleProof: Int => LKProof 
+  LinearEqExampleProof: Int => LKProof 
+  SumOfOnesExampleProof: Int => LKProof 
+  SumOfOnesFExampleProof: Int => LKProof 
+  SumOfOnesF2ExampleProof: Int => LKProof
+
+Formula Examples:
+  PigeonHolePrinciple: Int, Int => FOLFormula
 
 Visualization:
-  prooftool: LKProof => Unit - visualize proof in prooftool
+  prooftool: LKProof => Unit
 
 Uncategorized:
-  regularize: LKProof => LKProof
+  hol2fol: HOLExpression => FOLExpression
+  hol2fol: HOLFormula => FOLFormula
+  regularize: LKProof => LKProof - regularize the given LK proof
+  rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression
+  rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof
   printProofStats: LKProof => Unit
   lkTolksk: LKProof => LKProof
-  createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))
+  createHOLExpression: String => HOLExpression
   fsequent2sequent: FSequent => Sequent
   deleteTautologies: List[FSequent] => List[FSequent]
   removeDuplicates: List[FSequent] => List[FSequent]
@@ -215,6 +249,11 @@ Uncategorized:
   normalizeClauses: List[FSequent] => List[FSequent]
   writeLatex: List[FSequent], String => Unit
   writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
+
+General:
+  help    : this help text
+  copying : print redistribution conditions
+  license : print the text of GNU General Public License
 \end{lstlisting}
 
 In the following subsections we will (try to) describe what each of these are.
@@ -284,6 +323,13 @@ see~\cite{Dunchev12System} for details.
 
 \paragraph{\textbf{proveProp: FSequent $\rightarrow$ Option[LKProof]}}
 {\color{red}TODO}
+
+\paragraph{\textbf{miniSATsolve: HOLFormula $\rightarrow$ Option[Interpretation]}}
+Searches a model for a quantifier-free formula using the MiniSAT SAT Solver.
+Returns None if unsatisfiable, and Some(Interpretation) otherwise.
+
+\paragraph{\textbf{miniSATprove: HOLFormula $\rightarrow$ Boolean}}
+Checks if a quantifier-free formula is valid using the MiniSAT SAT Solver.
 
 \subsection{Proof Theory}
 
@@ -365,9 +411,9 @@ terms are $\{\oplus, \otimes\}$-terms over clause sets, and it's interpretation
 is the following:
 
 \begin{align*}
-|\mathcal{C}| &= \mathcal{C} \text{ if $\mathcal{C}$ is a set of clauses.}\\
-|X \oplus Y| &= |X| \cup |Y|\\
-|X \otimes Y| &= |X| \times |Y|
+  |\mathcal{C}| &= \mathcal{C} \text{ if $\mathcal{C}$ is a set of clauses.}\\
+   |X \oplus Y| &= |X| \cup |Y|\\
+  |X \otimes Y| &= |X| \times |Y|
 \end{align*}
 
 where $\mathcal{C} \times \mathcal{D} = \{ C \circ D | C \in \mathcal{C} \wedge
@@ -518,95 +564,95 @@ the system.
 
 First of all, we instantiate the desired proof and store this in a variable:
 {\small
-\begin{alltt}
-scala> val p = LinearExampleProof(9) 
-\end{alltt}
+  \begin{alltt}
+    scala> val p = LinearExampleProof(9) 
+  \end{alltt}
 }
 
 You will see that a big string representing the proof is printed. If desired,
 you can view this proof using \texttt{prooftool} \ref{sec:prooftool}. 
 It is possible to see some information about a proof on the command line by calling:
 {\small
-\begin{alltt}
-scala> printProofStats(p)
-------------- Statistics ---------------
-Cuts: 0
-Number of quantifier rules: 9
-Number of rules: 28
-Quantifier complexity: 9
-----------------------------------------
-\end{alltt}
+  \begin{alltt}
+    scala> printProofStats(p)
+    ------------- Statistics ---------------
+    Cuts: 0
+    Number of quantifier rules: 9
+    Number of rules: 28
+    Quantifier complexity: 9
+    ----------------------------------------
+  \end{alltt}
 }
 Now we need to
 extract the terms used to instantiate the $\forall$ quantifiers of the
 end-sequent:
 {\small
-\begin{alltt}
-scala> val ts = extractTerms(p)
-The term set contains 9 terms.
-\end{alltt}
+  \begin{alltt}
+    scala> val ts = extractTerms(p)
+    The term set contains 9 terms.
+  \end{alltt}
 }
 The system indicates how many terms were extracted, which is nine for this case,
 as expected. The next step consists in computing grammars that generate this
 term set:
 {\small
-\begin{alltt}
-scala> val grms = computeGrammars(ts)
-693 grammars found.
-\end{alltt}
+  \begin{alltt}
+    scala> val grms = computeGrammars(ts)
+    693 grammars found.
+  \end{alltt}
 }
 The number of grammars found is shown, 693 in this case. They are ordered
 by size, and one can see the first ones by calling:
 {\small
-\begin{alltt}
-scala> seeNFirstGrammars(grms, 5)
-0. \{ tuple1(s(s(s(\(\alpha\))))), tuple1(\(\alpha\)), tuple1(s(s(s(s(s(s(\(\alpha\)))))))) \} o \{ 0, s(0), s(s(0)) \}
-   (size = 6)
-1. \{ tuple1(s(\(\alpha\))), tuple1(s(s(\(\alpha\)))), tuple1(\(\alpha\)) \} o \{ 0, s(s(s(0))), s(s(s(s(s(s(0)))))) \}
-   (size = 6)
-2. \{ tuple1(s(0)), tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))) \} o \{ 0, s(s(s(s(0)))), 
-   s(s(s(s(s(0))))) \}(size = 7)
-3. \{ tuple1(s(s(0))), tuple1(\(\alpha\)), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
-   s(s(s(s(s(0))))) \}(size = 7)
-4. \{ tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
-   s(s(s(s(s(0))))) \}(size = 7)
+  \begin{alltt}
+    scala> seeNFirstGrammars(grms, 5)
+    0. \{ tuple1(s(s(s(\(\alpha\))))), tuple1(\(\alpha\)), tuple1(s(s(s(s(s(s(\(\alpha\)))))))) \} o \{ 0, s(0), s(s(0)) \}
+    (size = 6)
+    1. \{ tuple1(s(\(\alpha\))), tuple1(s(s(\(\alpha\)))), tuple1(\(\alpha\)) \} o \{ 0, s(s(s(0))), s(s(s(s(s(s(0)))))) \}
+    (size = 6)
+    2. \{ tuple1(s(0)), tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))) \} o \{ 0, s(s(s(s(0)))), 
+    s(s(s(s(s(0))))) \}(size = 7)
+    3. \{ tuple1(s(s(0))), tuple1(\(\alpha\)), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
+    s(s(s(s(s(0))))) \}(size = 7)
+    4. \{ tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
+    s(s(s(s(s(0))))) \}(size = 7)
 
-Note that the function symbols 'tuplei' are inserted by the system as part of the algorithm.
-\end{alltt}
+    Note that the function symbols 'tuplei' are inserted by the system as part of the algorithm.
+  \end{alltt}
 }
 This will print on the screen the first 5 grammars, and we can choose which one
 to use for compressing the proof, in this case we take the second one:
 {\small
-\begin{alltt}
-scala> val g = grms(1)
-\end{alltt}
+  \begin{alltt}
+    scala> val g = grms(1)
+  \end{alltt}
 }
 Given the end-sequent of the proof and a grammar, the extended Herbrand sequent can be computed:
 {\small
-\begin{alltt}
-scala> val ehs = generateExtendedHerbrandSequent(p.root, g)
-ehs: at.logic.algorithms.cutIntroduction.ExtendedHerbrandSequent = 
-P(0), (P(s(\(\alpha\)))\(\impl\)P(s(s(\(\alpha\))))), (P(s(s(\(\alpha\))))\(\impl\)P(s(s(s(\(\alpha\)))))),(P(\(\alpha\))\(\impl\)P(s(\(\alpha\)))),
-(X(\(\alpha\))\(\impl\)(X(s(s(s(s(s(s(0)))))))\(\wedge\)(X(s(s(s(0))))\(\wedge\)X(0)))) :- 
-P(s(s(s(s(s(s(s(s(s(0)))))))))),
-\end{alltt}
+  \begin{alltt}
+    scala> val ehs = generateExtendedHerbrandSequent(p.root, g)
+    ehs: at.logic.algorithms.cutIntroduction.ExtendedHerbrandSequent = 
+    P(0), (P(s(\(\alpha\)))\(\impl\)P(s(s(\(\alpha\))))), (P(s(s(\(\alpha\))))\(\impl\)P(s(s(s(\(\alpha\)))))),(P(\(\alpha\))\(\impl\)P(s(\(\alpha\)))),
+    (X(\(\alpha\))\(\impl\)(X(s(s(s(s(s(s(0)))))))\(\wedge\)(X(s(s(s(0))))\(\wedge\)X(0)))) :- 
+    P(s(s(s(s(s(s(s(s(s(0)))))))))),
+  \end{alltt}
 }
 As it was shown in \cite{cutIntro2013}, the cut-introduction problem has a
 canonical solution:
 {\small
-\begin{alltt}
-scala> val cs = computeCanonicalSolution(p.root, g)
-Note that the clauses that do not contain the eigenvariable were already removed.
-cs: at.logic.language.fol.FOLFormula = 
-\(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
-\end{alltt}
+  \begin{alltt}
+    scala> val cs = computeCanonicalSolution(p.root, g)
+    Note that the clauses that do not contain the eigenvariable were already removed.
+    cs: at.logic.language.fol.FOLFormula = 
+    \(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
+  \end{alltt}
 }
 The extended Herbrand sequent generated previously has the canonical solution as
 default, but this solution can be improved, as demonstrated in Section
 \ref{sec.improving}. 
 {\small
-\begin{alltt}
-scala> minimizeSolution(ehs)
+  \begin{alltt}
+    scala> minimizeSolution(ehs)
 Previous solution: \(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
 Improved solution: \(\forall\)x.(P(s(s(s(x))))\(\vee \neg\)P(x))
 \end{alltt}
@@ -641,6 +687,57 @@ scala> val fp2 = cutIntro(p)
 Regarding the choice of the grammar, this command will compute the proofs with
 all minimal grammars and choose the smallest one (with respect to the number of rules).
 
+\subsection{SAT solving}
+%
+The following shows an example session, using the MiniSAT SAT solver
+to verify valdity and satisfiability, and query the thus obtained models.
+Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, which states that if $m$ pigeons
+are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
+iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
+is no hole containing two pigeons. This is satisfiable iff $m\leq n$. Then
+\begin{lstlisting}
+scala> miniSATprove(PigeonHolePrinciple(3, 2))
+res12: Boolean = true
+\end{lstlisting}
+shows that $\mathrm{PHP}_{3,2}$ is valid, and
+\begin{lstlisting}
+scala> miniSATprove(PigeonHolePrinciple(3, 3))
+res13: Boolean = false
+\end{lstlisting}
+shows that $\mathrm{PHP}_{3,3}$ is valid not valid.
+Furthermore,
+\begin{lstlisting}
+scala> val m = miniSATsolve(Neg(PigeonHolePrinciple(3, 3))).get
+\end{lstlisting}
+yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
+\begin{lstlisting}
+scala> val p1 = at.logic.testing.PigeonHolePrinciple.atom(1, 1)
+p1: at.logic.language.fol.FOLFormula = R(p_1, h_1)
+
+scala> val p2 = at.logic.testing.PigeonHolePrinciple.atom(2, 1)
+p2: at.logic.language.fol.FOLFormula = R(p_2, h_1)
+
+scala> val p3 = at.logic.testing.PigeonHolePrinciple.atom(3, 1)
+p3: at.logic.language.fol.FOLFormula = R(p_3, h_1)
+
+scala> m.interpret(p1) // Is pigeon 1 in hole 1?
+res14: Boolean = false
+
+scala> m.interpret(p2) // Is pigeon 2 in hole 1?
+res15: Boolean = true
+
+scala> m.interpret(p3) // Is pigeon 3 in hole 1?
+res16: Boolean = false
+\end{lstlisting}
+We can also interpret quantifier-free formulas:
+\begin{lstlisting}
+cala> m.interpret( And(p1, p2) )
+res17: Boolean = false
+
+scala> m.interpret( Neg(notvalid) )
+res18: Boolean = true
+\end{lstlisting}
+%
 \bibliographystyle{plain}
 \bibliography{references}
 \end{document}
