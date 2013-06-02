@@ -83,12 +83,22 @@ object ComputeGrammars extends Logger {
         trace( "  pairs has size " + pairs.size )
         trace( "  newpairs has size " + newpairs.size )
         trace( "  allsubsets has size " + allsubsets.size )
+
+        /**
+          * A tail-recursive union without duplicate elimination, used below in subsetpairs
+          * Since order does not matter this instance, ++ was replaced by this.
+          */
+        def tailRecUnion[A](xs:List[A],ys:List[A]):List[A] = ys match {
+          case Nil => xs
+          case (y::yrest) => tailRecUnion(y::xs,yrest)
+        }
+
         // For each subset, get the set U formed by the u_i's and the set T of the
         // terms covered (union of t_i)
-        val subsetpairs = allsubsets.foldRight(List[(List[FOLTerm], List[FOLTerm])]()) {(subset, acc1) =>
-          val d = subset.foldRight(List[FOLTerm](), List[FOLTerm]()) ( (el, acc2) => el._1 match {
+        val subsetpairs = allsubsets.foldLeft(List[(List[FOLTerm], List[FOLTerm])]()) {(acc1, subset) =>
+          val d = subset.foldLeft(List[FOLTerm](), List[FOLTerm]()) ( (acc2, el) => el._1 match {
             case null => acc2
-            case _ => (el._1 :: acc2._1, el._2 ++ acc2._2)
+            case _ => (el._1 :: acc2._1, tailRecUnion(el._2,acc2._2))
           })
           d :: acc1
         }
@@ -100,8 +110,8 @@ object ComputeGrammars extends Logger {
         // adding the missing terms to U should not exceed the size of the term
         // set.
         val ssize = s.size
-        subsetpairs.foldRight(grammars) {
-          case (p, acc) =>
+        subsetpairs.foldLeft(grammars) {
+          case (acc, p) =>
             val termsCovered = p._2
             val difference = terms.diff(termsCovered)
        
@@ -111,6 +121,8 @@ object ComputeGrammars extends Logger {
             }
             // Some constants are added to U and this is still reasonably small
             else if(p._1.size + difference.size + ssize < terms.size) {
+              //NOTE: p._1 ++ difference could cause a stack overflow, should difference grow too large.
+              //Presently, this is not a problem.
               (new Grammar(p._1 ++ difference, s, ev)) :: acc
             }
             // No good
