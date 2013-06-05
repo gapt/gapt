@@ -122,6 +122,113 @@ object CutIntroduction extends Logger {
 */
   }
 
+
+
+
+
+  /** Carbon copy of cutIntro, except for the call "ehs.minimizeSolution2", put
+    * there to test its perfomance. Should minimizeSolution2 work as intended, cutIntro.apply will be replaced
+    * by this method.
+    */
+  def apply2(proof: LKProof) : LKProof = {
+
+    val endSequent = proof.root
+    println("\nEnd sequent: " + endSequent)
+
+    // Extract the terms used to instantiate each formula
+    val termsTuples = TermsExtraction(proof)
+
+    // Assign a fresh function symbol to each quantified formula in order to
+    // transform tuples into terms.
+    val terms = new FlatTermSet(termsTuples)
+
+    println( "\nTerm set: {" + terms.termset + "}" )
+    println( "Size of term set: " + terms.termset.size )
+
+    val grammars = ComputeGrammars(terms)
+
+    println( "\nNumber of grammars: " + grammars.length )
+
+    if(grammars.length == 0) {
+      throw new CutIntroException("\nNo grammars found." + 
+        " The proof cannot be compressed using a cut with one universal quantifier.\n")
+    }
+
+    // Compute the proofs for each of the smallest grammars
+    val smallest = grammars.head.size
+    val smallestGrammars = grammars.filter(g => g.size == smallest)
+
+    println( "Smallest grammar-size: " + smallest )
+    println( "Number of smallest grammars: " + smallestGrammars.length )
+
+    val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
+      trace( "building proof for grammar " + grammar.toPrettyString )
+
+      val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
+    
+      val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+      ehs.minimizeSolution2
+
+      // Building up the final proof with cut
+      buildFinalProof(ehs) match {
+        case Some(p) => (p, ehs) :: acc
+        case None => acc
+      }
+    }
+
+    // Sort the list by size of proofs
+    val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
+
+    val smallestProof = sorted.head._1
+    val ehs = sorted.head._2
+
+    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+
+    smallestProof
+      
+/* TODO: uncomment when fixed.
+    // Computing the interpolant (transform this into a separate function later)
+    
+    // A[s_i] forall i
+    val asi = s.map(t => cutFormula0.substitute(t))
+    val cutConj = andN(asi)
+
+    // Negative part
+    val gamma = ehs.inst_l
+    val delta = ehs.inst_r
+    val npart = gamma ++ delta
+
+    // Positive part
+    val pi = ehs.prop_l :+ cutConj
+    val lambda = ehs.prop_r
+    val ppart = pi ++ lambda
+
+    // Proof
+    val interpProof = solvePropositional(FSequent(gamma++pi, delta++lambda))
+
+    // Getting the formula occurrences...
+    val occurrences = interpProof.root.antecedent ++ interpProof.root.succedent
+    val npart_occ = occurrences.filter(x => npart.contains(x.formula))
+    val ppart_occ = occurrences.filter(x => ppart.contains(x.formula))
+
+    val interpolant = ExtractInterpolant(interpProof, npart_occ.toSet, ppart_occ.toSet)
+
+    println("Interpolant: " + interpolant.toPrettyString + "\n")
+
+    // Adding interpolant to cut formula
+    // TODO: casting does not work here.
+    val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
+*/
+  }
+
+
+
+
+
+
+
+
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
    
     val flatterms = g.flatterms
@@ -245,12 +352,12 @@ object CutIntroduction extends Logger {
 
   //------------------------ FORGETFUL RESOLUTION -------------------------//
 
-  class MyFClause(val neg: List[FOLFormula], val pos: List[FOLFormula])
+  class MyFClause[A](val neg: List[A], val pos: List[A])
  
   def toMyFClause(c: FClause) = {
     val neg = c.neg.toList.map(x => x.asInstanceOf[FOLFormula])
     val pos = c.pos.toList.map(x => x.asInstanceOf[FOLFormula])
-    new MyFClause(neg, pos)
+    new MyFClause[FOLFormula](neg, pos)
   }
 
   // We assume f is in CNF. Maybe it works also for f not
@@ -270,21 +377,32 @@ object CutIntroduction extends Logger {
     )
   }
 
-  // assume (for simplicity) that 
-  // cls is not empty, and does not contain the empty
-  // clause
-  def CNFtoFormula( cls : List[MyFClause] ) : FOLFormula =
+  /** Converts a CNF back into a FOL formula.
+    */
+  def CNFtoFormula( cls : List[MyFClause[FOLFormula]] ) : FOLFormula =
   {
-    andN(cls.map( c => orN(c.pos ++ c.neg.map( l => Neg(l) )) ))
+    val nonEmptyClauses = cls.filter(c => c.neg.length > 0 || c.pos.length > 0).toList
+
+    if (nonEmptyClauses.length == 0) { TopC }
+    else { andN(nonEmptyClauses.map( c => orN(c.pos ++ c.neg.map( l => Neg(l) )) )) }
+  }
+
+  /** Converts a numbered CNF back into a FOL formula.
+    */
+  def NumberedCNFtoFormula( cls : List[MyFClause[(FOLFormula, Int)]] ) : FOLFormula = {
+    val nonEmptyClauses = cls.filter(c => c.neg.length > 0 || c.pos.length > 0).toList
+
+    if (nonEmptyClauses.length == 0) { TopC }
+    else { andN(nonEmptyClauses.map( c => orN(c.pos.map(l => l._1) ++ c.neg.map( l => Neg(l._1) )) )) }
   }
 
   // Checks if complementary literals exist.
-  def resolvable(l: MyFClause, r: MyFClause) =
+  def resolvable(l: MyFClause[FOLFormula], r: MyFClause[FOLFormula]) =
     l.pos.exists( f => r.neg.contains(f) ) || l.neg.exists(f => r.pos.contains(f))
 
   // Assumes that resolvable(l, r). Does propositional resolution.
   // TODO: incorporate contraction.
-  def resolve(l: MyFClause, r: MyFClause) : MyFClause =
+  def resolve(l: MyFClause[FOLFormula], r: MyFClause[FOLFormula]) : MyFClause[FOLFormula] =
   {
     val cl = l.pos.find( f => r.neg.contains(f) )
     if (cl != None)
@@ -294,12 +412,59 @@ object CutIntroduction extends Logger {
          the scala team proposes to replace - with filterNot(_ == cl.get), but this removes all formulas.
          another solution would be to work with FormulaOccurrences
        */
-      new MyFClause( l.neg ++ (r.neg - cl.get) , (l.pos - cl.get) ++ r.pos )
+      new MyFClause[FOLFormula]( l.neg ++ (r.neg - cl.get) , (l.pos - cl.get) ++ r.pos )
     else
     {
       val cr = l.neg.find( f => r.pos.contains(f) ).get
-      new MyFClause( (l.neg - cr) ++ r.neg, l.pos ++ (r.pos - cr) )
+      new MyFClause[FOLFormula]( (l.neg - cr) ++ r.neg, l.pos ++ (r.pos - cr) )
     }
+  }
+
+  /** Given a formula and a pair of indices (i,j), resolves the two clauses which contain i & j.
+    * The original two clauses are deleted and the new, merged clauses is added to the formula.
+    *
+    * The order of the clauses is NOT preserved!
+    *
+    * @param cls The formula in numbered clause form: each atom is tuple of the atom itself and its index.
+    * @param pair The two atom indices indicating the atoms to be resolved.
+    * @return The original formula, with the two resolved clauses deleted and the new, resolved clause added.
+    */
+  def forgetfulResolve(cls: List[MyFClause[(FOLFormula, Int)]], pair:(Int, Int)) : List[MyFClause[(FOLFormula, Int)]] = {
+
+    /** If either component of pair is present in clause, (clause',True)
+      * is returned, where clause' is clause, with the occurring atoms deleted.
+      * Otherwise, (clause,False) is returned.
+      */
+    def resolveClause(clause:MyFClause[(FOLFormula, Int)], pair: (Int, Int)) = {
+      val neg = clause.neg.filter(a => a._2 != pair._1 && a._2 != pair._2)
+      val pos = clause.pos.filter(a => a._2 != pair._1 && a._2 != pair._2)
+
+      (new MyFClause(neg, pos), neg.length != clause.neg.length || pos.length != clause.pos.length)
+    }
+
+    val emptyClause = new MyFClause[(FOLFormula, Int)](Nil, Nil)
+
+    def mergeClauses(clauses:List[MyFClause[(FOLFormula, Int)]]) : MyFClause[(FOLFormula, Int)] = {
+      clauses.foldLeft(emptyClause)((c1, c2) => new MyFClause(c1.neg ++ c2.neg, c1.pos ++ c2.pos))
+    }
+
+    val startVal = (List[MyFClause[(FOLFormula, Int)]](), List[MyFClause[(FOLFormula, Int)]]())
+
+    //Goes through all clauses with fold, trying to delete the atoms given by pair.
+    val (f, rest) = cls.foldLeft(startVal)((x:(List[MyFClause[(FOLFormula, Int)]], List[MyFClause[(FOLFormula, Int)]]), clause:MyFClause[(FOLFormula,Int)]) => {
+        val (formula, mergingClause) = x
+        val (clause2,resolved) = resolveClause(clause, pair)
+
+        //The first clause was resolved => add it to the temporary mergingClause instead of formula.
+        if (resolved && mergingClause.length == 0) { (formula, clause2::Nil) }
+        //The 2nd clause was resolved => merge the two clauses and add the result to formula.
+        else if (resolved) { (mergeClauses(clause2::mergingClause)::formula, Nil) }
+        //No clause was resolved => add the clause as is to the formula and continue.
+        else {(clause::formula, mergingClause)}
+      })
+
+    //If both atoms were part of the same clause, rest is non-empty. In this case, add rest's 1 clause again.
+    if (rest.length > 0) { (rest.head)::f } else { f }
   }
   
   //-----------------------------------------------------------------------//
