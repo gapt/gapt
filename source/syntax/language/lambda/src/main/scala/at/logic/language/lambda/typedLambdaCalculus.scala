@@ -54,6 +54,11 @@ trait LambdaFactoryProvider {
 
   class VariableNameGenerator(gen : () => String) extends VariableGenerator {
     def apply(a : Var) : Var = a.factory.createVar(VariableStringSymbol(gen()), a.exptype)
+    def apply(a : Var, blacklist : Set[String]) = {
+      var name : String = gen()
+      while (blacklist.contains(name)) name = gen()
+      a.factory.createVar(VariableStringSymbol(name), a.exptype)
+    }
   }
 
 
@@ -91,8 +96,8 @@ object Normalization {
     (normalize_(f,vg, blacklist)._1 , x)
   }
 
-  private def normalize_[T <: LambdaExpression](f : T, gen: => VariableGenerator, bl : immutable.Set[String])
-   : (T, VariableGenerator, immutable.Set[String]) =f match {
+  private def normalize_[T <: LambdaExpression](f : T, gen: => VariableNameGenerator, bl : immutable.Set[String])
+   : (T, VariableNameGenerator, immutable.Set[String]) =f match {
     case Var(name, exptype) => (f, gen, bl)
     case App(s, t) =>
       val (s_, g1, bl1) = normalize_(s,gen, bl)
@@ -100,10 +105,10 @@ object Normalization {
       (s.factory.createApp(s_, t_).asInstanceOf[T], g2, bl2)
     case Abs(x, s) =>
       var x_ =  gen(x)
-      while (bl.contains(x_.name.toString)) { x_ = gen(x) } //make sure the new variable is really fresh
+      x_ = gen(x, bl) //make sure the new variable is really fresh
       val sub = Substitution[LambdaExpression]((x, x_))
       val (s_, g1, bl1) = normalize_(sub(s).asInstanceOf[T], gen, bl + x_.name.toString)
-      (s.factory.createAbs(x_, s_).asInstanceOf[T], g1, bl1)
+      (s.factory.createAbs(x_, s_).asInstanceOf[T], g1, bl1 + (x_.toString))
     case _ => throw new Exception("Unhandled expression type in variable normalization!")
   }
 }

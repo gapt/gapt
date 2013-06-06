@@ -3,7 +3,6 @@ package at.logic.algorithms.unification
 import _root_.at.logic.algorithms.diophantine.Vector
 import _root_.at.logic.calculi.lk.base.types.FSequent
 import _root_.at.logic.calculi.lk.base.{Sequent, FSequent}
-import _root_.at.logic.calculi.lkmodulo.EequalityA
 import _root_.at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import _root_.at.logic.language.hol.{HOL, HOLFormula}
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser

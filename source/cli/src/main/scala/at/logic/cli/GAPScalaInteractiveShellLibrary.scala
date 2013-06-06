@@ -29,7 +29,6 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lkmodulo.EequalityA
 import at.logic.calculi.lksk.base._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.calculi.resolution.base._
@@ -113,6 +112,7 @@ import at.logic.calculi.slk.SchemaProofDB
 import at.logic.transformations.ceres.ACNF.getInstantiationsOfTheIndexedFOVars
 import at.logic.transformations.ceres.ACNF.ConvertCutsToHOLFormulasInResProof
 import at.logic.transformations.ceres.ACNF.renameIndexedVarInProjection
+import at.logic.algorithms.unification.EequalityA
 
 object printProofStats {
     def apply(p: LKProof) = {

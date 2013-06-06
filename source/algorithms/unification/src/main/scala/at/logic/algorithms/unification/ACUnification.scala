@@ -1,8 +1,6 @@
 package at.logic.algorithms.unification
 
 import _root_.at.logic.calculi.lk.base.types.FSequent
-import _root_.at.logic.calculi.lkmodulo.types.Equation
-import _root_.at.logic.calculi.lkmodulo.{EequalityA, Equation}
 import _root_.at.logic.language.hol.{HOLFormula}
 import _root_.at.logic.language.lambda.symbols.{VariableStringSymbol, VariableSymbolA}
 import _root_.at.logic.parsing.language.simple.SimpleFOLParser
@@ -18,6 +16,77 @@ import scala.collection.immutable.Seq
 import collection.mutable.HashMap
 import collection.immutable.Stream.Cons
 import at.logic.calculi.lk.base.FSequent
+import at.logic.language.lambda.typedLambdaCalculus.Normalization
+
+
+package types {
+class Equation(val left: FOLTerm, val right : FOLTerm) {
+  def toFormula() = FOLEquation(left, right)
+}
+}
+
+object Equation {
+  def apply(left : FOLTerm , right : FOLTerm ) = new types.Equation(left,  right)
+
+  /*
+  def unapply(f : FOLFormula) = {
+    f match {
+      case FOLEquation(left, right) => Some(Equation(left, right))
+      case _ => None
+    }
+  }*/
+
+  implicit def equation2formula(e : types.Equation) = e.toFormula()
+}
+
+abstract class REequalityA {
+  def equational_rules() : Set[types.Equation];
+  def rewrite_rules() : Set[Tuple2[FOLFormula, FOLFormula]];
+
+  def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean;
+}
+
+abstract class EequalityA extends REequalityA {
+  /* the set of rewrite rules is empty in a pure equational theory */
+  final override def rewrite_rules() = Set[Tuple2[FOLFormula, FOLFormula]]()
+  override def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean =
+    reequal_to_(
+      Normalization(s,0,"x", s.symbols.map(_.toString).toSet)._1,
+      Normalization(t,0,"x", t.symbols.map(_.toString).toSet)._1)
+
+  private def reequal_to_(s : FOLFormula, t : FOLFormula) : Boolean = {
+    def tuples_equals(el : Tuple2[FOLTerm, FOLTerm] ) : Boolean = (word_equalsto(el._1, el._2))
+
+    (s,t) match {
+      case (Atom( sym1: ConstantSymbolA, args1: List[FOLTerm]), Atom( sym2: ConstantSymbolA, args2: List[FOLTerm])) =>
+        (sym1 == sym2) &&
+          (args1.length == args2.length) &&
+          ( (args1 zip args2) forall (tuples_equals))
+
+      case (Neg(f1), Neg(f2)) =>
+        reequal_to_(f1,f2)
+
+      case (And(f1,f2), And(g1,g2)) =>
+        reequal_to_(f1,g2) && reequal_to (f2,g2)
+
+      case (Or(f1,f2), Or(g1,g2)) =>
+        reequal_to_(f1,g2) && reequal_to (f2,g2)
+
+      /* these two rules work only if the variables are canonically renamed in both formulas */
+      case (AllVar(x1,t1), AllVar(x2,t2)) =>
+        (x1 == x2) && reequal_to_ (t1,t2)
+
+      case (ExVar(x1,t1), ExVar(x2,t2)) =>
+        (x1 == x2) && reequal_to_ (t1,t2)
+
+      case default => false
+    }
+  }
+
+  def word_equalsto(s : FOLTerm, t : FOLTerm) : Boolean
+  def unifies_with(s : FOLTerm, t : FOLTerm) : Option[Substitution[FOLTerm]]
+}
+
 
 object ACUnification {
   val algorithms  = new HashMap[ConstantSymbolA, FinitaryUnification[FOLTerm]]
@@ -723,7 +792,7 @@ class ACUEquality(val function_symbol : ConstantSymbolA, val zero_symbol : Const
   private val zero = FOLConst(zero_symbol)
   private def f(s:FOLTerm, t:FOLTerm) = Function(function_symbol, List(s,t))
 
-  override def equational_rules() : Set[Equation] = {
+  override def equational_rules() : Set[types.Equation] = {
     val x = FOLVar(new VariableStringSymbol("x"))
     val y = FOLVar(new VariableStringSymbol("y"))
     val z = FOLVar(new VariableStringSymbol("z"))
@@ -749,7 +818,7 @@ class MulACEquality(val function_symbols : List[ConstantSymbolA]) extends Eequal
 
   def flatten(f : FOLFormula) = function_symbols.foldLeft(f)( (formula : FOLFormula, sym:ConstantSymbolA) => ACUtils.flatten(sym, formula)  )
 
-  override def equational_rules() : Set[Equation] = {
+  override def equational_rules() : Set[types.Equation] = {
     val x = FOLVar(new VariableStringSymbol("x"))
     val y = FOLVar(new VariableStringSymbol("y"))
     val z = FOLVar(new VariableStringSymbol("z"))
@@ -773,10 +842,10 @@ class MulACUEquality(override val function_symbols : List[ConstantSymbolA], val 
 
   val fzsymbols = function_symbols zip zero_symbols
 
-  override def equational_rules() : Set[Equation] = {
+  override def equational_rules() : Set[types.Equation] = {
     val x = FOLVar(new VariableStringSymbol("x"))
 
-    val acrules : Set[Equation] = super.equational_rules()
+    val acrules : Set[types.Equation] = super.equational_rules()
     val urules = fzsymbols map ((i : (ConstantSymbolA, ConstantSymbolA)) => { Equation( f(i._1, x, FOLConst(i._2)), x)  })
     acrules ++ urules.toSet
   }

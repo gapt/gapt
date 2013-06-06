@@ -152,15 +152,17 @@ object TermReplacement{
           val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
           var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
-          //println("sub="+sub)
-          //println("nsub="+nsub)
-          //println("inference: "+clause)
-          //println("ninference: "+inference.root)
-          //println("parent:    "+parent1.root)
-          //println("rparent:    "+rparent1.root)
+          println("sub="+sub)
+          println("nsub="+nsub)
+          println("inference: "+clause)
+          println("ninference: "+inference.root)
+          println("parent:    "+parent1.root)
+          println("rparent:    "+rparent1.root)
 
           def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
             val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+            println("anc corr in matcher:")
+            println(anc_correspondences)
             t.formula == apply(o.formula.asInstanceOf[FOLExpression], smap) &&
               anc_correspondences.diff(t.ancestors).isEmpty &&
               t.ancestors.diff(anc_correspondences).isEmpty
