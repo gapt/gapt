@@ -1,6 +1,6 @@
 package at.logic.parsing.language.prover9
 
-import util.parsing.combinator.JavaTokenParsers
+import scala.util.parsing.combinator.{RegexParsers, JavaTokenParsers}
 import at.logic.language.fol
 import fol._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
@@ -50,7 +50,7 @@ object Prover9TermParserLadrStyle extends Prover9TermParserA {
 }
 
 
-abstract trait Prover9TermParserA extends JavaTokenParsers {
+abstract trait Prover9TermParserA extends RegexParsers {
   /* these two rules are abstract since the variable style decides the regexp for a variable */
   def conssymb : Parser[String]
   def varsymb : Parser[String]
@@ -71,7 +71,7 @@ abstract trait Prover9TermParserA extends JavaTokenParsers {
   def pformula : Parser[FOLFormula] = parens(formula) | allformula | exformula
   def formula: Parser[FOLFormula] = implication
   //precedence 800
-  def implication: Parser[FOLFormula]  = (dis_or_con ~ ("<->"|"->"|"<-") ~ dis_or_con) ^^ { _ match {
+  def implication: Parser[FOLFormula]  = ((dis_or_con ~ ("<->"|"->"|"<-")) ~ dis_or_con) ^^ { _ match {
     case f ~ "->"  ~ g => fol.Imp(f,g)
     case f ~ "<-"  ~ g => fol.Imp(g,f)
     case f ~ "<->" ~ g => fol.And(fol.Imp(f,g), fol.Imp(g,f))

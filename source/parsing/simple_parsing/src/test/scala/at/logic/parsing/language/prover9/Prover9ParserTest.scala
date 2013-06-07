@@ -136,6 +136,61 @@ class Prover9ParserTest extends SpecificationWithJUnit {
           throw new Exception("Could not parse endsequent! "+msg+ " "+input.pos)
       }
 
+      "parse large formula 1" in {
+        skipped("too large")
+        val str = """ -(all U (ssList(U) -> (all V (ssList(V) -> (all W (ssList(W) -> (all X (ssList(X) -> V != X | U != W | -neq(V,nil) | (all Y (ssList(Y) -
+> app(W,Y) != X | -totalorderedP(W) | (exists Z (ssItem(Z) & (exists X1 (ssList(X1) & app(cons(Z,nil),X1) = Y & (exists X2 (ssItem(X2) & (e
+xists X3 (ssList(X3) & app(X3,cons(X2,nil)) = W & leq(X2,Z))))))))))) | nil != X & nil = W | neq(U,nil) & frontsegP(V,U)))))))))"""
+        println("parsing large example 1")
+        Prover9TermParser.parseAll(Prover9TermParser.formula, str) match {
+          case Prover9TermParser.Success(result, _ ) =>
+            "success" must beEqualTo("success")
+          case Prover9TermParser.NoSuccess(msg, input) =>
+            throw new Exception("Could not parse endsequent! "+msg+ " "+input.pos)
+        }
+
+      }
+
+      "parse large formula 2" in {
+        skipped("too large to parse")
+        val str = """--(exists X -(-(all Y (-r1(X,Y) | p7(Y))) | -((all Y (-r1(X,Y) | (-(all X (-r1(Y,X) | -(-p16(X) & -p116(X) & p115(X)))) & -(all X (-r1(Y,
+X) | -(p16(X) & -p116(X) & p115(X)))) | -(-p115(Y) & p114(Y))) & (-(all X (-r1(Y,X) | -(-p15(X) & -p115(X) & p114(X)))) & -(all X (-r1(Y,X)
+ | -(p15(X) & -p115(X) & p114(X)))) | -(-p114(Y) & p113(Y))) & (-(all X (-r1(Y,X) | -(-p14(X) & -p114(X) & p113(X)))) & -(all X (-r1(Y,X) |
+ -(p14(X) & -p114(X) & p113(X)))) | -(-p113(Y) & p112(Y))) & (-(all X (-r1(Y,X) | -(-p13(X) & -p113(X) & p112(X)))) & -(all X (-r1(Y,X) | -
+(p13(X) & -p113(X) & p112(X)))) | -(-p112(Y) & p111(Y))) & (-(all X (-r1(Y,X) | -(-p12(X) & -p112(X) & p111(X)))) & -(all X (-r1(Y,X) | -(p
+12(X) & -p112(X) & p111(X)))) | -(-p111(Y) & p110(Y))) & (-(all X (-r1(Y,X) | -(-p11(X) & -p111(X) & p110(X)))) & -(all X (-r1(Y,X) | -(p11
+(X) & -p111(X) & p110(X)))) | -(-p110(Y) & p109(Y))) & (-(all X (-r1(Y,X) | -(-p10(X) & -p110(X) & p109(X)))) & -(all X (-r1(Y,X) | -(p10(X
+) & -p110(X) & p109(X)))) | -(-p109(Y) & p108(Y))) & (-(all X (-r1(Y,X) | -(-p9(X) & -p109(X) & p108(X)))) & -(all X (-r1(Y,X) | -(p9(X) &
+-p109(X) & p108(X)))) | -(-p108(Y) & p107(Y))) & (-(all X (-r1(Y,X) | -(-p8(X) & -p108(X) & p107(X)))) & -(all X (-r1(Y,X) | -(p8(X) & -p10
+8(X) & p107(X)))) | -(-p107(Y) & p106(Y))) & (-(all X (-r1(Y,X) | -(-p7(X) & -p107(X) & p106(X)))) & -(all X (-r1(Y,X) | -(p7(X) & -p107(X)
+ & p106(X)))) | -(-p106(Y) & p105(Y))) & (-(all X (-r1(Y,X) | -(-p6(X) & -p106(X) & p105(X)))) & -(all X (-r1(Y,X) | -(p6(X) & -p106(X) & p
+105(X)))) | -(-p105(Y) & p104(Y))) & (-(all X (-r1(Y,X) | -(-p5(X) & -p105(X) & p104(X)))) & -(all X (-r1(Y,X) | -(p5(X) & -p105(X) & p104(
+X)))) | -(-p104(Y) & p103(Y))) & (-(all X (-r1(Y,X) | -(-p4(X) & -p104(X) & p103(X)))) & -(all X (-r1(Y,X) | -(p4(X) & -p104(X) & p103(X)))
+) | -(-p103(Y) & p102(Y))) & (-(all X (-r1(Y,X) | -(-p3(X) & -p103(X) & p102(X)))) & -(all X (-r1(Y,X) | -(p3(X) & -p103(X) & p102(X)))) |
+-(-p102(Y) & p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1(Y,X) | -(p2(X) & -p102(X) & p101(X)))) | -(-p
+101(Y) & p100(Y))) & (((all X (-r1(Y,X) | -p16(X) | -p115(X))) | p16(Y)) & ((all X (-r1(Y,X) | p16(X) | -p115(X))) | -p16(Y)) | -p115(Y)) &
+ (((all X (-r1(Y,X) | -p15(X) | -p114(X))) | p15(Y)) & ((all X (-r1(Y,X) | p15(X) | -p114(X))) | -p15(Y)) | -p114(Y)) & (((all X (-r1(Y,X)
+| -p14(X) | -p113(X))) | p14(Y)) & ((all X (-r1(Y,X) | p14(X) | -p113(X))) | -p14(Y)) | -p113(Y)) & (((all X (-r1(Y,X) | -p13(X) | -p112(X)
+)) | p13(Y)) & ((all X (-r1(Y,X) | p13(X) | -p112(X))) | -p13(Y)) | -p112(Y)) & (((all X (-r1(Y,X) | -p12(X) | -p111(X))) | p12(Y)) & ((all
+ X (-r1(Y,X) | p12(X) | -p111(X))) | -p12(Y)) | -p111(Y)) & (((all X (-r1(Y,X) | -p11(X) | -p110(X))) | p11(Y)) & ((all X (-r1(Y,X) | p11(X
+) | -p110(X))) | -p11(Y)) | -p110(Y)) & (((all X (-r1(Y,X) | -p10(X) | -p109(X))) | p10(Y)) & ((all X (-r1(Y,X) | p10(X) | -p109(X))) | -p1
+0(Y)) | -p109(Y)) & (((all X (-r1(Y,X) | -p9(X) | -p108(X))) | p9(Y)) & ((all X (-r1(Y,X) | p9(X) | -p108(X))) | -p9(Y)) | -p108(Y)) & (((a
+ll X (-r1(Y,X) | -p8(X) | -p107(X))) | p8(Y)) & ((all X (-r1(Y,X) | p8(X) | -p107(X))) | -p8(Y)) | -p107(Y)) & (((all X (-r1(Y,X) | -p7(X)
+| -p106(X))) | p7(Y)) & ((all X (-r1(Y,X) | p7(X) | -p106(X))) | -p7(Y)) | -p106(Y)) & (((all X (-r1(Y,X) | -p6(X) | -p105(X))) | p6(Y)) &
+((all X (-r1(Y,X) | p6(X) | -p105(X))) | -p6(Y)) | -p105(Y)) & (((all X (-r1(Y,X) | -p5(X) | -p104(X))) | p5(Y)) & ((all X (-r1(Y,X) | p5(X
+) | -p104(X))) | -p5(Y)) | -p104(Y)) & (((all X (-r1(Y,X) | -p4(X) | -p103(X))) | p4(Y)) & ((all X (-r1(Y,X) | p4(X) | -p103(X))) | -p4(Y))
+ | -p103(Y)) & (((all X (-r1(Y,X) | -p3(X) | -p102(X))) | p3(Y)) & ((all X (-r1(Y,X) | p3(X) | -p102(X))) | -p3(Y)) | -p102(Y)) & (((all X
+(-r1(Y,X) | -p2(X) | -p101(X))) | p2(Y)) & ((all X (-r1(Y,X) | p2(X) | -p101(X))) | -p2(Y)) | -p101(Y)) & (((all X (-r1(Y,X) | -p1(X) | -p100(X))) | p1(Y)) & ((all X (-r1(Y,X) | p1(X) | -p100(X))) | -p1(Y)) | -p100(Y)) & (p115(Y) | -p116(Y)) & (p114(Y) | -p115(Y)) & (p113(Y) | -p114(Y)) & (p112(Y) | -p113(Y)) & (p111(Y) | -p112(Y)) & (p110(Y) | -p111(Y)) & (p109(Y) | -p110(Y)) & (p108(Y) | -p109(Y)) & (p107(Y) | -p108(Y)) & (p106(Y) | -p107(Y)) & (p105(Y) | -p106(Y)) & (p104(Y) | -p105(Y)) & (p103(Y) | -p104(Y)) & (p102(Y) | -p103(Y)) & (p101(Y) | -p102(Y)) & (p100(Y) | -p101(Y)))) & -p101(X) & p100(X))))"""
+        println("parsing large example 2")
+        Prover9TermParser.parseAll(Prover9TermParser.formula, str) match {
+          case Prover9TermParser.Success(result, _ ) =>
+            "success" must beEqualTo("success")
+          case Prover9TermParser.NoSuccess(msg, input) =>
+            throw new Exception("Could not parse endsequent! "+msg+ " "+input.pos)
+        }
+
+      }
+
     }
 
   }
