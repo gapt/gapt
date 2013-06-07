@@ -7,36 +7,18 @@
 
 package at.logic.language.fol
 
-import _root_.at.logic.language.hol.logicSymbols.ConstantSymbolA
-import _root_.at.logic.language.lambda.substitutions.Substitution
-import _root_.at.logic.language.lambda.symbols.VariableSymbolA
-import _root_.at.logic.language.lambda.typedLambdaCalculus.{AbsInScope, App, Var, LambdaExpression}
-import _root_.at.logic.language.lambda.types.->
-import _root_.at.logic.language.lambda.types.{To, Ti, TA}
+import at.logic.language.hol.logicSymbols.ConstantSymbolA
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.symbols.VariableSymbolA
+import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression}
+import at.logic.language.lambda.types.->
+import at.logic.language.lambda.types.{To, Ti, TA}
 
 object Utils {
   // universally closes off the given fol formula
   def universal_closure_of(f : FOLFormula) : FOLFormula = {
     val free_vars = getFreeVariablesFOL(f)
     free_vars.foldRight(f)((v : FOLVar, f : FOLFormula) => AllVar(v,f))
-  }
-
-  // this is nearly the same as LambdaExpression.getFreeAndBoundVariables, but returns the variabes in the order encountered
-  def freevars_boundvars_constants_of(expression: LambdaExpression):Tuple3[List[Var],List[Var],List[Var]] = expression match {
-    case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (List(v), List(), List())
-    case v: Var if v.name.isInstanceOf[VariableSymbolA] => (List(), List(v), List())
-    case v: Var if v.name.isInstanceOf[ConstantSymbolA] => (List(), List(), List(v))
-    case v: Var => (List(), List(), List())// not variables (constants in this case)
-    case App(exp, arg) => {
-      val mFBV = freevars_boundvars_constants_of(exp)
-      val nFBV = freevars_boundvars_constants_of(arg)
-      ((mFBV._1 ::: nFBV._1).distinct, (mFBV._2 ::: nFBV._2).distinct, (mFBV._3 ::: nFBV._3).distinct)
-    }
-    case AbsInScope(v, exp) => {
-      val mFBV = freevars_boundvars_constants_of(exp)
-      val bound = removeDoubles(mFBV._2 ::: List(v))
-      (mFBV._1, bound, mFBV._3)
-    }
   }
 
   def isFirstOrderType( exptype: TA ) = isFunctionType( exptype ) || isPredicateType( exptype )

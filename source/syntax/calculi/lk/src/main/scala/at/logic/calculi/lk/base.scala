@@ -153,6 +153,7 @@ import collection.immutable
     def occurrences = antecedent ++ succedent
 
     //sanity checks for free and bound variables
+    // TODO: should this be here??
     def checkFormulaOccurrences(l : Seq[FormulaOccurrence]) = {
       (l filterNot ((fo : FormulaOccurrence) => 
         checkFormulas( List(fo.formula) ++ fo.ancestors.map(((occ:FormulaOccurrence) => occ.formula) ) ))
@@ -165,21 +166,6 @@ import collection.immutable
       ).isEmpty
     }
 
-    def checkLambdaExpression(t: LambdaExpression) = checkLambdaExpression_(t, HashSet[Var]())
-    def checkLambdaExpression_(t: LambdaExpression, scope: HashSet[Var]) : List[Var] = t match {
-      case v : Var  =>
-        if (scope.contains(v) && v.isFree) return List(v)
-        if ((!scope.contains(v)) && v.isBound) {
-          println("******** Bound variable not in scope: " + v)
-          return List(v)
-        }
-        List()
-      case App(s,t) =>
-        checkLambdaExpression_(s,scope) ++ checkLambdaExpression_(t,scope)
-      case AbsInScope(v,t) =>
-        checkLambdaExpression_(t, scope + v)
-      case _ => throw new Exception("Unhandled Lambda Term Type (not var, abs nor app)")
-    }
   }
 
   object Sequent {

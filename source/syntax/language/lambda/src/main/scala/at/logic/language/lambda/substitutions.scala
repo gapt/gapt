@@ -30,21 +30,6 @@ import collection.immutable.HashSet
     override def hashCode() = map.hashCode
     override def toString = map.toString
 
-    /*copy of a method in Sequent */
-    def checkLambdaExpression(t: LambdaExpression) = checkLambdaExpression_(t, HashSet[Var]())
-    def checkLambdaExpression_(t: LambdaExpression, scope: HashSet[Var]) : List[Var] = t match {
-      case v : Var  =>
-        if (scope.contains(v) && v.isFree) return List(v)
-        if ((!scope.contains(v)) && v.isBound) return List(v)
-        List()
-      case App(s,t) =>
-        checkLambdaExpression_(s,scope) ++ checkLambdaExpression_(t,scope)
-      case AbsInScope(v,t) =>
-      //case Abs(v,t) =>
-        checkLambdaExpression_(t, scope + v)
-      case _ => throw new Exception("Unhandled Lambda Term Type (not var, abs nor app)")
-    }
-
     // the change of db indices is done automatically in the constructor of abs
     // NOTE: the list protectedVars contains the bound variables of the whole expression
     protected def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {

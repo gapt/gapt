@@ -10,6 +10,7 @@ import symbols.ImplicitConverters._
 import scala.collection.immutable
 import scala.collection.mutable.Map
 import types._
+import collection.immutable.HashSet
 
 package typedLambdaCalculus {
 
@@ -25,6 +26,7 @@ trait LambdaFactoryProvider {
     def toString1(): String
     def syntaxEquals(e: LambdaExpression): Boolean
     def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
+
     private def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
       case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (immutable.HashSet(v), new immutable.HashSet())
       case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new immutable.HashSet(), immutable.HashSet(v))
@@ -42,7 +44,7 @@ trait LambdaFactoryProvider {
     }
 
     def freeVariables = getFreeAndBoundVariables._1
-    def boundVariables = getFreeAndBoundVariables._2
+    def boundVariables = getFreeAndBoundVariables._2 // TODO: note to self, this should die.
 
     def noUnboundedBounded: Boolean = {val ret = noUnboundedBoundedRec(Set[Var]()); if (!ret) Console.println(toStringSimple); ret} // confirms there are no unbounded bounded variables in the term
     protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean // the recursive call
@@ -470,4 +472,23 @@ object Normalization {
       }
     }
   }
+
+  object checkLambdaExpression {
+    def apply(t: LambdaExpression) = checkLambdaExpression_(t, HashSet[Var]())
+    def checkLambdaExpression_(t: LambdaExpression, scope: HashSet[Var]) : List[Var] = t match {
+      case v : Var  =>
+        if (scope.contains(v) && v.isFree) return List(v)
+        if ((!scope.contains(v)) && v.isBound) return List(v)
+        List()
+      case App(s,t) =>
+        checkLambdaExpression_(s,scope) ++ checkLambdaExpression_(t,scope)
+      // TODO: note to self, when AbsInScope is commented out and Abs is
+      // commented in, lots of tests in SubstitutionTests fail.
+      case AbsInScope(v,t) =>
+      //case Abs(v,t) =>
+        checkLambdaExpression_(t, scope + v)
+      case _ => throw new Exception("Unhandled Lambda Term Type (not var, abs nor app)")
+    }
+  }
+
 }
