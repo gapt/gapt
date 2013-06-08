@@ -12,6 +12,7 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.resolution.instance.Instance
 import scala.Some
+import at.logic.utils.logging.Logger
 
 /******* Term Replacement **********
    replaces all occurences of term "what" by term "by" in term "term" -- be careful with replacing variables,
@@ -20,11 +21,11 @@ import scala.Some
    usable on subclasses of lambda expressions, fsequents and resolution proofs
  */
 
-object TermReplacement{
+object TermReplacement extends Logger {
   import NameReplacement.find_matching
 
 
-  def debug(l : Int, m : Any) = { if (List().contains(l))  println("DEBUG: "+m.toString)}
+  // def debug(l : Int, m : Any) = { if (List().contains(l))  println("DEBUG: "+m.toString)}
 
   def apply[T <: LambdaExpression](term : T, what : T, by : T) : T = {
     require(what.exptype == by.exptype)
@@ -152,17 +153,17 @@ object TermReplacement{
           val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val nsub = Substitution(sub.map map ((x:(Var, FOLExpression)) => (x._1, apply(x._2, smap)) ))
           var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
-          println("sub="+sub)
-          println("nsub="+nsub)
-          println("inference: "+clause)
-          println("ninference: "+inference.root)
-          println("parent:    "+parent1.root)
-          println("rparent:    "+rparent1.root)
+          trace("sub="+sub)
+          trace("nsub="+nsub)
+          trace("inference: "+clause)
+          trace("ninference: "+inference.root)
+          trace("parent:    "+parent1.root)
+          trace("rparent:    "+rparent1.root)
 
           def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
             val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
-            println("anc corr in matcher:")
-            println(anc_correspondences)
+            trace("anc corr in matcher:")
+            trace(anc_correspondences.toString)
             t.formula == apply(o.formula.asInstanceOf[FOLExpression], smap) &&
               anc_correspondences.diff(t.ancestors).isEmpty &&
               t.ancestors.diff(anc_correspondences).isEmpty
