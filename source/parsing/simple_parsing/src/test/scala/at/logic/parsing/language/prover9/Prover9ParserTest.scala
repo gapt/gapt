@@ -132,6 +132,20 @@ class Prover9ParserTest extends SpecificationWithJUnit {
       }
     }
 
+    "parse infix formulas" in {
+      val terms = List("a = b", "P(1+(X*2))", "f(1+X)= (X*0)+X",
+        "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)")
+      terms map ((s: String) =>
+        Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
+          case Prover9TermParser.Success(result, _) =>
+            //println(result)
+            true must beEqualTo(true)
+          case Prover9TermParser.NoSuccess(msg, input) =>
+            s must beEqualTo(input.pos.toString + ": " + msg)
+        })
+
+    }
+
     "parse large formula 1" in {
       val str = """-(all U (ssList(U) -> (all V (ssList(V) -> (all W (ssList(W) -> (all X (ssList(X) -> V != X | U != W |
 -neq(V,nil) | (all Y (ssList(Y) -> app(W,Y) != X | -totalorderedP(W) | (exists Z (ssItem(Z) & (exists X1 (ssList(X1) &

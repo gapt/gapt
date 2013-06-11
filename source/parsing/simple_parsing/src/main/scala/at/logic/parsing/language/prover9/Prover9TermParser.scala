@@ -106,11 +106,26 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   lazy val atom1: PackratParser[FOLFormula] = atomsymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
   lazy val atom2: PackratParser[FOLFormula] = atomsymb ^^ {case x => Atom(ConstantStringSymbol(x), Nil)}
 
+  val plus_sym = new ConstantStringSymbol("+")
+  val times_sym = new ConstantStringSymbol("*")
+  val minus_sym = new ConstantStringSymbol("-")
+  val div_sym = new ConstantStringSymbol("-")
+  val wedge_sym = new ConstantStringSymbol("^")
+//  val vee_sym = new ConstantStringSymbol("v")
+  val less_sym = new ConstantStringSymbol("<")
+  val greater_sym = new ConstantStringSymbol(">")
+  val lesseq_sym = new ConstantStringSymbol("<=")
+  val greatereq_sym = new ConstantStringSymbol(">=")
+
   //infixatom
-  lazy val iatom : PackratParser[FOLFormula] = term ~ """((<|>)=?)|(!?=)""".r  ~ term ^^ {
+  lazy val iatom : PackratParser[FOLFormula] = term ~ """((<|>)=?)|(!?=)|[+\-*]""".r  ~ term ^^ {
     _ match {
       case t1 ~ "=" ~ t2 => Equation(t1,t2)
       case t1 ~ "!=" ~ t2 => Neg(Equation(t1,t2))
+      case t1 ~ "<" ~ t2 => Atom(less_sym, List(t1,t2))
+      case t1 ~ ">" ~ t2 => Atom(greater_sym, List(t1,t2))
+      case t1 ~ "<=" ~ t2 => Atom(lesseq_sym, List(t1,t2))
+      case t1 ~ ">=" ~ t2 => Atom(greatereq_sym, List(t1,t2))
       case t1 ~ sym ~ t2 => fol.Atom(ConstantStringSymbol(sym), List(t1,t2))
     }
   }
@@ -121,7 +136,18 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   def orderings : Parser[FOLFormula] = term ~ """(<|>)=?""".r  ~ term ^^ { case t1 ~ sym ~ t2 => fol.Atom(ConstantStringSymbol(sym), List(t1,t2))}
   */
   lazy val atomsymb: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*""".r
-  lazy val term: PackratParser[FOLTerm] = function | constant | variable
+  lazy val term: PackratParser[FOLTerm] = ifunction | noniterm
+  lazy val noniterm: PackratParser[FOLTerm] = function | constant | variable
+  lazy val ifunction: PackratParser[FOLTerm] = (noniterm|parens(ifunction)) ~ """[+\-*/^]""".r ~ (noniterm|parens(ifunction)) ^^ {
+    _ match {
+      case t1 ~ "+" ~ t2 => fol.Function(plus_sym, List(t1,t2))
+      case t1 ~ "-" ~ t2 => fol.Function(minus_sym, List(t1,t2))
+      case t1 ~ "*" ~ t2 => fol.Function(times_sym, List(t1,t2))
+      case t1 ~ "/" ~ t2 => fol.Function(div_sym, List(t1,t2))
+      case t1 ~ "^" ~ t2 => fol.Function(wedge_sym, List(t1,t2))
+      case t1 ~ sym ~ t2 => fol.Function(ConstantStringSymbol(sym), List(t1,t2))
+    }
+  }
   lazy val function: PackratParser[FOLTerm] = conssymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Function(ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
   lazy val constant: PackratParser[FOLConst] = conssymb ^^ {case x => FOLFactory.createVar(ConstantStringSymbol(x), Ti()).asInstanceOf[FOLConst]}
   lazy val variable: PackratParser[FOLVar] = varsymb ^^ {case x => FOLFactory.createVar(VariableStringSymbol(x), Ti()).asInstanceOf[FOLVar]}
