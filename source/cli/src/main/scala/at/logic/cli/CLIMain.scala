@@ -31,6 +31,7 @@ object CLIMain {
   import at.logic.calculi.occurrences.FormulaOccurrence
   import help.{apply => help}
   import at.logic.cli.GPL.{apply => copying, printLicense => license}
+  import at.logic.algorithms.cutIntroduction.FlatTermSet
 
   println()
   println("    *************************************")

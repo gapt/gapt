@@ -22,7 +22,7 @@ import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.calculi.lk.base.types._
 import at.logic.calculi.expansionTrees._
-import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti}
+import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti, StrongQuantifier => StrongQuantifierMulti}
 import at.logic.algorithms.lk._
 import at.logic.algorithms.expansionTrees._
 
@@ -32,6 +32,8 @@ object TermsExtraction {
 
   // If all the quantified formulas have only one quantifier, each list of
   // the list will have only one element
+  // TODO: make this method use the apply for expansioTree by extracting this
+  // tree from the proof
   def apply(proof: LKProof) : Map[FOLFormula, List[List[FOLTerm]]] = {
     val es = proof.root
     val formulas = es.antecedent ++ es.succedent
@@ -62,6 +64,7 @@ object TermsExtraction {
               map + (f -> (t ++ terms) )
             }
             else map + (f -> terms)
+          case StrongQuantifierMulti(_,_,_) => throw new TermsExtractionException("ERROR: Found strong quantifier while extracting terms.")
           case _ => map
         }
       }

@@ -57,10 +57,12 @@
       <artifactId>resolution</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+    <!-- This is commented out because otherwise a circular dependency is
+         created (expansion_trees depends on unification) -->
+    <!--dependency>
       <groupId>at.logic</groupId>
       <artifactId>expansion_trees</artifactId>
       <version>${project.version}</version>
-    </dependency>
+    </dependency-->
   </dependencies>
 </project>

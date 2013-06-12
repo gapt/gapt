@@ -136,6 +136,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case HOLAbs(_, x) => this +: x.subTerms
       case HOLApp(x, y) => this +: (x.subTerms ++ y.subTerms)
     }
+
   }
 
   trait HOLFormula extends HOLExpression with Formula {

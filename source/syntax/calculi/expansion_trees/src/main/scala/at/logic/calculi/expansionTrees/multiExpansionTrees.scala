@@ -15,11 +15,12 @@ type T1 = NonTerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]]
 
 trait MultiExpansionTree extends TreeA[Option[HOLFormula],Option[Seq[HOLExpression]]]
 
-case class WeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpansionTree, Seq[HOLExpression]]])
+case class WeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpansionTree, Seq[HOLExpression]]]) 
   extends MultiExpansionTree with T1 {
     lazy val node = Some(formula)
     lazy val children = instances.map(x => (x._1,Some(x._2)))
-  }
+}
+
 case class StrongQuantifier(formula: HOLFormula, variables: Seq[HOLVar], selection: MultiExpansionTree)
   extends MultiExpansionTree with T1 {
   lazy val node = Some(formula)

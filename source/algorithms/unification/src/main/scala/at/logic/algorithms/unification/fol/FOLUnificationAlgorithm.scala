@@ -48,7 +48,6 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
       true
   }
 
-  // TODO: use getFreeAndBoundVariables from FOLExpression?
   def getVars(f: FOLExpression): List[FOLVar] = f match {
       case (FOLConst(c)) => Nil
       case FOLVar(x) => f.asInstanceOf[FOLVar]::Nil

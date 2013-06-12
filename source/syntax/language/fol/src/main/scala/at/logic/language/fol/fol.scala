@@ -123,6 +123,8 @@ trait FOLFormula extends FOLExpression with HOLFormula {
     }
   }
 
+  // TODO: some of the methods below should work for FOL and HOL...
+
   // Transforms a formula to negation normal form (transforming also
   // implications into disjunctions)
   def toNNF : FOLFormula = this match {
@@ -180,6 +182,21 @@ trait FOLFormula extends FOLExpression with HOLFormula {
     case _ => throw new Exception("ERROR: Unexpected case while counting the number of atoms.")
   }
 
+  // Returns the quantifier free part of a prenex formula
+  def getMatrix : FOLFormula = {
+    assert(this.isPrenex)
+    this match {
+      case Var(_,_) |
+           Atom(_,_) |
+           Imp(_,_) |
+           And(_,_) |
+           Or(_,_) |
+           Neg(_) => this
+      case ExVar(x,f0) => f0.getMatrix
+      case AllVar(x,f0) => f0.getMatrix
+      case _ => throw new Exception("ERROR: Unexpected case while extracting the matrix of a formula.")
+    }
+  }
 }
 
 // the companion object converts HOL formulas into fol if the hol version has fol type

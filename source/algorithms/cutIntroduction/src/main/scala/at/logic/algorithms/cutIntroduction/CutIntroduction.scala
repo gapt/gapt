@@ -30,6 +30,7 @@ class CutIntroException(msg: String) extends Exception(msg)
 
 object CutIntroduction extends Logger {
 
+  // TODO: apply method for expansion trees
   def apply(proof: LKProof) : LKProof = {
 
     val endSequent = proof.root
@@ -221,12 +222,6 @@ object CutIntroduction extends Logger {
     val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
 */
   }
-
-
-
-
-
-
 
 
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {

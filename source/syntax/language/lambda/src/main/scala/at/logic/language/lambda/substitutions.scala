@@ -67,6 +67,8 @@ import collection.immutable.HashSet
     def simultaneousCompose(sub: Substitution[T]): Substitution[T] = Substitution(map ++ sub.map)
 
     def isRenaming = map.forall( p => p._2.isInstanceOf[Var] )
+
+    def getTerm = map.iterator.next._2
   }
 
   object Substitution {

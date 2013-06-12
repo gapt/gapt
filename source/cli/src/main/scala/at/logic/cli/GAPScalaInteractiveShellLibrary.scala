@@ -83,31 +83,7 @@ import scala.collection.mutable.Map
 
 package GAPScalaInteractiveShellLibrary {
 
-  object loadProofs {
-    def apply(file: String) =
-      try {
-        (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)))) with XMLProofDatabaseParser).getProofDatabase().proofs
-      }
-    catch
-    {
-      case _ =>
-        (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase().proofs
-    }
-  }
-
-  object loadProofDB {
-    def apply(file: String) =
-      try {
-        (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)))) with XMLProofDatabaseParser).getProofDatabase()
-      }
-    catch
-    {
-      case _ =>
-        (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase()
-    }
-  }
-
-  import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.lk.statistics._
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.transformations.ceres.ACNF.getInstantiationsOfTheIndexedFOVars
 import at.logic.transformations.ceres.ACNF.ConvertCutsToHOLFormulasInResProof
@@ -161,10 +137,157 @@ object printProofStats {
     }
   }
 
-  // TODO: the projections should already be grounded at this point... how do I do this?
   object buildACNF {
     def apply(ref: LKProof, projs: Set[LKProof], es: FSequent) = at.logic.transformations.ceres.ACNF.ACNF(ref, projs, es)
   }
+
+/******************** Proof loaders *************************/
+
+  object loadProofs {
+    def apply(file: String) =
+      try {
+        (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)))) with XMLProofDatabaseParser).getProofDatabase().proofs
+      }
+    catch
+    {
+      case _ =>
+        (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase().proofs
+    }
+  }
+
+  object loadProofDB {
+    def apply(file: String) =
+      try {
+        (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)))) with XMLProofDatabaseParser).getProofDatabase()
+      }
+    catch
+    {
+      case _ =>
+        (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase()
+    }
+  }
+
+  object loadPrime {
+    def apply(i : Int) = {
+      val p2   = loadProofs("prime1-"+i+".xml").head._2
+      val p2_  = regularize(skolemize(p2))._1
+      val cs2  = structToClausesList(extractStruct(p2_))
+      val cs2_ = removeDuplicates(deleteEquationalTautologies(deleteTautologies(cs2 map ((x:Sequent) => x.toFSequent))))
+      writeLatex(cs2_ map (fsequent2sequent.apply), "cs"+i+".tex")
+      exportTPTP(cs2_, "cs"+i+".p")
+      (p2,p2_,cs2,cs2_)
+    }
+
+  }
+
+  import at.logic.parsing.veriT._
+  object loadVeriTProof {
+    def apply(fileName : String) = {
+      VeriTParser.read(fileName)
+    }
+  }
+
+  object loadIvyProof {
+    var naming_style : IvyParser.VariableNamingConvention = IvyParser.IvyStyleVariables
+    def set_ivy_naming = { naming_style = IvyParser.IvyStyleVariables }
+    def set_ladr_naming = { naming_style = IvyParser.LadrStyleVariables }
+    def set_prolog_naming = { naming_style = IvyParser.LadrStyleVariables }
+
+    def apply(fn : String) : RobinsonResolutionProof = {
+      val rp = IvyToRobinson(intoIvyResolution(fn))
+      InstantiateElimination(rp)
+    }
+
+    def intoIvyResolution(fn : String) : IvyResolutionProof = {
+      val ivyproof = IvyParser.apply(fn, naming_style)
+      ivyproof
+    }
+
+    def printNodes(p:IvyResolutionProof, m : List[String]) : List[String] = p match {
+      case ivy.InitialClause(id, _, clause) => if (! m.contains(id)) { println(id + " : "+clause); id::m } else m
+      case ivy.Instantiate(id,_, sub, clause, parent) => if (! m.contains(id)) { val l = printNodes(parent, m); println(id + " : "+clause); id::l } else m
+      case ivy.Propositional(id,_, clause, parent) => if (! m.contains(id)) { val l1 = printNodes(parent,m); println(id + " : "+clause); id::l1 } else m
+      case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) => 
+        if (!m.contains(id)) {
+          val l1 = printNodes(parent1,m);
+          val l2 = printNodes(parent2,l1);
+          println(id + " : "+clause); id::l2 
+        }
+        else m
+      case _ => println("rule not implemented"); m
+    }
+
+    def collectIds(p:IvyResolutionProof) : List[String] = p match {
+      case ivy.InitialClause(id, _, clause) => id::Nil
+      case ivy.Instantiate(id,_, sub, clause, parent) => id::collectIds(parent)
+      case ivy.Propositional(id,_, clause, parent) => id::collectIds(parent)
+      case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) => id::(collectIds(parent1) ++ collectIds(parent2))
+      case _ => println("rule not implemented"); Nil
+    }
+
+  }
+
+  object loadHLK {
+    def apply(filename : String) = LKProofParser.parseProof(new InputStreamReader(new FileInputStream(filename)))
+
+  }
+
+  object loadProver9Proof {
+    def apply(filename : String, escape_underscore : Boolean = true, newimpl : Boolean = true) :
+      (RobinsonResolutionProof, FSequent) = Prover9.parse_prover9(filename, escape_underscore, newimpl)
+  }
+
+  object loadProver9LKProof {
+    def apply(filename : String, newimpl : Boolean = true, forceSkolemization: Boolean = false) : LKProof = {
+      val (proof, endsequent) = Prover9.parse_prover9(filename, true, newimpl)
+      //println("skolemizing endsequent: "+endsequent)
+      //val sendsequent = skolemize(endsequent)
+      //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
+      //println("done: "+folsendsequent)
+      if (!forceSkolemization && !containsStrongQuantifiers(endsequent)) {
+        //println("End-sequent does not contain strong quantifiers!.")
+          val closure = FSequent(endsequent.antecedent map (x => univclosure( x.asInstanceOf[FOLFormula])),
+              endsequent.succedent map (x => existsclosure( x.asInstanceOf[FOLFormula])))
+
+          Robinson2LK(proof,closure)
+      } else {
+        //if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
+        //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
+
+          val fclauses : Set[FClause]  = proof.nodes.map( _ match {
+              case InitialClause(clause) => clause.toFClause;
+              case _ => FClause(Nil,Nil) }
+              ).filter( (x:FClause) => x match { case FClause(Nil,Nil) => false; case _ => true } )
+            val clauses = fclauses.map( c => univclosure(fol.Or(c.neg.map(f => fol.Neg(f.asInstanceOf[FOLFormula])) ++ c.pos.map(f => f.asInstanceOf[FOLFormula])))  )
+            val clauses_ = clauses.partition(_ match { case fol.Neg(_) => false; case _ => true})
+            //val cendsequent = FSequent(clauses.toList, Nil)
+            val cendsequent2 = FSequent(clauses_._1.toList, clauses_._2.map(_ match {case fol.Neg(x) => x} ).toList)
+            //println("new endsequent: "+cendsequent2)
+
+            Robinson2LK(proof,cendsequent2)
+
+      }
+    }
+    def univclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
+    def existsclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.ExVar(v.asInstanceOf[FOLVar],g))
+
+      def containsStrongQuantifiers(fs:FSequent) : Boolean =
+        fs.antecedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],false)) ||
+        fs.succedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],true))
+
+      def containsStrongQuantifiers(f:FOLFormula, pol : Boolean) : Boolean = f match {
+        case fol.Atom(_,_) => false
+        case fol.And(s,t) => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
+        case fol.Or(s,t)  => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
+        case fol.Imp(s,t) => containsStrongQuantifiers(s, !pol) || containsStrongQuantifiers(t,pol)
+        case fol.Neg(s)   => containsStrongQuantifiers(s, !pol)
+        case fol.AllVar(x,s) => if (pol == true) true else containsStrongQuantifiers(s, pol)
+        case fol.ExVar(x,s)  => if (pol == false) true else containsStrongQuantifiers(s, pol)
+        case _ => throw new Exception("Unhandled case!")
+      }
+
+  }
+
 
 /*************************************************************/
 
@@ -255,7 +378,6 @@ object printProofStats {
     }
   }
 
-
   object exportXML {
     def apply( ls: List[LKProof], names: List[String], outputFile: String ) = {
       val exporter = new LKExporter{}
@@ -277,19 +399,6 @@ object printProofStats {
         file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(ls))
         file.close
     }
-  }
-
-  object loadPrime {
-    def apply(i : Int) = {
-      val p2   = loadProofs("prime1-"+i+".xml").head._2
-        val p2_  = regularize(skolemize(p2))._1
-        val cs2  = structToClausesList(extractStruct(p2_))
-        val cs2_ = removeDuplicates(deleteEquationalTautologies(deleteTautologies(cs2 map ((x:Sequent) => x.toFSequent))))
-        writeLatex(cs2_ map (fsequent2sequent.apply), "cs"+i+".tex")
-        exportTPTP(cs2_, "cs"+i+".p")
-        (p2,p2_,cs2,cs2_)
-    }
-
   }
 
   object createEquality {
@@ -345,7 +454,7 @@ object printProofStats {
     }
   }
 
-/*************************** Proof examples **********************************/
+/*************************** Proof generators **********************************/
 
   object LinearExampleTermset {
     def apply( n : Int) = at.logic.testing.LinearExampleTermset( n )
@@ -387,11 +496,11 @@ object printProofStats {
     def apply( n : Int) = at.logic.testing.SumOfOnesF2ExampleProof( n )
   }
 
-    object testProof {
+  object testProof {
     def apply( n : Int) = at.logic.testing.testProof( n )
   }
 
-/*************************** Formula examples **********************************/
+/*************************** Formula generators **********************************/
 
   object PigeonHolePrinciple {
     def apply( p : Int, h : Int ) = at.logic.testing.PigeonHolePrinciple( p, h )
@@ -449,8 +558,8 @@ object printProofStats {
   object minimizeSolution {
     def apply(ehs: ExtendedHerbrandSequent) = {
       println("Previous solution: " + ehs.cutFormula)
-        ehs.minimizeSolution
-        println("Improved solution: " + ehs.cutFormula)
+      ehs.minimizeSolution
+      println("Improved solution: " + ehs.cutFormula)
     }
   }
 
@@ -462,6 +571,7 @@ object printProofStats {
       }
   }
 
+  // TODO: implement one that takes expansion trees
   object cutIntro {
     def apply( p: LKProof ) : LKProof = CutIntroduction(p)
   }
@@ -482,46 +592,6 @@ object printProofStats {
 
   object extractHerbrandSequent {
     def apply( p: LKProof ) = at.logic.transformations.herbrandExtraction.ExtractHerbrandSequent(p)
-  }
-
-  object loadIvyProof {
-    var naming_style : IvyParser.VariableNamingConvention = IvyParser.IvyStyleVariables
-      def set_ivy_naming = { naming_style = IvyParser.IvyStyleVariables }
-    def set_ladr_naming = { naming_style = IvyParser.LadrStyleVariables }
-    def set_prolog_naming = { naming_style = IvyParser.LadrStyleVariables }
-
-    def apply(fn : String) : RobinsonResolutionProof = {
-      val rp = IvyToRobinson(intoIvyResolution(fn))
-        InstantiateElimination(rp)
-    }
-
-    def intoIvyResolution(fn : String) : IvyResolutionProof = {
-      val ivyproof = IvyParser.apply(fn, naming_style)
-        ivyproof
-    }
-
-    def printNodes(p:IvyResolutionProof, m : List[String]) : List[String] = p match {
-      case ivy.InitialClause(id, _, clause) => if (! m.contains(id)) { println(id + " : "+clause); id::m } else m
-      case ivy.Instantiate(id,_, sub, clause, parent) => if (! m.contains(id)) { val l = printNodes(parent, m); println(id + " : "+clause); id::l } else m
-      case ivy.Propositional(id,_, clause, parent) => if (! m.contains(id)) { val l1 = printNodes(parent,m); println(id + " : "+clause); id::l1 } else m
-      case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) => 
-        if (!m.contains(id)) {
-          val l1 = printNodes(parent1,m);
-          val l2 = printNodes(parent2,l1);
-          println(id + " : "+clause); id::l2 
-        }
-        else m
-      case _ => println("rule not implemented"); m
-    }
-
-    def collectIds(p:IvyResolutionProof) : List[String] = p match {
-      case ivy.InitialClause(id, _, clause) => id::Nil
-        case ivy.Instantiate(id,_, sub, clause, parent) => id::collectIds(parent)
-        case ivy.Propositional(id,_, clause, parent) => id::collectIds(parent)
-        case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) => id::(collectIds(parent1) ++ collectIds(parent2))
-      case _ => println("rule not implemented"); Nil
-    }
-
   }
 
   object eliminateInstaces {
@@ -629,69 +699,6 @@ object printProofStats {
     def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(HOLVar, HOLExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
   }
 
-
-  object loadHLK {
-    def apply(filename : String) = LKProofParser.parseProof(new InputStreamReader(new FileInputStream(filename)))
-
-  }
-
-
-  object loadProver9Proof {
-    def apply(filename : String, escape_underscore : Boolean = true, newimpl : Boolean = true) :
-      (RobinsonResolutionProof, FSequent) = Prover9.parse_prover9(filename, escape_underscore, newimpl)
-  }
-
-  object loadProver9LKProof {
-    def apply(filename : String, newimpl : Boolean = true, forceSkolemization: Boolean = false) : LKProof = {
-      val (proof, endsequent) = Prover9.parse_prover9(filename, true, newimpl)
-      //println("skolemizing endsequent: "+endsequent)
-      //val sendsequent = skolemize(endsequent)
-      //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
-      //println("done: "+folsendsequent)
-      if (!forceSkolemization && !containsStrongQuantifiers(endsequent)) {
-        //println("End-sequent does not contain strong quantifiers!.")
-          val closure = FSequent(endsequent.antecedent map (x => univclosure( x.asInstanceOf[FOLFormula])),
-              endsequent.succedent map (x => existsclosure( x.asInstanceOf[FOLFormula])))
-
-          Robinson2LK(proof,closure)
-      } else {
-        //if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
-        //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
-
-          val fclauses : Set[FClause]  = proof.nodes.map( _ match {
-              case InitialClause(clause) => clause.toFClause;
-              case _ => FClause(Nil,Nil) }
-              ).filter( (x:FClause) => x match { case FClause(Nil,Nil) => false; case _ => true } )
-            val clauses = fclauses.map( c => univclosure(fol.Or(c.neg.map(f => fol.Neg(f.asInstanceOf[FOLFormula])) ++ c.pos.map(f => f.asInstanceOf[FOLFormula])))  )
-            val clauses_ = clauses.partition(_ match { case fol.Neg(_) => false; case _ => true})
-            //val cendsequent = FSequent(clauses.toList, Nil)
-            val cendsequent2 = FSequent(clauses_._1.toList, clauses_._2.map(_ match {case fol.Neg(x) => x} ).toList)
-            //println("new endsequent: "+cendsequent2)
-
-            Robinson2LK(proof,cendsequent2)
-
-      }
-    }
-    def univclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
-    def existsclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.ExVar(v.asInstanceOf[FOLVar],g))
-
-      def containsStrongQuantifiers(fs:FSequent) : Boolean =
-        fs.antecedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],false)) ||
-        fs.succedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],true))
-
-      def containsStrongQuantifiers(f:FOLFormula, pol : Boolean) : Boolean = f match {
-        case fol.Atom(_,_) => false
-        case fol.And(s,t) => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
-        case fol.Or(s,t)  => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
-        case fol.Imp(s,t) => containsStrongQuantifiers(s, !pol) || containsStrongQuantifiers(t,pol)
-        case fol.Neg(s)   => containsStrongQuantifiers(s, !pol)
-        case fol.AllVar(x,s) => if (pol == true) true else containsStrongQuantifiers(s, pol)
-        case fol.ExVar(x,s)  => if (pol == false) true else containsStrongQuantifiers(s, pol)
-        case _ => throw new Exception("Unhandled case!")
-      }
-
-  }
-
   // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
   object proveProp {
     def apply( seq: FSequent ) : Option[LKProof] = solvePropositional(seq)
@@ -707,8 +714,8 @@ object printProofStats {
 
   object rename {
     def apply[T <: LambdaExpression](exp : T, map : NameReplacement.SymbolMap) : T = NameReplacement(exp, map)
-                                                                                 def apply(fs: FSequent, map : NameReplacement.SymbolMap) = NameReplacement(fs,map)
-                                                                                 def apply(p : RobinsonResolutionProof, map : NameReplacement.SymbolMap) : RobinsonResolutionProof = NameReplacement(p, map)
+    def apply(fs: FSequent, map : NameReplacement.SymbolMap) = NameReplacement(fs,map)
+    def apply(p : RobinsonResolutionProof, map : NameReplacement.SymbolMap) : RobinsonResolutionProof = NameReplacement(p, map)
   }
 
   object proofs {
@@ -731,9 +738,9 @@ object printProofStats {
 
   object huet {
     import at.logic.parsing.readers.StringReader
-      import at.logic.parsing.language.simple._
-      import at.logic.algorithms.unification.hol.huet._
-      import at.logic.utils.executionModels.ndStream.{NDStream, Configuration}
+    import at.logic.parsing.language.simple._
+    import at.logic.algorithms.unification.hol.huet._
+    import at.logic.utils.executionModels.ndStream.{NDStream, Configuration}
 
     class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
 
@@ -749,13 +756,13 @@ object printProofStats {
 
   object normalizeSub {
     import at.logic.language.lambda.substitutions._
-      import at.logic.language.lambda.BetaReduction
-      import at.logic.language.lambda.BetaReduction._
-      import StrategyOuterInner._
-      import StrategyLeftRight._
-      def apply(sub : Substitution[HOLExpression]):Unit = {
-        sub.map.foreach(x => println("\n<"+(BetaReduction.betaNormalize(x._1)(Outermost)).toStringSimple+" -> "+(BetaReduction.betaNormalize(x._2)(Outermost)).toStringSimple+">"))
-      }
+    import at.logic.language.lambda.BetaReduction
+    import at.logic.language.lambda.BetaReduction._
+    import StrategyOuterInner._
+    import StrategyLeftRight._
+    def apply(sub : Substitution[HOLExpression]):Unit = {
+      sub.map.foreach(x => println("\n<"+(BetaReduction.betaNormalize(x._1)(Outermost)).toStringSimple+" -> "+(BetaReduction.betaNormalize(x._2)(Outermost)).toStringSimple+">"))
+    }
   }
 
   object prooftool {
@@ -987,7 +994,7 @@ object printProofStats {
 
   object goat {
     lazy val (proof, endsequent) = loadProver9Proof( "provers/prover9/src/test/resources/PUZ047+1.out")
-      lazy val lkproof = loadProver9LKProof( "provers/prover9/src/test/resources/PUZ047+1.out")
+    lazy val lkproof = loadProver9LKProof( "provers/prover9/src/test/resources/PUZ047+1.out")
   }
 
   object hol2fol {
