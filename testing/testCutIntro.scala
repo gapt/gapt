@@ -54,8 +54,8 @@ object testCutIntro {
 
   def apply ( str : String, timeout : Int) = {
     testRec(str, timeout)
-    val file = new File("../../../testing/resultsCutIntro/data.csv")
-    val summary = new File("../../../testing/resultsCutIntro/summary.txt")
+    val file = new File("../testing/resultsCutIntro/data.csv")
+    val summary = new File("../testing/resultsCutIntro/summary.txt")
     file.createNewFile()
     summary.createNewFile()
     val fw = new FileWriter(file.getAbsoluteFile)
@@ -63,19 +63,19 @@ object testCutIntro {
     val fw_s = new FileWriter(summary.getAbsoluteFile)
     val bw_s = new BufferedWriter(fw_s)
 
-    var instance_per_formula = 0
+    var instance_per_formula = 0.0
     var ts_size = 0
     val data = termsets.foldLeft("") {
       case (acc, (k, v)) =>
         val tssize = v.termset.size
         val n_functions = v.formulaFunction.size
-        instance_per_formula += tssize/n_functions
+        instance_per_formula += tssize.toFloat/n_functions.toFloat
         ts_size += tssize
         k + " , " + n_functions + " , " + tssize + "\n" + acc
     }
 
     val avg_inst_per_form = instance_per_formula/termsets.size
-    val avg_ts_size = ts_size/termsets.size
+    val avg_ts_size = ts_size.toFloat/termsets.size.toFloat
 
     bw.write(data)
     bw.close()
