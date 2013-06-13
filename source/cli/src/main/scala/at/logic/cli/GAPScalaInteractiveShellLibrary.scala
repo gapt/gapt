@@ -702,6 +702,7 @@ object printProofStats {
   // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
   object proveProp {
     def apply( seq: FSequent ) : Option[LKProof] = solvePropositional(seq)
+    def apply( f: HOLFormula ) : Option[LKProof] = apply( FSequent( Nil, f::Nil ))
   }
 
   object format {
@@ -1058,6 +1059,12 @@ object printProofStats {
         """
           | Available commands:
           |
+          | Parsing:
+          |   parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"
+          |   parse.hol: String => HOLExpression
+          |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
+          |   parse.lisp: String => List[SExpression]
+          |
           | File Input/Output:
           |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
           |   loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
@@ -1067,12 +1074,6 @@ object printProofStats {
           |   loadHLK : String => LKProof - load a proof in the HLK 2 format from given filename
           |   exportXML: List[Proof], List[String], String => Unit
           |   exportTPTP: List[Proof], List[String], String => Unit
-          |
-          | Parsing:
-          |   parse.fol: String => FOLFormula - example: \"Forall x Imp P(x,f(x)) Exists y P(x,y)\"
-          |   parse.hol: String => HOLExpression
-          |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
-          |   parse.lisp: String => List[SExpression]
           |
           | Automated Deduction:
           |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP

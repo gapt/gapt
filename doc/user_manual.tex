@@ -1,13 +1,16 @@
-\documentclass[a4paper, 11pt]{report}
+\documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
+%\usepackage{fullpage}
 \usepackage{listings}
 \usepackage{color}
-\usepackage{amsmath}
 \usepackage{url}
 \usepackage{alltt}
 \usepackage{multicol}
-
+\usepackage{fancyhdr}
+\usepackage{amsmath}
 \usepackage{bussproofs}
+
+\renewcommand{\familydefault}{\sfdefault} % change to sans serif font
 
 \newcommand{\seq}{\vdash}	% the sequent sign
 \newcommand{\impl}{\supset} %logical connectives: implies, not, and, or
@@ -24,117 +27,138 @@
 %Normal text in math mode ("math text")
 \newcommand{\mt}[1]{\textnormal{#1}}
 
-% Using a report without chapters
-\renewcommand*\thesection{\arabic{section}}
+\newenvironment{meta}{\color{red}}{\color{black}}
 
+\definecolor{LightGray}{rgb}{0.9,0.9,0.9}
 \lstset{
+  backgroundcolor=\color{LightGray},
   basicstyle=\footnotesize\ttfamily,
   breaklines=true,
-  frame=lines
+  frame=single,
+  mathescape=true
 }
 
-\title{GAPT - Generic Architecture for Proof Transformations \\ \vspace{0.5cm} User's manual}
-% Whenever you contribute for this manual, include your name here
-% (alphabetically by last name) :)
-\author{
-Stefan Hetzl - \texttt{hetzl@logic.at}\\
-Giselle Reis - \texttt{giselle@logic.at}
-}
+
+\setlength{\headheight}{14pt}
+\setlength{\oddsidemargin}{1pt}
+\setlength{\textwidth}{450pt}
+%\setlength{\textheight}{600pt}
+
+\pagestyle{fancy}
+\lhead{GAPT -- User Manual}
+\chead{}
+\rhead{}
 
 \begin{document}
-\maketitle
+
+\begin{titlepage}
+\begin{center}
+
+\hrule
+
+\vspace*{20mm}
+
+{\Huge GAPT}
+
+\vspace*{5mm}
+
+{\huge Generic Architecture for Proof Transformations}
+
+\vspace*{20mm}
+
+{\Huge User Manual}
+
+\vspace*{60mm}
+
+{\Large \today}
+
+\vspace*{20mm}
+
+{\Large
+% Whenever you contribute for this manual, include your name here
+% (alphabetically by last name) :)
+Stefan Hetzl - \texttt{stefan.hetzl@tuwien.ac.at}\\
+Giselle Reis - \texttt{giselle@logic.at}\\
+Janos Tapolczai - \texttt{e0825077@student.tuwien.ac.at}\\
+Daniel Weller - \texttt{weller@logic.at}
+}
+
+\vspace*{20mm}
+
+\hrule
+\end{center}
+
+
+
+\end{titlepage}
+
+\tableofcontents
+\vfill
+\pagebreak
 
 \section{Introduction}
 
-Talk about the system, the motivation, the ceres method and the necessary
-previous knowledge.
+GAPT is a generic architecture for proof transformations. It is implemented
+in Scala and its logical basis is simple type theory. It has
+layers for first-order logic and schematic first-order logic.
 
-Required knowledge:
-\begin{itemize}
-  \item Proof theory
-  \item Cut-elimination
-  \item CERES method
-\end{itemize}
+The focus of GAPT are proof transformations (in contrast to proof assistants
+whose focus is proof formalization and automated deduction systems whose focus
+is proof search). GAPT is used from a shell which provides access to the functionality
+in the system in a way that is inspired by computer algebra systems: the basic
+objects are formulas and (different kinds of) proofs which can be modified
+by calling GAPT-commands from the command-line. In addition, there
+is a graphical user interface which allows to view (and up to a certain extent:
+also to modify) proofs in a flexible and visually appealing way.
+
+The current functionality of GAPT includes data structures for formulas,
+sequents, resolution proofs, sequent calculus proofs, expansion tree proofs
+and algorithms for e.g.\ unification, proof skolemization, cut-elimination,
+cut-elimination by resolution~\cite{TODO}, cut-introducton~\cite{TODO}, etc.
+
+This document describes the system from the perspective of a user who has
+downloaded a jar-file. For information on how to get started as a developer,
+please see the developer wiki at \url{http://code.google.com/p/gapt/w/list}.
+
+\begin{meta}
+Meta-comments about this user guide are printed like this.
+\end{meta}
 
 \section{System Requirements}
 \label{sec:sysreq}
 
-To run GAPT you need to have these installed:
+To run GAPT you need to have the Java runtime environment 1.6.0 or higher installed. We had
+problems with OpenJDK, but you can use it at your own risk.
 
+GAPT contains interfaces to the following automated reasoning systems. Installing
+them is optional. If GAPT does not find the executables in the path, the
+functionality of these systems will not be available. 
+%
 \begin{itemize}
-\item Java JDK - 1.6.0 or higher (we had problems with OpenJDK, but you can try
-it at your own risk)
-\item Maven2 - 2.2.1 or higher
-\item Subversion (a.k.a. svn)
 \item Prover9 (\url{http://www.cs.unm.edu/~mccune/mace4/download/}) - make sure
 the commands \texttt{prover9}, \texttt{prooftrans} and \texttt{tptp\_to\_ladr}
 are available.
+\item VeriT (\url{http://www.verit-solver.org/})
+\item Minisat (\url{http://minisat.se/})
 \end{itemize}
 
-\section{Running the system}
+\section{Downloading and Running the System}
 
-If you used svn to check out the source of GAPT from the website, after
-everything is downloaded you should see two folders: ``doc'' and ``source''. To
-compile the system, just go into the folder ``source'' and type:
+You can download a pre-packaged jar-file of the current version of GAPT
+at~\url{http://code.google.com/p/gapt/downloads/list}. After having downloaded
+the gapt-cli zip-file you will find a shellscript \texttt{cli.sh}.
 
-\begin{lstlisting}
-$ mvn install
+Running this script
+\begin{lstlisting}[mathescape=false]
+$ ./cli.sh
 \end{lstlisting}
+will start the command-line interface of GAPT.
 
-Then you can go get something to eat, a coffee or anything more interesting. The
-whole system takes about 15 minutes (or more) to compile, and you don't want to keep
-staring at a screen printing non sense for that long. It's good to check,
-though, once in a while, if no errors occurred. If something wrong happened,
-there are somethings you can do (in that order):
+The command-line interface of GAPT runs in an interactive Scala-shell. This
+has the consequence that all functionality of Scala is available to you. In
+particular it is easy to write Scala-scripts that use the functionality of GAPT.
 
-\begin{enumerate}
-\item Make sure you have all required packages (Section \ref{sec:sysreq}).
-\item Try running \texttt{make clean} and then \texttt{make install} again.
-\item Send us an e-mail ({\color{red}TODO}: which e-mail?).
-\end{enumerate}
-
-Probably the first thing you want to do after compiling your project is run it
-and make some tests. The easiest way to do this, is to run the scripts in the
-source folder. There are two bash scripts in this folder that you should care
-about. You may first want to make them executable:
-
-\begin{lstlisting}
-$ chmod +x cli.sh
-$ chmod +x gui.sh
-\end{lstlisting}
-
-What do each of these scripts do?
-
-\texttt{cli.sh}: This will start GAPT inside a scala iteractive shell.
-
-\texttt{gui.sh}: This will start ProofTool, an interface to visualize proofs.
-
-If for any reason these scripts do not work, no need for crying.
-The jars for these applications are created during compilation
-and it's just a matter of finding the directory where they are to execute them.
-
-The jar for GAPT is created inside the directory \texttt{cli/target} (you
-should use the one with dependencies) and you can execute it like this:
-
-\begin{lstlisting}
-$ java -jar cli-XX-SNAPSHOT-jar-with-dependencies.jar
-\end{lstlisting}
-
-The jar for ProofTool is created inside the directory
-\texttt{gui/prooftool/target} (also use the one with dependencies) and again you
-can execute it like this:
-
-\begin{lstlisting}
-$ java -jar prooftool-XX-SNAPSHOT-jar-with-dependencies.jar
-\end{lstlisting}
-
-{\color{red}TODO}: describe how to download the jars from the site and run them. Easier than
-installing the system...
-
-\section{Some useful \texttt{scala} tips}
-
-Since GAPT runs in an interactive \texttt{scala} shell, here are some useful things you
-should know about it.
+Here are some useful things you should know about the Scala shell.
 
 If you want to assign the result of a method to a variable, use: 
 \texttt{var v = method(args)}. Otherwise, the system will create a variable by 
@@ -166,137 +190,224 @@ The elements of a tuple \texttt{t} of size $n$ are accessed by the methods
 
 To quit the interactive shell, just type \texttt{:quit} and press enter.
 
-\section{Top level commands}
+In order to see the list of all available commands, type \texttt{help} and
+press enter.
 
-After executing the client (\texttt{cli.sh}), you will get to an interactive \texttt{scala} shell 
-from where it is possile to run the operations GAPT provides. You can see all of
-them by typing \texttt{ceresHelp} and pressing enter. Here they are (as of
-22/05/2013):
 
+
+
+% \section{Top level commands}
+% 
+% After executing the client (\texttt{cli.sh}), you will get to an interactive \texttt{scala} shell 
+% from where it is possile to run the operations GAPT provides. You can see all of
+% them by typing \texttt{ceresHelp} and pressing enter. Here they are (as of
+% 22/05/2013):
+% 
+% \begin{lstlisting}
+% Available commands:
+% 
+% File Input/Output:                                                                                                          
+%   loadProofDB: String => ProofDatabase
+%   loadProofs: String => List[(String, LKProof)]
+%   loadIvyProof: String => RobinsonResolutionProof
+%   loadProver9Proof: String => (RobinsonResolutionProof, FSequent)
+%   loadProver9LKProof: String => LKProof
+%   loadHLK : String => LKProof
+%   exportXML: List[Proof], List[String], String => Unit                                                                      
+%   exportTPTP: List[Proof], List[String], String => Unit                                                                     
+%                                                                                                                             
+% Parsing:                                                                                                                    
+%   parse.fol: String => FOLFormula
+%   parse.hol: String => HOLExpression                                                                                        
+%   parse.slk: String => Map[String, Pair[LKProof, LKProof]]                                                                  
+%   parse.lisp: String => List[SExpression]                                                                                   
+%                                                                                                                             
+% Automated Deduction:                                                                                                        
+%   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]
+%   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]]
+%   prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]]
+%   prover9: String => Option[ResolutionProof[Clause]]
+%   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]]
+%   proveProp: FSequent => Option[LKProof]
+%   toClauses: HOLFormula => Set[FClause]
+%   miniSATsolve: HOLFormula => Option[Interpretation]
+%   miniSATprove: HOLFormula => Boolean
+%                                                                                                                             
+% Proof Theory:                                                                                                               
+%   skolemize: LKProof => LKProof
+%   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula
+%   extractHerbrandSequent: LKProof => Sequent
+%   extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree)
+%   compressExpansionTree: ExpansionTree => MultiExpansionTree
+% 
+% Cut-Elimination by Resolution:
+%   extractStruct: LKProof => Struct
+%   structToClausesList: Struct => List[Sequent]
+%   structToLabelledClausesList: Struct => List[LabelledSequent]
+% 
+% Proof Schemata:
+%   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
+%   unfoldProof: (String, Int) => LKProof
+% 
+% Cut-Introduction:
+%   cutIntro: LKProof => LKProof
+%   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
+%   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
+%   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
+%   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
+%   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
+%   minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
+%   buildProofWithCut: ExtendedHerbrandSequent => LKProof 
+% 
+% Proof Examples:
+%   LinearExampleTermset: Int => Set[FOLTerm] 
+%   LinearExampleProof: Int => LKProof 
+%   SquareDiagonalExampleProof: Int => LKProof 
+%   SquareEdgesExampleProof: Int => LKProof 
+%   SquareEdges2DimExampleProof: Int => LKProof 
+%   SumExampleProof: Int => LKProof 
+%   LinearEqExampleProof: Int => LKProof 
+%   SumOfOnesExampleProof: Int => LKProof 
+%   SumOfOnesFExampleProof: Int => LKProof 
+%   SumOfOnesF2ExampleProof: Int => LKProof
+% 
+% Formula Examples:
+%   PigeonHolePrinciple: Int, Int => FOLFormula
+% 
+% Visualization:
+%   prooftool: LKProof => Unit
+% 
+% Uncategorized:
+%   hol2fol: HOLExpression => FOLExpression
+%   hol2fol: HOLFormula => FOLFormula
+%   regularize: LKProof => LKProof - regularize the given LK proof
+%   rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression
+%   rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof
+%   printProofStats: LKProof => Unit
+%   lkTolksk: LKProof => LKProof
+%   createHOLExpression: String => HOLExpression
+%   fsequent2sequent: FSequent => Sequent
+%   deleteTautologies: List[FSequent] => List[FSequent]
+%   removeDuplicates: List[FSequent] => List[FSequent]
+%   unitResolve: List[FSequent] => List[FSequent]
+%   removeSubsumed: List[FSequent] => List[FSequent]
+%   normalizeClauses: List[FSequent] => List[FSequent]
+%   writeLatex: List[FSequent], String => Unit
+%   writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
+% 
+% General:
+%   help    : this help text
+%   copying : print redistribution conditions
+%   license : print the text of GNU General Public License
+% \end{lstlisting}
+% 
+% In the following subsections we will (try to) describe what each of these are.
+% 
+% The syntax for calling the methods are always the name of the method followed by
+% the arguments in parenthesis, separated by commas if there's more than one.
+
+\section{Entering Formulas}\label{sec.entering_formulas}
+
+Formulas can be entered as strings which are parsed as follows:
 \begin{lstlisting}
-Available commands:
-
-File Input/Output:                                                                                                          
-  loadProofDB: String => ProofDatabase
-  loadProofs: String => List[(String, LKProof)]
-  loadIvyProof: String => RobinsonResolutionProof
-  loadProver9Proof: String => (RobinsonResolutionProof, FSequent)
-  loadProver9LKProof: String => LKProof
-  loadHLK : String => LKProof
-  exportXML: List[Proof], List[String], String => Unit                                                                      
-  exportTPTP: List[Proof], List[String], String => Unit                                                                     
-                                                                                                                            
-Parsing:                                                                                                                    
-  parse.fol: String => FOLFormula
-  parse.hol: String => HOLExpression                                                                                        
-  parse.slk: String => Map[String, Pair[LKProof, LKProof]]                                                                  
-  parse.lisp: String => List[SExpression]                                                                                   
-                                                                                                                            
-Automated Deduction:                                                                                                        
-  refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]]
-  refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]]
-  prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]]
-  prover9: String => Option[ResolutionProof[Clause]]
-  prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]]
-  proveProp: FSequent => Option[LKProof]
-  toClauses: HOLFormula => Set[FClause]
-  miniSATsolve: HOLFormula => Option[Interpretation]
-  miniSATprove: HOLFormula => Boolean
-                                                                                                                            
-Proof Theory:                                                                                                               
-  skolemize: LKProof => LKProof
-  extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula
-  extractHerbrandSequent: LKProof => Sequent
-  extractExpansionTrees: LKProof => (Seq[ExpansionTree],Seq[ExpansionTree)
-  compressExpansionTree: ExpansionTree => MultiExpansionTree
-
-Cut-Elimination by Resolution:
-  extractStruct: LKProof => Struct
-  structToClausesList: Struct => List[Sequent]
-  structToLabelledClausesList: Struct => List[LabelledSequent]
-
-Proof Schemata:
-  parse.slk: String => Map[String, Pair[LKProof, LKProof]]
-  unfoldProof: (String, Int) => LKProof
-
-Cut-Introduction:
-  cutIntro: LKProof => LKProof
-  extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
-  computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
-  seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
-  generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
-  computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
-  minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
-  buildProofWithCut: ExtendedHerbrandSequent => LKProof 
-
-Proof Examples:
-  LinearExampleTermset: Int => Set[FOLTerm] 
-  LinearExampleProof: Int => LKProof 
-  SquareDiagonalExampleProof: Int => LKProof 
-  SquareEdgesExampleProof: Int => LKProof 
-  SquareEdges2DimExampleProof: Int => LKProof 
-  SumExampleProof: Int => LKProof 
-  LinearEqExampleProof: Int => LKProof 
-  SumOfOnesExampleProof: Int => LKProof 
-  SumOfOnesFExampleProof: Int => LKProof 
-  SumOfOnesF2ExampleProof: Int => LKProof
-
-Formula Examples:
-  PigeonHolePrinciple: Int, Int => FOLFormula
-
-Visualization:
-  prooftool: LKProof => Unit
-
-Uncategorized:
-  hol2fol: HOLExpression => FOLExpression
-  hol2fol: HOLFormula => FOLFormula
-  regularize: LKProof => LKProof - regularize the given LK proof
-  rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression
-  rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof
-  printProofStats: LKProof => Unit
-  lkTolksk: LKProof => LKProof
-  createHOLExpression: String => HOLExpression
-  fsequent2sequent: FSequent => Sequent
-  deleteTautologies: List[FSequent] => List[FSequent]
-  removeDuplicates: List[FSequent] => List[FSequent]
-  unitResolve: List[FSequent] => List[FSequent]
-  removeSubsumed: List[FSequent] => List[FSequent]
-  normalizeClauses: List[FSequent] => List[FSequent]
-  writeLatex: List[FSequent], String => Unit
-  writeLabelledSequentListLatex: List[LabelledSequent], String => Unit
-
-General:
-  help    : this help text
-  copying : print redistribution conditions
-  license : print the text of GNU General Public License
+scala> val F = parse.fol( "Imp A Imp B And A B" )
+F: at.logic.language.fol.FOLFormula = (A$\supset$(B$\supset$(A$\land$B)))
+\end{lstlisting}
+For a first-order examples consider:
+\begin{lstlisting}
+scala> val G = parse.fol( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
+G: at.logic.language.fol.FOLFormula = $\forall$x.(P(x, f(x))$\supset\exists$y.P(x, y))
 \end{lstlisting}
 
-In the following subsections we will (try to) describe what each of these are.
 
-The syntax for calling the methods are always the name of the method followed by
-the arguments in parenthesis, separated by commas if there's more than one.
+\begin{meta}
+TODO: add HOL parsing
+\end{meta}
 
-\subsection{File Input/Output}
+\section{Entering Proofs}
 
-\paragraph{\textbf{loadProofs: String $\rightarrow$ List[(String, LKProof)]}}
-This method will take as an argument a string that represents the path of a file
+There are various possibilities for entering proofs into the system. The most
+basic one is a direct top-down proof-construction using the constructors
+of the inference rules. For example, continuing in the environment of
+Section~\ref{sec.entering_formulas}, suppose that we want to enter a
+proof of \texttt{F}. It is convenient to prepare the subformulas first.
+\begin{lstlisting}
+scala> val F1 = parse.fol( "Imp B And A B" )
+F1: at.logic.language.fol.FOLFormula = (B$\supset$(A$\land$B))
+
+scala> val F2 = parse.fol( "And A B" )
+F2: at.logic.language.fol.FOLFormula = (A$\land$B)
+
+scala> val A = parse.fol( "A" )
+A: at.logic.language.fol.FOLFormula = A
+
+scala> val B = parse.fol( "B" )
+B: at.logic.language.fol.FOLFormula = B
+\end{lstlisting}
+%
+We start with the axioms:
+%
+\begin{lstlisting}
+scala> val p1 = Axiom( A::Nil, A::Nil )
+p1: at.logic.utils.ds.trees.LeafTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.NullaryLKProof{def rule: at.logic.calculi.lk.propositionalRules.InitialRuleType.type} = InitialRuleType(A :- A)
+
+scala> val p2 = Axiom( B::Nil, B::Nil )
+p2: at.logic.utils.ds.trees.LeafTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.NullaryLKProof{def rule: at.logic.calculi.lk.propositionalRules.InitialRuleType.type} = InitialRuleType(B :- B)
+\end{lstlisting}
+%
+These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
+for the formal definition of the sequent calculus used in GAPT.
+%
+\begin{lstlisting}
+scala> val p3 = AndRightRule( p1, p2, A, B )
+p3: at.logic.calculi.lk.base.BinaryLKProof with at.logic.calculi.lk.base.BinaryLKProof with at.logic.calculi.lk.base.AuxiliaryFormulas with at.logic.calculi.lk.base.PrincipalFormulas = AndRightRuleType(A, B :- (A∧B), InitialRuleType(A :- A), InitialRuleType(B :- B))
+\end{lstlisting}
+%
+To finish the proof it remains to apply two $\impl:\mathrm{right}$-inferences:
+%
+\begin{lstlisting}
+scala> val p4 = ImpRightRule( p3, B, F2 )
+p4: at.logic.utils.ds.trees.UnaryTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.UnaryLKProof with at.logic.calculi.lk.base.AuxiliaryFormulas with at.logic.calculi.lk.base.PrincipalFormulas = ImpRightRuleType(A :- (B⊃(A∧B)), AndRightRuleType(A, B :- (A∧B), InitialRuleType(A :- A), InitialRuleType(B :- B)))
+
+scala> val p5 = ImpRightRule( p4, A, F1 )
+p5: at.logic.utils.ds.trees.UnaryTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.UnaryLKProof with at.logic.calculi.lk.base.AuxiliaryFormulas with at.logic.calculi.lk.base.PrincipalFormulas = ImpRightRuleType( :- (A⊃(B⊃(A∧B))), ImpRightRuleType(A :- (B⊃(A∧B)), AndRightRuleType(A, B :- (A∧B), InitialRuleType(A :- A), InitialRuleType(B :- B))))
+\end{lstlisting}
+%
+You can now view this proof by typing:
+\begin{lstlisting}
+scala> prooftool( p5 )
+\end{lstlisting}
+
+
+
+
+\begin{meta}
+mention hlk here!?
+\end{meta}
+
+\section{File Input/Output}
+
+\begin{meta}
+TODO: first some general talk on file formats, then: give examples for saving and loading
+proofs.
+\end{meta}
+
+This method \texttt{loadProofs} will take as an argument a string that represents the path of a file
 containing an xml proof (generated by HLK for example), and will return a list 
 of pairs. It expects a file (the string of a proof will not work) and you can use 
 the relative path. On the list returned, each pair is composed of a string and 
 an object representing a proof within the system. The string is the name of the 
 proof defined on the xml file, and it returns a list for the case that this file
-contains more than one proof.
-
-Example:
+contains more than one proof. For example:
 \begin{lstlisting}[mathescape]
 scala> var proof = loadProofs("integration_tests/misc_test/src/test/resources/sk2.xml")
 proof: List[(String, at.logic.calculi.lk.base.LKProof)] = List((p,ExistsRightRuleType( :- $\exists$(x.($\forall$(y.(((a P x) $\wedge$ (a Q y)))))), ForallRightRuleType( :- $\forall$(y.(((a P b) $\wedge$ (a Q y)))), AndRightRuleType( :- ((a P b) $\wedge$ (a Q \beta)), InitialRuleType( :- (a P b)), InitialRuleType( :- (a Q \beta)))))))
 \end{lstlisting}
 
-\paragraph{\textbf{loadProofDB: String $\rightarrow$ ProofDatabase}}
-{\color{red}TODO}
+%\paragraph{\textbf{loadProofDB: String $\rightarrow$ ProofDatabase}}
+%{\color{red}TODO}
 
-\paragraph{\textbf{exportXML: List[Proof], List[String], String $\rightarrow$ Unit}}
+The command \texttt{exportXML: List[Proof], List[String], String $\rightarrow$ Unit}
 Exports several proofs to an XML file. The first argument is the list of proofs,
 the second is the list of the names of the proofs and the third is the name of
 the file that will be written. The file path can also be specified and it's
@@ -309,402 +420,14 @@ respectively.
 scala> exportXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
 \end{lstlisting}
 
-\paragraph{\textbf{exportTPTP: List[Proof], List[String], String $\rightarrow$ Unit}}
-{\color{red}TODO}
+%\paragraph{\textbf{exportTPTP: List[Proof], List[String], String $\rightarrow$ Unit}}
+%{\color{red}TODO}
 
-\subsection{Parsing}
-
-\paragraph{\textbf{parse.fol: String $\rightarrow$ FOLFormula}}
-{\color{red}TODO}
-
-\paragraph{\textbf{parse.hol: String $\rightarrow$ HOLFormula}}
-{\color{red}TODO}
-
-\paragraph{\textbf{parse.fol: String $\rightarrow$ Map[String, Pair[LKProof, LKProof]]}}
-{\color{red}TODO}
-
-\subsection{Automated Deduction}
+\section{Automated Deduction}
   
-\paragraph{\textbf{refuteFOL: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{refuteFOLI: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{prover9: List[Sequent],Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
-sends the input clause set (given as either List[Sequent] or Seq[Clause]) to prover9. Returns
-the resolution proof obtained from replaying the output proof of prover9,
-see~\cite{Dunchev12System} for details.
-
-\paragraph{\textbf{proveProp: FSequent $\rightarrow$ Option[LKProof]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{miniSATsolve: HOLFormula $\rightarrow$ Option[Interpretation]}}
-Searches a model for a quantifier-free formula using the MiniSAT SAT Solver.
-Returns None if unsatisfiable, and Some(Interpretation) otherwise.
-
-\paragraph{\textbf{miniSATprove: HOLFormula $\rightarrow$ Boolean}}
-Checks if a quantifier-free formula is valid using the MiniSAT SAT Solver.
-
-\subsection{Proof Theory}
-
-\paragraph{\textbf{skolemize: LKProof $\rightarrow$ LKProof}}
-{\color{red}TODO}
-
-\paragraph{\textbf{extractInterpolant: ( p: LKProof, npart: Set[FormulaOccurrence],
-ppart: Set[FormulaOccurrence] ) $\rightarrow$ HOLFormula}}
-
-Extracts an interpolant from a cut-free proof in the sequent calculus. The
-implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
-a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a 
-``negative part'' $\Gamma_1\seq\Delta_1$ and a ``positive part'' $\Gamma_2 \seq \Delta_2$.
-It returns a formula $I$ s.t.\ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$
-are provable and $I$ contains only such predicate symbols that appear in both, $\Gamma_1\seq\Delta_1$
-and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq p, q$
-by a single $\lor$-left inference, then you can compute an interpolant as follows:
-\begin{lstlisting}
-scala> val s = pr.root
-s: at.logic.calculi.lk.base.Sequent = (p:o $\lor$ q:o) :- p:o, q:o
-
-scala> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
-npart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set((p:o $\lor$ q:o)[10005], p:o[10006])
-
-scala> val ppart = Set( s.succedent( 1 ) )
-ppart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set(q:o[10007])
-
-scala> val I = extractInterpolant( pr, npart, ppart )
-I: at.logic.language.hol.HOLFormula = ($\bot$:o $\lor$ q:o)
-\end{lstlisting}
-
-\paragraph{\textbf{extractHerbrandSequent: LKProof $\rightarrow$ Sequent}}
-
-A proof in first order logic can be concisely represented with a Herbrand
-sequent. Since this sequent is purely propositional, this is a way of reducing
-first order logic to propositional logic. In short, if $\varphi$ is a proof and
-$H$ is its Herbrand sequent, then $H$ contains all instances of the formulas in
-the end-sequent of $\varphi$ and $H$ is a tautology. It is important to note
-that $\varphi$ may not have strong quantifiers nor cuts on quantified formulas.
-A more detailed explanation of Herbrand sequent extraction can be found in
-\ref{Hetzl2008}. 
-
-This method extracts a Herbrand sequent from a proof $\varphi$ that satisfies
-the constraints. 
-An execution and output of this command is shown below. The proof $p$ used is the
-``Linear Example Proof'' for $n=4$\footnote{For the example proofs that are
-automatically generated in the system, see Section \ref{sec:exampleproofs}.},
-which is a proof without cuts of the end sequent:
-
-$$P0, \forall x. (Px \rightarrow Psx) \vdash Ps^4 0$$
-
-\begin{lstlisting}
-scala> var hs = extractHerbrandSequent(p)
-hs: at.logic.calculi.lk.base.types.FSequent =
-([(P(s(s(s(0))))->P(s(s(s(s(0)))))), (P(s(s(0)))->P(s(s(s(0))))),
-(P(s(0))->P(s(s(0)))), (P(0)->P(s(0))), P(0)], [P(s(s(s(s(0)))))])
-\end{lstlisting}
-
-Observe that this sequent (represented by two lists, one for the antecedent and
-one for the succedent) is a tautology, is propositional and contains all
-instances of $\forall x. (Px \rightarrow Psx)$ that must be used in a cut-free
-proof.
-
-\subsection{Cut-Elimination by Resolution}
-
-% TODO: it would be nice to combine extractStruct,structToClausesList,prover9 etc.
-%       to an example session for applying Ceres to a proof
-
-\paragraph{\textbf{extractStruct: LKProof $\rightarrow$ Struct}}
-Extracts a struct from a LKProof. A struct is referred to as a clause term in
-\cite{Baaz2011}. I will give a quick definition of it. For more details and
-for an explanation of this structure on the CERES method, please refer to
-\cite{Baaz2011}, Chapter 6.
-
-Given a proof with cuts, by removing all the inference rules that operate on end
-sequent ancestors, we obtain a proof of the empty sequent (refutation). The
-axioms of this refutation are represented by \textit{clause terms}. Clause
-terms are $\{\oplus, \otimes\}$-terms over clause sets, and it's interpretation
-is the following:
-
-\begin{align*}
-  |\mathcal{C}| &= \mathcal{C} \text{ if $\mathcal{C}$ is a set of clauses.}\\
-   |X \oplus Y| &= |X| \cup |Y|\\
-  |X \otimes Y| &= |X| \times |Y|
-\end{align*}
-
-where $\mathcal{C} \times \mathcal{D} = \{ C \circ D | C \in \mathcal{C} \wedge
-D \in \mathcal{D}\}$ and if $S = \Gamma \vdash \Delta$ and $S' = \Pi \vdash
-\Lambda$, $S \circ S' = \Gamma, \Pi \vdash \Delta, \Lambda.$
-
-\paragraph{\textbf{structToClausesList: Struct $\rightarrow$ List[Sequent]}} computes
-the standard characteristic clause set
-from the struct, see~\cite[Section 4.2.1]{WoltzenlogelPaleo09General} for details.
-
-\paragraph{\textbf{structToLabelledClausesList: Struct $\rightarrow$ List[LabelledSequent]}}
-{\color{red}TODO}
-
-\subsection{Cut-Introduction}
-
-\paragraph{\textbf{cutIntro: LKProof $\rightarrow$ LKProof}}
-This method is the implementation of the cut-introduction algorithm described on
-\cite{Hetzl2012}. It takes a cut-free proof in classical logic, automatically
-computes a universally quantified cut formula and builds a new proof with this
-cut. The example proofs listed in Section \ref{sec:exampleproofs} were
-implemented to test this method and, in general, have a good compression rate.
-
-\paragraph{\textbf{termsExtraction: LKProof $\rightarrow$ Map[FormulaOccurrence, List[List[FOLTerm]]]}}
-A crucial part of the cut-introduction algorithm of \cite{Hetzl2012} is the
-computation of the term set, which are the witnesses of the existential
-quantifiers of the end-sequent of a proof. This method takes a proof and returns
-a map. This map associates each existentially quantified formula of the end
-sequent with a list of tuples of terms. These tuples will have the same size as
-the number of quantifiers of the formula.
-
-\paragraph{\textbf{termsExtractionFlat: LKProof $\rightarrow$ Set[FOLTerm]}}
-{\color{red}TODO: I know what this does but what is it for exactly??} extract
-the witnesses of the existential quantifiers of the end-sequent of a proof (as a
-,,flat'' set)
-
-\subsection{Proof Examples}
-\label{sec:exampleproofs}
-
-%% TODO: maybe we could put examples of these proofs for n=2
-%% we can generate them and export to latex :)
-
-\paragraph{\textbf{LinearExampleTermset: Int $\rightarrow$ Set[FOLTerm]}}
-{\color{red}TODO}: construct the linear example termset for cut-introduction
-
-\paragraph{\textbf{LinearExampleProof: Int $\rightarrow$ LKProof}}
-{\color{red}TODO}: construct the linear example proof for cut-introduction
-
-\paragraph{\textbf{SquareDiagonalExampleProof: Int $\rightarrow$ LKProof}}
-{\color{red}TODO}: construct the square (diagonal) example proof for cut-introduction
-
-\paragraph{\textbf{SquareEdgesExampleProof: Int $\rightarrow$ LKProof}}
-{\color{red}TODO}: construct the square (edges) example proof for cut-introduction
-
-\paragraph{\textbf{SumExampleProof: Int $\rightarrow$ LKProof}}
-{\color{red}TODO}: construct the sum example proof for cut-introduction
-
-\subsection{Visualization}
-
-\paragraph{\textbf{prooftool: LKProof $\rightarrow$ Unit}}
-{\color{red}TODO}: visualize proof in prooftool
-
-\subsection{Uncategorized}
-
-\paragraph{\textbf{printProofStats: LKProof $\rightarrow$ Unit}}
-This method takes a proof and prints some statistics about it, namely the number
-of unary, binary and cut rules. If you have a variable storing the result of 
-\texttt{loadProofs(...)}, one way to get the first proof of the list is: 
-\texttt{proof.head.\_2}. If \texttt{proof} is the one defined on the previous 
-example:
-
-\begin{lstlisting}
-scala> printPoofStats(proof.head._2)
-unary: 2
-binary: 1
-cuts: 0
-\end{lstlisting}
-
-Of course you can always assing this to a variable and use it as a parameter:
-
-\begin{lstlisting}
-scala> var theproof = proof.head._2
-theproof: at.logic.calculi.lk.base.LKProof = ExistsRightRuleType( :- $\exists$(x.($\forall$(y.(((a P x) $\wedge$ (a Q y)))))), ForallRightRuleType( :- $\forall$(y.(((a P b) $\wedge$ (a Q y)))), AndRightRuleType( :- ((a P b) $\wedge$ (a Q \beta)), InitialRuleType( :- (a P b)), InitialRuleType( :- (a Q \beta)))))
-
-scala> printPoofStats(theproof)
-unary: 2
-binary: 1
-cuts: 0
-\end{lstlisting}
-
-\paragraph{\textbf{lkTolksk: LKProof $\rightarrow$ LKProof}}
-This method takes a proof in classical logic (LK), such as one generated by HLK and 
-loaded by the method \texttt{loadProofs}, and transforms it to a proof on the
-calculus $\mathbf{LK}_{sk}$. This calculus was proposed to solve the problem of
-Skolemization in higher-order logic, and it basically replaces eigenvariables
-with Skolem terms. For more information, see \cite{Hetzl2011}.
-
-\paragraph{\textbf{regularize: LKProof $\rightarrow$ LKProof}}
-{\color{red}TODO}
-
-\paragraph{\textbf{createHOLExpression: String $\rightarrow$ HOLExpression
-(Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))}}
-{\color{red}TODO}
-
-\paragraph{\textbf{fsequent2sequent: FSequent $\rightarrow$ Sequent}}
-{\color{red}TODO}
-
-\paragraph{\textbf{deleteTautologies: List[FSequent] $\rightarrow$ List[FSequent]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{removeDuplicates: List[FSequent] $\rightarrow$ List[FSequent]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{unitResolve: List[FSequent] $\rightarrow$ List[FSequent]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{removeSubsumed: List[FSequent] $\rightarrow$ List[FSequent]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{normalizeClauses: List[FSequent] $\rightarrow$ List[FSequent]}}
-{\color{red}TODO}
-
-\paragraph{\textbf{writeLatex: List[FSequent], String $\rightarrow$ Unit}}
-{\color{red}TODO}
-
-\paragraph{\textbf{writeLabelledSequentListLatex: List[LabelledSequent], String $\rightarrow$ Unit}}
-{\color{red}TODO}
-
-\section{ProofTool}
-\label{sec:prooftool}
-
-TO WRITE
-
-\section{Algorithms}
-
-In this section we describe how to run some algorithms implemented in GAPT, from
-loading the proof until obtaining the final result.
-
-\subsection{Cut-introduction}
-
-The cut-introduction algorithm was described in \cite{cutIntro2013} and it is
-implemented in gapt for introducing a single $\Pi_1$-cut into a sequent calculus
-proof. In this section we show the commands, step by step, that need to be
-executed for this algorithm. We will use as input one of the proofs generated by
-the system, namely, \texttt{LinearExampleProof(9)}. But the
-user can also, for example, write his own proofs in
-\texttt{hlk}\footnote{\url{http://www.logic.at/hlk/}} and input these files to
-the system. 
-
-First of all, we instantiate the desired proof and store this in a variable:
-{\small
-  \begin{alltt}
-    scala> val p = LinearExampleProof(9) 
-  \end{alltt}
-}
-
-You will see that a big string representing the proof is printed. If desired,
-you can view this proof using \texttt{prooftool} \ref{sec:prooftool}. 
-It is possible to see some information about a proof on the command line by calling:
-{\small
-  \begin{alltt}
-    scala> printProofStats(p)
-    ------------- Statistics ---------------
-    Cuts: 0
-    Number of quantifier rules: 9
-    Number of rules: 28
-    Quantifier complexity: 9
-    ----------------------------------------
-  \end{alltt}
-}
-Now we need to
-extract the terms used to instantiate the $\forall$ quantifiers of the
-end-sequent:
-{\small
-  \begin{alltt}
-    scala> val ts = extractTerms(p)
-    The term set contains 9 terms.
-  \end{alltt}
-}
-The system indicates how many terms were extracted, which is nine for this case,
-as expected. The next step consists in computing grammars that generate this
-term set:
-{\small
-  \begin{alltt}
-    scala> val grms = computeGrammars(ts)
-    693 grammars found.
-  \end{alltt}
-}
-The number of grammars found is shown, 693 in this case. They are ordered
-by size, and one can see the first ones by calling:
-{\small
-  \begin{alltt}
-    scala> seeNFirstGrammars(grms, 5)
-    0. \{ tuple1(s(s(s(\(\alpha\))))), tuple1(\(\alpha\)), tuple1(s(s(s(s(s(s(\(\alpha\)))))))) \} o \{ 0, s(0), s(s(0)) \}
-    (size = 6)
-    1. \{ tuple1(s(\(\alpha\))), tuple1(s(s(\(\alpha\)))), tuple1(\(\alpha\)) \} o \{ 0, s(s(s(0))), s(s(s(s(s(s(0)))))) \}
-    (size = 6)
-    2. \{ tuple1(s(0)), tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))) \} o \{ 0, s(s(s(s(0)))), 
-    s(s(s(s(s(0))))) \}(size = 7)
-    3. \{ tuple1(s(s(0))), tuple1(\(\alpha\)), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
-    s(s(s(s(s(0))))) \}(size = 7)
-    4. \{ tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
-    s(s(s(s(s(0))))) \}(size = 7)
-
-    Note that the function symbols 'tuplei' are inserted by the system as part of the algorithm.
-  \end{alltt}
-}
-This will print on the screen the first 5 grammars, and we can choose which one
-to use for compressing the proof, in this case we take the second one:
-{\small
-  \begin{alltt}
-    scala> val g = grms(1)
-  \end{alltt}
-}
-Given the end-sequent of the proof and a grammar, the extended Herbrand sequent can be computed:
-{\small
-  \begin{alltt}
-    scala> val ehs = generateExtendedHerbrandSequent(p.root, g)
-    ehs: at.logic.algorithms.cutIntroduction.ExtendedHerbrandSequent = 
-    P(0), (P(s(\(\alpha\)))\(\impl\)P(s(s(\(\alpha\))))), (P(s(s(\(\alpha\))))\(\impl\)P(s(s(s(\(\alpha\)))))),(P(\(\alpha\))\(\impl\)P(s(\(\alpha\)))),
-    (X(\(\alpha\))\(\impl\)(X(s(s(s(s(s(s(0)))))))\(\wedge\)(X(s(s(s(0))))\(\wedge\)X(0)))) :- 
-    P(s(s(s(s(s(s(s(s(s(0)))))))))),
-  \end{alltt}
-}
-As it was shown in \cite{cutIntro2013}, the cut-introduction problem has a
-canonical solution:
-{\small
-  \begin{alltt}
-    scala> val cs = computeCanonicalSolution(p.root, g)
-    Note that the clauses that do not contain the eigenvariable were already removed.
-    cs: at.logic.language.fol.FOLFormula = 
-    \(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
-  \end{alltt}
-}
-The extended Herbrand sequent generated previously has the canonical solution as
-default, but this solution can be improved, as demonstrated in Section
-\ref{sec.improving}. 
-{\small
-  \begin{alltt}
-    scala> minimizeSolution(ehs)
-Previous solution: \(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
-Improved solution: \(\forall\)x.(P(s(s(s(x))))\(\vee \neg\)P(x))
-\end{alltt}
-}
-Finally, the proof with cut is constructed:
-{\small
-\begin{alltt}
-scala> val fp = buildProofWithCut(ehs)
-\end{alltt}
-}
-In order to compare this with the initial proof, one can again count
-the number of rules:
-{\small
-\begin{alltt}
-scala> printProofStats(fp)
-------------- Statistics ---------------
-Cuts: 1
-Number of quantifier rules: 7
-Number of rules: 25
-Quantifier complexity: 6
-----------------------------------------
-\end{alltt}
-%% :))))))
-}
-We showed how to run the cut-introduction algorithm step by step. There is,
-though, a command comprising all these steps:
-{\small
-\begin{alltt}
-scala> val fp2 = cutIntro(p)
-\end{alltt}
-}
-Regarding the choice of the grammar, this command will compute the proofs with
-all minimal grammars and choose the smallest one (with respect to the number of rules).
-
-\subsection{SAT solving}
+\subsection{SAT Solving using MiniSAT}
 %
-The following shows an example session, using the MiniSAT SAT solver
+The following shows an example session, using the MiniSAT solver
 to verify valdity and satisfiability, and query the thus obtained models.
 Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, which states that if $m$ pigeons
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
@@ -753,11 +476,292 @@ scala> m.interpret( Neg(notvalid) )
 res18: Boolean = true
 \end{lstlisting}
 
-\newpage
+\subsection{SMT Solving using VeriT}
 
-\section{Rule systems used}
+\subsection{First-Order Resolution Proving using Prover9}
 
-This section defines the rule systems used in GAPT. The rules can be constructed via Scala-classes, which create the underlying data structure.
+\subsection{Built-In Resolution Prover}
+
+GAPT contains a built-in resultion prover that can be called with the command:
+\texttt{refuteFOL: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
+and with the command
+\texttt{refuteFOLI: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
+for interactive mode.
+
+\subsection{Built-In Tableaux Prover}
+
+GAPT contains a  built-in tableaux prover for propositional logic
+which can be called with the command \texttt{proveProp}, for example as in:
+\begin{lstlisting}
+scala> proveProp( parse.fol( "Imp A Imp B And A B" ))
+res16: Option[at.logic.calculi.lk.base.LKProof] = Some(ImpRightRuleType( :- (A$\supset$(B$\supset$(A$\land$B))), ImpRightRuleType(A :- (B$\supset$(A$\land$B)), AndRightRuleType(A, B :- (A$\land$B), InitialRuleType(A :- A), InitialRuleType(B :- B)))))
+\end{lstlisting}
+
+
+\section{Proof Theory}
+
+\subsection{Skolemization}
+
+\begin{meta}
+short example for proof skolemization 
+\end{meta}
+
+
+\subsection{Interpolation}
+
+The command \texttt{extractInterpolant} extracts an interpolant from a cut-free
+sequent calculus proof. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
+a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a 
+``negative part'' $\Gamma_1\seq\Delta_1$ and a ``positive part'' $\Gamma_2 \seq \Delta_2$.
+It returns a formula $I$ s.t.\ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$
+are provable and $I$ contains only such predicate symbols that appear in both, $\Gamma_1\seq\Delta_1$
+and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq p, q$
+by a single $\lor$-left inference, then you can compute an interpolant as follows:
+\begin{lstlisting}
+scala> val s = pr.root
+s: at.logic.calculi.lk.base.Sequent = (p:o $\lor$ q:o) :- p:o, q:o
+
+scala> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
+npart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set((p:o $\lor$ q:o)[10005], p:o[10006])
+
+scala> val ppart = Set( s.succedent( 1 ) )
+ppart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set(q:o[10007])
+
+scala> val I = extractInterpolant( pr, npart, ppart )
+I: at.logic.language.hol.HOLFormula = ($\bot$:o $\lor$ q:o)
+\end{lstlisting}
+
+\subsection{Expansion Trees}
+
+\begin{meta}
+ how to extract expansion trees, how to view them in prooftool, remove extractHerbrandSequent in the long run
+\end{meta}
+
+\paragraph{\textbf{extractHerbrandSequent: LKProof $\rightarrow$ Sequent}}
+
+A proof in first order logic can be concisely represented with a Herbrand
+sequent. Since this sequent is purely propositional, this is a way of reducing
+first order logic to propositional logic. In short, if $\varphi$ is a proof and
+$H$ is its Herbrand sequent, then $H$ contains all instances of the formulas in
+the end-sequent of $\varphi$ and $H$ is a tautology. It is important to note
+that $\varphi$ may not have strong quantifiers nor cuts on quantified formulas.
+A more detailed explanation of Herbrand sequent extraction can be found in
+\ref{Hetzl2008}. 
+
+This method extracts a Herbrand sequent from a proof $\varphi$ that satisfies
+the constraints. 
+An execution and output of this command is shown below. The proof $p$ used is the
+``Linear Example Proof'' for $n=4$,
+which is a proof without cuts of the end sequent:
+
+$$P0, \forall x. (Px \rightarrow Psx) \vdash Ps^4 0$$
+
+\begin{lstlisting}
+scala> var hs = extractHerbrandSequent(p)
+hs: at.logic.calculi.lk.base.types.FSequent =
+([(P(s(s(s(0))))->P(s(s(s(s(0)))))), (P(s(s(0)))->P(s(s(s(0))))),
+(P(s(0))->P(s(s(0)))), (P(0)->P(s(0))), P(0)], [P(s(s(s(s(0)))))])
+\end{lstlisting}
+
+Observe that this sequent (represented by two lists, one for the antecedent and
+one for the succedent) is a tautology, is propositional and contains all
+instances of $\forall x. (Px \rightarrow Psx)$ that must be used in a cut-free
+proof.
+
+\section{Cut-Elimination by Resolution}
+
+\subsection{First-Order Logic}
+
+\begin{meta}
+The ceres-functionality should be demonstrated by an example
+session using extractStruct, structToClausesList, prover9 etc.
+\end{meta}
+
+\paragraph{\textbf{extractStruct: LKProof $\rightarrow$ Struct}}
+Extracts a struct from a LKProof. A struct is referred to as a clause term in
+\cite{Baaz2011}. I will give a quick definition of it. For more details and
+for an explanation of this structure on the CERES method, please refer to
+\cite{Baaz2011}, Chapter 6.
+
+Given a proof with cuts, by removing all the inference rules that operate on end
+sequent ancestors, we obtain a proof of the empty sequent (refutation). The
+axioms of this refutation are represented by \textit{clause terms}. Clause
+terms are $\{\oplus, \otimes\}$-terms over clause sets, and it's interpretation
+is the following:
+
+\begin{align*}
+  |\mathcal{C}| &= \mathcal{C} \text{ if $\mathcal{C}$ is a set of clauses.}\\
+   |X \oplus Y| &= |X| \cup |Y|\\
+  |X \otimes Y| &= |X| \times |Y|
+\end{align*}
+
+where $\mathcal{C} \times \mathcal{D} = \{ C \circ D | C \in \mathcal{C} \wedge
+D \in \mathcal{D}\}$ and if $S = \Gamma \vdash \Delta$ and $S' = \Pi \vdash
+\Lambda$, $S \circ S' = \Gamma, \Pi \vdash \Delta, \Lambda.$
+
+\paragraph{\textbf{structToClausesList: Struct $\rightarrow$ List[Sequent]}} computes
+the standard characteristic clause set
+from the struct, see~\cite[Section 4.2.1]{WoltzenlogelPaleo09General} for details.
+
+\paragraph{\textbf{structToLabelledClausesList: Struct $\rightarrow$ List[LabelledSequent]}}
+{\color{red}TODO}
+
+\subsection{Higher-Order Logic}
+
+
+\subsection{Schematic First-Order Logic}
+
+
+
+
+\section{Cut-Introduction}
+
+The cut-introduction algorithm as described in \cite{cutIntro2013} is
+implemented in GAPT for introducing a single $\Pi_1$-cut into a sequent calculus
+proof. In this section we show the commands, step by step, that need to be
+executed for this algorithm. We will use as input one of the proofs generated by
+the system, namely, \texttt{LinearExampleProof(9)}. But the
+user can also, for example, write his own proofs in
+\texttt{hlk}\footnote{\url{http://www.logic.at/hlk/}} and input these files to
+the system. 
+
+First of all, we instantiate the desired proof and store this in a variable:
+\begin{lstlisting}
+scala> val p = LinearExampleProof(9) 
+\end{lstlisting}
+
+You will see that a big string representing the proof is printed. If desired,
+you can view this proof using \texttt{prooftool}. 
+It is possible to see some information about a proof on the command line by calling:
+\begin{lstlisting}
+scala> printProofStats(p)
+------------- Statistics ---------------
+Cuts: 0
+Number of quantifier rules: 9
+Number of rules: 28
+Quantifier complexity: 9
+----------------------------------------
+\end{lstlisting}
+Now we need to
+extract the terms used to instantiate the $\forall$ quantifiers of the
+end-sequent:
+\begin{lstlisting}
+scala> val ts = extractTerms(p)
+The term set contains 9 terms.
+\end{lstlisting}
+The system indicates how many terms were extracted, which is nine for this case,
+as expected. The next step consists in computing grammars that generate this
+term set:
+\begin{lstlisting}
+scala> val grms = computeGrammars(ts)
+693 grammars found.
+\end{lstlisting}
+The number of grammars found is shown, 693 in this case. They are ordered
+by size, and one can see the first ones by calling:
+\begin{lstlisting}
+scala> seeNFirstGrammars(grms, 5)
+0. \{ tuple1(s(s(s(\(\alpha\))))), tuple1(\(\alpha\)), tuple1(s(s(s(s(s(s(\(\alpha\)))))))) \} o \{ 0, s(0), s(s(0)) \}
+(size = 6)
+1. \{ tuple1(s(\(\alpha\))), tuple1(s(s(\(\alpha\)))), tuple1(\(\alpha\)) \} o \{ 0, s(s(s(0))), s(s(s(s(s(s(0)))))) \}
+(size = 6)
+2. \{ tuple1(s(0)), tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))) \} o \{ 0, s(s(s(s(0)))), 
+s(s(s(s(s(0))))) \}(size = 7)
+3. \{ tuple1(s(s(0))), tuple1(\(\alpha\)), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
+s(s(s(s(s(0))))) \}(size = 7)
+4. \{ tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
+s(s(s(s(s(0))))) \}(size = 7)
+
+Note that the function symbols 'tuplei' are inserted by the system as part of the algorithm.
+\end{lstlisting}
+This will print on the screen the first 5 grammars, and we can choose which one
+to use for compressing the proof, in this case we take the second one:
+\begin{lstlisting}
+scala> val g = grms(1)
+\end{lstlisting}
+Given the end-sequent of the proof and a grammar, the extended Herbrand sequent can be computed:
+\begin{lstlisting}
+scala> val ehs = generateExtendedHerbrandSequent(p.root, g)
+ehs: at.logic.algorithms.cutIntroduction.ExtendedHerbrandSequent = 
+P(0), (P(s(\(\alpha\)))\(\impl\)P(s(s(\(\alpha\))))), (P(s(s(\(\alpha\))))\(\impl\)P(s(s(s(\(\alpha\)))))),(P(\(\alpha\))\(\impl\)P(s(\(\alpha\)))),
+(X(\(\alpha\))\(\impl\)(X(s(s(s(s(s(s(0)))))))\(\wedge\)(X(s(s(s(0))))\(\wedge\)X(0)))) :- 
+P(s(s(s(s(s(s(s(s(s(0)))))))))),
+\end{lstlisting}
+As it was shown in \cite{cutIntro2013}, the cut-introduction problem has a
+canonical solution:
+\begin{lstlisting}
+scala> val cs = computeCanonicalSolution(p.root, g)
+Note that the clauses that do not contain the eigenvariable were already removed.
+cs: at.logic.language.fol.FOLFormula = 
+\(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
+\end{lstlisting}
+The extended Herbrand sequent generated previously has the canonical solution as
+default, but this solution can be improved.. 
+\begin{lstlisting}
+scala> minimizeSolution(ehs)
+Previous solution: \(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
+Improved solution: \(\forall\)x.(P(s(s(s(x))))\(\vee \neg\)P(x))
+\end{lstlisting}
+Finally, the proof with cut is constructed:
+\begin{lstlisting}
+scala> val fp = buildProofWithCut(ehs)
+\end{lstlisting}
+In order to compare this with the initial proof, one can again count
+the number of rules:
+\begin{lstlisting}
+scala> printProofStats(fp)
+------------- Statistics ---------------
+Cuts: 1
+Number of quantifier rules: 7
+Number of rules: 25
+Quantifier complexity: 6
+----------------------------------------
+\end{lstlisting}
+We showed how to run the cut-introduction algorithm step by step. There is,
+though, a command comprising all these steps:
+\begin{lstlisting}
+scala> val fp2 = cutIntro(p)
+\end{lstlisting}
+Regarding the choice of the grammar, this command will compute the proofs with
+all minimal grammars and choose the smallest one (with respect to the number of rules).
+
+
+\section{Miscellaneous}
+
+The method \texttt{printProofStats: LKProof $\rightarrow$ Unit}
+takes a proof and prints some statistics about it, namely the number
+of unary, binary and cut rules. If you have a variable storing the result of 
+\texttt{loadProofs(...)}, one way to get the first proof of the list is: 
+\texttt{proof.head.\_2}. If \texttt{proof} is the one defined on the previous 
+example:
+
+\begin{lstlisting}
+scala> printPoofStats(proof.head._2)
+unary: 2
+binary: 1
+cuts: 0
+\end{lstlisting}
+
+Of course you can always assing this to a variable and use it as a parameter:
+
+\begin{lstlisting}
+scala> var theproof = proof.head._2
+theproof: at.logic.calculi.lk.base.LKProof = ExistsRightRuleType( :- $\exists$(x.($\forall$(y.(((a P x) $\wedge$ (a Q y)))))), ForallRightRuleType( :- $\forall$(y.(((a P b) $\wedge$ (a Q y)))), AndRightRuleType( :- ((a P b) $\wedge$ (a Q \beta)), InitialRuleType( :- (a P b)), InitialRuleType( :- (a Q \beta)))))
+
+scala> printPoofStats(theproof)
+unary: 2
+binary: 1
+cuts: 0
+\end{lstlisting}
+
+
+\vfill
+\pagebreak
+\begin{appendix}
+
+\section{The Sequent Calculus}\label{app:sequent_calculus}
+
+This section defines the rule systems used in GAPT. The rules can be constructed
+via Scala-classes, which create the underlying data structure.
 
 \subsection{First-order LK}
 
@@ -925,7 +929,7 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
 
 The variable $y$ must not occur free in $\Gamma$ or $\Delta$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
 
-\subsubsection{Equational rules}
+\subsubsection*{Equational rules}
 
 \begin{multicols}{2}
 
@@ -963,7 +967,148 @@ The variable $y$ must not occur free in $\Gamma$ or $\Delta$. The term $t$ must 
 
 \end{multicols}
 
-%
+
+\section{The Resolution Calculus}
+
+\begin{meta}
+ TODO: give formal definition of our resolution calculus
+\end{meta}
+
+\section{Command Reference}
+
+\begin{meta}
+Shall we really keep a command reference in the user manual? This may make more sense
+as \texttt{help <command>} in the CLI.
+\end{meta}
+
+\paragraph{\textbf{prover9: List[Sequent],Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}}
+sends the input clause set (given as either List[Sequent] or Seq[Clause]) to prover9. Returns
+the resolution proof obtained from replaying the output proof of prover9,
+see~\cite{Dunchev12System} for details.
+
+\paragraph{\textbf{miniSATsolve: HOLFormula $\rightarrow$ Option[Interpretation]}}
+Searches a model for a quantifier-free formula using the MiniSAT SAT Solver.
+Returns None if unsatisfiable, and Some(Interpretation) otherwise.
+
+\paragraph{\textbf{miniSATprove: HOLFormula $\rightarrow$ Boolean}}
+Checks if a quantifier-free formula is valid using the MiniSAT SAT Solver.
+
+\paragraph{\textbf{lkTolksk: LKProof $\rightarrow$ LKProof}}
+This method takes a proof in classical logic (LK), such as one generated by HLK and 
+loaded by the method \texttt{loadProofs}, and transforms it to a proof on the
+calculus $\mathbf{LK}_{sk}$. This calculus was proposed to solve the problem of
+Skolemization in higher-order logic, and it basically replaces eigenvariables
+with Skolem terms. For more information, see \cite{Hetzl2011}.
+
+\paragraph{\textbf{cutIntro: LKProof $\rightarrow$ LKProof}}
+This method is the implementation of the cut-introduction algorithm described on
+\cite{Hetzl2012}. It takes a cut-free proof in classical logic, automatically
+computes a universally quantified cut formula and builds a new proof with this
+cut.
+
+\paragraph{\textbf{termsExtraction: LKProof $\rightarrow$ Map[FormulaOccurrence, List[List[FOLTerm]]]}}
+A crucial part of the cut-introduction algorithm of \cite{Hetzl2012} is the
+computation of the term set, which are the witnesses of the existential
+quantifiers of the end-sequent of a proof. This method takes a proof and returns
+a map. This map associates each existentially quantified formula of the end
+sequent with a list of tuples of terms. These tuples will have the same size as
+the number of quantifiers of the formula.
+
+\paragraph{\textbf{regularize: LKProof $\rightarrow$ LKProof}}
+{\color{red}TODO}
+
+\paragraph{\textbf{createHOLExpression: String $\rightarrow$ HOLExpression
+(Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))}}
+{\color{red}TODO}
+
+\paragraph{\textbf{fsequent2sequent: FSequent $\rightarrow$ Sequent}}
+{\color{red}TODO}
+
+\paragraph{\textbf{deleteTautologies: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{removeDuplicates: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{unitResolve: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{removeSubsumed: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{normalizeClauses: List[FSequent] $\rightarrow$ List[FSequent]}}
+{\color{red}TODO}
+
+\paragraph{\textbf{writeLatex: List[FSequent], String $\rightarrow$ Unit}}
+{\color{red}TODO}
+
+\paragraph{\textbf{writeLabelledSequentListLatex: List[LabelledSequent], String $\rightarrow$ Unit}}
+{\color{red}TODO}
+
+
+% do we still need this section?
+% \section{Running the system}
+% 
+% If you used svn to check out the source of GAPT from the website, after
+% everything is downloaded you should see two folders: ``doc'' and ``source''. To
+% compile the system, just go into the folder ``source'' and type:
+% 
+% \begin{lstlisting}[mathescape=false]
+% $ mvn install
+% \end{lstlisting}
+% 
+% Then you can go get something to eat, a coffee or anything more interesting. The
+% whole system takes about 15 minutes (or more) to compile, and you don't want to keep
+% staring at a screen printing non sense for that long. It's good to check,
+% though, once in a while, if no errors occurred. If something wrong happened,
+% there are somethings you can do (in that order):
+% 
+% \begin{enumerate}
+% \item Make sure you have all required packages (Section \ref{sec:sysreq}).
+% \item Try running \texttt{make clean} and then \texttt{make install} again.
+% \item Send us an e-mail ({\color{red}TODO}: which e-mail?).
+% \end{enumerate}
+% 
+% Probably the first thing you want to do after compiling your project is run it
+% and make some tests. The easiest way to do this, is to run the scripts in the
+% source folder. There are two bash scripts in this folder that you should care
+% about. You may first want to make them executable:
+% 
+% \begin{lstlisting}[mathescape=false]
+% $ chmod +x cli.sh
+% $ chmod +x gui.sh
+% \end{lstlisting}
+% 
+% What do each of these scripts do?
+% 
+% \texttt{cli.sh}: This will start GAPT inside a scala iteractive shell.
+% 
+% \texttt{gui.sh}: This will start ProofTool, an interface to visualize proofs.
+% 
+% If for any reason these scripts do not work, no need for crying.
+% The jars for these applications are created during compilation
+% and it's just a matter of finding the directory where they are to execute them.
+% 
+% The jar for GAPT is created inside the directory \texttt{cli/target} (you
+% should use the one with dependencies) and you can execute it like this:
+% 
+% \begin{lstlisting}[mathescape=false]
+% $ java -jar cli-XX-SNAPSHOT-jar-with-dependencies.jar
+% \end{lstlisting}
+% 
+% The jar for ProofTool is created inside the directory
+% \texttt{gui/prooftool/target} (also use the one with dependencies) and again you
+% can execute it like this:
+% 
+% \begin{lstlisting}[mathescape=false]
+% $ java -jar prooftool-XX-SNAPSHOT-jar-with-dependencies.jar
+% \end{lstlisting}
+
+\end{appendix}
+
+\vfill
+\pagebreak
+
 \bibliographystyle{plain}
 \bibliography{references}
 \end{document}
