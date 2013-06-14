@@ -38,6 +38,7 @@ object CLIMain {
   import help.{apply => help}
   import at.logic.cli.GPL.{apply => copying, printLicense => license}
   import at.logic.algorithms.cutIntroduction.FlatTermSet
+  import at.logic.algorithms.lk.statistics._
 
   println()
   println("    *************************************")
