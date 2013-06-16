@@ -48,7 +48,7 @@ object qFreeToExpansionTree {
     case AndHOL(f1,f2) => And(qFreeToExpansionTree(f1), qFreeToExpansionTree(f2))
     case OrHOL(f1,f2) => Or(qFreeToExpansionTree(f1), qFreeToExpansionTree(f2))
     case ImpHOL(f1,f2) => Imp(qFreeToExpansionTree(f1), qFreeToExpansionTree(f2))
-    case _ => throw new Exception("Error transforming a quantifier-free formula into an expansion tree")
+    case _ => throw new Exception("Error transforming a quantifier-free formula into an expansion tree: " + f)
   }
 }
 
@@ -68,8 +68,11 @@ object prenexToExpansionTree {
     // Each possible instance will generate an expansion tree, and they all 
     // have the same root.
     val children = lst.foldLeft(List[(ExpansionTree, HOLExpression)]()) { 
-      case (acc, instance) => 
+      case (acc, instance) =>
+        println("Matrix: " + fMatrix)
+        println("Instance: " + instance)
         val subs = FOLUnificationAlgorithm.unify(fMatrix, instance)
+        println("Substitutions: " + subs)
         val expTree = apply_(f, subs)
         expTree match {
           case WeakQuantifier(_, lst) => lst.toList ++ acc
@@ -85,6 +88,9 @@ object prenexToExpansionTree {
     case sub :: tail =>
       val term = sub.getTerm
       val newf = sub(f).asInstanceOf[FOLFormula] 
+      println("Formula: " + f)
+      println("Substitution: " + sub)
+      println("New formula: " + newf)
       WeakQuantifier(f, List(Pair(apply_(newf, tail), term)))
 
     case Nil => qFreeToExpansionTree(f)

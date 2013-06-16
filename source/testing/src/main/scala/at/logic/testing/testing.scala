@@ -785,12 +785,12 @@ object PigeonHolePrinciple {
 
   def apply( ps: Int, hs: Int ) = {
     assert( ps > 1 )
-    Imp( and( (1 to ps).map( p => 
-            or( (1 to hs).map( h => atom(p, h) ) ) ) ),
-          or( (1 to hs).map ( h => 
-            or( (2 to ps).map( p => 
-              or( ((1 to p - 1)).map( pp => 
-                And(atom(p, h),atom(pp,h)))))))))
+    Imp( Utils.andN( (1 to ps).map( p => 
+            Utils.orN( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
+          Utils.orN( (1 to hs).map ( h => 
+            Utils.orN( (2 to ps).map( p => 
+              Utils.orN( ((1 to p - 1)).map( pp => 
+                And(atom(p, h),atom(pp,h))).toList)).toList)).toList))
   }
 
   def atom( p: Int, h: Int ) = Atom(rel, pigeon(p)::hole(h)::Nil)
@@ -799,15 +799,6 @@ object PigeonHolePrinciple {
 
   def hole(i: Int) = FOLConst(ConstantStringSymbol("h_" + i))
 
-  def or( l: Seq[FOLFormula] ) : FOLFormula = l.toList match {
-    case p::Nil => p
-    case p::tail => Or(p, or(tail))    
-  }
-
-  def and( l : Seq[FOLFormula] ) : FOLFormula = l.toList match {
-    case p::Nil => p
-    case p::tail => And(p, and(tail))
-  }
 }
 
 // Workaround until there is a real FOLSubstitution

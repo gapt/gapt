@@ -9,7 +9,7 @@ import java.io.FileReader
 
 object VeriTParser extends RegexParsers {
 
-  def read(filename : String) : List[List[FOLFormula]] = {
+  def read(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {
     parse(finalResult, new FileReader(filename)) match {
       case Success(r, _) => r
       case Failure(msg, _) => throw new Exception("Failure in veriT parsing: " + msg)
@@ -17,16 +17,11 @@ object VeriTParser extends RegexParsers {
     }
   }
 
-  def eq_reflexive_toExpTree(f : FOLFormula) : ExpansionTree = {
+  def eq_reflexive_toExpTree(f : List[FOLFormula]) : ExpansionTree = {
     val x = FOLVar(VariableStringSymbol("x"))
     val eq = ConstantStringSymbol("=")
     val eq_refl = AllVar(x, Atom(eq, List(x, x)))
-    //val term = f match {
-    //  case Atom(eq0, List(y1, y2)) if y1 == y2 && eq0 == eq => y1
-    //  case _ => throw new Exception("Error getting terms for eq_reflexive. Not expected format.")
-    //}
-    //WeakQuantifier(eq_refl, List(Pair(qFreeToExpansionTree(f),term)))
-    prenexToExpansionTree(eq_refl, List(f))
+    prenexToExpansionTree(eq_refl, f)
   }
 
   // Assuming all the antecedents of the implication are in order:
@@ -99,12 +94,13 @@ object VeriTParser extends RegexParsers {
           f3 :: unfoldChain_(l.tail, newc)
 
         case Neg(Atom(eq1, List(x2, x3))) => throw new Exception("ERROR: the conclusion of the previous terms have" +  
-          "no literal in common with the next one. Are the literals out of order?")
+          " no literal in common with the next one. Are the literals out of order?")
 
         case _ => throw new Exception("ERROR: wrong format for negated equality: " + c)
       }
 
-      case Neg(Atom(eq0, List(x0, x1))) if eq0 != eq => throw new Exception("ERROR: Predicate " + eq0 + " in eq_transitive is not equality.")
+      case Neg(Atom(eq0, List(x0, x1))) if eq0 != eq => throw new Exception("ERROR: Predicate " + eq0 + 
+        " in eq_transitive is not equality.")
       
       // When reaching the final literal, check if they are the same.
       case Atom(eq0, List(x0, x1)) if eq0 == eq => c match {
@@ -112,13 +108,14 @@ object VeriTParser extends RegexParsers {
         case Neg(Atom(eq1, List(x2, x3))) if x1 == x2 && x0 == x3 => Nil
         
         case Neg(Atom(eq1, List(x2, x3))) => throw new Exception("ERROR: the conclusion of the previous terms" + 
-          "have no literal in common with the conclusion of the chain. Are the literals out of order? Is the conclusion" + 
-          "not the last one?")
+          " have no literal in common with the conclusion of the chain. Are the literals out of order? Is the conclusion" + 
+          " not the last one?")
 
         case _ => throw new Exception("ERROR: wrong format for negated equality: " + c)
       }
 
-      case Atom(eq0, List(x0, x1)) if eq0 != eq => throw new Exception("ERROR: Predicate " + eq0 + " in eq_transitive is not equality.")
+      case Atom(eq0, List(x0, x1)) if eq0 != eq => throw new Exception("ERROR: Predicate " + eq0 + 
+        " in eq_transitive is not equality.")
     }
 
 
@@ -126,15 +123,19 @@ object VeriTParser extends RegexParsers {
     prenexToExpansionTree(eq_trans, instances)
   }
 
-/* TODO finish these methods
   def eq_congr_toExpTree(f: List[FOLFormula]) : ExpansionTree = {
-    // Transform the list of literals into a formula
+    
+    def getFunctionName(f: FOLFormula) : String = f match {
+      case Imp(_, Atom(eq, List(f1, _))) => f1 match {
+          case Function(ConstantStringSymbol(n), _) => n 
+      }
+    }
 
     // Generate the eq_congruent formula with the right number of literals
-    def gen_eq_congr(n: int, fname: String) : FOLFormula = {
-      val listX = for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i))
-      val listY = for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i))
-      val equalities = listX.zip(listY).foldLeft(List[FOLFormulas]()) {
+    def gen_eq_congr(n: Int, fname: String) : FOLFormula = {
+      val listX = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i)) ).toList
+      val listY = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i)) ).toList
+      val equalities = listX.zip(listY).foldLeft(List[FOLFormula]()) {
         case (acc, p) => 
           val eq = ConstantStringSymbol("=")
           Atom(eq, List(p._1, p._2)) :: acc
@@ -143,6 +144,7 @@ object VeriTParser extends RegexParsers {
       val name = ConstantStringSymbol(fname)
       val f1 = Function(name, listX)
       val f2 = Function(name, listY)
+      val eq = ConstantStringSymbol("=")
       val last_eq = Atom(eq, List(f1, f2))
       val matrix = Imp(conj, last_eq)
 
@@ -155,23 +157,33 @@ object VeriTParser extends RegexParsers {
       }
     }
 
+    val instance = Utils.reverseCNF(f)
+    val fname = getFunctionName(instance)
     val n = f.size - 1
+    val eq_congr = gen_eq_congr(n, fname)
+    
+    prenexToExpansionTree(eq_congr, List(instance))
   }
 
   def eq_congr_pred_toExpTree(f: List[FOLFormula]) : ExpansionTree = {
-    // Transform the list of literals in a formula
+
+    def getPredName(f: FOLFormula) : String = f match {
+      case Imp(_, Atom(p, _)) => p match {
+          case ConstantStringSymbol(n) => n 
+      }
+    }
 
     // Generate the eq_congruent_pred with the right number of literals
-    def gen_eq_congr(n: int, fname: String) : FOLFormula = {
-      val listX = for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i))
-      val listY = for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i))
-      val equalities = listX.zip(listY).foldLeft(List[FOLFormulas]()) {
+    def gen_eq_congr_pred(n: Int, pname: String) : FOLFormula = {
+      val listX = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i)) ).toList
+      val listY = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i)) ).toList
+      val equalities = listX.zip(listY).foldLeft(List[FOLFormula]()) {
         case (acc, p) => 
           val eq = ConstantStringSymbol("=")
           Atom(eq, List(p._1, p._2)) :: acc
       }
       val conj = Utils.andN(equalities)
-      val name = ConstantStringSymbol(fname)
+      val name = ConstantStringSymbol(pname)
       val p1 = Atom(name, listX)
       val p2 = Atom(name, listY)
       val matrix = Imp(And(conj, p1), p2)
@@ -185,20 +197,26 @@ object VeriTParser extends RegexParsers {
       }
     }
 
+    val instance = Utils.reverseCNF(f)
+    val pname = getPredName(instance)
     val n = f.size - 2
+    val eq_congr_pred = gen_eq_congr_pred(n, pname)
+    
+    prenexToExpansionTree(eq_congr_pred, List(instance))
   }
-*/
 
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
-  // TODO: process this
-  def finalResult : Parser[List[List[FOLFormula]]] = rep(line) ^^ {
-    case list => list.filterNot(l => l.isEmpty)
+  def finalResult : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(line) ^^ {
+    case list => 
+      val ant = list.flatten
+      val cons = List()
+      (ant.toSeq, cons.toSeq)
   }
   
-  def line : Parser[List[FOLFormula]] = useless | ruleDesc
+  def line : Parser[List[ExpansionTree]] = useless | ruleDesc
   
   // For type-matching purposes...
-  def useless : Parser[List[FOLFormula]] = (success | unsat | header) ^^ { 
+  def useless : Parser[List[ExpansionTree]] = (success | unsat | header) ^^ { 
     case s => Nil }
   
   // Dummy strings that should be ignored
@@ -206,36 +224,46 @@ object VeriTParser extends RegexParsers {
   def unsat : Parser[String] = "unsat"
   def header : Parser[String] = "verit dev - the VERI(T) theorem prover (UFRN/LORIA)."
   
-  def ruleDesc : Parser[List[FOLFormula]] = "(set" ~ label ~ "(" ~> rule <~ "))"
+  def ruleDesc : Parser[List[ExpansionTree]] = "(set" ~ label ~ "(" ~> rule <~ "))"
   def label : Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
 
-  def rule : Parser[List[FOLFormula]] = axiom | innerRule
+  def rule : Parser[List[ExpansionTree]] = axiom | innerRule
   
-  def axiom : Parser[List[FOLFormula]] = input | eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
+  def axiom : Parser[List[ExpansionTree]] = input | eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
   
-  def input : Parser[List[FOLFormula]] = "input" ~> conclusion
-  // TODO: process these formulas to obtain the terms
-  def eq_reflexive : Parser[List[FOLFormula]] = "eq_reflexive" ~> conclusion
-  def eq_transitive : Parser[List[FOLFormula]] = "eq_transitive" ~> conclusion
-  def eq_congruence : Parser[List[FOLFormula]] = "eq_congruent" ~> conclusion
-  def eq_congruence_pred : Parser[List[FOLFormula]] = "eq_congruent_pred" ~> conclusion
+  def input : Parser[List[ExpansionTree]] = "input" ~> conclusion ^^ { case forms =>
+    forms.map(f => qFreeToExpansionTree(f))
+  }
+  
+  def eq_reflexive : Parser[List[ExpansionTree]] = "eq_reflexive" ~> conclusion ^^ {
+    case c => List( eq_reflexive_toExpTree(c) )
+  }
+  def eq_transitive : Parser[List[ExpansionTree]] = "eq_transitive" ~> conclusion ^^ {
+    case c => List( eq_transitive_toExpTree(c) )
+  }
+  def eq_congruence : Parser[List[ExpansionTree]] = "eq_congruent" ~> conclusion ^^ {
+    case c => List( eq_congr_toExpTree(c) )
+  }
+  def eq_congruence_pred : Parser[List[ExpansionTree]] = "eq_congruent_pred" ~> conclusion ^^ {
+    case c => List( eq_congr_pred_toExpTree(c) )
+  }
 
-  def innerRule : Parser[List[FOLFormula]] = resolution | and | and_pos | or
+  def innerRule : Parser[List[ExpansionTree]] = resolution | and | and_pos | or
   
   // Rules that I don't care
-  def resolution : Parser[List[FOLFormula]] = "resolution" ~> premises <~ conclusion
-  def and : Parser[List[FOLFormula]] = "and" ~> premises <~ conclusion
-  def and_pos : Parser[List[FOLFormula]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
-  def or : Parser[List[FOLFormula]] = "or" ~> premises <~ conclusion
+  def resolution : Parser[List[ExpansionTree]] = "resolution" ~> premises <~ conclusion
+  def and : Parser[List[ExpansionTree]] = "and" ~> premises <~ conclusion
+  def and_pos : Parser[List[ExpansionTree]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
+  def or : Parser[List[ExpansionTree]] = "or" ~> premises <~ conclusion
   
   // I don't care about premises. I only use the leaves
-  def premises : Parser[List[FOLFormula]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
+  def premises : Parser[List[ExpansionTree]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
   def conclusion : Parser[List[FOLFormula]] = ":conclusion (" ~> rep(formula) <~ ")"
  
   def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred
   def term : Parser[FOLTerm] = name ~ rep(term) ^^ {
     case name ~ args => 
-      val n = ConstantStringSymbol(name)
+      val n = ConstantStringSymbol(name) 
       Function(n, args)
   }
 

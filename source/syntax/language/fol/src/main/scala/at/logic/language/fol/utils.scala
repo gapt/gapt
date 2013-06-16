@@ -119,6 +119,22 @@ object Utils {
     }
   }
 
+  // TODO: the following three methods can be implemented for HOL.
+
+  // Transforms a list of literals into an implication formula, with negative 
+  // literals on the antecedent and positive literals on the succedent.
+  def reverseCNF(f: List[FOLFormula]) : FOLFormula = {
+    val (ant, succ) = f.foldLeft((List[FOLFormula](), List[FOLFormula]())) {
+      case ((ant, succ), f) => f match {
+        case Neg(a) => (a::ant, succ)
+        case a => (ant, a::succ)
+      }
+    }
+    val conj = andN(ant)
+    val disj = orN(succ)
+    Imp(conj, disj)
+  }
+
   // Iterated disjunction
   // Assume that fs is nonempty
   def orN(fs: List[FOLFormula]) : FOLFormula = fs match {
