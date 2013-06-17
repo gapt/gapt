@@ -106,16 +106,16 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   lazy val atom1: PackratParser[FOLFormula] = atomsymb ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => Atom(ConstantStringSymbol(x), params.asInstanceOf[List[FOLTerm]])}
   lazy val atom2: PackratParser[FOLFormula] = atomsymb ^^ {case x => Atom(ConstantStringSymbol(x), Nil)}
 
-  val plus_sym = new ConstantStringSymbol("+")
-  val times_sym = new ConstantStringSymbol("*")
-  val minus_sym = new ConstantStringSymbol("-")
-  val div_sym = new ConstantStringSymbol("-")
-  val wedge_sym = new ConstantStringSymbol("^")
-//  val vee_sym = new ConstantStringSymbol("v")
-  val less_sym = new ConstantStringSymbol("<")
-  val greater_sym = new ConstantStringSymbol(">")
-  val lesseq_sym = new ConstantStringSymbol("<=")
-  val greatereq_sym = new ConstantStringSymbol(">=")
+  val plus_sym = ConstantStringSymbol("+")
+  val times_sym = ConstantStringSymbol("*")
+  val minus_sym = ConstantStringSymbol("-")
+  val div_sym = ConstantStringSymbol("-")
+  val wedge_sym = ConstantStringSymbol("^")
+//  val vee_sym = ConstantStringSymbol("v")
+  val less_sym = ConstantStringSymbol("<")
+  val greater_sym = ConstantStringSymbol(">")
+  val lesseq_sym = ConstantStringSymbol("<=")
+  val greatereq_sym = ConstantStringSymbol(">=")
 
   //infixatom
   lazy val iatom : PackratParser[FOLFormula] = term ~ """((<|>)=?)|(!?=)|[+\-*]""".r  ~ term ^^ {

@@ -89,6 +89,8 @@ import at.logic.transformations.ceres.ACNF.getInstantiationsOfTheIndexedFOVars
 import at.logic.transformations.ceres.ACNF.ConvertCutsToHOLFormulasInResProof
 import at.logic.transformations.ceres.ACNF.renameIndexedVarInProjection
 import at.logic.algorithms.unification.EequalityA
+import at.logic.language.fol.FOLConst
+import at.logic.calculi.lk.quantificationRules.ForallLeftRule
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -131,6 +133,7 @@ object printProofStats {
   object computeProjections {
     def apply(p: LKProof) : Set[LKProof] = at.logic.transformations.ceres.projections.Projections(p)
   }
+
   object computeGroundProjections {
     def apply(projections: Set[LKProof], groundSubs: List[(HOLVar, HOLExpression)]): Set[LKProof] = {
       groundSubs.map(subs => projections.map(pr => renameIndexedVarInProjection(pr, subs))).flatten.toSet
@@ -1052,6 +1055,38 @@ object printProofStats {
     }
 
   }
+
+  object equation_example {
+    def apply : LKProof = {
+      import at.logic.calculi.lk.propositionalRules._
+      import at.logic.calculi.lk.equationalRules._
+      import at.logic.calculi.lk.quantificationRules._
+      val List(uv,fuu,fuv,ab,fab) = List("u = v", "f(u)=f(u)", "f(u)=f(v)", "a=b", "f(a)=f(b)") map (Prover9TermParserLadrStyle.parseFormula)
+      val List(uy,xy,ay) = List("(all y (u = y -> f(u) = f(y)))",
+        "(all x all y (x = y -> f(x) = f(y)))",
+        "(all y (a = y -> f(a) = f(y)))") map (Prover9TermParserLadrStyle.parseFormula)
+      val List(u,v) = List("u","v").map(s => FOLVar(VariableStringSymbol(s)))
+      val List(a,b) = List("a","b").map(s => FOLConst(ConstantStringSymbol(s)))
+      val ax1 = Axiom(List(uv),List(uv))
+      val ax2 = Axiom(List(),List(fuu))
+      val ax3 = Axiom(List(ab),List(ab))
+      val ax4 = Axiom(List(fab),List(fab))
+
+      val i1 = EquationRight1Rule(ax1,ax2,ax1.root.succedent(0),ax2.root.succedent(0), fuv)
+      val i2 = ImpRightRule(i1, i1.root.antecedent(0),i1.root.succedent(0))
+      println(i2.root)
+      val i3 = ForallRightRule(i2, i2.root.succedent(0), uy, v )
+      val i4 = ForallRightRule(i3, i3.root.succedent(0), xy, u )
+
+      val i5 = ImpLeftRule(ax3,ax4,ax3.root.succedent(0),ax4.root.antecedent(0))
+      val i6 = ForallLeftRule(i5, i5.root.antecedent(1),ay, b)
+      val i7 = ForallLeftRule(i6, i6.root.antecedent(1),xy, a)
+
+      val es = CutRule(i4,i7,i4.root.succedent(0),i7.root.antecedent(1))
+      es
+    }
+  }
+
 
   object help {
     def apply() = {

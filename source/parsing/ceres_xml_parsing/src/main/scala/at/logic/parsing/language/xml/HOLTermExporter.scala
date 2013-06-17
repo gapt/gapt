@@ -15,11 +15,24 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ExportingException
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.types.Ti
+import at.logic.language.lambda.types.->
+import at.logic.language.lambda.types.To
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.types.Ti
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.types.->
+import at.logic.language.lambda.types.To
 
 trait HOLTermExporter {
   def exportTerm(term: HOLExpression): scala.xml.Elem = term match {
     case Atom(ConstantStringSymbol(name),args) =>
       <constantatomformula symbol={name}>
+        {exportList(args)}
+      </constantatomformula>
+    case Atom(EqSymbol,args) =>
+      <constantatomformula symbol={"="}>
         {exportList(args)}
       </constantatomformula>
     case AppN1(func@Var(VariableStringSymbol(_), FunctionType(To(),_)),args) =>

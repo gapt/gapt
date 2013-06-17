@@ -2,118 +2,77 @@ package at.logic.transformations.ceres.ACNF
 
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
-import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOccurrence}
 import at.logic.calculi.slk._
-import at.logic.calculi.slk.AndEquivalenceRule1._
-import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.algorithms.shlk._
-import at.logic.utils.ds.trees.LeafTree
-import collection.immutable
 import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
-import at.logic.language.lambda.typedLambdaCalculus.{App, AppN, LambdaExpression, Var}
-import at.logic.language.lambda.types.FunctionType._
-import at.logic.language.lambda.types.To._
-import at.logic.language.lambda.types._
-import at.logic.language.hol.Atom._
-import at.logic.language.schema.foTerm._
+import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.schema._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.algorithms.lk.getCutAncestors._
-import at.logic.algorithms.lk.{getCutAncestors, addContractions, getAncestors}
-import at.logic.transformations.ceres.GroundingProjectionTerm._
+import at.logic.calculi.lk.equationalRules._
+import at.logic.algorithms.lk.getCutAncestors
 import at.logic.transformations.ceres.UnfoldProjectionTerm._
-import at.logic.transformations.ceres.RemoveArrowRules._
-import at.logic.transformations.ceres.ProjectionTermToSetOfProofs._
 import at.logic.transformations.ceres._
 import clauseSchema._
-import java.io.{FileInputStream, InputStreamReader}
-import java.io.File.separator
 import at.logic.calculi.resolution.robinson._
 import at.logic.language.fol._
 import at.logic.calculi.resolution.instance.Instance
-import at.logic.calculi.proofs.NullaryProof
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.types.FunctionType.apply
-import at.logic.transformations.ceres.UnfoldProjectionTerm.apply
-import at.logic.algorithms.lk.getCutAncestors.apply
-import at.logic.transformations.ceres.ProjectionTermToSetOfProofs.apply
-import at.logic.transformations.ceres.RemoveArrowRules.apply
-import at.logic.language.hol.Atom.apply
-import at.logic.language.lambda.types.To.apply
-import at.logic.transformations.ceres.GroundingProjectionTerm.apply
-import at.logic.calculi.slk.AndEquivalenceRule1.apply
-import at.logic.language.schema.foTerm.apply
-import at.logic.language.schema.IntZero
-import at.logic.language.lambda.types.Ti
-import at.logic.language.lambda.types.FunctionType.apply
-import at.logic.transformations.ceres.UnfoldProjectionTerm.apply
-import at.logic.algorithms.lk.getCutAncestors.apply
-import at.logic.transformations.ceres.ProjectionTermToSetOfProofs.apply
-import at.logic.language.hol.Atom.apply
-import at.logic.transformations.ceres.RemoveArrowRules.apply
-import at.logic.language.lambda.types.To.apply
-import at.logic.transformations.ceres.GroundingProjectionTerm.apply
-import at.logic.calculi.slk.AndEquivalenceRule1.apply
-import at.logic.language.schema.foTerm.apply
-import at.logic.language.lambda.types.->
-import at.logic.language.lambda.types.To
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.schema.IntZero
-import scala.Tuple2
 import at.logic.language.hol.Atom
 import at.logic.language.lambda.types.Ti
-import at.logic.language.lambda.types.FunctionType.apply
-import at.logic.transformations.ceres.UnfoldProjectionTerm.apply
-import at.logic.algorithms.lk.getCutAncestors.apply
-import at.logic.transformations.ceres.ProjectionTermToSetOfProofs.apply
-import at.logic.language.hol.Atom.apply
-import at.logic.transformations.ceres.RemoveArrowRules.apply
-import at.logic.language.lambda.types.To.apply
-import at.logic.transformations.ceres.GroundingProjectionTerm.apply
-import at.logic.calculi.slk.AndEquivalenceRule1.apply
-import at.logic.language.schema.foTerm.apply
-import at.logic.language.lambda.types.->
 import at.logic.language.lambda.types.To
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.schema.IntZero
-import scala.Tuple2
+import scala.collection.immutable
+import at.logic.calculi.resolution.base.Clause
+import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
+import at.logic.language.lambda.substitutions.Substitution
 
 
 object ACNF {
     def plugProjections(resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: FSequent): LKProof = {
       resRefutation match {
-        case Axiom(seq) => {
-//          println("\nresRefutation.root = "+resRefutation.root)
-          if(seq.antecedent.isEmpty && seq.succedent.isEmpty) {
-            return groun_proj_set.find(p => p.root.toFSequent == end_seq).get
-          }
-//          println("seq = "+printSchemaProof.sequentToString(seq))
-          if(seq.antecedent.isEmpty) {
-            val set = groun_proj_set.filter(p => p.root.succedent.map(fo => fo.formula).intersect(seq.succedent.map(fo => fo.formula)).nonEmpty)
-//            println("\nant.Empty")
-//            println("projection.root : "+set.head.root)
-            return set.head
-          }
-          else
-            if(seq.succedent.isEmpty) {
-              val set = groun_proj_set.filter(p => p.root.antecedent.map(fo => fo.formula).intersect(seq.antecedent.map(fo => fo.formula)).nonEmpty)
-//              println("\nsucc.Empty")
-//              println("projection.root : "+set.head.root)
-              return set.head
-            }
-            else {
-              val set = groun_proj_set.filter(p => p.root.antecedent.map(fo => fo.formula).intersect(seq.antecedent.map(fo => fo.formula)).nonEmpty && p.root.succedent.map(fo => fo.formula).intersect(seq.succedent.map(fo => fo.formula)).nonEmpty)
-//              println("\n(ant & succ)Empty")
-//              println("projection.root : "+set.head.root)
-              return set.head
-            }
-        }
+        case Axiom(Sequent(Nil,Nil)) =>
+            groun_proj_set.find(p => p.root.toFSequent == end_seq).get
+        case Axiom(Sequent(Nil,succedent)) =>
+            val set = groun_proj_set.filter(p => {
+              println("1) "+p.root.succedent.map(fo => fo.formula));
+              println("2) "+succedent.map(fo => fo.formula));
+              p.root.succedent.map(fo => fo.formula).intersect(succedent.map(fo => fo.formula)).nonEmpty
+            })
+            set.head
+        case Axiom(Sequent(antecedent,Nil)) =>
+              val set = groun_proj_set.filter(p => p.root.antecedent.map(fo =>
+                fo.formula).intersect(antecedent.map(fo => fo.formula)).nonEmpty)
+              set.head
+        case Axiom(Sequent(antecedent,succedent)) =>
+              val set = groun_proj_set.filter(p =>
+                p.root.antecedent.map(fo => fo.formula).intersect(antecedent.map(fo => fo.formula)).nonEmpty &&
+                p.root.succedent.map(fo => fo.formula).intersect(succedent.map(fo => fo.formula)).nonEmpty)
+              set.head
+
+        case EquationLeft1Rule(p1,p2, root, occ1, occ2, main) =>
+          val pr1 = plugProjections(p1, groun_proj_set, end_seq)
+          val pr2 = plugProjections(p2, groun_proj_set, end_seq)
+          EquationLeft1Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+
+        case EquationLeft2Rule(p1,p2, root, occ1, occ2, main) =>
+          val pr1 = plugProjections(p1, groun_proj_set, end_seq)
+          val pr2 = plugProjections(p2, groun_proj_set, end_seq)
+          EquationLeft2Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+
+        case EquationRight1Rule(p1,p2, root, occ1, occ2, main) =>
+          val pr1 = plugProjections(p1, groun_proj_set, end_seq)
+          val pr2 = plugProjections(p2, groun_proj_set, end_seq)
+          EquationRight1Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+
+        case EquationRight2Rule(p1,p2, root, occ1, occ2, main) =>
+          val pr1 = plugProjections(p1, groun_proj_set, end_seq)
+          val pr2 = plugProjections(p2, groun_proj_set, end_seq)
+          EquationRight2Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+
+
         case CutRule(up1, up2, _, a1, a2) => {
           val pr1 = plugProjections(up1, groun_proj_set, end_seq)
           val pr2 = plugProjections(up2, groun_proj_set, end_seq)
@@ -188,6 +147,62 @@ object ACNF {
     }
     apply(resDeduction, ground_proj_set, end_seq)
   }
+
+  /*
+  //this only works for regular first order proofs
+  def calculateGroundSubstitutions(proj : immutable.Set[LKProof], rp : RobinsonResolutionProof) : List[(HOLVar, HOLExpression)] = {
+    //collect the initial axioms
+    val raxioms : List[Clause] = rp.nodes.foldLeft(List[Clause]())( (list,el) =>
+      el match {
+      case InitialClause(clause) => clause::list ;
+      case _ => list}
+    )
+
+    for (ax <- raxioms) yield {
+      val axant = ax.toFSequent.antecedent
+      val axsuc = ax.toFSequent.succedent
+
+      def findmatchingprojection(p:LKProof) : Option[List[(HOLVar, HOLExpression)]] = {
+        val root = p.root.toFSequent
+        val pant = root.antecedent
+        val psuc = root.succedent
+        val pospairs  = getpairs(axsuc.toList, psuc.toList)
+        val negpairs = getpairs(axant.toList, pant.toList)
+        val pairs = for (pos <- pospairs; neg <- negpairs) yield { pos ++ neg }
+        //FOLMatchingAlgorithm.matchSetOfTuples(Nil, )
+        var result : Option[List[(HOLVar, HOLExpression)]] = None
+        var candidates = pairs
+        while (candidates.nonEmpty && result.isEmpty) {
+          val candidate : List[(FOLFormula, FOLFormula)] = candidates.head.asInstanceOf[List[(FOLFormula, FOLFormula)]]
+          candidates = candidates.tail
+          val restrictedvars = candidate.flatMap(_._1.freeVariables)
+          FOLMatchingAlgorithm.matchSetOfTuples(restrictedvars, candidate, Nil) match {
+            case Some((Nil, r)) => result = Some(r.asInstanceOf[List[(HOLVar, HOLExpression)]])
+            case _ => ;
+          }
+        }
+
+        result
+      }
+
+      List[(HOLVar, HOLExpression)]()
+    }
+  } */
+
+  def removeFirst[T](t:T, l:List[T]) : List[T] = l match {
+    case x::xs => if (x==t) xs else x::removeFirst(t,xs)
+    case Nil => Nil
+  }
+
+  def getpairs[T](l1 : List[T], l2 : List[T]) : List[List[(T,T)]]= (l1,l2) match {
+    case (Nil, _) => Nil
+    case (_, Nil) => throw new Exception("Second list in match search is not large enough!")
+    case (x::xs, _) =>
+      for (l <- l2) yield {
+        ((x,l)::getpairs(xs, removeFirst(x,l2))).asInstanceOf[List[(T,T)]]
+      }
+  }
+
 }
 
 //apply contractions to the proof with formula repetitions
@@ -296,7 +311,101 @@ object ConvertCutsToHOLFormulasInResProof {
   }
 }
 
+//does not work for schemata proofs
+object SubstituteProof {
+  def subapp(f: HOLFormula, sub:Substitution[HOLExpression]) = sub(f).asInstanceOf[HOLFormula]
+  def subapp(f: FormulaOccurrence, sub:Substitution[HOLExpression]) = sub(f.formula).asInstanceOf[HOLFormula]
+  def remove_from_sub(v:Var, sub:Substitution[HOLExpression]) = Substitution[HOLExpression](sub.map.filterNot( x => x._1 == v  ))
+
+  def apply(proof: LKProof, sub:Substitution[HOLExpression]) : LKProof = proof match {
+    case Axiom(s) =>
+      val fs = s.toFSequent
+      val ant : immutable.Seq[Formula] = fs.antecedent.map(sub(_).asInstanceOf[Formula])
+      val suc : immutable.Seq[Formula] = fs.succedent.map(sub(_).asInstanceOf[Formula])
+      val inf = Axiom(ant, suc )
+      inf
+
+    case WeakeningLeftRule(p, root, aux) =>
+      val rp = apply(p, sub)
+      WeakeningLeftRule(rp, subapp(aux,sub) )
+    case WeakeningRightRule(p, root, aux) =>
+      val rp = apply(p, sub)
+      WeakeningRightRule(rp, subapp(aux, sub))
+    case ContractionLeftRule(p,root,occ1,occ2,main) =>
+      val rp = apply(p, sub)
+      ContractionLeftRule(rp,subapp(occ1, sub))
+    case ContractionRightRule(p,root,occ1,occ2,main) =>
+      val rp = apply(p, sub)
+      ContractionRightRule(rp,subapp(occ1, sub) )
+
+    case AndLeft1Rule(p,root,aux1,aux2) =>
+      val rp = apply(p, sub)
+      AndLeft1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+    case AndLeft2Rule(p,root,aux1,aux2) =>
+      val rp = apply(p, sub)
+      AndLeft2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+    case AndRightRule(p1,p2,root,aux1, aux2,main) =>
+      val rp1 = apply(p1, sub)
+      val rp2 = apply(p2, sub)
+      AndRightRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
+    case OrLeftRule(p1,p2,root,aux1, aux2,main) =>
+      val rp1 = apply(p1, sub)
+      val rp2 = apply(p2, sub)
+      OrLeftRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
+    case OrRight1Rule(p,root,aux1,aux2) =>
+      val rp = apply(p, sub)
+      OrRight1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+    case OrRight2Rule(p,root,aux1,aux2) =>
+      val rp = apply(p, sub)
+      OrRight2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+    case ImpLeftRule(p1,p2,root,aux1, aux2,main) =>
+      val rp1 = apply(p1, sub)
+      val rp2 = apply(p2, sub)
+      ImpLeftRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
+    case ImpRightRule(p,root,aux1,aux2,main) =>
+      val rp = apply(p, sub)
+      ImpRightRule(rp, subapp(aux1,sub), subapp(aux2, sub))
+
+    case EquationLeft1Rule(p1,p2,root,aux1, aux2, main) =>
+      val rp1 = apply(p1, sub)
+      val rp2 = apply(p2, sub)
+      EquationLeft1Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+    case EquationLeft2Rule(p1,p2,root,aux1, aux2, main) =>
+      val rp1 = apply(p1, sub)
+      val rp2 = apply(p2, sub)
+      EquationLeft2Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+    case EquationRight1Rule(p1,p2,root,aux1, aux2, main) =>
+      val rp1 = apply(p1, sub)
+      val rp2 = apply(p2, sub)
+      EquationRight1Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+    case EquationRight2Rule(p1,p2,root,aux1, aux2, main) =>
+      val rp1 = apply(p1, sub)
+      val rp2 = apply(p2, sub)
+      EquationRight2Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+
+    case ForallLeftRule(p, root, aux, main, term) =>
+      val rp = apply(p, sub)
+      ForallLeftRule(rp, subapp(aux,sub), subapp(main,sub), sub(term))
+    case ExistsRightRule(p, root, aux, main, term) =>
+      val rp = apply(p, sub)
+      ExistsRightRule(rp, subapp(aux,sub), subapp(main,sub), sub(term))
+
+    case ForallRightRule(p, root, aux, main, eigenvar) =>
+      val rsub = remove_from_sub(eigenvar, sub)
+      val rp = apply(p, rsub)
+      ForallLeftRule(rp, subapp(aux,rsub), subapp(main,rsub), eigenvar)
+    case ExistsLeftRule(p, root, aux, main, eigenvar) =>
+      val rsub = remove_from_sub(eigenvar, sub)
+      val rp = apply(p, rsub)
+      ExistsRightRule(rp, subapp(aux,rsub), subapp(main,rsub), eigenvar)
+
+
+  }
+}
+
+
 // applies the ground substitution obtained from the resolution refutation
+//TODO: this method does not care for bindings! Cvetan, please fix it!
 object renameIndexedVarInProjection {
   def apply(p: LKProof, pair: Tuple2[Var, HOLExpression]): LKProof = {
 //    println("p.rule = "+p.rule)
@@ -318,6 +427,7 @@ object renameIndexedVarInProjection {
       case NegRightRule(up, _, a, p) => NegRightRule(apply(up,pair), renameVar(a.formula,pair))
       case ForallLeftRule(up, seq, a, p, t) => ForallLeftRule(apply(up,pair), renameVar(a.formula,pair), renameVar(p.formula,pair), renameVar.apply1(t,pair))
       case ExistsRightRule(up, _, a, p, t) => ExistsRightRule(apply(up,pair), renameVar(a.formula,pair), renameVar(p.formula,pair), renameVar.apply1(t,pair))
+        //TODO: Implement ForallRight and ExistsLeft! Cvetan please fix it!
       case _ => throw new Exception("\nMissing case in GroundingProjections !\n"+p.rule)
     }
   }
@@ -341,8 +451,8 @@ object renameVar {
       }
       case at.logic.language.fol.Function(name, args) => {
 //        println("   fol.Function = "+exp)
-        val func = HOLConst(new ConstantStringSymbol(name.toString()), Ti()->Ti())
-        at.logic.language.hol.Function(func, args.map(f => apply1(f, pair)))
+        //val func = HOLConst(new ConstantStringSymbol(name.toString()), Ti()->Ti())
+        at.logic.language.fol.Function(name, args.map(f => apply1(f, pair).asInstanceOf[FOLTerm]))
       }
       case Succ(arg) => {
 //        println("   Succ = "+exp)

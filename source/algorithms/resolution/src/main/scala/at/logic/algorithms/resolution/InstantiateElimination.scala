@@ -15,10 +15,105 @@ import scala.Some
 import at.logic.calculi.lk.base.Sequent
 import collection.mutable
 import at.logic.utils.ds.acyclicGraphs.AGraph
+import at.logic.language.hol.{HOLFormula, HOLExpression}
 
 /**
  * Eliminates the insantiate rule from a RobinsonResolutionProof
  */
+
+
+object ResolutionSubstitution {
+  type ProofMap = immutable.Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]
+  val emptyProofMap = immutable.Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]()
+
+  def extend_pmap(pm : ProofMap, p : RobinsonResolutionProof,
+                  sub : Substitution[HOLExpression], value : RobinsonResolutionProof) = (p, pm + (((p,sub), value)))
+
+  def apply[T](p: RobinsonResolutionProof, sub : Substitution[HOLExpression], pmap : ProofMap ) : (RobinsonResolutionProof, ProofMap) = {
+    if (pmap contains ((p,sub)))
+      (pmap(p,sub), pmap)
+    else
+      p match {
+        case InitialClause(clause) =>
+          val nclause = substitute_clause(clause, sub)
+          val np = InitialClause(nclause.negative map (_.formula.asInstanceOf[FOLFormula]),
+                                 nclause.positive map (_.formula.asInstanceOf[FOLFormula]))
+          extend_pmap(pmap, p, sub, np)
+
+        case Factor(clause, p1, List(as), subst) =>
+          require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
+          var ant_or_succ1 = clause.antecedent
+          clause.literals.find(_._1 == as.head) match {
+            case Some((_, true)) => ant_or_succ1 = p1.root.succedent
+            case Some((_,false)) => ant_or_succ1 = p1.root.antecedent
+            case _ => throw new Exception("Did not find factored literal in clause!")
+          }
+          val na::nas = as.map(find_sublit(ant_or_succ1, _, sub))
+          val np = Factor(p1, na, nas, subst)
+          extend_pmap(pmap1, p, sub, np)
+
+        case Factor(clause, p1, List(as,bs), subst) =>
+          require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
+          var ant_or_succ1 = clause.antecedent
+          clause.literals.find(_._1 == as.head) match {
+            case Some((_, true)) => ant_or_succ1 = p1.root.succedent
+            case Some((_,false)) => ant_or_succ1 = p1.root.antecedent
+            case _ => throw new Exception("Did not find factored literal in clause!")
+          }
+          var ant_or_succ2 = clause.antecedent
+          clause.literals.find(_._1 == bs.head) match {
+            case Some((_, true)) => ant_or_succ2 = p1.root.succedent
+            case Some((_,false)) => ant_or_succ2 = p1.root.antecedent
+            case _ => throw new Exception("Did not find factored literal in clause!")
+          }
+          val na::nas = as.map(find_sublit(ant_or_succ1, _, sub))
+          val nb::nbs = as.map(find_sublit(ant_or_succ2, _, sub))
+          val np = Factor(p1, na, nas, nb, nbs, subst)
+          extend_pmap(pmap1, p, sub, np)
+
+        case Resolution(clause, p1, p2, lit1, lit2, subst) =>
+          require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
+          val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution[HOLExpression]], pmap1)
+          val nlit1 = find_sublit(np1.root.succedent, lit1, sub)
+          val nlit2 = find_sublit(np2.root.antecedent, lit2, sub)
+          val np = Resolution(np1,np2,nlit1,nlit2, subst)
+          extend_pmap(pmap2, p, sub, np)
+
+        case Paramodulation(clause, p1, p2, lit1, lit2, subst) =>
+          require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
+          val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution[HOLExpression]], pmap1)
+          val nlit1 = find_sublit(np1.root.succedent, lit1, sub)
+          val nlit2 = find_sublit(np2.root.antecedent, lit2, sub)
+          val Some(newlit) = p2.root.occurrences.find(occ => occ.ancestors.contains(lit1) && occ.ancestors.contains(lit2))
+          val np = Paramodulation(np1,np2,nlit1,nlit2, sub(newlit.formula).asInstanceOf[FOLFormula], subst)
+          extend_pmap(pmap2, p, sub, np)
+      }
+
+  }
+
+  def find_sublit(oldoccs : Seq[FormulaOccurrence], newocc : FormulaOccurrence, sub : Substitution[HOLExpression]) : FormulaOccurrence = {
+    oldoccs.find( x => sub(x.formula) == newocc.formula) match {
+      case Some(result) => result
+      case None => throw new Exception("Could not find match for "+newocc+" in "+oldoccs+" with substitution "+sub)
+    }
+  }
+
+  def substitute_focc( occ:FormulaOccurrence, sub : Substitution[HOLExpression]) : FormulaOccurrence = {
+    val subf = sub(occ.formula).asInstanceOf[HOLFormula]
+    val nanc = occ.ancestors map (substitute_focc(_, sub))
+    occ.factory.createFormulaOccurrence(subf, nanc)
+  }
+
+  def substitute_clause(c:Clause, sub : Substitution[HOLExpression]) : Clause = {
+    val nlits = c.literals map ( x =>  (substitute_focc(x._1,sub), x._2) )
+    Clause(nlits)
+  }
+}
+
 object InstantiateElimination {
   private var counter = 0
 
@@ -589,3 +684,5 @@ object InstantiateElimination {
   def getVars(ss: Seq[Sequent], forbidden :VarSet) : VarSet = ss.foldLeft(forbidden)((set:VarSet, s:Sequent ) => getVars(s, set))
 
 }
+
+
