@@ -146,7 +146,11 @@ object CutIntroduction extends Logger {
     println( "\nTerm set: {" + terms.termset + "}" )
     println( "Size of term set: " + terms.termset.size )
 
-    val grammars = ComputeGrammars(terms)
+    var beginTime = System.currentTimeMillis;
+
+    val grammars = ComputeGrammars.apply2(terms)
+
+    debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
 
     println( "\nNumber of grammars: " + grammars.length )
 
@@ -162,6 +166,12 @@ object CutIntroduction extends Logger {
     println( "Smallest grammar-size: " + smallest )
     println( "Number of smallest grammars: " + smallestGrammars.length )
 
+    debug("=============================================================")
+    debug("" + smallestGrammars.map(x => (x.toString() + "\n")))
+
+    beginTime = System.currentTimeMillis;
+    debug("Improving solution...")
+
     val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
       trace( "building proof for grammar " + grammar.toPrettyString )
 
@@ -176,6 +186,8 @@ object CutIntroduction extends Logger {
         case None => acc
       }
     }
+
+    debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
     // Sort the list by size of proofs
     val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))

@@ -22,6 +22,11 @@ import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
 import scala.collection.immutable.Stack
 import at.logic.algorithms.cutIntroduction.CutIntroduction.MyFClause
+import at.logic.utils.ds.lists.Definitions.mapAccumL
+import at.logic.utils.executionModels.searchAlgorithms.Definitions.DFS
+import at.logic.utils.executionModels.searchAlgorithms.Definitions.setSearch
+import at.logic.utils.executionModels.searchAlgorithms.SetNode
+
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
@@ -160,25 +165,6 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
 
   //Helper functions.
 
-  /** Performs a map with an accumulator.
-    * Useful for e.g. mapping a custom counter onto a collection.
-    *
-    * @param f The mapping function. Takes an accumulator and an element from the list and returns a tuple
-    *        of the new accumulator value and the mapped list element.
-    * @param init The initial accumulator value.
-    * @param list The list on which to perform the map.
-    * @return The mapped list and the final value of the accumulator.
-    */
-  def mapAccumL[Acc,X,Y](f:(Acc, X) => (Acc,Y), init:Acc, list:List[X]):(Acc,List[Y]) = list match {
-    case Nil => (init, Nil)
-    case (x::xs) => {
-      val (new_acc, y) = f(init, x)
-      val (new_acc2,ys) = mapAccumL(f, new_acc, xs)
-
-      (new_acc2, y::ys)
-    }
-  }
-
   /** Returns the Cartesian product of two sets.
     * e.g. choose2([1,2],[3,4]) = [(1,2),(1,3),(1,4),(1,5)]
     */
@@ -194,34 +180,6 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     mapAccumL((c:Int,cl:MyFClause[FOLFormula]) => (c + cl.neg.length + cl.pos.length,
                                                    new MyFClause(cl.neg zip (Stream from c), cl.pos zip (Stream from (c + cl.neg.length)))),
               0,formula)._2
-
-  /** Performs a parameterizable DFS with a custom successor function.
-    *
-    * It is assumed that all nodes with no successors are goal nodes (true in this special case)
-    * and that the successor function generates no invalid nodes.
-    *
-    * @param root The root node of the search.
-    * @param succ The successor function which takes a node and generates all valid successors.
-    * @return The list of nodes which have no successors (=goal nodes in this context).
-    */
-  def DFS[NodeType](root:NodeType, succ:NodeType => List[NodeType]):List[NodeType] = {
-    val st = Stack[NodeType]()
-
-    def innerDFS(st:Stack[NodeType]) : List[NodeType] = {
-      //no more nodes to expand => search is finished.
-      if (st.size == 0) { Nil }
-      else {
-        val succs = succ(st.top)
-
-        //current node has no successors => add it to the list of solutions.
-        if (succs == Nil) { (st.top) :: (innerDFS(st.pop)) }
-        //otherwise, keep searching: generate successors & push them all to the search stack.
-        else { innerDFS(succs.foldLeft(st.pop)((s, x) => s.push(x))) }
-      }
-    }
-
-    innerDFS(st.push(root))
-  }
 
   /** Tries to minimize the canonical solution by removing as many atoms as
     * as possible through forgetful resolution.
@@ -292,51 +250,52 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
       }
 
       //3. for every variable v, generate every (v1 in v+, v2 in v-) and number all of the resultant pairs.
-      val pairs = posNegSets.map((v) => {val (_,(n,p)) = v; cartesianProduct(n.toList,p.toList)}).flatten.zipWithIndex
+      val pairs = posNegSets.map((v) => {val (_,(n,p)) = v; cartesianProduct(n.toList,p.toList)}).flatten.zipWithIndex.toList
 
       //-----------------------------------------------------------------------
       //DFS starts here
       //-----------------------------------------------------------------------
 
       // 4) let each node of the DFS be (R,V, F'), where R is the set of resolved pairs, V is the set of resolved atoms, and F' the resulting formula.
-      class ResNode(appliedPairsc:List[Int], resolvedVarsc:Set[Int], currentFormulac: List[MyFClause[(FOLFormula, Int)]]) {
-        var appliedPairs:List[Int] = appliedPairsc
-        var resolvedVars:Set[Int] = resolvedVarsc
-        var currentFormula: List[MyFClause[(FOLFormula, Int)]] = currentFormulac
+      class ResNode(val appliedPairs:List[((Int,Int),Int)],
+                    val remainingPairs:List[((Int,Int),Int)],
+                    val resolvedVars:Set[Int],
+                    val currentFormula: List[MyFClause[(FOLFormula, Int)]])
+            extends SetNode[(Int,Int)] {
 
-        override def toString(): String = ("RESNODE(R: " + appliedPairs.toString + ", V: " + resolvedVars.toString + ", P: " + currentFormula.toString + ")")
+        def includedElements: List[((Int, Int),Int)] = appliedPairs
+        def remainingElements: List[((Int, Int),Int)] = remainingPairs
+        def largerElements: List[((Int, Int),Int)] = {
+          if (appliedPairs.size == 0) {
+            remainingPairs
+          } else {
+            val maxIncluded = appliedPairs.map(p => p._2).max
+            remainingPairs.filter(p => p._2 > maxIncluded)
+          }
+        }
+
+        override def addElem(p:((Int,Int),Int)): ResNode = {
+          val (pair,index) = p
+          new ResNode(p::appliedPairs, remainingPairs.filter(x => x._2 != index),
+                      resolvedVars + (pair._1,pair._2) , CutIntroduction.forgetfulResolve(currentFormula, pair))
+        }
       }
 
       // 4.1) let the root be ({},{},F).
-      val rootNode = new ResNode(List[Int](), Set[Int](), fNumbered)
+      val rootNode = new ResNode(List[((Int,Int),Int)](), pairs, Set[Int](), fNumbered)
 
       // 4.2) let the successor function be succ((R,V,F)) = {(R U r,V,F'') | r in (PAIRS - R),
       //                                                                     r intersect V =  {},
       //                                                                     r > max{R}, F'' = r applied to F',
       //                                                                     F'' is still valid}
       //      (if a node has no valid successors, it is considered an end node and added to the list of solutions.)
-      def successorFunction(node:ResNode) : List[ResNode] = { 
-        //NOTE: instead of pairs.filter, one could store the non-applied pairs in the node to avoid some unnecessary recomputation.
-        val candidatePairs = pairs.filter(p => {val (pair,index) = p
-                                                //r in (PAIRS - R)
-                                                !node.appliedPairs.contains(index) &&
-                                                //r > max{R} (the maximum index is always the head of node.appliedPairs).
-                                                (node.appliedPairs.length == 0 || index > node.appliedPairs.head) &&
-                                                //Pairs may share variables and the same variable cannot be resolved away twice.
-                                                !node.resolvedVars.contains(pair._1) &&
-                                                !node.resolvedVars.contains(pair._2)})
+      def elemFilter(node: ResNode, elem:((Int,Int),Int)) : Boolean =
+        (node.resolvedVars.contains(elem._1._1) && node.resolvedVars.contains(elem._1._2))
 
-        //Perform resolution with each of the candidate pairs, creating the successor nodes
-        val candidateNodes = candidatePairs.map(p => {
-          val (pair,index) = p
-          new ResNode(index::node.appliedPairs, node.resolvedVars + (pair._1, pair._2), CutIntroduction.forgetfulResolve(node.currentFormula, pair))})
-
-        //Filter out those nodes which would leave the formula invalid.
-        candidateNodes.filter(node => isValidWith(AllVar(x, CutIntroduction.NumberedCNFtoFormula(node.currentFormula)))).toList
-      }
+      def nodeFilter(node: ResNode) : Boolean = isValidWith(AllVar(x, CutIntroduction.NumberedCNFtoFormula(node.currentFormula)))
 
       //Perform the DFS
-      val solutions = DFS[ResNode](rootNode, successorFunction)
+      val solutions = DFS[ResNode](rootNode, (setSearch[(Int,Int),ResNode](elemFilter, nodeFilter, _:ResNode)))
 
       //All-quantify the found solutions.
       solutions.map(n => CutIntroduction.NumberedCNFtoFormula(n.currentFormula)).map(s => AllVar(x, s))
