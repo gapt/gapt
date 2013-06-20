@@ -19,7 +19,7 @@ export CALL_RESET="yes"
 export FORCE_DEVEL="no"
 
 
-while getopts "dm:n" FLAG; do
+while getopts "hdm:n" FLAG; do
   case $FLAG in
     d)
       echo "forcing development version!" 

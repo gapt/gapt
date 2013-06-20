@@ -1057,7 +1057,7 @@ object printProofStats {
   }
 
   object equation_example {
-    def apply : LKProof = {
+    def apply : (LKProof, Substitution[HOLExpression]) = {
       import at.logic.calculi.lk.propositionalRules._
       import at.logic.calculi.lk.equationalRules._
       import at.logic.calculi.lk.quantificationRules._
@@ -1083,7 +1083,9 @@ object printProofStats {
       val i7 = ForallLeftRule(i6, i6.root.antecedent(1),xy, a)
 
       val es = CutRule(i4,i7,i4.root.succedent(0),i7.root.antecedent(1))
-      es
+
+      val sub = Substitution[HOLExpression]((u,b))
+      (es, sub)
     }
   }
 

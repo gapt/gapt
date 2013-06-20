@@ -95,11 +95,13 @@ import collection.immutable
 
   class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[FormulaOccurrence])
   {
+    /*
     require(checkFormulaOccurrences(antecedent), 
       //"\nERROR: Antecedent contains binding errors: " + (antecedent map (_.formula.toStringSimple)))
       "\nERROR: Antecedent contains binding errors: " + antecedent)
     require(checkFormulaOccurrences(succedent),  
       "\nERROR: Succedent contains binding errors: " + (succedent map (_.formula.toStringSimple)))
+    */
 
     //TODO improve both equals methods
     def multisetEquals( o: Sequent ) = o.antecedent.diff(antecedent).isEmpty &&
