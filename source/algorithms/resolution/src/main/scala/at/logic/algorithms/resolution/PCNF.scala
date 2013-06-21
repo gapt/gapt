@@ -24,7 +24,7 @@ import at.logic.algorithms.lk.{applySubstitution => applySub}
 object PCNF {
   /**
    * @param s a sequent not containing strong quantifiers
-   * @param a a clause
+   * @param a a clause in the CNF of -s
    * @return an LK proof of s o a (see logic.at/ceres for the definition of o)
    */
   def apply(s: FSequent, a: FClause): LKProof = {
