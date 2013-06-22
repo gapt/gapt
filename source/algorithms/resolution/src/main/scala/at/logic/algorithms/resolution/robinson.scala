@@ -29,6 +29,9 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
   def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof =
     introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof]()),s)
 
+  // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
+  def apply(resproof: RobinsonResolutionProof, s: FSequent, map: mapT): LKProof =
+    introduceContractions(recConvert(resproof, s, map),s)
 
   def apply(resproof: RobinsonResolutionProof): LKProof = recConvert(resproof, FSequent(List(),List()), scala.collection.mutable.Map[FClause,LKProof]())
 
@@ -91,7 +94,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
     case Resolution(r, p1, p2, a1, a2, s) => {
       val u1 = applySub(recConvert(p1, seq,map),fol2hol(s))._1
       val u2 = applySub(recConvert(p2, seq,map),fol2hol(s))._1
-      CutRule(u1, u2, s(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula])
+      introduceContractions(CutRule(u1, u2, s(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula]),seq)
     }
     case Paramodulation(r, p1, p2, a1, a2, s) => {
 
@@ -105,7 +108,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
       val lo = r.antecedent.find(_.ancestors.contains(a2))
       val ro = r.succedent.find(_.ancestors.contains(a2))
       // left rule
-      if (ro == None) {
+      val retProof = (if (ro == None) {
         val lof = lo.get.formula.asInstanceOf[FOLFormula]
         // locate aux formulae
         val aux1 = u1.root.succedent.find(_.formula == s(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
@@ -126,7 +129,8 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
         if (isRule1(rof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationRight1Rule(u1, u2, aux1, aux2, rof)
         // rule 2
         else EquationRight2Rule(u1, u2, aux1, aux2, rof)
-      }
+      })
+      introduceContractions(retProof, seq)
     }
     // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
     case at.logic.calculi.resolution.instance.Instance(_,p,s) => applySub(recConvert(p, seq,map),fol2hol(s))._1
