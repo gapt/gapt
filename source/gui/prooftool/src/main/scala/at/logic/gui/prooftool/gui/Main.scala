@@ -34,7 +34,7 @@ import at.logic.transformations.ceres.clauseSets.{renameCLsymbols, StandardClaus
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{Projections, DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
-import at.logic.algorithms.shlk.{FixedFOccs, UnfoldException, applySchemaSubstitution2, applySchemaSubstitution}
+import at.logic.algorithms.shlk.{FixedFOccs, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
 import at.logic.transformations.skolemization.skolemize
