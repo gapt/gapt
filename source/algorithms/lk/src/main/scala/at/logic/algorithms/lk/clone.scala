@@ -5,6 +5,8 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.defaultFormulaOccurrenceFactory
 import at.logic.calculi.slk._
 import at.logic.language.schema.SchemaFormula
+import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
+import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 
 //creates a copy of an existing LK proof (used for unfolding, not to have cycles in the tree having the base proof several times)
 object CloneLKProof {
@@ -150,6 +152,40 @@ object CloneLKProof {
       case ImpRightRule(p, _, a1, a2, m) => {
         val new_p = apply(p)
         ImpRightRule(new_p, a1.formula, a2.formula)
+      }
+
+      case EquationLeft1Rule(up1, up2, _, eqocc, auxocc, prin) => {
+        val new_p1 = apply(up1)
+        val new_p2 = apply(up2)
+        EquationLeft1Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+      }
+
+      case EquationLeft2Rule(up1, up2, _, eqocc, auxocc, prin) => {
+        val new_p1 = apply(up1)
+        val new_p2 = apply(up2)
+        EquationLeft2Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+      }
+
+      case EquationRight1Rule(up1, up2, _, eqocc, auxocc, prin) => {
+        val new_p1 = apply(up1)
+        val new_p2 = apply(up2)
+        EquationRight1Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+      }
+
+      case EquationRight2Rule(up1, up2, _, eqocc, auxocc, prin) => {
+        val new_p1 = apply(up1)
+        val new_p2 = apply(up2)
+        EquationRight2Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+      }
+
+      case DefinitionLeftRule(up, _, aux, prin) => {
+        val new_p = apply(up)
+        DefinitionLeftRule(new_p, aux.formula, prin.formula)
+      }
+
+      case DefinitionRightRule(up, _, aux, prin) => {
+        val new_p = apply(up)
+        DefinitionRightRule(new_p, aux.formula, prin.formula)
       }
       case _ => { println("ERROR in CloneLKProof : missing rule!"); throw new UnfoldException("Rule is missing!") }
     }}
