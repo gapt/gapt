@@ -7,6 +7,7 @@ import at.logic.calculi.slk._
 import at.logic.language.schema.SchemaFormula
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
+import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
 
 //creates a copy of an existing LK proof (used for unfolding, not to have cycles in the tree having the base proof several times)
 object CloneLKProof {
@@ -187,6 +188,27 @@ object CloneLKProof {
         val new_p = apply(up)
         DefinitionRightRule(new_p, aux.formula, prin.formula)
       }
+
+      case ForallLeftRule(p, seq, a, m, t) => {
+        val new_parent = apply(p)
+        ForallLeftRule(new_parent, a.formula, m.formula, t)
+      }
+
+      case ForallRightRule(p, seq, a, m, t) => {
+        val new_parent = apply(p)
+        ForallRightRule(new_parent, a.formula, m.formula, t)
+      }
+
+      case ExistsLeftRule(p, seq, a, m, v) => {
+        val new_parent = apply(p)
+        ExistsLeftRule(new_parent, a.formula, m.formula, v)
+      }
+
+      case ExistsRightRule(p, seq, a, m, t) => {
+        val new_parent = apply(p)
+        ExistsRightRule(new_parent, a.formula, m.formula, t)
+      }
+
       case u => throw new UnfoldException("Rule is not supported: " + u.rule)
     }}
 }
