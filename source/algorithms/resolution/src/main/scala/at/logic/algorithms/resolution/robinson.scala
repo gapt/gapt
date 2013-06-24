@@ -18,7 +18,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Var, App}
 import at.logic.calculi.resolution.base.{FClause, Clause}
-import at.logic.algorithms.lk.{CleanStructuralRules, applySubstitution => applySub}
+import at.logic.algorithms.lk.{CleanStructuralRules, applySubstitution => applySub, CloneLKProof}
 
 
 object RobinsonToLK {
@@ -51,7 +51,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
   }
 
   private def recConvert(proof: RobinsonResolutionProof, seq: FSequent, map: mapT): LKProof = if (map.contains(proof.root.toFClause))
-  map(proof.root.toFClause)
+  CloneLKProof(map(proof.root.toFClause))
   else {
     val ret = proof match {
     case InitialClause(cls) => if (seq.antecedent.isEmpty && seq.succedent.isEmpty)

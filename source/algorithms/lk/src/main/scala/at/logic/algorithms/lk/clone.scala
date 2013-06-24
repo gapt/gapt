@@ -187,7 +187,7 @@ object CloneLKProof {
         val new_p = apply(up)
         DefinitionRightRule(new_p, aux.formula, prin.formula)
       }
-      case _ => { println("ERROR in CloneLKProof : missing rule!"); throw new UnfoldException("Rule is missing!") }
+      case u => throw new UnfoldException("Rule is not supported: " + u.rule)
     }}
 }
 
