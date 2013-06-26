@@ -4,6 +4,7 @@ import at.logic.calculi.lk.base.{LKProof, Sequent}
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
+import at.logic.calculi.lk.equationalRules._
 import at.logic.language.lambda.types.TA
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
@@ -106,7 +107,13 @@ package statistics {
       case AndLeftEquivalenceRule3(p, _, _, _) => apply(p)
       case AndRightEquivalenceRule3(p, _, _, _) => apply(p)
       case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
-      case OrRightEquivalenceRule3(p, _, _, _) => apply(p) 
+      case OrRightEquivalenceRule3(p, _, _, _) => apply(p)     
+      // Equality rules
+      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      
       case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
     }
   }

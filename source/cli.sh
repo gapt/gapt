@@ -10,8 +10,8 @@ export RELEASE="gapt-cli-$VERSION.jar"
 export SCP=""
 export RCP=""
 #export POSSIBLE_PATHS="$(echo $PATH | sed "s/:/\" \"/"g | sed "s/^/\"/" |sed "s/$/\"/")"
-export JAVA_MEM="2g"
-#export JAVA_OPTS="-Xss1m -Xmx$JAVA_MEM"
+export JAVA_MEM="3g"
+#export JAVA_OPTS="-Xss500m -Xmx$JAVA_MEM"
 export OLDIFS="$IFS"
 export IFS=":"
 #echo $POSSIBLE_PATHS
@@ -48,7 +48,7 @@ done
 
 shift $(( OPTIND - 1 ));
 
-export JAVA_OPTS="-Xss1m -Xmx$JAVA_MEM"
+export JAVA_OPTS="-Xss500m -Xmx$JAVA_MEM"
 echo $JAVA_OPTS
 
 # look for java

@@ -231,6 +231,8 @@ class GrammarTest extends SpecificationWithJUnit {
         val f2alpha = Function(f, (Function(f, alpha::Nil))::Nil)
         val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
 
+        // NOTE: with the new implementation, once a grammar with size N is 
+        // found, no other grammar of size bigger than N is generated.
         var expected : List[Grammar] = Nil
         expected = expected :+ new Grammar(f3alpha::falpha::Nil, a::fa::Nil, alpha)
         expected = expected :+ new Grammar(f2alpha::f3alpha::falpha::Nil, a::fa::Nil, alpha)
@@ -241,7 +243,6 @@ class GrammarTest extends SpecificationWithJUnit {
         val d = ComputeGrammars(fa::f2a::f3a::f4a::Nil)
 
         containsEquivalentGrammars(d, expected) must beTrue
-        //(d) must haveTheSameElementsAs (expected)
 
       }
 
@@ -282,10 +283,17 @@ class GrammarTest extends SpecificationWithJUnit {
         expected = expected :+ new Grammar(f_c_g2alpha::f_galpha_alpha::f_g2alpha_galpha::f_c_galpha::Nil, c::gc::Nil, alpha)
         expected = expected :+ new Grammar(f_galpha_alpha::f_c_galpha::Nil, c::gc::g2c::Nil, alpha)
 
-        val d = ComputeGrammars(t1::t2::t3::t4::t5::t6::Nil)
+        //val minGrammar = new Grammar(f_galpha_alpha::f_c_galpha::Nil, c::gc::g2c::Nil, alpha)
 
+        val d = ComputeGrammars(t1::t2::t3::t4::t5::t6::Nil)
+        
+        /*val contains = d.exists(g => 
+          g.u.diff(minGrammar.u) == Nil && minGrammar.u.diff(g.u) == Nil &&
+          g.s.diff(minGrammar.s) == Nil && minGrammar.s.diff(g.s) == Nil
+        )
+
+        contains must beTrue*/
         containsEquivalentGrammars(d, expected) must beTrue
-        //(d) must haveTheSameElementsAs (expected)
          
       }
 
@@ -313,7 +321,6 @@ class GrammarTest extends SpecificationWithJUnit {
         val d = ComputeGrammars(a::fa::f2a::f3a::Nil)
 
         containsEquivalentGrammars(d, expected) must beTrue
-        //(d) must haveTheSameElementsAs (expected)
       }
 
       "issue 206!!" in {
@@ -369,7 +376,6 @@ class GrammarTest extends SpecificationWithJUnit {
         )
 
         contains must beTrue
-        //d must contain (criticalGrammar)
       }
     }
   }

@@ -32,5 +32,13 @@ object ListSupport {
       heads::transpose(tails)             
   }
 
+  /**
+    * A tail-recursive union without duplicate elimination.
+    * When order does not matter, ++ can be replaced by this.
+    */
+  def tailRecUnion[A](xs:List[A],ys:List[A]):List[A] = ys match {
+    case Nil => xs
+    case (y::yrest) => tailRecUnion(y::xs,yrest)
+  }
 }
 

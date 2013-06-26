@@ -30,7 +30,8 @@ class CutIntroException(msg: String) extends Exception(msg)
 
 object CutIntroduction extends Logger {
 
-  // TODO: apply method for expansion trees
+  // TODO: apply method for expansion trees (find out how to obtain the
+  // end-sequent)
   def apply(proof: LKProof) : LKProof = {
 
     val endSequent = proof.root
@@ -123,10 +124,6 @@ object CutIntroduction extends Logger {
 */
   }
 
-
-
-
-
   /** Carbon copy of cutIntro, except for the call "ehs.minimizeSolution2", put
     * there to test its perfomance. Should minimizeSolution2 work as intended, cutIntro.apply will be replaced
     * by this method.
@@ -195,8 +192,8 @@ object CutIntroduction extends Logger {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
-    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
-    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+    //println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    //println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
     smallestProof
       
@@ -235,6 +232,110 @@ object CutIntroduction extends Logger {
 */
   }
 
+  // Uses findValidGrammar3 and minimizeSolution2
+  def apply3(proof: LKProof) : LKProof = {
+
+    val endSequent = proof.root
+    println("\nEnd sequent: " + endSequent)
+
+    // Extract the terms used to instantiate each formula
+    val termsTuples = TermsExtraction(proof)
+
+    // Assign a fresh function symbol to each quantified formula in order to
+    // transform tuples into terms.
+    val terms = new FlatTermSet(termsTuples)
+
+    println( "\nTerm set: {" + terms.termset + "}" )
+    println( "Size of term set: " + terms.termset.size )
+
+    var beginTime = System.currentTimeMillis;
+
+    val grammars = ComputeGrammars.apply3(terms)
+
+    debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
+
+    println( "\nNumber of grammars: " + grammars.length )
+
+    if(grammars.length == 0) {
+      throw new CutIntroException("\nNo grammars found." + 
+        " The proof cannot be compressed using a cut with one universal quantifier.\n")
+    }
+
+    // Compute the proofs for each of the smallest grammars
+    val smallest = grammars.head.size
+    val smallestGrammars = grammars.filter(g => g.size == smallest)
+
+    println( "Smallest grammar-size: " + smallest )
+    println( "Number of smallest grammars: " + smallestGrammars.length )
+
+    debug("=============================================================")
+    debug("" + smallestGrammars.map(x => (x.toString() + "\n")))
+
+    beginTime = System.currentTimeMillis;
+    debug("Improving solution...")
+
+    val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
+      trace( "building proof for grammar " + grammar.toPrettyString )
+
+      val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
+    
+      val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+      ehs.minimizeSolution2
+
+      // Building up the final proof with cut
+      buildFinalProof(ehs) match {
+        case Some(p) => (p, ehs) :: acc
+        case None => acc
+      }
+    }
+
+    debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
+
+    // Sort the list by size of proofs
+    val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
+
+    val smallestProof = sorted.head._1
+    val ehs = sorted.head._2
+
+    //println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    //println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+
+    smallestProof
+      
+/* TODO: uncomment when fixed.
+    // Computing the interpolant (transform this into a separate function later)
+    
+    // A[s_i] forall i
+    val asi = s.map(t => cutFormula0.substitute(t))
+    val cutConj = andN(asi)
+
+    // Negative part
+    val gamma = ehs.inst_l
+    val delta = ehs.inst_r
+    val npart = gamma ++ delta
+
+    // Positive part
+    val pi = ehs.prop_l :+ cutConj
+    val lambda = ehs.prop_r
+    val ppart = pi ++ lambda
+
+    // Proof
+    val interpProof = solvePropositional(FSequent(gamma++pi, delta++lambda))
+
+    // Getting the formula occurrences...
+    val occurrences = interpProof.root.antecedent ++ interpProof.root.succedent
+    val npart_occ = occurrences.filter(x => npart.contains(x.formula))
+    val ppart_occ = occurrences.filter(x => ppart.contains(x.formula))
+
+    val interpolant = ExtractInterpolant(interpProof, npart_occ.toSet, ppart_occ.toSet)
+
+    println("Interpolant: " + interpolant.toPrettyString + "\n")
+
+    // Adding interpolant to cut formula
+    // TODO: casting does not work here.
+    val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
+*/
+  }
 
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
    

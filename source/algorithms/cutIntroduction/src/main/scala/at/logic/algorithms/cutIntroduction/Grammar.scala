@@ -84,7 +84,23 @@ object ComputeGrammars extends Logger {
     debug( "reading off grammars from delta-table" )
     findValidGrammars2(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
   }
-  
+ 
+  // Uses findValidGrammar3.
+  def apply3(terms: FlatTermSet) : List[Grammar] = apply(terms.termset).map{ case g => g.flatterms = terms; g }
+
+  def apply3(terms: List[FOLTerm]) : List[Grammar] = {
+    // TODO: when iterating for the case of multiple cuts, change this variable.
+    val eigenvariable = FOLVar(new VariableStringSymbol("α"))
+    
+    debug( "3rd version - computing delta-table" )
+    val deltatable = new DeltaTable(terms, eigenvariable)
+    debug( "done computing delta-table" )
+    deltatable.printStats( { s => trace( "  " + s ) } )
+
+    debug( "reading off grammars from delta-table" )
+    findValidGrammars3(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
+  }
+
   def findValidGrammars(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar) : List[Grammar] = {
 
     deltatable.table.foldRight(List[Grammar]()) {case ((s, pairs), grammars) =>
@@ -93,11 +109,10 @@ object ComputeGrammars extends Logger {
       if(s.size != 1) {
 
         // Add the trivial decomposition {alpha} o s
-        var newpairs = pairs
-        if(s.forall(e => terms.contains(e)) ) {
-          newpairs = (ev, s) :: pairs
-        }
-
+        val newpairs = if(s.forall(e => terms.contains(e)) ) {
+          (ev, s) :: pairs
+        } else pairs
+                                                              
         // Collect all possible subsets
         val allsubsets = subsets(newpairs)
 
@@ -105,15 +120,6 @@ object ComputeGrammars extends Logger {
         trace( "  pairs has size " + pairs.size )
         trace( "  newpairs has size " + newpairs.size )
         trace( "  allsubsets has size " + allsubsets.size )
-
-        /**
-          * A tail-recursive union without duplicate elimination, used below in subsetpairs
-          * Since order does not matter this instance, ++ was replaced by this.
-          */
-        def tailRecUnion[A](xs:List[A],ys:List[A]):List[A] = ys match {
-          case Nil => xs
-          case (y::yrest) => tailRecUnion(y::xs,yrest)
-        }
 
         // For each subset, get the set U formed by the u_i's and the set T of the
         // terms covered (union of t_i)
@@ -156,11 +162,9 @@ object ComputeGrammars extends Logger {
   }
 
 
-
-
-/** New implementation of findValidGrammars.
-  */
-def findValidGrammars2(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar) : List[Grammar] = {
+  /** New implementation of findValidGrammars.
+   */
+  def findValidGrammars2(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar) : List[Grammar] = {
 
     deltatable.table.foldRight(List[Grammar]()) {case ((s, pairs), grammars) =>
 
@@ -250,6 +254,84 @@ def findValidGrammars2(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar)
       else grammars
     }
   }
+
+
+  // Improve implementation of findValidGrammars.
+  // In this method, the size of the smallest grammar found so far is kept, and
+  // no grammar bigger than this is generated.
+  def findValidGrammars3(terms: List[FOLTerm], deltatable: DeltaTable, ev: FOLVar) : List[Grammar] = {
+    
+    var smallestGrammarSize = terms.size
+
+    // Exact computation of the smallest coverings. Returns only these.
+    // Memory-aware implementation.
+    def smallestCoverExact(s: List[FOLTerm], pairs: List[(FOLTerm, List[FOLTerm])], terms: List[FOLTerm]) = {
+
+      // |U| + |S| < |T|
+      // We only need to consider subsets of size |smallestGrammar| - |S| or less
+      val maxSubsetSize = smallestGrammarSize - s.size
+
+      // Trying a lazy list so that not all subsets are computed at once. 
+      // BUT not sure if I am getting the behavior I expect...
+      lazy val subsets = (1 to maxSubsetSize).toList.foldLeft(Iterator[Set[(FOLTerm, List[FOLTerm])]]()) {
+        case (acc, i) => pairs.toSet.subsets(i) ++ acc
+      }
+
+      // Supposedly these subsets are in increasing order of size, 
+      // so the lazy structure will not have to load the bigger ones.
+      var coverSize = maxSubsetSize
+
+      def getSmallestSubsets(subsets: Iterator[Set[(FOLTerm, List[FOLTerm])]]) : List[List[FOLTerm]] = {
+        if(subsets.hasNext) {
+          val set = subsets.next()
+          if(set.size <= coverSize) {
+            val (u, t) = set.foldLeft( ( List[FOLTerm](), List[FOLTerm]() ) ) { case (acc, (u, t)) => 
+              ( u :: acc._1, tailRecUnion(t, acc._2) )
+            }
+            val difference = terms.diff(t)
+
+            if(difference.size == 0) {
+              coverSize = set.size
+              u :: getSmallestSubsets(subsets) 
+            } 
+            else if(u.size + difference.size <= coverSize) {
+              coverSize = u.size + difference.size
+              (u ++ difference) :: getSmallestSubsets(subsets) 
+            } 
+            else getSmallestSubsets(subsets)
+         
+          } else List()
+        } else List()
+      }
+
+      val coverings = getSmallestSubsets(subsets)
+      smallestGrammarSize = s.size + coverSize
+      coverings
+    }
+
+    deltatable.table.foldRight(List[Grammar]()) {case ((s, pairs), grammars) =>
+      // Ignoring entries where s.size == 1 because they are trivial
+      // grammars with the function symbol on the right.
+      if(s.size != 1) {
+
+        // Add the trivial decomposition {alpha} o s
+        val newpairs = if(s.forall(e => terms.contains(e)) ) {
+          (ev, s) :: pairs
+        } else pairs
+
+        if(s.size < smallestGrammarSize) {                    
+          val coverings = smallestCoverExact(s, newpairs, terms)
+          coverings.foldLeft(grammars) { case (acc, u) =>
+            (new Grammar(u, s, ev) ) :: acc                   
+          }                                                   
+        } else grammars                                       
+                                                                                                                            
+      }
+      else grammars
+    }
+  }
+
+
 
 
 }
