@@ -60,36 +60,36 @@ object VeriTParser extends RegexParsers {
         case Neg(Atom(eq1, List(x2, x3))) if x1 == x2 =>
           val newc = Neg(Atom(eq, List(x0, x3)))
           // Instances
-          val f1 = FOLSubstitution(eq_trans, x, x0)
-          val f2 = FOLSubstitution(f1, y, x1) // or x2, should be the same
-          val f3 = FOLSubstitution(f2, z, x3)
+          val f1 = eq_trans.instantiate(x0)
+          val f2 = f1.instantiate(x1) // or x2, should be the same
+          val f3 = f2.instantiate(x3)
 
           f3 :: unfoldChain_(l.tail, newc)
 
         case Neg(Atom(eq1, List(x2, x3))) if x1 == x3 =>
           val newc = Neg(Atom(eq, List(x0, x2)))
           // Instances
-          val f1 = FOLSubstitution(eq_trans, x, x0)
-          val f2 = FOLSubstitution(f1, y, x1) // or x3, should be the same
-          val f3 = FOLSubstitution(f2, z, x2)
+          val f1 = eq_trans.instantiate(x0)
+          val f2 = f1.instantiate(x1) // or x3, should be the same
+          val f3 = f2.instantiate(x2)
 
           f3 :: unfoldChain_(l.tail, newc)
 
         case Neg(Atom(eq1, List(x2, x3))) if x0 == x2 =>
           val newc = Neg(Atom(eq, List(x1, x3)))
           // Instances
-          val f1 = FOLSubstitution(eq_trans, x, x1)
-          val f2 = FOLSubstitution(f1, y, x0) // or x2, should be the same
-          val f3 = FOLSubstitution(f2, z, x3)
+          val f1 = eq_trans.instantiate(x1)
+          val f2 = f1.instantiate(x0) // or x2, should be the same
+          val f3 = f2.instantiate(x3)
 
           f3 :: unfoldChain_(l.tail, newc)
 
         case Neg(Atom(eq1, List(x2, x3))) if x0 == x3 =>
           val newc = Neg(Atom(eq, List(x2, x1)))
           // Instances
-          val f1 = FOLSubstitution(eq_trans, x, x1)
-          val f2 = FOLSubstitution(f1, y, x0) // or x3, should be the same
-          val f3 = FOLSubstitution(f2, z, x2)
+          val f1 = eq_trans.instantiate(x1)
+          val f2 = f1.instantiate(x0) // or x3, should be the same
+          val f3 = f2.instantiate(x2)
 
           f3 :: unfoldChain_(l.tail, newc)
 
@@ -117,7 +117,6 @@ object VeriTParser extends RegexParsers {
       case Atom(eq0, List(x0, x1)) if eq0 != eq => throw new Exception("ERROR: Predicate " + eq0 + 
         " in eq_transitive is not equality.")
     }
-
 
     val instances = unfoldChain(l)
     prenexToExpansionTree(eq_trans, instances)
@@ -261,7 +260,9 @@ object VeriTParser extends RegexParsers {
   def conclusion : Parser[List[FOLFormula]] = ":conclusion (" ~> rep(formula) <~ ")"
  
   def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred
-  def term : Parser[FOLTerm] = name ~ rep(term) ^^ {
+  def term : Parser[FOLTerm] = variable | function
+  def variable : Parser[FOLTerm] = name ^^ { case n => FOLVar(VariableStringSymbol(n)) }
+  def function : Parser[FOLTerm] = "(" ~> name ~ rep(term) <~ ")" ^^ {
     case name ~ args => 
       val n = ConstantStringSymbol(name) 
       Function(n, args)

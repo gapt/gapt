@@ -49,7 +49,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
     f match {
-      case AllVar(_, _) => f.substituteAll(terms) :: acc
+      case AllVar(_, _) => f.instantiateAll(terms) :: acc
       case _ => acc
     }
   }
@@ -58,7 +58,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
     f match {
-      case ExVar(_, _) => f.substituteAll(terms) :: acc
+      case ExVar(_, _) => f.instantiateAll(terms) :: acc
       case _ => acc
     }
   }
@@ -95,10 +95,10 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
   // Checks if the sequent is a tautology using f as the cut formula
   def isValidWith(f: FOLFormula) : Boolean = {
 
-    val body = f.substitute(grammar.eigenvariable)
+    val body = f.instantiate(grammar.eigenvariable)
 
     val as = grammar.s.foldRight(List[FOLFormula]()) {case (t, acc) =>
-      acc :+ f.substitute(t) 
+      acc :+ f.instantiate(t) 
     }
     val head = andN(as)
 

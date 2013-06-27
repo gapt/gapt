@@ -69,11 +69,9 @@ object prenexToExpansionTree {
     // have the same root.
     val children = lst.foldLeft(List[(ExpansionTree, HOLExpression)]()) { 
       case (acc, instance) =>
-        println("Matrix: " + fMatrix)
-        println("Instance: " + instance)
         val subs = FOLUnificationAlgorithm.unify(fMatrix, instance)
-        println("Substitutions: " + subs)
-        val expTree = apply_(f, subs)
+        // WARNING: Considering only the first substitution
+        val expTree = apply_(f, subs(0))
         expTree match {
           case WeakQuantifier(_, lst) => lst.toList ++ acc
           case _ => throw new Exception("ERROR: Quantifier-free formula?")
@@ -84,15 +82,16 @@ object prenexToExpansionTree {
     WeakQuantifier(f, children)
   }
 
-  def apply_(f: FOLFormula, subs: List[Substitution[FOLExpression]]) : ExpansionTree = subs match {
-    case sub :: tail =>
-      val term = sub.getTerm
-      val newf = sub(f).asInstanceOf[FOLFormula] 
-      println("Formula: " + f)
-      println("Substitution: " + sub)
-      println("New formula: " + newf)
-      WeakQuantifier(f, List(Pair(apply_(newf, tail), term)))
-
-    case Nil => qFreeToExpansionTree(f)
+  def apply_(f: FOLFormula, sub: Substitution[FOLExpression]) : ExpansionTree = f match {
+    case AllVar(v, _) => v
+      val t = sub.getTerm(v)
+      val newf = f.instantiate(t.asInstanceOf[FOLTerm])
+      WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))
+    case ExVar(v, _) => v
+      val t = sub.getTerm(v)
+      val newf = f.instantiate(t.asInstanceOf[FOLTerm])
+      WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))
+    case _ => qFreeToExpansionTree(f)
   }
+  
 }

@@ -349,8 +349,8 @@ object CutIntroduction extends Logger {
         val terms = flatterms.getTermTuple(term)
         val f = flatterms.getFormula(term)
         val xterms = terms.map(e => FOLSubstitution(e, g.eigenvariable, xvar))
-        val fsubst = f.substituteAll(xterms)
-        f.substituteAll(xterms) :: acc
+        val fsubst = f.instantiateAll(xterms)
+        f.instantiateAll(xterms) :: acc
       }
       else acc
     }
@@ -366,9 +366,9 @@ object CutIntroduction extends Logger {
     val flatterms = grammar.flatterms
     
     val alpha = FOLVar(new VariableStringSymbol("α"))
-    val cutLeft = cutFormula.substitute(alpha)
+    val cutLeft = cutFormula.instantiate(alpha)
     val cutRight = grammar.s.foldRight(List[FOLFormula]()) { case (t, acc) =>
-      cutFormula.substitute(t) :: acc
+      cutFormula.instantiate(t) :: acc
     }
 
     val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
@@ -408,10 +408,10 @@ object CutIntroduction extends Logger {
   def genWeakQuantRules(f: FOLFormula, lst: List[FOLTerm], ax: LKProof) : LKProof = (f, lst) match {
     case (_, Nil) => ax
     case (AllVar(_,_), h::t) => 
-      val newForm = f.substitute(h)
+      val newForm = f.instantiate(h)
       ForallLeftRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
     case (ExVar(_,_), h::t) =>
-      val newForm = f.substitute(h)
+      val newForm = f.instantiate(h)
       ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
   }
 
@@ -448,11 +448,11 @@ object CutIntroduction extends Logger {
     s.foldRight(p) { case (t, p) =>
       if(first) {
         first = false
-        val scf = cf.substitute(t)
+        val scf = cf.instantiate(t)
         ForallLeftRule(p, scf, cf, t)
       }
       else {
-        val scf = cf.substitute(t)
+        val scf = cf.instantiate(t)
         ContractionLeftRule(ForallLeftRule(p, scf, cf, t), cf)
       }
     }

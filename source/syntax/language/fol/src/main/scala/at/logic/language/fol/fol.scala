@@ -6,8 +6,8 @@
  */
 package at.logic.language.fol
 
-import _root_.at.logic.language.hol.EqC._
-import _root_.at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.hol.EqC._
+import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.{Neg => HOLNeg, Or => HOLOr, And => HOLAnd, Imp => HOLImp, Atom => HOLAtom, Function => HOLFunction}
 import at.logic.language.hol.{HOLExpression, HOL, HOLFormula, HOLVar, HOLConst, HOLApp, HOLAbs, HOLConstFormula, HOLFactory, HOLAppFormula}
@@ -106,20 +106,20 @@ trait FOLExpression extends HOLExpression with FOL {
 //trait FOLFormula extends HOLFormula with FOL
 trait FOLFormula extends FOLExpression with HOLFormula {
 
-  // Substitutes a term in a quantified formula (using the first quantifier).
-  def substitute(t: FOLTerm) = this match {
+  // Instantiates a term in a quantified formula (using the first quantifier).
+  def instantiate(t: FOLTerm) = this match {
     case AllVar(v, form) => FOLSubstitution(form, v, t)
     case ExVar(v, form) => FOLSubstitution(form, v, t)
     case _ => throw new Exception("ERROR: trying to replace variables in a formula without quantifier.") 
   }
 
-  // Substitutes all quantifiers of the formula with the terms in lst.
-  // OBS: the number of quantifiers in the formula must greater of equal then the
+  // Instantiates all quantifiers of the formula with the terms in lst.
+  // OBS: the number of quantifiers in the formula must greater or equal than the
   // number of terms in lst.
-  def substituteAll(lst: List[FOLTerm]) : FOLFormula = {
+  def instantiateAll(lst: List[FOLTerm]) : FOLFormula = {
   lst match {
     case Nil => this
-    case h :: t => this.substitute(h).substituteAll(t)
+    case h :: t => this.instantiate(h).instantiateAll(t)
     }
   }
 
