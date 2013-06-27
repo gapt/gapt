@@ -86,7 +86,7 @@ object ComputeGrammars extends Logger {
   }
  
   // Uses findValidGrammar3.
-  def apply3(terms: FlatTermSet) : List[Grammar] = apply(terms.termset).map{ case g => g.flatterms = terms; g }
+  def apply3(terms: FlatTermSet) : List[Grammar] = apply3(terms.termset).map{ case g => g.flatterms = terms; g }
 
   def apply3(terms: List[FOLTerm]) : List[Grammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.
