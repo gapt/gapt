@@ -12,6 +12,7 @@ import collection.mutable.{Queue => MQueue}
 import collection.immutable.Stack
 import collection.immutable.Queue
 import scala.math.Ordering.Implicits._
+import at.logic.utils.logging.Logger
 
 package searchAlgorithms {
   trait SearchAlgorithm {
@@ -32,7 +33,12 @@ package searchAlgorithms {
     }
   }
 
-  /** A collection that can be used by generic search algorithms like DFS and BFS.
+  /** A collection that can be used by generic search algorithms like DFS and BFS
+    * to store the list of nodes waiting to be expanded.
+    *
+    * Queue semantics turn the search into a BFS,
+    * stack semantics turn it into a DFS.
+    * IDBFS and acyclic A* are also possible.
     */
   trait SearchCollection[ElemType] {
     /** Returns the topmost element without changing the collection */
@@ -45,7 +51,7 @@ package searchAlgorithms {
     def size : Int
   }
 
-  /** A stack, which turns the generic search into a DFS. */
+  /** A stack. Turns the generic search into a DFS. */
   class DFSColl[ElemType](val s:Stack[ElemType]) extends SearchCollection[ElemType] {
     override def topElem : ElemType = { s.top }
     override def popElem : DFSColl[ElemType] = { new DFSColl[ElemType](s.pop) }
@@ -59,7 +65,7 @@ package searchAlgorithms {
     }
   }
 
-  /** A queue, which turns the generic search into a BFS. */
+  /** A queue. Turns the generic search into a BFS. */
   class BFSColl[ElemType](val s:Queue[ElemType]) extends SearchCollection[ElemType] {
     override def topElem : ElemType = { s.first }
     override def popElem : BFSColl[ElemType] = { new BFSColl[ElemType](s.dequeue._2) }
@@ -104,7 +110,7 @@ package searchAlgorithms {
   }
 
 
-  object Definitions {
+  object SearchAlgorithms extends Logger {
 
 
     /** Performs a parameterizable search with with a custom collection and successor function.
@@ -213,12 +219,16 @@ package searchAlgorithms {
     def setSearch[ElemType, NodeType <: SetNode[ElemType]]
         (elemFilter:(NodeType, (ElemType,Int)) => Boolean, nodeFilter: NodeType => Boolean, node:NodeType):List[NodeType] = {
         //Generate candidate successors
+
+        trace("   setSearch: node.largerElements = " + node.largerElements.toList.toString)
         val candidateAdditions = node.largerElements.filter(e => {
             val (elem,index) = e
             !node.includedElements.contains(index) &&
             (node.includedElements.length == 0 || index > node.includedElements.head._2) &&
             elemFilter(node,e)
           })
+
+        trace("              passed filter: " + candidateAdditions.length)
 
         //Create the successor nodes
         //asInstanceOf: ugly hack, but it wouldn't typecheck otherwise

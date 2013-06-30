@@ -130,6 +130,10 @@ object CutIntroduction extends Logger {
     */
   def apply2(proof: LKProof) : LKProof = {
 
+    println("====================================================")
+    println("CUT INTRO 2")
+    println("====================================================")
+
     val endSequent = proof.root
     println("\nEnd sequent: " + endSequent)
 
@@ -167,7 +171,7 @@ object CutIntroduction extends Logger {
     debug("" + smallestGrammars.map(x => (x.toString() + "\n")))
 
     beginTime = System.currentTimeMillis;
-    debug("Improving solution...")
+    println("Improving solution...")
 
     val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
       trace( "building proof for grammar " + grammar.toPrettyString )
@@ -175,6 +179,7 @@ object CutIntroduction extends Logger {
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+      println("MINIMIZE SOLUTION")
       ehs.minimizeSolution2
 
       // Building up the final proof with cut
@@ -192,8 +197,8 @@ object CutIntroduction extends Logger {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
-    //println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
-    //println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
     smallestProof
       
@@ -297,8 +302,8 @@ object CutIntroduction extends Logger {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
-    //println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
-    //println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
     smallestProof
       

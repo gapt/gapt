@@ -22,10 +22,11 @@ import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
 import scala.collection.immutable.Stack
 import at.logic.algorithms.cutIntroduction.CutIntroduction.MyFClause
-import at.logic.utils.ds.lists.Definitions.mapAccumL
-import at.logic.utils.executionModels.searchAlgorithms.Definitions.DFS
-import at.logic.utils.executionModels.searchAlgorithms.Definitions.setSearch
+import at.logic.utils.dssupport.ListSupport.mapAccumL
+import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
+import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
+import at.logic.provers.minisat.MiniSAT
 
 
 // NOTE: implemented for the one cut case.
@@ -92,7 +93,32 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     (str1 + str0 + implication + " :- " + str3 + str2 + " where " + X + " = " + str4)
   }
 
-  // Checks if the sequent is a tautology using f as the cut formula
+  /** Checks if the sequent is a tautology using f as the cut formula.
+    * 
+    * @param sat A SAT-solver that performs the validity check.
+    * @param f The formula to be checked. It will be instantiated with the
+    *          eigenvariable of the solution's grammar.
+    *          For details, see introqcuts.pdf, Chapter 5, Prop. 4, Example 6.
+    * @return True iff f still represents a valid solution.
+    */
+  def isValidWith(sat: MiniSAT, f: FOLFormula) : Boolean = {
+
+    val body = f.instantiate(grammar.eigenvariable)
+
+    val as = grammar.s.foldRight(List[FOLFormula]()) {case (t, acc) =>
+      acc :+ f.instantiate(t) 
+    }
+    val head = andN(as)
+
+    val impl = Imp(body, head)
+
+    val antecedent = this.prop_l ++ this.inst_l :+ impl
+    val succedent = this.prop_r ++ this.inst_r
+
+    //isTautology(FSequent(antecedent, succedent))
+    sat.isValid(Imp(andN(antecedent), orN(succedent)))
+  }
+
   def isValidWith(f: FOLFormula) : Boolean = {
 
     val body = f.instantiate(grammar.eigenvariable)
@@ -128,18 +154,25 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
 
     // Exhaustive search over the resolvents (depth-first search),
     // returns the list of all solutions found.
+    var count = 0
+
     def searchSolution(f: FOLFormula) : List[FOLFormula] =
       f :: CutIntroduction.ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) =>
           if( this.isValidWith( AllVar( x, r ))) {
             trace( "found solution with " + r.numOfAtoms + " atoms: " + r )
+            count = count + 1
             searchSolution(r) ::: acc
           }
           else {
+            count = count + 1
             acc 
           }
         )
 
-    searchSolution(cnf).map(s => AllVar(x, s))
+    val res = searchSolution(cnf).map(s => AllVar(x, s))
+
+    debug("IMPROVESOLUTION - # of sets examined: " + count + ". finished.")
+    res
   }
 
   def minimizeSolution = {
@@ -213,6 +246,9 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     * @return The list of minimal-size solutions (=the set of end nodes as described in 4.2).
     */
    private def improveSolution2 : List[FOLFormula] = {
+      //Create a SAT-solver for the validity check
+      val sat = new MiniSAT()
+
       // Remove quantifier 
       val (x, form2) = cutFormula match {
         case AllVar(x, form) => (x, form)
@@ -260,15 +296,13 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
       class ResNode(val appliedPairs:List[((Int,Int),Int)],
                     val remainingPairs:List[((Int,Int),Int)],
                     val resolvedVars:Set[Int],
-                    val currentFormula: List[MyFClause[(FOLFormula, Int)]])
-            extends SetNode[(Int,Int)] {
+                    val currentFormula: List[MyFClause[(FOLFormula, Int)]]) extends SetNode[(Int,Int)] {
 
         def includedElements: List[((Int, Int),Int)] = appliedPairs
         def remainingElements: List[((Int, Int),Int)] = remainingPairs
         def largerElements: List[((Int, Int),Int)] = {
-          if (appliedPairs.size == 0) {
-            remainingPairs
-          } else {
+          if (appliedPairs.size == 0) { remainingPairs }
+          else {
             val maxIncluded = appliedPairs.map(p => p._2).max
             remainingPairs.filter(p => p._2 > maxIncluded)
           }
@@ -284,20 +318,36 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
       // 4.1) let the root be ({},{},F).
       val rootNode = new ResNode(List[((Int,Int),Int)](), pairs, Set[Int](), fNumbered)
 
+      var satCount = 0
+
       // 4.2) let the successor function be succ((R,V,F)) = {(R U r,V,F'') | r in (PAIRS - R),
       //                                                                     r intersect V =  {},
       //                                                                     r > max{R}, F'' = r applied to F',
       //                                                                     F'' is still valid}
       //      (if a node has no valid successors, it is considered an end node and added to the list of solutions.)
-      def elemFilter(node: ResNode, elem:((Int,Int),Int)) : Boolean =
-        (node.resolvedVars.contains(elem._1._1) && node.resolvedVars.contains(elem._1._2))
+      def elemFilter(node: ResNode, elem:((Int,Int),Int)) : Boolean = {
+        trace("elemfilter: node.appliedPairs:   " + node.appliedPairs)
+        trace("            node.remainingPairs: " + node.remainingPairs)
+        trace("            node.resolvedVars:   " + node.resolvedVars)
+        trace("            node.largerElements: " + node.largerElements)
 
-      def nodeFilter(node: ResNode) : Boolean = isValidWith(AllVar(x, CutIntroduction.NumberedCNFtoFormula(node.currentFormula)))
+        val ret = (!node.resolvedVars.contains(elem._1._1) && !node.resolvedVars.contains(elem._1._2))
+        trace("            RETURN: " + ret)
+        ret
+      }
+
+      //node-filter which checks for validity using miniSAT
+      def nodeFilter(node: ResNode) : Boolean = {
+        satCount = satCount + 1
+        isValidWith(sat, AllVar(x, CutIntroduction.NumberedCNFtoFormula(node.currentFormula)))
+      }
 
       //Perform the DFS
       val solutions = DFS[ResNode](rootNode, (setSearch[(Int,Int),ResNode](elemFilter, nodeFilter, _:ResNode)))
 
       //All-quantify the found solutions.
-      solutions.map(n => CutIntroduction.NumberedCNFtoFormula(n.currentFormula)).map(s => AllVar(x, s))
+      debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
+      val ret = solutions.map(n => CutIntroduction.NumberedCNFtoFormula(n.currentFormula)).map(s => AllVar(x, s))
+      ret
    }
 }

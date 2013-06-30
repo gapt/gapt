@@ -19,7 +19,7 @@ import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
 import at.logic.utils.logging.Logger
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
-import at.logic.utils.executionModels.searchAlgorithms.Definitions.{DFS, BFS, setSearch}
+import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.{DFS, BFS, setSearch}
 
 
 class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
