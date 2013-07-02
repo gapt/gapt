@@ -74,7 +74,6 @@ object PCNF {
 
     // apply contractions on the formulas of a, since we duplicate the context on every binary rule
     introduceContractions(p,a)
-    p
   }
 
   def introduceContractions(resp: LKProof, s: FClause): LKProof= {
