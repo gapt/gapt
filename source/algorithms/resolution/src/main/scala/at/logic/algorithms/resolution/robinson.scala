@@ -51,7 +51,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
   }
 
   private def recConvert(proof: RobinsonResolutionProof, seq: FSequent, map: mapT): LKProof = if (map.contains(proof.root.toFClause))
-  CloneLKProof(map(proof.root.toFClause))
+  { CloneLKProof(map(proof.root.toFClause))}
   else {
     val ret = proof match {
     case InitialClause(cls) => if (seq.antecedent.isEmpty && seq.succedent.isEmpty)

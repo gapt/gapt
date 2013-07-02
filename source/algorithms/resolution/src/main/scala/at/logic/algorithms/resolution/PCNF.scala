@@ -37,26 +37,24 @@ object PCNF {
     // compute CNF and confirm a <- CNF(-s) up to variable renaming
     val cnf = CNFp(form)
     var sub = Substitution[HOLExpression]()
+    var subi = Substitution[HOLExpression]()
     val op = cnf.find(y => getVariableRenaming(y,a) match {
-      case Some(s) => {sub = s; true}
+      case Some(s) => {sub = s; subi = getVariableRenaming(a,y).get; true}
       case _ => false
     })
     val (p,f,inAntecedent) = op match {
-      case Some(f2) =>
+      case Some(f2) => {
         // find the right formula and compute the proof
         s.antecedent.find(x => CNFp(x).contains(f2)) match {
           case Some(f3) => {
-            //println("sub = " + sub)
-            //println("a = " + a)
-            (applySub(PCNFp(f3,a),sub)._1,f3,true)
+            (applySub(PCNFp(f3,a,subi),sub)._1,f3,true)
           }
           case _ => {
             val f3 = s.succedent.find(x => CNFn(x).contains(f2)).get
-            //println("sub = " + sub)
-            //println("a = " + a)
-            (applySub(PCNFn(f3,a),sub)._1,f3,false)
+            (applySub(PCNFn(f3,a,subi),sub)._1,f3,false)
           }
         }
+      }
       case None =>
         // check for reflexivity
         a.pos.find(f => f match {
@@ -76,6 +74,7 @@ object PCNF {
 
     // apply contractions on the formulas of a, since we duplicate the context on every binary rule
     introduceContractions(p,a)
+    p
   }
 
   def introduceContractions(resp: LKProof, s: FClause): LKProof= {
@@ -94,9 +93,9 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFn(f: HOLFormula, a: FClause): LKProof = f match {
+  private def PCNFn(f: HOLFormula, a: FClause, sub: Substitution[HOLExpression]): LKProof = f match {
     case Atom(_,_) => Axiom(List(f),List(f))
-    case Neg(f2) => NegRightRule(PCNFp(f2,a), f2)
+    case Neg(f2) => NegRightRule(PCNFp(f2,a,sub), f2)
     case And(f1,f2) => {
       /* see Or in PCNFp
       // get all possible partitions of the ant and suc of the clause a
@@ -108,15 +107,20 @@ object PCNF {
       // create the proof
       AndRightRule(PCNFn(f1,par._1), PCNFn(f2,par._2), f1, f2)
       */
-      AndRightRule(PCNFn(f1,a), PCNFn(f2,a), f1, f2)
+      AndRightRule(PCNFn(f1,a,sub), PCNFn(f2,a,sub), f1, f2)
     }
     case Or(f1,f2) =>
-      if (CNFn(f1).contains(a)) OrRight1Rule(PCNFn(f1,a),f1,f2)
-      else OrRight2Rule(PCNFn(f2,a),f1,f2)
-    case Imp(f1,f2) =>
-      if (CNFp(f1).contains(a)) ImpRightRule(WeakeningRightRule(PCNFp(f1,a), f2), f1,f2)
-      else ImpRightRule(WeakeningLeftRule(PCNFn(f2,a), f1), f1, f2)
-    case ExVar(v,f2) => ExistsRightRule(PCNFn(f2, a), f2 ,f, v.asInstanceOf[HOLVar])
+      if (CNFn(f1).contains(as(a,sub))) OrRight1Rule(PCNFn(f1,a,sub),f1,f2)
+      else if (CNFn(f2).contains(as(a,sub))) OrRight2Rule(PCNFn(f2,a,sub),f1,f2)
+      else throw new IllegalArgumentException("clause: " + as(a,sub) + " is not found in CNFs of ancestors: "
+        +CNFn(f1) + " or " + CNFn(f2))
+    case Imp(f1,f2) => {
+      if (CNFp(f1).contains(as(a,sub))) ImpRightRule(WeakeningRightRule(PCNFp(f1,a,sub), f2), f1,f2)
+      else if (CNFn(f2).contains(as(a,sub))) ImpRightRule(WeakeningLeftRule(PCNFn(f2,a,sub), f1), f1, f2)
+      else throw new IllegalArgumentException("clause: " + as(a,sub) + " is not found in CNFs of ancestors: "
+        +CNFp(f1) + " or " + CNFn(f2))
+    }
+    case ExVar(v,f2) => ExistsRightRule(PCNFn(f2, a,sub), f2 ,f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)
   }
 
@@ -126,12 +130,14 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFp(f: HOLFormula, a: FClause): LKProof = f match {
+  private def PCNFp(f: HOLFormula, a: FClause, sub: Substitution[HOLExpression]): LKProof = f match {
     case Atom(_,_) => Axiom(List(f),List(f))
-    case Neg(f2) => NegLeftRule(PCNFn(f2,a), f2)
+    case Neg(f2) => NegLeftRule(PCNFn(f2,a,sub), f2)
     case And(f1,f2) =>
-      if (CNFp(f1).contains(a)) AndLeft1Rule(PCNFp(f1,a),f1,f2)
-      else AndLeft2Rule(PCNFp(f2,a),f1,f2)
+      if (CNFp(f1).contains(as(a,sub))) AndLeft1Rule(PCNFp(f1,a,sub),f1,f2)
+      else if (CNFp(f2).contains(as(a,sub))) AndLeft2Rule(PCNFp(f2,a,sub),f1,f2)
+      else throw new IllegalArgumentException("clause: " + as(a,sub) + " is not found in CNFs of ancestors: "
+        +CNFp(f1) + " or " + CNFp(f2))
     case Or(f1,f2) => {
       /* the following is an inefficient way to compute the exact context sequents
       // get all possible partitions of the ant and suc of the clause a
@@ -143,7 +149,7 @@ object PCNF {
       // create the proof
       OrLeftRule(PCNFp(f1,par._1), PCNFp(f2,par._2), f1, f2)
       we just take the whole context and apply weakenings later */
-      OrLeftRule(PCNFp(f1,a), PCNFp(f2,a), f1, f2)
+      OrLeftRule(PCNFp(f1,a,sub), PCNFp(f2,a,sub), f1, f2)
     }
     case Imp(f1,f2) => {
       /*
@@ -156,9 +162,9 @@ object PCNF {
       // create the proof
       ImpLeftRule(PCNFn(f1,par._1), PCNFp(f2,par._2), f1, f2)
       */
-      ImpLeftRule(PCNFn(f1,a), PCNFp(f2,a), f1, f2)
+      ImpLeftRule(PCNFn(f1,a,sub), PCNFp(f2,a,sub), f1, f2)
     }
-    case AllVar(v,f2) => ForallLeftRule(PCNFp(f2, a), f2, f, v.asInstanceOf[HOLVar])
+    case AllVar(v,f2) => ForallLeftRule(PCNFp(f2, a,sub), f2, f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)
   }
 
@@ -201,5 +207,8 @@ object PCNF {
     s.take(index) ++ s.takeRight(s.size-index-1)
   }
 
+  // applying sub to a clause
+  def as(a: FClause, sub: Substitution[HOLExpression]): FClause = FClause(a.neg.map(f => sub(f.asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]), a.pos.map(f =>
+      sub(f.asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]))
 }
 
