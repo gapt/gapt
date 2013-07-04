@@ -44,10 +44,10 @@ object aTerm {
 
 object foTerm {
   def apply(name: String, args: List[HOLExpression]): HOLExpression = {
-    val v = hol.createVar(new VariableStringSymbol(name), args.head.exptype  -> Ti()).asInstanceOf[HOLVar]
+    val v = hol.createVar(new ConstantStringSymbol(name), args.head.exptype  -> Ti()).asInstanceOf[HOLConst]
     HOLApp(v, args.head).asInstanceOf[HOLExpression]
   }
-  def apply(v: HOLVar, args: List[HOLExpression]): HOLExpression = {
+  def apply(v: HOLConst, args: List[HOLExpression]): HOLExpression = {
     HOLApp(v, args.head).asInstanceOf[HOLExpression]
   }
   def unapply(s: HOLExpression) = s match {
@@ -98,7 +98,7 @@ object unfoldSTerm {
                   case foTerm(name, arg1) => {
                     //                println("i = "+i)
 
-                    val rez = foTerm(name.asInstanceOf[HOLVar], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg))::Nil)
+                    val rez = foTerm(name.asInstanceOf[HOLConst], apply(sTerm(func.asInstanceOf[HOLConst], Pred(i.asInstanceOf[IntegerTerm]), arg))::Nil)
 //                    println("rez = "+rez)
                     rez
                   }
@@ -120,7 +120,7 @@ object unfoldSTerm {
       }
       case foTerm(holvar, arg) => {
 //        println("foTerm = "+t)
-        foTerm(holvar.asInstanceOf[HOLVar], apply(arg)::Nil)
+        foTerm(holvar.asInstanceOf[HOLConst], apply(arg)::Nil)
       }
       case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
     }
@@ -343,8 +343,9 @@ object SchemaAbs {
 
 object IndexedPredicate {
   def apply(sym: ConstantSymbolA, indexTerms: List[HOLExpression]): SchemaFormula = {
-    val pred = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.map( a => a.exptype ) ) )
-    AppN(pred, indexTerms).asInstanceOf[SchemaFormula]
+//    val pred = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.map( a => a.exptype ) ) )
+    val pred = SchemaFactory.createVar( sym, FunctionType( To(), indexTerms.head.exptype::Nil ) )
+    AppN(pred, indexTerms.head::Nil).asInstanceOf[SchemaFormula]
   }
   def apply(sym: ConstantSymbolA, indexTerm: IntegerTerm): SchemaFormula = apply(sym, indexTerm::Nil)
 
@@ -654,7 +655,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
 //        println("\nsTerm")
         sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]), args.map(x => apply(x.asInstanceOf[T]))).asInstanceOf[T]
       }
-      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
+      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLConst], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
       case _ => {
         //      println("\n SchemaSubstitution1: case _ => " + expression.toString + " : "+expression.getClass)
         expression
@@ -714,7 +715,7 @@ class SchemaSubstitution2[T <: HOLExpression](val map: scala.collection.immutabl
       case st @ sTerm(name, i, args) => {
         sTerm(name.asInstanceOf[HOLConst], apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm], apply(args.asInstanceOf[T])::Nil).asInstanceOf[T]
       }
-      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
+      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLConst], apply(arg.asInstanceOf[T])::Nil).asInstanceOf[T]
       case sIndTerm(func, i) => {
         sIndTerm(func.toString, apply(i.asInstanceOf[T]).asInstanceOf[IntegerTerm]).asInstanceOf[T]
       }
@@ -784,5 +785,68 @@ object leq {
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(LeqC(_),left),right) => Some( left.asInstanceOf[HOLExpression],right.asInstanceOf[HOLExpression] )
     case _ => None
+  }
+}
+
+class SchemaSubstitutionCNF(val map: scala.collection.immutable.Map[Var, HOLExpression])  {
+  def apply(expression: HOLExpression): HOLExpression = {
+    //    println("subst")
+    expression match {
+      case x:IntVar => {
+        //      println("\nIntVar = "+x)
+        map.get(x) match {
+          case Some(t) => {
+            //          println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+            t
+          }
+          case _ => {
+            //          println(x + " Error in schema subst 1")
+            x.asInstanceOf[HOLExpression]
+          }
+        }
+      }
+      case x:foVar => {
+        //        println("\nfoVar = "+x)
+        map.get(x) match {
+          case Some(t) => {
+            //          println("substituting " + t.toStringSimple + " for " + x.toStringSimple)
+            t
+          }
+          case _ => {
+            //          println(x + " Error in schema subst 1")
+            x.asInstanceOf[HOLExpression]
+          }
+        }
+      }
+      case v: indexedOmegaVar => indexedOmegaVar(v.name, apply(v.index))
+      case IndexedPredicate(pointer @ f, l @ ts) => IndexedPredicate(pointer.name.asInstanceOf[ConstantSymbolA], apply(l.head.asInstanceOf[HOLExpression]).asInstanceOf[IntegerTerm]).asInstanceOf[HOLExpression]
+      case Succ(n) => Succ(apply(n.asInstanceOf[HOLExpression]).asInstanceOf[IntegerTerm]).asInstanceOf[HOLExpression]
+      case at.logic.language.hol.Or(l @ left, r @ right) => at.logic.language.hol.Or(apply(l.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula], apply(r.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]).asInstanceOf[HOLExpression]
+      case at.logic.language.hol.And(l @ left, r @ right) => at.logic.language.hol.And(apply(l.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula], apply(r.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]).asInstanceOf[HOLExpression]
+      case at.logic.language.hol.Neg(l @ left) => at.logic.language.hol.Neg(apply(l.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]).asInstanceOf[HOLExpression]
+      case at.logic.language.hol.Atom(name, args) => {
+        at.logic.language.hol.Atom(name, args.map(x => apply(x.asInstanceOf[HOLExpression]))).asInstanceOf[HOLExpression]
+      }
+      case ifo: indexedFOVar => indexedFOVar(ifo.name, apply(ifo.index.asInstanceOf[HOLExpression]).asInstanceOf[IntegerTerm]).asInstanceOf[HOLExpression]
+      case st @ sTerm(name, i, args) => {
+//        println("\n st = "+st)
+        sTerm(name, apply(i), apply(args.head)::Nil)
+      }
+      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLConst], apply(arg.asInstanceOf[HOLExpression])::Nil).asInstanceOf[HOLExpression]
+      case sIndTerm(func, i) => {
+        sIndTerm(func.toString, apply(i).asInstanceOf[IntegerTerm])
+      }
+      case App(App(f,t1),t2) => {
+//        println("\nAppN: " + expression)
+        val rez = AppN(f, apply(t1.asInstanceOf[HOLFormula])::apply(t2.asInstanceOf[HOLFormula])::Nil).asInstanceOf[HOLExpression]
+//        println("\nsub AppN: " + rez)
+        rez
+      }
+      case _ => {
+//        println("\ncase _ =>")
+//        println(expression)
+        expression
+      }
+    }
   }
 }

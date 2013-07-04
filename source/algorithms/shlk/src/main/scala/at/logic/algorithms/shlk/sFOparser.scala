@@ -121,7 +121,8 @@ object sFOParser {
       def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ variable ~ ")" ^^ {
         case name ~ "(" ~ arg ~ ")" => {
           //println("\n\nfoTerm\n")
-          val v = hol.createVar(new VariableStringSymbol(name), i -> i).asInstanceOf[HOLVar]
+//          val v = hol.createVar(new VariableStringSymbol(name), i -> i).asInstanceOf[HOLVar]
+          val v = hol.createVar(new ConstantStringSymbol(name), i -> i).asInstanceOf[HOLConst]
           HOLApp(v, arg).asInstanceOf[HOLExpression]
         }
       }

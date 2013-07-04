@@ -436,7 +436,7 @@ object renameIndexedVarInProjection {
 //renames the indexed variable in atom
 object renameVar {
   def apply1(exp: HOLExpression, pair: Tuple2[Var, HOLExpression]): HOLExpression = {
-//    println("renameVar, exp = "+exp)
+    println("renameVar, exp = "+exp)
     exp match {
       case v:indexedFOVar => {
 //        println("   indexedFOVar = "+exp)
@@ -449,11 +449,14 @@ object renameVar {
 //        println("   foConst = "+exp)
         HOLConst(new ConstantStringSymbol(foc.name.toString),Ti())
       }
-      case at.logic.language.fol.Function(name, args) => {
-//        println("   fol.Function = "+exp)
-        //val func = HOLConst(new ConstantStringSymbol(name.toString()), Ti()->Ti())
-        at.logic.language.fol.Function(name, args.map(f => apply1(f, pair).asInstanceOf[FOLTerm]))
-      }
+//      case at.logic.language.fol.Function(name, args) => {
+////        println("   fol.Function = "+exp)
+//        //val func = HOLConst(new ConstantStringSymbol(name.toString()), Ti()->Ti())
+////        println("   exp "+exp)
+//        println("   new_args of "+args)
+//        val new_args = args.map(f => apply1(f, pair).asInstanceOf[FOLTerm])
+//        at.logic.language.fol.Function(name, new_args)
+//      }
       case Succ(arg) => {
 //        println("   Succ = "+exp)
         Succ(apply1(arg, pair))
@@ -466,6 +469,7 @@ object renameVar {
 //        println("   hol.Function = "+exp)
 //        println("   typ = "+typ)
         val func = HOLConst(new ConstantStringSymbol(name.toString()), Ti()->Ti())
+//        val func = HOLVar(new VariableStringSymbol(name.toString()), Ti()->Ti())
         at.logic.language.hol.Function(func, args.map(f => apply1(f, pair)))
       }
       case _ => {

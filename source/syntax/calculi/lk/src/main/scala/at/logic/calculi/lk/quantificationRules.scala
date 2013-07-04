@@ -378,8 +378,10 @@ import _root_.at.logic.utils.traits.Occurrence
   class QuantifierRuleHelper(polarity : Boolean) {
     def computeAux( main: HOLFormula, term: HOLExpression ) = main match {
       // TODO: make betaNormalize that respects closure of HOLFormula under normalization
+//      case All( sub, _ ) => App( sub, term ).asInstanceOf[HOLFormula]//TODO: find why fails: betaNormalize( App( sub, term ) ).asInstanceOf[HOLFormula]
+//      case Ex( sub, _ ) => App( sub, term ).asInstanceOf[HOLFormula]//betaNormalize( App( sub, term ) ).asInstanceOf[HOLFormula]
       case All( sub, _ ) => betaNormalize( App( sub, term ) ).asInstanceOf[HOLFormula]
-      case Ex( sub, _ ) => betaNormalize( App( sub, term ) ).asInstanceOf[HOLFormula]
+      case Ex( sub, _ ) =>  betaNormalize( App( sub, term ) ).asInstanceOf[HOLFormula]
       case _ => throw new LKRuleCreationException("Main formula of a quantifier rule must start with a strong quantfier.")
     }
 
@@ -449,7 +451,52 @@ import _root_.at.logic.utils.traits.Occurrence
           //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
           //If it fails, you are doing something seriously wrong!
           //In any case do NOT remove it without telling everyone!
-          if (comp_aux !=  aux_fo.formula)
+
+//        TODO: The FOL printing fails:  println("\ncomp_aux       = "+comp_aux)
+          println("\ncomp_aux       = "+comp_aux)
+          println("\naux_fo.formula = "+aux_fo.formula)
+          comp_aux match {
+            case Imp(f1, f2) => {
+              aux_fo.formula match {
+                case Imp(f3, f4) => {
+                  if(f1 == f3) println("YES 1")
+                  else println("NO 1")
+
+                  if(f2 == f4) println("YES 2")
+                  else {
+                    println("NO 2")
+                    f4 match {
+                      case Atom(name4,param4) => {
+                        f2 match {
+                          case Atom(name2,param2) => {
+                            param2.head match {
+                              case HOLApp(ime2, arg2) => {
+                                param4.head match {
+                                  case HOLApp(ime4, arg4) => {
+                                    println("ime4 == ime2")
+                                    println(ime4.getClass)
+                                    println("aux_fo.formula : "+ime4)
+                                    println(ime2.getClass)
+                                    println("comp_aux : "+ime2)
+                                    println(ime4 == ime2)
+                                    println("arg4 == arg2")
+                                    println(arg4 == arg2)
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                case _ => {}
+              }
+            }
+            case _ => {}
+          }
+          if (comp_aux != aux_fo.formula)
             throw new LKQuantifierException(s1, aux_fo, term, comp_aux)
           aux_fo
       }

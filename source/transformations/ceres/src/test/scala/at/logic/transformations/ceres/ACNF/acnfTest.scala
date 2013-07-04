@@ -145,7 +145,7 @@ class ACNFTest extends SpecificationWithJUnit {
       val acnf = ACNF.plugProjections(rlkp, gproj, es.root.toFSequent)
       println(acnf)
 
-      saveXML(List(("cutproof",es),("acnf",acnf)), List(("ccs",cs.map(_.toFSequent))), "equationacnf.xml")
+//      saveXML(List(("cutproof",es),("acnf",acnf)), List(("ccs",cs.map(_.toFSequent))), "equationacnf.xml")
 
 
       true must beEqualTo(true)

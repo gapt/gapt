@@ -71,7 +71,7 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
           getOutput.write("),");
           getOutput.write(cs.name);
           getOutput.write("}_{");
-          getOutput.write("{"+"""\"""+"color{red}");
+          getOutput.write("{");//getOutput.write("{"+"""\"""+"color{red}");
           b=false;
 //          if (args.size > 0) exportTerm(args.head)
 //          if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
@@ -82,7 +82,8 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
       }
       if(b) {
         getOutput.write("(")
-        getOutput.write("{"+"""\"""+"color{blue}")
+//        getOutput.write("{"+"""\"""+"color{blue}")
+        getOutput.write("{")
       }
 
       if (args.size > 0) exportTerm(args.head)

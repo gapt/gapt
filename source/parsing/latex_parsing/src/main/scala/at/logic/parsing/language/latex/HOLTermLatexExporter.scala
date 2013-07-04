@@ -13,10 +13,12 @@ import at.logic.language.hol._
 import at.logic.parsing.OutputExporter
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
+import at.logic.language.schema.indexedOmegaVar
 
 trait HOLTermLatexExporter extends OutputExporter with at.logic.parsing.language.HOLTermExporter {
   // it is LambdaExpression and require because of the stupid design chose not to have a common element for HOL
   def exportTerm(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]); t match {
+    case indv: indexedOmegaVar => getOutput.write(indv.name.toString + """_{""" + indv.index+"""}""")
     case Var(name, _) => getOutput.write(name.toString)
     case Neg(f) => {getOutput.write("("); getOutput.write("""\neg """); exportTerm(f); getOutput.write(")")}
     case And(f1,f2) => {getOutput.write("("); exportTerm(f1); getOutput.write(""" \wedge """); exportTerm(f2); getOutput.write(")")}

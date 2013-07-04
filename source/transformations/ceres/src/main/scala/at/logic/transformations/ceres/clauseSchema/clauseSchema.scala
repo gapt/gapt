@@ -318,7 +318,7 @@ abstract class sResolutionTerm {}
                           Map[Var, HOLExpression]() + Pair(k, i)
               val subst = new SchemaSubstitution3(map)
               trs.map.get(func).get._2._2 match {
-                case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs)::Nil)
+                case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLConst], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs)::Nil)
               }
             }
         }
@@ -341,10 +341,10 @@ abstract class sResolutionTerm {}
             t
           else
             trs.map.get(func).get._2._2 match {
-              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLVar], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs, subst)::Nil)
+              case foTerm(name, arg1) => foTerm(name.asInstanceOf[HOLConst], apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs, subst)::Nil)
             }
         }
-        case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLVar], apply(arg, trs, subst)::Nil)
+        case foTerm(holvar, arg) => foTerm(holvar.asInstanceOf[HOLConst], apply(arg, trs, subst)::Nil)
         case _ => t//throw new Exception("\nno such case in schema/unfoldSTerm")
       }
     }
@@ -475,7 +475,7 @@ abstract class sResolutionTerm {}
         }
         case foTerm(v, arg) => {
 //          println("foTerm")
-          foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression])::Nil).asInstanceOf[HOLExpression]
+          foTerm(v.asInstanceOf[HOLConst], apply(arg.asInstanceOf[HOLExpression])::Nil).asInstanceOf[HOLExpression]
         }
         case sIndTerm(func, i) => {
 //          println("subst sIndTerm")
@@ -942,7 +942,7 @@ abstract class sResolutionTerm {}
 //          println("v.getClass = "+v.getClass)
 //          println("v = "+v)
 //          println("arg = "+arg)
-          val t = foTerm(v.asInstanceOf[HOLVar], apply(arg.asInstanceOf[HOLExpression], mapfo2).asInstanceOf[HOLExpression]::Nil).asInstanceOf[HOLExpression]
+          val t = foTerm(v.asInstanceOf[HOLConst], apply(arg.asInstanceOf[HOLExpression], mapfo2).asInstanceOf[HOLExpression]::Nil).asInstanceOf[HOLExpression]
           //          println("t = "+t)
           t
         }

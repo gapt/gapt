@@ -414,7 +414,7 @@ import at.logic.language.hol._
       case st @ sTerm(name, i, args) => {
         sTerm(name.asInstanceOf[HOLConst], minusOne(i, k), args)
       }
-      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLVar], minusOne(arg, k)::Nil)
+      case foTerm(v, arg) => foTerm(v.asInstanceOf[HOLConst], minusOne(arg, k)::Nil)
       case _ => {
 //        println("\ncase _ => minusOne : "+e)
         e

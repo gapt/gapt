@@ -4,7 +4,7 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.slk._
 import at.logic.language.schema.IndexedPredicate._
-import at.logic.calculi.lk.base.{Sequent, LKProof}
+import at.logic.calculi.lk.base.{FSequent, Sequent, LKProof}
 import at.logic.calculi.lk.propositionalRules._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
@@ -32,10 +32,11 @@ import at.logic.language.hol.Imp
 import scala.Tuple4
 import at.logic.language.lambda.types.->
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.schema.IntZero
+import at.logic.language.schema.{IntZero, IndexedPredicate}
 import scala.Tuple2
 import at.logic.calculi.lk.lkExtractors.{BinaryLKProof, UnaryLKProof}
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.lk.base.types.FSequent
 
 object sFOParserCNT {
 
@@ -51,6 +52,8 @@ object sFOParserCNT {
     val p4 = map.get("\\omega").get._2.get("root").get
     val p5 = map.get("\\xi").get._2.get("root").get
     val p6 = map.get("\\varphi").get._2.get("root").get
+    val p7 = map.get("\\lambda").get._2.get("root").get
+    val p8 = map.get("\\chi").get._2.get("root").get
 
     val cc2:FormulaOccurrence = p2.root.antecedent.tail.tail.head
     val cc_zeta_1:FormulaOccurrence = p3.root.succedent.head
@@ -59,8 +62,10 @@ object sFOParserCNT {
     val cc_xi_1:FormulaOccurrence = p5.root.antecedent.last
     val cc_xi_2:FormulaOccurrence = p5.root.succedent.head
     val cc_xi_3:FormulaOccurrence = p5.root.antecedent.tail.head
-    val cc6 = p6.root.antecedent.tail.head :: p6.root.antecedent.last ::Nil
-    FixedFOccs.foccs = cc2::cc_xi_1::cc_xi_2::cc_xi_3::cc_zeta_1::cc_zeta_2::cc4::Nil
+    val cc6 = p6.root.antecedent.tail.head :: p6.root.antecedent.head ::Nil
+    val cc7 = p7.root.succedent.last
+    val cc8 = p8.root.succedent.head
+    FixedFOccs.foccs = cc7::cc8::cc2::cc_xi_1::cc_xi_2::cc_xi_3::cc_zeta_1::cc_zeta_2::cc4::Nil
 
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
@@ -729,4 +734,108 @@ object sFOParserCNT {
 //TODO: Remove it after tests!
 object FixedFOccs {
   var foccs: List[FormulaOccurrence] = Nil
+  var PLinksMap: Map[FormulaOccurrence, FormulaOccurrence] = Map.empty[FormulaOccurrence, FormulaOccurrence]
 }
+
+object getPLinks {
+  def apply(p: LKProof): List[Sequent] = p match {
+    case Axiom(so) => Nil
+    case UnaryLKProof(_,upperProof,_,_,_) => apply(upperProof)
+    case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux1, aux2, _) => apply(upperProofLeft) ::: apply(upperProofRight)
+    case UnarySchemaProof(_,upperProof,_,_,_) => apply(upperProof)
+    case SchemaProofLinkRule(so, name, indices) => so :: Nil
+    case TermEquivalenceRule1(upperProof, _, _, _) => apply(upperProof)
+    case ForallHyperLeftRule(upperProof, r, a, p, _) => apply(upperProof)
+    case ExistsHyperRightRule(upperProof, r, a, p, _) => apply(upperProof)
+    case ForallHyperRightRule(upperProof, r, a, p, _) => apply(upperProof)
+    case ExistsHyperLeftRule(upperProof, r, a, p, _) => apply(upperProof)
+    case _ => throw new Exception("\nMissin rule in getPLinks.apply\n")
+  }
+}
+
+//makes a clauses CL,A|-C,D  and CL|-E,F to CL|-(~A\/C\/D) /\ (E\/F)
+object ClauseSetToCNF {
+  //returns: CL |- formulaList
+  def apply(seq: FSequent): FSequent = {
+    val headCLsym = seq.antecedent.head
+    if(seq.antecedent.size == 1 && seq.succedent.size <= 1)
+      return seq
+    else if(seq.antecedent.size == 1)
+      return FSequent(headCLsym::Nil, Or(seq.succedent.toList) :: Nil)
+    val succ = Or( seq.antecedent.tail.toList.map( f => Neg( f ) ) ++ seq.succedent )
+    FSequent(headCLsym::Nil, succ::Nil)
+  }
+
+  var mapCLsym: Map[SchemaFormula, List[HOLFormula]] = Map.empty[SchemaFormula, List[HOLFormula]]
+
+  def combiningCLsymbols(ccs: List[FSequent]): Map[SchemaFormula, List[HOLFormula]] = {
+    ccs.map(fseq => {
+//      println("\ncombining: "+mapCLsym)
+      val seq: FSequent = ClauseSetToCNF(fseq)
+//      println("\n\nseq: "+seq)
+      val f = seq.antecedent.head
+      if (!mapCLsym.contains(f.asInstanceOf[SchemaFormula]))
+        if(seq.succedent.isEmpty)
+          mapCLsym = mapCLsym.updated(f.asInstanceOf[SchemaFormula], List.empty[HOLFormula])
+        else
+          mapCLsym = mapCLsym.updated(f.asInstanceOf[SchemaFormula], seq.succedent.head::Nil)
+      else {
+        val l = mapCLsym.get(f.asInstanceOf[SchemaFormula]).get
+        if(seq.succedent.isEmpty)
+          mapCLsym = mapCLsym.updated(f.asInstanceOf[SchemaFormula], l)
+        else
+          mapCLsym = mapCLsym.updated(f.asInstanceOf[SchemaFormula], seq.succedent.head :: l)
+      }
+    })
+      mapCLsym
+  }
+
+  def apply(ccs: List[FSequent]): List[FSequent] = {
+    combiningCLsymbols(ccs)
+    mapCLsym.toList.map(pair => FSequent(pair._1::Nil, And(pair._2)::Nil))
+  }
+}
+
+object RW {
+  //non-grounded map : CL_k -> HOLformula
+  def createMap(ccs: List[FSequent]): Map[SchemaFormula, HOLFormula] = {
+    var map = Map.empty[SchemaFormula, HOLFormula]
+    ccs.foreach(fseq => {
+      if(fseq.antecedent.size > 0)
+        map = map.updated(fseq.antecedent.head.asInstanceOf[SchemaFormula], fseq.succedent.head)
+    })
+    map
+  }
+
+  def rewriteGroundFla(f: HOLFormula, map: Map[SchemaFormula, HOLFormula] ): HOLFormula = {
+    f match {
+      case IndexedPredicate(name, l) => {
+        if(l.head == IntZero())
+          return map.get(f.asInstanceOf[SchemaFormula]).get
+        else {
+          val k = IntVar(new VariableStringSymbol("k"))
+          val from = IndexedPredicate(new ConstantStringSymbol(name.name.toString()), Succ(k))
+          val to = map.get(from).get
+          val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(l.head.asInstanceOf[IntegerTerm]))
+          val subst = new SchemaSubstitutionCNF(new_map)
+          return rewriteGroundFla( subst(to).asInstanceOf[HOLFormula] , map)
+        }
+      }
+      case at.logic.language.hol.Or(l , r ) => at.logic.language.hol.Or(rewriteGroundFla(l, map), rewriteGroundFla(r, map))
+      case at.logic.language.hol.And(l , r) => at.logic.language.hol.And(rewriteGroundFla(l, map), rewriteGroundFla(r, map))
+      case at.logic.language.hol.Neg(l) => at.logic.language.hol.Neg(rewriteGroundFla(l, map))
+      case _ => f
+    }
+  }
+}
+
+object CNFtoSet {
+  //f should be in CNF
+  def apply(f: HOLFormula): List[HOLFormula] = {
+    f match {
+      case And(f1, f2) => apply(f1) ::: apply(f2)
+      case _ => f::Nil
+    }
+  }
+}
+

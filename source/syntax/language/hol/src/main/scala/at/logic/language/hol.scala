@@ -252,6 +252,10 @@ trait Formula extends LambdaExpression {require(exptype == To())}
   }
 
   object And {
+    def apply(fs: List[HOLFormula]) : HOLFormula = fs match {
+      case Nil => BottomC
+      case f::fs => fs.foldLeft(f)( (d, f) => And(d, f) )
+    }
     def apply(left: HOLFormula, right: HOLFormula) = (App(App(AndC,left),right)).asInstanceOf[HOLFormula]
     def unapply(expression: LambdaExpression) = expression match {
       case App(App(AndC,left),right) => Some( (left.asInstanceOf[HOLFormula],right.asInstanceOf[HOLFormula]) )

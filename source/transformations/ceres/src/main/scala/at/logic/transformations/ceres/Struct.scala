@@ -39,6 +39,7 @@ import at.logic.algorithms.shlk._
 import clauseSchema.SchemaSubstitution3
 import at.logic.language.hol.HOLAppFormula
 import at.logic.language.schema.Pred
+import at.logic.utils.ds.Multisets.Multiset
 
 trait Struct
 
@@ -174,25 +175,54 @@ import at.logic.language.schema.SchemaFormula
   // by, for each o in cc, taking the element f from seq such that
   // f, where param goes to term, is equal to o.formula.
   object cutOccConfigToCutConfig {
-    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]) =
+    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]): (Multiset[HOLFormula], Multiset[HOLFormula]) = {
+//      println("\n\nso: "+so)
+//      println("\n\nfSeq: "+seq)
+//      println("\n\ncc: "+cc)
       cc.foldLeft( (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
-        if (so.antecedent.contains( fo ))
+        if (so.antecedent.map(x => x.formula).contains( fo.formula ))
           (cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs)
-        else if (so.succedent.contains( fo ))
+        else
+          if (so.succedent.map(x => x.formula).contains( fo.formula ))
+            (cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[HOLFormula]], params, terms ))
+          else
+            throw new Exception("\nError in cutOccConfigToCutConfig !\n")
+      })
+    }
+
+    def applyRCC( so: Sequent, cc: CutOccurrenceConfiguration): (Multiset[HOLFormula], Multiset[HOLFormula]) = {
+//      println("\n\nso: "+so)
+//      println("\n\ncc: "+cc)
+      if(cc.isEmpty)
+        return (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() )
+      val seq = so.toFSequent()
+      val params = IntVar(new VariableStringSymbol("k") )::Nil
+      val terms = IntVar(new VariableStringSymbol("k") )::Nil
+      cc.foldLeft( (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( (res, fo) => {
+        val cca = res._1
+        val ccs = res._2
+        if (so.antecedent.map(x => x.formula).contains( fo.formula ))
+          (cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs)
+        else
+        if (so.succedent.map(x => x.formula).contains( fo.formula ))
           (cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[HOLFormula]], params, terms ))
         else
-          throw new Exception("\nError in cutOccConfigToCutConfig !\n")
+          throw new Exception("\nError in cutOccConfigToCutConfigRCC !\n")
       })
-
+    }
 
     def getFormulaForCC( fo: FormulaOccurrence, fs: List[HOLFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
       val sub = Substitution[HOLExpression](params.zip(terms))
+//      println("\n\nfo.formula = "+fo.formula)
+//      println("\n\nfs = "+fs)
+
       val list = fs.filter( f => {
-        println( sub(f).syntaxEquals(fo.formula))
-        sub(f).syntaxEquals(fo.formula)
+//        println( sub(f).syntaxEquals(fo.formula))
+//        sub(f).syntaxEquals(fo.formula)
+        sub(f).syntaxEquals(fo.formula) || f.syntaxEquals(fo.formula)
         //sub(f) == fo.formula //WHY DOES NOT WORK ???
       }) 
       //println("list.size = " + list.size)
@@ -352,30 +382,56 @@ import at.logic.language.schema.SchemaFormula
     }
 
     //extracts the struct given the relevant CC
-    def extractStructRCC(name: String, fresh_param: IntVar, rcc: List[(String, Set[FormulaOccurrence])]) : Struct = {
+    def extractStructRCCstep(name: String, fresh_param: IntVar, rcc: List[(String, Set[FormulaOccurrence])]) : Struct = {
       val relevant_struct_list_step = rcc.map(pair => Tuple3("Θ(" + pair._1 + "_step, (" +
-        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).rec.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, Succ(IntVar(new VariableStringSymbol("k") ))::Nil ) ) + "))",
+        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(pair._1).rec.root, pair._2 ) ) + "))",
         extractStepWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
         pair._2))
+//      println("\n\nrelevant_struct_list_step.size = "+relevant_struct_list_step.size)
 //      val terms = extractRelevantStruct(name, fresh_param)
-      println("\nrelevant_struct_list_step : "+relevant_struct_list_step)
+      val k = IntVar(new VariableStringSymbol("k") )
+//      println("\nrelevant_struct_list_step : "+relevant_struct_list_step)
       val cs_0 = relevant_struct_list_step.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
-        Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_base","\n").takeWhile(c => !c.equals('\n')),
-          cutOccConfigToCutConfig( hackGettingProof(triple._1).base.root, triple._3, hackGettingProof(triple._1).seq, hackGettingProof(triple._1).vars, IntZero()::Nil ) ), IntZero()::Nil ), hackGettingProof(triple._1).base.root ) ) ),
+        Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_step","\n").takeWhile(c => !c.equals('\n')),
+          cutOccConfigToCutConfig.applyRCC( hackGettingProof(triple._1).rec.root, triple._3 ) ), Succ(k)::Nil ), hackGettingProof(triple._1).rec.root ) ) ),
           triple._2), result) )
 
       return cs_0
-      // assumption: all proofs in the SchemaProofDB have the
-      // same running variable "k".
-//      val k = IntVar(new VariableStringSymbol("k") )
-//      val cs_1 = terms._1.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
-//        Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_step","\n").takeWhile(c => !c.equals('\n')),
-//          cutOccConfigToCutConfig( hackGettingProof(triple._1).rec.root, triple._3, hackGettingProof(triple._1).seq, hackGettingProof(triple._1).vars, Succ(k)::Nil ) ), Succ(k)::Nil ), hackGettingProof(triple._1).rec.root ) ) ),
-//          triple._2), result) )
+    }
 
-//      val cl_n = IndexedPredicate( new ClauseSetSymbol(name, (HashMultiset[HOLFormula], HashMultiset[HOLFormula]) ),
-//        fresh_param::Nil )
-//      Plus(A(toOccurrence(cl_n, SchemaProofDB.get(name).rec.root)), Plus( cs_0 ,cs_1) )
+    //the third parameter is for creating the cl symbols with the correct configuration
+    def extractStructRCCbase(name: String, rcc: List[(String, Set[FormulaOccurrence], Set[FormulaOccurrence])]) : Struct = {
+      val relevant_struct_list_base = rcc.map(triple =>
+          if (triple._2 == triple._3)
+            Tuple4("Θ(" + triple._1 + "_base, (" +
+            ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(triple._1).base.root, triple._3 ) ) + "))",
+            extractBaseWithCutConfig( SchemaProofDB.get(triple._1), triple._2),
+            triple._2, triple._3)
+          else
+            Tuple4("Θ(" + triple._1 + "_base, (" +
+            ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(triple._1).rec.root, triple._3 ) ) + "))",
+            extractBaseWithCutConfig( SchemaProofDB.get(triple._1), triple._2),
+            triple._2, triple._3)
+      )
+
+      println("\nrelevant_struct_list_base : "+relevant_struct_list_base)
+      //the triple is here 4-ple
+      val cs_0 = relevant_struct_list_base.foldLeft[Struct](EmptyPlusJunction())((result, fourple) =>
+        if (fourple._3 == fourple._4)
+          Plus(Times(Dual(A(toOccurrence(
+            IndexedPredicate( new ClauseSetSymbol( fourple._1.replace("Θ(","").replace("_base","\n").takeWhile(c => !c.equals('\n')),
+              cutOccConfigToCutConfig.applyRCC( hackGettingProof(fourple._1).base.root, fourple._4 ) ), IntZero()::Nil ),
+            hackGettingProof(fourple._1).base.root ) ) ),
+            fourple._2), result)
+        else
+          Plus(Times(Dual(A(toOccurrence(
+            IndexedPredicate( new ClauseSetSymbol( fourple._1.replace("Θ(","").replace("_base","\n").takeWhile(c => !c.equals('\n')),
+              cutOccConfigToCutConfig.applyRCC( hackGettingProof(fourple._1).rec.root, fourple._4 ) ), IntZero()::Nil ),
+            hackGettingProof(fourple._1).base.root ) ) ),
+            fourple._2), result)
+
+      )
+      return cs_0
     }
 
 
@@ -508,11 +564,29 @@ import at.logic.language.schema.SchemaFormula
       case _ => throw new Exception("\nMissin rule in StructCreators.extract\n")
     }
 
+    //the original version:
+//    def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
+//      val schema = SchemaProofDB.get( name )
+//      val sym = new ClauseSetSymbol( name,
+//        cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)),
+//                                 schema.seq, schema.vars, indices) )
+//      val atom = IndexedPredicate( sym, indices )
+//      A( toOccurrence( atom, so ) )
+//    }
+
+    //the new version: TODO:remove it!
     def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
-      val schema = SchemaProofDB.get( name )
-      val sym = new ClauseSetSymbol( name,
-        cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)),
-                                 schema.seq, schema.vars, indices) )
+      val root = SchemaProofDB.get( name ).rec.root
+      val root_focc = root.antecedent++root.succedent
+      val cutsInPLink = cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)).map(fo => if(FixedFOccs.PLinksMap.contains(fo)) FixedFOccs.PLinksMap.get(fo).get
+                                                                                                         else fo)
+      println("\ncutsInPLink = "+cutsInPLink)
+//      root_focc.filter(fo => getAncestors(fo).intersect(cutsInPLink).nonEmpty)
+//      val sym = new ClauseSetSymbol( name, cutOccConfigToCutConfig.applyRCC( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ))))
+      val sym = if ((so.antecedent ++ so.succedent).intersect(FixedFOccs.PLinksMap.keySet.toList).nonEmpty)
+              new ClauseSetSymbol( name, cutOccConfigToCutConfig.applyRCC( root, cutsInPLink.filter( occ => (root.antecedent ++ root.succedent).contains(occ))))
+                else
+              new ClauseSetSymbol( name, cutOccConfigToCutConfig.applyRCC( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ))))
       val atom = IndexedPredicate( sym, indices )
       A( toOccurrence( atom, so ) )
     }
