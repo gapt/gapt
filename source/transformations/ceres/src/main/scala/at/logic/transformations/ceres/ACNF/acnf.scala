@@ -37,8 +37,6 @@ object ACNF {
             groun_proj_set.find(p => p.root.toFSequent == end_seq).get
         case Axiom(Sequent(Nil,succedent)) =>
             val set = groun_proj_set.filter(p => {
-              println("1) "+p.root.succedent.map(fo => fo.formula));
-              println("2) "+succedent.map(fo => fo.formula));
               p.root.succedent.map(fo => fo.formula).intersect(succedent.map(fo => fo.formula)).nonEmpty
             })
             set.head
@@ -436,7 +434,7 @@ object renameIndexedVarInProjection {
 //renames the indexed variable in atom
 object renameVar {
   def apply1(exp: HOLExpression, pair: Tuple2[Var, HOLExpression]): HOLExpression = {
-    println("renameVar, exp = "+exp)
+//    println("renameVar, exp = "+exp)
     exp match {
       case v:indexedFOVar => {
 //        println("   indexedFOVar = "+exp)
