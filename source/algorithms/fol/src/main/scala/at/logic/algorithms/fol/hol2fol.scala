@@ -63,10 +63,15 @@ import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexed
           }
           throw new Exception("\nProbably unrecognized object from schema!\n")
         }
+        // This case replaces an abstraction by a function term.
+        //
         // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant use the same symbol
-        case a @ AbsInScope(v, exp) => {
+        //
+        // TODO: at the moment, syntactic equality is used here... This means that alpha-equivalent terms may be replaced
+        // by different constants, which is undesirable.
+        case a @ Abs(v, exp) => {
           val sym = scope.getOrElseUpdate(a.variant(new VariantGenerator(new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName")), ConstantStringSymbol("q_{" + id.nextId + "}"))
-          val freeVarList = exp.freeVariables.toList.sortWith((x,y) => x.toString < y.toString).map(x => apply(x.asInstanceOf[HOLExpression],scope,id))
+          val freeVarList = a.getFreeVariables.toList.sortWith((x,y) => x.toString < y.toString).map(x => apply(x.asInstanceOf[HOLExpression],scope,id))
           if (freeVarList.isEmpty) FOLConst(sym) else Function(sym, freeVarList.asInstanceOf[List[FOLTerm]])
         }
         case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions

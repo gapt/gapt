@@ -43,8 +43,22 @@ trait LambdaFactoryProvider {
       }
     }
 
-    def freeVariables = getFreeAndBoundVariables._1
+
+    def freeVariables = getFreeAndBoundVariables._1 // TODO: should be replaced by getFreeVariables() below
+                                                    // when AbsInScope is eliminated.
     def boundVariables = getFreeAndBoundVariables._2 // TODO: note to self, this should die.
+
+    
+    // replacement for the above method which works if AbsInScope is not used.
+    // TODO: remove upper method when AbsInScope is removed
+    def getFreeVariables() : Set[Var] = getFreeVariables(new immutable.HashSet())
+    
+    private def getFreeVariables(bound: Set[Var]) : Set[Var] = this match {
+      case v: Var if !bound.contains(v) && v.name.isInstanceOf[VariableSymbolA] => immutable.HashSet(v)
+      case v: Var => immutable.HashSet() // case of bound variables and constants
+      case App(exp, arg) => exp.getFreeVariables(bound) ++ arg.getFreeVariables(bound)
+      case Abs(v, exp) => exp.getFreeVariables(bound + v)
+    }
 
     def noUnboundedBounded: Boolean = {val ret = noUnboundedBoundedRec(Set[Var]()); if (!ret) Console.println(toStringSimple); ret} // confirms there are no unbounded bounded variables in the term
     protected[typedLambdaCalculus] def noUnboundedBoundedRec(binders: Set[Var]): Boolean // the recursive call
