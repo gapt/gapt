@@ -47,7 +47,11 @@ object CutIntroduction extends Logger {
     println( "\nTerm set: {" + terms.termset + "}" )
     println( "Size of term set: " + terms.termset.size )
 
+    var beginTime = System.currentTimeMillis;
+
     val grammars = ComputeGrammars(terms)
+
+    debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
 
     println( "\nNumber of grammars: " + grammars.length )
 
@@ -63,6 +67,9 @@ object CutIntroduction extends Logger {
     println( "Smallest grammar-size: " + smallest )
     println( "Number of smallest grammars: " + smallestGrammars.length )
 
+    beginTime = System.currentTimeMillis;
+    println("Improving solution...")
+
     val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
       trace( "building proof for grammar " + grammar.toPrettyString )
 
@@ -72,11 +79,17 @@ object CutIntroduction extends Logger {
       ehs.minimizeSolution
 
       // Building up the final proof with cut
-      buildFinalProof(ehs) match {
+      trace ( "building final proof" )
+      val r = buildFinalProof(ehs) match {
         case Some(p) => (p, ehs) :: acc
         case None => acc
       }
+      trace( "done building final proof" )
+
+      r
     }
+
+    debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
     // Sort the list by size of proofs
     val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
@@ -183,10 +196,14 @@ object CutIntroduction extends Logger {
       ehs.minimizeSolution2
 
       // Building up the final proof with cut
-      buildFinalProof(ehs) match {
+      trace( "building final proof" )
+      val r = buildFinalProof(ehs) match {
         case Some(p) => (p, ehs) :: acc
         case None => acc
       }
+      trace( "done building final proof" )
+
+      r 
     }
 
     debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
@@ -288,10 +305,14 @@ object CutIntroduction extends Logger {
       ehs.minimizeSolution2
 
       // Building up the final proof with cut
-      buildFinalProof(ehs) match {
+      trace( "building final proof" )
+      val r = buildFinalProof(ehs) match {
         case Some(p) => (p, ehs) :: acc
         case None => acc
       }
+      trace( "done building final proof" )
+
+      r
     }
 
     debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
@@ -376,6 +397,7 @@ object CutIntroduction extends Logger {
       cutFormula.instantiate(t) :: acc
     }
 
+    trace( "calling solvePropositional" )
     val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
@@ -388,6 +410,7 @@ object CutIntroduction extends Logger {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
       case None => throw new CutIntroException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     }
+    trace( "done calling solvePropositional" )
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
 
@@ -405,7 +428,11 @@ object CutIntroduction extends Logger {
     // Instantiating constant terms from U
     val finalProof = uPart(grammar.u.filter(t => !t.freeVariables.contains(grammar.eigenvariable)), contractSucc, flatterms)
 
-    Some(CleanStructuralRules(finalProof))
+    trace( "cleaning structural rules" )
+    val r = Some(CleanStructuralRules(finalProof))
+    trace( "done cleaning structural rules" )
+
+    r
   }
 
   // Both methods bellow are responsible for generating the instances of 

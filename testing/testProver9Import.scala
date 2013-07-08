@@ -5,7 +5,7 @@ import scala.io.Source
  * test script for prover9 import, usage example from CLI:
  *
  * scala> :load ../testing/testProver9Import.scala
- * scala> testProver9Import( "../testing/prover9-TSTP/ALG/", 5 )
+ * scala> testProver9Import( "../testing/prover9-TSTP/", 60, Some( "results_revXXXX_loadProver9LKProof_60sec.txt" ))
  **********/
 
 /**

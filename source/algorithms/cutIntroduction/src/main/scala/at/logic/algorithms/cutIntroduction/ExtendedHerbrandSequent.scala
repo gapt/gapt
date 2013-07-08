@@ -116,7 +116,11 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val succedent = this.prop_r ++ this.inst_r
 
     //isTautology(FSequent(antecedent, succedent))
-    sat.isValid(Imp(andN(antecedent), orN(succedent)))
+    trace( "calling SAT-solver" )
+    val r = sat.isValid(Imp(andN(antecedent), orN(succedent)))
+    trace( "finished call to SAT-solver" )
+
+    r
   }
 
   def isValidWith(f: FOLFormula) : Boolean = {
@@ -133,7 +137,11 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val antecedent = this.prop_l ++ this.inst_l :+ impl
     val succedent = this.prop_r ++ this.inst_r
 
-    isTautology(FSequent(antecedent, succedent))
+    trace( "calling isTautology" )
+    val r = isTautology(FSequent(antecedent, succedent))
+    trace( "finished call to isTautology" )
+
+    r
   }
 
   // The canonical solution computed already has only the quantified formulas 
