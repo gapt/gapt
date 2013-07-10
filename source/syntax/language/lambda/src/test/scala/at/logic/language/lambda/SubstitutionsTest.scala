@@ -80,35 +80,35 @@ class SubstitutionsTest extends SpecificationWithJUnit {
     }
     /*"substitute correctly when Substitution is applied (4)" in {
       "(λx1:i.x2((λx3:i.v(x1:i):o)):o)"
-      val x1 = LambdaVar("x1", i); val x2 = LambdaVar("x2", i->o); val x3 = LambdaVar("x3", i); val v = LambdaVar("v", )
+      val x1 = LambdaVar("x1", i); val x2 = LambdaVar("x2", i->o); val x3 = LambdaVar("x3", i); val v = LambdaVar("v", i->o)
       val y = LambdaVar("y", i)
       val e = App(f, x)
       val sigma: Substitution = (v,e)
       val expression = Abs(y, App(f, v))
       ( Abs(y,App(f, App(f, x))) ) must beEqualTo ( sigma(expression) )
     }*/
-            /*"substitute correctly when SingleSubstitution is applied, renaming bound variables (1)" in {
-                val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
-                val e = App(f, x)
-                val sigma: SingleSubstitution = (v,e)
-                val exp1 = Abs(x, App(f, v))
-                val exp2 = sigma(exp1)
-                debug(exp2.toString)
-                val exp3 = Abs(x,App(f, App(f, x)))
-                val isDifferent = !(exp2==exp3)
-                ( isDifferent ) must beEqualTo ( true )
-            }
-            "substitute correctly when SingleSubstitution is applied, renaming bound variables (2)" in {
-                val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
-                val e = App(f, x)
-                val sigma: SingleSubstitution = (v,e)
-                val exp1 = Abs(f, App(f, v))
-                val exp2 = sigma(exp1)
-                debug(exp2.toString)
-                val exp3 = Abs(f,App(f, App(f, x)))
-                val isDifferent = !(exp2==exp3)
-                ( isDifferent ) must beEqualTo ( true )
-            }*/
+    "substitute correctly when SingleSubstitution is applied, renaming bound variables (1)" in {
+        val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
+        val e = App(f, x)
+        val sigma: Substitution[LambdaExpression] = (v,e)
+        val exp1 = Abs(x, App(f, v))
+        val exp2 = sigma(exp1)
+        debug(exp2.toString)
+        val exp3 = Abs(x,App(f, App(f, x)))
+        val isDifferent = !(exp2==exp3)
+        ( exp2 ) must be_!= ( exp3 )
+    }
+    "substitute correctly when SingleSubstitution is applied, renaming bound variables (2)" in {
+        val v = LambdaVar("v", i); val x = LambdaVar("x", i); val f = LambdaVar("f", i -> i)
+        val e = App(f, x)
+        val sigma: Substitution[LambdaExpression] = (v,e)
+        val exp1 = Abs(f, App(f, v))
+        val exp2 = sigma(exp1)
+        debug(exp2.toString)
+        val exp3 = Abs(f,App(f, App(f, x)))
+        val isDifferent = !(exp2==exp3)
+        ( exp2) must be_!= ( exp3 )
+    }
 
     "substitute and normalize correctly when Substitution is applied" in {
       val x = LambdaVar(VariableStringSymbol("X"), i -> o )
@@ -136,7 +136,7 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       ( sigma2 ) must beEqualTo ( sigma3 )
     }
     "substitute correctly when Substitution is applied" in {
-      val v = LambdaVar("v", i) 
+      val v = LambdaVar("v", i)
       val x = LambdaVar("x", i)
       val f = LambdaVar("f", i -> i)
       val e = App(f, v)

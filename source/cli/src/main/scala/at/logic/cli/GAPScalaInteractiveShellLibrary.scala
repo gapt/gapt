@@ -210,11 +210,11 @@ object printProofStats {
       case ivy.InitialClause(id, _, clause) => if (! m.contains(id)) { println(id + " : "+clause); id::m } else m
       case ivy.Instantiate(id,_, sub, clause, parent) => if (! m.contains(id)) { val l = printNodes(parent, m); println(id + " : "+clause); id::l } else m
       case ivy.Propositional(id,_, clause, parent) => if (! m.contains(id)) { val l1 = printNodes(parent,m); println(id + " : "+clause); id::l1 } else m
-      case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) => 
+      case ivy.Resolution(id, _, lit1, lit2, clause, parent1, parent2) =>
         if (!m.contains(id)) {
           val l1 = printNodes(parent1,m);
           val l2 = printNodes(parent2,l1);
-          println(id + " : "+clause); id::l2 
+          println(id + " : "+clause); id::l2
         }
         else m
       case _ => println("rule not implemented"); m
@@ -612,7 +612,7 @@ object printProofStats {
   object miniSATprove {
     def apply ( f : HOLFormula ) = (new at.logic.provers.minisat.MiniSAT).isValid(f)
   }
-  
+
   // atp support
   object refuteFOL {
       import at.logic.provers.atp.commands.base._

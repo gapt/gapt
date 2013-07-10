@@ -32,13 +32,18 @@ import collection.immutable.HashSet
 
     // the change of db indices is done automatically in the constructor of abs
     // NOTE: the list protectedVars contains the bound variables of the whole expression
-    protected def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
+    protected def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = {
+      // compute the set of free variables of the range of the substitution in order to avoid variables capture
+      val freeVarsInRange = map.foldLeft(Set[Var]().empty){case (set,(x,t)) => set ++ t.freeVariables}
+      applyWithChangeDBIndices(expression, protectedVars, freeVarsInRange)
+    }
+    protected def applyWithChangeDBIndices(expression: T, protectedVars: List[Var], freeVarsInRange: Set[Var]): T = expression match {
       case x:Var if !(protectedVars.contains(x)) => {
         map.get(x) match {
           case Some(t) => {
             val freevarsWithDBIndex = checkLambdaExpression(t)
             if (!freevarsWithDBIndex.isEmpty) {
-              println("ERROR: bound variables "+ freevarsWithDBIndex +" outside of binding context in term "+t.toStringSimple)
+              //println("ERROR: bound variables "+ freevarsWithDBIndex +" outside of binding context in term "+t.toStringSimple)
               throw new Exception("ERROR: bound variables "+ freevarsWithDBIndex +" outside of binding context in term "+t.toStringSimple)
             }
             t
@@ -54,8 +59,15 @@ import collection.immutable.HashSet
           //println("WARNING: trying to substitute for a bound variable, ignoring!")
        expression
       }
-      case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T], protectedVars), applyWithChangeDBIndices(n.asInstanceOf[T], protectedVars)).asInstanceOf[T]
-      case abs: Abs => Abs(abs.variable, applyWithChangeDBIndices(abs.expression.asInstanceOf[T],abs.variable::protectedVars)).asInstanceOf[T]
+      case App(m,n) => App(applyWithChangeDBIndices(m.asInstanceOf[T], protectedVars,freeVarsInRange),
+        applyWithChangeDBIndices(n.asInstanceOf[T], protectedVars, freeVarsInRange)).asInstanceOf[T]
+      case abs: Abs if freeVarsInRange.contains(abs.variable) => {
+        val newbvar = abs.variable.factory.createVar(FreshVariableSymbolFactory.getVariableSymbol,abs.variable.exptype)
+        val tsub = Substitution[T]((abs.variable,newbvar.asInstanceOf[T]))
+        Abs(newbvar, applyWithChangeDBIndices(tsub(abs.expression.asInstanceOf[T]).asInstanceOf[T],newbvar::protectedVars, freeVarsInRange)).asInstanceOf[T]
+      }
+      case abs: Abs => Abs(abs.variable, applyWithChangeDBIndices(abs.expression.asInstanceOf[T],abs.variable::protectedVars,
+        freeVarsInRange)).asInstanceOf[T]
       case _ => expression
     }
 
