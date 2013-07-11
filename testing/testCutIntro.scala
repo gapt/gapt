@@ -7,7 +7,7 @@ import scala.collection.immutable.HashMap
  * usage example from CLI:
  *
  * scala> :load ../testing/testCutIntro.scala
- * scala> testCutIntro( "../testing/prover9-TSTP/", 60 )
+ * scala> testCutIntro.testTSTPLibrary( "../testing/prover9-TSTP/", 60 )
  * scala> testCutIntro.compressProofs( "../testing/resultsCutIntro/data.csv", 60 )
  **********/
 
@@ -17,11 +17,31 @@ object testCutIntro {
   var error_term_extraction = 0
   var error_cut_intro = 0
   var out_of_memory = 0
+  var stack_overflow = 0
+  var error_rule_count = 0
+  var finished = 0
   // Hashmap containing proofs with non-trivial termsets
   var termsets = HashMap[String, FlatTermSet]()
   // File name -> q-rules before cut, rules before cut, q-rules after
   // cut, rules after cut
   var rulesInfo = HashMap[String, (Int, Int, Int, Int)]()
+
+  def apply = {
+    println("Usage:")
+    println()
+    println("Finds all proofs with non trivial term-sets. " + 
+      "Prints the results to resultsCutIntro/data.csv and resultsCutIntro/summary.txt")
+    println("scala> testCutIntro.testTSTPLibrary( \"../testing/prover9-TSTP/\", 60 )")
+    println()
+    println("Compress the proofs of the TSTP library in the file data.csv. " + 
+      "The proofs that could be compressed are in resultsCutIntro/compression.csv and a " + 
+      "summary of the operations is in resultsCutIntro/compression_summary.txt")
+    println("scala> testCutIntro.compressProofs( \"../testing/resultsCutIntro/data.csv\", 60 )")
+    println()
+    println("Parses and compress the proofs from the VeriT library. " + 
+      "The results are in resultsCutIntro/veriT.csv and resultsCutIntro/veriT_summary.txt")
+    println("scala> testCutIntro.processVeriT(\"../testing/veriT-SMT-LIB/QF_UF/\", 60)")
+  }
 
   def testRec (str : String, timeout : Int) : Unit = {
     val file = new File(str)
@@ -56,7 +76,7 @@ object testCutIntro {
     }       
   }
 
-  def apply ( str : String, timeout : Int) = {
+  def testTSTPLibrary ( str : String, timeout : Int) = {
     testRec(str, timeout)
     val file = new File("../testing/resultsCutIntro/data.csv")
     val summary = new File("../testing/resultsCutIntro/summary.txt")
@@ -93,25 +113,24 @@ object testCutIntro {
     bw_s.close()
   }
 
+  //def processVeriT(str: String, timeout: Int) = {
+    // TODO: implement this
+    // In order to do this, I need to implement cutIntro for expansion trees.
+  //}
+
   // TODO: measures for time
 
   // Compress the proofs that are in the csv file passed as a parameter
   def compressProofs(str: String, timeout: Int) = {
-    var inner_oom = 0
-    var inner_exc = 0
+    var number = 0
 
     // Process each file
     val lines = Source.fromFile(str).getLines().toList
     lines.foreach{ case l =>
+      number += 1
       val data = l.split(",")
-      try {
-        compressProof(data(0), timeout)
-      } catch {
-        case e: OutOfMemoryError => 
-          inner_oom += 1
-        case e: Exception =>
-          inner_exc += 1
-      }
+      println("Processing proof number: " + number)
+      compressProof(data(0), timeout)
     }
    
     // Write results
@@ -145,13 +164,15 @@ object testCutIntro {
     bw.write(data)
     bw.close()
 
-    bw_s.write("Total number of proofs: " + total + "\n")
+    bw_s.write("Total number of proofs: " + lines.size + "\n")
+    bw_s.write("Total number of proofs processed: " + total + "\n")
+    bw_s.write("Total number of proofs compressed: " + finished + "\n")
     bw_s.write("Time limit exceeded or exception during parsing: " + error_parser + "\n")
     bw_s.write("Exception during cut-introduction: " + error_cut_intro + "\n")
     bw_s.write("Out of memory during cut-introduction: " + out_of_memory + "\n")
+    bw_s.write("Stack overflow during cut-introduction: " + stack_overflow + "\n")
+    bw_s.write("Error during rule counting: " + error_rule_count + "\n")
     bw_s.write("The rest of the proofs probably exceeded the time limit during cut-introduction.\n")
-    bw_s.write("Out of memory during compressProof: " + inner_oom + "\n")
-    bw_s.write("Exception during compressProof: " + inner_exc + "\n")
     bw_s.write("Average compression rate of quantifier rules: " + avg_compression_quant + "\n")
     bw_s.write("Average compression rate: " + avg_compression + "\n")
     bw_s.close()
@@ -170,17 +191,27 @@ object testCutIntro {
                 case e: OutOfMemoryError => 
                   out_of_memory += 1
                   throw new Exception("OutOfMemory")
+                case e: StackOverflowError => 
+                  stack_overflow += 1
+                  throw new Exception("StackOverflow")
                 case e: Exception => 
                   error_cut_intro += 1
                   throw new Exception("OtherException")
               }
             } match {
             case Some(p_cut) =>
-              val i1 = quantRulesNumber(p)
-              val i2 = rulesNumber(p)
-              val i3 = quantRulesNumber(p_cut)
-              val i4 = rulesNumber(p_cut)
-              rulesInfo += (str -> ( i1, i2, i3, i4 )) 
+              try {
+                val i1 = quantRulesNumber(p)
+                val i2 = rulesNumber(p)
+                val i3 = quantRulesNumber(p_cut)
+                val i4 = rulesNumber(p_cut)
+                finished += 1
+                rulesInfo += (str -> ( i1, i2, i3, i4 )) 
+              } catch {
+                case e: Exception => 
+                  error_rule_count += 1
+                  throw new Exception("Error in rule count")
+              }
             case None => ()
           }
         case None => error_parser += 1

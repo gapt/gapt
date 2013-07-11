@@ -56,7 +56,7 @@ object VeriTParser extends RegexParsers {
         // x=y ^ y=z -> x=z
         // x=y ^ z=y -> x=z
         // y=x ^ y=z -> x=z
-        // ...
+        // y=x ^ z=y -> x=z
         case Neg(Atom(eq1, List(x2, x3))) if x1 == x2 =>
           val newc = Neg(Atom(eq, List(x0, x3)))
           // Instances
