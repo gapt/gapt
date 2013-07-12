@@ -8,6 +8,7 @@
 package at.logic.language.fol
 
 import at.logic.language.hol.logicSymbols.ConstantSymbolA
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.symbols.VariableSymbolA
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression}
@@ -150,6 +151,14 @@ object Utils {
     case f::Nil => f
     case f::rest => And(f, andN( rest ) )
   }
+
+  // Constructs the FOLTerm f^k(a)
+  def iterateTerm( a: FOLTerm, f: ConstantStringSymbol, k: Int ) : FOLTerm =
+    if ( k == 0 ) a else Function( f, iterateTerm( a, f, k-1 )::Nil )
+
+  // Constructs the FOLTerm s^k(0)
+  def numeral( k: Int ) = iterateTerm( FOLConst( ConstantStringSymbol( "0" )), ConstantStringSymbol( "s" ), k )
+
 
   // TODO: maybe these functions should go to listSupport in dssupport in the
   // utils project.

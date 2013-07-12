@@ -1,0 +1,17 @@
+
+This folder contains a formal proof of the following statement: given an
+infinite tape labeled by zeros and ones there are two cells with the same value.
+The proof proceeds by a lemma stating that - on a such a tape - there are either
+infinitely many zeros or infinitely many ones. This is a subcase of the proof of
+the unbounded pigeonhole principle from the infinite pigeonhole principle.
+
+For more information about this proof, please see Section 4.2 of:
+
+C. Urban: Classical Logic and Computation, PhD thesis,
+University of Cambridge, 2000
+
+as well as Section 3 of:
+
+M. Baaz, S. Hetzl, A. Leitsch, C. Richter, H. Spohr: Cut-Elimination:
+Experiments with CERES. LPAR 2004, Springer LNCS 3452, pg. 481-495
+

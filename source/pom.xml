@@ -10,7 +10,6 @@
 
 	<modules>
 		<module>utils</module>
-		<module>testing</module>
 		<module>syntax</module>
 		<module>provers</module>
 		<module>transformations</module>

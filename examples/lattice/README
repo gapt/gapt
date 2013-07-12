@@ -1,0 +1,8 @@
+
+This folder contains a proof of (one direction of) the equivalence of different
+definitions of the concept of a lattice. For background information about this
+proof and an informal version, please see Section 5 of:
+
+S. Hetzl, A. Leitsch, D. Weller, B. Woltzenlogel Paleo: Herbrand Sequent
+Extraction. AISC/MKM/Calculemus 2008, Springer LNCS 5144, pg. 462-477
+

@@ -1,0 +1,9 @@
+
+This folder contains a formal proof that every number greater than 1 has a prime divisor
+from the least number principle. This statement is inferred from two Lemmas:
+
+  The least number principle implies the induction principle, and
+  The induction principle implies that every number greater than 1 has a prime divisor.
+
+This proof is formalized in second-order logic.
+

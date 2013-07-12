@@ -457,58 +457,6 @@ object printProofStats {
     }
   }
 
-/*************************** Proof generators **********************************/
-
-  object LinearExampleTermset {
-    def apply( n : Int) = at.logic.testing.LinearExampleTermset( n )
-  }
-
-  object LinearExampleProof {
-    def apply( n : Int) = at.logic.testing.LinearExampleProof( n )
-  }
-
-  object SquareDiagonalExampleProof {
-    def apply( n : Int) = at.logic.testing.SquareDiagonalExampleProof( n )
-  }
-
-  object SquareEdgesExampleProof {
-    def apply( n : Int) = at.logic.testing.SquareEdgesExampleProof( n )
-  }
-
-  object SquareEdges2DimExampleProof {
-    def apply( n : Int) = at.logic.testing.SquareEdges2DimExampleProof( n )
-  }
-
-  object SumExampleProof {
-    def apply( n : Int) = at.logic.testing.SumExampleProof( n )
-  }
-
-  object LinearEqExampleProof {
-    def apply( n : Int) = at.logic.testing.LinearEqExampleProof( n )
-  }
-
-  object SumOfOnesExampleProof {
-    def apply( n : Int) = at.logic.testing.SumOfOnesExampleProof( n )
-  }
-
-  object SumOfOnesFExampleProof {
-    def apply( n : Int) = at.logic.testing.SumOfOnesFExampleProof( n )
-  }
-
-  object SumOfOnesF2ExampleProof {
-    def apply( n : Int) = at.logic.testing.SumOfOnesF2ExampleProof( n )
-  }
-
-  object testProof {
-    def apply( n : Int) = at.logic.testing.testProof( n )
-  }
-
-/*************************** Formula generators **********************************/
-
-  object PigeonHolePrinciple {
-    def apply( p : Int, h : Int ) = at.logic.testing.PigeonHolePrinciple( p, h )
-  }
-
 /*************************** Cut introduction algorithm **********************************/
 
   import at.logic.algorithms.cutIntroduction._
@@ -1152,21 +1100,6 @@ object printProofStats {
           |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
           |   minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
           |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
-          |
-          | Proof Examples:
-          |   LinearExampleTermset: Int => Set[FOLTerm] - construct the linear example termset for cut-introduction
-          |   LinearExampleProof: Int => LKProof - construct the linear example proof for cut-introduction
-          |   SquareDiagonalExampleProof: Int => LKProof - construct the square (diagonal) example proof for cut-introduction
-          |   SquareEdgesExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction
-          |   SquareEdges2DimExampleProof: Int => LKProof - construct the square (edges) example proof for cut-introduction, with the x- and y-axis using different functions.
-          |   SumExampleProof: Int => LKProof - construct the sum example proof for cut-introduction
-          |   LinearEqExampleProof: Int => LKProof - construct linear example in equational formulation
-          |   SumOfOnesExampleProof: Int => LKProof - construct the sum of ones example proof for cut-introduction
-          |   SumOfOnesFExampleProof: Int => LKProof - construct a variant of the sum of ones example proof using a function f
-          |   SumOfOnesF2ExampleProof: Int => LKProof - construct an inductive variant of the sum of ones example proof using a function f
-          |
-          | Formula Examples:
-          |   PigeonHolePrinciple: Int, Int => FOLFormula - construct a quantifier-free formula representing the pigeon hole principle
           |
           | Visualization:
           |   prooftool: LKProof => Unit - visualize proof in prooftool

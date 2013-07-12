@@ -1,3 +1,5 @@
-This directory should develop into the central repository for all example
-proofs, proof sequences, etc. Authoritative versions should be here,
-copies can be in various resources-directories or other test scripts.
+
+This folder is the central repository for all example proofs, proof sequences,
+formula sequences, etc. Authoritative versions should be here, copies are put
+in various resources-directories or other test scripts.
+
