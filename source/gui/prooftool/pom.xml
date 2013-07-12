@@ -92,19 +92,6 @@
 	</build>
 
 	<dependencies>
-	  <!-- TODO: maybe remove these. For convenience: (cutintro(linearexampleproof(4))
-	       can be called via main menu -->
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>testing</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>algorithms_dependency</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <type>pom</type>
-    </dependency>
 		<!-- <dependency> <groupId>at.logic</groupId> <artifactId>javaviewer</artifactId> 
 			<version>1.0-SNAPSHOT</version> </dependency> -->
 		<dependency>

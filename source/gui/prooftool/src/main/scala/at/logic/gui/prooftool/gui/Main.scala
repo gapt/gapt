@@ -42,8 +42,6 @@ import at.logic.transformations.ceres.clauseSchema.{resolutionProofSchemaDB, Ins
 import at.logic.transformations.ceres.ACNF.ACNF
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
-import at.logic.algorithms.cutIntroduction.CutIntroduction
-import at.logic.testing.LinearExampleProof
 import at.logic.calculi.occurrences.FormulaOccurrence
 
 object Main extends SimpleSwingApplication {
@@ -691,11 +689,6 @@ object Main extends SimpleSwingApplication {
     }
     contents += new Menu("Tests") {
       mnemonic = Key.T
-      contents += new MenuItem(Action("cutIntro(LinearExampleProof(4))") {
-        body.contents = new Launcher(Some(("cutIntro(LinearExampleProof(4))", CutIntroduction(LinearExampleProof(4)))), 12)
-        ProofToolPublisher.publish(EnableMenus)
-      }) { border = customBorder }
-
       contents += new MenuItem(Action("Non-Prenex Proof 1") {
         import at.logic.language.lambda.types.Definitions._
         import at.logic.language.lambda.symbols.ImplicitConverters._

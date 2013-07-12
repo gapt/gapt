@@ -10,6 +10,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
+import at.logic.language._
 import at.logic.language.hol._
 import at.logic.calculi.resolution.base._
 import at.logic.language.lambda.symbols._
@@ -19,12 +20,31 @@ import logicSymbols.ImplicitConverters._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.types.Definitions._
 
-import at.logic.testing.PigeonHolePrinciple
-
 @RunWith(classOf[JUnitRunner])
 class MiniSATTest extends SpecificationWithJUnit {
   val box : Set[FClause] = Set()
   def checkForMiniSATOrSkip = (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
+
+  object PigeonHolePrinciple {
+    // The binary relation symbol.
+    val rel = ConstantStringSymbol("R")
+
+    def apply( ps: Int, hs: Int ) = {
+      assert( ps > 1 )
+      fol.Imp( fol.Utils.andN( (1 to ps).map( p =>
+              fol.Utils.orN( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
+            fol.Utils.orN( (1 to hs).map ( h =>
+              fol.Utils.orN( (2 to ps).map( p =>
+                fol.Utils.orN( ((1 to p - 1)).map( pp =>
+                  fol.And(atom(p, h),atom(pp,h))).toList)).toList)).toList))
+    }
+
+    def atom( p: Int, h: Int ) = fol.Atom(rel, pigeon(p)::hole(h)::Nil)
+
+    def pigeon(i: Int) = fol.FOLConst(ConstantStringSymbol("p_" + i))
+
+    def hole(i: Int) = fol.FOLConst(ConstantStringSymbol("h_" + i))
+  }
 
   "MiniSAT" should {
       
