@@ -531,10 +531,6 @@ object printProofStats {
     def apply( p: LKProof ) : LKProof = CutIntroduction.apply2(p)
   }
 
-  object cutIntro3 {
-    def apply( p: LKProof ) : LKProof = CutIntroduction.apply3(p)
-  }
-
 /*****************************************************************************************/
 
   object toClauses {

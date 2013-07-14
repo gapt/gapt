@@ -1,0 +1,139 @@
+\documentclass[a4paper, 11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{alltt}
+\usepackage{multicol}
+\usepackage{amssymb}
+
+\usepackage{bussproofs}
+
+\newcommand{\seq}{\vdash}	% the sequent sign
+\newcommand{\impl}{\supset} %logical connectives: implies, not, and, or
+\renewcommand{\lnot}{\neg}
+\renewcommand{\land}{\wedge}
+\renewcommand{\lor}{\vee}
+
+%Commands for constructing proof trees with bussproofs. See the chapter on the LK system for examples.
+\newcommand{\UnaryInfCm}[1]{\UnaryInfC{$#1$}}
+\newcommand{\BinaryInfCm}[1]{\BinaryInfC{$#1$}}
+\newcommand{\RightLabelm}[1]{\RightLabel{$#1$}}
+\newcommand{\AxiomCm}[1]{\AxiomC{$#1$}}
+
+%Normal text in math mode ("math text")
+\newcommand{\mt}[1]{\textnormal{#1}}
+
+% Using a report without chapters
+\renewcommand*\thesection{\arabic{section}}
+
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  frame=lines
+}
+
+\title{Cut Introduction\\ \vspace{0.5cm} Cut-Formulas with Multiple Universal Quantifiers}
+
+\author{Janos Tapolczai}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+In \cite[Ch. 5]{cutIntro2013}, algorithmic cut-introduction is described, albeit restricted to cut-formulas with
+one universal quantifier. This document extends the mechanism described therein to cut-formulas with an
+arbitrary number of universal quantifiers.
+
+\section{Generalized $\Delta$-Vector}
+
+One need only change the definition of the $\delta$-vector and extend it to deal with vectors of variables
+instead of a single variable. This extended definition is as follows:
+
+$$
+  \Delta_G(t_1,\dots,t_n) = \left\{
+    \begin{array}{l}
+    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_n})) = (f(u_1',\dots,u_m'), (\overline{s_1},\dots,\overline{s_p}))\\
+    \\
+    \quad \textnormal{where } (\overline{s_1},\dots,\overline{s_n}) =
+          \bigsqcup\limits_{1 \leq j \leq n}
+            \pi_2(\Delta_G(t_j^1,\dots,t_j^n))
+
+    \\
+    \quad \textnormal{if all } t_i = f(t_1^i,\dots,t_m^i) \mt{ and}\\
+    \quad \quad
+      \Delta_G(t_j^1,\dots,t_j^n) = (u_j, (\overline{s_{\alpha_1}},\dots,\overline{s_{\alpha_k}})) \mt{ for all } j \in \{1,\dots,m \}\\
+    \quad \quad
+      \textnormal{where } \{\alpha_1,\dots,\alpha_k\} \mt{ is precisely the set of $\alpha$ which occur in } u_j.\\
+
+    \\
+    \\
+    
+    (\alpha_{\mt{UNIQUE}},(t_1,\dots,t_n))\quad \mt{otherwise}\\
+    \end{array}
+  \right.
+$$
+
+\noindent
+where $\sqcup$ is list concatenation, $\pi$ is the tuple projection function and $\alpha_{\mt{UNIQUE}}$ denotes an instance of $\alpha$ with a globally unique index that starts with 1 and is incremented by 1 with each instantiation left-to-right in the formula tree --- formally, the leftmost instance of $\alpha$ in $\Delta_G(t_1,\dots,t_n)$ is $\alpha_1$ and $\alpha_{j_1}$ is the nearest left sibling of $\alpha_{j_2}$ iff $j_1+1=j_2$.\\
+
+\noindent
+\texttt{nub}, the duplicate-eliminating function, is defined as:
+
+$$
+  \begin{array}{l}
+    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_n})) = \texttt{elim} \uparrow \uparrow \infty =
+    (f(u_1',\dots,u_m'), (\overline{s_1},\dots,\overline{s_p}))\\
+
+    \\
+
+    \quad 
+      \begin{array}{l l}
+        \mt{where } &
+        \alpha_{F+1} \mt{ is the } \alpha \mt{ with the lowest index which occurs in } u_1,\dots,u_m \mt{ and}\\
+
+        \\
+
+        & \texttt{elim}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_n}) =\\
+        & \mt{if } [\exists i,j: i < j]\ \overline{s_{i+F}} = \overline{s_{j+F}} \mt { then}\\
+        & \quad \mt{remove } \overline{s_{j+F}},\\
+        & \quad \mt{replace } \alpha_j \mt { with } \alpha_i \mt{ and }\\
+        & \quad \mt{replace } \alpha_k \mt{ with } \alpha_{k-1}\ \forall k > j \mt{ in } u_1,\dots,u_m \mt{.}
+        \\
+      \end{array}
+  \end{array}
+$$
+
+\section{Correctness}
+
+It remains to show that, given $\Delta_G(t_1,\dots,t_n) = (u,(\overline{s_1},\dots,\overline{s_p}))$, for any $t_i$, $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$.
+
+\subsection{Proof}
+We proceed by induction on the depth $u$.
+
+\paragraph{Base case.} $u$'s depth is 0.\\
+Per definition, $\Delta_G(t_1,\dots,t_n) = (\alpha_1,\overline{s_1} = (t_1,\dots,t_n))$.\\
+$t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}] = \alpha_1[\alpha_1\backslash s_{1,i}] = t_i$.
+
+\paragraph{Step case.} Assume the correctness for a depth of $\leq d$. We show the correctness for a depth of $d+1$.\\
+
+Let us take any $j \in \{1,\dots,m\}$. Per the IH, the correctness condition holds for $\Delta_G(t_j^1,\dots,t_j^n) = (u_j, (\overline{s_{\alpha_1}},\dots,\overline{s_{\alpha_k}})))$. Per the uniqueness constraint on instances of $\alpha$, $u_{j_1}$ and $u_{j_2}$ will contain non-intersecting sets of $\alpha$ iff $j_1 \neq j_2$. If we therefore take $f(u_1,\dots,u_m)$ and the concatenation of all $\pi_2(\Delta_G(t_j^1,\dots,t_j^n))$, the correctness condition will still hold.\\
+
+It may, however, be the case that for two different $\alpha_{j_1}$ and $\alpha_{j_2}$ ($j_1 < j_2$), $\overline{s_{j_1}} = \overline{s_{j_2}}$. In this case, \texttt{elim} replaces $\alpha_{j_2}$ with $\alpha_{j_1}$ in $u_1,\dots,u_m$ and deletes $\overline{s_{j_2}}$, effectively merging the two instances of $\alpha$. For all $j_3 > j_2$, $\alpha_{j_3}$ is renamed to $\alpha_{j_3 - 1}$, preserving the 1-to-1 correspondence between $\alpha_i$ and $\overline{s_j}$ for all $j \in \{1,\dots,n-1\}$. Since only only the superfluous $\alpha_{j_2}$ was eliminated, the substituion $u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for any $i$) yields the same result as before and the correctness condition is still fulfilled.\\
+
+\texttt{nub} then merely repeats this correctness-preserving operation until no more duplicates can be eliminated.
+
+\section{$\Delta$-Table}
+
+The $\Delta$-table, as described in the paper, is compatible with the $\Delta_G$-vector and, save substituting for multiple $\alpha$ instead of one, can be left as is. 
+
+\section{Remarks}
+
+The introduction of a global, contiguous numbering of $\alpha$-instances is very procedural and bloats the definition almost to the point of being pseudocode, but the precise definition of the semantics of $\Delta_G$ and the continuous \& unique labeling and and re-labeling of $\alpha$-instances regrettably make such an algorithmic approach necessary.\\
+
+
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}
