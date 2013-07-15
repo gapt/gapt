@@ -2,6 +2,7 @@ package at.logic.transformations.skolemization
 
 // This package implements formula and proof Skolemization.
 
+import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.{Map,HashMap,HashSet}
@@ -13,7 +14,7 @@ import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base.{FSequent, LKProof, Sequent, PrincipalFormulas}
 import at.logic.language.hol._
 import at.logic.language.hol
-import at.logic.language.fol
+import at.logic.language.fol.FOLFormula
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
 import at.logic.language.lambda.substitutions._
@@ -27,10 +28,9 @@ import typedLambdaCalculus.{App, Var, LambdaExpression}
 import at.logic.calculi.slk.{trsArrowLeftRule, SchemaProofLinkRule}
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.types.FSequent
-import fol.{FOLTerm, FOL}
+import at.logic.utils.logging.Logger
 
-
-object skolemize {
+object skolemize extends Logger {
   /* proof skolemization */
   def apply(p: LKProof) : LKProof = 
   {
@@ -64,8 +64,13 @@ object skolemize {
   /* formula skolemization -- symbols provides the skolem symbols to introduce */
   def apply(f: HOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) : HOLFormula = skolemize( f, pol, symbols )
 
+  /* formula skolemization -- polarity 0 is negative and polarity 1 is positive */
+  def apply(f: FOLFormula, pol: Int) : FOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
 
+  /* formula skolemization -- symbols provides the skolem symbols to introduce */
+  def apply(f: FOLFormula, pol: Int, symbols: Stream[ConstantSymbolA]) : FOLFormula = reduceHolToFol(skolemize( f, pol, symbols ))
   /*
+
   Idea of the algorithm: Going upwards in the prooftree, we remember the 
   instantiations of the weak quantifiers (inst_map) and replace EV's by Skolem terms (symbols chosen by symbol_map).
   The skolemized formulas in the proof-tree are computed dynamically at every step.
@@ -83,7 +88,7 @@ object skolemize {
     implicit val s_map = symbol_map
     implicit val i_map = inst_map
     implicit val c_ancs = cut_ancs
-    //println("=== Skolemizing: " + proof.root + " ===")
+    trace("=== Skolemizing: " + proof.root + " ===")
     proof match
     {
       case SchemaProofLinkRule(s, link, indices) => {
@@ -91,7 +96,7 @@ object skolemize {
         val succ = s.succedent
         val new_seq = ( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
         val ax = Axiom( new_seq._1, new_seq._2 )
-        //println("Skolemization creates SchemaProofLink: " + ax.root.toStringSimple)
+        trace("Skolemization creates SchemaProofLink: " + ax.root.toStringSimple)
         var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
         new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
         (ax, new_map)
@@ -102,7 +107,7 @@ object skolemize {
 /*        val new_seq = Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ) */
         val new_seq = ( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) )
         val ax = Axiom( new_seq._1, new_seq._2 )
-        //println("Skolemization creates Axiom: " + ax.root.toStringSimple)
+        trace("Skolemization creates Axiom: " + ax.root.toStringSimple)
         var new_map = ant.zipWithIndex.foldLeft(new HashMap[FormulaOccurrence, FormulaOccurrence])( (m, p) => m + ( p._1 -> ax.root.antecedent( p._2 ) ))
         new_map = succ.zipWithIndex.foldLeft(new_map)((m, p) => m + ( p._1 -> ax.root.succedent( p._2 )))
         (ax, new_map)
@@ -171,17 +176,17 @@ object skolemize {
 
   /*
   def debug(msg: String,  proof : LKProof, aux : List[FormulaOccurrence], formulas : List[HOLFormula], terms: List[LambdaExpression]) = {
-    println("====== DEBUG: "+ msg)
-    println("== endsequent: "+proof.root.toStringSimple)
-    println("== auxiliaries:")
-    aux map  ((x:FormulaOccurrence) => println("== "+x.formula.toStringSimple))
-    println("==")
-    println("== formulas:")
-    formulas map  ((x:HOLFormula) => println(x.toStringSimple))
-    println("==")
-    println("== terms:")
-    terms map  ((x:LambdaExpression) => println("== "+x.toStringSimple))
-    println()
+    debug("====== DEBUG: "+ msg)
+    debug("== endsequent: "+proof.root.toStringSimple)
+    debug("== auxiliaries:")
+    aux map  ((x:FormulaOccurrence) => debug("== "+x.formula.toStringSimple))
+    debug("==")
+    debug("== formulas:")
+    formulas map  ((x:HOLFormula) => debug(x.toStringSimple))
+    debug("==")
+    debug("== terms:")
+    terms map  ((x:LambdaExpression) => debug("== "+x.toStringSimple))
+    debug()
   }
   */
 
@@ -444,44 +449,34 @@ object skolemize {
     case Imp(l, r) => Imp( sk( l , invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
     case Neg(f) => Neg( sk( f, invert( pol ), terms, symbols ) )
     case ExVar(x, f) =>
-      if (pol == 1)
-      {
-        //println( "skolemizing ExQ")
-        val sf : HOLExpression = if (x.isInstanceOf[FOL]) {
-          //println("FOL skolemization!")
-          fol.Function( symbols.head, terms.asInstanceOf[List[FOLTerm]] )
-        } else{
-          //println("HOL skolemization!")
-          hol.Function( symbols.head, terms, x.exptype )
-        }
+      if (pol == 1) {
+        trace( "skolemizing AllQ")
+        val sf = Function( symbols.head, terms, x.exptype )
 
         val sub = Substitution[HOLExpression](x, sf)
-        //println( "substitution: " + sub )
-        //println( "before: " + f )
-        //println( "after: " + sub( f ) )
+        trace( "substitution: " + sub )
+        trace( "before: " + f )
+        trace( "after: " + sub( f ) )
         // TODO: should not be necessary to cast here, Formula is closed under substitution
-        sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
+        val res = sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
+        trace( "result of skolemization: " + res )
+        res
       }
       else // TODO: should not be necessary to cast! try to change it in hol.scala.
         ExVar(x, sk( f, pol, terms :+ x.asInstanceOf[HOLVar], symbols ) )
     case AllVar(x, f) =>
       if (pol == 0)
       {
-        //println( "skolemizing AllQ")
-        val sf : HOLExpression = if (x.isInstanceOf[FOL]) {
-          //println("FOL skolemization!")
-          fol.Function( symbols.head, terms.asInstanceOf[List[FOLTerm]] )
-        } else{
-          //println("HOL skolemization!")
-          hol.Function( symbols.head, terms, x.exptype )
-        }
+        trace( "skolemizing AllQ")
+        val sf = Function( symbols.head, terms, x.exptype )
+
         val sub = Substitution[HOLExpression](x, sf)
-        //println( "substitution: " + sub )
-        //println( f )
-        //println( sub( f ) )
+        trace( "substitution: " + sub )
+        trace( f.toString )
+        trace( sub( f ).toString )
         // TODO: should not be necessary to cast here, Formula is closed under substitution
         val res = sk( sub( f ).asInstanceOf[HOLFormula], pol, terms, symbols.tail )
-        //println( "result of skolemization: " + res )
+        trace( "result of skolemization: " + res )
         res
       }
       else // TODO: should not be necessary to cast! try to change it in hol.scala.

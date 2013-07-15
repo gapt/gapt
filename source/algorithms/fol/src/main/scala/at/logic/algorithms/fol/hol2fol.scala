@@ -87,9 +87,21 @@ import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexed
     // TODO: should return FOLSequent
     def apply(s: FSequent, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FSequent = 
       new FSequent( s._1.map( f => apply(f, scope, id ) ), s._2.map( f => apply(f, scope, id ) ) )
+
+    // convienience method creating empty scope and default id
+    def apply(term: HOLExpression) : FOLExpression = {
+      val counter = new {private var state = 0; def nextId = { state = state +1; state}}
+      val emptymap = Map[LambdaExpression, ConstantStringSymbol]()
+      reduceHolToFol( term, emptymap, counter )
     }
+
+    def apply(formula: HOLFormula) : FOLFormula = apply(formula).asInstanceOf[FOLFormula]
+
+  }
   // TODO - support generated function symbols by checking the arity from le and add the variables to the returned term. Right now only constants are supported
   object createExampleFOLConstant {
     def apply(le: LambdaExpression, css: ConstantStringSymbol) = FOLConst(css)
   }
+
+
 }

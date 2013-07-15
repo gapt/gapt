@@ -950,24 +950,12 @@ object printProofStats {
   }
 
   object hol2fol {
-    // TODO: the counter, emptymap initialization is copied from
-    // other uses of reduceHolToFol in this file. Maybe a convenience
-    // method should be supplied by the hol2fol package where these
-    // (standard?) values are initialized. On the other hand, maybe
-    // a different version of hol2fol (which does not introduce new
-    // symbols, and hence does not require these parameters) should
-    // be implemented and used here.
 
-    val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-    val emptymap = Map[LambdaExpression, ConstantStringSymbol]()
+    def apply(term: HOLExpression) : FOLExpression =
+      reduceHolToFol( term )
 
-      def apply(term: HOLExpression) : FOLExpression = {
-        reduceHolToFol( term, emptymap, counter )
-      }
-
-    def apply(term: HOLFormula) : FOLFormula = {
-      reduceHolToFol( term, emptymap, counter )
-    }
+    def apply(term: HOLFormula) : FOLFormula =
+      reduceHolToFol( term  )
 
   }
 
