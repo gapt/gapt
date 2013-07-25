@@ -21,7 +21,9 @@ class VeriTParsingTest extends SpecificationWithJUnit {
       //println("\nNumber of formulas on the antecedent: " + formulas._1.size)
       //println("Formulas on the antecedent:")
       //formulas._1.foreach(f => println(f))
-      formulas._1 must haveSize(74)
+      // Only 3 expantion trees: input, eq_transitive (with a million
+      // instances!) and eq_symmetry (with hundreds of instances)
+      formulas._1 must haveSize(3)
     }
   }
 }

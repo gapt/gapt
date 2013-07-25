@@ -70,7 +70,7 @@ object ComputeGrammars extends Logger {
   // These exist so that the old and the new solution may be tested side by side.
   // cutIntro in CutIntroduction.scala uses apply, cutIntro2, in addition to a more efficient version of improveSolution, uses apply2
  
-  // Uses findValidGrammar3.
+  // Uses findValidGrammar2.
   def apply2(terms: FlatTermSet) : List[Grammar] = apply2(terms.termset).map{ case g => g.flatterms = terms; g }
 
   def apply2(terms: List[FOLTerm]) : List[Grammar] = {
