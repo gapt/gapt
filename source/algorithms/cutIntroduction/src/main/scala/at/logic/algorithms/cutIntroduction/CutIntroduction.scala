@@ -16,8 +16,7 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
 import at.logic.language.lambda.typedLambdaCalculus._
-import scala.collection.mutable.Map
-import scala.collection.mutable.HashMap
+import scala.collection.immutable.Seq
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.shlk._
@@ -25,20 +24,30 @@ import at.logic.algorithms.interpolation._
 import at.logic.algorithms.resolution._
 import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
+import at.logic.calculi.expansionTrees._
+import at.logic.calculi.expansionTrees.multi._
 
 class CutIntroException(msg: String) extends Exception(msg)
 
 object CutIntroduction extends Logger {
 
-  // TODO: apply method for expansion trees (find out how to obtain the
-  // end-sequent)
-  def apply(proof: LKProof) : LKProof = {
+  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
+    val endSequent = toSequent(ep)
+    println("\nEnd sequent: " + endSequent)
+    // Extract the terms used to instantiate each formula
+    val termsTuples = TermsExtraction(ep)
+    apply_(endSequent, termsTuples)
+  }
 
+  def apply(proof: LKProof) : LKProof = {
     val endSequent = proof.root
     println("\nEnd sequent: " + endSequent)
-
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(proof)
+    apply_(endSequent, termsTuples)
+  }
+
+  def apply_(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]]) : LKProof = {
 
     // Assign a fresh function symbol to each quantified formula in order to
     // transform tuples into terms.
@@ -138,13 +147,24 @@ object CutIntroduction extends Logger {
   }
 
   // Uses findValidGrammar2 and minimizeSolution2
-  def apply2(proof: LKProof) : LKProof = {
+  
+  def apply2(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
+    val endSequent = toSequent(ep)
+    println("\nEnd sequent: " + endSequent)
+    // Extract the terms used to instantiate each formula
+    val termsTuples = TermsExtraction(ep)
+    apply2_(endSequent, termsTuples)
+  }
 
+  def apply2(proof: LKProof) : LKProof = {
     val endSequent = proof.root
     println("\nEnd sequent: " + endSequent)
-
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(proof)
+    apply2_(endSequent, termsTuples)
+  }
+
+  def apply2_(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]]) : LKProof = {
 
     // Assign a fresh function symbol to each quantified formula in order to
     // transform tuples into terms.
@@ -246,6 +266,7 @@ object CutIntroduction extends Logger {
 */
   }
 
+  // seq is not used? What the hell???
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
    
     val flatterms = g.flatterms

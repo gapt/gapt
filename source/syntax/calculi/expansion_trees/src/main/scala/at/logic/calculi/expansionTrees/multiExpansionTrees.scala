@@ -1,6 +1,7 @@
 package at.logic.calculi.expansionTrees
 
 import at.logic.language.hol._
+import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL}
 import at.logic.utils.ds.trees._
 
 /**
@@ -46,4 +47,23 @@ case class Not(tree: MultiExpansionTree) extends MultiExpansionTree with T1 {
 case class Atom(formula: HOLFormula) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]] {
   lazy val node = Some(formula)
 }
+
+// TODO: is there a way to make this and the toFormula method from ExpansionTree
+// the same??
+// This has to be inside the "multi" object, otherwise the type
+// MultiExpansionTree is not recognized.
+// Why is this implementation inside an object and the other (ExpansionTree) is
+// not?
+// Can I call this using the dot notation? (met.toFormulaM)
+def toFormulaM(tree: MultiExpansionTree): HOLFormula = tree match {
+  case Atom(f) => f
+  case Not(t1) => Neg(toFormulaM(t1))
+  case And(t1,t2) => AndHOL(toFormulaM(t1), toFormulaM(t2))
+  case Or(t1,t2) => OrHOL(toFormulaM(t1), toFormulaM(t2))
+  case Imp(t1,t2) => ImpHOL(toFormulaM(t1), toFormulaM(t2))
+  case WeakQuantifier(f,_) => f
+  case StrongQuantifier(f,_,_) => f
 }
+
+}
+

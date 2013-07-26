@@ -22,7 +22,7 @@ import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.calculi.lk.base.types._
 import at.logic.calculi.expansionTrees._
-import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti, StrongQuantifier => StrongQuantifierMulti}
+import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti, StrongQuantifier => StrongQuantifierMulti, toFormulaM}
 import at.logic.algorithms.lk._
 import at.logic.algorithms.expansionTrees._
 
@@ -54,7 +54,7 @@ object TermsExtraction {
 
     // Extract the terms
     multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
-      if(shallow(mTree).isPrenex) {
+      if(toFormulaM(mTree).isPrenex) {
         mTree match {
           case WeakQuantifierMulti(form, children) => 
             val f = form.asInstanceOf[FOLFormula]

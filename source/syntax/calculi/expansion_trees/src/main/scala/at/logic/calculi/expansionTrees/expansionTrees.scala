@@ -1,11 +1,14 @@
 package at.logic.calculi.expansionTrees
 
+import scala.collection.immutable.Seq
 import at.logic.language.hol._
 import at.logic.language.fol.{FOLFormula, FOLTerm, FOLExpression}
 import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL}
 import at.logic.utils.ds.trees._
 import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.calculi.lk.base._
+import at.logic.calculi.occurrences._
 
 trait ExpansionTree extends TreeA[Option[HOLFormula],Option[HOLExpression]]
 
@@ -38,6 +41,29 @@ case class Not(tree: ExpansionTree) extends ExpansionTree with NonTerminalNodeA[
 }
 case class Atom(formula: HOLFormula) extends ExpansionTree with TerminalNodeA[Option[HOLFormula],Option[HOLExpression]] {
   lazy val node = Some(formula)
+}
+
+object toFormula {
+  def apply(tree: ExpansionTree): HOLFormula = tree match {
+    case Atom(f) => f
+    case Not(t1) => Neg(toFormula(t1))
+    case And(t1,t2) => AndHOL(toFormula(t1), toFormula(t2))
+    case Or(t1,t2) => OrHOL(toFormula(t1), toFormula(t2))
+    case Imp(t1,t2) => ImpHOL(toFormula(t1), toFormula(t2))
+    case WeakQuantifier(f,_) => f
+    case StrongQuantifier(f,_,_) => f
+  }
+}
+
+// Returns the end-sequent of the proof represented by this expansion tree
+object toSequent {
+  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : Sequent = {
+    // TODO: there MUST be an easier way...
+    val ant = ep._1.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
+    val cons = ep._2.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
+
+    Sequent(ant, cons)
+  }
 }
 
 // Builds an expansion tree given a quantifier free formula
