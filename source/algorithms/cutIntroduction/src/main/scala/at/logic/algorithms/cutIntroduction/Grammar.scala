@@ -12,7 +12,6 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
-import scala.collection.mutable.{Set => MSet}
 import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._

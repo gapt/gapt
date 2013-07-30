@@ -8,7 +8,7 @@ package at.logic.algorithms.cutIntroduction
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import scala.collection.mutable.HashMap
+import scala.collection.immutable.HashMap
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.fol._
@@ -139,7 +139,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val f2alpha = Function(f, (Function(f, alpha::Nil))::Nil)
         val f3alpha = Function(f, (Function(f, (Function(f, alpha::Nil))::Nil))::Nil)
 
-        val expected = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
+        var expected = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
         expected += ( (Nil) -> ((null, Nil)::Nil) )
         expected += ( (fa::Nil) -> ((alpha, fa::Nil)::Nil) )
         expected += ( (f2a::Nil) -> ((alpha, f2a::Nil)::Nil) )
@@ -155,10 +155,9 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltatable = new DeltaTable(fa::f2a::f3a::f4a::Nil, alpha)
 
-        // Note: if elements in the inner lists are not on the same order,
-        // this returns false.
-        (deltatable.table) must haveTheSameElementsAs (expected)
+        deltaTableEquals(deltatable.table, expected) must beTrue
       }
+
 
       "for Stefan's example" in {
         // t1 = f(c, gc)
@@ -193,7 +192,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val f_alpha_gc = Function(f, alpha::gc::Nil)
         val f_alpha_g2c = Function(f, alpha::g2c::Nil)
 
-        val expected = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
+        var expected = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]
         expected += ( (Nil) -> ((null, Nil)::Nil) )
         expected += ( (t1::Nil) -> ((alpha, t1::Nil)::Nil) )
         expected += ( (t2::Nil) -> ((alpha, t2::Nil)::Nil) )
@@ -208,9 +207,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltatable = new DeltaTable(t1::t2::t3::t4::t5::t6::Nil, alpha)
 
-        // Note: if elements in the inner lists are not on the same order,
-        // this returns false.
-        (deltatable.table) must haveTheSameElementsAs (expected)
+        deltaTableEquals(deltatable.table, expected) must beTrue
       }
     }
 
@@ -387,4 +384,19 @@ class GrammarTest extends SpecificationWithJUnit {
        g.s.diff(e.s) == Nil && e.s.diff(g.s) == Nil
       )
     )
+      
+  def deltaTableEquals(d1: HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]], d2: HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]]) = (
+    d1.forall(v1 =>
+      d2.exists(v2 => 
+        v1._1 == v2._1 && v1._2.toSet.equals(v2._2.toSet)
+      )
+    )
+    &&
+    d2.forall(v1 =>
+      d1.exists(v2 => 
+        v1._1 == v2._1 && v1._2.toSet.equals(v2._2.toSet)
+      )
+    )
+  )
+
 }

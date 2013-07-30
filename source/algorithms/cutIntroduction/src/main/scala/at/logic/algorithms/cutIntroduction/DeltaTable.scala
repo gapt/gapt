@@ -11,9 +11,8 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
-import scala.collection.mutable._
+import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
-import at.logic.utils.dssupport.MapSupport._
 import at.logic.utils.logging.Logger
 
 // TODO: should I use grammars instead of pairs here?
@@ -22,7 +21,7 @@ class DeltaTableException(msg: String) extends Exception(msg)
 
 class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
    
-  val table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
+  var table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
 
   // Fills the delta table with some terms
 
@@ -73,10 +72,11 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
   def add(s: List[FOLTerm], u: FOLTerm, t: List[FOLTerm]) {
  
     if(table.contains(s)) {
-      table(s) = table(s) :+ (u, t)
+      val lst = table(s)
+      table += (s -> ((u, t) :: lst) )
     }
     else {
-      table(s) = ((u, t)::Nil)
+      table += ( s -> ((u, t)::Nil) )
     }
   }
 
@@ -106,7 +106,7 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
     prln( "max. number of pairs / line: " + maxNumOfPairsPerLine )
 
     val linestats = table.foldRight( new HashMap[Int,Int]() ) {
-      case ((k, lst), acc) => acc += ( lst.size -> ( acc.getOrElse( lst.size, 0 ) + 1 ) ) 
+      case ((k, lst), acc) => acc + ( lst.size -> ( acc.getOrElse( lst.size, 0 ) + 1 ) ) 
     }
     prln( "  k   number of lines with k pairs" )
     linestats.toSeq.sortBy( _._1 ).foreach{

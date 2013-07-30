@@ -5,7 +5,7 @@
 
 package at.logic.utils.dssupport
 
-import scala.collection.mutable._
+//import scala.collection.mutable._
 
 object MapSupport {
 
