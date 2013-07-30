@@ -11,7 +11,6 @@ import at.logic.calculi.resolution.instance.{Instance => RInstantiate}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.resolution.base.Clause
 import at.logic.language.fol
-import collection.immutable
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import scala.Some
 import at.logic.language.lambda.symbols.VariableStringSymbol
@@ -25,12 +24,12 @@ import at.logic.calculi.lk.base.FSequent
  */
 object IvyToRobinson {
   val generator : VariantGenerator = new VariantGenerator( new {var c = 10000; def nextId = {c = c+1; c}} , "iv" )
-  type ProofMap = immutable.Map[String, RobinsonResolutionProof]
+  type ProofMap = Map[String, RobinsonResolutionProof]
 
   def debug(s:String) = {}
 
   def apply(iproof : IvyResolutionProof) : RobinsonResolutionProof = {
-    val (proof, pmap) = convert(iproof, immutable.Map[String, RobinsonResolutionProof]())
+    val (proof, pmap) = convert(iproof, Map[String, RobinsonResolutionProof]())
     val (newsymbol_rules, mapping) = iproof.nodes.foldLeft((Set[RobinsonResolutionProof]()), Set[(FOLConst, FOLTerm)]())((set, node) =>
       node match {
         case NewSymbol(id, _, _, sym, rt ,_,_) => (set._1 + (pmap(id)), set._2 + ((sym,rt)))
@@ -105,8 +104,8 @@ object IvyToRobinson {
         }
 
       case IPropositional(id, exp, clause, parent) =>
-        def remove_first(el:FormulaOccurrence, l:immutable.Seq[FormulaOccurrence])
-        : (FormulaOccurrence, immutable.List[FormulaOccurrence]) = l.toList match {
+        def remove_first(el:FormulaOccurrence, l:Seq[FormulaOccurrence])
+        : (FormulaOccurrence, List[FormulaOccurrence]) = l.toList match {
           case x::Nil =>
             if (x.formula == el.formula)
               (x, Nil)
@@ -123,8 +122,8 @@ object IvyToRobinson {
           case Nil => throw new Exception("Error: want to remove element "+el+" from an empty list!")
         }
 
-        def remove_firsts(fs:immutable.Seq[FormulaOccurrence], l:immutable.Seq[FormulaOccurrence]) :
-        (immutable.List[FormulaOccurrence], immutable.Seq[FormulaOccurrence]) = {
+        def remove_firsts(fs:Seq[FormulaOccurrence], l:Seq[FormulaOccurrence]) :
+        (List[FormulaOccurrence], Seq[FormulaOccurrence]) = {
           if (fs.isEmpty) { (Nil, l) } else {
             val (el, rest) = remove_first(fs.head,l)
             val (r1,r2) = remove_firsts(fs.tail, rest)
@@ -132,8 +131,8 @@ object IvyToRobinson {
           }
         }
 
-        def connect(ivy : immutable.List[FormulaOccurrence], robinson : immutable.Seq[FormulaOccurrence])
-        : immutable.List[FormulaOccurrence] = ivy match {
+        def connect(ivy : List[FormulaOccurrence], robinson : Seq[FormulaOccurrence])
+        : List[FormulaOccurrence] = ivy match {
           case x::xs =>
             val (rancs, rem) = remove_firsts(x.ancestors.toList, robinson)
             new FormulaOccurrence(x.formula, rancs, x.factory) :: connect(xs, rem)
@@ -141,8 +140,8 @@ object IvyToRobinson {
           case Nil => Nil
         }
 
-        def find_matching(what:immutable.List[FormulaOccurrence], where : immutable.List[FormulaOccurrence])
-        : immutable.List[FormulaOccurrence]= what match {
+        def find_matching(what:List[FormulaOccurrence], where : List[FormulaOccurrence])
+        : List[FormulaOccurrence]= what match {
           case x::xs =>
             val (y, rest) = remove_first(x,where)
             y :: find_matching(xs, rest)
@@ -256,7 +255,7 @@ object IvyToRobinson {
 
             //val rproof = RParamodulation(newaxiom, rparent, newaxiom.root.succedent(0), rlit, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())
             val FSequent(neg, pos) = clause.toFSequent
-            val rproof = RInitialClause(neg.asInstanceOf[immutable.Seq[FOLFormula]]  , pos.asInstanceOf[immutable.Seq[FOLFormula]])
+            val rproof = RInitialClause(neg.asInstanceOf[Seq[FOLFormula]]  , pos.asInstanceOf[Seq[FOLFormula]])
             //println("introduced new rule:"+rproof.root)
             //println("parent1:"+newaxiom.root)
             //println("parent2:"+rparent.root)

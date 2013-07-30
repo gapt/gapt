@@ -15,7 +15,6 @@ import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
-import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap
 import base._
 

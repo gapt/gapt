@@ -9,7 +9,6 @@ package at.logic.algorithms.matching.fol
 import at.logic.algorithms.matching.MatchingAlgorithm
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-//import at.logic.language.fol.substitutions._
 import at.logic.language.fol._
 
 object FOLMatchingAlgorithm extends MatchingAlgorithm[FOLExpression] {
@@ -25,7 +24,7 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm[FOLExpression] {
   }
 
 
-//  protected[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: scala.collection.immutable.Map[Var, FOLExpression]) extends Substitution[FOLExpression](m) {
+//  protected[fol] class MatchingSubstitution(val moduloVarList: List[Var], m: Map[Var, FOLExpression]) extends Substitution[FOLExpression](m) {
 ////    override def apply(expression: LambdaExpression): LambdaExpression = applyWithChangeDBIndicesModuloVarList(moduloVarList, expression)
 ////    protected def applyWithChangeDBIndicesModuloVarList(moduloVarList: List[Var], expression: LambdaExpression): LambdaExpression = expression match {
 //
@@ -47,7 +46,7 @@ object FOLMatchingAlgorithm extends MatchingAlgorithm[FOLExpression] {
 //  object MatchingSubstitution {
 //    def apply(moduloVarList: List[Var]): Substitution[FOLExpression] = new MatchingSubstitution(moduloVarList, Map())
 //    def apply(moduloVarList: List[Var], v: Var, t: FOLExpression): Substitution[FOLExpression] = new MatchingSubstitution(moduloVarList, Substitution(v,t).map)
-////    def unapply(moduloVarList: List[Var],  m: scala.collection.immutable.Map[Var, LambdaExpression])
+////    def unapply(moduloVarList: List[Var],  m: Map[Var, LambdaExpression])
 //  }
 
 

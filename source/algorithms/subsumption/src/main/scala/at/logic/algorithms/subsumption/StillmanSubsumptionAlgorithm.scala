@@ -15,7 +15,6 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol._
 import at.logic.language.fol.{Neg => FOLNeg, FOLFormula}
 import at.logic.calculi.lk.base._
-import collection.immutable.Seq
 import at.logic.calculi.lk.base.types._
 
 trait StillmanSubsumptionAlgorithm[T <: LambdaExpression] extends SubsumptionAlgorithm {

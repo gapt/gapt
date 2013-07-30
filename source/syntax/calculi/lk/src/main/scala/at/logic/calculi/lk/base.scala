@@ -16,23 +16,20 @@ import at.logic.utils.ds.trees._
 
 package base {
 
-import _root_.at.logic.utils.traits.Occurrence
+import at.logic.utils.traits.Occurrence
 import at.logic.language.lambda.substitutions.Substitution
 
 import java.util.Comparator
 import scala.math.Ordering._
 import tools.nsc.settings.FscSettings
 import base.types._
-import collection.immutable.{HashSet, Seq}
-import collection.immutable
 
   package types {
     object implicits {
       implicit def pair2fsequent(fs:(Seq[HOLFormula], Seq[HOLFormula])) = new FSequent(fs._1,fs._2)
     }
 
-    //type FSequent = Pair[Seq[HOLFormula],Seq[HOLFormula]]
-    class FSequent(val antecedent : immutable.Seq[HOLFormula], val succedent : immutable.Seq[HOLFormula]) {
+    class FSequent(val antecedent : Seq[HOLFormula], val succedent : Seq[HOLFormula]) {
       val _1 = antecedent
       val _2 = succedent
       
@@ -74,8 +71,8 @@ import collection.immutable
     def toStringSimple(f : FSequent)  : String  = toString((x:HOLFormula) => x.toStringSimple,f )
 
     def setEquals(f: FSequent, g: FSequent) : Boolean =
-        immutable.Set(f._1) == immutable.Set(g._1) &&
-        immutable.Set(f._2) == immutable.Set(g._2)
+        Set(f._1) == Set(g._1) &&
+        Set(f._2) == Set(g._2)
 
     def multiSetEquals(f : FSequent, g : FSequent) : Boolean =
           f._1.diff(g._1).isEmpty && f._2.diff(g._2).isEmpty &&

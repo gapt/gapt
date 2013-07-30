@@ -7,10 +7,9 @@ package at.logic.language.lambda
 
 import symbols._
 import symbols.ImplicitConverters._
-import scala.collection.immutable
-import scala.collection.mutable.Map
 import types._
-import collection.immutable.HashSet
+import scala.collection.immutable.HashSet
+import scala.collection.mutable.Map
 
 package typedLambdaCalculus {
 
@@ -28,9 +27,9 @@ trait LambdaFactoryProvider {
     def =^(e: LambdaExpression): Boolean = syntaxEquals(e)
 
     private def getFreeAndBoundVariables():Tuple2[Set[Var],Set[Var]] = this match {
-      case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (immutable.HashSet(v), new immutable.HashSet())
-      case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new immutable.HashSet(), immutable.HashSet(v))
-      case v: Var => (new immutable.HashSet(), new immutable.HashSet())// not variables (constants in this case)
+      case v: Var if v.isFree && v.name.isInstanceOf[VariableSymbolA]=> (HashSet(v), new HashSet())
+      case v: Var if v.name.isInstanceOf[VariableSymbolA] => (new HashSet(), HashSet(v))
+      case v: Var => (new HashSet(), new HashSet())// not variables (constants in this case)
       case App(exp, arg) => {
         val mFBV = exp.getFreeAndBoundVariables()
         val nFBV = arg.getFreeAndBoundVariables()
@@ -51,11 +50,11 @@ trait LambdaFactoryProvider {
     
     // replacement for the above method which works if AbsInScope is not used.
     // TODO: remove upper method when AbsInScope is removed
-    def getFreeVariables() : Set[Var] = getFreeVariables(new immutable.HashSet())
+    def getFreeVariables() : Set[Var] = getFreeVariables(new HashSet())
     
     private def getFreeVariables(bound: Set[Var]) : Set[Var] = this match {
-      case v: Var if !bound.contains(v) && v.name.isInstanceOf[VariableSymbolA] => immutable.HashSet(v)
-      case v: Var => immutable.HashSet() // case of bound variables and constants
+      case v: Var if !bound.contains(v) && v.name.isInstanceOf[VariableSymbolA] => HashSet(v)
+      case v: Var => HashSet() // case of bound variables and constants
       case App(exp, arg) => exp.getFreeVariables(bound) ++ arg.getFreeVariables(bound)
       case Abs(v, exp) => exp.getFreeVariables(bound + v)
     }
@@ -104,7 +103,7 @@ object Normalization {
    *
    * returns: a pair of normalized expression and highest index used */
   def apply[T <: LambdaExpression](f : T, start : Int,
-                                   pattern : String, blacklist : immutable.Set[String] = immutable.HashSet[String]() ) : (T,Int) = {
+                                   pattern : String, blacklist : Set[String] = HashSet[String]() ) : (T,Int) = {
     var x=start;
     def nextId() : String = {x=x+1; pattern + "_{" + x +"}"}
     val vg = new VariableNameGenerator(nextId)
@@ -112,8 +111,8 @@ object Normalization {
     (normalize_(f,vg, blacklist)._1 , x)
   }
 
-  private def normalize_[T <: LambdaExpression](f : T, gen: => VariableNameGenerator, bl : immutable.Set[String])
-   : (T, VariableNameGenerator, immutable.Set[String]) =f match {
+  private def normalize_[T <: LambdaExpression](f : T, gen: => VariableNameGenerator, bl : Set[String])
+   : (T, VariableNameGenerator, Set[String]) =f match {
     case Var(name, exptype) => (f, gen, bl)
     case App(s, t) =>
       val (s_, g1, bl1) = normalize_(s,gen, bl)
@@ -210,7 +209,7 @@ object Normalization {
 
   object doesNotContainFreeBound {
     def apply( e: LambdaExpression ) : Boolean = {
-      val ret = doesNotContainFreeBound( e, new immutable.HashSet[Var] )
+      val ret = doesNotContainFreeBound( e, new HashSet[Var] )
       if (!ret)
         println(e + " contains a free bound variable!")
       ret

@@ -3,7 +3,6 @@ package at.logic.algorithms.hlk.parser
 import at.logic.algorithms.hlk.HLKFormulaParser
 import at.logic.language.hol.{HOLVar, HOLFormula, HOLExpression}
 import util.parsing.combinator.RegexParsers
-import collection.immutable
 import at.logic.language.fol.FOLExpression
 import at.logic.language.lambda.types.{Ti, To, TA}
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
@@ -12,6 +11,7 @@ import util.parsing.input.Reader
 import util.parsing.combinator.token.Tokens
 import util.parsing.combinator.lexical.{Lexical, Scanners}
 import util.parsing.combinator.syntactical.{TokenParsers, StdTokenParsers, StandardTokenParsers}
+import scala.collection.immutable.HashMap
 
 /**
  * parser for hol formulas in the hlk format
@@ -54,8 +54,8 @@ abstract class HOLParser(symbol_map : HOLParser.SymbolMap) extends HLKFormulaPar
 }
 
 object HOLParser {
-  type SymbolMap = immutable.HashMap[String, HOLExpression]
-  val emptySymbolMap = immutable.HashMap.empty[String, HOLExpression]
+  type SymbolMap = HashMap[String, HOLExpression]
+  val emptySymbolMap = HashMap.empty[String, HOLExpression]
 
 //  def apply(symbolMap : SymbolMap) = new HOLParser(symbolMap)
 

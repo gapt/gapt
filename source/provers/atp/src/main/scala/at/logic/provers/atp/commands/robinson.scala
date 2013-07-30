@@ -30,12 +30,10 @@ import sequents._
 
 package robinson {
 
-import _root_.at.logic.language.hol.replacements.getAtPosition
-import _root_.at.logic.language.lambda.substitutions.Substitution
-import _root_.at.logic.provers.atp.ProverException
+import at.logic.language.hol.replacements.getAtPosition
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.provers.atp.ProverException
 import at.logic.calculi.lk.base.Sequent
-import scala.collection.immutable.Seq
-import collection.immutable.List._
 import scala.Some
 
 // adds to the state the initial set of resolution proofs, made from the input clauses

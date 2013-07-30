@@ -14,9 +14,9 @@ import at.logic.calculi.resolution.robinson._
 import at.logic.calculi.resolution.base.Clause
 import at.logic.calculi.agraphProofs.AGraphProof
 import at.logic.utils.ds.acyclicGraphs.{BinaryAGraph, UnaryAGraph, LeafAGraph, AGraph}
-import scala.collection.immutable
 import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 import at.logic.language.lambda.symbols.FreshVariableSymbolFactory
+import scala.collection.immutable.HashMap
 
 /**
  * Test for replacment of constant symbols by terms
@@ -93,7 +93,7 @@ class TermReplacementTest extends SpecificationWithJUnit {
     */
   }
 
-  val emptymap = immutable.HashMap[LambdaExpression, LambdaExpression]()
+  val emptymap = HashMap[LambdaExpression, LambdaExpression]()
 
   "Term replacement " should {
     " work on lambda terms " in {

@@ -5,7 +5,8 @@ package at.logic.transformations.skolemization
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
-import scala.collection.immutable.{Map,HashMap,HashSet}
+import scala.collection.immutable.{HashMap,HashSet}
+import scala.collection.immutable.Stream.Empty
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._
@@ -23,7 +24,6 @@ import at.logic.language.hol.logicSymbols.ConstantSymbolA
 import at.logic.algorithms.lk.applySubstitution
 import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import at.logic.utils.ds.streams.Definitions._
-import scala.collection.immutable.Stream.Empty
 import typedLambdaCalculus.{App, Var, LambdaExpression}
 import at.logic.calculi.slk.{trsArrowLeftRule, SchemaProofLinkRule}
 import at.logic.calculi.lk.base.types.FSequent

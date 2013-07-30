@@ -16,7 +16,11 @@ import at.logic.language.lambda.types.{Ti, Tindex}
 object solvePropositional {
 
   def apply(seq: FSequent): Option[LKProof] = prove(seq) match {
-    case Some(p) => Some(CleanStructuralRules(p))
+    case Some(p) =>
+      //println("solvePropositional: # of contraction left rules: " + statistics.contLeftNumber(p))
+      //println("solvePropositional: # of contraction right rules: " + statistics.contRightNumber(p))
+      //println("solvePropositional: # of rules: " + statistics.rulesNumber(p))
+      Some(CleanStructuralRules(p))
     case None => None
   }
 
@@ -82,7 +86,7 @@ object solvePropositional {
         case BigAnd(i, iter, from, to) =>
           val i = IntVar(new VariableStringSymbol("i"))
           if (from == to) {
-            val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+            val new_map = Map[Var, HOLExpression]() + Pair(i, to)
             val subst = new SchemaSubstitution1[HOLExpression](new_map)
             val sf = subst(iter).asInstanceOf[SchemaFormula]
             val p_ant = sf +: rest.antecedent
@@ -96,7 +100,7 @@ object solvePropositional {
             }
           }
           else {
-            val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+            val new_map = Map[Var, HOLExpression]() + Pair(i, to)
             val subst = new SchemaSubstitution1[HOLExpression](new_map)
             val sf1 = BigAnd(i, iter, from, Pred(to))
             val sf2 = subst(iter).asInstanceOf[HOLFormula]
@@ -159,7 +163,7 @@ object solvePropositional {
           case BigOr(i, iter, from, to) => 
             val i = IntVar(new VariableStringSymbol("i"))
             if (from == to){
-              val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+              val new_map = Map[Var, HOLExpression]() + Pair(i, to)
               val subst = new SchemaSubstitution1[HOLExpression](new_map)
               val p_ant = subst(iter).asInstanceOf[SchemaFormula] +: rest.antecedent
               val p_suc = rest.succedent
@@ -172,7 +176,7 @@ object solvePropositional {
               }
             }
             else {
-              val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+              val new_map = Map[Var, HOLExpression]() + Pair(i, to)
               val subst = new SchemaSubstitution1[HOLExpression](new_map)
               val p_ant = rest.antecedent
               val p_suc = BigOr(i, iter, from, Pred(to)) +: subst(iter).asInstanceOf[HOLFormula] +: rest.succedent
@@ -228,7 +232,7 @@ object solvePropositional {
             case BigOr(i, iter, from, to) =>
               val i = IntVar(new VariableStringSymbol("i"))
               if (from == to){
-                val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+                val new_map = Map[Var, HOLExpression]() + Pair(i, to)
                 val subst = new SchemaSubstitution1[HOLExpression](new_map)
                 val sf = subst(iter).asInstanceOf[SchemaFormula]
                 val p_ant = sf +: rest.antecedent
@@ -242,7 +246,7 @@ object solvePropositional {
                 }
               }
               else {
-                val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+                val new_map = Map[Var, HOLExpression]() + Pair(i, to)
                 val subst = new SchemaSubstitution1[HOLExpression](new_map)
                 val p_ant1 = BigOr(i, iter, from, Pred(to)) +: rest.antecedent
                 val p_suc1 = rest.succedent
@@ -286,7 +290,7 @@ object solvePropositional {
               case BigAnd(i, iter, from, to) =>
                 val i = IntVar(new VariableStringSymbol("i"))
                 if (from == to) {
-                  val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+                  val new_map = Map[Var, HOLExpression]() + Pair(i, to)
                   val subst = new SchemaSubstitution1[HOLExpression](new_map)
                   val p_ant = rest.antecedent
                   val p_suc = subst(iter).asInstanceOf[SchemaFormula] +: rest.succedent
@@ -299,7 +303,7 @@ object solvePropositional {
                   }
                 }
                 else {
-                  val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(i, to)
+                  val new_map = Map[Var, HOLExpression]() + Pair(i, to)
                   val subst = new SchemaSubstitution1[HOLExpression](new_map)
                   val p_ant1 = rest.antecedent
                   val p_suc1 = BigAnd(i, iter, from, Pred(to)) +: rest.succedent

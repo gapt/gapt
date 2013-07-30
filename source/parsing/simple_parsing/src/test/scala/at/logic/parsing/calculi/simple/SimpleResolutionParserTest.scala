@@ -25,7 +25,6 @@ import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.parsing.readers.StringReader
 import at.logic.calculi.resolution.base._
 import at.logic.calculi.resolution.robinson._
-import scala.collection.immutable.{Seq, List}
 
 @RunWith(classOf[JUnitRunner])
 class SimpleResolutionParserTest extends SpecificationWithJUnit {

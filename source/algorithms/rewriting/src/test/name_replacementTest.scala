@@ -4,7 +4,6 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import util.parsing.input.Reader
-import collection.immutable
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.{SimpleHOLParser, SimpleFOLParser}
 import at.logic.language.fol.{FOLExpression, FOLVar, FOLTerm, FOLFormula}
@@ -118,7 +117,7 @@ class name_replacementTest extends SpecificationWithJUnit {
 
 
     def debug(s:String) = {println("Debug: "+s)}
-    val map : NameReplacement.SymbolMap = immutable.Map[String, (Int,String)](
+    val map : NameReplacement.SymbolMap = Map[String, (Int,String)](
       "P" -> (2, "R"),
       "f" -> (1, "h"),
       "g" -> (2, "f"),
@@ -141,7 +140,7 @@ class name_replacementTest extends SpecificationWithJUnit {
     "rewrite of resolution proofs must work" in {
 //      println(proof1.p7)
 //      println(proof2.q7)
-      val map : NameReplacement.SymbolMap = immutable.Map[String, (Int,String)](
+      val map : NameReplacement.SymbolMap = Map[String, (Int,String)](
         "P" -> (1, "R"),
         "f" -> (1, "h"),
         "g" -> (1, "f"),

@@ -4,16 +4,15 @@ import symbols._
 import typedLambdaCalculus._
 import BetaReduction._
 
-
 package substitutions {
 
-import collection.immutable.HashSet
+import collection.immutable.HashMap
 
 /* substitution preserves the following:
 * 1) it is a valid function, i.e. order of elements is irrelevant and each variable is mapped to only one element
 * 2) all mappings are applied simultaneously to a term i.e. {x |-> y, y |-> a}x = y and not a.
 */
-  class Substitution[T <: LambdaExpression] protected[substitutions](val map: scala.collection.immutable.Map[Var, T]) extends (T => T) {
+  class Substitution[T <: LambdaExpression] protected[substitutions](val map: Map[Var, T]) extends (T => T) {
     def ::(sub:Tuple2[Var, T]) = new Substitution(map + sub)
     def :::(otherSubstitution:Substitution[T]) = new Substitution(map ++ otherSubstitution.map.iterator)
     def apply(expression: T): T = applyWithChangeDBIndices(expression, Nil)
@@ -88,12 +87,12 @@ import collection.immutable.HashSet
   }
 
   object Substitution {
-    def apply[T <: LambdaExpression](subs: Iterator[Tuple2[Var, T]]): Substitution[T] = new Substitution(new scala.collection.immutable.HashMap[Var, T]() ++ subs)
+    def apply[T <: LambdaExpression](subs: Iterator[Tuple2[Var, T]]): Substitution[T] = new Substitution(new HashMap[Var, T]() ++ subs)
     def apply[T <: LambdaExpression](subs: Tuple2[Var, T]*): Substitution[T] = apply(subs.iterator)
     def apply[T <: LambdaExpression](subs: List[Tuple2[Var, T]]): Substitution[T] = apply(subs.iterator)
     def apply[T <: LambdaExpression](variable: Var, expression: T): Substitution[T] = apply((variable, expression))
-    def apply[T <: LambdaExpression](map: scala.collection.immutable.Map[Var, T]): Substitution[T] = new Substitution( map )
-    def apply() = new Substitution(new scala.collection.immutable.HashMap())
+    def apply[T <: LambdaExpression](map: Map[Var, T]): Substitution[T] = new Substitution( map )
+    def apply() = new Substitution(new HashMap())
   }
 
   object ImplicitConverters {

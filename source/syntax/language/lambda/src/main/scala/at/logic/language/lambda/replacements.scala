@@ -9,7 +9,6 @@ package at.logic.language.lambda
 
 import symbols._
 import typedLambdaCalculus._
-import scala.collection.immutable._
 
 package replacements {
   case class Replacement(position: List[Int], expression: LambdaExpression) {

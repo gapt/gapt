@@ -14,7 +14,7 @@ WeakeningLeftRule => LKskWeakeningLeftRule,
 WeakeningRightRule => LKskWeakeningRightRule,
 ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule}
 
-import scala.collection.mutable.{Map, HashMap}
+import scala.collection.immutable.HashMap
 
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
@@ -216,7 +216,7 @@ import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
 //      println("\nproof_name = "+proof_name)
 //      println("number = "+number)
 //      val k = IntVar(new VariableStringSymbol("k")) ;
-//      val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
+//      val new_map = Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
 //      val subst = new SchemaSubstitution1[HOLExpression](new_map)
 ////      RemoveEqRulesFromGroundSchemaProof(apply(SchemaProofDB.get(proof_name).rec, subst, number))
 //      apply(SchemaProofDB.get(proof_name).rec, subst, number, trs)
@@ -703,7 +703,7 @@ object applySchemaSubstitution2 {
       //println("\nproof_name = "+proof_name)
       //println("number = "+number)
       val k = IntVar(new VariableStringSymbol("k")) ;
-      val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
+      val new_map = Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
       val subst = new SchemaSubstitution1[HOLExpression](new_map)
       //      RemoveEqRulesFromGroundSchemaProof(apply(SchemaProofDB.get(proof_name).rec, subst, number))
       apply(SchemaProofDB.get(proof_name).rec, subst, number)

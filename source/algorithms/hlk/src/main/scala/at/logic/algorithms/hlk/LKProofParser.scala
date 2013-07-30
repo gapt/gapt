@@ -20,24 +20,22 @@ import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.schema.{foVar, dbTRS, foTerm, indexedFOVar, sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 import at.logic.algorithms.lk._
-import collection.immutable.Stack
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import scala.Tuple4
 import at.logic.language.lambda.types.->
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.schema.IntZero
 import at.logic.calculi.lk.base.types.FSequent
-import collection.mutable
-import collection.immutable
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.parsing.language.prover9.Prover9TermParserA
 import scala.util.parsing.combinator.Parsers
+import scala.collection.immutable.{HashMap, Stack}
 
 object LKProofParser {
   def debug(s:String) = { println(s) }
 
-  type ProofMap = immutable.HashMap[String,LKProof]
-  val emptyProofMap = immutable.HashMap.empty[String,LKProof]
+  type ProofMap = HashMap[String,LKProof]
+  val emptyProofMap = HashMap.empty[String,LKProof]
   type LabeledProof = (String,LKProof)
 
 
@@ -46,10 +44,10 @@ object LKProofParser {
     m.proofs
   }
 
-  def parseProofFlat(txt: InputStreamReader): immutable.Map[String, LKProof] =
+  def parseProofFlat(txt: InputStreamReader): Map[String, LKProof] =
   {
     val proofdb = parseProof( txt )
-    immutable.Map.empty[String, LKProof] ++ (proofdb.proofs)
+    Map.empty[String, LKProof] ++ (proofdb.proofs)
   }
 
   //plabel should return the proof corresponding to this label
@@ -60,7 +58,7 @@ object LKProofParser {
       override def varsymb: Parser[String] =  """[u-z][a-zA-Z0-9_]*""".r
     }
 
-    sp.parseAll[immutable.List[LabeledProof]](sp.hlk_file, txt) match {
+    sp.parseAll[List[LabeledProof]](sp.hlk_file, txt) match {
       case sp.Success(result, input) =>
         println("YAY!!")
         println(result)
@@ -107,7 +105,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
 
 
   /* automatic generation of labels */
-  private var labels : immutable.Set[String] = immutable.Set.empty
+  private var labels : Set[String] = Set.empty
   private var labelcount = 100
   private def getLabel = {
     while (labels.contains("l"+labelcount))
@@ -456,7 +454,7 @@ trait SchemaFormulaParser extends HLKFormulaParser with HOLParser {
 
     def goal = term
 
-    val predicate_arities = mutable.Map.empty[String, Int]
+    val predicate_arities = scala.collection.mutable.Map.empty[String, Int]
 
     def intConst : Parser[IntegerTerm] = "[0-9]+".r ^^ { x => intToTerm(x.toInt) }
     def intVar: Parser[IntVar] = "[ijmnkx]".r ^^ { x => IntVar(new VariableStringSymbol(x)) }

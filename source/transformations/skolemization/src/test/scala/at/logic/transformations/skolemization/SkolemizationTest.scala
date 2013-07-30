@@ -18,7 +18,6 @@ import at.logic.language.lambda.symbols._
 import at.logic.calculi.lksk.base._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.symbols.ImplicitConverters._
-import scala.collection.immutable._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.propositionalRules.{AndRightRule, Axiom}

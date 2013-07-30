@@ -92,7 +92,7 @@ object RelevantCC {
     val cclistbase = Utils.removeDoubles(cclist1 ::: cclist).map(pair =>{
       val seq = SchemaProofDB.get(pair._1).base.root
       val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
-      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution1[HOLExpression](new_map)
       val groundccant = pair._2._1.map(fo => sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])))
       val groundccsucc = pair._2._2.map(fo => sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar])))
@@ -118,16 +118,16 @@ object RelevantCC {
       val len = StepMinusOne.lengthVar(index.asInstanceOf[IntegerTerm])
       val foccsInSeqAnt = seq.antecedent.filter(fo => cut_omega_anc.contains(fo))
       val foccsInSeqSucc = seq.succedent.filter(fo => cut_omega_anc.contains(fo))
-      var new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm]
+      var new_map = Map.empty[Var, IntegerTerm]
       var sub = new SchemaSubstitution1[HOLExpression](new_map)
       if (len == 0)
-        new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(index.asInstanceOf[IntegerTerm]) )
+        new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(index.asInstanceOf[IntegerTerm]) )
       else
       if (len == 1)
-        new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] //+ Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
+        new_map = Map.empty[Var, IntegerTerm] //+ Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
       else {
         val k = IntVar(new VariableStringSymbol("k"))
-        new_map  = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(k.asInstanceOf[Var], StepMinusOne.intTermPlus(k, len-1 ))
+        new_map  = Map.empty[Var, IntegerTerm] + Pair(k.asInstanceOf[Var], StepMinusOne.intTermPlus(k, len-1 ))
         sub = new SchemaSubstitution1[HOLExpression](new_map)
         val newccAnt = seq1.antecedent.toList.filter(fo => foccsInSeqAnt.map(foo => foo.formula).contains(sub(fo.formula)))
         val newccSucc = seq1.succedent.toList.filter(fo => foccsInSeqSucc.map(foo => foo.formula).contains(sub(fo.formula)))

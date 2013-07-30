@@ -3,7 +3,6 @@ package at.logic.parsing.ivy
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
-import collection.immutable
 import at.logic.parsing.lisp
 import java.io.File.separator
 import util.parsing.input.Reader

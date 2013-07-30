@@ -1,6 +1,5 @@
 package at.logic.algorithms.resolution
 
-import collection.immutable
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.resolution.robinson.{InitialClause, Factor, Resolution, Variant, Paramodulation, RobinsonResolutionProof}
 import at.logic.calculi.resolution.instance.Instance
@@ -13,7 +12,6 @@ import at.logic.calculi.resolution.base.Clause
 import at.logic.language.lambda.types.Ti
 import scala.Some
 import at.logic.calculi.lk.base.Sequent
-import collection.mutable
 import at.logic.utils.ds.acyclicGraphs.AGraph
 import at.logic.language.hol.{HOLFormula, HOLExpression}
 
@@ -23,8 +21,8 @@ import at.logic.language.hol.{HOLFormula, HOLExpression}
 
 
 object ResolutionSubstitution {
-  type ProofMap = immutable.Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]
-  val emptyProofMap = immutable.Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]()
+  type ProofMap = Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]
+  val emptyProofMap = Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]()
 
   def extend_pmap(pm : ProofMap, p : RobinsonResolutionProof,
                   sub : Substitution[HOLExpression], value : RobinsonResolutionProof) = (p, pm + (((p,sub), value)))
@@ -127,20 +125,20 @@ object InstantiateElimination {
   }
 
 
-  def find_matching[A,B](objects : immutable.List[A], targets : immutable.List[B], matches : (A,B) => Boolean  )
-        : immutable.Map[A,B] = NameReplacement.find_matching(objects, targets, matches)
+  def find_matching[A,B](objects : List[A], targets : List[B], matches : (A,B) => Boolean  )
+        : Map[A,B] = NameReplacement.find_matching(objects, targets, matches)
 
-  type OccMap = immutable.Map[FormulaOccurrence, FormulaOccurrence]
-  val emptyOccMap = immutable.Map[FormulaOccurrence, FormulaOccurrence]()
+  type OccMap = Map[FormulaOccurrence, FormulaOccurrence]
+  val emptyOccMap = Map[FormulaOccurrence, FormulaOccurrence]()
 
-  type RenameMap = immutable.Map[Var, Var]
-  val emptyRenameMap = immutable.Map[Var, Var]()
+  type RenameMap = Map[Var, Var]
+  val emptyRenameMap = Map[Var, Var]()
 
-  type ProofMap = immutable.Map[RobinsonResolutionProof, (OccMap, VarSet, RobinsonResolutionProof)]
-  val emptyProofMap = immutable.Map[RobinsonResolutionProof, (OccMap, VarSet, RobinsonResolutionProof)]()
+  type ProofMap = Map[RobinsonResolutionProof, (OccMap, VarSet, RobinsonResolutionProof)]
+  val emptyProofMap = Map[RobinsonResolutionProof, (OccMap, VarSet, RobinsonResolutionProof)]()
 
-  type VarSet = immutable.Set[Var]
-  val emptyVarSet = immutable.Set[Var]()
+  type VarSet = Set[Var]
+  val emptyVarSet = Set[Var]()
 
 
 
@@ -653,7 +651,7 @@ object InstantiateElimination {
      }
   }
 
-  private var generated = immutable.Set[Var]()
+  private var generated = Set[Var]()
 
   /* for each element v in vl generate a fresh variable f, return a list of pairs (v,f) */
   def generate_freshvars(vl:VarSet, forbidden : VarSet) : (List[Var], List[Var]) = {
@@ -666,7 +664,7 @@ object InstantiateElimination {
     (olds,news)
   }
 
-  def commonvars[T <: LambdaExpression](s1:Substitution[T], s2: Substitution[T]) : immutable.Set[Var] = {
+  def commonvars[T <: LambdaExpression](s1:Substitution[T], s2: Substitution[T]) : Set[Var] = {
     val k1 = s1.map.keySet
     val k2 = s2.map.keySet
     k1.filter(k2.contains) //++ k2.filter(k1.contains)

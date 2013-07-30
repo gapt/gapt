@@ -8,8 +8,6 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.symbols.SymbolA
 
 object defintion_elimination {
-  import collection.immutable.Map
-  import collection.immutable.Seq
   type DefinitionsMap = Map[HOLFormula, HOLFormula]
   type ProcessedDefinitionsMap = Map[SymbolA, (List[HOLVar], HOLFormula)]
 

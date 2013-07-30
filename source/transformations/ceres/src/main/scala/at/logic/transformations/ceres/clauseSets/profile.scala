@@ -1,7 +1,6 @@
 package at.logic.transformations.ceres.clauseSets
 
 import at.logic.calculi.lk.base. {Sequent , AuxiliaryFormulas, LKProof}
-//import at.logic.transformations.ceres.struct._
 import at.logic.calculi.occurrences. { FormulaOccurrence, FOFactory}
 import at.logic.language.hol.HOLFormula
 import at.logic.transformations.ceres.struct._
@@ -23,9 +22,7 @@ import at.logic.calculi.lk.lkExtractors. {BinaryLKProof, UnaryLKProof}
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
-import scala.collection.immutable._
 
-//import at.logic.transformations.ceres.struct._
 import at.logic.language.hol._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._

@@ -11,13 +11,6 @@ object VeriTParser extends RegexParsers {
 
   type Instances = (FOLFormula, List[FOLFormula])
 
-  def read(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {
-    parse(finalResult, new FileReader(filename)) match {
-      case Success(r, _) => r
-      case Failure(msg, _) => throw new Exception("Failure in veriT parsing: " + msg)
-      case Error(msg, _) => throw new Exception("Error in veriT parsing: " + msg)
-    }
-  }
 
   def fixOrder(pairs: List[(FOLTerm, FOLTerm)], eqs: List[FOLFormula]) : (List[FOLFormula], List[Instances]) = (pairs, eqs.head) match {
     case ( (x, y)::tail, Neg(Atom(eq, List(a, b))) ) if x==a && y==b =>
@@ -284,8 +277,16 @@ object VeriTParser extends RegexParsers {
     ((eq_congr_pred, List(instance)) :: symm)
   }
 
+  def read(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {
+    parseAll(proof, new FileReader(filename)) match {
+      case Success(r, _) => r
+      case Failure(msg, next) => throw new Exception("VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
+      case Error(msg, next) => throw new Exception("VeriT parsing: syntax error " + msg + "\nat " + next.pos.line + " and column " + next.pos.column)
+    }
+  }
+
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
-  def finalResult : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(line) ^^ {
+  def proof : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(line) ^^ {
     case list => 
       val allpairs = list.flatten
       
@@ -306,8 +307,8 @@ object VeriTParser extends RegexParsers {
       (ant.toSeq, cons.toSeq)
   }
   
-  def line : Parser[List[Instances]] = useless | ruleDesc
-  
+  def line : Parser[List[Instances]] = useless | ruleDesc 
+
   // For type-matching purposes...
   def useless : Parser[List[Instances]] = (success | unsat | header) ^^ { 
     case s => Nil }
@@ -325,37 +326,51 @@ object VeriTParser extends RegexParsers {
   def axiom : Parser[List[Instances]] = input | eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
   
   def input : Parser[List[Instances]] = "input" ~> conclusion ^^ { case forms =>
+    //println("Parsed input formulas")
     forms.map(f => (f, Nil))
   }
   
   def eq_reflexive : Parser[List[Instances]] = "eq_reflexive" ~> conclusion ^^ {
-    case c => getEqReflInstances(c)
+    case c => 
+      //println("eq_reflexive"); 
+      getEqReflInstances(c)
   }
   def eq_transitive : Parser[List[Instances]] = "eq_transitive" ~> conclusion ^^ {
-    case c => getEqTransInstances(c)
+    case c => 
+      //println("eq_transitive"); 
+      getEqTransInstances(c)
   }
   def eq_congruence : Parser[List[Instances]] = "eq_congruent" ~> conclusion ^^ {
-    case c => getEqCongrInstances(c)
+    case c => 
+      //println("eq_congruent"); 
+      getEqCongrInstances(c)
   }
   def eq_congruence_pred : Parser[List[Instances]] = "eq_congruent_pred" ~> conclusion ^^ {
-    case c => getEqCongrPredInstances(c)
+    case c => 
+      //println("eq_congruent_pred"); 
+      getEqCongrPredInstances(c)
   }
 
-  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or
+  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | tmp_distinct_elim | tmp_alphaconv | tmp_let_elim
   
   // Rules that I don't care
   def resolution : Parser[List[Instances]] = "resolution" ~> premises <~ conclusion
   def and : Parser[List[Instances]] = "and" ~> premises <~ conclusion
   def and_pos : Parser[List[Instances]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
   def or : Parser[List[Instances]] = "or" ~> premises <~ conclusion
+  def tmp_distinct_elim : Parser[List[Instances]] = "tmp_distinct_elim" ~> premises <~ conclusion
+  def tmp_alphaconv : Parser[List[Instances]] = "tmp_alphaconv" ~> premises <~ conclusion
+  def tmp_let_elim : Parser[List[Instances]] = "tmp_let_elim" ~> premises <~ conclusion
   
   // I don't care about premises. I only use the leaves
   def premises : Parser[List[Instances]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
   def conclusion : Parser[List[FOLFormula]] = ":conclusion (" ~> rep(formula) <~ ")"
  
-  def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred
-  def term : Parser[FOLTerm] = variable | function
+  def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred //| errorF
+  
+  def term : Parser[FOLTerm] = variable | function | variableAlt
   def variable : Parser[FOLTerm] = name ^^ { case n => FOLVar(VariableStringSymbol(n)) }
+  def variableAlt : Parser[FOLTerm] = "?" ~> name ^^ { case n => FOLVar(VariableStringSymbol(n)) }
   def function : Parser[FOLTerm] = "(" ~> name ~ rep(term) <~ ")" ^^ {
     case name ~ args => 
       val n = ConstantStringSymbol(name) 

@@ -1,7 +1,5 @@
 package at.logic.algorithms.rewriting
 
-import collection.immutable
-import collection.mutable
 import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, Var, LambdaExpression}
 import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import at.logic.language.lambda.types._
@@ -32,8 +30,8 @@ object NameReplacement {
   }
 
   // map from sumbol name to pair of Arity and replacement symbol name
-  type SymbolMap = immutable.Map[String, (Int,String)]
-  val emptySymbolMap = immutable.Map[String, (Int,String)]()
+  type SymbolMap = Map[String, (Int,String)]
+  val emptySymbolMap = Map[String, (Int,String)]()
 
   //gives the airty of a function - simple types have arity 0, complex types have 1 + arity of return value (because
   // of currying)
@@ -71,9 +69,9 @@ object NameReplacement {
     Substitution[T](for ( (key,value) <- sub.map) yield { (key, apply(value, map)) } )
   }
 
-  type OccMap = immutable.Map[FormulaOccurrence, FormulaOccurrence]
-  type ProofMap = immutable.Map[RobinsonResolutionProof, (OccMap, RobinsonResolutionProof)]
-  val emptyProofMap = immutable.Map[RobinsonResolutionProof, (OccMap, RobinsonResolutionProof)]()
+  type OccMap = Map[FormulaOccurrence, FormulaOccurrence]
+  type ProofMap = Map[RobinsonResolutionProof, (OccMap, RobinsonResolutionProof)]
+  val emptyProofMap = Map[RobinsonResolutionProof, (OccMap, RobinsonResolutionProof)]()
 
   def extendw_pmap(index: RobinsonResolutionProof, p:ProofMap, o : OccMap, i : RobinsonResolutionProof) = (p + ((index,(o,i))), o, i)
   def add_pmap(pmap : ProofMap, parent: RobinsonResolutionProof) : (ProofMap, OccMap, RobinsonResolutionProof) = { val x=pmap(parent); (pmap, x._1, x._2) }
@@ -85,12 +83,12 @@ object NameReplacement {
     p match {
     case InitialClause(clause) =>
       //rename literals
-      val negp : immutable.List[FOLFormula] = clause.negative.toList map ((fo : FormulaOccurrence) =>apply(fo.formula.asInstanceOf[FOLFormula], smap))
-      val posp : immutable.List[FOLFormula] = clause.positive.toList map ((fo : FormulaOccurrence) =>apply(fo.formula.asInstanceOf[FOLFormula], smap))
+      val negp : List[FOLFormula] = clause.negative.toList map ((fo : FormulaOccurrence) =>apply(fo.formula.asInstanceOf[FOLFormula], smap))
+      val posp : List[FOLFormula] = clause.positive.toList map ((fo : FormulaOccurrence) =>apply(fo.formula.asInstanceOf[FOLFormula], smap))
       val inference = InitialClause(negp, posp)
       //create map form original iteral occs to renamed literal occs
-      val negm : immutable.Map[FormulaOccurrence, FOLFormula] = immutable.Map[FormulaOccurrence, FOLFormula]() ++ (clause.negative zip negp)
-      val posm : immutable.Map[FormulaOccurrence, FOLFormula] = immutable.Map[FormulaOccurrence, FOLFormula]() ++ (clause.positive zip posp)
+      val negm : Map[FormulaOccurrence, FOLFormula] = Map[FormulaOccurrence, FOLFormula]() ++ (clause.negative zip negp)
+      val posm : Map[FormulaOccurrence, FOLFormula] = Map[FormulaOccurrence, FOLFormula]() ++ (clause.positive zip posp)
       def nmatcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = negm(o) == t.formula
       def pmatcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = posm(o) == t.formula
 
@@ -110,7 +108,7 @@ object NameReplacement {
       var inference :RobinsonResolutionProof = Variant(rparent1, nsub)
 
       def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
-        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
         t.formula == apply(o.formula, smap) &&
           anc_correspondences.diff(t.ancestors).isEmpty &&
           t.ancestors.diff(anc_correspondences).isEmpty
@@ -134,7 +132,7 @@ object NameReplacement {
       }
 
       def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
-        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
         t.formula == apply(o.formula, smap) &&
           anc_correspondences.diff(t.ancestors).isEmpty &&
           t.ancestors.diff(anc_correspondences).isEmpty
@@ -151,7 +149,7 @@ object NameReplacement {
       var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
 
       def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
-        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
         t.formula == apply(o.formula, smap) &&
           anc_correspondences.diff(t.ancestors).isEmpty &&
           t.ancestors.diff(anc_correspondences).isEmpty
@@ -174,7 +172,7 @@ object NameReplacement {
         //println("anc matcher")
         //println(o); println(o.ancestors)
         //println(t); println(t.ancestors)
-        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
         //println(anc_correspondences)
         t.formula == apply(o.formula, smap) &&
         anc_correspondences.diff(t.ancestors).isEmpty &&
@@ -204,7 +202,7 @@ object NameReplacement {
         //println("anc matcher")
         //println(o); println(o.ancestors)
         //println(t); println(t.ancestors)
-        val anc_correspondences : immutable.Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
         //println(anc_correspondences)
         t.formula == apply(o.formula, smap) &&
           anc_correspondences.diff(t.ancestors).isEmpty &&
@@ -223,7 +221,7 @@ object NameReplacement {
 
   /* creates a mapping from elements in objects to targets. the predicate matches indicates when two elements should
      be considered to match each */
-  def find_matching[A,B](objects : immutable.List[A], targets : immutable.List[B], matches : (A,B) => Boolean  ) : immutable.Map[A,B] = {
+  def find_matching[A,B](objects : List[A], targets : List[B], matches : (A,B) => Boolean  ) : Map[A,B] = {
     objects match {
       case x::xs =>
         val (prefix, suffix) = targets.span(!matches(x,_))
@@ -234,7 +232,7 @@ object NameReplacement {
 
       case Nil =>
         if (targets.isEmpty)
-          immutable.Map[A,B]()
+          Map[A,B]()
         else
           throw new Exception("Want to create a matching of sets of different size! remaining elements: "+targets)
     }

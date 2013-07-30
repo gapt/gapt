@@ -18,7 +18,6 @@ import java.io.InputStreamReader
 import java.lang.StringBuilder
 
 import scala.collection.immutable.HashMap
-import scala.collection.immutable.Map
 
 trait Interpretation {
   // Interpret an atom.

@@ -67,7 +67,7 @@ package searchAlgorithms {
 
   /** A queue. Turns the generic search into a BFS. */
   class BFSColl[ElemType](val s:Queue[ElemType]) extends SearchCollection[ElemType] {
-    override def topElem : ElemType = { s.first }
+    override def topElem : ElemType = { s.head }
     override def popElem : BFSColl[ElemType] = { new BFSColl[ElemType](s.dequeue._2) }
     override def putElem(x:ElemType) : BFSColl[ElemType] = { new BFSColl[ElemType](s.enqueue(x)) }
     override def size = { s.size }

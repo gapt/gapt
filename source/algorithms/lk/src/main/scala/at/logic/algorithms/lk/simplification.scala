@@ -1,7 +1,5 @@
 package at.logic.algorithms.lk
 
-import scala.collection.immutable.Set
-import scala.collection.immutable.Seq
 import at.logic.algorithms.subsumption.VariantsDeletion
 import at.logic.calculi.lk.base.Sequent
 import at.logic.language.hol._

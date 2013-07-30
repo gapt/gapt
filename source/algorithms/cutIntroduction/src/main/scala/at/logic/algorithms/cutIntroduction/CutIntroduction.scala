@@ -16,7 +16,6 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
 import at.logic.language.lambda.typedLambdaCalculus._
-import scala.collection.immutable.Seq
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.shlk._
@@ -328,7 +327,7 @@ object CutIntroduction extends Logger {
     val contractSucc = ehs.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) =>
       ContractionRightRule(premise, f)
     }
-   
+
     // Instantiating constant terms from U
     val finalProof = uPart(grammar.u.filter(t => !t.freeVariables.contains(grammar.eigenvariable)), contractSucc, flatterms)
 
@@ -450,17 +449,15 @@ object CutIntroduction extends Logger {
   {
     val cl = l.pos.find( f => r.neg.contains(f) )
     if (cl != None)
-      /*TODO: the - method will be dropped from Seq in scala >= 2.10 as its semantics are not well defined
-        (will it remove all copies of cl.get or just the first -- but first is not well defined
-         because seqs might give different orders on multiple iterations etc. )
-         the scala team proposes to replace - with filterNot(_ == cl.get), but this removes all formulas.
-         another solution would be to work with FormulaOccurrences
-       */
-      new MyFClause[FOLFormula]( l.neg ++ (r.neg - cl.get) , (l.pos - cl.get) ++ r.pos )
+      //new MyFClause[FOLFormula]( l.neg ++ (r.neg - cl.get) , (l.pos - cl.get) ++ r.pos )
+      // Using diff to remove only one copy of cl.get (the - operator is deprecated)
+      new MyFClause[FOLFormula]( l.neg ++ ( r.neg.diff(List(cl.get)) ) , ( l.pos.diff(List(cl.get)) ) ++ r.pos )
     else
     {
       val cr = l.neg.find( f => r.pos.contains(f) ).get
-      new MyFClause[FOLFormula]( (l.neg - cr) ++ r.neg, l.pos ++ (r.pos - cr) )
+      //new MyFClause[FOLFormula]( (l.neg - cr) ++ r.neg, l.pos ++ (r.pos - cr) )
+      // Using diff to remove only one copy of cr (the - operator is deprecated)
+      new MyFClause[FOLFormula]( ( l.neg.diff(List(cr)) ) ++ r.neg, l.pos ++ ( r.pos.diff(List(cr)) ) )
     }
   }
 

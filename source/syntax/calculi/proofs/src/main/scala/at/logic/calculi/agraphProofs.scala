@@ -10,13 +10,12 @@ import occurrences._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.acyclicGraphs._
-import scala.collection.immutable.Set
 import proofs._
 
 package agraphProofs {
 
-import _root_.at.logic.utils.ds.acyclicGraphs.UnaryAGraph._
-import _root_.at.logic.utils.ds.trees._
+import at.logic.utils.ds.acyclicGraphs.UnaryAGraph._
+import at.logic.utils.ds.trees._
 import treeProofs._
 
   trait AGraphProof[V] extends AGraph[V] with Proof[V] {

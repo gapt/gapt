@@ -12,8 +12,7 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import scala.collection.immutable.Seq
-import scala.collection.immutable.{Map,HashMap}
+import scala.collection.immutable.HashMap
 
 import at.logic.calculi.lk.base.{FormulaNotExistsException,AuxiliaryFormulas,PrincipalFormulas,Sequent}
 import at.logic.calculi.occurrences._

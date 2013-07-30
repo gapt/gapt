@@ -1,13 +1,14 @@
 package at.logic.parsing.lisp
 
-import collection.{mutable, immutable}
 import java.io.FileReader
-import collection.immutable.PagedSeq
 import util.parsing.input.{NoPosition, Position, Reader, PagedSeqReader}
 import util.parsing.combinator.Parsers
 import util.parsing.combinator.RegexParsers
 import at.logic.parsing.lisp
 import util.parsing.combinator.PackratParsers
+import scala.collection.immutable.PagedSeq
+import scala.collection.mutable.WeakHashMap
+import scala.collection.immutable
 
 /**** Lisp SExpression Datatypes and Parser
  * This is a basic LISP S-expression parser, without quote character, macros or other fancy stuff.
@@ -19,7 +20,8 @@ import util.parsing.combinator.PackratParsers
  */
 
 
-/* Basic Lisp Datastructures: Atom, Cons and List -- be careful with namespace collisions in scala.*.List.
+/* Basic Lisp Datastructures: Atom, Cons and List 
+ * Namespace collisions in scala.*.List
  * Printing a Datastructure should output valid Lisp.
  */
 sealed class SExpression
@@ -33,7 +35,7 @@ case class List(elements : immutable.List[SExpression] ) extends SExpression {
   def ++(list2 : lisp.List) = lisp.List(elements ++ list2.elements)
 
   def lst2string[T](fun:(T=>String), seperator: String, l:immutable.List[T]) : String = l match {
-    case immutable.Nil => ""
+    case Nil => ""
     case immutable.List(x) => fun(x)
     case x :: xs => fun(x)  + seperator + lst2string(fun, seperator, xs)
   }
@@ -41,6 +43,7 @@ case class List(elements : immutable.List[SExpression] ) extends SExpression {
   override def toString = "("+ lst2string(((x:Any) => x.toString), " ", elements) + ")"
   //def prepend(head : SExpression, list : lisp.List) = lisp.List(head::list.list)
 }
+
 case class Cons(car: SExpression, cdr : SExpression) extends SExpression {
   override def toString = "( " + car + " . " + cdr + ")"
 }
@@ -106,7 +109,7 @@ object ListReader {
     val outer = map.get(full)
     outer match {
       case None =>
-        val m = new mutable.WeakHashMap[immutable.List[tokens.Token],ListReader]()
+        val m = new WeakHashMap[List[tokens.Token],ListReader]()
         val el =  new ListReader(toks,full)
         m(toks) = el
         el
@@ -122,8 +125,8 @@ object ListReader {
     }
   } */
 
-  val map = mutable.WeakHashMap[immutable.List[tokens.Token],
-    mutable.WeakHashMap[immutable.List[tokens.Token],ListReader]]()
+  val map = WeakHashMap[immutable.List[tokens.Token],
+    WeakHashMap[immutable.List[tokens.Token],ListReader]]()
 }
 class ListReader(val list : immutable.List[tokens.Token], val full : immutable.List[tokens.Token])
   extends Reader[tokens.Token] {
@@ -152,7 +155,7 @@ object IntPosition {
         p
     }
   } */
-  val map = mutable.WeakHashMap[Int, IntPosition]()
+  val map = WeakHashMap[Int, IntPosition]()
 }
 class IntPosition(val i:Int) extends Position {
   def line = i;
@@ -229,7 +232,7 @@ class SExpressionParser extends Parsers {
       val car ~ _ ~ cdr = exp
       cdr match {
         case lisp.List(elems) => lisp.List(car::elems)
-        case _ => lisp.Cons(car,cdr)
+        case _ => LispCons(car,cdr)
       }
 
     })

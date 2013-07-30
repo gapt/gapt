@@ -86,7 +86,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
 //      println("map:\n" + pair._2)
 //      println("\n\n\n\n")
 //      println("rename:\n" + pair._1)
-      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(IntZero()) )
+      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(IntZero()) )
       var subst = new SchemaSubstitution3(new_map)
       val gr = groundStruct(struct, subst)
       //println("\nground struct : \n"+gr)

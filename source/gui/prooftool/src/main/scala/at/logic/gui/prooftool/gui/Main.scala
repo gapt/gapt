@@ -12,7 +12,6 @@ import BorderPanel._
 import event.Key
 import swing.Dialog.Message
 import swing.Swing.EmptyIcon
-import scala.collection.immutable.Seq
 import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File}
 import javax.swing.filechooser.FileFilter
 import javax.swing.SwingUtilities

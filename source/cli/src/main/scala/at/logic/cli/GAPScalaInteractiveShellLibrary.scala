@@ -79,7 +79,7 @@ import java.io.{File, FileReader, FileInputStream, InputStreamReader, FileWriter
 import java.io.IOException
 import java.util.zip.GZIPInputStream
 
-import scala.collection.mutable.Map
+import scala.collection.mutable.{Map => MMap}
 
 package GAPScalaInteractiveShellLibrary {
 
@@ -185,9 +185,8 @@ object printProofStats {
 
   import at.logic.parsing.veriT._
   object loadVeriTProof {
-    def apply(fileName : String) = {
-      VeriTParser.read(fileName)
-    }
+    // NOTE: this method returns a proof in the form of an expansion proof
+    def apply(fileName : String) = VeriTParser.read(fileName)
   }
 
   object loadIvyProof {
@@ -291,7 +290,6 @@ object printProofStats {
 
   }
 
-
 /*************************************************************/
 
   object createHOLExpression {
@@ -304,7 +302,7 @@ object printProofStats {
 
   object deleteEquationalTautologies {
     private val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-    private val emptymap = Map[LambdaExpression, ConstantStringSymbol]()
+    private val emptymap = MMap[LambdaExpression, ConstantStringSymbol]()
       val acu = new MulACUEquality(List("+","*") map (new ConstantStringSymbol(_)), List("0","1") map (new ConstantStringSymbol(_)))
 
       def apply(ls : List[FSequent]) = ls.filterNot(_._2 exists ((f:HOLFormula) =>
@@ -522,13 +520,14 @@ object printProofStats {
       }
   }
 
-  // TODO: implement one that takes expansion trees
   object cutIntro {
     def apply( p: LKProof ) : LKProof = CutIntroduction(p)
+    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction(e)
   }
 
   object cutIntro2 {
     def apply( p: LKProof ) : LKProof = CutIntroduction.apply2(p)
+    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction.apply2(e)
   }
 
 /*****************************************************************************************/
@@ -722,10 +721,10 @@ object printProofStats {
   }
 
   object findDefinitions {
-    def apply(p: LKProof) = definitions_(p, collection.immutable.Map[HOLFormula, HOLFormula]())
+    def apply(p: LKProof) = definitions_(p, Map[HOLFormula, HOLFormula]())
 
-      def definitions_(p: LKProof, m : collection.immutable.Map[HOLFormula, HOLFormula])
-      : collection.immutable.Map[HOLFormula, HOLFormula] = p match {
+      def definitions_(p: LKProof, m : Map[HOLFormula, HOLFormula])
+      : Map[HOLFormula, HOLFormula] = p match {
         case DefinitionLeftRule(proof, root, a, p) =>
           //println("definition rule left! "+a+" "+p);
           definitions_(proof,m) + ((p.formula,a.formula));
@@ -799,7 +798,7 @@ object printProofStats {
         val trsClauseSch = dbTRSclauseSchema("c", Pair(c0, clauseSchBase), Pair(ck, clauseSchRec))
         // ----------
 
-        val map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], j) + Pair(l.asInstanceOf[Var], three)
+        val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], j) + Pair(l.asInstanceOf[Var], three)
         val subst = new SchemaSubstitution3(map)
 
         val sig = subst(trsSigma.map.get("σ").get._2._1)
@@ -878,7 +877,7 @@ object printProofStats {
         val trsSCLterm = dbTRSclauseSetTerm("d1", pair1base, pair1step)
         trsSCLterm.add("d2", pair2base, pair2step)
 
-        val map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], j)
+        val map = Map[Var, HOLExpression]() + Pair(k.asInstanceOf[Var], j)
         val subst = new SchemaSubstitution3(map)
         println("\n\n\n\n\n\ninstantiating = "+d1step)
         val d1step_ground = applySubToSclauseOrSclauseTerm(subst, d1step)
@@ -886,7 +885,7 @@ object printProofStats {
 
         val unfold_d1step_ground = unfoldClauseSetTerm(d1step_ground, trsSCLterm, trsClauseSch, trsSigma, subst, false, false)
         println("\nclause-set term = "+unfold_d1step_ground)
-        val mapX = scala.collection.immutable.Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
+        val mapX = Map[sClauseVar, sClause]() + Pair(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
 
         val rwd1step_ground = RewriteClauseSchemaInSclauseTerm(unfold_d1step_ground, trsClauseSch, trsSigma, subst, mapX)
         println("\nrewriting = "+rwd1step_ground)
@@ -1045,6 +1044,7 @@ object printProofStats {
           |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
           |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
           |   loadHLK : String => LKProof - load a proof in the HLK 2 format from given filename
+          |   loadVeriTProof : String => (Seq[ExpansionTree], Seq[ExpansionTree]) - loads a veriT proof in the form of an expansion proof.
           |   exportXML: List[Proof], List[String], String => Unit
           |   exportTPTP: List[Proof], List[String], String => Unit
           |

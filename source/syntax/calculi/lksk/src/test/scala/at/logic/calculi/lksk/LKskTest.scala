@@ -7,7 +7,7 @@
 
 package at.logic.calculi.lksk
 
-import _root_.at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.occurrences.FormulaOccurrence
 import base._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
@@ -21,7 +21,6 @@ import at.logic.language.lambda.symbols._
 import base.LKskFOFactory._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.symbols.ImplicitConverters._
-import scala.collection.immutable._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.propositionalRules.{OrLeftRule, Axiom => LKAxiom}

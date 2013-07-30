@@ -18,7 +18,7 @@ WeakeningLeftRule => LKskWeakeningLeftRule,
 WeakeningRightRule => LKskWeakeningRightRule,
 ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule}
 
-import scala.collection.mutable.{Map, HashMap}
+import scala.collection.immutable.HashMap
 
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.definitionRules._
@@ -190,7 +190,7 @@ object applySchemaSubstitution {
       RemoveEqRulesFromGroundSchemaProof(SchemaProofDB.get(proof_name).base)
     else {
       val k = IntVar(new VariableStringSymbol("k")) ;
-      val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
+      val new_map = Map[Var, HOLExpression]() + Pair(k, toIntegerTerm(number-1))
       val subst = new SchemaSubstitution1[HOLExpression](new_map)
       RemoveEqRulesFromGroundSchemaProof(apply(SchemaProofDB.get(proof_name).rec, subst, number))
     }
@@ -320,7 +320,7 @@ object checkProofLinks1 {
         val ps = SchemaProofDB.get( name )
         // FIXME: cast needed???
 //        val sub = new SchemaSubstitution(ps.vars.zip(indices.asInstanceOf[List[HOLExpression]]))
-        val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(ps.vars.head, indices.head)
+        val new_map = Map[Var, HOLExpression]() + Pair(ps.vars.head, indices.head)
         val sub = new SchemaSubstitution1[HOLExpression](new_map)
      //   require( substitute(sub, ps.seq) == so.getSequent, "Proof Link to proof " + name + "(" + indices + ") with sequent " + so.getSequent + " incorrect!")
 

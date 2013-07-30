@@ -15,7 +15,6 @@ import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.types.TA
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
@@ -27,11 +26,12 @@ import at.logic.language.hol.And
 import at.logic.language.hol.Or
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.hol.Imp
-import scala.Tuple4
 import at.logic.language.lambda.types.->
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.schema.IntZero
+import scala.Tuple4
 import scala.Tuple2
+import collection.mutable.Map
 
 object sFOParser {
 
@@ -333,7 +333,7 @@ object sFOParser {
           }
 //          println("\n\nIndexedPredicate");
 
-//          val map: scala.collection.immutable.Map[Var, T])
+//          val map: Map[Var, T])
 //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
 //          val new_ind = subst(ind)
 //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )

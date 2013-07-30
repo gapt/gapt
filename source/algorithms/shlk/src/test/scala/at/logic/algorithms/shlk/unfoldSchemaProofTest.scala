@@ -28,7 +28,6 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.definitionRules._
-import scala.collection.immutable.Seq
 import at.logic.parsing.readers.StringReader
 import java.io.File.separator
 import org.specs2.execute.Success
@@ -138,7 +137,7 @@ val prh = SchemaProofLinkRule(Pair(BigAnd(i,A,zero,k) +: Seq.empty[HOLFormula], 
     SchemaProofDB.clear
 //    val chi = new SchemaProof( "\\chi", n::Nil, Pair(BigAnd(i,A,zero,n) +: Seq.empty[HOLFormula], BigAnd(i,A,zero,n) +: Seq.empty[HOLFormula]), chi0, chin )
 //    SchemaProofDB.put( chi )
-//    val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
+//    val new_map = Map[Var, HOLExpression]() + Pair(n, one)
 //    val subst = new SchemaSubstitution1[HOLExpression](new_map)
 //    val chi1 = applySchemaSubstitution(chi, subst)
  //   Main.display("chi", chi1) ; while(true){}
@@ -212,7 +211,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
      //        printSchemaProof( step )
 
 
-//         val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
+//         val new_map = Map[Var, HOLExpression]() + Pair(n, one)
 //         val subst = new SchemaSubstitution1[HOLExpression](new_map)
 //         val psi1 = applySchemaSubstitution(psi, subst)
     //     Main.display("psi1", applySchemaSubstitution(psi, subst)) ; while(true) {}
@@ -252,7 +251,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
           val An3 = IndexedPredicate(new ConstantStringSymbol("A"), n3)
           val An1 = IndexedPredicate(new ConstantStringSymbol("A"), n1)
           val b = BigAnd(i, A, zero, n3)
-          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, two)
+          val new_map = Map[Var, HOLExpression]() + Pair(k, two)
           val subst = new SchemaSubstitution1[HOLExpression](new_map)
 
 //          StepMinusOne(map.get("phi").get._2.get("root").get, k)

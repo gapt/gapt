@@ -1,10 +1,7 @@
 
 package at.logic.algorithms.interpolation
 
-import scala.collection.immutable.Set
-
 import at.logic.language.hol._
-
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.macroRules._

@@ -178,7 +178,7 @@ object ParseResSchema {
 //          }
 //          //          println("\n\nIndexedPredicate");
 //
-//          //          val map: scala.collection.immutable.Map[Var, T])
+//          //          val map: Map[Var, T])
 //          //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
 //          //          val new_ind = subst(ind)
 //          //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )

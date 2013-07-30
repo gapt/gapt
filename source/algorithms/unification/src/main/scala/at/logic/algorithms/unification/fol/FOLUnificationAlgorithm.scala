@@ -13,7 +13,6 @@ import at.logic.language.fol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.base.types._
-import collection.immutable.Seq
 
 object FOLUnificationAlgorithm extends UnificationAlgorithm[FOLExpression] {
 

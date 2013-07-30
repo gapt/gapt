@@ -32,7 +32,7 @@ object TermsExtraction {
 
   // If all the quantified formulas have only one quantifier, each list of
   // the list will have only one element
-  // TODO: make this method use the apply for expansioTree by extracting this
+  // TODO: make this method use the apply for expansionTree by extracting this
   // tree from the proof
   def apply(proof: LKProof) : Map[FOLFormula, List[List[FOLTerm]]] = {
     val es = proof.root

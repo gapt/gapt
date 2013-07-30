@@ -24,7 +24,6 @@ import at.logic.language.lambda.types.To
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.schema.IntZero
-import scala.collection.immutable
 import at.logic.calculi.resolution.base.Clause
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.language.lambda.substitutions.Substitution
@@ -134,12 +133,12 @@ object ACNF {
 //    ground_proj_set.foreach(p => println(printSchemaProof.sequentToString(p.root)))
     val end_seq = if (n == 0) {
       val ro = p1base.root
-      val new_map1 = scala.collection.immutable.Map.empty[Var, HOLExpression] + Pair(k, IntZero() )
+      val new_map1 = Map.empty[Var, HOLExpression] + Pair(k, IntZero() )
       var subst = new SchemaSubstitution1(new_map1)
       FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])))
     } else {
       val ro = p1rec.root
-      val new_map1 = scala.collection.immutable.Map.empty[Var, HOLExpression] + Pair(k, applySchemaSubstitution.toIntegerTerm(n-1) )
+      val new_map1 = Map.empty[Var, HOLExpression] + Pair(k, applySchemaSubstitution.toIntegerTerm(n-1) )
       var subst = new SchemaSubstitution1(new_map1)
       FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula).asInstanceOf[HOLFormula])))
     }
@@ -148,7 +147,7 @@ object ACNF {
 
   /*
   //this only works for regular first order proofs
-  def calculateGroundSubstitutions(proj : immutable.Set[LKProof], rp : RobinsonResolutionProof) : List[(HOLVar, HOLExpression)] = {
+  def calculateGroundSubstitutions(proj : Set[LKProof], rp : RobinsonResolutionProof) : List[(HOLVar, HOLExpression)] = {
     //collect the initial axioms
     val raxioms : List[Clause] = rp.nodes.foldLeft(List[Clause]())( (list,el) =>
       el match {
@@ -318,8 +317,8 @@ object SubstituteProof {
   def apply(proof: LKProof, sub:Substitution[HOLExpression]) : LKProof = proof match {
     case Axiom(s) =>
       val fs = s.toFSequent
-      val ant : immutable.Seq[Formula] = fs.antecedent.map(sub(_).asInstanceOf[Formula])
-      val suc : immutable.Seq[Formula] = fs.succedent.map(sub(_).asInstanceOf[Formula])
+      val ant : Seq[Formula] = fs.antecedent.map(sub(_).asInstanceOf[Formula])
+      val suc : Seq[Formula] = fs.succedent.map(sub(_).asInstanceOf[Formula])
       val inf = Axiom(ant, suc )
       inf
 

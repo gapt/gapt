@@ -11,12 +11,12 @@ import at.logic.transformations.ceres.struct._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lksk.base._
 import at.logic.calculi.occurrences._
-import scala.collection.immutable._
 import at.logic.language.schema.IndexedPredicate
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.types.{To, Tindex}
 import at.logic.language.hol.{HOLExpression, HOLApp, HOLConst, HOLFormula}
 import types.FSequent
+import scala.collection.immutable.HashSet
 
 object StandardClauseSet {
   def normalize(struct:Struct):Struct = struct match {

@@ -16,8 +16,6 @@ import base._
 
 package propositionalRules {
 
-import collection.immutable.Seq
-
   // axioms
   case object InitialRuleType extends NullaryRuleTypeA
 

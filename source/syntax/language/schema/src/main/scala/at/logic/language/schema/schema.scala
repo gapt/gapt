@@ -16,7 +16,6 @@ import at.logic.language.hol.HOLFactory
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.hol.Definitions._
 import at.logic.language.lambda.typedLambdaCalculus.Var._
-import collection.immutable.HashSet
 
 // propositiopnal
 trait Schema extends HOL {
@@ -83,7 +82,7 @@ object unfoldSTerm {
         if (i == IntZero()) {
 //          println("i == IntZero()")
           val base = dbTRS.map.get(func).get._1._2
-          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg.head)
+          val new_map = Map[Var, HOLExpression]() + Pair(x, arg.head)
           val subst = new SchemaSubstitution2[HOLExpression](new_map)
           subst(base)
         }
@@ -138,7 +137,7 @@ object unfoldSINDTerm {
         if (i == IntZero()) {
           val base = dbTRS.map.get(func).get._1._2
           base
-          //          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(x, arg.head)
+          //          val new_map = Map[Var, HOLExpression]() + Pair(x, arg.head)
           //          val subst = new SchemaSubstitution2[HOLExpression](new_map)
           //          subst(base)
         }
@@ -147,7 +146,7 @@ object unfoldSINDTerm {
           t
         else {
           val step = dbTRS.map.get(func).get._2._2
-          val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(k, Pred(i.asInstanceOf[IntegerTerm]))
+          val new_map = Map[Var, HOLExpression]() + Pair(k, Pred(i.asInstanceOf[IntegerTerm]))
           val subst = new SchemaSubstitution2[HOLExpression](new_map)
           subst(step)
         }
@@ -509,7 +508,7 @@ object SchemaFactory extends LambdaFactoryA {
 }
 
 //this substitution works for IntVar Only. It gives an instance of a schema.
-class SchemaSubstitution[T <: HOLExpression](map: scala.collection.immutable.Map[Var, T]) extends Substitution[T](map) {
+class SchemaSubstitution[T <: HOLExpression](map: Map[Var, T]) extends Substitution[T](map) {
    override def applyWithChangeDBIndices(expression: T, protectedVars: List[Var]): T = expression match {
       case x:IntVar if !(protectedVars.contains(x)) => {
           map.get(x) match {
@@ -615,7 +614,7 @@ object fowVar{
   }
 }
 
-class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
+class SchemaSubstitution1[T <: HOLExpression](val map: Map[Var, T])  {
   def apply(expression: T): T =  {
 //    println("sub1, expression = "+expression)
     expression match {
@@ -669,7 +668,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutabl
 */
 }
 
-class SchemaSubstitution2[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
+class SchemaSubstitution2[T <: HOLExpression](val map: Map[Var, T])  {
   def apply(expression: T): T = {
 //    println("subst")
     expression match {
@@ -788,7 +787,7 @@ object leq {
   }
 }
 
-class SchemaSubstitutionCNF(val map: scala.collection.immutable.Map[Var, HOLExpression])  {
+class SchemaSubstitutionCNF(val map: Map[Var, HOLExpression])  {
   def apply(expression: HOLExpression): HOLExpression = {
     //    println("subst")
     expression match {

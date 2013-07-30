@@ -148,11 +148,99 @@ package statistics {
       case AndLeftEquivalenceRule3(p, _, _, _) => apply(p)
       case AndRightEquivalenceRule3(p, _, _, _) => apply(p)
       case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
-      case OrRightEquivalenceRule3(p, _, _, _) => apply(p) 
+      case OrRightEquivalenceRule3(p, _, _, _) => apply(p)       
+      // Equality rules
+      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      
       case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
     }
   }
 
+  // Get the number of contractions left in a proof
+  object contLeftNumber {
+    def apply(p: LKProof) : Int = p match {
+      case Axiom(s)  => 0
+      case WeakeningLeftRule(p, _, _) => apply(p)
+      case WeakeningRightRule(p, _, _) => apply(p)
+      case ContractionLeftRule(p, _, _, _, _) => apply(p) + 1
+      case ContractionRightRule(p, _, _, _, _) => apply(p)
+      case NegLeftRule(p, _, _, _) => apply(p)
+      case NegRightRule(p, _, _, _) => apply(p)
+      case AndLeft1Rule(p, _, _, _) => apply(p)
+      case AndLeft2Rule(p, _, _, _) => apply(p)
+      case AndRightRule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case OrRight1Rule(p, _, _, _) => apply(p)
+      case OrRight2Rule(p, _, _, _) => apply(p)
+      case OrLeftRule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case ImpLeftRule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case ImpRightRule(p, _, _, _, _) => apply(p)
+      case ForallLeftRule(p, _, _, _, _) => apply(p)
+      case ForallRightRule(p, _, _, _, _) => apply(p)
+      case ExistsLeftRule(p, _, _, _, _) => apply(p)
+      case ExistsRightRule(p, _, _, _, _) => apply(p)
+      case CutRule(p1, p2, _, _, _) => apply(p1) + apply(p2)
+      // Schema rules
+      case AndLeftEquivalenceRule1(p, _, _, _) => apply(p)
+      case AndRightEquivalenceRule1(p, _, _, _) => apply(p) 
+      case OrLeftEquivalenceRule1(p, _, _, _) => apply(p)
+      case OrRightEquivalenceRule1(p, _, _, _) => apply(p)
+      case AndLeftEquivalenceRule3(p, _, _, _) => apply(p)
+      case AndRightEquivalenceRule3(p, _, _, _) => apply(p)
+      case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
+      case OrRightEquivalenceRule3(p, _, _, _) => apply(p)     
+      // Equality rules
+      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      
+      case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
+    }
+  }
 
+  // Get the number of contractions right in a proof
+  object contRightNumber {
+    def apply(p: LKProof) : Int = p match {
+      case Axiom(s)  => 0
+      case WeakeningLeftRule(p, _, _) => apply(p)
+      case WeakeningRightRule(p, _, _) => apply(p)
+      case ContractionLeftRule(p, _, _, _, _) => apply(p)
+      case ContractionRightRule(p, _, _, _, _) => apply(p) + 1
+      case NegLeftRule(p, _, _, _) => apply(p)
+      case NegRightRule(p, _, _, _) => apply(p)
+      case AndLeft1Rule(p, _, _, _) => apply(p)
+      case AndLeft2Rule(p, _, _, _) => apply(p)
+      case AndRightRule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case OrRight1Rule(p, _, _, _) => apply(p)
+      case OrRight2Rule(p, _, _, _) => apply(p)
+      case OrLeftRule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case ImpLeftRule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case ImpRightRule(p, _, _, _, _) => apply(p)
+      case ForallLeftRule(p, _, _, _, _) => apply(p)
+      case ForallRightRule(p, _, _, _, _) => apply(p)
+      case ExistsLeftRule(p, _, _, _, _) => apply(p)
+      case ExistsRightRule(p, _, _, _, _) => apply(p)
+      case CutRule(p1, p2, _, _, _) => apply(p1) + apply(p2)
+      // Schema rules
+      case AndLeftEquivalenceRule1(p, _, _, _) => apply(p)
+      case AndRightEquivalenceRule1(p, _, _, _) => apply(p) 
+      case OrLeftEquivalenceRule1(p, _, _, _) => apply(p)
+      case OrRightEquivalenceRule1(p, _, _, _) => apply(p)
+      case AndLeftEquivalenceRule3(p, _, _, _) => apply(p)
+      case AndRightEquivalenceRule3(p, _, _, _) => apply(p)
+      case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
+      case OrRightEquivalenceRule3(p, _, _, _) => apply(p)     
+      // Equality rules
+      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      
+      case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
+    }
+  }
 
 }

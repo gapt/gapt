@@ -16,7 +16,6 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types.ImplicitConverters._
-import collection.immutable.Seq
 
 object Definitions { def fol = FOLFactory }
 

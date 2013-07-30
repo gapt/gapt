@@ -17,8 +17,6 @@ import org.specs2.mutable._
 import org.scalacheck._
 import org.scalacheck.Prop._
 
-import scala.collection.immutable.Set
-
 import org.specs2.matcher._
 //import org.scalatest.matchers.{ MatchResult, Matcher }
 

@@ -27,7 +27,7 @@ import at.logic.calculi.slk._
 import at.logic.language.lambda.symbols._
 import at.logic.utils.ds.Multisets._
 
-import scala.collection.immutable.{HashSet, Set}
+import scala.collection.immutable.HashSet
 import at.logic.calculi.lk.base.types.FSequent
 
 // for debugging
@@ -678,7 +678,7 @@ import at.logic.language.schema.SchemaFormula
                 //TODO: take into account the omega-ancestors
                 val struct = StructCreators.extract(step, getCutAncestors(step))
                 println("struct : "+struct)
-                val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(l.asInstanceOf[IntegerTerm]))
+                val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(l.asInstanceOf[IntegerTerm]))
                 val new_subst = new SchemaSubstitution3(new_map)
                 val gr_struct = groundStruct(struct, new_subst)
                 println("ground struct : "+gr_struct)

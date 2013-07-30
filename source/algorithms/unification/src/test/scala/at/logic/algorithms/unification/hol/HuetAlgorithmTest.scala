@@ -11,7 +11,7 @@ package at.logic.algorithms.unification.hol
 import at.logic.algorithms.unification.hol.huet._
 import at.logic.language.lambda.BetaReduction
 import at.logic.language.lambda.BetaReduction._
-import scala.collection.immutable.{Map, HashMap}
+import scala.collection.immutable.HashMap
 import at.logic.language.lambda.substitutions.Substitution
 import org.specs2.mutable._
 import org.junit.runner.RunWith

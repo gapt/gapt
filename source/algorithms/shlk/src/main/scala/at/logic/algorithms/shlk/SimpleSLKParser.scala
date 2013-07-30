@@ -14,7 +14,6 @@ import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.types.TA
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import collection.mutable.Map
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
@@ -22,6 +21,7 @@ import java.io.InputStreamReader
 import at.logic.language.schema.{sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 import at.logic.calculi.lk.base.FSequent._
 import at.logic.calculi.lk.base.{FSequent, types, Sequent, LKProof}
+import collection.mutable.Map
 
 object SHLK {
 
@@ -285,7 +285,7 @@ object SHLK {
           }
 //          println("\n\nIndexedPredicate");
 
-//          val map: scala.collection.immutable.Map[Var, T])
+//          val map: Map[Var, T])
 //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
 //          val new_ind = subst(ind)
 //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
@@ -632,7 +632,7 @@ object SHLK {
 /* Moved to schema.scala in languages package. After checking is everything is
  * fine, delete this from here.
 
-class SchemaSubstitution1[T <: HOLExpression](val map: scala.collection.immutable.Map[Var, T])  {
+class SchemaSubstitution1[T <: HOLExpression](val map: Map[Var, T])  {
   import at.logic.language.schema._
 
   def apply(expression: T): T = expression match {

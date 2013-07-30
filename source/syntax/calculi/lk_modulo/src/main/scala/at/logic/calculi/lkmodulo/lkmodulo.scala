@@ -1,21 +1,20 @@
 package at.logic.calculi.lkmodulo
 
-import _root_.at.logic.calculi.proofs.UnaryRuleTypeA
+import at.logic.calculi.proofs.UnaryRuleTypeA
 import at.logic.language.fol.{Equation => FOLEquation, _}
-import _root_.at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
-import _root_.at.logic.language.hol.{Formula, HOLFormula, HOLExpression}
-import _root_.at.logic.language.lambda.substitutions.Substitution
-import _root_.at.logic.language.lambda.symbols.{SymbolA, VariableSymbolA, VariableStringSymbol}
-import _root_.at.logic.language.lambda.typedLambdaCalculus._
-import _root_.at.logic.language.lambda.types.{To, Ti, TA, ->}
-import _root_.at.logic.parsing.readers.StringReader
+import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
+import at.logic.language.hol.{Formula, HOLFormula, HOLExpression}
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.symbols.{SymbolA, VariableSymbolA, VariableStringSymbol}
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.types.{To, Ti, TA, ->}
+import at.logic.parsing.readers.StringReader
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lk._
 import collection.immutable.{HashMap, HashSet}
 import collection.mutable.StringBuilder
 import math.Ordering.String
 import at.logic.parsing.language.simple.SimpleFOLParser
-import scala.collection.immutable
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
@@ -111,7 +110,7 @@ object Renaming {
     tptp_renaming_of(f, f.symbols.map(_.toString).toSet)
   }
 
-  def tptp_renaming_of(f : FOLFormula, blacklist : immutable.Set[String]) = {
+  def tptp_renaming_of(f : FOLFormula, blacklist : Set[String]) = {
 
 
 

@@ -1,19 +1,18 @@
 package at.logic.algorithms.unification
 
-import _root_.at.logic.algorithms.diophantine.Vector
-import _root_.at.logic.calculi.lk.base.types.FSequent
-import _root_.at.logic.calculi.lk.base.{Sequent, FSequent}
-import _root_.at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
-import _root_.at.logic.language.hol.{HOL, HOLFormula}
-import _root_.at.logic.parsing.language.simple.SimpleFOLParser
-import _root_.at.logic.parsing.readers.StringReader
+import at.logic.algorithms.diophantine.Vector
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.{Sequent, FSequent}
+import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
+import at.logic.language.hol.{HOL, HOLFormula}
+import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.parsing.readers.StringReader
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus.Var
-import scala.collection.immutable.Seq
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.Expectable
 import org.specs2.execute.Skipped

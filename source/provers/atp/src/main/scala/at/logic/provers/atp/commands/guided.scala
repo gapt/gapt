@@ -5,15 +5,14 @@ package at.logic.provers.atp.commands
  */
 package guided {
 
-import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.robinson.{InitialClause}
+import at.logic.calculi.resolution.base.ResolutionProof
+import at.logic.calculi.resolution.robinson.{InitialClause}
 import at.logic.calculi.resolution.base.Clause
-import _root_.at.logic.language.fol.FOLFormula
-import _root_.at.logic.provers.atp.Definitions._
+import at.logic.language.fol.FOLFormula
+import at.logic.provers.atp.Definitions._
 import base.DataCommand
-import _root_.at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.occurrences._
-import scala.collection.immutable.Seq
 import scala.collection.mutable.Map
 
   case class GetGuidedClausesCommand(parentIds: Iterable[String]) extends DataCommand[Clause] {

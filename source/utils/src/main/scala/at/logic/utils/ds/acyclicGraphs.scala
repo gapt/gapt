@@ -9,6 +9,7 @@ package at.logic.utils.ds
 
 import at.logic.utils.ds.graphs._
 import at.logic.utils.logging.Logger
+import scala.collection.immutable.{HashSet, HashMap}
 
 // it should be called conntected acyclic graphs as it always generates connected components
 // important note! The current equality between trees always refer to pointers equality and ignore the vertex. Two notes about it:
@@ -17,19 +18,15 @@ import at.logic.utils.logging.Logger
 // 2) in case a different behavior is expected, the different agraphs should be extended and the equals method be override, but again, as we deal with immutable objects, only the roots should be compared.
 package acyclicGraphs {
 
-import collection.immutable
-
 trait AGraph[+V] extends Graph[V] {
-  import collection.mutable
-  import collection.immutable
 
     val vertex: V
     def name: String // used to contain more information about the AGraph, like rule names in LK
     def contains[T >: AGraph[V]](sub: T): Boolean
 
   /* collects all subnodes visiting each node only once */
-  def nodes[_ >: V] () : immutable.HashSet[AGraph[_]] = nodes(immutable.HashSet[AGraph[_]]())
-  def nodes[_ >: V](visited : immutable.HashSet[AGraph[_]]) : immutable.HashSet[AGraph[_]] =
+  def nodes[_ >: V] () : HashSet[AGraph[_]] = nodes(HashSet[AGraph[_]]())
+  def nodes[_ >: V](visited : HashSet[AGraph[_]]) : HashSet[AGraph[_]] =
     if (visited contains this)
       visited
     else this match {
@@ -48,8 +45,8 @@ trait AGraph[+V] extends Graph[V] {
   def unique_size = nodes.size
 
   /* number of nodes in proof */
-  def size[_ >: V] () : Int = size(immutable.HashMap[AGraph[_], Int]())(this)
-  def size[_ >: V](visited : immutable.Map[AGraph[_], Int]) : immutable.Map[AGraph[_],Int] =
+  def size[_ >: V] () : Int = size(HashMap[AGraph[_], Int]())(this)
+  def size[_ >: V](visited : Map[AGraph[_], Int]) : Map[AGraph[_],Int] =
     if (visited contains this)
       visited
     else this match {

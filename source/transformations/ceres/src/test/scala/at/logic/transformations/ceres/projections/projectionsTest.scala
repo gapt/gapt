@@ -33,7 +33,6 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.definitionRules._
-import scala.collection.immutable.Seq
 import at.logic.language.lambda.types.{To, ->, Ti}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.schema._
@@ -153,7 +152,7 @@ val end = chin
 SchemaProofDB.clear
 val chi = new SchemaProof( "\\chi", n::Nil, FSequent(BigAnd(i,A,zero,n) +: Nil, BigAnd(i,A,zero,n) +: Nil), chi0, chin )
 SchemaProofDB.put( chi )
-//    val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
+//    val new_map = Map[Var, HOLExpression]() + Pair(n, one)
 //    val subst = new SchemaSubstitution1[HOLExpression](new_map)
 //    val chi1 = applySchemaSubstitution(chi, subst)
 //   Main.display("chi", chi1) ; while(true){}
@@ -224,7 +223,7 @@ val pl13 = OrRightRule(negr33, Neg(A0), BigAnd(i,A,zero,n2))
 //        printSchemaProof( step )
 
 
-//         val new_map = scala.collection.immutable.Map[Var, HOLExpression]() + Pair(n, one)
+//         val new_map = Map[Var, HOLExpression]() + Pair(n, one)
 //         val subst = new SchemaSubstitution1[HOLExpression](new_map)
  //val psi1 = applySchemaSubstitution(psi, subst)
 //     Main.display("psi1", applySchemaSubstitution(psi, subst)) ; while(true) {}

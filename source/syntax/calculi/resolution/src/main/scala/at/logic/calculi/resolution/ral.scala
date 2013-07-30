@@ -13,7 +13,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.acyclicGraphs._
-import scala.collection.immutable.{Seq,HashSet}
+import scala.collection.immutable.HashSet
 import scala.collection.mutable.Map
 import at.logic.language.lambda.substitutions._
 import base._

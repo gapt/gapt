@@ -126,7 +126,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val a = new MyParser("a").getTerm
      val c = new MyParser("c").getTerm
 //     val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
-//     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
+//     val m: Map[Var, LambdaExpression] = Map()
 //     val t = new FOLMatchingAlgorithm.MatchingSubstitution(l, m.+((x1.asInstanceOf[Var],a))++m.+((x3.asInstanceOf[Var],c))).apply(term)
 //     println("\n\n\n  term = "+term.toString+"\n\n")
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
@@ -150,7 +150,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val P2:FOLFormula  = AllVar(x1,Atom(new ConstantStringSymbol("P"), c.asInstanceOf[FOLConst]::term2.asInstanceOf[FOLTerm]::Nil))
 //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
-//     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
+//     val m: Map[Var, LambdaExpression] = Map()
 //     val t = new FOLMatchingAlgorithm.MatchingSubstitution(l, m.+((x1.asInstanceOf[Var],a))++m.+((x3.asInstanceOf[Var],c))).apply(term)
 //     println("\n\n\n  term = "+term.toString+"\n\n")
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
@@ -173,7 +173,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val P2:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), c.asInstanceOf[FOLConst]::term2.asInstanceOf[FOLTerm]::Nil), Atom(new ConstantStringSymbol("Q"), c.asInstanceOf[FOLConst]::Nil))
 //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
-//     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
+//     val m: Map[Var, LambdaExpression] = Map()
 //     val t = new FOLMatchingAlgorithm.MatchingSubstitution(l, m.+((x1.asInstanceOf[Var],a))++m.+((x3.asInstanceOf[Var],c))).apply(term)
 //     println("\n\n\n  term = "+term.toString+"\n\n")
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
@@ -199,7 +199,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val P2:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), term2::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
 //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
-//     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
+//     val m: Map[Var, LambdaExpression] = Map()
 //     val t = new FOLMatchingAlgorithm.MatchingSubstitution(l, m.+((x1.asInstanceOf[Var],a))++m.+((x3.asInstanceOf[Var],c))).apply(term)
 //     println("\n\n\n  term = "+term.toString+"\n\n")
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")
@@ -224,7 +224,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
      val P2:FOLFormula  = And(Atom(new ConstantStringSymbol("P"), term2::Nil), Atom(new ConstantStringSymbol("Q"), c::Nil))
 //    val l =  (new MyParser("x3").getTerm.asInstanceOf[Var])::Nil
      val l =  (x1.asInstanceOf[Var]::x3.asInstanceOf[Var]::Nil)
-//     val m: scala.collection.immutable.Map[Var, LambdaExpression] = Map()
+//     val m: Map[Var, LambdaExpression] = Map()
 //     val t = new FOLMatchingAlgorithm.MatchingSubstitution(l, m.+((x1.asInstanceOf[Var],a))++m.+((x3.asInstanceOf[Var],c))).apply(term)
 //     println("\n\n\n  term = "+term.toString+"\n\n")
 //     println("\n\n\n  term = "+term.toStringSimple+"\n\n")

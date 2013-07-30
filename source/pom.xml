@@ -138,7 +138,16 @@
 				<version>${scala-maven-plugin.version}</version>
 				<configuration>
 				  <recompileMode>incremental</recompileMode>
-                  <useZincServer>true</useZincServer>
+          <useZincServer>true</useZincServer>
+          <args>
+            <arg>-unchecked</arg>
+            <arg>-deprecation</arg>
+            <arg>-explaintypes</arg>
+          </args>
+          <javacArgs>
+            <javacArg>-Xlint:unchecked</javacArg>
+            <javacArg>-Xlint:deprecation</javacArg>
+          </javacArgs>
 				</configuration>
 				<executions>
 					<execution>

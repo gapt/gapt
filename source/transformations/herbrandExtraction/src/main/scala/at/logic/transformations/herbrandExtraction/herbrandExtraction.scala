@@ -14,7 +14,6 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.language.hol._
 import at.logic.calculi.occurrences._
-import scala.collection.immutable._
 import at.logic.calculi.lk.base.types._
 
 class HerbrandExtractionException(msg: String) extends Exception(msg)

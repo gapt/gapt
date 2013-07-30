@@ -12,7 +12,6 @@ import at.logic.utils.ds.trees._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
-import scala.collection.immutable.Seq
 import at.logic.utils.traits.Occurrence
 import at.logic.calculi.lk.propositionalRules.{ContractionRightRuleType, ContractionLeftRuleType, CutRuleType, Axiom}
 import scala.Some

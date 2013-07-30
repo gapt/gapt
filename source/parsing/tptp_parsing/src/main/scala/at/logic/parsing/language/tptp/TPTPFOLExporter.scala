@@ -7,13 +7,12 @@
 
 package at.logic.parsing.language.tptp
 
-import _root_.at.logic.language.fol._
+import at.logic.language.fol._
 import at.logic.language.hol.{Neg => HOLNEG, HOLFormula, Or => HOLOR}
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base.types.FSequent
-import scala.collection.immutable.HashMap
 import at.logic.algorithms.fol.hol2fol._
-import collection.immutable.List._
+import scala.collection.immutable.HashMap
 
 object TPTPFOLExporter {
   // FIXME: this should not be here!

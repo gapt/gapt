@@ -11,7 +11,7 @@ package at.logic.algorithms.unification.hol
 package huet {
 
 import at.logic.language.lambda.etaExpansion._
-import scala.collection.immutable.{Map, HashMap}
+import scala.collection.immutable.HashMap
 import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
 import at.logic.language.lambda.types. {->, Ti, TA, FunctionType}
 import at.logic.language.lambda.symbols.VariableStringSymbol
@@ -22,7 +22,7 @@ import at.logic.language.hol.HOLExpression
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.etaExpansion.EtaExpand
-import scala.collection.mutable.Set
+import scala.collection.mutable.{Set => MSet}
 import at.logic.utils.executionModels.ndStream.{NDStream, Configuration}
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction
@@ -56,7 +56,7 @@ import at.logic.language.lambda.BetaReduction
     private[huet] object MyFun extends Function1[Configuration[Substitution[HOLExpression]], List[Configuration[Substitution[HOLExpression]]]] {
 
       def apply(conf2: Configuration[Substitution[HOLExpression]]): List[Configuration[Substitution[HOLExpression]]] = {
-        implicit val disAllowedVars: Set[Var] = Set[Var]()
+        implicit val disAllowedVars: MSet[Var] = MSet[Var]()
         val conf = conf2.asInstanceOf[MyConfiguration]
 //        println("\n\nconf = "+conf.toStr)
         if (inPreSolvedForm(conf.uproblems)) {
@@ -238,13 +238,13 @@ import at.logic.language.lambda.BetaReduction
     }
 
     def etaBetaNormalization(uprobl : List[Pair[HOLExpression, HOLExpression]]) : List[Pair[HOLExpression, HOLExpression]] = {
-      uprobl.map(x => Tuple2(BetaReduction.betaNormalize(EtaNormalize(x._1)(Set[Var]()))(Outermost) , BetaReduction.betaNormalize(EtaNormalize(x._2)(Set[Var]()))(Outermost))).asInstanceOf[List[Pair[HOLExpression, HOLExpression]]]
+      uprobl.map(x => Tuple2(BetaReduction.betaNormalize(EtaNormalize(x._1)(MSet[Var]()))(Outermost) , BetaReduction.betaNormalize(EtaNormalize(x._2)(MSet[Var]()))(Outermost))).asInstanceOf[List[Pair[HOLExpression, HOLExpression]]]
     }
 
 
-    private[huet] def createFuncVarH(ys: List[HOLVar], ls: List[HOLVar])(implicit disAllowedVars: Set[Var] ) : Var = {
+    private[huet] def createFuncVarH(ys: List[HOLVar], ls: List[HOLVar])(implicit disAllowedVars: MSet[Var] ) : Var = {
       val k: HOLVar = HOLVar(VariableStringSymbol("x"), Ti()).asInstanceOf[HOLVar]
-      val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
+      val dv  = disAllowedVars.foldLeft(Set[Var]())((ls,x) => ls.+(x))
       val fv: Var = freshVar.apply1(FunctionType.apply(Ti(), (ys:::ls).map(x => x.exptype)), dv, k)
       disAllowedVars.union(fv.freeVariables)
       disAllowedVars.union(fv.boundVariables)
@@ -252,12 +252,12 @@ import at.logic.language.lambda.BetaReduction
       fv
     }
 
-    private[huet] def getListOfZs(exptype: TA)(implicit disAllowedVars: Set[Var] ) : List[HOLVar] = {
+    private[huet] def getListOfZs(exptype: TA)(implicit disAllowedVars: MSet[Var] ) : List[HOLVar] = {
       val k = HOLVar(VariableStringSymbol("x"), Ti())
       val l1 = List[HOLVar]()
       exptype match {
         case Ti() => {
-           val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
+           val dv  = disAllowedVars.foldLeft(Set[Var]())((ls,x) => ls.+(x))
            val fv = freshVar.apply1(exptype ,dv, k ).asInstanceOf[HOLVar]
            disAllowedVars.+(fv);
            disAllowedVars.union(fv.freeVariables)
@@ -266,7 +266,7 @@ import at.logic.language.lambda.BetaReduction
         }
         case FunctionType(to, lsArgs ) => {
           val ls:List[HOLVar] = lsArgs.map(z => {
-            val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
+            val dv  = disAllowedVars.foldLeft(Set[Var]())((ls,x) => ls.+(x))
             val fv = freshVar.apply1(z, dv, k); disAllowedVars.+(fv);
             disAllowedVars.union(fv.freeVariables)
             disAllowedVars.union(fv.boundVariables)
@@ -279,11 +279,11 @@ import at.logic.language.lambda.BetaReduction
     }
 
   //4a
-  private[huet] def pairPartialBindingImitation(uprobl : List[Pair[HOLExpression, HOLExpression]])(implicit disAllowedVars: Set[Var] ) :  Tuple2[HOLExpression, List[Configuration[Substitution[HOLExpression]]]] = {
+  private[huet] def pairPartialBindingImitation(uprobl : List[Pair[HOLExpression, HOLExpression]])(implicit disAllowedVars: MSet[Var] ) :  Tuple2[HOLExpression, List[Configuration[Substitution[HOLExpression]]]] = {
     uprobl match {
       case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), AbsN(varList2, Function(sym : ConstantStringSymbol, args2, returnType)))::s => {
 
-              val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
+              val dv  = disAllowedVars.foldLeft(Set[Var]())((ls,x) => ls.+(x))
               val newVarList = args1.map(x => {val fv = freshVar.apply1(x.exptype, dv, funcVar); disAllowedVars+=fv; fv} )
               val generalFlexibleTermList = args2.map(x1 => createFuncVarH(newVarList.asInstanceOf[List[HOLVar]], getListOfZs(x1.exptype)))
               val zHlist = generalFlexibleTermList.zip(args2.map(x => getListOfZs(x.exptype))).map(x => AbsN(x._2, x._1))
@@ -307,10 +307,10 @@ import at.logic.language.lambda.BetaReduction
 
 
   // 4b
-  private[huet] def listOfProjections(uprobl : List[Pair[HOLExpression, HOLExpression]])(implicit disAllowedVars: Set[Var] ) :  List[Configuration[Substitution[HOLExpression]]] = {
+  private[huet] def listOfProjections(uprobl : List[Pair[HOLExpression, HOLExpression]])(implicit disAllowedVars: MSet[Var] ) :  List[Configuration[Substitution[HOLExpression]]] = {
     uprobl match {
         case (AbsN(varList1, AppN(funcVar: HOLVar, args1)), AbsN(varList2, AppN(funcVar2: HOLConst, args2)))::s => {
-         val dv  = disAllowedVars.foldLeft(scala.collection.immutable.Set[Var]())((ls,x) => ls.+(x))
+         val dv  = disAllowedVars.foldLeft(Set[Var]())((ls,x) => ls.+(x))
          val newVarList = args1.map(x => {val fv = freshVar.apply1(x.exptype, dv, funcVar).asInstanceOf[HOLVar]; disAllowedVars+=fv; fv.asInstanceOf[HOLVar]} )
          val generalFlexibleTermListOfList: List[List[HOLVar]] = newVarList.map(x => {
            x.exptype match {

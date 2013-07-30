@@ -26,7 +26,7 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
-import scala.collection.immutable._
+import scala.collection.immutable.HashMap
 import at.logic.language.hol.logicSymbols._
 
 class FlatTermSetException(msg: String) extends Exception(msg)

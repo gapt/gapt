@@ -20,22 +20,20 @@ import scala.collection.immutable.HashSet
 
 package robinson {
 
-import _root_.at.logic.language.fol.Neg
-import _root_.at.logic.language.hol.{HOLVar, Formula, HOLExpression, Neg => HOLNeg}
-import _root_.at.logic.language.lambda.substitutions.Substitution._
-import _root_.at.logic.language.lambda.types.->
-import _root_.at.logic.utils.traits.Occurrence
-import collection.immutable.Seq
+import at.logic.language.fol.Neg
+import at.logic.language.hol.{HOLVar, Formula, HOLExpression, Neg => HOLNeg}
+import at.logic.language.lambda.substitutions.Substitution._
+import at.logic.language.lambda.types.->
+import at.logic.utils.traits.Occurrence
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.resolution.instance._
-import collection.immutable
 
 /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
 object createContext {
     def apply(set: Seq[FormulaOccurrence], sub: Substitution[FOLExpression]): Seq[FormulaOccurrence] =
-      apply(set, sub, immutable.Map[FormulaOccurrence, List[FormulaOccurrence]]())
-    def apply(set: Seq[FormulaOccurrence], sub: Substitution[FOLExpression], additional_context : immutable.Map[FormulaOccurrence, Seq[FormulaOccurrence]]): Seq[FormulaOccurrence] =
+      apply(set, sub, Map[FormulaOccurrence, List[FormulaOccurrence]]())
+    def apply(set: Seq[FormulaOccurrence], sub: Substitution[FOLExpression], additional_context : Map[FormulaOccurrence, Seq[FormulaOccurrence]]): Seq[FormulaOccurrence] =
       set.map(x =>
                 x.factory.createFormulaOccurrence(sub(x.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula],
                                                   x::additional_context.getOrElse(x,Nil).toList)
@@ -52,7 +50,7 @@ object createContext {
   }
 
   object InitialClause {
-    def apply(ant: immutable.Seq[FOLFormula], suc: immutable.Seq[FOLFormula]) (implicit factory: FOFactory): RobinsonResolutionProof = {
+    def apply(ant: Seq[FOLFormula], suc: Seq[FOLFormula]) (implicit factory: FOFactory): RobinsonResolutionProof = {
       val left: Seq[FormulaOccurrence] = ant.map(factory.createFormulaOccurrence(_,Nil))
       val right: Seq[FormulaOccurrence] = suc.map(factory.createFormulaOccurrence(_,Nil))
       new LeafAGraph[Clause](Clause(left, right)) with NullaryResolutionProof[Clause]  with RobinsonResolutionProof {
@@ -218,7 +216,7 @@ object createContext {
               a: FormulaOccurrence, occurrencesToRemove: Seq[FormulaOccurrence],
               sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
       val r = p.root.removeFormulasAtOccurrences(occurrencesToRemove)
-      val additional_ancestors = immutable.Map[FormulaOccurrence, List[FormulaOccurrence]]() + ((a,occurrencesToRemove))
+      val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() + ((a,occurrencesToRemove))
       val newCl = Clause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ))
       new UnaryAGraph[Clause](newCl, p)
         with UnaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof {
@@ -237,7 +235,7 @@ object createContext {
               b: FormulaOccurrence, oc2: Seq[FormulaOccurrence],
               sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
       val r = p.root.removeFormulasAtOccurrences(oc1 ++ oc2)
-      val additional_ancestors = immutable.Map[FormulaOccurrence, List[FormulaOccurrence]]() ++ List((a,oc1), (b,oc2))
+      val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() ++ List((a,oc1), (b,oc2))
       val newCl = Clause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ))
       new UnaryAGraph[Clause](newCl, p)
         with UnaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof {
@@ -277,13 +275,13 @@ object Formatter {
 
 
   def apply(p: ResolutionProof[Clause]) : String = {
-    apply("", p, createMap(p,1,collection.immutable.Map[Clause, Int]())._1)
+    apply("", p, createMap(p,1, Map[Clause, Int]())._1)
   }
 
 
   def asHumanReadableString(p:ResolutionProof[Clause]) = apply(p)
 
-  def createMap(p : ResolutionProof[Clause], i : Int, map : collection.immutable.Map[Clause, Int]) : (collection.immutable.Map[Clause, Int], Int) = p match {
+  def createMap(p : ResolutionProof[Clause], i : Int, map : Map[Clause, Int]) : (Map[Clause, Int], Int) = p match {
     case Resolution(clause, p1, p2, occ1, occ2, subst) =>
       val (m1,h1) = createMap(p1, i, map)
       val (m2,h2) = createMap(p2, h1, m1)
@@ -329,7 +327,7 @@ object Formatter {
   }
 
   def asTex(p : ResolutionProof[Clause]) : String = {
-    val ids = createMap(p,1,collection.immutable.Map[Clause, Int]())._1
+    val ids = createMap(p,1, Map[Clause, Int]())._1
     """\documentclass[a4paper,8pt,usenames,dvipsnames]{article}
 \ usepackage[utf8]{inputenc}
 \ usepackage{amssymb}
@@ -351,7 +349,7 @@ object Formatter {
   def escapeTex(s:String) = s.replaceAll("_","\\_")
 
 
-  def tex(p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int], edges : List[List[Int]] )
+  def tex(p : ResolutionProof[Clause], ids : Map[Clause, Int], edges : List[List[Int]] )
   : (String, List[List[Int]]) = {
     def f(l:Seq[FormulaOccurrence]) : String = lst2string( (x:FormulaOccurrence) => escapeTex(x.formula.toPrettyString), ",", l.toList)
 
@@ -383,14 +381,14 @@ object Formatter {
   }
 
   def asGraphViz(p : ResolutionProof[Clause]) : String = {
-    val ids = createMap(p,1,collection.immutable.Map[Clause, Int]())._1
+    val ids = createMap(p,1, Map[Clause, Int]())._1
 
     "digraph resproof {\n graph [rankdir=TB]; node [shape=box];\n" +
       (ids.keys.foldLeft ("")((str, clause) => str+ "v" + ids(clause) +" [label=\""+clause+"\"];\n")) +
       gv(p, ids, List())._1 +
       "}\n"
   }
-  def gv(p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int], edges : List[List[Int]] )
+  def gv(p : ResolutionProof[Clause], ids : Map[Clause, Int], edges : List[List[Int]] )
   : (String, List[List[Int]]) = p match {
     case Resolution(clause, p1, p2, occ1, occ2, subst) =>
       val (str1, e1) = gv( p1, ids, edges)
@@ -451,7 +449,7 @@ object Formatter {
     case _ => ("", edges)
   }
 
-  def apply(indent : String, p : ResolutionProof[Clause], ids : collection.immutable.Map[Clause, Int]) : String = p match {
+  def apply(indent : String, p : ResolutionProof[Clause], ids : Map[Clause, Int]) : String = p match {
     case Resolution(clause, p1, p2, occ1, occ2, subst) =>
       indent + "(" + ids(clause) +") Resolution(["+clause+"] aux1=["+ occ1.formula + "] aux2=["+occ2.formula + "] sub=" + subst + ")\n" +
         apply("  "+indent, p1, ids) + apply("  "+indent, p2, ids)

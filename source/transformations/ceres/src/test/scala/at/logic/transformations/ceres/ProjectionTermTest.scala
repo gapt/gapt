@@ -124,7 +124,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       println("\n------ proj.term: \n\n")
       val ptermBase = ProjectionTermCreators.extract(p2base, Set.empty[FormulaOccurrence], getCutAncestors(p2base))
       val ptermRec = ProjectionTermCreators.extract(p2rec, Set.empty[FormulaOccurrence], getCutAncestors(p2rec))
-      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(IntZero()).asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(IntZero()).asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution3(new_map)
       val t = PStructToExpressionTree.applyConsole(ptermRec)
       PStructToExpressionTree.printTree(t)
@@ -176,7 +176,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //      println("\nl = "+l)
 //      println("\ncclist2 = "+cclist2)
 //      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
-//      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+//      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
 //      var sub = new SchemaSubstitution1[HOLExpression](new_map)
 //      val fo = p1.root.succedent.head
 //      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
@@ -207,7 +207,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
       val pterm = ProjectionTermCreators.extract(p1, Set.empty[FormulaOccurrence], getCutAncestors(p1))
 //        val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence] + fo, getCutAncestors(p2))
-      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(Succ(IntZero())).asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(Succ(IntZero())).asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution3(new_map)
       //println("dbTRS = "+dbTRS.map )
 
@@ -257,7 +257,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 //        println("\nl = "+l)
 //        println("\ncclist2 = "+cclist2)
       //      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
-      //      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+      //      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
       //      var sub = new SchemaSubstitution1[HOLExpression](new_map)
       //      val fo = p1.root.succedent.head
       //      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))
@@ -286,7 +286,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
 
       val pterm = ProjectionTermCreators.extract(p1, Set.empty[FormulaOccurrence], getCutAncestors(p1))
 //      val pterm = ProjectionTermCreators.extract(p2, Set.empty[FormulaOccurrence] + fo, getCutAncestors(p2))
-      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(Succ(IntZero())).asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Succ(Succ(IntZero())).asInstanceOf[IntegerTerm] )
       var sub = new SchemaSubstitution3(new_map)
 
       //println("\n------ proj.term: \n\n")
@@ -324,7 +324,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       //        println("\nl = "+l)
       //        println("\ncclist2 = "+cclist2)
       //      val k = IntVar(new VariableStringSymbol("k")).asInstanceOf[Var]
-      //      val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
+      //      val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], IntZero().asInstanceOf[IntegerTerm] )
       //      var sub = new SchemaSubstitution1[HOLExpression](new_map)
       //      val fo = p1.root.succedent.head
       //      val fosub = sub(StepMinusOne.minusOne(fo.formula, k.asInstanceOf[IntVar]))

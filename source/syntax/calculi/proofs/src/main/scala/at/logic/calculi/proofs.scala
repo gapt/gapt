@@ -10,7 +10,6 @@ import occurrences._
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.acyclicGraphs._
-import scala.collection.immutable.Set
 
 package proofs {
   

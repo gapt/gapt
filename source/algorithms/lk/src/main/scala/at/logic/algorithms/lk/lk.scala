@@ -1,10 +1,10 @@
 package at.logic.algorithms.lk
 
-import _root_.at.logic.calculi.lksk.{ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, ForallSkRightRule}
-import _root_.at.logic.calculi.occurrences._
+import at.logic.calculi.lksk.{ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, ForallSkRightRule}
+import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.language.lambda.typedLambdaCalculus._
-import scala.collection.immutable.{HashSet, Set}
+import scala.collection.immutable.HashSet
 import scala.collection.mutable.{Map, HashMap}
 
 import at.logic.calculi.lk.equationalRules._

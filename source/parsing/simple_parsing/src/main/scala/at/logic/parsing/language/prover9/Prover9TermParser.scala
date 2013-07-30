@@ -17,8 +17,8 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.types.Ti
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import scala.collection.immutable
 import scala.util.parsing.combinator.PackratParsers
+import scala.collection.immutable.HashSet
 
 /**
  * Parser for first order formulas in the prover 9 format.
@@ -175,7 +175,7 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
     val nf : FOLFormula = Substitution(pairs)(f).asInstanceOf[FOLFormula]
 
     //TODO: create blacklist
-    Normalization(nf,freevars.size, "v", immutable.HashSet[String]())._1
+    Normalization(nf,freevars.size, "v", HashSet[String]())._1
   }
 
 

@@ -1,8 +1,7 @@
 package at.logic.parsing.ivy
 
-import scala.collection.immutable
 import at.logic.parsing.lisp
-import at.logic.parsing.lisp.{SExpressionParser, SExpression}
+import at.logic.parsing.lisp.{SExpression, SExpressionParser}
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.hol.logicSymbols.{EqSymbol, ConstantSymbolA, ConstantStringSymbol}
 import at.logic.language.lambda.symbols.{VariableStringSymbol, SymbolA}
@@ -17,6 +16,7 @@ import at.logic.language.hol.HOLFormula
 import fol._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import scala.collection.immutable
 
 /**
  * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
@@ -68,14 +68,14 @@ object IvyParser {
 
   // the type synoyms should make the parsing functions more readable
   type ProofId = String
-  type ProofMap = immutable.Map[ProofId, IvyResolutionProof]
+  type ProofMap = Map[ProofId, IvyResolutionProof]
   type Position = List[Int]
 
 
   //decompose the proof object to a list and hand it to parse(exp: List[SExpression], found_steps : ProofMap )
   def parse(exp: SExpression, is_variable_symbol : (String => Boolean) ) : IvyResolutionProof =  exp match {
     case lisp.List(Nil) => throw new Exception("Trying to parse an empty proof!")
-    case lisp.List(l) => parse(l, immutable.Map[String, IvyResolutionProof](), is_variable_symbol ) // extract the list of inferences from exp
+    case lisp.List(l) => parse(l, Map[String, IvyResolutionProof](), is_variable_symbol ) // extract the list of inferences from exp
     case _ => throw new Exception("Parsing error: The proof object is not a list!")
   }
 
@@ -121,10 +121,10 @@ object IvyParser {
         val sub : Substitution[FOLTerm] = parse_substitution(subst_exp, is_variable_symbol)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
 
-        def connect(ancestors: immutable.Seq[FormulaOccurrence], formulas: immutable.Seq[HOLFormula]) :
-        immutable.Seq[FormulaOccurrence] =
+        def connect(ancestors: Seq[FormulaOccurrence], formulas: Seq[HOLFormula]) :
+        Seq[FormulaOccurrence] =
           (ancestors zip formulas) map ( (v: (FormulaOccurrence, HOLFormula)) =>
-            occurrences.factory.createFormulaOccurrence(v._2, immutable.List(v._1)))
+            occurrences.factory.createFormulaOccurrence(v._2, List(v._1)))
 
         val inference = Instantiate(id,clause, sub,
           Clause(connect(parent_proof.vertex.antecedent, fclause.antecedent),
@@ -355,7 +355,7 @@ object IvyParser {
         }
 
         //connects ancestors to formulas
-        def connect(ancestors: immutable.List[FormulaOccurrence], formulas: immutable.List[HOLFormula]) :
+        def connect(ancestors: List[FormulaOccurrence], formulas: List[HOLFormula]) :
           List[FormulaOccurrence] = {
           //find ancestor for every formula in conclusion clause
           debug("connecting "+formulas+" to ancestors "+ancestors)
@@ -368,8 +368,8 @@ object IvyParser {
         }
 
         //connects each formula to an ancestor, returns a pair of connected formulas and unconnected ancestors
-        def connect_(ancestors: immutable.List[FormulaOccurrence], formulas: immutable.List[HOLFormula]) :
-            (immutable.List[FormulaOccurrence], immutable.List[FormulaOccurrence]) = {
+        def connect_(ancestors: List[FormulaOccurrence], formulas: List[HOLFormula]) :
+            (List[FormulaOccurrence], List[FormulaOccurrence]) = {
           formulas match {
             case x::xs =>
               val index = ancestors.indexWhere(_.formula == x)
@@ -385,8 +385,8 @@ object IvyParser {
         }
 
         //connects unconnected (missing) ancestors to list of potential targets, returns list of updated targets
-        def connect_missing(targets : immutable.List[FormulaOccurrence], missing : immutable.List[FormulaOccurrence])
-           : immutable.List[FormulaOccurrence] = missing match {
+        def connect_missing(targets : List[FormulaOccurrence], missing : List[FormulaOccurrence])
+           : List[FormulaOccurrence] = missing match {
           case x::xs =>
             debug("trying to append "+x+" to possibilities "+targets)
             val targets_ = connect_missing_(targets, x)
@@ -396,13 +396,13 @@ object IvyParser {
         }
 
         //connects one missing occurence to possible tagets, returns list of updated targets
-        def connect_missing_(targets : immutable.List[FormulaOccurrence], missing : FormulaOccurrence)
-           : immutable.List[FormulaOccurrence] = targets match {
+        def connect_missing_(targets : List[FormulaOccurrence], missing : FormulaOccurrence)
+           : List[FormulaOccurrence] = targets match {
           case x::xs =>
             if (missing.formula == x.formula)
-              immutable.List(x.factory.createFormulaOccurrence(x.formula, immutable.List(missing) ++ x.ancestors)) ++ xs
+              List(x.factory.createFormulaOccurrence(x.formula, List(missing) ++ x.ancestors)) ++ xs
             else
-              immutable.List(x) ++ connect_missing_(xs, missing)
+              List(x) ++ connect_missing_(xs, missing)
           case Nil =>
             throw new Exception("Error connecting factorized literal, no suitable successor found!")
         }
@@ -492,7 +492,7 @@ object IvyParser {
 
   //term replacement
   //TODO: refactor replacement for lambda expressions
-  def replaceTerm_by_in_at(what : FOLTerm, by : FOLTerm, exp : fol.FOLExpression, pos : immutable.List[Int] )
+  def replaceTerm_by_in_at(what : FOLTerm, by : FOLTerm, exp : fol.FOLExpression, pos : List[Int] )
     : fol.FOLExpression = pos match {
       case p::ps =>
         exp match {
@@ -513,7 +513,7 @@ object IvyParser {
     }
 
 
-  def parse_position(l : immutable.List[SExpression]) : immutable.List[Int] = l match {
+  def parse_position(l : List[SExpression]) : List[Int] = l match {
     case lisp.Atom(x)::xs => try {
       x.toInt :: parse_position(xs)
     } catch {

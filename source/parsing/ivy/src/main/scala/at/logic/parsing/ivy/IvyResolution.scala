@@ -8,7 +8,6 @@ import at.logic.parsing.lisp.SExpression
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.fol.{FOLConst, FOLTerm}
 import at.logic.calculi.occurrences.FormulaOccurrence
-import collection.immutable
 
 /**** Implementation of Ivy's Resolution Calculus ***
  * Ivy has it's own variation of resolution which only resolves over identical literals but has an instantiation rule.
@@ -34,7 +33,7 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
 
 
   override def toString = { val b = new StringBuilder; printNodes(this, Nil, b); b.toString }
-  def printNodes(p:IvyResolutionProof, m : immutable.List[String], out: StringBuilder) : List[String]  = p match {
+  def printNodes(p:IvyResolutionProof, m : List[String], out: StringBuilder) : List[String]  = p match {
     case InitialClause(id, _, clause) =>
       if (! m.contains(id)) {
         out.append(id + " : Input("+clause+")\n"); id::m } else m

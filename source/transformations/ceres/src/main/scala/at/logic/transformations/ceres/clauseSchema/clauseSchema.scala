@@ -11,7 +11,6 @@ import at.logic.calculi.slk.AndEquivalenceRule1._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.algorithms.shlk._
 import at.logic.utils.ds.trees.LeafTree
-import collection.immutable
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import at.logic.language.lambda.typedLambdaCalculus.{AppN, LambdaExpression, Var}

@@ -13,7 +13,6 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
 import scala.collection.mutable.{Set => MSet}
-import scala.collection.immutable.Set
 import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._

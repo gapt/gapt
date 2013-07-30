@@ -11,7 +11,7 @@
 
 package at.logic.parsing.language.xml
 
-import _root_.at.logic.calculi.lk.base._
+import at.logic.calculi.lk.base._
 import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import scala.xml._
@@ -31,7 +31,6 @@ import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.types.FSequent
 
-import scala.collection.immutable.Set
 import scala.Predef._
 
 class ProofDatabase(val Definitions: Map[HOLExpression,HOLExpression], val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );

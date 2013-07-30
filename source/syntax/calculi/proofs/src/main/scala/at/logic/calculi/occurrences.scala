@@ -14,7 +14,6 @@ import at.logic.language.hol._
 object occurrences {
 
 import at.logic.utils.traits.Occurrence
-import collection.immutable.Seq
 import scala.Some
 
 trait HasAncestors {

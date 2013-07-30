@@ -17,7 +17,6 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._
-import scala.collection.immutable.Seq
 import at.logic.language.hol.HOLVarFormula._
 import at.logic.calculi.lk.propositionalRules.NegLeftRule._
 import org.specs2.execute.Success
@@ -53,7 +52,7 @@ class SLKTest extends SpecificationWithJUnit {
       val a_sn = IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil)
       val and_1_n_ai = BigAnd(i, ai,Succ(IntZero()), n)
       val and_1_sn_ai = BigAnd(i, ai,Succ(IntZero()), Succ(n))
-      val ax = Axiom(And(and_1_n_ai, a_sn) +: scala.collection.immutable.Seq.empty[SchemaFormula], a_sn +: scala.collection.immutable.Seq.empty[SchemaFormula])
+      val ax = Axiom(And(and_1_n_ai, a_sn) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula])
       val proof = AndEquivalenceRule1(ax, ax.root.antecedent.head, and_1_sn_ai)
       proof.root.toFSequent must beEqualTo (FSequent( and_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula]))
 
@@ -66,7 +65,7 @@ class SLKTest extends SpecificationWithJUnit {
       val a_sn = IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil)
       val or_1_n_ai = BigOr(i, ai, Succ(IntZero()), n)
       val or_1_sn_ai = BigOr(i, ai, Succ(IntZero()), Succ(n))
-      val ax = Axiom(Or(or_1_n_ai, a_sn) +: scala.collection.immutable.Seq.empty[SchemaFormula], a_sn +: scala.collection.immutable.Seq.empty[SchemaFormula] )
+      val ax = Axiom(Or(or_1_n_ai, a_sn) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
       val proof = OrEquivalenceRule1(ax, ax.root.antecedent.head, or_1_sn_ai)
       proof.root.toFSequent must beEqualTo (FSequent( or_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula]))
 

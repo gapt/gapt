@@ -9,7 +9,6 @@ package at.logic.language.hol
 
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
-import scala.collection.immutable._
 
 package replacements {
   case class Replacement(position: List[Int], expression: HOLExpression) {

@@ -12,7 +12,7 @@ import at.logic.utils.logging.Logger
 import acyclicGraphs._
 import graphs._
 import scala.collection.JavaConversions._
-import scala.collection.immutable.{Set,HashSet}
+import scala.collection.immutable.HashSet
 
 package trees {
 

@@ -9,14 +9,13 @@ package at.logic.transformations.ceres.projections
 
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._
-import scala.collection.immutable._
 import at.logic.language.hol._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
-import scala.collection.immutable.Seq
+import scala.collection.immutable.HashSet
 
 object Projections {
   // This method computes the standard projections according to the original CERES definition.
@@ -226,7 +225,6 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lksk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences._
-import scala.collection.immutable._
 import at.logic.language.hol._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.propositionalRules._

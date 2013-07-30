@@ -23,7 +23,6 @@ import quantificationRules._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.calculi.lk.lkSpecs.beMultisetEqual
 import at.logic.language.lambda.symbols.ImplicitConverters._
-import scala.collection.immutable._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import macroRules._
 

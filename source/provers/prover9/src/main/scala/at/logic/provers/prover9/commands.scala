@@ -10,39 +10,37 @@ package at.logic.provers.prover9
 
 package commands {
 
-import _root_.at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import _root_.at.logic.calculi.lk.base.types.FSequent
-import _root_.at.logic.calculi.occurrences.FormulaOccurrence
-import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.base.{ResolutionProof, Clause}
-import _root_.at.logic.language.fol
-import _root_.at.logic.language.fol._
-import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import _root_.at.logic.language.hol.replacements.getAtPosition
-import _root_.at.logic.language.hol.{HOLVar, HOLExpression, HOLFormula}
-import _root_.at.logic.language.lambda.substitutions.Substitution
-import _root_.at.logic.language.lambda.symbols.VariableStringSymbol
-import _root_.at.logic.language.lambda.types.Ti
-import _root_.at.logic.parsing.language.tptp.TPTPFOLExporter
-import _root_.at.logic.provers.atp.commands.guided.GetGuidedClausesCommand._
-import _root_.at.logic.provers.atp.commands.guided.{AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand}
-import _root_.at.logic.provers.atp.commands.replay.ReplayCommand
-import _root_.at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
-import _root_.at.logic.provers.atp.Definitions._
+import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.resolution.base.ResolutionProof
+import at.logic.calculi.resolution.base.{ResolutionProof, Clause}
+import at.logic.language.fol
+import at.logic.language.fol._
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.hol.replacements.getAtPosition
+import at.logic.language.hol.{HOLVar, HOLExpression, HOLFormula}
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.types.Ti
+import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.provers.atp.commands.guided.GetGuidedClausesCommand._
+import at.logic.provers.atp.commands.guided.{AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand}
+import at.logic.provers.atp.commands.replay.ReplayCommand
+import at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
+import at.logic.provers.atp.Definitions._
 import at.logic.calculi.lk.base.FSequent
 import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.sequents.{RefutationReachedCommand, fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
 import sys.process._
 import java.io._
 import scala.xml._
-import scala.collection.immutable.Seq
 import org.xml.sax.InputSource
 import javax.xml.parsers.SAXParserFactory
 import util.parsing.combinator.JavaTokenParsers
 import util.matching.Regex
 import collection.mutable.{ListBuffer, Map}
 import at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression, App, Abs}
-import collection.{mutable, immutable}
 import at.logic.parsing.language.prover9.{Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle}
 
 /**
@@ -365,21 +363,21 @@ object InferenceExtractor {
 
 
   /* fixed point of createFSequent_ */
-  def createFSequent(assumptions : immutable.Seq[FOLFormula], goals : immutable.Seq[FOLFormula]) : FSequent = {
+  def createFSequent(assumptions : Seq[FOLFormula], goals : Seq[FOLFormula]) : FSequent = {
     val fs = createFSequent_(assumptions, goals)
     if ((assumptions.length >= fs.antecedent.length ) && (goals.length >= fs.succedent.length))
       fs
     else
-      createFSequent(fs.antecedent.asInstanceOf[immutable.Seq[FOLFormula]], fs.succedent.asInstanceOf[immutable.Seq[FOLFormula]])
+      createFSequent(fs.antecedent.asInstanceOf[Seq[FOLFormula]], fs.succedent.asInstanceOf[Seq[FOLFormula]])
   }
 
   /* given a list of assumptions and goals, if a goal is of the form A -> B, put A into the
   *  antecedent and B into the succedent. if a goal is a disjunction B1,...,Bn, put B1 to Bn into the succedent
   *  instead. is an assumption is a conjunction A1,...,Am, put them into the antecedent instead.*/
-  def createFSequent_(assumptions : immutable.Seq[FOLFormula], goals : immutable.Seq[FOLFormula]) = {
+  def createFSequent_(assumptions : Seq[FOLFormula], goals : Seq[FOLFormula]) = {
     val fs = goals.map(implications).foldLeft(FSequent(assumptions, Nil))((f:FSequent,g:FSequent) => f.compose(g))
-    FSequent(fs.antecedent.asInstanceOf[immutable.Seq[FOLFormula]].map(conjunctions).flatten,
-      fs.succedent.asInstanceOf[immutable.Seq[FOLFormula]].map(disjunctions).flatten)
+    FSequent(fs.antecedent.asInstanceOf[Seq[FOLFormula]].map(conjunctions).flatten,
+      fs.succedent.asInstanceOf[Seq[FOLFormula]].map(disjunctions).flatten)
   }
 
   def implications(f:FOLFormula) : FSequent = f match {
@@ -387,14 +385,14 @@ object InferenceExtractor {
     case _ => FSequent(Nil, f::Nil)
   }
 
-  def disjunctions(f:FOLFormula) : immutable.List[FOLFormula] = f match {
+  def disjunctions(f:FOLFormula) : List[FOLFormula] = f match {
     case fol.Or(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
-    case _ => immutable.List[FOLFormula](f)
+    case _ => List[FOLFormula](f)
   }
 
   def conjunctions(f:FOLFormula) : List[FOLFormula] = f match {
     case fol.And(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
-    case _ => immutable.List[FOLFormula](f)
+    case _ => List[FOLFormula](f)
   }
 
 }

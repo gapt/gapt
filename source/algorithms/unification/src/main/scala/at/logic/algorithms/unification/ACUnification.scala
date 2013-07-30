@@ -1,17 +1,16 @@
 package at.logic.algorithms.unification
 
-import _root_.at.logic.calculi.lk.base.types.FSequent
-import _root_.at.logic.language.hol.{HOLFormula}
-import _root_.at.logic.language.lambda.symbols.{VariableStringSymbol, VariableSymbolA}
-import _root_.at.logic.parsing.language.simple.SimpleFOLParser
-import _root_.at.logic.parsing.readers.StringReader
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.language.hol.{HOLFormula}
+import at.logic.language.lambda.symbols.{VariableStringSymbol, VariableSymbolA}
+import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.parsing.readers.StringReader
 import at.logic.algorithms.diophantine.{LankfordSolver, Vector}
 import at.logic.calculi.lk.base.FSequent
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.fol._
 import at.logic.language.fol.{Equation => FOLEquation}
 import at.logic.language.lambda.substitutions.Substitution
-import scala.collection.immutable.Seq
 
 import collection.mutable.HashMap
 import collection.immutable.Stream.Cons

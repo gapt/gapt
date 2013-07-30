@@ -15,10 +15,9 @@ import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOcc
 import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.symbols.SymbolA
-import collection.immutable
 
 object Util {
-  class ElimEx(val uproofs : List[LKProof], val aux : List[FormulaOccurrence], val prim : HOLFormula, val defs : Option[immutable.Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
+  class ElimEx(val uproofs : List[LKProof], val aux : List[FormulaOccurrence], val prim : HOLFormula, val defs : Option[Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
     override def getMessage() = {
       var s = ("proofs:\n\n")
       for (p <- uproofs)
@@ -49,7 +48,7 @@ object Util {
   }
 
 
-  def check_map(map : immutable.Map[FormulaOccurrence, FormulaOccurrence], proof: LKProof) : Boolean = {
+  def check_map(map : Map[FormulaOccurrence, FormulaOccurrence], proof: LKProof) : Boolean = {
     val ant = proof.root.antecedent
     val succ = proof.root.succedent
     for (el <- map.values) {
@@ -60,11 +59,11 @@ object Util {
     true
   }
 
-  def check_map(map : immutable.Map[FormulaOccurrence, FormulaOccurrence], proof: LKProof, dproof : LKProof) : Boolean =
+  def check_map(map : Map[FormulaOccurrence, FormulaOccurrence], proof: LKProof, dproof : LKProof) : Boolean =
     check_map(map, proof.root, dproof.root)
 
 
-  def check_map(map : immutable.Map[FormulaOccurrence, FormulaOccurrence], root: Sequent, droot : Sequent) : Boolean = {
+  def check_map(map : Map[FormulaOccurrence, FormulaOccurrence], root: Sequent, droot : Sequent) : Boolean = {
     var error = false
     for (fo <- root.antecedent) {
       if (! (map.keySet contains fo)) {
