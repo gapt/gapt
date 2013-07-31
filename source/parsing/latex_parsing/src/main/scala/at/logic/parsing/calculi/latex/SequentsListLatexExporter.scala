@@ -21,7 +21,6 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.parsing.language.latex.HOLTermLatexExporter
 import at.logic.calculi.lk.base.types.FSequent
 
-import scala.collection.mutable.Map
 
 trait SequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = "\n\n"

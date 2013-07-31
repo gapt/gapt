@@ -15,7 +15,7 @@ import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.types.TA
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import collection.mutable.Map
+import collection.mutable.{Map => MMap}
 import at.logic.language.lambda.types.Definitions._
 import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
@@ -73,7 +73,7 @@ object sFOParserCNT {
   //--------------------------------- parse SLK proof -----------------------
 
 
-  def parseProofFlat(txt: InputStreamReader): Map[String, Pair[LKProof, LKProof]] =
+  def parseProofFlat(txt: InputStreamReader): MMap[String, Pair[LKProof, LKProof]] =
   {
     val map = parseProof( txt )
     map.map( pp => {
@@ -84,19 +84,19 @@ object sFOParserCNT {
   }
 
   //plabel should return the proof corresponding to this label
-  def parseProof(txt: InputStreamReader): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
-    var mapBase = Map.empty[String, LKProof]
-    var mapStep = Map.empty[String, LKProof]
-    var map  = Map.empty[String, LKProof]
+  def parseProof(txt: InputStreamReader): MMap[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]] = {
+    var mapBase = MMap.empty[String, LKProof]
+    var mapStep = MMap.empty[String, LKProof]
+    var map  = MMap.empty[String, LKProof]
     var baseORstep: Int = 1
     SchemaProofDB.clear
-    var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
+    var defMMap = MMap.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     var list = List[String]()
     var error_buffer = ""
     //    lazy val sp2 = new ParserTxt
     //    sp2.parseAll(sp2.line, txt)
-    val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
-    val mapPredicateToArity = Map.empty[String, Int]
+    val bigMMap = MMap.empty[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]]
+    val mapPredicateToArity = MMap.empty[String, Int]
     dbTRS.clear
     lazy val sp = new SimpleSLKParser
 
@@ -126,7 +126,7 @@ object sFOParserCNT {
         case l ~ ":" ~ p => {
           error_buffer = l
           if (baseORstep == 2) {
-            map = Map.empty[String, LKProof]
+            map = MMap.empty[String, LKProof]
             baseORstep = 1
           }
           map.put(l,p)
@@ -139,7 +139,7 @@ object sFOParserCNT {
           error_buffer = l
           //          mapStep.put(l,p)
           if (baseORstep == 1) {
-            map = Map.empty[String, LKProof]
+            map = MMap.empty[String, LKProof]
             baseORstep = 2
           }
           map.put(l,p)
@@ -152,10 +152,10 @@ object sFOParserCNT {
       def slkProof: Parser[Any] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
         case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
           //          proofName = str
-          bigMap.put(str, Pair(mapBase, mapStep))
+          bigMMap.put(str, Pair(mapBase, mapStep))
           SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
-          mapBase = Map.empty[String, LKProof]
-          mapStep = Map.empty[String, LKProof]
+          mapBase = MMap.empty[String, LKProof]
+          mapStep = MMap.empty[String, LKProof]
           //          println("\n\nParsing is SUCCESSFUL : "+str)
         }
       }
@@ -248,7 +248,7 @@ object sFOParserCNT {
           }
           //          println("\n\nIndexedPredicate");
 
-          //          val map: Map[Var, T])
+          //          val map: MMap[Var, T])
           //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
           //          val new_ind = subst(ind)
           //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
@@ -263,7 +263,7 @@ object sFOParserCNT {
         case indpred ~ ":=" ~ sf => {
           indpred match {
             case IndexedPredicate(f,ls) => {
-              defMap.put(f, Tuple2(ls.asInstanceOf[List[IntegerTerm]],sf.asInstanceOf[SchemaFormula]))
+              defMMap.put(f, Tuple2(ls.asInstanceOf[List[IntegerTerm]],sf.asInstanceOf[SchemaFormula]))
             }
           }
         }
@@ -716,16 +716,16 @@ object sFOParserCNT {
         }
       }
     }
-    //    println("\n\nnumber of SLK-proofs = "+bigMap.size)
-    //    println("\ndefMapr size = "+defMap.size)
+    //    println("\n\nnumber of SLK-proofs = "+bigMMap.size)
+    //    println("\ndefMMapr size = "+defMMap.size)
 
     //    println("\n\n\nlist = "+list)
-    //    if (!bigMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
-    //    val m = bigMap.get("chi").get._2.get(plabel).get
+    //    if (!bigMMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
+    //    val m = bigMMap.get("chi").get._2.get(plabel).get
     ////    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
     //    m
     //  println("\nSchemaProofDB.size = "+SchemaProofDB.size+"\n")
-    bigMap
+    bigMMap
   }
 }
 
@@ -734,7 +734,7 @@ object sFOParserCNT {
 //TODO: Remove it after tests!
 object FixedFOccs {
   var foccs: List[FormulaOccurrence] = Nil
-  var PLinksMap: Map[FormulaOccurrence, FormulaOccurrence] = Map.empty[FormulaOccurrence, FormulaOccurrence]
+  var PLinksMap: MMap[FormulaOccurrence, FormulaOccurrence] = MMap.empty[FormulaOccurrence, FormulaOccurrence]
 }
 
 object getPLinks {
@@ -766,9 +766,9 @@ object ClauseSetToCNF {
     FSequent(headCLsym::Nil, succ::Nil)
   }
 
-  var mapCLsym: Map[SchemaFormula, List[HOLFormula]] = Map.empty[SchemaFormula, List[HOLFormula]]
+  var mapCLsym: MMap[SchemaFormula, List[HOLFormula]] = MMap.empty[SchemaFormula, List[HOLFormula]]
 
-  def combiningCLsymbols(ccs: List[FSequent]): Map[SchemaFormula, List[HOLFormula]] = {
+  def combiningCLsymbols(ccs: List[FSequent]): MMap[SchemaFormula, List[HOLFormula]] = {
     ccs.map(fseq => {
 //      println("\ncombining: "+mapCLsym)
       val seq: FSequent = ClauseSetToCNF(fseq)
@@ -798,8 +798,8 @@ object ClauseSetToCNF {
 
 object RW {
   //non-grounded map : CL_k -> HOLformula
-  def createMap(ccs: List[FSequent]): Map[SchemaFormula, HOLFormula] = {
-    var map = Map.empty[SchemaFormula, HOLFormula]
+  def createMMap(ccs: List[FSequent]): MMap[SchemaFormula, HOLFormula] = {
+    var map = MMap.empty[SchemaFormula, HOLFormula]
     ccs.foreach(fseq => {
       if(fseq.antecedent.size > 0)
         map = map.updated(fseq.antecedent.head.asInstanceOf[SchemaFormula], fseq.succedent.head)
@@ -807,7 +807,7 @@ object RW {
     map
   }
 
-  def rewriteGroundFla(f: HOLFormula, map: Map[SchemaFormula, HOLFormula] ): HOLFormula = {
+  def rewriteGroundFla(f: HOLFormula, map: MMap[SchemaFormula, HOLFormula] ): HOLFormula = {
     f match {
       case IndexedPredicate(name, l) => {
         if(l.head == IntZero())
@@ -816,7 +816,7 @@ object RW {
           val k = IntVar(new VariableStringSymbol("k"))
           val from = IndexedPredicate(new ConstantStringSymbol(name.name.toString()), Succ(k))
           val to = map.get(from).get
-          val new_map = scala.collection.immutable.Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(l.head.asInstanceOf[IntegerTerm]))
+          val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(l.head.asInstanceOf[IntegerTerm]))
           val subst = new SchemaSubstitutionCNF(new_map)
           return rewriteGroundFla( subst(to).asInstanceOf[HOLFormula] , map)
         }

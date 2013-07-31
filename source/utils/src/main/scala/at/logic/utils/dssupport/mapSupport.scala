@@ -5,8 +5,6 @@
 
 package at.logic.utils.dssupport
 
-//import scala.collection.mutable._
-
 object MapSupport {
 
   // Given a map of T1 elements associated with a list of T2 elements, returns

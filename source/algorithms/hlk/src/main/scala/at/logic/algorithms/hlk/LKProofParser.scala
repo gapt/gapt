@@ -454,7 +454,7 @@ trait SchemaFormulaParser extends HLKFormulaParser with HOLParser {
 
     def goal = term
 
-    val predicate_arities = scala.collection.mutable.Map.empty[String, Int]
+    var predicate_arities = Map.empty[String, Int]
 
     def intConst : Parser[IntegerTerm] = "[0-9]+".r ^^ { x => intToTerm(x.toInt) }
     def intVar: Parser[IntVar] = "[ijmnkx]".r ^^ { x => IntVar(new VariableStringSymbol(x)) }
@@ -492,7 +492,10 @@ trait SchemaFormulaParser extends HLKFormulaParser with HOLParser {
     def indPred : Parser[HOLFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
       case x ~ "(" ~ l ~ ")" => {
         if (! predicate_arities.isDefinedAt(x.toString) )
-          predicate_arities.put(x.toString, l.size)
+        {
+          predicate_arities = predicate_arities + ((x.toString, l.size))
+          predicate_arities
+        }
         else if (predicate_arities.get(x.toString).get != l.size ) {
           println("Input ERROR : Indexed Predicate '"+x.toString+"' should have arity "+predicate_arities.get(x.toString).get+ ", but not "+l.size+" !")
           throw new Exception("Input ERROR : Indexed Predicate '"+x.toString+"' should have arity "+predicate_arities.get(x.toString).get+ ", but not "+l.size+" !")

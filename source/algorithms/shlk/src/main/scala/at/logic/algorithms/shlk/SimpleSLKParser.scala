@@ -21,7 +21,7 @@ import java.io.InputStreamReader
 import at.logic.language.schema.{sTerm, SchemaFormula, BigAnd, BigOr, IntVar, IntegerTerm, IndexedPredicate, Succ, IntZero, Neg => SNeg}
 import at.logic.calculi.lk.base.FSequent._
 import at.logic.calculi.lk.base.{FSequent, types, Sequent, LKProof}
-import collection.mutable.Map
+import collection.mutable.{Map => MMap}
 
 object SHLK {
 
@@ -160,19 +160,19 @@ object SHLK {
 //--------------------------------- parse SLK proof -----------------------
 
   //plabel should return the proof corresponding to this label
-  def parseProof(txt: InputStreamReader): Map[String, Pair[Map[String, LKProof], Map[String, LKProof]]] = {
-    var mapBase = Map.empty[String, LKProof]
-    var mapStep = Map.empty[String, LKProof]
-    var map  = Map.empty[String, LKProof]
+  def parseProof(txt: InputStreamReader): MMap[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]] = {
+    var mapBase = MMap.empty[String, LKProof]
+    var mapStep = MMap.empty[String, LKProof]
+    var map  = MMap.empty[String, LKProof]
     var baseORstep: Int = 1
     SchemaProofDB.clear
-    var defMap = Map.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
+    var defMMap = MMap.empty[HOLConst, Tuple2[List[IntegerTerm] ,SchemaFormula]]
     var list = List[String]()
     var error_buffer = ""
 //    lazy val sp2 = new ParserTxt
 //    sp2.parseAll(sp2.line, txt)
-    val bigMap = Map.empty[String, Pair[Map[String, LKProof], Map[String, LKProof]]]
-    val mapPredicateToArity = Map.empty[String, Int]
+    val bigMMap = MMap.empty[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]]
+    val mapPredicateToArity = MMap.empty[String, Int]
     lazy val sp = new SimpleSLKParser
 
 //    var proofName = ""
@@ -202,7 +202,7 @@ object SHLK {
         case l ~ ":" ~ p => {
           error_buffer = l
           if (baseORstep == 2) {
-            map = Map.empty[String, LKProof]
+            map = MMap.empty[String, LKProof]
             baseORstep = 1
           }
           map.put(l,p)
@@ -215,7 +215,7 @@ object SHLK {
           error_buffer = l
 //          mapStep.put(l,p)
           if (baseORstep == 1) {
-            map = Map.empty[String, LKProof]
+            map = MMap.empty[String, LKProof]
             baseORstep = 2
           }
           map.put(l,p)
@@ -228,10 +228,10 @@ object SHLK {
       def slkProof: Parser[Unit] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}"  ^^ {
         case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" => {
 //          proofName = str
-          bigMap.put(str, Pair(mapBase, mapStep))
+          bigMMap.put(str, Pair(mapBase, mapStep))
           SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
-          mapBase = Map.empty[String, LKProof]
-          mapStep = Map.empty[String, LKProof]
+          mapBase = MMap.empty[String, LKProof]
+          mapStep = MMap.empty[String, LKProof]
 //          println("\n\nParsing is SUCCESSFUL : "+str)
         }
       }
@@ -285,7 +285,7 @@ object SHLK {
           }
 //          println("\n\nIndexedPredicate");
 
-//          val map: Map[Var, T])
+//          val map: MMap[Var, T])
 //          val subst: SchemaSubstitution1[HOLExpression] = new SchemaSubstitution1[HOLExpression]()
 //          val new_ind = subst(ind)
 //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
@@ -300,7 +300,7 @@ object SHLK {
         case indpred ~ ":=" ~ sf => {
           indpred match {
             case IndexedPredicate(f,ls) => {
-              defMap.put(f, Tuple2(ls.asInstanceOf[List[IntegerTerm]],sf.asInstanceOf[SchemaFormula]))
+              defMMap.put(f, Tuple2(ls.asInstanceOf[List[IntegerTerm]],sf.asInstanceOf[SchemaFormula]))
             }
           }
         }
@@ -616,23 +616,23 @@ object SHLK {
       }
 
     }
-//    println("\n\nnumber of SLK-proofs = "+bigMap.size)
-//    println("\ndefMapr size = "+defMap.size)
+//    println("\n\nnumber of SLK-proofs = "+bigMMap.size)
+//    println("\ndefMMapr size = "+defMMap.size)
 
 //    println("\n\n\nlist = "+list)
-//    if (!bigMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
-//    val m = bigMap.get("chi").get._2.get(plabel).get
+//    if (!bigMMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
+//    val m = bigMMap.get("chi").get._2.get(plabel).get
 ////    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
 //    m
   //  println("\nSchemaProofDB.size = "+SchemaProofDB.size+"\n")
-    bigMap
+    bigMMap
   }
 }
 
 /* Moved to schema.scala in languages package. After checking is everything is
  * fine, delete this from here.
 
-class SchemaSubstitution1[T <: HOLExpression](val map: Map[Var, T])  {
+class SchemaSubstitution1[T <: HOLExpression](val map: MMap[Var, T])  {
   import at.logic.language.schema._
 
   def apply(expression: T): T = expression match {
@@ -684,7 +684,7 @@ class SchemaSubstitution1[T <: HOLExpression](val map: Map[Var, T])  {
 //object SHLK {
 //  //plabel should return the proof corresponding to this label
 //  def parseProof(txt: String, plabel: String): LKProof = {
-//    val map = Map.empty[String, LKProof]
+//    val map = MMap.empty[String, LKProof]
 //    lazy val sp = new SimpleSLKParser
 //    sp.parseAll(sp.line, txt)
 //

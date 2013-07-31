@@ -1,6 +1,5 @@
 package at.logic.algorithms.lksk
 
-import scala.collection.mutable.{Map, HashMap}
 
 import at.logic.calculi.lksk._
 import at.logic.calculi.lksk.base._
@@ -9,10 +8,13 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.base.types._
 import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
 import at.logic.language.hol._
-import at.logic.algorithms.lk.{applySubstitution => LKapplySubstitution}
+import at.logic.algorithms.lk.{applySubstitution => LKapplySubstitution, ProofTransformationUtils}
 import at.logic.language.lambda.substitutions.Substitution
+import scala.collection.mutable
 
 object applySubstitution {
+  import ProofTransformationUtils.computeMap
+
 
   def toLabelledSequent( so: Sequent )
     = new LabelledSequent( so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
@@ -23,13 +25,19 @@ def apply( proof: LKProof, subst: Substitution[HOLExpression] ) : (LKProof, Map[
     case Axiom(so : LabelledSequent) => {
       val ant_occs  = so.l_antecedent
       val succ_occs = so.l_succedent
-      val a = Axiom.createDefault(new FSequent(ant_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ), succ_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ) ),
+      val (a, (antecedent, succedent)) = Axiom.createDefault(new FSequent(ant_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ), succ_occs.map( fo => subst(fo.formula).asInstanceOf[HOLFormula] ) ),
         Pair( ant_occs.map( fo => fo.skolem_label.map( t => subst.apply(t) ) ).toList,
               succ_occs.map( fo => fo.skolem_label.map( t => subst.apply(t) ) ).toList ) )
-      val map = new HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
-      a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
-      a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
-      (a._1, map)
+      //val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
+      //a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
+      //a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
+
+      require(antecedent.length >= ant_occs.length, "cannot create translation map: old proof antecedent is shorter than new one")
+      require(succedent.length >= succ_occs.length, "cannot create translation map: old proof succedent is shorter than new one")
+      val map = Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence]() ++
+        (ant_occs zip antecedent) ++ (succ_occs zip succedent)
+
+      (a, map)
     }
     case WeakeningLeftRule(p, s, m) => {
       val new_parent = apply( p, subst )
@@ -77,12 +85,13 @@ def apply( proof: LKProof, subst: Substitution[HOLExpression] ) : (LKProof, Map[
   }
 
   // TODO: a very similar method is used in LKtoLKskc, refactor!?
+  /*
   def computeMap( occs: Seq[LabelledFormulaOccurrence], old_proof: LKProof, 
-                  new_proof: LKProof, old_map : Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence]) =
+                  new_proof: LKProof, old_map : mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence]) =
   {
-    val map = new HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
+    val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
     occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get.asInstanceOf[LabelledFormulaOccurrence], 
       new_proof.getDescendantInLowerSequent( old_map(fo) ).get.asInstanceOf[LabelledFormulaOccurrence] ) )
     map
-  }
+  } */
 }

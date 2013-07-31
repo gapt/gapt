@@ -14,7 +14,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
-import scala.collection.mutable.Map
+import scala.collection.mutable
 import at.logic.calculi.lk.base.types._
 
 package hol2fol {
@@ -36,7 +36,7 @@ import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexed
     }
 
     // scope and id are used to give the same names for new functions and constants between different calls of this method
-    def apply_(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = {
+    def apply_(term: HOLExpression, scope: mutable.Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = {
       term match {
         case z:indexedFOVar => FOLVar(new VariableStringSymbol(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString))
         case fov: foVar => FOLVar(new VariableStringSymbol(fov.name.toString))
@@ -78,20 +78,20 @@ import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexed
       }
     }
 
-    def apply(term: HOLExpression, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}) = 
+    def apply(term: HOLExpression, scope: mutable.Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}) =
       apply_( term, scope, id )
 
-    def apply(formula: HOLFormula, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLFormula =
+    def apply(formula: HOLFormula, scope: mutable.Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLFormula =
       apply_( formula, scope, id ).asInstanceOf[FOLFormula]
 
     // TODO: should return FOLSequent
-    def apply(s: FSequent, scope: Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FSequent = 
+    def apply(s: FSequent, scope: mutable.Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FSequent =
       new FSequent( s._1.map( f => apply(f, scope, id ) ), s._2.map( f => apply(f, scope, id ) ) )
 
     // convienience method creating empty scope and default id
     def apply(term: HOLExpression) : FOLExpression = {
       val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-      val emptymap = Map[LambdaExpression, ConstantStringSymbol]()
+      val emptymap = mutable.Map[LambdaExpression, ConstantStringSymbol]()
       reduceHolToFol( term, emptymap, counter )
     }
 

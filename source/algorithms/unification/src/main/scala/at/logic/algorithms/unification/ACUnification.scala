@@ -12,10 +12,10 @@ import at.logic.language.fol._
 import at.logic.language.fol.{Equation => FOLEquation}
 import at.logic.language.lambda.substitutions.Substitution
 
-import collection.mutable.HashMap
 import collection.immutable.Stream.Cons
 import at.logic.calculi.lk.base.FSequent
 import at.logic.language.lambda.typedLambdaCalculus.Normalization
+import scala.collection.mutable
 
 
 package types {
@@ -88,17 +88,24 @@ abstract class EequalityA extends REequalityA {
 
 
 object ACUnification {
-  val algorithms  = new HashMap[ConstantSymbolA, FinitaryUnification[FOLTerm]]
+  var algorithms  = Map[ConstantSymbolA, FinitaryUnification[FOLTerm]]()
+
   def unify(f:ConstantSymbolA, term1:FOLTerm, term2:FOLTerm) : Seq[Substitution[FOLTerm]] = {
-    if (! (algorithms contains f)) algorithms(f) = new ACUnification(f)
-    algorithms(f).unify(term1, term2)
+    algorithms.get(f) match {
+      case Some(alg) =>
+        alg.unify(term1, term2)
+      case None =>
+        val alg =  new ACUnification(f)
+        algorithms = algorithms + ((f, alg ))
+        alg.unify(term1,term2)
+    }
   }
 
    def unify(f:ConstantSymbolA, terms : List[FOLTerm]) : Seq[Substitution[FOLTerm]] = {
     /* this is very inefficient */
     terms match {
-      case Nil => Seq(Substitution())
-      case _::Nil => Seq(Substitution())
+      case Nil => Seq(Substitution[FOLTerm]())
+      case _::Nil => Seq(Substitution[FOLTerm]())
       case x::y::rest =>
         val subst_rest      : Seq[Substitution[FOLTerm]] = unify(f, y::rest)
         val alternatives    : Seq[FOLTerm] = subst_rest map (_.apply(y))
@@ -280,13 +287,13 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
       //debug(1,"number of solutions: "+results.size)
 
       // associate every base vector to a fresh logical variable
-      val varmap = new HashMap[Vector, VariableSymbolA]
+      var varmap = Map[Vector, VariableSymbolA]()
 
       debug(1, "basis:")
       for (b <- basis) {
         val v: VariableSymbolA = generator.getFreshVariable()
         debug(1, "$" + v + "<-" + b + "$")
-        varmap(b) = v
+        varmap = varmap + ((b, v))
       }
 
       for (s <- sums.toList.sortWith((x: (Vector, List[(Int, List[Vector])]), y: (Vector, List[(Int, List[Vector])])) => Vector.lex_<(x._1, y._1)))
@@ -309,7 +316,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
         }
       }
 
-      def createVectors(mapping: HashMap[Vector, VariableSymbolA], v: List[Vector]): List[FOLTerm] = {
+      def createVectors(mapping: Map[Vector, VariableSymbolA], v: List[Vector]): List[FOLTerm] = {
         //val len = v.length
         val len = if (v == Nil) 0 else v(0).length - 1
 
@@ -387,13 +394,13 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
 
 
   def calculateSums(basis: List[Vector], vlhs: Vector, vrhs: Vector, invariant: (Vector => Boolean)) = {
-    val sums = new HashMap[Vector, List[(Int, List[Vector])]]
+    var sums = Map[Vector, List[(Int, List[Vector])]]()
     var oldnewest: List[(Int, Vector, List[Vector])] = Nil
     var newest: List[(Int, Vector, List[Vector])] = Nil
 
     for (b <- basis) {
       val weight = vector_weight(vlhs, b)
-      sums(b) = List((weight, List(b)))
+      sums = sums + ((b, List((weight, List(b)))))
       newest = (weight, b, List(b)) :: newest
     }
 
@@ -417,10 +424,10 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
               // if the linear combination was already generated, add it to the list
               val l: List[(Int, List[Vector])] = sums(sum)
               if (!l.contains(entry))
-                sums(sum) = entry :: l
+                sums = sums + ((sum,entry :: l))
             } else {
               // else create a new entry and calculate possible new linear combinations
-              sums(sum) = List(entry)
+              sums = sums + ((sum, List(entry)))
               //if (weight < maxweight && sum.anyeqzero && invariant)
               if (invariant(sum)) //TODO: check if the anyeqzero is correct, the invariant has to be true anyway
                 newest = newest_entry :: newest
@@ -435,7 +442,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
 
   /* this is rather inefficient, but generates fewer solutions */
   def calculateSums_new(basis: List[Vector], vlhs: Vector, vrhs: Vector, invariant: (Vector => Boolean)) = {
-    val sums = new HashMap[Vector, List[(Int, List[Vector])]]
+    var sums = Map[Vector, List[(Int, List[Vector])]]()
     val maxweight = calculateMaxWeight(vlhs, vrhs)
     debug(1, "upper bound to sum of vectors: " + maxweight)
     val zero = basis(0).zero
@@ -451,32 +458,32 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
 
     for (p <- ps_inv) {
       val (sum, vs, weight) = p
-      if (sums contains sum) {
-        val list = sums(sum)
-        sums(sum) = (weight, vs) :: list
-      } else {
-        sums(sum) = List((weight, vs))
+      sums.get(sum) match {
+        case Some(list) => sums = sums + ((sum, (weight, vs) :: list))
+        case None => sums = sums + ((sum, List((weight, vs))))
       }
     }
     sums
   }
 
-  def calculateSums_new_efficient(basis: List[Vector], vlhs: Vector, vrhs: Vector, invariant: (Vector => Boolean)) = {
-    val sums = new HashMap[Vector, List[(Int, List[Vector])]]
+  def calculateSums_new_efficient(basis: List[Vector], vlhs: Vector, vrhs: Vector, invariant: (Vector => Boolean)) :
+    Map[Vector, List[(Int, List[Vector])]] = {
+    var sums = Map[Vector, List[(Int, List[Vector])]]()
     val maxweight = calculateMaxWeight(vlhs, vrhs)
     val zero = basis(0).zero
     val invariant_ = (x: Vector) => invariant(x) && (vector_weight(vlhs, x) <= maxweight)
     val fpowerset = filterpowerset((zero, Nil: List[Vector]), basis, invariant_)
     for (s <- fpowerset) {
       val (sum, vectors) = s
-      if (!sums.contains(sum)) {
-        sums(sum) = List((vector_weight(vlhs, sum), vectors))
-      } else {
-        val entry = sums(sum)
-        val new_entry = (vector_weight(vlhs, sum), vectors)
-        if (!entry.contains(new_entry))
-          sums(sum) = new_entry :: entry
+      sums.get(sum) match {
+        case None =>
+          sums = sums + ((sum, List((vector_weight(vlhs, sum), vectors))))
+        case Some(entry) =>
+          val new_entry = (vector_weight(vlhs, sum), vectors)
+          if (!entry.contains(new_entry))
+            sums = sums + ((sum, new_entry :: entry))
       }
+
     }
 
     sums

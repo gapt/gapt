@@ -13,12 +13,14 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.algorithms.fol.hol2fol._
 import scala.collection.immutable.HashMap
+import scala.collection.mutable
+import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 
 object TPTPFOLExporter {
   // FIXME: this should not be here!
   def hol2fol(f: HOLFormula) : FOLFormula = 
   {
-    val imap = scala.collection.mutable.Map[at.logic.language.lambda.typedLambdaCalculus.LambdaExpression, at.logic.language.hol.logicSymbols.ConstantStringSymbol]()
+    val imap = mutable.Map[LambdaExpression, ConstantStringSymbol]()
     val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
     reduceHolToFol(f, imap, iid )
   } 

@@ -5,8 +5,7 @@ package at.logic.algorithms.diophantine
  *  D.Lankford, J. of Automated Reasoning 5 (1989)" */
 
 
-import collection.mutable.Set
-import collection.mutable.HashSet
+import collection.mutable.{HashSet => MHashSet}
 
 trait DiophantineSolver[Data] {
   def solve(coeff_lhs: Vector, coeff_rhs: Vector) : List[Vector]
@@ -34,26 +33,6 @@ case class LankfordSolverInstance(val a : Vector, val b : Vector) {
   /* the norm is defined as theinner product - see p.30 */
   def norm(v : Vector) = ab * v
 
-  def addSets(set1: Set[Vector], set2:Set[Vector]) : HashSet[Vector] = {
-    val merged = new HashSet[Vector]
-    for (i <- set1)
-      for (j <- set2)
-        merged += (i+j)
-
-    merged
-  }
-
-  def unionSets(set1:Set[Vector], set2:Set[Vector]) : HashSet[Vector] = {
-    val merged = new HashSet[Vector]
-    for (i <- set1)
-      merged += i
-
-    for (j <- set2)
-        merged += j
-
-    merged
-  }
-
   /* follows the inductive definition on p.31 of the paper:
    * while P_k and N_k are nonempty:
    *   X_k+1 = {A+N_k} union {B+P_k}
@@ -64,19 +43,19 @@ case class LankfordSolverInstance(val a : Vector, val b : Vector) {
   def solve = {
     val im = MathHelperFunctions.createIdentityMatrix(ablength)
     val sim = im splitAt alength
-    val a = new HashSet[Vector]
-    val b = new HashSet[Vector]
+    val a = new MHashSet[Vector]
+    val b = new MHashSet[Vector]
 
     for (i<-sim._1)
       a += new Vector(i)
     for (i<-sim._2)
       b += new Vector(i)
 
-    val positive : HashSet[Vector] = new HashSet[Vector]
-    val negative : HashSet[Vector] = new HashSet[Vector]
-    val zero     : HashSet[Vector] = new HashSet[Vector]
-    var x        : HashSet[Vector] = new HashSet[Vector]
-    var zero_new : HashSet[Vector] = null 
+    val positive : MHashSet[Vector] = new MHashSet[Vector]
+    val negative : MHashSet[Vector] = new MHashSet[Vector]
+    val zero     : MHashSet[Vector] = new MHashSet[Vector]
+    var x        : MHashSet[Vector] = new MHashSet[Vector]
+    var zero_new : MHashSet[Vector] = null
     var stage = 1
 
     positive ++= a
@@ -84,12 +63,15 @@ case class LankfordSolverInstance(val a : Vector, val b : Vector) {
 
     while (!positive.isEmpty || !negative.isEmpty) {
       //println("=== "+stage+" ===")
-      x = unionSets(addSets(a,negative), addSets(b,positive))
+      val positive_sums = for (i <- b; j <- positive) yield { i+j }
+      val negative_sums = for (i <- a; j <- negative) yield { i+j }
+
+      x = negative_sums ++ positive_sums
       //println(x)
       positive.clear
       negative.clear
       
-      zero_new = new HashSet[Vector]
+      zero_new = new MHashSet[Vector]
       for (s <- x) {
         val ns = norm(s)
         //println("looking at: "+s+" with norm="+ns)

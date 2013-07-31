@@ -9,7 +9,6 @@ package at.logic.algorithms.normalization
 
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
-import scala.collection.mutable.Map
 
 // rename variables to a fixed form
 object TermNormalizer {

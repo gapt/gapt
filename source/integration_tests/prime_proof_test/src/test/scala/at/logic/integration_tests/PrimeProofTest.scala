@@ -41,8 +41,6 @@ import at.logic.algorithms.fol.hol2fol._
 import java.util.zip.GZIPInputStream
 import java.io.File.separator
 
-import scala.collection.mutable.Map
-
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.parsing.language.tptp.TPTPFOLExporter

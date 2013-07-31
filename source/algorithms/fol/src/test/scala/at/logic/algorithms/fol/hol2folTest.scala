@@ -23,13 +23,13 @@ import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
 import hol2fol._
 
-import scala.collection.mutable.Map
+import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
 class hol2folTest extends SpecificationWithJUnit {
   private class MyParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
   private class MyParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
-  def imap = Map[LambdaExpression, ConstantStringSymbol]() // the scope for most tests is just the term itself
+  def imap = mutable.Map[LambdaExpression, ConstantStringSymbol]() // the scope for most tests is just the term itself
   def iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
   "HOL terms" should {
     "be correctly reduced into FOL terms for" in {
@@ -49,7 +49,7 @@ class hol2folTest extends SpecificationWithJUnit {
         reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm(),imap,iid) must beEqualTo (new MyParserFOL("f(q_{1}(y))").getTerm())
       }
       "Two terms - f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o) and g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)" in {
-        val map = Map[LambdaExpression, ConstantStringSymbol]()
+        val map = mutable.Map[LambdaExpression, ConstantStringSymbol]()
         var id = new {var idd = 0; def nextId = {idd = idd+1; idd}}
         (reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm(),map,id)::
         reduceHolToFol(new MyParserHOL("g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)").getTerm(),map,id)::Nil) must beEqualTo(

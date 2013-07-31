@@ -1,6 +1,6 @@
 package at.logic.utils.executionModels
 
-import collection.mutable.Queue
+import collection.mutable
 import searchAlgorithms._
 
 /**
@@ -24,7 +24,7 @@ trait Configuration[S] {
 
   abstract class NDStream[S /*result type*/](val initial: Configuration[S], val myFun: Configuration[S] => Iterable[Configuration[S]]) extends SearchAlgorithm {
     type T = Configuration[S]
-    private val results: Queue[S] = new Queue[S]()
+    private val results: mutable.Queue[S] = new mutable.Queue[S]()
     protected def init: Unit = add(initial)
     @tailrec
     final def next: Option[S] = {

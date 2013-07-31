@@ -1,6 +1,6 @@
 package at.logic.algorithms.lk
 
-import scala.collection.mutable.{Map, HashMap}
+//import scala.collection.mutable.{Map, HashMap}
 
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.definitionRules._
@@ -16,6 +16,8 @@ import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 
 object applySubstitution {
+  import ProofTransformationUtils.computeMap
+
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
   def handleWeakening( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
                        subst: Substitution[HOLExpression],
@@ -73,11 +75,10 @@ object applySubstitution {
         val succ_occs = so.succedent
         val a = Axiom(ant_occs.map( fo => betaNormalize( subst.applyAndBetaNormalize(fo.formula)).asInstanceOf[HOLFormula]) ,
           succ_occs.map( fo => betaNormalize( subst.applyAndBetaNormalize(fo.formula) ).asInstanceOf[HOLFormula] ) )
-        val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
-        //a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant_occs( p._2 ), p._1 ) )
-        a.root.antecedent.zip(ant_occs).foreach(p => map.update( p._2, p._1))
-        //a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ_occs( p._2 ), p._1 ) )
-        a.root.succedent.zip(succ_occs).foreach(p => map.update( p._2, p._1))
+        require(a.root.antecedent.length >= ant_occs.length, "cannot create translation map: old proof antecedent is shorter than new one")
+        require(a.root.succedent.length >= succ_occs.length, "cannot create translation map: old proof succedent is shorter than new one")
+        val map = Map[FormulaOccurrence, FormulaOccurrence]() ++
+          (ant_occs zip a.root.antecedent) ++ (succ_occs zip a.root.succedent)
         (a, map)
       }
       case WeakeningLeftRule(p, s, m) => handleWeakening( new_parents.head, subst, p, proof, WeakeningLeftRule.apply, m )
@@ -203,13 +204,4 @@ object applySubstitution {
         handleRule( proof, apply( p1, subst )::apply( p2, subst )::Nil, subst )
     }
 
-  // TODO: a very similar method is used in LKtoLKskc, refactor!?
-  def computeMap( occs: Seq[FormulaOccurrence], old_proof: LKProof,
-                  new_proof: LKProof, old_map : Map[FormulaOccurrence, FormulaOccurrence]) =
-  {
-    val map = new HashMap[FormulaOccurrence, FormulaOccurrence]
-    occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get,
-      new_proof.getDescendantInLowerSequent( old_map(fo) ).get ) )
-    map
-  }
 }

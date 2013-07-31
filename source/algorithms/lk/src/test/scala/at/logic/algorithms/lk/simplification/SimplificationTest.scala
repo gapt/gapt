@@ -85,6 +85,7 @@ class SimplificationTest extends SpecificationWithJUnit {
 
     "correctly remove variants from a set of Sequents" in {
       val ls = List(s5,s6,s7,s8)
+      ls map println
       val ret = variantsRemoval( ls )
       ret.size must beEqualTo( 2 )
     }

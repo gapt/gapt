@@ -9,15 +9,15 @@ package at.logic.utils.ds
 
 import at.logic.utils.patterns.listeners._
 
-import scala.collection.mutable.{Buffer, ListBuffer}
+import scala.collection.mutable.{ListBuffer => MListBuffer, Buffer => MBuffer}
 
 case class PublishingBufferEvent[A](ar: AddRemove, elem: A)
 sealed abstract class AddRemove
 case object Add extends AddRemove
 case object Remove extends AddRemove
 
-class PublishingBuffer[A] extends Buffer[A] with ListenerManager[PublishingBufferEvent[A]] {
-  val buffer = new ListBuffer[A]()
+class PublishingBuffer[A] extends MBuffer[A] with ListenerManager[PublishingBufferEvent[A]] {
+  val buffer = new MListBuffer[A]()
   
   def +=(elem: A): this.type = {val ret = buffer += elem; fireEvent(PublishingBufferEvent(Add,elem)); this}
   def +=:(elem: A): this.type = {val ret = buffer.+=:(elem); fireEvent(PublishingBufferEvent(Add,elem)); this}

@@ -5,10 +5,10 @@ import at.logic.calculi.lk.base.Sequent
 import at.logic.language.hol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.symbols._
-import scala.collection.mutable.Map
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.types._
+import scala.collection.mutable
 
 package simplification {
 
@@ -28,10 +28,12 @@ package simplification {
 
   object variantsRemoval {
     def apply(sequents: List[FSequent]): List[FSequent] = sequents.foldLeft(List[FSequent]())((ls, el) => if (ls.exists(x => isVariantSequent(x,el))) ls else (el::ls))
+
     private def isVariantSequent(s1: FSequent, s2: FSequent) = {
-      val map = Map[Var,Var]();
+      val map = mutable.Map[Var,Var]()
       s1._1.size == s2._1.size && s1._2.size == s2._2.size &&
-      s1._1.zip(s2._1).forall(x => VariantsDeletion.isVariantOf(x._1, x._2, map)) && s1._2.zip(s2._2).forall(x => VariantsDeletion.isVariantOf(x._1, x._2, map))
+        s1._1.zip(s2._1).forall(x => VariantsDeletion.isVariantOf(x._1, x._2, map)) &&
+        s1._2.zip(s2._2).forall(x => VariantsDeletion.isVariantOf(x._1, x._2, map))
     }
   }
   

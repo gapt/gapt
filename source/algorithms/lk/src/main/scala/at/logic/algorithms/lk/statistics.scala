@@ -10,8 +10,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
 import at.logic.language.schema._
 import at.logic.calculi.slk._
-
-import scala.collection.mutable.Map
+import scala.collection.mutable
 
 package statistics {
   object getStatistics {
@@ -47,11 +46,11 @@ package statistics {
   // return the types of all constants in the sequents list
   object getTypeInformation {
     def apply(sequents: List[Sequent]): Map[LambdaExpression, TA] = {
-      val map = Map[LambdaExpression, TA]()
+      val map = mutable.Map[LambdaExpression, TA]()
       sequents.foreach(s => {s.antecedent.foreach(f => mapValues(map,f)); s.succedent.foreach(f => mapValues(map,f))})
-      map
+      map.toMap //create an immutable map from the mutable one
     }
-    private def mapValues(map: Map[LambdaExpression, TA], f: LambdaExpression): Unit = f match {
+    private def mapValues(map: mutable.Map[LambdaExpression, TA], f: LambdaExpression): Unit = f match {
       case v @ Var(at.logic.language.hol.logicSymbols.ConstantStringSymbol(x), t) => map.getOrElseUpdate(v, t)
       case App(a,b) => mapValues(map, a); mapValues(map, b)
       case Abs(_,b) => mapValues(map, b)

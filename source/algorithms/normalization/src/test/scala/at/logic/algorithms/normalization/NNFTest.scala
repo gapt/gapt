@@ -7,7 +7,6 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleHOLParser
-import scala.collection.mutable.Map
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.symbols.VariableStringSymbol

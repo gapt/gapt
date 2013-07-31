@@ -7,7 +7,7 @@ import util.parsing.combinator.RegexParsers
 import at.logic.parsing.lisp
 import util.parsing.combinator.PackratParsers
 import scala.collection.immutable.PagedSeq
-import scala.collection.mutable.WeakHashMap
+import scala.collection.mutable
 import scala.collection.immutable
 
 /**** Lisp SExpression Datatypes and Parser
@@ -125,8 +125,8 @@ object ListReader {
     }
   } */
 
-  val map = WeakHashMap[immutable.List[tokens.Token],
-    WeakHashMap[immutable.List[tokens.Token],ListReader]]()
+  val map = mutable.WeakHashMap[immutable.List[tokens.Token],
+    mutable.WeakHashMap[immutable.List[tokens.Token],ListReader]]()
 }
 class ListReader(val list : immutable.List[tokens.Token], val full : immutable.List[tokens.Token])
   extends Reader[tokens.Token] {
@@ -155,7 +155,7 @@ object IntPosition {
         p
     }
   } */
-  val map = WeakHashMap[Int, IntPosition]()
+  val map = mutable.WeakHashMap[Int, IntPosition]()
 }
 class IntPosition(val i:Int) extends Position {
   def line = i;
