@@ -78,24 +78,22 @@ object CutIntroduction extends Logger {
     beginTime = System.currentTimeMillis;
     println("Improving solution...")
 
-    val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
+    // Build a proof from each of the smallest grammars
+    def buildProof(grammar:Grammar) = {
       trace( "building proof for grammar " + grammar.toPrettyString )
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
       ehs.minimizeSolution
-
-      // Building up the final proof with cut
       trace ( "building final proof" )
-      val r = buildFinalProof(ehs) match {
-        case Some(p) => (p, ehs) :: acc
-        case None => acc
-      }
-      trace( "done building final proof" )
-
-      r
+      val proof = buildFinalProof(ehs)
+      trace ( "done building final proof" )
+      
+      if (proof.isDefined) { Some((proof.get,ehs)) } else { None }
     }
+
+    val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
 
     debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
@@ -198,24 +196,22 @@ object CutIntroduction extends Logger {
     beginTime = System.currentTimeMillis;
     debug("Improving solution...")
 
-    val proofs = smallestGrammars.foldRight(List[(LKProof, ExtendedHerbrandSequent)]()) { case (grammar, acc) => 
+    // Build a proof from each of the smallest grammars
+    def buildProof(grammar:Grammar) = {
       trace( "building proof for grammar " + grammar.toPrettyString )
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-      ehs.minimizeSolution2
-
-      // Building up the final proof with cut
-      trace( "building final proof" )
-      val r = buildFinalProof(ehs) match {
-        case Some(p) => (p, ehs) :: acc
-        case None => acc
-      }
-      trace( "done building final proof" )
-
-      r
+      ehs.minimizeSolution
+      trace ( "building final proof" )
+      val proof = buildFinalProof(ehs)
+      trace ( "done building final proof" )
+      
+      if (proof.isDefined) { Some((proof.get,ehs)) } else { None }
     }
+
+    val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
 
     debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
