@@ -39,21 +39,24 @@
 
 	<properties>
 
+      <!-- having dependencies on variable versions is deprecated
 	  <prooftool.version>1.4</prooftool.version>
 	  <cli.version>1.4</cli.version>
+      -->
         <!--
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
         -->
 
 		<encoding>UTF-8</encoding>
-		<scala.version>2.9.2</scala.version>
-		<slf4j.version>1.6.4</slf4j.version>
+		<scala.version>2.10</scala.version>
+        <scala-minor.version>2</scala-minor.version>
+		<slf4j.version>1.6.6</slf4j.version>
 		<junit.version>4.10</junit.version>
-		<specs2.version>1.10</specs2.version>
-		<scalatest.version>1.7.2</scalatest.version>
+		<specs2.version>1.14</specs2.version>
+		<scalatest.version>2.0.M5b</scalatest.version>
 		<mockito.version>1.9.0</mockito.version>
-		<scalacheck.version>1.9</scalacheck.version>
+		<scalacheck.version>1.10.1</scalacheck.version>
 
 		<maven-compiler-plugin.version>3.0</maven-compiler-plugin.version>
 		<maven-assembly-plugin.version>2.4</maven-assembly-plugin.version>
@@ -68,17 +71,17 @@
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
-			<version>${scala.version}</version>
+			<version>${scala.version}.${scala-minor.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>jline</artifactId>
-			<version>${scala.version}</version>
+			<version>${scala.version}.${scala-minor.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-compiler</artifactId>
-			<version>${scala.version}</version>
+			<version>${scala.version}.${scala-minor.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -198,7 +201,7 @@
 				<artifactId>scala-maven-plugin</artifactId>
 				<version>${scala-maven-plugin.version}</version>
 				<configuration>
-					<scalaVersion>${scala.version}</scalaVersion>
+					<scalaVersion>${scala.version}.${scala-minor.version}</scalaVersion>
 				</configuration>
 			</plugin>
 		</plugins>

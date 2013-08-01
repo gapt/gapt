@@ -76,7 +76,7 @@
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>prooftool</artifactId>
-      <version>${prooftool.version}-SNAPSHOT</version>
+      <version>1.4</version>
     </dependency>
   </dependencies>
 

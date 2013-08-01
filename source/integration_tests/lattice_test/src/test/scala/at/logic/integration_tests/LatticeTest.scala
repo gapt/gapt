@@ -56,6 +56,7 @@ class LatticeTest extends SpecificationWithJUnit {
     print("cuts: " + stats.cuts + "\n")
   }
 
+  sequential
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lattice.xml"))) with XMLProofDatabaseParser).getProofDatabase()

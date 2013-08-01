@@ -32,6 +32,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
 
   // commented out --- we need to construct formula occurrences, but they
   //   are abstract and the factory is private to LK
+  sequential
   "ClauseSets" should {
     "- transform a Struct into a standard clause set" in {
 //      val a = HOLVarFormula( "a" )

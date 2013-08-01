@@ -95,7 +95,7 @@ package tokens {
   case class STRING(s:String) extends Token { override def toString = "\""+s+"\"" };
   case class WORD(s:String) extends Token { override def toString = s };
   case object COMMENT extends Token { override def toString = "" };
-  case object EOF extends Token { override def toString = "" };
+  case object EMPTYFILE extends Token { override def toString = "" };
 }
 
 
@@ -133,8 +133,14 @@ class ListReader(val list : immutable.List[tokens.Token], val full : immutable.L
   //lazy val rest-full = (rest, full) //used as index in the hashtable
   lazy val position = IntPosition(full.size-list.size)
   def atEnd = list.isEmpty
-  def first : tokens.Token = { if (atEnd) tokens.EOF else list.head }
-  def rest : ListReader = { if (atEnd) this else ListReader(list.tail, full) }
+  def first : tokens.Token = { if (atEnd) tokens.EMPTYFILE else list.head }
+  def rest : ListReader = {
+    if (atEnd)
+      throw new Exception("Tried to get rest of a list reader already at its end!")
+    else
+      ListReader(list.tail, full)
+  }
+
   def pos : Position =
     if (list.isEmpty) NoPosition else position
 
@@ -155,11 +161,11 @@ object IntPosition {
         p
     }
   } */
-  val map = mutable.WeakHashMap[Int, IntPosition]()
+  //val map = mutable.WeakHashMap[Int, IntPosition]()
 }
 class IntPosition(val i:Int) extends Position {
-  def line = i;
-  def column = 0
+  def line = 0
+  def column = i
   def lineContents = "(no information)"
 }
 
@@ -196,7 +202,7 @@ class SExpressionParser extends Parsers {
     }
 
   lazy val LB : Parser[String] = accept("(", {case LBRACK => "("} )
-  lazy val RB : Parser[String] = accept("(", {case RBRACK => ")"} )
+  lazy val RB : Parser[String] = accept(")", {case RBRACK => ")"} )
   lazy val D : Parser[String] = accept(".", {case DOT => "."} )
   lazy val N : Parser[String] = accept("nil", {case NIL => "nil"} )
 
@@ -238,8 +244,7 @@ class SExpressionParser extends Parsers {
     })
   */
   lazy val sexp : Parser[SExpression] = lcprefix | atom
-  lazy val lisp_file : Parser[immutable.List[SExpression]] = rep(sexp) <~ EOF
-
+  lazy val lisp_file : Parser[immutable.List[SExpression]] = rep(sexp) | (EMPTYFILE ^^ { _ => Nil} )
 
   def parse(in : CharSequence) = {
     tokenizer.parseAll(tokenizer.tokens, in) match {

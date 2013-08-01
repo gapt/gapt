@@ -11,7 +11,7 @@
 	<artifactId>prooftool</artifactId>
 	<packaging>jar</packaging>
 	<name>Proof Tool</name>
-	<version>${prooftool.version}-SNAPSHOT</version>
+	<version>1.4</version>
 
 	<build>
 		<plugins>
@@ -97,7 +97,7 @@
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-swing</artifactId>
-			<version>${scala.version}</version>
+			<version>${scala.version}.${scala-minor.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sf.alxa</groupId>

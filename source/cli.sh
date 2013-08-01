@@ -5,7 +5,7 @@
 # (preference is given to the development version)
 
 export VERSION="1.4"
-export JARNAME="cli-$VERSION-SNAPSHOT-jar-with-dependencies.jar"
+export JARNAME="cli-$VERSION-jar-with-dependencies.jar"
 export RELEASE="gapt-cli-$VERSION.jar"
 export SCP=""
 export RCP=""
@@ -50,7 +50,7 @@ done
 shift $(( OPTIND - 1 ));
 
 export JAVA_OPTS="-Xss$JAVA_STACK -Xmx$JAVA_MEM"
-echo $JAVA_OPTS
+#echo $JAVA_OPTS
 
 # look for java
 

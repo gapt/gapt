@@ -23,30 +23,44 @@ class IvyTest extends SpecificationWithJUnit {
     println()
   }
 
-  def debug(s:String) = {println("Debug: "+s)}
+  def debug(s:String) = {} //{println("Debug: "+s)}
 
+
+  sequential
   "The Ivy Parser " should {
        " parse an empty list " in {
          val parser = new SExpressionParser
          parser.parse("()") match {
            case parser.Success(result, rest) =>
-//             debug("parsing ok!")
-             true must beEqualTo(true)
+             debug("parsing ok!")
+             "parsing ok!" must beEqualTo("parsing ok!")
            case parser.NoSuccess(msg, rest) =>
-//             debug("parser failed: "+msg)
-             true must beEqualTo(false)
+             debug("parser failed: "+msg+ " at "+rest.pos)
+             "msg: "+msg must beEqualTo("failed")
          }
        }
+
+    " not parse an empty list + garbage" in {
+      val parser = new SExpressionParser
+      parser.parse("())") match {
+        case parser.Success(result, rest) =>
+          debug("parsing ok!")
+          "parsing ok! "+result must beEqualTo("fail!")
+        case parser.NoSuccess(msg, rest) =>
+          debug("correctly failed!")
+          "parsing failed as expected" must beEqualTo("parsing failed as expected")
+      }
+    }
 
     " parse the atom a1" in {
       val parser = new SExpressionParser
       parser.parse("a1") match {
         case parser.Success(result, rest) =>
-//          debug("parsing ok!")
-          true must beEqualTo(true)
+          debug("parsing ok!")
+          "parsing ok!" must beEqualTo("parsing ok!")
         case parser.NoSuccess(msg, rest) =>
-//          debug("parser failed: "+msg)
-          true must beEqualTo(false)
+          debug("parser failed: "+msg)
+          "msg: "+msg must beEqualTo("failed")
       }
     }
 
@@ -55,10 +69,10 @@ class IvyTest extends SpecificationWithJUnit {
       val parser = new SExpressionParser
       parser.parse("a2    ") match {
         case parser.Success(result, rest) =>
-          //          debug("parsing ok!)
+          debug("parsing ok!")
           true must beEqualTo(true)
         case parser.NoSuccess(msg, rest) =>
-          //          debug("parsing wrong!")
+          debug("parsing wrong! "+msg)
           true must beEqualTo(false)
       }
     }
@@ -68,10 +82,10 @@ class IvyTest extends SpecificationWithJUnit {
       val parser = new SExpressionParser
       parser.parse(""""a b c"""") match {
         case parser.Success(result, rest) =>
-          //          debug("parsing ok!)
+          debug("parsing ok!")
           true must beEqualTo(true)
         case parser.NoSuccess(msg, rest) =>
-          //          debug("parsing wrong!")
+          debug("parsing wrong! "+msg)
           true must beEqualTo(false)
       }
     }
@@ -89,10 +103,10 @@ class IvyTest extends SpecificationWithJUnit {
             case _ =>
               //debug(result)
               //dumpreader(rest)
-              "matched correct list" must beEqualTo("failed")
+              "matched correct list "+result must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
-          "parser returned success" must beEqualTo("failed")
+          "parser returned success "+msg must beEqualTo("failed")
       }
     }
 
@@ -142,12 +156,12 @@ class IvyTest extends SpecificationWithJUnit {
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               //debug(result)
-              "matched correct list" must beEqualTo("failed")
+              "matched correct list "+result must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
           //debug(msg)
           //dumpreader(rest)
-          "parser returned success" must beEqualTo("failed")
+          "parser returned success "+msg must beEqualTo("failed")
       }
     }
 
@@ -162,10 +176,10 @@ class IvyTest extends SpecificationWithJUnit {
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               //debug(result)
-              "matched correct list" must beEqualTo("failed")
+              "matched correct list "+result must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
-          "parser returned success" must beEqualTo("failed")
+          "parser returned success"+msg must beEqualTo("failed")
       }
     }
 
@@ -180,10 +194,10 @@ class IvyTest extends SpecificationWithJUnit {
               "matched correct list" must beEqualTo("matched correct list")
             case _ =>
               //debug(result)
-              "matched correct list" must beEqualTo("failed")
+              "matched correct list "+result must beEqualTo("failed")
           }
         case parser.NoSuccess(msg, rest) =>
-          "parser returned success" must beEqualTo("failed")
+          "parser returned success"+msg must beEqualTo("failed")
       }
     }
 

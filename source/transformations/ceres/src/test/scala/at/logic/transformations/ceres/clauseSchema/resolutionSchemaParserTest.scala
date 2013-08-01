@@ -23,6 +23,8 @@ import at.logic.language.hol.{HOLFormula, HOLVar, HOLAbs, HOLExpression}
 class resolutionSchemaParserTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   import at.logic.language.schema._
+
+  sequential
   "resolutionSchemaParserTest" should {
     "should parse correctly the resolution schema in resSchema1.rs" in {
       //println(Console.BLUE+"\n\n\n\n------- Resolution schema for the resSchema1.rs ------- \n\n"+Console.RESET)

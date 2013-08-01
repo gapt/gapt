@@ -2,7 +2,7 @@
   <artifactId>cli</artifactId>
   <modelVersion>4.0.0</modelVersion>
   <name>Commandline Interface</name>
-  <version>${cli.version}-SNAPSHOT</version>
+  <version>1.4</version>
 
 
     <parent>
@@ -44,7 +44,7 @@
   <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-compiler</artifactId>
-      <version>${scala.version}</version>
+      <version>${scala.version}.${scala-minor.version}</version>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
@@ -72,7 +72,7 @@
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>prooftool</artifactId>
-      <version>${prooftool.version}-SNAPSHOT</version>
+      <version>1.4</version>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
@@ -124,7 +124,7 @@
       <dependency>
         <groupId>org.scala-lang</groupId>
         <artifactId>jline</artifactId>
-        <version>${scala.version}</version>
+        <version>${scala.version}.${scala-minor.version}</version>
       </dependency>
   </dependencies>
 </project>

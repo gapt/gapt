@@ -46,6 +46,7 @@ class LNPProofTest extends SpecificationWithJUnit {
   }
 
 
+  sequential
   "The system" should {
     "parse correctly the LNP proof" in {
       val proofs = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "lnp.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs

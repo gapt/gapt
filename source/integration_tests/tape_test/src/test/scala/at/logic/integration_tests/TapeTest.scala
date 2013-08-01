@@ -49,7 +49,7 @@ class TapeTest extends SpecificationWithJUnit {
   val box = List()
   def checkForProverOrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
 
-
+  sequential
   "The system" should {
     "parse correctly the tape proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()

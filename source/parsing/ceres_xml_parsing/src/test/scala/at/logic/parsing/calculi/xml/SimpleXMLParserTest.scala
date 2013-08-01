@@ -43,7 +43,7 @@ class SimpleXMLParserTest extends SpecificationWithJUnit {
             </rule>
           </rule>
         </proof>
-      ) with SimpleXMLProofParser).getNamedTree()
+      ) with SimpleXMLProofParser).getNamedTree()(Parser)
       name must beEqualTo("\\pi")
       tree.vertex must beLike{ case x : String if x == """\/_i=1..n P_i""" => ok
                                case _ => ko }
@@ -64,7 +64,7 @@ class SimpleXMLParserTest extends SpecificationWithJUnit {
             </rule>
           </proof>
         </prooftrees>
-      ) with SimpleXMLProofParser).getNamedTrees()
+      ) with SimpleXMLProofParser).getNamedTrees()(Parser)
       trees.size must beEqualTo(1)
       val (name, tree) = trees.head
       name must beEqualTo("\\pi")

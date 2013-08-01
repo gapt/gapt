@@ -65,7 +65,7 @@
       <dependency>
         <groupId>org.scala-lang</groupId>
         <artifactId>jline</artifactId>
-        <version>${scala.version}</version>
+        <version>${scala.version}.${scala-minor.version}</version>
       </dependency>
 
   </dependencies>
