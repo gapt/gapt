@@ -33,7 +33,7 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class SkolemizationTest extends SpecificationWithJUnit {
 
-
+  sequential
   "Skolemization" should {
       val x = HOLVar("x", i)
       val y = HOLVar("y", i)
