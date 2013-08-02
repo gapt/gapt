@@ -40,6 +40,7 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
   "sFOparserCNT" should {
 
+    sequential
     "parse correctly David's proof " in {
       skipped("has eigenvariable condition errors")
 

@@ -34,6 +34,8 @@ import org.specs2.execute.Success
 @RunWith(classOf[JUnitRunner])
 class sFOparserTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
+
+  sequential
   "sFOparser" should {
 
     "parse correctly a FO SLK-proof" in {

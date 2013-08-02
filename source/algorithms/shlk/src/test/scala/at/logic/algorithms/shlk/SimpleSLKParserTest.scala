@@ -36,6 +36,7 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
   private class MyParser extends StringReader("")
     "SimpleSLKParser" should {
 
+      sequential
         "parse correctly a SLK-proof" in {
           val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
           val var4 = HOLVarFormula(new VariableStringSymbol("x4"))
