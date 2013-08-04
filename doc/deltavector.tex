@@ -50,37 +50,10 @@ arbitrary number of universal quantifiers.
 \section{Generalized $\Delta$-Vector}
 
 One need only change the definition of the $\delta$-vector and extend it to deal with vectors of variables
-instead of a single variable. This extended definition is as follows:
-
-$$
-  \Delta_G(t_1,\dots,t_n) = \left\{
-    \begin{array}{l}
-    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_n})) = (f(u_1',\dots,u_m'), (\overline{s_1},\dots,\overline{s_p}))\\
-    \\
-    \quad \textnormal{where } (\overline{s_1},\dots,\overline{s_n}) =
-          \bigsqcup\limits_{1 \leq j \leq n}
-            \pi_2(\Delta_G(t_j^1,\dots,t_j^n))
-
-    \\
-    \quad \textnormal{if all } t_i = f(t_1^i,\dots,t_m^i) \mt{ and}\\
-    \quad \quad
-      \Delta_G(t_j^1,\dots,t_j^n) = (u_j, (\overline{s_{\alpha_1}},\dots,\overline{s_{\alpha_k}})) \mt{ for all } j \in \{1,\dots,m \}\\
-    \quad \quad
-      \textnormal{where } \{\alpha_1,\dots,\alpha_k\} \mt{ is precisely the set of $\alpha$ which occur in } u_j.\\
-
-    \\
-    \\
-    
-    (\alpha_{\mt{UNIQUE}},(t_1,\dots,t_n))\quad \mt{otherwise}\\
-    \end{array}
-  \right.
-$$
+instead of a single variable.\\
 
 \noindent
-where $\sqcup$ is list concatenation, $\pi$ is the tuple projection function and $\alpha_{\mt{UNIQUE}}$ denotes an instance of $\alpha$ with a globally unique index that starts with 1 and is incremented by 1 with each instantiation left-to-right in the formula tree --- formally, the leftmost instance of $\alpha$ in $\Delta_G(t_1,\dots,t_n)$ is $\alpha_1$ and $\alpha_{j_1}$ is the nearest left sibling of $\alpha_{j_2}$ iff $j_1+1=j_2$.\\
-
-\noindent
-\texttt{nub}, the duplicate-eliminating function, is defined as:
+First, we define the helper-function \texttt{nub}\footnote{\texttt{nub} is the common name for duplicate elimination in functional languages.} which eliminates duplicates:
 
 $$
   \begin{array}{l}
@@ -106,24 +79,118 @@ $$
   \end{array}
 $$
 
-\section{Correctness}
+\noindent
+We then define the generalized delta-vector $\Delta_G$:
+
+$$
+  \Delta_G(t_1,\dots,t_n) = \left\{
+    \begin{array}{l}
+    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q})) %= (f(u_1',\dots,u_m'), (\overline{s_1},\dots,\overline{s_p}))
+    \\
+    \\
+    \quad
+    \begin{array}{l l}
+      \mt{if all } & t_i = f(t_1^i,\dots,t_m^i)\\
+      \mt{where } & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq n} \pi_2(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ and}\\
+                  & u_j = \pi_1(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ for all } j \in \{1,\dots,m \}\\
+
+    \end{array}
+    
+    \\
+    \\
+    
+    (\alpha_{\mt{UNIQUE}},(t_1,\dots,t_n))\quad \mt{otherwise}\\
+    \end{array}
+  \right.
+$$
+
+\noindent
+where $\sqcup$ is list concatenation, $\pi$ is the tuple projection function and $\alpha_{\mt{UNIQUE}}$ denotes an instance of $\alpha$ with a globally unique index that starts with 1 and is incremented by 1 with each instantiation left-to-right in the formula tree --- formally, the leftmost instance of $\alpha$ in $\Delta_G(t_1,\dots,t_n)$ is $\alpha_1$ and $\alpha_{j_1}$ is the nearest left sibling of $\alpha_{j_2}$ iff $j_1+1=j_2$.\\
+
+Observe that, due to the incremental assignment of indices to generate $\alpha$-instances, $f(u_1,\dots,u_m)$ always contains a contiguous set $\{\alpha_k,\dots,\alpha_{k+q}\}$ (for a priori unknown $k$ and $q$).
+
+Strictly speaking, applying \texttt{nub} would not be necessary, but it does minimize the number of $\alpha$-instances by merging together those which have identical terms associated with them.
+
+\section{Behavior}
+
+$\Delta_G$ is a generalization of $\Delta$ in a certain sense, although not a strict one. Both prefer to find the maximal common structure in $t_1,\dots,t_n$, but the ability to use an unlimited number of $\alpha$-instances instead of just one means that $\Delta_G$ will always find such a decomposition if one is possible (see correctness proof), whereas $\Delta$ often only finds the trivial decomposition in some subtree (the ``otherwise''-case) if one $\alpha$ is not sufficient.
+
+\section{Soundness}
 
 It remains to show that, given $\Delta_G(t_1,\dots,t_n) = (u,(\overline{s_1},\dots,\overline{s_p}))$, for any $t_i$, $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$.
 
 \subsection{Proof}
+
+W.l.o.g. we assume that the set of $\alpha$ which occur is $\{\alpha_1,\dots,\alpha_k\}$.\\
 We proceed by induction on the depth $u$.
 
 \paragraph{Base case.} $u$'s depth is 0.\\
 Per definition, $\Delta_G(t_1,\dots,t_n) = (\alpha_1,\overline{s_1} = (t_1,\dots,t_n))$.\\
 $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}] = \alpha_1[\alpha_1\backslash s_{1,i}] = t_i$.
 
-\paragraph{Step case.} Assume the correctness for a depth of $\leq d$. We show the correctness for a depth of $d+1$.\\
+\paragraph{Step case.} Assume the soundness for a depth of $\leq d$. We show the soundess for a depth of $d+1$.\\
 
-Let us take any $j \in \{1,\dots,m\}$. Per the IH, the correctness condition holds for $\Delta_G(t_j^1,\dots,t_j^n) = (u_j, (\overline{s_{\alpha_1}},\dots,\overline{s_{\alpha_k}})))$. Per the uniqueness constraint on instances of $\alpha$, $u_{j_1}$ and $u_{j_2}$ will contain non-intersecting sets of $\alpha$ iff $j_1 \neq j_2$. If we therefore take $f(u_1,\dots,u_m)$ and the concatenation of all $\pi_2(\Delta_G(t_j^1,\dots,t_j^n))$, the correctness condition will still hold.\\
+Let us take any $j \in \{1,\dots,m\}$. Per the IH, the soundness condition holds for $\Delta_G(t_j^1,\dots,t_j^n) = (u_j, (\overline{s_{\alpha_1}},\dots,\overline{s_{\alpha_k}})))$. Per the uniqueness constraint on instances of $\alpha$, $u_{j_1}$ and $u_{j_2}$ will contain non-intersecting sets of $\alpha$ iff $j_1 \neq j_2$. If we therefore take $f(u_1,\dots,u_m)$ and the concatenation of all $\pi_2(\Delta_G(t_j^1,\dots,t_j^n))$, the soundness condition will still hold.\\
 
-It may, however, be the case that for two different $\alpha_{j_1}$ and $\alpha_{j_2}$ ($j_1 < j_2$), $\overline{s_{j_1}} = \overline{s_{j_2}}$. In this case, \texttt{elim} replaces $\alpha_{j_2}$ with $\alpha_{j_1}$ in $u_1,\dots,u_m$ and deletes $\overline{s_{j_2}}$, effectively merging the two instances of $\alpha$. For all $j_3 > j_2$, $\alpha_{j_3}$ is renamed to $\alpha_{j_3 - 1}$, preserving the 1-to-1 correspondence between $\alpha_i$ and $\overline{s_j}$ for all $j \in \{1,\dots,n-1\}$. Since only only the superfluous $\alpha_{j_2}$ was eliminated, the substituion $u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for any $i$) yields the same result as before and the correctness condition is still fulfilled.\\
+It may, however, be the case that for two different $\alpha_{j_1}$ and $\alpha_{j_2}$ ($j_1 < j_2$), $\overline{s_{j_1}} = \overline{s_{j_2}}$. In this case, \texttt{elim} replaces $\alpha_{j_2}$ with $\alpha_{j_1}$ in $u_1,\dots,u_m$ and deletes $\overline{s_{j_2}}$, effectively merging the two instances of $\alpha$. For all $j_3 > j_2$, $\alpha_{j_3}$ is renamed to $\alpha_{j_3 - 1}$, preserving the 1-to-1 correspondence between $\alpha_i$ and $\overline{s_j}$ for all $j \in \{1,\dots,n-1\}$. Since only only the superfluous $\alpha_{j_2}$ was eliminated, the substituion $u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for any $i$) yields the same result as before and the soundness condition is still fulfilled.\\
 
-\texttt{nub} then merely repeats this correctness-preserving operation until no more duplicates can be eliminated.
+\texttt{nub} then merely repeats this soundness-preserving operation until no more duplicates can be eliminated.
+
+\section{Completeness}
+
+To define the sense in which $\Delta_G$ is complete, we must first introduce the notion of a normal form for substitutions. For a single $\alpha$, this was done in \cite[Ch. 4]{Hetzl2012}, where a calculus for decompositions into $u,S$ was presented. The full calculus, as well as the theoretical results of that paper will not replicated for the case of multiple $\alpha$ here, but we will make use a few analogous notions.
+
+\paragraph{Definition.} A term $u$ and a list of vectors $S$ are a substitution for a set of terms $\{t_1,\dots,t_n\}$ iff
+$$
+  \{t_1,\dots,t_n\} =
+  u \circ S =
+  \{u[\overline{\alpha}\backslash(s_{1,1},\dots,s_{q,1}),\dots,\overline{\alpha}\backslash(s_{1,n},\dots,s_{q,n})]\}
+$$
+where $\overline{\alpha} = (\alpha_1,\dots,\alpha_q)$, $u[\overline{\alpha}\backslash(s_{1,j},\dots,s_{q,j})] = u[\alpha_1\backslash s_{1,j},\dots,\alpha_q\backslash s_{q,j}]$, s.t.
+\begin{enumerate}
+  \item $S$ does not contain any $\alpha$ and
+  \item the instances of $\alpha$ occurring in $u$ are numbered $\alpha_1,\dots,\alpha_q$ left-to-right.
+\end{enumerate}
+
+\paragraph{Left-Shifting.} A substitution may be left-shifted if, for some $\alpha_i$, all terms in the list $s_i$ start with a common function symbol $f$ or arity $r$. Let $s_i = (f(a_{1,1},\dots,a_{1,r}),\dots,f(a_{n,1},\dots,a_{n,r}))$. Then, left-shifting for $\alpha_i$ is defined as:
+
+\begin{prooftree}
+  \AxiomCm{u\circ S}
+  \RightLabelm{\leftarrow}
+  \UnaryInfCm{u[\alpha_i\backslash f(\alpha_i^1,\dots,\alpha_i^r)] \circ S[s_i\backslash (a_{1,1},\dots,a_{n,1}),\dots,(a_{1,r},\dots,a_{n,r}))]}
+\end{prooftree}
+
+\noindent
+where $\alpha_i^1,\dots,\alpha_i^r$ are fresh instances of $\alpha$.
+
+\paragraph{Example.} Let $\{t_1,\dots,t_n\} = \{f(g(a,b),x),f(g(c,d),y)\}$ and let\\
+$u = f(\alpha_1,\alpha_3),\ S=(s_1,s_2)$ with $s_1 = (g(a,b),g(c,d),\ s_2 = (x,y)$.\\
+We can left-shift for $\alpha_1$:
+
+\begin{prooftree}
+  \AxiomCm{f(\alpha_1,\alpha_3) \circ (s_1,s_2)}
+  \RightLabelm{\leftarrow}
+  \UnaryInfCm{f(g(\alpha_1,\alpha_2),\alpha_3) \circ ((a,c),(b,d),(x,y))}
+\end{prooftree}
+
+\paragraph{Merging \& splitting $\alpha$.} Suppose that there exist $\alpha_{i}$ and $\alpha_{j}$ in $u$ ($i \neq j$) s.t. $s_{i} = s_{j}$. Then we can replace $\alpha_{j}$ with $\alpha_{i}$ in $u$ and delete $s_{j}$ from $S$. Conversely, we can rename multiple occurrences of $\alpha_i$ to $\alpha_{i_1},\dots,\alpha_{i_n}$ and duplicate $s_{i}$ $n$ times. These operations are called merging \& splitting and obviously preserve the result of $u \circ S$.
+
+\paragraph{Normal form.} A substitution $u,S$ is in normal form iff no left-shift and no merging are possible.
+
+\subsection{Completeness proof}
+
+If $u,S$ is a substitution for $\{t_1,\dots,t_n\}$, then $\Delta_G(t_1,\dots,t_n) = (u',S')$ s.t. $u',S'$ is the normal form of $u,S$.
+
+W.l.o.g. we assume a contiguous numbering of the $\alpha$ occurring in $u$.
+
+\paragraph{Case 1.} Not every term in $\{t_1,\dots,t_n\}$ begins with a common function symbol $f$. In this case, the only possible substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This corresponds to the ``otherwise''-case of $\Delta_G$.
+
+\paragraph{Case 2.} All terms in $\{t_1,\dots,t_n\}$ begin with a common function symbol. We have two sub-cases:
+\begin{enumerate}
+  \item $u=\alpha$. Since a left-shift is possible due to the common function symbol $f$, such a substituion is not in normal form. By left-shifting, we arrive at the second case.
+  \item $u=f(\dots)$. Left-shifting may be possible in the arguments of $u$. As can be seen, performing all possible left shifts recursively corresponds to the first case of $\Delta_G$. Merging all possible $\alpha$ corresponds exactly to \texttt{nub}.
+\end{enumerate}
+
 
 \section{$\Delta$-Table}
 
@@ -132,6 +199,34 @@ The $\Delta$-table, as described in the paper, is compatible with the $\Delta_G$
 \section{Remarks}
 
 The introduction of a global, contiguous numbering of $\alpha$-instances is very procedural and bloats the definition almost to the point of being pseudocode, but the precise definition of the semantics of $\Delta_G$ and the continuous \& unique labeling and and re-labeling of $\alpha$-instances regrettably make such an algorithmic approach necessary.\\
+
+\section{Extensions}
+
+For theoretical reasons, we might be interested in limiting the number of allowed $\alpha$ (bounded $\Delta_G$).
+
+\subsection{Bounded generalized $\Delta$-Vector}
+
+$\Delta_G$ will a unique decomposition that will preserve as much of the common structure of $t_1,\dots,t_n$ as possible, employing as many $\alpha$-instances as needed, but in some cases, it may be desirable to limit the number of such $\alpha$-instances that it may use.
+Consider the following example:
+
+$$
+\begin{array}{l}
+\Delta_G(f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w)) =\\
+\\
+(f(g(\alpha_1,\alpha_2),g(\alpha_3,\alpha_4),\alpha_5); (a,x), (b,y), (c,u), (d,v), (e,w))
+\end{array}
+$$
+
+This illustrates two points:
+\begin{enumerate}
+\item There is a non-deterministic choice: we could restrict the number of $\alpha$-instances to, say, 4. This can be achieved by merging either $\alpha_1$ and $\alpha_2$ into a new $\alpha'$ (with the terms $(g(a,b),g(x,y))$) or $\alpha_3$ \& $\alpha_4$ (with the terms $(g(c,d),g(u,v))$).
+\item Generally, it is not possible to specify exactly how many $\alpha$ should occur in $u$: if we restrict the number of $\alpha$-instances to at most 2, we only get the trivial decomposition $(\alpha; f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w))$.
+\end{enumerate}
+
+We therefore can specify upper bounds, but not lower bounds on the number of $\alpha$-instances which may be used, although this burdens us with a non-deterministic choice as to which $\alpha$-instances to merge together.\\
+
+\noindent
+Rest: TODO
 
 
 \bibliographystyle{plain}
