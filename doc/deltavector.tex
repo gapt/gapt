@@ -1,16 +1,18 @@
 \documentclass[a4paper, 11pt]{report}
 \usepackage[utf8]{inputenc}
-\usepackage{listings}
+%\usepackage{listings}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{url}
 \usepackage{alltt}
 \usepackage{multicol}
 \usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{proof}
 
 \usepackage{bussproofs}
 
-\newcommand{\seq}{\vdash}	% the sequent sign
+\newcommand{\seq}{\vdash} % the sequent sign
 \newcommand{\impl}{\supset} %logical connectives: implies, not, and, or
 \renewcommand{\lnot}{\neg}
 \renewcommand{\land}{\wedge}
@@ -28,11 +30,16 @@
 % Using a report without chapters
 \renewcommand*\thesection{\arabic{section}}
 
-\lstset{
-  basicstyle=\footnotesize\ttfamily,
-  breaklines=true,
-  frame=lines
-}
+%Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{corollary}{Corollary}
+
+%\lstset{
+%  basicstyle=\footnotesize\ttfamily,
+%  breaklines=true,
+%  frame=lines
+%}
 
 \title{Cut Introduction\\ \vspace{0.5cm} Cut-Formulas with Multiple Universal Quantifiers}
 
@@ -85,15 +92,17 @@ We then define the generalized delta-vector $\Delta_G$:
 $$
   \Delta_G(t_1,\dots,t_n) = \left\{
     \begin{array}{l}
-    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q})) %= (f(u_1',\dots,u_m'), (\overline{s_1},\dots,\overline{s_p}))
+
+    (t_1,()) \mt{ if } t_1 = t_2 = \dots = t_n \mt{ and } n > 0\\
     \\
+
+    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q})) %= (f(u_1',\dots,u_m'), (\overline{s_1},\dots,\overline{s_p}))
     \\
     \quad
     \begin{array}{l l}
-      \mt{if all } & t_i = f(t_1^i,\dots,t_m^i)\\
-      \mt{where } & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq n} \pi_2(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ and}\\
+      \mt{if all } & t_i = f(t_1^i,\dots,t_m^i) \mt{ and case 1 does not apply,}\\
+      \mt{where } & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq m} \pi_2(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ and}\\
                   & u_j = \pi_1(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ for all } j \in \{1,\dots,m \}\\
-
     \end{array}
     
     \\
@@ -105,96 +114,193 @@ $$
 $$
 
 \noindent
-where $\sqcup$ is list concatenation, $\pi$ is the tuple projection function and $\alpha_{\mt{UNIQUE}}$ denotes an instance of $\alpha$ with a globally unique index that starts with 1 and is incremented by 1 with each instantiation left-to-right in the formula tree --- formally, the leftmost instance of $\alpha$ in $\Delta_G(t_1,\dots,t_n)$ is $\alpha_1$ and $\alpha_{j_1}$ is the nearest left sibling of $\alpha_{j_2}$ iff $j_1+1=j_2$.\\
+where $\sqcup$ is list concatenation, $\pi$ is the tuple projection function and $\alpha_{\mt{UNIQUE}}$ denotes an instance of $\alpha$ with a globally unique index that starts with 1 and is incremented by 1 with each instantiation left-to-right --- formally, if $\Delta_G(t_1,\dots,t_n) = (u,S)$, then the leftmost instance of $\alpha$ in $u$ is $\alpha_1$ and $\alpha_{j_1}$ is the nearest left sibling of $\alpha_{j_2}$ iff $j_1+1=j_2$.\\
 
-Observe that, due to the incremental assignment of indices to generate $\alpha$-instances, $f(u_1,\dots,u_m)$ always contains a contiguous set $\{\alpha_k,\dots,\alpha_{k+q}\}$ (for a priori unknown $k$ and $q$).
+Observe that, due to the incremental assignment of indices to generate $\alpha$-instances, $f(u_1,\dots,u_m)$ always contains a contiguous set $\{\alpha_k,\dots,\alpha_{k+q}\}$ (for a priori unknown $k$ and $q$).\\
 
-Strictly speaking, applying \texttt{nub} would not be necessary, but it does minimize the number of $\alpha$-instances by merging together those which have identical terms associated with them.
+Strictly speaking, neither applying \texttt{nub} would nor case 1 of $\Delta_G$ would be necessary, but they minimize the number of $\alpha$-instances: \texttt{nub} merges two $\alpha$-instances {\em if their respective $s$-vectors are identical}, whereas case 1 eliminates an $\alpha$-instance {\em if all terms within its $s$-vector} are identical.
 
 \section{Behavior}
 
-$\Delta_G$ is a generalization of $\Delta$ in a certain sense, although not a strict one. Both prefer to find the maximal common structure in $t_1,\dots,t_n$, but the ability to use an unlimited number of $\alpha$-instances instead of just one means that $\Delta_G$ will always find such a decomposition if one is possible (see correctness proof), whereas $\Delta$ often only finds the trivial decomposition in some subtree (the ``otherwise''-case) if one $\alpha$ is not sufficient.
+$\Delta_G$ is a generalization of $\Delta$ in a certain sense, although not a strict one. Both try to find the maximal common structure in $t_1,\dots,t_n$, but the ability to use an unbounded number of $\alpha$-instances instead of just one means that $\Delta_G$ will recursively descend until it encounters a termset in which at least two terms have different heads, whereas $\Delta$ will introduce its $\alpha$ as soon it is called on two different termsets where not all heads are equal, even if the heads {\em within} each termset are.
 
 \section{Soundness}
 
-It remains to show that, given $\Delta_G(t_1,\dots,t_n) = (u,(\overline{s_1},\dots,\overline{s_p}))$, for any $t_i$, $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$.
+\begin{theorem}
+\textbf{Soundness of $\Delta_G$.}
+Let $t_1,\dots,t_n$ be terms. If $\Delta_G(t_1,\dots,t_n) = (u,(\overline{s_1},\dots,\overline{s_p}))$, then $t_i$, $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for $1\leq i \leq n)$.
+\label{thm:DeltaGSoundness}
+\end{theorem}
 
-\subsection{Proof}
-
-W.l.o.g. we assume that the set of $\alpha$ which occur is $\{\alpha_1,\dots,\alpha_k\}$.\\
+\begin{proof}
+W.l.o.g. we assume that the set of variables which occur in $u$ is $\{\alpha_1,\dots,\alpha_k\}$.\\
 We proceed by induction on the depth $u$.
 
 \paragraph{Base case.} $u$'s depth is 0.\\
-Per definition, $\Delta_G(t_1,\dots,t_n) = (\alpha_1,\overline{s_1} = (t_1,\dots,t_n))$.\\
-$t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}] = \alpha_1[\alpha_1\backslash s_{1,i}] = t_i$.
+If not all $t_1,\dots,t_n$ are equal, $\Delta_G(t_1,\dots,t_n) = (\alpha_1,\overline{s_1} = (t_1,\dots,t_n))$ per definition.
+$t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}] = \alpha_1[\alpha_1\backslash s_{1,i}] = t_i$.\\
+If all terms are equal, then $\Delta_G(t_1,\dots,t_n) = (t_1,())$. We simply get $t_i = t_1$.
 
 \paragraph{Step case.} Assume the soundness for a depth of $\leq d$. We show the soundess for a depth of $d+1$.\\
 
-Let us take any $j \in \{1,\dots,m\}$. Per the IH, the soundness condition holds for $\Delta_G(t_j^1,\dots,t_j^n) = (u_j, (\overline{s_{\alpha_1}},\dots,\overline{s_{\alpha_k}})))$. Per the uniqueness constraint on instances of $\alpha$, $u_{j_1}$ and $u_{j_2}$ will contain non-intersecting sets of $\alpha$ iff $j_1 \neq j_2$. If we therefore take $f(u_1,\dots,u_m)$ and the concatenation of all $\pi_2(\Delta_G(t_j^1,\dots,t_j^n))$, the soundness condition will still hold.\\
+\noindent
+If all terms are equal, $\Delta_G(t_1,\dots,t_n) = (t_1,())$, which is obviously correct.
+If not all terms are equal, $\Delta_G(t_1,\dots,t_n) = (f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_p}))$.\\
 
-It may, however, be the case that for two different $\alpha_{j_1}$ and $\alpha_{j_2}$ ($j_1 < j_2$), $\overline{s_{j_1}} = \overline{s_{j_2}}$. In this case, \texttt{elim} replaces $\alpha_{j_2}$ with $\alpha_{j_1}$ in $u_1,\dots,u_m$ and deletes $\overline{s_{j_2}}$, effectively merging the two instances of $\alpha$. For all $j_3 > j_2$, $\alpha_{j_3}$ is renamed to $\alpha_{j_3 - 1}$, preserving the 1-to-1 correspondence between $\alpha_i$ and $\overline{s_j}$ for all $j \in \{1,\dots,n-1\}$. Since only only the superfluous $\alpha_{j_2}$ was eliminated, the substituion $u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for any $i$) yields the same result as before and the soundness condition is still fulfilled.\\
+\noindent
+For the second case, let $\Delta_G(t_j^1,\dots,t_j^n) = (u_j,(\overline{s_{\alpha_1}}\dots,\overline{s_{\alpha_k}}))$. Per the IH, the soundness condition holds for $\Delta_G(t_j^1,\dots,t_j^n)\ (1\leq j\leq m)$ --- i.e. $t_j^i = u_j[\alpha_1\backslash s_{\alpha_1,i},\dots,\alpha_k\backslash s_{\alpha_k,i}]$. Per the uniqueness constraint on instances of $\alpha$, $u_{j_1}$ and $u_{j_2}$ will contain non-intersecting sets of $\alpha$ iff $j_1 \neq j_2$. If we therefore take $f(u_1,\dots,u_m)$ and the concatenation of all $\pi_2(\Delta_G(t_j^1,\dots,t_j^n))$, the soundness condition will still hold.\\
+
+It may, however, be the case that for two different $\alpha_{j_1}$ and $\alpha_{j_2}$ ($j_1 < j_2$), $\overline{s_{j_1}} = \overline{s_{j_2}}$. In this case, \texttt{elim} replaces $\alpha_{j_2}$ with $\alpha_{j_1}$ in $u_1,\dots,u_m$ and deletes $\overline{s_{j_2}}$, effectively merging $\alpha_{j_1}$ and $\alpha_{j_2}$. For all $j_3 > j_2$, $\alpha_{j_3}$ is renamed to $\alpha_{j_3 - 1}$, preserving the 1-to-1 correspondence between $\alpha_i$ and $\overline{s_j}$ for all $j \in \{1,\dots,n-1\}$. Since only the superfluous $\alpha_{j_2}$ was eliminated, the substituiton $u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for any $i$) yields the same result as before and the soundness condition is still fulfilled.\\
 
 \texttt{nub} then merely repeats this soundness-preserving operation until no more duplicates can be eliminated.
 
+\end{proof}
+
+
+
 \section{Completeness}
 
-To define the sense in which $\Delta_G$ is complete, we must first introduce the notion of a normal form for substitutions. For a single $\alpha$, this was done in \cite[Ch. 4]{Hetzl2012}, where a calculus for decompositions into $u,S$ was presented. The full calculus, as well as the theoretical results of that paper will not replicated for the case of multiple $\alpha$ here, but we will make use a few analogous notions.
+To define the sense in which $\Delta_G$ is complete, we must first introduce the notion of a normal form for substitutions. For a single $\alpha$, this was done in \cite[Ch. 4]{Hetzl2012}, where a calculus for decompositions into $u,S$ was presented. The full calculus, as well as the theoretical results of that paper will not be replicated for the case of multiple $\alpha$ here, but we will make use of a few analogous notions.
 
-\paragraph{Definition.} A term $u$ and a list of vectors $S$ are a substitution for a set of terms $\{t_1,\dots,t_n\}$ iff
-$$
-  \{t_1,\dots,t_n\} =
-  u \circ S =
-  \{u[\overline{\alpha}\backslash(s_{1,1},\dots,s_{q,1}),\dots,\overline{\alpha}\backslash(s_{1,n},\dots,s_{q,n})]\}
-$$
-where $\overline{\alpha} = (\alpha_1,\dots,\alpha_q)$, $u[\overline{\alpha}\backslash(s_{1,j},\dots,s_{q,j})] = u[\alpha_1\backslash s_{1,j},\dots,\alpha_q\backslash s_{q,j}]$, s.t.
-\begin{enumerate}
-  \item $S$ does not contain any $\alpha$ and
-  \item the instances of $\alpha$ occurring in $u$ are numbered $\alpha_1,\dots,\alpha_q$ left-to-right.
-\end{enumerate}
+\subsection{A calculus of substitutions for multiple $\alpha$}
 
-\paragraph{Left-Shifting.} A substitution may be left-shifted if, for some $\alpha_i$, all terms in the list $s_i$ start with a common function symbol $f$ or arity $r$. Let $s_i = (f(a_{1,1},\dots,a_{1,r}),\dots,f(a_{n,1},\dots,a_{n,r}))$. Then, left-shifting for $\alpha_i$ is defined as:
+\begin{definition}
+  \textbf{Substitution.}
+  A term $u$ and a list of vectors $S$ are a substitution for a set of terms $\{t_1,\dots,t_n\}$ if
+  $$
+    \{t_1,\dots,t_n\} =
+    u \circ S =
+    \{u[\overline{\alpha}\backslash(s_{1,1},\dots,s_{q,1}),\dots,\overline{\alpha}\backslash(s_{1,n},\dots,s_{q,n})]\}
+  $$
+  where $\overline{\alpha} = (\alpha_1,\dots,\alpha_q)$, $u[\overline{\alpha}\backslash(s_{1,j},\dots,s_{q,j})] = u[\alpha_1\backslash s_{1,j},\dots,\alpha_q\backslash s_{q,j}]$, s.t.
+  \begin{enumerate}
+    \item $S$ does not contain any $\alpha_i$ and
+    \item the variables occurring in $u$ are numbered $\alpha_1,\dots,\alpha_q$ left-to-right.
+  \end{enumerate}
+\end{definition}
 
-\begin{prooftree}
-  \AxiomCm{u\circ S}
-  \RightLabelm{\leftarrow}
-  \UnaryInfCm{u[\alpha_i\backslash f(\alpha_i^1,\dots,\alpha_i^r)] \circ S[s_i\backslash (a_{1,1},\dots,a_{n,1}),\dots,(a_{1,r},\dots,a_{n,r}))]}
-\end{prooftree}
+\begin{definition} \textbf{Left-shifting.}
+  A substitution may be left-shifted if, for some $\alpha_i$, all terms in the list $s_i$ start with a common function symbol $f$ of arity $r$. Let $s_i = (f(a_{1,1},\dots,a_{1,r}),\dots,f(a_{n,1},\dots,a_{n,r}))$. Then, left-shifting for $\alpha_i$ is defined as:
 
-\noindent
-where $\alpha_i^1,\dots,\alpha_i^r$ are fresh instances of $\alpha$.
+  \begin{prooftree}
+    \AxiomCm{u\circ S}
+    \RightLabelm{\leftarrow}
+    \UnaryInfCm{u[\alpha_i\backslash f(\alpha_i^1,\dots,\alpha_i^r)] \circ S[\overline{s_i}\backslash (a_{1,1},\dots,a_{n,1}),\dots,(a_{1,r},\dots,a_{n,r}))]}
+  \end{prooftree}
 
-\paragraph{Example.} Let $\{t_1,\dots,t_n\} = \{f(g(a,b),x),f(g(c,d),y)\}$ and let\\
-$u = f(\alpha_1,\alpha_3),\ S=(s_1,s_2)$ with $s_1 = (g(a,b),g(c,d),\ s_2 = (x,y)$.\\
-We can left-shift for $\alpha_1$:
+  \noindent
+  where $\alpha_i^1,\dots,\alpha_i^r$ are fresh instances of $\alpha$.
 
-\begin{prooftree}
-  \AxiomCm{f(\alpha_1,\alpha_3) \circ (s_1,s_2)}
-  \RightLabelm{\leftarrow}
-  \UnaryInfCm{f(g(\alpha_1,\alpha_2),\alpha_3) \circ ((a,c),(b,d),(x,y))}
-\end{prooftree}
+  \paragraph{Example.} Let $\{t_1,\dots,t_n\} = \{f(g(a,b),x),f(g(c,d),y)\}$ and let\\
+  $u = f(\alpha_1,\alpha_3),\ S=(\overline{s_1},\overline{s_2})$ with $\overline{s_1} = (g(a,b),g(c,d),\ \overline{s_2} = (x,y)$.\\
+  We can left-shift for $\alpha_1$:
 
-\paragraph{Merging \& splitting $\alpha$.} Suppose that there exist $\alpha_{i}$ and $\alpha_{j}$ in $u$ ($i \neq j$) s.t. $s_{i} = s_{j}$. Then we can replace $\alpha_{j}$ with $\alpha_{i}$ in $u$ and delete $s_{j}$ from $S$. Conversely, we can rename multiple occurrences of $\alpha_i$ to $\alpha_{i_1},\dots,\alpha_{i_n}$ and duplicate $s_{i}$ $n$ times. These operations are called merging \& splitting and obviously preserve the result of $u \circ S$.
+  \begin{prooftree}
+    \AxiomCm{f(\alpha_1,\alpha_3) \circ (\overline{s_1},\overline{s_2})}
+    \RightLabelm{\leftarrow}
+    \UnaryInfCm{f(g(\alpha_1,\alpha_2),\alpha_3) \circ ((a,c),(b,d),(x,y))}
+  \end{prooftree}
+\end{definition}
 
-\paragraph{Normal form.} A substitution $u,S$ is in normal form iff no left-shift and no merging are possible.
+\begin{definition}
+  \textbf{Merging \& splitting $\alpha$.}
+  Suppose that there exist $\alpha_{i}$ and $\alpha_{j}$ in $u$ ($i \neq j$) s.t. $s_{i} = s_{j}$. Then we can replace $\alpha_{j}$ with $\alpha_{i}$ in $u$ and delete $\overline{s_{j}}$ from $S$. Conversely, we can rename multiple occurrences of $\alpha_i$ to $\alpha_{i_1},\dots,\alpha_{i_n}$ and duplicate $\overline{s_{i}}$ $n$ times. These operations are called merging \& splitting and obviously preserve the result of $u \circ S$.
+\end{definition}
+
+\begin{definition}
+  \textbf{$\alpha$-elimination.} Suppose that, for a substitution $u,S$, there exists an $a_i$ in $u$ s.t. all terms in $\overline{s_i}$ are equal, i.e. $\overline{s_i} = (s_{i,1},\dots,s_{i,1})$. Then we can eliminate $\alpha_i$ by replacing $u$ with $u[\alpha_i\backslash s_{i,1}]$ and deleting $\overline{s_i}$ from $S$.
+\end{definition}
+
+
+\begin{definition} \textbf{Normal form.} A substitution $u,S$ is in normal form iff no left-shift, no merging and no $\alpha$-elimination are possible.
+\end{definition}
+
+\begin{theorem}Every substitution $u,S$ has a unique normal form. \label{thm:uniqueNormalForm}\end{theorem}
+
+\begin{proof}
+  \begin{enumerate}
+    \item Observe that the order in which merging operations and $\alpha$-eliminations are applied is irrelevant. 
+    \item The order in which two left-shift operations are applied is irrelevant. Suppose $\alpha_{j_1}$ and $\alpha_{j_2}$ occur in $u$ and
+          we can left-shift for both. Left-shifting for $\alpha_{j_1}$ only replaces $\alpha_{j_1}$ in $u$ with a term containing fresh
+          $\alpha_{j_1}^1,\dots,\alpha_{j_1}^r$ and the vector $\overline{s_{j_1}}$ in $S$ with new vectors $\overline{s_{j_1}^1},\dots,\overline{s_{j_1}^r}$.
+          The applicability of a left-shift for $\alpha_{j_2}$ remains unaffected.
+    \item Left-shifting and $\alpha$-elimination are confluent.
+          Suppose both left-shifting and $\alpha$-elimination can be performed on $\alpha_j$, i.e.\\
+          $\overline{s_j} = (f(s_{j,1},\dots,s_{j,r}),\dots,f(s_{j,1},\dots,s_{j,r}))$.
+          $\alpha$-elimination replaces $\alpha_j$ with $f(s_{j,1},\dots,s_{j,r})$ in $u$ and deletes $\overline{s_j}$ in $S$.
+          Left-shifting replaces $\alpha_j$ with $f(\alpha_j^1,\dots,\alpha_j^r)$ in $u$ and $\overline{s_j}$ with $(s_{j,1},\dots,s_{j,1})\dots,(s_{j,r},\dots,s_{j,r})$.
+          $\alpha$-elimination can then be performed on $\alpha_j^1,\dots,\alpha_j^r$, giving the same result.
+    \item Left-shifting and merging are confluent. Suppose that $\alpha_{j_1}$ and $\alpha_{j_2}$ occur in $u$ s.t. $\alpha_{j_1}$ and $\alpha_{j_2}$
+          can be merged and left-shifting is possible on both.
+          Since merging is possible, $\overline{s_{j_1}} = \overline{s_{j_2}} = (s_{j,1},\dots,s_{j,n})$. Merging $\alpha_{j_1}$ and $\alpha_{j_2}$ replaces $u$
+          with $u[\alpha_{j_2}\backslash \alpha_{j_1}]$ and deletes $\overline{s_{j_2}}$ from $S$.
+          If we left-shift on $\alpha_{j_1}$ and $\alpha_{j_2}$, we introduce $\alpha_{j_1}^1,\dots,\alpha_{j_1}^r$ and $\alpha_{j_2}^1,\dots,\alpha_{j_2}^r$
+          with corresponding $s$-vectors $\overline{s_{j_1}^1},\dots,\overline{s_{j_1}^r}$ and $\overline{s_{j_2}^1},\dots,\overline{s_{j_2}^r}$
+          s.t. $\overline{s_{j_1}^i} = \overline{s_{j_2}^i}\ (1 \leq i \leq r)$.
+          Merging $(\alpha_{j_1}^1, \alpha_{j_2}^1), \dots, (\alpha_{j_1}^r, \alpha_{j_2}^r)$ then delivers the same result as merging $(\alpha_{j_1},\alpha_{j_2})$ did. 
+  \end{enumerate}
+\end{proof}
+
+\begin{corollary}
+If $t_1 = \dots = t_n$ and $n > 0$, the normal form of a substitution for $(t_1,\dots,t_n)$ is $t_1,()$.
+\label{cor:allTermsEq}
+\end{corollary}
+
+\begin{proof}
+Take the trivial substitution $\alpha_1,(t_1,\dots,t_n)$ and perform $\alpha$-elimination.
+\end{proof}
+
+%\begin{corollary}
+%If $u,S$ is a substitution in which all possible left-shifts, but no merges and $\alpha$-eliminations, have been performed, its normal form $u',S'$ is the result of performing %every possible merge and $\alpha$-elimination.
+%\label{cor:leftShiftsFirst}
+%\end{corollary}
+
+%\begin{proof}
+%Follows from the fact that the order in which left-shifts, merges and $\alpha$-elimination are performed is irrelevant.
+%\end{proof}
+
+\medskip
+
+%-----------------------------------------------------------------------------
+% Completeness proof begins here
+%-----------------------------------------------------------------------------
 
 \subsection{Completeness proof}
 
-If $u,S$ is a substitution for $\{t_1,\dots,t_n\}$, then $\Delta_G(t_1,\dots,t_n) = (u',S')$ s.t. $u',S'$ is the normal form of $u,S$.
+\begin{theorem}
+  \textbf{Completeness of $\Delta_G$.}
+  If $u,S$ is a substitution for a non-empty set of terms $\{t_1,\dots,t_n\}$, then $\Delta_G(t_1,\dots,t_n) = (u',S')$ s.t. $u',S'$ is the normal form of $u,S$.
+  \label{thm:DeltaGCompleteness}
+\end{theorem}
 
-W.l.o.g. we assume a contiguous numbering of the $\alpha$ occurring in $u$.
+\begin{proof}
+  W.l.o.g. we assume a contiguous numbering of the $\alpha$ occurring in $u$.
+  We proceed by induction on the depth of $u$.
 
-\paragraph{Case 1.} Not every term in $\{t_1,\dots,t_n\}$ begins with a common function symbol $f$. In this case, the only possible substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This corresponds to the ``otherwise''-case of $\Delta_G$.
+  \paragraph{Case 1.} All terms are equal. This corresponds the first case of $\Delta_G$, which, per Corollary~\ref{cor:allTermsEq}, is the normal form of $u,S$.
 
-\paragraph{Case 2.} All terms in $\{t_1,\dots,t_n\}$ begin with a common function symbol. We have two sub-cases:
-\begin{enumerate}
-  \item $u=\alpha$. Since a left-shift is possible due to the common function symbol $f$, such a substituion is not in normal form. By left-shifting, we arrive at the second case.
-  \item $u=f(\dots)$. Left-shifting may be possible in the arguments of $u$. As can be seen, performing all possible left shifts recursively corresponds to the first case of $\Delta_G$. Merging all possible $\alpha$ corresponds exactly to \texttt{nub}.
-\end{enumerate}
+  \paragraph{Case 2.} Not all terms are equal and not every term in $\{t_1,\dots,t_n\}$ begins with a common function symbol $f$. In this case, the only possible substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This corresponds to the ``otherwise''-case of $\Delta_G$.
+
+  \paragraph{Case 3.} Not all terms are equal and all terms in $\{t_1,\dots,t_n\}$ begin with a common function symbol. We have two sub-cases:
+  \begin{enumerate}
+    \item $u=\alpha$. Since a left-shift is possible due to the common function symbol $f$, such a substitution is not in normal form. By left-shifting, we arrive at the second case.
+    \item $u=f(u_1,\dots,u_m)$. For every $u_i\ (1\leq i \leq m)$, case 1,2, or 3 applies, with the terms $\{t_j^1,\dots,t_j^n \}$. This corresponds to the second case of $\Delta_G$, with the difference that some $\alpha$-instances might not have been merged. The application of \texttt{nub} in $\Delta_G$, however, performs {\em all} merges.\\
+    Theorem~\ref{thm:uniqueNormalForm} shows that it is irrelevant when merges are performed as long as all possible ones are performed --- the result is still the normal form of $u,S$. Therefore, cases 1-3 of $\Delta_G$ (including the application of \texttt{nub}) lead to the normal form of $u,S$.
+  \end{enumerate}
+\end{proof}
+
+\begin{corollary}
+  Every non-empty set of terms $\{t_1,\dots,t_n\}$ has exactly one substitution in normal form.
+\end{corollary}
+
+\begin{proof}
+  Follows from Theorems~\ref{thm:DeltaGSoundness}, \ref{thm:uniqueNormalForm} \& \ref{thm:DeltaGCompleteness} and from $\Delta_G$ being a total function.
+\end{proof}
 
 
 \section{$\Delta$-Table}
 
-The $\Delta$-table, as described in the paper, is compatible with the $\Delta_G$-vector and, save substituting for multiple $\alpha$ instead of one, can be left as is. 
+The $\Delta$-table, as described in the paper, is compatible with the $\Delta_G$-vector and, save for substituting for multiple $\alpha$ instead of one, can be left as is. 
 
 \section{Remarks}
 
@@ -206,7 +312,7 @@ For theoretical reasons, we might be interested in limiting the number of allowe
 
 \subsection{Bounded generalized $\Delta$-Vector}
 
-$\Delta_G$ will a unique decomposition that will preserve as much of the common structure of $t_1,\dots,t_n$ as possible, employing as many $\alpha$-instances as needed, but in some cases, it may be desirable to limit the number of such $\alpha$-instances that it may use.
+$\Delta_G$ will compute a unique decomposition that will preserve as much of the common structure of $t_1,\dots,t_n$ as possible, employing as many $\alpha$-instances as needed, but in some cases, it may be desirable to limit the number of such $\alpha$-instances that it may use.
 Consider the following example:
 
 $$
