@@ -34,6 +34,7 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 \newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
 
 %\lstset{
 %  basicstyle=\footnotesize\ttfamily,
@@ -77,10 +78,10 @@ $$
         \\
 
         & \texttt{elim}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_n}) =\\
-        & \mt{if } [\exists i,j: i < j]\ \overline{s_{i+F}} = \overline{s_{j+F}} \mt { then}\\
-        & \quad \mt{remove } \overline{s_{j+F}},\\
-        & \quad \mt{replace } \alpha_j \mt { with } \alpha_i \mt{ and }\\
-        & \quad \mt{replace } \alpha_k \mt{ with } \alpha_{k-1}\ \forall k > j \mt{ in } u_1,\dots,u_m \mt{.}
+        & \mt{if } [\exists i,j: i < j]\ \overline{s_{i}} = \overline{s_{j}} \mt { then}\\
+        & \quad \mt{remove } \overline{s_{j}},\\
+        & \quad \mt{replace } \alpha_{j+F} \mt { with } \alpha_{i+F} \mt{ and }\\
+        & \quad \mt{replace } \alpha_k \mt{ with } \alpha_{k-1}\ \forall k > j+F \mt{ in } u_1,\dots,u_m \mt{.}
         \\
       \end{array}
   \end{array}
@@ -204,7 +205,7 @@ To define the sense in which $\Delta_G$ is complete, we must first introduce the
 
 \begin{definition}
   \textbf{Merging \& splitting $\alpha$.}
-  Suppose that there exist $\alpha_{i}$ and $\alpha_{j}$ in $u$ ($i \neq j$) s.t. $s_{i} = s_{j}$. Then we can replace $\alpha_{j}$ with $\alpha_{i}$ in $u$ and delete $\overline{s_{j}}$ from $S$. Conversely, we can rename multiple occurrences of $\alpha_i$ to $\alpha_{i_1},\dots,\alpha_{i_n}$ and duplicate $\overline{s_{i}}$ $n$ times. These operations are called merging \& splitting and obviously preserve the result of $u \circ S$.
+  Suppose that there exist $\alpha_{i}$ and $\alpha_{j}$ in $u$ ($i \neq j$) s.t. $\overline{s_i} = \overline{s_j}$. Then we can replace $\alpha_{j}$ with $\alpha_{i}$ and $\alpha_k$ with $\alpha_{k-1}\ (k > max{i,j})$ in $u$ and delete $\overline{s_{j}}$ from $S$. Conversely, we can rename multiple occurrences of $\alpha_i$ to $\alpha_{i_1},\dots,\alpha_{i_n}$ and duplicate $\overline{s_{i}}$ $n$ times. These operations are called merging \& splitting and obviously preserve the result of $u \circ S$.
 \end{definition}
 
 \begin{definition}
@@ -267,30 +268,64 @@ Take the trivial substitution $\alpha_1,(t_1,\dots,t_n)$ and perform $\alpha$-el
 
 \subsection{Completeness proof}
 
+\begin{lemma}
+\textbf{\texttt{nub} performs all merges.}
+W.l.o.g. let $u,S = (\overline{s_1},\dots,\overline{s_q})$ be a substitution in which the variables $\alpha_1,\dots,\alpha_q$ occur. Then $\texttt{nub}(u,S) = u',S'$ such that $u',S'$ equals $u,S$ modulo merging and that no merge is possible in $u',S'$.
+\label{thm:nubAllMerges}
+\end{lemma}
+
+\begin{proof}
+We show that if a merge is possible, \texttt{elim} performs it.\\
+
+\noindent
+Per definition, merging two distinct variables $\alpha_i, \alpha_j$ is possible iff $\overline{s_i} = \overline{s_j}$. This is equivalent to the condition for the application of \texttt{elim}:\\ $[\exists i,j: i < j]\ \overline{s_{i}} = \overline{s_{j}}$.
+If this condition holds, \texttt{elim} performs the two actions given in the definition of merging: it
+  \begin{enumerate}
+    \item removes $\overline{s_j}$ and
+    \item replaces $\alpha_j$ with $\alpha_i$ and $\alpha_k$ with $\alpha_{k-1}\ (k > j)$ in $u$.
+  \end{enumerate}
+
+\texttt{nub} is the least fixed point of \texttt{elim}, and since \texttt{elim} merges two variables $\alpha_i$ and $\alpha_j$ iff they can be merged, it is shown that \texttt{nub} performs exactly every possible merge in $u,S$.
+\end{proof}
+
 \begin{theorem}
   \textbf{Completeness of $\Delta_G$.}
   If $u,S$ is a substitution for a non-empty set of terms $\{t_1,\dots,t_n\}$, then $\Delta_G(t_1,\dots,t_n) = (u',S')$ s.t. $u',S'$ is the normal form of $u,S$.
   \label{thm:DeltaGCompleteness}
 \end{theorem}
 
+
+
+
+
 \begin{proof}
   W.l.o.g. we assume a contiguous numbering of the $\alpha$ occurring in $u$.
-  We proceed by induction on the depth of $u$.
+  We proceed by induction on the depth of $t_1,\dots,t_n$.
 
-  \paragraph{Case 1.} All terms are equal. This corresponds the first case of $\Delta_G$, which, per Corollary~\ref{cor:allTermsEq}, is the normal form of $u,S$.
-
-  \paragraph{Case 2.} Not all terms are equal and not every term in $\{t_1,\dots,t_n\}$ begins with a common function symbol $f$. In this case, the only possible substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This corresponds to the ``otherwise''-case of $\Delta_G$.
-
-  \paragraph{Case 3.} Not all terms are equal and all terms in $\{t_1,\dots,t_n\}$ begin with a common function symbol. We have two sub-cases:
+  \paragraph{Base case.} Let $t_i\ (1 \leq i \leq n)$ have a depth of 0. We have two sub-cases:
   \begin{enumerate}
-    \item $u=\alpha$. Since a left-shift is possible due to the common function symbol $f$, such a substitution is not in normal form. By left-shifting, we arrive at the second case.
-    \item $u=f(u_1,\dots,u_m)$. For every $u_i\ (1\leq i \leq m)$, case 1,2, or 3 applies, with the terms $\{t_j^1,\dots,t_j^n \}$. This corresponds to the second case of $\Delta_G$, with the difference that some $\alpha$-instances might not have been merged. The application of \texttt{nub} in $\Delta_G$, however, performs {\em all} merges.\\
-    Theorem~\ref{thm:uniqueNormalForm} shows that it is irrelevant when merges are performed as long as all possible ones are performed --- the result is still the normal form of $u,S$. Therefore, cases 1-3 of $\Delta_G$ (including the application of \texttt{nub}) lead to the normal form of $u,S$.
+    \item All terms are equal. This is the condition of first case of $\Delta_G$, which, per Corollary~\ref{cor:allTermsEq}, is the normal form of $u,S$.
+    \item Not all terms are equal. The terms can only be variables or constants. In either case, the only possibly substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This is exactly the ``otherwise''-case of $\Delta_G$.
+  \end{enumerate}
+
+  \paragraph{Step case.} Assume that $\Delta_G$ is complete if $t_i\ (1 \leq i \leq n)$ has a depth $\leq d$.
+  We again have two cases:
+  \begin{enumerate}
+    \item All terms are equal. As in the base case, $\Delta_G$ computes the normal form of $u,S$, per Corollary~\ref{cor:allTermsEq}.
+    \item Not all terms are equal. If not all terms begin with a common function symbol with arity $m$, the only possible substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This is again exactly the ``otherwise''-case of $\Delta_G$.
+    If all terms do begin with a common function symbol of arity $m$, then $t_i = f(t_1^i,\dots,t_m^i)$ for  $(1 \leq i \leq n)$. This is the condition for the second case of $\Delta_G$. $u$ can take one of two forms:
+    \begin{enumerate}
+      \item $u=\alpha$. Since a left-shift is possible due to the common function symbol $f$, such a substitution is not in normal form. By left-shifting, we arrive at the second case.
+      \item $u=f(u_1,\dots,u_m)$. In this case, $u_i, S_i\ (1 \leq i \leq m)$ must be a substitution for the terms $t_i^1,\dots,t_i^n$. For these substitutions, completeness of $\Delta_G$ holds per the IH. Now let $\widehat{u}=f(\widehat{u_1},\dots,\widehat{u_m}),\widehat{S}=\bigsqcup\limits_{1 \leq i \leq m} S_i$ be the substitution created by simply concatenating all $u_i,S_i$, where $\widehat{u_i}$ is $u_i$, with its variables renamed to avoid clashes between any two $u_{i_1}, u_{i_2}$. Per definition of $\Delta_G$, $\widehat{u},\widehat{S}$ is precisely the result of the second case of $\Delta_G$, without the application of \texttt{nub}. Furthermore, per Theorem~\ref{thm:uniqueNormalForm}, $u,S$ and $\widehat{u},\widehat{S}$ have the same normal form.\\
+
+      Due to the IH, $\widehat{u},\widehat{S}$ can only differ from $u',S'$ through merging. Per Lemma~\ref{thm:nubAllMerges}, the application of \texttt{nub} to $\widehat{u},\widehat{S}$ performs all possible merges, which results in the unique normal form of both $\widehat{u},\widehat{S}$ and $u,S$.
+    \end{enumerate}
   \end{enumerate}
 \end{proof}
 
 \begin{corollary}
-  Every non-empty set of terms $\{t_1,\dots,t_n\}$ has exactly one substitution in normal form.
+  Every non-empty set of terms $\{t_1,\dots,t_n\}$ has exactly one substitution in normal form and $\Delta_G$ computes it.
+  \label{thm:deltaGCorrectness}
 \end{corollary}
 
 \begin{proof}
@@ -325,15 +360,74 @@ $$
 
 This illustrates two points:
 \begin{enumerate}
-\item There is a non-deterministic choice: we could restrict the number of $\alpha$-instances to, say, 4. This can be achieved by merging either $\alpha_1$ and $\alpha_2$ into a new $\alpha'$ (with the terms $(g(a,b),g(x,y))$) or $\alpha_3$ \& $\alpha_4$ (with the terms $(g(c,d),g(u,v))$).
+\item There is a non-deterministic choice: we could restrict the number of $\alpha$-instances to, say, 4. This can be achieved by right-shifting $\alpha_1$ and $\alpha_2$ into a new $\alpha'$ (with the terms $(g(a,b),g(x,y))$) or $\alpha_3$ \& $\alpha_4$ (with the terms $(g(c,d),g(u,v))$).
 \item Generally, it is not possible to specify exactly how many $\alpha$ should occur in $u$: if we restrict the number of $\alpha$-instances to at most 2, we only get the trivial decomposition $(\alpha; f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w))$.
 \end{enumerate}
 
-We therefore can specify upper bounds, but not lower bounds on the number of $\alpha$-instances which may be used, although this burdens us with a non-deterministic choice as to which $\alpha$-instances to merge together.\\
+We therefore can specify upper bounds, but not lower bounds on the number of $\alpha$-instances which may be used, although this burdens us with a non-deterministic choice as to for which $\alpha$-instances to right-shift.\\
 
-\noindent
-Rest: TODO
+\subsubsection{Calculating the set of all substitutions}
 
+If we wish to know all the ways in which variables can be right-shifted, we can employ a slightly altered variant of $\Delta_G$: if $\Delta_G(t_1,\dots,t_n)$ computes $u,S$ such that $\alpha_1,\dots,\alpha_p$ occur in $u$, we can create substitutions with smaller numbers of variables by introducing non-determinism into $\Delta_G$ and having it choose randomly whether to jump into its ``otherwise''-case.
+
+$$
+  \Delta_G^*(t_1,\dots,t_n) = \left\{
+    \begin{array}{l}
+
+    (t_1,()) \mt{ if } t_1 = t_2 = \dots = t_n \mt{ and } n > 0\\
+    \\
+
+    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q}))
+    \\
+    \quad
+    \begin{array}{l l}
+      \mt{if } & \mt{\textbf{RANDOM} = true,}\\
+      \mt{all } & t_i = f(t_1^i,\dots,t_m^i) \mt{, and case 1 does not apply,}\\
+      \mt{where } & \mt{\textbf{RANDOM} is a non-deterministic boolean variable,}\\
+                  & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq m} \pi_2(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ and}\\
+                  & u_j = \pi_1(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ for all } j \in \{1,\dots,m \}\\
+    \end{array}
+    
+    \\
+    \\
+    
+    (\alpha_{\mt{UNIQUE}},(t_1,\dots,t_n))\quad \mt{otherwise}\\
+    \end{array}
+  \right.
+$$
+
+Whenever \textbf{RANDOM} is false, we terminate our search for a common structure in the termset early and create a new variable with a corresponding $s$-vector consisting of the entire termset. This is equivalent to calculating the deterministic $\Delta_G$ and then non-deterministically right-shifting to reduce the number of variables.
+If we collect the results of all choices, we get the set of all substitutions which are in a weaker normal form.
+
+\begin{definition}
+\textbf{Weak k-normal form.}
+A substitution $u,S$ is in weak k-normal form if $\leq k$ variables occur in $u$, merging and $\alpha$-elimination are not possible, and any left-shifting would result in $> k$ variables in $u$.
+\end{definition}
+
+\begin{theorem}
+\textbf{Completeness of $\Delta_G^*$.} $\Delta_G^*$ computes a set of substitutions s.t. for all $k > 0$, the set of all weak k-normal forms is a subset of $\Delta_G^*(t_1,\dots,t_n)$.\\
+\end{theorem}
+
+%\begin{proof}
+%Suppose that a substitution $u,S$ for $(t_1,\dots,t_n)$ is in weak k-normal form and let $u',S'$ be its normal form. Per Corollary~\ref{thm:deltaGCorrectness}, $\Delta_G(t_1,\dots,t_n) = u',S'$.
+
+%Since merging and $\alpha$-elimination are impossible in weak k-normal form, $u,S$ and $u',S'$ differ only by left-shifting.
+
+%\end{proof}
+
+
+
+Unlike the normal form, weak k-normal forms are not confluent, as the following example shows:
+
+$$
+\begin{array}{l}
+\Delta_G^*(f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w)) =\\
+\\
+\{(f(\alpha_1,\alpha_2,\alpha_3); ((g(a,b),g(x,y)), (g(c,d),g(u,v)), (e,w)),\dots \}
+\end{array}
+$$
+
+As we can see, this is the same termset as in the previous example, but here, we have terminated the search early in the case of $\alpha_1$ and $\alpha_2$. The substitutions shown has 3 variables. If we want to get to weak 4-normal form, we can left-shift either for $\alpha_1$ and $\alpha_2$, but not for both. Therefore, we can create two different weak normal forms.
 
 \bibliographystyle{plain}
 \bibliography{references}
