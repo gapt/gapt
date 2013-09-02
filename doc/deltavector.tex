@@ -366,68 +366,112 @@ This illustrates two points:
 
 We therefore can specify upper bounds, but not lower bounds on the number of $\alpha$-instances which may be used, although this burdens us with a non-deterministic choice as to for which $\alpha$-instances to right-shift.\\
 
-\subsubsection{Calculating the set of all substitutions}
+\subsubsection{Calculating the set of all substitutions with at most $k$ variables}
 
-If we wish to know all the ways in which variables can be right-shifted, we can employ a slightly altered variant of $\Delta_G$: if $\Delta_G(t_1,\dots,t_n)$ computes $u,S$ such that $\alpha_1,\dots,\alpha_p$ occur in $u$, we can create substitutions with smaller numbers of variables by introducing non-determinism into $\Delta_G$ and having it choose randomly whether to jump into its ``otherwise''-case.
+$\Delta_G$ can be slightly altered to compute substitutions with at most $k$ variables. We do this by introducing a parameter $k$ and a non-deterministic boolean variable \textbf{RANDOM}, creating $\Delta_G^k$:
 
 $$
-  \Delta_G^*(t_1,\dots,t_n) = \left\{
-    \begin{array}{l}
+  \begin{array}{l l l}
+    \Delta_G^*(t_1,\dots,t_n) & = & \left\{
+      \begin{array}{l}
 
-    (t_1,()) \mt{ if } t_1 = t_2 = \dots = t_n \mt{ and } n > 0\\
+      (t_1,()) \mt{ if } t_1 = t_2 = \dots = t_n \mt{ and } n > 0\\
+      \\
+
+      \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q}))
+      \\
+      \quad
+      \begin{array}{l l}
+        \mt{if all } & t_i = f(t_1^i,\dots,t_m^i) \mt{, case 1 does not apply and}\\
+        & (\mt{\textbf{RANDOM} = true} \vee m = 1)\\
+        % & [\nexists l]\ l > k \wedge \alpha_l \mt{ occurs in } f(u_1,\dots,u_m),\\
+        \mt{where } & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq m} \pi_2(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ and}\\
+                    & u_j = \pi_1(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ for all } j \in \{1,\dots,m \}\\
+      \end{array}
+      
+      \\
+      \\
+      
+      (\alpha_{\mt{UNIQUE}},(t_1,\dots,t_n))\quad \mt{otherwise}\\
+      \end{array}
+    \right.
+
+    \\
     \\
 
-    \texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q}))
-    \\
-    \quad
-    \begin{array}{l l}
-      \mt{if } & \mt{\textbf{RANDOM} = true,}\\
-      \mt{all } & t_i = f(t_1^i,\dots,t_m^i) \mt{, and case 1 does not apply,}\\
-      \mt{where } & \mt{\textbf{RANDOM} is a non-deterministic boolean variable,}\\
-                  & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq m} \pi_2(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ and}\\
-                  & u_j = \pi_1(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ for all } j \in \{1,\dots,m \}\\
+      \Delta_G^k(t_1,\dots,t_n) & = & \{u,S \in \Delta_G^*(t_1,\dots,t_n) |\ [\nexists l]\ l > k \wedge \alpha_l \mt{ occurs in } u\}
     \end{array}
-    
-    \\
-    \\
-    
-    (\alpha_{\mt{UNIQUE}},(t_1,\dots,t_n))\quad \mt{otherwise}\\
-    \end{array}
-  \right.
 $$
 
-Whenever \textbf{RANDOM} is false, we terminate our search for a common structure in the termset early and create a new variable with a corresponding $s$-vector consisting of the entire termset. This is equivalent to calculating the deterministic $\Delta_G$ and then non-deterministically right-shifting to reduce the number of variables.
-If we collect the results of all choices, we get the set of all substitutions which are in a weaker normal form.
+The side-condition for the instantation of $\alpha_{\mt{UNIQUE}}$ is the same as in $\Delta_G$: the leftmost occurrence is $\alpha_1$ and all instances are numbered incrementally left-to-right.\\
+
+The second case of $\Delta_G^*$ now has an condition: either \textbf{RANDOM} is true or the function symbol $f$ at the head of $t_1,\dots,t_n$ is unary. This for the non-deterministic nature of right-shifting: whenever \textbf{RANDOM} is false and choosing the second case might introduce more than variable, we terminate our search for a common structure in the termset early and create a new variable with a corresponding $s$-vector consisting of $t_1,\dots,t_n$, which is equivalent to computing $\Delta_G$ and the non-deterministically right-shifting to reduce the number of variables. $\Delta_G^k$ simply filters the result of $\Delta_G^*$ so that we only get substitutions with at most $k$ variables.\\
+
+It is obvious, substitutions computed by $\Delta_G^k$ need not be in normal form. To talk about the result of $\Delta_G^k$, we thus need the notion of a weaker normal form for substitutions:
 
 \begin{definition}
 \textbf{Weak k-normal form.}
 A substitution $u,S$ is in weak k-normal form if $\leq k$ variables occur in $u$, merging and $\alpha$-elimination are not possible, and any left-shifting would result in $> k$ variables in $u$.
 \end{definition}
 
-\begin{theorem}
-\textbf{Completeness of $\Delta_G^*$.} $\Delta_G^*$ computes a set of substitutions s.t. for all $k > 0$, the set of all weak k-normal forms is a subset of $\Delta_G^*(t_1,\dots,t_n)$.\\
-\end{theorem}
+\noindent
+Thus equipped, we can give the following completeness result:
+
+%SOUNDNESS:
+%The algorithm isn't sound!
+%Randomly jumping into the otherwise-case is premature. Even if we would temporarily get too many
+%variables, we still might be able to merge them back!
+
+%I don't think this can be easily fixed; calculating Delta_G and right-shifting might prove more fruitful, both in theory and practice.
+
+%\begin{theorem}
+%\textbf{Soundness of $\Delta_G^k$.}
+%Let $t_1,\dots,t_n$ be terms. If $u,S \in \Delta_G^k(t_1,\dots,t_n)$, then $u,S$ is in weak l-normal form ($l \leq k$) and $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for $1\leq i \leq n)$.
+%\label{thm:DeltaGkSoundness}
+%\end{theorem}
 
 %\begin{proof}
-%Suppose that a substitution $u,S$ for $(t_1,\dots,t_n)$ is in weak k-normal form and let $u',S'$ be its normal form. Per Corollary~\ref{thm:deltaGCorrectness}, $\Delta_G(t_1,\dots,t_n) = u',S'$.
+%The proof is largely analogous to that given in Theorem~\ref{thm:DeltaGSoundness}. Since $\Delta_G^k$ only differs from $\Delta_G$ in that it non-deterministically chooses its ``otherwise''-case, we need only show two additional claims:
 
-%Since merging and $\alpha$-elimination are impossible in weak k-normal form, $u,S$ and $u',S'$ differ only by left-shifting.
+%\begin{enumerate}
+%  \item $u,S$ is in weak $l$-normal form for some $l < k$ and
+%  \item choosing the ``othwise''-case where $\Delta_G$ would choose its second case still results in a substitution.
+%\end{enumerate}
 
+%The first claim is clearly true: since $\Delta_G^k$ filters out all substitutions returned by $\Delta_G^*$ which have more than $k$ variables, $\leq k$ variables occur in $u$. If left-shifting is not possible, $u,S$ is weak $k$-normal form. Otherwise, suppose that left-shifting is possible for some variable $\alpha_i$ and a corresponding s-vector $(f(\dots),\dots,f(\dots))$. $f$ cannot be unary, since for unary functions, the second case of $\Delta_G^*$ would have applied. Left-shifting for $\alpha_i$ would therefore introduce at least two new variables $\alpha_{i_1}$ and $\alpha_{i_2}$. It is not possible to merge these two variables with each other or with existing ones, because the application
+
+% in the second case of $\Delta_G^k$: should a variable with an index $ > k$ occur, the ``otherwise''-case is chosen, which instantates one variable and creates a substitution . The second claim is similarly clear: if we choose the ``otherwise''-case and instantiate $\alpha_i$ with the s-vector $(t_1,\dots,t_n)$,\\
+%$\alpha_i\backslash(t_1,\dots,t_n)=(t_1,\dots,t_n)$.
 %\end{proof}
 
+%-------------------------------------------------------------------------------------------------
 
+\begin{theorem}
+\textbf{Completeness of $\Delta_G^k$.}
+If we evaluate for all possible assignments for \textbf{RANDOM}, $\Delta_G^k$ returns the set of all substitutions which are in weak l-normal form ($1 \leq l \leq k$).
+\label{thm:DeltaGkCompletenss}
+\end{theorem}
+
+\begin{proof}
+Let $l \in \{1,\dots,k\}$ and let $u,S$ be a substitution in weak l-normal form. We proceed by induction on the depth of $t_1,\dots,t_n$.
+The proof is entirely analogous to that for Theorem~\ref{thm:DeltaGCompleteness}, except for point 2 of the step case.
+There, if $t_1\dots,t_n$ start with a common unary function symbol, $u$ can only be of the form $u=f(u_1)$, since it wouldn't be in weak l-normal form otherwise. This corresponds to second case of $\Delta_G^*$, where the condition $(\textbf{RANDOM = true } \vee m=1)$ becomes $\top$ and thereby identical to the condition for the second case of $\Delta_G$.
+If, on the other hand, $t_1\dots,t_n$ start with a non-unary function symbol of arity $m$, $u$ may either be of the form $u=\alpha$ or $u=f(u_1,\dots,u_m)$. The first form corresponds to the ``otherwise''-case and the second form corresponds to the second case of $\Delta_G^k$. Due to \textbf{RANDOM}, both forms are chosen and hence $\Delta_G^k$ is complete.
+\end{proof}
+
+\medskip
 
 Unlike the normal form, weak k-normal forms are not confluent, as the following example shows:
 
 $$
 \begin{array}{l}
-\Delta_G^*(f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w)) =\\
+\Delta_G^\infty(f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w)) =\\
 \\
 \{(f(\alpha_1,\alpha_2,\alpha_3); ((g(a,b),g(x,y)), (g(c,d),g(u,v)), (e,w)),\dots \}
 \end{array}
 $$
 
-As we can see, this is the same termset as in the previous example, but here, we have terminated the search early in the case of $\alpha_1$ and $\alpha_2$. The substitutions shown has 3 variables. If we want to get to weak 4-normal form, we can left-shift either for $\alpha_1$ and $\alpha_2$, but not for both. Therefore, we can create two different weak normal forms.
+As we can see, this is the same termset as in the previous example, but here, we have terminated the search early in the case of $\alpha_1$ and $\alpha_2$. The substitution shown has 3 variables. If we want to get to weak 4-normal form, we can left-shift either for $\alpha_1$ and $\alpha_2$, but not for both. Therefore, we can create two different weak normal forms.
 
 \bibliographystyle{plain}
 \bibliography{references}
