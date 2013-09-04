@@ -141,6 +141,7 @@
 				<version>${scala-maven-plugin.version}</version>
 				<configuration>
 				  <recompileMode>incremental</recompileMode>
+          <checkMultipleScalaVersions>off</checkMultipleScalaVersions>
           <useZincServer>true</useZincServer>
           <args>
             <arg>-unchecked</arg>

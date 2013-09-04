@@ -96,7 +96,11 @@ object prenexToExpansionTree {
       case (acc, instance) =>
         val subs = FOLUnificationAlgorithm.unify(fMatrix, instance)
         // WARNING: Considering only the first substitution
-        val expTree = apply_(f, subs(0))
+        val expTree = subs match {
+          case h::t => apply_(f, h) // WARNING: considering only the first substitution
+          case Nil => throw new Exception("ERROR: prenexToExpansionTree: No substitutions found for:\n" + 
+            "Matrix: " + fMatrix + "\nInstance: " + instance)
+        }
         expTree match {
           case WeakQuantifier(_, lst) => lst.toList ++ acc
           case _ => throw new Exception("ERROR: Quantifier-free formula?")
@@ -108,11 +112,11 @@ object prenexToExpansionTree {
   }
 
   def apply_(f: FOLFormula, sub: Substitution[FOLExpression]) : ExpansionTree = f match {
-    case AllVar(v, _) => v
+    case AllVar(v, _) => //v What is this 'v' doing here?
       val t = sub.getTerm(v)
       val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))
-    case ExVar(v, _) => v
+    case ExVar(v, _) => //v
       val t = sub.getTerm(v)
       val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))

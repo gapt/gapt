@@ -125,8 +125,8 @@ object Utils {
   // Transforms a list of literals into an implication formula, with negative 
   // literals on the antecedent and positive literals on the succedent.
   def reverseCNF(f: List[FOLFormula]) : FOLFormula = {
-    val (ant, succ) = f.foldLeft((List[FOLFormula](), List[FOLFormula]())) {
-      case ((ant, succ), f) => f match {
+    val (ant, succ) = f.foldRight((List[FOLFormula](), List[FOLFormula]())) {
+      case (f, (ant, succ)) => f match {
         case Neg(a) => (a::ant, succ)
         case a => (ant, a::succ)
       }

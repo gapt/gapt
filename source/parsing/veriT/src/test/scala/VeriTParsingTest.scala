@@ -30,15 +30,11 @@ class VeriTParsingTest extends SpecificationWithJUnit {
     
     "parse correctly an even more complicated example" in {
       //println("------------------- TEST 2 ------------------------")
-      //val formulas = VeriTParser.read("target/test-classes/test2.verit")
+      val formulas = VeriTParser.read("target/test-classes/test2.verit")
       //println("\nNumber of formulas on the antecedent: " + formulas._1.size)
       //println("Formulas on the antecedent:")
       //formulas._1.foreach(f => println(f))
-      // Only 3 expansion trees: input, eq_transitive (with a million
-      // instances!) and eq_symmetry (with hundreds of instances)
-      //formulas._1 must haveSize(3)
-      // TODO: fix the parser to pass this test
-      success
+      formulas._1 must haveSize(4)
     }
   }
 }

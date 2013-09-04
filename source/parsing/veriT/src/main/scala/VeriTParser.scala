@@ -2,6 +2,9 @@ package at.logic.parsing.veriT
 
 import scala.util.parsing.combinator._
 import at.logic.language.fol._
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.lambda.BetaReduction._
+//import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, prenexToExpansionTree, qFreeToExpansionTree}
@@ -11,7 +14,10 @@ object VeriTParser extends RegexParsers {
 
   type Instances = (FOLFormula, List[FOLFormula])
 
-
+  // Fixes the order of the equalities for congruence predicates.
+  // E.g.:
+  // x1 = y1 ^ y2 = x2 -> f(x1, x2) = f(y1, y2)  should become
+  // x1 = y1 ^ x2 = y2 -> f(x1, x2) = f(y1, y2)
   def fixOrder(pairs: List[(FOLTerm, FOLTerm)], eqs: List[FOLFormula]) : (List[FOLFormula], List[Instances]) = (pairs, eqs.head) match {
     case ( (x, y)::tail, Neg(Atom(eq, List(a, b))) ) if x==a && y==b =>
       val p = fixOrder(tail, eqs.tail)
@@ -21,10 +27,10 @@ object VeriTParser extends RegexParsers {
       val p = fixOrder(tail, eqs.tail)
       ((Neg(Atom(eq, List(b, a))) :: p._1), s :: p._2)
     case ( (x, y)::tail, Neg(Atom(eq, List(a, b))) ) =>
-      throw new Exception("ERROR: Predicate of function " + eqs.head + 
-      " does not have args " + x + ", " + y)
-    case ( Nil, Atom(_,_) ) => (List(eqs.head), Nil)
-    case _ => throw new Exception("ERROR: mal-formed eq_congruent")
+      throw new Exception("ERROR: Predicate of function " + eqs.head + " does not have args " + x + ", " + y)
+    case ( Nil, Atom(_,_) ) => (eqs, Nil)
+    case ( Nil, Neg(Atom(_,_)) ) => (eqs, Nil)
+    case _ => throw new Exception("ERROR: mal-formed eq_congruent or eq_congruent_pred.")
 
   }
 
@@ -183,8 +189,8 @@ object VeriTParser extends RegexParsers {
     def gen_eq_congr(n: Int, fname: String) : FOLFormula = {
       val listX = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i)) ).toList
       val listY = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i)) ).toList
-      val equalities = listX.zip(listY).foldLeft(List[FOLFormula]()) {
-        case (acc, p) => 
+      val equalities = listX.zip(listY).foldRight(List[FOLFormula]()) {
+        case (p, acc) => 
           val eq = ConstantStringSymbol("=")
           Atom(eq, List(p._1, p._2)) :: acc
       }
@@ -244,16 +250,18 @@ object VeriTParser extends RegexParsers {
     def gen_eq_congr_pred(n: Int, pname: String) : FOLFormula = {
       val listX = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i)) ).toList
       val listY = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i)) ).toList
-      val equalities = listX.zip(listY).foldLeft(List[FOLFormula]()) {
-        case (acc, p) => 
+      val equalities = listX.zip(listY).foldRight(List[FOLFormula]()) {
+        case (p, acc) => 
           val eq = ConstantStringSymbol("=")
           Atom(eq, List(p._1, p._2)) :: acc
       }
-      val conj = Utils.andN(equalities)
+      //val conj = Utils.andN(equalities)
       val name = ConstantStringSymbol(pname)
       val p1 = Atom(name, listX)
       val p2 = Atom(name, listY)
-      val matrix = Imp(And(conj, p1), p2)
+      val conj = Utils.andN(equalities :+ p1)
+      //val matrix = Imp(And(conj, p1), p2)
+      val matrix = Imp(conj, p2)
 
       val quantY = listY.foldRight(matrix) {
         case (yi, f) => AllVar(yi, f)
@@ -359,18 +367,19 @@ object VeriTParser extends RegexParsers {
   def and_pos : Parser[List[Instances]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
   def or : Parser[List[Instances]] = "or" ~> premises <~ conclusion
   def tmp_distinct_elim : Parser[List[Instances]] = "tmp_distinct_elim" ~> premises <~ conclusion
+  // TODO: what to do with these???
   def tmp_alphaconv : Parser[List[Instances]] = "tmp_alphaconv" ~> premises <~ conclusion
   def tmp_let_elim : Parser[List[Instances]] = "tmp_let_elim" ~> premises <~ conclusion
   
   // I don't care about premises. I only use the leaves
   def premises : Parser[List[Instances]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
-  def conclusion : Parser[List[FOLFormula]] = ":conclusion (" ~> rep(formula) <~ ")"
+  def conclusion : Parser[List[FOLFormula]] = ":conclusion (" ~> rep(expression) <~ ")"
  
-  def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred //| errorF
+  def expression : Parser[FOLFormula] = formula | let
+  def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred
   
-  def term : Parser[FOLTerm] = variable | function | variableAlt
+  def term : Parser[FOLTerm] = variable | function 
   def variable : Parser[FOLTerm] = name ^^ { case n => FOLVar(VariableStringSymbol(n)) }
-  def variableAlt : Parser[FOLTerm] = "?" ~> name ^^ { case n => FOLVar(VariableStringSymbol(n)) }
   def function : Parser[FOLTerm] = "(" ~> name ~ rep(term) <~ ")" ^^ {
     case name ~ args => 
       val n = ConstantStringSymbol(name) 
@@ -378,18 +387,35 @@ object VeriTParser extends RegexParsers {
   }
 
   def andFormula : Parser[FOLFormula] = "(and" ~> rep(formula) <~ ")" ^^ { 
-    case flst => Utils.andN(flst) 
+    case flst => Utils.andN(flst)
   }
   def orFormula : Parser[FOLFormula] = "(or" ~> rep(formula) <~ ")" ^^ { 
-    case flst => Utils.orN(flst) 
+    case flst => Utils.orN(flst)
   }
   def notFormula : Parser[FOLFormula] = "(not" ~> formula <~ ")" ^^ { 
-    case f => Neg(f) 
+    case f => Neg(f)
   }
   def pred : Parser[FOLFormula] = "(" ~> name ~ rep(term) <~ ")" ^^ { 
     case name ~ args => 
       val n = ConstantStringSymbol(name)
-      Atom(n, args) 
+      Atom(n, args)
+  }
+
+  // Syntax of let-expressions:
+  // (let (v1 t1) ... (vn tn) exp)
+  // which is equivalent to the lambda-expression:
+  // (\lambda v1 ... vn exp) t1 ... tn
+  def let : Parser[FOLFormula] = "(" ~> "let" ~> "(" ~> rep(binding) ~ ")" ~ expression <~ ")" ^^ {
+    case bLst ~ ")" ~ f => 
+    val lambda_exp = bLst.foldRight(f) {
+      case ((v, t), exp) => App(Abs(v.asInstanceOf[FOLVar], exp), t).asInstanceOf[FOLFormula]
+    }
+    // TODO: normalize everything afterwards to see if it improves time.
+    betaNormalize(lambda_exp)(StrategyOuterInner.Innermost).asInstanceOf[FOLFormula]
+  }
+
+  def binding : Parser[(FOLTerm, FOLTerm)] = "(" ~> variable ~ term <~ ")" ^^ {
+    case v ~ t => (v, t)
   }
   
   def name : Parser[String] = """[^ ():]+""".r
