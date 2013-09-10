@@ -288,8 +288,14 @@ object VeriTParser extends RegexParsers {
   def read(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {
     parseAll(proof, new FileReader(filename)) match {
       case Success(r, _) => r
-      case Failure(msg, next) => throw new Exception("VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
-      case Error(msg, next) => throw new Exception("VeriT parsing: syntax error " + msg + "\nat " + next.pos.line + " and column " + next.pos.column)
+      case Failure(msg, next) => 
+        println("FILE: " + filename)
+        println("VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
+        throw new Exception("VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
+      case Error(msg, next) => 
+        println("FILE: " + filename)
+        println("VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
+        throw new Exception("VeriT parsing: syntax error " + msg + "\nat " + next.pos.line + " and column " + next.pos.column)
     }
   }
 
@@ -410,7 +416,6 @@ object VeriTParser extends RegexParsers {
     val lambda_exp = bLst.foldRight(f) {
       case ((v, t), exp) => App(Abs(v.asInstanceOf[FOLVar], exp), t).asInstanceOf[FOLFormula]
     }
-    // TODO: normalize everything afterwards to see if it improves time.
     betaNormalize(lambda_exp)(StrategyOuterInner.Innermost).asInstanceOf[FOLFormula]
   }
 

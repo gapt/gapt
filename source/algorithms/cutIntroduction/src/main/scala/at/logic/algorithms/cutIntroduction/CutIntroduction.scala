@@ -32,7 +32,7 @@ object CutIntroduction extends Logger {
 
   def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
     val endSequent = toSequent(ep)
-    println("\nEnd sequent: " + endSequent)
+    //println("\nEnd sequent: " + endSequent)
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(ep)
     apply_(endSequent, termsTuples)
@@ -40,7 +40,7 @@ object CutIntroduction extends Logger {
 
   def apply(proof: LKProof) : LKProof = {
     val endSequent = proof.root
-    println("\nEnd sequent: " + endSequent)
+    //println("\nEnd sequent: " + endSequent)
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(proof)
     apply_(endSequent, termsTuples)
@@ -52,16 +52,16 @@ object CutIntroduction extends Logger {
     // transform tuples into terms.
     val terms = new FlatTermSet(termsTuples)
 
-    println( "\nTerm set: {" + terms.termset + "}" )
-    println( "Size of term set: " + terms.termset.size )
+    //println( "\nTerm set: {" + terms.termset + "}" )
+    //println( "Size of term set: " + terms.termset.size )
 
     var beginTime = System.currentTimeMillis;
 
     val grammars = ComputeGrammars(terms)
 
-    debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
+    //debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
 
-    println( "\nNumber of grammars: " + grammars.length )
+    //println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
       throw new CutIntroException("\nNo grammars found." + 
@@ -72,30 +72,30 @@ object CutIntroduction extends Logger {
     val smallest = grammars.head.size
     val smallestGrammars = grammars.filter(g => g.size == smallest)
 
-    println( "Smallest grammar-size: " + smallest )
-    println( "Number of smallest grammars: " + smallestGrammars.length )
+    //println( "Smallest grammar-size: " + smallest )
+    //println( "Number of smallest grammars: " + smallestGrammars.length )
 
     beginTime = System.currentTimeMillis;
-    println("Improving solution...")
+    //println("Improving solution...")
 
     // Build a proof from each of the smallest grammars
     def buildProof(grammar:Grammar) = {
-      trace( "building proof for grammar " + grammar.toPrettyString )
+      //trace( "building proof for grammar " + grammar.toPrettyString )
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
       ehs.minimizeSolution
-      trace ( "building final proof" )
+      //trace ( "building final proof" )
       val proof = buildFinalProof(ehs)
-      trace ( "done building final proof" )
+      //trace ( "done building final proof" )
       
       if (proof.isDefined) { Some((proof.get,ehs)) } else { None }
     }
 
     val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
 
-    debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
+    //debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
     // Sort the list by size of proofs
     val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
@@ -103,8 +103,8 @@ object CutIntroduction extends Logger {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
-    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
-    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+    //println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    //println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
     smallestProof
       
@@ -147,7 +147,7 @@ object CutIntroduction extends Logger {
   
   def apply2(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
     val endSequent = toSequent(ep)
-    println("\nEnd sequent: " + endSequent)
+    //println("\nEnd sequent: " + endSequent)
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(ep)
     apply2_(endSequent, termsTuples)
@@ -155,7 +155,7 @@ object CutIntroduction extends Logger {
 
   def apply2(proof: LKProof) : LKProof = {
     val endSequent = proof.root
-    println("\nEnd sequent: " + endSequent)
+    //println("\nEnd sequent: " + endSequent)
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(proof)
     apply2_(endSequent, termsTuples)
@@ -167,18 +167,19 @@ object CutIntroduction extends Logger {
     // transform tuples into terms.
     val terms = new FlatTermSet(termsTuples)
 
-    println( "\nTerm set: {" + terms.termset + "}" )
-    println( "Size of term set: " + terms.termset.size )
+    //println( "\nTerm set: {" + terms.termset + "}" )
+    //println( "Size of term set: " + terms.termset.size )
 
     var beginTime = System.currentTimeMillis;
 
     val grammars = ComputeGrammars.apply2(terms)
 
-    debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
+    //debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
 
-    println( "\nNumber of grammars: " + grammars.length )
+    //println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
+      println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress.")
       throw new CutIntroException("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier.\n")
     }
@@ -187,33 +188,33 @@ object CutIntroduction extends Logger {
     val smallest = grammars.head.size
     val smallestGrammars = grammars.filter(g => g.size == smallest)
 
-    println( "Smallest grammar-size: " + smallest )
-    println( "Number of smallest grammars: " + smallestGrammars.length )
+    //println( "Smallest grammar-size: " + smallest )
+    //println( "Number of smallest grammars: " + smallestGrammars.length )
 
-    debug("=============================================================")
-    debug("" + smallestGrammars.map(x => (x.toString() + "\n")))
+    //debug("=============================================================")
+    //debug("" + smallestGrammars.map(x => (x.toString() + "\n")))
 
     beginTime = System.currentTimeMillis;
-    debug("Improving solution...")
+    //debug("Improving solution...")
 
     // Build a proof from each of the smallest grammars
     def buildProof(grammar:Grammar) = {
-      trace( "building proof for grammar " + grammar.toPrettyString )
+      //trace( "building proof for grammar " + grammar.toPrettyString )
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
     
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
       ehs.minimizeSolution
-      trace ( "building final proof" )
+      //trace ( "building final proof" )
       val proof = buildFinalProof(ehs)
-      trace ( "done building final proof" )
+      //trace ( "done building final proof" )
       
       if (proof.isDefined) { Some((proof.get,ehs)) } else { None }
     }
 
     val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
 
-    debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
+    //debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
     // Sort the list by size of proofs
     val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
@@ -221,8 +222,8 @@ object CutIntroduction extends Logger {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
-    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
-    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+    //println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    //println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
     smallestProof
       
@@ -296,7 +297,7 @@ object CutIntroduction extends Logger {
       cutFormula.instantiate(t) :: acc
     }
 
-    trace( "calling solvePropositional" )
+    //trace( "calling solvePropositional" )
     val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
@@ -309,7 +310,7 @@ object CutIntroduction extends Logger {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
       case None => throw new CutIntroException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     }
-    trace( "done calling solvePropositional" )
+    //trace( "done calling solvePropositional" )
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
 
@@ -327,9 +328,9 @@ object CutIntroduction extends Logger {
     // Instantiating constant terms from U
     val finalProof = uPart(grammar.u.filter(t => !t.freeVariables.contains(grammar.eigenvariable)), contractSucc, flatterms)
 
-    trace( "cleaning structural rules" )
+    //trace( "cleaning structural rules" )
     val r = Some(CleanStructuralRules(finalProof))
-    trace( "done cleaning structural rules" )
+    //trace( "done cleaning structural rules" )
 
     r
   }

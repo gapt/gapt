@@ -55,12 +55,12 @@ object ComputeGrammars extends Logger {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = FOLVar(new VariableStringSymbol("α"))
     
-    debug( "computing delta-table" )
+    //debug( "computing delta-table" )
     val deltatable = new DeltaTable(terms, eigenvariable)
-    debug( "done computing delta-table" )
-    deltatable.printStats( { s => trace( "  " + s ) } )
+    //debug( "done computing delta-table" )
+    //deltatable.printStats( { s => trace( "  " + s ) } )
 
-    debug( "reading off grammars from delta-table" )
+    //debug( "reading off grammars from delta-table" )
     findValidGrammars(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
   }
 
@@ -75,12 +75,12 @@ object ComputeGrammars extends Logger {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = FOLVar(new VariableStringSymbol("α"))
     
-    debug( "3rd version - computing delta-table" )
+    //debug( "3rd version - computing delta-table" )
     val deltatable = new DeltaTable(terms, eigenvariable)
-    debug( "done computing delta-table" )
-    deltatable.printStats( { s => trace( "  " + s ) } )
+    //debug( "done computing delta-table" )
+    //deltatable.printStats( { s => trace( "  " + s ) } )
 
-    debug( "reading off grammars from delta-table" )
+    //debug( "reading off grammars from delta-table" )
     findValidGrammars2(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
   }
 
@@ -99,10 +99,10 @@ object ComputeGrammars extends Logger {
         // Collect all possible subsets
         val allsubsets = subsets(newpairs)
 
-        trace( "folding allsubsets of newpairs" )
-        trace( "  pairs has size " + pairs.size )
-        trace( "  newpairs has size " + newpairs.size )
-        trace( "  allsubsets has size " + allsubsets.size )
+        //trace( "folding allsubsets of newpairs" )
+        //trace( "  pairs has size " + pairs.size )
+        //trace( "  newpairs has size " + newpairs.size )
+        //trace( "  allsubsets has size " + allsubsets.size )
 
         // For each subset, get the set U formed by the u_i's and the set T of the
         // terms covered (union of t_i)
@@ -113,7 +113,7 @@ object ComputeGrammars extends Logger {
           })
           d :: acc1
         }
-        trace( "survived folding allsubsets of newpairs" )
+        //trace( "survived folding allsubsets of newpairs" )
        
         // Generate valid grammars
         // Note: each pair is ({u_1, ..., u_k}, {t_1, ..., t_j}) and for this to

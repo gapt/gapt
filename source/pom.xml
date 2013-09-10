@@ -146,7 +146,7 @@
           <args>
             <arg>-unchecked</arg>
             <arg>-deprecation</arg>
-            <arg>-explaintypes</arg>
+            <!--arg>-explaintypes</arg-->
           </args>
           <javacArgs>
             <javacArg>-Xlint:unchecked</javacArg>
