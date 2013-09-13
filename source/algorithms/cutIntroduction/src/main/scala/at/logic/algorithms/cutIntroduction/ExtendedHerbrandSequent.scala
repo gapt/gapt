@@ -116,9 +116,9 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val succedent = this.prop_r ++ this.inst_r
 
     //isTautology(FSequent(antecedent, succedent))
-    trace( "calling SAT-solver" )
+    //trace( "calling SAT-solver" )
     val r = sat.isValid(Imp(andN(antecedent), orN(succedent)))
-    trace( "finished call to SAT-solver" )
+    //trace( "finished call to SAT-solver" )
 
     r
   }
@@ -137,9 +137,9 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val antecedent = this.prop_l ++ this.inst_l :+ impl
     val succedent = this.prop_r ++ this.inst_r
 
-    trace( "calling isTautology" )
+    //trace( "calling isTautology" )
     val r = isTautology(FSequent(antecedent, succedent))
-    trace( "finished call to isTautology" )
+    //trace( "finished call to isTautology" )
 
     r
   }
@@ -167,7 +167,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     def searchSolution(f: FOLFormula) : List[FOLFormula] =
       f :: CutIntroduction.ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) =>
           if( this.isValidWith( AllVar( x, r ))) {
-            trace( "found solution with " + r.numOfAtoms + " atoms: " + r )
+            //trace( "found solution with " + r.numOfAtoms + " atoms: " + r )
             count = count + 1
             searchSolution(r) ::: acc
           }
@@ -179,18 +179,18 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
 
     val res = searchSolution(cnf).map(s => AllVar(x, s))
 
-    debug("IMPROVESOLUTION - # of sets examined: " + count + ". finished.")
+    //debug("IMPROVESOLUTION - # of sets examined: " + count + ". finished.")
     res
   }
 
   def minimizeSolution = {
-    trace( "minimizing solution " + cutFormula )
+    //trace( "minimizing solution " + cutFormula )
     val minimalSol = this.improveSolution.sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     this.cutFormula = minimalSol
   }
 
   def minimizeSolution2 = {
-    trace( "minimizing solution " + cutFormula )
+    //trace( "minimizing solution " + cutFormula )
     val minimalSol = this.improveSolution2.sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     this.cutFormula = minimalSol
   }
@@ -334,13 +334,13 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
       //                                                                     F'' is still valid}
       //      (if a node has no valid successors, it is considered an end node and added to the list of solutions.)
       def elemFilter(node: ResNode, elem:((Int,Int),Int)) : Boolean = {
-        trace("elemfilter: node.appliedPairs:   " + node.appliedPairs)
-        trace("            node.remainingPairs: " + node.remainingPairs)
-        trace("            node.resolvedVars:   " + node.resolvedVars)
-        trace("            node.largerElements: " + node.largerElements)
+        //trace("elemfilter: node.appliedPairs:   " + node.appliedPairs)
+        //trace("            node.remainingPairs: " + node.remainingPairs)
+        //trace("            node.resolvedVars:   " + node.resolvedVars)
+        //trace("            node.largerElements: " + node.largerElements)
 
         val ret = (!node.resolvedVars.contains(elem._1._1) && !node.resolvedVars.contains(elem._1._2))
-        trace("            RETURN: " + ret)
+        //trace("            RETURN: " + ret)
         ret
       }
 
@@ -354,7 +354,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
       val solutions = DFS[ResNode](rootNode, (setSearch[(Int,Int),ResNode](elemFilter, nodeFilter, _:ResNode)))
 
       //All-quantify the found solutions.
-      debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
+      //debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
       val ret = solutions.map(n => CutIntroduction.NumberedCNFtoFormula(n.currentFormula)).map(s => AllVar(x, s))
       ret
    }
