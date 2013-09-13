@@ -1,0 +1,9 @@
+formulas(assumptions).
+  p(a) | p(b).
+  all x (q(x,f(x)) | q(x,g(x))).
+end_of_list.
+
+formulas(goals).
+  exists x (p(x) & exists y (q(x,y))).
+end_of_list.
+
