@@ -1,0 +1,232 @@
+============================== Prover9 ===============================
+Prover9 (64) version 2009-11A, November 2009.
+Process 6187 was started by shaolin on localhost,
+Sat Sep 14 17:01:58 2013
+The command was "prover9".
+============================== end of head ===========================
+
+============================== INPUT =================================
+set(prolog_style_variables).
+
+formulas(assumptions).
+p(south,south,south,south,start) & (all T (p(south,north,south,north,T) -> p(north,north,south,north,go_alone(T)))) & (all T1 (p(north,north,south,north,T1) -> p(south,north,south,north,go_alone(T1)))) & (all T2 (p(south,south,north,south,T2) -> p(north,south,north,south,go_alone(T2)))) & (all T3 (p(north,south,north,south,T3) -> p(south,south,north,south,go_alone(T3)))) & (all T4 (p(south,south,south,north,T4) -> p(north,north,south,north,take_wolf(T4)))) & (all T5 (p(north,north,south,north,T5) -> p(south,south,south,north,take_wolf(T5)))) & (all T6 (p(south,south,north,south,T6) -> p(north,north,north,south,take_wolf(T6)))) & (all T7 (p(north,north,north,south,T7) -> p(south,south,north,south,take_wolf(T7)))) & (all X all Y all U (p(south,X,south,Y,U) -> p(north,X,north,Y,take_goat(U)))) & (all X1 all Y1 all V (p(north,X1,north,Y1,V) -> p(south,X1,south,Y1,take_goat(V)))) & (all T8 (p(south,north,south,south,T8) -> p(north,north,south,north,take_cabbage(T8)))) & (all T9 (p(north,north,south,north,T9) -> p(south,north,south,south,take_cabbage(T9)))) & (all U1 (p(south,south,north,south,U1) -> p(north,south,north,north,take_cabbage(U1)))) & (all V1 (p(north,south,north,north,V1) -> p(south,south,north,south,take_cabbage(V1)))).
+end_of_list.
+
+formulas(goals).
+(exists Z p(north,north,north,north,Z)).
+end_of_list.
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 p(south,south,south,south,start) & (all T (p(south,north,south,north,T) -> p(north,north,south,north,go_alone(T)))) & (all T1 (p(north,north,south,north,T1) -> p(south,north,south,north,go_alone(T1)))) & (all T2 (p(south,south,north,south,T2) -> p(north,south,north,south,go_alone(T2)))) & (all T3 (p(north,south,north,south,T3) -> p(south,south,north,south,go_alone(T3)))) & (all T4 (p(south,south,south,north,T4) -> p(north,north,south,north,take_wolf(T4)))) & (all T5 (p(north,north,south,north,T5) -> p(south,south,south,north,take_wolf(T5)))) & (all T6 (p(south,south,north,south,T6) -> p(north,north,north,south,take_wolf(T6)))) & (all T7 (p(north,north,north,south,T7) -> p(south,south,north,south,take_wolf(T7)))) & (all X all Y all U (p(south,X,south,Y,U) -> p(north,X,north,Y,take_goat(U)))) & (all X1 all Y1 all V (p(north,X1,north,Y1,V) -> p(south,X1,south,Y1,take_goat(V)))) & (all T8 (p(south,north,south,south,T8) -> p(north,north,south,north,take_cabbage(T8)))) & (all T9 (p(north,north,south,north,T9) -> p(south,north,south,south,take_cabbage(T9)))) & (all U1 (p(south,south,north,south,U1) -> p(north,south,north,north,take_cabbage(U1)))) & (all V1 (p(north,south,north,north,V1) -> p(south,south,north,south,take_cabbage(V1)))) # label(non_clause).  [assumption].
+2 (exists Z p(north,north,north,north,Z)) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+p(south,south,south,south,start).  [clausify(1)].
+-p(south,north,south,north,A) | p(north,north,south,north,go_alone(A)).  [clausify(1)].
+-p(north,north,south,north,A) | p(south,north,south,north,go_alone(A)).  [clausify(1)].
+-p(south,south,north,south,A) | p(north,south,north,south,go_alone(A)).  [clausify(1)].
+-p(north,south,north,south,A) | p(south,south,north,south,go_alone(A)).  [clausify(1)].
+-p(south,south,south,north,A) | p(north,north,south,north,take_wolf(A)).  [clausify(1)].
+-p(north,north,south,north,A) | p(south,south,south,north,take_wolf(A)).  [clausify(1)].
+-p(south,south,north,south,A) | p(north,north,north,south,take_wolf(A)).  [clausify(1)].
+-p(north,north,north,south,A) | p(south,south,north,south,take_wolf(A)).  [clausify(1)].
+-p(south,A,south,B,C) | p(north,A,north,B,take_goat(C)).  [clausify(1)].
+-p(north,A,north,B,C) | p(south,A,south,B,take_goat(C)).  [clausify(1)].
+-p(south,north,south,south,A) | p(north,north,south,north,take_cabbage(A)).  [clausify(1)].
+-p(north,north,south,north,A) | p(south,north,south,south,take_cabbage(A)).  [clausify(1)].
+-p(south,south,north,south,A) | p(north,south,north,north,take_cabbage(A)).  [clausify(1)].
+-p(north,south,north,north,A) | p(south,south,north,south,take_cabbage(A)).  [clausify(1)].
+-p(north,north,north,north,A).  [deny(2)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+No predicates eliminated.
+
+============================== end predicate elimination =============
+
+Auto_denials:  (no changes).
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ p ]).
+Function symbol precedence:  function_order([ south, north, start, go_alone, take_cabbage, take_wolf, take_goat ]).
+After inverse_order:  (no changes).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(neg_binary_resolution).  % (HNE depth_diff=-14)
+  % clear(ordered_res).  % (HNE depth_diff=-14)
+  % set(ur_resolution).  % (HNE depth_diff=-14)
+    % set(ur_resolution) -> set(pos_ur_resolution).
+    % set(ur_resolution) -> set(neg_ur_resolution).
+
+Auto_process settings:  (no changes).
+
+kept:      3 p(south,south,south,south,start).  [clausify(1)].
+kept:      4 -p(south,north,south,north,A) | p(north,north,south,north,go_alone(A)).  [clausify(1)].
+kept:      5 -p(north,north,south,north,A) | p(south,north,south,north,go_alone(A)).  [clausify(1)].
+kept:      6 -p(south,south,north,south,A) | p(north,south,north,south,go_alone(A)).  [clausify(1)].
+kept:      7 -p(north,south,north,south,A) | p(south,south,north,south,go_alone(A)).  [clausify(1)].
+kept:      8 -p(south,south,south,north,A) | p(north,north,south,north,take_wolf(A)).  [clausify(1)].
+kept:      9 -p(north,north,south,north,A) | p(south,south,south,north,take_wolf(A)).  [clausify(1)].
+kept:      10 -p(south,south,north,south,A) | p(north,north,north,south,take_wolf(A)).  [clausify(1)].
+kept:      11 -p(north,north,north,south,A) | p(south,south,north,south,take_wolf(A)).  [clausify(1)].
+kept:      12 -p(south,A,south,B,C) | p(north,A,north,B,take_goat(C)).  [clausify(1)].
+kept:      13 -p(north,A,north,B,C) | p(south,A,south,B,take_goat(C)).  [clausify(1)].
+kept:      14 -p(south,north,south,south,A) | p(north,north,south,north,take_cabbage(A)).  [clausify(1)].
+kept:      15 -p(north,north,south,north,A) | p(south,north,south,south,take_cabbage(A)).  [clausify(1)].
+kept:      16 -p(south,south,north,south,A) | p(north,south,north,north,take_cabbage(A)).  [clausify(1)].
+kept:      17 -p(north,south,north,north,A) | p(south,south,north,south,take_cabbage(A)).  [clausify(1)].
+kept:      18 -p(north,north,north,north,A).  [deny(2)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+3 p(south,south,south,south,start).  [clausify(1)].
+4 -p(south,north,south,north,A) | p(north,north,south,north,go_alone(A)).  [clausify(1)].
+5 -p(north,north,south,north,A) | p(south,north,south,north,go_alone(A)).  [clausify(1)].
+6 -p(south,south,north,south,A) | p(north,south,north,south,go_alone(A)).  [clausify(1)].
+7 -p(north,south,north,south,A) | p(south,south,north,south,go_alone(A)).  [clausify(1)].
+8 -p(south,south,south,north,A) | p(north,north,south,north,take_wolf(A)).  [clausify(1)].
+9 -p(north,north,south,north,A) | p(south,south,south,north,take_wolf(A)).  [clausify(1)].
+10 -p(south,south,north,south,A) | p(north,north,north,south,take_wolf(A)).  [clausify(1)].
+11 -p(north,north,north,south,A) | p(south,south,north,south,take_wolf(A)).  [clausify(1)].
+12 -p(south,A,south,B,C) | p(north,A,north,B,take_goat(C)).  [clausify(1)].
+13 -p(north,A,north,B,C) | p(south,A,south,B,take_goat(C)).  [clausify(1)].
+14 -p(south,north,south,south,A) | p(north,north,south,north,take_cabbage(A)).  [clausify(1)].
+15 -p(north,north,south,north,A) | p(south,north,south,south,take_cabbage(A)).  [clausify(1)].
+16 -p(south,south,north,south,A) | p(north,south,north,north,take_cabbage(A)).  [clausify(1)].
+17 -p(north,south,north,north,A) | p(south,south,north,south,take_cabbage(A)).  [clausify(1)].
+18 -p(north,north,north,north,A).  [deny(2)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.01 seconds.
+
+given #1 (I,wt=6): 3 p(south,south,south,south,start).  [clausify(1)].
+
+given #2 (I,wt=13): 4 -p(south,north,south,north,A) | p(north,north,south,north,go_alone(A)).  [clausify(1)].
+
+given #3 (I,wt=13): 5 -p(north,north,south,north,A) | p(south,north,south,north,go_alone(A)).  [clausify(1)].
+
+given #4 (I,wt=13): 6 -p(south,south,north,south,A) | p(north,south,north,south,go_alone(A)).  [clausify(1)].
+
+given #5 (I,wt=13): 7 -p(north,south,north,south,A) | p(south,south,north,south,go_alone(A)).  [clausify(1)].
+
+given #6 (I,wt=13): 8 -p(south,south,south,north,A) | p(north,north,south,north,take_wolf(A)).  [clausify(1)].
+
+given #7 (I,wt=13): 9 -p(north,north,south,north,A) | p(south,south,south,north,take_wolf(A)).  [clausify(1)].
+
+given #8 (I,wt=13): 10 -p(south,south,north,south,A) | p(north,north,north,south,take_wolf(A)).  [clausify(1)].
+
+given #9 (I,wt=13): 11 -p(north,north,north,south,A) | p(south,south,north,south,take_wolf(A)).  [clausify(1)].
+
+given #10 (I,wt=13): 12 -p(south,A,south,B,C) | p(north,A,north,B,take_goat(C)).  [clausify(1)].
+
+given #11 (I,wt=13): 13 -p(north,A,north,B,C) | p(south,A,south,B,take_goat(C)).  [clausify(1)].
+
+given #12 (I,wt=13): 14 -p(south,north,south,south,A) | p(north,north,south,north,take_cabbage(A)).  [clausify(1)].
+
+given #13 (I,wt=13): 15 -p(north,north,south,north,A) | p(south,north,south,south,take_cabbage(A)).  [clausify(1)].
+
+given #14 (I,wt=13): 16 -p(south,south,north,south,A) | p(north,south,north,north,take_cabbage(A)).  [clausify(1)].
+
+given #15 (I,wt=13): 17 -p(north,south,north,north,A) | p(south,south,north,south,take_cabbage(A)).  [clausify(1)].
+
+given #16 (I,wt=6): 18 -p(north,north,north,north,A).  [deny(2)].
+
+given #17 (A,wt=7): 19 p(north,south,north,south,take_goat(start)).  [ur(12,a,3,a)].
+
+given #18 (F,wt=6): 20 -p(south,north,south,north,A).  [resolve(18,a,12,b)].
+
+given #19 (F,wt=6): 23 -p(north,north,south,north,A).  [resolve(20,a,5,b)].
+
+given #20 (F,wt=6): 24 -p(south,north,south,south,A).  [resolve(23,a,14,b)].
+
+given #21 (F,wt=6): 25 -p(south,south,south,north,A).  [resolve(23,a,8,b)].
+
+given #22 (T,wt=8): 21 p(south,south,south,south,take_goat(take_goat(start))).  [ur(13,a,19,a)].
+
+given #23 (T,wt=8): 22 p(south,south,north,south,go_alone(take_goat(start))).  [ur(7,a,19,a)].
+
+============================== PROOF =================================
+
+% Proof 1 at 0.01 (+ 0.00) seconds.
+% Length of proof is 18.
+% Level of proof is 6.
+% Maximum clause weight is 13.000.
+% Given clauses 23.
+
+1 p(south,south,south,south,start) & (all T (p(south,north,south,north,T) -> p(north,north,south,north,go_alone(T)))) & (all T1 (p(north,north,south,north,T1) -> p(south,north,south,north,go_alone(T1)))) & (all T2 (p(south,south,north,south,T2) -> p(north,south,north,south,go_alone(T2)))) & (all T3 (p(north,south,north,south,T3) -> p(south,south,north,south,go_alone(T3)))) & (all T4 (p(south,south,south,north,T4) -> p(north,north,south,north,take_wolf(T4)))) & (all T5 (p(north,north,south,north,T5) -> p(south,south,south,north,take_wolf(T5)))) & (all T6 (p(south,south,north,south,T6) -> p(north,north,north,south,take_wolf(T6)))) & (all T7 (p(north,north,north,south,T7) -> p(south,south,north,south,take_wolf(T7)))) & (all X all Y all U (p(south,X,south,Y,U) -> p(north,X,north,Y,take_goat(U)))) & (all X1 all Y1 all V (p(north,X1,north,Y1,V) -> p(south,X1,south,Y1,take_goat(V)))) & (all T8 (p(south,north,south,south,T8) -> p(north,north,south,north,take_cabbage(T8)))) & (all T9 (p(north,north,south,north,T9) -> p(south,north,south,south,take_cabbage(T9)))) & (all U1 (p(south,south,north,south,U1) -> p(north,south,north,north,take_cabbage(U1)))) & (all V1 (p(north,south,north,north,V1) -> p(south,south,north,south,take_cabbage(V1)))) # label(non_clause).  [assumption].
+2 (exists Z p(north,north,north,north,Z)) # label(non_clause) # label(goal).  [goal].
+3 p(south,south,south,south,start).  [clausify(1)].
+5 -p(north,north,south,north,A) | p(south,north,south,north,go_alone(A)).  [clausify(1)].
+7 -p(north,south,north,south,A) | p(south,south,north,south,go_alone(A)).  [clausify(1)].
+8 -p(south,south,south,north,A) | p(north,north,south,north,take_wolf(A)).  [clausify(1)].
+12 -p(south,A,south,B,C) | p(north,A,north,B,take_goat(C)).  [clausify(1)].
+13 -p(north,A,north,B,C) | p(south,A,south,B,take_goat(C)).  [clausify(1)].
+16 -p(south,south,north,south,A) | p(north,south,north,north,take_cabbage(A)).  [clausify(1)].
+18 -p(north,north,north,north,A).  [deny(2)].
+19 p(north,south,north,south,take_goat(start)).  [ur(12,a,3,a)].
+20 -p(south,north,south,north,A).  [resolve(18,a,12,b)].
+22 p(south,south,north,south,go_alone(take_goat(start))).  [ur(7,a,19,a)].
+23 -p(north,north,south,north,A).  [resolve(20,a,5,b)].
+25 -p(south,south,south,north,A).  [resolve(23,a,8,b)].
+27 -p(north,south,north,north,A).  [resolve(25,a,13,b)].
+29 p(north,south,north,north,take_cabbage(go_alone(take_goat(start)))).  [ur(16,a,22,a)].
+30 $F.  [resolve(29,a,27,a)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=23. Generated=35. Kept=27. proofs=1.
+Usable=15. Sos=3. Demods=0. Limbo=0, Disabled=24. Hints=0.
+Kept_by_rule=0, Deleted_by_rule=0.
+Forward_subsumed=8. Back_subsumed=8.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+Demod_attempts=0. Demod_rewrites=0.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=4. Nonunit_bsub_feature_tests=41.
+Megabytes=0.15.
+User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 6187 exit (max_proofs) Sat Sep 14 17:01:58 2013

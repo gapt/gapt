@@ -1,0 +1,9 @@
+set(prolog_style_variables).
+
+formulas(assumptions).
+p(south,south,south,south,start) & (all T (p(south,north,south,north,T) -> p(north,north,south,north,go_alone(T)))) & (all T1 (p(north,north,south,north,T1) -> p(south,north,south,north,go_alone(T1)))) & (all T2 (p(south,south,north,south,T2) -> p(north,south,north,south,go_alone(T2)))) & (all T3 (p(north,south,north,south,T3) -> p(south,south,north,south,go_alone(T3)))) & (all T4 (p(south,south,south,north,T4) -> p(north,north,south,north,take_wolf(T4)))) & (all T5 (p(north,north,south,north,T5) -> p(south,south,south,north,take_wolf(T5)))) & (all T6 (p(south,south,north,south,T6) -> p(north,north,north,south,take_wolf(T6)))) & (all T7 (p(north,north,north,south,T7) -> p(south,south,north,south,take_wolf(T7)))) & (all X all Y all U (p(south,X,south,Y,U) -> p(north,X,north,Y,take_goat(U)))) & (all X1 all Y1 all V (p(north,X1,north,Y1,V) -> p(south,X1,south,Y1,take_goat(V)))) & (all T8 (p(south,north,south,south,T8) -> p(north,north,south,north,take_cabbage(T8)))) & (all T9 (p(north,north,south,north,T9) -> p(south,north,south,south,take_cabbage(T9)))) & (all U1 (p(south,south,north,south,U1) -> p(north,south,north,north,take_cabbage(U1)))) & (all V1 (p(north,south,north,north,V1) -> p(south,south,north,south,take_cabbage(V1)))).
+end_of_list.
+
+formulas(goals).
+exists Z p(north,north,north,north,Z).
+end_of_list.
