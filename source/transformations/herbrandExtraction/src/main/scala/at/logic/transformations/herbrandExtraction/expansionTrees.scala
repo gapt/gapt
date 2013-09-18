@@ -83,10 +83,10 @@ object extractExpansionTrees {
 
   private def setAddition(children1 : Seq[Tuple2[ExpansionTree,HOLExpression]], children2: Seq[Tuple2[ExpansionTree,HOLExpression]]):
   Seq[Tuple2[ExpansionTree,HOLExpression]] = {
-    val sorted = (children1 ++ children2).sortWith((e1,e2) => e1._2.toString > e2._2.toString)
+    val sorted = (children1 ++ children2).sortWith((e1,e2) => e1._1.toString > e2._1.toString)
     sorted.foldLeft(List[Tuple2[ExpansionTree,HOLExpression]]())((ls,e1) => ls match {
       case Nil => List(e1)
-      case (t2,e2):: _ if e1._2 == e2 => ls
+      case (t2,e2):: _ if e1._1 == t2 => ls
       case _ =>  e1 :: ls
     })
   }
