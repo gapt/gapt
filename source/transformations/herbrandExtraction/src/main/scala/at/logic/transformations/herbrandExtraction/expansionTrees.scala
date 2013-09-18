@@ -72,12 +72,22 @@ object extractExpansionTrees {
     else if (tree2.isInstanceOf[AtomTree]) tree1
     else (tree1,tree2) match {
       case (SQTree(_,_,_),SQTree(_,_,_)) => throw new UnsupportedOperationException("Expansion tree extractions works for skolemized proofs only(for now)")
-      case (WQTree(f1, children1), WQTree(f2,children2)) if f1 == f2 => WQTree(f1, children1++children2)
+      case (WQTree(f1, children1), WQTree(f2,children2)) if f1 == f2 => WQTree(f1, setAddition(children1,children2))
       case (NotTree(s1),NotTree(s2)) => NotTree(mergeTrees(s1,s2))
       case (AndTree(s1,t1),AndTree(s2,t2)) => AndTree(mergeTrees(s1,s2),mergeTrees(t1,t2))
       case (OrTree(s1,t1),OrTree(s2,t2)) => OrTree(mergeTrees(s1,s2),mergeTrees(t1,t2))
       case (ImpTree(s1,t1),ImpTree(s2,t2)) => ImpTree(mergeTrees(s1,s2),mergeTrees(t1,t2))
       case _ => throw new IllegalArgumentException("Bug in mergeTrees in extractExpansionTrees. By Construction, the trees to be merge should have the same structure, which is violated.")
     }
+  }
+
+  private def setAddition(children1 : Seq[Tuple2[ExpansionTree,HOLExpression]], children2: Seq[Tuple2[ExpansionTree,HOLExpression]]):
+  Seq[Tuple2[ExpansionTree,HOLExpression]] = {
+    val sorted = (children1 ++ children2).sortWith((e1,e2) => e1._2.toString > e2._2.toString)
+    sorted.foldLeft(List[Tuple2[ExpansionTree,HOLExpression]]())((ls,e1) => ls match {
+      case Nil => List(e1)
+      case (t2,e2):: _ if e1._2 == e2 => ls
+      case _ =>  e1 :: ls
+    })
   }
 }

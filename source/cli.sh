@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# searches the actual $PATH, local directory and its development subpath for 
+# searches the actual $PATH, local directory and its development subpath for
 # the CLI jar package and runs the scala interpreter
 # (preference is given to the development version)
 
@@ -23,7 +23,7 @@ export FORCE_DEVEL="no"
 while getopts "hdm:n" FLAG; do
   case $FLAG in
     d)
-      echo "forcing development version!" 
+      echo "forcing development version!"
       export FORCE_DEVEL="yes"
       ;;
     n)
@@ -100,8 +100,8 @@ export IFS=$OLDIFS
 #if test _$1_ = _-d_ ; then echo "forcing development version!" ; fi
 
 
-if test "_${RCP}_" = __ -o $FORCE_DEVEL = "yes" ; then 
-if test "_${SCP}_" = __ ; then 
+if test "_${RCP}_" = __ -o $FORCE_DEVEL = "yes" ; then
+if test "_${SCP}_" = __ ; then
     echo "Could not find ${JARNAME} nor ${RELEASE} in path or current directory!"
 else
     echo found ${JARNAME} in ${SCP}!
