@@ -1,7 +1,0 @@
-Total number of proofs processed: 142
-Total number of proofs compressed: 1
-Time limit exceeded or exception during parsing: 131
-Exception during cut-introduction: 2
-Out of memory during cut-introduction: 0
-Stack overflow during cut-introduction: 1
-Error during rule counting: 0

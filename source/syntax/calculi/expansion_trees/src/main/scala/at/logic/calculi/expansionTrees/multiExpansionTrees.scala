@@ -65,5 +65,19 @@ def toFormulaM(tree: MultiExpansionTree): HOLFormula = tree match {
   case StrongQuantifier(f,_,_) => f
 }
 
+def quantRulesNumber(tree: MultiExpansionTree): Int = tree match {
+  case Atom(f) => 0
+  case Not(t1) => quantRulesNumber(t1)
+  case And(t1,t2) => quantRulesNumber(t1) + quantRulesNumber(t2)
+  case Or(t1,t2) => quantRulesNumber(t1) + quantRulesNumber(t2)
+  case Imp(t1,t2) => quantRulesNumber(t1) + quantRulesNumber(t2)
+  case WeakQuantifier(_,children) => children.foldRight(0){
+    case ((et, _), sum) => quantRulesNumber(et) + 1 + sum
+  }
+  case StrongQuantifier(_,vars,et) => quantRulesNumber(et) + vars.size
 }
+
+}
+
+
 

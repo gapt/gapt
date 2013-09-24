@@ -42,6 +42,26 @@ case class Atom(formula: HOLFormula) extends ExpansionTree with TerminalNodeA[Op
   lazy val node = Some(formula)
 }
 
+object quantRulesNumber {
+  def apply(tree: ExpansionTree): Int = tree match {
+    case Atom(f) => 0
+    case Not(t1) => quantRulesNumber(t1)
+    case And(t1,t2) => quantRulesNumber(t1) + quantRulesNumber(t2)
+    case Or(t1,t2) => quantRulesNumber(t1) + quantRulesNumber(t2)
+    case Imp(t1,t2) => quantRulesNumber(t1) + quantRulesNumber(t2)
+    case WeakQuantifier(_,children) => children.foldRight(0){
+      case ((et, _), sum) => quantRulesNumber(et) + 1 + sum
+    }
+    case StrongQuantifier(_,_,et) => quantRulesNumber(et) + 1
+  }
+
+  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : Int = {
+    val qAnt = ep._1.foldLeft(0)( (sum, et) => quantRulesNumber(et) + sum)
+    val qSuc = ep._2.foldLeft(0)( (sum, et) => quantRulesNumber(et) + sum)
+    qAnt + qSuc
+  }
+}
+
 object toFormula {
   def apply(tree: ExpansionTree): HOLFormula = tree match {
     case Atom(f) => f
@@ -112,11 +132,11 @@ object prenexToExpansionTree {
   }
 
   def apply_(f: FOLFormula, sub: Substitution[FOLExpression]) : ExpansionTree = f match {
-    case AllVar(v, _) => //v What is this 'v' doing here?
+    case AllVar(v, _) => 
       val t = sub.getTerm(v)
       val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))
-    case ExVar(v, _) => //v
+    case ExVar(v, _) => 
       val t = sub.getTerm(v)
       val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))

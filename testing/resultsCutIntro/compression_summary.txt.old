@@ -1,9 +1,0 @@
-Total number of proofs: 109
-Time limit exceeded or exception during parsing: 1
-Exception during cut-introduction: 79
-Out of memory during cut-introduction: 7
-The rest of the proofs probably exceeded the time limit during cut-introduction.
-Out of memory during compressProof: 1
-Exception during compressProof: 0
-Average compression rate of quantifier rules: 0.3333333333333333
-Average compression rate: 1.0
