@@ -34,7 +34,7 @@ object testCutIntro {
       "Prints the results to resultsCutIntro/tstp_non_trivial_termset.csv and resultsCutIntro/tstp_non_trivial_summary.txt")
     println("scala> testCutIntro.findNonTrivialTSTPExamples( \"../testing/prover9-TSTP/\", 60 )")
     println()
-    println("Compress the proofs of the TSTP library in the file tptp_non_trivial_termset.csv. " + 
+    println("Compress the proofs of the TSTP library in the file tstp_non_trivial_termset.csv. " + 
       "The proofs that could be compressed are in resultsCutIntro/pleaseChangeToTheRightRevisionNumber/tstp_compressed.csv and a " + 
       "summary of the operations is in resultsCutIntro/pleaseChangeToTheRightRevisionNumber/tstp_compressed_summary.txt")
     println("scala> testCutIntro.compressTSTP( \"../testing/resultsCutIntro/tstp_non_trivial_termset.csv\", 60 )")
