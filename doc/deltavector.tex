@@ -53,7 +53,9 @@
 
 In \cite[Ch. 5]{cutIntro2013}, algorithmic cut-introduction is described, albeit restricted to cut-formulas with
 one universal quantifier. This document extends the mechanism described therein to cut-formulas with an
-arbitrary number of universal quantifiers.
+arbitrary number of universal quantifiers.\\
+
+Specifically, we replace the $\Delta$ operator with $\Delta_G$. Both descend through a list of terms in parallel in search for a common teram structure, but whereas $\Delta$ is limited to introducing only one variable, $\Delta_G$ can introduce an arbitrary number. Also, a specific definition of completeness will be given, namely that, for every set of terms and an unbounded number of variables, every decomposition has a uniqe normal form, which $\Delta_G$ computes. Later on, we also give an operator $\Delta_G^k$ for a bounded number of variables, and the corresponding completeness result that every decomposition computed by $\Delta_G^k$ is in {\em weak k-normal form}.
 
 \section{Generalized $\Delta$-Vector}
 
@@ -117,36 +119,32 @@ $$
 \noindent
 where $\sqcup$ is list concatenation, $\pi$ is the tuple projection function and $\alpha_{\mt{UNIQUE}}$ denotes an instance of $\alpha$ with a globally unique index that starts with 1 and is incremented by 1 with each instantiation left-to-right.\\
 \\
-
-%commented out because might not hold after a merge
-% --- formally, if $\Delta_G(t_1,\dots,t_n) = (u,S)$, then the leftmost instance of $\alpha$ in $u$ is $\alpha_1$ and $\alpha_{j_1}$ is the nearest left sibling of $\alpha_{j_2}$ iff $j_1+1=j_2$.\\
-
 Observe that, due to the incremental assignment of indices to generate $\alpha$-instances, $f(u_1,\dots,u_m)$ always contains a contiguous set $\{\alpha_k,\dots,\alpha_{k+q}\}$ (for a priori unknown $k$ and $q$).\\
 
-Strictly speaking, neither applying \texttt{nub} would nor case 1 of $\Delta_G$ would be necessary, but they minimize the number of $\alpha$-instances: \texttt{nub} merges two $\alpha$-instances {\em if their respective $s$-vectors are identical}, whereas case 1 eliminates an $\alpha$-instance {\em if all terms within its $s$-vector} are identical.
+Strictly speaking, neither applying \texttt{nub} nor case 1 of $\Delta_G$ would be necessary, but they minimize the number of $\alpha$-instances: \texttt{nub} merges two $\alpha$-instances {\em if their respective $s$-vectors are identical}, whereas case 1 eliminates an $\alpha$-instance {\em if all terms within its $s$-vector} are identical.
 
 \section{Behavior}
 
-$\Delta_G$ is a generalization of $\Delta$ in a certain sense, although not a strict one. Both try to find the maximal common structure in $t_1,\dots,t_n$, but the ability to use an unbounded number of $\alpha$-instances instead of just one means that $\Delta_G$ will recursively descend until it encounters a termset in which at least two terms have different heads, whereas $\Delta$ will introduce its $\alpha$ as soon it is called on two different termsets where not all heads are equal, even if the heads {\em within} each termset are.
+$\Delta_G$ is a generalization of $\Delta$ in a certain sense, although not a strict one. Both try to find the maximal common structure in $t_1,\dots,t_n$, but the ability to use an unbounded number of $\alpha$-instances instead of just one means that $\Delta_G$ will recursively descend until it encounters a termset in which at least two terms have different heads, whereas $\Delta$ will introduce its $\alpha$ as soon as it is called on two different termsets where not all heads are equal, even if the heads {\em within} each termset are.
 
 \section{Soundness}
 
+W.l.o.g. we assume that the set of variables which occur in $u$ is $\{\alpha_1,\dots,\alpha_k\}$.
+
 \begin{theorem}
 \textbf{Soundness of $\Delta_G$.}
-Let $t_1,\dots,t_n$ be terms. If $\Delta_G(t_1,\dots,t_n) = (u,(\overline{s_1},\dots,\overline{s_p}))$, then $t_i$, $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for $1\leq i \leq n)$.
+Let $t_1,\dots,t_n$ be terms. If $\Delta_G(t_1,\dots,t_n) = (u,(\overline{s_1},\dots,\overline{s_p}))$, then $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ (for $1\leq i \leq n)$.
 \label{thm:DeltaGSoundness}
 \end{theorem}
 
-\begin{proof}
-W.l.o.g. we assume that the set of variables which occur in $u$ is $\{\alpha_1,\dots,\alpha_k\}$.\\
-We proceed by induction on the depth $u$.
-
+\begin{proof} We proceed by induction on the depth $u$.
 \paragraph{Base case.} $u$'s depth is 0.\\
 If not all $t_1,\dots,t_n$ are equal, $\Delta_G(t_1,\dots,t_n) = (\alpha_1,\overline{s_1} = (t_1,\dots,t_n))$ per definition.
 $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}] = \alpha_1[\alpha_1\backslash s_{1,i}] = t_i$.\\
 If all terms are equal, then $\Delta_G(t_1,\dots,t_n) = (t_1,())$. We simply get $t_i = t_1$.
 
-\paragraph{Step case.} Assume the soundness for a depth of $\leq d$. We show the soundess for a depth of $d+1$.\\
+
+\paragraph{Step case.} Assume the soundness for a depth of $\leq d$. We show the soundess for depth $d+1$.\\
 
 \noindent
 If all terms are equal, $\Delta_G(t_1,\dots,t_n) = (t_1,())$, which is obviously correct.
@@ -165,17 +163,18 @@ It may, however, be the case that for two different $\alpha_{j_1}$ and $\alpha_{
 
 \section{Completeness}
 
-To define the sense in which $\Delta_G$ is complete, we must first introduce the notion of a normal form for substitutions. For a single $\alpha$, this was done in \cite[Ch. 4]{Hetzl2012}, where a calculus for decompositions into $u,S$ was presented. The full calculus, as well as the theoretical results of that paper will not be replicated for the case of multiple $\alpha$ here, but we will make use of a few analogous notions.
+To define the sense in which $\Delta_G$ is complete, we must first introduce the notion of a normal form for decompositions. For a single $\alpha$, this was done in \cite[Sect. 4]{Hetzl2012}, where a calculus for decompositions into $u,S$ was presented. The full calculus, as well as the theoretical results of that paper will not be replicated for the case of multiple $\alpha$ here, but we will make use of a few analogous notions.
 
-\subsection{A calculus of substitutions for multiple $\alpha$}
+\subsection{A calculus of decompositions for multiple $\alpha$}
 
 \begin{definition}
-  \textbf{Substitution.}
-  A term $u$ and a list of vectors $S$ are a substitution for a set of terms $\{t_1,\dots,t_n\}$ if
+  \textbf{Decomposition and substitution.}
+  A term $u$ and a list of vectors $S$ are a decomposition and $u \circ S$ is a substitution for a set of terms $\{t_1,\dots,t_n\}$ if
   $$
     \{t_1,\dots,t_n\} =
     u \circ S =
-    \{u[\overline{\alpha}\backslash(s_{1,1},\dots,s_{q,1}),\dots,\overline{\alpha}\backslash(s_{1,n},\dots,s_{q,n})]\}
+    \{ u[\overline{\alpha} \backslash s_{i,i}, \dots, s_{q,i} |\ 1 \leq i \leq n]  \}
+    %\{u[\overline{\alpha}\backslash(s_{1,1},\dots,s_{q,1}),\dots,\overline{\alpha}\backslash(s_{1,n},\dots,s_{q,n})]\}
   $$
   where $\overline{\alpha} = (\alpha_1,\dots,\alpha_q)$, $u[\overline{\alpha}\backslash(s_{1,j},\dots,s_{q,j})] = u[\alpha_1\backslash s_{1,j},\dots,\alpha_q\backslash s_{q,j}]$, s.t.
   \begin{enumerate}
@@ -185,7 +184,7 @@ To define the sense in which $\Delta_G$ is complete, we must first introduce the
 \end{definition}
 
 \begin{definition} \textbf{Left-shifting.}
-  A substitution may be left-shifted if, for some $\alpha_i$, all terms in the list $s_i$ start with a common function symbol $f$ of arity $r$. Let $s_i = (f(a_{1,1},\dots,a_{1,r}),\dots,f(a_{n,1},\dots,a_{n,r}))$. Then, left-shifting for $\alpha_i$ is defined as:
+  A decomposition may be left-shifted if, for some $\alpha_i$, all terms in the list $s_i$ start with a common function symbol $f$ of arity $r$. Let $s_i = (f(a_{1,1},\dots,a_{1,r}),\dots,f(a_{n,1},\dots,a_{n,r}))$. Then, left-shifting for $\alpha_i$ is defined as:
 
   \begin{prooftree}
     \AxiomCm{u\circ S}
@@ -194,7 +193,7 @@ To define the sense in which $\Delta_G$ is complete, we must first introduce the
   \end{prooftree}
 
   \noindent
-  where $\alpha_i^1,\dots,\alpha_i^r$ are fresh instances of $\alpha$.
+  where $\alpha_i^1,\dots,\alpha_i^r$ are fresh variable names.
 
   \paragraph{Example.} Let $\{t_1,\dots,t_n\} = \{f(g(a,b),x),f(g(c,d),y)\}$ and let\\
   $u = f(\alpha_1,\alpha_3),\ S=(\overline{s_1},\overline{s_2})$ with $\overline{s_1} = (g(a,b),g(c,d),\ \overline{s_2} = (x,y)$.\\
@@ -209,18 +208,18 @@ To define the sense in which $\Delta_G$ is complete, we must first introduce the
 
 \begin{definition}
   \textbf{Merging \& splitting $\alpha$.}
-  Suppose that there exist $\alpha_{i}$ and $\alpha_{j}$ in $u$ ($i \neq j$) s.t. $\overline{s_i} = \overline{s_j}$. Then we can replace $\alpha_{j}$ with $\alpha_{i}$ and $\alpha_k$ with $\alpha_{k-1}\ (k > max{i,j})$ in $u$ and delete $\overline{s_{j}}$ from $S$. Conversely, we can rename multiple occurrences of $\alpha_i$ to $\alpha_{i_1},\dots,\alpha_{i_n}$ and duplicate $\overline{s_{i}}$ $n$ times. These operations are called merging \& splitting and obviously preserve the result of $u \circ S$.
+  Suppose that there exist $\alpha_{i}$ and $\alpha_{j}$ in $u$ ($i \neq j$) s.t. $\overline{s_i} = \overline{s_j}$. Then we can replace $\alpha_{j}$ with $\alpha_{i}$ and $\alpha_k$ with $\alpha_{k-1}\ (k > max\{i,j\})$ in $u$ and delete $\overline{s_{j}}$ from $S$. Conversely, we can rename multiple occurrences of $\alpha_i$ to $\alpha_{i_1},\dots,\alpha_{i_n}$ and duplicate $\overline{s_{i}}$ $n$ times. These operations are called merging \& splitting and obviously preserve the result of $\circ_{\overline{\alpha}}$.
 \end{definition}
 
 \begin{definition}
-  \textbf{$\alpha$-elimination.} Suppose that, for a substitution $u,S$, there exists an $a_i$ in $u$ s.t. all terms in $\overline{s_i}$ are equal, i.e. $\overline{s_i} = (s_{i,1},\dots,s_{i,1})$. Then we can eliminate $\alpha_i$ by replacing $u$ with $u[\alpha_i\backslash s_{i,1}]$ and deleting $\overline{s_i}$ from $S$.
+  \textbf{$\alpha$-elimination.} Suppose that, for a decomposition $u,S$, there exists an $\alpha_i$ in $u$ s.t. all terms in $\overline{s_i}$ are equal, i.e. $\overline{s_i} = (s_{i,1},\dots,s_{i,1})$. Then we can eliminate $\alpha_i$ by replacing $u$ with $u[\alpha_i\backslash s_{i,1}]$ and deleting $\overline{s_i}$ from $S$ without changing the result of $\circ_{\overline{\alpha}}$.
 \end{definition}
 
 
-\begin{definition} \textbf{Normal form.} A substitution $u,S$ is in normal form iff no left-shift, no merging and no $\alpha$-elimination are possible.
+\begin{definition} \textbf{Normal form.} A decomposition $u,S$ is in normal form iff no left-shift, no merging and no $\alpha$-elimination are possible.
 \end{definition}
 
-\begin{theorem}Every substitution $u,S$ has a unique normal form. \label{thm:uniqueNormalForm}\end{theorem}
+\begin{theorem}Every decomposition $u,S$ has a unique normal form. \label{thm:uniqueNormalForm}\end{theorem}
 
 \begin{proof}
   \begin{enumerate}
@@ -229,13 +228,13 @@ To define the sense in which $\Delta_G$ is complete, we must first introduce the
           we can left-shift for both. Left-shifting for $\alpha_{j_1}$ only replaces $\alpha_{j_1}$ in $u$ with a term containing fresh
           $\alpha_{j_1}^1,\dots,\alpha_{j_1}^r$ and the vector $\overline{s_{j_1}}$ in $S$ with new vectors $\overline{s_{j_1}^1},\dots,\overline{s_{j_1}^r}$.
           The applicability of a left-shift for $\alpha_{j_2}$ remains unaffected.
-    \item Left-shifting and $\alpha$-elimination are confluent.
+    \item Left-shifting and $\alpha$-elimination commute.
           Suppose both left-shifting and $\alpha$-elimination can be performed on $\alpha_j$, i.e.\\
           $\overline{s_j} = (f(s_{j,1},\dots,s_{j,r}),\dots,f(s_{j,1},\dots,s_{j,r}))$.
           $\alpha$-elimination replaces $\alpha_j$ with $f(s_{j,1},\dots,s_{j,r})$ in $u$ and deletes $\overline{s_j}$ in $S$.
           Left-shifting replaces $\alpha_j$ with $f(\alpha_j^1,\dots,\alpha_j^r)$ in $u$ and $\overline{s_j}$ with $(s_{j,1},\dots,s_{j,1})\dots,(s_{j,r},\dots,s_{j,r})$.
           $\alpha$-elimination can then be performed on $\alpha_j^1,\dots,\alpha_j^r$, giving the same result.
-    \item Left-shifting and merging are confluent. Suppose that $\alpha_{j_1}$ and $\alpha_{j_2}$ occur in $u$ s.t. $\alpha_{j_1}$ and $\alpha_{j_2}$
+    \item Left-shifting and merging commute. Suppose that $\alpha_{j_1}$ and $\alpha_{j_2}$ occur in $u$ s.t. $\alpha_{j_1}$ and $\alpha_{j_2}$
           can be merged and left-shifting is possible on both.
           Since merging is possible, $\overline{s_{j_1}} = \overline{s_{j_2}} = (s_{j,1},\dots,s_{j,n})$. Merging $\alpha_{j_1}$ and $\alpha_{j_2}$ replaces $u$
           with $u[\alpha_{j_2}\backslash \alpha_{j_1}]$ and deletes $\overline{s_{j_2}}$ from $S$.
@@ -247,16 +246,16 @@ To define the sense in which $\Delta_G$ is complete, we must first introduce the
 \end{proof}
 
 \begin{corollary}
-If $t_1 = \dots = t_n$ and $n > 0$, the normal form of a substitution for $(t_1,\dots,t_n)$ is $t_1,()$.
+If $t_1 = \dots = t_n$ and $n > 0$, the normal form of a decomposition for $(t_1,\dots,t_n)$ is $t_1,()$.
 \label{cor:allTermsEq}
 \end{corollary}
 
 \begin{proof}
-Take the trivial substitution $\alpha_1,(t_1,\dots,t_n)$ and perform $\alpha$-elimination.
+Take the trivial decomposition $\alpha_1,(t_1,\dots,t_n)$ and perform $\alpha$-elimination.
 \end{proof}
 
 %\begin{corollary}
-%If $u,S$ is a substitution in which all possible left-shifts, but no merges and $\alpha$-eliminations, have been performed, its normal form $u',S'$ is the result of performing %every possible merge and $\alpha$-elimination.
+%If $u,S$ is a decomposition in which all possible left-shifts, but no merges and $\alpha$-eliminations, have been performed, its normal form $u',S'$ is the result of performing %every possible merge and $\alpha$-elimination.
 %\label{cor:leftShiftsFirst}
 %\end{corollary}
 
@@ -274,7 +273,7 @@ Take the trivial substitution $\alpha_1,(t_1,\dots,t_n)$ and perform $\alpha$-el
 
 \begin{lemma}
 \textbf{\texttt{nub} performs all merges.}
-W.l.o.g. let $u,S = (\overline{s_1},\dots,\overline{s_q})$ be a substitution in which the variables $\alpha_1,\dots,\alpha_q$ occur. Then $\texttt{nub}(u,S) = u',S'$ such that $u',S'$ equals $u,S$ modulo merging and that no merge is possible in $u',S'$.
+W.l.o.g. let $u,S = (\overline{s_1},\dots,\overline{s_q})$ be a decomposition in which the variables $\alpha_1,\dots,\alpha_q$ occur. Then $\texttt{nub}(u,S) = u',S'$ such that $u',S'$ equals $u,S$ modulo merging and that no merge is possible in $u',S'$.
 \label{thm:nubAllMerges}
 \end{lemma}
 
@@ -294,7 +293,7 @@ If this condition holds, \texttt{elim} performs the two actions given in the def
 
 \begin{theorem}
   \textbf{Completeness of $\Delta_G$.}
-  If $u,S$ is a substitution for a non-empty set of terms $\{t_1,\dots,t_n\}$, then $\Delta_G(t_1,\dots,t_n) = (u',S')$ s.t. $u',S'$ is the normal form of $u,S$.
+  If $u,S$ is a decomposition for a non-empty set of terms $\{t_1,\dots,t_n\}$, then $\Delta_G(t_1,\dots,t_n) = (u',S')$ s.t. $u',S'$ is the normal form of $u,S$.
   \label{thm:DeltaGCompleteness}
 \end{theorem}
 
@@ -306,21 +305,21 @@ If this condition holds, \texttt{elim} performs the two actions given in the def
   W.l.o.g. we assume a contiguous numbering of the $\alpha$ occurring in $u$.
   We proceed by induction on the depth of $t_1,\dots,t_n$.
 
-  \paragraph{Base case.} Let $t_i\ (1 \leq i \leq n)$ have a depth of 0. We have two sub-cases:
+  \paragraph{Base case.} Let all $t_i\ (1 \leq i \leq n)$ have a depth of 0. We have two sub-cases:
   \begin{enumerate}
-    \item All terms are equal. This is the condition of first case of $\Delta_G$, which, per Corollary~\ref{cor:allTermsEq}, is the normal form of $u,S$.
-    \item Not all terms are equal. The terms can only be variables or constants. In either case, the only possibly substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This is exactly the ``otherwise''-case of $\Delta_G$.
+    \item All terms are equal. This is the condition of the first case of $\Delta_G$, which, per Corollary~\ref{cor:allTermsEq}, is the normal form of $u,S$.
+    \item Not all terms are equal. The terms can only be constants. In either case, the only possible decomposition is $u=\alpha, S=(t_1,\dots,t_n)$. This is exactly the ``otherwise''-case of $\Delta_G$.
   \end{enumerate}
 
-  \paragraph{Step case.} Assume that $\Delta_G$ is complete if $t_i\ (1 \leq i \leq n)$ has a depth $\leq d$.
+  \paragraph{Step case.} Assume that $\Delta_G$ is complete if all $t_i\ (1 \leq i \leq n)$ have a depth $\leq d$.
   We again have two cases:
   \begin{enumerate}
     \item All terms are equal. As in the base case, $\Delta_G$ computes the normal form of $u,S$, per Corollary~\ref{cor:allTermsEq}.
-    \item Not all terms are equal. If not all terms begin with a common function symbol with arity $m$, the only possible substitution is $u=\alpha, S=(t_1,\dots,t_n)$. This is again exactly the ``otherwise''-case of $\Delta_G$.
+    \item Not all terms are equal. If not all terms begin with a common function symbol with arity $m$, the only possible decomposition is $u=\alpha, S=(t_1,\dots,t_n)$. This is again exactly the ``otherwise''-case of $\Delta_G$.
     If all terms do begin with a common function symbol of arity $m$, then $t_i = f(t_1^i,\dots,t_m^i)$ for  $(1 \leq i \leq n)$. This is the condition for the second case of $\Delta_G$. $u$ can take one of two forms:
     \begin{enumerate}
-      \item $u=\alpha$. Since a left-shift is possible due to the common function symbol $f$, such a substitution is not in normal form. By left-shifting, we arrive at the second case.
-      \item $u=f(u_1,\dots,u_m)$. In this case, $u_i, S_i\ (1 \leq i \leq m)$ must be a substitution for the terms $t_i^1,\dots,t_i^n$. For these substitutions, completeness of $\Delta_G$ holds per the IH. Now let $\widehat{u}=f(\widehat{u_1},\dots,\widehat{u_m}),\widehat{S}=\bigsqcup\limits_{1 \leq i \leq m} S_i$ be the substitution created by simply concatenating all $u_i,S_i$, where $\widehat{u_i}$ is $u_i$, with its variables renamed to avoid clashes between any two $u_{i_1}, u_{i_2}$. Per definition of $\Delta_G$, $\widehat{u},\widehat{S}$ is precisely the result of the second case of $\Delta_G$, without the application of \texttt{nub}. Furthermore, per Theorem~\ref{thm:uniqueNormalForm}, $u,S$ and $\widehat{u},\widehat{S}$ have the same normal form.\\
+      \item $u=\alpha$. Since a left-shift is possible due to the common function symbol $f$, such a decomposition is not in normal form. If we left-shift, case 2.(b) applies.
+      \item $u=f(u_1,\dots,u_m)$. In this case, $u_i, S_i\ (1 \leq i \leq m)$ must be a decomposition for the terms $t_i^1,\dots,t_i^n$. For these decomposition, completeness of $\Delta_G$ holds per the IH. Now let $\widehat{u}=f(\widehat{u_1},\dots,\widehat{u_m}),\widehat{S}=\bigsqcup\limits_{1 \leq i \leq m} S_i$ be the decomposition created by simply concatenating all $u_i,S_i$, where $\widehat{u_i}$ is $u_i$, with its variables renamed to avoid clashes between any two $u_{i_1}, u_{i_2}$. Per definition of $\Delta_G$, $\widehat{u},\widehat{S}$ is precisely the result of the second case of $\Delta_G$, without the application of \texttt{nub}. Furthermore, per Theorem~\ref{thm:uniqueNormalForm}, $u,S$ and $\widehat{u},\widehat{S}$ have the same normal form.\\
 
       Due to the IH, $\widehat{u},\widehat{S}$ can only differ from $u',S'$ through merging. Per Lemma~\ref{thm:nubAllMerges}, the application of \texttt{nub} to $\widehat{u},\widehat{S}$ performs all possible merges, which results in the unique normal form of both $\widehat{u},\widehat{S}$ and $u,S$.
     \end{enumerate}
@@ -328,7 +327,7 @@ If this condition holds, \texttt{elim} performs the two actions given in the def
 \end{proof}
 
 \begin{corollary}
-  Every non-empty set of terms $\{t_1,\dots,t_n\}$ has exactly one substitution in normal form and $\Delta_G$ computes it.
+  Every non-empty set of terms $\{t_1,\dots,t_n\}$ has exactly one decomposition in normal form and $\Delta_G$ computes it.
   \label{thm:deltaGCorrectness}
 \end{corollary}
 
@@ -339,7 +338,7 @@ If this condition holds, \texttt{elim} performs the two actions given in the def
 
 \section{$\Delta$-Table}
 
-The $\Delta$-table, as described in the paper, is compatible with the $\Delta_G$-vector and, save for substituting for multiple $\alpha$ instead of one, can be left as is. 
+The $\Delta$-table, as described in \cite{cutIntro2013}, is compatible with the $\Delta_G$-vector and, save for substituting for multiple $\alpha$ instead of one, can be left as is. 
 
 \section{Remarks}
 
@@ -365,17 +364,17 @@ $$
 This illustrates two points:
 \begin{enumerate}
 \item There is a non-deterministic choice: we could restrict the number of $\alpha$-instances to, say, 4. This can be achieved by right-shifting $\alpha_1$ and $\alpha_2$ into a new $\alpha'$ (with the terms $(g(a,b),g(x,y))$) or $\alpha_3$ \& $\alpha_4$ (with the terms $(g(c,d),g(u,v))$).
-\item Generally, it is not possible to specify exactly how many $\alpha$ should occur in $u$: if we restrict the number of $\alpha$-instances to at most 2, we only get the trivial decomposition $(\alpha; f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w))$.
+\item Generally, we cannot say that, for any $k$, decompositions with exactly $k$ variables exist. For example, if we restrict the number of $\alpha$-instances to at most 2 in $u$, we only get the trivial decomposition $(\alpha; f(g(a,b),g(c,d),e), f(g(x,y),g(u,v),w))$.
 \end{enumerate}
 
-We therefore can specify upper bounds, but not lower bounds on the number of $\alpha$-instances which may be used, although this burdens us with a non-deterministic choice as to for which $\alpha$-instances to right-shift.\\
+We can see that we can specify upper, but not lower bounds on the number of variables which may be used, although this burdens us with a non-deterministic choice as to for which $\alpha$-instances to right-shift.\\
 
-\subsubsection{Calculating the set of all substitutions with at most $k$ variables}
+\subsubsection{Calculating the set of all decompositions with at most $k$ variables}
 
-$\Delta_G$ can be slightly altered to compute substitutions with at most $k$ variables. We do this by introducing a parameter $k$ and a non-deterministic boolean variable \textbf{RANDOM}, creating $\Delta_G^k$:
+$\Delta_G$ can be slightly altered to compute decompositions with at most $k$ variables. We do this by introducing a parameter $k$ and a non-deterministic boolean variable \textbf{RANDOM}, creating $\Delta_G^k$:
 
 $$
-  \Delta_G^K(t_1,\dots,t_n) = \left\{
+  \Delta_G^k(t_1,\dots,t_n) = \left\{
     \begin{array}{l}
 
     (t_1,()) \mt{ if } t_1 = t_2 = \dots = t_n \mt{ and } n > 0\\
@@ -386,14 +385,11 @@ $$
     \quad
     \begin{array}{l l}
       \mt{if all } & t_i = f(t_1^i,\dots,t_m^i) \mt{, case 1 does not apply, and}\\
-      \\
-      & ((\textbf{RANDOM} \mt{ = true and}\\
-      & \ \ \pi_2(\texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q}))) \leq k) \mt{ or}\\
+      & ((\textbf{RANDOM} \mt{ = true and } |\{\overline{s_1},\dots,\overline{s_q}\}| \leq k) \mt{ or}\\
       & \ m = 1)\\
       \\
-      \\
-      \mt{where } & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq m} \pi_2(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ and}\\
-                  & u_j = \pi_1(\Delta_G(t_j^1,\dots,t_j^n)) \mt{ for all } j \in \{1,\dots,m \}\\
+      \mt{where } & (\overline{s_1},\dots,\overline{s_q}) = \bigsqcup\limits_{1 \leq j \leq m} \pi_2(\Delta_G^k(t_j^1,\dots,t_j^n)) \mt{ and}\\
+                  & u_j = \pi_1(\Delta_G^k(t_j^1,\dots,t_j^n)) \mt{ for all } j \in \{1,\dots,m \}\\
     \end{array}
     
     \\
@@ -406,29 +402,35 @@ $$
 
 The side-condition for the instantation of $\alpha_{\mt{UNIQUE}}$ is the same as in $\Delta_G$: the leftmost occurrence is $\alpha_1$ and all instances are numbered incrementally left-to-right.\\
 
-The second case of $\Delta_G^k$ now has an additional condition: first, either the function symbol $f$ at the head of $t_1,\dots,t_n$ is unary, or \textbf{RANDOM} is true and, after the application of \texttt{nub}, there are at most $k$ s-vectors. If we have a unary function symbol, we can always choose the second case because doing so does not immediately necessitate more than one variable. If the function symbol is not unary, we have two conditions: \textbf{RANDOM} has to be true and the returned substitution may not contain more than $k$ variables. The purpose of this latter is obvious, whereas \textbf{RANDOM} accounts for the non-deterministic nature of right-shifting: randomly terminating our search for a common term structure early is equivalent to first computing $\Delta_G$ and then non-deterministically right-shifting to reduce the number of variables.\\
+The second case of $\Delta_G^k$ now has an additional condition: first, either the function symbol $f$ at the head of $t_1,\dots,t_n$ is unary, or \textbf{RANDOM} is true and, after the application of \texttt{nub}, there are at most $k$ s-vectors. If we have a unary function symbol, we can always choose the second case because doing so does not immediately necessitate more than one variable. If the function symbol is not unary, we have two conditions: \textbf{RANDOM} has to be true and the returned decomposition may not contain more than $k$ variables. The purpose of this latter is obvious, whereas \textbf{RANDOM} accounts for the non-deterministic nature of right-shifting: randomly terminating our search for a common term structure early is equivalent to first computing $\Delta_G$ and then non-deterministically right-shifting to reduce the number of variables.\\
 
-It is easy to see that substitutions computed by $\Delta_G^k$ need not be in normal form. To talk about the result of $\Delta_G^k$, we therefore need the notion of a weaker normal form:
+It is easy to see that decompositions computed by $\Delta_G^k$ need not be in normal form. A simple example is the following:
+$$
+  \Delta_G^\infty(f(a),f(b)) = \{(\alpha_1,( (f(a)), (f(b)) )), (f(\alpha_1), ((a), (b)) )\}
+$$
+
+Due to its non-determinism, $\Delta_G^\infty$ computed the trivial decomposition, even though a left-shift is possible on it. To talk about the result of $\Delta_G^k$, we therefore need the notion of a weaker normal form:
 
 \begin{definition}
 \textbf{Weak k-normal form.}
-A substitution $u,S$ is in weak k-normal form if $\leq k$ variables occur in $u$, merging and $\alpha$-elimination are not possible, and any left-shifting would result in $> k$ variables in $u$.
+A decomposition $u,S$ is in weak k-normal form if $\leq k$ variables occur in $u$, merging and $\alpha$-elimination are not possible, and any left-shifting would result in $> k$ variables in $u$.
 \end{definition}
 
 \noindent
 Thus equipped, we can give the following correctness result:
 
 %SOUNDNESS:
-%The algorithm isn't sound!
+%The algorithm is techincally, but not naturally sound!
 %Randomly jumping into the otherwise-case is premature. Even if we would temporarily get too many
-%variables, we still might be able to merge them back!
+%variables, we still might be able to merge them back! All the results of Delta_G^k are in some weak NF, but
+%the notion of weak NFs itself is flawed because of the the possibility of first left-shifting and then merging.
 
 %I don't think this can be easily fixed; calculating Delta_G and right-shifting might prove more fruitful, both in theory and practice.
 
 \begin{theorem}
 \textbf{Soundness of $\Delta_G^k$.}
 Let $t_1,\dots,t_n$ be terms and let $k\geq 1$.\\
-If $u,S \in \Delta_G^k(t_1,\dots,t_n)$, then $u,S$ is in weak $l$-normal form ($1 \leq l \leq k$) and $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ ($1\leq i \leq n)$.
+If $u,S \in \Delta_G^k(t_1,\dots,t_n)$, then $u,S$ is in weak $l$-normal form (for some $l \in \{1,\dots,k\}$) and $t_i = u[\alpha_1\backslash s_{1,i},\dots,\alpha_p\backslash s_{p,i}]$ ($1\leq i \leq n)$.
 \label{thm:DeltaGkSoundness}
 \end{theorem}
 
@@ -437,42 +439,51 @@ The proof is largely analogous to that given in Theorem~\ref{thm:DeltaGSoundness
 
 \begin{enumerate}
   \item $u,S$ is in weak $l$-normal form for some $1 \leq l \leq k$ and
-  \item choosing the ``othwise''-case where $\Delta_G$ would choose its second case still results in a substitution.
+  \item choosing the ``otherwise''-case where $\Delta_G$ would choose its second case still results in a decomposition.
 \end{enumerate}
 
-The first claim is clearly true: the condition\\
-$\pi_2(\texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q}))) \leq k$ in the second case of $\Delta_G^k$ forces the ``otherwise-case'' to be chosen whenever more than $k$ distinct variables occur in some subtree of $u$, including $u$ itself. Therefore, $\Delta_G^k$ will never return a substitution with more than $k$ variables. Now let $l$ be the number of variables occurring in $u$. We cannot left-shift for a unary function symbol, because $\Delta_G^k$ always performs such left-shifts by virtue of the condition $m = 1$ in its second case. If we were to left-shift for a function symbol with an arity of at least 2, we would introduce at least two new variables. Therefore, $u,S$ is in weak $l$-normal form.\\
+For the first claim, note that the condition $|\{\overline{s_1},\dots,\overline{s_q}\}| \leq k$ in the second case of $\Delta_G^k$ forces the ``otherwise-case'' to be chosen whenever more than $k$ distinct variables occur in some subtree of $u$, including $u$ itself. Therefore, $\Delta_G^k$ will never return a decomposition with more than $k$ variables. Now let $l$ be the number of variables occurring in $u$.\\
 
-The second claim is similarly clear: if we choose the ``otherwise''-case and instantiate the new variables $\alpha_i$ with its s-vector $(t_1,\dots,t_n)$, then
-$\alpha_i\backslash(t_1,\dots,t_n)=(t_1,\dots,t_n)$.
+We also annot perform a left-shift without increasing the number of variables in $u$, as is evident by examining the s-vectors of $S$. We distinguish three cases for the form of $s \in S$:
+\begin{enumerate}
+  \item $s = (c_1,\dots,c_n)$ where not all $c_i$ have a common function symbol of the same arity. In this case, no left-shift is possible at all.
+  \item $s = (f(s_1),\dots,f(s_n))$. Such an s-vector would permit a left-shift without increasing the number of variables. However, such an $s$ cannot exist because it would imply that $\Delta_G^k(f(s_1),\dots,f(s_n))$ chose its ``otherwise''-case. The condition $m = 1$ in the second case of $\Delta_G^k$ precludes that.
+  \item $s = (f(s_1^1,\dots,s_1^r),\dots,f(s_n^1,\dots,s_n^r))\ (r > 1)$. If we were to left-shift for the corresponding variable, we would increase the number of variables by $r-1$, resulting in at least $l+1$ variables. Consequently, $u,S$ would no longer be in weak $l$-normal form.
+\end{enumerate}
+
+%Since $l\ (\leq k)$ variables occur in $u,S$ and no left-shift is possible without increasing the number of variables, $u,S$ is in weak $l$-normal form.\\
+
+The second claim is clearly true: if we choose the ``otherwise''-case and instantiate every new variable $\alpha_i$ with its s-vector $(t_1,\dots,t_n)$, then
+$(\alpha_i\backslash t_1, \dots, \alpha_i\backslash t_n)=(t_1,\dots,t_n)$ and $u \circ S = (t_1,\dots,t_n)$.
 \end{proof}
 
 %-------------------------------------------------------------------------------------------------
 
 \begin{theorem}
 \textbf{Completeness of $\Delta_G^k$.}
-If we evaluate for all possible assignments for \textbf{RANDOM}, $\Delta_G^k$ returns the set of all substitutions which are in weak $l$-normal form ($1 \leq l \leq k$).
+If we evaluate for all possible assignments for \textbf{RANDOM}, $\Delta_G^k$ returns the set of all decompositions which are in weak $l$-normal form (for some $l \in \{1,\dots,k$).
 \label{thm:DeltaGkCompletenss}
 \end{theorem}
 
 \begin{proof}
-Let $l \in \{1,\dots,k\}$ and let $u,S$ be a substitution in weak $l$-normal form. We proceed by induction on the depth of $t_1,\dots,t_n$.
-The proof is entirely analogous to that for Theorem~\ref{thm:DeltaGCompleteness}, except for point 2 of the step case, which will be given here.\\
+Let $l \in \{1,\dots,k\}$ and let $u,S$ be a decomposition in weak $l$-normal form.\\
 
-We first note that the condition $\pi_2(\texttt{nub}(f(u_1,\dots,u_m), (\overline{s_1},\dots,\overline{s_q}))) \leq k$ is necessary for weak $l$-normal forms: if, after performing \texttt{nub}, more than $k$ variables remain, these will all have distinct s-vectors which cannot be merged with each other, and the substitution therefore cannot be in weak $l$-normal form ($1 \leq l \leq k$).\\
+We first note that the condition $|\{\overline{s_1},\dots,\overline{s_q}\}| \leq k$ is {\em necessary} for weak $l$-normal forms: if there are more than $k$ distinct variables (evidenced by the distinct s-vectors), these cannot be merged with each other, and the decomposition cannot be in weak $l$-normal form ($1 \leq l \leq k$).\\
+
+Now we proceed by induction on the maximal depth of $t_1,\dots,t_n$. The proof is entirely analogous to that for Theorem~\ref{thm:DeltaGCompleteness}, except for point 2 of the step case, which will be given here.\\
 
 \noindent
-We now distinguish two sub-cases:
+The induction hypothesis is that $\Delta_G^k$ is complete for depth $\leq d$. In point 2 of the step case, assuming that not all terms are equal, we distinguish two sub-cases:
   \begin{enumerate}
-    \item $t_1\dots,t_n$ start with a common unary function symbol, i.e. $m = 1$. Then, $u$ can only be of the form $u=f(u_1)$, since it wouldn't be in weak $l$-normal form otherwise.
-    his corresponds to second case of $\Delta_G^k$, since $m = 1$ is true.
-    \item $t_1\dots,t_n$ start with a common function symbol of arity $m > 1$. $u$ may either be of the form $u=\alpha$ or $u=f(u_1,\dots,u_m)$. The first form corresponds to the ``otherwise''-case and the second form corresponds to the second case of $\Delta_G^k$. Due to \textbf{RANDOM} being non-deterministic, both forms are chosen and hence $\Delta_G^k$ is complete.
+    \item $t_1,\dots,t_n $ start with a common unary function symbol, i.e. $m = 1$ and $t_1,\dots,t_n = f(t_1^1,\dots,t_n^1)$. Then, $u$ can only be of the form $u=f(u_1)$, since it wouldn't be in weak $l$-normal form otherwise.
+    This corresponds to the second case of $\Delta_G^k$, since $m = 1$ is true. Per the IH, $\Delta_G^k$ is complete for $t_1^1,\dots,t_1^n$.
+    \item $t_1,\dots,t_n$ start with a common function symbol of arity $m > 1$. $u$ may either be of the form $u=\alpha$ or $u=f(u_1,\dots,u_m)$. The first form corresponds to the ``otherwise''-case. The second form corresponds to the second case of $\Delta_G^k$ and the IH applies in the same manner as it applied in the step case of $\Delta_G$'s completeness proof. Due to \textbf{RANDOM} being non-deterministic, both forms are chosen and hence $\Delta_G^k$ is complete.
   \end{enumerate}
 \end{proof}
 
 \medskip
 
-Unlike the normal form, weak k-normal forms are not confluent, as the following example shows:
+Unlike the normal form, weak k-normal forms are not unique, as the following example shows:
 
 $$
   \begin{array}{l}
@@ -482,9 +493,9 @@ $$
   \end{array}
 $$
 
-As we can see, this is the same termset as in the previous example, but here, we have terminated the search early in the case of $\alpha_1$ and $\alpha_2$. The substitution shown has 3 variables. If we want to get to weak 4-normal form, we can left-shift either for $\alpha_1$ and $\alpha_2$, but not for both. Therefore, we can create two different weak normal forms.\\
+As we can see, this is the same termset as in the previous example, but here, we have terminated the search early in the case of $\alpha_1$ and $\alpha_2$. The decomposition shown has 3 variables. If we want to get to weak 4-normal form, we can left-shift either for $\alpha_1$ and $\alpha_2$, but not for both. Therefore, we can create two different weak normal forms.\\
 
-Another property is that one weak k-normal form might reduce to another weak k-normal form, without the intermediate substitutions being in weak k-normal form themselves. This simple example illustrates:
+Another property is that one weak k-normal form might reduce to another weak k-normal form, without the intermediate decompositions being in weak k-normal form themselves. This simple example illustrates:
 
 $$
   \begin{array}{l}
@@ -493,7 +504,7 @@ $$
   \end{array}
 $$
 \noindent
-Both substitutions are in weak 2-normal form. However, by left-shifting for $\alpha_1$ in the first one, we get
+Both decompositions are in weak 2-normal form. However, by left-shifting for $\alpha_1$ in the first one, we get
 
 $$
   (f(g(\alpha_1,\alpha_2),\alpha_3), ((a,b), (c,d) , (a,b))
@@ -507,7 +518,7 @@ $$
 \noindent
 The intermediate $(f(g(\alpha_1,\alpha_2),\alpha_3), ((a,b), (c,d) , (a,b))$, however, is not in weak 2-normal form.\\
 
-The definition of weak normal forms could be altered to forbid the possibility of such reductions instead of simply the possibility of left-shifts, but a conscious choice was made against it: substitutions such as the two in this example, though related, are materially different, and, for the purpose of finding ``intuitive'' cut-formulas, it might be advantageous to consider both.
+The definition of weak normal forms could be altered to forbid the possibility of such reductions instead of simply the possibility of left-shifts, but a conscious choice was made against it: decompositions such as the two in this example, though related, are materially different, and, for the purpose of finding ``intuitive'' cut-formulas, it might be advantageous to consider both.
 
 \bibliographystyle{plain}
 \bibliography{references}
