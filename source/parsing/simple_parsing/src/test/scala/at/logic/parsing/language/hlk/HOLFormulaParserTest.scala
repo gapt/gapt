@@ -182,9 +182,22 @@ class HOLASTParserTest extends SpecificationWithJUnit {
       }
     }
 
+    "(x+x) is a pformula" in {
+      HOLASTParser.parseAll(HOLASTParser.pformula, "(x+x)") match {
+        case HOLASTParser.Success(result, _) =>
+          debug(1,"got ast: "+result)
+          //debug(1,result)
+          true must beEqualTo(true)
+        case HOLASTParser.NoSuccess(msg, input) =>
+          "(x+x)" must beEqualTo(input.pos.toString + ": " + msg)
+      }
+    }
+
     "parse infix formulas" in {
       val terms = List("a = b", "1+X","1+(X*2)","P(1+(X*2))", "f(1+X)= (X*0)+X",
-        "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)")
+        "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)",
+        "(\\ x => (\\y => ( x+x = y+y  )))"//, " (\\ x => (\\y => ( (x+x) = (y+y)  )))"
+      )
       terms map ((s: String) =>
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>

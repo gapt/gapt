@@ -1134,8 +1134,8 @@ object printProofStats {
           |   parse.hol: String => HOLExpression
           |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
           |   parse.lisp: String => List[SExpression]
-          |   parse hlkexp: String => HOLExpression - example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
-          |   parse hlkformula: String => HOLFormula
+          |   parse hlkexp: String => HOLExpression - example: "var x,y: i>o; (\\ x => (\\y => (x=y) ))"
+          |   parse hlkformula: String => HOLFormula -  example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
           |          |
           | File Input/Output:
           |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file

@@ -83,7 +83,7 @@ class HOLASTParser extends JavaTokenParsers with PackratParsers {
     ("exists" ~> atom2 ~ ( allformula_ | exformula_ | formula) ) ^^ { case v ~ f => ast.Exists(v,f) }
 
   //precedence 300
-  lazy val literal2:PackratParser[LambdaAST] = pformula | atomWeq | negation
+  lazy val literal2:PackratParser[LambdaAST] = pformula | absOrAtomWeq | negation
   lazy val negation:PackratParser[LambdaAST] = ("-" ~> (pformula | negation |absOrAtomWeq) ^^ { x => ast.Neg(x) }) | absOrAtomWeq
 
 
@@ -99,20 +99,26 @@ class HOLASTParser extends JavaTokenParsers with PackratParsers {
    }
   } | atomWeq
 
-  lazy val atomWeq: PackratParser[LambdaAST] =  iatom | atom
-  lazy val atom: PackratParser[LambdaAST] = atom1 | atom2 | topbottom
-  lazy val atom1: PackratParser[LambdaAST] = atomsymb ~ "(" ~ repsep(formula,",") ~ ")" ^^ {
-    case x ~ "(" ~ params ~ ")" => ast.App(ast.Var(x) :: params )}
-  lazy val atom2: PackratParser[ast.Var] = atomsymb ^^ {case x =>  ast.Var(x) }
+  lazy val atomWeq: PackratParser[LambdaAST] =  eqatom | atom
 
   //infixatom
-  lazy val iatom : PackratParser[LambdaAST] = formula ~ """((<|>)=?)|(!?=)|[+\-*]""".r  ~ formula ^^ {
+  lazy val piatom = iatom
+  lazy val eqatom : PackratParser[LambdaAST] = piatom ~ """(!?=)""".r  ~ piatom ^^ {
     _ match {
       case t1 ~ "=" ~ t2  => ast.Eq(t1,t2)
       case t1 ~ "!=" ~ t2 => ast.Neg(ast.Eq(t1,t2))
-      case t1 ~ sym ~ t2  => ast.App(List(ast.Var(sym), t1, t2) )
     }
-  }
+  } | piatom
+
+  lazy val pfiatom = atom | pformula
+  lazy val iatom : PackratParser[LambdaAST] = pfiatom ~ """((<|>)=?)|[+\-*]""".r  ~ pfiatom ^^ {
+      case t1 ~ sym ~ t2  => ast.App(List(ast.Var(sym), t1, t2) )
+  } | pfiatom
+
+  lazy val atom: PackratParser[LambdaAST] = atom1 | atom2 | topbottom
+  lazy val atom1: PackratParser[LambdaAST] = atomsymb ~ parens(repsep(formula,",")) ^^ {
+    case x ~ params => ast.App(ast.Var(x) :: params )}
+  lazy val atom2: PackratParser[ast.Var] = atomsymb ^^ {case x =>  ast.Var(x) }
 
   lazy val atomsymb: Parser[String] = atomregexp
   lazy val atomregexp = """(\\?)[a-zA-Z0-9_]+""".r
@@ -146,29 +152,33 @@ class DeclarationParser extends HOLASTParser {
       throw new Exception("Error parsing type declaration '"+s+"' at position "+input.pos+". Error message: "+msg)
   }
 
+  lazy val symbolnames = atomregexp | """((<|>)=?)|(!?=)|[+\-*]""".r
+
   // simple and complex types
   lazy val ti : PackratParser[TA] = "i" ^^ { _ => Ti() }
   lazy val to : PackratParser[TA] = "o" ^^ { _ => To() }
   lazy val simpleType : PackratParser[TA] = ti | to
   lazy val complexType : PackratParser[TA]= (complexType ~ ">" ~ complexType) ^^ { case t1 ~ _ ~ t2 => t1 -> t2} | simpleType
 
-  lazy val constdecl : PackratParser[Map[String, HOLExpression] ] = "const" ~ rep1sep(atomregexp, ",") ~ ":" ~ complexType ^^ {
+  lazy val constdecl : PackratParser[Map[String, HOLExpression] ] = "const" ~ rep1sep(symbolnames, ",") ~ ":" ~ complexType ^^ {
     case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map (x => (x, HOLConst(ConstantStringSymbol(x), exptype))))
   }
 
-  lazy val vardecl : PackratParser[Map[String, HOLExpression] ] = "var" ~ rep1sep(atomregexp, ",") ~ ":" ~ complexType ^^ {
+  lazy val vardecl : PackratParser[Map[String, HOLExpression] ] = "var" ~ rep1sep(symbolnames, ",") ~ ":" ~ complexType ^^ {
     case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map (x => (x, HOLVar(VariableStringSymbol(x), exptype))))
   }
 
   //declaration lists e.g.: var x,y :i; const a,b : i; const P : i > i > o
   lazy val declaration : PackratParser[Map[String, HOLExpression] ]= constdecl | vardecl
   lazy val declaration_list : PackratParser[Map[String, HOLExpression] ] =
-    (rep1sep(declaration, ";") ~ ";") ^^ { case l ~ _ =>  l.foldLeft(Map[String, HOLExpression]())( (map, x) => {
+    (rep1sep(declaration, ";") ~ ";") ^^ { case l ~ _ =>  l.foldLeft(defaultsymbols)( (map, x) => {
       for (v <- map.keys) {
         require(!x.contains(v), "Redeclaration of the variable "+v+" is not allowed!" )
       }
       map ++ x })
     }
+
+  val defaultsymbols = Map[String, HOLExpression]()
 
   lazy val declaredformula : PackratParser[(Map[String, HOLExpression], ast.LambdaAST)]  =
     (declaration_list ~ formula) ^^ { case d ~ f => (d,f) }
@@ -204,7 +214,8 @@ object HLKHOLParser {
     case ast.And(l,r) => And(f(ASTtoHOL(create, l)), f(ASTtoHOL(create,r)))
     case ast.Or(l,r) => Or(f(ASTtoHOL(create, l)), f(ASTtoHOL(create,r)))
     case ast.Imp(l,r) => Imp(f(ASTtoHOL(create, l)), f(ASTtoHOL(create,r)))
-    case ast.Eq(l,r) => Equation(f(ASTtoHOL(create, l)), f(ASTtoHOL(create,r)))
+
+    case ast.Eq(l,r) => Equation(ASTtoHOL(create, l), ASTtoHOL(create,r))
 
     case ast.Var(x) => create(x)
     case ast.Top() => Atom(TopC, Nil )
