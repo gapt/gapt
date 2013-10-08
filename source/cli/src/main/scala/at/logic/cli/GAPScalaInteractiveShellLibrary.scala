@@ -100,8 +100,8 @@ object printProofStats {
       val weakQuant = weakQuantRulesNumber(p)
       println("------------- Statistics ---------------")
       println("Cuts: " + stats.cuts)
-      println("Number of quantifier rules: " + quant)
-      println("Number of rules: " + total)
+      println("Number of quantifier inferences: " + quant)
+      println("Number of inferences: " + total)
       println("Quantifier complexity: " + weakQuant)
       println("----------------------------------------")
     }
