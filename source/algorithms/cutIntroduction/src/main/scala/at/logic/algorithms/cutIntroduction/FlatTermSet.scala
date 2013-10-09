@@ -31,8 +31,10 @@ import at.logic.language.hol.logicSymbols._
 
 class FlatTermSetException(msg: String) extends Exception(msg)
 
+// TODO: change the name of the class (to what??)
 class FlatTermSet(terms: Map[FOLFormula, List[List[FOLTerm]]]) {
 
+  // TODO: val (formulaFuncion, termset) = code that processes terms
   var formulaFunction = new HashMap[ConstantStringSymbol, FOLFormula]
   var termset : List[FOLTerm] = Nil
 
