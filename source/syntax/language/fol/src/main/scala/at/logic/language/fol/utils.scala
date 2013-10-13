@@ -10,7 +10,7 @@ package at.logic.language.fol
 import at.logic.language.hol.logicSymbols.ConstantSymbolA
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.lambda.symbols.VariableSymbolA
+import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression}
 import at.logic.language.lambda.types.->
 import at.logic.language.lambda.types.{To, Ti, TA}
@@ -199,6 +199,62 @@ object Utils {
       List()
     else
       lower :: between (lower+1, upper)
+  }
+
+  /** Adds a list of universal quantifiers to a FOL formula.
+    * The first element of the list will be the outermost quantifier.
+    * A generalization of applying AllVar(x,f).
+    *
+    * It always holds that addQuantifiers(f,removeQuantifiers(f)._1) = f.
+    *
+    * @param f A FOL formula, typically with the free variables of xs.
+    * @param xs A list of variables [x1,...,xn] over which to universally quantify f.
+    * @return [forall x1,...,xn] f
+    */
+  def addQuantifiers(f : FOLFormula, xs : List[FOLVar]) = xs.reverse.foldLeft(f)((f,x) => AllVar(x, f))
+
+  /** Strips the initial universal quantifiers from a FOL formula that begins
+    * with a quantifier block.
+    * A generalization of unapplying AllVar(x,f).
+    * 
+    * @param f A FOL formula of the form [forall x1,...,xn] f'.
+    * @return The tuple ([xn,...,x1], f').
+    */
+  def removeQuantifiers(f : FOLFormula) : (List[FOLVar], FOLFormula) = f match {
+    case AllVar(x, f) => {
+      val (xs,fret) = removeQuantifiers(f)
+      (x :: xs, fret)
+    }
+    case f => (List[FOLVar](),f)
+  }
+
+  /** Removes at most n universal quantifiers from a FOL formula that begins
+    * with a quantifier block.
+    *
+    * See removeQuantifiers.
+    *
+    * @param f A FOL formula of the form [forall x1,...,xm] f'.
+    * @param n The number of quantifiers to strip.
+    * @return The tuple ([x1',...,xn], f'') where n' <= n & n' <= m and f' is a subformula
+    * of f''.
+    */
+  def removeNQuantifiers(f: FOLFormula, n: Int) : (List[FOLVar], FOLFormula) = f match {
+    case AllVar(x, f) => {
+      if (n > 0) {
+        val (xs,fret) = removeNQuantifiers(f, n-1)
+        (xs :+ x, fret)
+      }
+      else { (List[FOLVar](), AllVar(x, f)) }
+    }
+    case f => (List[FOLVar](), f)
+  }
+
+  /** Given varName and an integer n,
+    * returns the list [varName_1,...,varName_n],
+    * where varName_i is a FOLVar with the same name.
+    */
+  def createFOLVars(varName: String, n: Int) = {
+    (1 to n).map(n => FOLVar(new VariableStringSymbol(varName + "_" + n))).toList
   }
 
 }

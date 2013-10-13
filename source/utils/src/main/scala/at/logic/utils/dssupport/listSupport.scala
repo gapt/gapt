@@ -58,5 +58,21 @@ object ListSupport {
       (new_acc2, y::ys)
     }
   }
+
+  /** Identical to foldLeft, but with addition function which returns when the folding should be aborted.
+    * If that function returns False for an element, the folding is aborted and the result of the last execution
+    * of the folding function is returned.
+    *
+    * @param acc The initial value and the first argument of the folding function.
+    * @param list The list of elements to fold.
+    * @param cont The function specifying when to abort.
+    * It is executed for each list element before the folding function.
+    * @param f The folding function which takes the accumulated value and the next list element
+    * and returns a the next accumulated value.
+    */
+  def foldLeftWhile[A,B](acc:B, list:Iterable[A], cont: A => Boolean, f:(B,A) => B) : B = {
+    if (list.isEmpty || !cont(list.head)) { acc }
+    else { foldLeftWhile(f(acc,list.head), list.tail, cont, f) }
+  }
 }
 

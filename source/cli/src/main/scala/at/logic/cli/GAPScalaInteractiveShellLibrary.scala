@@ -542,6 +542,11 @@ object printProofStats {
     def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction.apply2(e)
   }
 
+  object cutIntroG {
+    def apply( p: LKProof ) : LKProof = CutIntroductionG.applyG(p)
+    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroductionG.applyG(e)
+  }
+
 /*****************************************************************************************/
 
   object toClauses {
@@ -1177,6 +1182,8 @@ object printProofStats {
           |
           | Cut-Introduction:
           |   cutIntro: LKProof => LKProof
+          |   cutIntro2: LKProof => LKProof - uses an optimized version of the cut intro algorithm
+          |   cutIntroG: LKProof => LKProof - performs cut introduction with multiple quantifiers
           |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
           |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
           |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list

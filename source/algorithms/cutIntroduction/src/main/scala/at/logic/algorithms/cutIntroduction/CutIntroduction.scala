@@ -262,6 +262,189 @@ object CutIntroduction extends Logger {
 */
   }
 
+
+
+
+
+
+  /*def applyG(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
+    val endSequent = toSequent(ep)
+    //println("\nEnd sequent: " + endSequent)
+    // Extract the terms used to instantiate each formula
+    val termsTuples = TermsExtraction(ep)
+    applyG_(endSequent, termsTuples)
+  }
+
+  def applyG(proof: LKProof) : LKProof = {
+    val endSequent = proof.root
+    //println("\nEnd sequent: " + endSequent)
+    // Extract the terms used to instantiate each formula
+    val termsTuples = TermsExtraction(proof)
+    applyG_(endSequent, termsTuples)
+  }*/
+
+  /*def applyG_(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]]) : LKProof = {
+
+    // Assign a fresh function symbol to each quantified formula in order to
+    // transform tuples into terms.
+    val terms = new FlatTermSet(termsTuples)
+
+    //println( "\nTerm set: {" + terms.termset + "}" )
+    //println( "Size of term set: " + terms.termset.size )
+
+    var beginTime = System.currentTimeMillis;
+
+    val grammars = ComputeGeneralizedGrammars.apply(terms)
+
+    //debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
+
+    //println( "\nNumber of grammars: " + grammars.length )
+
+    if(grammars.length == 0) {
+      println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress.")
+      throw new CutIntroException("\nNo grammars found." + 
+        " The proof cannot be compressed using a cut with one universal quantifier.\n")
+    }
+
+    // Compute the proofs for each of the smallest grammars
+    val smallest = grammars.head.size
+    val smallestGrammars = grammars.filter(g => g.size == smallest)
+
+    //println( "Smallest grammar-size: " + smallest )
+    //println( "Number of smallest grammars: " + smallestGrammars.length )
+
+    //debug("=============================================================")
+    //debug("" + smallestGrammars.map(x => (x.toString() + "\n")))
+
+    beginTime = System.currentTimeMillis;
+    //debug("Improving solution...")
+
+    // Build a proof from each of the smallest grammars
+    def buildProof(grammar:GeneralizedGrammar) = {
+      //trace( "building proof for grammar " + grammar.toPrettyString )
+
+      val cutFormula0 = computeCanonicalSolutionG(endSequent, grammar)
+    
+      //val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+      //ehs.minimizeSolution
+      //trace ( "building final proof" )
+      //val proof = buildFinalProof(ehs)
+      //trace ( "done building final proof" )
+      
+      //if (proof.isDefined) { Some((proof.get,ehs)) } else { None }
+      throw new Exception
+    }
+
+    val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
+
+    //debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
+
+    // Sort the list by size of proofs
+    val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
+
+    val smallestProof = sorted.head._1
+    val ehs = sorted.head._2
+
+    //println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
+    //println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+
+    smallestProof*/
+      
+/* TODO: uncomment when fixed.
+    // Computing the interpolant (transform this into a separate function later)
+    
+    // A[s_i] forall i
+    val asi = s.map(t => cutFormula0.substitute(t))
+    val cutConj = andN(asi)
+
+    // Negative part
+    val gamma = ehs.inst_l
+    val delta = ehs.inst_r
+    val npart = gamma ++ delta
+
+    // Positive part
+    val pi = ehs.prop_l :+ cutConj
+    val lambda = ehs.prop_r
+    val ppart = pi ++ lambda
+
+    // Proof
+    val interpProof = solvePropositional(FSequent(gamma++pi, delta++lambda))
+
+    // Getting the formula occurrences...
+    val occurrences = interpProof.root.antecedent ++ interpProof.root.succedent
+    val npart_occ = occurrences.filter(x => npart.contains(x.formula))
+    val ppart_occ = occurrences.filter(x => ppart.contains(x.formula))
+
+    val interpolant = ExtractInterpolant(interpProof, npart_occ.toSet, ppart_occ.toSet)
+
+    println("Interpolant: " + interpolant.toPrettyString + "\n")
+
+    // Adding interpolant to cut formula
+    // TODO: casting does not work here.
+    val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
+*/
+  //}
+
+  // seq is not used? What the hell???
+  /** Computes the canonical solution with multiple quantifiers from a generalized grammar.
+    *
+    */
+  /*def computeCanonicalSolutionG(seq: Sequent, g: GeneralizedGrammar) : FOLFormula = {
+
+    /*val flatterms = g.flatterms
+
+    val xvar = FOLVar(new VariableStringSymbol("x"))
+    val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
+      val freeVars = term.freeVariables
+      // Taking only the terms that contain alpha
+      if( freeVars.contains(g.eigenvariable) ) {
+        val terms = flatterms.getTermTuple(term)
+        val f = flatterms.getFormula(term)
+        val xterms = terms.map(e => FOLSubstitution(e, g.eigenvariable, xvar))
+        val fsubst = f.instantiateAll(xterms)
+        f.instantiateAll(xterms) :: acc
+      }
+      else acc
+    }
+ 
+    AllVar(xvar, andN(xFormulas))*/
+
+    print("Canonical solution not yet implemented.")
+    throw new Exception
+  }*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // seq is not used? What the hell???
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
    
