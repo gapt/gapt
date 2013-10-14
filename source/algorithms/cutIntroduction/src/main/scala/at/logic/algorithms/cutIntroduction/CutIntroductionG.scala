@@ -186,7 +186,12 @@ object CutIntroductionG extends Logger {
     //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
     //whole initial quantifier block instantiated to α_1,...,α_n.
     val alphas = createFOLVars("α", ehs.grammar.numVars)
+
+    println("alphas: " + alphas)
     //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
+    val cutLeft = instantiateFirstN(cutFormula, alphas, alphas.length)
+
+    println("cutLeft = " + cutLeft)
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
     val cutRight = grammar.s.transpose.foldRight(List[FOLFormula]()) { case (t, acc) =>
@@ -198,7 +203,10 @@ object CutIntroductionG extends Logger {
 
     //trace( "calling solvePropositional" )
     //solvePropositional need only be called with the non-instantiated cutLeft (with the quantifier block in front)
-    val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutFormula +: (ehs.succedent ++ ehs.succedent_alpha))))
+    println("===FSEQUENT===")
+    println(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
+
+    val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
         val s1 = uPart(grammar.u.filter(t => !t.freeVariables.intersect(grammar.eigenvariables.toSet).isEmpty), proofLeft1, flatterms)

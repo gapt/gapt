@@ -54,7 +54,7 @@ class GeneralizedExtendedHerbrandSequent(seq: Sequent, g: GeneralizedGrammar, cf
       case _ => acc
     }
   }
-  // Instanciated (previously ex. quantified) formulas on the right
+  // Instantiated (previously ex. quantified) formulas on the right
   private val inst_r : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
@@ -64,12 +64,17 @@ class GeneralizedExtendedHerbrandSequent(seq: Sequent, g: GeneralizedGrammar, cf
     }
   }
 
-  // Separating the formulas that contain or not the eigenvariable
+  // Separating the formulas that contain/don't contain eigenvariables
   def varFree(f : FOLFormula) = f.freeVariables.intersect(g.eigenvariables.toSet).isEmpty
   val antecedent = prop_l ++ inst_l.filter(varFree)
-  val antecedent_alpha = inst_l.filter(varFree)
+  val antecedent_alpha = inst_l.filter(x => !varFree(x))
   val succedent = prop_r ++ inst_r.filter(varFree)
-  val succedent_alpha = inst_r.filter(varFree)
+  val succedent_alpha = inst_r.filter(x => !varFree(x))
+
+  println("antecent: " + prop_l + " ++ " + inst_l.filter(varFree))
+  println("antecent_alpha: " + inst_l.filter(x => !varFree(x)))
+  println("succedent: " + prop_r + " ++ " + inst_r.filter(varFree))
+  println("succedent_alpha: " + inst_r.filter(x => !varFree(x)))
 
   var cutFormula = if(cf == null) CutIntroductionG.computeCanonicalSolutionG(seq, g) else cf
 

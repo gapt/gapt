@@ -32,7 +32,7 @@ class GeneralizedGrammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   var flatterms: FlatTermSet = null
 
   /** Returns the size of the grammar, i.e. |u| + |s| */
-  def size = u.size + s.size
+  def size = u.size + s.foldLeft(0)((n,sPart) => n + sPart.size)
 
   /** Returns the set of eigenvariables that occur in u. */
   def eigenvariables = u.flatMap(collectEigenvariables)
@@ -150,12 +150,16 @@ object ComputeGeneralizedGrammars extends Logger {
       coverings
     }
 
+    println("STARTING FOLDING")
+    println("smallestGrammarSize= " + smallestGrammarSize)
+
     //Go through the rows of the delta table and find the smallest
     //covering in each row.
     deltatable.table.foldLeft(List[GeneralizedGrammar]()) {case (grammars, (s, pairs)) =>
+
       // Ignoring entries where s.size == 1 because they are trivial
       // grammars with the function symbol on the right.
-      if(s.size != 1) {
+      if(s.size > 1 || (s.size == 1 && s.head.size > 1)) {
 
         println("DEBUG: [folding DTG] - passed size check")
 

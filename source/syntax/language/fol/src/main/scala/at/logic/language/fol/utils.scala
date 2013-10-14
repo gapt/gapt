@@ -265,6 +265,9 @@ object Utils {
     */
   def instantiateFirstN(cf:FOLFormula, t: List[FOLTerm], n: Int) : FOLFormula = n match {
     case 0 => cf
-    case n => instantiateFirstN(cf.instantiate(t.head), t.tail, n-1)
+    case n => {
+      println("INSTANTIATEFIRSTN: n=" + n + "; cf=" + cf + "; cf.instantiate=" + cf)
+      instantiateFirstN(cf.instantiate(t.head), t.tail, n-1)
+    }
   }
 }
