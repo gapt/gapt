@@ -8,8 +8,8 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.language.fol.{Neg => FOLNeg, Or => FOLOr, And => FOLAnd, Imp => FOLImp, Atom => FOLAtom, AllVar => FOLAllVar}
-import at.logic.language.fol.FOLVar
-import at.logic.language.fol.FOLTerm
+import at.logic.language.fol.{FOLVar, FOLTerm, FOLFormula}
+import at.logic.language.fol.Utils.instantiateFirstN
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -162,6 +162,35 @@ package macroRules {
       val allQXYZ = ForallLeftRule(allQYZ, TransX(x), Trans, x)
 
       ContractionLeftRule(allQXYZ, Trans)
+    }
+  }
+
+  object ForallLeftBlock {
+    /** <pre>Applies the ForallLeft-rules n times.
+      * This method expects a formula main with
+      * a quantifier block, and a proof s1 which has a fully
+      * instantiated version of main on the left side of its
+      * bottommost sequent.
+      *
+      * The rule: 
+      *   (rest of s1)
+      *  sL, A[x1\term1,...,xN\termN] |- sR
+      * ---------------------------------- (ForallLeft x n)
+      *     sL, Forall x1,..,xN.A |- sR
+      * </pre>
+      *
+      * @params s1 The top proof with (sL, A[x1\term1,...,xN\termN] |- sR) as the bocttommost sequent.
+      * @params main A formula of the form (Forall x1,...,xN.A).
+      * @params terms The list of terms with which to instantiate main. The caller of this
+      * method has to ensure the correctness of these terms, and, specifically, that
+      * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof s1.
+      */
+    def apply(s1: LKProof, main: FOLFormula, terms:List[FOLTerm]) : LKProof = {
+      val partiallyInstantiatedMains = (0 to terms.length).toList.reverse.map(n => instantiateFirstN(main,terms,n)).toList
+
+      val series = terms.reverse.foldLeft((s1,partiallyInstantiatedMains))((acc, ai) => (ForallLeftRule(acc._1, acc._2.head, acc._2.tail.head, ai), acc._2.tail))
+
+      series._1
     }
   }
 }

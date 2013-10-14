@@ -12,6 +12,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
+import at.logic.calculi.lk.macroRules.ForallLeftBlock
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
@@ -51,7 +52,11 @@ object CutIntroductionG extends Logger {
     // transform tuples into terms.
     val terms = new FlatTermSet(termsTuples)
 
-    //println( "\nTerm set: {" + terms.termset + "}" )
+    println("Terms: \n" + terms)
+    println("===============================================================")
+    println("Termstuples: \n" + termsTuples)
+    println("===============================================================")
+    println( "\nTerm set: {" + terms.termset + "}" )
     //println( "Size of term set: " + terms.termset.size )
 
     var beginTime = System.currentTimeMillis;
@@ -60,7 +65,7 @@ object CutIntroductionG extends Logger {
 
     //debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
 
-    //println( "\nNumber of grammars: " + grammars.length )
+    println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
       println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress.")
@@ -72,11 +77,11 @@ object CutIntroductionG extends Logger {
     val smallest = grammars.head.size
     val smallestGrammars = grammars.filter(g => g.size == smallest)
 
-    //println( "Smallest grammar-size: " + smallest )
-    //println( "Number of smallest grammars: " + smallestGrammars.length )
+    println( "Smallest grammar-size: " + smallest )
+    println( "Number of smallest grammars: " + smallestGrammars.length )
 
-    //debug("=============================================================")
-    //debug("" + smallestGrammars.map(x => (x.toString() + "\n")))
+    println("=============================================================")
+    println("" + smallestGrammars.map(x => (x.toString() + "\n")))
 
     beginTime = System.currentTimeMillis;
     //debug("Improving solution...")
@@ -133,10 +138,25 @@ object CutIntroductionG extends Logger {
 
     val varName = "x"
 
+    println("===============================================================")
+    println("   g.u:\n")
+    println(g.u)
+    println("===============================================================")
+    println("g.eigenvariables: \n")
+    println(g.eigenvariables)
+    println("===============================================================")
+    println("    g.s:\n")
+    println(g.s)
+    println("===============================================================")
+
     val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
       val freeVars = term.freeVariables
+      println("   inside g.u.foldRight!   ")
+      println("   term.freeVariables: " + freeVars)
+
       // Taking only the terms that contain alpha
       if( !freeVars.intersect(g.eigenvariables.toSet).isEmpty ) {
+        println("      found terms with alphas!")
         val terms = flatterms.getTermTuple(term)
         val f = flatterms.getFormula(term)
         val xterms = terms.flatMap(e => mkFOLSubst(g.eigenvariables, varName, e))
@@ -166,7 +186,7 @@ object CutIntroductionG extends Logger {
     //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
     //whole initial quantifier block instantiated to α_1,...,α_n.
     val alphas = createFOLVars("α", ehs.grammar.numVars)
-    val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
+    //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
     val cutRight = grammar.s.transpose.foldRight(List[FOLFormula]()) { case (t, acc) =>
@@ -178,7 +198,7 @@ object CutIntroductionG extends Logger {
 
     //trace( "calling solvePropositional" )
     //solvePropositional need only be called with the non-instantiated cutLeft (with the quantifier block in front)
-    val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (partialCutLeft.last +: (ehs.succedent ++ ehs.succedent_alpha))))
+    val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutFormula +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
         val s1 = uPart(grammar.u.filter(t => !t.freeVariables.intersect(grammar.eigenvariables.toSet).isEmpty), proofLeft1, flatterms)
@@ -186,11 +206,13 @@ object CutIntroductionG extends Logger {
         //Add sequents to all-quantify the cut formula in the right part of s1, starting with
         //partialCutLeft.head, whith contains only free variables and going to partialCutLeft.last, which has a quantifier block
         //in front instead.
-        val lPart = alphas.reverse.foldLeft((s1,partialCutLeft)){(acc, ai) =>
+        /*val lPart = alphas.reverse.foldLeft((s1,partialCutLeft)){(acc, ai) =>
                       (ForallLeftRule(acc._1, acc._2.head, acc._2.tail.head, ai), acc._2.tail)
-                    }
+                    }*/
+        val lPart = ForallLeftBlock(s1, cutFormula, alphas)
+        lPart
 
-        lPart._1
+        //lPart._1
 
       case None => throw new CutIntroException("ERROR: propositional part is not provable.")
     }
@@ -289,39 +311,30 @@ object CutIntroductionG extends Logger {
     s.transpose.foldLeft(p) { case (p,t) =>
 
       //1. Partially instantiate the cut formula.
-      val pcf = (0 to t.length).toList.reverse.map(n => instantiateFirstN(cf,t,n)).toList
+      //val pcf = (0 to t.length).toList.reverse.map(n => instantiateFirstN(cf,t,n)).toList
 
       //2. Starting from p, in which pcf[0] occurs, work down, adding quantifiers, until we get 
       //   the fully quantified cf back.
-      val newP = t.reverse.foldLeft((p,pcf)){(acc, singleT) => {
+      /*val newP = t.reverse.foldLeft((p,pcf)){(acc, singleT) => {
         val p2 = ForallLeftRule(acc._1, acc._2.head, acc._2.tail.head, singleT)
         (p2, acc._2.tail)
-        }}
+        }}*/
+
+      val newP = ForallLeftBlock(p, cf, t)
 
       //3. If this is not the first time we build cf, 
       //   cf is already present in p and we can do away with its second,
       //   newly generated instance through a contraction rule.
       if (first) {
         first = false
-        newP._1
+        //newP._1
+        newP
       }
       else {
-        ContractionLeftRule(newP._1, cf)
+        //ContractionLeftRule(newP._1, cf)
+        ContractionLeftRule(newP, cf)
       }
     }
-  }
-
-  /** Helper function for sPart.
-    *
-    * Given a FOL formula cf starting with a quantifier block, a list of terms t
-    * and an integer n, instantiates the first n quantifiers of cf with the
-    * first n terms of t.
-    *
-    * @return The formula cf, with the first n quantifers instantiated.
-    */
-  def instantiateFirstN(cf:FOLFormula, t: List[FOLTerm], n: Int) : FOLFormula = n match {
-    case 0 => cf
-    case n => instantiateFirstN(cf.instantiate(t.head), t.tail, n-1)
   }
 
   //------------------------ FORGETFUL RESOLUTION -------------------------//

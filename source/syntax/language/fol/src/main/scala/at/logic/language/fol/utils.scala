@@ -257,4 +257,14 @@ object Utils {
     (1 to n).map(n => FOLVar(new VariableStringSymbol(varName + "_" + n))).toList
   }
 
+  /** Given a FOL formula cf starting with a quantifier block, a list of terms t
+    * and an integer n, instantiates the first n quantifiers of cf with the
+    * first n terms of t.
+    *
+    * @return The formula cf, with the first n quantifers instantiated.
+    */
+  def instantiateFirstN(cf:FOLFormula, t: List[FOLTerm], n: Int) : FOLFormula = n match {
+    case 0 => cf
+    case n => instantiateFirstN(cf.instantiate(t.head), t.tail, n-1)
+  }
 }

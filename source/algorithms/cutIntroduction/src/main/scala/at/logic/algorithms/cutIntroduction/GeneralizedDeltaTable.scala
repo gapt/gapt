@@ -64,13 +64,24 @@ class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends
       // Iterate over the list of decompositions
       pairs.foreach { case (u, ti) =>
         // Only choose terms that are after the last term in tl
+
         val maxIdx = terms.lastIndexWhere(e => ti.contains(e))
         val termsToAdd = terms.slice(maxIdx + 1, (terms.size + 1))
+
+        println("termsToAdd: ")
+        println(termsToAdd)
 
         // Compute delta of the incremented list
         termsToAdd.foreach {case e =>
           val incrementedtermset = ti :+ e
           val p = deltaG(incrementedtermset, eigenvariable)
+
+          println("---------------------------------------------------------")
+          println("Computed deltaG of " + incrementedtermset)
+          println("Result:")
+          println("u: " + p._1)
+          println("s: " + p._2)
+          println("---------------------------------------------------------")
 
           // If non-trivial or equal to 1 (for the term set of size
           // 1, the decomposition is always trivial and should be added)
@@ -219,11 +230,18 @@ object deltaG {
     //True iff all terms begin with the same function symbol.
     def commonFuncHead(terms:List[FOLTerm]) = terms.tail.forall(isFunc(_:FOLTerm, (fname => fname == fromFunc(terms.head).toString)))
 
+
+    //Special case: only one term has been provided. This isn't part of
+    //the definition of DeltaG in the paper (deltavector.tex), but
+    //decompositions of the form (a,t.head) must be added to give the delta table a starting point.
+    if (terms.size == 1) {
+      ((FOLVar(new VariableStringSymbol(eigenvariable + "_" + curInd)), List(terms)), curInd+1)
+    }
     //The case distinction of Delta_G.
     //   First case: all terms are equal -> take one and put it into u (with no variables and curInd unchanged).
     //   Second case: all terms begin with the same function symbol -> recurse.
     //   Third case: otherwise -> create a new variable with the terms as s-vector and increment curInd.
-    if (terms.tail.forall(t => (t =^ terms.head))) {
+    else if (terms.tail.forall(t => (t =^ terms.head))) {
       ((terms.head, Nil), curInd)
     }
     else if (commonFuncHead(terms)) {
@@ -238,10 +256,22 @@ object deltaG {
         
         //Get the function args (unapply._2) and fold with computePart
         //The result might contain duplicate variables and therefore, nub must be applied
-        val (rawUParts, rawS) = terms.map(fromFuncArgs).foldLeft((Nil:List[types.U], Nil:types.S))(computePart)
+        val (rawUParts, rawS) = terms.map(fromFuncArgs).transpose.foldLeft((Nil:List[types.U], Nil:types.S))(computePart)
+
+        println("computePart finished. Results(u,S):")
+        println(rawUParts)
+        println(rawS)
+
         //Reapply the function head to the pieces
         val rawU = Function(fromFunc(terms.head), rawUParts)
+
+        println("rawU: " + rawU)
+        println("smallest Var in rawU: " + smallestVarInU(eigenvariable, rawU))
+
         val (u,s) = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
+
+        println("final (u | S): " + u + " | " + s)
+        println("newInd: " + newInd)
 
         ((u,s), newInd)
     } else {
@@ -256,7 +286,7 @@ object deltaG {
     * where i is the variable index.
     */
   private def smallestVarInU(eigenvariable: String, u: types.U) : Int = u match {
-    case Function(_,terms) => terms.map(t => smallestVarInU(eigenvariable, t)).min
+    case Function(_,terms) => if (terms.length == 0) { 0 } else { terms.map(t => smallestVarInU(eigenvariable, t)).min }
     case FOLVar(x) => x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt
   }
 
@@ -274,8 +304,12 @@ object deltaG {
   private def nub (beginWith: Int, eigenvariable:String, u: types.U, s: types.S): types.Decomposition = {
     val indexedS = s.zip(beginWith to (beginWith + s.size - 1))
 
+    println("    nub | indexedS = " + indexedS)
+
     //Get the list of all variables occurring in u
     var presentVars = collectVars(u)
+
+    println("    nub | presentVars = " + presentVars)
 
     //Go through s, look ahead for duplicates, and delete them.
     def nub2(ev: String, u: types.U, s: List[(List[FOLTerm],Int)]) : types.Decomposition = s match {
@@ -283,7 +317,10 @@ object deltaG {
       case Nil => (u,s.unzip._1)
       //variables occur -> check xs for identical s-vectors
       case ((lst,ind)::xs) => {
+        //The duplicates are all the duplicates of lst. The rest is lst + all vectors not identical to it.
         val (duplicates,rest) = xs.partition(y => y._1 == lst)
+
+        println("    nub2 | duplicates,rest = " + (duplicates,rest))
 
         //go through all duplicates, rename the corresponding variables in u to ev_[ind]
         //and delete ev_[x] from presentvars
@@ -292,12 +329,15 @@ object deltaG {
           renameVar(curU, ev + "_" + dupl._2, ev + "_" + ind)
         })
 
-        nub2(eigenvariable, newU, rest)
+        val ret = nub2(eigenvariable, newU, rest)
+        (ret._1, lst::ret._2)
       }
     }
 
     //nub2Merge duplicate vars in u and delete elements of s.
     val (swissCheeseU,newS) = nub2(eigenvariable, u, indexedS)
+
+    println("    nub | (swCU, newS) = " + (swissCheeseU,newS))
 
     //Merging with nub2 will have created holes in u => reindex the variables in u to get a contiuous segment
     val renamings = presentVars.toList.sorted.zip(beginWith to (presentVars.size - 1))
