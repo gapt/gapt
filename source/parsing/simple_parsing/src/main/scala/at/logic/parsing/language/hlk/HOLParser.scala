@@ -22,20 +22,22 @@ import at.logic.language.fol
 
 //Abstract syntax tree - ignores typing
 package ast {
-  abstract class LambdaAST;
+  abstract class LambdaAST {
+    def varnames : List[String]
+  };
 
-  case class Var(name : String) extends LambdaAST
-  case class App(args: List[LambdaAST]) extends LambdaAST
-  case class Abs(v : Var, t : LambdaAST) extends LambdaAST
-  case class All(v : Var, t : LambdaAST) extends LambdaAST
-  case class Exists(v : Var, t : LambdaAST) extends LambdaAST
-  case class Neg(t : LambdaAST) extends LambdaAST
-  case class And(l : LambdaAST, r : LambdaAST) extends LambdaAST
-  case class Or(l : LambdaAST, r : LambdaAST) extends LambdaAST
-  case class Eq(l : LambdaAST, r : LambdaAST) extends LambdaAST
-  case class Imp(l : LambdaAST, r : LambdaAST) extends LambdaAST
-  case class Top() extends  LambdaAST
-  case class Bottom() extends LambdaAST
+  case class Var(name : String) extends LambdaAST { def varnames = List(name) }
+  case class App(args: List[LambdaAST]) extends LambdaAST { def varnames = args.foldLeft[List[String]](Nil)((x,e) => x ++ e.varnames)  }
+  case class Abs(v : Var, t : LambdaAST) extends LambdaAST { def varnames = v.name :: t.varnames }
+  case class All(v : Var, t : LambdaAST) extends LambdaAST { def varnames = v.name :: t.varnames }
+  case class Exists(v : Var, t : LambdaAST) extends LambdaAST { def varnames = v.name :: t.varnames }
+  case class Neg(t : LambdaAST) extends LambdaAST { def varnames = t.varnames }
+  case class And(l : LambdaAST, r : LambdaAST) extends LambdaAST { def varnames = l.varnames ++ r.varnames }
+  case class Or(l : LambdaAST, r : LambdaAST) extends LambdaAST { def varnames = l.varnames ++ r.varnames }
+  case class Eq(l : LambdaAST, r : LambdaAST) extends LambdaAST { def varnames = l.varnames ++ r.varnames }
+  case class Imp(l : LambdaAST, r : LambdaAST) extends LambdaAST { def varnames = l.varnames ++ r.varnames }
+  case class Top() extends  LambdaAST { def varnames = Nil }
+  case class Bottom() extends LambdaAST {def varnames = Nil }
 }
 
 
@@ -44,8 +46,9 @@ object HOLASTParser extends HOLASTParser;
 //Parser from strings to ast
 class HOLASTParser extends JavaTokenParsers with PackratParsers {
   import ast.LambdaAST
-  /* debug transformers
-  def d(s:String,f:FOLFormula) : FOLFormula = { println(s+": "+f); f }    */
+  /* debug transformers */
+  def d[T](s:String,f:T) : T = { println(s+": "+f); f }
+  def d[T](f:T) : T = d("(debug)",f)
 
   /* The main entry point to the parser for prover9 formulas. To parse literals, use literal as the entry point. */
   def parseFormula(s:String) : LambdaAST = parseAll(formula, s) match {
@@ -83,37 +86,48 @@ class HOLASTParser extends JavaTokenParsers with PackratParsers {
     ("exists" ~> atom2 ~ ( allformula_ | exformula_ | formula) ) ^^ { case v ~ f => ast.Exists(v,f) }
 
   //precedence 300
-  lazy val literal2:PackratParser[LambdaAST] = pformula | absOrAtomWeq | negation
-  lazy val negation:PackratParser[LambdaAST] = ("-" ~> (pformula | negation |absOrAtomWeq) ^^ { x => ast.Neg(x) }) | absOrAtomWeq
+  lazy val literal2:PackratParser[LambdaAST] = absOrAtomWeq | negation
+  lazy val negation:PackratParser[LambdaAST] = ("-" ~> literal2 ^^ { x => ast.Neg(x) }) | absOrAtomWeq
 
 
   def parens[T](p:Parser[T]) : Parser[T] = "(" ~> p <~ ")"
   //precedence 250
   lazy val absOrAtomWeq : PackratParser[LambdaAST] = parens(abs) | appOrAtomWeq
-  lazy val abs : PackratParser[LambdaAST] = ("\\" ~ atom2 ~ "=>" ~ formula) ^^ { case _ ~ v ~ _ ~ f => ast.Abs(v, f) }
+  lazy val abs : PackratParser[LambdaAST] =
+    ("\\" ~ atom2 ~ ("=>" ~> formula)) ^^ { case _ ~ v ~ f => ast.Abs(v, f) }
 
   //precedence 200
-  lazy val appOrAtomWeq : PackratParser[LambdaAST] = parens("@" ~ rep1(formula)) ^^ { x => x match {
-    case _ ~ List(elem) => elem
-    case _ ~ list => ast.App(list)
+  lazy val appOrAtomWeq : PackratParser[LambdaAST] =
+    parens("@" ~> rep1(formula))  ^^ {_ match {
+      case List(elem) => elem
+      case list => ast.App(list)
    }
   } | atomWeq
 
   lazy val atomWeq: PackratParser[LambdaAST] =  eqatom | atom
 
   //infixatom
-  lazy val piatom = iatom
-  lazy val eqatom : PackratParser[LambdaAST] = piatom ~ """(!?=)""".r  ~ piatom ^^ {
+  lazy val eqatom : PackratParser[LambdaAST] = iatom1 ~ """(!?=)""".r  ~ iatom1 ^^ {
     _ match {
       case t1 ~ "=" ~ t2  => ast.Eq(t1,t2)
       case t1 ~ "!=" ~ t2 => ast.Neg(ast.Eq(t1,t2))
     }
-  } | piatom
+  } | iatom1
 
-  lazy val pfiatom = atom | pformula
-  lazy val iatom : PackratParser[LambdaAST] = pfiatom ~ """((<|>)=?)|[+\-*]""".r  ~ pfiatom ^^ {
+  lazy val iatom1 : PackratParser[LambdaAST] = iatom2 ~ """((<|>)=?)""".r  ~ iatom2 ^^ {
       case t1 ~ sym ~ t2  => ast.App(List(ast.Var(sym), t1, t2) )
+  } | iatom2
+
+
+  lazy val iatom2 : PackratParser[LambdaAST] = iatom3 ~ """[+\-]""".r  ~ iatom3 ^^ {
+    case t1 ~ sym ~ t2  => ast.App(List(ast.Var(sym), t1, t2) )
+  } | iatom3
+
+  lazy val iatom3 : PackratParser[LambdaAST] = pfiatom ~ """[*/]""".r  ~ pfiatom ^^ {
+    case t1 ~ sym ~ t2  => ast.App(List(ast.Var(sym), t1, t2) )
   } | pfiatom
+
+  lazy val pfiatom = pformula | atom
 
   lazy val atom: PackratParser[LambdaAST] = atom1 | atom2 | topbottom
   lazy val atom1: PackratParser[LambdaAST] = atomsymb ~ parens(repsep(formula,",")) ^^ {
@@ -121,7 +135,7 @@ class HOLASTParser extends JavaTokenParsers with PackratParsers {
   lazy val atom2: PackratParser[ast.Var] = atomsymb ^^ {case x =>  ast.Var(x) }
 
   lazy val atomsymb: Parser[String] = atomregexp
-  lazy val atomregexp = """(\\?)[a-zA-Z0-9_]+""".r
+  lazy val atomregexp = """(\\?)([a-zA-Z0-9']+([_^](\{[a-zA-Z0-9']+\})?)*)+""".r
 
   lazy val topbottom: PackratParser[LambdaAST] = "$" ~> ( "T" ^^ (x=> ast.Top()) | "F" ^^ (x =>  ast.Bottom()) )
 
@@ -185,7 +199,8 @@ class DeclarationParser extends HOLASTParser {
 }
 
 
-object HLKHOLParser {
+object HLKHOLParser extends HLKHOLParser
+class HLKHOLParser {
   //automated casting, a bit dirty
   private def f(e:HOLExpression) : HOLFormula = {
     require(e.isInstanceOf[HOLFormula], "The expression "+e+" is supposed to be a formula!")
@@ -222,7 +237,7 @@ object HLKHOLParser {
     case ast.Bottom() => Atom(BottomC, Nil)
   }
 
-  def parse(create : String => HOLVar, s : String) : HOLExpression = {
+  def parse(create : String => HOLVar, s : CharSequence) : HOLExpression = {
     DeclarationParser.parseAll(DeclarationParser.formula, s) match {
       case DeclarationParser.Success(result, _) => ASTtoHOL(create, result)
       case DeclarationParser.NoSuccess(msg, input) =>
@@ -231,7 +246,7 @@ object HLKHOLParser {
 
   }
 
-  def parse(s : String) : HOLExpression = {
+  def parse(s : CharSequence) : HOLExpression = {
     DeclarationParser.parseAll(DeclarationParser.declaredformula, s) match {
       case DeclarationParser.Success((declarations, tree), _) =>
         ASTtoHOL( x => declarations(x), tree)

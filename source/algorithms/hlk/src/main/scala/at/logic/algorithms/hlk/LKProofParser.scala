@@ -32,7 +32,7 @@ import scala.util.parsing.combinator.Parsers
 import scala.collection.immutable.{HashMap, Stack}
 
 object LKProofParser {
-  def debug(s:String) = { println(s) }
+  def debug(s:String) = { /* println(s) */ }
 
   type ProofMap = HashMap[String,LKProof]
   val emptyProofMap = HashMap.empty[String,LKProof]
@@ -60,8 +60,8 @@ object LKProofParser {
 
     sp.parseAll[List[LabeledProof]](sp.hlk_file, txt) match {
       case sp.Success(result, input) =>
-        println("YAY!!")
-        println(result)
+        //println("YAY!!")
+        //println(result)
         //sp.getProofDB
         val db = new ProofDatabase(Map.empty, result, Nil, Nil)
         db

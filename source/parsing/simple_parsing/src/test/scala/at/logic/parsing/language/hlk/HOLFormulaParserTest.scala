@@ -187,26 +187,36 @@ class HOLASTParserTest extends SpecificationWithJUnit {
         case HOLASTParser.Success(result, _) =>
           debug(1,"got ast: "+result)
           //debug(1,result)
-          true must beEqualTo(true)
+          ok
         case HOLASTParser.NoSuccess(msg, input) =>
-          "(x+x)" must beEqualTo(input.pos.toString + ": " + msg)
+          ko(input.pos.toString + ": " + msg)
       }
     }
 
     "parse infix formulas" in {
       val terms = List("a = b", "1+X","1+(X*2)","P(1+(X*2))", "f(1+X)= (X*0)+X",
         "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)",
-        "(\\ x => (\\y => ( x+x = y+y  )))"//, " (\\ x => (\\y => ( (x+x) = (y+y)  )))"
+        "(\\ x => (\\y => ( x+x = y+y  )))"
+        //, " (\\ x => (\\y => ( (x+x) = (y+y)  )))"
+        ,"(\\delta + \\kappa) +1","(\\delta + \\kappa) +1 = 0+1"
+        ,"(@ ((\\ x => (\\alpha))) 0)"
+        //,"((\\delta + \\kappa) +1)","((\\delta + \\kappa) +1) = 0+1"
       )
-      terms map ((s: String) =>
+      val res : List[(String,String)] = terms.map((s: String) =>
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>
             debug(1,"got ast: "+result+ " for "+s)
             //debug(1,result)
-            true must beEqualTo(true)
+            (s,"")
           case HOLASTParser.NoSuccess(msg, input) =>
-            s must beEqualTo(input.pos.toString + ": " + msg)
-        })
+            (s, (input.pos.toString + ": " + msg+"\nproblem is:"+s))
+        }).filterNot(_._2 == "")
+
+      println(""+res.length+" errors:")
+      res.map((x:(String,String)) => println(x._1) )
+      println()
+
+      res.map((x:(String,String)) =>"" mustEqual(x._2) )
 
     }
 
