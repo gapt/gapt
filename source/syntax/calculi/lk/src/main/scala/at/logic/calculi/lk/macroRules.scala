@@ -166,7 +166,7 @@ package macroRules {
   }
 
   object ForallLeftBlock {
-    /** <pre>Applies the ForallLeft-rules n times.
+    /** <pre>Applies the ForallLeft-rule n times.
       * This method expects a formula main with
       * a quantifier block, and a proof s1 which has a fully
       * instantiated version of main on the left side of its
@@ -188,7 +188,56 @@ package macroRules {
     def apply(s1: LKProof, main: FOLFormula, terms:List[FOLTerm]) : LKProof = {
       val partiallyInstantiatedMains = (0 to terms.length).toList.reverse.map(n => instantiateFirstN(main,terms,n)).toList
 
-      val series = terms.reverse.foldLeft((s1,partiallyInstantiatedMains))((acc, ai) => (ForallLeftRule(acc._1, acc._2.head, acc._2.tail.head, ai), acc._2.tail))
+      //partiallyInstantiatedMains.foreach(println)
+
+      val series = terms.reverse.foldLeft((s1,partiallyInstantiatedMains)){(acc, ai) =>
+        /*println("MACRORULES|FORALLLEFTBLOCK|APPLYING FORALLEFT")
+        println("s1: " + acc._1)
+        println("aux: " + acc._2.head)
+        println("main: " + acc._2.tail.head)
+        println("term: " + ai)*/
+        (ForallLeftRule(acc._1, acc._2.head, acc._2.tail.head, ai), acc._2.tail)
+      }
+
+      series._1
+    }
+  }
+
+  object ForallRightBlock {
+    /** <pre>Applies the ForallRight-rule n times.
+      * This method expects a formula main with
+      * a quantifier block, and a proof s1 which has a fully
+      * instantiated version of main on the right side of its
+      * bottommost sequent.
+      *
+      * The rule: 
+      *   (rest of s1)
+      *  sL |- sR, A[x1\y1,...,xN\yN]
+      * ---------------------------------- (ForallRight x n)
+      *     sL |- sR, Forall x1,..,xN.A
+      *
+      * where y1,...,yN are eigenvariables.
+      * </pre>
+      *
+      * @params s1 The top proof with (sL |- sR, A[x1\y1,...,xN\yN]) as the bocttommost sequent.
+      * @params main A formula of the form (Forall x1,...,xN.A).
+      * @params terms The list of eigenvariables with which to instantiate main. The caller of this
+      * method has to ensure the correctness of these terms, and, specifically, that
+      * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof s1.
+      */
+    def apply(s1: LKProof, main: FOLFormula, eigenvariables:List[FOLVar]) : LKProof = {
+      val partiallyInstantiatedMains = (0 to eigenvariables.length).toList.reverse.map(n => instantiateFirstN(main,eigenvariables,n)).toList
+
+      //partiallyInstantiatedMains.foreach(println)
+
+      val series = eigenvariables.reverse.foldLeft((s1,partiallyInstantiatedMains)){(acc, ai) =>
+        /*println("MACRORULES|FORALLRIGHTBLOCK|APPLYING FORALLEFT")
+        println("s1: " + acc._1)
+        println("aux: " + acc._2.head)
+        println("main: " + acc._2.tail.head)
+        println("term: " + ai)*/
+        (ForallRightRule(acc._1, acc._2.head, acc._2.tail.head, ai), acc._2.tail)
+      }
 
       series._1
     }

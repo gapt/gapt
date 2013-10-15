@@ -150,8 +150,8 @@ object ComputeGeneralizedGrammars extends Logger {
       coverings
     }
 
-    println("STARTING FOLDING")
-    println("smallestGrammarSize= " + smallestGrammarSize)
+    //println("STARTING FOLDING")
+    //println("smallestGrammarSize= " + smallestGrammarSize)
 
     //Go through the rows of the delta table and find the smallest
     //covering in each row.
@@ -161,20 +161,20 @@ object ComputeGeneralizedGrammars extends Logger {
       // grammars with the function symbol on the right.
       if(s.size > 1 || (s.size == 1 && s.head.size > 1)) {
 
-        println("DEBUG: [folding DTG] - passed size check")
+        //println("DEBUG: [folding DTG] - passed size check")
 
         // Add the trivial decomposition {alpha_0} o s if s only has one vector
         val ev = FOLVar(new VariableStringSymbol(eigenvariable + "_0"))
         val newpairs = if(s.size == 1 && s.head.forall(e => terms.contains(e)) ) { (ev, s.head) :: pairs } else pairs
 
-        println("    | newpairs:")
-        println(newpairs)
+        //println("    | newpairs:")
+        //println(newpairs)
 
         // Whenever we find a smaller S-vector,
         // we add the grammars in its row to the list of returned ones.
         if(s.size < smallestGrammarSize) {      
 
-          println("DEBUG: [folding DTG] - passed s.size with s.size=" + s.size + ", smallestGrammarSize=" + smallestGrammarSize)              
+          //println("DEBUG: [folding DTG] - passed s.size with s.size=" + s.size + ", smallestGrammarSize=" + smallestGrammarSize)              
           val coverings = smallestCoverExact(s, newpairs)
           coverings.foldLeft(grammars) { case (acc, u) =>
             (new GeneralizedGrammar(u, s, eigenvariable) ) :: acc                   
