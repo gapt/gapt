@@ -3,12 +3,26 @@
 
 % *, +, 0, 1, <, A, ARITH_1, ARITH_2, ARITH_3, ARITH_4, AX, BASE, BIF0, BIF1, C, I, IF0, IF1, IIF0, IIF1, MAIN, MON, MONstep, MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}, MONstep_{b1}, NOCC, NOCCstep, NOCCstep_{a}, NOCCstep_{b}, P, STEP, T, X, \Delta, \Gamma, \alpha, \beta, \delta, \gamma, \kappa, \nu, \pi_1, \rho, \sigma, be, bm, f, h, h', h_1, i, i_1, i_2, ie, ite, j, j_1, k, n, s, t, x, x_1, y, y_1 %
 
-\VARDEC{ i, i_1, i_2, ie, ite, j, j_1, k, n, s, t, x, x_1, y, y_1}{i}
-\VARDEC{\alpha, \beta, \delta, \gamma, \kappa, \nu}{i}
+\VARDEC{ i, i_1, i_2, j, j_1, k, n, s, x, x_1, y, y_1}{i}
+\VARDEC{\alpha, \beta, \delta, \gamma, \kappa, \nu, \sigma}{i}
 \CONSTDEC{0, 1}{i}
-\CONSTDEC{*, +}{i>i}
+\CONSTDEC{*, +, bm}{i>i>i}
+\CONSTDEC{be}{o>i}
+\CONSTDEC{f, ie}{i>i}
+\CONSTDEC{ite}{i>i>i>i}
 \CONSTDEC{<}{i>i>o}
-% , A, ARITH_1, ARITH_2, ARITH_3, ARITH_4, AX, BASE, BIF0, BIF1, C, I, IF0, IF1, IIF0, IIF1, MAIN, MON, MONstep, MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}, MONstep_{b1}, NOCC, NOCCstep, NOCCstep_{a}, NOCCstep_{b}, P, STEP, T, X, \Delta, \Gamma,  \pi_1, \rho, \sigma, be, bm, f, h, h', h_1 %
+\CONSTDEC{A,I}{i>o}
+\CONSTDEC{AX,T}{o}
+\CONSTDEC{ARITH_1, ARITH_2, ARITH_3, ARITH_4}{o}
+\CONSTDEC{BIF0, BIF1, C, IF0, IF1, IIF0, IIF1, MONstep, MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}, MONstep_{b1}, NOCCstep, NOCCstep_{a}, NOCCstep_{b}, \pi_1}{o}
+\CONSTDEC{BASE, STEP, MAIN, \rho}{i>o}
+\CONSTDEC{MON}{(i>i)>i>o}
+\CONSTDEC{NOCC}{(i>i)>i>i>o}
+\CONSTDEC{t}{(i>i)>i>i>i>i}
+
+\VARDEC{P,X}{o}
+\VARDEC{h, h', h_1}{i>i}
+
 
 
 
@@ -301,7 +315,7 @@
 \IMPL{AX, j_1<(n+1)+1, j_1<(n+1)+1 -> j_1<(n+1) | j_1=(n+1)+1 }{ j_1<(n+1) | j_1=(n+1)+1}
 \INSTAXIOM{A10}{AX, j_1<(n+1)+1}{ j_1<(n+1) | j_1=(n+1)+1}
 
-\CONTINUEFROM{MONstep_{a3}}{\Gamma, j_1<(n+1) | j_1=(n+1)+1}{\Delta}
+\CONTINUEFROM{MONstep_{a3}}{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1) | j_1=(n+1)+1 , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 \CUT{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 \EQR{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 \CONTINUEWITH{MONstep_{a1}}  
@@ -458,7 +472,7 @@
   \EQR{AX,- X}{\benc{X} * \alpha + (1 \bm \benc{X}) * \beta=\beta}
   \DEF{AX,- X}{\ite{\benc{X}}{\alpha}{\beta}=\beta}
   \IMPR{AX}{- X -> \ite{\benc{X}}{\alpha}{\beta}=\beta}
-  \ALLR{AX}{(all P all t all f ( - P -> \ite{P}{t}{f}=f))}
+  \ALLR{AX}{(all P all x all y ( - P -> \ite{\benc{P}}{x}{y}=y))}
   \CONTINUEWITH{BIF0}
 
 % ===== END OF PROOF ===== %
@@ -475,7 +489,7 @@
   \EQR{AX,X}{\benc{X} * \alpha + (1 \bm \benc{X}) * \beta=\beta}
   \DEF{AX,X}{\ite{\benc{X}}{\alpha}{\beta}=\beta}
   \IMPR{AX}{X -> \ite{\benc{X}}{\alpha}{\beta}=\alpha}
-  \ALLR{AX}{(all P all t all f (P -> \ite{P}{t}{f}=t))}
+  \ALLR{AX}{(all P all x all y (P -> \ite{\benc{P}}{x}{y}=x))}
   \CONTINUEWITH{BIF1}
 
 % ===== END OF PROOF ===== %
@@ -490,7 +504,7 @@
   \EQR{AX,\ienc{\alpha}=0}{\ienc{\alpha}*\beta + (1 \bm \ienc{\alpha}) * \gamma = \gamma}
   \DEF{AX,\ienc{\alpha}=0}{(\ite{\ienc{\alpha}}{\beta}{\gamma}) = \gamma}
   \IMPR{AX}{\ienc{\alpha}=0-> (\ite{\ienc{\alpha}}{\beta}{\gamma}) = \gamma}
-  \ALLR{AX}{(all i all t all f \ienc{i}=0-> (\ite{\ienc{i}}{t}{f}) = f)}
+  \ALLR{AX}{(all i all x all y \ienc{i}=0-> (\ite{\ienc{i}}{x}{y}) = y)}
 
   \CONTINUEWITH{IIF0}
 
@@ -504,7 +518,7 @@
   \EQR{AX,\ienc{\alpha}=1}{\ienc{\alpha}*\beta + (1 \bm \ienc{\alpha}) * \gamma = \beta}
   \DEF{AX,\ienc{\alpha}=1}{(\ite{\ienc{\alpha}}{\beta}{\gamma}) = \beta}
   \IMPR{AX}{\ienc{\alpha}=1 -> (\ite{\ienc{\alpha}}{\beta}{\gamma}) = \beta}
-  \ALLR{AX}{(all i all t all f \ienc{i}=1 -> (\ite{\ienc{i}}{t}{f}) = t)}
+  \ALLR{AX}{(all i all x all y \ienc{i}=1 -> (\ite{\ienc{i}}{x}{y}) = x)}
 
   \CONTINUEWITH{IIF1}
 

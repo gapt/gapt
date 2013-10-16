@@ -172,7 +172,7 @@ class DeclarationParser extends HOLASTParser {
   lazy val ti : PackratParser[TA] = "i" ^^ { _ => Ti() }
   lazy val to : PackratParser[TA] = "o" ^^ { _ => To() }
   lazy val simpleType : PackratParser[TA] = ti | to
-  lazy val complexType : PackratParser[TA]= (complexType ~ ">" ~ complexType) ^^ { case t1 ~ _ ~ t2 => t1 -> t2} | simpleType
+  lazy val complexType : PackratParser[TA]= ((complexType | parens(complexType)) ~ ">" ~ (complexType|parens(complexType))) ^^ { case t1 ~ _ ~ t2 => t1 -> t2} | simpleType
 
   lazy val constdecl : PackratParser[Map[String, HOLExpression] ] = "const" ~ rep1sep(symbolnames, ",") ~ ":" ~ complexType ^^ {
     case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map (x => (x, HOLConst(ConstantStringSymbol(x), exptype))))

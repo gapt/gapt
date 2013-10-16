@@ -4,9 +4,14 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.execute.Success
-import at.logic.parsing.language.hlk.ast
+import at.logic.parsing.language.hlk.{HLKHOLParser, ast}
 import at.logic.parsing.language.hlk.ast.LambdaAST
 import java.io.File.separator
+import at.logic.language.lambda.types.TA
+import at.logic.language.hol.{HOLFormula, HOLConst, HOLVar, HOLExpression}
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.calculi.lk.base.FSequent
 
 
 /**
@@ -68,6 +73,8 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
             case RToken(_,_,a, s) => a++s
             case TToken(_,_,_) => Nil
           })
+
+
           println(lterms.flatMap(_.varnames).toSet)
 
           ok("successfully parsed "+r)
@@ -94,6 +101,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
           case TToken(_,_,_) => Nil
         })
         println(lterms.flatMap(x => {val vn = x.varnames; if(vn.contains("lambda") ) println(x); vn}).toSet.toList.sorted)
+
 
         ok
       } catch {

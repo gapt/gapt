@@ -92,6 +92,7 @@ import at.logic.algorithms.unification.EequalityA
 import at.logic.language.fol.FOLConst
 import at.logic.calculi.lk.quantificationRules.ForallLeftRule
 import at.logic.parsing.language.hlk.{HLKHOLParser, DeclarationParser}
+import at.logic.algorithms.hlk.HybridLatexParser
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -232,7 +233,14 @@ object printProofStats {
 
   object loadHLK {
     def apply(filename : String) = LKProofParser.parseProof(new InputStreamReader(new FileInputStream(filename)))
+  }
 
+  object loadLLK {
+    def apply(filename : String) = {
+      val tokens = HybridLatexParser.parseFile(filename)
+      HybridLatexParser.printRules(tokens)
+      ()
+    }
   }
 
   object loadProver9Proof {

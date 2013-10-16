@@ -7,6 +7,12 @@ import scala.util.parsing.input.PagedSeqReader
 import scala.collection.immutable.PagedSeq
 import java.io.FileReader
 import at.logic.language.lambda.types.TA
+import at.logic.language.hol.{HOLFormula, HOLConst, HOLVar, HOLExpression}
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.calculi.lk.base.FSequent
+import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 
 abstract class Token
 case class RToken(rule:String, name : String, antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
@@ -76,7 +82,58 @@ trait LatexReplacementParser extends DeclarationParser {
 
 }
 
-object HybridLatexParser extends HybridLatexParser
+object HybridLatexParser extends HybridLatexParser {
+  def createNaming(r : List[Token]) : (String => HOLExpression) = {
+    val ctypes : List[(String,TA)] = r.flatMap(_ match {
+      case TToken("CONST",names,t) => names map ((_,t))
+      case _ => Nil
+    })
+    val constmap = Map[String, TA]() ++ ctypes
+
+    val vtypes : List[(String,TA)] = r.flatMap(_ match {
+      case TToken("VAR",names,t) => names map ((_,t))
+      case _ => Nil
+    })
+    val varmap = Map[String, TA]() ++ vtypes
+
+    { (s:String)=> {
+      if (varmap contains s) {
+        HOLVar(VariableStringSymbol(s), varmap(s))
+      } else
+
+      if (constmap contains s) {
+        HOLConst(ConstantStringSymbol(s), constmap(s))
+      } else
+
+      throw new Exception("no type declaration for symbol "+s)
+    }}
+  }
+
+
+  def printRules(r: List[Token]) : List[FSequent]= {
+    val rules = r.filter( _ match { case RToken(_,_,_,_) => true; case _ => false}  )
+    val naming = createNaming(r)
+
+    var l = List[FSequent]()
+
+    for (RToken(name, argname, antecedent, succedent) <- rules) {
+      val ant = antecedent.map(x => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
+      val suc = succedent.map(x  => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
+      val fs = FSequent(ant, suc)
+      println(name + ": "+fs)
+      l = fs  :: l
+    }
+
+    l.reverse
+  }
+
+
+  private def c(e:HOLExpression) : HOLFormula =
+    if (e.isInstanceOf[HOLFormula]) e.asInstanceOf[HOLFormula] else
+      throw new Exception("Could not convert "+e+" to a HOL Formula!")
+
+}
+
 class HybridLatexParser extends DeclarationParser with LatexReplacementParser {
 
   def parseFile(fn : String) : List[Token] = {
