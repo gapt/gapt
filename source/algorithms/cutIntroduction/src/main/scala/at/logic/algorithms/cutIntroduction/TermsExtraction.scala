@@ -5,9 +5,6 @@
  * formula.
  * Implemented for the cut-introduction algorithm.
  * NOTE: This algorithm was developed for prenex formulas only.
- * This means that when we hava a binary rule such as A ^ B, it is never the
- * case that A or B have instantiated terms. Therefore, we don't worry about it
- * and don't look them up on the hashmap (they won't be there anyway...)
  */
 
 package at.logic.algorithms.cutIntroduction

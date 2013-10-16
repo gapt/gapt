@@ -4,7 +4,6 @@ import scala.util.parsing.combinator._
 import at.logic.language.fol._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.BetaReduction._
-//import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, prenexToExpansionTree, qFreeToExpansionTree}
@@ -300,12 +299,13 @@ object VeriTParser extends RegexParsers {
   }
 
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
-  def proof : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(line) ^^ {
-    case list => 
-      val allpairs = list.flatten
+  def proof : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
+    case pp ~ r => 
+      println("Preprocessing formulas: " + pp)
+      val input = pp.last
+      val axioms = r.flatten
       
       // Join the instances of the same quantified formula
-      val (input, axioms) = allpairs.partition(p => p._2 == Nil)
       val keys = axioms.map(p => p._1).distinct 
       val joinedInst = keys.foldLeft(List[Instances]()) {case (acc, f) =>
         val keyf = axioms.filter(p => p._1 == f)
@@ -313,7 +313,7 @@ object VeriTParser extends RegexParsers {
         (f, allInst.distinct) :: acc
       }
       // Transform all pairs into expansion trees
-      val inputET = input.map(p => qFreeToExpansionTree(p._1))
+      val inputET = input.map(p => qFreeToExpansionTree(p))
       val axiomET = joinedInst.map(p => prenexToExpansionTree(p._1, p._2))
       val ant = axiomET ++ inputET
 
@@ -321,29 +321,28 @@ object VeriTParser extends RegexParsers {
       (ant.toSeq, cons.toSeq)
   }
   
-  def line : Parser[List[Instances]] = useless | ruleDesc 
-
-  // For type-matching purposes...
-  def useless : Parser[List[Instances]] = (success | unsat | header) ^^ { 
-    case s => Nil }
+  def label : Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
   
+  // FILE HEADER
   // Dummy strings that should be ignored
+  def header : Parser[String] = success | unsat | title
   def success : Parser[String] = "success"
   def unsat : Parser[String] = "unsat"
-  def header : Parser[String] = "verit dev - the VERI(T) theorem prover (UFRN/LORIA)."
-  
-  def ruleDesc : Parser[List[Instances]] = "(set" ~ label ~ "(" ~> rule <~ "))"
-  def label : Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
+  def title : Parser[String] = "verit dev - the VERI(T) theorem prover (UFRN/LORIA)."
+ 
+  // INPUT PROCESSING RULES
+  // Get only the formula on the last one of these rules.
+  def preprocess : Parser[List[FOLFormula]] = "(set" ~ label ~ "(" ~> rulePreProc <~ "))"
+  def rulePreProc : Parser[List[FOLFormula]] = input | tmp_distinct_elim | tmp_alphaconv | tmp_let_elim 
+  def input : Parser[List[FOLFormula]] = "input" ~> conclusion
+  def tmp_distinct_elim : Parser[List[FOLFormula]] = "tmp_distinct_elim" ~ premises ~> conclusion  
+  def tmp_alphaconv : Parser[List[FOLFormula]] = "tmp_alphaconv" ~ premises ~> conclusion
+  def tmp_let_elim : Parser[List[FOLFormula]] = "tmp_let_elim" ~ premises ~> conclusion
 
-  def rule : Parser[List[Instances]] = axiom | innerRule
-  
-  def axiom : Parser[List[Instances]] = input | eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
-  
-  def input : Parser[List[Instances]] = "input" ~> conclusion ^^ { case forms =>
-    //println("Parsed input formulas")
-    forms.map(f => (f, Nil))
-  }
-  
+  // RESOLUTION RULES AND EQUALITY AXIOMS
+  def rules : Parser[List[Instances]] = "(set" ~ label ~ "(" ~> rule <~ "))"
+  def rule : Parser[List[Instances]] = eqAxiom | innerRule
+  def eqAxiom : Parser[List[Instances]] = eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
   def eq_reflexive : Parser[List[Instances]] = "eq_reflexive" ~> conclusion ^^ {
     case c => 
       //println("eq_reflexive"); 
@@ -365,17 +364,12 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances(c)
   }
 
-  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | tmp_distinct_elim | tmp_alphaconv | tmp_let_elim
-  
+  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or
   // Rules that I don't care
   def resolution : Parser[List[Instances]] = "resolution" ~> premises <~ conclusion
   def and : Parser[List[Instances]] = "and" ~> premises <~ conclusion
   def and_pos : Parser[List[Instances]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
   def or : Parser[List[Instances]] = "or" ~> premises <~ conclusion
-  // TODO: get only the *last* conclusion of all these rules.
-  def tmp_distinct_elim : Parser[List[Instances]] = "tmp_distinct_elim" ~> premises <~ conclusion
-  def tmp_alphaconv : Parser[List[Instances]] = "tmp_alphaconv" ~> premises <~ conclusion
-  def tmp_let_elim : Parser[List[Instances]] = "tmp_let_elim" ~> premises <~ conclusion
   
   // I don't care about premises. I only use the leaves
   def premises : Parser[List[Instances]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
@@ -416,7 +410,9 @@ object VeriTParser extends RegexParsers {
     val lambda_exp = bLst.foldRight(f) {
       case ((v, t), exp) => App(Abs(v.asInstanceOf[FOLVar], exp), t).asInstanceOf[FOLFormula]
     }
-    betaNormalize(lambda_exp)(StrategyOuterInner.Innermost).asInstanceOf[FOLFormula]
+    lambda_exp
+    // Do not normalize. We don't need this actually.
+    //betaNormalize(lambda_exp)(StrategyOuterInner.Innermost).asInstanceOf[FOLFormula]
   }
 
   def binding : Parser[(FOLTerm, FOLTerm)] = "(" ~> variable ~ term <~ ")" ^^ {
