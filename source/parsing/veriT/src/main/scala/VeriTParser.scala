@@ -301,7 +301,7 @@ object VeriTParser extends RegexParsers {
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
   def proof : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
     case pp ~ r => 
-      println("Preprocessing formulas: " + pp)
+      
       val input = pp.last
       val axioms = r.flatten
       

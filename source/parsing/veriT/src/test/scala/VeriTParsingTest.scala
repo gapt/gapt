@@ -28,9 +28,8 @@ class VeriTParsingTest extends SpecificationWithJUnit {
       formulas._1 must haveSize(3)
     }
 
-/* Commenting out for the time being. Failing during the computation of
- * DBIndices.
     "parse correctly an even more complicated example" in {
+      skipped("Failing while computing DBIndices (OutOfMemory Error)")
       //println("------------------- TEST 2 ------------------------")
       val formulas = VeriTParser.read("target/test-classes/test2.verit")
       //println("\nNumber of formulas on the antecedent: " + formulas._1.size)
@@ -38,7 +37,6 @@ class VeriTParsingTest extends SpecificationWithJUnit {
       //formulas._1.foreach(f => println(f))
       formulas._1 must haveSize(4)
     }
-*/
   }
 }
 
