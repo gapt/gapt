@@ -256,7 +256,7 @@ trait TokenToLKConverter {
 
   def getOrdering[T](pm : Map[T, List[T]]) : List[T] = {
     val (leaves, nonleaves) = pm.partition( el => el._2.isEmpty )
-    require(leaves.nonEmpty, "Circular dependency in prooflinks detected: "+pm)
+    require(leaves.nonEmpty, "Circular dependency detected: "+pm)
     val leaflist = leaves.keySet.toList
     if (nonleaves.isEmpty) {
       leaflist

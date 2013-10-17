@@ -1,0 +1,13 @@
+\CONSTDEC{PROOF}{o}
+
+\CONSTDEC{P}{i>i>o}
+\VARDEC{X}{i>o}
+\CONSTDEC{f}{i>i}
+\CONSTDEC{a}{i}
+\VARDEC{x}{i}
+
+\AX{P(a,f(a))}{P(a,f(a))}
+\ALLL{a}{(all x P(x,f(x)))}{P(a,f(a))}
+\EXR{a}{(all x P(x,f(x)))}{(exists h P(h(a),f(a)))}
+
+\CONTINUEWITH{PROOF}
