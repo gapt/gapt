@@ -25,14 +25,14 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
   val p1 =
     """\AX{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
       |\AX{ NOCC(h_1,\alpha,\sigma)}{NOCC(h_1,\alpha,\sigma)}
-      |\EXR{ NOCC(h_1,\alpha,\sigma)}{(exists s NOCC(h_1,\alpha,s))}
+      |\EXR{}{ NOCC(h_1,\alpha,\sigma)}{(exists s NOCC(h_1,\alpha,s))}
       |\ANDR{T,MON(h_1,\alpha), NOCC(h_1,\alpha,\sigma)}{MON(h_1,\alpha) & (exists s NOCC(h_1,\alpha,s))}
-      |\EXR {T,MON(h_1,\alpha), NOCC(h_1,\alpha,\sigma)}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
+      |\EXR{}{T,MON(h_1,\alpha), NOCC(h_1,\alpha,\sigma)}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
       |\ANDL{T, MON(h_1,\sigma) & NOCC(h_1,\sigma,x)}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
-      |\EXL{T, (exists h (MON(h,\sigma) & NOCC(h,\sigma,x)))}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
-      |\ALLL{T, (all n exists h (MON(h,n) & NOCC(h,n,x)))}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
+      |\EXL{}{T, (exists h (MON(h,\sigma) & NOCC(h,\sigma,x)))}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
+      |\ALLL{}{T, (all n exists h (MON(h,n) & NOCC(h,n,x)))}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
       |\DEF{T,A(\sigma)}{(exists h (MON(h,\alpha) & (exists s NOCC(h,\alpha,s))))}
-      |\ALLR{T,A(\sigma)}{(all n exists h (MON(h,n) & (exists s NOCC(h,n,s))))}
+      |\ALLR{}{T,A(\sigma)}{(all n exists h (MON(h,n) & (exists s NOCC(h,n,s))))}
       |\DEF{T,A(\sigma)}{C}
       |\CONTINUEWITH{\rho(\sigma)}
       |""".stripMargin
@@ -93,15 +93,12 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
       }
     }
 
-    "load the tape3 proof from file" in {
-      try {
-        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "tape3.llk")
-        val lterms : List[LambdaAST] = r.flatMap(_ match {
-          case RToken(_,_,a, s) => a++s
-          case TToken(_,_,_) => Nil
-        })
-        println(lterms.flatMap(x => {val vn = x.varnames; if(vn.contains("lambda") ) println(x); vn}).toSet.toList.sorted)
 
+    "load the simple example from file and parse it" in {
+      try {
+        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "simple.llk")
+        val p = HybridLatexParser.createLKProof(r)
+        println(p)
 
         ok
       } catch {
@@ -110,6 +107,24 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
       }
     }
 
-  }
+    "load the tape3 proof from file" in {
+      try {
+        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "tape3.llk")
+        val lterms : List[LambdaAST] = r.flatMap(_ match {
+          case RToken(_,_,a, s) => a++s
+          case TToken(_,_,_) => Nil
+        })
+//        println(lterms.flatMap(x => {val vn = x.varnames; if(vn.contains("lambda") ) println(x); vn}).toSet.toList.sorted)
 
+        val p = HybridLatexParser.createLKProof(r)
+
+        ok
+      } catch {
+        case e:Exception =>
+          ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
+      }
+    }
+
+
+  }
 }
