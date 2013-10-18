@@ -240,7 +240,6 @@ trait TokenToLKConverter {
           current_proof = handleStrongQuantifier(name, current_proof, name, fs, auxterm, naming, rt)
 
         case "CONTINUEWITH" => ;
-
         case "COMMENT" => ;
         case _ => throw new Exception("Rule type "+name+" not yet implemented!")
       }
