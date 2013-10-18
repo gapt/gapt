@@ -452,6 +452,11 @@ object printProofStats {
       sFOParser.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
     }
 
+
+    def slkh(file:String) = {
+      sFOParserCNT.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
+    }
+
     def lisp(string:String) = {
       SExpressionParser.parseString(string)
     }

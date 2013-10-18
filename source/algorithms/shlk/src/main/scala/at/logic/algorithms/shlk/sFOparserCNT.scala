@@ -147,7 +147,7 @@ object sFOParserCNT {
         }
       }
 
-      def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
+      def name = """[\\]*[a-z,_,0-9]*""".r
                                                                                                                //~ "(" ~ repsep(term,",") ~ ")"
       def slkProof: Parser[Any] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
         case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
@@ -184,7 +184,7 @@ object sFOParserCNT {
 
 
       def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | exLHyper | allR | allRHyper | allLHyper | exRHyper | impL | impR | termDefL1 | termDefR1 | arrowL | foldL | arrowR | autoprop
-      def label: String = """[0-9]*[root]*"""
+      def label: String = """([0-9]*|root)"""
 
       def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant | forall_hyper | exists_hyper) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
       def intTerm: Parser[HOLExpression] = index //| schemaFormula
@@ -229,7 +229,7 @@ object sFOParserCNT {
           case Succ(Succ(Succ(IntZero()))) => Succ(Succ(Succ(indV)))
         }}}
 
-      def intVar: Parser[IntVar] = "[i,j,k,p,u,q]".r ^^ {
+      def intVar: Parser[IntVar] = "I[a-z]".r ^^ {
         case x => { /*println("\n\nintVar");*/ IntVar(new VariableStringSymbol(x))}
       }
       def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
@@ -238,7 +238,7 @@ object sFOParserCNT {
 
       def schemaFormula = formula
 
-      def indPred : Parser[HOLFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
+      def indPred : Parser[HOLFormula] = """[A-Z]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
         case x ~ "(" ~ l ~ ")" => {
           if (! mapPredicateToArity.isDefinedAt(x.toString) )
             mapPredicateToArity.put(x.toString, l.size)
@@ -352,8 +352,8 @@ object sFOParserCNT {
       def eq_prefix: Parser[HOLFormula] = "=" ~ "(" ~ term ~ "," ~ term  ~ ")" ^^ {case "=" ~ "(" ~ x ~ "," ~ y  ~ ")" => Equation(x,y)}
       def less: Parser[HOLFormula] = term ~ "<" ~ term ^^ {case x ~ "<" ~ y => lessThan(x,y)}
       def lessOrEqual: Parser[HOLFormula] = term ~ "<=" ~ term ^^ {case x ~ "<=" ~ y => leq(x,y)}
-      def var_func: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, ind->ind)}
-      def SOindVar: Parser[HOLExpression] = regex(new Regex("[x,c,w,h,a,z,b,b',l,f,r,m,y,A,B]")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->ind)}
+      def var_func: Parser[HOLExpression] = regex(new Regex("[u-zR]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, ind->ind)}
+      def SOindVar: Parser[HOLExpression] = regex(new Regex("([xcwhazblfrmyABR]|b')")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->ind)}
       /*def var_func: Parser[HOLExpression] = (var_func1 | var_funcn)
       def var_func1: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
       def var_funcn: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "^" ~ decimalNumber ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "^" ~ n ~ "(" ~ params ~ ")" ~ ":" ~ tp => genF(n.toInt, HOLVar(new VariableStringSymbol(x)), params)}
