@@ -18,6 +18,7 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.language.lambda.typedLambdaCalculus.Var
 
 abstract class Token
 case class RToken(rule:String, name : Option[LambdaAST], antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
@@ -196,6 +197,7 @@ trait TokenToLKConverter {
     ).asInstanceOf[(List[RToken], List[TToken])] //need to cast because partition returns Tokens
     val naming = createNaming(ttokens)
 
+    //seperate inferences for the different (sub)proofs
     val (last,rm) = rtokens.foldLeft((List[RToken]()), Map[HOLFormula, List[RToken] ]()) ((current, token) => {
       token match {
         case RToken("CONTINUEWITH", Some(name), a, s) =>
@@ -225,11 +227,7 @@ trait TokenToLKConverter {
     println((ordering map (_.toPrettyString)).mkString("Ordering: ",", ",""))
 
     var current_proof : List[LKProof] = List[LKProof]()
-
-
-    /*
-
-    for ( RToken(name, auxterm, antecedent, succedent) <- rtokens) {
+    for ( rt@RToken(name, auxterm, antecedent, succedent) <- rtokens) {
       val ant = antecedent.map(x => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val suc = succedent.map(x  => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val fs = FSequent(ant, suc)
@@ -237,22 +235,68 @@ trait TokenToLKConverter {
         case "AX" =>
           current_proof = Axiom(ant, suc) :: current_proof
         case "ALLL" =>
-          require(current_proof.size > 0, "Imbalanced proof tree in application of "+name+" with es: "+fs)
-          require(auxterm.isDefined, "Weak quantfier rule "+name+" requires the substitution term to be passed as an argument!")
-          val oldproof = current_proof.head
-          val (main, List(aux)) = filterContext(oldproof.root.toFSequent, fs)
-          val term = HLKHOLParser.ASTtoHOL(naming,auxterm.get)
-          val rule = ForallLeftRule(oldproof, aux, main, term  )
-          current_proof = rule :: current_proof.tail
+          current_proof = handleStrongQuantifier(name, current_proof, name, fs, auxterm, naming, rt)
+        case "EXR" =>
+          current_proof = handleStrongQuantifier(name, current_proof, name, fs, auxterm, naming, rt)
+
+        case "CONTINUEWITH" => ;
+
+        case "COMMENT" => ;
+        case _ => throw new Exception("Rule type "+name+" not yet implemented!")
       }
     }
 
     //println(current_proof)
-    */
     //current_proof.head
     Axiom(Nil,Nil)
   }
 
+
+  def handleStrongQuantifier(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + name + " with es: " + fs)
+    val oldproof = current_proof.head
+    val (main, auxs) = filterContext(oldproof.root.toFSequent, fs)
+    require(auxs.size == 1, "Exactly one auxiliary formula in strong quantifier rule required! " + auxs)
+    val List(aux) = auxs
+    def inferTerm(x: Var, f:HOLFormula): HOLExpression = {
+      NaiveIncompleteMatchingAlgorithm.holMatch(f, aux)(Nil) match {
+        case Some(sub) =>
+          val s: HOLExpression = sub.map(x)
+          if (auxterm.nonEmpty) {
+            //try to use user provided term
+            val t: HOLExpression = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
+            if (s == t) {
+              println("Remark: automatically inferred the auxiliaray term in rule " + rt + ".")
+              t
+            } else {
+              println("Preferring user specified term " + t + " over inferred term " + s + ".")
+              t
+            }
+          } else {
+            //no user provided term
+            s
+          }
+
+        case None =>
+          println("Remark: Could not infer substitution term, using user specified one!")
+          HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new Exception("No substitution term found, please specify! " + rt)))
+      }
+    }
+
+    main match {
+      case AllVar(x, f) =>
+        require(ruletype == "ALLL","Main formula "+main+" can not be used in a forall left rule!")
+        val term = inferTerm(x,f)
+        val rule = ForallLeftRule(oldproof, aux, main, term)
+        rule :: current_proof.tail
+
+      case ExVar(x,f) => inferTerm(x,f)
+        require(ruletype == "EXR","Main formula "+main+" can not be used in a exists right rule!")
+        val term = inferTerm(x,f)
+        val rule = ExistsRightRule(oldproof, aux, main, term)
+        rule :: current_proof.tail
+    }
+  }
 
   def getOrdering[T](pm : Map[T, List[T]]) : List[T] = {
     val (leaves, nonleaves) = pm.partition( el => el._2.isEmpty )
