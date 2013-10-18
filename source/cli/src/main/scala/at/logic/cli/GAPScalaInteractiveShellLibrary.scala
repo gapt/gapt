@@ -532,8 +532,9 @@ object printProofStats {
   object minimizeSolution {
     def apply(ehs: ExtendedHerbrandSequent) = {
       println("Previous solution: " + ehs.cutFormula)
-      ehs.minimizeSolution
-      println("Improved solution: " + ehs.cutFormula)
+      val new_ehs = MinimizeSolution(ehs)
+      println("Improved solution: " + new_ehs.cutFormula)
+      new_ehs
     }
   }
 

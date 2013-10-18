@@ -15,7 +15,6 @@ import at.logic.calculi.occurrences._
 import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
-import at.logic.utils.logging.Logger
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.{DFS, BFS, setSearch}
 
@@ -46,7 +45,7 @@ class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
   }
 }
 
-object ComputeGrammars extends Logger {
+object ComputeGrammars {
 
   // This looks ugly :(
   def apply(terms: FlatTermSet) : List[Grammar] = apply(terms.termset).map{ case g => g.flatterms = terms; g }
@@ -55,12 +54,8 @@ object ComputeGrammars extends Logger {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = FOLVar(new VariableStringSymbol("α"))
     
-    //debug( "computing delta-table" )
     val deltatable = new DeltaTable(terms, eigenvariable)
-    //debug( "done computing delta-table" )
-    //deltatable.printStats( { s => trace( "  " + s ) } )
 
-    //debug( "reading off grammars from delta-table" )
     findValidGrammars(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
   }
 
@@ -75,12 +70,8 @@ object ComputeGrammars extends Logger {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = FOLVar(new VariableStringSymbol("α"))
     
-    //debug( "3rd version - computing delta-table" )
     val deltatable = new DeltaTable(terms, eigenvariable)
-    //debug( "done computing delta-table" )
-    //deltatable.printStats( { s => trace( "  " + s ) } )
 
-    //debug( "reading off grammars from delta-table" )
     findValidGrammars2(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
   }
 
@@ -99,11 +90,6 @@ object ComputeGrammars extends Logger {
         // Collect all possible subsets
         val allsubsets = subsets(newpairs)
 
-        //trace( "folding allsubsets of newpairs" )
-        //trace( "  pairs has size " + pairs.size )
-        //trace( "  newpairs has size " + newpairs.size )
-        //trace( "  allsubsets has size " + allsubsets.size )
-
         // For each subset, get the set U formed by the u_i's and the set T of the
         // terms covered (union of t_i)
         val subsetpairs = allsubsets.foldLeft(List[(List[FOLTerm], List[FOLTerm])]()) {(acc1, subset) =>
@@ -113,7 +99,6 @@ object ComputeGrammars extends Logger {
           })
           d :: acc1
         }
-        //trace( "survived folding allsubsets of newpairs" )
        
         // Generate valid grammars
         // Note: each pair is ({u_1, ..., u_k}, {t_1, ..., t_j}) and for this to
@@ -143,8 +128,6 @@ object ComputeGrammars extends Logger {
       else grammars
     }
   }
-
-
 
   // Improve implementation of findValidGrammars.
   // In this method, the size of the smallest grammar found so far is kept, and
@@ -220,8 +203,5 @@ object ComputeGrammars extends Logger {
       else grammars
     }
   }
-
-
-
 
 }

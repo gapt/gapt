@@ -12,7 +12,7 @@ import scala.collection.mutable.HashMap
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.fol._
-import CutIntroduction._
+import MinimizeSolution._
 
 @RunWith(classOf[JUnitRunner])
 class ForgetfulResolutionTest extends SpecificationWithJUnit {

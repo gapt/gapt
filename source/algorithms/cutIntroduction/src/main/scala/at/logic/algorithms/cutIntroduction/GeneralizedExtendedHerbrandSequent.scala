@@ -21,7 +21,7 @@ import at.logic.algorithms.resolution._
 import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
 import scala.collection.immutable.Stack
-import at.logic.algorithms.cutIntroduction.CutIntroduction.MyFClause
+import at.logic.algorithms.cutIntroduction.MinimizeSolution.MyFClause
 import at.logic.utils.dssupport.ListSupport.mapAccumL
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch
@@ -155,7 +155,7 @@ class GeneralizedExtendedHerbrandSequent(seq: Sequent, g: GeneralizedGrammar, cf
     var count = 0
 
     def searchSolution(f: FOLFormula) : List[FOLFormula] =
-      f :: CutIntroduction.ForgetfulResolve(f).foldLeft(List[FOLFormula]()) ( (acc, r) =>
+      f :: MinimizeSolution.ForgetfulResolve(f).foldLeft(List[FOLFormula]()) ( (acc, r) =>
           //Re-quantify the resolved f and checker whether it's still a tautology.
           //If so, keep applying resolution to it and add the results to acc.
           if( this.isValidWith(sat, addQuantifiers(r, xs))) {
