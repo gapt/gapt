@@ -41,6 +41,13 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
   "sFOparserCNT" should {
 
     sequential
+    "parse the schematic tape proof" in {
+      skipped("proof doesnt work yet")
+      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "TapeSchemaProof.lks"))
+      val map = sFOParserCNT.parseProof(s)
+      ok
+    }
+
     "parse correctly David's proof " in {
       skipped("has eigenvariable condition errors")
 
