@@ -1,5 +1,5 @@
 proof \varphi  proves  
-      ForallHyper x maxf(s(Ik),R, x), Forall x  posf(s(Ik),x), ForallHyper x  maxl(s(Ik),r(s(Ik)), x), Forall x Forall y((s(x)<=y) -> (x<y)), same(s(Ik)) |- Exists x Exists y ((x<y) \wedge (f(x) \sim f(y)))
+      ForallHyper x MAXF(s(Ik),R, x), Forall x  POSF(s(Ik),x), ForallHyper x  MAXL(s(Ik),r(s(Ik)), x), Forall x Forall y((s(x)<=y) -> (x<y)), SAME(s(Ik)) |- Exists x Exists y ((x<y) \wedge (f(x) \sim f(y)))
 
 base {
 23:   pLink( (\mu,0)
