@@ -74,5 +74,16 @@ object ListSupport {
     if (list.isEmpty || !cont(list.head)) { acc }
     else { foldLeftWhile(f(acc,list.head), list.tail, cont, f) }
   }
+
+  /** A safe version of List.head which never fails.
+    * 
+    * @param xs The list of which to return the head.
+    * @param default The value to return in case the list is empty.
+    * @return xs.head if xs is not empty, otherwise default.
+    */
+  def safeHead[A](xs:List[A], default:A) : A = xs match {
+    case Nil => default
+    case (x::_) => x
+  }
 }
 

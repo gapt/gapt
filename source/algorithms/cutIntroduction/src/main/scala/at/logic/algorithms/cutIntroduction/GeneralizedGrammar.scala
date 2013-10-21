@@ -11,6 +11,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
+import at.logic.language.fol.Utils._
 import at.logic.calculi.occurrences._
 import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
@@ -35,16 +36,16 @@ class GeneralizedGrammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   def size = u.size + s.foldLeft(0)((n,sPart) => n + sPart.size)
 
   /** Returns the set of eigenvariables that occur in u. */
-  def eigenvariables = u.flatMap(collectEigenvariables)
+  def eigenvariables = u.flatMap(collectVariables).distinct
 
   /** Returns the number of eigenvariables that occur in this grammar. Equals this.eigenvariables.length. */
   def numVars = s.length
 
   /** Collects the variables occurring in a FOL term. */
-  private def collectEigenvariables(u : types.U) : List[FOLVar] = u match {
+  /*private def collectEigenvariables(u : types.U) : List[FOLVar] = u match {
     case Function(_,terms) => terms.map(collectEigenvariables).foldLeft(Nil:List[FOLVar])(_ ++ _)
     case FOLVar(x) => List(FOLVar(x))
-  }
+  }*/
 
 /*
   def strictSuperGrammarOf(g : Grammar) = 
@@ -150,8 +151,8 @@ object ComputeGeneralizedGrammars extends Logger {
       coverings
     }
 
-    //println("STARTING FOLDING")
-    //println("smallestGrammarSize= " + smallestGrammarSize)
+    trace("STARTING FOLDING")
+    trace("smallestGrammarSize= " + smallestGrammarSize)
 
     //Go through the rows of the delta table and find the smallest
     //covering in each row.
@@ -161,20 +162,20 @@ object ComputeGeneralizedGrammars extends Logger {
       // grammars with the function symbol on the right.
       if(s.size > 1 || (s.size == 1 && s.head.size > 1)) {
 
-        //println("DEBUG: [folding DTG] - passed size check")
+        trace("DEBUG: [folding DTG] - passed size check")
 
         // Add the trivial decomposition {alpha_0} o s if s only has one vector
         val ev = FOLVar(new VariableStringSymbol(eigenvariable + "_0"))
         val newpairs = if(s.size == 1 && s.head.forall(e => terms.contains(e)) ) { (ev, s.head) :: pairs } else pairs
 
-        //println("    | newpairs:")
-        //println(newpairs)
+        trace("    | newpairs:")
+        trace(newpairs.toString())
 
         // Whenever we find a smaller S-vector,
         // we add the grammars in its row to the list of returned ones.
         if(s.size < smallestGrammarSize) {      
 
-          //println("DEBUG: [folding DTG] - passed s.size with s.size=" + s.size + ", smallestGrammarSize=" + smallestGrammarSize)              
+          trace("DEBUG: [folding DTG] - passed s.size with s.size=" + s.size + ", smallestGrammarSize=" + smallestGrammarSize)              
           val coverings = smallestCoverExact(s, newpairs)
           coverings.foldLeft(grammars) { case (acc, u) =>
             (new GeneralizedGrammar(u, s, eigenvariable) ) :: acc                   

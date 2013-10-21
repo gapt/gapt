@@ -70,7 +70,7 @@ object CutIntroductionG extends Logger {
     if(grammars.length == 0) {
       println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress.")
       throw new CutIntroException("\nNo grammars found." + 
-        " The proof cannot be compressed using a cut with one universal quantifier.\n")
+        " The proof cannot be compressed using a cut with one universal quantifier block.\n")
     }
 
     // Compute the proofs for each of the smallest grammars
@@ -91,6 +91,9 @@ object CutIntroductionG extends Logger {
       //trace( "building proof for grammar " + grammar.toPrettyString )
 
       val cutFormula0 = computeCanonicalSolutionG(endSequent, grammar)
+
+      trace("[buildProof] cutFormula0: " + cutFormula0)
+      trace("[buildProof] grammar: " + grammar)
     
       val ehs = new GeneralizedExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
       ehs.minimizeSolution
@@ -123,50 +126,61 @@ object CutIntroductionG extends Logger {
   def computeCanonicalSolutionG(seq: Sequent, g: GeneralizedGrammar) : FOLFormula = {
 
     val flatterms = g.flatterms
-
-    /** Given a list of eigenvariables, a variable name and a term,
-      * returns a list of substitutions that replace ev[i] with the variables "x_i" in term
-      * (for 0 <= i < evs.length).
-      */
-    def mkFOLSubst(evs: List[FOLVar], varName: String, term: FOLTerm) : List[FOLTerm] = {
-      val res = evs.foldLeft((0, List[FOLTerm]())) {(acc, ev) => {
-          (acc._1 + 1, FOLSubstitution(term, ev, FOLVar(new VariableStringSymbol(varName + "_" + acc._1))) :: acc._2)
-        }}
-
-      res._2
-    }
-
     val varName = "x"
 
-    /*println("===============================================================")
-    println("   g.u:\n")
-    println(g.u)
-    println("===============================================================")
-    println("g.eigenvariables: \n")
-    println(g.eigenvariables)
-    println("===============================================================")
-    println("    g.s:\n")
-    println(g.s)
-    println("===============================================================")*/
+    trace("===============================================================")
+    trace("   g.u:\n")
+    trace(g.u.toString())
+    trace("===============================================================")
+    trace("g.eigenvariables: \n")
+    trace(g.eigenvariables.toString())
+    trace("===============================================================")
+    trace("    g.s:\n")
+    trace(g.s.toString())
+    trace("===============================================================")
 
     val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
       val freeVars = term.freeVariables
-      //println("   inside g.u.foldRight!   ")
-      //println("   term.freeVariables: " + freeVars)
 
       // Taking only the terms that contain alpha
       if( !freeVars.intersect(g.eigenvariables.toSet).isEmpty ) {
-        //println("      found terms with alphas!")
+        trace("      found terms with alphas!")
+        trace("      term: " + term)
         val terms = flatterms.getTermTuple(term)
         val f = flatterms.getFormula(term)
-        val xterms = terms.flatMap(e => mkFOLSubst(g.eigenvariables, varName, e))
+
+        //Some subset of g's eigenvariables occurs in every term. This generates
+        //substitutions to replace each occurring EV a_i with a quantified variables x_i.
+        val xterms = terms.flatMap(t => {
+          val vars = createFOLVars(varName, g.eigenvariables.length+1)
+          val allEV = g.eigenvariables.zip(vars)
+          val occurringEV = collectVariables(t).distinct
+
+          trace("allEV: " + allEV)
+          trace("occurringEV: " + occurringEV)
+          trace("filteredEV: " + allEV.filter(e => occurringEV.contains(e._1)))
+          trace("result: " + allEV.filter(e => occurringEV.contains(e._1)).map(e => FOLSubstitution(t, e._1, e._2)))
+
+          val res = allEV.filter(e => occurringEV.contains(e._1)).map(e => FOLSubstitution(t, e._1, e._2))
+
+          //edge case: The current term is constant. In this case, we don't instantiate the variables inside, but leave it as is.
+          if (collectVariables(t).isEmpty) { t::Nil } else { res }
+        })
+
+        trace("ComputeCanoicalSolutionG:")
+        trace("   f: " + f)
+        trace("   terms: " + terms)
+        trace("   xterms: " + xterms)
+        trace("   eigenvariables: " + g.eigenvariables)
+        trace("---------------------------------------------")
+
         val fsubst = f.instantiateAll(xterms)
         f.instantiateAll(xterms) :: acc
       }
       else acc
     }
  
-    (0 to (g.eigenvariables.size-1)).toList.foldLeft(andN(xFormulas)){(f, n) => AllVar(FOLVar(new VariableStringSymbol(varName + "_" + n)), f)}
+    (0 to (g.eigenvariables.size-1)).reverse.toList.foldLeft(andN(xFormulas)){(f, n) => AllVar(FOLVar(new VariableStringSymbol(varName + "_" + n)), f)}
   }
 
 
@@ -187,11 +201,11 @@ object CutIntroductionG extends Logger {
     //whole initial quantifier block instantiated to α_0,...,α_n-1.
     val alphas = createFOLVars("α", ehs.grammar.numVars)
 
-    //println("alphas: " + alphas)
+    trace("alphas: " + alphas)
     //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
     val cutLeft = instantiateFirstN(cutFormula, alphas, alphas.length)
 
-    //println("cutLeft = " + cutLeft)
+    trace("cutLeft = " + cutLeft)
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
     val cutRight = grammar.s.transpose.foldRight(List[FOLFormula]()) { case (t, acc) =>
@@ -203,32 +217,30 @@ object CutIntroductionG extends Logger {
 
     //trace( "calling solvePropositional" )
     //solvePropositional need only be called with the non-instantiated cutLeft (with the quantifier block in front)
-    //println("===FSEQUENT===")
-    //println(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
+    trace("===FSEQUENT===")
+    trace("ehs.antecedent: " + ehs.antecedent)
+    trace("ehs.antecedent_alpha: " + ehs.antecedent_alpha)
+    trace("cutFormula: " + cutFormula)
+    trace("   instatiated with alphas: " + alphas)
+    trace("   resulting in cutLeft: " + cutLeft)
+    trace("ehs.succedent: " + ehs.succedent)
+    trace("ehs.succedent_alpha: " + ehs.succedent_alpha)
+    trace(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))).toString())
 
     val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
         val s1 = uPart(grammar.u.filter(t => !t.freeVariables.intersect(grammar.eigenvariables.toSet).isEmpty), proofLeft1, flatterms)
 
-        //Add sequents to all-quantify the cut formula in the right part of s1, starting with
-        //partialCutLeft.head, whith contains only free variables and going to partialCutLeft.last, which has a quantifier block
-        //in front instead.
-        /*val lPart = alphas.reverse.foldLeft((s1,partialCutLeft)){(acc, ai) =>
-                      (ForallLeftRule(acc._1, acc._2.head, acc._2.tail.head, ai), acc._2.tail)
-                    }*/
+        trace("=======================")
+        trace("s1:")
+        trace(s1.toString())
+        trace("=======================")
+        trace("CF: " + cutFormula)
+        trace("alphas: " + alphas)
 
-        //println("=======================")
-        //println("s1:")
-        //println(s1)
-        //println("=======================")
-        //println("CF: " + cutFormula)
-        //println("alphas: " + alphas)
-
-        val lPart = ForallRightBlock(s1, cutFormula, alphas)
-        lPart
-
-        //lPart._1
+        //Add sequents to all-quantify the cut formula in the right part of s1
+        ForallRightBlock(s1, cutFormula, alphas)
 
       case None => throw new CutIntroException("ERROR: propositional part is not provable.")
     }
@@ -270,7 +282,7 @@ object CutIntroductionG extends Logger {
       ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
   }
 
-  /** This... does something.
+  /** Proves the u-part of a grammar.
     *
     */
   def uPart(us: List[types.U], ax: LKProof, flatterms: FlatTermSet) : LKProof = {
@@ -278,8 +290,6 @@ object CutIntroductionG extends Logger {
       case (ax, term) => 
         //Get the arguments of a single u
         val terms = flatterms.getTermTuple(term)
-        //Get... uh... flatterms has a hashmap with constant symbols as keys and FOL formulas as
-        //values. getFormula returns the value for the key of the function symbol of a single u.
         val f = flatterms.getFormula(term)
 
         f match { 
@@ -331,11 +341,6 @@ object CutIntroductionG extends Logger {
 
       //2. Starting from p, in which pcf[0] occurs, work down, adding quantifiers, until we get 
       //   the fully quantified cf back.
-      /*val newP = t.reverse.foldLeft((p,pcf)){(acc, singleT) => {
-        val p2 = ForallLeftRule(acc._1, acc._2.head, acc._2.tail.head, singleT)
-        (p2, acc._2.tail)
-        }}*/
-
       val newP = ForallLeftBlock(p, cf, t)
 
       //3. If this is not the first time we build cf, 
@@ -343,11 +348,9 @@ object CutIntroductionG extends Logger {
       //   newly generated instance through a contraction rule.
       if (first) {
         first = false
-        //newP._1
         newP
       }
       else {
-        //ContractionLeftRule(newP._1, cf)
         ContractionLeftRule(newP, cf)
       }
     }

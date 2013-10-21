@@ -13,16 +13,19 @@ import at.logic.language.fol._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
+import at.logic.utils.logging.Logger
 
 // TODO: should I use grammars instead of pairs here?
 
 class DeltaTableException(msg: String) extends Exception(msg)
 
-class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
+class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
    
   var table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
 
   // Fills the delta table with some terms
+
+  var termsAdded : Int = 0
 
   // Initialize with empty decomposition
   //trace( "initializing delta-table" )
@@ -34,6 +37,15 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
     // Take only the simple grammars of term sets of size (n-1) from the current delta table
     val one_less = getEntriesOfSize(n-1)
 
+    trace("_____________________________________________________")
+    trace("DT contains " + table.size + " elements. Filtered to " + one_less.size)
+    trace("previously (for n=" + (n-1) + "), " + termsAdded + "entries were added")
+    trace("one_less (n=" + n + "): ")
+    trace(one_less.toString())
+    trace("_____________________________________________________")
+
+    termsAdded = 0
+
     one_less.foreach { case (s, pairs) =>
 
       // Iterate over the list of decompositions
@@ -42,10 +54,25 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
         val maxIdx = terms.lastIndexWhere(e => ti.contains(e))
         val termsToAdd = terms.slice(maxIdx + 1, (terms.size + 1))
 
+        trace("termsToAdd with n     = " + n)
+        trace("                maxIdx= " + maxIdx)
+        trace("                ti    = " + ti)
+        trace("termsToAdd (" + termsToAdd.size + ": ")
+        trace(termsToAdd.toString())
+
         // Compute delta of the incremented list
         termsToAdd.foreach {case e =>
           val incrementedtermset = ti :+ e
           val p = delta(incrementedtermset, eigenvariable)
+
+          trace("---------------------------------------------------------")
+          trace("Computed delta of " + incrementedtermset)
+          trace("Result:")
+          trace("u: " + p._1)
+          trace("s: " + p._2)
+          trace("---------------------------------------------------------")
+
+          termsAdded = termsAdded + 1
 
           // If non-trivial or equal to 1 (for the term set of size
           // 1, the decomposition is always trivial and should be added)

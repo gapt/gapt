@@ -42,8 +42,10 @@ package object types {
   */
 class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends Logger {
 
+  var termsAdded : Int = 0
    
   var table = new HashMap[types.S, List[(types.U, List[FOLTerm])]] 
+  val trivialEv = FOLVar(new VariableStringSymbol(eigenvariable + "_0"))
 
   // Fills the delta table with some terms
 
@@ -51,12 +53,23 @@ class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends
   trace( "initializing generalized delta-table" )
   add(Nil, null, Nil)
 
+
   for (n <- 1 until terms.length+1) {
     trace( "adding simple grammars for " + n + " terms to generalized delta-table" )
 
     // Take only the simple grammars of term sets of size (n-1) from the current delta table
     // Filter the keys (S) according to size
-    val one_less = table.filter( e => e._1.length == n-1)
+    val one_less = table.filter( e => safeHead(e._1,Nil).length == n - 1) // (e._1.isEmpty && n==1) || (n !=1 && e._1.head.length == n-1)
+
+    trace("_____________________________________________________")
+    trace("DT contains " + table.size + " elements. Filtered to " + one_less.size)
+    trace("previously (for n=" + (n-1) + "), " + termsAdded + "entries were added")
+    trace("one_less (n=" + n + "): ")
+    trace(one_less.toString())
+    trace("_____________________________________________________")
+
+
+    termsAdded = 0
 
     //Go through each the decompositions for each (n-1)-sized key and try to add terms.
     one_less.foreach { case (s, pairs) =>
@@ -68,20 +81,25 @@ class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends
         val maxIdx = terms.lastIndexWhere(e => ti.contains(e))
         val termsToAdd = terms.slice(maxIdx + 1, (terms.size + 1))
 
-        //println("termsToAdd: ")
-        //println(termsToAdd)
+        trace("termsToAdd with n     = " + n)
+        trace("                maxIdx= " + maxIdx)
+        trace("                ti    = " + ti)
+        trace("termsToAdd (" + termsToAdd.size + ": ")
+        trace(termsToAdd.toString())
 
         // Compute delta of the incremented list
         termsToAdd.foreach {case e =>
           val incrementedtermset = ti :+ e
           val p = deltaG(incrementedtermset, eigenvariable)
 
-          //println("---------------------------------------------------------")
-          //println("Computed deltaG of " + incrementedtermset)
-          //println("Result:")
-          //println("u: " + p._1)
-          //println("s: " + p._2)
-          //println("---------------------------------------------------------")
+          trace("---------------------------------------------------------")
+          trace("Computed deltaG of " + incrementedtermset)
+          trace("Result:")
+          trace("u: " + p._1)
+          trace("s: " + p._2)
+          trace("---------------------------------------------------------")
+
+          termsAdded = termsAdded + 1
 
           // If non-trivial or equal to 1 (for the term set of size
           // 1, the decomposition is always trivial and should be added)
@@ -94,7 +112,7 @@ class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends
           // corresponds to a formula with more than one quantifier. Right now, it
           // is better to not worry about this and rather consider it a potential
           // for further improvement.
-          if (p._2.size == 1 || p._2 != (incrementedtermset)) {
+          if (incrementedtermset.size == 1 || p._1 != trivialEv) { //p._2.size == 1 || p._1 != FOLVar(eigenvariable + "") safeHead(p._2, Nil) != (incrementedtermset)) {
             // Update delta-table
             add(p._2, p._1, incrementedtermset)
           }
@@ -116,7 +134,11 @@ class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends
     * a decomposition of T.
     * If the key already exists, (u,T) is appended the list of existing values */
   def add(s: types.S, u: types.U, t: List[FOLTerm]) {
- 
+    trace("-------------ADD:")
+    trace("s: " + s)
+    trace("t: " + t)
+    trace("u: " + u)
+
     if(table.contains(s)) {
       val lst = table(s)
       table += (s -> ((u, t) :: lst) )
@@ -125,16 +147,6 @@ class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends
       table += ( s -> ((u, t)::Nil) )
     }
   }
-
-  /** Returns the value (u,s) for the key t from the delta table. */
-  //def get(t: List[FOLTerm]) = table(t)
- 
-  /** Returns the entires in the delta table which have size == n */
-  //def getEntriesOfSize(n: Int) = {
-  //  table.filter( e => e._1.length == n)
-  //}
-
-  //def size = table.size
 
   def numberOfPairs = table.foldRight(0) { case ((k, lst), acc) => lst.size + acc }
 
@@ -184,7 +196,7 @@ class GeneralizedDeltaTable(terms: List[FOLTerm], eigenvariable: String) extends
   * lists of different terms which must be substituted for the eigenvariables to get the
   * original termset.
   */
-object deltaG {
+object deltaG extends Logger {
   /** Computes Delta_G(t_1,...,t_n) for a list of terms t_1,...,t_n
     * and returns (u;s_1,...s_q) where u is a term containing the variables α_1,...,α_q
     * and the lists s_1,...,s_q are the values which must be substituted for these α to
@@ -249,7 +261,7 @@ object deltaG {
 
         //Compute Delta_G(u_i) for all u_i
         def computePart(acc:(List[types.U], types.S), ts: List[FOLTerm]) : (List[types.U], types.S) = {
-          val ((uPart,sPart),i:Int) = computeDg(ts, eigenvariable, curInd)
+          val ((uPart,sPart),i:Int) = computeDg(ts, eigenvariable, newInd)
           newInd = i
           (acc._1 :+ uPart, acc._2 ++ sPart)
         }
@@ -258,20 +270,20 @@ object deltaG {
         //The result might contain duplicate variables and therefore, nub must be applied
         val (rawUParts, rawS) = terms.map(fromFuncArgs).transpose.foldLeft((Nil:List[types.U], Nil:types.S))(computePart)
 
-        //println("computePart finished. Results(u,S):")
-        //println(rawUParts)
-        //println(rawS)
+        trace("computePart finished. Results(u,S):")
+        trace(rawUParts.toString())
+        trace(rawS.toString())
 
         //Reapply the function head to the pieces
         val rawU = Function(fromFunc(terms.head), rawUParts)
 
-        //println("rawU: " + rawU)
-        //println("smallest Var in rawU: " + smallestVarInU(eigenvariable, rawU))
+        trace("rawU: " + rawU)
+        trace("smallest Var in rawU: " + smallestVarInU(eigenvariable, rawU))
 
         val (u,s) = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
 
-        //println("final (u | S): " + u + " | " + s)
-        //println("newInd: " + newInd)
+        trace("final (u | S): " + u + " | " + s)
+        trace("newInd: " + newInd)
 
         ((u,s), newInd)
     } else {
@@ -304,12 +316,12 @@ object deltaG {
   private def nub (beginWith: Int, eigenvariable:String, u: types.U, s: types.S): types.Decomposition = {
     val indexedS = s.zip(beginWith to (beginWith + s.size - 1))
 
-    //println("    nub | indexedS = " + indexedS)
+    trace("    nub | indexedS = " + indexedS)
 
     //Get the list of all variables occurring in u
-    var presentVars = collectVars(u)
+    var presentVars = collectVars(u).distinct
 
-    //println("    nub | presentVars = " + presentVars)
+    trace("    nub | presentVars = " + presentVars)
 
     //Go through s, look ahead for duplicates, and delete them.
     def nub2(ev: String, u: types.U, s: List[(List[FOLTerm],Int)]) : types.Decomposition = s match {
@@ -320,7 +332,7 @@ object deltaG {
         //The duplicates are all the duplicates of lst. The rest is lst + all vectors not identical to it.
         val (duplicates,rest) = xs.partition(y => y._1 == lst)
 
-        //println("    nub2 | duplicates,rest = " + (duplicates,rest))
+        trace("    nub2 | duplicates,rest = " + (duplicates,rest))
 
         //go through all duplicates, rename the corresponding variables in u to ev_[ind]
         //and delete ev_[x] from presentvars
@@ -334,10 +346,10 @@ object deltaG {
       }
     }
 
-    //nub2Merge duplicate vars in u and delete elements of s.
+    //Merge duplicate vars in u and delete elements of s.
     val (swissCheeseU,newS) = nub2(eigenvariable, u, indexedS)
 
-    //println("    nub | (swCU, newS) = " + (swissCheeseU,newS))
+    trace("    nub | (swCU, newS) = " + (swissCheeseU,newS))
 
     //Merging with nub2 will have created holes in u => reindex the variables in u to get a contiuous segment
     val renamings = presentVars.toList.sorted.zip(beginWith to (presentVars.size - 1))

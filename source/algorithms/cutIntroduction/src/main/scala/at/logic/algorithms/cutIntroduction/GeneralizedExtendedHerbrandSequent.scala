@@ -71,10 +71,10 @@ class GeneralizedExtendedHerbrandSequent(seq: Sequent, g: GeneralizedGrammar, cf
   val succedent = prop_r ++ inst_r.filter(varFree)
   val succedent_alpha = inst_r.filter(x => !varFree(x))
 
-  //println("antecent: " + prop_l + " ++ " + inst_l.filter(varFree))
-  //println("antecent_alpha: " + inst_l.filter(x => !varFree(x)))
-  //println("succedent: " + prop_r + " ++ " + inst_r.filter(varFree))
-  //println("succedent_alpha: " + inst_r.filter(x => !varFree(x)))
+  //trace("antecent: " + prop_l + " ++ " + inst_l.filter(varFree))
+  //trace("antecent_alpha: " + inst_l.filter(x => !varFree(x)))
+  //trace("succedent: " + prop_r + " ++ " + inst_r.filter(varFree))
+  //trace("succedent_alpha: " + inst_r.filter(x => !varFree(x)))
 
   var cutFormula = if(cf == null) CutIntroductionG.computeCanonicalSolutionG(seq, g) else cf
 

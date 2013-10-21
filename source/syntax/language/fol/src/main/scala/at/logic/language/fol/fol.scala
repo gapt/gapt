@@ -159,7 +159,9 @@ trait FOLFormula extends FOLExpression with HOLFormula {
     case Or(f1, And(f2,f3)) => And(Or(f1,f2).distribute, Or(f1,f3).distribute)
     case Or(And(f1,f2), f3) => And(Or(f1,f3).distribute, Or(f2,f3).distribute)
     case Or(f1, f2) => Or(f1.distribute, f2.distribute)
-    case _ => throw new Exception("ERROR: Unexpected case while distributing Ors over Ands.")
+    case _ => {
+      throw new Exception("ERROR: Unexpected case while distributing Ors over Ands.")
+    }
   }
 
   // Transforms a formula to conjunctive normal form

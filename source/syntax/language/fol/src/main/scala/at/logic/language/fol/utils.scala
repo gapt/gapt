@@ -15,6 +15,9 @@ import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression}
 import at.logic.language.lambda.types.->
 import at.logic.language.lambda.types.{To, Ti, TA}
 
+/** Utility functions for the manipulation of
+  * first-order formulas.
+  */
 object Utils {
   // universally closes off the given fol formula
   def universal_closure_of(f : FOLFormula) : FOLFormula = {
@@ -69,7 +72,7 @@ object Utils {
 
       case AllVar(v, f)  =>
         if ((v =^ variable) && (v != variable)) {
-          println("Warning: comparing two variables, which have the same sytactic representatio but differ on other things (probably different binding context)")
+          println("Warning: comparing two variables, which have the same syntactic representation but differ on other things (probably different binding context)")
         }
 
         if (v == variable) {
@@ -201,6 +204,7 @@ object Utils {
       lower :: between (lower+1, upper)
   }
 
+
   /** Adds a list of universal quantifiers to a FOL formula.
     * The first element of the list will be the outermost quantifier.
     * A generalization of applying AllVar(x,f).
@@ -250,7 +254,7 @@ object Utils {
   }
 
   /** Given varName and an integer n,
-    * returns the list [varName_1,...,varName_n],
+    * returns the list [varName_0,...,varName_(n-1)],
     * where varName_i is a FOLVar with the same name.
     */
   def createFOLVars(varName: String, n: Int) = {
@@ -265,8 +269,36 @@ object Utils {
     */
   def instantiateFirstN(cf:FOLFormula, t: List[FOLTerm], n: Int) : FOLFormula = n match {
     case 0 => cf
-    case n => {
-      instantiateFirstN(cf.instantiate(t.head), t.tail, n-1)
-    }
+    case n => instantiateFirstN(cf.instantiate(t.head), t.tail, n-1)
+  }
+
+  /** Returns the list (not set!) of all occurring variables, free or bound, in a FOL FORMULA, from left to right.
+    *
+    * @param f The FOL formula in which to collect the variables.
+    * @return The list of occurring variables, from left to right. If a variable occurs multiple times
+    *         in the formula, it will occur multiple times in the returned list.
+    */
+  def collectVariables(f: FOLFormula) : List[FOLVar] = f match {
+    case And(f1,f2) => collectVariables(f1) ++ collectVariables(f2)
+    case Or(f1,f2) => collectVariables(f1) ++ collectVariables(f2)
+    case Imp(f1,f2) => collectVariables(f1) ++ collectVariables(f2)
+    case Neg(f1) => collectVariables(f1)
+    case AllVar(_,f1) => collectVariables(f1)
+    case ExVar(_,f1) => collectVariables(f1)
+    case Atom(_,f1) => f1.map(collectVariables).foldLeft(List[FOLVar]())(_ ++ _)
+    case _ => throw new IllegalArgumentException("Unhandled case in fol.util.collectVariables(FOLFormula)!")
+  }
+
+  /** Returns the list (not set!) of all occurring variables, free or bound, in a FOL TERM, from left to right.
+    *
+    * @param f The FOL term in which to collect the variables.
+    * @return The list of occurring variables, from left to right. If a variable occurs multiple times
+    *         in the formula, it will occur multiple times in the returned list.
+    */
+  def collectVariables(f: FOLTerm) : List[FOLVar] = f match {
+    case FOLVar(x) => List(FOLVar(x))
+    case Function(_,terms) => terms.map(collectVariables).foldLeft(List[FOLVar]())(_ ++ _)
+    case FOLConst(_) => Nil
+    case _ => throw new IllegalArgumentException("Unhandled case in fol.util.collectVariables(FOLTerm)!")
   }
 }
