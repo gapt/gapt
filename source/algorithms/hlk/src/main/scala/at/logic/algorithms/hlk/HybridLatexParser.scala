@@ -24,6 +24,7 @@ abstract class Token
 case class RToken(rule:String, name : Option[LambdaAST], antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
 case class TToken(decltype : String, names : List[String], types : TA ) extends Token
 
+
 //case class QToken(override val rule:String, override val name : LambdaAST, override val antecedent: List[LambdaAST], override val succedent:List[LambdaAST], term : LambdaAST)
 //  extends RToken(rule, name, antecedent, succedent)
 
@@ -189,8 +190,10 @@ trait TokenToLKConverter {
     l.reverse
   }
 
-
-  def createLKProof( l : List[Token]) : LKProof = {
+  /* The main entry point to the proof parser. The list of tokens l is taken apart into subproofs (noticable by the
+     CONTINUEWITH rule). Then the subproofs are ordered by dependency and constructed in this order*/
+  def createLKProof( l : List[Token]) : Map[HOLFormula, LKProof] = {
+    //seperate rule tokens from type declaration tokens
     val (rtokens, ttokens) = l.partition( _ match {
       case RToken(_,_,_,_) =>  true ;
       case TToken(_,_,_) => false; }
@@ -204,7 +207,7 @@ trait TokenToLKConverter {
           //put proof under name into map, continue with empty rulelist
           try {
             val nformula = c(HLKHOLParser.ASTtoHOL(naming, name))
-            ( Nil, current._2 + ((nformula,current._1)) )
+            ( Nil, current._2 + ((nformula,current._1.reverse)) )
           } catch {
             case e:Exception => throw new Exception("Error in parsing CONTINUEWITH{"+name+"}{"+a+"}{"+s"}: "+e.getMessage, e)
           }
@@ -221,23 +224,52 @@ trait TokenToLKConverter {
 
     require(last.isEmpty, "There are some rules left after parsing the list, use CONTINUEFROM to give proof a name! "+last)
 
+    //dependncy analysis
     val dependecies = getDependecyMap(naming, rm)
     //dependecies map (x => println(x._1.toPrettyString+": "+x._2.mkString(",")))
     val ordering : List[HOLFormula] = getOrdering(dependecies)
     println((ordering map (_.toPrettyString)).mkString("Ordering: ",", ",""))
 
-    var current_proof : List[LKProof] = List[LKProof]()
-    for ( rt@RToken(name, auxterm, antecedent, succedent) <- rtokens) {
+    //proof completion in dependency order
+   val proofs =rm.foldLeft( Map[HOLFormula, LKProof]() )( (proofs_done, el) => {
+     val (f, rules) = el
+     val f_proof : LKProof = completeProof(f, proofs_done, naming, rules)
+     proofs_done + ((f, f_proof))
+    }
+   )
+   proofs
+  }
+
+  /* Creates the subproof proofname from a list of rules. Uses the naming function to create basic term and
+  *  uses the proofs map to look up subproofs referenced by CONTINUEWITH and INSTLEMMA. This means, the calls
+  *  to completeProof have to be ordered s.t. dependent proofs are already contained in the map.*/
+  def completeProof(proofname : HOLFormula,
+                    proofs : Map[HOLFormula, LKProof],
+                    naming : String => HOLExpression,
+                     rules : List[RToken]) : LKProof = {
+    var proofstack : List[LKProof] = List[LKProof]()
+    for ( rt@RToken(name, auxterm, antecedent, succedent) <- rules) {
+      println("Processing rule: "+name)
+      println(proofstack.mkString("Proof stack: ",",",""))
       val ant = antecedent.map(x => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val suc = succedent.map(x  => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val fs = FSequent(ant, suc)
       name match {
         case "AX" =>
-          current_proof = Axiom(ant, suc) :: current_proof
+          proofstack = Axiom(ant, suc) :: proofstack
         case "ALLL" =>
-          current_proof = handleStrongQuantifier(name, current_proof, name, fs, auxterm, naming, rt)
+          proofstack = handleWeakQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
         case "EXR" =>
-          current_proof = handleStrongQuantifier(name, current_proof, name, fs, auxterm, naming, rt)
+          proofstack = handleWeakQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
+        case "ALLR" =>
+          proofstack = handleStrongQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
+        case "EXL" =>
+          proofstack = handleStrongQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
+        case "ANDR" =>
+          proofstack = handleBinaryLogicalOperator(name, proofstack, name, fs, auxterm, naming, rt)
+        case "ORL" =>
+          proofstack = handleBinaryLogicalOperator(name, proofstack, name, fs, auxterm, naming, rt)
+
 
         case "CONTINUEWITH" => ;
         case "COMMENT" => ;
@@ -245,18 +277,21 @@ trait TokenToLKConverter {
       }
     }
 
-    //println(current_proof)
-    //current_proof.head
-    Axiom(Nil,Nil)
+    require(proofstack.nonEmpty,"Error creating proof: Proof stack may not be empty!")
+    proofstack.head
   }
 
 
-  def handleStrongQuantifier(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+  def handleWeakQuantifier(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + name + " with es: " + fs)
-    val oldproof = current_proof.head
-    val (main, auxs) = filterContext(oldproof.root.toFSequent, fs)
-    require(auxs.size == 1, "Exactly one auxiliary formula in strong quantifier rule required! " + auxs)
-    val List(aux) = auxs
+    val oldproof::rest = current_proof
+    val (mainsequent, auxsequent, _) = filterContext(oldproof.root.toFSequent, fs)
+    require(auxsequent.formulas.size == 1, "Exactly one auxiliary formula in weak quantifier rule required (no autocontraction allowed)! " + auxsequent)
+    val (main, aux) = ruletype match {
+      case "ALLL" => (mainsequent.antecedent(0), auxsequent.antecedent(0))
+      case "EXR"  => (mainsequent.succedent(0), auxsequent.succedent(0))
+    }
+
     def inferTerm(x: Var, f:HOLFormula): HOLExpression = {
       NaiveIncompleteMatchingAlgorithm.holMatch(f, aux)(Nil) match {
         case Some(sub) =>
@@ -287,14 +322,146 @@ trait TokenToLKConverter {
         require(ruletype == "ALLL","Main formula "+main+" can not be used in a forall left rule!")
         val term = inferTerm(x,f)
         val rule = ForallLeftRule(oldproof, aux, main, term)
-        rule :: current_proof.tail
+        rule :: rest
 
       case ExVar(x,f) => inferTerm(x,f)
         require(ruletype == "EXR","Main formula "+main+" can not be used in a exists right rule!")
         val term = inferTerm(x,f)
         val rule = ExistsRightRule(oldproof, aux, main, term)
+        rule :: rest
+    }
+  }
+
+  def handleStrongQuantifier(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + name + " with es: " + fs)
+    val oldproof = current_proof.head
+    val (mainsequent, auxsequent, _) = filterContext(oldproof.root.toFSequent, fs)
+    require(auxsequent.formulas.size == 1, "Exactly one auxiliary formula in strong quantifier rule required! " + auxsequent)
+    val (main, aux) = ruletype match {
+      case "EXL" => (mainsequent.antecedent(0), auxsequent.antecedent(0))
+      case "ALLR"  => (mainsequent.succedent(0), auxsequent.succedent(0))
+    }
+
+    def inferTerm(x: Var, f:HOLFormula): HOLExpression = {
+      NaiveIncompleteMatchingAlgorithm.holMatch(f, aux)(Nil) match {
+        case Some(sub) =>
+          val s: HOLExpression = sub.map(x)
+          if (auxterm.nonEmpty) {
+            //try to use user provided term
+            val t: HOLExpression = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
+            if (s == t) {
+              println("Remark: automatically inferred the auxiliaray term in rule " + rt + ".")
+              require(t.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
+              t
+            } else {
+              println("Preferring user specified term " + t + " over inferred term " + s + ".")
+              require(t.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
+              t
+            }
+          } else {
+            //no user provided term
+            require(s.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+s+" is not!")
+            s
+          }
+
+        case None =>
+          //automatic mode failed
+          println("Remark: Could not infer substitution term, using user specified one!")
+          val t = HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new Exception("No substitution term found, please specify! " + rt)))
+          require(t.isInstanceOf[Var],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
+          t
+      }
+    }
+
+    main match {
+      case AllVar(x, f) =>
+        require(ruletype == "ALLR","Main formula "+main+" can not be used in a forall right rule!")
+        val term : HOLVar = inferTerm(x,f).asInstanceOf[HOLVar]
+        val rule = ForallRightRule(oldproof, aux, main, term)
+        rule :: current_proof.tail
+
+      case ExVar(x,f) => inferTerm(x,f)
+        require(ruletype == "EXL","Main formula "+main+" can not be used in a exists left rule!")
+        val term : HOLVar = inferTerm(x,f).asInstanceOf[HOLVar]
+        val rule = ExistsLeftRule(oldproof, aux, main, term)
         rule :: current_proof.tail
     }
+  }
+
+  def handleBinaryLogicalOperator(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 1, "Imbalanced proof tree in application of " + name + " with es: " + fs)
+    val rightproof::leftproof::stack = current_proof
+
+    val (mainsequent, auxsequent, context) = filterContext(leftproof.root.toFSequent, rightproof.root.toFSequent, fs)
+
+    println("main   : " +  mainsequent)
+    println("aux    : " +  auxsequent)
+    println("context: " +  context)
+
+    ruletype match {
+      case "ANDR" =>
+        mainsequent.succedent(0) match {
+          case And(l,r) =>
+            require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas"+auxsequent)
+            require(auxsequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
+            require(leftproof.root.toFSequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
+            require(rightproof.root.toFSequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
+            val inf = AndRightRule(leftproof, rightproof, l,r)
+            val contr = contract(inf, fs)
+            contr :: stack
+          case _ => throw new Exception("Main formula of a conjunction right rule must have conjuntion as outermost operator!")
+        }
+
+      case "ORL"  =>
+        mainsequent.antecedent(0) match {
+          case Or(l,r) =>
+            require(auxsequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
+            require(auxsequent.antecedent.contains(r), "Right branch formula "+l+" not found in auxiliary formulas!"+auxsequent)
+            require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
+            require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
+            val inf = OrLeftRule(leftproof, rightproof, l,r)
+            val contr = contract(inf, fs)
+            contr :: stack
+          case _ => throw new Exception("Main formula of a disjunction left rule must have disjunction as outermost operator!")
+        }
+
+      case "IMPL" =>
+        mainsequent.antecedent(0) match {
+          case Or(l,r) =>
+            require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
+            require(auxsequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
+            require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
+            require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
+            val inf = ImpLeftRule(leftproof, rightproof, l,r)
+            val contr = contract(inf, fs)
+            contr :: stack
+          case _ => throw new Exception("Main formula of a implication left rule must have implication as outermost operator!")
+        }
+    }
+  }
+
+  def contract(proof : LKProof, towhat : FSequent) : LKProof = {
+    val context = proof.root.toFSequent diff towhat
+    val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
+      try {
+        ContractionLeftRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+      }
+    )
+    val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
+      try {
+        ContractionLeftRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+      }
+    )
+
+    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of contraction errenous: "+proof.root+" does not contract to "+rightcontr)
+
+    rightcontr
   }
 
   def getOrdering[T](pm : Map[T, List[T]]) : List[T] = {
@@ -332,32 +499,53 @@ trait TokenToLKConverter {
                 +" in: "+proofnames.mkString(",")+" but proof links need to be unique!")
           }
 
+        case RToken("INSTLEMMA",Some(f),_,_) =>
+          //find the matching proofs
+          proofnames.filter( p =>
+            NaiveIncompleteMatchingAlgorithm.holMatch(p, c(HLKHOLParser.ASTtoHOL(naming, f)))(Nil).isDefined
+          ) match {
+            //and check if the dependency is ok
+            case Nil =>
+              throw new Exception("Could not find a matching dependency for proof "+f
+                +" in: "+proofnames.mkString(","))
+            case l@List(d) =>
+              l
+            case _ =>
+              throw new Exception("Found more than one matching dependency for proof "+f
+                +" in: "+proofnames.mkString(",")+" but proof links need to be unique!")
+          }
+
         case RToken("CONTINUEFROM",_,_,_) =>
           throw new Exception("The CONTINUEFROM statement needs a proof as an argument!")
+        case RToken("INSTLEMMA",_,_,_) =>
+          throw new Exception("The INSTLEMMA statement needs a proof as an argument!")
         case _ => Nil
       }))
     )
   }
 
 
-  def filterContext(fs_old : FSequent, fs_new : FSequent) : (HOLFormula, List[HOLFormula]) = {
-    val FSequent(aold, sold) = fs_old
-    val FSequent(anew, snew) = fs_new
-    val adiffn = anew diff aold
-    val sdiffn = snew diff sold
+  /* remove common context from sequent (fs_old) and inferred sequent (fs_new).
+   * return a triple: (sequent with main formula,
+   *                   sequent with auxiliary and uncontracted formulas,
+   *                   context sequent) */
+  def filterContext(fs_old : FSequent, fs_new : FSequent) : (FSequent, FSequent,FSequent) = {
+    val ndiff = fs_new diff fs_old
+    val odiff = fs_old diff fs_new
 
-    val adiffo = aold diff anew
-    val sdiffo = sold diff snew
+    val csequent = fs_new diff ndiff
 
-    val ndiff = adiffn ++ sdiffn
-    val odiff = adiffo ++ sdiffo
-
-    require(ndiff.length == 1, "We want exactly one primary formula, not: "+ndiff)
-    require(odiff.length > 0, "We want at least one auxiliary formula, not: "+odiff)
-    (ndiff(0), odiff.toList)
-
+    require(ndiff.formulas.length == 1, "We want exactly one primary formula, not: "+ndiff)
+    require(odiff.formulas.length > 0, "We want at least one auxiliary formula, not: "+odiff)
+    (ndiff, odiff, csequent)
   }
 
+  /* remove common context from 2 sequents (fs_old1, fs_old2) and inferred sequent (fs_new).
+   * return a triple: (sequent with main formula,
+   *                   sequent with auxiliary and uncontracted formulas,
+   *                   context sequent) */
+  def filterContext(fs_old1 : FSequent, fs_old2 : FSequent, fs_new : FSequent) : (FSequent, FSequent, FSequent) =
+    filterContext(fs_old1 compose fs_old2, fs_new)
 
 
   private def c(e:HOLExpression) : HOLFormula =

@@ -95,6 +95,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
 
 
     "load the simple example from file and parse it" in {
+      //skipped("problem with autocontt")
       try {
         val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "simple.llk")
         val p = HybridLatexParser.createLKProof(r)

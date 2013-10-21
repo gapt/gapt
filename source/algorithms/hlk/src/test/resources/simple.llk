@@ -4,11 +4,15 @@
 \VARDEC{X}{i>o}
 \CONSTDEC{f}{i>i}
 \VARDEC{h}{i>i}
-\CONSTDEC{a}{i}
+\VARDEC{a}{i}
 \VARDEC{x}{i}
 
 \AX{P(a,f(a))}{P(a,f(a))}
 \ALLL{}{(all x P(x,f(x)))}{P(a,f(a))}
 \EXR{(\lambda x a)}{(all x P(x,f(x)))}{(exists h P(h(a),f(a)))}
+\ALLR{}{(all x P(x,f(x)))}{(all x exists h P(h(x),f(x)))}
+
+\AX{P(a,a)}{P(a,a)}
+\ANDR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a)}
 
 \CONTINUEWITH{PROOF}

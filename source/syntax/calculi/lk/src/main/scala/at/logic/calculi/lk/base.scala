@@ -44,6 +44,8 @@ import base.types._
       def multiSetEquals(g:FSequent) = FSequent.multiSetEquals(this, g)
       def formulas : Seq[HOLFormula] = antecedent ++ succedent
 
+      def diff(that : FSequent) = FSequent(this.antecedent diff that.antecedent, this.succedent diff that.succedent)
+
       /*
        compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
       */
