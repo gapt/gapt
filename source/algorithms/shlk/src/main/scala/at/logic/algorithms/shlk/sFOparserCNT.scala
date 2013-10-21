@@ -185,7 +185,6 @@ object sFOParserCNT {
 
       def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | exLHyper | allR | allRHyper | allLHyper | exRHyper | impL | impR | termDefL1 | termDefR1 | arrowL | foldL | arrowR | autoprop
       def label: String = """([0-9]*|root)"""
-
       def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant | forall_hyper | exists_hyper) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
       def intTerm: Parser[HOLExpression] = index //| schemaFormula
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
@@ -240,6 +239,7 @@ object sFOParserCNT {
 
       def indPred : Parser[HOLFormula] = """[A-Z]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
         case x ~ "(" ~ l ~ ")" => {
+          println("fuck");
           if (! mapPredicateToArity.isDefinedAt(x.toString) )
             mapPredicateToArity.put(x.toString, l.size)
           else if (mapPredicateToArity.get(x.toString).get != l.size ) {
@@ -253,7 +253,7 @@ object sFOParserCNT {
           //          val new_ind = subst(ind)
           //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
           //          val new_subst = new SchemaSubstitution1(new_map)
-
+          println("fuck");
           IndexedPredicate(new ConstantStringSymbol(x), l)
         }
       }
@@ -293,7 +293,8 @@ object sFOParserCNT {
           })
         }
       }
-      def term: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | var_func | const_func | SOindVar)
+      def term: Parser[HOLExpression] = ( fo_term | s_term | abs | variable | constant | var_func | const_func | SOindVar)
+      def term2: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | var_func | const_func | SOindVar)
       def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ intZero ~ ")" ^^ {
         case "(" ~ "λ" ~ x ~ "." ~ zero ~ ")" => HOLAbs(x, zero)
       }
