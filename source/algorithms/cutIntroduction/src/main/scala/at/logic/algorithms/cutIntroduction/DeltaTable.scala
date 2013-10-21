@@ -13,24 +13,23 @@ import at.logic.language.fol._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
-import at.logic.utils.logging.Logger
 
 // TODO: should I use grammars instead of pairs here?
 
 class DeltaTableException(msg: String) extends Exception(msg)
 
-class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
+class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) {
    
   var table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
 
   // Fills the delta table with some terms
 
   // Initialize with empty decomposition
-  trace( "initializing delta-table" )
+  //trace( "initializing delta-table" )
   add(Nil, null, Nil)
 
   for (n <- 1 until terms.length+1) {
-    trace( "adding simple grammars for " + n + " terms to delta-table" )
+    //trace( "adding simple grammars for " + n + " terms to delta-table" )
 
     // Take only the simple grammars of term sets of size (n-1) from the current delta table
     val one_less = getEntriesOfSize(n-1)
@@ -113,17 +112,6 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
       case ( k, num ) => prln( "% 3d".format(k) + "   " + num )
     }
   }
-
-  /*
-  def debug(msg: String) = {
-    println("============== DEBUG: DeltaTable ===============")
-    println("Where: " + msg)
-    println("Number of lines in the table: " + size)
-    println("Each line contains pairs.")
-    println("Total number of pairs: " + numberOfPairs)
-    println("================================================")
-  }
-  */
 }
 
 object delta {
