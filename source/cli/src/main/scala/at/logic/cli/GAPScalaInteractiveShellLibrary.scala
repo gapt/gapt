@@ -1203,7 +1203,7 @@ object printProofStats {
           |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
           |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
           |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
-          |   minimizeSolution: ExtendedHerbrandSequent => Unit - updates the solution associated with this extended Herbrand sequent to the minimal one
+          |   minimizeSolution: ExtendedHerbrandSequent => ExtendedHerbrandSequent - minimizes the solution associated with the extended Herbrand sequent returning another Herbrand sequent with this minimal solution
           |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
           |
           | Visualization:

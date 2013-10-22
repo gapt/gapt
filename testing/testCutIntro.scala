@@ -1,6 +1,7 @@
 import java.io._
 import scala.io.Source
 import scala.collection.immutable.HashMap
+import org.slf4j.LoggerFactory
 
 /**********
  * test script for the cut-introduction algorithm on output proofs from prover9,
@@ -12,9 +13,14 @@ import scala.collection.immutable.HashMap
  * scala> testCutIntro.compressVeriT("../testing/veriT-SMT-LIB/QF_UF/", 300)
  **********/
 
+val TestCutIntroLogger = LoggerFactory.getLogger("TestCutIntroLogger$")
+
 object testCutIntro {
   var total = 0
   var error_parser = 0
+  var error_parser_OOM = 0
+  var error_parser_SO = 0
+  var error_parser_other = 0
   var error_term_extraction = 0
   var error_cut_intro = 0
   var out_of_memory = 0
@@ -45,6 +51,9 @@ object testCutIntro {
   }
 
   def findNonTrivialTSTPExamples ( str : String, timeout : Int) = {
+    
+    TestCutIntroLogger.trace("================ Finding TSTP non-trivial examples ===============")
+
     nonTrivialTermset(str, timeout)
     val file = new File("../testing/resultsCutIntro/tstp_non_trivial_termset.csv")
     val summary = new File("../testing/resultsCutIntro/tstp_non_trivial_summary.txt")
@@ -89,7 +98,7 @@ object testCutIntro {
     }
     else if (file.getName.endsWith(".out")) {
       total += 1
-      println("\nFILE: " + file.getAbsolutePath)
+      TestCutIntroLogger.trace("\nFILE: " + file.getAbsolutePath)
       runWithTimeout(timeout * 1000){ loadProver9LKProof(file.getAbsolutePath) } match {
         case Some(p) => 
           runWithTimeout(timeout * 1000){ 
@@ -105,7 +114,7 @@ object testCutIntro {
           } match {
             case Some(n) =>
               if(n > 0) {
-                println("File: " + file.getAbsolutePath + " has term-set of size " + n)
+                TestCutIntroLogger.trace("File: " + file.getAbsolutePath + " has term-set of size " + n)
               }
             case None => error_term_extraction += 1
           }
@@ -114,9 +123,11 @@ object testCutIntro {
     }       
   }
 
-  // TODO: measures for time
   // Compress the proofs that are in the csv file passed as a parameter
   def compressTSTP(str: String, timeout: Int) = {
+    
+    TestCutIntroLogger.trace("================ Compressing non-trivial TSTP examples ===============")
+    
     var number = 0
 
     // Process each file
@@ -124,7 +135,7 @@ object testCutIntro {
     lines.foreach{ case l =>
       number += 1
       val data = l.split(",")
-      println("Processing proof number: " + number)
+      TestCutIntroLogger.trace("Processing proof number: " + number)
       compressProof(data(0), timeout)
     }
    
@@ -175,6 +186,7 @@ object testCutIntro {
 
   }
   def compressProof(str: String, timeout: Int) = {
+    TestCutIntroLogger.trace("FILE: " + str)
     val file = new File(str.trim)
     if (file.getName.endsWith(".out")) {
       total += 1
@@ -185,12 +197,15 @@ object testCutIntro {
             catch { 
               case e: OutOfMemoryError => 
                 out_of_memory += 1
+                TestCutIntroLogger.trace("OutOfMemory: " + e)
                 throw new Exception("OutOfMemory")
               case e: StackOverflowError => 
                 stack_overflow += 1
+                TestCutIntroLogger.trace("StackOverflow: " + e)
                 throw new Exception("StackOverflow")
               case e: Exception => 
                 error_cut_intro += 1
+                TestCutIntroLogger.trace("Other exception: " + e)
                 throw new Exception("OtherException")
             }
           } match {
@@ -205,16 +220,22 @@ object testCutIntro {
               } catch {
                 case e: Exception => 
                   error_rule_count += 1
+                  TestCutIntroLogger.trace("Error in rule count: " + e)
                   throw new Exception("Error in rule count")
               }
             case None => ()
           }
-        case None => error_parser += 1
+        case None => 
+          TestCutIntroLogger.trace("Error in parsing.")
+          error_parser += 1
       }
     }
   }
 
   def compressVeriT( str : String, timeout : Int) = {
+
+    TestCutIntroLogger.trace("================ Compressing VeriT proofs ===============")
+    
     processVeriT(str, timeout)
     val file = new File("../testing/resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed.csv")
     val summary = new File("../testing/resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed_summary.txt")
@@ -248,12 +269,17 @@ object testCutIntro {
     bw.close()
     
     bw_s.write("Total number of proofs processed: " + total + "\n")
-    bw_s.write("Total number of proofs compressed: " + finished + "\n")
-    bw_s.write("Time limit exceeded or exception during parsing: " + error_parser + "\n")
-    bw_s.write("Exception during cut-introduction: " + error_cut_intro + "\n")
+    bw_s.write("Total number of proofs compressed: " + finished + "\n\n")
+    
+    bw_s.write("Out of memory during parsing: " + error_parser_OOM + "\n")
+    bw_s.write("Stack overflow during parsing: " + error_parser_SO + "\n")
+    bw_s.write("Other exception during parsing: " + error_parser_other + "\n\n")
+    
     bw_s.write("Out of memory during cut-introduction: " + out_of_memory + "\n")
     bw_s.write("Stack overflow during cut-introduction: " + stack_overflow + "\n")
     bw_s.write("Error during rule counting: " + error_rule_count + "\n")
+    bw_s.write("Other exception during cut-introduction: " + error_cut_intro + "\n\n")
+
     bw_s.write("Average compression rate of quantifier rules: " + avg_compression_quant + "\n")
     //bw_s.write("Average compression rate: " + avg_compression + "\n")
     bw_s.close()
@@ -267,22 +293,39 @@ object testCutIntro {
     }
     else if (file.getName.endsWith(".proof_flat")) {
       total += 1
-      println("\nFILE: " + file.getAbsolutePath)
-      runWithTimeout(timeout * 1000){ loadVeriTProof(file.getAbsolutePath) } match {
+      TestCutIntroLogger.trace("FILE: " + file.getAbsolutePath)
+      runWithTimeout(timeout * 1000){ 
+        try { loadVeriTProof(file.getAbsolutePath) }
+        catch {
+          case e: OutOfMemoryError =>
+            error_parser_OOM += 1
+            TestCutIntroLogger.trace("OutOfMemory (parsing): " + e)
+            throw new Exception("OutOfMemory")              
+          case e: StackOverflowError => 
+            error_parser_SO += 1
+            TestCutIntroLogger.trace("StackOverflow (parsing): " + e)
+            throw new Exception("StackOverflow")
+          case e: Exception =>
+            error_parser_other += 1
+            TestCutIntroLogger.trace("Other exception (parsing): " + e)
+            throw new Exception("OtherException (TLE?)")
+        }
+      } match {
         case Some(p) => 
           runWithTimeout(timeout * 1000){ 
             try { cutIntro2(p) } 
             catch { 
               case e: OutOfMemoryError => 
                 out_of_memory += 1
+                TestCutIntroLogger.trace("OutOfMemory (cut-intro): " + e)
                 throw new Exception("OutOfMemory")
               case e: StackOverflowError => 
-                println("Stack-overflow during cut-introduction.")
                 stack_overflow += 1
+                TestCutIntroLogger.trace("StackOverflow (cut-intro): " + e)
                 throw new Exception("StackOverflow")
               case e: Exception =>
-                println("Error during cut-introduction.")
                 error_cut_intro += 1
+                TestCutIntroLogger.trace("Other exception (cut-intro): " + e)
                 throw new Exception("OtherException (not compressable? TLE?)")
             }
           } match {
@@ -297,13 +340,12 @@ object testCutIntro {
               } catch {
                 case e: Exception => 
                   error_rule_count += 1
+                  TestCutIntroLogger.trace("Error in rule count: " + e)
                   throw new Exception("Error in rule count")
               }
             case None => ()
           }
-        case None => 
-          println("Error during parsing.")
-          error_parser += 1
+        case None => () 
       }
     } 
   }
@@ -322,7 +364,7 @@ object testCutIntro {
     t.start()
     t.join( to )
     if ( t.isAlive() ) {
-      println("TIMEOUT.")
+      TestCutIntroLogger.trace("TIMEOUT.")
       t.stop()
     }
 

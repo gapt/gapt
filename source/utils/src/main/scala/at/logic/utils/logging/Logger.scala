@@ -7,8 +7,8 @@ trait Logger {
   val log = LoggerFactory.getLogger(getClass)
 
   // Ordered by level of importance.
-  // E.g. if the loggin level is chosen to be info, info, warn and error
-  // messages will be logged.
+  // E.g. if the logging level is chosen to be info, info, warn and error
+  // messages will be logged as well, but not debug and trace.
   def error(msg: => String) = if (log.isErrorEnabled) log.error(msg)
   def error(msg: => String, e:Throwable) = {if (log.isErrorEnabled) log.error(msg,e); throw e}
   def warn(msg: => String) = if (log.isWarnEnabled) log.warn(msg)

@@ -243,14 +243,14 @@ object MinimizeSolution {
     val as = ehs.grammar.s.foldRight(List[FOLFormula]()) {case (t, acc) =>
       acc :+ f.instantiate(t) 
     }
-    val head = andN(as)
+    val head = And(as)
 
     val impl = Imp(body, head)
 
     val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
     val succedent = ehs.prop_r ++ ehs.inst_r
 
-    sat.isValid(Imp(andN(antecedent), orN(succedent)))
+    sat.isValid(Imp(And(antecedent), Or(succedent)))
   }
 
   def isValidWith(ehs: ExtendedHerbrandSequent, f: FOLFormula) : Boolean = {
@@ -260,7 +260,7 @@ object MinimizeSolution {
     val as = ehs.grammar.s.foldRight(List[FOLFormula]()) {case (t, acc) =>
       acc :+ f.instantiate(t) 
     }
-    val head = andN(as)
+    val head = And(as)
 
     val impl = Imp(body, head)
 
@@ -305,7 +305,7 @@ object MinimizeSolution {
     val nonEmptyClauses = cls.filter(c => c.neg.length > 0 || c.pos.length > 0).toList
 
     if (nonEmptyClauses.length == 0) { TopC }
-    else { andN(nonEmptyClauses.map( c => orN(c.pos ++ c.neg.map( l => Neg(l) )) )) }
+    else { And(nonEmptyClauses.map( c => Or(c.pos ++ c.neg.map( l => Neg(l) )) )) }
   }
 
   /** Converts a numbered CNF back into a FOL formula.
@@ -314,7 +314,7 @@ object MinimizeSolution {
     val nonEmptyClauses = cls.filter(c => c.neg.length > 0 || c.pos.length > 0).toList
 
     if (nonEmptyClauses.length == 0) { TopC }
-    else { andN(nonEmptyClauses.map( c => orN(c.pos.map(l => l._1) ++ c.neg.map( l => Neg(l._1) )) )) }
+    else { And(nonEmptyClauses.map( c => Or(c.pos.map(l => l._1) ++ c.neg.map( l => Neg(l._1) )) )) }
   }
 
   // Checks if complementary literals exist.

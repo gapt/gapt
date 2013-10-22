@@ -28,7 +28,6 @@ object CLIMain {
   import at.logic.calculi.lk.equationalRules._
   import at.logic.calculi.lk.macroRules._
   import at.logic.calculi.lk.base.types.FSequent
-  import at.logic.calculi.lk.base.FSequent
   import at.logic.calculi.lksk.base._
   import at.logic.language.lambda.symbols._
   import at.logic.language.hol.logicSymbols._

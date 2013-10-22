@@ -66,8 +66,8 @@ object CutIntroduction {
     totalTime = tn - t0
     
     CutIntro1Logger.trace(quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", ("
-      + improvSol_proofBuild.foldLeft("")((acc, t) => acc + " [" + t._1 + ", " + t._2 + "] ") + ")" )
+      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
+      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
 
     finalProof
   }
@@ -95,8 +95,8 @@ object CutIntroduction {
     totalTime = tn - t0
     
     CutIntro1Logger.trace(numRules + ", " + quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", ("
-      + improvSol_proofBuild.foldLeft("")((acc, t) => acc + " [" + t._1 + ", " + t._2 + "] ") + ")" )
+      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
+      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
 
     finalProof
   }
@@ -197,8 +197,8 @@ object CutIntroduction {
     totalTime = tn - t0
     
     CutIntro2Logger.trace(quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", ("
-      + improvSol_proofBuild.foldLeft("")((acc, t) => acc + " [" + t._1 + ", " + t._2 + "] ") + ")" )
+      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
+      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
 
     finalProof
   }
@@ -226,8 +226,8 @@ object CutIntroduction {
     totalTime = tn - t0
     
     CutIntro2Logger.trace(numRules + ", " + quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", ("
-      + improvSol_proofBuild.foldLeft("")((acc, t) => acc + " [" + t._1 + ", " + t._2 + "] ") + ")" )
+      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
+      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
 
     finalProof
   }
@@ -308,7 +308,7 @@ object CutIntroduction {
     
     // A[s_i] forall i
     val asi = s.map( t => FOLSubstitution(ehs.cutFormula, ehs.grammar.eigenvariable, t) )
-    val cutConj = andN(asi)
+    val cutConj = And(asi)
 
     // Negative part
     val gamma = ehs.inst_l
@@ -351,7 +351,7 @@ object CutIntroduction {
       else acc
     }
  
-    AllVar(xvar, andN(xFormulas))
+    AllVar(xvar, And(xFormulas))
   }
 
   def buildFinalProof(ehs: ExtendedHerbrandSequent) : Option[LKProof] = {
