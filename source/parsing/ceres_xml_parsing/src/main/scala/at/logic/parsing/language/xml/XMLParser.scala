@@ -33,7 +33,10 @@ import at.logic.calculi.lk.base.types.FSequent
 
 import scala.Predef._
 
-class ProofDatabase(val Definitions: Map[HOLExpression,HOLExpression], val proofs: List[Pair[String,LKProof]], val axioms: List[FSequent], val sequentLists: List[Pair[String,List[FSequent]]] );
+class ProofDatabase(val Definitions: Map[HOLExpression,HOLExpression],
+                    val proofs: List[Pair[String,LKProof]],
+                    val axioms: List[FSequent],
+                    val sequentLists: List[Pair[String,List[FSequent]]] );
 
 class TestException(val formulas : (HOLExpression, HOLFormula)) extends Exception
 

@@ -14,5 +14,9 @@
 
 \AX{P(a,a)}{P(a,a)}
 \ANDR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a)}
+\WEAKL{P(a,a), P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), P(x,x), P(x,x)}
+\CONTRL{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), P(x,x)}
+\NEGL{-P(x,x), P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x)}
+\NEGR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), --P(x,x)}
 
 \CONTINUEWITH{PROOF}

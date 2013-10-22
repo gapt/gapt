@@ -238,8 +238,7 @@ object printProofStats {
   object loadLLK {
     def apply(filename : String) = {
       val tokens = HybridLatexParser.parseFile(filename)
-      HybridLatexParser.printRules(tokens)
-      ()
+      HybridLatexParser.createLKProof(tokens)
     }
   }
 

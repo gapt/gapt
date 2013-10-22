@@ -19,6 +19,7 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.language.lambda.typedLambdaCalculus.Var
+import at.logic.parsing.language.xml.ProofDatabase
 
 abstract class Token
 case class RToken(rule:String, name : Option[LambdaAST], antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
@@ -145,7 +146,17 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
 
 }
 
+/* proof names as stored as formulas now, therefore we extend the proofdatabase */
+case class ExtendedProofDatabase(val eproofs : Map[HOLFormula, LKProof])
+  extends ProofDatabase(Map(),Nil,Nil,Nil) {
+  override val proofs : List[(String,LKProof)] = eproofs.map(x => (x._1.toString, x._2)).toList
+  override val Definitions : Map[HOLExpression, HOLExpression] = Map()
+  override val axioms : List[FSequent] = Nil
+  override val sequentLists : List[(String,List[FSequent])] = Nil
+}
+
 trait TokenToLKConverter {
+  /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */
   def createNaming(r : List[Token]) : (String => HOLExpression) = {
     val ctypes : List[(String,TA)] = r.flatMap(_ match {
       case TToken("CONST",names,t) => names map ((_,t))
@@ -192,7 +203,7 @@ trait TokenToLKConverter {
 
   /* The main entry point to the proof parser. The list of tokens l is taken apart into subproofs (noticable by the
      CONTINUEWITH rule). Then the subproofs are ordered by dependency and constructed in this order*/
-  def createLKProof( l : List[Token]) : Map[HOLFormula, LKProof] = {
+  def createLKProof( l : List[Token]) : ExtendedProofDatabase = {
     //seperate rule tokens from type declaration tokens
     val (rtokens, ttokens) = l.partition( _ match {
       case RToken(_,_,_,_) =>  true ;
@@ -237,7 +248,7 @@ trait TokenToLKConverter {
      proofs_done + ((f, f_proof))
     }
    )
-   proofs
+   ExtendedProofDatabase(proofs)
   }
 
   /* Creates the subproof proofname from a list of rules. Uses the naming function to create basic term and
@@ -250,26 +261,54 @@ trait TokenToLKConverter {
     var proofstack : List[LKProof] = List[LKProof]()
     for ( rt@RToken(name, auxterm, antecedent, succedent) <- rules) {
       println("Processing rule: "+name)
-      println(proofstack.mkString("Proof stack: ",",",""))
+      //println(proofstack.mkString("Proof stack: ",",",""))
       val ant = antecedent.map(x => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val suc = succedent.map(x  => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val fs = FSequent(ant, suc)
       name match {
         case "AX" =>
           proofstack = Axiom(ant, suc) :: proofstack
+         // --- quantifier rules ---
         case "ALLL" =>
-          proofstack = handleWeakQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
+          proofstack = handleWeakQuantifier(proofstack, name, fs, auxterm, naming, rt)
         case "EXR" =>
-          proofstack = handleWeakQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
+          proofstack = handleWeakQuantifier(proofstack, name, fs, auxterm, naming, rt)
         case "ALLR" =>
-          proofstack = handleStrongQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
+          proofstack = handleStrongQuantifier(proofstack, name, fs, auxterm, naming, rt)
         case "EXL" =>
-          proofstack = handleStrongQuantifier(name, proofstack, name, fs, auxterm, naming, rt)
+          proofstack = handleStrongQuantifier(proofstack, name, fs, auxterm, naming, rt)
         case "ANDR" =>
-          proofstack = handleBinaryLogicalOperator(name, proofstack, name, fs, auxterm, naming, rt)
+          proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
         case "ORL" =>
-          proofstack = handleBinaryLogicalOperator(name, proofstack, name, fs, auxterm, naming, rt)
+          proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+        // --- unary rules ---
+        case "ORR" =>
+          proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+        case "ANDL" =>
+          proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+        case "IMPR" =>
+          proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+        // --- negation rules ---
+        case "NEGL" =>
+          proofstack = handleNegation(proofstack, name, fs, auxterm, naming, rt)
+        case "NEGR" =>
+          proofstack = handleNegation(proofstack, name, fs, auxterm, naming, rt)
 
+        // --- equational rules ---
+
+        // --- definition rules ---
+
+        // --- structural rules ---
+        case "CONTRL" =>
+          proofstack = handleContraction(proofstack, name, fs, auxterm, naming, rt )
+        case "CONTRR" =>
+          proofstack = handleContraction(proofstack, name, fs, auxterm, naming, rt )
+        case "WEAKL" =>
+          proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
+        case "WEAKR" =>
+          proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
+
+        // --- macro rules ---
 
         case "CONTINUEWITH" => ;
         case "COMMENT" => ;
@@ -282,8 +321,8 @@ trait TokenToLKConverter {
   }
 
 
-  def handleWeakQuantifier(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
-    require(current_proof.size > 0, "Imbalanced proof tree in application of " + name + " with es: " + fs)
+  def handleWeakQuantifier(current_proof: List[LKProof], ruletype: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val oldproof::rest = current_proof
     val (mainsequent, auxsequent, _) = filterContext(oldproof.root.toFSequent, fs)
     require(auxsequent.formulas.size == 1, "Exactly one auxiliary formula in weak quantifier rule required (no autocontraction allowed)! " + auxsequent)
@@ -332,8 +371,8 @@ trait TokenToLKConverter {
     }
   }
 
-  def handleStrongQuantifier(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
-    require(current_proof.size > 0, "Imbalanced proof tree in application of " + name + " with es: " + fs)
+  def handleStrongQuantifier(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val oldproof = current_proof.head
     val (mainsequent, auxsequent, _) = filterContext(oldproof.root.toFSequent, fs)
     require(auxsequent.formulas.size == 1, "Exactly one auxiliary formula in strong quantifier rule required! " + auxsequent)
@@ -388,15 +427,11 @@ trait TokenToLKConverter {
     }
   }
 
-  def handleBinaryLogicalOperator(ruletype:String, current_proof: List[LKProof], name: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
-    require(current_proof.size > 1, "Imbalanced proof tree in application of " + name + " with es: " + fs)
+  def handleBinaryLogicalOperator(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val rightproof::leftproof::stack = current_proof
 
     val (mainsequent, auxsequent, context) = filterContext(leftproof.root.toFSequent, rightproof.root.toFSequent, fs)
-
-    println("main   : " +  mainsequent)
-    println("aux    : " +  auxsequent)
-    println("context: " +  context)
 
     ruletype match {
       case "ANDR" =>
@@ -427,7 +462,7 @@ trait TokenToLKConverter {
 
       case "IMPL" =>
         mainsequent.antecedent(0) match {
-          case Or(l,r) =>
+          case Imp(l,r) =>
             require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
             require(auxsequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
             require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
@@ -438,6 +473,95 @@ trait TokenToLKConverter {
           case _ => throw new Exception("Main formula of a implication left rule must have implication as outermost operator!")
         }
     }
+  }
+
+  def handleUnaryLogicalOperator(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val rightproof::leftproof::stack = current_proof
+
+    val (mainsequent, auxsequent, context) = filterContext(leftproof.root.toFSequent, rightproof.root.toFSequent, fs)
+
+    println("main   : " +  mainsequent)
+    println("aux    : " +  auxsequent)
+    println("context: " +  context)
+
+    ruletype match {
+      case "ORR" =>
+        mainsequent.succedent(0) match {
+          case Or(l,r) =>
+            require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas"+auxsequent)
+            require(auxsequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
+            require(leftproof.root.toFSequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
+            require(rightproof.root.toFSequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
+            val inf = AndRightRule(leftproof, rightproof, l,r)
+            val contr = contract(inf, fs)
+            contr :: stack
+          case _ => throw new Exception("Main formula of a conjunction right rule must have conjuntion as outermost operator!")
+        }
+
+      case "ANDL"  =>
+        mainsequent.antecedent(0) match {
+          case And(l,r) =>
+            require(auxsequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
+            require(auxsequent.antecedent.contains(r), "Right branch formula "+l+" not found in auxiliary formulas!"+auxsequent)
+            require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
+            require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
+            val inf = OrLeftRule(leftproof, rightproof, l,r)
+            val contr = contract(inf, fs)
+            contr :: stack
+          case _ => throw new Exception("Main formula of a disjunction left rule must have disjunction as outermost operator!")
+        }
+
+      case "IMPR" =>
+        mainsequent.succedent(0) match {
+          case Imp(l,r) =>
+            require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
+            require(auxsequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
+            require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
+            require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
+            val inf = ImpLeftRule(leftproof, rightproof, l,r)
+            val contr = contract(inf, fs)
+            contr :: stack
+          case _ => throw new Exception("Main formula of a implication left rule must have implication as outermost operator!")
+        }
+    }
+  }
+
+  def handleNegation(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val top::stack = current_proof
+    val (main, aux, context) = filterContext(top.root.toFSequent, fs)
+
+    val left = main.antecedent.foldLeft(top)((intermediate, f) => {
+      f match {
+        case Neg(g) =>
+          NegLeftRule(intermediate,g)
+        case _ =>
+          throw new Exception("Trying to apply the negation rule on formula "+f+" without negation as outermost symbol on "+top.root+" to get "+fs)
+      }
+     }
+    )
+    val right = main.succedent.foldLeft(left)((intermediate, f) => {
+      f match {
+        case Neg(g) =>
+          NegRightRule(intermediate,g)
+        case _ =>
+          throw new Exception("Trying to apply the negation rule on formula "+f+" without negation as outermost symbol on "+top.root+" to get "+fs)
+      }
+    }
+    )
+
+    val contr = contract(right, fs)
+
+    require(contr.root.toFSequent multiSetEquals fs,"Could not create target sequent "+fs+" by a series of negations from "+top.root+" but got "+contr.root+" instead!" )
+    contr :: stack
+  }
+
+    def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val parentproof::stack = current_proof
+    val inf = contract(parentproof, fs)
+    inf :: stack
   }
 
   def contract(proof : LKProof, towhat : FSequent) : LKProof = {
@@ -452,17 +576,50 @@ trait TokenToLKConverter {
     )
     val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
       try {
-        ContractionLeftRule(intermediate, f)
+        ContractionRightRule(intermediate, f)
       } catch {
         case e : Exception =>
           throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
       }
     )
 
-    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of contraction errenous: "+proof.root+" does not contract to "+rightcontr)
+    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of contraction errenous: "+proof.root+" does not contract to "+rightcontr.root)
 
     rightcontr
   }
+
+  def handleWeakening(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val parentproof::stack = current_proof
+    val inf = weaken(parentproof, fs)
+    inf :: stack
+  }
+
+  def weaken(proof : LKProof, towhat : FSequent) : LKProof = {
+    val context = towhat diff proof.root.toFSequent
+    val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
+      try {
+        WeakeningLeftRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+      }
+    )
+    val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
+      try {
+        WeakeningRightRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+      }
+    )
+
+    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of weakening errenous: "+proof.root+" does not contract to "+rightcontr.root)
+
+    rightcontr
+  }
+
+
 
   def getOrdering[T](pm : Map[T, List[T]]) : List[T] = {
     val (leaves, nonleaves) = pm.partition( el => el._2.isEmpty )
