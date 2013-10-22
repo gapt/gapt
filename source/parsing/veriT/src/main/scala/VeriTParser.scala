@@ -324,11 +324,11 @@ object VeriTParser extends RegexParsers {
     } catch {
       case e : OutOfMemoryError => 
         val msg = "Out of memory during parsing."
-        VeriTParserLogger.error(msg)
+        VeriTParserLogger.error(msg + ": " + e)
         throw e
       case e : Throwable =>
         val msg = "Unknown error during parsing."
-        VeriTParserLogger.error(msg)
+        VeriTParserLogger.error(msg + ": " + e)
         throw e
     }
   }
