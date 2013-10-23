@@ -7,6 +7,13 @@
 \VARDEC{a}{i}
 \VARDEC{x}{i}
 
+% first branch into cut %
+\AX{P(f(x),a)}{P(f(x),a)}
+\AX{P(a,a)}{P(a,a)}
+\ANDR{P(a,a), P(f(x),a)}{P(f(x),a) & P(a,a)}
+\ALLL{}{(all x P(x,x)), P(f(x),a)}{P(f(x),a) & P(a,a)}
+
+% second branch into cut %
 \AX{P(a,f(a))}{P(a,f(a))}
 \ALLL{}{(all x P(x,f(x)))}{P(a,f(a))}
 \EXR{(\lambda x a)}{(all x P(x,f(x)))}{(exists h P(h(a),f(a)))}
@@ -18,5 +25,9 @@
 \CONTRL{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), P(x,x)}
 \NEGL{-P(x,x), P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x)}
 \NEGR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), --P(x,x)}
+\ORR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x) | --P(x,x)}
+\ANDL{P(f(x),a) & P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x) | --P(x,x)}
 
+
+\CUT{(all x P(x,x)), P(f(x),a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x) | --P(x,x)}
 \CONTINUEWITH{PROOF}

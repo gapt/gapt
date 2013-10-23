@@ -307,6 +307,8 @@ trait TokenToLKConverter {
           proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
         case "WEAKR" =>
           proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
+        case "CUT" =>
+          proofstack = handleCut(proofstack, name, fs, auxterm, naming, rt )
 
         // --- macro rules ---
 
@@ -321,6 +323,7 @@ trait TokenToLKConverter {
   }
 
 
+  /* Takes care of weak quantifiers. */
   def handleWeakQuantifier(current_proof: List[LKProof], ruletype: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val oldproof::rest = current_proof
@@ -465,7 +468,7 @@ trait TokenToLKConverter {
           case Imp(l,r) =>
             require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
             require(auxsequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
-            require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
+            require(leftproof.root.toFSequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
             require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
             val inf = ImpLeftRule(leftproof, rightproof, l,r)
             val contr = contract(inf, fs)
@@ -477,52 +480,98 @@ trait TokenToLKConverter {
 
   def handleUnaryLogicalOperator(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
-    val rightproof::leftproof::stack = current_proof
+    val top::stack = current_proof
 
-    val (mainsequent, auxsequent, context) = filterContext(leftproof.root.toFSequent, rightproof.root.toFSequent, fs)
-
-    println("main   : " +  mainsequent)
-    println("aux    : " +  auxsequent)
-    println("context: " +  context)
+    val (mainsequent, auxsequent, context) = filterContext(top.root.toFSequent, fs)
 
     ruletype match {
       case "ORR" =>
         mainsequent.succedent(0) match {
           case Or(l,r) =>
-            require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas"+auxsequent)
-            require(auxsequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
-            require(leftproof.root.toFSequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
-            require(rightproof.root.toFSequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
-            val inf = AndRightRule(leftproof, rightproof, l,r)
-            val contr = contract(inf, fs)
-            contr :: stack
-          case _ => throw new Exception("Main formula of a conjunction right rule must have conjuntion as outermost operator!")
+            require(top.root.toFSequent.succedent.contains(l)|top.root.toFSequent.succedent.contains(r), "Neither "+l+" nor "+r+" found in auxiliary formulas"+auxsequent)
+
+            //try out which of the 3 variants of the rule it is
+            val inf1 = try {
+              val inf = OrRight1Rule(top, l,r)
+              val contr = contract(inf, fs)
+              Some(contr)
+            } catch {
+              case e:Exception => None
+            }
+
+            val inf2 = try {
+              val inf = OrRight2Rule(top, l,r)
+              val contr = contract(inf, fs)
+              Some(contr)
+            } catch {
+              case e:Exception => None
+            }
+
+            val inf3 = try {
+              val inf = OrRight1Rule(top, l,r)
+              val inf_ = OrRight2Rule(inf, l,r)
+              val contr = contract(inf_, fs)
+              Some(contr)
+            } catch {
+              case e:Exception => None
+            }
+
+            val worked = List(inf1,inf2,inf3).filter( _.isDefined )
+            require(worked.nonEmpty, "Could not infer or right rule "+fs+" from "+top.root)
+
+            worked(0).get :: stack
+          case _ => throw new Exception("Main formula of a disjunction right rule must have conjuntion as outermost operator!")
         }
 
       case "ANDL"  =>
         mainsequent.antecedent(0) match {
           case And(l,r) =>
-            require(auxsequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
-            require(auxsequent.antecedent.contains(r), "Right branch formula "+l+" not found in auxiliary formulas!"+auxsequent)
-            require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
-            require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
-            val inf = OrLeftRule(leftproof, rightproof, l,r)
-            val contr = contract(inf, fs)
-            contr :: stack
-          case _ => throw new Exception("Main formula of a disjunction left rule must have disjunction as outermost operator!")
+            require(top.root.toFSequent.antecedent.contains(l)|top.root.toFSequent.antecedent.contains(r), "Neither "+l+" nor "+r+" found in auxiliary formulas"+auxsequent)
+
+            //try out which of the 3 variants of the rule it is
+            val inf1 = try {
+              val inf = AndLeft1Rule(top, l,r)
+              val contr = contract(inf, fs)
+              Some(contr)
+            } catch {
+              case e:Exception => None
+            }
+
+            val inf2 = try {
+              val inf = AndLeft2Rule(top, l,r)
+              val contr = contract(inf, fs)
+              Some(contr)
+            } catch {
+              case e:Exception => None
+            }
+
+            val inf3 = try {
+              val inf = AndLeft1Rule(top, l,r)
+              val inf_ = AndLeft2Rule(inf, l,r)
+              val contr = contract(inf_, fs)
+              Some(contr)
+            } catch {
+              case e:Exception => None
+            }
+
+            val worked = List(inf1,inf2,inf3).filter( _.isDefined )
+            require(worked.nonEmpty, "Could not infer or right rule "+fs+" from "+top.root)
+
+            worked(0).get :: stack
+          case _ => throw new Exception("Main formula of a conjunction left rule must have disjunction as outermost operator!")
         }
 
       case "IMPR" =>
         mainsequent.succedent(0) match {
           case Imp(l,r) =>
-            require(auxsequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
-            require(auxsequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
-            require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
-            require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
-            val inf = ImpLeftRule(leftproof, rightproof, l,r)
+            require(auxsequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+auxsequent)
+            require(auxsequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+auxsequent)
+            require(top.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+top.root)
+            require(top.root.toFSequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+top.root)
+            val inf = ImpRightRule(top, l,r)
             val contr = contract(inf, fs)
             contr :: stack
-          case _ => throw new Exception("Main formula of a implication left rule must have implication as outermost operator!")
+          case _ => throw new Exception("Main formula of a implication right rule must have implication as outermost operator!")
         }
     }
   }
@@ -557,13 +606,39 @@ trait TokenToLKConverter {
     contr :: stack
   }
 
-    def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+  def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val parentproof::stack = current_proof
     val inf = contract(parentproof, fs)
     inf :: stack
   }
 
+  def handleWeakening(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val parentproof::stack = current_proof
+    val inf = weaken(parentproof, fs)
+    inf :: stack
+  }
+
+  def handleCut(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val rightproof::leftproof::stack = current_proof
+
+    val auxsequent = (leftproof.root.toFSequent compose rightproof.root.toFSequent) diff fs
+    require(auxsequent.antecedent.size == 1 && auxsequent.succedent.size == 1, "Need exactly one formula in the antecedent and in the succedent of the parents!"+auxsequent)
+    require(auxsequent.antecedent(0) == auxsequent.succedent(0), "Cut formula right ("+auxsequent.antecedent(0)+") is not equal to cut formula left ("+auxsequent.succedent(0)+")")
+    val cutformula = auxsequent.antecedent(0)
+    require(leftproof.root.toFSequent.succedent contains cutformula, "Cut formula "+cutformula+" must occur in succedent of "+leftproof.root)
+    require(rightproof.root.toFSequent.antecedent contains cutformula, "Cut formula "+cutformula+" must occur in antecedent of "+rightproof.root)
+    val inf = CutRule(leftproof, rightproof, cutformula)
+    require(inf.root.toFSequent multiSetEquals fs, "Inferred sequent "+inf.root+" is what was not expected: "+fs)
+    inf :: stack
+  }
+
+
+  //TODO: there is definitely a copy of contract somewhere. Find it and eliminate the redundancy.
+  /* Apply contraction rules to a proof until a given end-sequent is obtained.
+    Throws an exception if this is impossible. */
   def contract(proof : LKProof, towhat : FSequent) : LKProof = {
     val context = proof.root.toFSequent diff towhat
     val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
@@ -588,13 +663,9 @@ trait TokenToLKConverter {
     rightcontr
   }
 
-  def handleWeakening(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
-    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
-    val parentproof::stack = current_proof
-    val inf = weaken(parentproof, fs)
-    inf :: stack
-  }
-
+  //TODO: there is definitely a copy of weaken somewhere. Find it and eliminate the redundancy.
+  /* Apply weakening rules to a proof until a given end-sequent is obtained.
+    Throws an exception if this is impossible. */
   def weaken(proof : LKProof, towhat : FSequent) : LKProof = {
     val context = towhat diff proof.root.toFSequent
     val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
@@ -619,8 +690,9 @@ trait TokenToLKConverter {
     rightcontr
   }
 
-
-
+  /* given a map of elements to lists of dependant elements (e.g. a node's children in a graph), calculate a list l where
+   * for every element a occurring before an element b in l we know that a does not depend on b.
+   * Throws an exception, if the dependency graph contains cycles. */
   def getOrdering[T](pm : Map[T, List[T]]) : List[T] = {
     val (leaves, nonleaves) = pm.partition( el => el._2.isEmpty )
     require(leaves.nonEmpty, "Circular dependency detected: "+pm)
@@ -634,6 +706,7 @@ trait TokenToLKConverter {
     }
   }
 
+  /* Extracts a map of dependencies between subproofs from a mapping of proof names to the token lists representing them. */
   def getDependecyMap(naming : String => HOLExpression,pm : Map[HOLFormula, List[RToken]]) : Map[HOLFormula,List[HOLFormula]] = {
     val proofnames = pm.keySet.toList
     // only keep continuefrom tokens in the lists, map to the formulas in
@@ -692,8 +765,8 @@ trait TokenToLKConverter {
 
     val csequent = fs_new diff ndiff
 
-    require(ndiff.formulas.length == 1, "We want exactly one primary formula, not: "+ndiff)
-    require(odiff.formulas.length > 0, "We want at least one auxiliary formula, not: "+odiff)
+    require(ndiff.formulas.length == 1, "We want exactly one primary formula, not: "+ndiff+ " in "+fs_new)
+    require(odiff.formulas.length > 0, "We want at least one auxiliary formula, not: "+odiff+ " in "+fs_old)
     (ndiff, odiff, csequent)
   }
 
@@ -704,7 +777,7 @@ trait TokenToLKConverter {
   def filterContext(fs_old1 : FSequent, fs_old2 : FSequent, fs_new : FSequent) : (FSequent, FSequent, FSequent) =
     filterContext(fs_old1 compose fs_old2, fs_new)
 
-
+  /* Checked cast of HOLExpression to HOLFormula which gives a nicer */
   private def c(e:HOLExpression) : HOLFormula =
     if (e.isInstanceOf[HOLFormula]) e.asInstanceOf[HOLFormula] else
       throw new Exception("Could not convert "+e+" to a HOL Formula!")
