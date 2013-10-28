@@ -22,6 +22,111 @@ class GrammarTest extends SpecificationWithJUnit {
 
   "The decomposition" should {
 
+    "compute the multi-variable delta-vector DeltaG correctly" in {
+      "trivial decomposition" in {
+        val f = ConstantStringSymbol("f")
+        val g = ConstantStringSymbol("g")
+        val a = FOLConst(ConstantStringSymbol("a"))
+        val b = FOLConst(ConstantStringSymbol("b"))
+
+        val f1 = Function(f, a::Nil)
+        val g1 = Function(g, b::Nil)
+
+        val dec = deltaG(f1::g1::Nil, "α")
+
+        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+
+        (dec) must beEqualTo (alpha, (f1::g1::Nil)::Nil)
+      }
+
+      "example #1 without duplicates" in {
+        val f = ConstantStringSymbol("f")
+        val g = ConstantStringSymbol("g")
+        val a = FOLConst(ConstantStringSymbol("a"))
+        val b = FOLConst(ConstantStringSymbol("b"))
+        val c = FOLConst(ConstantStringSymbol("c"))
+        val d = FOLConst(ConstantStringSymbol("d"))
+        val e = FOLConst(ConstantStringSymbol("e"))
+        val fc = FOLConst(ConstantStringSymbol("f"))
+
+        val f1 = Function(f, a::Function(g, c::d::Nil)::Nil)
+        val f2 = Function(f, b::Function(g, e::fc::Nil)::Nil)
+
+        val dec = deltaG(f1::f2::Nil, "α")
+
+        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha1 = FOLVar(new VariableStringSymbol("α_1"))
+        val alpha2 = FOLVar(new VariableStringSymbol("α_2"))
+
+        val uTarget = Function(f, alpha0::Function(g, alpha1::alpha2::Nil)::Nil)
+
+        (dec) must beEqualTo (uTarget, (a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil)
+      }
+
+      "example #2 with duplicates" in {
+        val f = ConstantStringSymbol("f")
+        val g = ConstantStringSymbol("g")
+        val a = FOLConst(ConstantStringSymbol("a"))
+        val b = FOLConst(ConstantStringSymbol("b"))
+        val c = FOLConst(ConstantStringSymbol("c"))
+        val d = FOLConst(ConstantStringSymbol("d"))
+
+        val f1 = Function(f, a::Function(g, c::c::Nil)::Nil)
+        val f2 = Function(f, b::Function(g, d::d::Nil)::Nil)
+
+        val dec = deltaG(f1::f2::Nil, "α")
+
+        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha1 = FOLVar(new VariableStringSymbol("α_1"))
+
+        val uTarget = Function(f, alpha0::Function(g, alpha1::alpha1::Nil)::Nil)
+
+        (dec) must beEqualTo (uTarget, (a::b::Nil)::(c::d::Nil)::Nil)
+      }
+
+      "example #3 with alpha-elimination" in {
+        val f = ConstantStringSymbol("f")
+        val g = ConstantStringSymbol("g")
+        val a = FOLConst(ConstantStringSymbol("a"))
+        val b = FOLConst(ConstantStringSymbol("b"))
+        val c = FOLConst(ConstantStringSymbol("c"))
+        val d = FOLConst(ConstantStringSymbol("d"))
+
+        val f1 = Function(f, a::Function(g, c::d::Nil)::Nil)
+        val f2 = Function(f, b::Function(g, c::d::Nil)::Nil)
+
+        val dec = deltaG(f1::f2::Nil, "α")
+
+        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
+
+        val uTarget = Function(f, alpha0::Function(g, c::d::Nil)::Nil)
+
+        (dec) must beEqualTo (uTarget, (a::b::Nil)::Nil)
+      }
+
+      "example #4 with duplicates and alpha-elimination" in {
+        val f = ConstantStringSymbol("f")
+        val g = ConstantStringSymbol("g")
+        val h = ConstantStringSymbol("h")
+        val a = FOLConst(ConstantStringSymbol("a"))
+        val b = FOLConst(ConstantStringSymbol("b"))
+        val c = FOLConst(ConstantStringSymbol("c"))
+        val d = FOLConst(ConstantStringSymbol("d"))
+
+        val f1 = Function(f, Function(h, a::Nil)::Function(g, c::a::Nil)::Nil)
+        val f2 = Function(f, Function(h, b::Nil)::Function(g, c::b::Nil)::Nil)
+        val f3 = Function(f, Function(h, b::Nil)::Function(g, c::b::Nil)::Nil)
+
+        val dec = deltaG(f1::f2::f3::Nil, "α")
+
+        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
+
+        val uTarget = Function(f, Function(h, alpha0::Nil)::Function(g, c::alpha0::Nil)::Nil)
+
+        (dec) must beEqualTo (uTarget, (a::b::b::Nil)::Nil)
+      }
+    }
+
     "compute the delta-vector correctly" in {
       "initial example" in {
         // f(hggc, ggc), f(hgc, gc) --> (f(hgA, gA), {gc, c})

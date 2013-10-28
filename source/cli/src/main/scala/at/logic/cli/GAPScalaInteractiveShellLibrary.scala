@@ -506,8 +506,28 @@ object printProofStats {
     }
   }
 
+  object computeGrammarsG {
+    def apply(terms: FlatTermSet) = {
+      val g = ComputeGeneralizedGrammars(terms)
+        g.size match {
+          case 0 => throw new Exception("No grammars found for this list of terms.")
+          case n => println(n + " grammars found.\n"); g
+        }
+    }
+  }
+
   object seeNFirstGrammars {
     def apply(lst: List[Grammar], n: Int) = {
+      println("\n");
+      for(i <- 0 to n-1) {
+        println(i + ". " + lst(i).toPrettyString + "\n(size = " + lst(i).size + ")\n"  )
+      }
+      println("\nNote that the function symbols 'tuplei' are inserted by the system as part of the algorithm.")
+    }
+  }
+
+  object seeNFirstGrammarsG {
+    def apply(lst: List[GeneralizedGrammar], n: Int) = {
       println("\n");
       for(i <- 0 to n-1) {
         println(i + ". " + lst(i).toPrettyString + "\n(size = " + lst(i).size + ")\n"  )
@@ -519,6 +539,11 @@ object printProofStats {
   object generateExtendedHerbrandSequent {
     def apply( es: Sequent, g: Grammar) =
       new ExtendedHerbrandSequent(es, g)
+  }
+
+  object generateGeneralizedExtendedHerbrandSequent {
+    def apply( es: Sequent, g: GeneralizedGrammar) =
+      new GeneralizedExtendedHerbrandSequent(es, g)
   }
 
   object computeCanonicalSolution {
@@ -1199,8 +1224,11 @@ object printProofStats {
           |   cutIntroG: LKProof => LKProof - performs cut introduction with multiple quantifiers
           |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
           |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
+          |   computeGrammarsG: FlatTermSet => List[GeneralizedGrammar] - computes all the grammars of a given list of terms with an unbounded number of variables (returns a list ordered by symbolic complexity)
           |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
+          |   seeNFirstGrammarsG: List[GeneralizedGrammar], Int => Unit - prints the first n grammars from a list
           |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
+          |   generateGeneralizedExtendedHerbrandSequent: Sequent, GeneralizedGrammar => GeneralizedExtendedHerbrandSequent - generates the Generalized Extended Herbrand Sequent from an end-sequent of a proof and a grammar
           |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
           |   minimizeSolution: ExtendedHerbrandSequent => ExtendedHerbrandSequent - minimizes the solution associated with the extended Herbrand sequent returning another Herbrand sequent with this minimal solution
           |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent

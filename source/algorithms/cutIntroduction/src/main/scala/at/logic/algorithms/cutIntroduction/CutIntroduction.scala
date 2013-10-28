@@ -166,6 +166,7 @@ object CutIntroduction {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
+    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
     println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
     smallestProof

@@ -15,6 +15,7 @@ import at.logic.calculi.occurrences._
 import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
+import at.logic.utils.logging.Logger
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.{DFS, BFS, setSearch}
 
@@ -45,7 +46,7 @@ class Grammar(u0: List[FOLTerm], s0: List[FOLTerm], ev: FOLVar) {
   }
 }
 
-object ComputeGrammars {
+object ComputeGrammars extends Logger {
 
   // This looks ugly :(
   def apply(terms: FlatTermSet) : List[Grammar] = apply(terms.termset).map{ case g => g.flatterms = terms; g }
@@ -154,53 +155,102 @@ object ComputeGrammars {
       // so the lazy structure will not have to load the bigger ones.
       var coverSize = maxSubsetSize
 
+      trace("[smallestCoverExact] terms: " + terms)
+      trace("[smallestCoverExact] maxSubsetSize: " + maxSubsetSize)
+
       def getSmallestSubsets(subsets: Iterator[Set[(FOLTerm, List[FOLTerm])]]) : List[List[FOLTerm]] = {
         if(subsets.hasNext) {
+
+          trace("[smallestCoverExact]    hasNext!")
+
           val set = subsets.next()
+
+          trace("[smallestCoverExact]    set=" + set)
+
           if(set.size <= coverSize) {
+            trace("[smallestCoverExact]    set.size < coverSize!")
             val (u, t) = set.foldLeft( ( List[FOLTerm](), List[FOLTerm]() ) ) { case (acc, (u, t)) => 
               ( u :: acc._1, tailRecUnion(t, acc._2) )
             }
+            trace("[smallestCoverExact]    (u,t)=(" + u + ", " + t + ")")
             val difference = terms.diff(t)
+            trace("[smallestCoverExact]    difference=" + difference)
 
             if(difference.size == 0) {
+              trace("[smallestCoverExact]    OUTCOME: no difference!")
+              trace("[smallestCoverExact]             coversize=" + set.size)
               coverSize = set.size
               u :: getSmallestSubsets(subsets) 
             } 
             else if(u.size + difference.size <= coverSize) {
+              trace("[smallestCoverExact]    OUTCOME: difference!")
+              trace("[smallestCoverExact]             coversize(u.size + difference.size=" + u.size + " + " + difference.size + " = " + (u.size + difference.size))
               coverSize = u.size + difference.size
               (u ++ difference) :: getSmallestSubsets(subsets) 
-            } 
-            else getSmallestSubsets(subsets)
+            }
+            else {
+              trace("[smallestCoverExact]    OUTCOME: difference too large!")
+              getSmallestSubsets(subsets)
+            }
          
-          } else List()
+          } else {
+            trace("[smallestCoverExact]    NOT set.size < coverSize!")
+            List()
+          }
         } else List()
       }
 
       val coverings = getSmallestSubsets(subsets)
+
+      trace("[smallestCoverExact] coverSize: " + coverSize)
+
       smallestGrammarSize = s.size + coverSize
+
+      trace("[smallestCoverExact] new smallestGrammarSize: " + smallestGrammarSize)
       coverings
     }
+
+    trace("STARTING FOLDING")
+    trace("smallestGrammarSize= " + smallestGrammarSize)
+
+    trace("---------------------------------------------")
+    trace("DT Contents: ")
+    trace(deltatable.table.toString)
+    trace("---------------------------------------------")
 
     deltatable.table.foldRight(List[Grammar]()) {case ((s, pairs), grammars) =>
       // Ignoring entries where s.size == 1 because they are trivial
       // grammars with the function symbol on the right.
+      trace("[folding DT] checking grammar: " + s)
+
       if(s.size != 1) {
+
+        trace("[folding DT] - passed size check")
 
         // Add the trivial decomposition {alpha} o s
         val newpairs = if(s.forall(e => terms.contains(e)) ) {
           (ev, s) :: pairs
         } else pairs
 
-        if(s.size < smallestGrammarSize) {                    
+        trace("    | newpairs:")
+        trace(newpairs.toString())
+
+        if(s.size < smallestGrammarSize) {
+          trace("[folding DT] - passed s.size with s.size=" + s.size + ", smallestGrammarSize=" + smallestGrammarSize)    
+
           val coverings = smallestCoverExact(s, newpairs, terms)
+
+          trace("[folding DT] coverings: " + coverings)
           coverings.foldLeft(grammars) { case (acc, u) =>
             (new Grammar(u, s, ev) ) :: acc                   
           }                                                   
         } else grammars                                       
                                                                                                                             
+      } else {
+        trace("[folding DTG] +++FAILED SIZE CHECK+++ s     =" + s)
+        trace("                                      pairs =" + pairs)
+        grammars
       }
-      else grammars
     }
   }
 
