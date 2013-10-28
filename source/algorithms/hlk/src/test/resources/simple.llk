@@ -1,11 +1,12 @@
-\CONSTDEC{PROOF}{o}
+\CONSTDEC{PROOF,SUB2}{o}
+\CONSTDEC{SUBPROOF }{i>o}
 
 \CONSTDEC{P}{i>i>o}
 \VARDEC{X}{i>o}
-\CONSTDEC{f}{i>i}
+\CONSTDEC{f,g}{i>i}
 \VARDEC{h}{i>i}
 \VARDEC{a}{i}
-\VARDEC{x}{i}
+\VARDEC{x,y}{i}
 
 % first branch into cut %
 \AX{P(f(x),a)}{P(f(x),a)}
@@ -14,8 +15,7 @@
 \ALLL{}{(all x P(x,x)), P(f(x),a)}{P(f(x),a) & P(a,a)}
 
 % second branch into cut %
-\AX{P(a,f(a))}{P(a,f(a))}
-\ALLL{}{(all x P(x,f(x)))}{P(a,f(a))}
+\CONTINUEFROM{SUBPROOF(a)}{(all x P(x,f(x)))}{P(a,f(a))}
 \EXR{(\lambda x a)}{(all x P(x,f(x)))}{(exists h P(h(a),f(a)))}
 \ALLR{}{(all x P(x,f(x)))}{(all x exists h P(h(x),f(x)))}
 
@@ -31,3 +31,18 @@
 
 \CUT{(all x P(x,x)), P(f(x),a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x) | --P(x,x)}
 \CONTINUEWITH{PROOF}
+
+
+% start of second proof %
+\AX{P(y,f(y))}{P(y,f(y))}
+\ALLL{}{(all x P(x,f(x)))}{P(y,f(y))}
+\CONTINUEWITH{SUBPROOF(y)}
+
+
+% start of third proof %
+\AX{f(a)=g(a)}{f(a)=g(a)}
+\AX{f(a)=g(a)}{f(a)=g(a)}
+\AX{P(f(a),f(a))}{P(f(a), f(a))}
+\EQR{f(a)=g(a), P(f(a),f(a))}{P(f(a), g(a))}
+% \EQR{g(a)=f(a), f(a)=g(a), P(f(a),f(a))}{P(f(a), f(a))} %
+\CONTINUEWITH{SUB2}

@@ -18,8 +18,11 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
-import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.parsing.language.xml.ProofDatabase
+import at.logic.algorithms.lk.applySubstitution
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, LambdaExpression, Var}
+import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 
 abstract class Token
 case class RToken(rule:String, name : Option[LambdaAST], antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
@@ -242,9 +245,8 @@ trait TokenToLKConverter {
     println((ordering map (_.toPrettyString)).mkString("Ordering: ",", ",""))
 
     //proof completion in dependency order
-   val proofs =rm.foldLeft( Map[HOLFormula, LKProof]() )( (proofs_done, el) => {
-     val (f, rules) = el
-     val f_proof : LKProof = completeProof(f, proofs_done, naming, rules)
+   val proofs =ordering.foldLeft( Map[HOLFormula, LKProof]() )( (proofs_done, f) => {
+     val f_proof : LKProof = completeProof(f, proofs_done, naming, rm(f))
      proofs_done + ((f, f_proof))
     }
    )
@@ -295,6 +297,10 @@ trait TokenToLKConverter {
           proofstack = handleNegation(proofstack, name, fs, auxterm, naming, rt)
 
         // --- equational rules ---
+        case "EQL" =>
+          proofstack = handleEquality(proofstack, name, fs, auxterm, naming, rt)
+        case "EQR" =>
+          proofstack = handleEquality(proofstack, name, fs, auxterm, naming, rt)
 
         // --- definition rules ---
 
@@ -312,6 +318,8 @@ trait TokenToLKConverter {
 
         // --- macro rules ---
 
+        case "CONTINUEFROM" =>
+          proofstack = handleLink(proofs, proofstack, name, fs, auxterm, naming, rt )
         case "CONTINUEWITH" => ;
         case "COMMENT" => ;
         case _ => throw new Exception("Rule type "+name+" not yet implemented!")
@@ -327,6 +335,7 @@ trait TokenToLKConverter {
   def handleWeakQuantifier(current_proof: List[LKProof], ruletype: String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val oldproof::rest = current_proof
+
     val (mainsequent, auxsequent, _) = filterContext(oldproof.root.toFSequent, fs)
     require(auxsequent.formulas.size == 1, "Exactly one auxiliary formula in weak quantifier rule required (no autocontraction allowed)! " + auxsequent)
     val (main, aux) = ruletype match {
@@ -606,6 +615,84 @@ trait TokenToLKConverter {
     contr :: stack
   }
 
+  def handleEquality(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val rightproof::leftproof::stack = current_proof
+
+    val (mainsequent, auxsequent, context) = filterContext(leftproof.root.toFSequent, rightproof.root.toFSequent, fs)
+    val auxleft = leftproof.root.toFSequent diff context
+    val auxright = rightproof.root.toFSequent diff context
+    require(auxleft.formulas.size == 1,
+      "An equation rule must have exactly one auxiliar equation in the succedent of the left parent, not: "+auxleft)
+    require(auxleft.succedent.size == 1,
+      "An equation rule must have exactly one auxiliar equation in the succedent of the left parent, not: "+auxleft)
+    require(auxright.formulas.size == 1,
+      "An equation rule must have exactly one auxiliar formula as the right parent, not: "+auxright)
+
+    val eq = auxleft.succedent(0)
+    val (s,t) = eq match { case Equation(u,v) => (u,v); case _ => throw new Exception("Auxiliary formula in left hand proof must be an equation, but is "+eq) }
+
+    val rule = ruletype match {
+      case "EQL" =>
+        require(auxright.antecedent.size == 1,
+          "An equation left rule must have exactly one auxiliar formula in the antecedent of the right parent, not: "+auxright)
+        val f = auxright.antecedent(0)
+        val main = mainsequent.antecedent(0)
+        checkReplacement(s,t, f, main) match {
+          case EqualModuloEquality(_) => EquationLeft1Rule(leftproof, rightproof, eq, f, main)
+          case _ =>
+            checkReplacement(t, s, f, main) match {
+              case EqualModuloEquality(_) => EquationLeft2Rule(leftproof, rightproof, eq, f, main)
+              case _ =>
+                throw new Exception("Could not infer equation rule!")
+            }
+        }
+
+      case "EQR" =>
+        require(auxright.succedent.size == 1,
+          "An equation right rule must have exactly one auxiliar formula in the antecedent of the right parent, not: "+auxright)
+        val f = auxright.succedent(0)
+        val main = mainsequent.succedent(0)
+        checkReplacement(s,t, f, main) match {
+          case EqualModuloEquality(_) => EquationRight1Rule(leftproof, rightproof, eq, f, main)
+          case _ =>
+            checkReplacement(t, s, f, main) match {
+              case EqualModuloEquality(_) => EquationRight2Rule(leftproof, rightproof, eq, f, main)
+              case _ =>
+                throw new Exception("Could not infer equation rule!")
+            }
+        }
+
+    }
+
+
+
+    rule::current_proof
+  }
+
+  abstract class ReplacementResult;
+  case object Equal extends ReplacementResult;
+  case object Different extends ReplacementResult;
+  case class EqualModuloEquality(path : List[Int]) extends ReplacementResult;
+
+
+  def checkReplacement(s : LambdaExpression, t : LambdaExpression, e1 : LambdaExpression, e2 : LambdaExpression) : ReplacementResult = {
+    (e1,e2) match {
+      case _ if (e1 == e2) => Equal
+      case _ if (e1 == s) && (e2 == t) => EqualModuloEquality(Nil)
+      case (Var(_,_), Var(_,_)) => Different
+      case (App(l1,r1), App(l2,r2)) =>
+        (checkReplacement(s,t,l1,l2), checkReplacement(s,t,r1,r2)) match {
+          case (Equal, Equal) => Equal
+          case (EqualModuloEquality(path), Equal) => EqualModuloEquality(1::path)
+          case (Equal, EqualModuloEquality(path)) => EqualModuloEquality(2::path)
+          case _ => Different
+        }
+      case (Abs(v1,t1), Abs(v2,t2)) => Different
+      case _ => Different
+    }
+  }
+
   def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val parentproof::stack = current_proof
@@ -633,6 +720,27 @@ trait TokenToLKConverter {
     val inf = CutRule(leftproof, rightproof, cutformula)
     require(inf.root.toFSequent multiSetEquals fs, "Inferred sequent "+inf.root+" is what was not expected: "+fs)
     inf :: stack
+  }
+
+  def handleLink(proofs : Map[HOLFormula, LKProof], current_proof: List[LKProof],
+                 ruletype:String, fs: FSequent, auxterm: Option[LambdaAST],
+                 naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(auxterm.isDefined, "Can not refer to a subproof(CONTINUEFROM): Need a proof name to link to!")
+    val link = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
+    val ps : List[LKProof] = proofs.toList.flatMap( x => {
+      NaiveIncompleteMatchingAlgorithm.holMatch(x._1,link)(Nil) match {
+        case None => Nil
+        case Some(sub) =>
+          applySubstitution(x._2, sub)._1 :: Nil
+      }
+    }
+    )
+
+    require(ps.nonEmpty, "None of the proofs in "+proofs.keys.mkString("(",",",")")+" matches proof link "+link  )
+    require(ps(0).root.toFSequent.multiSetEquals(fs), "LINK to "+link+" must give "+fs+" but gives "+ps(0).root)
+
+    ps(0) :: current_proof
+
   }
 
 

@@ -7,11 +7,17 @@ import org.specs2.execute.Success
 import at.logic.parsing.language.hlk.{HLKHOLParser, ast}
 import at.logic.parsing.language.hlk.ast.LambdaAST
 import java.io.File.separator
-import at.logic.language.lambda.types.TA
-import at.logic.language.hol.{HOLFormula, HOLConst, HOLVar, HOLExpression}
+import at.logic.language.lambda.types.{To, Ti, TA}
+import at.logic.language.hol._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.lk.base.FSequent
+import at.logic.language.lambda.typedLambdaCalculus.{AppN, App}
+import at.logic.language.lambda.types.Ti
+import at.logic.algorithms.hlk.TToken
+import at.logic.algorithms.hlk.RToken
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.lambda.types.To
 
 
 /**
@@ -91,6 +97,32 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case e:Exception =>
         ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
       }
+    }
+
+    "correctly infer replacement terms in equalities" in {
+      import HybridLatexParser.{Equal, Different, EqualModuloEquality}
+      val List(a) = List("a") map (x => HOLConst(ConstantStringSymbol(x), Ti()))
+      val List(f,g) = List("f","g") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
+      val List(p) = List("p") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> (Ti() -> (Ti() -> To())) ))
+      val t1 = AppN(p, List(App(f,a), App(f,App(g,App(f,a))), a  ))
+      val t2 = AppN(p, List(App(f,a), App(f,App(g,App(g,a))), a  ))
+      val fa = App(f,a)
+      val ga = App(g,a)
+
+      HybridLatexParser.checkReplacement(fa,ga,t1,t2) match {
+        case Equal => ko("Terms "+t1+" and "+t2+" considered as equal, but they differ!")
+        case Different => ko("Terms "+t1+" and t2 considered as (completely) different, but they differ only modulo one replacement!")
+        case EqualModuloEquality(path) =>
+          println("Path:"+path)
+          ok
+      }
+
+      HybridLatexParser.checkReplacement(fa,ga,t1,t1) match {
+        case Equal => ok
+        case Different => ko("Terms "+t1+" and t2 considered as (completely) different, but they are equal!")
+        case EqualModuloEquality(path) => ko("Found an equality modulo "+Equation(fa.asInstanceOf[HOLExpression],ga.asInstanceOf[HOLExpression])+" but should be equal!")
+      }
+
     }
 
 
