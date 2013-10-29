@@ -1179,11 +1179,10 @@ object printProofStats {
           |   parse.lisp: String => List[SExpression]
           |   parse hlkexp: String => HOLExpression - example: "var x,y: i>o; (\\ x => (\\y => (x=y) ))"
           |   parse hlkformula: String => HOLFormula -  example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
-          |          |
+          |
           | File Input/Output:
           |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
           |   loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
-          |   loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format
           |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
           |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
           |   loadHLK : String => LKProof - load a proof in the HLK 2 format from given filename
@@ -1243,6 +1242,7 @@ object printProofStats {
           |   rename: (LambaExpression, Map[String, (Int,String)]) => LambdaExpression - use map from oldname to (arity, newname) to rename constants in a given LambdaExpressions
           |   rename: (RobinsonResolutionProof, Map[String, (Int,String)]) => RobinsonResolutionProof - the same for resolution proofs
           |   printProofStats: LKProof => Unit
+          |   loadIvyProof: String => RobinsonResolutionProof - load a proof in the ivy proof checker format (buggy)
           |   lkTolksk: LKProof => LKProof
           |   createHOLExpression: String => HOLExpression (Forall x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i)))
           |   fsequent2sequent: FSequent => Sequent

@@ -23,14 +23,15 @@ import at.logic.algorithms.lk.applySubstitution
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, LambdaExpression, Var}
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
+import at.logic.calculi.lk.equationalRules.EquationVerifier._
 
 abstract class Token
 case class RToken(rule:String, name : Option[LambdaAST], antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
 case class TToken(decltype : String, names : List[String], types : TA ) extends Token
 
-
-//case class QToken(override val rule:String, override val name : LambdaAST, override val antecedent: List[LambdaAST], override val succedent:List[LambdaAST], term : LambdaAST)
-//  extends RToken(rule, name, antecedent, succedent)
+class HybridLatexParserException(m : String, t: Throwable) extends Exception(m, t) {
+  def this(m: String) = this(m, null)
+}
 
 trait LatexReplacementParser extends DeclarationParser {
   override lazy val abs : PackratParser[LambdaAST] =
@@ -77,7 +78,7 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
     parseAll( rules, reader) match {
       case Success(r, _) => r
       case NoSuccess(msg, input) =>
-        throw new Exception("Error parsing Hybrid Latex/LK in "+fn+" at position "+input.pos +": "+msg)
+        throw new HybridLatexParserException("Error parsing Hybrid Latex/LK in "+fn+" at position "+input.pos +": "+msg)
     }
   }
 
@@ -85,7 +86,7 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
     parseAll( rules, in) match {
       case Success(r, _) => r
       case NoSuccess(msg, input) =>
-        throw new Exception("Error parsing Hybrid Latex/LK at position "+input.pos +": "+msg)
+        throw new HybridLatexParserException("Error parsing Hybrid Latex/LK at position "+input.pos +": "+msg)
     }
   }
 
@@ -182,7 +183,7 @@ trait TokenToLKConverter {
         HOLConst(ConstantStringSymbol(s), constmap(s))
       } else
 
-        throw new Exception("no type declaration for symbol "+s)
+        throw new HybridLatexParserException("no type declaration for symbol "+s)
     }}
   }
 
@@ -223,10 +224,10 @@ trait TokenToLKConverter {
             val nformula = c(HLKHOLParser.ASTtoHOL(naming, name))
             ( Nil, current._2 + ((nformula,current._1.reverse)) )
           } catch {
-            case e:Exception => throw new Exception("Error in parsing CONTINUEWITH{"+name+"}{"+a+"}{"+s"}: "+e.getMessage, e)
+            case e:Exception => throw new HybridLatexParserException("Error in parsing CONTINUEWITH{"+name+"}{"+a+"}{"+s"}: "+e.getMessage, e)
           }
         case RToken("CONTINUEWITH", _,_,_) =>
-          throw new Exception("The CONTINUEWITH statement needs a name giving the argument!")
+          throw new HybridLatexParserException("The CONTINUEWITH statement needs a name giving the argument!")
         case RToken("COMMENT",_,_,_) =>
           //filter comments
           current
@@ -322,7 +323,7 @@ trait TokenToLKConverter {
           proofstack = handleLink(proofs, proofstack, name, fs, auxterm, naming, rt )
         case "CONTINUEWITH" => ;
         case "COMMENT" => ;
-        case _ => throw new Exception("Rule type "+name+" not yet implemented!")
+        case _ => throw new HybridLatexParserException("Rule type "+name+" not yet implemented!")
       }
     }
 
@@ -364,7 +365,7 @@ trait TokenToLKConverter {
 
         case None =>
           println("Remark: Could not infer substitution term, using user specified one!")
-          HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new Exception("No substitution term found, please specify! " + rt)))
+          HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new HybridLatexParserException("No substitution term found, please specify! " + rt)))
       }
     }
 
@@ -418,7 +419,7 @@ trait TokenToLKConverter {
         case None =>
           //automatic mode failed
           println("Remark: Could not infer substitution term, using user specified one!")
-          val t = HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new Exception("No substitution term found, please specify! " + rt)))
+          val t = HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new HybridLatexParserException("No substitution term found, please specify! " + rt)))
           require(t.isInstanceOf[Var],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
           t
       }
@@ -456,7 +457,7 @@ trait TokenToLKConverter {
             val inf = AndRightRule(leftproof, rightproof, l,r)
             val contr = contract(inf, fs)
             contr :: stack
-          case _ => throw new Exception("Main formula of a conjunction right rule must have conjuntion as outermost operator!")
+          case _ => throw new HybridLatexParserException("Main formula of a conjunction right rule must have conjuntion as outermost operator!")
         }
 
       case "ORL"  =>
@@ -469,7 +470,7 @@ trait TokenToLKConverter {
             val inf = OrLeftRule(leftproof, rightproof, l,r)
             val contr = contract(inf, fs)
             contr :: stack
-          case _ => throw new Exception("Main formula of a disjunction left rule must have disjunction as outermost operator!")
+          case _ => throw new HybridLatexParserException("Main formula of a disjunction left rule must have disjunction as outermost operator!")
         }
 
       case "IMPL" =>
@@ -482,7 +483,7 @@ trait TokenToLKConverter {
             val inf = ImpLeftRule(leftproof, rightproof, l,r)
             val contr = contract(inf, fs)
             contr :: stack
-          case _ => throw new Exception("Main formula of a implication left rule must have implication as outermost operator!")
+          case _ => throw new HybridLatexParserException("Main formula of a implication left rule must have implication as outermost operator!")
         }
     }
   }
@@ -529,7 +530,7 @@ trait TokenToLKConverter {
             require(worked.nonEmpty, "Could not infer or right rule "+fs+" from "+top.root)
 
             worked(0).get :: stack
-          case _ => throw new Exception("Main formula of a disjunction right rule must have conjuntion as outermost operator!")
+          case _ => throw new HybridLatexParserException("Main formula of a disjunction right rule must have conjuntion as outermost operator!")
         }
 
       case "ANDL"  =>
@@ -567,7 +568,7 @@ trait TokenToLKConverter {
             require(worked.nonEmpty, "Could not infer or right rule "+fs+" from "+top.root)
 
             worked(0).get :: stack
-          case _ => throw new Exception("Main formula of a conjunction left rule must have disjunction as outermost operator!")
+          case _ => throw new HybridLatexParserException("Main formula of a conjunction left rule must have disjunction as outermost operator!")
         }
 
       case "IMPR" =>
@@ -580,7 +581,7 @@ trait TokenToLKConverter {
             val inf = ImpRightRule(top, l,r)
             val contr = contract(inf, fs)
             contr :: stack
-          case _ => throw new Exception("Main formula of a implication right rule must have implication as outermost operator!")
+          case _ => throw new HybridLatexParserException("Main formula of a implication right rule must have implication as outermost operator!")
         }
     }
   }
@@ -595,7 +596,7 @@ trait TokenToLKConverter {
         case Neg(g) =>
           NegLeftRule(intermediate,g)
         case _ =>
-          throw new Exception("Trying to apply the negation rule on formula "+f+" without negation as outermost symbol on "+top.root+" to get "+fs)
+          throw new HybridLatexParserException("Trying to apply the negation rule on formula "+f+" without negation as outermost symbol on "+top.root+" to get "+fs)
       }
      }
     )
@@ -604,7 +605,7 @@ trait TokenToLKConverter {
         case Neg(g) =>
           NegRightRule(intermediate,g)
         case _ =>
-          throw new Exception("Trying to apply the negation rule on formula "+f+" without negation as outermost symbol on "+top.root+" to get "+fs)
+          throw new HybridLatexParserException("Trying to apply the negation rule on formula "+f+" without negation as outermost symbol on "+top.root+" to get "+fs)
       }
     }
     )
@@ -619,79 +620,121 @@ trait TokenToLKConverter {
     require(current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val rightproof::leftproof::stack = current_proof
 
-    val (mainsequent, auxsequent, context) = filterContext(leftproof.root.toFSequent, rightproof.root.toFSequent, fs)
-    val auxleft = leftproof.root.toFSequent diff context
-    val auxright = rightproof.root.toFSequent diff context
-    require(auxleft.formulas.size == 1,
-      "An equation rule must have exactly one auxiliar equation in the succedent of the left parent, not: "+auxleft)
-    require(auxleft.succedent.size == 1,
-      "An equation rule must have exactly one auxiliar equation in the succedent of the left parent, not: "+auxleft)
-    require(auxright.formulas.size == 1,
-      "An equation rule must have exactly one auxiliar formula as the right parent, not: "+auxright)
+    //In the case the main formula is the same as an auxiliariy formula, filterContext cannot infer the main formula
+    //we doe this now by hand
+    def eqfilter(x:HOLFormula) : Boolean = x match { case Equation(s,t) => true; case _ => false }
+    def canReplace(s:HOLExpression, t:HOLExpression, exp1 : HOLExpression, exp2:HOLExpression) : Boolean = {
+      (checkReplacement(s,t,exp1,exp2), checkReplacement(t,s,exp1,exp2)) match {
+        case (EqualModuloEquality(_), _) => true
+        case (_, EqualModuloEquality(_)) => true
+        case _ => false
+      }
+    }
 
-    val eq = auxleft.succedent(0)
-    val (s,t) = eq match { case Equation(u,v) => (u,v); case _ => throw new Exception("Auxiliary formula in left hand proof must be an equation, but is "+eq) }
-
-    val rule = ruletype match {
+    val lefteqs = leftproof.root.toFSequent.succedent.filter( eqfilter )
+    ruletype match {
       case "EQL" =>
-        require(auxright.antecedent.size == 1,
-          "An equation left rule must have exactly one auxiliar formula in the antecedent of the right parent, not: "+auxright)
-        val f = auxright.antecedent(0)
-        val main = mainsequent.antecedent(0)
-        checkReplacement(s,t, f, main) match {
-          case EqualModuloEquality(_) => EquationLeft1Rule(leftproof, rightproof, eq, f, main)
-          case _ =>
-            checkReplacement(t, s, f, main) match {
-              case EqualModuloEquality(_) => EquationLeft2Rule(leftproof, rightproof, eq, f, main)
+        //we find all candidates, i.e. equations e: s=t in the left parent and pair it with possible formulas f
+        // from the right parent together with possible main formulas in the conclusion s.t. f[s] = main[t] or
+        // f[t] = main[s]
+        val righteqsante = rightproof.root.toFSequent.antecedent
+        val candidates = for( e@Equation(s,t) <- lefteqs;
+                              f <- righteqsante;
+                              main <- fs.antecedent;
+                              if canReplace(s,t,f,main)  )
+        yield { (s,t,e,f,main)}
+
+        //now we try to create an inference from each candidate
+        val inferences : Seq[LKProof] = candidates.flatMap( args => {
+          try {
+            val (s,t,eq,f,main) = args
+            //we check if we can paramodulate s=t ...
+            checkReplacement(s, t, f, main) match {
+              case EqualModuloEquality(_) =>
+                val rule = EquationLeft1Rule(leftproof, rightproof, eq, f, main)
+                if (! rule.root.toFSequent.multiSetEquals(fs))
+                  throw new HybridLatexParserException("Wrong end-sequent!")
+                rule::Nil
               case _ =>
-                throw new Exception("Could not infer equation rule!")
+                //if not we try t=s....
+                checkReplacement(t, s, f, main) match {
+                  case EqualModuloEquality(_) =>
+                    val rule = EquationLeft2Rule(leftproof, rightproof, eq, f, main)
+                    if (! rule.root.toFSequent.multiSetEquals(fs))
+                      throw new HybridLatexParserException("Wrong end-sequent!")
+                    rule::Nil
+                  case _ =>
+                    //... and if this also fails we throw an exception
+                    throw new HybridLatexParserException("Could not infer equation rule!")
+                }
             }
-        }
+          } catch {
+            case e:Exception => Nil
+          }
+        })
+
+        require(inferences.nonEmpty, "Could not infer an eq:l rule from left parent "+leftproof.root
+          +" and "+rightproof.root+" to infer "+fs)
+        if (inferences.size > 1)
+          println("WARNING: Inference to create eq:l rule is not uniquely specified from left parent "
+            +leftproof.root+" and "+rightproof.root+" to infer "+fs)
+
+        inferences(0)::stack
+
 
       case "EQR" =>
-        require(auxright.succedent.size == 1,
-          "An equation right rule must have exactly one auxiliar formula in the antecedent of the right parent, not: "+auxright)
-        val f = auxright.succedent(0)
-        val main = mainsequent.succedent(0)
-        checkReplacement(s,t, f, main) match {
-          case EqualModuloEquality(_) => EquationRight1Rule(leftproof, rightproof, eq, f, main)
-          case _ =>
-            checkReplacement(t, s, f, main) match {
-              case EqualModuloEquality(_) => EquationRight2Rule(leftproof, rightproof, eq, f, main)
+        //we find all candidates, i.e. equations e: s=t in the left parent and pair it with possible formulas f
+        // from the right parent together with possible main formulas in the conclusion
+        val righteqssucc = rightproof.root.toFSequent.succedent
+        val candidates = for( e@Equation(s,t) <- lefteqs;
+                              f <- righteqssucc;
+                              main <- fs.succedent;
+                              if canReplace(s,t,f,main)  )
+        yield { (s,t,e,f,main)}
+
+        //now we try to create an inference from each candidate
+        val inferences : Seq[LKProof] = candidates.flatMap( args => {
+          try {
+            val (s,t,eq,f,main) = args
+
+            //we check if we can paramodulate s=t ...
+            checkReplacement(s, t, f, main) match {
+              case EqualModuloEquality(_) =>
+                val rule = EquationRight1Rule(leftproof, rightproof, eq, f, main)
+                if (! rule.root.toFSequent.multiSetEquals(fs))
+                  throw new HybridLatexParserException("Wrong end-sequent!")
+                rule::Nil
               case _ =>
-                throw new Exception("Could not infer equation rule!")
+                //if not, we try t=s....
+                checkReplacement(t, s, f, main) match {
+                  case EqualModuloEquality(_) =>
+                    val rule = EquationRight2Rule(leftproof, rightproof, eq, f, main)
+                    if (! rule.root.toFSequent.multiSetEquals(fs))
+                      throw new HybridLatexParserException("Wrong end-sequent!")
+                    rule::Nil
+                  case _ =>
+                    //... and if this also fails we throw an exception
+                    throw new HybridLatexParserException("Could not infer equation rule!")
+                }
             }
-        }
+          } catch {
+            //any exception occurring will ignore the candidate
+            case e:Exception => Nil
+          }
+        })
 
-    }
+        require(inferences.nonEmpty, "Could not infer an eq:r rule from left parent "+leftproof.root
+          +" and "+rightproof.root+" to infer "+fs)
+        if (inferences.size > 1)
+          println("WARNING: Inference to create eq:r rule is not uniquely specified from left parent "
+            +leftproof.root+" and "+rightproof.root+" to infer "+fs)
 
+        inferences(0)::stack
 
-
-    rule::current_proof
-  }
-
-  abstract class ReplacementResult;
-  case object Equal extends ReplacementResult;
-  case object Different extends ReplacementResult;
-  case class EqualModuloEquality(path : List[Int]) extends ReplacementResult;
-
-
-  def checkReplacement(s : LambdaExpression, t : LambdaExpression, e1 : LambdaExpression, e2 : LambdaExpression) : ReplacementResult = {
-    (e1,e2) match {
-      case _ if (e1 == e2) => Equal
-      case _ if (e1 == s) && (e2 == t) => EqualModuloEquality(Nil)
-      case (Var(_,_), Var(_,_)) => Different
-      case (App(l1,r1), App(l2,r2)) =>
-        (checkReplacement(s,t,l1,l2), checkReplacement(s,t,r1,r2)) match {
-          case (Equal, Equal) => Equal
-          case (EqualModuloEquality(path), Equal) => EqualModuloEquality(1::path)
-          case (Equal, EqualModuloEquality(path)) => EqualModuloEquality(2::path)
-          case _ => Different
-        }
-      case (Abs(v1,t1), Abs(v2,t2)) => Different
-      case _ => Different
+      case _ => throw new Exception("Epected equational rule but got rule name: "+ruletype)
     }
   }
+
 
   def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
@@ -754,7 +797,7 @@ trait TokenToLKConverter {
         ContractionLeftRule(intermediate, f)
       } catch {
         case e : Exception =>
-          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
       }
     )
     val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
@@ -762,7 +805,7 @@ trait TokenToLKConverter {
         ContractionRightRule(intermediate, f)
       } catch {
         case e : Exception =>
-          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
       }
     )
 
@@ -781,7 +824,7 @@ trait TokenToLKConverter {
         WeakeningLeftRule(intermediate, f)
       } catch {
         case e : Exception =>
-          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
       }
     )
     val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
@@ -789,7 +832,7 @@ trait TokenToLKConverter {
         WeakeningRightRule(intermediate, f)
       } catch {
         case e : Exception =>
-          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
       }
     )
 
@@ -828,12 +871,12 @@ trait TokenToLKConverter {
           ) match {
             //and check if the dependency is ok
             case Nil =>
-              throw new Exception("Could not find a matching dependency for proof "+f
+              throw new HybridLatexParserException("Could not find a matching dependency for proof "+f
                 +" in: "+proofnames.mkString(","))
             case l@List(d) =>
               l
             case _ =>
-              throw new Exception("Found more than one matching dependency for proof "+f
+              throw new HybridLatexParserException("Found more than one matching dependency for proof "+f
                 +" in: "+proofnames.mkString(",")+" but proof links need to be unique!")
           }
 
@@ -844,19 +887,19 @@ trait TokenToLKConverter {
           ) match {
             //and check if the dependency is ok
             case Nil =>
-              throw new Exception("Could not find a matching dependency for proof "+f
+              throw new HybridLatexParserException("Could not find a matching dependency for proof "+f
                 +" in: "+proofnames.mkString(","))
             case l@List(d) =>
               l
             case _ =>
-              throw new Exception("Found more than one matching dependency for proof "+f
+              throw new HybridLatexParserException("Found more than one matching dependency for proof "+f
                 +" in: "+proofnames.mkString(",")+" but proof links need to be unique!")
           }
 
         case RToken("CONTINUEFROM",_,_,_) =>
-          throw new Exception("The CONTINUEFROM statement needs a proof as an argument!")
+          throw new HybridLatexParserException("The CONTINUEFROM statement needs a proof as an argument!")
         case RToken("INSTLEMMA",_,_,_) =>
-          throw new Exception("The INSTLEMMA statement needs a proof as an argument!")
+          throw new HybridLatexParserException("The INSTLEMMA statement needs a proof as an argument!")
         case _ => Nil
       }))
     )
@@ -873,8 +916,12 @@ trait TokenToLKConverter {
 
     val csequent = fs_new diff ndiff
 
-    require(ndiff.formulas.length == 1, "We want exactly one primary formula, not: "+ndiff+ " in "+fs_new)
-    require(odiff.formulas.length > 0, "We want at least one auxiliary formula, not: "+odiff+ " in "+fs_old)
+    try {
+      require(ndiff.formulas.length == 1, "We want exactly one primary formula, not: "+ndiff+ " in "+fs_new)
+      require(odiff.formulas.length > 0, "We want at least one auxiliary formula, not: "+odiff+ " in "+fs_old)
+    } catch {
+      case e:Exception => throw new HybridLatexParserException(e.getMessage,e)
+    }
     (ndiff, odiff, csequent)
   }
 

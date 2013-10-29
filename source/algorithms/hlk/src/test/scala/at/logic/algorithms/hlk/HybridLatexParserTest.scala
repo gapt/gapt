@@ -100,7 +100,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
     }
 
     "correctly infer replacement terms in equalities" in {
-      import HybridLatexParser.{Equal, Different, EqualModuloEquality}
+      import at.logic.calculi.lk.equationalRules.EquationVerifier.{Equal, Different, EqualModuloEquality, checkReplacement}
       val List(a) = List("a") map (x => HOLConst(ConstantStringSymbol(x), Ti()))
       val List(f,g) = List("f","g") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
       val List(p) = List("p") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> (Ti() -> (Ti() -> To())) ))
@@ -109,7 +109,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
       val fa = App(f,a)
       val ga = App(g,a)
 
-      HybridLatexParser.checkReplacement(fa,ga,t1,t2) match {
+      checkReplacement(fa,ga,t1,t2) match {
         case Equal => ko("Terms "+t1+" and "+t2+" considered as equal, but they differ!")
         case Different => ko("Terms "+t1+" and t2 considered as (completely) different, but they differ only modulo one replacement!")
         case EqualModuloEquality(path) =>
@@ -117,7 +117,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
           ok
       }
 
-      HybridLatexParser.checkReplacement(fa,ga,t1,t1) match {
+      checkReplacement(fa,ga,t1,t1) match {
         case Equal => ok
         case Different => ko("Terms "+t1+" and t2 considered as (completely) different, but they are equal!")
         case EqualModuloEquality(path) => ko("Found an equality modulo "+Equation(fa.asInstanceOf[HOLExpression],ga.asInstanceOf[HOLExpression])+" but should be equal!")

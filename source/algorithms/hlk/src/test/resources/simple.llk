@@ -5,7 +5,7 @@
 \VARDEC{X}{i>o}
 \CONSTDEC{f,g}{i>i}
 \VARDEC{h}{i>i}
-\VARDEC{a}{i}
+\VARDEC{a,b}{i}
 \VARDEC{x,y}{i}
 
 % first branch into cut %
@@ -40,9 +40,15 @@
 
 
 % start of third proof %
+\AX{a=b}{a=b}
+\AX{a=b}{a=b}
 \AX{f(a)=g(a)}{f(a)=g(a)}
 \AX{f(a)=g(a)}{f(a)=g(a)}
-\AX{P(f(a),f(a))}{P(f(a), f(a))}
-\EQR{f(a)=g(a), P(f(a),f(a))}{P(f(a), g(a))}
-% \EQR{g(a)=f(a), f(a)=g(a), P(f(a),f(a))}{P(f(a), f(a))} %
+\AX{f(a)=f(a)}{f(a)=f(a)}
+\EQR{f(a)=g(a), f(a)=f(a)}{f(a)=g(a)}
+\EQR{f(a)=g(a), f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\CONTRL{f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\EQL{a=b, f(b)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\EQL{a=b, a=b, f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\CONTRL{a=b, f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
 \CONTINUEWITH{SUB2}
