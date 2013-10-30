@@ -92,7 +92,7 @@ import at.logic.algorithms.unification.EequalityA
 import at.logic.language.fol.FOLConst
 import at.logic.calculi.lk.quantificationRules.ForallLeftRule
 import at.logic.parsing.language.hlk.{HLKHOLParser, DeclarationParser}
-import at.logic.algorithms.hlk.HybridLatexParser
+import at.logic.algorithms.hlk.{HybridLatexExporter, HybridLatexParser}
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -407,6 +407,15 @@ object printProofStats {
       val file = new JBufferedWriter(new JFileWriter(filename))
         file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem(ls))
         file.close
+    }
+  }
+
+  object exportLLK {
+    def apply(lkproof : LKProof) = HybridLatexExporter(lkproof)
+    def apply(lkproof : LKProof, filename:String) = {
+      val file = new JBufferedWriter(new JFileWriter(filename))
+      file.write(HybridLatexExporter(lkproof))
+      file.close
     }
   }
 

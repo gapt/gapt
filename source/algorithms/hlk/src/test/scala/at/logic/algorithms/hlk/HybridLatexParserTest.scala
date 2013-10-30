@@ -14,8 +14,6 @@ import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.lk.base.FSequent
 import at.logic.language.lambda.typedLambdaCalculus.{AppN, App}
 import at.logic.language.lambda.types.Ti
-import at.logic.algorithms.hlk.TToken
-import at.logic.algorithms.hlk.RToken
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.types.To
 

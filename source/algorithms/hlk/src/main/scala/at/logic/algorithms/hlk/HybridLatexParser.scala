@@ -24,6 +24,7 @@ import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, LambdaExpression, Var}
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.equationalRules.EquationVerifier._
+import at.logic.calculi.lk.definitionRules.{DefinitionLeftRule, DefinitionRightRule}
 
 abstract class Token
 case class RToken(rule:String, name : Option[LambdaAST], antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
@@ -304,7 +305,8 @@ trait TokenToLKConverter {
           proofstack = handleEquality(proofstack, name, fs, auxterm, naming, rt)
 
         // --- definition rules ---
-
+        case "DEF" =>
+          proofstack = handleDefinitions(proofstack, name, fs, auxterm, naming, rt)
         // --- structural rules ---
         case "CONTRL" =>
           proofstack = handleContraction(proofstack, name, fs, auxterm, naming, rt )
@@ -735,8 +737,30 @@ trait TokenToLKConverter {
     }
   }
 
+  //TODO: integrate which definitions were used into the proof
+  def handleDefinitions(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
+    val parent::stack = current_proof
+    val (mainsequent, auxsequent, context) = filterContext(parent.root.toFSequent, fs)
+    require( auxsequent.formulas.size == 1, "Definition rules expect exactly one auxiliary formula, not "+auxsequent )
+    require( (auxsequent.antecedent.size == mainsequent.antecedent.size) &&
+             (auxsequent.succedent.size == mainsequent.succedent.size), "The definition needs to be on the same side!")
 
-  def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
+    (auxsequent, mainsequent) match {
+      case (FSequent(Nil, List(aux)), FSequent(Nil, List(main))) =>
+        val rule = DefinitionRightRule(parent, aux, main)
+        rule ::stack
+      case (FSequent(List(aux),Nil), FSequent(List(main),Nil)) =>
+        val rule = DefinitionLeftRule(parent, aux, main)
+        rule ::stack
+      case _ =>
+        throw new HybridLatexParserException("Error in creation of definition rule, can not infer "+mainsequent+" from "+auxsequent)
+    }
+  }
+
+
+   /*   =================== STRUCTURAL RULES =============================    */
+    def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val parentproof::stack = current_proof
     val inf = contract(parentproof, fs)

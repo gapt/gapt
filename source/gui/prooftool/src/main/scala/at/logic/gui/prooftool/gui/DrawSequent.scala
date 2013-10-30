@@ -27,6 +27,7 @@ import scala.swing.event.MouseClicked
 import scala.swing.event.MouseEntered
 import scala.swing.event.MouseExited
 import at.logic.language.schema.IntZero
+import at.logic.utils.latex.nameToLatexString
 
 object DrawSequent {
 
@@ -226,19 +227,6 @@ object DrawSequent {
         "(" + formulaToLatexString(args.head, false) + nameToLatexString(name.toString) + formulaToLatexString(args.last, false) + ")"
       else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, false)).mkString("(",",",")")}
     case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v, false) + """.""" + formulaToLatexString(s, false) + ")"
-  }
-
-  // Add more unicode symbols if necessary
-  def nameToLatexString(name: String) = name match {
-    case "~" => """ \sim """
-    case "∈" => """ \in """
-    case "ν" => """ \nu """
-    case "⊆" => """ \subseteq """
-    case "∪" => """ \cup """
-    case "∩" => """ \cap """
-    case "≤" => """ \leq """
-    case _ => //if (!name.matches("""[\w]*|[+]|[=]|[*]|[<]|[>]""")) println(name)
-      name
   }
 
   def parseIntegerTerm( t: IntegerTerm, n: Int) : String = t match {
