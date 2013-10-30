@@ -1,0 +1,11 @@
+Total number of proofs: 2819
+Total number of proofs processed: 2819
+Total number of proofs compressed: 161
+Time limit exceeded or exception during parsing: 0
+Exception during cut-introduction: 1968
+Out of memory during cut-introduction: 0
+Stack overflow during cut-introduction: 2
+Error during rule counting: 0
+The rest of the proofs probably exceeded the time limit during cut-introduction.
+Average compression rate of quantifier rules: 0.11180124223602485
+Average compression rate: 0.4409937888198758
