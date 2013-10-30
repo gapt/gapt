@@ -160,62 +160,72 @@ object DrawSequent {
     s
   }
 
-  def formulaToLatexString(t: LambdaExpression): String = t match {
-    case Neg(f) => """\neg """ + formulaToLatexString(f)
-    case And(f1,f2) => "(" + formulaToLatexString(f1) + """ \wedge """ + formulaToLatexString(f2) + ")"
-    case Or(f1,f2) => "(" + formulaToLatexString(f1) + """ \vee """ + formulaToLatexString(f2) + ")"
-    case Imp(f1,f2) => "(" + formulaToLatexString(f1) + """ \supset """ + formulaToLatexString(f2) + ")"
+  def formulaToLatexString(t: LambdaExpression, outermost : Boolean=true): String = t match {
+    case Neg(f) => """\neg """ + formulaToLatexString(f, false)
+    case And(f1,f2) => "(" + formulaToLatexString(f1, false) + """ \wedge """ + formulaToLatexString(f2, false) + ")"
+    case Or(f1,f2) => "(" + formulaToLatexString(f1, false) + """ \vee """ + formulaToLatexString(f2, false) + ")"
+    case Imp(f1,f2) => "(" + formulaToLatexString(f1, false) + """ \supset """ + formulaToLatexString(f2, false) + ")"
     case ExVar(v, f) => {
       if (v.exptype == ind->ind)
-        "(" + """\exists^{hyp} """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+        "(" + """\exists^{hyp} """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
       else
-        "(" + """\exists """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+        "(" + """\exists """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
     }
     case AllVar(v, f) => {
       if (v.exptype == ind->ind)
-        "(" + """\forall^{hyp} """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+        "(" + """\forall^{hyp} """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
       else
-        "(" + """\forall """ + formulaToLatexString(v) + """)""" + formulaToLatexString(f)
+        "(" + """\forall """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
     }
     case BigAnd(v, formula, init, end) =>
-      """ \bigwedge_{ """ + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
+      """ \bigwedge_{ """ + formulaToLatexString(v, false) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end, false) + "}" + formulaToLatexString(formula, false)
     case BigOr(v, formula, init, end) =>
-      """ \bigvee_{ """ + formulaToLatexString(v) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end) + "}" + formulaToLatexString(formula)
+      """ \bigvee_{ """ + formulaToLatexString(v, false) + "=" + formulaToLatexString(init, false) + "}^{" + formulaToLatexString(end, false) + "}" + formulaToLatexString(formula)
     case IndexedPredicate(constant, indices) if (constant != BiggerThanC) =>
       {if (constant.name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
         val cl = constant.name.asInstanceOf[ClauseSetSymbol]
-        "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
-          cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
+        "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + " | " +
+          cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
       } else if (constant.name.isInstanceOf[ProjectionSetSymbol]) { //parse pr variables to display cut-configuration.
         val pr = constant.name.asInstanceOf[ProjectionSetSymbol]
-        "pr^{" + pr.name +",(" + pr.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
-          pr.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
+        "pr^{" + pr.name +",(" + pr.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + " | " +
+          pr.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
       }  //or return the predicate symbol
-      else nameToLatexString(constant.name.toString())
+      else nameToLatexString(constant.name.toString)
       } + {if (indices.isEmpty) "" else indices.map(x => formulaToLatexString(x)).mkString("_{",",","}")}
     case t : IntegerTerm  => parseIntegerTerm(t, 0)
     case Atom(name, args) =>
-      if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
-        "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
-      else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
-    case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index) + "}"
-    case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString(vi.index) + "}"
+      if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*""")) {
+        //formats infix formulas
+        if (outermost) {
+          //if the whole formula is an infix atom, we can skip parenthesis
+          formulaToLatexString(args.head, false) + nameToLatexString(name.toString) + formulaToLatexString(args.last, false)
+        } else {
+          "(" + formulaToLatexString(args.head, false) + nameToLatexString(name.toString) + formulaToLatexString(args.last, false) + ")"
+        }
+      }
+      else {
+        //formats everything else
+        nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, false)).mkString("(",",",")")}
+      }
+    case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, false) + "}"
+    case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, false) + "}"
     case Var(name, _) => if (name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
       val cl = name.asInstanceOf[ClauseSetSymbol]
       "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
-        cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + ")}"
+        cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
     } else if (t.asInstanceOf[Var].isBound) "z_{" + t.asInstanceOf[Var].dbIndex.get + "}" // This line is added for debugging reasons!!!
       else if (t.exptype == ind->ind)
-        "\\textbf {" + name.toString() + "}"
-      else  name.toString()
+        "\\textbf {" + name.toString + "}"
+      else  name.toString
     case Function(name, args, _) =>
-      if (name.toString() == "EXP")
+      if (name.toString == "EXP")
         args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
-      else if (args.size == 1) parseNestedUnaryFunction(name.toString(), args.head, 1)
-      else if (args.size == 2 && !name.toString().matches("""[\w\p{InGreek}]*"""))
-        "(" + formulaToLatexString(args.head) + nameToLatexString(name.toString()) + formulaToLatexString(args.last) + ")"
-      else nameToLatexString(name.toString()) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x)).mkString("(",",",")")}
-    case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(s) + ")"
+      else if (args.size == 1) parseNestedUnaryFunction(name.toString, args.head, 1)
+      else if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
+        "(" + formulaToLatexString(args.head, false) + nameToLatexString(name.toString) + formulaToLatexString(args.last, false) + ")"
+      else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, false)).mkString("(",",",")")}
+    case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v, false) + """.""" + formulaToLatexString(s, false) + ")"
   }
 
   // Add more unicode symbols if necessary

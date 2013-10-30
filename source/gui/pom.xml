@@ -11,7 +11,6 @@
 
   <modules>
     <module>prooftool</module>
-<!--    <module>javaviewer</module> -->
   </modules>
 
   <packaging>pom</packaging>
