@@ -8,6 +8,7 @@ import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrence
 import java.io.{FileInputStream, InputStreamReader}
 import at.logic.calculi.slk.SchemaProofDB
 import java.io.File.separator
+import java.io.IOException
 import scala.io._
 import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
 import at.logic.language.hol.HOLAbs._
@@ -98,6 +99,9 @@ class ACNFTest extends SpecificationWithJUnit {
     }
 
     "chould correctly handle equality rules" in {
+      // checks if the execution of prover9 works ok, o.w. skips test
+      Prover9.refute(List()) must not(throwA[IOException]).orSkip
+
       def groundproj(projections: Set[LKProof], groundSubs: List[(HOLVar, HOLExpression)]): Set[LKProof] = {
         groundSubs.map(subs => projections.map(pr => renameIndexedVarInProjection(pr, subs))).flatten.toSet
       }

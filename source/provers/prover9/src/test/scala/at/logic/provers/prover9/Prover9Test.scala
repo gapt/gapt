@@ -135,6 +135,9 @@ class Prover9Test extends SpecificationWithJUnit {
       }) must beTrue
     } */
     "prove (with xx - 3) -=(a,a) | -=(a,a)." in {
+      //checks, if the execution of prover9 works (used by getRefutation2), o.w. skip test
+      Prover9.refute(box ) must not(throwA[IOException]).orSkip
+
       val eaa = parse("=(a,a)")
       val s = FSequent(List(eaa,eaa),Nil)
       (getRefutation2(List(s)) match {
@@ -255,7 +258,7 @@ class Prover9Test extends SpecificationWithJUnit {
       val result  : Option[RobinsonResolutionProof] = Prover9.refute( List(s1,t1) )
       result match {
         case Some(proof) =>
-          "" must beEqualTo( "Refutation found although clause set satisfyable!" )
+          "" must beEqualTo( "Refutation found although clause set satisfiable!" )
 
         case None => true must beEqualTo(true)
       }
@@ -265,32 +268,23 @@ class Prover9Test extends SpecificationWithJUnit {
 
   "The Prover9 interface" should {
     "successfully load the goat puzzle PUZ047+1.out" in {
-      try {
-        Prover9.parse_prover9("target" + separator + "test-classes" + separator +"PUZ047+1.out")
+        // if the execution of prooftrans does not work: skip test
+        Prover9.parse_prover9("target" + separator + "test-classes" + separator +"PUZ047+1.out") must not(throwA[IOException]).orSkip
+
         "success" must beEqualTo("success")
-      } catch {
-        case e:Exception =>
-          e.printStackTrace
-        "success" must beEqualTo(e.getMessage )
-      }
     }
 
     "successfully load the expansion proof paper example cade13example.out" in {
-      try {
-        Prover9.parse_prover9("target" + separator + "test-classes" + separator +"cade13example.out")
+        // if the execution of prooftrans does not work: skip test
+        Prover9.parse_prover9("target" + separator + "test-classes" + separator +"cade13example.out") must not(throwA[IOException]).orSkip
+
         "success" must beEqualTo("success")
-      } catch {
-        case e:Exception =>
-          e.printStackTrace
-          "success" must beEqualTo(e.getMessage )
-      }
     }
 
     "successfully load a proof with new_symbol" in {
       skipped("doesnt work with the old implementation, new one is not ready yet")
       try {
         val p = Prover9.parse_prover9("target" + separator + "test-classes" + separator +"ALG138+1.out")
-        //println("")
         Formatter.asHumanReadableString(p._1)
         "success" must beEqualTo("success")
       } catch {
