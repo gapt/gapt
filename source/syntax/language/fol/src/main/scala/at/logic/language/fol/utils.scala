@@ -157,7 +157,9 @@ object Utils {
 
   // Constructs the FOLTerm f^k(a)
   def iterateTerm( a: FOLTerm, f: ConstantStringSymbol, k: Int ) : FOLTerm =
-    if ( k == 0 ) a else Function( f, iterateTerm( a, f, k-1 )::Nil )
+    if ( k < 0 ) throw new Exception("iterateTerm called with negative iteration count")
+    else if ( k == 0 ) a
+    else Function( f, iterateTerm( a, f, k-1 )::Nil )
 
   // Constructs the FOLTerm s^k(0)
   def numeral( k: Int ) = iterateTerm( FOLConst( ConstantStringSymbol( "0" )), ConstantStringSymbol( "s" ), k )
