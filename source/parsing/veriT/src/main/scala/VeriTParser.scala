@@ -336,7 +336,7 @@ object VeriTParser extends RegexParsers {
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
   def proof : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
     case pp ~ r => 
-      
+     
       val input = pp.last
       val axioms = r.flatten
       
@@ -399,12 +399,15 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances(c)
   }
 
-  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or
+  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | or_pos | and_neg | not_and
   // Rules that I don't care
   def resolution : Parser[List[Instances]] = "resolution" ~> premises <~ conclusion
   def and : Parser[List[Instances]] = "and" ~> premises <~ conclusion
   def and_pos : Parser[List[Instances]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
   def or : Parser[List[Instances]] = "or" ~> premises <~ conclusion
+  def or_pos : Parser[List[Instances]] = "or_pos" ~> conclusion ^^ { case _ => Nil }
+  def and_neg : Parser[List[Instances]] = "and_neg" ~> conclusion ^^ { case _ => Nil }
+  def not_and : Parser[List[Instances]] = "not_and" ~> premises <~ conclusion
   
   // I don't care about premises. I only use the leaves
   def premises : Parser[List[Instances]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
@@ -440,12 +443,18 @@ object VeriTParser extends RegexParsers {
   // (let (v1 t1) ... (vn tn) exp)
   // which is equivalent to the lambda-expression:
   // (\lambda v1 ... vn exp) t1 ... tn
+  // But we are not constructing the terms for now, first because we don't need 
+  // it and second because the garbage collector goes crazy and crashes while
+  // constructing this huge lambda-term
   def let : Parser[FOLFormula] = "(" ~> "let" ~> "(" ~> rep(binding) ~ ")" ~ expression <~ ")" ^^ {
-    case bLst ~ ")" ~ f => 
+    case _ => Or(List())
+    /*
+    case bLst ~ ")" ~ f =>
     val lambda_exp = bLst.foldRight(f) {
       case ((v, t), exp) => App(Abs(v.asInstanceOf[FOLVar], exp), t).asInstanceOf[FOLFormula]
     }
     lambda_exp
+    */
     // Do not normalize. We don't need this actually.
     //betaNormalize(lambda_exp)(StrategyOuterInner.Innermost).asInstanceOf[FOLFormula]
   }

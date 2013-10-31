@@ -27,6 +27,8 @@ object testCutIntro {
   var stack_overflow = 0
   var error_rule_count = 0
   var finished = 0
+  var timeout_cut_intro = 0
+  var timeout_parsing = 0
   // Hashmap containing proofs with non-trivial termsets
   var termsets = HashMap[String, FlatTermSet]()
   // File name -> q-rules before cut, rules before cut, q-rules after
@@ -274,11 +276,13 @@ object testCutIntro {
     bw_s.write("Out of memory during parsing: " + error_parser_OOM + "\n")
     bw_s.write("Stack overflow during parsing: " + error_parser_SO + "\n")
     bw_s.write("Other exception during parsing: " + error_parser_other + "\n\n")
+    bw_s.write("Timeout during parsing: " + timeout_parsing + "\n\n")
     
     bw_s.write("Out of memory during cut-introduction: " + out_of_memory + "\n")
     bw_s.write("Stack overflow during cut-introduction: " + stack_overflow + "\n")
     bw_s.write("Error during rule counting: " + error_rule_count + "\n")
     bw_s.write("Other exception during cut-introduction: " + error_cut_intro + "\n\n")
+    bw_s.write("Timeout during cut-introduction: " + timeout_cut_intro + "\n\n")
 
     bw_s.write("Average compression rate of quantifier rules: " + avg_compression_quant + "\n")
     //bw_s.write("Average compression rate: " + avg_compression + "\n")
@@ -293,38 +297,48 @@ object testCutIntro {
     }
     else if (file.getName.endsWith(".proof_flat")) {
       total += 1
-      TestCutIntroLogger.trace("FILE: " + file.getAbsolutePath)
-      runWithTimeout(timeout * 1000){ 
+      var exception_parsing = false
+      var exception_cut_intro = false
+      TestCutIntroLogger.trace("\nFILE: " + file.getAbsolutePath)
+      runWithTimeout(timeout * 1000){
+        TestCutIntroLogger.trace("Parsing...")
         try { loadVeriTProof(file.getAbsolutePath) }
         catch {
           case e: OutOfMemoryError =>
             error_parser_OOM += 1
+            exception_parsing = true
             TestCutIntroLogger.trace("OutOfMemory (parsing): " + e)
             throw new Exception("OutOfMemory")              
           case e: StackOverflowError => 
             error_parser_SO += 1
+            exception_parsing = true
             TestCutIntroLogger.trace("StackOverflow (parsing): " + e)
             throw new Exception("StackOverflow")
           case e: Exception =>
             error_parser_other += 1
+            exception_parsing = true
             TestCutIntroLogger.trace("Other exception (parsing): " + e)
             throw new Exception("OtherException (TLE?)")
         }
       } match {
         case Some(p) => 
           runWithTimeout(timeout * 1000){ 
+            TestCutIntroLogger.trace("Trying to introduce a cut...")
             try { cutIntro2(p) } 
             catch { 
               case e: OutOfMemoryError => 
                 out_of_memory += 1
+                exception_cut_intro = true
                 TestCutIntroLogger.trace("OutOfMemory (cut-intro): " + e)
                 throw new Exception("OutOfMemory")
               case e: StackOverflowError => 
                 stack_overflow += 1
+                exception_cut_intro = true
                 TestCutIntroLogger.trace("StackOverflow (cut-intro): " + e)
                 throw new Exception("StackOverflow")
               case e: Exception =>
                 error_cut_intro += 1
+                exception_cut_intro = true
                 TestCutIntroLogger.trace("Other exception (cut-intro): " + e)
                 throw new Exception("OtherException (not compressable? TLE?)")
             }
@@ -343,9 +357,13 @@ object testCutIntro {
                   TestCutIntroLogger.trace("Error in rule count: " + e)
                   throw new Exception("Error in rule count")
               }
-            case None => ()
+            case None => 
+              if (!exception_cut_intro) { timeout_cut_intro += 1 }
+              else exception_cut_intro = false
           }
-        case None => () 
+        case None => 
+          if (!exception_parsing) { timeout_parsing += 1 }
+          else exception_parsing = false
       }
     } 
   }

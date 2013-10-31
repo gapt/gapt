@@ -1,6 +1,5 @@
 /**
  * Cut introduction algorithm
- * 
  *
  */
 
@@ -34,6 +33,7 @@ object CutIntroduction {
   // Note: collecting data only of proofs that were compressed.
   var totalTime = -1.0
   var termExtractionTime = -1.0
+  var deltaTableTime = -1.0
   var grammarComputationTime = -1.0
   var quantRules = -1
   var numRules = -1
@@ -66,7 +66,7 @@ object CutIntroduction {
     totalTime = tn - t0
     
     CutIntro1Logger.trace(quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
+      + totalTime + ", " + termExtractionTime + ", " + deltaTableTime + ", " + grammarComputationTime + ", "
       + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
 
     finalProof
@@ -95,7 +95,7 @@ object CutIntroduction {
     totalTime = tn - t0
     
     CutIntro1Logger.trace(numRules + ", " + quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
+      + totalTime + ", " + termExtractionTime + ", " + deltaTableTime + ", " + grammarComputationTime + ", "
       + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
 
     finalProof
@@ -110,8 +110,17 @@ object CutIntroduction {
 
     println( "Size of term set: " + terms.termset.size )
 
+    // Building the delta-table
+    val eigenvariable = FOLVar(new VariableStringSymbol("α"))
+    val t3 = System.currentTimeMillis
+    val deltatable = new DeltaTable(terms.termset, eigenvariable)
+    val t4 = System.currentTimeMillis
+    deltaTableTime = t4 - t3
+
     val t1 = System.currentTimeMillis
-    val grammars = ComputeGrammars(terms)
+    val grammars = ComputeGrammars.findValidGrammars(terms.termset, deltatable, eigenvariable)
+      .sortWith((g1, g2) => g1.size < g2.size )
+      .map{ case g => g.flatterms = terms; g }
     val t2 = System.currentTimeMillis
     grammarComputationTime = t2 - t1
 
@@ -242,8 +251,17 @@ object CutIntroduction {
 
     println( "Size of term set: " + terms.termset.size )
 
+    // Building the delta-table
+    val eigenvariable = FOLVar(new VariableStringSymbol("α"))
+    val t3 = System.currentTimeMillis
+    val deltatable = new DeltaTable(terms.termset, eigenvariable)
+    val t4 = System.currentTimeMillis
+    deltaTableTime = t4 - t3
+
     val t1 = System.currentTimeMillis
-    val grammars = ComputeGrammars.apply2(terms)
+    val grammars = ComputeGrammars.findValidGrammars2(terms.termset, deltatable, eigenvariable)
+      .sortWith((g1, g2) => g1.size < g2.size )
+      .map{ case g => g.flatterms = terms; g }
     val t2 = System.currentTimeMillis
     grammarComputationTime = t2 - t1
 
