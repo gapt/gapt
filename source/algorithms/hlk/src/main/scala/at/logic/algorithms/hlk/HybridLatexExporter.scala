@@ -17,7 +17,7 @@ object HybridLatexExporter {
   def nameToLatexString(s:String, escapebrack : Boolean = true) : String = {
     val s1 = at.logic.utils.latex.nameToLatexString(s)
     //val s2 = if (escapebrack) s1.replaceAll("\\[","(").replaceAll("\\]",")") else s1
-    val s2 = s1
+    val s2 = if (s == "!=") "\\neq" else s1
     val s3 = if (s2 != "-") s2.replaceAll("-","") else s2
     s3
   }
@@ -124,7 +124,7 @@ object HybridLatexExporter {
 
     case Atom(sym, args) =>
       val str : String =
-        if (args.length == 2 && sym.toString.matches("""(<|>|\\leq|\\geq|=|!=|>=|<=)"""))
+        if (args.length == 2 && sym.toString.matches("""(<|>|\\leq|\\geq|=|>=|<=)"""))
           getFormulaString(args(0), false) +" "+nameToLatexString(sym.toString)+" "+getFormulaString(args(1))
         else
           nameToLatexString(sym.toString) + args.map(getFormulaString(_, false)).mkString("(",", ",")")
