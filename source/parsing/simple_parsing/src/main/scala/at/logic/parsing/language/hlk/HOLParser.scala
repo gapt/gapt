@@ -135,7 +135,7 @@ class HOLASTParser extends JavaTokenParsers with PackratParsers {
   lazy val atom2: PackratParser[ast.Var] = atomsymb ^^ {case x =>  ast.Var(x) }
 
   lazy val atomsymb: Parser[String] = atomregexp
-  lazy val atomregexp = """(\\?)([a-zA-Z0-9']+([_^](\{[a-zA-Z0-9']+\})?)*)+""".r
+  lazy val atomregexp = """(\\?)([a-zA-Z0-9']+([_^](\{[a-zA-Z0-9']+\})?)*(\[[a-zA-Z0-9']+\])*)+""".r
 
   lazy val topbottom: PackratParser[LambdaAST] = "$" ~> ( "T" ^^ (x=> ast.Top()) | "F" ^^ (x =>  ast.Bottom()) )
 

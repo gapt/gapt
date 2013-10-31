@@ -285,6 +285,8 @@ trait TokenToLKConverter {
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
         case "ORL" =>
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+        case "IMPL" =>
+          proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
         // --- unary rules ---
         case "ORR" =>
           proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
