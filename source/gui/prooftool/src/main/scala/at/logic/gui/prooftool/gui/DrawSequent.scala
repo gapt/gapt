@@ -103,7 +103,7 @@ object DrawSequent {
     yLayoutAlignment = 0.5
 
     val latexText = ls
-    val formula = new TeXFormula(ls)
+    val formula = try { new TeXFormula(ls) } catch { case e: Exception => throw new Exception("Could not create formula "+ls+": "+e.getMessage,e)}
     val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, ft.getSize)
     val myimage = new BufferedImage(myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB)
     val g2 = myimage.createGraphics()
@@ -196,13 +196,13 @@ object DrawSequent {
       } + {if (indices.isEmpty) "" else indices.map(x => formulaToLatexString(x)).mkString("_{",",","}")}
     case t : IntegerTerm  => parseIntegerTerm(t, 0)
     case Atom(name, args) =>
-      if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*""")) {
+      if (args.size == 2 &&  name.toString.matches("""(=|!=|\\neq|<|>|\\leq|\\geq|\\in|\+|-|\*|/)""")) { //!name.toString.matches("""[\w\p{InGreek}]*""")) {
         //formats infix formulas
         if (outermost) {
           //if the whole formula is an infix atom, we can skip parenthesis
-          formulaToLatexString(args.head, false) + nameToLatexString(name.toString) + formulaToLatexString(args.last, false)
+          formulaToLatexString(args.head, false) + " "+ nameToLatexString(name.toString) +" "+ formulaToLatexString(args.last, false)
         } else {
-          "(" + formulaToLatexString(args.head, false) + nameToLatexString(name.toString) + formulaToLatexString(args.last, false) + ")"
+          "(" + formulaToLatexString(args.head, false) +" "+ nameToLatexString(name.toString) +" "+ formulaToLatexString(args.last, false) + ")"
         }
       }
       else {
@@ -223,8 +223,8 @@ object DrawSequent {
       if (name.toString == "EXP")
         args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
       else if (args.size == 1) parseNestedUnaryFunction(name.toString, args.head, 1)
-      else if (args.size == 2 && !name.toString.matches("""[\w\p{InGreek}]*"""))
-        "(" + formulaToLatexString(args.head, false) + nameToLatexString(name.toString) + formulaToLatexString(args.last, false) + ")"
+      else if (args.size == 2 && name.toString.matches("""(=|!=|\\neq|<|>|\\leq|\\geq|\\in|\+|-|\*|/)"""))  //!name.toString.matches("""[\w\p{InGreek}]*"""))
+        "(" + formulaToLatexString(args.head, false) + " "+ nameToLatexString(name.toString) +" " + formulaToLatexString(args.last, false) + ")"
       else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, false)).mkString("(",",",")")}
     case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v, false) + """.""" + formulaToLatexString(s, false) + ")"
   }
