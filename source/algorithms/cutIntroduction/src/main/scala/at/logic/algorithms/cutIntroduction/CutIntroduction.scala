@@ -19,115 +19,41 @@ import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.interpolation._
 import at.logic.algorithms.resolution._
 import at.logic.calculi.expansionTrees.{ExpansionTree, toSequent, quantRulesNumber => quantRulesNumberET}
-import at.logic.utils.logging.Logger
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 
 class CutIntroException(msg: String) extends Exception(msg)
+class CutIntroUncompressibleException(msg: String) extends CutIntroException(msg)
 
-// Logging old and new implementations in different files.
-object CutIntro1Logger extends Logger
-object CutIntro2Logger extends Logger
+/**
+ * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
+ * In practice it does happen if the method used for searching a proof covers a too
+ * weak theory (e.g. no equality) or is not complete.
+ **/
+class CutIntroEHSUnprovableException(msg: String) extends CutIntroException(msg)
 
 object CutIntroduction {
-  
-  // For experiments:
-  // Note: collecting data only of proofs that were compressed.
-  var totalTime = -1.0
-  var termExtractionTime = -1.0
-  var deltaTableTime = -1.0
-  var grammarComputationTime = -1.0
-  var quantRules = -1
-  var numRules = -1
-  var termSetSize = -1
-  var minGrammars = -1
-  // This list has the size of the variable minGrammars
-  var improvSol_proofBuild = List[(Long, Long)]()
-  
-  /************************ 1st Cut-Introduction ***************************/
 
+  def apply(proof: LKProof) : LKProof = apply( extractExpansionTrees( proof ))
+
+  /**
+   * cut-introduction algorithm (stable version)
+   **/
   def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
-   
-    improvSol_proofBuild = Nil
-
-    val t0 = System.currentTimeMillis
-    quantRules = quantRulesNumberET(ep)
-
     val endSequent = toSequent(ep)
     println("\nEnd sequent: " + endSequent)
     
-    // Extract the terms used to instantiate each formula
-    val t1 = System.currentTimeMillis
-    val termsTuples = TermsExtraction(ep)
-    val t2 = System.currentTimeMillis
-    termExtractionTime = t2 - t1
-
-    val finalProof = apply_(endSequent, termsTuples)
-
-    val tn = System.currentTimeMillis
-    totalTime = tn - t0
-    
-    CutIntro1Logger.trace(quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + deltaTableTime + ", " + grammarComputationTime + ", "
-      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
-
-    finalProof
-  }
-
-  def apply(proof: LKProof) : LKProof = {
-    
-    improvSol_proofBuild = Nil
-
-    val t0 = System.currentTimeMillis
-    quantRules = quantRulesNumber(proof)
-    numRules = rulesNumber(proof)
-    
-    val endSequent = proof.root
-    println("\nEnd sequent: " + endSequent)
-    
-    // Extract the terms used to instantiate each formula
-    val t1 = System.currentTimeMillis
-    val termsTuples = TermsExtraction(proof)
-    val t2 = System.currentTimeMillis
-    termExtractionTime = t2 - t1
-    
-    val finalProof = apply_(endSequent, termsTuples)
-    
-    val tn = System.currentTimeMillis
-    totalTime = tn - t0
-    
-    CutIntro1Logger.trace(numRules + ", " + quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + deltaTableTime + ", " + grammarComputationTime + ", "
-      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
-
-    finalProof
-  }
-
-  def apply_(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]]) : LKProof = {
-
     // Assign a fresh function symbol to each quantified formula in order to
     // transform tuples into terms.
+    val termsTuples = TermsExtraction(ep)
     val terms = new FlatTermSet(termsTuples)
-    termSetSize = terms.termset.size
-
     println( "Size of term set: " + terms.termset.size )
 
-    // Building the delta-table
-    val eigenvariable = FOLVar(new VariableStringSymbol("α"))
-    val t3 = System.currentTimeMillis
-    val deltatable = new DeltaTable(terms.termset, eigenvariable)
-    val t4 = System.currentTimeMillis
-    deltaTableTime = t4 - t3
-
-    val t1 = System.currentTimeMillis
-    val grammars = ComputeGrammars.findValidGrammars(terms.termset, deltatable, eigenvariable)
-      .sortWith((g1, g2) => g1.size < g2.size )
-      .map{ case g => g.flatterms = terms; g }
-    val t2 = System.currentTimeMillis
-    grammarComputationTime = t2 - t1
+    val grammars = ComputeGrammars(terms)
 
     println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
-      throw new CutIntroException("\nNo grammars found." + 
+      throw new CutIntroUncompressibleException("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier.\n")
     }
 
@@ -137,18 +63,13 @@ object CutIntroduction {
 
     println( "Smallest grammar-size: " + smallest )
     println( "Number of smallest grammars: " + smallestGrammars.length )
-    minGrammars = smallestGrammars.length
 
-    // Build a proof from each of the smallest grammars
+    // maps a grammar to a proof and a corresponding extended Herbrand-sequent
     def buildProof(grammar:Grammar) = {
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-
-      val t1 = System.currentTimeMillis
       val ehs1 = MinimizeSolution(ehs)
-      val t2 = System.currentTimeMillis
-      val improvSol = t2 - t1
 
       // TODO Uncomment when fixed.
       // Call interpolant before or after minimization??
@@ -156,18 +77,13 @@ object CutIntroduction {
       //val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
       //val ehs2 = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula)
 
-      val t3 = System.currentTimeMillis
-      val proof = buildFinalProof(ehs1)
-      val t4 = System.currentTimeMillis
-      val proofBuild = t4 - t3
-
-      if (proof.isDefined) { 
-        improvSol_proofBuild = improvSol_proofBuild :+ (improvSol, proofBuild)
-        Some((proof.get,ehs1)) 
-      } else { None }
+      val proof = buildProofWithCut(ehs1)
+      val final_proof = CleanStructuralRules( proof )
+ 
+      ( final_proof, ehs1 )
     }
 
-    val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
+    val proofs = smallestGrammars.map(buildProof)
 
     // Sort the list by size of proofs
     val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
@@ -181,94 +97,47 @@ object CutIntroduction {
     smallestProof
   }
 
-  /************************ 2nd Cut-Introduction ***************************/
+  /**
+   * Experimental implementation of cut-introduction algorithm
+   *
+   * @return a pair ( p: LKProof, s: String ) where s is a logging string
+   * with quantitative data, see testing/resultsCutIntro/stats.ods ('format' sheet)
+   * for details.
+   **/
+  def applyExp(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : ( LKProof , String )= {
+    var log = ""
 
-  // Uses findValidGrammar2 and minimizeSolution2 (optimized)
- 
-  def apply2(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
+    var SolutionCTime: Long = 0
+    var ProofBuildingCTime: Long = 0
+    var CleanStructuralRulesCTime:Long = 0
     
-    improvSol_proofBuild = Nil
+    log += ", " + quantRulesNumberET(ep) // log #qnodes
 
-    val t0 = System.currentTimeMillis
-    quantRules = quantRulesNumberET(ep)
-    
     val endSequent = toSequent(ep)
     println("\nEnd sequent: " + endSequent)
     
-    // Extract the terms used to instantiate each formula
+    // generate term set
     val t1 = System.currentTimeMillis
     val termsTuples = TermsExtraction(ep)
-    val t2 = System.currentTimeMillis
-    termExtractionTime = t2 - t1
-    
-    val finalProof = apply2_(endSequent, termsTuples)
-
-    val tn = System.currentTimeMillis
-    totalTime = tn - t0
-    
-    CutIntro2Logger.trace(quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
-      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
-
-    finalProof
-  }
-
-  def apply2(proof: LKProof) : LKProof = {
-    
-    improvSol_proofBuild = Nil
-
-    val t0 = System.currentTimeMillis
-    quantRules = quantRulesNumber(proof)
-    numRules = rulesNumber(proof)
-    
-    val endSequent = proof.root
-    println("\nEnd sequent: " + endSequent)
-
-    // Extract the terms used to instantiate each formula
-    val t1 = System.currentTimeMillis
-    val termsTuples = TermsExtraction(proof)
-    val t2 = System.currentTimeMillis
-    termExtractionTime = t2 - t1
-    
-    val finalProof = apply2_(endSequent, termsTuples)
-    
-    val tn = System.currentTimeMillis
-    totalTime = tn - t0
-    
-    CutIntro2Logger.trace(numRules + ", " + quantRules + ", " + termSetSize +  ", " + minGrammars + ", "
-      + totalTime + ", " + termExtractionTime + ", " + grammarComputationTime + ", "
-      + improvSol_proofBuild.foldLeft("")((acc, t) => t._1 + ", " + t._2 + ", " + acc) )
-
-    finalProof
-  }
-
-  def apply2_(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]]) : LKProof = {
-
-    // Assign a fresh function symbol to each quantified formula in order to
-    // transform tuples into terms.
     val terms = new FlatTermSet(termsTuples)
-    termSetSize = terms.termset.size
-
+    val t2 = System.currentTimeMillis
+    log += ", " + (t2 - t1) + ", " + terms.termset.size // log tstime, tssize
     println( "Size of term set: " + terms.termset.size )
 
-    // Building the delta-table
-    val eigenvariable = FOLVar(new VariableStringSymbol("α"))
+    // compute grammars
     val t3 = System.currentTimeMillis
+    val eigenvariable = FOLVar(new VariableStringSymbol("α"))
     val deltatable = new DeltaTable(terms.termset, eigenvariable)
     val t4 = System.currentTimeMillis
-    deltaTableTime = t4 - t3
-
-    val t1 = System.currentTimeMillis
-    val grammars = ComputeGrammars.findValidGrammars2(terms.termset, deltatable, eigenvariable)
-      .sortWith((g1, g2) => g1.size < g2.size )
-      .map{ case g => g.flatterms = terms; g }
-    val t2 = System.currentTimeMillis
-    grammarComputationTime = t2 - t1
+    val gs = ComputeGrammars.findValidGrammars2(terms.termset, deltatable, eigenvariable)
+    val grammars = gs.map{ case g => g.flatterms = terms; g }.sortWith((g1, g2) => g1.size < g2.size )
+    val t5 = System.currentTimeMillis
+    log += ", " + (t4 - t3) + ", " + (t5 - t4) // log dtgtime, dtrtime
 
     println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
-      throw new CutIntroException("\nNo grammars found." + 
+      throw new CutIntroUncompressibleException("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier.\n")
     }
 
@@ -278,37 +147,32 @@ object CutIntroduction {
 
     println( "Smallest grammar-size: " + smallest )
     println( "Number of smallest grammars: " + smallestGrammars.length )
-    minGrammars = smallestGrammars.length
+
+    log += ", " + smallest + ", " + smallestGrammars.length // mgsize, #mg
 
     // Build a proof from each of the smallest grammars
     def buildProof(grammar:Grammar) = {
-
+      val t1 = System.currentTimeMillis
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-      
-      val t1 = System.currentTimeMillis
       val ehs1 = MinimizeSolution.apply2(ehs)
       val t2 = System.currentTimeMillis
-      val improvSol = t2 - t1
+      SolutionCTime += t2 - t1
    
-      // TODO Uncomment when fixed.
-      // Call interpolant before or after minimization??
-      //val interpolant = computeInterpolant(ehs1, grammar.s)
-      //val cutFormula = AllVar(xvar, And(conj, interpolant))
-      //val ehs2 = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula)
-    
+      val proof = buildProofWithCut(ehs1)
       val t3 = System.currentTimeMillis
-      val proof = buildFinalProof(ehs1)
-      val t4 = System.currentTimeMillis
-      val proofBuild = t4 - t3
+      ProofBuildingCTime += t3 - t2
       
-      if (proof.isDefined) { 
-        improvSol_proofBuild = improvSol_proofBuild :+ (improvSol, proofBuild)
-        Some((proof.get,ehs1)) 
-      } else { None }
+      val pruned_proof = CleanStructuralRules( proof )
+      val t4 = System.currentTimeMillis
+      CleanStructuralRulesCTime += t4 - t3
+
+      ( pruned_proof, ehs1 )
     }
 
-    val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
+    val proofs = smallestGrammars.map(buildProof)
+
+    log += ", " + SolutionCTime + ", " + ProofBuildingCTime + ", " + CleanStructuralRulesCTime // log sctime, pbctime, csrctime
 
     // Sort the list by size of proofs
     val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
@@ -318,8 +182,11 @@ object CutIntroduction {
 
     println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
-    smallestProof
+    log += ", " + rulesNumber( smallestProof ) + ", " + quantRulesNumber( smallestProof ) // log #infc, #qinfc
+
+    ( smallestProof, log )
   }
+
 
   /************************ Helper functions *********************/
 
@@ -353,7 +220,6 @@ object CutIntroduction {
 
   // seq is not used? What the hell???
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
-   
     val flatterms = g.flatterms
 
     val xvar = FOLVar(new VariableStringSymbol("x"))
@@ -373,7 +239,8 @@ object CutIntroduction {
     AllVar(xvar, And(xFormulas))
   }
 
-  def buildFinalProof(ehs: ExtendedHerbrandSequent) : Option[LKProof] = {
+  /// build a proof with cut from an extended herbrand sequent
+  def buildProofWithCut(ehs: ExtendedHerbrandSequent) : LKProof = {
 
     val endSequent = ehs.endSequent
     val cutFormula = ehs.cutFormula
@@ -390,13 +257,13 @@ object CutIntroduction {
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
         ForallRightRule(uPart(grammar.u.filter(t => t.freeVariables.contains(grammar.eigenvariable)), proofLeft1, flatterms), cutLeft, cutFormula, alpha)
-      case None => throw new CutIntroException("ERROR: propositional part is not provable.")
+      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable.")
     }
 
     val proofRight = solvePropositional(FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     val rightBranch = proofRight match {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
-      case None => throw new CutIntroException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
+      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     }
 
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
@@ -413,9 +280,9 @@ object CutIntroduction {
     }
 
     // Instantiating constant terms from U
-    val finalProof = uPart(grammar.u.filter(t => !t.freeVariables.contains(grammar.eigenvariable)), contractSucc, flatterms)
+    val proof = uPart(grammar.u.filter(t => !t.freeVariables.contains(grammar.eigenvariable)), contractSucc, flatterms)
 
-    Some(CleanStructuralRules(finalProof))
+    proof
   }
 
   // Both methods bellow are responsible for generating the instances of 

@@ -97,7 +97,7 @@ object CutIntroductionG extends Logger {
 
     if(grammars.length == 0) {
       println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress.")
-      throw new CutIntroException("\nNo grammars found." + 
+      throw new CutIntroUncompressibleException("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier block.\n")
     }
 
@@ -270,13 +270,13 @@ object CutIntroductionG extends Logger {
         //Add sequents to all-quantify the cut formula in the right part of s1
         ForallRightBlock(s1, cutFormula, alphas)
 
-      case None => throw new CutIntroException("ERROR: propositional part is not provable.")
+      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable.")
     }
 
     val proofRight = solvePropositional(FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     val rightBranch = proofRight match {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
-      case None => throw new CutIntroException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
+      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     }
     //trace( "done calling solvePropositional" )
 

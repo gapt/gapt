@@ -3,17 +3,29 @@ import scala.io.Source
 import scala.collection.immutable.HashMap
 import org.slf4j.LoggerFactory
 
+import at.logic.calculi.expansionTrees.ExpansionTree
+import at.logic.algorithms.cutIntroduction.{CutIntroduction,CutIntroUncompressibleException,CutIntroEHSUnprovableException}
+
 /**********
  * test script for the cut-introduction algorithm on output proofs from prover9,
+ * veriT and example proof sequences.
  * usage example from CLI:
  *
  * scala> :load ../testing/testCutIntro.scala
  * scala> testCutIntro.findNonTrivialTSTPExamples( "../testing/prover9-TSTP/", 60 )
  * scala> testCutIntro.compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60 )
- * scala> testCutIntro.compressVeriT("../testing/veriT-SMT-LIB/QF_UF/", 300)
+ * scala> testCutIntro.compressVeriT( "../testing/veriT-SMT-LIB/QF_UF/", 60 )
+ * scala> testCutIntro.compressProofSequences( 60 )
  **********/
 
 val TestCutIntroLogger = LoggerFactory.getLogger("TestCutIntroLogger$")
+val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
+
+class TimeOutException extends Exception
+
+// for testCutIntro.compressProofSequences
+:load ../examples/ProofSequences.scala
+
 
 object testCutIntro {
   var total = 0
@@ -27,8 +39,6 @@ object testCutIntro {
   var stack_overflow = 0
   var error_rule_count = 0
   var finished = 0
-  var timeout_cut_intro = 0
-  var timeout_parsing = 0
   // Hashmap containing proofs with non-trivial termsets
   var termsets = HashMap[String, FlatTermSet]()
   // File name -> q-rules before cut, rules before cut, q-rules after
@@ -50,7 +60,12 @@ object testCutIntro {
     println("Parses and compress the proofs from the VeriT library. " + 
       "The results are in resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed.csv and resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed_summary.txt")
     println("scala> testCutIntro.compressVeriT(\"../testing/veriT-SMT-LIB/QF_UF/\", 60)")
+    println()
+    println("Compress proofs from ../examples/ProofSequences.scala")
+    println("scala> testCutIntro.compressProofSequences(60)")
   }
+
+  /************** finding non-trival prover9-TSTP proofs **********************/
 
   def findNonTrivialTSTPExamples ( str : String, timeout : Int) = {
     
@@ -125,8 +140,8 @@ object testCutIntro {
     }       
   }
 
-  // Compress the proofs that are in the csv file passed as a parameter
-  def compressTSTP(str: String, timeout: Int) = {
+  // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
+  def compressTSTP( str: String, timeout: Int ) = {
     
     TestCutIntroLogger.trace("================ Compressing non-trivial TSTP examples ===============")
     
@@ -138,9 +153,10 @@ object testCutIntro {
       number += 1
       val data = l.split(",")
       TestCutIntroLogger.trace("Processing proof number: " + number)
-      compressProof(data(0), timeout)
+      compressTSTPProof(data(0), timeout)
     }
    
+/* old stats output
     // Write results
     val file = new File("../testing/resultsCutIntro/pleaseChangeToTheRightRevisionNumber/tstp_compressed.csv")
     val summary = new File("../testing/resultsCutIntro/pleaseChangeToTheRightRevisionNumber/tstp_compressed_summary.txt")
@@ -185,60 +201,127 @@ object testCutIntro {
     bw_s.write("Average compression rate of quantifier rules: " + avg_compression_quant + "\n")
     bw_s.write("Average compression rate: " + avg_compression + "\n")
     bw_s.close()
-
+*/
   }
-  def compressProof(str: String, timeout: Int) = {
-    TestCutIntroLogger.trace("FILE: " + str)
-    val file = new File(str.trim)
+
+  /// compress the prover9-TSTP proof found in file fn
+  def compressTSTPProof( fn: String, timeout: Int ) = {
+    var log_ptime_ninfcf_nqinfcf = ""
+    var parsing_status = "ok"
+    var cutintro_status = "ok"
+    var cutintro_logline = ""
+
+    TestCutIntroLogger.trace( "FILE: " + fn )
+
+    val file = new File(fn.trim)
     if (file.getName.endsWith(".out")) {
-      total += 1
-      runWithTimeout(timeout * 1000){ loadProver9LKProof(file.getAbsolutePath) } match {
-        case Some(p) => 
-          runWithTimeout(timeout * 1000){ 
-            try { cutIntro2(p) } 
-            catch { 
-              case e: OutOfMemoryError => 
-                out_of_memory += 1
-                TestCutIntroLogger.trace("OutOfMemory: " + e)
-                throw new Exception("OutOfMemory")
-              case e: StackOverflowError => 
-                stack_overflow += 1
-                TestCutIntroLogger.trace("StackOverflow: " + e)
-                throw new Exception("StackOverflow")
-              case e: Exception => 
-                error_cut_intro += 1
-                TestCutIntroLogger.trace("Other exception: " + e)
-                throw new Exception("OtherException")
-            }
-          } match {
-            case Some(p_cut) =>
-              try {
-                val i1 = quantRulesNumber(p)
-                val i2 = rulesNumber(p)
-                val i3 = quantRulesNumber(p_cut)
-                val i4 = rulesNumber(p_cut)
-                finished += 1
-                rulesInfo += (str -> ( i1, i2, i3, i4 )) 
-              } catch {
-                case e: Exception => 
-                  error_rule_count += 1
-                  TestCutIntroLogger.trace("Error in rule count: " + e)
-                  throw new Exception("Error in rule count")
-              }
-            case None => ()
-          }
-        case None => 
-          TestCutIntroLogger.trace("Error in parsing.")
-          error_parser += 1
+      try { withTimeout( timeout * 1000 ) {
+        val t0 = System.currentTimeMillis
+        val p = loadProver9LKProof( file.getAbsolutePath )
+        val ep = extractExpansionTrees( p )
+        val t1 = System.currentTimeMillis
+        
+        log_ptime_ninfcf_nqinfcf = ", " + (t1 - t0) + ", " + rulesNumber(p) + ", " + quantRulesNumber(p) // log ptime, #infcf, #qinfcf
+
+        val r = compressExpansionProof( ep, timeout )
+        cutintro_status = r._1
+        cutintro_logline = r._2
+      } } catch {
+        case e: TimeOutException =>
+          TestCutIntroLogger.trace("Parsing: Timeout")
+          parsing_status = "parsing_timeout"
+        case e: OutOfMemoryError =>
+          TestCutIntroLogger.trace("Parsing: OutOfMemory: " + e)
+          parsing_status = "parsing_out_of_memory"
+        case e: StackOverflowError =>
+          TestCutIntroLogger.trace("Parsing: StackOverflow: " + e)
+          parsing_status = "parsing_stack_overflow"
+        case e: Exception =>
+          TestCutIntroLogger.trace("Parsing: Other exception: " + e)
+          parsing_status = "parsing_other_exception"
+      }
+
+      if ( parsing_status == "ok" ) {
+        if ( cutintro_status == "ok" ) {
+          CutIntroDataLogger.trace( fn + ", ok" + log_ptime_ninfcf_nqinfcf + cutintro_logline )
+        }
+        else {
+          CutIntroDataLogger.trace( fn + ", " + cutintro_status )
+        }
+      }
+      else {
+        CutIntroDataLogger.trace( fn + ", " + parsing_status )
       }
     }
   }
 
-  def compressVeriT( str : String, timeout : Int) = {
+  /****************************** VeriT SMT-LIB ******************************/
 
+  /// compress all veriT-proof found recursively in the directory str
+  def compressVeriT( str : String, timeout : Int ) = {
     TestCutIntroLogger.trace("================ Compressing VeriT proofs ===============")
-    
-    processVeriT(str, timeout)
+    recCompressVeriT( str, timeout )
+  }
+
+  def recCompressVeriT( str : String, timeout : Int ): Unit = {
+    val file = new File( str )
+    if (file.isDirectory) {
+      val children = file.listFiles
+      children.foreach( f => recCompressVeriT( f.getPath, timeout ))
+    }
+    else if (file.getName.endsWith(".proof_flat")) {
+      compressVeriTProof( file.getPath, timeout )
+    }
+  }
+
+  /// compress the veriT-proof str
+  def compressVeriTProof( str: String, timeout: Int ) {
+    var parsing_status = "ok"
+    var cutintro_status = "ok"
+    var cutintro_logline = ""
+    var log_ptime_ninfcf_nqinfcf = ""
+
+    TestCutIntroLogger.trace("FILE: " + str)
+
+    try { withTimeout( timeout * 1000 ) {
+      val t0 = System.currentTimeMillis
+      val ep = loadVeriTProof( str )
+      val t1 = System.currentTimeMillis
+
+      log_ptime_ninfcf_nqinfcf = ", " + (t1 - t0) + ", n/a, n/a" // log ptime, #infcf, #qinfcf
+
+      val r = compressExpansionProof( ep, timeout )
+      cutintro_status = r._1
+      cutintro_logline = r._2
+    } } catch {
+      case e: TimeOutException =>
+        TestCutIntroLogger.trace("Parsing: Timeout")
+        parsing_status = "parsing_timeout"
+      case e: OutOfMemoryError =>
+        TestCutIntroLogger.trace("Parsing: OutOfMemory: " + e)
+        parsing_status = "parsing_out_of_memory"
+      case e: StackOverflowError => 
+        TestCutIntroLogger.trace("Parsing: StackOverflow: " + e)
+        parsing_status = "parsing_stack_overflow"
+      case e: Exception =>
+        TestCutIntroLogger.trace("Parsing: Other exception: " + e)
+        parsing_status = "parsing_other_exception"
+    }
+
+    if ( parsing_status == "ok" ) {
+      if ( cutintro_status == "ok" ) {
+        CutIntroDataLogger.trace( str + ", ok" + log_ptime_ninfcf_nqinfcf + cutintro_logline )
+      }
+      else {
+        CutIntroDataLogger.trace( str + ", " + cutintro_status )
+      }
+    }
+    else {
+      CutIntroDataLogger.trace( str + ", " + parsing_status )
+    }
+  }
+
+/* old stats output
     val file = new File("../testing/resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed.csv")
     val summary = new File("../testing/resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed_summary.txt")
     file.createNewFile()
@@ -276,97 +359,174 @@ object testCutIntro {
     bw_s.write("Out of memory during parsing: " + error_parser_OOM + "\n")
     bw_s.write("Stack overflow during parsing: " + error_parser_SO + "\n")
     bw_s.write("Other exception during parsing: " + error_parser_other + "\n\n")
-    bw_s.write("Timeout during parsing: " + timeout_parsing + "\n\n")
     
     bw_s.write("Out of memory during cut-introduction: " + out_of_memory + "\n")
     bw_s.write("Stack overflow during cut-introduction: " + stack_overflow + "\n")
     bw_s.write("Error during rule counting: " + error_rule_count + "\n")
     bw_s.write("Other exception during cut-introduction: " + error_cut_intro + "\n\n")
-    bw_s.write("Timeout during cut-introduction: " + timeout_cut_intro + "\n\n")
 
     bw_s.write("Average compression rate of quantifier rules: " + avg_compression_quant + "\n")
     //bw_s.write("Average compression rate: " + avg_compression + "\n")
     bw_s.close()
+*/
+
+
+  /***************************** Proof Sequences ******************************/
+
+  def compressProofSequences( timeout: Int ) {
+    TestCutIntroLogger.trace("================ Compressing proof sequences ===============")
+
+    for ( i <- 1 to 12 ) {
+      val pn = "LinearExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, LinearExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 10 ) {
+      val pn = "SquareDiagonalExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, SquareDiagonalExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 8 ) {
+      val pn = "SquareEdgesExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, SquareEdgesExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 9 ) {
+      val pn = "SquareEdges2DimExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, SquareEdges2DimExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 10 ) {
+      val pn = "LinearEqExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, LinearEqExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 5 ) {
+      val pn = "SumOfOnesF2ExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, SumOfOnesF2ExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 5 ) {
+      val pn = "SumOfOnesFExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, SumOfOnesFExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 6 ) {
+      val pn = "SumOfOnesExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, SumOfOnesExampleProof( i ), timeout )
+    }
+
+    for ( i <- 1 to 2 ) {
+      val pn = "UniformAssociativity3ExampleProof(" + i + ")"
+      TestCutIntroLogger.trace( "PROOF: " + pn )
+      compressLKProof( pn, UniformAssociativity3ExampleProof( i ), timeout )
+    }
 
   }
-  def processVeriT(str: String, timeout: Int) : Unit = {
-    val file = new File(str)
-    if (file.isDirectory) {
-      val children = file.listFiles
-      children.foreach(f => processVeriT(f.getAbsolutePath, timeout))
+
+  def compressLKProof( name: String, p: LKProof, timeout: Int ) = {
+    val r = compressExpansionProof( extractExpansionTrees( p ), timeout )
+    val cutintro_status = r._1
+    val cutintro_logline = r._2
+
+    if ( cutintro_status == "ok" ) {
+      CutIntroDataLogger.trace( name + ", ok, n/a, " + rulesNumber( p ) + ", " + quantRulesNumber( p ) + cutintro_logline )
     }
-    else if (file.getName.endsWith(".proof_flat")) {
-      total += 1
-      var exception_parsing = false
-      var exception_cut_intro = false
-      TestCutIntroLogger.trace("\nFILE: " + file.getAbsolutePath)
-      runWithTimeout(timeout * 1000){
-        TestCutIntroLogger.trace("Parsing...")
-        try { loadVeriTProof(file.getAbsolutePath) }
-        catch {
-          case e: OutOfMemoryError =>
-            error_parser_OOM += 1
-            exception_parsing = true
-            TestCutIntroLogger.trace("OutOfMemory (parsing): " + e)
-            throw new Exception("OutOfMemory")              
-          case e: StackOverflowError => 
-            error_parser_SO += 1
-            exception_parsing = true
-            TestCutIntroLogger.trace("StackOverflow (parsing): " + e)
-            throw new Exception("StackOverflow")
-          case e: Exception =>
-            error_parser_other += 1
-            exception_parsing = true
-            TestCutIntroLogger.trace("Other exception (parsing): " + e)
-            throw new Exception("OtherException (TLE?)")
-        }
-      } match {
-        case Some(p) => 
-          runWithTimeout(timeout * 1000){ 
-            TestCutIntroLogger.trace("Trying to introduce a cut...")
-            try { cutIntro2(p) } 
-            catch { 
-              case e: OutOfMemoryError => 
-                out_of_memory += 1
-                exception_cut_intro = true
-                TestCutIntroLogger.trace("OutOfMemory (cut-intro): " + e)
-                throw new Exception("OutOfMemory")
-              case e: StackOverflowError => 
-                stack_overflow += 1
-                exception_cut_intro = true
-                TestCutIntroLogger.trace("StackOverflow (cut-intro): " + e)
-                throw new Exception("StackOverflow")
-              case e: Exception =>
-                error_cut_intro += 1
-                exception_cut_intro = true
-                TestCutIntroLogger.trace("Other exception (cut-intro): " + e)
-                throw new Exception("OtherException (not compressable? TLE?)")
-            }
-          } match {
-            case Some(with_cut) =>
-              try {
-                val i1 = at.logic.calculi.expansionTrees.quantRulesNumber(p)
-                //val i2 = rulesNumber(p)
-                val i3 = quantRulesNumber(with_cut)
-                val i4 = rulesNumber(with_cut)
-                finished += 1
-                rulesInfo += (str -> ( i1, 0, i3, i4 )) 
-              } catch {
-                case e: Exception => 
-                  error_rule_count += 1
-                  TestCutIntroLogger.trace("Error in rule count: " + e)
-                  throw new Exception("Error in rule count")
-              }
-            case None => 
-              if (!exception_cut_intro) { timeout_cut_intro += 1 }
-              else exception_cut_intro = false
-          }
-        case None => 
-          if (!exception_parsing) { timeout_parsing += 1 }
-          else exception_parsing = false
-      }
-    } 
+    else {
+      CutIntroDataLogger.trace( name + ", " + cutintro_status )
+    }
   }
+
+
+  /******************* auxiliary stuff for all test-suites ********************/
+
+  /**
+   * Runs experimental cut-introduction on the expansion proof ep. This is the
+   * only call to cut-introduction in this test-script.
+   *
+   * @return ( status, logline )
+   **/
+  def compressExpansionProof( ep: (Seq[ExpansionTree],Seq[ExpansionTree]), timeout: Int ) : ( String, String ) = {
+    var status = "ok"
+    var logline = ""
+
+    try { withTimeout( timeout * 1000 ) {
+      logline = CutIntroduction.applyExp( ep )._2 // get logline and discard proof
+    } } catch { 
+      case e: TimeOutException =>
+        TestCutIntroLogger.trace("Timeout")
+        status = "cutintro_timeout"
+      case e: OutOfMemoryError =>
+        TestCutIntroLogger.trace("OutOfMemory: " + e)
+        status = "cutintro_out_of_memory"
+      case e: StackOverflowError =>
+        TestCutIntroLogger.trace("StackOverflow: " + e)
+        status = "cutintro_stack_overflow"
+      case e: CutIntroUncompressibleException =>
+        TestCutIntroLogger.trace("Input Uncompressible: " + e)
+        status = "cutintro_uncompressible"
+      case e: CutIntroEHSUnprovableException =>
+        TestCutIntroLogger.trace("Extended Herbrand Sequent unprovable: " + e)
+        status = "cutintro_ehs_unprovable"
+      case e: Exception =>
+        TestCutIntroLogger.trace("Other exception: " + e)
+        status = "cutintro_other_exception"
+    }
+
+    ( status, logline )
+  }
+
+  /**
+   * runs f with timeout to
+   *
+   * If f does terminate within to milliseconds returns its result. If not
+   * throw a TimeOutException. If f throws an exception it is propagated to
+   * the caller of withTimeout.
+   *
+   * Use this as follows:
+   * try { withTimeout( 1234 ) {
+   *   ... your code ...
+   * } } catch {
+   *   case toe: TimeOutException ...
+   *   case ... other exception
+   * }
+   **/
+  def withTimeout[T]( to: Long )( f: => T ) : T = {
+    var result:Either[Throwable,T] = Left(new TimeOutException())
+
+    val r = new Runnable {
+      def run() {
+        try {
+          result = Right( f )
+        } catch {
+          case e: Exception =>
+            result = Left(e)
+        }
+      }
+    }
+
+    val t = new Thread( r )
+    t.start()
+    t.join( to )
+    if ( t.isAlive() ) {
+      t.stop()
+    }
+
+    if ( result.isLeft ) throw result.left.get
+    else result.right.get
+  }
+
+
+
+
 
   /**
    * Run f
@@ -388,5 +548,8 @@ object testCutIntro {
 
     output
   }
+
+
+
 }
 

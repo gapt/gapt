@@ -574,21 +574,20 @@ object printProofStats {
   }
 
   object buildProofWithCut {
-    def apply(ehs: ExtendedHerbrandSequent) =
-      CutIntroduction.buildFinalProof(ehs) match {
-        case Some(proof) => proof
-        case None => throw new Exception("Could not construct a proof with cut.")
-      }
+    def apply(ehs: ExtendedHerbrandSequent) = {
+      val p = CutIntroduction.buildProofWithCut( ehs )
+      CleanStructuralRules( p )
+    }
   }
 
   object cutIntro {
-    def apply( p: LKProof ) : LKProof = CutIntroduction(p)
-    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction(e)
+    def apply( p: LKProof ) : LKProof = CutIntroduction( p )
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction( ep )
   }
 
-  object cutIntro2 {
-    def apply( p: LKProof ) : LKProof = CutIntroduction.apply2(p)
-    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction.apply2(e)
+  object cutIntroExp {
+    def apply( p: LKProof ) : LKProof = apply( extractExpansionTrees( p ))
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction.applyExp( ep )._1
   }
 
   object cutIntroG {
@@ -1229,8 +1228,8 @@ object printProofStats {
           |   unfoldProof: (String, Int) => LKProof
           |
           | Cut-Introduction:
-          |   cutIntro: LKProof => LKProof
-          |   cutIntro2: LKProof => LKProof - uses an optimized version of the cut intro algorithm
+          |   cutIntro: LKProof => LKProof - cut-introduction in auto mode
+          |   cutIntroExp: LKProof => LKProof - experimental implementation of cut-introduction
           |   cutIntroG: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
           |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
           |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)

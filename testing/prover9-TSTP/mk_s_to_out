@@ -3,6 +3,7 @@
 for file1 in *
 do
   if [ -d "$file1" ]; then
+    echo "processing directory $file1..."
     cd "$file1"
     for file2 in *
     do

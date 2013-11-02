@@ -3,3 +3,5 @@
 ../testing/prover9-TSTP/SET/SET046-5/Prover9---1109a.UNS-Ref.s.out , 3 , 5
 ../testing/prover9-TSTP/SWC/SWC038+1/Prover9---1109a.THM-Ref.s.out , 2 , 6
 ../testing/prover9-TSTP/SYN/SYN139-1/Prover9---1109a.UNS-Ref.s.out , 15 , 20
+../testing/prover9-TSTP/SET/SET063-6/Prover9---1109a.UNS-Ref.s.out , 5 , 11
+../testing/prover9-TSTP/BOO/BOO011-4/Prover9---1109a.UNS-Ref.s.out , 8 , 30

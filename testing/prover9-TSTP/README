@@ -4,4 +4,4 @@ $ tar xvfz Prover9.s.tgz
 $ ./mk_s_to_out
 
 Troubleshooting:
-1) the location of awk might not be in \bin\awk. Change location if required.
+1) the location of awk might not be in /bin/awk. Change location if required.
