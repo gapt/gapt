@@ -1119,8 +1119,9 @@ object FactorialFunctionEqualityExampleProof {
         val p3 =
           if (n==k) {
             // use axiom directly, part_fac is empty
-            ForallLeftRule(p1, Atom(eq, f_k_term::f_km1_term::Nil), f_ax_2, km1_num)
-          }else  {
+            val p1_0 = ForallLeftRule(p1, Atom(eq, f_k_term::f_km1_term::Nil), f_ax_2, km1_num)
+            ContractionLeftRule(p1_0, f_ax_2)
+          } else  {
             // the antecedent contains something along the lines of:
             // 4*f(3) = (4*3) * f(2) or
             // (4*3)*f(2) = ((4*3)*2) * f(1)
@@ -1132,10 +1133,10 @@ object FactorialFunctionEqualityExampleProof {
             val yTrans = f2(part_fac, m, f2(k_num, m, f1(f, km1_num)))
             val p1_0 = trans_axiom( f_k_term::yTrans::f_km1_term::Nil, p1)
             // show by compat, then f_ax_2: part_fac * f(k) = part_fac * (k * f(k-1))
-            val f_k =  f1(f, k_num)
+            val f_k = f1(f, k_num)
             val k_f_km1 = f2(k_num, m, f1(f, km1_num))
             val p1_1 = compat_mul_axiom( List(f_k, k_f_km1, part_fac), p1_0)
-            val p1_2 =  ForallLeftRule(p1_1, Atom(eq, f_k::k_f_km1::Nil), f_ax_2, km1_num)
+            val p1_2 = ForallLeftRule(p1_1, Atom(eq, f_k::k_f_km1::Nil), f_ax_2, km1_num)
             val p1_3 = ContractionLeftRule(p1_2, f_ax_2)
             // show by assoc: part_fac * (k * f(k-1)) = (part_fac * k) * f(k-1)
             val p1_4 = assoc_mul_axiom( List(part_fac, k_num, f1(f, km1_num)), p1_3)
