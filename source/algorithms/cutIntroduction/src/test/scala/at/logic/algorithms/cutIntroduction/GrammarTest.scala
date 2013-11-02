@@ -14,6 +14,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.fol._
 import TermsExtraction._
 import ComputeGrammars._
+import Deltas._
 
 @RunWith(classOf[JUnitRunner])
 class GrammarTest extends SpecificationWithJUnit {
@@ -22,8 +23,11 @@ class GrammarTest extends SpecificationWithJUnit {
 
   "The decomposition" should {
 
-    "compute the multi-variable delta-vector DeltaG correctly" in {
+    "compute the bounded multi-variable delta-vector correctly" in {
       "trivial decomposition" in {
+
+        val deltaG = new ManyVariableDelta(1)
+
         val f = ConstantStringSymbol("f")
         val g = ConstantStringSymbol("g")
         val a = FOLConst(ConstantStringSymbol("a"))
@@ -32,14 +36,56 @@ class GrammarTest extends SpecificationWithJUnit {
         val f1 = Function(f, a::Nil)
         val g1 = Function(g, b::Nil)
 
-        val dec = deltaG(f1::g1::Nil, "α")
+        val dec = deltaG.computeDelta(f1::g1::Nil, "α")
 
         val alpha = FOLVar(new VariableStringSymbol("α_0"))
 
-        (dec) must beEqualTo (alpha, (f1::g1::Nil)::Nil)
+        (dec) must beEqualTo (Set[types.Decomposition]((alpha, (f1::g1::Nil)::Nil)))
+      }
+
+        "example #1" in {
+            val deltaG = new ManyVariableDelta(2)
+
+            val f = ConstantStringSymbol("f")
+            val a = FOLConst(ConstantStringSymbol("a"))
+            val b = FOLConst(ConstantStringSymbol("b"))
+
+            val f1 = Function(f, a::Nil)
+            val f2 = Function(f, b::Nil)
+
+            val dec = deltaG.computeDelta(f1::f2::Nil, "α")
+
+            val alpha = FOLVar(new VariableStringSymbol("α_0"))
+            val f_alpha = Function(f, alpha::Nil)
+
+            (dec) must beEqualTo (Set[types.Decomposition]((alpha, (f1::f2::Nil)::Nil), (f_alpha, (a::b::Nil)::Nil)))
+        }
+    }
+
+    "compute the multi-variable delta-vector DeltaG correctly" in {
+      "trivial decomposition" in {
+
+        val deltaG = new UnboundedVariableDelta()
+
+        val f = ConstantStringSymbol("f")
+        val g = ConstantStringSymbol("g")
+        val a = FOLConst(ConstantStringSymbol("a"))
+        val b = FOLConst(ConstantStringSymbol("b"))
+
+        val f1 = Function(f, a::Nil)
+        val g1 = Function(g, b::Nil)
+
+        val dec = deltaG.computeDelta(f1::g1::Nil, "α")
+
+        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+
+        (dec) must beEqualTo (Set[types.Decomposition]((alpha, (f1::g1::Nil)::Nil)))
       }
 
       "example #1 without duplicates" in {
+
+        val deltaG = new UnboundedVariableDelta()
+
         val f = ConstantStringSymbol("f")
         val g = ConstantStringSymbol("g")
         val a = FOLConst(ConstantStringSymbol("a"))
@@ -52,7 +98,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val f1 = Function(f, a::Function(g, c::d::Nil)::Nil)
         val f2 = Function(f, b::Function(g, e::fc::Nil)::Nil)
 
-        val dec = deltaG(f1::f2::Nil, "α")
+        val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
         val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
         val alpha1 = FOLVar(new VariableStringSymbol("α_1"))
@@ -60,10 +106,13 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha2::Nil)::Nil)
 
-        (dec) must beEqualTo (uTarget, (a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil)
+        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil)))
       }
 
       "example #2 with duplicates" in {
+
+        val deltaG = new UnboundedVariableDelta()
+
         val f = ConstantStringSymbol("f")
         val g = ConstantStringSymbol("g")
         val a = FOLConst(ConstantStringSymbol("a"))
@@ -74,17 +123,20 @@ class GrammarTest extends SpecificationWithJUnit {
         val f1 = Function(f, a::Function(g, c::c::Nil)::Nil)
         val f2 = Function(f, b::Function(g, d::d::Nil)::Nil)
 
-        val dec = deltaG(f1::f2::Nil, "α")
+        val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
         val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
         val alpha1 = FOLVar(new VariableStringSymbol("α_1"))
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha1::Nil)::Nil)
 
-        (dec) must beEqualTo (uTarget, (a::b::Nil)::(c::d::Nil)::Nil)
+        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::Nil)::(c::d::Nil)::Nil)))
       }
 
       "example #3 with alpha-elimination" in {
+
+        val deltaG = new UnboundedVariableDelta()
+
         val f = ConstantStringSymbol("f")
         val g = ConstantStringSymbol("g")
         val a = FOLConst(ConstantStringSymbol("a"))
@@ -95,16 +147,19 @@ class GrammarTest extends SpecificationWithJUnit {
         val f1 = Function(f, a::Function(g, c::d::Nil)::Nil)
         val f2 = Function(f, b::Function(g, c::d::Nil)::Nil)
 
-        val dec = deltaG(f1::f2::Nil, "α")
+        val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
         val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
 
         val uTarget = Function(f, alpha0::Function(g, c::d::Nil)::Nil)
 
-        (dec) must beEqualTo (uTarget, (a::b::Nil)::Nil)
+        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::Nil)::Nil)))
       }
 
       "example #4 with duplicates and alpha-elimination" in {
+
+        val deltaG = new UnboundedVariableDelta()
+
         val f = ConstantStringSymbol("f")
         val g = ConstantStringSymbol("g")
         val h = ConstantStringSymbol("h")
@@ -117,13 +172,13 @@ class GrammarTest extends SpecificationWithJUnit {
         val f2 = Function(f, Function(h, b::Nil)::Function(g, c::b::Nil)::Nil)
         val f3 = Function(f, Function(h, b::Nil)::Function(g, c::b::Nil)::Nil)
 
-        val dec = deltaG(f1::f2::f3::Nil, "α")
+        val dec = deltaG.computeDelta(f1::f2::f3::Nil, "α")
 
         val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
 
         val uTarget = Function(f, Function(h, alpha0::Nil)::Function(g, c::alpha0::Nil)::Nil)
 
-        (dec) must beEqualTo (uTarget, (a::b::b::Nil)::Nil)
+        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::b::Nil)::Nil)))
       }
     }
 

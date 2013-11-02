@@ -38,6 +38,26 @@ object Utils {
       case ->(ta, tr) => ta == argType && checkType( tr, retType, argType )
   }
 
+  /** Returns whether t is a function. */
+  def isFunc(t:FOLTerm) : Boolean = isFunc(t,_ => true)
+
+  /** Returns whether t is a variable. */
+  def isVar(t:FOLTerm) : Boolean = t match {
+    case FOLVar(_) => true
+    case _ => false
+  }
+
+  /** Returns whether t is a function whose name fulfills to a given condition. */
+  def isFunc(t:FOLTerm, cond: String => Boolean) : Boolean = t match {
+    case Function(f,_) => cond(f.toString)
+    case _ => false
+  }
+
+  /** Unsafely extracts the function name from a term. Fails if the term is not a function. */
+  def fromFunc(t:FOLTerm) = t match { case Function(f,_) => f }
+  /** Unsafely extracts the function arguments from a term. Fails if the term is not a function. */
+  def fromFuncArgs(t:FOLTerm) = t match { case Function(_,a) => a}
+
   def replaceLeftmostBoundOccurenceOf(variable : FOLVar, by : FOLVar, formula : FOLFormula) :
    (Boolean, FOLFormula) = {
     //println("replacing "+variable+" by "+by+" in "+formula)
@@ -88,7 +108,13 @@ object Utils {
     }
   }
 
-
+  /**
+    * Replaces all free ocurrences of a variable by another variable in a FOL formula.
+    *
+    * @param variable The free variable to replace.
+    * @param by The new variable.
+    * @param formula The formula in which to replace [variable] with [by].
+    */
   def replaceFreeOccurenceOf(variable : FOLVar, by : FOLVar, formula : FOLFormula) : FOLFormula = {
     formula match {
       case Atom(_, args) => Substitution[LambdaExpression](variable, by).apply(formula).asInstanceOf[FOLFormula]
@@ -121,6 +147,28 @@ object Utils {
        case _ => throw new Exception("Unknown operator encountered during renaming of outermost bound variable. Formula is: "+formula)
 
     }
+  }
+
+  /** Replaces all free ocurrences of a variable by another variable in a FOL formula.
+    *
+    * @param variable The name of the free variable to replace.
+    * @param by The name of the new variable.
+    * @param formula The formula in which to replace [variable] with [by].
+    */
+  def replaceFreeOccurenceOf(variable: String, by: String, formula: FOLFormula) : FOLFormula = {
+    replaceFreeOccurenceOf(FOLVar(new VariableStringSymbol(variable)), FOLVar(new VariableStringSymbol(by)), formula)
+  }
+
+  /** Replaces all free ocurrences of a variable by another variable in a FOL term.
+    *
+    * @param variable The name of the free variable to replace.
+    * @param by The name of the new variable.
+    * @param formula The formula in which to replace [variable] with [by].
+    */
+  def replaceFreeOccurenceOf(variable: String, by: String, term: FOLTerm) : FOLTerm = term match {
+    case Function(f,terms) => Function(f, terms.map(x => replaceFreeOccurenceOf(variable, by, x)))
+    case (v@FOLVar(x)) => if (x.toString() == variable) FOLVar(new VariableStringSymbol(by)) else v
+    case (c@FOLConst(_)) => c
   }
 
   // TODO: the following three methods can be implemented for HOL.
@@ -263,17 +311,6 @@ object Utils {
     (0 to (n-1)).map(n => FOLVar(new VariableStringSymbol(varName + "_" + n))).toList
   }
 
-  /** Given a FOL formula cf starting with a quantifier block, a list of terms t
-    * and an integer n, instantiates the first n quantifiers of cf with the
-    * first n terms of t.
-    *
-    * @return The formula cf, with the first n quantifers instantiated.
-    */
-  def instantiateFirstN(cf:FOLFormula, t: List[FOLTerm], n: Int) : FOLFormula = n match {
-    case 0 => cf
-    case n => instantiateFirstN(cf.instantiate(t.head), t.tail, n-1)
-  }
-
   /** Returns the list (not set!) of all occurring variables, free or bound, in a FOL FORMULA, from left to right.
     *
     * @param f The FOL formula in which to collect the variables.
@@ -288,7 +325,7 @@ object Utils {
     case AllVar(_,f1) => collectVariables(f1)
     case ExVar(_,f1) => collectVariables(f1)
     case Atom(_,f1) => f1.map(collectVariables).foldLeft(List[FOLVar]())(_ ++ _)
-    case _ => throw new IllegalArgumentException("Unhandled case in fol.util.collectVariables(FOLFormula)!")
+    case _ => throw new IllegalArgumentException("Unhandled case in fol.utils.collectVariables(FOLFormula)!")
   }
 
   /** Returns the list (not set!) of all occurring variables, free or bound, in a FOL TERM, from left to right.
@@ -301,6 +338,6 @@ object Utils {
     case FOLVar(x) => List(FOLVar(x))
     case Function(_,terms) => terms.map(collectVariables).foldLeft(List[FOLVar]())(_ ++ _)
     case FOLConst(_) => Nil
-    case _ => throw new IllegalArgumentException("Unhandled case in fol.util.collectVariables(FOLTerm)!")
+    case _ => throw new IllegalArgumentException("Unhandled case in fol.utils.collectVariables(FOLTerm)!")
   }
 }

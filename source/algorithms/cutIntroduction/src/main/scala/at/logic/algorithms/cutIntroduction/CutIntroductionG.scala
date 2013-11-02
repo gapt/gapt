@@ -26,27 +26,55 @@ import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
 import at.logic.calculi.expansionTrees._
 import at.logic.calculi.expansionTrees.multi._
+import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
+import Deltas._
 
 object CutIntroductionG extends Logger {
 
 
-  def applyG(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
+  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), numVars: Constraint[Int]) : Option[LKProof] = {
     val endSequent = toSequent(ep)
     //println("\nEnd sequent: " + endSequent)
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(ep)
-    applyG_(endSequent, termsTuples)
+    apply(endSequent, termsTuples, numVars)
   }
 
-  def applyG(proof: LKProof) : LKProof = {
+  def apply(proof: LKProof, numVars: Constraint[Int]) : Option[LKProof] = {
     val endSequent = proof.root
     //println("\nEnd sequent: " + endSequent)
     // Extract the terms used to instantiate each formula
     val termsTuples = TermsExtraction(proof)
-    applyG_(endSequent, termsTuples)
+    apply(endSequent, termsTuples, numVars)
   }
 
-  def applyG_(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]]) : LKProof = {
+  def apply(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]], numVars: Constraint[Int]) : Option[LKProof] = {
+    val vec = numVars match {
+      case NoConstraint => { println("Using UnboundedVariableDelta."); Some(new UnboundedVariableDelta()) }
+      case ExactBound(1) => { println("Using OneVariableDelta."); Some(new OneVariableDelta()) }
+      case UpperBound(n) => { println("Using ManyVariableDelta."); Some(new ManyVariableDelta(n)) }
+      case ExactBound(n) => {
+        println("cut Introduction with exactly n (n>1) variables is currently not supported!")
+        error("Used constraint 'ExactBound(" + n + ")' in cutIntroduction.")
+        None
+      }
+      case c@_ => {
+        println("Invalid constraint! Only NoConstraint, ExactBound and UpperBound are permissible!")
+        error("Used invalid constraint in cutIntroduction: " + c)
+        None
+      }
+    }
+
+    if (vec.isEmpty) None else {
+      try {
+        Some(apply(endSequent, termsTuples, vec.get))
+      } catch {
+        case ex : CutIntroException => { println(ex.toString()); None }
+      }
+    }
+  }
+
+  def apply(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]], delta: DeltaVector) : LKProof = {
 
     // Assign a fresh function symbol to each quantified formula in order to
     // transform tuples into terms.
@@ -61,7 +89,7 @@ object CutIntroductionG extends Logger {
 
     var beginTime = System.currentTimeMillis;
 
-    val grammars = ComputeGeneralizedGrammars.apply(terms)
+    val grammars = ComputeGeneralizedGrammars(terms, delta)
 
     //debug("Compute grammars time: " + (System.currentTimeMillis - beginTime))
 
@@ -203,7 +231,7 @@ object CutIntroductionG extends Logger {
 
     trace("alphas: " + alphas)
     //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
-    val cutLeft = instantiateFirstN(cutFormula, alphas, alphas.length)
+    val cutLeft = cutFormula.instantiateAll(alphas)
 
     trace("cutLeft = " + cutLeft)
 

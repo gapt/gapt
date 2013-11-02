@@ -20,6 +20,7 @@ import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.hol._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.algorithms.unification.{MulACEquality, MulACUEquality}
+import at.logic.algorithms.cutIntroduction.Deltas._
 
 import at.logic.calculi.expansionTrees.ExpansionTree
 import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
@@ -78,6 +79,7 @@ import at.logic.transformations.ceres.clauseSchema._
 import java.io.{File, FileReader, FileInputStream, InputStreamReader, FileWriter => JFileWriter, BufferedWriter=>JBufferedWriter}
 import java.io.IOException
 import java.util.zip.GZIPInputStream
+import at.logic.utils.constraint.Constraint
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -517,7 +519,7 @@ object printProofStats {
 
   object computeGrammarsG {
     def apply(terms: FlatTermSet) = {
-      val g = ComputeGeneralizedGrammars(terms)
+      val g = ComputeGeneralizedGrammars(terms, new UnboundedVariableDelta())
         g.size match {
           case 0 => throw new Exception("No grammars found for this list of terms.")
           case n => println(n + " grammars found.\n"); g
@@ -590,8 +592,8 @@ object printProofStats {
   }
 
   object cutIntroG {
-    def apply( p: LKProof ) : LKProof = CutIntroductionG.applyG(p)
-    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroductionG.applyG(e)
+    def apply( p: LKProof, numVars : Constraint[Int] ) : Option[LKProof] = CutIntroductionG(p, numVars)
+    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]), numVars : Constraint[Int] ) : Option[LKProof] = CutIntroductionG(e, numVars)
   }
 
 /*****************************************************************************************/
@@ -1229,7 +1231,7 @@ object printProofStats {
           | Cut-Introduction:
           |   cutIntro: LKProof => LKProof
           |   cutIntro2: LKProof => LKProof - uses an optimized version of the cut intro algorithm
-          |   cutIntroG: LKProof => LKProof - performs cut introduction with multiple quantifiers
+          |   cutIntroG: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
           |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
           |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
           |   computeGrammarsG: FlatTermSet => List[GeneralizedGrammar] - computes all the grammars of a given list of terms with an unbounded number of variables (returns a list ordered by symbolic complexity)

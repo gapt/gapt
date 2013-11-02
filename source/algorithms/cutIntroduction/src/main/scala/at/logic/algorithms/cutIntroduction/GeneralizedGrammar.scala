@@ -19,6 +19,7 @@ import at.logic.utils.dssupport.MapSupport._
 import at.logic.utils.logging.Logger
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.{DFS, BFS, setSearch}
+import Deltas._
 
 
 /** Creates a grammar from a decomposition (u,S).
@@ -66,14 +67,14 @@ class GeneralizedGrammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   */
 object ComputeGeneralizedGrammars extends Logger {
   // Uses findValidGrammar2.
-  def apply(terms: FlatTermSet) : List[GeneralizedGrammar] = apply(terms.termset).map{ case g => g.flatterms = terms; g }
+  def apply(terms: FlatTermSet, delta: DeltaVector) : List[GeneralizedGrammar] = apply(terms.termset, delta).map{ case g => g.flatterms = terms; g }
 
-  def apply(terms: List[FOLTerm]) : List[GeneralizedGrammar] = {
+  def apply(terms: List[FOLTerm], delta: DeltaVector) : List[GeneralizedGrammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = "α"
     
     //debug( "3rd version - computing delta-table" )
-    val deltatable = new GeneralizedDeltaTable(terms, eigenvariable)
+    val deltatable = new GeneralizedDeltaTable(terms, eigenvariable, delta)
     //debug( "done computing delta-table" )
     //deltatable.printStats( { s => trace( "  " + s ) } )
 
