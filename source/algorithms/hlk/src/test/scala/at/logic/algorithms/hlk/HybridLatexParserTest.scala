@@ -74,8 +74,9 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case HybridLatexParser.Success(r : List[Token] , _) =>
           //println(r)
           val lterms : List[LambdaAST] = r.flatMap(_ match {
-            case RToken(_,_,a, s) => a++s
+            case RToken(_,_,a, s,_) => a++s
             case TToken(_,_,_) => Nil
+            case AToken(_,_,a,s) => a++s
           })
 
 
@@ -139,16 +140,11 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
     }
 
     "load the tape3 proof from file" in {
-      skipped("lots of unimplemented rules")
+      skipped("does not work yet")
       try {
         val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "tape3.llk")
-        val lterms : List[LambdaAST] = r.flatMap(_ match {
-          case RToken(_,_,a, s) => a++s
-          case TToken(_,_,_) => Nil
-        })
-//        println(lterms.flatMap(x => {val vn = x.varnames; if(vn.contains("lambda") ) println(x); vn}).toSet.toList.sorted)
-
         val p = HybridLatexParser.createLKProof(r)
+        println(p)
 
         ok
       } catch {

@@ -1,4 +1,4 @@
-\CONSTDEC{PROOF,SUB2}{o}
+\CONSTDEC{PROOF,SUB2, EQPROOF}{o}
 \CONSTDEC{SUBPROOF }{i>o}
 
 \CONSTDEC{P}{i>i>o}
@@ -6,7 +6,18 @@
 \CONSTDEC{f,g}{i>i}
 \VARDEC{h}{i>i}
 \VARDEC{a,b}{i}
-\VARDEC{x,y}{i}
+\VARDEC{x,y,z,n}{i}
+
+\CONSTDEC{A1, A2, A3, A4}{o}
+\CONSTDEC{+}{i>i>i}
+\CONSTDEC{0,1}{i}
+\CONSTDEC{AX}{o}
+
+
+\AXIOMDEC{A1}{}{x+y=y+x}
+\AXIOMDEC{A2}{}{x+n = y+n -> x=y}
+\AXIOMDEC{A3}{}{x+0=x}
+\AXIOMDEC{A4}{}{x+(y+z)=(x+y)+z}
 
 % first branch into cut %
 \AX{P(f(x),a)}{P(f(x),a)}
@@ -52,3 +63,15 @@
 \EQL{a=b, a=b, f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
 \CONTRL{a=b, f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
 \CONTINUEWITH{SUB2}
+
+% start of fourth proof %
+\AX{AX}{1+(0+1)=1+(0+1)}
+\EQAXIOM{A1: 0+1=1+0}{AX}{1+(0+1)=1+(1+0)}
+\EQAXIOM{A3: 1+0=1}{AX}{1+(0+1)=1+1}
+\EQAXIOM{A4: 1+(0+1)=(1+0)+1}{AX}{(1+0)+1=1+1}
+
+\AX{1+0=1}{1+0=1}
+\IMPL{AX, (1+0)+1=1+1 -> 1+0=1}{1+0=1}
+\INSTAXIOM{A2}{AX}{1+0=1}
+
+\CONTINUEWITH{EQPROOF}
