@@ -221,19 +221,19 @@ object LatexCode {
   val header =
     """
 \documentclass[a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsfonts}
-\usepackage{amsthm}
-\usepackage{mathabx}
-\usepackage{graphicx}
-\usepackage[dvipsnames]{xcolor}
-\usepackage[paperwidth=510mm, paperheight=360mm, left=5mm,right=5mm,top=10mm, bottom=20mm]{geometry}
-\usepackage{bussproofs}
+\\usepackage[utf8]{inputenc}
+\\usepackage{amsfonts}
+\\usepackage{amsthm}
+\\usepackage{mathabx}
+\\usepackage{graphicx}
+\\usepackage[dvipsnames]{xcolor}
+\\usepackage[paperwidth=510mm, paperheight=360mm, left=5mm,right=5mm,top=10mm, bottom=20mm]{geometry}
+\\usepackage{bussproofs}
 \definecolor{linkcolor}{rgb}{0.1,0.0,0.35}
 \definecolor{citecolor}{rgb}{0.1,0.0,0.35}
 \newcommand{\iremark}[1]{\todo[inline, color=todocolor]{#1}}
 
-\usepackage[pdftex,
+\\usepackage[pdftex,
             colorlinks=true,
             linkcolor=linkcolor,
             filecolor=red,
@@ -341,7 +341,7 @@ $
 \newcommand{\AXIOMDEC}[3]{#1 & #2 & #3 \\}
 
 
-\newcommand{\ienc}[1]{\ensuremath{\ulcorner{#1}\urcorner}}
+\newcommand{\ienc}[1]{\ensuremath{\\ulcorner{#1}\\urcorner}}
 \newcommand{\benc}[1]{\ensuremath{\llcorner{#1}\lrcorner}}
 \newcommand{\impl}{\ensuremath{\rightarrow}}
 \newcommand{\bm}{\ensuremath{\dotdiv}}
