@@ -10,7 +10,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.{LKProof, FSequent}
+import at.logic.calculi.lk.base.{Sequent, LKProof, FSequent}
 import at.logic.utils.ds.acyclicGraphs.AGraph
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
@@ -25,6 +25,7 @@ import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, LambdaExpression,
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.equationalRules.EquationVerifier._
 import at.logic.calculi.lk.definitionRules.{DefinitionLeftRule, DefinitionRightRule}
+import at.logic.language.lambda.BetaReduction._
 import scala.annotation.tailrec
 
 abstract class Token
@@ -125,16 +126,16 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
   }
 
   lazy val rule3b : PackratParser[Token] = ("\\" ~> "(INSTAXIOM|EQAXIOM)".r
-    <~ "{") ~ (opt("([^}]+:)?".r ) ~> opt(formula)) ~ (opt("sub: "~> substitution) <~ "}") ~
+    <~ "{") ~ (opt("([^:}]+:)?".r ) ~> opt("sub" ~> parens(substitution))) ~ (opt(formula) <~ "}") ~
     ("{" ~> repsep(formula,",") <~ "}") ~ ("{" ~> repsep(formula,",") <~ "}")  ^^ { _ match {
-    case name ~ arg1 ~ Some(sub) ~ antecedent ~ succedent => RToken(name, arg1, antecedent, succedent, sub)
-    case name ~ arg1 ~ None ~ antecedent ~ succedent => RToken(name, arg1, antecedent, succedent, Nil)
+    case name  ~ Some(sub)~ arg1 ~ antecedent ~ succedent => println("Parsed sub:"+sub); RToken(name, arg1, antecedent, succedent, sub)
+    case name ~ None ~ arg1 ~ antecedent ~ succedent => RToken(name, arg1, antecedent, succedent, Nil)
   }
   }
 
   lazy val substitution: PackratParser[List[(ast.Var, ast.LambdaAST)]] = rep1sep( single_substitution, "," )
   lazy val single_substitution: PackratParser[(ast.Var, ast.LambdaAST)] =
-    (atomsymb ~ ("<-" ~> formula)) ^^ { case x ~ y => (ast.Var(x),y)}
+    (atomsymb ~ ("=" ~> formula)) ^^ { case x ~ y => (ast.Var(x),y)}
 
 
   lazy val decl : PackratParser[TToken] = ("\\" ~> "(CONSTDEC|VARDEC)".r <~ "{") ~
@@ -356,7 +357,7 @@ trait TokenToLKConverter {
          proofstack = handleEQAxiom(proofstack, name, fs, auxterm, sub, naming, rt, axioms)
 
         case "INSTAXIOM" =>
-          proofstack = handleInstAxiom(proofstack, name, fs, auxterm, naming, rt, axioms)
+          proofstack = handleInstAxiom(proofstack, name, fs, auxterm, sub, naming, rt, axioms)
 
         case "CONTINUEFROM" =>
           proofstack = handleLink(proofs, proofstack, name, fs, auxterm, naming, rt )
@@ -687,37 +688,45 @@ trait TokenToLKConverter {
                               if canReplace(s,t,f,main)  )
         yield { (s,t,e,f,main)}
 
+        require(candidates.nonEmpty,"For an eq:l rule, could not find a possible replacement of an equation from "
+          +lefteqs.map(this.f(_)).mkString("(",",",")")+" in "+fs.antecedent.map(this.f(_)).mkString("(",",",")")  )
+
         //now we try to create an inference from each candidate
         val inferences : Seq[LKProof] = candidates.flatMap( args => {
-          try {
-            val (s,t,eq,f,main) = args
+          val (s,t,eq,f,main) = args
+          val l1 = {
             //we check if we can paramodulate s=t ...
             checkReplacement(s, t, f, main) match {
               case EqualModuloEquality(_) =>
                 val rule = EquationLeft1Rule(leftproof, rightproof, eq, f, main)
-                if (! rule.root.toFSequent.multiSetEquals(fs))
-                  throw new HybridLatexParserException("Wrong end-sequent!")
-                rule::Nil
-              case _ =>
-                //if not we try t=s....
-                checkReplacement(t, s, f, main) match {
-                  case EqualModuloEquality(_) =>
-                    val rule = EquationLeft2Rule(leftproof, rightproof, eq, f, main)
-                    if (! rule.root.toFSequent.multiSetEquals(fs))
-                      throw new HybridLatexParserException("Wrong end-sequent!")
-                    rule::Nil
-                  case _ =>
-                    //... and if this also fails we throw an exception
-                    throw new HybridLatexParserException("Could not infer equation rule!")
+                try {
+                  contract(rule,fs)::Nil
+                } catch {
+                  case e:Exception => Nil
                 }
+              case _ =>
+                Nil
             }
-          } catch {
-            case e:Exception => Nil
           }
+            val l2 = {
+              //if not we try t=s....
+                  checkReplacement(t, s, f, main) match {
+                    case EqualModuloEquality(_) =>
+                      val rule = EquationLeft2Rule(leftproof, rightproof, eq, f, main)
+                      try {
+                        contract(rule,fs)::Nil
+                      } catch {
+                        case e:Exception => Nil
+                      }
+                    case _ =>
+                      Nil
+                  }
+                }
+            l1 ++ l2
         })
 
-        require(inferences.nonEmpty, "Could not infer an eq:l rule from left parent "+leftproof.root
-          +" and "+rightproof.root+" to infer "+fs)
+        require(inferences.nonEmpty, "Could not infer an eq:l rule from left parent "+this.f(leftproof.root)
+          +" and "+this.f(rightproof.root)+" to infer "+this.f(fs))
         if (inferences.size > 1)
           println("WARNING: Inference to create eq:l rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
@@ -735,39 +744,53 @@ trait TokenToLKConverter {
                               if canReplace(s,t,f,main)  )
         yield { (s,t,e,f,main)}
 
+        require(candidates.nonEmpty,"For an eq:r rule, could not find a possible replacement of an equation from "
+          +lefteqs.map(this.f(_)).mkString("(",",",")")+" in "+fs.succedent.map(this.f(_)).mkString("(",",",")") )
+
         //now we try to create an inference from each candidate
         val inferences : Seq[LKProof] = candidates.flatMap( args => {
-          try {
-            val (s,t,eq,f,main) = args
+          val (s,t,eq,f,main) = args
 
+          val l1 = {
+            print("Trying"+this.f(s)+"="+this.f(t)+" in "+this.f(main))
             //we check if we can paramodulate s=t ...
             checkReplacement(s, t, f, main) match {
               case EqualModuloEquality(_) =>
+                println("found!")
                 val rule = EquationRight1Rule(leftproof, rightproof, eq, f, main)
-                if (! rule.root.toFSequent.multiSetEquals(fs))
-                  throw new HybridLatexParserException("Wrong end-sequent!")
-                rule::Nil
-              case _ =>
-                //if not, we try t=s....
-                checkReplacement(t, s, f, main) match {
-                  case EqualModuloEquality(_) =>
-                    val rule = EquationRight2Rule(leftproof, rightproof, eq, f, main)
-                    if (! rule.root.toFSequent.multiSetEquals(fs))
-                      throw new HybridLatexParserException("Wrong end-sequent!")
-                    rule::Nil
-                  case _ =>
-                    //... and if this also fails we throw an exception
-                    throw new HybridLatexParserException("Could not infer equation rule!")
+                try {
+                  contract(rule,fs)::Nil
+                } catch {
+                  case e:Exception => Nil
                 }
+              case _ =>
+                Nil
             }
-          } catch {
-            //any exception occurring will ignore the candidate
-            case e:Exception => Nil
           }
+
+          val l2 = {
+            //if not, we try t=s....
+            print("Trying"+this.f(t)+"="+this.f(s)+" in "+this.f(main))
+            checkReplacement(t, s, f, main) match {
+              case EqualModuloEquality(_) =>
+                println("found!")
+                val rule = EquationRight2Rule(leftproof, rightproof, eq, f, main)
+                try {
+                  contract(rule,fs)::Nil
+                } catch {
+                  case e:Exception => Nil
+                }
+
+              case _ =>
+                Nil
+            }
+          }
+
+          l1++l2
         })
 
-        require(inferences.nonEmpty, "Could not infer an eq:r rule from left parent "+leftproof.root
-          +" and "+rightproof.root+" to infer "+fs)
+        require(inferences.nonEmpty, "Could not infer an eq:r rule from left parent "+this.f(leftproof.root)
+          +" and "+this.f(rightproof.root)+" to infer "+this.f(fs))
         if (inferences.size > 1)
           println("WARNING: Inference to create eq:r rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
@@ -845,13 +868,24 @@ trait TokenToLKConverter {
     )
 
     require(ps.nonEmpty, "None of the proofs in "+proofs.keys.mkString("(",",",")")+" matches proof link "+link  )
-    require(ps(0).root.toFSequent.multiSetEquals(fs), "LINK to "+link+" must give "+fs+" but gives "+ps(0).root)
+    require(ps(0).root.toFSequent.multiSetEquals(fs), "LINK to "+this.f(link)+" must give "+this.f(fs)+" but gives "+this.f(ps(0).root))
 
     ps(0) :: current_proof
 
   }
 
+
+  def createSubstitution(naming : String => HOLExpression, astlist : List[(ast.Var, LambdaAST)]) : Substitution[HOLExpression] = {
+    val terms : List[(Var, HOLExpression)] = astlist.foldLeft(List[(Var, HOLExpression)]())((list, p) => {
+      (HLKHOLParser.ASTtoHOL(naming, p._1).asInstanceOf[Var], HLKHOLParser.ASTtoHOL(naming, p._2)) :: list
+    })
+    Substitution[HOLExpression](terms.reverse)
+  }
+
+  /* =============== Macro Rules ============================ */
+
   val axioms_prove_sequent = FSequent(List(Atom(HOLConst(ConstantStringSymbol("AX"), To()), Nil)), Nil)
+  def normalize(exp:HOLExpression) = betaNormalize(exp)(StrategyOuterInner.Outermost).asInstanceOf[HOLExpression]
 
   def handleEQAxiom(current_proof: List[LKProof], ruletype: String, fs: FSequent, auxterm: Option[LambdaAST],
                     subterm : List[(ast.Var,LambdaAST)], naming: (String) => HOLExpression,
@@ -859,12 +893,16 @@ trait TokenToLKConverter {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val oldproof::rest = current_proof
     require(auxterm.isDefined, "Error creating an equational axiom rule: Need instantiation annotation!")
-    val auxf = c(HLKHOLParser.ASTtoHOL(naming, auxterm.get))
+    val auxf = c(HLKHOLParser.ASTtoHOLnormalized(naming, auxterm.get))
+
+    val sub = createSubstitution(naming, subterm)
 
     val axs : List[FSequent] = axioms.toList.map(_._2)
     val candidates = axs.flatMap( s => {
-      val FSequent(Nil, List(ax_)) = s
-      val (_,ax) = stripUniversalQuantifiers(ax_)
+      val FSequent(Nil, List(ax1)) = s
+      val (_,ax2) = stripUniversalQuantifiers(ax1)
+      val ax=  normalize(sub(ax2))
+      //println("Trying:"+this.f(ax))
       NaiveIncompleteMatchingAlgorithm.holMatch(ax, auxf)(Nil) match {
         case Some(sub) => (ax,sub)::Nil
         case None => Nil
@@ -922,11 +960,11 @@ trait TokenToLKConverter {
   }
 
 
-  def handleInstAxiom(current_proof: List[LKProof], ruletype: String, fs: FSequent, auxterm: Option[LambdaAST],
+  def handleInstAxiom(current_proof: List[LKProof], ruletype: String, fs: FSequent, auxterm: Option[LambdaAST], subterm : List[(ast.Var,LambdaAST)],
                     naming: (String) => HOLExpression, rt: RToken, axioms : Map[HOLFormula, FSequent]): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val oldproof::rest = current_proof
-    require(auxterm.isDefined, "Error creating an equational axiom rule: Need instantiation annotation!")
+    //require(auxterm.isDefined, "Error creating an stantiate axiom rule: Need instantiation annotation!")
     //val auxf = c(HLKHOLParser.ASTtoHOL(naming, auxterm.get))
     val auxsequent = oldproof.root.toFSequent diff fs
     val mainsequent = fs diff (oldproof.root.toFSequent compose axioms_prove_sequent)
@@ -936,13 +974,20 @@ trait TokenToLKConverter {
     require(auxsequent.antecedent.size == 1 && auxsequent.succedent.size == 0,
       "Auxformula formula in inst axiom rule need to be on the lh side of the sequent, not "+f(auxsequent))
 
-    val FSequent(List(auxf), Nil) = auxsequent
-    println("auxf="+auxf)
+    val FSequent(List(auxf_), Nil) = auxsequent
+    val auxf = c(betaNormalize(auxf_)(StrategyOuterInner.Outermost).asInstanceOf[HOLExpression])
+
+    println("auxf="+this.f(auxf))
+
+    val sub = createSubstitution(naming, subterm)
+    println(sub)
 
     val axs : List[FSequent] = axioms.toList.map(_._2)
     val candidates = axs.flatMap( s => {
-      val FSequent(Nil, List(ax_)) = s
-      val (vs, ax) = stripUniversalQuantifiers(ax_)
+      val FSequent(Nil, List(ax1)) = s
+      val (_,ax2) = stripUniversalQuantifiers(ax1)
+      val ax=  betaNormalize(sub(ax2))(StrategyOuterInner.Outermost).asInstanceOf[HOLExpression]
+      //println("Trying: "+ this.f(ax))
       NaiveIncompleteMatchingAlgorithm.holMatch(ax, auxf)(Nil) match {
         case Some(sub) => (ax,sub)::Nil
         case None => Nil
@@ -1151,6 +1196,7 @@ trait TokenToLKConverter {
     (fs.succedent.map(HybridLatexExporter.getFormulaString(_)).mkString(", "))+" "
   }
 
+  private def f(fs:Sequent) : String = f(fs.toFSequent)
   private def f(e:HOLExpression) : String = " "+HybridLatexExporter.getFormulaString(e)+" "
 
 }

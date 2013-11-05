@@ -12,8 +12,10 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 
+object LatexProofExporter extends HybridLatexExporter(true)
+object HybridLatexExporter extends HybridLatexExporter(false)
 
-object HybridLatexExporter {
+class HybridLatexExporter(val expandTex : Boolean) {
   def nameToLatexString(s:String, escapebrack : Boolean = true) : String = {
     val s1 = at.logic.utils.latex.nameToLatexString(s)
     //val s2 = if (escapebrack) s1.replaceAll("\\[","(").replaceAll("\\]",")") else s1
@@ -127,7 +129,7 @@ object HybridLatexExporter {
         if (args.length == 2 && sym.toString.matches("""(<|>|\\leq|\\geq|=|>=|<=)"""))
           getFormulaString(args(0), false) +" "+nameToLatexString(sym.toString)+" "+getFormulaString(args(1))
         else
-          nameToLatexString(sym.toString) + args.map(getFormulaString(_, false)).mkString("(",", ",")")
+          nameToLatexString(sym.toString) + (if (args.isEmpty) " " else args.map(getFormulaString(_, false)).mkString("(",", ",")"))
       if (outermost) str else "(" + str + ")"
     case Function(sym, args, _) =>
         if (args.length == 2 && sym.toString.matches("""[+\-*/]"""))
@@ -136,7 +138,7 @@ object HybridLatexExporter {
           if (args.isEmpty)
             nameToLatexString(sym.toString)
           else
-            nameToLatexString(sym.toString) + args.map(getFormulaString(_, false)).mkString("(",", ",")")
+            nameToLatexString(sym.toString) + (if (args.isEmpty) " " else args.map(getFormulaString(_, false)).mkString("(",", ",")"))
         }
 
     case HOLVar(v,_) => v.toString
@@ -213,4 +215,137 @@ object HybridLatexExporter {
 
   }
 
+}
+
+object LatexCode {
+  val header =
+    """
+\documentclass[a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{mathabx}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[paperwidth=510mm, paperheight=360mm, left=5mm,right=5mm,top=10mm, bottom=20mm]{geometry}
+\usepackage{bussproofs}
+\definecolor{linkcolor}{rgb}{0.1,0.0,0.35}
+\definecolor{citecolor}{rgb}{0.1,0.0,0.35}
+\newcommand{\iremark}[1]{\todo[inline, color=todocolor]{#1}}
+
+\usepackage[pdftex,
+            colorlinks=true,
+            linkcolor=linkcolor,
+            filecolor=red,
+            citecolor=citecolor,
+            pdfauthor={GAPT Prooftool},
+            bookmarks, bookmarksnumbered=true]{hyperref}
+
+\newcommand{\lkproves}{\ensuremath{\vdash}}
+\renewcommand{\fCenter}{\lkproves}
+\renewcommand{\emptyset}{{\font\cmsy = cmsy10 at 10pt \hbox{\cmsy \char 59}}}
+
+\newcommand{\apply}[1]{#1}
+
+\newcommand{\AX}[2]{\AxiomC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\UI}[2]{\UnaryInfC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\BI}[2]{\BinaryInfC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\LL}[1]{\LeftLabel{\footnotesize \ensuremath{#1}}}
+\newcommand{\RL}[1]{\RightLabel{\footnotesize \ensuremath{#1}}}
+\newcommand{\RLN}[1]{\RightLabel{#1}}
+
+
+\newcommand{\SALLL}{\RL{\forall:l}}
+\newcommand{\SALLR}{\RL{\forall:r}}
+\newcommand{\SEXL}{\RL{\exists:l}}
+\newcommand{\SEXR}{\RL{\exists:r}}
+\newcommand{\SANDL}{\RL{\land:l}}
+\newcommand{\SANDR}{\RL{\land:r}}
+\newcommand{\SORL}{\RL{\lor:l}}
+\newcommand{\SORR}{\RL{\lor:r}}
+\newcommand{\SIMPL}{\RL{\impl:l}}
+\newcommand{\SIMPR}{\RL{\impl:r}}
+\newcommand{\SNEGL}{\RL{\neg:l}}
+\newcommand{\SNEGR}{\RL{\neg:r}}
+\newcommand{\SEQL}{\RL{=:l}}
+\newcommand{\SEQR}{\RL{=:r}}
+\newcommand{\SWEAKL}{\RL{w:l}}
+\newcommand{\SWEAKR}{\RL{w:r}}
+\newcommand{\SCONTRL}{\RL{c:l}}
+\newcommand{\SCONTRR}{\RL{c:r}}
+\newcommand{\SCUT}{\RL{cut}}
+\newcommand{\SDEF}{\RL{def}}
+\newcommand{\SBETA}{\RL{\beta}}
+\newcommand{\SINSTLEMMA}[1]{\RL{LEMMA: #1}}
+\newcommand{\SINSTAXIOM}[1]{\RL{AXIOM: #1}}
+\newcommand{\SEQAXIOM}[1]{\RL{EQAX: #1}}
+
+\newcommand{\ALLL}     [3]{\SALLL \UI{#2}{#3} }
+\newcommand{\ALLR}     [3]{\SALLR \UI{#2}{#3} }
+\newcommand{\EXL}      [3]{\SEXL  \UI{#2}{#3} }
+\newcommand{\EXR}      [3]{\SEXR  \UI{#2}{#3} }
+\newcommand{\ANDL}     [2]{\SANDL \UI{#1}{#2} }
+\newcommand{\ANDR}     [2]{\SANDR \BI{#1}{#2} }
+\newcommand{\ORL}      [2]{\SORL  \BI{#1}{#2} }
+\newcommand{\ORR}      [2]{\SORR  \UI{#1}{#2} }
+\newcommand{\IMPL}     [2]{\SIMPL \BI{#1}{#2}}
+\newcommand{\IMPR}     [2]{\SIMPR \UI{#1}{#2}}
+\newcommand{\NEGL}     [2]{\SNEGL \UI{#1}{#2}}
+\newcommand{\NEGR}     [2]{\SNEGR \UI{#1}{#2}}
+\newcommand{\EQL}      [2]{\SEQL  \BI{#1}{#2}}
+\newcommand{\EQR}      [2]{\SEQR  \BI{#1}{#2}}
+\newcommand{\WEAKL}    [2]{\SWEAKL \UI{#1}{#2}}
+\newcommand{\WEAKR}    [2]{\SWEAKR \UI{#1}{#2}}
+\newcommand{\CONTRL}   [2]{\SCONTRL \UI{#1}{#2}}
+\newcommand{\CONTRR}   [2]{\SCONTRR \UI{#1}{#2}}
+\newcommand{\CUT}      [2]{\SCUT    \BI{#1}{#2}}
+\newcommand{\DEF}      [2]{\SDEF    \UI{#1}{#2}}
+\newcommand{\BETA}     [2]{\SBETA   \UI{#1}{#2}}
+\newcommand{\INSTLEMMA}[3]{\SINSTLEMMA{#1} \UI{#2}{#3}}
+\newcommand{\INSTAXIOM}[3]{\SINSTAXIOM{#1} \UI{#2}{#3}}
+\newcommand{\EQAXIOM}  [3]{\SEQAXIOM{#1}   \UI{#2}{#3}}
+
+
+\newcommand{\CONTINUEWITH}[1]{
+ \noLine
+ \UnaryInfC{\ensuremath{(#1)}}
+}
+
+\newcommand{\CONTINUEFROM}[3]{
+ \AxiomC{\ensuremath{(#1)}}
+ \noLine
+ \UI{#2}{#3}
+}
+
+\newenvironment{declaration}[0]{
+\section{Type Declarations}
+$
+\begin{array}{ll@{: }l}
+}{
+\end{array}
+$
+}
+\newenvironment{theoryaxioms}[0]{
+\section{Theory Axioms}
+%$
+%\begin{array}{ll@{\vdash }l}
+}{
+%\end{array}
+%$
+}
+
+\newcommand{\TYPEDEC}[3]{ #1 & #2 & #3 \\}
+\newcommand{\CONSTDEC}[2]{\TYPEDEC{const}{#1}{#2}}
+\newcommand{\VARDEC}[2]{\TYPEDEC{var}{#1}{#2}}
+
+\newcommand{\AXIOMDEC}[3]{#1 & #2 & #3 \\}
+
+
+\newcommand{\ienc}[1]{\ensuremath{\ulcorner{#1}\urcorner}}
+\newcommand{\benc}[1]{\ensuremath{\llcorner{#1}\lrcorner}}
+\newcommand{\impl}{\ensuremath{\rightarrow}}
+\newcommand{\bm}{\ensuremath{\dotdiv}}
+
+\begin{document}
+    """
 }

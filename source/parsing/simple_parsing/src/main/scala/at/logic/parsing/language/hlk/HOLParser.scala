@@ -211,6 +211,9 @@ class HLKHOLParser {
     e.asInstanceOf[HOLVar]
   }
 
+  def ASTtoHOLnormalized( create : String => HOLExpression, exp : ast.LambdaAST  ) : HOLExpression =
+    BetaReduction.betaNormalize(ASTtoHOL(create,exp))(BetaReduction.StrategyOuterInner.Outermost).asInstanceOf[HOLExpression]
+
   //converts an ast to a holformula. create decides if the string represents a constant or variable of appropriate type
   // and returns the matching hol expression
   def ASTtoHOL( create : String => HOLExpression, exp : ast.LambdaAST  ) : HOLExpression = exp match {

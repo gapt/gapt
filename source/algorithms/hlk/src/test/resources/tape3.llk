@@ -4,15 +4,22 @@
 % *, +, 0, 1, <, A, ARITH_1, ARITH_2, ARITH_3, ARITH_4, AX, BASE, BIF0, BIF1, C, I, IF0, IF1, IIF0, IIF1, MAIN, MON, MONstep, MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}, MONstep_{b1}, NOCC, NOCCstep, NOCCstep_{a}, NOCCstep_{b}, P, STEP, T, X, \Delta, \Gamma, \alpha, \beta, \delta, \gamma, \kappa, \nu, \pi_1, \rho, \sigma, be, bm, f, h, h', h_1, i, i_1, i_2, ie, ite, j, j_1, k, n, s, t, x, x_1, y, y_1 %
 
 % variables %
-\VARDEC{ i, i_1, i_2, j, j_1, k, n, s, x, x_1, y, y_1, z}{i}
+\VARDEC{ i, i_1, i_2, j, j_1, k, n, s, x, x_1, y, y_1, z, n_0, n_1}{i}
 \VARDEC{\alpha, \beta, \delta, \gamma, \kappa, \nu, \sigma}{i}
 
 \CONSTDEC{f}{i>i}
 \CONSTDEC{AX,T}{o}
 
 % proof names %
-\CONSTDEC{ARITH_1, ARITH_2, ARITH_3, ARITH_4}{o}
-\CONSTDEC{BIF0, BIF1, C, IF0, IF1, IIF0, IIF1, MONstep}{o}
+\CONSTDEC{ARITH_1}{o}
+\CONSTDEC{ARITH_2}{o}
+\CONSTDEC{ARITH_3}{i>i>o}
+\CONSTDEC{ARITH_4}{i>o}
+\CONSTDEC{ARITH_5}{i>i>i>o}
+\CONSTDEC{BIF0, BIF1}{o>i>i>o}
+\CONSTDEC{IIF0, IIF1}{i>i>i>o}
+\CONSTDEC{C, MONstep}{o}
+\CONSTDEC{IF0, IF1}{i>i>o}
 \CONSTDEC{MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}}{o}
 \CONSTDEC{MONstep_{b1}, NOCCstep, NOCCstep_{a}, NOCCstep_{b}, OLDTAPE, TAPEPROOF, \pi_1}{o}
 \CONSTDEC{BASE, STEP, MAIN, \rho}{i>o}
@@ -57,21 +64,21 @@
 \AXIOMDEC{A9}{}{ x<y | x=y | y<x}
 \AXIOMDEC{A30}{}{ x+0 = x}
 \AXIOMDEC{A31}{}{ 0+x = x}
-\AXIOMDEC{A10}{}{ x<y+1 -> x=y | x<y}
+\AXIOMDEC{A10}{}{ x<y+1 -> (x<y | x=y)}
 \AXIOMDEC{A11}{}{ x=y | x<y -> x < y+1}
 \AXIOMDEC{A12}{}{ x+y = y+x}
 \AXIOMDEC{A13}{}{ x + ( y + z) = (x+y)+z}
 \AXIOMDEC{A14}{}{ x*y = y*x}
 \AXIOMDEC{A15}{}{ x * ( y * z) = (x*y)*z} 
 \AXIOMDEC{A16}{}{ x=y -> x + z = y+z} 
-\AXIOMDEC{A17}{}{ x + z = y+z -> x = y}
+\AXIOMDEC{A17}{}{ x + z < y+z -> x < y}
 \AXIOMDEC{A18}{}{ x=0 | ( exists y y<x)} 
 \AXIOMDEC{A19}{}{ 0 < x +1}
 \AXIOMDEC{A32}{}{ x<y -> x+1<y+1}
 \AXIOMDEC{A33}{}{ -(x<x) }
 \AXIOMDEC{A34}{}{ x<y & y<z -> x<z }
 \AXIOMDEC{A35}{}{ x+1<y+1 -> x<y}
-\AXIOMDEC{IND}{}{(  all Y (Y(0) & ( all n (Y(n) -> Y(n+1)) -> ( all n Y(n)))))}
+\AXIOMDEC{IND}{}{Y(0) & ( all n (Y(n) -> Y(n+1))) -> ( all n Y(n))}
 \AXIOMDEC{A20}{}{(  all x (0 \bm x = 0))}
 \AXIOMDEC{A21}{}{(  all x (x \bm 0 = x))}
 \AXIOMDEC{A22}{}{(  all x  all y ((x+1) \bm (y+1) = x \bm y))}
@@ -102,14 +109,15 @@
 
 % ===== START OF PROOF ===== %
 
-\CONTINUEFROM{OLDTAPE}{AX, T}{I(0),I(1)}
+\CONTINUEFROM{OLDTAPE}{T}{I(0),I(1)}
 
 \CONTINUEFROM{MAIN(0)}{AX, I(0)}{A(0)}
 
 \CUT{AX, T}{A(0),I(1)}
 
 \CONTINUEFROM{MAIN(1)}{AX, I(1)}{A(1)}
-\CUT{AX, T}{A(0),A(1)}
+\CUT{AX, AX, T}{A(0),A(1)}
+\CONTRL{AX, T}{A(0),A(1)}
 \ORR{AX, T}{A(0)| A(1)}
 
 
@@ -118,7 +126,8 @@
 \ORL{T, T, A(0) | A(1)}{C,C}
 \CONTRL{T, A(0) | A(1)}{C,C}
 \CONTRR{T,A(0) | A(1)}{C}
-\CUT{AX, T}{C}
+\CUT{AX,T, T}{C}
+\CONTRL{AX, T}{C}
 \CONTINUEWITH{TAPEPROOF}
 
 % ===== END OF PROOF ===== %
@@ -138,7 +147,7 @@
   \DEF{( all n ( exists h (MON(h,n) & NOCC(h,n,\sigma))))}{A(\sigma)}
 
   \IMPL{AX,I(\sigma), ( exists h (MON(h,0) & NOCC(h,0,\sigma))) & ( all n (( exists h (MON(h,n) & NOCC(h,n,\sigma))) -> ( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma))))) -> ( all n ( exists h (MON(h,n) & NOCC(h,n,\sigma)))) }{A(\sigma)}
-  \INSTAXIOM{IND}{AX,I(\sigma)}{A(\sigma)}
+  \INSTAXIOM{IND: sub(Y=(\lambda x ( exists h ((MON(h,x) & NOCC(h,x,\sigma))))))}{AX,I(\sigma)}{A(\sigma)}
   \CONTINUEWITH{MAIN(\sigma)}
 
 % ===== END OF PROOF ===== %
@@ -180,10 +189,10 @@
 \AX{AX,\gamma<0}{ \gamma < 0}
 \NEGL{AX,- \gamma < 0, \gamma<0}{}
 \INSTAXIOM{A7}{AX,\gamma<0}{}
-\EQR{AX,\delta<0+1, \gamma<\delta}{}
+\EQL{AX,\delta<0+1, \gamma<\delta}{}
 \WEAKL{AX,\gamma<0+1, \delta<0+1, \gamma<\delta}{}
 \WEAKR{AX,\gamma<0+1, \delta<0+1, \gamma<\delta}{ \alpha < \alpha}
-\ANDL{AX,\gamma<0+1 & \delta<0+1, \gamma<\delta}{ \alpha < \alpha}
+\ANDL{AX,\gamma<0+1, \delta<0+1 & \gamma<\delta}{ \alpha < \alpha}
 \ANDL{AX,\gamma<0+1 & \delta<0+1 & \gamma<\delta}{ \alpha < \alpha}
 \IMPR{AX}{\gamma<0+1 & \delta<0+1 & \gamma<\delta -> \alpha < \alpha}
 \ALLR{\delta}{AX}{( all j (\gamma<0+1 & j<0+1 & \gamma<j -> \alpha < \alpha))}
@@ -193,7 +202,7 @@
 \AX{f(\alpha)=\sigma,\beta < 0+1}{f(\alpha)=\sigma}
 \IMPR{f(\alpha)=\sigma}{\beta < 0+1 -> f(\alpha)=\sigma}
 \ALLR{\beta}{f(\alpha)=\sigma}{( all i (i<0+1 -> f(\alpha)=\sigma))}
-\BETA{f(\alpha)=\sigma}{( all i (i<0+1 -> f(\apply{((\lambda x (\alpha))) 0})=\sigma))}
+% \BETA{f(\alpha)=\sigma}{( all i (i<0+1 -> f(\apply{((\lambda x (\alpha))) 0})=\sigma))} %
 \DEF{f(\alpha)=\sigma}{NOCC((\lambda x (\alpha)),0,\sigma)}
 \ANDR{AX, f(\alpha)=\sigma}{MON((\lambda x (\alpha)),0) & NOCC((\lambda x (\alpha)),0,\sigma)}
 \EXR{(\lambda x (\alpha))}{AX, f(\alpha)=\sigma}{( exists h (MON(h,0) & NOCC(h,0,\sigma)))}
@@ -215,16 +224,16 @@
 \DEF{AX, h'(n)<\alpha, MON(h',n)}{MON((\lambda x (t(h',n,x,\alpha))),n+1)}
 
 
-\CONTINUEFROM{NOCCstep}{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,0)}{NOCC((\lambda x (t(h',n,x,\alpha))),n+1,\sigma)}
-\ANDR{AX, h'(n)<\alpha, f(\alpha) = \sigma, MON(h',n), NOCC(h',n,0)}{MON((\lambda x (t(h',n,x,\alpha))),n+1) & NOCC((\lambda x (t(h',n,x,\alpha))),n+1,\sigma)}
-\EXR{(\lambda x (t(h',n,x,\alpha)))}{AX, h'(n)<\alpha, f(\alpha) = \sigma, MON(h',n), NOCC(h',n,0)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
-\ANDL{AX, h'(n)<\alpha & f(\alpha) = \sigma, MON(h',n), NOCC(h',n,0)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
+\CONTINUEFROM{NOCCstep}{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{NOCC((\lambda x (t(h',n,x,\alpha))),n+1,\sigma)}
+\ANDR{AX, h'(n)<\alpha, f(\alpha) = \sigma, MON(h',n), NOCC(h',n,\sigma)}{MON((\lambda x (t(h',n,x,\alpha))),n+1) & NOCC((\lambda x (t(h',n,x,\alpha))),n+1,\sigma)}
+\EXR{(\lambda x (t(h',n,x,\alpha)))}{AX, h'(n)<\alpha, f(\alpha) = \sigma, MON(h',n), NOCC(h',n,\sigma)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
+\ANDL{AX, h'(n)<\alpha & f(\alpha) = \sigma, MON(h',n), NOCC(h',n,\sigma)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
 
-\EXL{\alpha}{AX, ( exists y (h'(n)<y & f(y) = \sigma)), MON(h',n), NOCC(h',n,0)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
-\ALLL{h'(n)}{AX, ( all x  exists y (x<y & f(y) = \sigma)), MON(h',n), NOCC(h',n,0)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
-\DEF{AX, I(\sigma), MON(h',n), NOCC(h',n,0)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
-\ANDL{AX, I(\sigma), MON(h',n) & NOCC(h',n,0)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
-\EXL{h'}{AX, I(\sigma), ( exists h (MON(h,n) & NOCC(h,n,0)))}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
+\EXL{\alpha}{AX, ( exists y (h'(n)<y & f(y) = \sigma)), MON(h',n), NOCC(h',n,\sigma)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
+\ALLL{h'(n)}{AX, ( all x  exists y (x<y & f(y) = \sigma)), MON(h',n), NOCC(h',n,\sigma)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
+\DEF{AX, I(\sigma), MON(h',n), NOCC(h',n,\sigma)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
+\ANDL{AX, I(\sigma), MON(h',n) & NOCC(h',n,\sigma)}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
+\EXL{h'}{AX, I(\sigma), ( exists h (MON(h,n) & NOCC(h,n,\sigma)))}{( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))}
 \CONTINUEWITH{STEP(\sigma)}
 
 % ===== END OF PROOF ===== %
@@ -248,10 +257,13 @@
 
 % ===== START OF PROOF ===== %
 
+  \CONTINUEFROM{BIF1(j_1<n+1,h'(j_1),\alpha)}{AX}{(j_1<n+1) -> \ite{\benc{j_1<n+1}}{h'(j_1)}{\alpha} = h'(j_1)}
+ 
   \AX{j_1<n+1}{j_1<n+1}
   \AX{\ite{\benc{j_1<n+1}}{h'(j_1)}{\alpha} = h'(j_1) }{\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha} = h'(j_1)}
   \IMPL{j_1<n+1, (j_1<n+1) -> \ite{\benc{j_1<n+1}}{h'(j_1)}{\alpha} = h'(j_1) }{\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha} = h'(j_1)}
-  \INSTLEMMA{BIF1}{AX, j_1<n+1}{\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha} = h'(j_1)}
+
+  \CUT{AX, j_1<n+1}{\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha} = h'(j_1)}
 
 
   \CONTINUEFROM{MONstep_{a4'}}{AX, i_1 < n+1 & j_1 < n+1 & i_1 < j_1 -> h'(i_1)<h'(j_1), j_1<(n+1), i_1<j_1, i_1<n+1}{h'(i_1) < h'(j_1)}
@@ -267,18 +279,19 @@
 
 % ===== START OF PROOF ===== %
 
-  \AX{AX, - (n+1)+1<n+1}{- (n+1)+1<n+1}
-  \INSTLEMMA{ARITH_2}{AX}{- (n+1)+1<n+1}
 
-  \AX{AX, (n+1)+1<n+1}{(n+1)+1<n+1}
-  \NEGL{AX, - (n+1)+1<n+1, (n+1)+1<n+1}{}
-  \NEGR{AX, - (n+1)+1<n+1}{- (n+1)+1<n+1}
+  \CONTINUEFROM{BIF0(n+1<n+1, h'(j_1), \alpha)}{AX}{ - n+1<n+1 -> \ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
 
-  \AX{AX, \ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha} = \alpha}{\ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
-  \IMPL{AX, - (n+1)+1<n+1, - (n+1)+1<n+1 -> \ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha} = \alpha}{\ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
-  \INSTLEMMA{BIF0}{AX, - (n+1)+1<n+1}{\ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
+  \AX{AX, n+1<n+1}{n+1<n+1}
+  \NEGL{AX, - n+1<n+1, n+1<n+1}{}
+  \NEGR{AX, - n+1<n+1}{- n+1<n+1}
 
-  \CUT{AX}{\ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
+
+  \AX{AX, \ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}{\ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
+  \IMPL{AX, - n+1<n+1, - n+1<n+1 -> \ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}{\ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
+  \CUT{AX, AX,- n+1<n+1}{\ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
+  \INSTAXIOM{A33}{AX,AX}{\ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
+  \CONTRL{AX}{\ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
   \CONTINUEWITH{MONstep_{a6}}
 
 % ===== END OF PROOF ===== %
@@ -288,8 +301,10 @@
 
   \AX{i_1<n+1}{i_1<n+1}
 
-  \AX{AX, n<n+1}{n<n+1}
-  \INSTLEMMA{ARITH_1}{AX}{n < n+1}
+  \CONTINUEFROM{ARITH_1}{AX}{( all n (n<n+1))}
+  \AX{n<n+1}{n<n+1}
+  \ALLL{}{( all n (n<n+1))}{n<n+1}
+  \CUT{AX}{n < n+1}
 
   \AX{i_1 < n}{i_1 < n}
   \ANDR{AX, i_1 < n }{n < n+1 & i_1 < n}
@@ -297,12 +312,13 @@
 
   \AX{h'(i_1) < h'(n)}{h'(i_1) < h'(n)}
   \AX{h'(n)<\alpha}{h'(n)<\alpha}
-  \ANDR{AX, h'(n)<\alpha, h'(i_1) < h'(n)}{ h'(i_1) < h'(n) & h'(n)<\alpha}
+  \ANDR{h'(n)<\alpha, h'(i_1) < h'(n)}{ h'(i_1) < h'(n) & h'(n)<\alpha}
 
   \AX{h'(i_1)<\alpha}{h'(i_1)<\alpha}
-  \IMPL{AX, h'(n)<\alpha, h'(i_1) < h'(n), h'(i_1) < h'(n) & h'(n)<\alpha -> h'(i_1)<\alpha}{h'(i_1)<\alpha}
+  \IMPL{h'(n)<\alpha, h'(i_1) < h'(n), h'(i_1) < h'(n) & h'(n)<\alpha -> h'(i_1)<\alpha}{h'(i_1)<\alpha}
   \INSTAXIOM{TRANS_{LT}}{AX, h'(n)<\alpha, h'(i_1) < h'(n)}{h'(i_1)<\alpha}
-  \IMPL{AX, h'(n)<\alpha, i_1 < n+1 & n < n+1 & i_1 < n -> h'(i_1) < h'(n), i_1<j_1, i_1<n+1, i_1 < n }{h'(i_1) < \alpha}
+  \IMPL{AX,h'(n)<\alpha, i_1 < n+1 & n < n+1 & i_1 < n -> h'(i_1) < h'(n), i_1<n+1, i_1 < n }{h'(i_1) < \alpha}
+  \WEAKL{AX,h'(n)<\alpha, i_1 < n+1 & n < n+1 & i_1 < n -> h'(i_1) < h'(n), i_1<n+1, i_1 < n, i_1<j_1 }{h'(i_1) < \alpha}
   \CONTINUEWITH{MONstep_{a7}}
 
 % ===== END OF PROOF ===== %
@@ -311,9 +327,9 @@
 
 % ===== START OF PROOF ===== %
 
-  \AX{j_1=(n+1)+1 }{j_1=(n+1)+1}
+  \AX{j_1=n+1 }{j_1=n+1}
 
-  \CONTINUEFROM{MONstep_{a6}}{AX}{\ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
+  \CONTINUEFROM{MONstep_{a6}}{AX}{\ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha} = \alpha}
 
   \AX{i_1<n+1}{i_1<n+1}
 
@@ -328,9 +344,9 @@
   \ORL{AX, h'(n)<\alpha, MON(h',n), i_1<j_1, i_1<n+1, i_1 < n | i_1 = n}{h'(i_1) < \alpha}
   \IMPL{AX, h'(n)<\alpha, MON(h',n), i_1<j_1, i_1<n+1, i_1<n+1 -> i_1 < n | i_1 = n}{h'(i_1) < \alpha}
   \INSTAXIOM{A10}{AX, h'(n)<\alpha, MON(h',n), i_1<j_1, i_1<n+1}{h'(i_1) < \alpha}
-  \EQR{AX, h'(n)<\alpha, MON(h',n), i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{(n+1)+1<n+1} }{h'(j_1)}{\alpha})}
+  \EQR{AX, h'(n)<\alpha, MON(h',n), i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{n+1<n+1} }{h'(j_1)}{\alpha})}
 
-  \EQR{AX, h'(n)<\alpha, MON(h',n), j_1=(n+1)+1 , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+  \EQR{AX, h'(n)<\alpha, MON(h',n), j_1=n+1, i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 
   \CONTINUEWITH{MONstep_{a5}}
 
@@ -341,9 +357,9 @@
 
   \CONTINUEFROM{MONstep_{a4}}{AX, MON(h',n), j_1<(n+1), i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 
-  \CONTINUEFROM{MONstep_{a5}}{AX, h'(n)<\alpha, MON(h',n), j_1=(n+1)+1 , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+  \CONTINUEFROM{MONstep_{a5}}{AX, h'(n)<\alpha, MON(h',n), j_1=(n+1) , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 
-  \ORL{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1) | j_1=(n+1)+1 , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+  \ORL{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1) | j_1=(n+1) , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
   \CONTINUEWITH{MONstep_{a3}}
 
 % ===== END OF PROOF ===== %
@@ -351,10 +367,13 @@
 
 % ===== START OF PROOF ===== %
 
+\CONTINUEFROM{BIF1(i_1<n+1,h'(i_1),\alpha)}{AX}{i_1<n+1 -> (\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}
+
 \AX{i_1<n+1}{i_1<n+1}
 \AX{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}
 \IMPL{i_1<n+1,i_1<n+1 -> (\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}
-\INSTLEMMA{BIF1}{AX,i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}
+
+\CUT{AX,i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}
 \CONTINUEWITH{MONstep_{a2}}
 
 % ===== END OF PROOF ===== %
@@ -365,12 +384,13 @@
 \CONTINUEFROM{MONstep_{a2}}{AX,i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}
 
 \AX{AX, j_1<(n+1)+1}{j_1<(n+1)+1}
-\AX{j_1<(n+1) | j_1=(n+1)+1 }{j_1<(n+1) | j_1=(n+1)+1 }
-\IMPL{AX, j_1<(n+1)+1, j_1<(n+1)+1 -> j_1<(n+1) | j_1=(n+1)+1 }{ j_1<(n+1) | j_1=(n+1)+1}
-\INSTAXIOM{A10}{AX, j_1<(n+1)+1}{ j_1<(n+1) | j_1=(n+1)+1}
+\AX{j_1<(n+1) | j_1=(n+1) }{j_1<(n+1) | j_1=(n+1) }
+\IMPL{AX, j_1<(n+1)+1, j_1<(n+1)+1 -> j_1<(n+1) | j_1=(n+1) }{ j_1<(n+1) | j_1=(n+1)}
+\INSTAXIOM{A10}{AX, j_1<(n+1)+1}{ j_1<(n+1) | j_1=(n+1)}
 
-\CONTINUEFROM{MONstep_{a3}}{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1) | j_1=(n+1)+1 , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
-\CUT{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+\CONTINUEFROM{MONstep_{a3}}{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1) | j_1=(n+1) , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+\CUT{AX, AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+\CONTRL{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 \EQR{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 \CONTINUEWITH{MONstep_{a1}}  
 
@@ -379,13 +399,8 @@
 
 % ===== START OF PROOF ===== %
 
- \AX{i_1 = (n+1)+1}{i_1 = (n+1)+1}
- \AX{j_1<(n+1)+1}{j_1<(n+1)+1}
- \AX{(n+1)+1<j_1}{(n+1)+1<j_1}
- \ANDR{AX, j_1<(n+1)+1, (n+1)+1<j_1}{j_1<(n+1)+1 & (n+1)+1<j_1}
- \NEGL{AX, -  (j_1<(n+1)+1 & (n+1)+1<j_1), j_1<(n+1)+1, (n+1)+1<j_1}{}
- \INSTLEMMA{ARITH_3}{AX, j_1<(n+1)+1, (n+1)+1<j_1}{}
- \EQL{AX, j_1<(n+1)+1, i_1<j_1, i_1 = (n+1)+1}{}
+
+ \AX{AX, j_1<(n+1)+1, i_1<j_1, i_1 = n+1}{}
  \CONTINUEWITH{MONstep_{b1}}  
 
 % ===== END OF PROOF ===== %
@@ -393,17 +408,15 @@
 
 % ===== START OF PROOF ===== %
 
-\AX{i_1<(n+1)+1}{i_1<(n+1)+1}
-
+\CONTINUEFROM{ARITH_5(i_1,j_1,n)}{AX, i_1<j_1, j_1<(n+1)+1}{i_1<n+1}
 \CONTINUEFROM{MONstep_{a1}}{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 
-
-\CONTINUEFROM{MONstep_{b1}}{AX, j_1<(n+1)+1, i_1<j_1, i_1 = (n+1)+1}{}
-\ORL{AX, h'(n)<\alpha,  MON(h',n),j_1<(n+1)+1, i_1<j_1, (i_1<n+1) | i_1 = (n+1)+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
-
-\IMPL{AX, h'(n)<\alpha,  MON(h',n),i_1<(n+1)+1, j_1<(n+1)+1, i_1<j_1, i_1<(n+1)+1 -> (i_1<n+1) | i_1 = (n+1)+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
-\INSTAXIOM{A10}{AX, h'(n)<\alpha,  MON(h',n),i_1<(n+1)+1, j_1<(n+1)+1, i_1<j_1}{(\ite{\benc{ (i_1<n+1)} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
-\DEF{AX, h'(n)<\alpha,  MON(h',n),i_1<(n+1)+1, j_1<(n+1)+1, i_1<j_1}{t(h',n,i_1,\alpha)<t(h',n,j_1,\alpha)}
+\CUT{AX, AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<j_1, j_1<(n+1)+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+\CONTRL{ AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+\WEAKL{ AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1,i_1<(n+1)+1, i_1<j_1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
+\DEF{AX, h'(n)<\alpha,  MON(h',n),i_1<(n+1)+1, j_1<(n+1)+1, i_1<j_1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})<t(h',n,j_1,\alpha)}
+\DEF{AX, h'(n)<\alpha,  MON(h',n), i_1<(n+1)+1, j_1<(n+1)+1, i_1<j_1}{t(h',n,i_1,\alpha)<t(h',n,j_1,\alpha)}
+\ANDL{AX, h'(n)<\alpha,  MON(h',n), i_1<(n+1)+1, j_1<(n+1)+1& i_1<j_1}{t(h',n,i_1,\alpha)<t(h',n,j_1,\alpha)}
 \ANDL{AX, h'(n)<\alpha,  MON(h',n), i_1<(n+1)+1& j_1<(n+1)+1& i_1<j_1}{t(h',n,i_1,\alpha)<t(h',n,j_1,\alpha)}
 \IMPR{AX, h'(n)<\alpha,  MON(h',n)}{i_1<(n+1)+1& j_1<(n+1)+1& i_1<j_1 -> t(h',n,i_1,\alpha)<t(h',n,j_1,\alpha)}
 \CONTINUEWITH{MONstep}
@@ -413,6 +426,9 @@
 
 % ===== START OF PROOF ===== %
 
+\CONTINUEFROM{BIF1(i_2<n+1,h'(i_2),\alpha)}{AX}{ i_2<n+1 -> (\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}
+
+
 \AX{i_2< n+1}{ i_2<n+1 }
 
 \AX{(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}{(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}
@@ -420,13 +436,15 @@
 \AX{i_2< n+1}{i_2< n+1}
 \AX{f(h'(i_2) ) = \sigma}{f(h'(i_2) ) = \sigma}
 
-\IMPL{AX,  i_2< n+1 -> f(h'(i_2) ) = \sigma, i_2< n+1}{f(h'(i_2) ) = \sigma}
-\ALLL{i_2}{AX,  ( all i (i<n+1 -> f(h'(i))=\sigma)), i_2< n+1}{f(h'(i_2) ) = \sigma}
-\DEF{AX,  NOCC(h',n,\sigma), i_2< n+1}{f(h'(i_2) ) = \sigma}
-\EQR{AX,  NOCC(h',n,\sigma), i_2< n+1,(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
-\IMPL{AX,  NOCC(h',n,\sigma), i_2< n+1,i_2< n+1, i_2<n+1 -> (\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
-\CONTRL{AX,  NOCC(h',n,\sigma), i_2< n+1, i_2<n+1 -> (\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
-\INSTLEMMA{BIF1}{AX,  NOCC(h',n,\sigma), i_2< n+1}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+\IMPL{ i_2< n+1 -> f(h'(i_2) ) = \sigma, i_2< n+1}{f(h'(i_2) ) = \sigma}
+\ALLL{i_2}{ ( all i (i<n+1 -> f(h'(i))=\sigma)), i_2< n+1}{f(h'(i_2) ) = \sigma}
+\DEF{ NOCC(h',n,\sigma), i_2< n+1}{f(h'(i_2) ) = \sigma}
+\EQR{ NOCC(h',n,\sigma), i_2< n+1,(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+\IMPL{ NOCC(h',n,\sigma), i_2< n+1,i_2< n+1, i_2<n+1 -> (\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+\CONTRL{ NOCC(h',n,\sigma), i_2< n+1, i_2<n+1 -> (\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}) = h'(i_2)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+
+\CUT{AX,  NOCC(h',n,\sigma), i_2< n+1}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+
 \CONTINUEWITH{NOCCstep_{a}}
 
 % ===== END OF PROOF ===== %
@@ -434,17 +452,21 @@
 
 % ===== START OF PROOF ===== %
 
-\AX{- (n+1)+1<n+1 }{- (n+1)+1<n+1 }
 
+\CONTINUEFROM{BIF0(n+1<n+1, h'(n+1), \alpha)}{AX}{- n+1<n+1 -> \ite{\benc{n+1<n+1}}{ h'(n+1)}{\alpha}=\alpha}
 
-\AX{(\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}) = \alpha}{(\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}) = \alpha}
-\AX{AX, f(\alpha) = \sigma}{f(\alpha) = \sigma}
-\EQR{AX, f(\alpha) = \sigma, (\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}) = \alpha }{f(\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}  ) = \sigma}
-\IMPL{AX, f(\alpha) = \sigma, - (n+1)+1<n+1, - (n+1)+1<n+1 -> (\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}) = \alpha }{f(\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}  ) = \sigma}
+\AX{n+1<n+1}{ n+1<n+1}
+\NEGL{- n+1<n+1, n+1<n+1}{}
+\NEGR{- n+1<n+1}{- n+1<n+1}
 
-\INSTLEMMA{BIF0}{AX, f(\alpha) = \sigma, - (n+1)+1<n+1 }{f(\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}  ) = \sigma}
+\AX{\ite{\benc{n+1<n+1}}{ h'(n+1)}{\alpha}=\alpha}{\ite{\benc{n+1<n+1}}{ h'(n+1)}{\alpha}=\alpha}
+\AX{f(\alpha) = \sigma}{f(\alpha  ) = \sigma}
+\EQR{f(\alpha) = \sigma, \ite{\benc{n+1<n+1}}{ h'(n+1)}{\alpha}=\alpha}{f(\ite{\benc{n+1<n+1}}{h'(n+1)}{\alpha}  ) = \sigma}
 
-\INSTLEMMA{ARITH_4}{AX, f(\alpha) = \sigma }{f(\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}  ) = \sigma}
+\IMPL{ f(\alpha) = \sigma, - n+1<n+1, - n+1<n+1 -> \ite{\benc{n+1<n+1}}{ h'(n+1)}{\alpha}=\alpha}{f(\ite{\benc{n+1<n+1}}{h'(n+1)}{\alpha}  ) = \sigma}
+\CUT{AX, f(\alpha) = \sigma, - n+1<n+1}{f(\ite{\benc{n+1<n+1}}{h'(n+1)}{\alpha}  ) = \sigma}
+\INSTAXIOM{A33}{AX, f(\alpha) = \sigma }{f(\ite{\benc{n+1<n+1}}{h'(n+1)}{\alpha}  ) = \sigma}
+
 \CONTINUEWITH{NOCCstep_{b}}
 
 % ===== END OF PROOF ===== %
@@ -458,20 +480,23 @@
 
   \CONTINUEFROM{NOCCstep_{a}}{AX, NOCC(h',n,\sigma), i_2< n+1}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
 
-  \AX{i_2=(n+1)+1}{i_2=(n+1)+1}
+  \AX{i_2=(n+1)}{i_2=(n+1)}
+  \AX{i_2=(n+1)}{i_2=(n+1)}
 
-  \CONTINUEFROM{NOCCstep_{b}}{AX, f(\alpha) = \sigma }{f(\ite{\benc{(n+1)+1<n+1}}{h'((n+1)+1)}{\alpha}  ) = 0}
-  \EQR{AX, f(\alpha) = \sigma, i_2=(n+1)+1}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+  \CONTINUEFROM{NOCCstep_{b}}{AX, f(\alpha) = \sigma }{f(\ite{\benc{n+1<n+1}}{h'(n+1)}{\alpha}  ) = \sigma}
+  \EQR{AX, f(\alpha) = \sigma, i_2=(n+1)}{f(\ite{\benc{n+1<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+  \EQR{AX, f(\alpha) = \sigma, i_2=(n+1)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
 
-  \ORL{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2< n+1 | i_2=(n+1)+1}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+  \ORL{AX, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2< n+1 | i_2=(n+1)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
 
-  \IMPL{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2<(n+1)+1, i_2<(n+1)+1 -> (i_2< n+1 | i_2=(n+1)+1)}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
-  \INSTAXIOM{A10}{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2<(n+1)+1}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
-  \DEF{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2<(n+1)+1}{f(t(h',n,i_2,\alpha)) = \sigma}
-  \IMPR{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{i_2<(n+1)+1 -> f(t(h',n,i_2,\alpha)) = \sigma}
-  \ALLR{i_2}{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{( all i (i<(n+1)+1 -> f(t(h',n,i,\alpha)) = \sigma))}
-  \BETA{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{( all i (i<(n+1)+1 -> f(\apply{(\lambda x (t(h',n,x,\alpha))) i})=\sigma))}
-  \DEF{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{NOCC((\lambda x (t(h',n,x,\alpha))),n+1,\sigma)}
+  \IMPL{AX, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2<(n+1)+1, i_2<(n+1)+1 -> (i_2< n+1 | i_2=(n+1))}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+  \INSTAXIOM{A10}{AX, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2<(n+1)+1}{f(\ite{\benc{i_2<n+1}}{h'(i_2)}{\alpha}  ) = \sigma}
+  \DEF{AX, f(\alpha) = \sigma, NOCC(h',n,\sigma), i_2<(n+1)+1}{f(t(h',n,i_2,\alpha)) = \sigma}
+  \IMPR{AX, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{i_2<(n+1)+1 -> f(t(h',n,i_2,\alpha)) = \sigma}
+  \ALLR{i_2}{AX, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{( all i (i<(n+1)+1 -> f(t(h',n,i,\alpha)) = \sigma))}
+
+  \DEF{AX, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{NOCC((\lambda x (t(h',n,x,\alpha))),n+1,\sigma)}
+  \WEAKL{AX, h'(n)<\alpha, f(\alpha) = \sigma, NOCC(h',n,\sigma)}{NOCC((\lambda x (t(h',n,x,\alpha))),n+1,\sigma)}
   \CONTINUEWITH{NOCCstep}
 
 % ===== END OF PROOF ===== %
@@ -488,7 +513,7 @@
   \EQAXIOM{A21: 1 \bm 0=1}{AX}{(1 \bm 0) * \gamma = \gamma}
   \EQAXIOM{A31: 0 + ((1 \bm 0) * \gamma)=((1 \bm 0) * \gamma)}{AX}{0 + ((1 \bm 0) * \gamma) = \gamma}
   \EQAXIOM{A5: 0*\beta=0}{AX}{(0*\beta) + ((1 \bm 0) * \gamma) = \gamma}
-  \CONTINUEWITH{IF0}
+  \CONTINUEWITH{IF0(\beta,\gamma)}
 
 % ===== END OF PROOF ===== %
 
@@ -500,14 +525,14 @@
   \EQAXIOM{A31: 0+\beta=\beta}{AX}{0  +\beta  = \beta}
   \EQAXIOM{A5: 0*\beta = 0}{AX}{(0 * \beta) +\beta  = \beta}
   \EQAXIOM{A6: (0+1)*\beta = (0 * \beta) + \beta}{AX}{(0+1)*\beta  = \beta}
-  \EQAXIOM{A31: 1=0+1}{AX}{1*\beta  = \beta}
+  \EQAXIOM{A31: 0+1=1}{AX}{1*\beta  = \beta}
   \EQAXIOM{A30: (1*\beta) + 0 = 1*\beta}{AX}{(1*\beta) + 0  = \beta}
   \EQAXIOM{A5: 0 * \gamma = 0}{AX}{(1*\beta) + (0 * \gamma) = \beta}
   \EQAXIOM{A20: 0 \bm 0 = 0}{AX}{(1*\beta) + ((0 \bm 0) * \gamma) = \beta}
   \EQAXIOM{A22: (0+1) \bm (0+1) = 0 \bm 0}{AX}{(1*\beta) + (((0+1) \bm (0+1)) * \gamma) = \beta}
-  \EQAXIOM{A30: 1=0+1}{AX}{(1*\beta) + (((0+1) \bm 1) * \gamma) = \beta}
-  \EQAXIOM{A30: 1=0+1}{AX}{(1*\beta) + ((1 \bm 1) * \gamma) = \beta}
-  \CONTINUEWITH{IF1}
+  \EQAXIOM{A30: 0+1=1}{AX}{(1*\beta) + (((0+1) \bm 1) * \gamma) = \beta}
+  \EQAXIOM{A30: 0+1=1}{AX}{(1*\beta) + ((1 \bm 1) * \gamma) = \beta}
+  \CONTINUEWITH{IF1(\beta,\gamma)}
 
 % ===== END OF PROOF ===== %
 
@@ -519,15 +544,23 @@
   \NEGR{- X}{- X}
 
   \AX{\benc{X} = 0}{\benc{X} = 0}
-  \IMPL{AX, - X, - X -> \benc{X} = 0}{\benc{X} = 0}
+  \IMPL{- X, - X -> \benc{X} = 0}{\benc{X} = 0}
   \INSTAXIOM{A24}{AX, - X}{\benc{X} = 0}
 
-  \CONTINUEFROM{IF0}{AX}{0 * \alpha + (1 \bm 0) * \beta=\beta}
+  \AX{X}{X}
+  \NEGL{- X, X}{}
+  \NEGR{- X}{- X}
+
+  \AX{\benc{X} = 0}{\benc{X} = 0}
+  \IMPL{- X, - X -> \benc{X} = 0}{\benc{X} = 0}
+  \INSTAXIOM{A24}{AX, - X}{\benc{X} = 0}
+
+  \CONTINUEFROM{IF0(\alpha,\beta)}{AX}{0 * \alpha + (1 \bm 0) * \beta=\beta}
+  \EQR{AX,- X}{0 * \alpha + (1 \bm \benc{X}) * \beta=\beta}
   \EQR{AX,- X}{\benc{X} * \alpha + (1 \bm \benc{X}) * \beta=\beta}
   \DEF{AX,- X}{\ite{\benc{X}}{\alpha}{\beta}=\beta}
   \IMPR{AX}{- X -> \ite{\benc{X}}{\alpha}{\beta}=\beta}
-  \ALLR{}{AX}{( all P  all x  all y ( - P -> \ite{\benc{P}}{x}{y}=y))}
-  \CONTINUEWITH{BIF0}
+  \CONTINUEWITH{BIF0(X,\alpha,\beta)}
 
 % ===== END OF PROOF ===== %
 
@@ -536,15 +569,20 @@
 
   \AX{X}{X}
   \AX{\benc{X} = 1}{\benc{X} = 1}
-  \IMPL{AX, X, X -> \benc{X} = 1}{\benc{X} = 1}
+  \IMPL{X, X -> \benc{X} = 1}{\benc{X} = 1}
   \INSTAXIOM{A23}{AX, X}{\benc{X} = 1}
 
-  \CONTINUEFROM{IF1}{AX}{1 * \alpha + (1 \bm 1) * \beta=\alpha}
-  \EQR{AX,X}{\benc{X} * \alpha + (1 \bm \benc{X}) * \beta=\beta}
-  \DEF{AX,X}{\ite{\benc{X}}{\alpha}{\beta}=\beta}
+  \AX{X}{X}
+  \AX{\benc{X} = 1}{\benc{X} = 1}
+  \IMPL{X, X -> \benc{X} = 1}{\benc{X} = 1}
+  \INSTAXIOM{A23}{AX, X}{\benc{X} = 1}
+
+  \CONTINUEFROM{IF1(\alpha,\beta)}{AX}{1 * \alpha + (1 \bm 1) * \beta=\alpha}
+  \EQR{AX,X}{\benc{X} * \alpha + (1 \bm 1) * \beta=\alpha}
+  \EQR{AX,X}{\benc{X} * \alpha + (1 \bm \benc{X}) * \beta=\alpha}
+  \DEF{AX,X}{\ite{\benc{X}}{\alpha}{\beta}=\alpha}
   \IMPR{AX}{X -> \ite{\benc{X}}{\alpha}{\beta}=\alpha}
-  \ALLR{}{AX}{( all P  all x  all y (P -> \ite{\benc{P}}{x}{y}=x))}
-  \CONTINUEWITH{BIF1}
+  \CONTINUEWITH{BIF1(X,\alpha,\beta)}
 
 % ===== END OF PROOF ===== %
 
@@ -552,15 +590,16 @@
 % ===== START OF PROOF ===== %
 
   \AX{\ienc{\alpha}=0}{\ienc{\alpha}=0}
+  \AX{\ienc{\alpha}=0}{\ienc{\alpha}=0}
 
-  \CONTINUEFROM{IF0}{AX}{0*\beta + (1 \bm 0) * \gamma = \gamma}
+  \CONTINUEFROM{IF0(\beta,\gamma)}{AX}{0*\beta + (1 \bm 0) * \gamma = \gamma}
   
+  \EQR{AX,\ienc{\alpha}=0}{0*\beta + (1 \bm \ienc{\alpha}) * \gamma = \gamma}
   \EQR{AX,\ienc{\alpha}=0}{\ienc{\alpha}*\beta + (1 \bm \ienc{\alpha}) * \gamma = \gamma}
   \DEF{AX,\ienc{\alpha}=0}{(\ite{\ienc{\alpha}}{\beta}{\gamma}) = \gamma}
   \IMPR{AX}{\ienc{\alpha}=0-> (\ite{\ienc{\alpha}}{\beta}{\gamma}) = \gamma}
-  \ALLR{}{AX}{( all i  all x  all y \ienc{i}=0-> (\ite{\ienc{i}}{x}{y}) = y)}
 
-  \CONTINUEWITH{IIF0}
+  \CONTINUEWITH{IIF0(\alpha,\beta,\gamma)}
 
 % ===== END OF PROOF ===== %
 
@@ -568,13 +607,14 @@
 % ===== START OF PROOF ===== %
 
   \AX{\ienc{\alpha}=1}{\ienc{\alpha}=1}
-  \CONTINUEFROM{IF1}{AX}{1*\beta + (1 \bm 1) * \gamma = \beta}
+  \AX{\ienc{\alpha}=1}{\ienc{\alpha}=1}
+  \CONTINUEFROM{IF1(\beta,\gamma)}{AX}{1*\beta + (1 \bm 1) * \gamma = \beta}
+  \EQR{AX,\ienc{\alpha}=1}{1*\beta + (1 \bm \ienc{\alpha}) * \gamma = \beta}
   \EQR{AX,\ienc{\alpha}=1}{\ienc{\alpha}*\beta + (1 \bm \ienc{\alpha}) * \gamma = \beta}
   \DEF{AX,\ienc{\alpha}=1}{(\ite{\ienc{\alpha}}{\beta}{\gamma}) = \beta}
   \IMPR{AX}{\ienc{\alpha}=1 -> (\ite{\ienc{\alpha}}{\beta}{\gamma}) = \beta}
-  \ALLR{}{AX}{( all i  all x  all y \ienc{i}=1 -> (\ite{\ienc{i}}{x}{y}) = x)}
 
-  \CONTINUEWITH{IIF1}
+  \CONTINUEWITH{IIF1(\alpha,\beta,\gamma)}
 
 % ===== END OF PROOF ===== %
 
@@ -590,7 +630,7 @@
   \ANDR{AX}{0<0+1 & (( all n (n<n+1 -> n+1 < (n+1)+1)))}
   \AX{( all n (n < n+1))}{( all n (n < n+1))}
   \IMPL{AX, 0<0+1 & (( all n (n<n+1 -> n+1 < (n+1)+1))) -> ( all n (n<n+1))}{( all n (n < n+1))}
-  \INSTAXIOM{IND}{AX}{( all x (x < x+1))}
+  \INSTAXIOM{IND: sub(Y =(\lambda x (x < x+1)))}{AX}{( all n (n < n+1))}
   \CONTINUEWITH{ARITH_1}
 
 % ===== END OF PROOF ===== %
@@ -616,8 +656,8 @@
   \ANDR{AX}{ - 0+1<0 & ( all n (- (n+1<n) -> -((n+1)+1 < n+1)))}
 
   \AX{( all n (- n+1<n))}{( all n (- n+1<n))}
-  \IMPL{AX, - 0+1<0 & ( all n (- (n+1<n) -> - ((n+1)+1 < n+1))) -> ( all n (- (n+1<n)))  }{( all n (- n+1<n))}
-  \INSTAXIOM{IND}{AX}{( all x (- x+1<x))}
+  \IMPL{AX, (- 0+1<0 & ( all n (- (n+1<n) -> - ((n+1)+1 < n+1)))) -> ( all n (- (n+1<n)))  }{( all n (- n+1<n))}
+  \INSTAXIOM{IND: sub(Y = (\lambda x (- x+1<x)))}{AX}{( all n (- n+1<n))}
   \CONTINUEWITH{ARITH_2}
 
 % ===== END OF PROOF ===== %
@@ -633,36 +673,76 @@
   \INSTAXIOM{A33: IRREF_{LT}}{AX, x_1<y_1 & y_1<x_1, x_1<y_1 & y_1<x_1 -> x_1 < x_1}{}
   \INSTAXIOM{A34: TRANS_{LT}}{AX, x_1<y_1 & y_1<x_1}{}
   \NEGR{AX }{- (x_1<y_1 & y_1<x_1)}
-  \ALLR{y_1}{AX }{( all y (- (x_1<y & y<x_1)))}
-  \ALLR{x_1}{AX }{( all x  all y (- (x<y & y<x)))}
-  \CONTINUEWITH{ARITH_3}
+%  \ALLR{y_1}{AX }{( all y (- (x_1<y & y<x_1)))} %
+%  \ALLR{x_1}{AX }{( all x  all y (- (x<y & y<x)))} %
+  \CONTINUEWITH{ARITH_3(x_1,y_1)}
 
 % ===== END OF PROOF ===== %
 
 
 % ===== START OF PROOF ===== %
-
-  \AX{x_1=x_1+0}{x_1=x_1+0}
 
   \AX{x_1+1<x_1+0 }{x_1+1<x_1+0 }
   \AX{1<0}{1<0}
-  \NEGL{AX, 1<0,- 1<0 }{}
+  \NEGL{1<0,- 1<0 }{}
   \INSTAXIOM{A7}{AX, 1<0 }{}
   \IMPL{AX, x_1+1<x_1+0 -> 1<0 , x_1+1<x_1+0}{}
+  \EQAXIOM{1+x_1=x_1+1}{AX, 1+x_1<x_1+0 -> 1<0 , x_1+1<x_1+0}{}
+  \EQAXIOM{0+x_1=x_1+0}{AX, 1+x_1<0+x_1 -> 1<0 , x_1+1<x_1+0}{}
   \INSTAXIOM{A17: CANCEL_{PLUS}}{AX, x_1+1<x_1+0}{}
-
-  \EQL{AX, x_1=x_1+0, x_1+1<x_1}{}
-  \INSTAXIOM{A30}{AX, x_1+1<x_1}{}
+  \EQAXIOM{A30: x_1+0=x_1}{AX, x_1+1<x_1}{}
   \NEGR{AX}{- x_1+1<x_1}
-  \ALLR{x_1}{AX}{( all x (- x+1<x))}
-  \CONTINUEWITH{ARITH_4}
+%  \ALLR{x_1}{AX}{( all x (- x+1<x))} %
+  \CONTINUEWITH{ARITH_4(x_1)}
 
 % ===== END OF PROOF ===== %
 
 
 % ===== START OF PROOF ===== %
 
-  \AX{AX, T}{I(0),I(1)}
+  \AX{j<(n+1)+1}{j<(n+1)+1}
+
+
+
+  \AX{i<j}{i<j}
+  \AX{j<n+1}{j<n+1}
+  \ANDR{i<j, j<n+1}{i<j & j<n+1}
+
+  \AX{i<n+1}{i<n+1}
+  \IMPL{i<j, j<n+1, i<j & j<n+1 -> i<n+1}{i<n+1}
+  \INSTAXIOM{A34}{AX, i<j, j<n+1}{i<n+1}
+
+  \AX{j=n+1}{j=n+1}
+  \AX{i<n+1}{i<n+1}
+  \EQL{i<j, j=n+1}{i<n+1}
+
+  \ORL{AX, i<j, j<n+1 | j=n+1}{i<n+1}
+
+  \IMPL{AX, i<j, j<(n+1)+1, j<(n+1)+1 -> (j<n+1 | j=n+1)}{i<n+1}
+  \INSTAXIOM{A10}{AX, i<j, j<(n+1)+1}{i<n+1}
+  \CONTINUEWITH{ARITH_5(i,j,n)}
+
+% ===== END OF PROOF ===== %
+
+
+
+% ===== START OF PROOF ===== %
+
+
+\AX{f((n_0 + n_1)) = 0}{f((n_0 + n_1)) = 0}
+\AX{}{(n_0 + n_1) = (n_1 + n_0)}
+\AX{f((n_1 + n_0)) = 1}{f((n_1 + n_0)) = 1}
+\EQL{f((n_0 + n_1)) = 1}{f((n_1 + n_0)) = 1}
+\ORL{(f((n_0 + n_1)) = 0) |  (f((n_0 + n_1)) = 1)}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
+\ALLL{(n_0 + n_1)}{( all x ((f(x) = 0) |  (f(x) = 1)))}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
+\DEF{T}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
+\EXR{n_0}{T}{f((n_0 + n_1)) = 0,( exists k (f((n_1 + k)) = 1))}
+\EXR{n_1}{T}{( exists k (f((n_1 + k)) = 1)),( exists k (f((n_0 + k)) = 0))}
+\ALLR{n_1}{T}{( exists k (f((n_0 + k)) = 0)),( all n ( exists k (f((n + k)) = 1)))}
+\ALLR{n_0}{T}{( all n ( exists k (f((n + k)) = 1))),( all n ( exists k (f((n + k)) = 0)))}
+\DEF{T}{( all n ( exists k (f((n + k)) = 0))),I(1)}
+\DEF{T}{I(1),I(0)}
+
   \CONTINUEWITH{OLDTAPE}
 
 % ===== END OF PROOF ===== %
