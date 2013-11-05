@@ -228,7 +228,32 @@ object Deltas extends Logger {
       * @return The tuple (u:FOLTerm, s:List[List[FOLTerm]]).
         Replacing α_1,...,α_q with s[1][i],...,s[q][i] results in t_i.
       */
-    def computeDelta(terms: List[FOLTerm], eigenvariable: String) : Set[types.Decomposition] = Set(computeDg(terms, eigenvariable, 0)._1)
+    def computeDelta(terms: List[FOLTerm], eigenvariable: String) : Set[types.Decomposition] = {
+      //Set(computeDg(terms, eigenvariable, 0)._1)
+
+      val (rawU,rawS) = computeDg(terms, eigenvariable, 0)._1
+
+      val nubbedRes = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
+
+      //These are just quick asserts, designed to catch faulty delta-computations early.
+      val vars = collectVariables(nubbedRes._1).distinct.map(x => x.toString())
+      val diffs = List("α_0", "α_1", "α_2", "α_3", "α_4", "α_5", "α_6", "α_7", "α_8", "α_9", "α_10").zip(vars).map(x => x._1 == x._2).toList
+      val diffs2 = diffs.foldLeft(true)(_ && _)
+
+      if (!diffs2) {
+        error("Non-contiguous set of variables in UnboundedVariableDelta!")
+        throw new Exception("Non-contiguous set of variables in UnboundedVariableDelta!");
+        ???
+      } else if (vars.length != nubbedRes._2.length) {
+        error("Number of variables in u (" + vars.length + ") and number of s-vectors (" + nubbedRes._2.length + ") don't match in UnboundedVariableDelta!")
+        error("Variables in u: " + vars)
+        error("s-vectors     : " + nubbedRes._2)
+        throw new Exception("Number of variables in u (" + vars.length + ") and number of s-vectors (" + nubbedRes._2.length + ") don't match in UnboundedVariableDelta!");
+        ???
+      } else { 
+        Set(nubbedRes)
+      }
+    }
 
     /** Computes Delta_G. Called by delta.apply.
       *
@@ -239,6 +264,10 @@ object Deltas extends Logger {
       * number of introduced α.
       */
     private def computeDg(terms: List[FOLTerm], eigenvariable: String, curInd: Int) : (types.Decomposition,Int) = {
+
+      trace("----------- entering computeDg.")
+      trace("   terms: " + terms)
+      trace("   curInd: " + curInd)
 
       //Special case: only one term has been provided. This isn't part of
       //the definition of DeltaG in the paper (deltavector.tex), but
@@ -254,34 +283,35 @@ object Deltas extends Logger {
         ((terms.head, Nil), curInd)
       }
       else if (commonFuncHead(terms)) {
-          var newInd = curInd
-
           //Compute Delta_G(u_i) for all u_i
-          def computePart(acc:(List[types.U], types.S), ts: List[FOLTerm]) : (List[types.U], types.S) = {
-            val ((uPart,sPart),i:Int) = computeDg(ts, eigenvariable, newInd)
-            newInd = i
-            (acc._1 :+ uPart, acc._2 ++ sPart)
+          def computePart(acc:(List[types.U], types.S,Int), ts: List[FOLTerm]) : (List[types.U], types.S, Int) = {
+            val ((uPart,sPart),i:Int) = computeDg(ts, eigenvariable, acc._3)
+            (acc._1 :+ uPart, acc._2 ++ sPart, i)
           }
           
           //Get the function args (unapply._2) and fold with computePart
           //The result might contain duplicate variables and therefore, nub must be applied
-          val (rawUParts, rawS) = terms.map(fromFuncArgs).transpose.foldLeft((Nil:List[types.U], Nil:types.S))(computePart)
+          val (rawUParts, s, newInd) = terms.map(fromFuncArgs).transpose.foldLeft((Nil:List[types.U], Nil:types.S, curInd))(computePart)
 
-          trace("computePart finished. Results(u,S):")
-          trace(rawUParts.toString())
-          trace(rawS.toString())
+          //trace("computePart finished. Results(u,S):")
+          //trace(rawUParts.toString())
+          //trace(rawS.toString())
 
           //Reapply the function head to the pieces
-          val rawU = Function(fromFunc(terms.head), rawUParts)
+          val u = Function(fromFunc(terms.head), rawUParts)
 
-          trace("rawU: " + rawU)
-          trace("smallest Var in rawU: " + smallestVarInU(eigenvariable, rawU))
+          //trace("rawU: " + rawU)
+          //trace("smallest Var in rawU: " + smallestVarInU(eigenvariable, rawU))
 
-          val (u,s) = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
+          //val (u,s) = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
+
+          //computePart naively increased newInd, but nub reduces the number of variables again
+          //val nubbedInd = largestVarInU(eigenvariable, u)
 
           trace("final (u | S): " + u + " | " + s)
-          trace("newInd: " + newInd)
+          //trace("newInd(" + (if (nubbedInd.nonEmpty) "exists" else "does not exist") + "): " + (if (nubbedInd.nonEmpty) nubbedInd.get + 1 else curInd))
 
+          //((u,s), if (nubbedInd.nonEmpty) nubbedInd.get + 1 else curInd)
           ((u,s), newInd)
       } else {
           ((FOLVar(new VariableStringSymbol(eigenvariable + "_" + curInd)), List(terms)), curInd+1)
@@ -300,78 +330,98 @@ object Deltas extends Logger {
 
   /** Returns the smallest variable index occurring in a term u.
     * Variable names are expected to be of the form [eigenvariable]_[i],
-    * where i is the variable index.
+    * where i is the variable index. If u has no variables, None is returned.
+    *
+    * This function is used for nub.
     */
-  private def smallestVarInU(eigenvariable: String, u: types.U) : Int = u match {
-    case Function(_,terms) => if (terms.length == 0) { 0 } else { terms.map(t => smallestVarInU(eigenvariable, t)).min }
-    case FOLVar(x) => x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt
+  private def smallestVarInU(eigenvariable: String, u: types.U) : Option[Int] = u match {
+    case Function(_,terms) => if (terms.length == 0) { None } else {
+      val ret = terms.map(t => smallestVarInU(eigenvariable, t)).filter(x => x.nonEmpty)
+
+      if (ret.length == 0) None else ret.min
+    }
+    case FOLVar(x) => Some(x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt)
+  }
+
+  /** Returns the largest variable index occurring in a term u.
+    * Variable names are expected to be of the form [eigenvariable]_[i],
+    * where i is the variable index. If u has no variables, None is returned.
+    */
+  private def largestVarInU(eigenvariable: String, u: types.U) : Option[Int] = u match {
+    case Function(_,terms) => if (terms.length == 0) { None } else {
+      val ret = terms.map(t => smallestVarInU(eigenvariable, t)).filter(x => x.nonEmpty)
+
+      if (ret.length == 0) None else ret.max
+    }
+    case FOLVar(x) => Some(x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt)
   }
 
   /** Duplicate-eliminating function; merges those α in u which have identical term-lists in s.
     * If a contiguous set α_k,...,α_(k+q) of variables was present in u before the merging, a contiguous
     * set α_k,...,α_(k+p) (0<=p<=q) of variables will be present in the return value u'.
     * 
-    * @param beginWith The smallest index of any alpha occurring in u.
+    * @param beginWith The smallest index of any alpha occurring in u. If this is None, nothing is done.
     * @param eigenvariable The name of the eigenvariables in u. Default is "α".
     * @param u The term u of the substitution which contains α-instances.
     * @param s The list of terms belonging to the α-instances.
     * @param (u',s') s.t. all α with identical corresponding term-lists in s have been merged together in u
     * and all duplicate lists s have been reduced to only 1 occurrence.
     */
-  private def nub (beginWith: Int, eigenvariable:String, u: types.U, s: types.S): types.Decomposition = {
-    val indexedS = s.zip(beginWith to (beginWith + s.size - 1))
+  private def nub (beginWith: Option[Int], eigenvariable:String, u: types.U, s: types.S): types.Decomposition = beginWith match {
+    case None => (u,s)
+    case Some(start) => {
+      val indexedS = s.zip(start to (start + s.size - 1))
 
-    trace("    nub | indexedS = " + indexedS)
+      trace("    nub | indexedS = " + indexedS)
 
-    //Get the list of all variables occurring in u
-    var presentVars = collectVariables(u).distinct
+      //Get the list of all variables occurring in u
+      var presentVars = collectVariables(u).distinct
 
-    trace("    nub | presentVars = " + presentVars)
+      trace("    nub | presentVars = " + presentVars)
 
-    //Go through s, look ahead for duplicates, and delete them.
-    def nub2(ev: String, u: types.U, s: List[(List[FOLTerm],Int)]) : types.Decomposition = s match {
-      //no variables in u -> just return (u,Nil)
-      case Nil => (u,s.unzip._1)
-      //variables occur -> check xs for identical s-vectors
-      case ((lst,ind)::xs) => {
-        //The duplicates are all the duplicates of lst. The rest is lst + all vectors not identical to it.
-        val (duplicates,rest) = xs.partition(y => y._1 == lst)
+      //Go through s, look ahead for duplicates, and delete them.
+      def nub2(u: types.U, s: List[(List[FOLTerm],Int)]) : types.Decomposition = s match {
+        //no variables in u -> just return (u,Nil)
+        case Nil => (u,s.unzip._1)
+        //variables occur -> check xs for identical s-vectors
+        case ((lst,ind)::xs) => {
+          //The duplicates are all the duplicates of lst. The rest is lst + all vectors not identical to it.
+          val (duplicates,rest) = xs.partition(y => y._1 == lst)
 
-        trace("    nub2 | duplicates,rest = " + (duplicates,rest))
+          trace("    nub2 | duplicates,rest = " + (duplicates,rest))
 
-        //go through all duplicates, rename the corresponding variables in u to ev_[ind]
-        //and delete ev_[x] from presentvars
-        val newU = duplicates.foldLeft(u)((curU, dupl) => {
-          presentVars = presentVars.filter(pv => pv != ev + "_" + dupl._2)
-          replaceFreeOccurenceOf(ev + "_" + dupl._2, ev + "_" + ind, curU)
-        })
+          //go through all duplicates, rename the corresponding variables in u to ev_[ind]
+          //and delete ev_[x] from presentvars
+          val newU = duplicates.foldLeft(u)((curU, dupl) => {
+            trace("        | deleting duplicate " + eigenvariable + "_" + dupl._2 )
+            presentVars = presentVars.filter(pv => pv.toString != (eigenvariable + "_" + dupl._2))
+            trace("        | now present vars: " + presentVars)
+            replaceFreeOccurenceOf(eigenvariable + "_" + dupl._2, eigenvariable + "_" + ind, curU)
+          })
 
-        val ret = nub2(eigenvariable, newU, rest)
-        (ret._1, lst::ret._2)
+          val ret = nub2(newU, rest)
+          (ret._1, lst::ret._2)
+        }
       }
+
+      //Merge duplicate vars in u and delete elements of s.
+      val (swissCheeseU,newS) = nub2(u, indexedS)
+
+      trace("    nub | (swCU, newS) = " + (swissCheeseU,newS))
+
+      //Merging with nub2 will have created holes in u => reindex the variables in u to get a contiuous segment
+      val renamings = presentVars.toList.sortBy(x => x.toString).zip(start to (presentVars.size - 1))
+
+      trace("    nub | renamings (there are " + renamings.length + ") = " + renamings)
+
+      val reindexedU = renamings.foldLeft(swissCheeseU) {(curU,ren) => 
+        trace("        | rename: " + ren._1 + " -> " + eigenvariable + "_" + ren._2)
+        val ret = replaceFreeOccurenceOf(ren._1.toString, eigenvariable + "_" + ren._2, curU)
+        trace("        | result: " + ret)
+        ret
+      }
+
+      (reindexedU, newS)
     }
-
-    //Merge duplicate vars in u and delete elements of s.
-    val (swissCheeseU,newS) = nub2(eigenvariable, u, indexedS)
-
-    trace("    nub | (swCU, newS) = " + (swissCheeseU,newS))
-
-    //Merging with nub2 will have created holes in u => reindex the variables in u to get a contiuous segment
-    val renamings = presentVars.toList.sortBy(x => x.toString).zip(beginWith to (presentVars.size - 1))
-    val reindexedU = renamings.foldLeft(swissCheeseU) ((curU,ren) => replaceFreeOccurenceOf(eigenvariable + "_" + ren._1, eigenvariable + "_" + ren._2, curU))
-
-    (reindexedU, newS)
   }
-
-  /** Returns the set of variables occurring in a FOL term which consists only of functions and variables. */
-  /*private def collectVars(u: types.U) : List[String] = u match {
-    case Function(_,terms) => terms.map(collectVars).foldLeft(Nil:List[String])(_ ++ _)
-    case FOLVar(x) => List(x.toString)
-  }*/
-
-  /** Renames a variables in u from oldName to newName */
-  /*private def renameVar(u : types.U, oldName: String, newName: String) : types.U = u match {
-    case Function(f,terms) => Function(f, terms.map(x => renameVar(x,oldName,newName)))
-    case FOLVar(x) => if (x.toString() == oldName) { FOLVar(new VariableStringSymbol(newName)) } else { FOLVar(x) }
-  }*/
 }

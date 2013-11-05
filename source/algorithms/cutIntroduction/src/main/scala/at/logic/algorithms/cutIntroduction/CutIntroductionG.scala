@@ -179,7 +179,7 @@ object CutIntroductionG extends Logger {
 
         //Some subset of g's eigenvariables occurs in every term. This generates
         //substitutions to replace each occurring EV a_i with a quantified variables x_i.
-        val xterms = terms.flatMap(t => {
+        val xterms = terms.map(t => {
           val vars = createFOLVars(varName, g.eigenvariables.length+1)
           val allEV = g.eigenvariables.zip(vars)
           val occurringEV = collectVariables(t).distinct
@@ -187,12 +187,13 @@ object CutIntroductionG extends Logger {
           trace("allEV: " + allEV)
           trace("occurringEV: " + occurringEV)
           trace("filteredEV: " + allEV.filter(e => occurringEV.contains(e._1)))
-          trace("result: " + allEV.filter(e => occurringEV.contains(e._1)).map(e => FOLSubstitution(t, e._1, e._2)))
 
-          val res = allEV.filter(e => occurringEV.contains(e._1)).map(e => FOLSubstitution(t, e._1, e._2))
+          val res = allEV.filter(e => occurringEV.contains(e._1)).foldLeft(t)((t,e) => FOLSubstitution(t, e._1, e._2))
+
+          trace("result: " + res)
 
           //edge case: The current term is constant. In this case, we don't instantiate the variables inside, but leave it as is.
-          if (collectVariables(t).isEmpty) { t::Nil } else { res }
+          if (collectVariables(t).isEmpty) { t } else { res }
         })
 
         trace("ComputeCanoicalSolutionG:")
@@ -229,6 +230,9 @@ object CutIntroductionG extends Logger {
     //whole initial quantifier block instantiated to α_0,...,α_n-1.
     val alphas = createFOLVars("α", ehs.grammar.numVars)
 
+    trace("grammar (u,S): ")
+    trace(ehs.grammar.u.toString)
+    trace(ehs.grammar.s.toString)
     trace("alphas: " + alphas)
     //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
     val cutLeft = cutFormula.instantiateAll(alphas)
