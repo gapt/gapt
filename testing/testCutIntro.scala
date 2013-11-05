@@ -215,7 +215,7 @@ object testCutIntro {
 
     val file = new File(fn.trim)
     if (file.getName.endsWith(".out")) {
-      try { withTimeout( timeout * 1000 ) {
+      val expproof = try { withTimeout( timeout * 1000 ) {
         val t0 = System.currentTimeMillis
         val p = loadProver9LKProof( file.getAbsolutePath )
         val ep = extractExpansionTrees( p )
@@ -223,22 +223,32 @@ object testCutIntro {
         
         log_ptime_ninfcf_nqinfcf = ", " + (t1 - t0) + ", " + rulesNumber(p) + ", " + quantRulesNumber(p) // log ptime, #infcf, #qinfcf
 
-        val r = compressExpansionProof( ep, timeout )
-        cutintro_status = r._1
-        cutintro_logline = r._2
+        Some(ep)
       } } catch {
         case e: TimeOutException =>
           TestCutIntroLogger.trace("Parsing: Timeout")
           parsing_status = "parsing_timeout"
+          None
         case e: OutOfMemoryError =>
           TestCutIntroLogger.trace("Parsing: OutOfMemory: " + e)
           parsing_status = "parsing_out_of_memory"
+          None
         case e: StackOverflowError =>
           TestCutIntroLogger.trace("Parsing: StackOverflow: " + e)
           parsing_status = "parsing_stack_overflow"
+          None
         case e: Exception =>
           TestCutIntroLogger.trace("Parsing: Other exception: " + e)
           parsing_status = "parsing_other_exception"
+          None
+      }
+
+      expproof match {
+        case Some(ep) =>
+          val r = compressExpansionProof( ep, timeout )
+          cutintro_status = r._1
+          cutintro_logline = r._2
+        case None => ()
       }
 
       if ( parsing_status == "ok" ) {
@@ -283,29 +293,39 @@ object testCutIntro {
 
     TestCutIntroLogger.trace("FILE: " + str)
 
-    try { withTimeout( timeout * 1000 ) {
+    val expproof = try { withTimeout( timeout * 1000 ) {
       val t0 = System.currentTimeMillis
       val ep = loadVeriTProof( str )
       val t1 = System.currentTimeMillis
 
       log_ptime_ninfcf_nqinfcf = ", " + (t1 - t0) + ", n/a, n/a" // log ptime, #infcf, #qinfcf
 
-      val r = compressExpansionProof( ep, timeout )
-      cutintro_status = r._1
-      cutintro_logline = r._2
+      Some(ep)
     } } catch {
       case e: TimeOutException =>
         TestCutIntroLogger.trace("Parsing: Timeout")
         parsing_status = "parsing_timeout"
+        None
       case e: OutOfMemoryError =>
         TestCutIntroLogger.trace("Parsing: OutOfMemory: " + e)
         parsing_status = "parsing_out_of_memory"
+        None
       case e: StackOverflowError => 
         TestCutIntroLogger.trace("Parsing: StackOverflow: " + e)
         parsing_status = "parsing_stack_overflow"
+        None
       case e: Exception =>
         TestCutIntroLogger.trace("Parsing: Other exception: " + e)
         parsing_status = "parsing_other_exception"
+        None
+    }
+
+    expproof match {
+      case Some(ep) =>
+        val r = compressExpansionProof( ep, timeout )
+        cutintro_status = r._1
+        cutintro_logline = r._2
+      case None => ()
     }
 
     if ( parsing_status == "ok" ) {
