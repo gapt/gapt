@@ -108,6 +108,9 @@ trait FClause {
     }
     sb.toString
   }
+
+  def toFSequent = FSequent(neg.map(_.asInstanceOf[HOLFormula]),pos.map(_.asInstanceOf[HOLFormula]))
+
   /*
    compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
    should be moved to FSequent once FSequent is called Sequent (see Issue 201)
