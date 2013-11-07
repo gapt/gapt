@@ -10,7 +10,7 @@ import at.logic.calculi.slk._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.{VariableNameGenerator, Var}
 import at.logic.language.schema._
-import at.logic.language.hol.{HOLConst, Atom, HOLExpression, HOLFormula}
+import at.logic.language.hol.{HOLConst, Atom, HOLExpression, HOLFormula, AllVar, ExVar}
 import at.logic.language.lambda.types.{Ti, Tindex}
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.lk.quantificationRules._
@@ -52,6 +52,9 @@ object solvePropositional {
       val (f, rest) = getAxiomfromSeq(seq)
       val p = addWeakenings(Axiom(f::Nil, f::Nil), seq)
       Some(p)
+    } else if (findNonschematicAxiom(seq).isDefined) {
+      val Some((f,g)) = findNonschematicAxiom(seq)
+      Some(AtomicExpansion(seq,f,g))
     }
     else findUnaryLeft(seq) match {
       // Apply unary rule on antecedent
@@ -341,7 +344,34 @@ object solvePropositional {
         f == f2 && f.isAtom
       )
     )
- 
+
+  def findNonschematicAxiom(seq: FSequent) : Option[(HOLFormula,HOLFormula)] = {
+    val axs = for (f  <- seq.antecedent.toList;
+         g <- seq.succedent.toList;
+         if f == g && isNotSchematic(f)
+      ) yield { (f,g) }
+
+    axs match {
+      case Nil => None
+      case (f,g)::_ => Some((f,g))
+    }
+  }
+
+
+  private def isNotSchematic(f:HOLFormula) : Boolean = f match {
+    case Atom(_,_) => true
+    case Neg(l) => isNotSchematic(l.asInstanceOf[HOLFormula])
+    case And(l,r) => isNotSchematic(l.asInstanceOf[HOLFormula]) && isNotSchematic(r.asInstanceOf[HOLFormula])
+    case Or(l,r) => isNotSchematic(l.asInstanceOf[HOLFormula]) && isNotSchematic(r.asInstanceOf[HOLFormula])
+    case Imp(l,r) => isNotSchematic(l.asInstanceOf[HOLFormula]) && isNotSchematic(r.asInstanceOf[HOLFormula])
+    case AllVar(_,l)  => isNotSchematic(l.asInstanceOf[HOLFormula])
+    case ExVar(_,l)  => isNotSchematic(l.asInstanceOf[HOLFormula])
+    case BigAnd(_,_,_,_) => false
+    case BigOr(_,_,_,_) => false
+    case _ => println("WARNING: Unexpected operator in test for schematic formula "+f); false
+  }
+
+
   // Tries to find a formula on the left or on the right such that its
   // introduction rule is unary.
   def findUnaryLeft(seq: FSequent) : Option[HOLFormula] =
@@ -405,22 +435,23 @@ object AtomicExpansion {
    * CAUTION: Does not work on schematic formulas! Reason: No match for BigAnd/BigOr, schema substitution is special. */
   def apply(fs : FSequent) : LKProof = {
     //find a formula occurring on both sides
-    val occurs_on_both_sides = for (left <- fs.antecedent.toList;
-                                    right <- fs.succedent.toList;
-                                    if (left == right)) yield ((left,right))
+    solvePropositional.findNonschematicAxiom(fs) match {
+      case (Some((f,g))) =>
+        apply(fs,f,g)
+      case None =>
+        throw new Exception("Could not find a (non-schematic) formula in "+fs+" which occurs on both sides!")
+    }
+  }
 
-    if (occurs_on_both_sides.isEmpty) throw new Exception("Could not find a formula in "+fs+" which occurs on both sides!")
-    val (f1,f2)::_ = occurs_on_both_sides
-
+  /* Same as apply(fs:FSequent) but you can specify the formula on the lhs (f1) and rhs (f2) */
+  def apply(fs:FSequent, f1:HOLFormula, f2: HOLFormula) = {
     //initialize generator for eigenvariables
     var index = 100
     val gen = new VariableNameGenerator(() => { index = index+1; "ev"+index+""} )
 
     val atomic_proof = atomicExpansion_(gen, f1,f2)
-    val FSequent(missingleft,missingright) = fs diff atomic_proof.root.toFSequent
-    val weakenedleft  = missingleft.foldLeft(atomic_proof)((p,f) => WeakeningLeftRule(p,f))
-    val weakenedright = missingright.foldLeft(weakenedleft)((p,f) => WeakeningRightRule(p,f))
-    weakenedright
+
+    addWeakenings(atomic_proof, fs)
   }
 
   // assumes f1 == f2
