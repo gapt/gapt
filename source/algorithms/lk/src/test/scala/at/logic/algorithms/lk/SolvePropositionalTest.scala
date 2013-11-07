@@ -1,10 +1,11 @@
 package at.logic.algorithms.lk
 
+import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.propositionalRules.{Axiom, NegLeftRule}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.hol.logicSymbols.{LogicalSymbolsA, ConstantStringSymbol}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.schema.{And => AndS, Or => OrS, Neg => NegS, Imp => ImpS, _}
 import java.io.File.separator
@@ -13,8 +14,9 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
-import at.logic.language.lambda.types.Ti
+import at.logic.language.lambda.types.{To, Ti}
 import at.logic.algorithms.lk.statistics._
+import at.logic.calculi.lk.lkSpecs.beSyntacticFSequentEqual
 
 @RunWith(classOf[JUnitRunner])
 class SolvePropositionalTest extends SpecificationWithJUnit {
@@ -87,6 +89,60 @@ class SolvePropositionalTest extends SpecificationWithJUnit {
 
       solvePropositional(seq16) must beEqualTo (None)
     }
+
+    "prove non-atomic axioms (1)" in {
+      import at.logic.language.hol._
+      val List(x,y,z)    = List("x","y","z") map (x => HOLVar(VariableStringSymbol(x), Ti()))
+      val List(u,v,w) = List("u","v","w") map (x => HOLVar(VariableStringSymbol(x), Ti() -> Ti()))
+      val List(a,b,c, zero)    = List("a","b","c","0") map (x => HOLConst(ConstantStringSymbol(x), Ti()))
+      val List(f,g,h,s)    = List("f","g","h","s") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
+      val List(p,q)      = List("P","Q") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
+      val List(_Xsym,_Ysym)    = List("X","Y") map (x => VariableStringSymbol(x))
+      val List(_X,_Y)    = List(_Xsym,_Ysym) map (x => HOLVar(x, Ti() -> To()))
+
+      val xzero = Atom(_X,List(zero))
+      val xx = Atom(_X,List(x))
+      val xsx = Atom(_X,List(Function(s,List(x))))
+
+      val ind = AllVar(_X, Imp(And(xzero, AllVar(x, Imp(xx,xsx) )), AllVar(x, xx) ))
+      val fs = FSequent(ind::Nil,ind::Nil)
+      val proof = AtomicExpansion(fs)
+      //check if the derived end-sequent is correct
+      proof.root.toFSequent must beSyntacticFSequentEqual (fs)
+
+      //check if three different eigenvariables were introduced and nothing more
+      val psymbols = proof.nodes.flatMap(x => x.asInstanceOf[LKProof].root.toFormula.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
+      val fssymbols = fs.formulas.flatMap(_.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
+      //println(psymbols)
+      (psymbols diff fssymbols).size must_== 3
+      (fssymbols diff psymbols) must beEmpty
+    }
+
+    "prove non-atomic axioms (2)" in {
+      import at.logic.language.hol._
+      val List(x,y,z)    = List("x","y","z") map (x => HOLVar(VariableStringSymbol(x), Ti()))
+      val List(u,v,w) = List("u","v","w") map (x => HOLVar(VariableStringSymbol(x), Ti() -> Ti()))
+      val List(a,b,c, zero)    = List("a","b","c","0") map (x => HOLConst(ConstantStringSymbol(x), Ti()))
+      val List(f,g,h,s)    = List("f","g","h","s") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
+      val List(psym,qsym)      = List("P","Q") map (x => ConstantStringSymbol(x))
+      val List(_Xsym,_Ysym)    = List("X","Y") map (x => VariableStringSymbol(x))
+      val List(_X,_Y)    = List(_Xsym,_Ysym) map (x => HOLVar(x, Ti() -> To()))
+
+      val xzero = Atom(psym,List(y, Function(s,List(x))))
+
+      val formula = AllVar(x, Neg(ExVar(y, xzero)))
+      val fs = FSequent(List(Atom(psym,x::Nil), formula),List(formula, Atom(psym,y::Nil)))
+      val proof = AtomicExpansion(fs)
+      //check if the derived end-sequent is correct
+      proof.root.toFSequent must beSyntacticFSequentEqual (fs)
+
+      //check if two different eigenvariables were introduced and nothing more
+      val psymbols = proof.nodes.flatMap(x => x.asInstanceOf[LKProof].root.toFormula.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
+      val fssymbols = fs.formulas.flatMap(_.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
+      (psymbols diff fssymbols).size must_== 2
+      (fssymbols diff psymbols) must beEmpty
+    }
+
   }
 }
 

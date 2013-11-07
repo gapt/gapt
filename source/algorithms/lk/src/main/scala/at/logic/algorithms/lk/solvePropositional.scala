@@ -8,10 +8,12 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.calculi.slk._
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus.Var
+import at.logic.language.lambda.typedLambdaCalculus.{VariableNameGenerator, Var}
 import at.logic.language.schema._
 import at.logic.language.hol.{HOLConst, Atom, HOLExpression, HOLFormula}
 import at.logic.language.lambda.types.{Ti, Tindex}
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.calculi.lk.quantificationRules._
 
 object solvePropositional {
 
@@ -392,6 +394,100 @@ object solvePropositional {
     else throw new Exception("\nError in else-autoprop.getAxiomfromSeq !\n")
   }
 
+
+}
+
+object AtomicExpansion {
+  import at.logic.language.hol._
+
+  /*  === implements algorithm from Lemma 4.1.1 in Methods of Cut-Elimination === */
+  /* given a sequent S = F :- F for an arbitrary formula F, derive a proof of S from atomic axioms
+   * CAUTION: Does not work on schematic formulas! Reason: No match for BigAnd/BigOr, schema substitution is special. */
+  def apply(fs : FSequent) : LKProof = {
+    //find a formula occurring on both sides
+    val occurs_on_both_sides = for (left <- fs.antecedent.toList;
+                                    right <- fs.succedent.toList;
+                                    if (left == right)) yield ((left,right))
+
+    if (occurs_on_both_sides.isEmpty) throw new Exception("Could not find a formula in "+fs+" which occurs on both sides!")
+    val (f1,f2)::_ = occurs_on_both_sides
+
+    //initialize generator for eigenvariables
+    var index = 100
+    val gen = new VariableNameGenerator(() => { index = index+1; "ev"+index+""} )
+
+    val atomic_proof = atomicExpansion_(gen, f1,f2)
+    val FSequent(missingleft,missingright) = fs diff atomic_proof.root.toFSequent
+    val weakenedleft  = missingleft.foldLeft(atomic_proof)((p,f) => WeakeningLeftRule(p,f))
+    val weakenedright = missingright.foldLeft(weakenedleft)((p,f) => WeakeningRightRule(p,f))
+    weakenedright
+  }
+
+  // assumes f1 == f2
+  private def atomicExpansion_(gen : VariableNameGenerator ,f1 : HOLFormula, f2: HOLFormula) : LKProof = {
+    try {
+      (f1,f2) match {
+        case (Neg(l1), Neg(l2)) =>
+          val parent = atomicExpansion_(gen, l1,l2)
+          NegLeftRule(NegRightRule(parent,l1 ), l2)
+
+        case (And(l1,r1), And(l2,r2) ) =>
+          val parent1 = atomicExpansion_(gen, l1,l2)
+          val parent2 = atomicExpansion_(gen, r1,r2)
+          val i1 = AndLeft1Rule(parent1, l1, r1)
+          val i2 = AndLeft2Rule(parent2, l2, r2)
+          val i3 = AndRightRule(i1,i2,l1,r1)
+          ContractionLeftRule(i3, f1)
+
+        case (Or(l1,r1), Or(l2,r2) ) =>
+          val parent1 = atomicExpansion_(gen, l1,l2)
+          val parent2 = atomicExpansion_(gen, r1,r2)
+          val i1 = OrRight1Rule(parent1, l1, r1)
+          val i2 = OrRight2Rule(parent2, l2, r2)
+          val i3 = OrLeftRule(i1,i2,l1,r1)
+          ContractionRightRule(i3,f1)
+
+        case (Imp(l1,r1), Imp(l2,r2) ) =>
+          val parent1 = atomicExpansion_(gen, l1,l2)
+          val parent2 = atomicExpansion_(gen, r1,r2)
+          val i1 = ImpLeftRule(parent1, parent2, l1, r1)
+          ImpRightRule(i1, l2,r2)
+
+        case (AllVar(x1:HOLVar,l1), AllVar(x2:HOLVar,l2)) =>
+          val eigenvar = gen(x1, List(l1,l2)).asInstanceOf[HOLVar]
+          val sub1 = Substitution[HOLExpression](List((x1,eigenvar)))
+          val sub2 = Substitution[HOLExpression](List((x2,eigenvar)))
+          val aux1 = sub1(l1).asInstanceOf[HOLFormula]
+          val aux2 = sub2(l2).asInstanceOf[HOLFormula]
+
+          val parent = atomicExpansion_(gen, aux1, aux2)
+          val i1 = ForallLeftRule(parent, aux1, f1, eigenvar)
+          ForallRightRule(i1, aux2, f2, eigenvar)
+
+        case (ExVar(x1:HOLVar,l1), ExVar(x2:HOLVar,l2)) =>
+          val eigenvar = gen(x1, List(l1,l2)).asInstanceOf[HOLVar]
+          val sub1 = Substitution[HOLExpression](List((x1,eigenvar)))
+          val sub2 = Substitution[HOLExpression](List((x2,eigenvar)))
+          val aux1 = sub1(l1).asInstanceOf[HOLFormula]
+          val aux2 = sub2(l2).asInstanceOf[HOLFormula]
+
+          val parent = atomicExpansion_(gen, aux1, aux2)
+          val i1 = ExistsRightRule(parent, aux2, f2, eigenvar)
+          ExistsLeftRule(i1, aux1, f1, eigenvar)
+
+        case (a1,a2) if a1.isAtom && a2.isAtom =>
+          Axiom(a1::Nil, a2::Nil)
+
+        case _ =>
+          throw new Exception(""+f1+" and "
+            +f2+" do not have the same outermost operator or operator unhandled!")
+
+      }
+    } catch {
+      case e:Exception =>
+        throw new Exception("Error in non-atomic axiom expansion handling "+ f1 + " and "+f2+": "+e.getMessage, e)
+    }
+  }
 }
 
 

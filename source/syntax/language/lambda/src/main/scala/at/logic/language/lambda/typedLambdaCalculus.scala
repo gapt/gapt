@@ -69,11 +69,14 @@ trait LambdaFactoryProvider {
 
   class VariableNameGenerator(gen : () => String) extends VariableGenerator {
     def apply(a : Var) : Var = a.factory.createVar(VariableStringSymbol(gen()), a.exptype)
-    def apply(a : Var, blacklist : Set[String]) = {
+    def apply(a : Var, blacklist : Set[String]) : Var = {
       var name : String = gen()
       while (blacklist.contains(name)) name = gen()
       a.factory.createVar(VariableStringSymbol(name), a.exptype)
     }
+    //generates the blacklist from blacklist_exp
+    def apply(a: Var, blacklist_exps : Seq[LambdaExpression]) : Var =
+      apply(a, blacklist_exps.flatMap(_.symbols.map(_.toString)).toSet)
   }
 
 
