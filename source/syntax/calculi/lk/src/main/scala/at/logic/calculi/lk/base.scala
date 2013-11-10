@@ -50,6 +50,9 @@ import base.types._
        compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
       */
       def compose(other: FSequent) = FSequent(antecedent ++ other.antecedent, succedent ++ other.succedent)
+
+      def toFormula() = Or( antecedent.toList.map(x=> Neg( x ) ) ++ succedent.map(identity) )
+
     }
   }
 
@@ -79,6 +82,8 @@ import base.types._
     def multiSetEquals(f : FSequent, g : FSequent) : Boolean =
           f._1.diff(g._1).isEmpty && f._2.diff(g._2).isEmpty &&
           g._1.diff(f._1).isEmpty && g._2.diff(f._2).isEmpty
+
+
 
   }
 
@@ -147,7 +152,8 @@ import base.types._
     def toFSequent() : FSequent = {
       FSequent(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
     }
-    def toFormula = Or( antecedent.toList.map( f => Neg( f.formula ) ) ++ succedent.map(_.formula) )
+
+    def toFormula() : HOLFormula = this.toFSequent().toFormula()
     // checks whether this sequent is of the form F :- F
     def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head.formula == succedent.head.formula
 

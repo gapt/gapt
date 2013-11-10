@@ -127,10 +127,11 @@ class HybridLatexExporter(val expandTex : Boolean) {
     case Atom(sym, args) =>
       val str : String =
         if (args.length == 2 && sym.toString.matches("""(<|>|\\leq|\\geq|=|>=|<=)"""))
-          getFormulaString(args(0), false) +" "+nameToLatexString(sym.toString)+" "+getFormulaString(args(1))
+          "(" + getFormulaString(args(0), false) +" "+nameToLatexString(sym.toString)+" "+getFormulaString(args(1)) + ")"
         else
           nameToLatexString(sym.toString) + (if (args.isEmpty) " " else args.map(getFormulaString(_, false)).mkString("(",", ",")"))
-      if (outermost) str else "(" + str + ")"
+      //if (outermost) str else "(" + str + ")"
+      str
     case Function(sym, args, _) =>
         if (args.length == 2 && sym.toString.matches("""[+\-*/]"""))
           "("+getFormulaString(args(0), false) +" "+sym.toString+" "+getFormulaString(args(1))+")"

@@ -26,6 +26,7 @@ import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Ru
 import at.logic.calculi.lk.equationalRules.EquationVerifier._
 import at.logic.calculi.lk.definitionRules.{DefinitionLeftRule, DefinitionRightRule}
 import at.logic.language.lambda.BetaReduction._
+//import at.logic.algorithms.lk.{addContractions => contract, addWeakenings => weaken}
 import scala.annotation.tailrec
 
 abstract class Token
@@ -272,11 +273,11 @@ trait TokenToLKConverter {
     val dependecies = getDependecyMap(naming, rm)
     //dependecies map (x => println(x._1.toPrettyString+": "+x._2.mkString(",")))
     val ordering : List[HOLFormula] = getOrdering(dependecies)
-    println((ordering map (_.toPrettyString)).mkString("Ordering: ",", ",""))
+    //println((ordering map (_.toPrettyString)).mkString("Ordering: ",", ",""))
 
     //proof completion in dependency order
    val proofs =ordering.foldLeft( Map[HOLFormula, LKProof]() )( (proofs_done, f) => {
-     println("Processing (sub)proof "+this.f(f))
+     //println("Processing (sub)proof "+this.f(f))
      val f_proof : LKProof = completeProof(f, proofs_done, naming, rm(f), axioms)
      proofs_done + ((f, f_proof))
     }
@@ -294,77 +295,101 @@ trait TokenToLKConverter {
                     axioms : Map[HOLFormula, FSequent]) : LKProof = {
     var proofstack : List[LKProof] = List[LKProof]()
     for ( rt@RToken(name, auxterm, antecedent, succedent,sub) <- rules) {
-      println("Processing rule: "+name)
-      //println(proofstack.mkString("Proof stack: ",",",""))
+      //println("Processing rule: "+name)
       val ant = antecedent.map(x => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val suc = succedent.map(x  => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val fs = FSequent(ant, suc)
       name match {
         case "AX" =>
           proofstack = Axiom(ant, suc) :: proofstack
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
          // --- quantifier rules ---
         case "ALLL" =>
           proofstack = handleWeakQuantifier(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "EXR" =>
           proofstack = handleWeakQuantifier(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "ALLR" =>
           proofstack = handleStrongQuantifier(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "EXL" =>
           proofstack = handleStrongQuantifier(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "ANDR" =>
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "ORL" =>
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "IMPL" =>
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         // --- unary rules ---
         case "ORR" =>
           proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "ANDL" =>
           proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "IMPR" =>
           proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         // --- negation rules ---
         case "NEGL" =>
           proofstack = handleNegation(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "NEGR" =>
           proofstack = handleNegation(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
 
         // --- equational rules ---
         case "EQL" =>
           proofstack = handleEquality(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "EQR" =>
           proofstack = handleEquality(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
 
         // --- definition rules ---
         case "DEF" =>
           proofstack = handleDefinitions(proofstack, name, fs, auxterm, naming, rt)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
 
         // --- structural rules ---
         case "CONTRL" =>
           proofstack = handleContraction(proofstack, name, fs, auxterm, naming, rt )
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "CONTRR" =>
           proofstack = handleContraction(proofstack, name, fs, auxterm, naming, rt )
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "WEAKL" =>
           proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "WEAKR" =>
           proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "CUT" =>
           proofstack = handleCut(proofstack, name, fs, auxterm, naming, rt )
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
 
         // --- macro rules ---
         case "EQAXIOM" =>
          proofstack = handleEQAxiom(proofstack, name, fs, auxterm, sub, naming, rt, axioms)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
 
         case "INSTAXIOM" =>
           proofstack = handleInstAxiom(proofstack, name, fs, auxterm, sub, naming, rt, axioms)
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
 
         case "CONTINUEFROM" =>
           proofstack = handleLink(proofs, proofstack, name, fs, auxterm, naming, rt )
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs))
         case "CONTINUEWITH" => ;
         case "COMMENT" => ;
         case _ => throw new HybridLatexParserException("Rule type "+name+" not yet implemented!")
       }
+
     }
 
     require(proofstack.nonEmpty,"Error creating proof: Proof stack may not be empty!")
@@ -392,10 +417,10 @@ trait TokenToLKConverter {
             //try to use user provided term
             val t: HOLExpression = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
             if (s == t) {
-              println("Remark: automatically inferred the auxiliaray term in rule " + rt + ".")
+//              println("Remark: automatically inferred the auxiliaray term " + this.f(t) + " in formula "+this.f(f))
               t
             } else {
-              println("Preferring user specified term " + t + " over inferred term " + s + ".")
+              println("Preferring user specified term " + this.f(t) + " over inferred term " + this.f(s) + ".")
               t
             }
           } else {
@@ -404,7 +429,7 @@ trait TokenToLKConverter {
           }
 
         case None =>
-          println("Remark: Could not infer substitution term, using user specified one!")
+//          println("Remark: Could not infer substitution term, using user specified one!")
           HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new HybridLatexParserException("No substitution term found, please specify! " + rt)))
       }
     }
@@ -442,7 +467,7 @@ trait TokenToLKConverter {
             //try to use user provided term
             val t: HOLExpression = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
             if (s == t) {
-              println("Remark: automatically inferred the auxiliaray term in rule " + rt + ".")
+//              println("Remark: automatically inferred the auxiliaray term in rule " + rt + ".")
               require(t.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
               t
             } else {
@@ -452,7 +477,7 @@ trait TokenToLKConverter {
             }
           } else {
             //no user provided term
-            require(s.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+s+" is not!")
+//            require(s.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+s+" is not!")
             s
           }
 
@@ -752,7 +777,7 @@ trait TokenToLKConverter {
           val (s,t,eq,f,main) = args
 
           val l1 = {
-            print("Trying"+this.f(s)+"="+this.f(t)+" in "+this.f(main))
+            //print("Trying"+this.f(s)+"="+this.f(t)+" in "+this.f(main))
             //we check if we can paramodulate s=t ...
             checkReplacement(s, t, f, main) match {
               case EqualModuloEquality(_) =>
@@ -770,7 +795,7 @@ trait TokenToLKConverter {
 
           val l2 = {
             //if not, we try t=s....
-            print("Trying"+this.f(t)+"="+this.f(s)+" in "+this.f(main))
+            //print("Trying"+this.f(t)+"="+this.f(s)+" in "+this.f(main))
             checkReplacement(t, s, f, main) match {
               case EqualModuloEquality(_) =>
                 println("found!")
@@ -1019,6 +1044,7 @@ trait TokenToLKConverter {
   //TODO: there is definitely a copy of contract somewhere. Find it and eliminate the redundancy.
   /* Apply contraction rules to a proof until a given end-sequent is obtained.
     Throws an exception if this is impossible. */
+
   def contract(proof : LKProof, towhat : FSequent) : LKProof = {
     val context = proof.root.toFSequent diff towhat
     val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
@@ -1046,6 +1072,7 @@ trait TokenToLKConverter {
   //TODO: there is definitely a copy of weaken somewhere. Find it and eliminate the redundancy.
   /* Apply weakening rules to a proof until a given end-sequent is obtained.
     Throws an exception if this is impossible. */
+
   def weaken(proof : LKProof, towhat : FSequent) : LKProof = {
     val context = towhat diff proof.root.toFSequent
     val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>

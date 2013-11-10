@@ -658,15 +658,15 @@ object cutformulaExtraction {
 }
 
 // Adds weakenings to p in order to obtain the sequent s as the end-sequent.
-// Note: s should be a super-set of p's end-sequent.
+// Note: s should be a super-set of p's end-sequent. This assertion can be turned off be passing check=false
 object addWeakenings {
-  def apply(p: LKProof, s: FSequent) = {
+  def apply(p: LKProof, s: FSequent, check : Boolean = true) = {
     val root_ant = p.root.antecedent.map(x => x.formula)
     val root_suc = p.root.succedent.map(x => x.formula)
     val s_ant = s.antecedent
     val s_suc = s.succedent
 
-    assert(root_ant.forall(e => s_ant.contains(e)) && root_suc.forall(e => s_suc.contains(e)))
+    assert(check && root_ant.forall(e => s_ant.contains(e)) && root_suc.forall(e => s_suc.contains(e)))
 
     // Take formulas that occur in s and do not occur in p's end-sequent
     val diff_ant = s_ant.diff(root_ant) 
@@ -684,15 +684,15 @@ object addWeakenings {
 }
 
 // Adds contractions to p in order to obtain the sequent s as the end-sequent.
-// Note: s should be a sub-set of p's end-sequent.
+// Note: s should be a sub-set of p's end-sequent. This assertion can be turned off be passing check=false
 object addContractions {
-  def apply(p: LKProof, s: FSequent) = {
+  def apply(p: LKProof, s: FSequent, check : Boolean = true) = {
     val root_ant = p.root.antecedent.map(x => x.formula)
     val root_suc = p.root.succedent.map(x => x.formula)
     val s_ant = s.antecedent
     val s_suc = s.succedent
 
-    assert(s_ant.forall(e => root_ant.contains(e)) && s_suc.forall(e => root_suc.contains(e)))
+    assert(check && s_ant.forall(e => root_ant.contains(e)) && s_suc.forall(e => root_suc.contains(e)))
 
     // Take formulas that occur in p's end sequent and do not occur in s
     val diff_ant = root_ant.diff(s_ant)
