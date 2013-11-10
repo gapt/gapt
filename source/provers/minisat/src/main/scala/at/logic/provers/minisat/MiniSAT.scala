@@ -17,6 +17,10 @@ import java.io.FileWriter
 import java.io.InputStreamReader
 import java.lang.StringBuilder
 
+import at.logic.calculi.lk.base.types.FSequent
+
+import at.logic.provers.Prover
+
 import scala.collection.immutable.HashMap
 
 trait Interpretation {
@@ -35,7 +39,7 @@ trait Interpretation {
 }
 
 // Call MiniSAT to solve quantifier-free HOLFormulas.
-class MiniSAT {
+class MiniSAT extends at.logic.utils.logging.Logger {
   
   class MapBasedInterpretation( val model : Map[HOLFormula, Boolean]) extends Interpretation {
     def interpretAtom(atom : HOLFormula) = model.get(atom) match {
@@ -45,7 +49,7 @@ class MiniSAT {
   }
 
   var atom_map : Map[HOLFormula, Int] = new HashMap[HOLFormula,Int]
-  
+
   // Checks if f is valid using MiniSAT.
   def isValid( f: HOLFormula ) = solve( Neg( f ) ) match {
     case Some(_) => false
@@ -125,16 +129,17 @@ class MiniSAT {
     out.append(sb.toString())
     out.close()
     
-    //System.out.println(sb.toString());
+    trace( "Generated MiniSAT input: ")
+    trace(sb.toString());
     
     // run minisat
     
     val bin = "minisat";
     val run = bin + " " + temp_in.getAbsolutePath() + " " + temp_out.getAbsolutePath();
-    //System.out.println("Starting minisat...");
+    debug("Starting minisat...");
     val p = Runtime.getRuntime().exec(run);
     p.waitFor();
-    //System.out.println("minisat finished.");
+    debug("minisat finished.");
     
     // parse minisat output and construct map
     val in = new BufferedReader(new InputStreamReader(
@@ -142,7 +147,7 @@ class MiniSAT {
     
     val sat = in.readLine();
     
-    //System.out.println(sat);
+    trace("MiniSAT result: " + sat)
     
     if ( sat.equals("SAT") ) {
       Some( in.readLine().split(" ").
@@ -160,5 +165,16 @@ class MiniSAT {
       // unsatisfiable
       None
     }
+  }
+}
+
+class MiniSATProver extends Prover {
+  def getLKProof( seq : FSequent ) : Option[at.logic.calculi.lk.base.LKProof] = 
+    throw new Exception("MiniSAT does not produce proofs!")
+
+  override def isValid( seq : FSequent ) : Boolean = {
+    val sat = new MiniSAT()
+    sat.isValid(Imp(And(seq.antecedent.toList), Or(seq.succedent.toList)))
+
   }
 }

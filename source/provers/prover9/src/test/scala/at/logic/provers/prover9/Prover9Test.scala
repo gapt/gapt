@@ -4,6 +4,7 @@
 
 package at.logic.provers.prover9
 
+import at.logic.language.lambda.symbols._
 import _root_.at.logic.calculi.resolution.base.ResolutionProof
 import _root_.at.logic.calculi.resolution.base.Clause
 import _root_.at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
@@ -263,6 +264,31 @@ class Prover9Test extends SpecificationWithJUnit {
         case None => true must beEqualTo(true)
       }
     }
+
+/* FIXME: commented out since tptp export of quantifiers is still failing.
+   Try again after merging Giselle's changes.
+
+    "prove { :- (All x) x = x   }" in {
+      //checks, if the execution of prover9 works, o.w. skip test
+      Prover9.refute(box ) must not(throwA[IOException]).orSkip
+
+      val p = new Prover9Prover()
+
+      val s = FSequent(Nil,List(AllVar(FOLVar(new VariableStringSymbol("x")), parse("=(x,x)"))))
+
+      p.isValid(s) must beTrue
+    }
+*/
+    "prove { A or B :- -(-A and -B)  }" in {
+      //checks, if the execution of prover9 works, o.w. skip test
+      Prover9.refute(box ) must not(throwA[IOException]).orSkip
+
+      val p = new Prover9Prover()
+      val s = FSequent(List(Or(parse("A"), parse("B"))), List(Neg(And(Neg(parse("A")), Neg(parse("B"))))))
+
+      p.isValid(s) must beTrue
+    }
+
   }
 
 

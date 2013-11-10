@@ -5,9 +5,13 @@
 
 package at.logic.algorithms.cutIntroduction
 
+import at.logic.provers.Prover
+import at.logic.provers.prover9.Prover9Prover
+import at.logic.provers.minisat.MiniSATProver
 import at.logic.language.lambda.substitutions._
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base._
+import at.logic.calculi.lk.base.types._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.lambda.symbols._
@@ -33,12 +37,12 @@ class CutIntroEHSUnprovableException(msg: String) extends CutIntroException(msg)
 
 object CutIntroduction {
 
-  def apply(proof: LKProof) : LKProof = apply( extractExpansionTrees( proof ))
+  def apply(proof: LKProof, prover: Prover = new DefaultProver()) : LKProof = apply( extractExpansionTrees( proof ), prover)
 
   /**
    * cut-introduction algorithm (stable version)
    **/
-  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : LKProof = {
+  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: Prover) : LKProof = {
     val endSequent = toSequent(ep)
     println("\nEnd sequent: " + endSequent)
     
@@ -65,7 +69,7 @@ object CutIntroduction {
     println( "Number of smallest grammars: " + smallestGrammars.length )
 
     // maps a grammar to a proof and a corresponding extended Herbrand-sequent
-    def buildProof(grammar:Grammar) = {
+    def buildProof(grammar:Grammar, prover:Prover) = {
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
@@ -77,13 +81,13 @@ object CutIntroduction {
       //val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
       //val ehs2 = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula)
 
-      val proof = buildProofWithCut(ehs1)
+      val proof = buildProofWithCut(ehs1, prover)
       val final_proof = CleanStructuralRules( proof )
  
       ( final_proof, ehs1 )
     }
 
-    val proofs = smallestGrammars.map(buildProof)
+    val proofs = smallestGrammars.map(buildProof(_, prover))
 
     // Sort the list by size of proofs
     val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
@@ -97,14 +101,20 @@ object CutIntroduction {
     smallestProof
   }
 
+
   /**
    * Experimental implementation of cut-introduction algorithm
+   *
+   * @param ep: The sequent of expansion trees to which cut-introduction is to be applied.
+   * @param prover: The prover used for checking validity and constructing the final proof.
+                    Default: use MiniSAT for validity check, LK proof search for proof building.
    *
    * @return a pair ( p: LKProof, s: String ) where s is a logging string
    * with quantitative data, see testing/resultsCutIntro/stats.ods ('format' sheet)
    * for details.
    **/
-  def applyExp(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : ( LKProof , String )= {
+  // default: use prover9 for validity checks
+  def applyExp(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: Prover = new DefaultProver() ) : ( LKProof , String ) = {
     var log = ""
 
     var SolutionCTime: Long = 0
@@ -155,11 +165,11 @@ object CutIntroduction {
       val t1 = System.currentTimeMillis
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-      val ehs1 = MinimizeSolution.apply2(ehs)
+      val ehs1 = MinimizeSolution.apply2(ehs, prover)
       val t2 = System.currentTimeMillis
       SolutionCTime += t2 - t1
    
-      val proof = buildProofWithCut(ehs1)
+      val proof = buildProofWithCut(ehs1, prover)
       val t3 = System.currentTimeMillis
       ProofBuildingCTime += t3 - t2
       
@@ -190,7 +200,7 @@ object CutIntroduction {
 
   /************************ Helper functions *********************/
 
-  def computeInterpolant(ehs: ExtendedHerbrandSequent, s: List[FOLTerm]) : FOLFormula = {
+  def computeInterpolant(ehs: ExtendedHerbrandSequent, s: List[FOLTerm], prover: Prover) : FOLFormula = {
     
     // A[s_i] forall i
     val asi = s.map( t => FOLSubstitution(ehs.cutFormula, ehs.grammar.eigenvariable, t) )
@@ -207,7 +217,7 @@ object CutIntroduction {
     val ppart = pi ++ lambda
 
     // Proof
-    val interpProof = solvePropositional(FSequent(gamma++pi, delta++lambda)).get
+    val interpProof = prover.getLKProof(FSequent(gamma++pi, delta++lambda)).get
 
     // Getting the formula occurrences...
     val occurrences = interpProof.root.antecedent ++ interpProof.root.succedent
@@ -240,7 +250,7 @@ object CutIntroduction {
   }
 
   /// build a proof with cut from an extended herbrand sequent
-  def buildProofWithCut(ehs: ExtendedHerbrandSequent) : LKProof = {
+  def buildProofWithCut(ehs: ExtendedHerbrandSequent, prover: Prover) : LKProof = {
 
     val endSequent = ehs.endSequent
     val cutFormula = ehs.cutFormula
@@ -253,14 +263,14 @@ object CutIntroduction {
       cutFormula.instantiate(t) :: acc
     }
 
-    val proofLeft = solvePropositional(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
+    val proofLeft = prover.getLKProof(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
         ForallRightRule(uPart(grammar.u.filter(t => t.freeVariables.contains(grammar.eigenvariable)), proofLeft1, flatterms), cutLeft, cutFormula, alpha)
       case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable.")
     }
 
-    val proofRight = solvePropositional(FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
+    val proofRight = prover.getLKProof(FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     val rightBranch = proofRight match {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
       case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
@@ -341,3 +351,10 @@ object CutIntroduction {
   }
 }
 
+class DefaultProver extends Prover {
+  def getLKProof( seq : FSequent ) : Option[LKProof] =
+    new LKProver().getLKProof( seq )
+
+  override def isValid( seq : FSequent ) : Boolean = 
+    new MiniSATProver().isValid( seq )
+}

@@ -38,6 +38,7 @@ import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexed
     // scope and id are used to give the same names for new functions and constants between different calls of this method
     def apply_(term: HOLExpression, scope: mutable.Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLExpression = {
       term match {
+        case e : FOLExpression => e // if it's already FOL - great, we are done.
         case z:indexedFOVar => FOLVar(new VariableStringSymbol(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString))
         case fov: foVar => FOLVar(new VariableStringSymbol(fov.name.toString))
         case foc: foConst => FOLConst(new ConstantStringSymbol(foc.name.toString))

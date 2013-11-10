@@ -11,6 +11,7 @@ import at.logic.language.fol._
 import at.logic.calculi.resolution.base.FClause
 import at.logic.language.fol.Utils._
 import at.logic.provers.minisat.MiniSAT
+import at.logic.provers.Prover
 import at.logic.utils.dssupport.ListSupport.mapAccumL
 import at.logic.algorithms.resolution._
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
@@ -26,8 +27,8 @@ object MinimizeSolution {
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
   }
 
-  def apply2(ehs: ExtendedHerbrandSequent) = {
-    val minSol = improveSolution2(ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
+  def apply2(ehs: ExtendedHerbrandSequent, prover: Prover) = {
+    val minSol = improveSolution2(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
   }
 
@@ -121,9 +122,8 @@ object MinimizeSolution {
     * @param form The canonical solution to be improved (doesn't have to be in CNF).
     * @return The list of minimal-size solutions (=the set of end nodes as described in 4.2).
     */
-   private def improveSolution2(ehs: ExtendedHerbrandSequent) : List[FOLFormula] = {
+   private def improveSolution2(ehs: ExtendedHerbrandSequent, prover: Prover) : List[FOLFormula] = {
       //Create a SAT-solver for the validity check
-      val sat = new MiniSAT()
 
       val cutFormula = ehs.cutFormula
 
@@ -217,7 +217,7 @@ object MinimizeSolution {
       //node-filter which checks for validity using miniSAT
       def nodeFilter(node: ResNode) : Boolean = {
         satCount = satCount + 1
-        isValidWith(ehs, sat, AllVar(x, NumberedCNFtoFormula(node.currentFormula)))
+        isValidWith(ehs, prover, AllVar(x, NumberedCNFtoFormula(node.currentFormula)))
       }
 
       //Perform the DFS
@@ -230,13 +230,13 @@ object MinimizeSolution {
 
   /** Checks if the sequent is a tautology using f as the cut formula.
     * 
-    * @param sat A SAT-solver that performs the validity check.
+    * @param prover A prover that performs the validity check.
     * @param f The formula to be checked. It will be instantiated with the
     *          eigenvariable of the solution's grammar.
     *          For details, see introqcuts.pdf, Chapter 5, Prop. 4, Example 6.
     * @return True iff f still represents a valid solution.
     */
-  def isValidWith(ehs: ExtendedHerbrandSequent, sat: MiniSAT, f: FOLFormula) : Boolean = {
+  def isValidWith(ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula) : Boolean = {
 
     val body = f.instantiate(ehs.grammar.eigenvariable)
 
@@ -250,7 +250,7 @@ object MinimizeSolution {
     val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
     val succedent = ehs.prop_r ++ ehs.inst_r
 
-    sat.isValid(Imp(And(antecedent), Or(succedent)))
+    prover.isValid(Imp(And(antecedent), Or(succedent)))
   }
 
   def isValidWith(ehs: ExtendedHerbrandSequent, f: FOLFormula) : Boolean = {

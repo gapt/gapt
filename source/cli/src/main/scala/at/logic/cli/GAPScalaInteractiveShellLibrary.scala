@@ -575,19 +575,26 @@ object printProofStats {
 
   object buildProofWithCut {
     def apply(ehs: ExtendedHerbrandSequent) = {
-      val p = CutIntroduction.buildProofWithCut( ehs )
+      val p = CutIntroduction.buildProofWithCut( ehs, new at.logic.algorithms.cutIntroduction.DefaultProver() )
       CleanStructuralRules( p )
     }
   }
 
   object cutIntro {
     def apply( p: LKProof ) : LKProof = CutIntroduction( p )
-    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction( ep )
+    def apply( p: LKProof, prover: at.logic.provers.Prover ) : LKProof = CutIntroduction( p, prover )
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = 
+      CutIntroduction( ep, new at.logic.algorithms.cutIntroduction.DefaultProver() )
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: at.logic.provers.Prover ) : LKProof =
+      CutIntroduction( ep, prover )
   }
 
   object cutIntroExp {
     def apply( p: LKProof ) : LKProof = apply( extractExpansionTrees( p ))
+    def apply( p: LKProof, prover: at.logic.provers.Prover ) : LKProof = apply( extractExpansionTrees( p ), prover)
     def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction.applyExp( ep )._1
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: at.logic.provers.Prover ) : LKProof = 
+      CutIntroduction.applyExp( ep, prover )._1
   }
 
   object cutIntroG {
@@ -712,6 +719,10 @@ object printProofStats {
     //get the ground substitution of the ground resolution refutation
     //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.
     def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(HOLVar, HOLExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
+    def getProof( seq : FSequent) : Option[LKProof] = {
+      val p = new at.logic.provers.prover9.Prover9Prover()
+      p.getLKProof( seq )
+    }
   }
 
   // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
@@ -1206,6 +1217,7 @@ object printProofStats {
           |   prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
           |   prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file
           |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
+          |   prover9.getProof:  FSequent => Option[LKProof] - prove a sequent with prover9
           |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
           |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
           |   miniSATsolve: HOLFormula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT

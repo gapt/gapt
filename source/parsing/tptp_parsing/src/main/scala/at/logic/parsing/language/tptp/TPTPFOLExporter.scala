@@ -16,7 +16,7 @@ import scala.collection.immutable.HashMap
 import scala.collection.mutable
 import at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
 
-object TPTPFOLExporter {
+object TPTPFOLExporter extends at.logic.utils.logging.Logger {
   // FIXME: this should not be here!
   def hol2fol(f: HOLFormula) : FOLFormula = 
   {
@@ -31,8 +31,15 @@ object TPTPFOLExporter {
   def tptp_problem_named( ss: List[Pair[String, FSequent]] ) =
     ss.foldLeft("")( (s, p) => s + sequentToProblem( p._2, p._1 ) + "\n")
 
+  // Convert a sequent into a tptp proof problem.
+  def tptp_proof_problem( seq : FSequent ) =
+    "fof( to_prove, conjecture, " + exportFormula ( hol2fol( toFormula(seq) ) )+ ").\n"
+
   def tptp_problem( ss: List[FSequent] ) =
     tptp_problem_named( ss.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ) )
+
+  def sequentToProblemFull( s: FSequent, n: String ) =
+    "fof( " + n + ",axiom," + export( s ) + ")."
 
   def sequentToProblem( s: FSequent, n: String ) =
     "cnf( " + n + ",axiom," + export( s ) + ")."
@@ -41,12 +48,19 @@ object TPTPFOLExporter {
   // we export it as a disjunction
   def export( s: FSequent ) = {
     val f = hol2fol(toFormula(s))
-    val map = getFreeVarRenaming( f )
+    val map = getVarRenaming( f )
+    trace("var renaming: " + map)
     tptp( f )( map )
   }
 
-  def getFreeVarRenaming( f: FOLFormula ) = {
-    getFreeVariablesFOL( f ).toList.zipWithIndex.foldLeft( new HashMap[FOLVar, String] )( (m, p) =>
+  def exportFormula( f: FOLFormula ) = {
+    val map = getVarRenaming( f )
+    trace("var renaming: " + map)
+    tptpFormula( f )( map )
+  }
+
+  def getVarRenaming( f: FOLFormula ) = {
+    getVariablesFOL( f ).toList.zipWithIndex.foldLeft( new HashMap[FOLVar, String] )( (m, p) =>
       m + (p._1 -> ("X" + p._2.toString) )
     )
   }
@@ -65,9 +79,20 @@ object TPTPFOLExporter {
     case Neg(x) => "~" + tptp( x )
   }
 
+  // Exports a full formula in TPTP format.
+  def tptpFormula( f : FOLFormula ) (implicit s_map: Map[FOLVar, String]) : String = f match {
+    case Atom(x, args) => handleAtom( x, args )
+    case Or(x,y) => "( " + tptpFormula( x ) + " | " + tptpFormula( y ) + " )"
+    case Neg(x) => "( ~" + tptpFormula( x ) + ")"
+    case And(x,y) => "( " + tptpFormula( x ) + " & " + tptpFormula( y ) + " )"
+    case Imp(x,y) => "( " + tptpFormula( x ) + " => " + tptpFormula( y ) + " )"
+    case AllVar(v, f) => "! [" + tptp(v) + "] : " + tptpFormula(f)
+    case ExVar(v, f) => "? [" + tptp(v) + "] : " + tptpFormula(f)
+  }
+
   def tptp( t: FOLTerm )(implicit s_map: Map[FOLVar, String]) : String = t match {
     case FOLConst(c) => single_quote( c.toString )
-    case FOLVar(x) => s_map( t.asInstanceOf[FOLVar] )
+    case x : FOLVar => s_map( x )
     case Function(x, args) => handleAtom( x, args )
   }
 

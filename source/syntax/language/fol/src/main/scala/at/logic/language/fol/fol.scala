@@ -450,6 +450,10 @@ object getFreeVariablesFOL {
   def apply( f: FOLFormula ) = f.freeVariables.asInstanceOf[Set[FOLVar]]
 }
 
+object getVariablesFOL {
+  def apply( f: FOLFormula ) = (f.freeVariables ++ f.boundVariables).asInstanceOf[Set[FOLVar]]
+}
+
 object FOLSubstitution
 {
   def apply(f: FOLFormula, x: FOLVar, t: FOLTerm) : FOLFormula =

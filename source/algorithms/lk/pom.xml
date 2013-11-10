@@ -11,7 +11,13 @@
   <packaging>jar</packaging>  
   <name>Algorithms for LK and related datastructures</name>
 
-  <dependencies>
+  <dependencies>    
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>prover_base</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>subsumption</artifactId>

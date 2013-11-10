@@ -14,16 +14,25 @@ import at.logic.language.hol.{HOLConst, Atom, HOLExpression, HOLFormula, AllVar,
 import at.logic.language.lambda.types.{Ti, Tindex}
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.lk.quantificationRules._
+import at.logic.provers.Prover
 
-object solvePropositional {
+object solvePropositional extends at.logic.utils.logging.Logger {
 
-  def apply(seq: FSequent): Option[LKProof] = prove(seq) match {
-    case Some(p) =>
-      //println("solvePropositional: # of contraction left rules: " + statistics.contLeftNumber(p))
-      //println("solvePropositional: # of contraction right rules: " + statistics.contRightNumber(p))
-      //println("solvePropositional: # of rules: " + statistics.rulesNumber(p))
-      Some(CleanStructuralRules(p))
-    case None => None
+  def apply(seq: FSequent): Option[LKProof] = {
+    debug("running solvePropositional")
+    prove(seq) match {
+      case Some(p) => {
+        debug("finished solvePropositional succesfully")
+        debug("solvePropositional: # of contraction left rules: " + statistics.contLeftNumber(p))
+        debug("solvePropositional: # of contraction right rules: " + statistics.contRightNumber(p))
+        debug("solvePropositional: # of rules: " + statistics.rulesNumber(p))
+        Some(CleanStructuralRules(p))
+      }
+      case None => {
+        debug("finished solvePropositional unsuccesfully")
+        None
+      }
+    }
   }
 
   // Returns a boolean indicating if the sequent is provable.
@@ -368,7 +377,7 @@ object solvePropositional {
     case ExVar(_,l)  => isNotSchematic(l.asInstanceOf[HOLFormula])
     case BigAnd(_,_,_,_) => false
     case BigOr(_,_,_,_) => false
-    case _ => println("WARNING: Unexpected operator in test for schematic formula "+f); false
+    case _ => warn("WARNING: Unexpected operator in test for schematic formula "+f); false
   }
 
 
@@ -521,4 +530,7 @@ object AtomicExpansion {
   }
 }
 
-
+class LKProver extends Prover {
+  def getLKProof( seq : FSequent ) : Option[LKProof] =
+    solvePropositional( seq )
+}

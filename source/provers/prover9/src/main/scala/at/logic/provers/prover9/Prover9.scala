@@ -6,6 +6,8 @@
 
 package at.logic.provers.prover9
 
+import at.logic.provers.Prover
+import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.calculi.resolution.base._
 import at.logic.calculi.lk.base._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -32,12 +34,21 @@ import at.logic.calculi.lk.propositionalRules.{CutRule, Axiom}
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
-object Prover9 {
+object Prover9 extends at.logic.utils.logging.Logger {
 
-  def writeProblem( named_sequents: List[Pair[String, FSequent]], file: File ) = 
+  def writeProofProblem( seq: FSequent, file: File ) =
+  {
+    val tptp = TPTPFOLExporter.tptp_proof_problem( seq )
+    trace("created tptp input: " + tptp)
+    val writer = new FileWriter( file )
+    writer.write( tptp )
+    writer.flush
+  }
+
+  def writeRefutationProblem( named_sequents: List[Pair[String, FSequent]], file: File ) = 
   {
     val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
-    //println("created tptp input: " + tptp)
+    trace("created tptp input: " + tptp)
     val writer = new FileWriter( file )
     writer.write( tptp )
     writer.flush
@@ -75,24 +86,33 @@ object Prover9 {
   /* these are shortcuts for executing the programs; all take an input and an output file and
      return the exit status of the tool used */
   def tptpToLadr(in:String, out:String) = exec_in_out("tptp_to_ladr",in,out)
-  def refute(in:String, out:String) = exec_in_out("prover9",in,out)
+  def runP9(in:String, out:String) = exec_in_out("prover9",in,out)
   def p9_to_ivy(in:String, out:String) = exec_in_out("prooftrans ivy",in,out)
   def p9_to_p9(in:String, out:String) = exec_in_out("prooftrans",in,out)
 
 
-
-  def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
+  def prove( seq : FSequent, input_file: String, output_file : String ) : Option[RobinsonResolutionProof] =
   {
-    val tmp_file = File.createTempFile( "gapt-prover9", ".tptp", null )
-    writeProblem( named_sequents, tmp_file )
+    val tmp_file = File.createTempFile( "gapt-prover9-proof", ".tptp", null )
+    writeProofProblem( seq, tmp_file )
 
     tptpToLadr( tmp_file.getAbsolutePath, input_file )
     tmp_file.delete
-    refuteLadr(input_file, output_file)
+    runP9OnLADR(input_file, output_file)
   }
 
+  def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
+  {
+    val tmp_file = File.createTempFile( "gapt-prover9-ref", ".tptp", null )
+    trace("writing refutational problem")
+    writeRefutationProblem( named_sequents, tmp_file )
+    trace("converting tptp to ladr")
+    tptpToLadr( tmp_file.getAbsolutePath, input_file )
+    tmp_file.delete
+    runP9OnLADR(input_file, output_file)
+  }
 
-    def refuteLadr( input_file: String, output_file: String ) : Option[RobinsonResolutionProof] = {
+    def runP9OnLADR( input_file: String, output_file: String ) : Option[RobinsonResolutionProof] = {
     // find out which symbols have been renamed
     // this information should eventually be used when
     // parsing the prover9 proof
@@ -106,10 +126,12 @@ object Prover9 {
         case _ => m
     })
 
-//    println( "translation map: " )
-//    println( symbol_map )
+    trace( "translation map: " )
+    trace( symbol_map.toString )
 
-    val ret = refute( input_file, output_file )
+    trace( "running prover9" )
+    val ret = runP9( input_file, output_file )
+    trace( "prover9 finished" )
     ret match {
       case 0 =>
         try  {
@@ -120,7 +142,7 @@ object Prover9 {
           Some(tp9proof)
         } catch {
           case e : Exception =>
-            println("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
+            warn("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
             Some(InitialClause(Nil,Nil))
         }
       case 1 => throw new Prover9Exception("A fatal error occurred (user's syntax error or Prover9's bug).")
@@ -138,6 +160,22 @@ object Prover9 {
   def refute( sequents: List[FSequent], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
     refuteNamed( sequents.zipWithIndex.map( p => ("sequent" + p._2, p._1) ), input_file, output_file )
 
+  /**
+    Proves a sequent through Prover9 (which refutes the corresponding set of clauses).
+  **/
+  def prove( seq : FSequent ) : Option[RobinsonResolutionProof] = {
+    val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
+    val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
+    val ret = prove( seq, in_file.getAbsolutePath, out_file.getAbsolutePath )
+    in_file.delete
+    out_file.delete
+    ret
+  }
+
+
+  /**
+    Refutes a set of clauses, given as a List[FSequent].
+  **/
   def refute( sequents: List[FSequent] ) : Option[RobinsonResolutionProof] = {
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
@@ -149,7 +187,7 @@ object Prover9 {
 
   def refute( filename : String ) : Option[RobinsonResolutionProof] = {
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
-    val ret = refuteLadr(new File(filename).getAbsolutePath, out_file.getAbsolutePath )
+    val ret = runP9OnLADR(new File(filename).getAbsolutePath, out_file.getAbsolutePath )
     out_file.delete
     ret
   }
@@ -187,14 +225,13 @@ object Prover9 {
 
   /* Takes the output of prover9, extracts a resolution proof and the endsequent. */
   def parse_prover9(p9_file : String, escape_underscore : Boolean = true, newimpl : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
-    //println((new File(".")).getCanonicalPath)
 
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
     p9_to_p9(p9_file, pt_file.getCanonicalPath)
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
     p9_to_ivy(pt_file.getCanonicalPath, ivy_file.getCanonicalPath)
 
-    def debugline(s:String) = { println(s); true}
+    def debugline(s:String) = { debug(s); true}
 
     val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
     val rproof = IvyToRobinson(iproof)
@@ -214,4 +251,18 @@ object Prover9 {
 
   }
 
+}
+
+class Prover9Prover extends Prover {
+  def getRobinsonProof( seq : FSequent ) = Prover9.prove(seq)
+  
+  def getLKProof( seq : FSequent ) : Option[LKProof] = getRobinsonProof(seq) match {
+    case Some(proof) => Some(RobinsonToLK(proof,seq))
+    case None => None
+  }
+
+  override def isValid( seq : FSequent ) : Boolean = getRobinsonProof(seq) match {
+    case Some(_) => true
+    case None => false
+  }
 }
