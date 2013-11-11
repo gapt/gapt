@@ -55,7 +55,8 @@ import _root_.at.logic.utils.traits.Occurrence
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
-        case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula.")
+        case _ => //throw new LKRuleCreationException("No matching formula occurrence found for application of the rule all:l with the given auxiliary formula "+aux+" in "+s1.root)
+          throw new LKUnaryRuleCreationException("all:l", s1, aux::Nil)
       }
     }
 
@@ -140,8 +141,10 @@ import _root_.at.logic.utils.traits.Occurrence
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, term: HOLExpression) : LKProof = {
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, term )
-        case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
-        }
+        case _ => //throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
+          throw new LKUnaryRuleCreationException("ex:r", s1, aux::Nil)
+
+      }
     }
 
     /** <pre>Constructs a proof ending with an ExistsRight rule.
@@ -224,7 +227,9 @@ import _root_.at.logic.utils.traits.Occurrence
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: HOLVar) : LKProof =
       s1.root.succedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, eigen_var )
-        case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
+        case _ => //throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
+          throw new LKUnaryRuleCreationException("all:r", s1, aux::Nil)
+
       }
 
     /** <pre>Constructs a proof ending with a ForallRight rule.
@@ -309,7 +314,9 @@ import _root_.at.logic.utils.traits.Occurrence
     def apply(s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: HOLVar) : LKProof =
       s1.root.antecedent.filter( x => x.formula == aux ).toList match {
         case (x::_) => apply( s1, x, main, eigen_var )
-        case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
+        case _ => //throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
+          throw new LKUnaryRuleCreationException("ex:l", s1, aux::Nil)
+
       }
 
     /** <pre>Constructs a proof ending with a ExistsLeft rule.

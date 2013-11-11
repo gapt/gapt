@@ -176,7 +176,7 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
 /* proof names as stored as formulas now, therefore we extend the proofdatabase */
 case class ExtendedProofDatabase(val eproofs : Map[HOLFormula, LKProof])
   extends ProofDatabase(Map(),Nil,Nil,Nil) {
-  override val proofs : List[(String,LKProof)] = eproofs.map(x => (x._1.toString, x._2)).toList
+  override val proofs : List[(String,LKProof)] = eproofs.map(x => x._1 match { case Atom(sym,_) => (sym.toString, x._2)}).toList
   override val Definitions : Map[HOLExpression, HOLExpression] = Map()
   override val axioms : List[FSequent] = Nil
   override val sequentLists : List[(String,List[FSequent])] = Nil

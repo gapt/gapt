@@ -262,15 +262,16 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
-          " for application of the rule with the given formula: " + term1)
+        case _ => //throw new LKRuleCreationException("No matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
+          //" for application of the rule c:l with the given formula: " + term1)
+          throw new LKUnaryRuleCreationException("c:l", s1, term1::Nil)
       }
     }
 
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
       val term2op = s1.antecedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the left part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
@@ -347,16 +348,16 @@ package propositionalRules {
     }
     
     /** <pre>Eliminates a duplicate occurrence of a formula term1
-      * from the antecedent of a sequent. The two occurrences are automatically
+      * from the succedent of a sequent. The two occurrences are automatically
       * chosen; if term1 occurs less than twice, an exception is thrown.
       * If term1 occurs more than twice, multiple applications of this
       * function are needed to remove all duplicate occurrences.
       * 
       * The rule: 
       *  (rest of s1)
-      * sL, term1, term1 |- sR
+      * sL |- term1, term1, sR
       * ----------------------- (ContractionLeft)
-      * sL, term1 |- sR
+      * sL |- term1, sR
       * </pre>
       * 
       * @param s1 The top proof with (sL |- sR, term1, term1) as the bottommost sequent.
@@ -366,15 +367,17 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       (s1.root.succedent.filter(x => x.formula == term1)).toList match {
         case (x::y::_) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found in " + s1.root.succedent.map(_.formula) +
-          " for application of the rule with the given formula: " + term1)
+        case _ => //throw new LKRuleCreationException("No matching formula occurrences found in " + s1.root.succedent.map(_.formula) +
+          //" for application of the rule c:r with the given formula: " + term1)
+          throw new LKUnaryRuleCreationException("c:r", s1, term1::Nil)
+
       }
     }
 
     private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s1.succedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
@@ -489,12 +492,13 @@ package propositionalRules {
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas  = {
       ((s1.root.succedent.filter(x => x.formula.syntaxEquals(term1))).toList,(s2.root.antecedent.filter(x => x.formula.syntaxEquals(term1))).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case (Nil,Nil) =>throw new LKRuleCreationException("Not matching formula occurrences found in both " + s1.root.succedent + " and " +
-          s2.root.antecedent + " for application of the rule with the given formula " + term1)
-        case (Nil,_) =>throw new LKRuleCreationException("Not matching formula occurrences found in " + s1.root.succedent +
-          " for application of the rule with the given formula " + term1)
-        case (_,Nil) =>throw new LKRuleCreationException("Not matching formula occurrences found in " + s2.root.antecedent +
-          " for application of the rule with the given formula " + term1)
+        case _ =>  throw new LKBinaryRuleCreationException("cut", s1, term1, s2, term1)
+        case (Nil,Nil) =>throw new LKRuleCreationException("No matching formula occurrences found in both " + s1.root.succedent + " and " +
+          s2.root.antecedent + " for application of the cut rule with the given formula " + term1)
+        case (Nil,_) =>throw new LKRuleCreationException("No matching formula occurrences found in " + s1.root.succedent +
+          " for application of the cut rule with the given formula " + term1)
+        case (_,Nil) =>throw new LKRuleCreationException("No matching formula occurrences found in " + s2.root.antecedent +
+          " for application of the cut rule with the given formula " + term1)
       }
     }
 
@@ -507,7 +511,7 @@ package propositionalRules {
         val t1str = term1oc.asInstanceOf[FormulaOccurrence].formula.toString()
         val t2str = term2oc.asInstanceOf[FormulaOccurrence].formula.toString()
         val str = "s1: " + s1str + "\ns2: " + s2str + "\nt1: " + t1str + "\nt2: " + t2str + "\n"
-        throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent\n" + str)
+        throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent\n" + str)
       }
       else {
         val term1 = term1op.get
@@ -627,14 +631,18 @@ package propositionalRules {
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryLKProof with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule and:r with the given formulas "
+          //+term1+" in "+s1.root+" and "+term2+ " in "+s2.root)
+          throw new LKBinaryRuleCreationException("and:r", s1, term1, s2, term2)
+
       }
     }
 
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.succedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
@@ -739,13 +747,14 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x, term2)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ => //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
+          throw new LKUnaryRuleCreationException("and:l", s1, term1::term2::Nil)
       }
     }
 
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
+      if (term1op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the left part of the sequent")
       else {
         val term1 = term1op.get
         term1
@@ -841,13 +850,16 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.antecedent.filter(x => x.formula == term2)).toList match {
         case (x::_) => apply(s1, term1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule and:l with the given formulas "
+          //+term1+" and "+term2+" in "+s1.root)
+          throw new LKUnaryRuleCreationException("and:l", s1, term1::term2::Nil)
       }
     }
 
     private def getTerms(s1: Sequent, term2oc: Occurrence) = {
       val term2op = s1.antecedent.find(_ == term2oc)
-      if (term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
+      if (term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the left part of the sequent")
       else {
         val term2 = term2op.get
         term2
@@ -960,7 +972,10 @@ package propositionalRules {
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule or:l with the given formulas "
+          //  +term1+" in "+s1.root+" and "+term2+" in "+s2.root)
+          throw new LKBinaryRuleCreationException("or:l", s1, term1, s2, term2)
       }
     }
 
@@ -1069,12 +1084,15 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.succedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x, term2)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule or:r with the given formulas "
+          //  +term1+" and "+term2+" in "+s1.root)
+          throw new LKUnaryRuleCreationException("or:r", s1, term1::term2::Nil)
       }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formula is not contained in the right part of the sequent")
+      if (term1op == None) throw new LKRuleCreationException("Auxiliary formula is not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         term1
@@ -1170,12 +1188,16 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.succedent.filter(x => x.formula == term2)).toList match {
         case (x::_) => apply(s1, term1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule or:r with the given formulas "
+          //  +term1+" and "+term2+" in "+s1.root)
+          throw new LKUnaryRuleCreationException("or:r", s1, term1::term2::Nil)
+
       }
     }
     private def getTerms(s1: Sequent, term2oc: Occurrence) = {
       val term2op = s1.succedent.find(_ == term2oc)
-      if (term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term2 = term2op.get
         term2
@@ -1299,13 +1321,16 @@ package propositionalRules {
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, s2, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule imp:l with the given formulas "
+          //  +term1+" in "+s1.root+" and "+term2+" in "+s2.root)
+          throw new LKBinaryRuleCreationException("c:l", s1, term1, s2, term2)
       }
     }
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
       val term2op = s2.antecedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
@@ -1413,13 +1438,17 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula, term2: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       ((s1.root.antecedent.filter(x => x.formula == term1)).toList,(s1.root.succedent.filter(x => x.formula == term2)).toList) match {
         case ((x::_),(y::_)) => apply(s1, x, y)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule imp:r with the given formulas "
+          //  +term1+" and "+term2+" in "+s1.root)
+          throw new LKUnaryRuleCreationException("imp:r", s1, term1::term2::Nil)
+
       }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
       val term2op = s1.succedent.find(_ == term2oc)
-      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         val term2 = term2op.get
@@ -1515,12 +1544,15 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.succedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule neg:l with the given formula "
+          //  +term1+" in "+s1.root)
+          throw new LKUnaryRuleCreationException("neg:l", s1, term1::Nil)
       }
     }
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.succedent.find(_ == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         term1
@@ -1600,7 +1632,10 @@ package propositionalRules {
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
       (s1.root.antecedent.filter(x => x.formula == term1)).toList match {
         case (x::_) => apply(s1, x)
-        case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+        case _ =>
+          //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule neg:r with the given formula "
+          //  +term1+" in "+s1)
+          throw new LKUnaryRuleCreationException("neg:r", s1, term1::Nil)
       }
     }
 
@@ -1620,7 +1655,7 @@ package propositionalRules {
       */ 
     private def getTerms(s1: Sequent, term1oc: Occurrence) = {
       val term1op = s1.antecedent.find(_ == term1oc)
-      if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+      if (term1op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
       else {
         val term1 = term1op.get
         term1

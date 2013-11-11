@@ -1,0 +1,19 @@
+\VARDEC{x,y}{i}
+\CONSTDEC{P,Q}{i>i>o}
+\CONSTDEC{a,b,c}{i}
+\CONSTDEC{f,g,h}{i>i}
+
+\CONSTDEC{P1,P2,P3,P4}{o}
+
+\AX{P(a,b)}{P(a,b)}
+\ANDL{Q(b,b) & P(a,b)}{P(a,b)}
+\ORR{Q(b,b) & P(a,b)}{P(a,b) | Q(b,b)}
+\CONTINUEWITH{P1}
+
+\AX{P(a,y)}{P(a,y)}
+\ALLL{}{(all x P(x,y))}{P(a,y)}
+\CONTINUEWITH{P2}
+
+\CONTINUEFROM{P2}{(all x P(x,y))}{P(a,y)}
+\ANDL{P(x,x) & (all x P(x,y))}{P(a,y)}
+\CONTINUEWITH{P3}

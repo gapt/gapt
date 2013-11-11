@@ -183,6 +183,17 @@ import base.types._
   // exceptions
   class LKRuleException(msg: String) extends RuleException(msg)
   class LKRuleCreationException(msg: String) extends LKRuleException(msg)
+  //these two classes allow detailed error diagnosis
+  case class LKUnaryRuleCreationException(name: String, parent: LKProof, aux : List[HOLFormula])
+    extends LKRuleCreationException("") {
+    override def getMessage() = "Could not create lk rule "+name+" from parent "+parent.root+" with auxiliary formulas "+aux.mkString(", ")
+  }
+  case class LKBinaryRuleCreationException(name: String, parent1: LKProof, aux1 : HOLFormula,  parent2: LKProof, aux2 : HOLFormula)
+    extends LKRuleCreationException("") {
+    override def getMessage() = "Could not create lk rule "+name+" from left parent "+parent1.root+" with auxiliary formula "+aux1+
+      " and right parent "+parent2.root+" with auxiliary formula "+aux2
+  }
+
   class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
   trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {

@@ -6,6 +6,7 @@ import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOcc
 import at.logic.calculi.slk._
 import at.logic.algorithms.shlk._
 import at.logic.language.hol._
+import at.logic.language.hol
 import at.logic.language.lambda.typedLambdaCalculus.Var
 import at.logic.language.schema._
 import at.logic.calculi.lk.propositionalRules._
@@ -27,6 +28,7 @@ import at.logic.language.schema.IntZero
 import at.logic.calculi.resolution.base.Clause
 import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
 import at.logic.language.lambda.substitutions.Substitution
+import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 
 
 object ACNF {
@@ -314,90 +316,116 @@ object SubstituteProof {
   def subapp(f: FormulaOccurrence, sub:Substitution[HOLExpression]) = sub(f.formula).asInstanceOf[HOLFormula]
   def remove_from_sub(v:Var, sub:Substitution[HOLExpression]) = Substitution[HOLExpression](sub.map.filterNot( x => x._1 == v  ))
 
-  def apply(proof: LKProof, sub:Substitution[HOLExpression]) : LKProof = proof match {
-    case Axiom(s) =>
-      val fs = s.toFSequent
-      val ant : Seq[Formula] = fs.antecedent.map(sub(_).asInstanceOf[Formula])
-      val suc : Seq[Formula] = fs.succedent.map(sub(_).asInstanceOf[Formula])
-      val inf = Axiom(ant, suc )
-      inf
+  def apply(proof: LKProof, sub:Substitution[HOLExpression]) : LKProof =
+    proof match {
+      case Axiom(s) =>
+        val fs = s.toFSequent
+        val ant : Seq[Formula] = fs.antecedent.map(sub(_).asInstanceOf[Formula])
+        val suc : Seq[Formula] = fs.succedent.map(sub(_).asInstanceOf[Formula])
+        val inf = Axiom(ant, suc )
+        inf
 
-    case WeakeningLeftRule(p, root, aux) =>
-      val rp = apply(p, sub)
-      WeakeningLeftRule(rp, subapp(aux,sub) )
-    case WeakeningRightRule(p, root, aux) =>
-      val rp = apply(p, sub)
-      WeakeningRightRule(rp, subapp(aux, sub))
-    case ContractionLeftRule(p,root,occ1,occ2,main) =>
-      val rp = apply(p, sub)
-      ContractionLeftRule(rp,subapp(occ1, sub))
-    case ContractionRightRule(p,root,occ1,occ2,main) =>
-      val rp = apply(p, sub)
-      ContractionRightRule(rp,subapp(occ1, sub) )
+      case WeakeningLeftRule(p, root, aux) =>
+        val rp = apply(p, sub)
+        WeakeningLeftRule(rp, subapp(aux,sub) )
+      case WeakeningRightRule(p, root, aux) =>
+        val rp = apply(p, sub)
+        WeakeningRightRule(rp, subapp(aux, sub))
+      case ContractionLeftRule(p,root,occ1,occ2,main) =>
+        val rp = apply(p, sub)
+        ContractionLeftRule(rp,subapp(occ1, sub))
+      case ContractionRightRule(p,root,occ1,occ2,main) =>
+        val rp = apply(p, sub)
+        ContractionRightRule(rp,subapp(occ1, sub) )
 
-    case AndLeft1Rule(p,root,aux1,aux2) =>
-      val rp = apply(p, sub)
-      AndLeft1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
-    case AndLeft2Rule(p,root,aux1,aux2) =>
-      val rp = apply(p, sub)
-      AndLeft2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
-    case AndRightRule(p1,p2,root,aux1, aux2,main) =>
-      val rp1 = apply(p1, sub)
-      val rp2 = apply(p2, sub)
-      AndRightRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
-    case OrLeftRule(p1,p2,root,aux1, aux2,main) =>
-      val rp1 = apply(p1, sub)
-      val rp2 = apply(p2, sub)
-      OrLeftRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
-    case OrRight1Rule(p,root,aux1,aux2) =>
-      val rp = apply(p, sub)
-      OrRight1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
-    case OrRight2Rule(p,root,aux1,aux2) =>
-      val rp = apply(p, sub)
-      OrRight2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
-    case ImpLeftRule(p1,p2,root,aux1, aux2,main) =>
-      val rp1 = apply(p1, sub)
-      val rp2 = apply(p2, sub)
-      ImpLeftRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
-    case ImpRightRule(p,root,aux1,aux2,main) =>
-      val rp = apply(p, sub)
-      ImpRightRule(rp, subapp(aux1,sub), subapp(aux2, sub))
+      case CutRule(p1,p2, root, aux1, aux2) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        CutRule(rp1, rp2, subapp(aux1,sub))
 
-    case EquationLeft1Rule(p1,p2,root,aux1, aux2, main) =>
-      val rp1 = apply(p1, sub)
-      val rp2 = apply(p2, sub)
-      EquationLeft1Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
-    case EquationLeft2Rule(p1,p2,root,aux1, aux2, main) =>
-      val rp1 = apply(p1, sub)
-      val rp2 = apply(p2, sub)
-      EquationLeft2Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
-    case EquationRight1Rule(p1,p2,root,aux1, aux2, main) =>
-      val rp1 = apply(p1, sub)
-      val rp2 = apply(p2, sub)
-      EquationRight1Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
-    case EquationRight2Rule(p1,p2,root,aux1, aux2, main) =>
-      val rp1 = apply(p1, sub)
-      val rp2 = apply(p2, sub)
-      EquationRight2Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+      case NegLeftRule(p,root,aux1,primary) =>
+        val rp = apply(p, sub)
+        NegLeftRule(rp, subapp(aux1,sub))
+      case NegRightRule(p,root,aux1,primary) =>
+        val rp = apply(p, sub)
+        NegRightRule(rp, subapp(aux1,sub))
 
-    case ForallLeftRule(p, root, aux, main, term) =>
-      val rp = apply(p, sub)
-      ForallLeftRule(rp, subapp(aux,sub), subapp(main,sub), sub(term))
-    case ExistsRightRule(p, root, aux, main, term) =>
-      val rp = apply(p, sub)
-      ExistsRightRule(rp, subapp(aux,sub), subapp(main,sub), sub(term))
+      case AndLeft1Rule(p,root,aux1,main) =>
+        val aux2 = main match { case hol.And(_,f) => f }
+        val rp = apply(p, sub)
+        AndLeft1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+      case AndLeft2Rule(p,root,aux2,main) =>
+        val aux1 = main match { case hol.And(_,f) => f }
+        val rp = apply(p, sub)
+        AndLeft2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+      case AndRightRule(p1,p2,root,aux1, aux2,main) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        AndRightRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
+      case OrLeftRule(p1,p2,root,aux1, aux2,main) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        OrLeftRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
+      case OrRight1Rule(p,root,aux1,main) =>
+        val aux2 = main match { case hol.Or(_,f) => f }
+        val rp = apply(p, sub)
+        OrRight1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+      case OrRight2Rule(p,root,aux2,main) =>
+        val aux1 = main match { case hol.Or(f,_) => f }
+        val rp = apply(p, sub)
+        OrRight2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
+      case ImpLeftRule(p1,p2,root,aux1, aux2,main) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        ImpLeftRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
+      case ImpRightRule(p,root,aux1,aux2,main) =>
+        val rp = apply(p, sub)
+        ImpRightRule(rp, subapp(aux1,sub), subapp(aux2, sub))
 
-    case ForallRightRule(p, root, aux, main, eigenvar) =>
-      val rsub = remove_from_sub(eigenvar, sub)
-      val rp = apply(p, rsub)
-      ForallLeftRule(rp, subapp(aux,rsub), subapp(main,rsub), eigenvar)
-    case ExistsLeftRule(p, root, aux, main, eigenvar) =>
-      val rsub = remove_from_sub(eigenvar, sub)
-      val rp = apply(p, rsub)
-      ExistsRightRule(rp, subapp(aux,rsub), subapp(main,rsub), eigenvar)
+      case EquationLeft1Rule(p1,p2,root,aux1, aux2, main) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        EquationLeft1Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+      case EquationLeft2Rule(p1,p2,root,aux1, aux2, main) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        EquationLeft2Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+      case EquationRight1Rule(p1,p2,root,aux1, aux2, main) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        EquationRight1Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+      case EquationRight2Rule(p1,p2,root,aux1, aux2, main) =>
+        val rp1 = apply(p1, sub)
+        val rp2 = apply(p2, sub)
+        EquationRight2Rule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub), subapp(main,sub))
+
+      case ForallLeftRule(p, root, aux, main, term) =>
+        val rp = apply(p, sub)
+        ForallLeftRule(rp, subapp(aux,sub), subapp(main,sub), sub(term))
+      case ExistsRightRule(p, root, aux, main, term) =>
+        val rp = apply(p, sub)
+        ExistsRightRule(rp, subapp(aux,sub), subapp(main,sub), sub(term))
+
+      case ForallRightRule(p, root, aux, main, eigenvar) =>
+        val rsub = remove_from_sub(eigenvar, sub)
+        val rp = apply(p, rsub)
+        ForallRightRule(rp, subapp(aux,rsub), subapp(main,rsub), eigenvar)
+      case ExistsLeftRule(p, root, aux, main, eigenvar) =>
+        val rsub = remove_from_sub(eigenvar, sub)
+        val rp = apply(p, rsub)
+        ExistsLeftRule(rp, subapp(aux,rsub), subapp(main,rsub), eigenvar)
 
 
-  }
+      case DefinitionLeftRule(p, root, aux, main) =>
+        val rp = apply(p, sub)
+        DefinitionLeftRule(rp, subapp(aux,sub), subapp(main,sub))
+      case DefinitionRightRule(p, root, aux, main) =>
+        val rp = apply(p, sub)
+        DefinitionRightRule(rp, subapp(aux,sub), subapp(main,sub))
+
+
+    }
+
 }
 
 

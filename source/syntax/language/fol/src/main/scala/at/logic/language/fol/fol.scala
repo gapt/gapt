@@ -329,7 +329,7 @@ object AllQ {
 object Neg {
   def apply(sub: FOLFormula) = App(NegC,sub).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case App(NegC,sub) => Some( (sub.asInstanceOf[FOLFormula]) )
+    case App(NegC,sub:FOLFormula) => Some( sub )
     case _ => None
   }
 }
@@ -341,7 +341,7 @@ object And {
   }
   def apply(left: FOLFormula, right: FOLFormula) = (App(App(AndC,left),right)).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case App(App(AndC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
+    case App(App(AndC,left:FOLFormula),right:FOLFormula) => Some( (left,right) )
     case _ => None
   }
 }
@@ -353,7 +353,7 @@ object Or {
     }
   def apply(left: FOLFormula, right: FOLFormula) = App(App(OrC,left),right).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-    case App(App(OrC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
+    case App(App(OrC,left:FOLFormula),right:FOLFormula) => Some( (left,right) )
     case _ => None
   }
 }
@@ -361,7 +361,7 @@ object Or {
 object Imp {
   def apply(left: FOLFormula, right: FOLFormula) = App(App(ImpC,left),right).asInstanceOf[FOLFormula]
   def unapply(expression: LambdaExpression) = expression match {
-      case App(App(ImpC,left),right) => Some( (left.asInstanceOf[FOLFormula],right.asInstanceOf[FOLFormula]) )
+      case App(App(ImpC,left:FOLFormula),right:FOLFormula) => Some( (left,right) )
       case _ => None
   }
 }
