@@ -6,7 +6,7 @@ import at.logic.language.hol.{HOLFormula, HOLExpression}
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.resolution.robinson._
-import at.logic.language.fol.{FOLExpression, FOLFormula}
+import at.logic.language.fol.{FOLExpression, FOLFormula, FOLTerm}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.resolution.instance.Instance
@@ -263,4 +263,12 @@ object TermReplacement extends Logger {
       }
   }
 
+}
+
+object FOLReplacement {
+  def apply( t: FOLTerm, map: Map[FOLTerm, FOLTerm] ) : FOLTerm =
+    TermReplacement(t, map)
+
+  def apply( f: FOLFormula, map: Map[FOLTerm, FOLTerm] ) : FOLFormula =
+    TermReplacement( f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLFormula]
 }

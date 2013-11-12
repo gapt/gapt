@@ -35,7 +35,7 @@ class CutIntroUncompressibleException(msg: String) extends CutIntroException(msg
  **/
 class CutIntroEHSUnprovableException(msg: String) extends CutIntroException(msg)
 
-object CutIntroduction {
+object CutIntroduction extends at.logic.utils.logging.Logger {
 
   def apply(proof: LKProof, prover: Prover = new DefaultProver()) : LKProof = apply( extractExpansionTrees( proof ), prover)
 
@@ -263,7 +263,11 @@ object CutIntroduction {
       cutFormula.instantiate(t) :: acc
     }
 
-    val proofLeft = prover.getLKProof(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))))
+    val seq = FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha)))
+    trace("--------------building lhs proof for: " + seq)
+    val proofLeft = prover.getLKProof(seq)
+    trace("----------------finished building lhs proof for: " + seq)
+    trace("----------------end-sequent: " + proofLeft.get.root )
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
         ForallRightRule(uPart(grammar.u.filter(t => t.freeVariables.contains(grammar.eigenvariable)), proofLeft1, flatterms), cutLeft, cutFormula, alpha)
@@ -272,10 +276,15 @@ object CutIntroduction {
 
     val proofRight = prover.getLKProof(FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     val rightBranch = proofRight match {
-      case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
+      case Some(proofRight1) => {
+        sPart(cutFormula, grammar.s, proofRight1)
+      }
       case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
     }
 
+    trace("leftBranch endsequent:" + leftBranch.root)
+    trace("rightBranch endsequent:" + rightBranch.root)
+    trace("cutFormula:" + cutFormula)
     val untilCut = CutRule(leftBranch, rightBranch, cutFormula)
 
 

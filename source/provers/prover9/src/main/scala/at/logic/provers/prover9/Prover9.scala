@@ -12,7 +12,10 @@ import at.logic.calculi.resolution.base._
 import at.logic.calculi.lk.base._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-import at.logic.language.hol._
+//import at.logic.language.hol._
+import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
+import at.logic.language.lambda.symbols.SymbolA
+import at.logic.language.fol._
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 import java.io._
 import scala.io.Source
@@ -31,6 +34,7 @@ import at.logic.parsing.language.prover9._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOccurrence}
 import at.logic.calculi.lk.propositionalRules.{CutRule, Axiom}
+import at.logic.algorithms.lk.applyReplacement
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -135,8 +139,12 @@ object Prover9 extends at.logic.utils.logging.Logger {
     ret match {
       case 0 =>
         try  {
-          val p9proof = parse_prover9(output_file, false)
+          trace( "parsing prover9 to robinson" )
+          val p9proof = parse_prover9(output_file, true, true)
+          trace( "done parsing prover9 to robinson" )
+          trace( "doing name replacement" )
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
+          trace( "done doing name replacement" )
           //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
 
           Some(tp9proof)
@@ -146,12 +154,47 @@ object Prover9 extends at.logic.utils.logging.Logger {
             Some(InitialClause(Nil,Nil))
         }
       case 1 => throw new Prover9Exception("A fatal error occurred (user's syntax error or Prover9's bug).")
-      case 2 => None // Prover9 ran out of things to do (sos list exhausted).
-      case 3 => None // The max_megs (memory limit) parameter was exceeded.
-      case 4 => None // The max_seconds parameter was exceeded.
-      case 5 => None // The max_given parameter was exceeded.
-      case 6 => None // The max_kept parameter was exceeded.
-      case 7 => None // A Prover9 action terminated the search.
+      case 2 => {
+        trace("Prover9 ran out of things to do (sos list exhausted).")
+        // Sometimes, prover9 returns with this exit code even though
+        // a proof has been found. Hack-ish solution: Try to parse, if
+        // we fail, we assume that no proof was actually produced.
+        //
+        // FIXME: throw a specific expection in case no proof is found
+        // and handle it here.
+        // 
+        try {
+          trace( "parsing prover9 to robinson" )
+          val p9proof = parse_prover9(output_file, true, true)
+          trace( "done parsing prover9 to robinson" )
+          trace( "doing name replacement" )
+          val tp9proof = NameReplacement(p9proof._1, symbol_map)
+          trace( "done doing name replacement" )
+          Some(tp9proof)
+        } catch {
+          case _: Exception => None // Prover9 ran out of things to do (sos list exhausted).
+        }
+      }
+      case 3 => {
+        trace("The max_megs (memory limit) parameter was exceeded.")
+        None // The max_megs (memory limit) parameter was exceeded.
+        }
+      case 4 => {
+        trace("The max_seconds parameter was exceeded.")
+        None // The max_seconds parameter was exceeded.
+      }
+      case 5 => {
+        trace("The max_given parameter was exceeded.")
+        None // The max_given parameter was exceeded.
+      }
+      case 6 => {
+        trace("The max_kept parameter was exceeded.")
+        None // The max_kept parameter was exceeded.
+      }
+      case 7 => {
+        trace("A Prover9 action terminated the search.")
+        None // A Prover9 action terminated the search.
+      }
       case 101 => throw new Prover9Exception("Prover9 received an interrupt signal.")
       case 102 => throw new Prover9Exception("Prover9 crashed, most probably due to a bug.")
     }
@@ -164,14 +207,17 @@ object Prover9 extends at.logic.utils.logging.Logger {
     Proves a sequent through Prover9 (which refutes the corresponding set of clauses).
   **/
   def prove( seq : FSequent ) : Option[RobinsonResolutionProof] = {
+    //val (gseq, map) = ground(seq)
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
     val ret = prove( seq, in_file.getAbsolutePath, out_file.getAbsolutePath )
+    //val ret = prove( gseq, in_file.getAbsolutePath, out_file.getAbsolutePath )
+    //val ret2 = unground( ret.get, map )
     in_file.delete
     out_file.delete
+    //ret2
     ret
   }
-
 
   /**
     Refutes a set of clauses, given as a List[FSequent].
@@ -253,15 +299,75 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
 }
 
-class Prover9Prover extends Prover {
+class Prover9Prover extends Prover with at.logic.utils.logging.Logger {
   def getRobinsonProof( seq : FSequent ) = Prover9.prove(seq)
-  
-  def getLKProof( seq : FSequent ) : Option[LKProof] = getRobinsonProof(seq) match {
-    case Some(proof) => Some(RobinsonToLK(proof,seq))
-    case None => None
+
+  /** 
+    Return an LK proof of seq.
+ 
+    Note: We interpret free variables as constants. This
+    makes sense from the proof point-of-view (as opposed to
+    the refutational point-of-view). 
+    If we don't do this, prover9 substitutes for the variables 
+    in the formula (i.e. it proves the existential closure, not
+    the universal closure, as expected).   
+
+    TODO: the ground/unground code should be in Prover9.prove, and
+    the replacement applied to the resolution proof already (not the
+    LK proof, as we do it here.) To do this, a applyReplacement for
+    resolution proofs needs to be written.
+  **/
+  def getLKProof( seq : FSequent ) : Option[LKProof] = 
+  { 
+    val (gseq, map) = ground(seq)
+   
+    getRobinsonProof(gseq) match {
+      case Some(proof) => {
+        trace(" got a robinson proof from prover9, translating ")
+        Some(unground( RobinsonToLK(proof,gseq), map) )
+      }
+      case None => {
+        trace(" proving with prover9 failed ")
+        None
+      }
+    }
   }
 
-  override def isValid( seq : FSequent ) : Boolean = getRobinsonProof(seq) match {
+  // Grounds a sequent by replacing variables by new constants.
+  def ground( seq : FSequent ) : (FSequent, Map[FOLVar, FOLConst]) = {
+    // FIXME: cast of formula of sequent!
+    val free = seq.antecedent.flatMap( 
+      f => getFreeVariablesFOL(f.asInstanceOf[FOLFormula]) ).toSet ++ 
+      seq.succedent.flatMap( f => getFreeVariablesFOL(f.asInstanceOf[FOLFormula]) ).toSet
+    // FIXME: make a better association between the consts and the vars.
+    //val map = free.zip( free.map( v => new FOLConst( new CopySymbol( v.name ) ) ) ).toMap
+    val map = free.zip( free.map( v => new FOLConst( new ConstantStringSymbol( v.name.toString ) ) ) ).toMap
+    trace( "grounding map in prover9: ")
+    trace( map.toString )
+    // FIXME: cast of formula of sequent!
+    val ret = FSequent( seq.antecedent.map( f => FOLSubstitution( f.asInstanceOf[FOLFormula], map ) ),
+      seq.succedent.map( f=> FOLSubstitution( f.asInstanceOf[FOLFormula], map ) ) )
+    (ret, map)
+  }
+
+  def unground( p: LKProof, map: Map[FOLVar, FOLConst] ) =
+    applyReplacement( p, map.map( x => x.swap ) )._1
+
+  /* TODO: should use this when grounding instead of ConstantStringSymbol
+           to avoid name clashes. Can't seem to get equality to work,
+           though.
+
+  case class CopySymbol( val s: SymbolA ) extends ConstantSymbolA {
+    override def toString() = s.toString
+    def toCode() = "CopySymbol( " + s.toCode + " )"
+    def compare(that: SymbolA) = that match {
+      case CopySymbol( s2 ) => s.compare( s2 )
+    }
+    override def unique = "CopySymbol" 
+  }
+*/
+
+  override def isValid( seq : FSequent ) : Boolean = getRobinsonProof(ground(seq)._1) match {
     case Some(_) => true
     case None => false
   }

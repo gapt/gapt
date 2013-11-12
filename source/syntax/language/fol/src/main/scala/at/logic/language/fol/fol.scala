@@ -456,20 +456,21 @@ object getVariablesFOL {
 
 object FOLSubstitution
 {
-  def apply(f: FOLFormula, x: FOLVar, t: FOLTerm) : FOLFormula =
-  {
-    val sub = Substitution(x, t.asInstanceOf[FOLExpression])
+  def apply(f: FOLFormula, map: Map[FOLVar, FOLTerm]) : FOLFormula = {
+    val sub = Substitution(map.asInstanceOf[Map[Var, FOLExpression]])
       sub( f.asInstanceOf[FOLExpression]
          ).asInstanceOf[FOLFormula]
   }
 
-  def apply(f: FOLTerm, x: FOLVar, t: FOLTerm) : FOLTerm =
-  {
-    val sub = Substitution(x,
-        t.asInstanceOf[FOLExpression])
-      sub(
-          f.asInstanceOf[FOLExpression]
-         ).asInstanceOf[FOLTerm]
+  def apply(t: FOLTerm, map: Map[FOLVar, FOLTerm]) : FOLTerm = { 
+    val sub = Substitution(map.asInstanceOf[Map[Var, FOLTerm]])
+      sub( t )  
   }
-}
 
+  def apply(f: FOLFormula, x: FOLVar, t: FOLTerm) : FOLFormula =
+    apply( f, Map((x, t)) )
+
+  def apply(f: FOLTerm, x: FOLVar, t: FOLTerm) : FOLTerm =
+    apply( f, Map((x, t)) )
+
+}
