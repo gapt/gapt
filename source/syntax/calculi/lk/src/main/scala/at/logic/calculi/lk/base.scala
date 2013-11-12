@@ -53,6 +53,7 @@ import base.types._
 
       def toFormula() = Or( antecedent.toList.map(x=> Neg( x ) ) ++ succedent.map(identity) )
 
+      def isEmpty = _1.isEmpty && _2.isEmpty
     }
   }
 

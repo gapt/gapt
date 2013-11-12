@@ -351,11 +351,11 @@ object SubstituteProof {
         NegRightRule(rp, subapp(aux1,sub))
 
       case AndLeft1Rule(p,root,aux1,main) =>
-        val aux2 = main match { case hol.And(_,f) => f }
+        val aux2 = main.formula match { case hol.And(_,f) => f }
         val rp = apply(p, sub)
         AndLeft1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
       case AndLeft2Rule(p,root,aux2,main) =>
-        val aux1 = main match { case hol.And(_,f) => f }
+        val aux1 = main.formula match { case hol.And(f,_) => f }
         val rp = apply(p, sub)
         AndLeft2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
       case AndRightRule(p1,p2,root,aux1, aux2,main) =>
@@ -367,11 +367,11 @@ object SubstituteProof {
         val rp2 = apply(p2, sub)
         OrLeftRule(rp1, rp2, subapp(aux1,sub), subapp(aux2, sub))
       case OrRight1Rule(p,root,aux1,main) =>
-        val aux2 = main match { case hol.Or(_,f) => f }
+        val aux2 = main.formula match { case hol.Or(_,f) => f }
         val rp = apply(p, sub)
         OrRight1Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
       case OrRight2Rule(p,root,aux2,main) =>
-        val aux1 = main match { case hol.Or(f,_) => f }
+        val aux1 = main.formula match { case hol.Or(f,_) => f }
         val rp = apply(p, sub)
         OrRight2Rule(rp, subapp(aux1,sub), subapp(aux2, sub))
       case ImpLeftRule(p1,p2,root,aux1, aux2,main) =>

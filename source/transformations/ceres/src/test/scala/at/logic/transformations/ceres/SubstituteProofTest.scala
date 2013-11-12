@@ -37,8 +37,10 @@ class SubstituteProofTest extends SpecificationWithJUnit {
     val sub1 = Substitution[HOLExpression](List((x.asInstanceOf[Var],fa)))
 
     "work on simple proofs (1)" in {
-      skipped("meh")
+      //skipped("meh")
+      println(map("P1").root)
       val p_ = SubstituteProof(map("P1"), sub1)
+      println(p_.root)
       p_.root must beSyntacticMultisetEqual (map("P1").root)
     }
 

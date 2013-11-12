@@ -18,7 +18,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Var, App}
 import at.logic.calculi.resolution.base.{FClause, Clause}
-import at.logic.algorithms.lk.{CleanStructuralRules, applySubstitution => applySub, CloneLKProof}
+import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, CleanStructuralRules, CloneLKProof}
 
 
 object RobinsonToLK {
@@ -27,18 +27,18 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof =
-    introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), x => PCNF(s,x)),s)
+    addWeakenings.weaken(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), x => PCNF(s,x)),s), s)
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply(resproof: RobinsonResolutionProof, s: FSequent, map: mapT): LKProof =
-    introduceContractions(recConvert(resproof, s, map, x => PCNF(s,x)),s)
+    addWeakenings.weaken(introduceContractions(recConvert(resproof, s, map, x => PCNF(s,x)),s), s)
 
   def apply(resproof: RobinsonResolutionProof): LKProof =
     recConvert(resproof, FSequent(List(),List()), scala.collection.mutable.Map[FClause,LKProof](),x => Axiom(x.neg, x.pos))
 
   // this contructor allows passing your own axiom creator e.g. for ceres projections
   def apply(resproof: RobinsonResolutionProof, s: FSequent, createAxiom : FClause => LKProof): LKProof =
-    introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), createAxiom),s)
+    addWeakenings.weaken(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), createAxiom),s), s)
 
 
   /**

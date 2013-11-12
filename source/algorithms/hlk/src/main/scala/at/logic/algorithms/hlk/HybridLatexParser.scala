@@ -28,6 +28,8 @@ import at.logic.calculi.lk.definitionRules.{DefinitionLeftRule, DefinitionRightR
 import at.logic.language.lambda.BetaReduction._
 //import at.logic.algorithms.lk.{addContractions => contract, addWeakenings => weaken}
 import scala.annotation.tailrec
+import at.logic.algorithms.lk.addContractions.contract
+import at.logic.algorithms.lk.addWeakenings.weaken
 
 abstract class Token
 case class TToken(decltype : String, names : List[String], types : TA ) extends Token
@@ -781,7 +783,7 @@ trait TokenToLKConverter {
             //we check if we can paramodulate s=t ...
             checkReplacement(s, t, f, main) match {
               case EqualModuloEquality(_) =>
-                println("found!")
+                //println("found!")
                 val rule = EquationRight1Rule(leftproof, rightproof, eq, f, main)
                 try {
                   contract(rule,fs)::Nil
@@ -798,7 +800,7 @@ trait TokenToLKConverter {
             //print("Trying"+this.f(t)+"="+this.f(s)+" in "+this.f(main))
             checkReplacement(t, s, f, main) match {
               case EqualModuloEquality(_) =>
-                println("found!")
+                //println("found!")
                 val rule = EquationRight2Rule(leftproof, rightproof, eq, f, main)
                 try {
                   contract(rule,fs)::Nil
@@ -1002,10 +1004,10 @@ trait TokenToLKConverter {
     val FSequent(List(auxf_), Nil) = auxsequent
     val auxf = c(betaNormalize(auxf_)(StrategyOuterInner.Outermost).asInstanceOf[HOLExpression])
 
-    println("auxf="+this.f(auxf))
+    //println("auxf="+this.f(auxf))
 
     val sub = createSubstitution(naming, subterm)
-    println(sub)
+    //println(sub)
 
     val axs : List[FSequent] = axioms.toList.map(_._2)
     val candidates = axs.flatMap( s => {
@@ -1040,62 +1042,6 @@ trait TokenToLKConverter {
     newproof::rest
   }
 
-
-  //TODO: there is definitely a copy of contract somewhere. Find it and eliminate the redundancy.
-  /* Apply contraction rules to a proof until a given end-sequent is obtained.
-    Throws an exception if this is impossible. */
-
-  def contract(proof : LKProof, towhat : FSequent) : LKProof = {
-    val context = proof.root.toFSequent diff towhat
-    val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
-      try {
-        ContractionLeftRule(intermediate, f)
-      } catch {
-        case e : Exception =>
-          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
-      }
-    )
-    val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
-      try {
-        ContractionRightRule(intermediate, f)
-      } catch {
-        case e : Exception =>
-          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
-      }
-    )
-
-    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of contraction errenous: "+proof.root+" does not contract to "+rightcontr.root)
-
-    rightcontr
-  }
-
-  //TODO: there is definitely a copy of weaken somewhere. Find it and eliminate the redundancy.
-  /* Apply weakening rules to a proof until a given end-sequent is obtained.
-    Throws an exception if this is impossible. */
-
-  def weaken(proof : LKProof, towhat : FSequent) : LKProof = {
-    val context = towhat diff proof.root.toFSequent
-    val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
-      try {
-        WeakeningLeftRule(intermediate, f)
-      } catch {
-        case e : Exception =>
-          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
-      }
-    )
-    val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
-      try {
-        WeakeningRightRule(intermediate, f)
-      } catch {
-        case e : Exception =>
-          throw new HybridLatexParserException("Could not contract "+f+" in "+proof.root+"!",e)
-      }
-    )
-
-    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of weakening errenous: "+proof.root+" does not contract to "+rightcontr.root)
-
-    rightcontr
-  }
 
   /* given a map of elements to lists of dependant elements (e.g. a node's children in a graph), calculate a list l where
    * for every element a occurring before an element b in l we know that a does not depend on b.

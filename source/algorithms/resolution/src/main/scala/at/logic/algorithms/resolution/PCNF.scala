@@ -10,7 +10,7 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.lambda.substitutions.Substitution
 import scala.Some
 import scala.Tuple2
-import at.logic.algorithms.lk.{applySubstitution => applySub}
+import at.logic.algorithms.lk.{applySubstitution => applySub, addContractions, addWeakenings}
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)
@@ -72,8 +72,17 @@ object PCNF {
         => WeakeningLeftRule(pr,sub(f).asInstanceOf[HOLFormula]))
     )((pr,f) => WeakeningRightRule(pr,sub(f).asInstanceOf[HOLFormula]))*/
 
+    //val missing_literals = s diff p.root.toFSequent
+    val p1 = if (inAntecedent) {
+      addWeakenings.weaken(p, FSequent(sub(f).asInstanceOf[HOLFormula]::Nil, Nil) compose a.toFSequent)
+    } else {
+      addWeakenings.weaken(p, FSequent(Nil,sub(f).asInstanceOf[HOLFormula]::Nil) compose a.toFSequent)
+    }
+    val p2 = addContractions.contract(p1, s compose a.toFSequent)
+    p2
+
     // apply contractions on the formulas of a, since we duplicate the context on every binary rule
-    introduceContractions(p,a)
+    //introduceContractions(p_,a)
   }
 
   def introduceContractions(resp: LKProof, s: FClause): LKProof= {
@@ -86,6 +95,7 @@ object PCNF {
     ContractionRightRule(q,f.asInstanceOf[HOLFormula]) ))
    p2
   }
+
   /**
    * assuming a in CNF^-(f) we give a proof of a o |- f
    * @param f
@@ -109,15 +119,15 @@ object PCNF {
       AndRightRule(PCNFn(f1,a,sub), PCNFn(f2,a,sub), f1, f2)
     }
     case Or(f1,f2) =>
-      if (CNFn(f1).contains(as(a,sub))) OrRight1Rule(PCNFn(f1,a,sub),f1,f2)
-      else if (CNFn(f2).contains(as(a,sub))) OrRight2Rule(PCNFn(f2,a,sub),f1,f2)
+      if (containsSubsequent(CNFn(f1),as(a,sub))) OrRight1Rule(PCNFn(f1,a,sub),f1,f2)
+      else if (containsSubsequent(CNFn(f2),as(a,sub))) OrRight2Rule(PCNFn(f2,a,sub),f1,f2)
       else throw new IllegalArgumentException("clause: " + as(a,sub) + " is not found in CNFs of ancestors: "
-        +CNFn(f1) + " or " + CNFn(f2))
+        +CNFn(f1) + " or " + CNFn(f2)+" of formula "+f)
     case Imp(f1,f2) => {
-      if (CNFp(f1).contains(as(a,sub))) ImpRightRule(WeakeningRightRule(PCNFp(f1,a,sub), f2), f1,f2)
-      else if (CNFn(f2).contains(as(a,sub))) ImpRightRule(WeakeningLeftRule(PCNFn(f2,a,sub), f1), f1, f2)
+      if (containsSubsequent(CNFp(f1), as(a,sub))) ImpRightRule(WeakeningRightRule(PCNFp(f1,a,sub), f2), f1,f2)
+      else if (containsSubsequent(CNFn(f2),as(a,sub))) ImpRightRule(WeakeningLeftRule(PCNFn(f2,a,sub), f1), f1, f2)
       else throw new IllegalArgumentException("clause: " + as(a,sub) + " is not found in CNFs of ancestors: "
-        +CNFp(f1) + " or " + CNFn(f2))
+        +CNFp(f1) + " or " + CNFn(f2)+" of formula "+f)
     }
     case ExVar(v,f2) => ExistsRightRule(PCNFn(f2, a,sub), f2 ,f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)
@@ -133,10 +143,10 @@ object PCNF {
     case Atom(_,_) => Axiom(List(f),List(f))
     case Neg(f2) => NegLeftRule(PCNFn(f2,a,sub), f2)
     case And(f1,f2) =>
-      if (CNFp(f1).contains(as(a,sub))) AndLeft1Rule(PCNFp(f1,a,sub),f1,f2)
-      else if (CNFp(f2).contains(as(a,sub))) AndLeft2Rule(PCNFp(f2,a,sub),f1,f2)
+      if (containsSubsequent(CNFp(f1),as(a,sub))) AndLeft1Rule(PCNFp(f1,a,sub),f1,f2)
+      else if (containsSubsequent(CNFp(f2),as(a,sub))) AndLeft2Rule(PCNFp(f2,a,sub),f1,f2)
       else throw new IllegalArgumentException("clause: " + as(a,sub) + " is not found in CNFs of ancestors: "
-        +CNFp(f1) + " or " + CNFp(f2))
+        +CNFp(f1) + " or " + CNFp(f2)+" of formula "+f)
     case Or(f1,f2) => {
       /* the following is an inefficient way to compute the exact context sequents
       // get all possible partitions of the ant and suc of the clause a
@@ -199,6 +209,13 @@ object PCNF {
       case a :: as => pwr(as, acc ::: (acc map (x => (a :: x._1,removeFirst(x._2,a).toList))))
     }
     pwr(lst, (Nil,lst) :: Nil)
+  }
+
+  def containsSubsequent(set : Set[FClause], fc : FClause) : Boolean = {
+    val fs = fc.toFSequent
+    //println("Checking "+fs)
+    val r = set.filter( x => {/*println("... with "+x);*/ (x.toFSequent diff fs).isEmpty })
+    r.nonEmpty
   }
 
   def removeFirst[A](s: Seq[A], a: A): Seq[A] = {
