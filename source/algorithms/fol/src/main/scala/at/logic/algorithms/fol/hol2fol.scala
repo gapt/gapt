@@ -96,7 +96,9 @@ import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexed
       reduceHolToFol( term, emptymap, counter )
     }
 
-    def apply(formula: HOLFormula) : FOLFormula = apply(formula).asInstanceOf[FOLFormula]
+    def apply(formula: HOLFormula) : FOLFormula =
+      //inner cast needed to call the correct apply method
+      apply(formula.asInstanceOf[HOLExpression]).asInstanceOf[FOLFormula]
 
   }
   // TODO - support generated function symbols by checking the arity from le and add the variables to the returned term. Right now only constants are supported
