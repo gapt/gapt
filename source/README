@@ -26,9 +26,9 @@ Running:
   we found useful over time.
 
 * Alternatively, you can run the jar files directly by calling
-  'java -Xss2m -Xmx2g -jar gapt-cli-1.4.jar' 
+  'java -Xss2m -Xmx2g -jar gapt-cli-1.5.jar' 
   and 
-  'java -Xss2m -Xmx2g -jar prooftool-1.4.jar' 
+  'java -Xss2m -Xmx2g -jar prooftool-1.5.jar' 
 
 
 License: GAPT is free software licensed under the GNU General
