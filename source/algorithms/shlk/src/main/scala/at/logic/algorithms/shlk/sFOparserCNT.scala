@@ -183,7 +183,7 @@ object sFOParserCNT {
       }
 
 
-      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | exLHyper | allR | allRHyper | allLHyper | exRHyper | impL | impR | termDefL1 | termDefR1 | arrowL | foldL | arrowR | autoprop
+      def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | exLHyper | allR | allRHyper | allLHyper | exRHyper | impL | impR | termDefL1 | termDefR1 | arrowL | foldL | foldR | arrowR | autoprop
       def label: String = """[0-9()root]*"""
       def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant | forall_hyper | exists_hyper) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
       def intTerm: Parser[HOLExpression] = index //| schemaFormula
@@ -353,7 +353,7 @@ object sFOParserCNT {
       def sim: Parser[HOLFormula]  = term ~ "~" ~ term ^^ {case x ~ "~" ~ y => sims(x,y)}
       def lessOrEqual: Parser[HOLFormula] = term ~ "<=" ~ term ^^ {case x ~ "<=" ~ y => leq(x,y)}
       def individual_func: Parser[HOLExpression] = regex(new Regex("s")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i->i)}
-      def individual_func2: Parser[HOLExpression] = regex(new Regex("max")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i->i->i)}
+      def individual_func2: Parser[HOLExpression] = regex(new Regex("max")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i)}
       def iw_func: Parser[HOLExpression] = """d""".r ~ "(" ~ repsep(term,",") ~ ")"  ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, ind)}
       def SOindVar: Parser[HOLExpression] = regex(new Regex("[ABRXW]")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->i)}
 
@@ -683,6 +683,12 @@ object sFOParserCNT {
       def foldL: Parser[LKProof] = "foldL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "foldL(" ~ label ~ "," ~ aux ~ "," ~ main ~ ")" => {
           foldLeftRule(map.get(label).get, aux, main)
+        }
+      }
+
+      def foldR: Parser[LKProof] = "foldR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
+        case "foldR(" ~ label ~ "," ~ aux ~ "," ~ main ~ ")" => {
+          foldRightRule(map.get(label).get, aux, main)
         }
       }
 
