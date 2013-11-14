@@ -551,7 +551,7 @@ object indexedFOVar {
   }
 }
 
-class indexedOmegaVar(override val name: VariableStringSymbol, val index: HOLExpression) extends HOLVar(name, Tindex(), None) {
+class indexedOmegaVar(override val name: VariableStringSymbol, val index: HOLExpression) extends HOLVar(name, Ti(), None) {
   override def toString = name.toString+"("+index+")"+":"+exptype.toString
   override def equals(a: Any): Boolean = a match {
     case v:indexedOmegaVar if v.name.toString() == this.name.toString() && v.index == this.index => true
@@ -599,8 +599,8 @@ object foConst{
   }
 }
 
-//first-order variable of type ω
-class fowVar(name: VariableStringSymbol) extends HOLVar(name, Tindex(), None) {
+//first-order variable of type individual
+class fowVar(name: VariableStringSymbol) extends HOLVar(name, Ti(), None) {
   override def equals(a: Any): Boolean = a match {
     case v:fowVar if v.name.toString() == this.name.toString() => true
     case _ => false
@@ -753,6 +753,16 @@ case object lessThanSymbol extends ConstantSymbolA {
   }
 }
 
+
+case object simSymbol extends ConstantSymbolA {
+  override def unique = "simSymbol"
+  override def toString = "~"
+  def toCode = "simSymbol"
+  def compare(that: SymbolA) = that match {
+    case a: ConstantSymbolA => unique.compare( a.unique )
+  }
+}
+
 case object LeqSymbol extends ConstantSymbolA {
   override def unique = "LeqSymbol"
   override def toString = "≤"
@@ -762,8 +772,9 @@ case object LeqSymbol extends ConstantSymbolA {
   }
 }
 
-case class LessThanC(e:TA) extends HOLConst(lessThanSymbol, ->(Tindex(), ->(Tindex(), To())))
-case class LeqC(e:TA) extends HOLConst(LeqSymbol, ->(Tindex(), ->(Tindex(), To())))
+case class LessThanC(e:TA) extends HOLConst(lessThanSymbol, ->(Ti(), ->(Ti(), To())))
+case class SimsC(e:TA) extends HOLConst(simSymbol, ->(Tindex(), ->(Tindex(), To())))
+case class LeqC(e:TA) extends HOLConst(LeqSymbol, ->(Ti(), ->(Ti(), To())))
 
 object lessThan {
   def apply(left: HOLExpression, right: HOLExpression) = {
@@ -772,6 +783,17 @@ object lessThan {
   }
   def unapply(expression: LambdaExpression) = expression match {
     case App(App(LessThanC(_),left),right) => Some( left.asInstanceOf[HOLExpression],right.asInstanceOf[HOLExpression] )
+    case _ => None
+  }
+}
+
+object sims {
+  def apply(left: HOLExpression, right: HOLExpression) = {
+    //    require(left.exptype == right.exptype)
+    App(App(SimsC(left.exptype), left),right).asInstanceOf[HOLFormula]
+  }
+  def unapply(expression: LambdaExpression) = expression match {
+    case App(App(SimsC(_),left),right) => Some( left.asInstanceOf[HOLExpression],right.asInstanceOf[HOLExpression] )
     case _ => None
   }
 }

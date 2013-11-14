@@ -45,27 +45,27 @@ object sFOParserCNT {
     val m = sFOParserCNT.parseProof(input)
 
     //TODO: remove it. This is just for test marking in ProofTool
-    val map = m
-    val p1 = map.get("\\mu").get._2.get("root").get
-    val p2 = map.get("\\rho").get._2.get("root").get
-    val p3 = map.get("\\zeta").get._2.get("root").get
-    val p4 = map.get("\\omega").get._2.get("root").get
-    val p5 = map.get("\\xi").get._2.get("root").get
-    val p6 = map.get("\\varphi").get._2.get("root").get
-    val p7 = map.get("\\lambda").get._2.get("root").get
-    val p8 = map.get("\\chi").get._2.get("root").get
-
-    val cc2:FormulaOccurrence = p2.root.antecedent.tail.tail.head
-    val cc_zeta_1:FormulaOccurrence = p3.root.succedent.head
-    val cc_zeta_2:FormulaOccurrence = p3.root.antecedent.tail.tail.head
-    val cc4:FormulaOccurrence = p4.root.succedent.head
-    val cc_xi_1:FormulaOccurrence = p5.root.antecedent.last
-    val cc_xi_2:FormulaOccurrence = p5.root.succedent.head
-    val cc_xi_3:FormulaOccurrence = p5.root.antecedent.tail.head
-    val cc6 = p6.root.antecedent.tail.head :: p6.root.antecedent.head ::Nil
-    val cc7 = p7.root.succedent.last
-    val cc8 = p8.root.succedent.head
-    FixedFOccs.foccs = cc7::cc8::cc2::cc_xi_1::cc_xi_2::cc_xi_3::cc_zeta_1::cc_zeta_2::cc4::Nil
+//    val map = m
+//    val p1 = map.get("\\mu").get._2.get("root").get
+//    val p2 = map.get("\\rho").get._2.get("root").get
+//    val p3 = map.get("\\zeta").get._2.get("root").get
+//    val p4 = map.get("\\omega").get._2.get("root").get
+//    val p5 = map.get("\\xi").get._2.get("root").get
+//    val p6 = map.get("\\varphi").get._2.get("root").get
+//    val p7 = map.get("\\lambda").get._2.get("root").get
+//    val p8 = map.get("\\chi").get._2.get("root").get
+//
+//    val cc2:FormulaOccurrence = p2.root.antecedent.tail.tail.head
+//    val cc_zeta_1:FormulaOccurrence = p3.root.succedent.head
+//    val cc_zeta_2:FormulaOccurrence = p3.root.antecedent.tail.tail.head
+//    val cc4:FormulaOccurrence = p4.root.succedent.head
+//    val cc_xi_1:FormulaOccurrence = p5.root.antecedent.last
+//    val cc_xi_2:FormulaOccurrence = p5.root.succedent.head
+//    val cc_xi_3:FormulaOccurrence = p5.root.antecedent.tail.head
+//    val cc6 = p6.root.antecedent.tail.head :: p6.root.antecedent.head ::Nil
+//    val cc7 = p7.root.succedent.last
+//    val cc8 = p8.root.succedent.head
+//    FixedFOccs.foccs = cc7::cc8::cc2::cc_xi_1::cc_xi_2::cc_xi_3::cc_zeta_1::cc_zeta_2::cc4::Nil
 
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
@@ -184,7 +184,7 @@ object sFOParserCNT {
 
 
       def proof: Parser[LKProof] = ax | orL | orR1 | orR | orR2 | negL | negR | cut | pFOLink | andL | andR| andL1 | andL2 | weakL | weakR | contrL | contrR | andEqR1 | andEqR2 | andEqR3 | orEqR1 | orEqR2 | orEqR3 | andEqL1 | andEqL2 | andEqL3 | orEqL1 | orEqL2 | orEqL3 | allL | exR | exL | exLHyper | allR | allRHyper | allLHyper | exRHyper | impL | impR | termDefL1 | termDefR1 | arrowL | foldL | arrowR | autoprop
-      def label: String = """([0-9]*|root)"""
+      def label: String = """[0-9()root]*"""
       def formula: Parser[HOLFormula] = (atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant | forall_hyper | exists_hyper) ^? {case trm: Formula => trm.asInstanceOf[HOLFormula]}
       def intTerm: Parser[HOLExpression] = index //| schemaFormula
       def index: Parser[IntegerTerm] = (sum | intConst | intVar | succ  )
@@ -228,7 +228,7 @@ object sFOParserCNT {
           case Succ(Succ(Succ(IntZero()))) => Succ(Succ(Succ(indV)))
         }}}
 
-      def intVar: Parser[IntVar] = "I[a-z]".r ^^ {
+      def intVar: Parser[IntVar] = "k".r ^^ {
         case x => { /*println("\n\nintVar");*/ IntVar(new VariableStringSymbol(x))}
       }
       def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
@@ -239,7 +239,6 @@ object sFOParserCNT {
 
       def indPred : Parser[HOLFormula] = """[A-Z]*""".r ~ "(" ~ repsep(index,",") ~ ")" ^^ {
         case x ~ "(" ~ l ~ ")" => {
-          println("fuck");
           if (! mapPredicateToArity.isDefinedAt(x.toString) )
             mapPredicateToArity.put(x.toString, l.size)
           else if (mapPredicateToArity.get(x.toString).get != l.size ) {
@@ -253,7 +252,6 @@ object sFOParserCNT {
           //          val new_ind = subst(ind)
           //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
           //          val new_subst = new SchemaSubstitution1(new_map)
-          println("fuck");
           IndexedPredicate(new ConstantStringSymbol(x), l)
         }
       }
@@ -293,8 +291,8 @@ object sFOParserCNT {
           })
         }
       }
-      def term: Parser[HOLExpression] = ( fo_term | s_term | abs | variable | constant | var_func | const_func | SOindVar)
-      def term2: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | var_func | const_func | SOindVar)
+      def term: Parser[HOLExpression] = ( variable | index | fo_term | s_term | abs |  constant | individual_func | individual_func2 | iw_func | SOindVar | lambdaTerm)
+      def term2: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | individual_func | individual_func2 | iw_func | SOindVar)
       def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ intZero ~ ")" ^^ {
         case "(" ~ "λ" ~ x ~ "." ~ zero ~ ")" => HOLAbs(x, zero)
       }
@@ -306,6 +304,7 @@ object sFOParserCNT {
           sTerm(name, i, args::Nil)
         }
       }
+
       def fo_term: Parser[HOLExpression] = "[f]".r ~ "(" ~ term ~ ")" ^^ {
         case name ~ "(" ~ arg ~ ")" => {
           //     println("\n\nfoTerm\n arg.extype = "+arg.exptype)
@@ -318,15 +317,16 @@ object sFOParserCNT {
         }
       }
       //indexed variable of type ω->ω
-      def indexedwVar: Parser[HOLVar] = regex(new Regex("[α,c,b,y,a,x,z,s,w,h,m,n,l]")) ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedwVar: Parser[HOLVar] = regex(new Regex("[ABRXW]")) ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
           indexedOmegaVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[x,v,g,u,q]" + word))  ^^ {case x => fowVar(x)} //foVar(x)}
-      def variable: Parser[HOLVar] = (indexedwVar | indexedVar | FOVariable)//regex(new Regex("[u-z]" + word))  ^^ {case x => hol.createVar(new VariableStringSymbol(x), i->i).asInstanceOf[HOLVar]}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[xyz]{1}"))  ^^ {case x => fowVar(x)} //foVar(x)}
+      def variable: Parser[HOLVar] = (FOVariable | indexedwVar) // | indexedVar |
+      //why is a constant of type ind -> ind
       def constant: Parser[HOLConst] = regex(new Regex("[t]" + word))  ^^ {
           case x => {
             hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]
@@ -337,29 +337,26 @@ object sFOParserCNT {
       def imp: Parser[HOLFormula] = "(" ~ formula ~ "->" ~ formula ~ ")" ^^ {case "(" ~ x ~ "->" ~ y ~ ")"=> Imp(x,y)}
       def abs: Parser[HOLExpression] = "Abs" ~ variable ~ term ^^ {case "Abs" ~ v ~ x => Abs(v,x).asInstanceOf[HOLExpression]}
       def neg: Parser[HOLFormula] = "~" ~ formula ^^ {case "~" ~ x => Neg(x)}
-      def atom: Parser[HOLFormula] = (inequality | equality | less | lessOrEqual | s_atom | var_atom | const_atom)
+      def atom: Parser[HOLFormula] = (inequality | equality | less | sim | lessOrEqual | s_atom  | const_atom)
       def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
       def forall_hyper: Parser[HOLFormula] = "ForallHyper" ~ SOindVar ~ formula ^^ {case "ForallHyper" ~ v ~ x => AllVar(v.asInstanceOf[Var],x)}
       def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
       def exists_hyper: Parser[HOLFormula] = "ExistsHyper" ~ SOindVar ~ formula ^^ {case "ExistsHyper" ~ v ~ x => ExVar(v.asInstanceOf[Var],x)}
-
-      def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => { Atom(new VariableStringSymbol(x), params)}}
-      //      def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => {
+      //def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => { Atom(new VariableStringSymbol(x), params)}}
       def const_atom: Parser[HOLFormula] = regex(new Regex("[A-Z]+")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { Atom(new ConstantStringSymbol(x), params) }}
-      def s_atom: Parser[HOLFormula] = """[B]*[E]*[Σ]*[C]*[O]*""".r ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
+      def s_atom: Parser[HOLFormula] = """MAXL|MAXF|ORINF|POSF""".r ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
       def equality: Parser[HOLFormula] = eq_infix |  eq_prefix // infix is problematic in higher order
       def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
       def inequality: Parser[HOLFormula] = term ~ "\\=" ~ term ^^ {case x ~ "\\=" ~ y => Neg(Equation(x,y))}
       def eq_prefix: Parser[HOLFormula] = "=" ~ "(" ~ term ~ "," ~ term  ~ ")" ^^ {case "=" ~ "(" ~ x ~ "," ~ y  ~ ")" => Equation(x,y)}
       def less: Parser[HOLFormula] = term ~ "<" ~ term ^^ {case x ~ "<" ~ y => lessThan(x,y)}
+      def sim: Parser[HOLFormula]  = term ~ "~" ~ term ^^ {case x ~ "~" ~ y => sims(x,y)}
       def lessOrEqual: Parser[HOLFormula] = term ~ "<=" ~ term ^^ {case x ~ "<=" ~ y => leq(x,y)}
-      def var_func: Parser[HOLExpression] = regex(new Regex("[u-zR]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, ind->ind)}
-      def SOindVar: Parser[HOLExpression] = regex(new Regex("([xcwhazblfrmyABR]|b')")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->ind)}
-      /*def var_func: Parser[HOLExpression] = (var_func1 | var_funcn)
-      def var_func1: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(new VariableStringSymbol(x), params, tp)}
-      def var_funcn: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "^" ~ decimalNumber ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {case x ~ "^" ~ n ~ "(" ~ params ~ ")" ~ ":" ~ tp => genF(n.toInt, HOLVar(new VariableStringSymbol(x)), params)}
-      */
-      def const_func: Parser[HOLExpression] = "[v]"~ "(" ~ repsep(term,",") ~ ")"  ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, ind->ind)}
+      def individual_func: Parser[HOLExpression] = regex(new Regex("s")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i->i)}
+      def individual_func2: Parser[HOLExpression] = regex(new Regex("max")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i->i->i)}
+      def iw_func: Parser[HOLExpression] = """d""".r ~ "(" ~ repsep(term,",") ~ ")"  ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, ind)}
+      def SOindVar: Parser[HOLExpression] = regex(new Regex("[ABRXW]")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->i)}
+
       protected def word: String = """[a-zA-Z0-9$_{}]*"""
       protected def symbol: Parser[String] = symbols.r
       def symbols: String = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""" // +-*/\^<>=`~?@&|!#{}';

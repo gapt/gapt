@@ -316,6 +316,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
 
   object Function {
     def apply( sym: SymbolA, args: List[HOLExpression], returnType: TA): HOLExpression = {
+      println(sym.toString());
       val pred : Var = HOLFactory.createVar( sym, FunctionType( returnType, args.map( a => a.exptype ) ) )
       apply(pred, args)
     }
