@@ -23,15 +23,42 @@ import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, Cle
 
 object RobinsonToLK {
 type mapT = scala.collection.mutable.Map[FClause,LKProof]
+
+
+  //encapsulates a memo table s.t. subsequent runs of PCNF are not computed multiple times for the same c
+  private class PCNFMemoTable(val endsequent : FSequent) {
+    val table : mapT = scala.collection.mutable.Map[FClause,LKProof]()
+    var hits : Int = 0
+
+    def getHits() = this.hits
+
+    def getPCNF(c : FClause) = {
+      if (! (table contains c)) {
+        table.put(c,PCNF(endsequent,c))
+      } else {
+        hits = hits +1
+      }
+      table(c)
+    }
+  }
+
   def fol2hol(s: Substitution[FOLExpression]):Substitution[HOLExpression] = s.asInstanceOf[Substitution[HOLExpression]]
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
-  def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof =
-    addWeakenings.weaken(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), x => PCNF(s,x)),s), s)
+  def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof = {
+    val memotable = new PCNFMemoTable(s)
+    val p = addWeakenings.weaken(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), memotable.getPCNF),s), s)
+    println("Memoization saved "+memotable.getHits()+" calls!")
+    p
+  }
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
-  def apply(resproof: RobinsonResolutionProof, s: FSequent, map: mapT): LKProof =
-    addWeakenings.weaken(introduceContractions(recConvert(resproof, s, map, x => PCNF(s,x)),s), s)
+  def apply(resproof: RobinsonResolutionProof, s: FSequent, map: mapT): LKProof = {
+    val memotable = new PCNFMemoTable(s)
+    val p = addWeakenings.weaken(introduceContractions(recConvert(resproof, s, map, memotable.getPCNF),s), s)
+    println("Memoization saved "+memotable.getHits()+" calls!")
+    p
+  }
 
   def apply(resproof: RobinsonResolutionProof): LKProof =
     recConvert(resproof, FSequent(List(),List()), scala.collection.mutable.Map[FClause,LKProof](),x => Axiom(x.neg, x.pos))
