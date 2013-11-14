@@ -113,10 +113,13 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
     }
   }
 
-  lazy val rule2 : PackratParser[RToken] = ("\\" ~>
-    "(AX|AND[LR]|OR[LR]|IMP[LR]|NEG[LR]|EQ[LR]|WEAK[LR]|CONTR[LR]|CUT|DEF|BETA)".r
-    <~ "{") ~ (repsep(formula, ",") <~ "}") ~ ("{" ~> repsep(formula,",") <~ "}") ^^ {
-    case name ~ antecedent ~ succedent => RToken(name, None, antecedent, succedent, Nil)
+  lazy val rule2 : PackratParser[Token] = ("\\" ~>
+    "(AX|AND[LR]|OR[LR]|IMP[LR]|NEG[LR]|EQ[LR]|WEAK[LR]|CONTR[LR]|CUT|DEF|BETA|PREDDEF|FUNDEF)".r
+    <~ "{") ~ (repsep(formula, ",") <~ "}") ~ ("{" ~> repsep(formula,",") <~ "}") ^^ { _ match {
+      case (name@"PREDDEF") ~ de ~ to => AToken(name, None, de, to)
+      case (name@"FUNDEF") ~ de ~ to => AToken(name, None, de, to)
+      case name ~ antecedent ~ succedent => RToken(name, None, antecedent, succedent, Nil)
+    }
   }
 
   lazy val rule3 : PackratParser[Token] = rule3a | rule3b
@@ -176,11 +179,13 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
 }
 
 /* proof names as stored as formulas now, therefore we extend the proofdatabase */
-case class ExtendedProofDatabase(val eproofs : Map[HOLFormula, LKProof])
+case class ExtendedProofDatabase(eproofs : Map[HOLFormula, LKProof],
+                                 eaxioms : Map[HOLFormula,FSequent],
+                                 edefinitions : Map[HOLExpression, HOLExpression])
   extends ProofDatabase(Map(),Nil,Nil,Nil) {
   override val proofs : List[(String,LKProof)] = eproofs.map(x => x._1 match { case Atom(sym,_) => (sym.toString, x._2)}).toList
-  override val Definitions : Map[HOLExpression, HOLExpression] = Map()
-  override val axioms : List[FSequent] = Nil
+  override val Definitions : Map[HOLExpression, HOLExpression] = edefinitions
+  override val axioms : List[FSequent] = eaxioms.values.toList
   override val sequentLists : List[(String,List[FSequent])] = Nil
 }
 
@@ -240,12 +245,13 @@ trait TokenToLKConverter {
     ).asInstanceOf[(List[RToken], List[Token])] //need to cast because partition returns Tokens
     val (ttokens, atokens) = tatokens.partition( _ match {
         case TToken(_,_,_) =>  true ;
-        case t@AToken(_,_,_,_) => println(t); false;
+        case t@AToken(_,_,_,_) => false;
         case t : Token => throw new Exception("Severe error: rule tokens were already filtered out, but rule "+t+" still contained!")
       }
       ).asInstanceOf[(List[TToken], List[AToken])] //need to cast because partition returns Tokens
     val naming = createNaming(ttokens)
     val axioms = createAxioms(naming, atokens)
+    val definitions = createDefinitions(naming, atokens)
 
     //seperate inferences for the different (sub)proofs
     val (last,rm) = rtokens.foldLeft((List[RToken]()), Map[HOLFormula, List[RToken] ]()) ((current, token) => {
@@ -284,7 +290,7 @@ trait TokenToLKConverter {
      proofs_done + ((f, f_proof))
     }
    )
-   ExtendedProofDatabase(proofs)
+   ExtendedProofDatabase(proofs, axioms, definitions)
   }
 
   /* Creates the subproof proofname from a list of rules. Uses the naming function to create basic term and
@@ -1140,6 +1146,53 @@ trait TokenToLKConverter {
         require(ant.isEmpty && suc.size == 1, "Axiom declarations need to be one positive formula, not "+fs)
         map + ((aformula, fs))
     })
+  }
+
+  def createDefinitions(naming : String => HOLExpression,l : List[AToken]) : Map[HOLExpression,HOLExpression] = {
+    val preddefs = l.filter(_.rule == "PREDDEF").foldLeft(Map[HOLExpression, HOLExpression]())( (map, token) => {
+      val (left,right) = token match {
+        case AToken(_, _, List(left), List(right)) => (left,right)
+        case _ => throw new HybridLatexParserException(
+          "Only one formula allowed as parameters in predicate definition declaration, got "+token)
+      }
+
+      val lformula = c(HLKHOLParser.ASTtoHOL(naming, left))
+      val rformula = c(HLKHOLParser.ASTtoHOL(naming, right))
+
+      lformula match {
+        case Atom(_,_) =>
+          require(lformula.freeVariables == rformula.freeVariables,
+            "Definition formulas "+lformula+" and "+rformula+" do not have the same set of free variables!"   )
+          map + ((lformula,rformula))
+        case _ => throw new HybridLatexParserException("Left hand side of a definition must be an atom, but is "+lformula)
+      }
+
+    }
+    )
+
+    l.filter(_.rule == "FUNDEF").foldLeft(preddefs)( (map, token) => {
+      val (left,right) = token match {
+        case AToken(_, _, List(left), List(right)) => (left,right)
+        case _ => throw new HybridLatexParserException(
+          "Only one formula allowed as parameters in function definition declaration, got "+token)
+      }
+
+      val lexpression = HLKHOLParser.ASTtoHOL(naming, left)
+      val rexpression = HLKHOLParser.ASTtoHOL(naming, right)
+
+      (lexpression, rexpression) match {
+        case (Function(_,_,exptype1), Function(_,_,exptype2)) =>
+          require(exptype1 == exptype2,
+            "The types of defined formulas and definition must match, but are: "+exptype1+" and "+exptype2)
+          require(lexpression.freeVariables == rexpression.freeVariables,
+            "Definition function "+lexpression+" and "+rexpression+" do not have the same set of free variables!"   )
+          map + ((lexpression,rexpression))
+        case _ => throw new HybridLatexParserException("Left hand side of a definition must be an atom, but is "+lexpression)
+      }
+
+    }
+    )
+
   }
 
   /* remove common context from 2 sequents (fs_old1, fs_old2) and inferred sequent (fs_new).

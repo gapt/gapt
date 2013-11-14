@@ -126,7 +126,6 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
 
 
     "load the simple example from file and parse it" in {
-      //skipped("problem with autocontt")
       try {
         val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "simple.llk")
         val p = HybridLatexParser.createLKProof(r)
@@ -140,12 +139,12 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
     }
 
     "load the tape3 proof from file" in {
-      //skipped("does not work yet")
       try {
         val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "tape3.llk")
         val p = HybridLatexParser.createLKProof(r)
-        println(p)
-
+        p.proofs.length must be_>(0)
+        p.Definitions.toList.length must be_>(0)
+        p.axioms.length must be_>(0)
         ok
       } catch {
         case e:Exception =>
