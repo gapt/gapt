@@ -592,9 +592,9 @@ object printProofStats {
   object cutIntroExp {
     def apply( p: LKProof ) : LKProof = apply( extractExpansionTrees( p ))
     def apply( p: LKProof, prover: at.logic.provers.Prover ) : LKProof = apply( extractExpansionTrees( p ), prover)
-    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction.applyExp( ep )._1
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]) ) : LKProof = CutIntroduction.applyExp( ep )._1.get
     def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: at.logic.provers.Prover ) : LKProof = 
-      CutIntroduction.applyExp( ep, prover )._1
+      CutIntroduction.applyExp( ep, prover )._1.get
   }
 
   object cutIntroG {

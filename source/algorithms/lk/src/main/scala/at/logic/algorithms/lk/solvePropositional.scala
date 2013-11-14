@@ -23,9 +23,9 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     prove(seq) match {
       case Some(p) => {
         debug("finished solvePropositional succesfully")
-        debug("solvePropositional: # of contraction left rules: " + statistics.contLeftNumber(p))
-        debug("solvePropositional: # of contraction right rules: " + statistics.contRightNumber(p))
-        debug("solvePropositional: # of rules: " + statistics.rulesNumber(p))
+        debug("# of contraction left rules: " + statistics.contLeftNumber(p))
+        debug("# of contraction right rules: " + statistics.contRightNumber(p))
+        debug("# of rules: " + statistics.rulesNumber(p))
         Some(CleanStructuralRules(p))
       }
       case None => {
@@ -49,6 +49,18 @@ object solvePropositional extends at.logic.utils.logging.Logger {
   }
 
   def prove(seq: FSequent): Option[LKProof] = {
+    val ant_set = seq.antecedent.toSet
+    val suc_set = seq.succedent.toSet
+    if (( ant_set.size != seq.antecedent.size ) || ( suc_set.size != seq.succedent.size )) {
+      warn( "proving a sequent which is not set-normalized" )
+      /*
+      warn( "antecedent size (list): " + seq.antecedent.size )
+      warn( "antecedent size (set): " + ant_set.size )
+      warn( "succedent size (list): " + seq.succedent.size )
+      warn( "succedent size (set): " + suc_set.size )
+      warn( seq.toString )
+      */
+    }
 
     // Solving in this order:
     // 1. Check if its axiom
