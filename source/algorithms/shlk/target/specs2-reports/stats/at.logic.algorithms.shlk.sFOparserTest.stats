@@ -1,0 +1,72 @@
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382010965077"><stats time="902" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382031099399"><stats time="1161" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382038210357"><stats time="1305" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382039100445"><stats time="903" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382099675036"><stats time="5816" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382296859704"><stats time="1073" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382299967446"><stats time="1710" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382337716992"><stats time="1338" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382337932917"><stats time="900" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382338227726"><stats time="810" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382339319613"><stats time="2048" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382347578243"><stats time="1283" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382348248121"><stats time="1541" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382348363883"><stats time="948" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382348472607"><stats time="1062" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382349162737"><stats time="2745" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1382366092659"><stats time="2164" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384369095767"><stats time="1485" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384369669322"><stats time="888" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384370252415"><stats time="970" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384370609174"><stats time="898" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384371976262"><stats time="1432" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384372431132"><stats time="907" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384372799821"><stats time="1154" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384373290658"><stats time="889" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-results timestamp="1384373764440"><result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:41)" id="-366743513"><stats time="1198" expectations="1" errors="1" examples="1"></stats></result>
+<result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:127)" id="-1098878724"><stats time="89" expectations="1" errors="1" examples="1"></stats></result>
+</at.logic.algorithms.shlk.sFOparserTest-results>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384373764481"><stats time="1406" expectations="2" errors="2" examples="2"><trend><stats time="1406" errors="2" successes="-2"></stats></trend></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-results timestamp="1384374097435"><result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:41)" id="-366743513"><stats time="1029" expectations="1" errors="1" examples="1"></stats></result>
+<result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:127)" id="-1098878724"><stats time="102" expectations="1" errors="1" examples="1"></stats></result>
+</at.logic.algorithms.shlk.sFOparserTest-results>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384374097480"><stats time="1265" expectations="2" errors="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-results timestamp="1384374253058"><result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:41)" id="-366743513"><stats time="1100" expectations="1" errors="1" examples="1"></stats></result>
+<result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:127)" id="-1098878724"><stats time="78" expectations="1" errors="1" examples="1"></stats></result>
+</at.logic.algorithms.shlk.sFOparserTest-results>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384374253114"><stats time="1281" expectations="2" errors="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-results timestamp="1384378638254"><result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:41)" id="-366743513"><stats time="1366" expectations="1" errors="1" examples="1"></stats></result>
+<result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:127)" id="-1098878724"><stats time="72" expectations="1" errors="1" examples="1"></stats></result>
+</at.logic.algorithms.shlk.sFOparserTest-results>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384378638305"><stats time="1548" expectations="2" errors="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-results timestamp="1384378685578"><result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:41)" id="-366743513"><stats time="1215" expectations="1" errors="1" examples="1"></stats></result>
+<result location="at.logic.algorithms.shlk.sFOparserTest (sFOparserTest.scala:127)" id="-1098878724"><stats time="93" expectations="1" errors="1" examples="1"></stats></result>
+</at.logic.algorithms.shlk.sFOparserTest-results>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384378685626"><stats time="1399" expectations="2" errors="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384378789917"><stats time="1718" expectations="2" successes="2" examples="2"><trend><stats time="1718" errors="-2" successes="2"></stats></trend></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384421166217"><stats time="2280" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384422702828"><stats time="1813" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384423358001"><stats time="847" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384423611360"><stats time="1298" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384423935622"><stats time="1123" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384445673477"><stats time="1775" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384446069272"><stats time="1724" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384446627396"><stats time="2652" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384446842345"><stats time="874" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384446941219"><stats time="989" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384447630026"><stats time="1133" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384448045063"><stats time="1373" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384448702441"><stats time="1325" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384449269076"><stats time="2216" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384449751081"><stats time="1030" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384450674322"><stats time="1559" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384451261608"><stats time="1204" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384451637941"><stats time="1261" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384451866855"><stats time="1141" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384452010352"><stats time="1253" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384452387424"><stats time="1183" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384452751236"><stats time="2116" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384453711730"><stats time="1145" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384467434538"><stats time="1324" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384469876193"><stats time="891" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
+<at.logic.algorithms.shlk.sFOparserTest-stats timestamp="1384471394801"><stats time="1501" expectations="2" successes="2" examples="2"></stats></at.logic.algorithms.shlk.sFOparserTest-stats>
