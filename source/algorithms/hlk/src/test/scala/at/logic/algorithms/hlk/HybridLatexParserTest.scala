@@ -80,7 +80,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
           })
 
 
-          println(lterms.flatMap(_.varnames).toSet)
+          //println(lterms.flatMap(_.varnames).toSet)
 
           ok("successfully parsed "+r)
         case HybridLatexParser.NoSuccess(msg, input) =>
@@ -112,7 +112,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case Equal => ko("Terms "+t1+" and "+t2+" considered as equal, but they differ!")
         case Different => ko("Terms "+t1+" and t2 considered as (completely) different, but they differ only modulo one replacement!")
         case EqualModuloEquality(path) =>
-          println("Path:"+path)
+          //println("Path:"+path)
           ok
       }
 
@@ -129,7 +129,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
       try {
         val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "simple.llk")
         val p = HybridLatexParser.createLKProof(r)
-        println(p)
+        //println(p)
 
         ok
       } catch {
