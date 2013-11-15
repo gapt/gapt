@@ -1,0 +1,133 @@
+proof \varphi  proves  
+      ForallHyper X MAXF(k+1,R,X), Forall x  POSF(k+1,x), ForallHyper X  MAXL(k+1,X), AX() |- Exists x Exists y ((x<y) /\ (d(x) ~ d(y)))
+
+base {
+01:pLink((\mu,0)
+        AX(), ORINF(0,(λx.0))|- Exists x Exists y ((x<y) /\ (d(x) ~ d(y))))
+00:allLHyper(01, ORINF(0,(λx.0)), ForallHyper X ORINF(0,X),(λx.0))
+4: pLink((\omega,0,R,W)
+         AX(), MAXF(0,R,W),POSF(0,R(0)),MAXL(0,W)|- ORINF(0,W))
+3: allL(4, POSF(0,R(0)),  Forall x  POSF(0,x), R(0))
+2: allLHyper(3,  MAXF(0,R,W), ForallHyper X MAXF(0,R,X),W)
+1: allLHyper(2, MAXL(0,W), ForallHyper X  MAXL(0,X),W)
+0: allRHyper(1, ORINF(0,W), ForallHyper X ORINF(0,X),X)
+root: cut(0,00, ForallHyper X ORINF(0,X))
+
+}
+
+step {
+01:pLink((\mu,k+1)
+        AX(), ORINF(k+1,(λx.0))|- Exists x Exists y ((x<y) /\ (d(x) ~ d(y))))
+00:allLHyper(01, ORINF(k+1,(λx.0)), ForallHyper X ORINF(k+1,X), (λx.0))
+4: pLink((\omega,k+1,R,W)
+         AX(), MAXF(k+1,R,W),POSF(k+1,R(k+1)),MAXL(k+1,W)|- ORINF(k+1,W))
+3: allL(4, POSF(k+1,R(k+1)),  Forall x  POSF(k+1,x), R(k+1))
+2: allLHyper(3,  MAXF(k+1,R,W), ForallHyper X MAXF(k+1,R,X),W)
+1: allLHyper(2, MAXL(k+1,W), ForallHyper X  MAXL(k+1,X),W)
+0: allRHyper(1, ORINF(k+1,W), ForallHyper X ORINF(k+1,X),X)
+root: cut(0, 00, ForallHyper X ORINF(k+1,X) )
+
+}
+
+proof \omega  proves  
+      AX(), MAXF(k+1,R,W),POSF(k+1,R(k+1)),MAXL(k+1,W)|- ORINF(k+1,W)
+
+base {
+80: ax( AX(), W(0) <= max(W(0),R(0)), R(0) = W(0) |- W(0) <= max(W(0),W(0)) )
+70:ax( AX(), W(0) <= W(0), R(0) = W(0) |- W(0) <= R(0) )
+50:ax( d(R(0)) ~ 0 |- d(R(0)) ~ 0 )
+9: ax( AX(), W(0) <= max(W(0),W(0)) |- W(0) <= W(0) )
+8: cut(80, 9, W(0) <= max(W(0),W(0)))
+7: cut(8, 70, W(0) <= W(0))
+6: contrL(7,  R(0) = W(0))
+5: andR(6, 50, W(0) <= R(0), d(R(0)) ~ 0)
+4: allL(5, W(0) <= max(W(0),R(0)),  Forall x ( W(0) <= max(W(0),x)),R(0))
+3: exR( 4 , ((W(0) <= R(0)) /\ (d(R(0)) ~ 0)) , Exists x ( W(0) <= x /\ d(x) ~ 0 ), R(0))
+2: foldL(3, d(R(0)) ~ 0, POSF(0,R(0)))
+1: foldL(2, R(0) = W(0), MAXF(0,R,W))
+0: foldL(1, Forall x ( W(0) <= max(W(0),x)), MAXL(0,W))
+root: foldR(0, Exists x ( W(0) <= x /\ d(x) ~ 0 ), ORINF(0,W))
+}
+
+
+step {
+(14)0:  ax(AX(), max(W(k+1),R(k))=R(k), POSF(k,max(W(k+1),R(k))) |- POSF(k,R(k)))
+(13)0:  ax(AX() |- max(W(k+1),R(k))=W(k+1), max(W(k+1),R(k))=R(k))
+(12)00: ax(AX() , max(W(k+1),R(k))=W(k+1), POSF(k,max(W(k+1),R(k)))|-POSF(k,W(k+1)))
+(12)1: pLink((\chi,k+1,W(k+1),R,W) 
+             AX(), MAXF(k,R,W), max(W(k+1),R(k))=W(k+1), POSF(k,W(k+1)),MAXL(k,W)|- ORINF(k,W))
+(12)0: cut((12)00,(12)1,  POSF(k,W(k+1)))
+(11)0: ax(d(max(W(k+1),R(k))) ~ k+1 |-  d(max(W(k+1),R(k))) ~ k+1)
+(10)0: ax(R(k+1) = max(W(k+1),R(k)) |- R(k+1) = max(W(k+1),R(k)))
+50: ax( W(k+1) <= max(W(k+1),R(k)) |- W(k+1) <= max(W(k+1),R(k)))
+(15): pLink((\omega,k+1,R,W)  
+            AX(), MAXF(k,R,W),POSF(k,R(k)),MAXL(k,W)|- ORINF(k,W) )
+(14): cut((14)0,(15), POSF(k,R(k)))
+(13): cut((13)0,(14), max(W(k+1),R(k)) = R(k))
+(12): cut((13),(12)0, max(W(k+1),R(k)) = W(k+1) )
+(11): orL((11)0,(12), d(max(W(k+1),R(k))) ~ k+1 , POSF(k,max(W(k+1),R(k))))
+(10): impL((10)0,(11), R(k+1) = max(W(k+1),R(k)), (d(max(W(k+1),R(k))) ~ k+1 \/ POSF(k,max(W(k+1),R(k)))) )
+9: andL((10),R(k+1) = max(W(k+1),R(k)),  MAXF(k,R,W))
+8: foldL(9, (R(k+1) = max(W(k+1),R(k)) /\ MAXF(k,R,W)) , MAXF(k+1,R,W))
+7: allL(8, (R(k+1) = max(W(k+1),R(k)) -> (d(max(W(k+1),R(k))) ~ k+1 \/  POSF(k,max(W(k+1),R(k))))), Forall x(R(k+1) = x -> (d(x) ~ k+1 \/  POSF(k,x))), max(W(k+1),R(k)) )
+6: foldL(7, Forall x(R(k+1) = x -> (d(x) ~ k+1 \/  POSF(k,x))), POSF(k+1,R(k+1)))
+5: andR(50, 6, W(k+1) <= max(W(k+1),R(k)), d(max(W(k+1),R(k))) ~ k+1) 
+4: allL(5, W(k+1) <= max(W(k+1),R(k)), Forall x ( W(k+1) <= max(W(k+1),x)), R(k))
+3: exR( 4, ( W(k+1) <= max(W(k+1),R(k)) /\ d(max(W(k+1),R(k))) ~ k+1 ), Exists x ( W(k+1) <= x /\ d(x) ~ k+1), max(W(k+1),R(k)))
+2: andL(3, Forall x ( W(k+1) <= max(W(k+1),x)), MAXL(k,W))
+1: foldL(2, (Forall x ( W(k+1) <= max(W(k+1),x)) /\ MAXL(k,W) ), MAXL(k+1,W))
+0: orR(1, Exists x ( W(k+1) <= x /\ d(x) ~ k+1 ), ORINF(k,W))
+root: foldR(0, (Exists x ( W(k+1) <= x /\ d(x) ~ k+1 ) \/ ORINF(k,W)), ORINF(k+1,W))
+}
+
+proof \chi  proves  
+      AX(), MAXF(k+1,R,W),POSF(k+1,R(k+1)),MAXL(k+1,W)|- ORINF(k+1,W)
+
+base {
+80: ax( AX(), W(0) <= max(W(0),R(0)), R(0) = W(0) |- W(0) <= max(W(0),W(0)) )
+70:ax( AX(), W(0) <= W(0), R(0) = W(0) |- W(0) <= R(0) )
+50:ax( d(R(0)) ~ 0 |- d(R(0)) ~ 0 )
+9: ax( AX(), W(0) <= max(W(0),W(0)) |- W(0) <= W(0) )
+8: cut(80, 9, W(0) <= max(W(0),W(0)))
+7: cut(8, 70, W(0) <= W(0))
+6: contrL(7,  R(0) = W(0))
+5: andR(6, 50, W(0) <= R(0), d(R(0)) ~ 0)
+4: allL(5, W(0) <= max(W(0),R(0)),  Forall x ( W(0) <= max(W(0),x)),R(0))
+3: exR( 4 , ((W(0) <= R(0)) /\ (d(R(0)) ~ 0)) , Exists x ( W(0) <= x /\ d(x) ~ 0 ), R(0))
+2: foldL(3, d(R(0)) ~ 0, POSF(0,R(0)))
+1: foldL(2, R(0) = W(0), MAXF(0,R,W))
+0: foldL(1, Forall x ( W(0) <= max(W(0),x)), MAXL(0,W))
+root: foldR(0, Exists x ( W(0) <= x /\ d(x) ~ 0 ), ORINF(0,W))
+}
+
+
+step {
+(14)0:  ax(AX(), max(W(k+1),R(k))=R(k), POSF(k,max(W(k+1),R(k))) |- POSF(k,R(k)))
+(13)0:  ax(AX() |- max(W(k+1),R(k))=W(k+1), max(W(k+1),R(k))=R(k))
+(12)00: ax(AX() , max(W(k+1),R(k))=W(k+1), POSF(k,max(W(k+1),R(k)))|-POSF(k,W(k+1)))
+(12)1: pLink((\chi,k+1,W(k+1),R,W) 
+             AX(), MAXF(k,R,W), max(W(k+1),R(k))=W(k+1), POSF(k,W(k+1)),MAXL(k,W)|- ORINF(k,W))
+(12)0: cut((12)00,(12)1,  POSF(k,W(k+1)))
+(11)0: ax(d(max(W(k+1),R(k))) ~ k+1 |-  d(max(W(k+1),R(k))) ~ k+1)
+(10)0: ax(R(k+1) = max(W(k+1),R(k)) |- R(k+1) = max(W(k+1),R(k)))
+50: ax( W(k+1) <= max(W(k+1),R(k)) |- W(k+1) <= max(W(k+1),R(k)))
+(15): pLink((\omega,k+1,R,W)  
+            AX(), MAXF(k,R,W),POSF(k,R(k)),MAXL(k,W)|- ORINF(k,W) )
+(14): cut((14)0,(15), POSF(k,R(k)))
+(13): cut((13)0,(14), max(W(k+1),R(k)) = R(k))
+(12): cut((13),(12)0, max(W(k+1),R(k)) = W(k+1) )
+(11): orL((11)0,(12), d(max(W(k+1),R(k))) ~ k+1 , POSF(k,max(W(k+1),R(k))))
+(10): impL((10)0,(11), R(k+1) = max(W(k+1),R(k)), (d(max(W(k+1),R(k))) ~ k+1 \/ POSF(k,max(W(k+1),R(k)))) )
+9: andL((10),R(k+1) = max(W(k+1),R(k)),  MAXF(k,R,W))
+8: foldL(9, (R(k+1) = max(W(k+1),R(k)) /\ MAXF(k,R,W)) , MAXF(k+1,R,W))
+7: allL(8, (R(k+1) = max(W(k+1),R(k)) -> (d(max(W(k+1),R(k))) ~ k+1 \/  POSF(k,max(W(k+1),R(k))))), Forall x(R(k+1) = x -> (d(x) ~ k+1 \/  POSF(k,x))), max(W(k+1),R(k)) )
+6: foldL(7, Forall x(R(k+1) = x -> (d(x) ~ k+1 \/  POSF(k,x))), POSF(k+1,R(k+1)))
+5: andR(50, 6, W(k+1) <= max(W(k+1),R(k)), d(max(W(k+1),R(k))) ~ k+1) 
+4: allL(5, W(k+1) <= max(W(k+1),R(k)), Forall x ( W(k+1) <= max(W(k+1),x)), R(k))
+3: exR( 4, ( W(k+1) <= max(W(k+1),R(k)) /\ d(max(W(k+1),R(k))) ~ k+1 ), Exists x ( W(k+1) <= x /\ d(x) ~ k+1), max(W(k+1),R(k)))
+2: andL(3, Forall x ( W(k+1) <= max(W(k+1),x)), MAXL(k,W))
+1: foldL(2, (Forall x ( W(k+1) <= max(W(k+1),x)) /\ MAXL(k,W) ), MAXL(k+1,W))
+0: orR(1, Exists x ( W(k+1) <= x /\ d(x) ~ k+1 ), ORINF(k,W))
+root: foldR(0, (Exists x ( W(k+1) <= x /\ d(x) ~ k+1 ) \/ ORINF(k,W)), ORINF(k+1,W))
+}
+
