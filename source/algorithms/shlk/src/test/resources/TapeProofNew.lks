@@ -1,5 +1,5 @@
 proof \varphi  proves  
-      ForallHyper X MAXF(k+1,R,X), Forall x  POSF(k+1,x), ForallHyper X  MAXL(k+1,X), AX() |- Exists x Exists y ((x<y) /\ (d(x) ~ d(y)))
+      ForallHyper X MAXF(k+1,R,X), Forall x  POSF(k+1,x), ForallHyper X  MAXL(k+1,X), AX(), SAME(k+1), Forall x Forall y ( (s(x) <= y) -> (x < y)) |- Exists x Exists y ((x<y) /\ (d(x) ~ d(y)))
 
 base {
 01:pLink((\mu,0)
@@ -17,7 +17,7 @@ root: cut(0,00, ForallHyper X ORINF(0,X))
 
 step {
 01:pLink((\mu,k+1)
-        AX(), ORINF(k+1,(λx.0))|- Exists x Exists y ((x<y) /\ (d(x) ~ d(y))))
+         ORINF(k+1,(λx.0)), SAME(k+1), Forall x Forall y ( (s(x) <= y) -> (x < y))|- Exists x Exists y ((x<y) /\ (d(x) ~ d(y))))
 00:allLHyper(01, ORINF(k+1,(λx.0)), ForallHyper X ORINF(k+1,X), (λx.0))
 4: pLink((\omega,k+1,R,W)
          AX(), MAXF(k+1,R,W),POSF(k+1,R(k+1)),MAXL(k+1,W)|- ORINF(k+1,W))
@@ -133,3 +133,15 @@ step {
 root: foldR(0, Exists x ( W(k+1) <= x /\ d(x) ~ k+1 ), ORINF(k+1,W))
 }
 
+proof \mu  proves  
+      ORINF(k+1,(λx.0)), SAME(k+1), Forall x Forall y ( (s(x) <= y) -> (x < y)) |- Exists x Exists y ((x<y) /\ (d(x) ~ d(y)))
+
+base {
+root: ax( ORINF(0,(λx.0)), SAME(0), Forall x Forall y ( (s(x) <= y) -> (x < y)) |- Exists x Exists y ((x<y) /\ (d(x) ~ d(y))))
+
+}
+
+step {
+root: ax( ORINF(k+1,(λx.0)), SAME(k+1), Forall x Forall y ( (s(x) <= y) -> (x < y)) |- Exists x Exists y ((x<y) /\ (d(x) ~ d(y))) )
+
+}

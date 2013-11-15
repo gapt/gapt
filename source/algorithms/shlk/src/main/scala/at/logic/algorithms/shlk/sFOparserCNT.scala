@@ -291,8 +291,8 @@ object sFOParserCNT {
           })
         }
       }
-      def term: Parser[HOLExpression] = (  individual_func | individual_func2 | iw_func | variable | index | fo_term | s_term | abs |  constant  | SOindVar | lambdaTerm)
-      def term2: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | individual_func | individual_func2 | iw_func | SOindVar)
+      def term: Parser[HOLExpression] = (   individual_func2 | iw_func | variable | index | fo_term | s_term | abs |  constant  | SOindVar | lambdaTerm)
+      def term2: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | individual_func2 | iw_func | SOindVar)
       def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ intZero ~ ")" ^^ {
         case "(" ~ "λ" ~ x ~ "." ~ zero ~ ")" => HOLAbs(x, zero)
       }
@@ -352,8 +352,7 @@ object sFOParserCNT {
       def less: Parser[HOLFormula] = term ~ "<" ~ term ^^ {case x ~ "<" ~ y => lessThan(x,y)}
       def sim: Parser[HOLFormula]  = term ~ "~" ~ term ^^ {case x ~ "~" ~ y => sims(x,y)}
       def lessOrEqual: Parser[HOLFormula] = term ~ "<=" ~ term ^^ {case x ~ "<=" ~ y => leq(x,y)}
-      def individual_func: Parser[HOLExpression] = regex(new Regex("s")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i->i)}
-      def individual_func2: Parser[HOLExpression] = regex(new Regex("max")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i)}
+      def individual_func2: Parser[HOLExpression] = regex(new Regex("max|s")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i)}
       def iw_func: Parser[HOLExpression] = """d""".r ~ "(" ~ repsep(term,",") ~ ")"  ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, ind)}
       def SOindVar: Parser[HOLExpression] = regex(new Regex("[ABRXW]")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->i)}
 
