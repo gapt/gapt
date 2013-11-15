@@ -291,7 +291,7 @@ object sFOParserCNT {
           })
         }
       }
-      def term: Parser[HOLExpression] = ( variable | index | fo_term | s_term | abs |  constant | individual_func | individual_func2 | iw_func | SOindVar | lambdaTerm)
+      def term: Parser[HOLExpression] = (  individual_func | individual_func2 | iw_func | variable | index | fo_term | s_term | abs |  constant  | SOindVar | lambdaTerm)
       def term2: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | individual_func | individual_func2 | iw_func | SOindVar)
       def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ intZero ~ ")" ^^ {
         case "(" ~ "λ" ~ x ~ "." ~ zero ~ ")" => HOLAbs(x, zero)
@@ -311,7 +311,7 @@ object sFOParserCNT {
           foTerm(name, arg::Nil)
         }
       }
-      def indexedVar: Parser[HOLVar] = regex(new Regex("[zzz]")) ~ "(" ~ intTerm ~ ")" ^^ {
+      def indexedVar: Parser[HOLVar] = regex(new Regex("zzz")) ~ "(" ~ intTerm ~ ")" ^^ {
         case x ~ "(" ~ index ~ ")" => {
           indexedFOVar(new VariableStringSymbol(x), index.asInstanceOf[IntegerTerm])
         }
@@ -324,7 +324,7 @@ object sFOParserCNT {
       }
 
       // TODO: a should be a FOConstant
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[xyz]{1}"))  ^^ {case x => fowVar(x)} //foVar(x)}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[xyzm]{1}"))  ^^ {case x => fowVar(x)} //foVar(x)}
       def variable: Parser[HOLVar] = (FOVariable | indexedwVar) // | indexedVar |
       //why is a constant of type ind -> ind
       def constant: Parser[HOLConst] = regex(new Regex("[t]" + word))  ^^ {
