@@ -104,7 +104,7 @@ class FileParser {
   }
 
   def parseFile(path: String) { try {
-    if (path.endsWith("David.lks")) lksCNTFileReader(fileStreamReader(path))
+    if (path.endsWith(".lksc")) lksCNTFileReader(fileStreamReader(path))
     else if (path.endsWith(".lks")) lksFileReader(fileStreamReader(path))
     else if (path.endsWith(".lks.gz")) lksFileReader(gzFileStreamReader(path))
     else if (path.endsWith(".rs")) rsFileReader(fileStreamReader(path))
