@@ -1,7 +1,0 @@
-proof \psi proves A(x), ~A(x) |- 
-
-  	1: ax(A(x) |- A(x))
-	root: negR(1, A(x))   	
-
- 
-
