@@ -10,7 +10,7 @@ import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.lambda.substitutions.Substitution
 import scala.Some
 import scala.Tuple2
-import at.logic.algorithms.lk.{applySubstitution => applySub, addContractions, addWeakenings}
+import at.logic.algorithms.lk.{applySubstitution => applySub, addContractions, addWeakenings, addWeakeningAndContraction}
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)
@@ -73,16 +73,14 @@ object PCNF {
     )((pr,f) => WeakeningRightRule(pr,sub(f).asInstanceOf[HOLFormula]))*/
 
     //val missing_literals = s diff p.root.toFSequent
-    val p1 = if (inAntecedent) {
-      addWeakenings.weaken(p, FSequent(sub(f).asInstanceOf[HOLFormula]::Nil, Nil) compose a.toFSequent)
-    } else {
-      addWeakenings.weaken(p, FSequent(Nil,sub(f).asInstanceOf[HOLFormula]::Nil) compose a.toFSequent)
-    }
-    val p2 = addContractions.contract(p1, s compose a.toFSequent)
-    p2
+    val f_sequent = if (inAntecedent) FSequent(sub(f).asInstanceOf[HOLFormula]::Nil, Nil)
+                    else FSequent(Nil,sub(f).asInstanceOf[HOLFormula]::Nil)
+    //val p1 = addWeakenings.weaken(p, f_sequent compose a.toFSequent)
+    //val p2 = addContractions.contract(p1, s compose a.toFSequent)
+    //p2
 
-    // apply contractions on the formulas of a, since we duplicate the context on every binary rule
-    //introduceContractions(p_,a)
+    addWeakeningAndContraction(p, s compose a.toFSequent)
+
   }
 
   def introduceContractions(resp: LKProof, s: FClause): LKProof= {

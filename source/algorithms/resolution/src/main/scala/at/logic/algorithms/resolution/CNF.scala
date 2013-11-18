@@ -2,6 +2,7 @@ package at.logic.algorithms.resolution
 
 import at.logic.language.hol._
 import at.logic.calculi.resolution.base.FClause
+import at.logic.calculi.lk.base.FSequent
 
 /**
  * * Formulas must be regular and weakly quantified
@@ -40,7 +41,12 @@ import at.logic.calculi.resolution.base.FClause
 
   object times {
     def apply(s1: Set[FClause], s2: Set[FClause]): Set[FClause] = {
-      s1.flatMap(c1 => s2.map(c2 => c1 compose c2))
+      s1.flatMap(c1 => s2.map(c2 => setCompose(c1, c2)))
+    }
+
+    //as FClause.compose, but does not duplicate literals occurring in both fc1 and fc2
+    def setCompose(fc1 : FClause, fc2: FClause) = {
+      FClause((fc1.neg.toSet ++ fc2.neg).toList, (fc1.pos.toSet ++ fc2.pos).toList)
     }
   }
 

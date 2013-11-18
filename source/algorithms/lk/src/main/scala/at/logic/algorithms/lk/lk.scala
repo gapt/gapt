@@ -693,7 +693,7 @@ object addWeakenings {
         WeakeningLeftRule(intermediate, f)
       } catch {
         case e : Exception =>
-          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+          throw new Exception("Could not weaken "+f+" in "+proof.root+"!",e)
       }
     )
     val rightcontr : LKProof = context.succedent.foldLeft(leftcontr)((intermediate, f) =>
@@ -701,15 +701,61 @@ object addWeakenings {
         WeakeningRightRule(intermediate, f)
       } catch {
         case e : Exception =>
-          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+          throw new Exception("Could not weaken "+f+" in "+proof.root+"!",e)
       }
     )
 
-    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of weakening errenous: "+proof.root+" does not weaken to "+rightcontr.root)
+    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of weakening errenous: "+proof.root+" does not weaken to "+towhat+" but "+rightcontr.root+
+    " : "+(rightcontr.root.toFSequent diff towhat)+" || "+(towhat diff rightcontr.root.toFSequent))
 
     rightcontr
   }
 
+}
+
+
+object addWeakeningAndContraction {
+  def apply(proof : LKProof, towhat : FSequent) : LKProof = {
+    val context = towhat diff proof.root.toFSequent
+    val leftweak : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
+      try {
+        WeakeningLeftRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not weaken "+f+" in "+proof.root+"!",e)
+      }
+    )
+    val rightweak : LKProof = context.succedent.foldLeft(leftweak)((intermediate, f) =>
+      try {
+        WeakeningRightRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not weaken "+f+" in "+proof.root+"!",e)
+      }
+    )
+
+    val context2 = rightweak.root.toFSequent() diff towhat
+    val leftcontr : LKProof = context2.antecedent.foldLeft(rightweak)((intermediate, f) =>
+      try {
+        ContractionLeftRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+      }
+    )
+    val rightcontr : LKProof = context2.succedent.foldLeft(leftcontr)((intermediate, f) =>
+      try {
+        ContractionRightRule(intermediate, f)
+      } catch {
+        case e : Exception =>
+          throw new Exception("Could not contract "+f+" in "+proof.root+"!",e)
+      }
+    )
+
+    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of combined weakening and contraction errenous:\n "+proof.root+" does not weaken to\n "+towhat+" but\n "+rightcontr.root+
+      "diff1:\n "+(rightcontr.root.toFSequent diff towhat)+"diff2:\n "+(towhat diff rightcontr.root.toFSequent))
+    rightcontr
+  }
 }
 
 // Adds contractions to p in order to obtain the sequent s as the end-sequent.
