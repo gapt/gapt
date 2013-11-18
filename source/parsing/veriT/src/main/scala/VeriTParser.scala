@@ -16,6 +16,34 @@ object VeriTParser extends RegexParsers {
 
   type Instances = (FOLFormula, List[FOLFormula])
 
+  def genEqualities(pairs: List[(FOLTerm, FOLTerm)], eqs: List[FOLFormula]) = {
+    
+    // Transforms the equalities provided into a list of pairs
+    val eqs_pairs = eqs.map(f => f match {
+      case Neg(Atom(_, List(a, b))) => (a, b)
+    })
+
+    // Checking which equalities were in the wrong order and generating the symmetry instances
+    val symm = pairs.foldLeft(List[Instances]()) ( (acc, p) =>
+      if ( eqs_pairs.contains((p._2, p._1)) ) {
+        acc :+ getSymmInstances(p._2, p._1)
+      }
+      else {
+        assert(eqs_pairs.contains(p))
+        acc
+      }
+    )
+
+    // Generate the correct equalities
+    val eqs_correct = pairs.foldRight(List[FOLFormula]()) {
+      case (p, acc) => 
+        val eq = ConstantStringSymbol("=")
+        Atom(eq, List(p._1, p._2)) :: acc
+    }
+    
+    (eqs_correct, symm)
+  }
+
   def getSymmInstances(a: FOLTerm, b: FOLTerm) : Instances = {
     val x = FOLVar(VariableStringSymbol("x"))
     val y = FOLVar(VariableStringSymbol("y"))
@@ -214,16 +242,10 @@ object VeriTParser extends RegexParsers {
     
     val (args1, args2) = getArgsLst(f.last)
     val pairs = args1.zip(args2)
-    // Building the equalities instead of fixing their order
-    // TODO: add symmetry??
-    val eqs = pairs.foldRight(List[FOLFormula]()) {
-      case (p, acc) => 
-        val eq = ConstantStringSymbol("=")
-        Atom(eq, List(p._1, p._2)) :: acc
-    }
-    val instance = Imp(And(eqs), f.last)
+    val (eqs_correct, symm) = genEqualities(pairs, f.dropRight(1))
+    val instance = Imp(And(eqs_correct), f.last)
 
-    ((eq_congr, List(instance)) :: Nil)
+    ((eq_congr, List(instance)) :: symm)
   }
 
   // Assuming all the antecedents of the implication are ordered:
@@ -278,20 +300,14 @@ object VeriTParser extends RegexParsers {
     
     val (args1, args2) = getArgsLst(f(f.length-2), f(f.length-1))
     val pairs = args1.zip(args2)
-    // Building the equalities instead of fixing their order
-    // TODO: add symmetry??
-    val eqs = pairs.foldRight(List[FOLFormula]()) {
-      case (p, acc) => 
-        val eq = ConstantStringSymbol("=")
-        Atom(eq, List(p._1, p._2)) :: acc
-    }
+    val (eqs_correct, symm) = genEqualities(pairs, f.dropRight(2))
     val (p1, p2) = (f(f.length-2), f(f.length-1)) match { 
       case (Neg(f1), f2) => (f1, f2)
       case (f1, Neg(f2)) => (f2, f1)
     }
-    val instance = Imp(And(eqs :+ p1), p2)
+    val instance = Imp(And(eqs_correct :+ p1), p2)
     
-    ((eq_congr_pred, List(instance)) :: Nil)
+    ((eq_congr_pred, List(instance)) :: symm)
   }
 
   def read(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {

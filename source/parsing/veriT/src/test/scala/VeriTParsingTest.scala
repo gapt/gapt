@@ -22,7 +22,7 @@ class VeriTParsingTest extends SpecificationWithJUnit {
 
     "parse correctly an even more complicated example" in {
       val formulas = VeriTParser.read("target/test-classes/test2.verit")
-      formulas._1 must haveSize(3)
+      formulas._1 must haveSize(4)
     }
     
     "parse correctly an example from QG-classification" in {
