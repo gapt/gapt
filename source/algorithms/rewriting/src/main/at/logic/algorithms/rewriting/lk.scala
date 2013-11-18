@@ -3,18 +3,14 @@
 
 package at.logic.algorithms.rewriting
 
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.{FSequent, Sequent, LKProof}
+import at.logic.calculi.lk.base.{Sequent, LKProof}
 import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
 import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOccurrence}
 import at.logic.language.hol._
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.lambda.symbols.SymbolA
 
 object Util {
   class ElimEx(val uproofs : List[LKProof], val aux : List[FormulaOccurrence], val prim : HOLFormula, val defs : Option[Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
@@ -102,24 +98,27 @@ object Util {
 
 }
 
-object LKRewrite {
+object DefinitionElimination {
   import Util._
   private val emptymap = Map[FormulaOccurrence,FormulaOccurrence]() //this will be passed to some functions
 
 
+  private def c(e:HOLExpression) = {
+    if (e.isInstanceOf[HOLFormula]) e.asInstanceOf[HOLFormula] else
+      throw new Exception("Could not convert "+e+" to a HOL Formula!")
+  }
+
   //eliminates defs in proof and returns a mapping from the old aux formulas to the new aux formulas
   // + the proof with the definition removed
-  def eliminate_in_proof_(rewrite : (HOLFormula => HOLFormula), proof : LKProof) :
+  def eliminate_in_proof_(rewrite : (HOLExpression => HOLExpression), proof : LKProof) :
   (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     proof match {
       // introductory rules
       case Axiom(Sequent(antecedent, succedent)) =>
         println("Axiom!")
-        val antd  =  antecedent.map((x:FormulaOccurrence) => rewrite(x.formula))  //recursive_elimination_from(defs,antecedent.map((x:FormulaOccurrence) => x.formula))
-        val succd =  succedent.map((x:FormulaOccurrence) => rewrite(x.formula)) //recursive_elimination_from(defs,succedent.map((x:FormulaOccurrence) => x.formula))
-        val sequent = fsequent2sequent( FSequent(antd,succd) )
-        val dproof = Axiom(sequent)
-        //          val correspondences = emptymap ++ ((antecedent ++ succedent) zip (duproof.root.antecedent ++ duproof.root.succedent))
+        val antd  =  antecedent.map((x:FormulaOccurrence) => c(rewrite(x.formula)))  //recursive_elimination_from(defs,antecedent.map((x:FormulaOccurrence) => x.formula))
+        val succd =  succedent.map((x:FormulaOccurrence) => c(rewrite(x.formula))) //recursive_elimination_from(defs,succedent.map((x:FormulaOccurrence) => x.formula))
+        val dproof = Axiom(antd, succd)
         val correspondences = calculateCorrespondences(Sequent(antecedent, succedent) , dproof)
 
         check_map(correspondences, proof, dproof)
@@ -203,16 +202,16 @@ object LKRewrite {
       //quantfication rules
       case ForallLeftRule(uproof, root, aux, prim, substituted_term) =>
         println("Forall Left")
-        handleQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ForallLeftRule.apply)
+        handleWeakQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ForallLeftRule.apply)
       case ForallRightRule(uproof, root, aux, prim, substituted_term) =>
         println("Forall Right")
-        handleQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ForallRightRule.apply)
+        handleStrongQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ForallRightRule.apply)
       case ExistsLeftRule(uproof, root, aux, prim, substituted_term) =>
         println("Exists Left")
-        handleQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ExistsLeftRule.apply)
+        handleStrongQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ExistsLeftRule.apply)
       case ExistsRightRule(uproof, root, aux, prim, substituted_term) =>
         println("Exists Right")
-        handleQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ExistsRightRule.apply)
+        handleWeakQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ExistsRightRule.apply)
 
       //equational rules
       case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
@@ -246,17 +245,17 @@ object LKRewrite {
 
 
 
-  def handleWeakeningRule(rewrite : (HOLFormula => HOLFormula),
+  def handleWeakeningRule(rewrite : (HOLExpression => HOLExpression),
                           uproof: LKProof, root: Sequent, prin: FormulaOccurrence,
                           createRule : (LKProof,  HOLFormula) => LKProof )
   : (Map[FormulaOccurrence,FormulaOccurrence], LKProof) = {
     val (dmap, duproof) = eliminate_in_proof_(rewrite, uproof)
-    val dproof = createRule(duproof, rewrite(prin.formula))
+    val dproof = createRule(duproof, c(rewrite(prin.formula)))
     val correspondences = calculateCorrespondences(root, dproof)
     (correspondences, dproof)
   }
 
-  def handleContractionRule(rewrite : (HOLFormula => HOLFormula),
+  def handleContractionRule(rewrite : (HOLExpression => HOLExpression),
                             uproof: LKProof,
                             root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
                             createRule : (LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof)
@@ -271,7 +270,7 @@ object LKRewrite {
     (correspondences, dproof)
   }
 
-  def handleNegationRule(rewrite : (HOLFormula => HOLFormula), uproof: LKProof, root: Sequent,
+  def handleNegationRule(rewrite : (HOLExpression => HOLExpression), uproof: LKProof, root: Sequent,
                          aux: FormulaOccurrence,
                          createRule : (LKProof, FormulaOccurrence) => LKProof)
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
@@ -282,26 +281,24 @@ object LKRewrite {
   }
 
   //only handles AndL1,2 and OrR1,2 -- ImpR and NegL/R are different
-  def handleUnaryLogicalRule(rewrite : (HOLFormula => HOLFormula), uproof: LKProof, root: Sequent,
+  def handleUnaryLogicalRule(rewrite : (HOLExpression => HOLExpression), uproof: LKProof, root: Sequent,
                              aux: FormulaOccurrence, prin : FormulaOccurrence,
                              createRule : (LKProof, FormulaOccurrence, HOLFormula) => LKProof)
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
-    val dproof = createRule(duproof, dmap(aux), rewrite(prin.formula)  )
+    val dproof = createRule(duproof, dmap(aux), c(rewrite(prin.formula))  )
     val correspondences = calculateCorrespondences(root, dproof)
     (correspondences,  dproof)
   }
 
 
-  def handleBinaryLogicalRule(rewrite : (HOLFormula => HOLFormula), uproof1: LKProof, uproof2: LKProof,
+  def handleBinaryLogicalRule(rewrite : (HOLExpression => HOLExpression), uproof1: LKProof, uproof2: LKProof,
                               root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
                               prin : FormulaOccurrence,
                               createRule : (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence) => LKProof)
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap1,duproof1) = eliminate_in_proof_(rewrite, uproof1)
     val (dmap2,duproof2) = eliminate_in_proof_(rewrite, uproof2)
-    //      val correspondences1 = calculateCorrespondences(defs, emptymap, root, duproof1)
-    //      val correspondences2 = calculateCorrespondences(defs, correspondences1, root, duproof2)
 
     val dproof = createRule(duproof1, duproof2, dmap1(aux1), dmap2(aux2)  )
     val correspondences = calculateCorrespondences(root, dproof)
@@ -309,19 +306,28 @@ object LKRewrite {
   }
 
 
-  def handleQuantifierRule[T <: HOLExpression](rewrite : (HOLFormula => HOLFormula), uproof: LKProof, root: Sequent,
-                                               aux: FormulaOccurrence, prin : FormulaOccurrence, substituted_term : T,
-                                               createRule : (LKProof, FormulaOccurrence, HOLFormula, T) => LKProof)
+  def handleWeakQuantifierRule(rewrite : (HOLExpression => HOLExpression), uproof: LKProof, root: Sequent,
+                                               aux: FormulaOccurrence, prin : FormulaOccurrence, substituted_term : HOLExpression,
+                                               createRule : (LKProof, FormulaOccurrence, HOLFormula, HOLExpression) => LKProof)
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
-    //TODO: take care of function definitions in substituted term
-    val dproof = createRule(duproof, dmap(aux), rewrite(prin.formula),  substituted_term   )
+    val dproof = createRule(duproof, dmap(aux), c(rewrite(prin.formula)),  rewrite(substituted_term)   )
+    val correspondences = calculateCorrespondences(root, dproof)
+    (correspondences,  dproof)
+  }
+
+  def handleStrongQuantifierRule(rewrite : (HOLExpression => HOLExpression), uproof: LKProof, root: Sequent,
+                           aux: FormulaOccurrence, prin : FormulaOccurrence, eigenvar : HOLVar,
+                           createRule : (LKProof, FormulaOccurrence, HOLFormula, HOLVar) => LKProof)
+  : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
+    val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
+    val dproof = createRule(duproof, dmap(aux), c(rewrite(prin.formula)),  eigenvar  )
     val correspondences = calculateCorrespondences(root, dproof)
     (correspondences,  dproof)
   }
 
 
-  def handleEquationalRule(rewrite : (HOLFormula => HOLFormula), uproof1: LKProof, uproof2: LKProof,
+  def handleEquationalRule(rewrite : (HOLExpression => HOLExpression), uproof1: LKProof, uproof2: LKProof,
                            root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
                            prin : FormulaOccurrence,
                            createRule : (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => LKProof)
@@ -335,34 +341,16 @@ object LKRewrite {
     (correspondences,  dproof)
   }
 
-  def handleDefinitionRule(rewrite : (HOLFormula => HOLFormula), uproof: LKProof, root: Sequent,
+  def handleDefinitionRule(rewrite : (HOLExpression => HOLExpression), uproof: LKProof, root: Sequent,
                            aux: FormulaOccurrence, prin : FormulaOccurrence,
                            createRule : (LKProof, FormulaOccurrence, HOLFormula) => LKProof)
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
-    val elim_prin = rewrite(prin.formula)
-    if (elim_prin == dmap(aux).formula ) {
-      println("eliminating: "+prin)
-      (dmap, duproof)
-    } else {
-      println("not eliminating:" + prin)
-      //        println("trying with: "+duproof.vertex + " ::: " + dmap(aux) +" / " +aux + " ::: " + elim_prin  )
-      try {
-        val dproof = createRule(duproof, dmap(aux), elim_prin)
 
-        val correspondences = calculateCorrespondences(root, dproof)
-
-        check_map(correspondences, root, dproof.root)
-        (correspondences,  dproof)
-      } catch {
-        case e: ElimEx => throw e
-        case e:Exception =>
-          println("exception!")
-          e.printStackTrace()
-
-          throw new ElimEx(List(duproof), List(aux,dmap(aux)), elim_prin, None)
-      }
-    }
+    //we skip the rule, so current occurrences have to be mapped to what their ancestors were
+    val dmapnew = Map[FormulaOccurrence,FormulaOccurrence]() ++
+      (uproof.root.occurrences flatMap (_.ancestors.map (x => (x, dmap(x)))))
+    (dmapnew, duproof)
   }
 
 
