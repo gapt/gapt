@@ -122,6 +122,10 @@ object printProofStats {
     def apply(p: LKProof) = StructCreators.extract( p )
   }
 
+  object extractStructLKSC {
+     def apply(p: LKProof, cut_occs: Set[FormulaOccurrence]) = StructCreators.extract( p,cut_occs )
+  }
+
   object structToClausesList {
     def apply(s: Struct) = at.logic.transformations.ceres.clauseSets.StandardClauseSet.transformStructToClauseSet(s)
   }
