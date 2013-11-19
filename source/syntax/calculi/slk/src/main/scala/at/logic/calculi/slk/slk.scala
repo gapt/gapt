@@ -137,6 +137,24 @@ object FOSchemaProofLinkRule {
     }
     else None
 }
+object EXFOSchemaProofLinkRule  {
+  def unapply( proof: LKProof ) =
+    if (proof.rule == SchemaProofLinkRuleType) {
+      val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
+      Some((r.root, r.link, r.indices))
+    }
+    else None
+
+}
+//object ExtendedFOProofLinkRule {
+//  def unapply( proof: LKProof ) =
+//    if (proof.rule == SchemaProofLinkRuleType) {
+//      val r = proof.asInstanceOf[NullaryLKProof with SchemaProofLink]
+//      val intterm = r.indices(0)
+//      Some((r.root, r.link, r.indices, intterm))
+//    }
+//    else None
+//}
 
 object SchemaProofLinkRule {
   def apply(seq: FSequent, link_name: String, indices_ : List[IntegerTerm])(implicit factory: FOFactory) = {

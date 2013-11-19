@@ -710,12 +710,37 @@ object applySchemaSubstitution2 {
     }
   }
 
+  def apply( proof_name: String, number: IntegerTerm ): LKProof = {
+    if (number == toIntegerTerm(0)) {
+      //println("\nproof_name = "+proof_name)
+      //println("number = "+number)
+      CloneLKProof2(SchemaProofDB.get(proof_name).base)
+    }
+    else {
+      //println("\nproof_name = "+proof_name)
+      //println("number = "+number)
+      val k = IntVar(new VariableStringSymbol("k")) ;
+      val new_map = Map[Var, HOLExpression]() + Pair(k, number.subTerms.tail.head.asInstanceOf[IntegerTerm])
+      val subst = new SchemaSubstitution1[HOLExpression](new_map)
+      //      RemoveEqRulesFromGroundSchemaProof(apply(SchemaProofDB.get(proof_name).rec, subst, number))
+      apply(SchemaProofDB.get(proof_name).rec, subst, toInt(number))
+    }
+  }
+
   def toIntegerTerm(i: Int): IntegerTerm = {
     if (i == 0)
       IntZero()
     else
       Succ(toIntegerTerm(i-1))
   }
+
+  def toInt(i: IntegerTerm): Int = {
+    if (i == IntZero())
+      0
+    else
+      1+ toInt(i.subTerms.tail.head.asInstanceOf[IntegerTerm])
+  }
+
 
   def apply( proof: LKProof, subst: SchemaSubstitution1[HOLExpression] , cnt: Int) : LKProof = {
         //println("\n"+proof.rule+" : "+printSchemaProof.sequentToString(proof.root))
@@ -855,6 +880,25 @@ object CloneLKProof2 {
         apply(p)
       }
 
+      case foldLeftRule(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        //        val new_p = apply(p, trs)
+        //        trsArrowLeftRule(new_p, a.formula, trs)
+        apply(p)
+      }
+      case foldRightRule(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        //        val new_p = apply(p, trs)
+        //        trsArrowRightRule(new_p, a.formula, trs)
+        apply(p)
+      }
+      case foldRule(p, s, a, m) => {
+        //            println("\nAndLeftEquivalenceRule1   YESSSSSSSSSSS \n")
+        //        val new_p = apply(p, trs)
+        //        trsArrowRightRule(new_p, a.formula, trs)
+        apply(p)
+      }
+
       case Axiom(ro) => Axiom(ro.antecedent.map(fo => unfoldSFormula(fo.formula.asInstanceOf[HOLFormula])),ro.succedent.map(fo => unfoldSFormula(fo.formula.asInstanceOf[HOLFormula])))
 
       case AndLeftEquivalenceRule1(p, s, a, m) => {
@@ -984,6 +1028,9 @@ object CloneLKProof2 {
 
       case ForallLeftRule(p, seq, a, m, t) => {
         val new_parent = apply(p)
+        println(a.formula.toString + "   " + unfoldSFormula(a.formula).toString )
+        println(m.formula.toString + "   " + unfoldSFormula(m.formula).toString)
+
         ForallLeftRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), unfoldSTerm(t))
       }
       case ForallRightRule(p, seq, a, m, v) => {
@@ -1027,7 +1074,11 @@ object CloneLKProof2 {
         val new_parent = apply(p)
         ImpRightRule(new_parent, unfoldSFormula(a1.formula), unfoldSFormula(a2.formula))
       }
-      case _ => throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n" + p.root + "\n")
+      case FOSchemaProofLinkRule(s,name,l) => {
+        println(l.head.asInstanceOf[IntegerTerm])
+        applySchemaSubstitution2.apply(name,l.head.asInstanceOf[IntegerTerm])
+      }
+      case _ => throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n" + p.rule + "\n")
     }}
 }
 
