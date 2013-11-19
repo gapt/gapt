@@ -172,9 +172,13 @@ class MiniSATProver extends Prover {
   def getLKProof( seq : FSequent ) : Option[at.logic.calculi.lk.base.LKProof] = 
     throw new Exception("MiniSAT does not produce proofs!")
 
+  override def isValid( f : HOLFormula ) : Boolean = {
+    val sat = new MiniSAT()
+    sat.isValid(f)
+  }
+
   override def isValid( seq : FSequent ) : Boolean = {
     val sat = new MiniSAT()
     sat.isValid(Imp(And(seq.antecedent.toList), Or(seq.succedent.toList)))
-
   }
 }

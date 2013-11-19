@@ -10,6 +10,7 @@ import at.logic.provers.prover9.Prover9Prover
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.language.lambda.substitutions._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.base.types._
 import at.logic.calculi.lk.propositionalRules._
@@ -380,4 +381,8 @@ class DefaultProver extends Prover {
 
   override def isValid( seq : FSequent ) : Boolean = 
     new MiniSATProver().isValid( seq )
+
+  override def isValid( f : HOLFormula ) : Boolean = {
+    new MiniSATProver().isValid( f )
+  }
 }
