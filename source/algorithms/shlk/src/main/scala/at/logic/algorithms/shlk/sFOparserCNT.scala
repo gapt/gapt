@@ -149,11 +149,12 @@ object sFOParserCNT {
 
       def name = """[\\]*[a-z,_,0-9]*""".r
                                                                                                                //~ "(" ~ repsep(term,",") ~ ")"
-      def slkProof: Parser[Any] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
-        case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
+      def slkProof: Parser[Any] = "proof" ~ name ~ "given" ~  "[" ~ repsep(term,",") ~ "]" ~  "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
+        case                       "proof" ~  str ~ "given" ~ "[" ~ linkparams ~ "]" ~  "proves" ~   seq  ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
           //          proofName = str
           bigMMap.put(str, Pair(mapBase, mapStep))
           SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
+          SchemaProofDB.putLinkTerms(str,linkparams)
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
           //          println("\n\nParsing is SUCCESSFUL : "+str)
@@ -292,7 +293,6 @@ object sFOParserCNT {
         }
       }
       def term: Parser[HOLExpression] = (   individual_func2 | iw_func | variable | index | fo_term | s_term | abs |  constant  | SOindVar | lambdaTerm)
-      def term2: Parser[HOLExpression] = (lambdaTerm | PLUSterm | MINUSterm | MULTterm | POWterm | index | fo_term | s_term | abs | variable | constant | individual_func2 | iw_func | SOindVar)
       def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ intZero ~ ")" ^^ {
         case "(" ~ "λ" ~ x ~ "." ~ zero ~ ")" => HOLAbs(x, zero)
       }

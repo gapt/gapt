@@ -89,11 +89,12 @@ class SchemaProof(val name: String, val vars: List[IntVar], val seq: FSequent, v
 
 object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnce[(String, SchemaProof)] {
   val proofs = new scala.collection.mutable.HashMap[String, SchemaProof]
+  val LinkTerms = new scala.collection.mutable.HashMap[String, List[HOLExpression]]
 
-  def clear = proofs.clear
+  def clear = { proofs.clear;  LinkTerms.clear;}
 
   def get(name: String) = proofs(name)
-
+  def getLinkTerms(name: String) = LinkTerms(name)
   // Compute a map between sets of FOs from
   // SchemaProofLinkRules and end-sequents of proof.base, proof.rec
   // and CutConfigurations, such that the CutConfigurations are
@@ -108,6 +109,7 @@ object SchemaProofDB extends Iterable[(String, SchemaProof)] with TraversableOnc
   }
 
   def put(proof: SchemaProof) = proofs.put(proof.name, proof)
+  def putLinkTerms(name: String,linkparams:  List[HOLExpression]) = LinkTerms.put(name, linkparams)
   def iterator = proofs.iterator
 }
 

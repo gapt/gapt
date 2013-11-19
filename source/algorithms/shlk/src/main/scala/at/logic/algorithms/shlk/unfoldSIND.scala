@@ -991,6 +991,33 @@ object CloneLKProof2 {
         ForallRightRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), v)
       }
 
+      case ExistsRightRule(p, seq, a, m, t) => {
+        val new_parent = apply(p)
+        ExistsRightRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), unfoldSTerm(t))
+      }
+      case ExistsLeftRule(p, seq, a, m, v) => {
+        val new_parent = apply(p)
+        ExistsLeftRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), v)
+      }
+
+      case ExistsHyperRightRule(p, seq, a, m, t) => {
+        val new_parent = apply(p)
+        ExistsHyperRightRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), unfoldSTerm(t))
+      }
+      case ExistsHyperLeftRule(p, seq, a, m, v) => {
+        val new_parent = apply(p)
+        ExistsHyperLeftRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), v)
+      }
+      case ForallHyperLeftRule(p, seq, a, m, t) => {
+        val new_parent = apply(p)
+        ForallHyperLeftRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), unfoldSTerm(t))
+      }
+      case ForallHyperRightRule(p, seq, a, m, v) => {
+        val new_parent = apply(p)
+        ForallHyperRightRule(new_parent, unfoldSFormula(a.formula), unfoldSFormula(m.formula), v)
+      }
+
+
       case ImpLeftRule(p1, p2, s, a1, a2, m) => {
         val new_parent1 = apply(p1)
         val new_parent2 = apply(p2)
@@ -1000,7 +1027,7 @@ object CloneLKProof2 {
         val new_parent = apply(p)
         ImpRightRule(new_parent, unfoldSFormula(a1.formula), unfoldSFormula(a2.formula))
       }
-      case _ => throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n")
+      case _ => throw new Exception("ERROR in unfolding: CloneLKProof2: missing rule !\n" + p.root + "\n")
     }}
 }
 

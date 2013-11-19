@@ -545,22 +545,22 @@ import at.logic.language.schema.SchemaFormula
 
     def extract(p: LKProof, cut_occs: Set[FormulaOccurrence]):Struct = p match {
       case Axiom(so) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
-      so match {
+      { println("0 "+cut_occs+ "  ");  so match {
         case lso : LabelledSequent  if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 =>
           handleLabelledAxiom( lso, cut_occs )
         case _ => handleAxiom( so, cut_occs )
-      }
-      case UnaryLKProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
-      case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux1, aux2, _) => 
-        handleBinary( upperProofLeft, upperProofRight, aux1::aux2::Nil, cut_occs )
-      case UnaryLKskProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
-      case UnarySchemaProof(_,upperProof,_,_,_) => handleUnary( upperProof, cut_occs )
-      case SchemaProofLinkRule(so, name, indices) => handleSchemaProofLink( so, name, indices.asInstanceOf[List[IntegerTerm]], cut_occs )
-      case TermEquivalenceRule1(upperProof, _, _, _) => extract(upperProof, cut_occs)
-      case ForallHyperLeftRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
-      case ExistsHyperRightRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
-      case ForallHyperRightRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
-      case ExistsHyperLeftRule(upperProof, r, a, p, _) => extract(upperProof, cut_occs)
+      }         }
+      case UnaryLKProof(_,upperProof,_,_,_) =>{ println("1 "+cut_occs+ "  "); handleUnary( upperProof, cut_occs )     }
+      case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux1, aux2, _) =>
+      { println("2 "+cut_occs+ "  "); handleBinary( upperProofLeft, upperProofRight, aux1::aux2::Nil, cut_occs )}
+      case UnaryLKskProof(_,upperProof,_,_,_) =>{ println("3 "+cut_occs+ "  ");  handleUnary( upperProof, cut_occs ) }
+      case UnarySchemaProof(_,upperProof,_,_,_) => { println("4 "+cut_occs+ "  "); handleUnary( upperProof, cut_occs )}
+      case SchemaProofLinkRule(so, name, indices) => { println("5 "+cut_occs+ "  "); handleSchemaProofLink( so, name, indices.asInstanceOf[List[IntegerTerm]], cut_occs )  }
+      case TermEquivalenceRule1(upperProof, _, _, _) => { println("6 "+cut_occs+ "  ");  extract(upperProof, cut_occs)     }
+      case ForallHyperLeftRule(upperProof, r, a, p, _) => { println("7 "+cut_occs+ "  "); extract(upperProof, cut_occs)    }
+      case ExistsHyperRightRule(upperProof, r, a, p, _) => { println("8 "+cut_occs+ "  "); extract(upperProof, cut_occs)       }
+      case ForallHyperRightRule(upperProof, r, a, p, _) => { println("9 "+cut_occs+ "  "); extract(upperProof, cut_occs)        }
+      case ExistsHyperLeftRule(upperProof, r, a, p, _) =>{ println("(10) "+cut_occs+ "  ");  extract(upperProof, cut_occs)   }
       case _ => throw new Exception("\nMissin rule in StructCreators.extract\n")
     }
 
@@ -578,8 +578,7 @@ import at.logic.language.schema.SchemaFormula
     def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
       val root = SchemaProofDB.get( name ).rec.root
       val root_focc = root.antecedent++root.succedent
-      val cutsInPLink = cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)).map(fo => if(FixedFOccs.PLinksMap.contains(fo)) FixedFOccs.PLinksMap.get(fo).get
-                                                                                                         else fo)
+      val cutsInPLink = cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)).map(fo => if(FixedFOccs.PLinksMap.contains(fo)) FixedFOccs.PLinksMap.get(fo).get else fo)
       println("\ncutsInPLink = "+cutsInPLink)
 //      root_focc.filter(fo => getAncestors(fo).intersect(cutsInPLink).nonEmpty)
 //      val sym = new ClauseSetSymbol( name, cutOccConfigToCutConfig.applyRCC( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ))))
