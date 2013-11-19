@@ -3,12 +3,16 @@ package at.logic.algorithms.rewriting
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.language.fol
 import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.symbols.SymbolA
+import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, Var, LambdaExpression}
+import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.language.fol.FOLFormula
 
-object defintion_elimination {
-  type DefinitionsMap = Map[HOLFormula, HOLFormula]
+object definition_elimination {
+  type DefinitionsMap = Map[HOLExpression, HOLExpression]
   type ProcessedDefinitionsMap = Map[SymbolA, (List[HOLVar], HOLFormula)]
 
   def fixedpoint_val[A](f : (A=>A), l : A) : A = {
@@ -21,6 +25,7 @@ object defintion_elimination {
     if (r==l) r  else fixedpoint_seq(f,r)
   }
 
+  /*
   def recursive_elimination_from(defs: DefinitionsMap, l : FSequent) : FSequent =
     FSequent(recursive_elimination_from(defs,l._1), recursive_elimination_from(defs,l._2))
 
@@ -29,8 +34,64 @@ object defintion_elimination {
 
   def recursive_elimination_from(defs: DefinitionsMap, l : HOLFormula) : HOLFormula =
     fixedpoint_val(((x:HOLFormula) => eliminate_from(defs,x)), l )
+    */
+
+  private def c(e:HOLExpression) = {
+    if (e.isInstanceOf[HOLFormula]) e.asInstanceOf[HOLFormula] else
+      throw new Exception("Could not convert "+e+" to a HOL Formula!")
+  }
+
+  def replaceAll_informula(dmap: DefinitionsMap, e:HOLFormula) : HOLFormula = c(replaceAll_in(dmap,e))
+  def replaceAll_in(dmap : DefinitionsMap, e : HOLExpression) : HOLExpression = {
+    e match {
+      case HOLConst(_,_) => try_to_match(dmap, e)
+      case HOLVar(_,_) => try_to_match(dmap, e)
+      case Neg(s) => Neg(replaceAll_informula(dmap,s))
+      case And(s,t) => And(replaceAll_informula(dmap,s), replaceAll_informula(dmap,t))
+      case Or(s,t) => Or(replaceAll_informula(dmap,s), replaceAll_informula(dmap,t))
+      case Imp(s,t) => Imp(replaceAll_informula(dmap,s), replaceAll_informula(dmap,t))
+      //TODO: fix issue 224 and remove the fol specific matches
+      case fol.AllVar(x,t) => fol.AllVar(x, replaceAll_informula(dmap, t).asInstanceOf[FOLFormula])
+      case fol.ExVar(x,t) => fol.ExVar(x, replaceAll_informula(dmap, t).asInstanceOf[FOLFormula])
+      case AllVar(x,t) => AllVar(x, replaceAll_informula(dmap, t))
+      case ExVar(x,t) => ExVar(x, replaceAll_informula(dmap, t))
+      case HOLApp(s,t) =>
+        val fullmatch = try_to_match(dmap,e)
+        if (fullmatch == e)
+          try_to_match(dmap,e.factory.createApp(replaceAll_in(dmap, s), replaceAll_in(dmap,t)).asInstanceOf[HOLExpression])
+        else
+          replaceAll_in(dmap,fullmatch)
+      case HOLAbs(x,t) => e.factory.createAbs(x, replaceAll_in(dmap, t)).asInstanceOf[HOLExpression]
+    }
+  }
 
 
+  def try_to_matchformula(dmap:DefinitionsMap,e:HOLExpression) = c(try_to_match(dmap,e))
+  def try_to_match(dmap: DefinitionsMap, e: HOLExpression): HOLExpression = {
+    dmap.keys.foldLeft(e)((v, elem) => {
+      //println("matching "+elem+" against "+v)
+      NaiveIncompleteMatchingAlgorithm.holMatch(elem,v)(Nil) match {
+        case None => v
+        case Some(sub) =>
+          val r = sub(dmap(elem))
+          //println("YES! "+sub)
+          r
+      }
+    }
+    )
+  }
+
+  def expand_dmap(dmap: DefinitionsMap) : DefinitionsMap = {
+    val ndmap = dmap map ( x => {
+      (x._1, replaceAll_in(dmap, x._2))
+    })
+
+    if (ndmap == dmap)
+      dmap
+    else expand_dmap(ndmap)
+  }
+
+  /*
   def eliminate_from(defs : DefinitionsMap, f : HOLFormula) : HOLFormula = {
     //preprocess definitions
     var map : ProcessedDefinitionsMap = Map[SymbolA, (List[HOLVar], HOLFormula)]()
@@ -45,7 +106,7 @@ object defintion_elimination {
       case _ => println("Warning: ignoring non-atomic definition during definition elimination!")
     }
     eliminate_from_(map, f)
-  }
+  } */
 
   private def eliminate_from_(defs : ProcessedDefinitionsMap, f : HOLFormula) : HOLFormula = {
     f match {
@@ -76,57 +137,6 @@ object defintion_elimination {
       case _ => println("Warning: unhandled case in definition elimination!"); f
     }
   }
-
-
-  private def append_ancestors(endsequent : FSequent, ancestors : Sequent) =
-    Sequent(append_ancestors_(endsequent._1, ancestors.antecedent),
-      append_ancestors_(endsequent._2, ancestors.succedent))
-  private def append_ancestors_(endsequent : Seq[HOLFormula], ancestors : Seq[FormulaOccurrence]) :
-  Seq[FormulaOccurrence] = {
-    endsequent.zip(ancestors).map(
-      (x:(HOLFormula, FormulaOccurrence)) =>
-        x._2.factory.createFormulaOccurrence(x._1, Seq(x._2)  )  )
-  }
-
-  //needs a different name because type erasure removes HOLFormula/FormulaOccurrence from append_ancestors(2)_
-  private def append_ancestors2(endsequent : Sequent, ancestors : Sequent) =
-    Sequent(append_ancestors2_(endsequent.antecedent, ancestors.antecedent),
-      append_ancestors2_(endsequent.succedent, ancestors.succedent))
-  private def append_ancestors2_(endsequent : Seq[FormulaOccurrence], ancestors : Seq[FormulaOccurrence]) :
-  Seq[FormulaOccurrence] = {
-    endsequent.zip(ancestors).map(
-      (x:(FormulaOccurrence, FormulaOccurrence)) =>
-        x._2.factory.createFormulaOccurrence(x._1.formula, x._1.ancestors ++ x._2.ancestors  )  )
-  }
-
-
-
-  /* calculates the correspondences between occurences of the formulas in the original end-sequent and those in the
- *  definition free one. in binary rules, ancestors may occur in both branches, so we also pass a map with previously
- *  calculated correspondences and add the new ones
- private def calculateCorrespondences2(rewrite : (HOLFormula => HOLFormula),
-                                      existing_correspondences : Map[FormulaOccurrence, FormulaOccurrence],
-                                      root: Sequent, duproof: LKProof)
-   : Map[FormulaOccurrence, FormulaOccurrence] = {
-   val fsroot = root.toFSequent()
-   val eroot_fs = FSequent(fsroot.antecedent map rewrite, fsroot.succedent map rewrite)
-   val eroot_f = append_ancestors(eroot_fs, duproof.root)
-   val additional = (root.antecedent ++ root.succedent) zip (eroot_f.antecedent ++ eroot_f.succedent)
-   var correspondences = existing_correspondences
-   for ( el@(key,value) <- additional ) {
-     //if there are ancestors in both subproofs, the entry needs to be merged
-     if (correspondences.contains(key)) {
-       val entry = correspondences(key)
-       correspondences = correspondences + ((key,(new FormulaOccurrence(entry.formula, entry.ancestors ++ value.ancestors, entry.factory))))
-
-     } else {
-       correspondences = correspondences + el
-     }
-
-   }
-
-   correspondences
- } */
 
 
 

@@ -347,9 +347,18 @@ object DefinitionElimination {
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
 
+    val correspondences_toparent =
+      NameReplacement.find_matching[FormulaOccurrence, FormulaOccurrence](root.occurrences.toList, uproof.root.occurrences.toList,
+        (occ1, occ2) => {
+          if (occ1 == prin) occ2 == aux else
+            occ1.formula syntaxEquals occ2.formula
+        } )
+
+    val dmapnew = correspondences_toparent.map(x => (x._1, dmap(x._2)))
+
     //we skip the rule, so current occurrences have to be mapped to what their ancestors were
-    val dmapnew = Map[FormulaOccurrence,FormulaOccurrence]() ++
-      (uproof.root.occurrences flatMap (_.ancestors.map (x => (x, dmap(x)))))
+    //val dmapnew = Map[FormulaOccurrence,FormulaOccurrence]() ++
+    //  (uproof.root.occurrences flatMap (_.ancestors.map (x => (x, dmap.getOrElse(x, throw new Exception("Could not find fo "+x+" in map "+ (dmap.keys.mkString(", ")) ))))))
     (dmapnew, duproof)
   }
 
