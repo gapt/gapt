@@ -4,7 +4,7 @@
 package at.logic.algorithms.rewriting
 
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.{Sequent, LKProof}
+import at.logic.calculi.lk.base.{PrincipalFormulas, BinaryLKProof, Sequent, LKProof}
 import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.propositionalRules._
@@ -108,6 +108,8 @@ object DefinitionElimination {
       throw new Exception("Could not convert "+e+" to a HOL Formula!")
   }
 
+  def eliminate_in_proof(rewrite : (HOLExpression => HOLExpression), proof : LKProof) : LKProof =
+    eliminate_in_proof_(rewrite,proof)._2
   //eliminates defs in proof and returns a mapping from the old aux formulas to the new aux formulas
   // + the proof with the definition removed
   def eliminate_in_proof_(rewrite : (HOLExpression => HOLExpression), proof : LKProof) :
@@ -166,11 +168,13 @@ object DefinitionElimination {
 
       case AndLeft1Rule(uproof, root, aux, prin)  =>
         println("And 1 Left!")
-        handleUnaryLogicalRule(rewrite, uproof, root, aux, prin, AndLeft1Rule.apply )
+        val vf = prin.formula match { case And(_,x) => x }
+        handleUnaryLogicalRule(rewrite, uproof, root, aux, vf, AndLeft1Rule.apply )
 
       case AndLeft2Rule(uproof, root, aux, prin)  =>
         println("And 2 Left!")
-        handleUnaryLogicalRule(rewrite, uproof, root, aux, prin, switchargs(AndLeft2Rule.apply) )
+        val vf = prin.formula match { case And(x,_) => x }
+        handleUnaryLogicalRule(rewrite, uproof, root, aux, vf, switchargs(AndLeft2Rule.apply) )
 
       case AndRightRule(uproof1, uproof2, root, aux1, aux2, prin)  =>
         println("And Right")
@@ -178,11 +182,13 @@ object DefinitionElimination {
 
       case OrRight1Rule(uproof, root, aux, prin)  =>
         println("Or 1 Right")
-        handleUnaryLogicalRule(rewrite, uproof, root, aux, prin, OrRight1Rule.apply )
+        val vf = prin.formula match { case Or(_,x) => x }
+        handleUnaryLogicalRule(rewrite, uproof, root, aux, vf, OrRight1Rule.apply )
 
       case OrRight2Rule(uproof, root, aux, prin)  =>
         println("Or 2 Right")
-        handleUnaryLogicalRule(rewrite, uproof, root, aux, prin, switchargs(OrRight2Rule.apply) )
+        val vf = prin.formula match { case Or(x,_) => x }
+        handleUnaryLogicalRule(rewrite, uproof, root, aux, vf, switchargs(OrRight2Rule.apply) )
 
       case OrLeftRule(uproof1, uproof2, root, aux1, aux2, prin)  =>
         println("Or Left!")
@@ -282,11 +288,11 @@ object DefinitionElimination {
 
   //only handles AndL1,2 and OrR1,2 -- ImpR and NegL/R are different
   def handleUnaryLogicalRule(rewrite : (HOLExpression => HOLExpression), uproof: LKProof, root: Sequent,
-                             aux: FormulaOccurrence, prin : FormulaOccurrence,
+                             aux: FormulaOccurrence, weakened_formula : HOLFormula,
                              createRule : (LKProof, FormulaOccurrence, HOLFormula) => LKProof)
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
-    val dproof = createRule(duproof, dmap(aux), c(rewrite(prin.formula))  )
+    val dproof = createRule(duproof, dmap(aux), c(rewrite(weakened_formula))  )
     val correspondences = calculateCorrespondences(root, dproof)
     (correspondences,  dproof)
   }
@@ -334,10 +340,9 @@ object DefinitionElimination {
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap1,duproof1) = eliminate_in_proof_(rewrite, uproof1)
     val (dmap2,duproof2) = eliminate_in_proof_(rewrite, uproof2)
-    val ucorrespundences = (dmap1 ++ dmap2)
-
-    val dproof = createRule(duproof1, duproof2, dmap1(aux1), dmap2(aux2) , ucorrespundences(prin).formula )
+    val dproof = createRule(duproof1, duproof2, dmap1(aux1), dmap2(aux2) , c(rewrite(prin.formula)) )
     val correspondences = calculateCorrespondences(root, dproof)
+
     (correspondences,  dproof)
   }
 
@@ -370,7 +375,7 @@ object DefinitionElimination {
                                        root: Sequent, duproof: LKProof)
   : Map[FormulaOccurrence, FormulaOccurrence] = {
     val r = emptymap ++ (root.antecedent zip duproof.root.antecedent) ++ (root.succedent zip duproof.root.succedent)
-    print_hashcodes("DEBUG: Correspondences", r)
+    //print_hashcodes("DEBUG: Correspondences", r)
     r
   }
 

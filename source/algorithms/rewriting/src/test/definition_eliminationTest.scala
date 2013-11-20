@@ -6,13 +6,15 @@ import org.specs2.runner.JUnitRunner
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.calculi.lk.propositionalRules.{InitialRuleType, AndRightRule, Axiom}
+import at.logic.calculi.lk.propositionalRules.{AndLeft2Rule, InitialRuleType, AndRightRule, Axiom}
 import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ForallRightRule, ForallLeftRule}
 import at.logic.calculi.lk.definitionRules.{DefinitionLeftRule, DefinitionRightRule}
 import at.logic.language.hol.HOLExpression
-import at.logic.calculi.lk.base.{Sequent, LKProof}
+import at.logic.calculi.lk.base.{FSequent, Sequent, LKProof}
 import at.logic.calculi.lk.lkExtractors.{BinaryLKProof, UnaryLKProof}
 import at.logic.calculi.proofs.NullaryProof
+import at.logic.calculi.lk.equationalRules.EquationLeft1Rule
+import at.logic.calculi.lk.lkSpecs._
 
 @RunWith(classOf[JUnitRunner])
 class definition_eliminationTest extends SpecificationWithJUnit {
@@ -28,8 +30,10 @@ class definition_eliminationTest extends SpecificationWithJUnit {
     val pty = Atom(p, List(t,y))
     val pxy = Atom(p, List(x,y))
     val ax =  Atom(a,x::Nil)
+    val at =  Atom(a,t::Nil)
     val aa =  Atom(a,alpha::Nil)
     val bx = Atom(b,x::Nil)
+    val eqxt = Equation(x,t)
     val allypay = AllVar(y,pay)
     val allypty = AllVar(y,pty)
     val allypxy = AllVar(y, pxy)
@@ -49,7 +53,11 @@ class definition_eliminationTest extends SpecificationWithJUnit {
     val i9 = AndRightRule(i2, i8, i2.root.succedent(0), i8.root.succedent(0))
     val i10 = ExistsRightRule(i9, i9.root.succedent(0), exformula , alpha)
     val i11 = DefinitionRightRule(i10, i10.root.succedent(0), ExVar(x, bx))
-    getoccids(i11, Nil) map println
+    val i12 = AndLeft2Rule(i11, ax, i11.root.antecedent(0))
+
+    val i13 = Axiom(eqxt::Nil, eqxt::Nil)
+    val i14 = EquationLeft1Rule(i13,i12,i13.root.succedent(0), i12.root.antecedent(1), And(at, AllVar(x, qx)) )
+    getoccids(i14, Nil) map println
 
     val def1 = (ax, AllVar(y, pxy))
     val def2 = (bx, And(qx,ax))
@@ -84,11 +92,21 @@ class definition_eliminationTest extends SpecificationWithJUnit {
     }
 
     "work on a simple proof" in {
+      import proof1._
+      val expdmap = definition_elimination.expand_dmap(dmap)
+      val elp = DefinitionElimination.eliminate_in_proof( definition_elimination.replaceAll_in(expdmap, _), i12 )
+      println(elp)
+      val expected = FSequent(List(AllVar(x,AllVar(y, pxy)), And(AllVar(y,pxy), AllVar(x,qx))), List(ExVar(x, And(qx, AllVar(y,pxy)))))
+      expected must beSyntacticFSequentEqual(elp.root.toFSequent())
+    }
+
+    "work on a simple proof with equality" in {
       val expdmap = definition_elimination.expand_dmap(proof1.dmap)
-      val elp = DefinitionElimination.eliminate_in_proof_( definition_elimination.replaceAll_in(expdmap, _), proof1.i11 )
+      val elp = DefinitionElimination.eliminate_in_proof( definition_elimination.replaceAll_in(expdmap, _), proof1.i14 )
       println(elp)
       ok
     }
+
   }
 
 }
