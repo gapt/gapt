@@ -22,7 +22,8 @@ trait Schema extends HOL {
   override def factory: LambdaFactoryA = SchemaFactory//FOLSchemataFactory
 }
 
-trait SchemaExpression extends HOLExpression with Schema
+trait SchemaExpression extends HOLExpression with Schema  {
+}
 
 
 trait IntegerTerm extends SchemaExpression {
@@ -726,6 +727,24 @@ class SchemaSubstitution2[T <: HOLExpression](val map: Map[Var, T])  {
     }
   }
 }
+  object SchemaSubTerms{
+      def apply(f:HOLExpression):Seq[HOLExpression] = f match {
+      case Var(_,_) => List(f)
+      case Atom(_, args) =>  args.map(a => apply(a.asInstanceOf[HOLExpression])).flatten
+      case Function(_,args,_)  =>  (List(f).toSeq ++ args.map(a => apply(a.asInstanceOf[HOLExpression])).flatten)
+      case BinaryFormula(x,y) => (apply(x.asInstanceOf[HOLExpression]) ++ apply(y.asInstanceOf[HOLExpression]))
+      case Neg(x) => apply(x.asInstanceOf[HOLExpression])
+      case Quantifier(_,_,x) =>  apply(x.asInstanceOf[HOLExpression])
+      case HOLAbs(_, x) =>  apply(x.asInstanceOf[HOLExpression])
+      case HOLApp(x, y) => (apply(x.asInstanceOf[HOLExpression]) ++ apply(y.asInstanceOf[HOLExpression]))
+    }
+  }
+object isSAtom{
+  def apply(f:HOLFormula): Boolean = f match {
+    case sAtom(_,_) => true
+    case _ => false
+  }
+}
 
 //object representing a schematic atom: P(i:ω, args)
 object sAtom {
@@ -736,6 +755,7 @@ object sAtom {
   def apply(head: Var, args: List[HOLExpression]): HOLFormula = {
     AppN(head, args).asInstanceOf[HOLFormula with Schema]
   }
+
   def unapply( expression: LambdaExpression ) = expression match {
     case App(Var(sym,_),_) if sym.isInstanceOf[LogicalSymbolsA] => None
     case App(App(Var(sym,_),_),_) if sym.isInstanceOf[LogicalSymbolsA] => None

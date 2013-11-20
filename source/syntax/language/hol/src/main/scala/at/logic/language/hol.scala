@@ -126,6 +126,8 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case _ => false
     }
 
+
+
     def subTerms: Seq[HOLExpression] = this match {
       case Var(_,_) => List(this)
       case Atom(_, args) =>  this +: args.flatMap(_.subTerms)
@@ -136,6 +138,8 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case HOLAbs(_, x) => this +: x.subTerms
       case HOLApp(x, y) => this +: (x.subTerms ++ y.subTerms)
     }
+
+
 
   }
 
