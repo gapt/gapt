@@ -19,6 +19,7 @@ import at.logic.language.lambda.types._
 import logicSymbols.ImplicitConverters._
 import at.logic.language.lambda.types.ImplicitConverters._
 import at.logic.language.lambda.types.Definitions._
+import at.logic.calculi.lk.base.types.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class MiniSATTest extends SpecificationWithJUnit {
@@ -82,6 +83,7 @@ class MiniSATTest extends SpecificationWithJUnit {
       (new MiniSAT).solve(box) must not(throwA[IOException]).orSkip
 
       (new MiniSAT).isValid( Or(pc, Neg(pc) ) ) must beTrue
+      (new MiniSATProver).isValid( new FSequent( Nil, Or(pc, Neg(pc) )::Nil) ) must beTrue
     }
     
     "see that Pc is not valid" in {

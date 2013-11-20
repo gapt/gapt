@@ -14,6 +14,8 @@ import at.logic.calculi.lk.base.FSequent
    */
   object CNFp {
     def apply(f: HOLFormula): Set[FClause] = f match {
+      case BottomC => Set(FClause(List(), List()))
+      case TopC => Set()
       case Atom(_,_) => Set(FClause(List(), List(f)))
       case Neg(f2) => CNFn(f2)
       case And(f1,f2) => CNFp(f1) union CNFp(f2)
@@ -29,6 +31,8 @@ import at.logic.calculi.lk.base.FSequent
    */
   object CNFn {
     def apply(f: HOLFormula): Set[FClause] = f match {
+      case BottomC => Set()
+      case TopC => Set(FClause(List(), List()))
       case Atom(_,_) => Set(FClause(List(f), List()))
       case Neg(f2) => CNFp(f2)
       case And(f1,f2) => times(CNFn(f1),CNFn(f2))

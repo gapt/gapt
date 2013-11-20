@@ -58,7 +58,11 @@ class MiniSAT extends at.logic.utils.logging.Logger {
   
   // Returns a model of the formula obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
-  def solve( f: HOLFormula ) : Option[Interpretation] = solve( CNFp(f) )
+  def solve( f: HOLFormula ) : Option[Interpretation] = {
+    val cnf = CNFp(f)
+    trace("produced cnf: " + cnf)
+    solve( cnf )
+  }
   
   // Returns a model of the set of clauses obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
@@ -168,7 +172,7 @@ class MiniSAT extends at.logic.utils.logging.Logger {
   }
 }
 
-class MiniSATProver extends Prover {
+class MiniSATProver extends Prover with at.logic.utils.logging.Logger{
   def getLKProof( seq : FSequent ) : Option[at.logic.calculi.lk.base.LKProof] = 
     throw new Exception("MiniSAT does not produce proofs!")
 
@@ -179,6 +183,7 @@ class MiniSATProver extends Prover {
 
   override def isValid( seq : FSequent ) : Boolean = {
     val sat = new MiniSAT()
+    trace("calling MiniSAT.isValid( " + Imp(And(seq.antecedent.toList), Or(seq.succedent.toList)) + ")")
     sat.isValid(Imp(And(seq.antecedent.toList), Or(seq.succedent.toList)))
   }
 }

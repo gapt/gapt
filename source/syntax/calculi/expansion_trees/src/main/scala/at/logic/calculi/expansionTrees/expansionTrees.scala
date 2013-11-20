@@ -62,6 +62,22 @@ object quantRulesNumber {
   }
 }
 
+object toDeep {
+  def apply(tree: ExpansionTree): HOLFormula = tree match {
+    case Atom(f) => f
+    case Not(t1) => Neg(toDeep(t1))
+    case And(t1,t2) => AndHOL(toDeep(t1), toDeep(t2))
+    case Or(t1,t2) => OrHOL(toDeep(t1), toDeep(t2))
+    case Imp(t1,t2) => ImpHOL(toDeep(t1), toDeep(t2))
+    case WeakQuantifier(_,cs) => OrHOL( cs.map( t => toDeep(t._1)).toList )
+    case StrongQuantifier(_,_,t) => toDeep(t)
+  }
+}
+
+// Daniel: shouldn't this rather be called toShallow to keep in line
+// with expansion tree terminology? toFormula is IMHO confusing since
+// there are two formulas (Deep and Shallow) associated to ever 
+// expansion tree.
 object toFormula {
   def apply(tree: ExpansionTree): HOLFormula = tree match {
     case Atom(f) => f
