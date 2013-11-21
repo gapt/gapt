@@ -194,7 +194,11 @@ object printProofStats {
   import at.logic.parsing.veriT._
   object loadVeriTProof {
     // NOTE: this method returns a proof in the form of an expansion proof
-    def apply(fileName : String) = VeriTParser.read(fileName)
+    def apply(fileName : String) = VeriTParser.getExpansionProof(fileName)
+  }
+
+  object exportVeriT {
+    def apply(f: FSequent, fileName: String) = VeriTExporter(f, fileName)
   }
 
   object loadIvyProof {
@@ -287,20 +291,21 @@ object printProofStats {
     def univclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.AllVar(v.asInstanceOf[FOLVar],g))
     def existsclosure(f:FOLFormula) = f.freeVariables.foldRight(f)((v,g) => fol.ExVar(v.asInstanceOf[FOLVar],g))
 
-      def containsStrongQuantifiers(fs:FSequent) : Boolean =
-        fs.antecedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],false)) ||
-        fs.succedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],true))
+    // What is this doing here?? C'mon people!!!
+    def containsStrongQuantifiers(fs:FSequent) : Boolean =
+      fs.antecedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],false)) ||
+      fs.succedent.exists(x => containsStrongQuantifiers(x.asInstanceOf[FOLFormula],true))
 
-      def containsStrongQuantifiers(f:FOLFormula, pol : Boolean) : Boolean = f match {
-        case fol.Atom(_,_) => false
-        case fol.And(s,t) => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
-        case fol.Or(s,t)  => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
-        case fol.Imp(s,t) => containsStrongQuantifiers(s, !pol) || containsStrongQuantifiers(t,pol)
-        case fol.Neg(s)   => containsStrongQuantifiers(s, !pol)
-        case fol.AllVar(x,s) => if (pol == true) true else containsStrongQuantifiers(s, pol)
-        case fol.ExVar(x,s)  => if (pol == false) true else containsStrongQuantifiers(s, pol)
-        case _ => throw new Exception("Unhandled case!")
-      }
+    def containsStrongQuantifiers(f:FOLFormula, pol : Boolean) : Boolean = f match {
+      case fol.Atom(_,_) => false
+      case fol.And(s,t) => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
+      case fol.Or(s,t)  => containsStrongQuantifiers(s, pol)  || containsStrongQuantifiers(t,pol)
+      case fol.Imp(s,t) => containsStrongQuantifiers(s, !pol) || containsStrongQuantifiers(t,pol)
+      case fol.Neg(s)   => containsStrongQuantifiers(s, !pol)
+      case fol.AllVar(x,s) => if (pol == true) true else containsStrongQuantifiers(s, pol)
+      case fol.ExVar(x,s)  => if (pol == false) true else containsStrongQuantifiers(s, pol)
+      case _ => throw new Exception("Unhandled case!")
+    }
 
   }
 

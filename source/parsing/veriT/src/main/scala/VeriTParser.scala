@@ -310,7 +310,7 @@ object VeriTParser extends RegexParsers {
     ((eq_congr_pred, List(instance)) :: symm)
   }
 
-  def read(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {
+  def getExpansionProof(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {
     VeriTParserLogger.trace("FILE: " + filename)
     try {
       parseAll(proof, new FileReader(filename)) match {
@@ -335,6 +335,8 @@ object VeriTParser extends RegexParsers {
         throw e
     }
   }
+  // TODO: implement a method that will simply check if something is
+  // unsatisfiable or not.
 
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
   def proof : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
@@ -362,7 +364,6 @@ object VeriTParser extends RegexParsers {
   def label : Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
   
   // FILE HEADER
-  // Dummy strings that should be ignored
   def header : Parser[String] = success | unsat | title
   def success : Parser[String] = "success"
   def unsat : Parser[String] = "unsat"
