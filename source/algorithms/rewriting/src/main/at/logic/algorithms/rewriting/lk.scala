@@ -134,8 +134,8 @@ object DefinitionElimination {
         println("Cut!")
         val (dmap1,duproof1) = eliminate_in_proof_(rewrite, uproof1)
         val (dmap2,duproof2) = eliminate_in_proof_(rewrite, uproof2)
-        //val correspondences1 = calculateCorrespondences(defs, emptymap, root, duproof1)
-        //val correspondences2 = calculateCorrespondences(defs, correspondences1, root, duproof2)
+        println("aux:  "+aux1+" and "+aux2)
+        println("daux: "+dmap1(aux1)+" and "+dmap2(aux2))
 
         val dproof = CutRule(duproof1,  duproof2,  dmap1(aux1), dmap2(aux2))
         val correspondences = calculateCorrespondences(root, dproof)
@@ -202,7 +202,7 @@ object DefinitionElimination {
         println("Imp Right")
         val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
         val dproof = ImpRightRule(duproof, dmap(aux1), dmap(aux2)  )
-        val correspondences = calculateCorrespondences(root, duproof)
+        val correspondences = calculateCorrespondences(root, dproof)
         (correspondences,  dproof)
 
       //quantfication rules
@@ -269,7 +269,7 @@ object DefinitionElimination {
     val (dmap, duproof) = eliminate_in_proof_(rewrite, uproof)
     println("Contracting from: "+aux1+" and "+ aux2)
     println("Contracting to:   "+dmap(aux1)+" and "+ dmap(aux2))
-    throw new ElimEx(uproof::duproof::Nil, aux1::aux2::Nil, uproof.root.toFormula, Some(dmap))
+    //throw new ElimEx(uproof::duproof::Nil, aux1::aux2::Nil, uproof.root.toFormula, Some(dmap))
 
     val dproof = createRule(duproof, dmap(aux1), dmap(aux2))
     val correspondences = calculateCorrespondences(root, dproof)
@@ -327,6 +327,11 @@ object DefinitionElimination {
                            createRule : (LKProof, FormulaOccurrence, HOLFormula, HOLVar) => LKProof)
   : (Map[FormulaOccurrence, FormulaOccurrence], LKProof) = {
     val (dmap,duproof) = eliminate_in_proof_(rewrite, uproof)
+    println("roccs= "+ root.occurrences.map(_.id))
+    println("doccs= "+ duproof.root.occurrences.map(_.id))
+    println("uoccs= "+ uproof.root.occurrences.map(_.id))
+    println("mocc=  "+ dmap.keys.toList.map(_.id))
+    println("aux =  "+ aux.id+ " "+dmap(aux).id)
     val dproof = createRule(duproof, dmap(aux), c(rewrite(prin.formula)),  eigenvar  )
     val correspondences = calculateCorrespondences(root, dproof)
     (correspondences,  dproof)

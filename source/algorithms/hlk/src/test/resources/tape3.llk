@@ -754,11 +754,11 @@
 \ORL{(f((n_0 + n_1)) = 0) |  (f((n_0 + n_1)) = 1)}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
 \ALLL{(n_0 + n_1)}{( all x ((f(x) = 0) |  (f(x) = 1)))}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
 \DEF{T}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
-\EXR{n_0}{T}{f((n_0 + n_1)) = 0,( exists k (f((n_1 + k)) = 1))}
-\EXR{n_1}{T}{( exists k (f((n_1 + k)) = 1)),( exists k (f((n_0 + k)) = 0))}
-\ALLR{n_1}{T}{( exists k (f((n_0 + k)) = 0)),( all n ( exists k (f((n + k)) = 1)))}
-\ALLR{n_0}{T}{( all n ( exists k (f((n + k)) = 1))),( all n ( exists k (f((n + k)) = 0)))}
-\DEF{T}{( all n ( exists k (f((n + k)) = 0))),I(1)}
+\EXR{n_0}{T}{f((n_0 + n_1)) = 0,( exists y (f((n_1 + y)) = 1))}
+\EXR{n_1}{T}{( exists y (f((n_1 + y)) = 1)),( exists y (f((n_0 + y)) = 0))}
+\ALLR{n_1}{T}{( exists y (f((n_0 + y)) = 0)),( all x ( exists y (f((x + y)) = 1)))}
+\ALLR{n_0}{T}{( all x ( exists y (f((x + y)) = 1))),( all x ( exists y (f((x + y)) = 0)))}
+\DEF{T}{( all x ( exists y (f((x + y)) = 0))),I(1)}
 \DEF{T}{I(1),I(0)}
 
   \CONTINUEWITH{OLDTAPE}
