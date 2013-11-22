@@ -116,11 +116,10 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    * and l is a logging string with quantitative data,
    * see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
    **/
-  // default: use prover9 for validity checks
   def applyExp(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */ ) : ( Option[LKProof] , String, String ) = {
     var log = ""
     var status = "ok"
-    var phase = "gcomp" // used for knowing when a TimeOutException has been thrown
+    var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
 
     var SolutionCTime: Long = 0
     var ProofBuildingCTime: Long = 0
@@ -140,11 +139,15 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
       log += "," + (t2 - t1) + "," + terms.termset.size // log tstime, tssize
       println( "Size of term set: " + terms.termset.size )
 
-      // compute grammars
+      // compute delta-table
+      phase = "dtg" // "delta-table generation"
       val t3 = System.currentTimeMillis
       val eigenvariable = FOLVar(new VariableStringSymbol("α"))
       val deltatable = new DeltaTable(terms.termset, eigenvariable)
       val t4 = System.currentTimeMillis
+
+      // read off grammars from delta-table
+      phase = "dtr" // "delta-table readout"
       val gs = ComputeGrammars.findValidGrammars2(terms.termset, deltatable, eigenvariable)
       val grammars = gs.map{ case g => g.flatterms = terms; g }.sortWith((g1, g2) => g1.size < g2.size )
       val t5 = System.currentTimeMillis
