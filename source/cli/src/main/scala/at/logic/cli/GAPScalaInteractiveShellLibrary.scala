@@ -95,6 +95,7 @@ import at.logic.language.fol.FOLConst
 import at.logic.calculi.lk.quantificationRules.ForallLeftRule
 import at.logic.parsing.language.hlk.{HLKHOLParser, DeclarationParser}
 import at.logic.algorithms.hlk.{HybridLatexExporter, HybridLatexParser}
+import at.logic.algorithms.rewriting.DefinitionElimination
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -832,8 +833,7 @@ object printProofStats {
     def apply(tree: ExpansionTree): MultiExpansionTree = at.logic.algorithms.expansionTrees.compressQuantifiers(tree)
   }
 
-  object definitions {
-  }
+  object eliminateDefinitions extends DefinitionElimination
 
   object sequent {
     def find(p:LKProof, pred : (LKProof => Boolean)) : List[LKProof] = p match {
@@ -1026,11 +1026,6 @@ object printProofStats {
         //Main.display("sigma", sigma);
         //while(true){}
     }
-  }
-
-  object goat {
-    lazy val (proof, endsequent) = loadProver9Proof( "provers/prover9/src/test/resources/PUZ047+1.out")
-    lazy val lkproof = loadProver9LKProof( "provers/prover9/src/test/resources/PUZ047+1.out")
   }
 
   object hol2fol {

@@ -41,7 +41,9 @@ import at.logic.language.hol.HOLAppFormula
 import at.logic.language.schema.Pred
 import at.logic.utils.ds.Multisets.Multiset
 
-trait Struct
+trait Struct {
+  def formula_equal(that: Struct) : Boolean;
+}
 
   // Times is done as an object instead of a case class since
   // it has a convenience constructor (with empty auxFOccs)
@@ -61,28 +63,66 @@ trait Struct
 
   class Times(val left: Struct, val right: Struct, val auxFOccs: List[FormulaOccurrence]) extends Struct {
     override def toString(): String = Console.RED+"("+Console.RESET+left+Console.RED+" ⊗ "+Console.RESET+right+Console.RED+")"+Console.RESET
+    override def formula_equal(s:Struct) = s match {
+      case Times(x,y,aux) => left.formula_equal(x) && right.formula_equal(y) &&
+        aux.diff(auxFOccs).isEmpty && auxFOccs.diff(aux).isEmpty
+      case _ => false
+    }
   }
   case class Plus(left: Struct, right: Struct) extends Struct {
     override def toString(): String = Console.BLUE+"("+Console.RESET+left+Console.BLUE+" ⊕ "+Console.RESET+right+Console.BLUE+")"+Console.RESET
+    override def formula_equal(s:Struct) = s match {
+      case Plus(x,y) => left.formula_equal(x) && right.formula_equal(y)
+      case _ => false
+    }
   }
   case class Dual(sub: Struct) extends Struct {
     override def toString(): String = Console.GREEN+"~("+Console.RESET+sub+Console.GREEN+")"+Console.RESET
+    override def formula_equal(s:Struct) = s match {
+      case Dual(x) => sub.formula_equal(x)
+      case _ => false
+    }
   }
   case class A(fo: FormulaOccurrence) extends Struct {// Atomic Struct
     override def toString(): String = printSchemaProof.formulaToString(fo.formula)
+    override def formula_equal(s:Struct) = s match {
+      case A(x) => fo.formula syntaxEquals(x.formula)
+      case _ => false
+    }
   }
   case class EmptyTimesJunction() extends Struct {
     override def toString(): String = Console.RED+"ε"+Console.RESET
+    override def formula_equal(s:Struct) = s match {
+      case EmptyTimesJunction() => true
+      case _ => false
+    }
   }
   case class EmptyPlusJunction() extends Struct {
     override def toString(): String = Console.BLUE+"ε"+Console.RESET
+    override def formula_equal(s:Struct) = s match {
+      case EmptyPlusJunction() => true
+      case _ => false
+    }
   }
 
+  /* convenience object allowing to create and match a set of plus nodes */
   object PlusN {
-    //TODO
-    //def apply(l : List[Struct]) =
-    //def unapply(s:Struct) = unapply_(s)
+    def apply(l : List[Struct]) : Struct = l match {
+      case Nil => EmptyPlusJunction()
+      case x::Nil => x
+      case x::xs =>  Plus(x,PlusN(xs))
+    }
+
+
+    def unapply(s:Struct) : Option[List[Struct]] = Some(unapply_(s))
+
+    def unapply_(s:Struct) : List[Struct] = s match {
+      case Plus(l,r) => unapply_(l) ++ unapply_(r)
+      case _ => s::Nil
+    }
   }
+
+
 
   // since case classes may be DAGs, we give a method to convert to a tree
   // (for, e.g. displaying purposes)

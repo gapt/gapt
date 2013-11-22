@@ -20,15 +20,31 @@ import scala.collection.immutable.HashSet
 
 object StandardClauseSet {
   def normalize(struct:Struct, optimize:Boolean = false):Struct = struct match {
-    case Times(x,Dual(y), aux) if optimize && x == y =>
-      EmptyTimesJunction()
-
-    case Plus(s1,s2) => Plus(normalize(s1), normalize(s2))
     case Times(s1,s2,aux) => merge(normalize(s1), normalize(s2),aux)
     case s: A => s
     case s: Dual => s
     case e: EmptyTimesJunction => e
     case e: EmptyPlusJunction => e
+
+    case Times(x,Dual(y), aux) if optimize && x.formula_equal(y) =>
+      EmptyTimesJunction()
+    case Times(Dual(x),y, aux) if optimize && x.formula_equal(y) =>
+      println("tautology deleted")
+      EmptyTimesJunction()
+
+    case Plus(s1,s2) if (!optimize) => Plus(normalize(s1), normalize(s2))
+
+    case PlusN(terms) if optimize =>
+      println("Checking pluses of "+terms)
+      assert(terms.nonEmpty, "Implementation Error: PlusN always unapplies to at least one struct!")
+      val h::t = terms
+      def non_redundant_terms = t.foldLeft(h::Nil)( (r, current_term) => {
+        val nt = normalize(current_term,optimize)
+        if (r.find(_ formula_equal nt).nonEmpty)
+          r else nt::r
+      })
+      PlusN(non_redundant_terms)
+
   }
 
   def transformStructToClauseSet(struct:Struct) = clausify(normalize(struct))
@@ -64,6 +80,7 @@ object StandardClauseSet {
     case Plus(s1,s2) => getLiterals(s1):::getLiterals(s2)
     case Times(s1,s2,_) => getLiterals(s1):::getLiterals(s2)
   }
+
 
   private def clausifyTimesJunctions(struct: Struct): Sequent = {
     def isDual(s:Struct):Boolean = s match {case x: Dual => true; case _ => false}

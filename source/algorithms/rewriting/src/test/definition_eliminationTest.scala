@@ -83,9 +83,7 @@ class definition_eliminationTest extends SpecificationWithJUnit {
   "Definition elimination" should {
     "work on formulas" in {
       val f = And(proof1.ax,Or(Atom(proof1.a,proof1.t::Nil), proof1.bx))
-      val expdmap = definition_elimination.expand_dmap(proof1.dmap)
-      println(expdmap)
-      val f_ = definition_elimination.replaceAll_in(expdmap,f)
+      val f_ = DefinitionElimination(proof1.dmap,f)
       println(f_)
       val correct_f = And(proof1.allypxy,Or(proof1.allypty, And(proof1.qx, proof1.allypxy)))
       f_ mustEqual(correct_f)
@@ -93,16 +91,14 @@ class definition_eliminationTest extends SpecificationWithJUnit {
 
     "work on a simple proof" in {
       import proof1._
-      val expdmap = definition_elimination.expand_dmap(dmap)
-      val elp = DefinitionElimination.eliminate_in_proof( definition_elimination.replaceAll_in(expdmap, _), i12 )
+      val elp = DefinitionElimination( dmap, i12 )
       println(elp)
       val expected = FSequent(List(AllVar(x,AllVar(y, pxy)), And(AllVar(y,pxy), AllVar(x,qx))), List(ExVar(x, And(qx, AllVar(y,pxy)))))
       expected must beSyntacticFSequentEqual(elp.root.toFSequent())
     }
 
     "work on a simple proof with equality" in {
-      val expdmap = definition_elimination.expand_dmap(proof1.dmap)
-      val elp = DefinitionElimination.eliminate_in_proof( definition_elimination.replaceAll_in(expdmap, _), proof1.i14 )
+      val elp = DefinitionElimination( proof1.dmap, proof1.i14 )
       println(elp)
       ok
     }

@@ -35,12 +35,15 @@ class FileParser {
 
   def gzFileStreamReader(f: String) = new InputStreamReader(new GZIPInputStream(new FileInputStream(f)), "UTF8")
 
-  def ceresFileReader(input: InputStreamReader) {
+  def ceresFileReader(input: InputStreamReader) =
+    loadProofDatabase((new XMLReader(input) with XMLProofDatabaseParser).getProofDatabase())
+
+  def loadProofDatabase(db : ProofDatabase) {
     SchemaProofDB.clear
     resolutionProofSchemaDB.clear
     proofs = Nil
     termTrees = Nil
-    proofdb = (new XMLReader(input) with XMLProofDatabaseParser).getProofDatabase()
+    proofdb = db
   }
 
   def stabFileReader(input: InputStreamReader) {

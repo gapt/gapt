@@ -134,7 +134,7 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
   lazy val rule3b : PackratParser[Token] = ("\\" ~> "(INSTAXIOM|EQAXIOM)".r
     <~ "{") ~ (opt("([^:}]+:)?".r ) ~> opt("sub" ~> parens(substitution))) ~ (opt(formula) <~ "}") ~
     ("{" ~> repsep(formula,",") <~ "}") ~ ("{" ~> repsep(formula,",") <~ "}")  ^^ { _ match {
-    case name  ~ Some(sub)~ arg1 ~ antecedent ~ succedent => println("Parsed sub:"+sub); RToken(name, arg1, antecedent, succedent, sub)
+    case name  ~ Some(sub)~ arg1 ~ antecedent ~ succedent => /* println("Parsed sub:"+sub); */ RToken(name, arg1, antecedent, succedent, sub)
     case name ~ None ~ arg1 ~ antecedent ~ succedent => RToken(name, arg1, antecedent, succedent, Nil)
   }
   }
@@ -228,7 +228,7 @@ trait TokenToLKConverter {
       val ant = antecedent.map(x => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val suc = succedent.map(x  => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val fs = FSequent(ant, suc)
-      println(name + ": "+fs)
+      //println(name + ": "+fs)
       l = fs  :: l
     }
 
@@ -303,7 +303,7 @@ trait TokenToLKConverter {
                     axioms : Map[HOLFormula, FSequent]) : LKProof = {
     var proofstack : List[LKProof] = List[LKProof]()
     for ( rt@RToken(name, auxterm, antecedent, succedent,sub) <- rules) {
-      println("Processing rule: "+name)
+      //println("Processing rule: "+name)
       val ant = antecedent.map(x => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val suc = succedent.map(x  => c(HLKHOLParser.ASTtoHOL( naming  ,x)))
       val fs = FSequent(ant, suc)
@@ -935,7 +935,7 @@ trait TokenToLKConverter {
       val FSequent(Nil, List(ax1)) = s
       val (_,ax2) = stripUniversalQuantifiers(ax1)
       val ax=  normalize(sub(ax2))
-      println("Trying:"+this.f(ax)+" against "+this.f(auxf))
+      //println("Trying:"+this.f(ax)+" against "+this.f(auxf))
       NaiveIncompleteMatchingAlgorithm.holMatch(ax, auxf)(Nil) match {
         case Some(sub) => (ax,sub)::Nil
         case None => Nil
