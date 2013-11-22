@@ -19,7 +19,10 @@ import types.FSequent
 import scala.collection.immutable.HashSet
 
 object StandardClauseSet {
-  def normalize(struct:Struct):Struct = struct match {
+  def normalize(struct:Struct, optimize:Boolean = false):Struct = struct match {
+    case Times(x,Dual(y), aux) if optimize && x == y =>
+      EmptyTimesJunction()
+
     case Plus(s1,s2) => Plus(normalize(s1), normalize(s2))
     case Times(s1,s2,aux) => merge(normalize(s1), normalize(s2),aux)
     case s: A => s

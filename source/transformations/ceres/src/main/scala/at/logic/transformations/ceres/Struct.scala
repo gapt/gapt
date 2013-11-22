@@ -78,6 +78,12 @@ trait Struct
     override def toString(): String = Console.BLUE+"ε"+Console.RESET
   }
 
+  object PlusN {
+    //TODO
+    //def apply(l : List[Struct]) =
+    //def unapply(s:Struct) = unapply_(s)
+  }
+
   // since case classes may be DAGs, we give a method to convert to a tree
   // (for, e.g. displaying purposes)
 
@@ -543,24 +549,46 @@ import at.logic.language.schema.SchemaFormula
     def extract(p: LKProof) : Struct = extract( p, getCutAncestors( p ) )
     def extract(p: LKProof, predicate: HOLFormula => Boolean) : Struct = extract( p, getCutAncestors( p, predicate ) )
 
+    private def debug(s:String) = { /* println("DEBUG:"+s) */ }
+
     def extract(p: LKProof, cut_occs: Set[FormulaOccurrence]):Struct = p match {
       case Axiom(so) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
-      { println("0 "+cut_occs+ "  ");  so match {
+      {
+        debug("0 "+cut_occs+ "  ");
+        so match {
         case lso : LabelledSequent  if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 =>
           handleLabelledAxiom( lso, cut_occs )
         case _ => handleAxiom( so, cut_occs )
       }         }
-      case UnaryLKProof(_,upperProof,_,_,_) =>{ println("1 "+cut_occs+ "  "); handleUnary( upperProof, cut_occs )     }
+      case UnaryLKProof(_,upperProof,_,_,_) =>{
+        debug("1 "+cut_occs+ "  ");
+        handleUnary( upperProof, cut_occs )     }
       case BinaryLKProof(_, upperProofLeft, upperProofRight, _, aux1, aux2, _) =>
-      { println("2 "+cut_occs+ "  "); handleBinary( upperProofLeft, upperProofRight, aux1::aux2::Nil, cut_occs )}
-      case UnaryLKskProof(_,upperProof,_,_,_) =>{ println("3 "+cut_occs+ "  ");  handleUnary( upperProof, cut_occs ) }
-      case UnarySchemaProof(_,upperProof,_,_,_) => { println("4 "+cut_occs+ "  "); handleUnary( upperProof, cut_occs )}
-      case SchemaProofLinkRule(so, name, indices) => { println("5 "+cut_occs+ "  "); handleSchemaProofLink( so, name, indices.asInstanceOf[List[IntegerTerm]], cut_occs )  }
-      case TermEquivalenceRule1(upperProof, _, _, _) => { println("6 "+cut_occs+ "  ");  extract(upperProof, cut_occs)     }
-      case ForallHyperLeftRule(upperProof, r, a, p, _) => { println("7 "+cut_occs+ "  "); extract(upperProof, cut_occs)    }
-      case ExistsHyperRightRule(upperProof, r, a, p, _) => { println("8 "+cut_occs+ "  "); extract(upperProof, cut_occs)       }
-      case ForallHyperRightRule(upperProof, r, a, p, _) => { println("9 "+cut_occs+ "  "); extract(upperProof, cut_occs)        }
-      case ExistsHyperLeftRule(upperProof, r, a, p, _) =>{ println("(10) "+cut_occs+ "  ");  extract(upperProof, cut_occs)   }
+        debug("2 "+cut_occs+ "  ");
+        handleBinary( upperProofLeft, upperProofRight, aux1::aux2::Nil, cut_occs )
+      case UnaryLKskProof(_,upperProof,_,_,_) =>
+        debug("3 "+cut_occs+ "  ");
+        handleUnary( upperProof, cut_occs )
+      case UnarySchemaProof(_,upperProof,_,_,_) =>
+        debug("4 "+cut_occs+ "  "); handleUnary( upperProof, cut_occs )
+      case SchemaProofLinkRule(so, name, indices) =>
+        debug("5 "+cut_occs+ "  ");
+        handleSchemaProofLink( so, name, indices.asInstanceOf[List[IntegerTerm]], cut_occs )
+      case TermEquivalenceRule1(upperProof, _, _, _) =>
+        debug("6 "+cut_occs+ "  ");
+        extract(upperProof, cut_occs)
+      case ForallHyperLeftRule(upperProof, r, a, p, _) =>
+        debug("7 "+cut_occs+ "  ");
+        extract(upperProof, cut_occs)
+      case ExistsHyperRightRule(upperProof, r, a, p, _) =>
+        debug("8 "+cut_occs+ "  ");
+        extract(upperProof, cut_occs)
+      case ForallHyperRightRule(upperProof, r, a, p, _) =>
+        debug("9 "+cut_occs+ "  ");
+        extract(upperProof, cut_occs)
+      case ExistsHyperLeftRule(upperProof, r, a, p, _) =>
+        debug("(10) "+cut_occs+ "  ");
+        extract(upperProof, cut_occs)
       case _ => throw new Exception("\nMissin rule in StructCreators.extract\n")
     }
 
