@@ -190,7 +190,7 @@ object Utils {
   // Iterated disjunction
   // Assume that fs is nonempty
   def orN(fs: List[FOLFormula]) : FOLFormula = fs match {
-    case Nil => throw new Exception("ERROR: Cannot generate a disjunction of an empty list.")
+    case Nil => BottomC //throw new Exception("ERROR: Cannot generate a disjunction of an empty list.")
     case f::Nil => f
     case f::rest => Or(f, orN( rest ) )
   }
@@ -198,7 +198,7 @@ object Utils {
   // Iterated conjunction
   // Assume that fs is nonempty
   def andN(fs: List[FOLFormula]) : FOLFormula = fs match {
-    case Nil => throw new Exception("ERROR: Cannot generate a conjunction of an empty list.")
+    case Nil => TopC //throw new Exception("ERROR: Cannot generate a conjunction of an empty list.")
     case f::Nil => f
     case f::rest => And(f, andN( rest ) )
   }
@@ -339,5 +339,17 @@ object Utils {
     case Function(_,terms) => terms.map(collectVariables).foldLeft(List[FOLVar]())(_ ++ _)
     case FOLConst(_) => Nil
     case _ => throw new IllegalArgumentException("Unhandled case in fol.utils.collectVariables(FOLTerm)!")
+  }
+
+  /** Helper function for checking whether a FOLVar is an eigenvariable.
+    * This is used in computing cutIntroduction.Deltas.UnboundedVariableDelta
+    * and GeneralizedGrammar.eigenvariables.
+    * 
+    * isEigenvariable(x, ev) == true iff x's name matches the format [ev]_[n],
+    * where n is some non-negative integer.
+    */
+def isEigenvariable(x : FOLVar, eigenvariable : String) = x.toString.split('_') match {
+    case Array(eigenvariable, n) => n.forall(Character.isDigit)
+    case _ => false
   }
 }

@@ -236,11 +236,12 @@ object Deltas extends Logger {
       val nubbedRes = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
 
       //These are just quick asserts, designed to catch faulty delta-computations early.
-      val vars = collectVariables(nubbedRes._1).distinct.map(x => x.toString())
+      
+      /*val vars = collectVariables(nubbedRes._1).filter(isEigenvariable(_:FOLVar,eigenvariable)).distinct.map(x => x.toString())
       val diffs = List("α_0", "α_1", "α_2", "α_3", "α_4", "α_5", "α_6", "α_7", "α_8", "α_9", "α_10").zip(vars).map(x => x._1 == x._2).toList
       val diffs2 = diffs.foldLeft(true)(_ && _)
 
-      if (!diffs2) {
+      //if (!diffs2) {
         error("Non-contiguous set of variables in UnboundedVariableDelta!")
         throw new Exception("Non-contiguous set of variables in UnboundedVariableDelta!");
         ???
@@ -252,7 +253,9 @@ object Deltas extends Logger {
         ???
       } else { 
         Set(nubbedRes)
-      }
+      }*/
+
+      Set(nubbedRes)
     }
 
     /** Computes Delta_G. Called by delta.apply.
@@ -334,26 +337,22 @@ object Deltas extends Logger {
     *
     * This function is used for nub.
     */
-  private def smallestVarInU(eigenvariable: String, u: types.U) : Option[Int] = u match {
-    case Function(_,terms) => if (terms.length == 0) { None } else {
-      val ret = terms.map(t => smallestVarInU(eigenvariable, t)).filter(x => x.nonEmpty)
+  private def smallestVarInU(eigenvariable: String, u: types.U) : Option[Int] = {
+    def extractIndex(x:FOLVar) = x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt
 
-      if (ret.length == 0) None else ret.min
-    }
-    case FOLVar(x) => Some(x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt)
+    val res = collectVariables(u).filter(isEigenvariable(_:FOLVar,eigenvariable)).map(extractIndex)
+    if (res.length == 0) None else Some(res.min)
   }
 
   /** Returns the largest variable index occurring in a term u.
     * Variable names are expected to be of the form [eigenvariable]_[i],
     * where i is the variable index. If u has no variables, None is returned.
     */
-  private def largestVarInU(eigenvariable: String, u: types.U) : Option[Int] = u match {
-    case Function(_,terms) => if (terms.length == 0) { None } else {
-      val ret = terms.map(t => smallestVarInU(eigenvariable, t)).filter(x => x.nonEmpty)
+  private def largestVarInU(eigenvariable: String, u: types.U) : Option[Int] = {
+    def extractIndex(x:FOLVar) = x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt
 
-      if (ret.length == 0) None else ret.max
-    }
-    case FOLVar(x) => Some(x.toString.substring(eigenvariable.length + 1, x.toString.length).toInt)
+    val res = collectVariables(u).filter(isEigenvariable(_:FOLVar,eigenvariable)).map(extractIndex)
+    if (res.length == 0) None else Some(res.max)
   }
 
   /** Duplicate-eliminating function; merges those α in u which have identical term-lists in s.
@@ -375,7 +374,7 @@ object Deltas extends Logger {
       trace("    nub | indexedS = " + indexedS)
 
       //Get the list of all variables occurring in u
-      var presentVars = collectVariables(u).distinct
+      var presentVars = collectVariables(u).filter(isEigenvariable(_:FOLVar, eigenvariable)).distinct
 
       trace("    nub | presentVars = " + presentVars)
 

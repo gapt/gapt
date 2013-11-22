@@ -37,16 +37,10 @@ class GeneralizedGrammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   def size = u.size + safeHead(s, Nil).length //s.foldLeft(0)((n,sPart) => n + sPart.size)
 
   /** Returns the set of eigenvariables that occur in u. */
-  def eigenvariables = u.flatMap(collectVariables).distinct
+  def eigenvariables = u.flatMap(collectVariables).filter(isEigenvariable(_:FOLVar, ev)).distinct
 
   /** Returns the number of eigenvariables that occur in this grammar. Equals this.eigenvariables.length. */
   def numVars = s.length
-
-  /** Collects the variables occurring in a FOL term. */
-  /*private def collectEigenvariables(u : types.U) : List[FOLVar] = u match {
-    case Function(_,terms) => terms.map(collectEigenvariables).foldLeft(Nil:List[FOLVar])(_ ++ _)
-    case FOLVar(x) => List(FOLVar(x))
-  }*/
 
 /*
   def strictSuperGrammarOf(g : Grammar) = 
@@ -82,11 +76,8 @@ object ComputeGeneralizedGrammars extends Logger {
     findValidGrammars(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
   }
 
-
   /** Finds valid, minimum-size grammars based on a list of terms and a generalized delta table.
     * 
-    *
-    * This method is an adaptation of Grammar.findValidGrammars.
     *
     * @param terms The terms to be compressed.
     * @param deltatable A generalized delta table for terms.
@@ -227,6 +218,7 @@ object ComputeGeneralizedGrammars extends Logger {
           trace("[folding DTG] coverings: " + coverings)
 
           coverings.foldLeft(grammars) { case (acc, u) =>
+            trace("[folding DTG] adding new grammar to coverings(u,s): (" + u + ", " + s + ")" )
             (new GeneralizedGrammar(u, s, eigenvariable) ) :: acc                   
           }                                                   
         } else grammars                                       

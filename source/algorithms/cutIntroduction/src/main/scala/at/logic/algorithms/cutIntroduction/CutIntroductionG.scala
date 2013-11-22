@@ -49,7 +49,7 @@ object CutIntroductionG extends Logger {
   }
 
   def apply(endSequent: Sequent, termsTuples: Map[FOLFormula, List[List[FOLTerm]]], numVars: Constraint[Int]) : Option[LKProof] = {
-    val vec = numVars match {
+    val deltaVec = numVars match {
       case NoConstraint => { println("Using UnboundedVariableDelta."); Some(new UnboundedVariableDelta()) }
       case ExactBound(1) => { println("Using OneVariableDelta."); Some(new OneVariableDelta()) }
       case UpperBound(n) => { println("Using ManyVariableDelta."); Some(new ManyVariableDelta(n)) }
@@ -65,9 +65,9 @@ object CutIntroductionG extends Logger {
       }
     }
 
-    if (vec.isEmpty) None else {
+    if (deltaVec.isEmpty) None else {
       try {
-        Some(apply(endSequent, termsTuples, vec.get))
+        Some(apply(endSequent, termsTuples, deltaVec.get))
       } catch {
         case ex : CutIntroException => { println(ex.toString()); None }
       }
@@ -132,6 +132,9 @@ object CutIntroductionG extends Logger {
       if (proof.isDefined) { Some((proof.get,ehs)) } else { None }
     }
 
+    trace("   CUTINTRO:")
+    trace("   smallestGrammars: " + smallestGrammars)
+
     val proofs = smallestGrammars.map(buildProof).filter(proof => proof.isDefined).map(proof => proof.get)
 
     //debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
@@ -154,7 +157,7 @@ object CutIntroductionG extends Logger {
   def computeCanonicalSolutionG(seq: Sequent, g: GeneralizedGrammar) : FOLFormula = {
 
     val flatterms = g.flatterms
-    val varName = "x"
+    val varName = "β"
 
     trace("===============================================================")
     trace("   g.u:\n")
@@ -182,7 +185,7 @@ object CutIntroductionG extends Logger {
         val xterms = terms.map(t => {
           val vars = createFOLVars(varName, g.eigenvariables.length+1)
           val allEV = g.eigenvariables.zip(vars)
-          val occurringEV = collectVariables(t).distinct
+          val occurringEV = collectVariables(t).filter(isEigenvariable(_:FOLVar, g.eigenvariable)).distinct
 
           trace("allEV: " + allEV)
           trace("occurringEV: " + occurringEV)
@@ -193,7 +196,7 @@ object CutIntroductionG extends Logger {
           trace("result: " + res)
 
           //edge case: The current term is constant. In this case, we don't instantiate the variables inside, but leave it as is.
-          if (collectVariables(t).isEmpty) { t } else { res }
+          if (collectVariables(t).filter(isEigenvariable(_:FOLVar, g.eigenvariable)).isEmpty) { t } else { res }
         })
 
         trace("ComputeCanoicalSolutionG:")
@@ -395,13 +398,14 @@ object CutIntroductionG extends Logger {
     * Variables beyond x_5 are left unchanged.
     */
   def sanitizeVars(f: FOLFormula) = {
-    val sanitizedVars = List[(String,String)](("x","x_0"),("y","x_1"),("z","x_2"),("u","x_3"),("v","x_4"),("w","x_5")).map(
-      v => (FOLVar(new VariableStringSymbol(v._1)),FOLVar(new VariableStringSymbol(v._2))) )
+    //val sanitizedVars = List[(String,String)](("x","x_0"),("y","x_1"),("z","x_2"),("u","x_3"),("v","x_4"),("w","x_5")).map(
+    //  v => (FOLVar(new VariableStringSymbol(v._1)),FOLVar(new VariableStringSymbol(v._2))) )
 
-    sanitizedVars.foldLeft(f){(f, v) => f match {
-      case AllVar(_, _) => replaceLeftmostBoundOccurenceOf(v._2, v._1,f)._2
-      case _ => f
-    }}
+    //sanitizedVars.foldLeft(f){(f, v) => f match {
+    //  case AllVar(_, _) => replaceLeftmostBoundOccurenceOf(v._2, v._1,f)._2
+    //  case _ => f
+    //}}
+    f
   }
 }
 
