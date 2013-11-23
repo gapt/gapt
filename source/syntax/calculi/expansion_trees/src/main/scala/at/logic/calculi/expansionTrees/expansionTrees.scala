@@ -8,6 +8,7 @@ import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._
+import at.logic.calculi.lk.base.types.FSequent
 
 trait ExpansionTree extends TreeA[Option[HOLFormula],Option[HOLExpression]]
 
@@ -159,4 +160,19 @@ object prenexToExpansionTree {
     case _ => qFreeToExpansionTree(f)
   }
   
+}
+
+/**
+ * Returns the expansion sequent with certain expansions trees removed
+ */
+object removeFromExpansionSequent {
+  /**
+   * @param seq: specifies formulas to remove; formulas in the antecedent/consequent will remove expansion trees in the antecedent/consequent of the expansion tree
+   *             expansion trees are removed if Sh(e) \in seq (using default equality, which is alpha equality)
+   */
+  def apply(etSeq: (Seq[ExpansionTree], Seq[ExpansionTree]), seq: FSequent) :  (Seq[ExpansionTree], Seq[ExpansionTree]) = {
+    val ante = etSeq._1.filter( et => ! seq._1.contains( toFormula(et) ) )
+    val cons = etSeq._2.filter( et => ! seq._2.contains( toFormula(et) ) )
+    (ante, cons)
+  }
 }
