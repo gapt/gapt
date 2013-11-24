@@ -38,6 +38,11 @@ import org.specs2.execute.Success
 import at.logic.algorithms.cutIntroduction._
 import at.logic.transformations.ReductiveCutElim
 
+import at.logic.parsing.veriT.VeriTParser
+import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep, applyToExpansionSequent => ETapplyToExpansionSequent}
+import at.logic.language.hol.{And => AndHOL, Imp => ImpHOL, Or => OrHOL}
+import at.logic.provers.prover9.Prover9
+
 @RunWith(classOf[JUnitRunner])
 class MiscTest extends SpecificationWithJUnit {
 
@@ -167,5 +172,30 @@ class MiscTest extends SpecificationWithJUnit {
       ReductiveCutElim.isCutFree(pi) must beEqualTo( false )
       ReductiveCutElim.isCutFree(pe) must beEqualTo( true )
     }
+
+    /*
+
+    "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT as well as prover9 " in {
+
+      val fileName = "/home/totycro/gapt/source/parsing/veriT/target/test-classes/test0.verit"
+      val p = VeriTParser.getExpansionProof(fileName)
+
+      val f_seq = ETapplyToExpansionSequent(ETtoDeep.apply, p)
+      val f_formula = ImpHOL( AndHOL(f_seq._1.toList), OrHOL(f_seq._2.toList) )
+
+      "MiniSAT must be able to proof formula " ! (new at.logic.provers.minisat.MiniSATProver).isValid(f_formula)
+
+      // TODO: prover9 implements the interface for HOLFormulas, but downcasts them to FOLFormula
+      //"prover9 must be able to proof formula " ! (new at.logic.provers.prover9.Prover9Prover).isValid(f_formula)
+    }
+
+    "load prover9 proof pi and verify the validity of the formula using MiniSAT as well as prover9 " in {
+
+      val (robResProof, seq) = Prover9.parse_prover9("/home/totycro/gapt/source/provers/prover9/target/test-classes/cade13example.out")
+
+      "prover9 must be able to proof the sequent" ! (new at.logic.provers.prover9.Prover9Prover).isValid(seq)
+      "MiniSAT must be able to proof the sequent" ! (new at.logic.provers.minisat.MiniSATProver).isValid(seq)
+    }
+    */
   }
 }

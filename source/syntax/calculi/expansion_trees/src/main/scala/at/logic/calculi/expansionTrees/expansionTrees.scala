@@ -176,3 +176,16 @@ object removeFromExpansionSequent {
     (ante, cons)
   }
 }
+
+/**
+ * Applies a function to all expansion trees in an expansion sequent
+ * TODO: Implement proper handling of expansion sequents (special class like Sequent?)
+ */
+object applyToExpansionSequent {
+  def apply[T](fun: ExpansionTree => T, etSeq: (Seq[ExpansionTree], Seq[ExpansionTree])) : (Seq[T], Seq[T]) = {
+    (etSeq._1.map(fun), etSeq._2.map(fun))
+  }
+
+
+}
+
