@@ -40,6 +40,7 @@ import clauseSchema.SchemaSubstitution3
 import at.logic.language.hol.HOLAppFormula
 import at.logic.language.schema.Pred
 import at.logic.utils.ds.Multisets.Multiset
+import scala.annotation.tailrec
 
 trait Struct {
   def formula_equal(that: Struct) : Boolean;
@@ -317,6 +318,14 @@ import at.logic.language.schema.SchemaFormula
   }
 
   object StructCreators {
+    def size(s:Struct) : Int = size(s,0)
+    //TODO:make tailrecursive
+    def size(s:Struct, n:Int) : Int = s match {
+      case A(_) => n
+      case Dual(x) => size(x,n+1)
+      case Plus(l,r) => size(l, size(r,n+1))
+      case Times(l,r,_) => size(l, size(r,n+1))
+    }
 
     // this is for proof schemata: it extracts the characteristic
     // clause set for the proof called "name"

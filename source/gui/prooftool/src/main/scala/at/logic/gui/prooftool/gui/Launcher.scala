@@ -20,6 +20,7 @@ import at.logic.calculi.expansionTrees.ExpansionTree
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.proofs.Proof
 import at.logic.calculi.lk.base.LKProof
+import at.logic.transformations.ceres.struct.{structToExpressionTree, Struct}
 
 class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel with MouseMotionListener {
   option match {
@@ -112,6 +113,9 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None
+    case struct : Struct =>
+      setWindowContent(structToExpressionTree.prunedTree(struct),c)
+
     case _ =>
       layout(new Label("Cannot match the "+option.get._2.getClass.toString + " : " + option.get._2){
         font = new Font(SANS_SERIF, BOLD, 16)

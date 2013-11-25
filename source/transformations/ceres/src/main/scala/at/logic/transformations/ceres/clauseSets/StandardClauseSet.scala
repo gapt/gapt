@@ -17,34 +17,17 @@ import at.logic.language.lambda.types.{To, Tindex}
 import at.logic.language.hol.{HOLExpression, HOLApp, HOLConst, HOLFormula}
 import types.FSequent
 import scala.collection.immutable.HashSet
+import scala.annotation.tailrec
+
 
 object StandardClauseSet {
-  def normalize(struct:Struct, optimize:Boolean = false):Struct = struct match {
-    case Times(s1,s2,aux) => merge(normalize(s1), normalize(s2),aux)
+  def normalize(struct:Struct):Struct = struct match {
     case s: A => s
     case s: Dual => s
     case e: EmptyTimesJunction => e
     case e: EmptyPlusJunction => e
-
-    case Times(x,Dual(y), aux) if optimize && x.formula_equal(y) =>
-      EmptyTimesJunction()
-    case Times(Dual(x),y, aux) if optimize && x.formula_equal(y) =>
-      println("tautology deleted")
-      EmptyTimesJunction()
-
-    case Plus(s1,s2) if (!optimize) => Plus(normalize(s1), normalize(s2))
-
-    case PlusN(terms) if optimize =>
-      println("Checking pluses of "+terms)
-      assert(terms.nonEmpty, "Implementation Error: PlusN always unapplies to at least one struct!")
-      val h::t = terms
-      def non_redundant_terms = t.foldLeft(h::Nil)( (r, current_term) => {
-        val nt = normalize(current_term,optimize)
-        if (r.find(_ formula_equal nt).nonEmpty)
-          r else nt::r
-      })
-      PlusN(non_redundant_terms)
-
+    case Plus(s1,s2) => Plus(normalize(s1), normalize(s2))
+    case Times(s1,s2,aux) => merge(normalize(s1), normalize(s2),aux)
   }
 
   def transformStructToClauseSet(struct:Struct) = clausify(normalize(struct))
@@ -52,15 +35,26 @@ object StandardClauseSet {
   def transformStructToLabelledClauseSet(struct:Struct) =
     transformStructToClauseSet(struct).map( so => sequentToLabelledSequent( so ) )
 
+
+  @tailrec
+  def transformCartesianProductToStruct(cp: List[Pair[Struct,Struct]],
+                                        aux:List[FormulaOccurrence],
+                                        acc : List[Struct => Struct]): Struct = cp match {
+    case (i,j)::Nil =>
+      acc.reverse.foldLeft[Struct](Times(i, j, aux))((struct,fun) => fun(struct))
+    case (i,j)::rest =>
+      val rec : Struct => Struct = { x => Plus(Times(i,j, aux), x) }
+      transformCartesianProductToStruct(rest,aux, rec::acc)
+
+    case Nil =>
+      acc.reverse.foldLeft[Struct](EmptyPlusJunction())((struct,fun) => fun(struct))
+  }
+
   private def merge(s1:Struct, s2:Struct, aux: List[FormulaOccurrence]):Struct = {
     val (list1,list2) = (getTimesJunctions(s1),getTimesJunctions(s2))
     val cartesianProduct = for (i <- list1; j <- list2) yield (i,j)
-    def transformCartesianProductToStruct(cp: List[Pair[Struct,Struct]]): Struct = cp match {
-      case (i,j)::Nil => Times(i, j, aux)
-      case (i,j)::rest => Plus(Times(i,j, aux),transformCartesianProductToStruct(rest))
-      case Nil => EmptyPlusJunction()
-    }
-    transformCartesianProductToStruct(cartesianProduct)
+    //println("Cartesian product length="+cartesianProduct.size)
+    transformCartesianProductToStruct(cartesianProduct,aux, Nil)
   }
 
   private def getTimesJunctions(struct: Struct):List[Struct] = struct match {
@@ -100,6 +94,47 @@ object StandardClauseSet {
     timesJunctions.map(x => clausifyTimesJunctions(x))
   }
 }
+
+object SimplifyStruct {
+  def apply(s:Struct) : Struct = s match {
+    case EmptyPlusJunction() => s
+    case EmptyTimesJunction() => s
+    case A(_) => s
+    case Dual(EmptyPlusJunction()) => EmptyTimesJunction()
+    case Dual(EmptyTimesJunction()) => EmptyPlusJunction()
+    case Dual(x) => SimplifyStruct(x)
+    case Times(x,EmptyTimesJunction(),_) => SimplifyStruct(x)
+    case Times(EmptyTimesJunction(),x,_) => SimplifyStruct(x)
+    case Times(x,Dual(y), aux) if x.formula_equal(y) =>
+      //println("tautology deleted")
+      EmptyTimesJunction()
+    case Times(Dual(x),y, aux) if x.formula_equal(y) =>
+      //println("tautology deleted")
+      EmptyTimesJunction()
+    case Times(x,y,aux) =>
+      //TODO: adjust aux formulas, they are not needed for the css construction, so we can drop them,
+      // but this method should be as general as possible
+      Times(SimplifyStruct(x), SimplifyStruct(y), aux)
+    case PlusN(terms)  =>
+      //println("Checking pluses of "+terms)
+      assert(terms.nonEmpty, "Implementation Error: PlusN always unapplies to at least one struct!")
+      val nonrendundant_terms = terms.foldLeft[List[Struct]](Nil)((x,term) => {
+        val simple = SimplifyStruct(term)
+        if (x.filter(_.formula_equal(simple)).nonEmpty || (x == EmptyPlusJunction()) )
+          x
+        else
+          simple::x
+      })
+      /*
+      val saved = nonrendundant_terms.size - terms.size
+      if (saved >0)
+        println("Removed "+ saved + " terms from the struct!")
+        */
+      PlusN(nonrendundant_terms.reverse)
+
+  }
+}
+
 
 object renameCLsymbols {
   def createMap(cs: List[Sequent]): Map[HOLExpression, HOLExpression] = {
