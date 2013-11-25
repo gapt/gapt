@@ -14,7 +14,8 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.fol._
 import TermsExtraction._
 import ComputeGrammars._
-import Deltas._
+import Generalized.Deltas._
+import Generalized.types._
 
 @RunWith(classOf[JUnitRunner])
 class GrammarTest extends SpecificationWithJUnit {
@@ -40,7 +41,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val alpha = FOLVar(new VariableStringSymbol("α_0"))
 
-        (dec) must beEqualTo (Set[types.Decomposition]((alpha, (f1::g1::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::g1::Nil)::Nil)))
       }
 
         "example #1" in {
@@ -58,7 +59,7 @@ class GrammarTest extends SpecificationWithJUnit {
             val alpha = FOLVar(new VariableStringSymbol("α_0"))
             val f_alpha = Function(f, alpha::Nil)
 
-            (dec) must beEqualTo (Set[types.Decomposition]((alpha, (f1::f2::Nil)::Nil), (f_alpha, (a::b::Nil)::Nil)))
+            (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::f2::Nil)::Nil), (f_alpha, (a::b::Nil)::Nil)))
         }
     }
 
@@ -79,7 +80,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val alpha = FOLVar(new VariableStringSymbol("α_0"))
 
-        (dec) must beEqualTo (Set[types.Decomposition]((alpha, (f1::g1::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::g1::Nil)::Nil)))
       }
 
       "example #1 without duplicates" in {
@@ -106,7 +107,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha2::Nil)::Nil)
 
-        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil)))
       }
 
       "example #2 with duplicates" in {
@@ -130,7 +131,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha1::Nil)::Nil)
 
-        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::Nil)::(c::d::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::Nil)::(c::d::Nil)::Nil)))
       }
 
       "example #3 with alpha-elimination" in {
@@ -153,7 +154,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val uTarget = Function(f, alpha0::Function(g, c::d::Nil)::Nil)
 
-        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::Nil)::Nil)))
       }
 
       "example #4 with duplicates and alpha-elimination" in {
@@ -178,7 +179,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val uTarget = Function(f, Function(h, alpha0::Nil)::Function(g, c::alpha0::Nil)::Nil)
 
-        (dec) must beEqualTo (Set[types.Decomposition]((uTarget, (a::b::b::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::b::Nil)::Nil)))
       }
     }
 

@@ -20,7 +20,7 @@ import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.hol._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.algorithms.unification.{MulACEquality, MulACUEquality}
-import at.logic.algorithms.cutIntroduction.Deltas._
+import at.logic.algorithms.cutIntroduction.Generalized.Deltas._
 
 import at.logic.calculi.expansionTrees.ExpansionTree
 import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
@@ -502,6 +502,10 @@ object printProofStats {
 /*************************** Cut introduction algorithm **********************************/
 
   import at.logic.algorithms.cutIntroduction._
+  import at.logic.algorithms.cutIntroduction.Generalized.{Grammar => GeneralizedGrammar,
+                                                          ComputeGrammars => ComputeGeneralizedGrammars,
+                                                          ExtendedHerbrandSequent => GeneralizedExtendedHerbrandSequent,
+                                                          CutIntroduction => CutIntroductionG}
   object extractTerms {
     def apply( p: LKProof ) = {
       val ts = new FlatTermSet(TermsExtraction(p))
@@ -608,8 +612,12 @@ object printProofStats {
   }
 
   object cutIntroG {
-    def apply( p: LKProof, numVars : Constraint[Int] ) : Option[LKProof] = CutIntroductionG(p, numVars)
-    def apply( e: (Seq[ExpansionTree], Seq[ExpansionTree]), numVars : Constraint[Int] ) : Option[LKProof] = CutIntroductionG(e, numVars)
+    def apply( p: LKProof, numVars : Constraint[Int] ) = CutIntroductionG( p, numVars )
+    def apply( p: LKProof, numVars : Constraint[Int], prover: at.logic.provers.Prover ) = CutIntroductionG( p, numVars, prover )
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), numVars : Constraint[Int] )  = 
+      CutIntroductionG( ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver() )
+    def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), numVars : Constraint[Int], prover: at.logic.provers.Prover ) =
+      CutIntroductionG( ep, numVars, prover )
   }
 
 /*****************************************************************************************/
