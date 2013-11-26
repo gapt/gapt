@@ -325,6 +325,8 @@ import at.logic.language.schema.SchemaFormula
       case Dual(x) => size(x,n+1)
       case Plus(l,r) => size(l, size(r,n+1))
       case Times(l,r,_) => size(l, size(r,n+1))
+      case EmptyPlusJunction() => n
+      case EmptyTimesJunction() => n
     }
 
     // this is for proof schemata: it extracts the characteristic

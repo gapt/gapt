@@ -107,10 +107,10 @@ object SimplifyStruct {
     case Times(EmptyTimesJunction(),x,_) => SimplifyStruct(x)
     case Times(x,Dual(y), aux) if x.formula_equal(y) =>
       //println("tautology deleted")
-      EmptyTimesJunction()
+      EmptyPlusJunction()
     case Times(Dual(x),y, aux) if x.formula_equal(y) =>
       //println("tautology deleted")
-      EmptyTimesJunction()
+      EmptyPlusJunction()
     case Times(x,y,aux) =>
       //TODO: adjust aux formulas, they are not needed for the css construction, so we can drop them,
       // but this method should be as general as possible
@@ -120,7 +120,7 @@ object SimplifyStruct {
       assert(terms.nonEmpty, "Implementation Error: PlusN always unapplies to at least one struct!")
       val nonrendundant_terms = terms.foldLeft[List[Struct]](Nil)((x,term) => {
         val simple = SimplifyStruct(term)
-        if (x.filter(_.formula_equal(simple)).nonEmpty || (x == EmptyPlusJunction()) )
+        if (x.filter(_.formula_equal(simple)).nonEmpty )
           x
         else
           simple::x
