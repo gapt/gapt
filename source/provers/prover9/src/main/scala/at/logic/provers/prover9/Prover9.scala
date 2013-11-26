@@ -94,6 +94,61 @@ object Prover9 extends at.logic.utils.logging.Logger {
   def p9_to_ivy(in:String, out:String) = exec_in_out("prooftrans ivy",in,out)
   def p9_to_p9(in:String, out:String) = exec_in_out("prooftrans",in,out)
 
+  /* Check if a sequent is valid using prover9 without parsing the proof */
+  def isValid( seq : FSequent ) : Boolean = {
+    val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
+    val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
+    val ret = isValid( seq, in_file.getAbsolutePath, out_file.getAbsolutePath )
+    in_file.delete
+    out_file.delete
+    ret
+  }
+
+  def isValid( seq: FSequent, input_file: String, output_file: String ) : Boolean = {
+    val tmp_file = File.createTempFile( "gapt-prover9-proof", ".tptp", null )
+    writeProofProblem( seq, tmp_file )
+
+    tptpToLadr( tmp_file.getAbsolutePath, input_file )
+    tmp_file.delete
+    isValid(input_file, output_file)
+  }
+
+  def isValid( input_file: String, output_file: String ) : Boolean = {
+    trace( "running prover9" )
+    val ret = runP9( input_file, output_file )
+    trace( "prover9 finished" )
+    ret match {
+      case 0 =>  // prover9 ran successfully
+        return true
+      case 1 => throw new Prover9Exception("A fatal error occurred (user's syntax error or Prover9's bug).")
+      case 2 => {
+        trace("Prover9 ran out of things to do (sos list exhausted).")
+        // Sometimes, prover9 returns with this exit code even though
+        // a proof has been found. 
+        //
+        // TODO: look through the proof for evidence that prover9 found a proof
+        throw new Prover9Exception("Prover9 ran out of things to do (sos list exhausted).")
+      }
+      case 3 => {
+        throw new Prover9Exception("The max_megs (memory limit) parameter was exceeded.")
+        }
+      case 4 => {
+        throw new Prover9Exception("The max_seconds parameter was exceeded.")
+      }
+      case 5 => {
+        throw new Prover9Exception("The max_given parameter was exceeded.")
+      }
+      case 6 => {
+        throw new Prover9Exception("The max_kept parameter was exceeded.")
+      }
+      case 7 => {
+        throw new Prover9Exception("A Prover9 action terminated the search.")
+      }
+      case 101 => throw new Prover9Exception("Prover9 received an interrupt signal.")
+      case 102 => throw new Prover9Exception("Prover9 crashed, most probably due to a bug.")
+    }
+  }
+
 
   def prove( seq : FSequent, input_file: String, output_file : String ) : Option[RobinsonResolutionProof] =
   {
@@ -367,8 +422,5 @@ class Prover9Prover extends Prover with at.logic.utils.logging.Logger {
   }
 */
 
-  override def isValid( seq : FSequent ) : Boolean = getRobinsonProof(ground(seq)._1) match {
-    case Some(_) => true
-    case None => false
-  }
+  override def isValid( seq : FSequent ) : Boolean = Prover9.isValid( seq )
 }
