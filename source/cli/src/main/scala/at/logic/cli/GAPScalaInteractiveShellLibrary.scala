@@ -506,6 +506,8 @@ object printProofStats {
                                                           ComputeGrammars => ComputeGeneralizedGrammars,
                                                           ExtendedHerbrandSequent => GeneralizedExtendedHerbrandSequent,
                                                           CutIntroduction => CutIntroductionG}
+  import at.logic.algorithms.cutIntroduction.Generalized.DeltaVector
+  import at.logic.algorithms.cutIntroduction.Generalized.Deltas._
   object extractTerms {
     def apply( p: LKProof ) = {
       val ts = new FlatTermSet(TermsExtraction(p))
@@ -618,6 +620,10 @@ object printProofStats {
       CutIntroductionG( ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver() )
     def apply( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), numVars : Constraint[Int], prover: at.logic.provers.Prover ) =
       CutIntroductionG( ep, numVars, prover )
+    def applyStat( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), delta: DeltaVector ) =
+      CutIntroductionG.applyStat( ep, delta)._1.get
+    def applyStat( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), delta: DeltaVector, prover: at.logic.provers.Prover ) =
+      CutIntroductionG.applyStat( ep, delta, prover )._1.get
   }
 
 /*****************************************************************************************/
