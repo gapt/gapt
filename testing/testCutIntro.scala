@@ -4,7 +4,7 @@ import scala.collection.immutable.HashMap
 import org.slf4j.LoggerFactory
 
 import at.logic.utils.executionModels.timeout._
-import at.logic.calculi.expansionTrees.ExpansionTree
+import at.logic.calculi.expansionTrees.{ExpansionTree,removeFromExpansionSequent}
 import at.logic.algorithms.cutIntroduction.{CutIntroduction,DefaultProver,CutIntroUncompressibleException,CutIntroEHSUnprovableException}
 import at.logic.provers.prover9._
 import at.logic.provers._
@@ -19,8 +19,9 @@ import at.logic.provers._
  * scala> testCutIntro.compressAll
  * scala> testCutIntro.compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false )
  * scala> testCutIntro.compressVeriT( "../testing/veriT-SMT-LIB/QF_UF/", 60 )
- * scala> testCutIntro.compressProofSequences( 60 )
+ * scala> testCutIntro.compressProofSequences( 60, false )
  * scala> testCutIntro.compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, true )
+ * scala> testCutIntro.compressProofSequences( 60, true )
  **********/
 
 val TestCutIntroLogger = LoggerFactory.getLogger("TestCutIntroLogger$")
@@ -35,8 +36,9 @@ object testCutIntro {
   def compressAll() = {
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false )
     compressVeriT( "../testing/veriT-SMT-LIB/QF_UF/", 60 )
-    compressProofSequences( 60 )
+    compressProofSequences( 60, false )
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, true )
+    compressProofSequences( 60, true )
   }
 
   var total = 0
@@ -63,17 +65,16 @@ object testCutIntro {
       "Prints the results to resultsCutIntro/tstp_non_trivial_termset.csv and resultsCutIntro/tstp_non_trivial_summary.txt")
     println("scala> testCutIntro.findNonTrivialTSTPExamples( \"../testing/prover9-TSTP/\", 60 )")
     println()
-    println("Compress the proofs of the TSTP library in the file tstp_non_trivial_termset.csv. " + 
-      "The proofs that could be compressed are in resultsCutIntro/pleaseChangeToTheRightRevisionNumber/tstp_compressed.csv and a " + 
-      "summary of the operations is in resultsCutIntro/pleaseChangeToTheRightRevisionNumber/tstp_compressed_summary.txt")
-    println("scala> testCutIntro.compressTSTP( \"../testing/resultsCutIntro/tstp_non_trivial_termset.csv\", 60 )")
+    println("Compress the proofs of the TSTP library")
+    println("scala> testCutIntro.compressTSTP( \"../testing/resultsCutIntro/tstp_non_trivial_termset.csv\", 60, false )")
+    println("the last parameter is a boolean determining whether to work modulo equality")
     println()
-    println("Parses and compress the proofs from the VeriT library. " + 
-      "The results are in resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed.csv and resultsCutIntro/pleaseChangeToTheRightRevisionNumber/verit_compressed_summary.txt")
+    println("Parses and compress the proofs from the VeriT library. ")
     println("scala> testCutIntro.compressVeriT(\"../testing/veriT-SMT-LIB/QF_UF/\", 60)")
     println()
     println("Compress proofs from ../examples/ProofSequences.scala")
-    println("scala> testCutIntro.compressProofSequences(60)")
+    println("scala> testCutIntro.compressProofSequences( 60, false )")
+    println("the last parameter is a boolean determining whether to work modulo equality")
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/
@@ -308,67 +309,70 @@ object testCutIntro {
 
   /***************************** Proof Sequences ******************************/
 
-  def compressProofSequences( timeout: Int ) {
-    TestCutIntroLogger.trace("================ Compressing proof sequences ===============")
+  def compressProofSequences( timeout: Int, moduloEq: Boolean ) {
+    TestCutIntroLogger.trace("================ Compressing proof sequences " + ( if (moduloEq) "(modulo equality)" else "(modulo propositional logic)" ) + "===============")
 
     for ( i <- 1 to 12 ) {
       val pn = "LinearExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, LinearExampleProof( i ), timeout )
+      compressLKProof( pn, LinearExampleProof( i ), timeout, moduloEq )
     }
 
-    for ( i <- 1 to 10 ) {
+    for ( i <- 1 to 13 ) {
       val pn = "SquareDiagonalExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, SquareDiagonalExampleProof( i ), timeout )
+      compressLKProof( pn, SquareDiagonalExampleProof( i ), timeout, moduloEq )
     }
 
     for ( i <- 1 to 8 ) {
       val pn = "SquareEdgesExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, SquareEdgesExampleProof( i ), timeout )
+      compressLKProof( pn, SquareEdgesExampleProof( i ), timeout, moduloEq )
     }
 
-    for ( i <- 1 to 9 ) {
+    for ( i <- 1 to 12 ) {
       val pn = "SquareEdges2DimExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, SquareEdges2DimExampleProof( i ), timeout )
+      compressLKProof( pn, SquareEdges2DimExampleProof( i ), timeout, moduloEq )
     }
 
     for ( i <- 1 to 10 ) {
       val pn = "LinearEqExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, LinearEqExampleProof( i ), timeout )
+      compressLKProof( pn, LinearEqExampleProof( i ), timeout, moduloEq )
     }
 
     for ( i <- 1 to 5 ) {
       val pn = "SumOfOnesF2ExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, SumOfOnesF2ExampleProof( i ), timeout )
+      compressLKProof( pn, SumOfOnesF2ExampleProof( i ), timeout, moduloEq )
     }
 
     for ( i <- 1 to 5 ) {
       val pn = "SumOfOnesFExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, SumOfOnesFExampleProof( i ), timeout )
+      compressLKProof( pn, SumOfOnesFExampleProof( i ), timeout, moduloEq )
     }
 
     for ( i <- 1 to 6 ) {
       val pn = "SumOfOnesExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, SumOfOnesExampleProof( i ), timeout )
+      compressLKProof( pn, SumOfOnesExampleProof( i ), timeout, moduloEq )
     }
 
     for ( i <- 1 to 2 ) {
       val pn = "UniformAssociativity3ExampleProof(" + i + ")"
       TestCutIntroLogger.trace( "PROOF: " + pn )
-      compressLKProof( pn, UniformAssociativity3ExampleProof( i ), timeout )
+      compressLKProof( pn, UniformAssociativity3ExampleProof( i ), timeout, moduloEq )
     }
-
   }
 
-  def compressLKProof( name: String, p: LKProof, timeout: Int ) = {
-    val r = compressExpansionProof( extractExpansionTrees( p ), new DefaultProver(), timeout )
+  def compressLKProof( name: String, p: LKProof, timeout: Int, moduloEq: Boolean ) = {
+    val r = if ( moduloEq )
+      compressExpansionProof( removeEqAxioms( extractExpansionTrees( p )), new Prover9Prover(), timeout )
+    else
+      compressExpansionProof( extractExpansionTrees( p ), new DefaultProver(), timeout )
+
     val cutintro_status = r._1
     val cutintro_logline = r._2
 
@@ -378,6 +382,23 @@ object testCutIntro {
     else {
       CutIntroDataLogger.trace( name + "," + cutintro_status )
     }
+  }
+
+  def removeEqAxioms( eseq: (Seq[ExpansionTree], Seq[ExpansionTree]) ) = {
+   // removes all equality axioms that appear in ../examples/ProofSequences.scala
+   val R = parse.fol( "Forall x =(x,x)" )
+   val S = parse.fol( "Forall x Forall y Imp =(x,y) =(y,x)" )
+   val T = parse.fol( "Forall x Forall y Forall z Imp And =(x,y) =(y,z) =(x,z)" )
+   val Tprime = parse.fol( "Forall x Forall y Forall z Imp =(x,y) Imp =(y,z) =(x,z)" )
+   val CSuc = parse.fol( "Forall x Forall y Imp =(x,y) =(s(x),s(y))" )
+   val CPlus = parse.fol( "Forall x Forall y Forall u Forall v Imp =(x,y) Imp =(u,v) =(+(x,u),+(y,v))" )
+   val CPlusL = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(+(y,x),+(z,x))" ) // congruence plus left
+   val CgR = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(g(x,y),g(x,z))" ) // congruence of g on the right
+   val CMultR = parse.fol( "Forall x Forall y Forall z Imp =(x,y) =(*(z,x),*(z,y))" ) // congruence of mult right
+
+   val eqaxioms = new FSequent( R::S::T::Tprime::CSuc::CPlus::CPlusL::CgR::CMultR::Nil, Nil )
+   
+   removeFromExpansionSequent( eseq, eqaxioms )
   }
 
 

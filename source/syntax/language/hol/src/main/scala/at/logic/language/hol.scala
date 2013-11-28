@@ -126,8 +126,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case _ => false
     }
 
-
-
     def subTerms: Seq[HOLExpression] = this match {
       case Var(_,_) => List(this)
       case Atom(_, args) =>  this +: args.flatMap(_.subTerms)
@@ -138,15 +136,26 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case HOLAbs(_, x) => this +: x.subTerms
       case HOLApp(x, y) => this +: (x.subTerms ++ y.subTerms)
     }
-
-
-
   }
 
   trait HOLFormula extends HOLExpression with Formula {
     def and(that: HOLFormula) =  And(this, that)
     def or(that: HOLFormula) = Or(this, that)
     def imp(that: HOLFormula) = Imp(this, that)
+
+    /**
+     * the logical complexity of this formula, i.e. the number of logical connectives and atoms
+     * starting from the root of the formula. The inner structure of atoms is not counted.
+     **/
+    def lcomp : Int = this match {
+      case Atom(_, _) => 1
+      case Neg(f) => f.lcomp + 1
+      case And(f,g) => f.lcomp + g.lcomp + 1
+      case Or(f,g) => f.lcomp + g.lcomp + 1
+      case Imp(f,g) => f.lcomp + g.lcomp + 1
+      case ExVar(x,f) => f.lcomp + 1
+      case AllVar(x,f) => f.lcomp + 1
+    }
   }
 
   class HOLVar protected[hol] (name: VariableSymbolA, exptype: TA, dbInd: Option[Int])
@@ -351,7 +360,7 @@ trait Formula extends LambdaExpression {require(exptype == To())}
     }
   }
 
-object ExQ {
+  object ExQ {
     def unapply(v: Var) = v match {
       case vo: ExQ => Some(vo.exptype)
       case _ => None
