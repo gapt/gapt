@@ -275,7 +275,7 @@ package propositionalRules {
       else {
         val term1 = term1op.get
         val term2 = term2op.get
-        if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: term1.formula = " + term1.formula.toStringSimple + ", term2.formula = " + term2.formula.toStringSimple)
+        if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be contracted are not identical: \nterm1.formula = " + term1.formula + ", \nterm2.formula = " + term2.formula)
         else if (term1 == term2) throw new LKRuleCreationException("Formulas to be contracted are of the same occurrence")
         else {
           (term1, term2)

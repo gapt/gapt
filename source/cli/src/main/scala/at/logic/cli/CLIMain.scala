@@ -34,11 +34,11 @@ object CLIMain {
   import at.logic.transformations.skolemization.skolemize
   import at.logic.algorithms.lk.regularize
   import at.logic.calculi.occurrences.FormulaOccurrence
-  import help.{apply => help}
-  import at.logic.cli.GPL.{apply => copying, printLicense => license}
   import at.logic.algorithms.cutIntroduction.FlatTermSet
   import at.logic.algorithms.lk.statistics._
   import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
+  import help.{apply => help}
+  import at.logic.cli.GPL.{apply => copying, printLicense => license}
 
   println()
   println("    *************************************")

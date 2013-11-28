@@ -15,6 +15,8 @@ import at.logic.language.lambda.types.{Ti, Tindex}
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.provers.Prover
+import at.logic.calculi.lk.equationalRules.{EquationRight1Rule, EquationRight2Rule, EquationLeft2Rule, EquationLeft1Rule}
+import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 
 object solvePropositional extends at.logic.utils.logging.Logger {
 
@@ -464,6 +466,8 @@ object AtomicExpansion {
     }
   }
 
+  def apply(p:LKProof) : LKProof = expandProof(p)
+
   /* Same as apply(fs:FSequent) but you can specify the formula on the lhs (f1) and rhs (f2) */
   def apply(fs:FSequent, f1:HOLFormula, f2: HOLFormula) = {
     //initialize generator for eigenvariables
@@ -540,7 +544,120 @@ object AtomicExpansion {
         throw new Exception("Error in non-atomic axiom expansion handling "+ f1 + " and "+f2+": "+e.getMessage, e)
     }
   }
+
+  def expandProof(p:LKProof) : LKProof = p match {
+    case Axiom(seq@Sequent(antd,succd)) =>
+      val tautology_formulas = for (a <- antd; s <- succd; if a.formula == s.formula && !a.formula.isAtom) yield { a.formula }
+      if (tautology_formulas.nonEmpty) {
+        val tf = tautology_formulas(0)
+        println("Expanding "+tf)
+        AtomicExpansion(seq.toFSequent, tf, tf) }
+      else {
+        p
+      }
+
+    //structural rules
+    case ContractionLeftRule(uproof, root, aux1, aux2, _) =>
+      val duproof = expandProof(uproof)
+      ContractionLeftRule(duproof, aux1.formula)
+    case ContractionRightRule(uproof, root, aux1, aux2, _) =>
+      val duproof = expandProof(uproof)
+      ContractionRightRule(duproof, aux1.formula)
+    case WeakeningLeftRule(uproof, root, aux1) =>
+      val duproof = expandProof(uproof)
+      WeakeningLeftRule(duproof, aux1.formula)
+    case WeakeningRightRule(uproof, root, aux1) =>
+      val duproof = expandProof(uproof)
+      WeakeningRightRule(duproof, aux1.formula)
+    case CutRule(uproof1, uproof2, root, aux1, aux2) =>
+      val duproof1 = expandProof(uproof1)
+      val duproof2 = expandProof(uproof2)
+      CutRule(duproof1, duproof2, aux1.formula)
+
+    //Unary Logical rules
+    case NegLeftRule(uproof, root, aux1, _) =>
+      val duproof = expandProof(uproof)
+      NegLeftRule(duproof, aux1.formula)
+    case NegRightRule(uproof, root, aux1, _) =>
+      val duproof = expandProof(uproof)
+      NegRightRule(duproof, aux1.formula)
+    case ImpRightRule(uproof, root, aux1, aux2, _) =>
+      val duproof = expandProof(uproof)
+      ImpRightRule(duproof, aux1.formula, aux2.formula)
+    case OrRight1Rule(uproof, root, aux1, prin) =>
+      val duproof = expandProof(uproof)
+      val f = prin.formula match { case Or(_, x) => x }
+      OrRight1Rule(duproof, aux1.formula, f)
+    case OrRight2Rule(uproof, root, aux1, prin) =>
+      val duproof = expandProof(uproof)
+      val f = prin.formula match { case Or(x,_) => x }
+      OrRight2Rule(duproof, f, aux1.formula)
+    case AndLeft1Rule(uproof, root, aux1, prin) =>
+      val duproof = expandProof(uproof)
+      val f = prin.formula match { case And(_, x) => x }
+      AndLeft1Rule(duproof, aux1.formula, f)
+    case AndLeft2Rule(uproof, root, aux1, prin) =>
+      val duproof = expandProof(uproof)
+      val f = prin.formula match { case And(x,_) => x }
+      AndLeft2Rule(duproof, f, aux1.formula)
+
+    //Binary Logical Rules
+    case ImpLeftRule(uproof1, uproof2, root, aux1, aux2, prin) =>
+        val duproof1 = expandProof(uproof1)
+        val duproof2 = expandProof(uproof2)
+        ImpLeftRule(duproof1, duproof2, aux1.formula, aux2.formula)
+    case OrLeftRule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      val duproof1 = expandProof(uproof1)
+      val duproof2 = expandProof(uproof2)
+      OrLeftRule(duproof1, duproof2, aux1.formula, aux2.formula)
+    case AndRightRule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      val duproof1 = expandProof(uproof1)
+      val duproof2 = expandProof(uproof2)
+      AndRightRule(duproof1, duproof2, aux1.formula, aux2.formula)
+
+    //Quantifier Rules
+    case ForallLeftRule(uproof, root, aux, prin, sub) =>
+      val duproof = expandProof(uproof)
+      ForallLeftRule(duproof, aux.formula, prin.formula, sub)
+    case ForallRightRule(uproof, root, aux, prin, sub) =>
+      val duproof = expandProof(uproof)
+      ForallRightRule(duproof, aux.formula, prin.formula, sub)
+    case ExistsLeftRule(uproof, root, aux, prin, sub) =>
+      val duproof = expandProof(uproof)
+      ExistsLeftRule(duproof, aux.formula, prin.formula, sub)
+    case ExistsRightRule(uproof, root, aux, prin, sub) =>
+      val duproof = expandProof(uproof)
+      ExistsRightRule(duproof, aux.formula, prin.formula, sub)
+
+    //equality and definitions
+    case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      val duproof1 = expandProof(uproof1)
+      val duproof2 = expandProof(uproof2)
+      EquationLeft1Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
+    case EquationLeft2Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      val duproof1 = expandProof(uproof1)
+      val duproof2 = expandProof(uproof2)
+      EquationLeft2Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
+    case EquationRight1Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      val duproof1 = expandProof(uproof1)
+      val duproof2 = expandProof(uproof2)
+      EquationRight1Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
+    case EquationRight2Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      val duproof1 = expandProof(uproof1)
+      val duproof2 = expandProof(uproof2)
+      EquationRight2Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
+
+    case DefinitionLeftRule(uproof, root, aux, prin) =>
+      val duproof = expandProof(uproof)
+      DefinitionLeftRule(duproof, aux.formula, prin.formula)
+    case DefinitionRightRule(uproof, root, aux, prin) =>
+      val duproof = expandProof(uproof)
+      DefinitionRightRule(duproof, aux.formula, prin.formula)
+
+
+  }
 }
+
 
 class LKProver extends Prover {
   def getLKProof( seq : FSequent ) : Option[LKProof] =

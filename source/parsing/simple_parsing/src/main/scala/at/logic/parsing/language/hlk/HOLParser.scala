@@ -252,7 +252,7 @@ class HLKHOLParser {
   def parse(s : CharSequence) : HOLExpression = {
     DeclarationParser.parseAll(DeclarationParser.declaredformula, s) match {
       case DeclarationParser.Success((declarations, tree), _) =>
-        ASTtoHOL( x => declarations(x), tree)
+        ASTtoHOL(x => declarations(x), tree)
       case DeclarationParser.NoSuccess(msg, input) =>
         throw new Exception("Error parsing HOL formula '"+s+"' at position "+input.pos+". Error message: "+msg)
     }

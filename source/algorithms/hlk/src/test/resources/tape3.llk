@@ -109,7 +109,8 @@
 
 % ===== START OF PROOF ===== %
 
-\AX{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
+\AX{MON(h_1,\alpha)}{MON(h_1,\alpha) }
+\WEAKL{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
 
 \AX{ NOCC(h_1,\alpha,\sigma)}{NOCC(h_1,\alpha,\sigma)}
 \EXR{\sigma}{ NOCC(h_1,\alpha,\sigma)}{( exists s NOCC(h_1,\alpha,s))}
@@ -188,9 +189,9 @@
 \EQAXIOM{A12: 1 + \kappa = \kappa+1}{AX,  \nu+ (1 + \kappa) = 0}{}
 \EQAXIOM{A13: \nu + (1+\kappa)=(\nu+1) + \kappa}{AX,  (\nu+1) + \kappa = 0}{}
 \EQL{AX,  \delta + \kappa = 0, \delta =\nu+1}{}
-\EXL{\nu}{AX,  \delta + \kappa = 0, ( exists n (\delta =n+1))}{}
+\EXL{\nu}{AX,  \delta + \kappa = 0, ( exists k (\delta =k+1))}{}
 
-\ORL{AX,  \delta + \kappa = 0, \delta = 0 | ( exists n (\delta =n+1))}{\delta = 0}
+\ORL{AX,  \delta + \kappa = 0, \delta = 0 | ( exists k (\delta =k+1))}{\delta = 0}
 \INSTAXIOM{A2}{AX,  \delta + \kappa = 0}{\delta = 0}
 \IMPL{AX,(\delta + \kappa) +1 = 0+1, (\delta + \kappa) +1 = 0+1 -> \delta + \kappa = 0}{\delta = 0}
 \INSTAXIOM{A3}{AX,(\delta + \kappa) +1 = 0+1}{\delta = 0}
@@ -219,7 +220,8 @@
 \ALLR{\gamma}{AX}{( all i  all j (i<0+1 & j<0+1 & i<j -> \alpha < \alpha))}
 \DEF{AX}{MON((\lambda x (\alpha)),0)}
 
-\AX{f(\alpha)=\sigma,\beta < 0+1}{f(\alpha)=\sigma}
+\AX{f(\alpha)=\sigma}{f(\alpha)=\sigma}
+\WEAKL{f(\alpha)=\sigma,\beta < 0+1}{f(\alpha)=\sigma}
 \IMPR{f(\alpha)=\sigma}{\beta < 0+1 -> f(\alpha)=\sigma}
 \ALLR{\beta}{f(\alpha)=\sigma}{( all i (i<0+1 -> f(\alpha)=\sigma))}
 % \BETA{f(\alpha)=\sigma}{( all i (i<0+1 -> f(\apply{((\lambda x (\alpha))) 0})=\sigma))} %
@@ -263,13 +265,14 @@
 
   \AX{i_1 < n+1}{i_1 < n+1}
 
-  \AX{AX, j_1<(n+1)}{j_1 < n+1}
-  \AX{AX, i_1<j_1}{i_1 < j_1}
-  \ANDR{AX, j_1<(n+1), i_1<j_1}{j_1 < n+1 & i_1 < j_1}
-  \ANDR{AX, j_1<(n+1), i_1<j_1, i_1<n+1}{i_1 < n+1 & j_1 < n+1 & i_1 < j_1}
+  \AX{j_1<(n+1)}{j_1 < n+1}
+  \AX{i_1<j_1}{i_1 < j_1}
+  \ANDR{j_1<(n+1), i_1<j_1}{j_1 < n+1 & i_1 < j_1}
+  \ANDR{j_1<(n+1), i_1<j_1, i_1<n+1}{i_1 < n+1 & j_1 < n+1 & i_1 < j_1}
 
-  \AX{AX, h'(i_1)<h'(j_1)}{h'(i_1) < h'(j_1)}
-  \IMPL{AX, i_1 < n+1 & j_1 < n+1 & i_1 < j_1 -> h'(i_1)<h'(j_1), j_1<(n+1), i_1<j_1, i_1<n+1}{h'(i_1) < h'(j_1)}
+  \AX{h'(i_1)<h'(j_1)}{h'(i_1) < h'(j_1)}
+  \IMPL{i_1 < n+1 & j_1 < n+1 & i_1 < j_1 -> h'(i_1)<h'(j_1), j_1<(n+1), i_1<j_1, i_1<n+1}{h'(i_1) < h'(j_1)}
+  \WEAKL{AX, i_1 < n+1 & j_1 < n+1 & i_1 < j_1 -> h'(i_1)<h'(j_1), j_1<(n+1), i_1<j_1, i_1<n+1}{h'(i_1) < h'(j_1)}
   \CONTINUEWITH{MONstep_{a4'}}
 
 % ===== END OF PROOF ===== %
@@ -403,9 +406,10 @@
 
 \CONTINUEFROM{MONstep_{a2}}{AX,i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha})= h'(i_1)}
 
-\AX{AX, j_1<(n+1)+1}{j_1<(n+1)+1}
+\AX{j_1<(n+1)+1}{j_1<(n+1)+1}
 \AX{j_1<(n+1) | j_1=(n+1) }{j_1<(n+1) | j_1=(n+1) }
-\IMPL{AX, j_1<(n+1)+1, j_1<(n+1)+1 -> j_1<(n+1) | j_1=(n+1) }{ j_1<(n+1) | j_1=(n+1)}
+\IMPL{j_1<(n+1)+1, j_1<(n+1)+1 -> j_1<(n+1) | j_1=(n+1) }{ j_1<(n+1) | j_1=(n+1)}
+\WEAKL{AX,j_1<(n+1)+1, j_1<(n+1)+1 -> j_1<(n+1) | j_1=(n+1) }{ j_1<(n+1) | j_1=(n+1)}
 \INSTAXIOM{A10}{AX, j_1<(n+1)+1}{ j_1<(n+1) | j_1=(n+1)}
 
 \CONTINUEFROM{MONstep_{a3}}{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1) | j_1=(n+1) , i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}

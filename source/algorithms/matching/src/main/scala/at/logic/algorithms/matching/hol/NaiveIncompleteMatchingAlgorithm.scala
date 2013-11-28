@@ -31,14 +31,24 @@ object NaiveIncompleteMatchingAlgorithm extends MatchingAlgorithm[HOLExpression]
       res 
     }
 
-  def holMatch( s: HOLExpression, t: HOLExpression )(implicit restrictedDomain: List[Var]) : Option[Substitution[HOLExpression]] =
+  def holMatch( s: HOLExpression, t: HOLExpression )(implicit restrictedDomain: List[Var]) : Option[Substitution[HOLExpression]] = {
+    holMatch_(s,t)(restrictedDomain) match {
+      case Some(sub) =>
+        //filter identity substitutions
+        //Some()
+        Some(sub)
+      case None => None
+    }
+  }
+
+  def holMatch_( s: HOLExpression, t: HOLExpression )(implicit restrictedDomain: List[Var]) : Option[Substitution[HOLExpression]] =
     (s, t) match {
-      case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( holMatch(s_1, t_1), holMatch(s_2, t_2) )
+      case ( HOLApp(s_1, s_2), HOLApp(t_1, t_2) ) => merge( holMatch_(s_1, t_1), holMatch_(s_2, t_2) )
       case ( s : HOLVar, _ ) if !restrictedDomain.contains(s) => Some(Substitution[HOLExpression]( s, t  ) )
       case ( v1 : HOLVar, v2 : HOLVar ) if v1 == v2 => Some(Substitution[HOLExpression]())
       case ( v1 : HOLVar, v2 : HOLVar ) if v1 != v2 =>  None
       case ( c1 : HOLConst, c2 : HOLConst ) if c1 == c2 => Some(Substitution[HOLExpression]())
-      case ( HOLAbs(v1, e1), HOLAbs(v2, e2) ) => holMatch( e1, e2 )
+      case ( HOLAbs(v1, e1), HOLAbs(v2, e2) ) => holMatch_( e1, e2 )
       case _ => None
     }
 

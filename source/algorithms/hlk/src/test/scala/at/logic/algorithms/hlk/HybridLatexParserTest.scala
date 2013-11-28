@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.execute.Success
-import at.logic.parsing.language.hlk.{HLKHOLParser, ast}
+import at.logic.parsing.language.hlk.{HOLASTParser, HLKHOLParser, ast}
 import at.logic.parsing.language.hlk.ast.LambdaAST
 import java.io.File.separator
 import at.logic.language.lambda.types.{To, Ti, TA}
@@ -16,6 +16,7 @@ import at.logic.language.lambda.typedLambdaCalculus.{AppN, App}
 import at.logic.language.lambda.types.Ti
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.types.To
+import at.logic.language.lambda.substitutions.Substitution
 
 
 /**
@@ -153,5 +154,30 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
     }
 
 
+  }
+
+  "Tactics" should {
+    "correctly prove the instance of an axiom" in {
+      val vmap = Map[String,TA]( "x" -> Ti(), "y" -> Ti(), "z" -> Ti())
+      val cmap = Map[String,TA]( "a" -> Ti(), "1" -> Ti(), "+" -> (Ti()->(Ti()->Ti())))
+      val naming : String => HOLExpression = x => { if (vmap contains x) HOLVar(VariableStringSymbol(x),vmap(x)) else
+                                                                       HOLConst(ConstantStringSymbol(x),cmap(x)) }
+      val axiom =  HLKHOLParser.ASTtoHOL( naming, HybridLatexParser.parseFormula("(all x all y all z (x+(y+z)=(x+y)+z))"))
+      val instance = HLKHOLParser.ASTtoHOL( naming, HybridLatexParser.parseFormula("a+((1+x)+y)=(a+(1+x))+y"))
+      val t1 = Function(HOLConst(ConstantStringSymbol("+"),Ti() -> (Ti() -> Ti())),List(
+                          HOLConst(ConstantStringSymbol("1"), Ti()),
+                          HOLVar(VariableStringSymbol("x"),Ti())))
+      val t2 = HOLConst(ConstantStringSymbol("a"), Ti())
+      val x = HOLVar(VariableStringSymbol("x"),Ti())
+      val y = HOLVar(VariableStringSymbol("y"),Ti())
+      val z = HOLVar(VariableStringSymbol("z"),Ti())
+      val sub = Substitution[HOLExpression]( (x,t2), (y,t1), (z,y) )
+      val p = HybridLatexParser.proveInstance(axiom.asInstanceOf[HOLFormula],instance.asInstanceOf[HOLFormula], sub)
+      p.root.occurrences must haveSize(2)
+      p.root.antecedent must haveSize(1)
+      p.root.succedent must haveSize(1)
+      p.root.antecedent(0).formula mustEqual(axiom)
+      p.root.succedent(0).formula mustEqual(instance)
+    }
   }
 }

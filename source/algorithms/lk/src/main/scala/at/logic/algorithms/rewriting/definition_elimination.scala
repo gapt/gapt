@@ -26,6 +26,7 @@ import scala.Some
 import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
+import at.logic.algorithms.lk.AtomicExpansion
 
 object DefinitionElimination extends DefinitionElimination
 class DefinitionElimination {
@@ -44,7 +45,7 @@ class DefinitionElimination {
 
   def apply(dmap : DefinitionsMap, p:LKProof) : LKProof = {
     val edmap = expand_dmap(dmap)
-    eliminate_in_proof(replaceAll_in(dmap,_),p)
+    eliminate_in_proof(replaceAll_in(edmap,_),p)
   }
 
 
@@ -162,7 +163,8 @@ class DefinitionElimination {
         debug("Axiom!")
         val antd  =  antecedent.map((x:FormulaOccurrence) => c(rewrite(x.formula)))  //recursive_elimination_from(defs,antecedent.map((x:FormulaOccurrence) => x.formula))
       val succd =  succedent.map((x:FormulaOccurrence) => c(rewrite(x.formula))) //recursive_elimination_from(defs,succedent.map((x:FormulaOccurrence) => x.formula))
-      val dproof = Axiom(antd, succd)
+      //val dproof = Axiom(antd, succd)
+      val dproof = Axiom(antd,succd)
         val correspondences = calculateCorrespondences(Sequent(antecedent, succedent) , dproof)
 
         check_map(correspondences, proof, dproof)
@@ -313,9 +315,14 @@ class DefinitionElimination {
     debug("Contracting to:   "+dmap(aux1)+" and "+ dmap(aux2))
     //throw new ElimEx(uproof::duproof::Nil, aux1::aux2::Nil, uproof.root.toFormula, Some(dmap))
 
-    val dproof = createRule(duproof, dmap(aux1), dmap(aux2))
-    val correspondences = calculateCorrespondences(root, dproof)
-    (correspondences, dproof)
+    try {
+      val dproof = createRule(duproof, dmap(aux1), dmap(aux2))
+      val correspondences = calculateCorrespondences(root, dproof)
+      (correspondences, dproof)
+    } catch {
+      case e: Exception =>
+        throw new LKUnaryRuleCreationException("Definition elimination failed in contraction rule: "+e.getMessage, duproof, List(dmap(aux1).formula,dmap(aux2).formula))
+    }
   }
 
   def handleNegationRule(rewrite : (HOLExpression => HOLExpression), uproof: LKProof, root: Sequent,
