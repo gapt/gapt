@@ -126,8 +126,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     var CleanStructuralRulesCTime:Long = 0
 
     val p = try { withTimeout( timeout * 1000 ) {
-      log += "," + quantRulesNumberET(ep) // log #qnodes
-
       val endSequent = toSequent(ep)
       println("\nEnd sequent: " + endSequent)
     
@@ -188,7 +186,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         val t4 = System.currentTimeMillis
         CleanStructuralRulesCTime += t4 - t3
 
-        ( pruned_proof, ehs1 )
+        ( pruned_proof, ehs1, cutFormula0.lcomp, ehs1.cutFormula.lcomp )
       }
 
       val proofs = smallestGrammars.map(buildProof)
@@ -200,10 +198,12 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
       val smallestProof = sorted.head._1
       val ehs = sorted.head._2
+      val cansolc = sorted.head._3
+      val minsolc = sorted.head._4
 
       println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
-      log += "," + rulesNumber( smallestProof ) + "," + quantRulesNumber( smallestProof ) // log #infc, #qinfc
+      log += "," + cansolc + "," + minsolc + "," + rulesNumber( smallestProof ) + "," + quantRulesNumber( smallestProof ) // log cansolc, minsolc, #infc, #qinfc
 
       Some( smallestProof )
     } } catch {
