@@ -37,6 +37,17 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     }
   }
 
+  def applyWOCleaning(seq: FSequent): Option[LKProof] = {
+    debug("running solvePropositional")
+    val r = prove(seq)
+    r match {
+      case Some(_) => debug("finished solvePropositional succesfully")
+      case None => debug("finished solvePropositional unsuccesfully")
+    }
+
+    r
+  }
+
   // Returns a boolean indicating if the sequent is provable.
   def isTautology(seq: FSequent) : Boolean = prove(seq) match {
     case Some(p) => true
@@ -658,8 +669,12 @@ object AtomicExpansion {
   }
 }
 
-
 class LKProver extends Prover {
   def getLKProof( seq : FSequent ) : Option[LKProof] =
     solvePropositional( seq )
+}
+
+class LKWOCleaningProver extends Prover {
+  def getLKProof( seq : FSequent ) : Option[LKProof] =
+    solvePropositional.applyWOCleaning( seq )
 }

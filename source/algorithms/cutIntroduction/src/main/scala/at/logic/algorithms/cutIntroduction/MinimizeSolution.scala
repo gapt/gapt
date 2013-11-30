@@ -7,6 +7,7 @@
 
 package at.logic.algorithms.cutIntroduction
 
+import at.logic.utils.logging._
 import at.logic.language.fol._
 import at.logic.calculi.resolution.base.FClause
 import at.logic.language.fol.Utils._
@@ -20,10 +21,10 @@ import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.algorithms.lk.solvePropositional._
 import at.logic.calculi.lk.base._
 
-object MinimizeSolution {
+object MinimizeSolution extends Logger {
   
-  def apply(ehs: ExtendedHerbrandSequent) = {
-    val minSol = improveSolution(ehs).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
+  def apply(ehs: ExtendedHerbrandSequent, prover: Prover) = {
+    val minSol = improveSolution(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
   }
 
@@ -37,7 +38,7 @@ object MinimizeSolution {
   //
   // returns the list of improved solutions found by the forgetful resolution
   // algorithm.
-  private def improveSolution(ehs: ExtendedHerbrandSequent) : List[FOLFormula] = {
+  private def improveSolution(ehs: ExtendedHerbrandSequent, prover: Prover) : List[FOLFormula] = {
 
     val cutFormula = ehs.cutFormula
 
@@ -48,7 +49,9 @@ object MinimizeSolution {
     }
 
     // Transform to conjunctive normal form
+    trace( "starting CNF-Transformation" )
     val cnf = f.toCNF
+    trace( "finished CNF-Transformation" )
 
     // Exhaustive search over the resolvents (depth-first search),
     // returns the list of all solutions found.
@@ -56,7 +59,7 @@ object MinimizeSolution {
 
     def searchSolution(f: FOLFormula) : List[FOLFormula] =
       f :: ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) =>
-          if( isValidWith(ehs, AllVar( x, r ))) {
+          if( isValidWith(ehs, prover, AllVar( x, r ))) {
             count = count + 1
             searchSolution(r) ::: acc
           }
@@ -135,7 +138,9 @@ object MinimizeSolution {
 
       //0. Convert to a clause set where each clause is a list of positive and negative atoms.
       //1. assign a number to every atom in F.
+      trace( "starting CNF-Transformation" )
       val fNumbered = numberAtoms(CNFp(form2.toCNF).map(c => toMyFClause(c)).toList)
+      trace( "finished CNF-Transformation" )
 
       //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
       val posNegSets = fNumbered.foldLeft(Map[FOLFormula, (Set[Int], Set[Int])]()) {(m, clause) =>
@@ -253,23 +258,6 @@ object MinimizeSolution {
     prover.isValid(Imp(And(antecedent), Or(succedent)))
   }
 
-  def isValidWith(ehs: ExtendedHerbrandSequent, f: FOLFormula) : Boolean = {
-
-    val body = f.instantiate(ehs.grammar.eigenvariable)
-
-    val as = ehs.grammar.s.foldRight(List[FOLFormula]()) {case (t, acc) =>
-      acc :+ f.instantiate(t) 
-    }
-    val head = And(as)
-
-    val impl = Imp(body, head)
-
-    val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
-    val succedent = ehs.prop_r ++ ehs.inst_r
-
-    isTautology(FSequent(antecedent, succedent))
-  }
-  
   //------------------------ FORGETFUL RESOLUTION -------------------------//
   // TODO: this should go somewhere else.
 

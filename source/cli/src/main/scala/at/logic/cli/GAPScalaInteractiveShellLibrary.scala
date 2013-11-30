@@ -583,7 +583,7 @@ object printProofStats {
   object minimizeSolution {
     def apply(ehs: ExtendedHerbrandSequent) = {
       println("Previous solution: " + ehs.cutFormula)
-      val new_ehs = MinimizeSolution(ehs)
+      val new_ehs = MinimizeSolution(ehs, new at.logic.algorithms.cutIntroduction.DefaultProver())
       println("Improved solution: " + new_ehs.cutFormula)
       new_ehs
     }

@@ -75,7 +75,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
       val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
       val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-      val ehs1 = MinimizeSolution(ehs)
+      val ehs1 = MinimizeSolution(ehs, prover)
 
       // TODO Uncomment when fixed.
       // Call interpolant before or after minimization??
@@ -116,7 +116,8 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    * and l is a logging string with quantitative data,
    * see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
    **/
-  def applyExp(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */ ) : ( Option[LKProof] , String, String ) = {
+  def applyExp( ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: Prover = new DefaultProver(),
+                timeout: Int = 3600 /* 1 hour */ ) : ( Option[LKProof] , String, String ) = {
     var log = ""
     var status = "ok"
     var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
@@ -178,7 +179,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         SolutionCTime += t2 - t1
    
         phase = "prcons" // proof construction
-        val proof = buildProofWithCut(ehs1, prover)
+        val proof = buildProofWithCut( ehs1, prover )
         val t3 = System.currentTimeMillis
         ProofBuildingCTime += t3 - t2
       
@@ -380,7 +381,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
 class DefaultProver extends Prover {
   def getLKProof( seq : FSequent ) : Option[LKProof] =
-    new LKProver().getLKProof( seq )
+    new LKWOCleaningProver().getLKProof( seq )
 
   override def isValid( seq : FSequent ) : Boolean = 
     new MiniSATProver().isValid( seq )

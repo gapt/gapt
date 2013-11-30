@@ -85,8 +85,6 @@ object MinimizeSolution {
     * @return The list of minimal-size solutions (=the set of end nodes as described in 4.2).
     */
    private def improveSolution(ehs: ExtendedHerbrandSequent, prover: Prover) : List[FOLFormula] = {
-      //Create a SAT-solver for the validity check
-
       val (xs, form2) = removeQuantifiers(ehs.cutFormula)
 
       if (xs.length == 0) { throw new CutIntroException("ERROR: Canonical solution is not quantified.") }
