@@ -165,7 +165,7 @@ class MiscTest extends SpecificationWithJUnit {
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       val p = LinearExampleProof( 0, 4 )
-      val pi = CutIntroduction(p)
+      val pi = CutIntroduction( p, new LKProver() )
       val pe = ReductiveCutElim.eliminateAllByUppermost(pi, false)
 
       ReductiveCutElim.isCutFree(p) must beEqualTo( true )

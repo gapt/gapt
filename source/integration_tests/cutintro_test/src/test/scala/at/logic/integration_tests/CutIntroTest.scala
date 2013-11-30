@@ -61,7 +61,7 @@ class CutIntroTest extends SpecificationWithJUnit {
         )
       )
 
-      CutIntroduction(proof)
+      CutIntroduction( proof, new LKProver() )
 
       termset must haveTheSameElementsAs ( LinearExampleTermset( 4 ) )
     }

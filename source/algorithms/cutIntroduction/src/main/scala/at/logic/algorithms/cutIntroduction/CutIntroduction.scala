@@ -39,7 +39,7 @@ class CutIntroEHSUnprovableException(msg: String) extends CutIntroException(msg)
 
 object CutIntroduction extends at.logic.utils.logging.Logger {
 
-  def apply(proof: LKProof, prover: Prover = new DefaultProver()) : LKProof = apply( extractExpansionTrees( proof ), prover)
+  def apply( proof: LKProof, prover: Prover = new DefaultProver() ) : LKProof = apply( extractExpansionTrees( proof ), prover)
 
   /**
    * cut-introduction algorithm (stable version)
