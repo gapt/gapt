@@ -333,8 +333,8 @@ class Prover9Test extends SpecificationWithJUnit {
   }
 
   "The Prover9 interface" should {
-    skipped("TPTPFOLExporter bug (c.f. FIXME above in line 277, probably same error)")
     "load a Prover9 proof and verify the validity of the sequent" in {
+      skipped("TPTPFOLExporter bug (c.f. FIXME above in line 277, probably same error)")
       for (testfilename <- "PUZ047+1.out"::"ALG138+1.out"::"cade13example.out"::Nil) {
          val (robResProof, seq) = Prover9.parse_prover9("target" + separator + "test-classes" + separator + testfilename)
         (new Prover9Prover).isValid(seq) must beTrue
