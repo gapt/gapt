@@ -276,12 +276,13 @@ class Prover9Test extends SpecificationWithJUnit {
 
   /* FIXME: commented out since tptp export of quantifiers is still failing.
      Try again after merging Giselle's changes. */
-     /* 
+      /*
       p.isValid(s) must beTrue
       p.getRobinsonProof (s) must beLike {
         case Some(_) => ok
         case None => ko
-      } */
+      }
+      */
     }
 
     "prove { A or B :- -(-A and -B)  }" in {
@@ -329,6 +330,16 @@ class Prover9Test extends SpecificationWithJUnit {
       }
     }
 
+  }
+
+  "The Prover9 interface" should {
+    skipped("TPTPFOLExporter bug (c.f. FIXME above in line 277, probably same error)")
+    "load a Prover9 proof and verify the validity of the sequent" in {
+      for (testfilename <- "PUZ047+1.out"::"ALG138+1.out"::"cade13example.out"::Nil) {
+         val (robResProof, seq) = Prover9.parse_prover9("target" + separator + "test-classes" + separator + testfilename)
+        (new Prover9Prover).isValid(seq) must beTrue
+      }
+    }
   }
 
 }

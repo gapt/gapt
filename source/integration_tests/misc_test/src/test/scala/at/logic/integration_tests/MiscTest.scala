@@ -25,7 +25,7 @@ import at.logic.calculi.lk.macroRules._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk._
 import java.util.zip.GZIPInputStream
-import java.io.{FileReader, FileInputStream, InputStreamReader}
+import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
@@ -42,6 +42,7 @@ import at.logic.parsing.veriT.VeriTParser
 import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep, applyToExpansionSequent => ETapplyToExpansionSequent}
 import at.logic.language.hol.{And => AndHOL, Imp => ImpHOL, Or => OrHOL}
 import at.logic.provers.prover9.Prover9
+import at.logic.calculi.resolution.base.FClause
 
 @RunWith(classOf[JUnitRunner])
 class MiscTest extends SpecificationWithJUnit {
@@ -173,29 +174,49 @@ class MiscTest extends SpecificationWithJUnit {
       ReductiveCutElim.isCutFree(pe) must beEqualTo( true )
     }
 
-    /*
 
-    "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT as well as prover9 " in {
+    "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT" in {
+      skipped("MiniSAT fails to proof this")
 
-      val fileName = "/home/totycro/gapt/source/parsing/veriT/target/test-classes/test0.verit"
-      val p = VeriTParser.getExpansionProof(fileName)
+      val box: Set[FClause] = Set()
+      (new at.logic.provers.minisat.MiniSAT).solve(Set[FClause]()) must not(throwA[IOException]).orSkip
 
-      val f_seq = ETapplyToExpansionSequent(ETtoDeep.apply, p)
-      val f_formula = ImpHOL( AndHOL(f_seq._1.toList), OrHOL(f_seq._2.toList) )
+      for (i <- 0 to 4) {
 
-      "MiniSAT must be able to proof formula " ! (new at.logic.provers.minisat.MiniSATProver).isValid(f_formula)
+        val testfilename = "target" + separator + "test-classes" + separator + "test" + i + ".verit"
 
-      // TODO: prover9 implements the interface for HOLFormulas, but downcasts them to FOLFormula
-      //"prover9 must be able to proof formula " ! (new at.logic.provers.prover9.Prover9Prover).isValid(f_formula)
+        val p = VeriTParser.getExpansionProof(testfilename)
+
+        val formulas = ETapplyToExpansionSequent(ETtoDeep.apply, p)
+        val seq = FSequent(formulas._1, formulas._2)
+
+        /*
+        println("file: " +testfilename)
+        println("formula: " +seq)
+        */
+
+        (new at.logic.provers.minisat.MiniSATProver).isValid(seq) must beTrue
+      }
     }
 
-    "load prover9 proof pi and verify the validity of the formula using MiniSAT as well as prover9 " in {
+    "load veriT proofs pi and verify the validity of Deep(pi) using Prover9" in {
+      skipped("test takes way too long, possibly some kind of bug")
+      for (i <- 0 to 4) {
 
-      val (robResProof, seq) = Prover9.parse_prover9("/home/totycro/gapt/source/provers/prover9/target/test-classes/cade13example.out")
+        val testfilename = "target" + separator + "test-classes" + separator + "test" + i + ".verit"
 
-      "prover9 must be able to proof the sequent" ! (new at.logic.provers.prover9.Prover9Prover).isValid(seq)
-      "MiniSAT must be able to proof the sequent" ! (new at.logic.provers.minisat.MiniSATProver).isValid(seq)
+        val p = VeriTParser.getExpansionProof(testfilename)
+
+        val formulas = ETapplyToExpansionSequent(ETtoDeep.apply, p)
+        val seq = FSequent(formulas._1, formulas._2)
+
+        /*
+        println("file: " +testfilename)
+        println("formula: " +seq)
+        */
+
+        (new at.logic.provers.prover9.Prover9Prover).isValid(seq) must beTrue
+      }
     }
-    */
   }
 }
