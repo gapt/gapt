@@ -8,7 +8,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.calculi.slk._
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus.{VariableNameGenerator, Var}
+import at.logic.language.lambda.typedLambdaCalculus.{VariantGenerator, VariableNameGenerator, Var}
 import at.logic.language.schema._
 import at.logic.language.hol.{HOLConst, Atom, HOLExpression, HOLFormula, AllVar, ExVar}
 import at.logic.language.lambda.types.{Ti, Tindex}
@@ -479,13 +479,15 @@ object AtomicExpansion {
 
   def apply(p:LKProof) : LKProof = expandProof(p)
 
+
+
   /* Same as apply(fs:FSequent) but you can specify the formula on the lhs (f1) and rhs (f2) */
   def apply(fs:FSequent, f1:HOLFormula, f2: HOLFormula) = {
     //initialize generator for eigenvariables
     var index = 100
-    val gen = new VariableNameGenerator(() => { index = index+1; "ev"+index+""} )
+    val vg = new EVGenerator(() => {index = index+1; index.toString})
 
-    val atomic_proof = atomicExpansion_(gen, f1,f2)
+    val atomic_proof = atomicExpansion_(vg, f1,f2)
 
     addWeakenings(atomic_proof, fs)
   }
@@ -561,7 +563,7 @@ object AtomicExpansion {
       val tautology_formulas = for (a <- antd; s <- succd; if a.formula == s.formula && !a.formula.isAtom) yield { a.formula }
       if (tautology_formulas.nonEmpty) {
         val tf = tautology_formulas(0)
-        println("Expanding "+tf)
+        //println("Expanding "+tf)
         AtomicExpansion(seq.toFSequent, tf, tf) }
       else {
         p
@@ -666,6 +668,14 @@ object AtomicExpansion {
       DefinitionRightRule(duproof, aux.formula, prin.formula)
 
 
+  }
+
+  class EVGenerator( gen : () => String) extends VariableNameGenerator( gen ) {
+    override def apply(a : Var, blacklist : Set[String]) : Var = {
+      var name : String = "ev"+a.name+"_{"+gen()+"}"
+      while (blacklist.contains(name)) name = gen()
+      a.factory.createVar(VariableStringSymbol(name), a.exptype)
+    }
   }
 }
 

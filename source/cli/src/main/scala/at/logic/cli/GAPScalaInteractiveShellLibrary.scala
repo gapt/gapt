@@ -96,6 +96,9 @@ import at.logic.calculi.lk.quantificationRules.ForallLeftRule
 import at.logic.parsing.language.hlk.{HLKHOLParser, DeclarationParser}
 import at.logic.algorithms.hlk.{HybridLatexExporter, HybridLatexParser}
 import at.logic.algorithms.rewriting.DefinitionElimination
+import at.logic.parsing.language.xml.ProofDatabase
+import at.logic.transformations.ceres.clauseSets.{SimplifyStruct, StandardClauseSet}
+import scala.reflect.runtime.universe._
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -120,19 +123,20 @@ object printProofStats {
 
   import at.logic.transformations.ceres.struct._
   object extractStruct {
-    def apply(p: LKProof) = StructCreators.extract( p )
-  }
-
-  object extractStructLKSC {
-     def apply(p: LKProof, cut_occs: Set[FormulaOccurrence]) = StructCreators.extract( p,cut_occs )
+    def apply(p: LKProof) =
+      StructCreators.extract( p )
+    def apply(p: LKProof, cutformula_condidtion : HOLFormula => Boolean) =
+      StructCreators.extract( p, cutformula_condidtion )
+    def apply(p: LKProof, cut_occs: Set[FormulaOccurrence]) =
+      StructCreators.extract( p,cut_occs )
   }
 
   object structToClausesList {
-    def apply(s: Struct) = at.logic.transformations.ceres.clauseSets.StandardClauseSet.transformStructToClauseSet(s)
+    def apply(s: Struct) = StandardClauseSet.transformStructToClauseSet(s)
   }
 
   object structToLabelledClausesList {
-    def apply(s: Struct) = at.logic.transformations.ceres.clauseSets.StandardClauseSet.transformStructToLabelledClauseSet(s)
+    def apply(s: Struct) = StandardClauseSet.transformStructToLabelledClauseSet(s)
   }
 
   object refuteClauseList {
@@ -850,7 +854,47 @@ object printProofStats {
     def apply(tree: ExpansionTree): MultiExpansionTree = at.logic.algorithms.expansionTrees.compressQuantifiers(tree)
   }
 
-  object eliminateDefinitions extends DefinitionElimination
+  object eliminateDefinitions {
+    def apply(db : ProofDatabase, name : String) : LKProof = {
+      val proofs = db.proofs.filter(_._1 == name)
+      require(proofs.nonEmpty, "Proof "+name+" not contained in proof database: "+db.proofs.map(_._1))
+      val (_,p)::_ = proofs
+      eliminateDefinitions(db.Definitions, p)
+    }
+    def apply(definition_map : Map[HOLExpression,HOLExpression], p:LKProof) : LKProof =
+      AtomicExpansion(DefinitionElimination(definition_map,p))
+  }
+
+  object css {
+    def apply(s:Struct) : (List[FSequent], List[FSequent])  = {
+      apply(structToClausesList(SimplifyStruct(s)))
+    }
+
+    def apply(l:List[Sequent]) : (List[FSequent], List[FSequent])  =
+      prunes(l)
+
+    def prunes(l:List[Sequent]) : (List[FSequent], List[FSequent]) = {
+        prunefs(l map (_.toFSequent()))
+    }
+
+    def prunefs(l:List[FSequent]) : (List[FSequent], List[FSequent]) = {
+      (removeSubsumed(extractFOL(l)).sorted(FSequentOrdering), extractHOL(l).toSet.toList.sorted(FSequentOrdering))
+    }
+
+    def extractFOL(l : List[FSequent]) : List[FSequent] = l.flatMap(x => try {
+      hol2fol(x.toFormula())
+      FSequent(x.antecedent.map(hol2fol.apply), x.succedent.map(hol2fol.apply))::Nil
+    } catch {
+      case e:Exception => Nil
+    })
+
+    def extractHOL(l : List[FSequent]) : List[FSequent] = l.flatMap(x => try {
+      hol2fol(x.toFormula())
+      Nil
+    } catch {
+      case e:Exception => x::Nil
+    })
+  }
 
   object sequent {
     def find(p:LKProof, pred : (LKProof => Boolean)) : List[LKProof] = p match {

@@ -640,7 +640,7 @@ import at.logic.language.schema.SchemaFormula
       case ExistsHyperLeftRule(upperProof, r, a, p, _) =>
         debug("(10) "+cut_occs+ "  ");
         extract(upperProof, cut_occs)
-      case _ => throw new Exception("\nMissin rule in StructCreators.extract\n")
+      case _ => throw new Exception("Missing rule in StructCreators.extract: "+p.rule)
     }
 
     //the original version:

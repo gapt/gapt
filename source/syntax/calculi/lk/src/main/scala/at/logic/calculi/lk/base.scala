@@ -54,8 +54,36 @@ import base.types._
       def toFormula() = Or( antecedent.toList.map(x=> Neg( x ) ) ++ succedent.map(identity) )
 
       def isEmpty = _1.isEmpty && _2.isEmpty
+
+      def sorted = FSequent(_1.sorted(HOLOrdering), _2.sorted(HOLOrdering))
+    }
+
+  }
+
+  object FSequentOrdering extends FSequentOrdering;
+  class FSequentOrdering extends Ordering[FSequent]  {
+    def compare(x:FSequent,y:FSequent)  : Int = {
+      if (x.antecedent.size < y.antecedent.size) -1 else
+      if (y.antecedent.size < x.antecedent.size) 1 else
+      if (x.antecedent.size == y.antecedent.size && x.succedent.size < y.succedent.size) -1 else
+      if (x.antecedent.size == y.antecedent.size && y.succedent.size < x.succedent.size) 1 else
+      {
+        assert(x.antecedent.size == y.antecedent.size &&
+                x.succedent.size == y.succedent.size, "Implementation error comparing FSequents!")
+        val xs = x.sorted.formulas
+        val ys = y.sorted.formulas
+        val xys = xs zip ys
+        xys.foldLeft(0)( (rv, pair) => {
+          //as long as it is undecided, we compare pairs
+          if (rv == 0) HOLOrdering.compare(pair._1, pair._2)
+          //otherwise we pass the result on
+          else rv
+        })
+      }
     }
   }
+
+
 
   object FSequent {
     def apply(ant: Seq[HOLFormula], succ: Seq[HOLFormula]) : types.FSequent =  new FSequent(ant,succ) //Pair(ant, succ)
