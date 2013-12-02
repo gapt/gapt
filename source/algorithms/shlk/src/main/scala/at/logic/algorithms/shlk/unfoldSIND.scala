@@ -661,12 +661,6 @@ object cloneMySol{
         val finForm = apply(aF,proofSize)
         ExVar(aV,finForm)
       }
-      case sAtom(set) => {
-        val atomName = set.asInstanceOf[Pair[ConstantStringSymbol,List[HOLExpression]]]._1
-        val SOLList = set.asInstanceOf[Pair[ConstantStringSymbol,List[HOLExpression]]]._2
-        val finSOLList = SOLList.asInstanceOf[List[HOLExpression]].map( x => cloneMyTerm(x,proofSize))
-        sAtom(atomName,finSOLList)
-      }
       case Atom(set) => {
         val atomName = set.asInstanceOf[Pair[ConstantStringSymbol,List[HOLExpression]]]._1
         val SOLList = set.asInstanceOf[Pair[ConstantStringSymbol,List[HOLExpression]]]._2
@@ -681,7 +675,9 @@ object cloneMySol{
 object cloneMyTerm{
   import at.logic.language.hol._
   def apply(term:HOLExpression , proofSize:Int):HOLExpression = {
-    term
+    term match {
+      case _ => { term}
+    }
   }
 }
 

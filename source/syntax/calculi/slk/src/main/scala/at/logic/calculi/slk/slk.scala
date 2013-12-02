@@ -49,7 +49,7 @@ object SingleSequent {
   }
 }
 
-class SchemaProof(val name: String, val vars: List[IntVar], val seq: FSequent, val base: LKProof, val rec: LKProof)
+class SchemaProof(val name: String, val vars: List[HOLVar], val seq: FSequent, val base: LKProof, val rec: LKProof)
 {
   {
     // FIXME: why are these casts needed?

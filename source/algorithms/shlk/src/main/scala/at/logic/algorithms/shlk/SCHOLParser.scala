@@ -7,12 +7,11 @@ import at.logic.calculi.lk.propositionalRules._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import at.logic.language.hol._
-import at.logic.language.schema.{IntZero,IntegerTerm,fowVar,SchemaFormula,lessThan,sims,leq,Succ,IntVar,dbTRS,indexedOmegaVar}
-import at.logic.language.hol.Definitions._
+import at.logic.language.schema.{lessThan,sims,leq,dbTRS}
 import at.logic.language.lambda.typedLambdaCalculus._
 import collection.mutable.{Map => MMap}
 import at.logic.language.lambda.types.Definitions._
-import logicSymbols.{ConstantStringSymbol}
+import logicSymbols.ConstantStringSymbol
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.algorithms.lk._
@@ -84,7 +83,7 @@ object SCHOLParser {
       def slkProof: Parser[Any] = "proof" ~ """[\\]*[a-z0-9]+""".r ~ "given" ~  "[" ~ repsep(term|IndividualordinalExpressions,",") ~ "]" ~  "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
         case                       "proof" ~  str ~ "given" ~ "[" ~ linkparams ~ "]" ~  "proves" ~   seq  ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
           bigMMap.put(str, Pair(mapBase, mapStep))
-          SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
+          SchemaProofDB.put(new SchemaProof(str, HOLVar(new VariableStringSymbol("k"),ind)::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
           SchemaProofDB.putLinkTerms(str,linkparams)
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
@@ -101,9 +100,9 @@ object SCHOLParser {
       def and: Parser[HOLFormula] = "(" ~ repsep(formula, "/\\") ~ ")" ^^ { case "(" ~ formulas ~ ")"  => {  And(formulas) } }
       def or: Parser[HOLFormula]  = "(" ~ repsep(formula, """\/""" ) ~ ")" ^^ { case "(" ~ formulas ~ ")"  => { Or(formulas) } }
       def imp: Parser[HOLFormula] = "(" ~ formula ~ "->" ~ formula ~ ")" ^^ {case "(" ~ x ~ "->" ~ y ~ ")"=> Imp(x,y)}
-      def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
+      def forall: Parser[HOLFormula] = "Forall" ~ FOVariable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
       def forall_hyper: Parser[HOLFormula] = "ForallHyper" ~ IndividualOrdinalFunctionVar ~ formula ^^ {case "ForallHyper" ~ v ~ x => AllVar(v.asInstanceOf[Var],x)}
-      def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
+      def exists: Parser[HOLFormula] = "Exists" ~ FOVariable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
       def exists_hyper: Parser[HOLFormula] = "ExistsHyper" ~ IndividualOrdinalFunctionVar ~ formula ^^ {case "ExistsHyper" ~ v ~ x => ExVar(v.asInstanceOf[Var],x)}
       def Atoms: Parser[HOLFormula] = inequality | equality | less | sim | lessOrEqual | OrdinalAtom  | BaseAtom
       def inequality: Parser[HOLFormula] = IndividualSort ~ "\\=" ~ IndividualSort ^^ {case x ~ "\\=" ~ y => Neg(Equation(x,y))}
@@ -126,26 +125,23 @@ object SCHOLParser {
       ////////////////////////////////////////////////////////////////////////////////////////////////////
       def term: Parser[HOLExpression] = OrdinalSort| IndividualSort
       def OrdinalSort: Parser[HOLExpression] =  OrdinalFunction | OrdinalTerms
-      def IndividualSort: Parser[HOLExpression] =    IndividualFunction  | FOVariable | indexedwVar  |  constant
-      def variable: Parser[HOLVar] =   FOVariable | indexedwVar
+      def IndividualSort: Parser[HOLExpression] = IndividualFunction  | OrdinalFunctionFarIns |  FOVariable |  constant
+      def variable: Parser[HOLExpression] =   FOVariable | OrdinalFunctionFarIns
       def IndividualordinalExpressions: Parser[HOLExpression] = IndividualOrdinalFunctionVar | lambdaTerm
-      def OrdinalTerms: Parser[IntegerTerm] =  sum | succ | succConsts | numberConsts | intVar
-      def VariatedOrdinalTerms: Parser[IntegerTerm] = intVar | succ
-      def intConst: Parser[IntegerTerm] = numberConsts | succConsts
-      def numberConsts: Parser[IntegerTerm] = """[0-9]+""".r ^^ {case x => {maketogether(augmentString(x).toInt)}
-      }
+      def OrdinalTerms: Parser[HOLExpression] =  sum | succ | succConsts | numberConsts | intVar
+      def VariatedOrdinalTerms: Parser[HOLExpression] = intVar | succ
+      def intConst: Parser[HOLExpression] = numberConsts | succConsts
+      def numberConsts: Parser[HOLExpression] = """[0-9]+""".r ^^ {case x => {maketogether(augmentString(x).toInt)}}
       def OrdinalFunction: Parser[HOLExpression] = regex(new Regex("[d]{1}")) ~ "(" ~ repsep(IndividualSort,",") ~ ")"  ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, ind)}
-      def sum : Parser[IntegerTerm] = VariatedOrdinalTerms ~ "+" ~ intConst ^^ {case iI ~ "+" ~ iC => { PutPlusTogether(iI,iC)}}
-      def intVar: Parser[IntVar] = "k".r ^^ {case x => { IntVar(new VariableStringSymbol(x))}}
-      def succ: Parser[IntegerTerm] = "s(" ~ VariatedOrdinalTerms ~ ")" ^^ {case "s(" ~ ii ~ ")" => Succ(ii)}
-      def succConsts: Parser[IntegerTerm] = "s(" ~ intConst ~ ")" ^^ { case "s(" ~ i ~ ")" => Succ(i)}
-      def IndividualFunction: Parser[HOLExpression] = regex(new Regex("max|s")) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i)}
-      def FOVariable: Parser[HOLVar] = regex(new Regex("[xyzm]{1}"))  ^^ {case x => fowVar(x)}
-      def indexedwVar: Parser[HOLVar] = regex(new Regex("[ABRXW]")) ~ "(" ~ OrdinalTerms ~ ")" ^^ {
-        case x ~ "(" ~ i ~ ")" => { indexedOmegaVar(new VariableStringSymbol(x), i.asInstanceOf[IntegerTerm])}}
-      def constant: Parser[HOLConst] = regex(new Regex("[c]{1}[a-zA-Z0-9]+"))  ^^ {
-        case x => {hol.createVar(new ConstantStringSymbol(x), ind->ind).asInstanceOf[HOLConst]}}
-      def IndividualOrdinalFunctionVar: Parser[HOLExpression] = regex(new Regex("[ABRXW]{1}")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->i)}
+      def sum : Parser[HOLExpression] = VariatedOrdinalTerms ~ "+" ~ intConst ^^ {case iI ~ "+" ~ iC => { PutPlusTogether(iI,iC)}}
+      def intVar: Parser[HOLExpression] = "k".r ^^ {case x => { HOLVar(new VariableStringSymbol(x),ind)}}
+      def succ: Parser[HOLExpression] = "s(" ~ VariatedOrdinalTerms ~ ")" ^^ {case "s(" ~ ii ~ ")" => Function(new ConstantStringSymbol("schS"), List(ii), ind)}
+      def succConsts: Parser[HOLExpression] = "s(" ~ intConst ~ ")" ^^ { case "s(" ~ ii ~ ")" => Function(new ConstantStringSymbol("schS"), List(ii), ind)}
+      def IndividualFunction: Parser[HOLExpression] = regex(new Regex("[a-z]+")) ~ "(" ~ repsep(IndividualSort,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i)}
+      def FOVariable: Parser[HOLVar] = regex(new Regex("[xyzm]{1}"))  ^^ {case x => HOLVar(new VariableStringSymbol(x),i)}
+      def OrdinalFunctionFarIns: Parser[HOLExpression] = regex(new Regex("[A-Z]{1}")) ~ "(" ~ OrdinalTerms ~ ")" ^^ {case x ~ "(" ~ ii ~ ")" => { Function(new ConstantStringSymbol(x), List(ii), i)}}
+      def constant: Parser[HOLConst] = regex(new Regex("[c]{1}[a-zA-Z0-9]+"))  ^^ {case x => HOLConst(new ConstantStringSymbol(x), i)}
+      def IndividualOrdinalFunctionVar: Parser[HOLExpression] = regex(new Regex("[A-Z]{1}")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->i)}
       def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ IndividualSort ~ ")" ^^ {
         case "(" ~ "λ" ~ x ~ "." ~ t ~ ")" => HOLAbs(x, t)
       }
@@ -276,32 +272,32 @@ object SCHOLParser {
       }
       def orEqR1: Parser[LKProof] = "orEqR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orEqR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          OrRightEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          OrRightEquivalenceRule1(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
       }
       def orEqR2: Parser[LKProof] = "orEqR2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orEqR2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          OrRightEquivalenceRule2(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          OrRightEquivalenceRule2(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
       }
       def orEqR3: Parser[LKProof] = "orEqR3(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orEqR3(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          OrRightEquivalenceRule3(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          OrRightEquivalenceRule3(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
       }
       def orEqL1: Parser[LKProof] = "orEqL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orEqL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          OrLeftEquivalenceRule1(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          OrLeftEquivalenceRule1(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
       }
       def orEqL2: Parser[LKProof] = "orEqL2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orEqL2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          OrLeftEquivalenceRule2(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          OrLeftEquivalenceRule2(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
       }
       def orEqL3: Parser[LKProof] = "orEqL3(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orEqL3(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          OrLeftEquivalenceRule3(map.get(l).get, f1.asInstanceOf[SchemaFormula], f2.asInstanceOf[SchemaFormula])
+          OrLeftEquivalenceRule3(map.get(l).get, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
         }
       }
       def contrL: Parser[LKProof] = "contrL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
@@ -320,12 +316,12 @@ object SCHOLParser {
           ForallLeftRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], term.asInstanceOf[HOLExpression])
         }
       }
-      def allR: Parser[LKProof] = "allR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ (indexedwVar|FOVariable) ~ ")" ^^ {
+      def allR: Parser[LKProof] = "allR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ (OrdinalFunctionFarIns|FOVariable) ~ ")" ^^ {
         case "allR(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ v ~ ")" => {
           ForallRightRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
         }
       }
-      def exL: Parser[LKProof] = "exL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ (indexedwVar|FOVariable) ~ ")" ^^ {
+      def exL: Parser[LKProof] = "exL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ "," ~ (OrdinalFunctionFarIns|FOVariable) ~ ")" ^^ {
         case "exL(" ~ l ~ "," ~ aux ~ "," ~ main ~ "," ~ v ~ ")" => {
           ExistsLeftRule(map.get(l).get, aux.asInstanceOf[HOLFormula], main.asInstanceOf[HOLFormula], v.asInstanceOf[HOLVar])
         }
@@ -399,19 +395,25 @@ object SCHOLParser {
   }
 }
 object PutPlusTogether{
-  def apply(iI: IntegerTerm, iC: IntegerTerm): IntegerTerm = {
+  def apply(iI: HOLExpression, iC: HOLExpression): HOLExpression = {
       iC match{
-        case IntZero() => iI
-        case Succ(i) => Succ(apply(iI,i))
-        case _ => throw new Exception("WHHHHHHHHHHHHHHHHHHHHHHHHHHHHYYYYYYYYYYYYYYYYYYYYY????????????????\n" + iC.toString + "\n")
+        case HOLConst(n,t) => n match {
+          case ConstantStringSymbol(s) if s == "0" && t == ind =>  iI
+          case _ => throw new Exception("Why?\n" + iC.toString + "\n")
+        }
+        case Function(n,l,t) => n match {
+            case ConstantStringSymbol(s) if s == "schS" && t == ind => Function(n,List(apply(iI,l.head)),t)
+            case _ => throw new Exception("Why?\n" + iC.toString + "\n")
+        }
+        case _ =>  throw new Exception("Why?\n" + iC.toString + "\n")
       }
   }
 }
 object maketogether{
-  def apply(i: Int): IntegerTerm = {
+  def apply(i: Int): HOLExpression = {
       i match{
-        case 0 => IntZero()
-        case x => Succ(apply(x-1))
+        case 0 => HOLConst(ConstantStringSymbol("0"), ind)
+        case x => Function(new ConstantStringSymbol("schS"),List(apply(x-1)),ind)
       }
   }
 }
