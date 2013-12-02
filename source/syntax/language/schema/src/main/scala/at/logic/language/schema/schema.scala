@@ -727,16 +727,19 @@ class SchemaSubstitution2[T <: HOLExpression](val map: Map[Var, T])  {
     }
   }
 }
+
+//This version of the function is used specifically to find the highest level subterms
+//within atoms and satoms. Terms within terms are not located within the set.
   object SchemaSubTerms{
       def apply(f:HOLExpression):Seq[HOLExpression] = f match {
       case Var(_,_) => List(f)
       case Atom(_, args) =>  args.map(a => apply(a.asInstanceOf[HOLExpression])).flatten
-      case Function(_,args,_)  =>  (List(f).toSeq ++ args.map(a => apply(a.asInstanceOf[HOLExpression])).flatten)
-      case BinaryFormula(x,y) => (apply(x.asInstanceOf[HOLExpression]) ++ apply(y.asInstanceOf[HOLExpression]))
+      case Function(_,args,_)  =>  {/*println("wShould be here????????  " + f.toString);*/ List(f).toSeq   }
+      case BinaryFormula(x,y) =>  {/*println("why are you here????????  " + x.toString);*/ (apply(x.asInstanceOf[HOLExpression]) ++ apply(y.asInstanceOf[HOLExpression]))   }
       case Neg(x) => apply(x.asInstanceOf[HOLExpression])
       case Quantifier(_,_,x) =>  apply(x.asInstanceOf[HOLExpression])
       case HOLAbs(_, x) =>  apply(x.asInstanceOf[HOLExpression])
-      case HOLApp(x, y) => (apply(x.asInstanceOf[HOLExpression]) ++ apply(y.asInstanceOf[HOLExpression]))
+      case HOLApp(x, y) => List(f).toSeq
     }
   }
 object isSAtom{

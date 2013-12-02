@@ -476,6 +476,9 @@ object printProofStats {
     def slkh(file:String) = {
       sFOParserCNT.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
     }
+    def ScholParse(file:String) = {
+      SCHOLParser.parseProofFlat( new InputStreamReader(new FileInputStream( file ) ) )
+    }
 
     def lisp(string:String) = {
       SExpressionParser.parseString(string)

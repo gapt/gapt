@@ -119,7 +119,7 @@ trait SchemaProofLink {
 }
 
 object FOSchemaProofLinkRule {
-  def apply(seq: FSequent, link_name: String, indices_ : List[HOLExpression]) = {
+  def apply(seq: FSequent, link_name: String, indices_ : List[HOLExpression]) : LeafTree[Sequent] with NullaryLKProof with SchemaProofLink = {
     def createSide(side : Seq[HOLFormula]) = {
       side.map(f =>factory.createFormulaOccurrence(f, Seq.empty[FormulaOccurrence]))
     }

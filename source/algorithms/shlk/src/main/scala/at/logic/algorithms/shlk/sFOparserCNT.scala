@@ -10,6 +10,7 @@ import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import at.logic.parsing.language.HOLParser
 import at.logic.language.hol._
+import at.logic.language.schema.{IntegerTerm,fowVar,sTerm,SchemaFormula,indexedFOVar,lessThan,sims,leq,Succ,IntVar,dbTRS,sAtom,BigAnd,BigOr,SchemaSubstitutionCNF,indexedOmegaVar,foTerm,Pred}
 import at.logic.language.hol.Definitions._
 import at.logic.language.hol.ImplicitConverters._
 import at.logic.language.lambda.types.TA
@@ -21,14 +22,9 @@ import at.logic.language.lambda.types._
 import logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.language.schema.{Neg => SNeg, _}
 import at.logic.algorithms.lk._
 import at.logic.language.lambda.types.Ti
-import at.logic.language.hol.And
 import at.logic.language.lambda.types.Tindex
-import at.logic.language.hol.Or
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.hol.Imp
 import scala.Tuple4
 import at.logic.language.lambda.types.->
 import at.logic.language.lambda.symbols.VariableStringSymbol
@@ -342,7 +338,6 @@ object sFOParserCNT {
       def forall_hyper: Parser[HOLFormula] = "ForallHyper" ~ SOindVar ~ formula ^^ {case "ForallHyper" ~ v ~ x => AllVar(v.asInstanceOf[Var],x)}
       def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
       def exists_hyper: Parser[HOLFormula] = "ExistsHyper" ~ SOindVar ~ formula ^^ {case "ExistsHyper" ~ v ~ x => ExVar(v.asInstanceOf[Var],x)}
-      //def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")" => { Atom(new VariableStringSymbol(x), params)}}
       def const_atom: Parser[HOLFormula] = regex(new Regex("[A-Z]+")) ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { Atom(new ConstantStringSymbol(x), params) }}
       def s_atom: Parser[HOLFormula] = """MAXL|MAXF|ORINF|POSF""".r ~ "(" ~ repsep(term,",") ~ ")" ^^ { case x ~ "(" ~ params ~ ")" => { sAtom(new ConstantStringSymbol(x), params) }}
       def equality: Parser[HOLFormula] = eq_infix |  eq_prefix // infix is problematic in higher order

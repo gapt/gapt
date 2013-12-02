@@ -18,7 +18,7 @@ import at.logic.parsing.ParsingException
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.LKProof
-import at.logic.algorithms.shlk.{sFOParser,sFOParserCNT}
+import at.logic.algorithms.shlk.{SCHOLParser, sFOParser, sFOParserCNT}
 import at.logic.utils.ds.trees.{LeafTree, BinaryTree, Tree}
 import at.logic.language.hol.HOLExpression
 import at.logic.gui.prooftool.gui.{DrawSequent, Main}
@@ -70,7 +70,7 @@ class FileParser {
     resolutionProofSchemaDB.clear
     proofs = Nil
     termTrees = Nil
-    val ps = sFOParserCNT.parseProofs(input) // constructs dbTRS as a side effect.
+    val ps = SCHOLParser.parseProofs(input) // constructs dbTRS as a side effect.
     val defs = dbTRS.map.map(p => p._2._1::p._2._2::Nil).flatten.toMap[HOLExpression,HOLExpression]
     //  val start = System.currentTimeMillis()
     proofdb = new ProofDatabase(defs, ps, Nil, Nil)
