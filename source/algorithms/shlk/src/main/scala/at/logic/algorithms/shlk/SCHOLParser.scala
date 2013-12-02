@@ -26,7 +26,7 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 object SCHOLParser {
 
   def parseProofs(input: InputStreamReader): List[(String, LKProof)] = {
-    val m = sFOParserCNT.parseProof(input)
+    val m = SCHOLParser.parseProof(input)
     m.foldLeft(List.empty[(String, LKProof)])((res, pair) => (pair._1, pair._2._1.get("root").get) :: (pair._1, pair._2._2.get("root").get) :: res)
   }
 
@@ -143,14 +143,12 @@ object SCHOLParser {
       def intVar: Parser[HOLExpression] = "k".r ^^ {case x => { HOLVar(new VariableStringSymbol(x),ind)}}
       def succ: Parser[HOLExpression] = "s(" ~ VariatedOrdinalTerms ~ ")" ^^ {case "s(" ~ ii ~ ")" => Function(new ConstantStringSymbol("schS"), List(ii), ind)}
       def succConsts: Parser[HOLExpression] = "s(" ~ intConst ~ ")" ^^ { case "s(" ~ ii ~ ")" => Function(new ConstantStringSymbol("schS"), List(ii), ind)}
-      def IndividualFunction: Parser[HOLExpression] = regex(new Regex("[a-z]+")) ~ "(" ~ repsep(IndividualSort,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new VariableStringSymbol(x), params, i)}
+      def IndividualFunction: Parser[HOLExpression] = regex(new Regex("[a-z]+")) ~ "(" ~ repsep(IndividualSort,",") ~ ")" ^^ {case x ~ "(" ~ params ~ ")"  => Function(new ConstantStringSymbol(x), params, i)}
       def FOVariable: Parser[HOLVar] = regex(new Regex("[xyzm]{1}"))  ^^ {case x => HOLVar(new VariableStringSymbol(x),i)}
       def OrdinalFunctionFarIns: Parser[HOLExpression] = regex(new Regex("[A-Z]{1}")) ~ "(" ~ OrdinalTerms ~ ")" ^^ {case x ~ "(" ~ ii ~ ")" => { Function(new ConstantStringSymbol(x), List(ii), i)}}
       def constant: Parser[HOLConst] = regex(new Regex("[c]{1}[a-zA-Z0-9]+"))  ^^ {case x => HOLConst(new ConstantStringSymbol(x), i)}
       def IndividualOrdinalFunctionVar: Parser[HOLExpression] = regex(new Regex("[A-Z]{1}")) ^^ {case x => HOLVar(new VariableStringSymbol(x), ind->i)}
-      def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ IndividualSort ~ ")" ^^ {
-        case "(" ~ "λ" ~ x ~ "." ~ t ~ ")" => HOLAbs(x, t)
-      }
+      def lambdaTerm: Parser[HOLExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ IndividualSort ~ ")" ^^ { case "(" ~ "λ" ~ x ~ "." ~ t ~ ")" => HOLAbs(x, t)}
       ////////////////////////////////////////////////////////////////////////////////////////////////////
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -424,3 +422,15 @@ object maketogether{
   }
 }
 
+object backToInt{
+  def apply(i: HOLExpression): Int = {
+    i match{
+      case HOLConst(n,t) => n match {
+        case ConstantStringSymbol(s) if s == "0" && t == ind =>  0
+        case _ => throw new Exception("Why?\n" + i.toString + "\n")
+      }
+      case Function(ConstantStringSymbol(n),l,t) if n ==  "schS" && t == ind =>  1 + apply(l.head)
+      case _ => throw new Exception("Why?\n" + i.toString + "\n")
+    }
+  }
+}

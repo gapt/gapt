@@ -801,7 +801,7 @@ case class LeqC(e:TA) extends HOLConst(LeqSymbol, ->(Ti(), ->(Ti(), To())))
 
 object lessThan {
   def apply(left: HOLExpression, right: HOLExpression) = {
-//    require(left.exptype == right.exptype)
+    require(left.exptype == right.exptype)
     App(App(LessThanC(left.exptype), left),right).asInstanceOf[HOLFormula]
   }
   def unapply(expression: LambdaExpression) = expression match {
@@ -812,7 +812,7 @@ object lessThan {
 
 object sims {
   def apply(left: HOLExpression, right: HOLExpression) = {
-    //    require(left.exptype == right.exptype)
+    require(left.exptype == right.exptype)
     App(App(SimsC(left.exptype), left),right).asInstanceOf[HOLFormula]
   }
   def unapply(expression: LambdaExpression) = expression match {
