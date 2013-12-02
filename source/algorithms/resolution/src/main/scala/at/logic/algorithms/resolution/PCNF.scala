@@ -11,16 +11,20 @@ import at.logic.language.lambda.substitutions.Substitution
 import scala.Some
 import scala.Tuple2
 import at.logic.algorithms.lk.{applySubstitution => applySub, addContractions, addWeakenings}
+import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)
  * Note about checking containmenet up to variables renaming:
  * we compute the variable renaming from the lk proof to the resolution proof for a specific clause. We cannot apply it to the formula in s
- * as it might be quantified over this variables so we apply it to the resulted lk proof. We must apply it as otherwise the substitution in
+  as it might be quantified over this variables so we apply it to the resulted lk proof. We must apply it as otherwise the substitution in
  * the resolution to lk transformation will not be applied to these clauses. In the weakenings application at the end of this method we try
  * to apply it to the formulas as well as if it is quantified over these variables, it will be also quantified in the proof so no damage
  * done.
  */
+case class ResolutionException(msg : String, proofs : List[RobinsonResolutionProof], clauses: List[FClause])
+  extends Exception("Resolution Exception: "+msg)
+
 object PCNF {
   /**
    * @param s a sequent not containing strong quantifiers
@@ -45,12 +49,12 @@ object PCNF {
     val (p,f,inAntecedent) = op match {
       case Some(f2) => {
         // find the right formula and compute the proof
-        s.antecedent.find(x => CNFp(x).contains(f2)) match {
+        s.antecedent.find(x => containsMatchingClause(f2,CNFp(x))) match {
           case Some(f3) => {
             (applySub(PCNFp(f3,a,subi),sub)._1,f3,true)
           }
           case _ => {
-            val f3 = s.succedent.find(x => CNFn(x).contains(f2)).get
+            val f3 = s.succedent.find(x => containsMatchingClause(f2,CNFn(x))).get
             (applySub(PCNFn(f3,a,subi),sub)._1,f3,false)
           }
         }
@@ -62,8 +66,8 @@ object PCNF {
           case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
           case  _ => false
         }) match {
-          case Some(f) => (Axiom(List(),List(f)),f.asInstanceOf[HOLFormula],false)
-          case _ => throw new IllegalArgumentException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]")
+         case Some(f) => (Axiom(List(),List(f)),f.asInstanceOf[HOLFormula],false)
+          case _ => throw new ResolutionException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]", Nil, a::cnf.toList )
         }
     }
     // apply weakenings
@@ -83,6 +87,11 @@ object PCNF {
 
     // apply contractions on the formulas of a, since we duplicate the context on every binary rule
     //introduceContractions(p_,a)
+  }
+
+  def containsMatchingClause(what : FClause, where : Set[FClause]) : Boolean = {
+    //TODO: check for symmetry applications during prover9's cnf construction
+    where.find(_ equals what).isDefined
   }
 
   def introduceContractions(resp: LKProof, s: FClause): LKProof= {

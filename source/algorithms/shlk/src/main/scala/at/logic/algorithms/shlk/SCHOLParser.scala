@@ -7,7 +7,7 @@ import at.logic.calculi.lk.propositionalRules._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import at.logic.language.hol._
-import at.logic.language.schema.{lessThan,sims,leq,dbTRS}
+import at.logic.language.schema._
 import at.logic.language.lambda.typedLambdaCalculus._
 import collection.mutable.{Map => MMap}
 import at.logic.language.lambda.types.Definitions._
@@ -15,6 +15,12 @@ import logicSymbols.ConstantStringSymbol
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.algorithms.lk._
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.hol.And
+import at.logic.language.hol.Or
+import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.hol.Imp
+import at.logic.language.hol.Neg
 import at.logic.language.lambda.symbols.VariableStringSymbol
 
 object SCHOLParser {
@@ -83,7 +89,7 @@ object SCHOLParser {
       def slkProof: Parser[Any] = "proof" ~ """[\\]*[a-z0-9]+""".r ~ "given" ~  "[" ~ repsep(term|IndividualordinalExpressions,",") ~ "]" ~  "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
         case                       "proof" ~  str ~ "given" ~ "[" ~ linkparams ~ "]" ~  "proves" ~   seq  ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
           bigMMap.put(str, Pair(mapBase, mapStep))
-          SchemaProofDB.put(new SchemaProof(str, HOLVar(new VariableStringSymbol("k"),ind)::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
+          SchemaProofDB.put(new SchemaProof(str, IntVar(new VariableStringSymbol("k"))::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
           SchemaProofDB.putLinkTerms(str,linkparams)
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
