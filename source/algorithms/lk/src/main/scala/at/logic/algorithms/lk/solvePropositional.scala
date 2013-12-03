@@ -90,10 +90,14 @@ object solvePropositional extends at.logic.utils.logging.Logger {
       val Some((f,g)) = findNonschematicAxiom(seq)
       Some(AtomicExpansion(seq,f,g))
     }
+    // If all atoms are different, return None.
+    else if(noCommonAtoms(seq)) {
+      None
+    }
     else findUnaryLeft(seq) match {
       // Apply unary rule on antecedent
       case Some(f) => 
-      val rest = new FSequent(seq.antecedent.diff(f::Nil), seq.succedent)
+      val rest = FSequent(seq.antecedent.diff(f::Nil), seq.succedent)
       f match {
 
         case Neg(f1) =>
@@ -110,7 +114,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
             // Computing premise antecedent and succedent
             val p_ant = rest.antecedent
             val p_suc = f1.asInstanceOf[HOLFormula] +: rest.succedent
-            val premise = new FSequent(p_ant, p_suc)
+            val premise = FSequent(p_ant, p_suc)
             prove(premise) match {
               case Some(p) => 
                 val p1 = NegLeftRule(p, f1.asInstanceOf[HOLFormula])
@@ -129,11 +133,34 @@ object solvePropositional extends at.logic.utils.logging.Logger {
               case None => None
             }
           }
+          // If one formula is there, do not contract, just pick the other.
+          else if (checkDuplicate(f1.asInstanceOf[HOLFormula]::Nil, Nil, seq)) {
+            val up_ant = f2.asInstanceOf[HOLFormula] +: rest.antecedent
+            val up_suc = rest.succedent
+            val upremise = FSequent(up_ant, up_suc)
+            prove(upremise) match {
+              case Some(proof) =>
+                val proof_and2 = AndLeft2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                Some(proof_and2)
+              case None => None
+            }       
+          }
+          else if (checkDuplicate(f2.asInstanceOf[HOLFormula]::Nil, Nil, seq)) {
+            val up_ant = f1.asInstanceOf[HOLFormula] +: rest.antecedent
+            val up_suc = rest.succedent
+            val upremise = FSequent(up_ant, up_suc)
+            prove(upremise) match {
+              case Some(proof) =>
+                val proof_and1 = AndLeft1Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                Some(proof_and1)
+              case None => None
+            }       
+          }
           else {
             // For this case, contract the formula and choose the first and then the second conjunct
             val up_ant = f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.antecedent
             val up_suc = rest.succedent
-            val upremise = new FSequent(up_ant, up_suc)
+            val upremise = FSequent(up_ant, up_suc)
             prove(upremise) match {
               case Some(proof) =>
                 val proof_and2 = AndLeft2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
@@ -152,7 +179,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
             val sf = subst(iter).asInstanceOf[SchemaFormula]
             val p_ant = sf +: rest.antecedent
             val p_suc = rest.succedent
-            val premise = new FSequent(p_ant, p_suc)
+            val premise = FSequent(p_ant, p_suc)
             prove(premise) match {
               case Some(proof) => 
                 val proof2 = AndLeftEquivalenceRule3(proof, sf, f.asInstanceOf[SchemaFormula])
@@ -167,7 +194,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
             val sf2 = subst(iter).asInstanceOf[HOLFormula]
             val p_ant = sf1 +: sf2 +: rest.antecedent
             val p_suc = rest.succedent
-            val premise = new FSequent(p_ant, p_suc)
+            val premise = FSequent(p_ant, p_suc)
             prove(premise) match {
               case Some(proof) =>
                 val proof1 = AndLeftRule(proof, sf1, sf2)
@@ -182,7 +209,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
       case None => findUnaryRight(seq) match {
         // Apply unary rule on succedent
         case Some(f) =>
-        val rest = new FSequent(seq.antecedent, seq.succedent.diff(f::Nil))
+        val rest = FSequent(seq.antecedent, seq.succedent.diff(f::Nil))
         f match {
         
           case Neg(f1) =>
@@ -198,7 +225,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
             else {
               val p_ant = f1.asInstanceOf[HOLFormula] +: rest.antecedent
               val p_suc = rest.succedent
-              val premise = new FSequent(p_ant, p_suc)
+              val premise = FSequent(p_ant, p_suc)
               prove(premise) match {
                 case Some(p) => 
                   val p1 = NegRightRule(p, f1.asInstanceOf[HOLFormula])
@@ -220,7 +247,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
             else {
               val p_ant = f1.asInstanceOf[HOLFormula] +: rest.antecedent
               val p_suc = f2.asInstanceOf[HOLFormula] +: rest.succedent
-              val premise = new FSequent(p_ant, p_suc)
+              val premise = FSequent(p_ant, p_suc)
               prove(premise) match {
                 case Some(p) => 
                   val p1 = ImpRightRule(p, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
@@ -231,7 +258,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
           
           case Or(f1, f2) => 
             // If the auxiliary formulas already exists, no need to apply the rule
-            if(checkDuplicate(Nil, f1.asInstanceOf[HOLFormula]::f2.asInstanceOf[HOLFormula]::Nil, seq)) {
+            if (checkDuplicate(Nil, f1.asInstanceOf[HOLFormula]::f2.asInstanceOf[HOLFormula]::Nil, seq)) {
               prove(rest) match {
                 case Some(p) =>
                   val p1 = WeakeningRightRule(p, f)
@@ -239,11 +266,33 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                 case None => None
               }
             }
+            else if (checkDuplicate(Nil, f2.asInstanceOf[HOLFormula]::Nil, seq)) {
+              val up_ant = rest.antecedent
+              val up_suc = f1.asInstanceOf[HOLFormula] +: rest.succedent
+              val upremise = FSequent(up_ant, up_suc)
+              prove(upremise) match {
+                case Some(proof) =>
+                  val proof_or1 = OrRight1Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                  Some(proof_or1)
+                case None => None
+              }
+            }
+            else if (checkDuplicate(Nil, f1.asInstanceOf[HOLFormula]::Nil, seq)) {
+              val up_ant = rest.antecedent
+              val up_suc = f2.asInstanceOf[HOLFormula] +: rest.succedent
+              val upremise = FSequent(up_ant, up_suc)
+              prove(upremise) match {
+                case Some(proof) =>
+                  val proof_or2 = OrRight2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                  Some(proof_or2)
+                case None => None
+              }
+            }
             else {
               // For this case, contract the formula and choose the first and then the second conjunct
               val up_ant = rest.antecedent
               val up_suc = f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.succedent
-              val upremise = new FSequent(up_ant, up_suc)
+              val upremise = FSequent(up_ant, up_suc)
               prove(upremise) match {
                 case Some(proof) =>
                   val proof_or2 = OrRight2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
@@ -261,7 +310,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
               val subst = new SchemaSubstitution1[HOLExpression](new_map)
               val p_ant = subst(iter).asInstanceOf[SchemaFormula] +: rest.antecedent
               val p_suc = rest.succedent
-              val premise = new FSequent(p_ant, p_suc)
+              val premise = FSequent(p_ant, p_suc)
               prove(premise) match {
                 case Some(proof) =>
                   val proof1 = OrRightEquivalenceRule3(proof, subst(iter).asInstanceOf[SchemaFormula], f.asInstanceOf[SchemaFormula])
@@ -274,7 +323,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
               val subst = new SchemaSubstitution1[HOLExpression](new_map)
               val p_ant = rest.antecedent
               val p_suc = BigOr(i, iter, from, Pred(to)) +: subst(iter).asInstanceOf[HOLFormula] +: rest.succedent
-              val premise = new FSequent(p_ant, p_suc)
+              val premise = FSequent(p_ant, p_suc)
               prove(premise) match {
                 case Some(proof) => 
                   val proof1 = OrRightRule(proof, BigOr(i, iter, from, Pred(to)), subst(iter).asInstanceOf[HOLFormula])
@@ -290,7 +339,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
         case None => findBinaryLeft(seq) match {
           // Apply binary rule on antecedent
           case Some(f) =>
-          val rest = new FSequent(seq.antecedent.diff(f::Nil), seq.succedent)
+          val rest = FSequent(seq.antecedent.diff(f::Nil), seq.succedent)
           f match {
             
             case Imp(f1, f2)=>
@@ -308,14 +357,17 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                 val p_suc1 = f1.asInstanceOf[HOLFormula] +: rest.succedent
                 val p_ant2 = f2.asInstanceOf[HOLFormula] +: rest.antecedent
                 val p_suc2 = rest.succedent
-                val premise1 = new FSequent(p_ant1, p_suc1)
-                val premise2 = new FSequent(p_ant2, p_suc2)
-                (prove(premise1), prove(premise2)) match {
-                  case (Some(p1), Some(p2)) =>
-                    val p = ImpLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                    val p_contr = addContractions(p, seq)
-                    Some(p_contr)
-                  case _ => None
+                val premise1 = FSequent(p_ant1, p_suc1)
+                val premise2 = FSequent(p_ant2, p_suc2)
+                prove(premise1) match {
+                  case Some(p1) => prove(premise2) match {
+                    case Some(p2) =>
+                      val p = ImpLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                      val p_contr = addContractions(p, seq)
+                      Some(p_contr)
+                    case None => None
+                  }
+                  case None => None
                 }
               }
   
@@ -334,14 +386,17 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                 val p_suc1 = rest.succedent
                 val p_ant2 = f2.asInstanceOf[HOLFormula] +: rest.antecedent
                 val p_suc2 = rest.succedent
-                val premise1 = new FSequent(p_ant1, p_suc1)
-                val premise2 = new FSequent(p_ant2, p_suc2)
-                (prove(premise1), prove(premise2)) match {
-                  case (Some(p1), Some(p2)) => 
-                    val p = OrLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                    val p_contr = addContractions(p, seq)
-                    Some(p_contr)
-                  case _ => None
+                val premise1 = FSequent(p_ant1, p_suc1)
+                val premise2 = FSequent(p_ant2, p_suc2)
+                prove(premise2) match {
+                  case Some(p2) => prove(premise1) match {
+                    case Some(p1) =>
+                      val p = OrLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                      val p_contr = addContractions(p, seq)
+                      Some(p_contr)
+                    case None => None
+                  }
+                  case None => None
                 }
               }
   
@@ -353,7 +408,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                 val sf = subst(iter).asInstanceOf[SchemaFormula]
                 val p_ant = sf +: rest.antecedent
                 val p_suc = rest.succedent
-                val premise = new FSequent(p_ant, p_suc)
+                val premise = FSequent(p_ant, p_suc)
                 prove(premise) match {
                   case Some(proof) => 
                     val proof1 = OrLeftEquivalenceRule3(proof, sf, f.asInstanceOf[SchemaFormula])
@@ -368,16 +423,19 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                 val p_suc1 = rest.succedent
                 val p_ant2 = subst(iter).asInstanceOf[HOLFormula] +: rest.antecedent
                 val p_suc2 = rest.succedent
-                val premise1 = new FSequent(p_ant1, p_suc1)
-                val premise2 = new FSequent(p_ant2, p_suc2)
-                (prove(premise1), prove(premise2)) match {
-                  case (Some(proof1), Some(proof2)) =>
-                    val proof3 = OrLeftRule(proof1, proof2, BigOr(i, iter, from, Pred(to)), subst(iter).asInstanceOf[HOLFormula])
-                    val or = Or(BigOr(i, iter, from, Pred(to)), subst(iter).asInstanceOf[SchemaFormula])
-                    val proof4 = OrLeftEquivalenceRule1(proof3, or, BigOr(i, iter, from, to))
-                    val proof5 = addContractions(proof4, seq)
-                    Some(proof5)
-                  case _ => None
+                val premise1 = FSequent(p_ant1, p_suc1)
+                val premise2 = FSequent(p_ant2, p_suc2)
+                prove(premise1) match {
+                  case Some(proof1) => prove(premise2) match {
+                    case Some(proof2) =>
+                      val proof3 = OrLeftRule(proof1, proof2, BigOr(i, iter, from, Pred(to)), subst(iter).asInstanceOf[HOLFormula])
+                      val or = Or(BigOr(i, iter, from, Pred(to)), subst(iter).asInstanceOf[SchemaFormula])
+                      val proof4 = OrLeftEquivalenceRule1(proof3, or, BigOr(i, iter, from, to))
+                      val proof5 = addContractions(proof4, seq)
+                      Some(proof5)
+                    case None => None
+                  }
+                  case None => None
                 }
               }
           }
@@ -385,7 +443,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
           case None => findBinaryRight(seq) match {
             // Apply binary rule on succedent
             case Some(f) =>
-            val rest = new FSequent(seq.antecedent, seq.succedent.diff(f::Nil))
+            val rest = FSequent(seq.antecedent, seq.succedent.diff(f::Nil))
             f match {
 
               case And(f1, f2) => 
@@ -403,14 +461,17 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                   val p_suc1 = f1.asInstanceOf[HOLFormula] +: rest.succedent
                   val p_ant2 = rest.antecedent
                   val p_suc2 = f2.asInstanceOf[HOLFormula] +: rest.succedent
-                  val premise1 = new FSequent(p_ant1, p_suc1)
-                  val premise2 = new FSequent(p_ant2, p_suc2)
-                  (prove(premise1), prove(premise2)) match {
-                    case (Some(p1), Some(p2)) => 
-                      val p = AndRightRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                      val p_contr = addContractions(p, seq)
-                      Some(p_contr)
-                    case _ => None
+                  val premise1 = FSequent(p_ant1, p_suc1)
+                  val premise2 = FSequent(p_ant2, p_suc2)
+                  prove(premise2) match {
+                    case Some(p2) => prove(premise1) match {
+                      case Some(p1) =>
+                        val p = AndRightRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                        val p_contr = addContractions(p, seq)
+                        Some(p_contr)
+                      case None => None
+                    }
+                    case None => None
                   }
                 }
     
@@ -421,7 +482,7 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                   val subst = new SchemaSubstitution1[HOLExpression](new_map)
                   val p_ant = rest.antecedent
                   val p_suc = subst(iter).asInstanceOf[SchemaFormula] +: rest.succedent
-                  val premise = new FSequent(p_ant, p_suc)
+                  val premise = FSequent(p_ant, p_suc)
                   prove(premise) match {
                     case Some(proof) =>
                       val proof1 = AndRightEquivalenceRule3(proof, subst(iter).asInstanceOf[SchemaFormula], f.asInstanceOf[SchemaFormula])
@@ -436,16 +497,19 @@ object solvePropositional extends at.logic.utils.logging.Logger {
                   val p_suc1 = BigAnd(i, iter, from, Pred(to)) +: rest.succedent
                   val p_ant2 = rest.antecedent
                   val p_suc2 = subst(iter).asInstanceOf[HOLFormula] +: rest.succedent
-                  val premise1 = new FSequent(p_ant1, p_suc1)
-                  val premise2 = new FSequent(p_ant2, p_suc2)
-                  (prove(premise1), prove(premise2)) match {
-                    case (Some(proof1), Some(proof2)) =>
-                      val proof3 = AndRightRule(proof1, proof2, BigAnd(i, iter, from, Pred(to)), subst(iter).asInstanceOf[HOLFormula])
-                      val and = And(BigAnd(i, iter, from, Pred(to)),  subst(iter).asInstanceOf[SchemaFormula])
-                      val proof4 = AndRightEquivalenceRule1(proof3, and, BigAnd(i, iter, from, to))
-                      val proof5 = addContractions(proof4, seq)
-                      Some(proof5)
-                    case _ => None
+                  val premise1 = FSequent(p_ant1, p_suc1)
+                  val premise2 = FSequent(p_ant2, p_suc2)
+                  prove(premise1) match {
+                    case Some(proof1) => prove(premise2) match {
+                      case Some(proof2) =>
+                        val proof3 = AndRightRule(proof1, proof2, BigAnd(i, iter, from, Pred(to)), subst(iter).asInstanceOf[HOLFormula])
+                        val and = And(BigAnd(i, iter, from, Pred(to)),  subst(iter).asInstanceOf[SchemaFormula])
+                        val proof4 = AndRightEquivalenceRule1(proof3, and, BigAnd(i, iter, from, to))
+                        val proof5 = addContractions(proof4, seq)
+                        Some(proof5)
+                      case None => None
+                    }
+                    case None => None
                   }
                 }
             }
@@ -492,6 +556,30 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     case _ => warn("WARNING: Unexpected operator in test for schematic formula "+f); false
   }
 
+  // Checks if the atoms occurring in seq are all different (if so, the sequent
+  // is not provable.
+  private def noCommonAtoms(seq: FSequent) : Boolean = {
+    val atoms = getAtoms(seq)
+    atoms.size == atoms.toSet.size
+  }
+
+  // TODO: move this to sequent!!!!!
+  private def getAtoms(seq: FSequent) : List[HOLFormula] = {
+    val all = seq.antecedent ++ seq.succedent
+    all.foldLeft(List[HOLFormula]()) { case (acc, f) => getAtoms(f) ++ acc }
+  }
+
+  // TODO: move this to hol!!!!!!
+  private def getAtoms(f: HOLFormula) : List[HOLFormula] = f match {
+    case Atom(_,_) => List(f)
+    case Neg(f) => getAtoms(f.asInstanceOf[HOLFormula])
+    case And(f1,f2) => getAtoms(f1.asInstanceOf[HOLFormula]) ++ getAtoms(f2.asInstanceOf[HOLFormula])
+    case Or(f1,f2) => getAtoms(f1.asInstanceOf[HOLFormula]) ++ getAtoms(f2.asInstanceOf[HOLFormula])
+    case Imp(f1,f2) => getAtoms(f1.asInstanceOf[HOLFormula]) ++ getAtoms(f2.asInstanceOf[HOLFormula])
+    case ExVar(v,f) => getAtoms(f)
+    case AllVar(v,f) => getAtoms(f)
+  }
+
   // Checks if seq contains the formulas of lft in the antecedent and the formulas of rght on the succedent
   private def checkDuplicate(lft: List[HOLFormula], rght: List[HOLFormula], seq: FSequent) : Boolean = {
     lft.forall(f => seq.antecedent.contains(f)) && rght.forall(f => seq.succedent.contains(f))
@@ -524,19 +612,19 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     })
 
   def removeFfromSeqAnt(seq: FSequent, f : HOLFormula) : FSequent = {
-    new FSequent(seq.antecedent.filter(x => x != f) , seq.succedent)
+    FSequent(seq.antecedent.filter(x => x != f) , seq.succedent)
   }
 
   def removeFfromSeqSucc(seq: FSequent, f : HOLFormula) : FSequent = {
-    new FSequent(seq.antecedent, seq.succedent.filter(x => x != f))
+    FSequent(seq.antecedent, seq.succedent.filter(x => x != f))
   }
 
   def removeFfromSeqAnt(seq: FSequent, flist : List[HOLFormula]) : FSequent = {
-    new FSequent(seq.antecedent.filter(x => !flist.contains(x)) , seq.succedent)
+    FSequent(seq.antecedent.filter(x => !flist.contains(x)) , seq.succedent)
   }
 
   def removeFfromSeqSucc(seq: FSequent, flist : List[HOLFormula]) : FSequent = {
-    new FSequent(seq.antecedent, seq.succedent.filter(x => !flist.contains(x)))
+    FSequent(seq.antecedent, seq.succedent.filter(x => !flist.contains(x)))
   }
   
   def getAxiomfromSeq(seq: FSequent) : (HOLFormula, FSequent) = {
