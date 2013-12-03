@@ -416,8 +416,8 @@ object VeriTParser extends RegexParsers {
   def expression : Parser[FOLFormula] = formula | let
   def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred
   
-  def term : Parser[FOLTerm] = variable | function 
-  def variable : Parser[FOLTerm] = name ^^ { case n => FOLVar(VariableStringSymbol(n)) }
+  def term : Parser[FOLTerm] = constant | function 
+  def constant : Parser[FOLTerm] = name ^^ { case n => FOLConst(ConstantStringSymbol(n)) }
   def function : Parser[FOLTerm] = "(" ~> name ~ rep(term) <~ ")" ^^ {
     case name ~ args => 
       val n = ConstantStringSymbol(name) 
@@ -450,7 +450,7 @@ object VeriTParser extends RegexParsers {
     case _ => Or(List())
   }
 
-  def binding : Parser[(FOLTerm, FOLTerm)] = "(" ~> variable ~ term <~ ")" ^^ {
+  def binding : Parser[(FOLTerm, FOLTerm)] = "(" ~> constant ~ term <~ ")" ^^ {
     case v ~ t => (v, t)
   }
   

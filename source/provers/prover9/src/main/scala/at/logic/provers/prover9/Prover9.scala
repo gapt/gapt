@@ -12,7 +12,6 @@ import at.logic.calculi.resolution.base._
 import at.logic.calculi.lk.base._
 import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.substitutions._
-//import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.lambda.symbols.SymbolA
 import at.logic.language.fol._

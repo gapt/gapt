@@ -97,29 +97,51 @@ object solvePropositional extends at.logic.utils.logging.Logger {
       f match {
 
         case Neg(f1) =>
-          // Computing premise antecedent and succedent
-          val p_ant = rest.antecedent
-          val p_suc = f1.asInstanceOf[HOLFormula] +: rest.succedent
-          val premise = new FSequent(p_ant, p_suc)
-          prove(premise) match {
-            case Some(p) => 
-              val p1 = NegLeftRule(p, f1.asInstanceOf[HOLFormula])
-              Some(p1)
-            case None => None
+          // If the auxiliary formulas already exists, no need to apply the rule
+          if(checkDuplicate(Nil, f1.asInstanceOf[HOLFormula]::Nil, seq)) {
+            prove(rest) match {
+              case Some(p) =>
+                val p1 = WeakeningLeftRule(p, f)
+                Some(p1)
+              case None => None
+            }
+          }
+          else {
+            // Computing premise antecedent and succedent
+            val p_ant = rest.antecedent
+            val p_suc = f1.asInstanceOf[HOLFormula] +: rest.succedent
+            val premise = new FSequent(p_ant, p_suc)
+            prove(premise) match {
+              case Some(p) => 
+                val p1 = NegLeftRule(p, f1.asInstanceOf[HOLFormula])
+                Some(p1)
+              case None => None
+            }
           }
 
         case And(f1, f2) => 
-          // For this case, contract the formula and choose the first and then the second conjunct
-          val up_ant = f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.antecedent
-          val up_suc = rest.succedent
-          val upremise = new FSequent(up_ant, up_suc)
-          prove(upremise) match {
-            case Some(proof) =>
-              val proof_and2 = AndLeft2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-              val proof_and1 = AndLeft1Rule(proof_and2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-              val proof_contr = ContractionLeftRule(proof_and1, f)
-              Some(proof_contr)
-            case None => None
+          // If the auxiliary formulas already exists, no need to apply the rule
+          if(checkDuplicate(f1.asInstanceOf[HOLFormula]::f2.asInstanceOf[HOLFormula]::Nil, Nil, seq)) {
+            prove(rest) match {
+              case Some(p) =>
+                val p1 = WeakeningLeftRule(p, f)
+                Some(p1)
+              case None => None
+            }
+          }
+          else {
+            // For this case, contract the formula and choose the first and then the second conjunct
+            val up_ant = f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.antecedent
+            val up_suc = rest.succedent
+            val upremise = new FSequent(up_ant, up_suc)
+            prove(upremise) match {
+              case Some(proof) =>
+                val proof_and2 = AndLeft2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                val proof_and1 = AndLeft1Rule(proof_and2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                val proof_contr = ContractionLeftRule(proof_and1, f)
+                Some(proof_contr)
+              case None => None
+            }
           }
 
         case BigAnd(i, iter, from, to) =>
@@ -164,39 +186,72 @@ object solvePropositional extends at.logic.utils.logging.Logger {
         f match {
         
           case Neg(f1) =>
-            val p_ant = f1.asInstanceOf[HOLFormula] +: rest.antecedent
-            val p_suc = rest.succedent
-            val premise = new FSequent(p_ant, p_suc)
-            prove(premise) match {
-              case Some(p) => 
-                val p1 = NegRightRule(p, f1.asInstanceOf[HOLFormula])
-                Some(p1)
-              case None => None
+            // If the auxiliary formulas already exists, no need to apply the rule
+            if(checkDuplicate(f1.asInstanceOf[HOLFormula]::Nil, Nil, seq)) {
+              prove(rest) match {
+                case Some(p) =>
+                  val p1 = WeakeningRightRule(p, f)
+                  Some(p1)
+                case None => None
+              }
+            }
+            else {
+              val p_ant = f1.asInstanceOf[HOLFormula] +: rest.antecedent
+              val p_suc = rest.succedent
+              val premise = new FSequent(p_ant, p_suc)
+              prove(premise) match {
+                case Some(p) => 
+                  val p1 = NegRightRule(p, f1.asInstanceOf[HOLFormula])
+                  Some(p1)
+                case None => None
+              }
             }
   
           case Imp(f1, f2)=> 
-            val p_ant = f1.asInstanceOf[HOLFormula] +: rest.antecedent
-            val p_suc = f2.asInstanceOf[HOLFormula] +: rest.succedent
-            val premise = new FSequent(p_ant, p_suc)
-            prove(premise) match {
-              case Some(p) => 
-                val p1 = ImpRightRule(p, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                Some(p1)
-              case None => None
+            // If the auxiliary formulas already exists, no need to apply the rule
+            if(checkDuplicate(f1.asInstanceOf[HOLFormula]::Nil, f2.asInstanceOf[HOLFormula]::Nil, seq)) {
+              prove(rest) match {
+                case Some(p) =>
+                  val p1 = WeakeningRightRule(p, f)
+                  Some(p1)
+                case None => None
+              }
+            }
+            else {
+              val p_ant = f1.asInstanceOf[HOLFormula] +: rest.antecedent
+              val p_suc = f2.asInstanceOf[HOLFormula] +: rest.succedent
+              val premise = new FSequent(p_ant, p_suc)
+              prove(premise) match {
+                case Some(p) => 
+                  val p1 = ImpRightRule(p, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                  Some(p1)
+                case None => None
+              }
             }
           
           case Or(f1, f2) => 
-            // For this case, contract the formula and choose the first and then the second conjunct
-            val up_ant = rest.antecedent
-            val up_suc = f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.succedent
-            val upremise = new FSequent(up_ant, up_suc)
-            prove(upremise) match {
-              case Some(proof) =>
-                val proof_or2 = OrRight2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                val proof_or1 = OrRight1Rule(proof_or2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                val proof_contr = ContractionRightRule(proof_or1, f)
-                Some(proof_contr)
-              case None => None
+            // If the auxiliary formulas already exists, no need to apply the rule
+            if(checkDuplicate(Nil, f1.asInstanceOf[HOLFormula]::f2.asInstanceOf[HOLFormula]::Nil, seq)) {
+              prove(rest) match {
+                case Some(p) =>
+                  val p1 = WeakeningRightRule(p, f)
+                  Some(p1)
+                case None => None
+              }
+            }
+            else {
+              // For this case, contract the formula and choose the first and then the second conjunct
+              val up_ant = rest.antecedent
+              val up_suc = f1.asInstanceOf[HOLFormula] +: f2.asInstanceOf[HOLFormula] +: rest.succedent
+              val upremise = new FSequent(up_ant, up_suc)
+              prove(upremise) match {
+                case Some(proof) =>
+                  val proof_or2 = OrRight2Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                  val proof_or1 = OrRight1Rule(proof_or2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                  val proof_contr = ContractionRightRule(proof_or1, f)
+                  Some(proof_contr)
+                case None => None
+              }
             }
   
           case BigOr(i, iter, from, to) => 
@@ -239,33 +294,55 @@ object solvePropositional extends at.logic.utils.logging.Logger {
           f match {
             
             case Imp(f1, f2)=>
-              val p_ant1 = rest.antecedent
-              val p_suc1 = f1.asInstanceOf[HOLFormula] +: rest.succedent
-              val p_ant2 = f2.asInstanceOf[HOLFormula] +: rest.antecedent
-              val p_suc2 = rest.succedent
-              val premise1 = new FSequent(p_ant1, p_suc1)
-              val premise2 = new FSequent(p_ant2, p_suc2)
-              (prove(premise1), prove(premise2)) match {
-                case (Some(p1), Some(p2)) =>
-                  val p = ImpLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                  val p_contr = addContractions(p, seq)
-                  Some(p_contr)
-                case _ => None
+              // If the auxiliary formulas already exists, no need to apply the rule
+              if(checkDuplicate(f2.asInstanceOf[HOLFormula]::Nil, Nil, seq) || checkDuplicate(Nil, f1.asInstanceOf[HOLFormula]::Nil, seq)) {
+                prove(rest) match {
+                  case Some(p) =>
+                    val p1 = WeakeningLeftRule(p, f)
+                    Some(p1)
+                  case None => None
+                }
+              }
+              else {
+                val p_ant1 = rest.antecedent
+                val p_suc1 = f1.asInstanceOf[HOLFormula] +: rest.succedent
+                val p_ant2 = f2.asInstanceOf[HOLFormula] +: rest.antecedent
+                val p_suc2 = rest.succedent
+                val premise1 = new FSequent(p_ant1, p_suc1)
+                val premise2 = new FSequent(p_ant2, p_suc2)
+                (prove(premise1), prove(premise2)) match {
+                  case (Some(p1), Some(p2)) =>
+                    val p = ImpLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                    val p_contr = addContractions(p, seq)
+                    Some(p_contr)
+                  case _ => None
+                }
               }
   
             case Or(f1, f2) => 
-              val p_ant1 = f1.asInstanceOf[HOLFormula] +: rest.antecedent
-              val p_suc1 = rest.succedent
-              val p_ant2 = f2.asInstanceOf[HOLFormula] +: rest.antecedent
-              val p_suc2 = rest.succedent
-              val premise1 = new FSequent(p_ant1, p_suc1)
-              val premise2 = new FSequent(p_ant2, p_suc2)
-              (prove(premise1), prove(premise2)) match {
-                case (Some(p1), Some(p2)) => 
-                  val p = OrLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                  val p_contr = addContractions(p, seq)
-                  Some(p_contr)
-                case _ => None
+              // If the auxiliary formulas already exists, no need to apply the rule
+              if(checkDuplicate(f1.asInstanceOf[HOLFormula]::Nil, Nil, seq) || checkDuplicate(f2.asInstanceOf[HOLFormula]::Nil, Nil, seq)) {
+                prove(rest) match {
+                  case Some(p) =>
+                    val p1 = WeakeningLeftRule(p, f)
+                    Some(p1)
+                  case None => None
+                }
+              }
+              else {
+                val p_ant1 = f1.asInstanceOf[HOLFormula] +: rest.antecedent
+                val p_suc1 = rest.succedent
+                val p_ant2 = f2.asInstanceOf[HOLFormula] +: rest.antecedent
+                val p_suc2 = rest.succedent
+                val premise1 = new FSequent(p_ant1, p_suc1)
+                val premise2 = new FSequent(p_ant2, p_suc2)
+                (prove(premise1), prove(premise2)) match {
+                  case (Some(p1), Some(p2)) => 
+                    val p = OrLeftRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                    val p_contr = addContractions(p, seq)
+                    Some(p_contr)
+                  case _ => None
+                }
               }
   
             case BigOr(i, iter, from, to) =>
@@ -312,18 +389,29 @@ object solvePropositional extends at.logic.utils.logging.Logger {
             f match {
 
               case And(f1, f2) => 
-                val p_ant1 = rest.antecedent
-                val p_suc1 = f1.asInstanceOf[HOLFormula] +: rest.succedent
-                val p_ant2 = rest.antecedent
-                val p_suc2 = f2.asInstanceOf[HOLFormula] +: rest.succedent
-                val premise1 = new FSequent(p_ant1, p_suc1)
-                val premise2 = new FSequent(p_ant2, p_suc2)
-                (prove(premise1), prove(premise2)) match {
-                  case (Some(p1), Some(p2)) => 
-                    val p = AndRightRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-                    val p_contr = addContractions(p, seq)
-                    Some(p_contr)
-                  case _ => None
+                // If the auxiliary formulas already exists, no need to apply the rule
+                if(checkDuplicate(Nil, f1.asInstanceOf[HOLFormula]::Nil, seq) || checkDuplicate(Nil, f2.asInstanceOf[HOLFormula]::Nil, seq)) {
+                  prove(rest) match {
+                    case Some(p) =>
+                      val p1 = WeakeningRightRule(p, f)
+                      Some(p1)
+                    case None => None
+                  }
+                }
+                else {
+                  val p_ant1 = rest.antecedent
+                  val p_suc1 = f1.asInstanceOf[HOLFormula] +: rest.succedent
+                  val p_ant2 = rest.antecedent
+                  val p_suc2 = f2.asInstanceOf[HOLFormula] +: rest.succedent
+                  val premise1 = new FSequent(p_ant1, p_suc1)
+                  val premise2 = new FSequent(p_ant2, p_suc2)
+                  (prove(premise1), prove(premise2)) match {
+                    case (Some(p1), Some(p2)) => 
+                      val p = AndRightRule(p1, p2, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
+                      val p_contr = addContractions(p, seq)
+                      Some(p_contr)
+                    case _ => None
+                  }
                 }
     
               case BigAnd(i, iter, from, to) =>
@@ -391,7 +479,6 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     }
   }
 
-
   private def isNotSchematic(f:HOLFormula) : Boolean = f match {
     case Atom(_,_) => true
     case Neg(l) => isNotSchematic(l.asInstanceOf[HOLFormula])
@@ -405,6 +492,10 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     case _ => warn("WARNING: Unexpected operator in test for schematic formula "+f); false
   }
 
+  // Checks if seq contains the formulas of lft in the antecedent and the formulas of rght on the succedent
+  private def checkDuplicate(lft: List[HOLFormula], rght: List[HOLFormula], seq: FSequent) : Boolean = {
+    lft.forall(f => seq.antecedent.contains(f)) && rght.forall(f => seq.succedent.contains(f))
+  }
 
   // Tries to find a formula on the left or on the right such that its
   // introduction rule is unary.

@@ -198,7 +198,6 @@ object printProofStats {
 
   import at.logic.parsing.veriT._
   object loadVeriTProof {
-    // NOTE: this method returns a proof in the form of an expansion proof
     def apply(fileName : String) = VeriTParser.getExpansionProof(fileName)
   }
 

@@ -8,12 +8,12 @@ import java.io._
 object VeriTExporter {
 
   // Takes a sequent and generates the input for VeriT as a string.
-  def apply(s: FSequent, fileName: String) = {
+  def apply(s: FSequent, fileName: String) : File = {
     // Define the logic
     val logic = "(set-logic QF_UF)\n"
     // Declare the function and predicate symbols with arity
     val symbols = getSymbolsDeclaration((s._1 ++ s._2).asInstanceOf[List[FOLFormula]])
-    // Generate assertions for the antecedent formulas
+    // Generate assertions for the antecedent and succedent formulas
     val asserts = getAssertions(s._1.asInstanceOf[List[FOLFormula]], s._2.asInstanceOf[List[FOLFormula]])
     // Generate the check_sat formula
     val check_sat = "(check-sat)"
@@ -24,6 +24,8 @@ object VeriTExporter {
     val bw = new BufferedWriter(fw)
     bw.write( logic + symbols + asserts + check_sat )
     bw.close()
+
+    file
   }
 
   private def getAssertions(ant: List[FOLFormula], succ: List[FOLFormula]) = { 
