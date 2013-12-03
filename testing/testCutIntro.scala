@@ -42,9 +42,9 @@ object testCutIntro {
     compressProofSequences( 60, false, false )
     CutIntroDataLogger.trace( "---------- now starting ProofSeq/generalized cut-intro/DefaultProver" )
     compressProofSequences( 60, true, false )
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/cut-intro/Prover9Prover" )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/cut-intro/Prover9Prover" )
     compressProofSequences( 60, false, true )
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/generalized cut-intro/Prover9Prover" )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/generalized cut-intro/Prover9Prover" )
     compressProofSequences( 60, true, true )
 
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/cut-intro/DefaultProver" )
