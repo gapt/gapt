@@ -14,6 +14,7 @@ import at.logic.language.schema.{SchemaSubstitution1,unfoldSFormula,unfoldSTerm,
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.types.Tindex
 
 
 //test version
@@ -44,11 +45,6 @@ object applySchemaSubstitution2 {
                          a1: FormulaOccurrence,
                          a2: FormulaOccurrence,
                          constructor: (LKProof, HOLFormula) => LKProof) = {
-
-    //    println("n = "+subst.map.toList.head._2)
-    //    println("\n\nContrL:")
-    //    println("aux = "+subst(a1.formula))
-    //    println("seq = "+new_parent.root)
     constructor( new_parent, unfoldSFormula(subst(a1.formula).asInstanceOf[HOLFormula]) )
     //    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
@@ -187,10 +183,6 @@ object CloneLKProof2 {
   def rewriteruleconverter( argsPos: Int, mainArgsList:Seq[HOLExpression], ausArgsList:Seq[HOLExpression],  Thepair: (Seq[HOLExpression], Seq[HOLExpression]) ):  (Seq[HOLExpression], Seq[HOLExpression])  = {
       if(mainArgsList.isEmpty) Thepair
       else rewriteruleconverter( argsPos+1, mainArgsList.tail, ausArgsList, Thepair)
-
-
-
-
   }
   def apply(proof: LKProof,name:String, rewriterules:scala.collection.mutable.HashMap[HOLFormula, HOLFormula],proofSize: Int, version: Int, ProofLinkPassing:List[Pair[HOLExpression,HOLExpression]] ):LKProof = {
     proof match {
@@ -230,7 +222,7 @@ object CloneLKProof2 {
           //val main = SchemaSubTerms(m.formula)
           //val aux = SchemaSubTerms(a.formula)
           // d.tail.tail.head.isInstanceOf[HOLAbs]
-          println(m.formula  + "   "+ a.formula)
+          (m.formula  + "   "+ a.formula)
           //println( SchemaSubTerms(m.formula) + "   "+ SchemaSubTerms(a.formula)/*+ "   "+ d.tail.tail.head.isInstanceOf[HOLAbs] + d.tail.tail.head.isInstanceOf[HOLApp]  +"  "+ d.tail.tail.head +"w   "+ d.head + "    " +  d.head.isInstanceOf[HOLAbs] + d.head.isInstanceOf[HOLApp]*/  )
           //for each  value in main find all instances in within aux and replace both occurances
           //in main and aux with SubConst(i) where i is a number indicating the arguemnt position.
@@ -563,7 +555,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-          ForallLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(t,ProofLinkPassing))
+          ForallLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(t,ProofLinkPassing))
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -575,7 +567,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-          ForallRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(v,ProofLinkPassing).asInstanceOf[HOLVar])
+          ForallRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(v,ProofLinkPassing).asInstanceOf[HOLVar])
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -588,7 +580,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-            ExistsRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(t,ProofLinkPassing))
+            ExistsRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(t,ProofLinkPassing))
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -600,7 +592,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-           ExistsLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(v,ProofLinkPassing).asInstanceOf[HOLVar])
+           ExistsLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(v,ProofLinkPassing).asInstanceOf[HOLVar])
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -613,7 +605,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-           ExistsHyperRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(t,ProofLinkPassing))
+           ExistsHyperRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(t,ProofLinkPassing))
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -625,7 +617,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-           ExistsHyperLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(v,ProofLinkPassing).asInstanceOf[HOLVar])
+           ExistsHyperLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(v,ProofLinkPassing).asInstanceOf[HOLVar])
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -637,7 +629,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-           ForallHyperLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(t,ProofLinkPassing))
+           ForallHyperLeftRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(t,ProofLinkPassing))
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -649,7 +641,7 @@ object CloneLKProof2 {
         if(version == 0)apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
         else if(version == 1){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
-           ForallHyperRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula.apply2(v,ProofLinkPassing).asInstanceOf[HOLVar])
+           ForallHyperRightRule(new_p, iterateOnFormula(a.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(m.formula.asInstanceOf[HOLFormula],ProofLinkPassing), iterateOnFormula(v,ProofLinkPassing).asInstanceOf[HOLVar])
         }
         else if(version == 2){
           val new_p = apply(p,name,rewriterules,proofSize,version,ProofLinkPassing)
@@ -674,13 +666,23 @@ object CloneLKProof2 {
         if(version == 0)proof
         else if(version == 1){
           val next = backToInt(l.head)
-          if(next == 0) CloneLKProof2(SchemaProofDB.get(name2).base,name2,rewriterules,0,version,ProofLinkPassing)
+          val newList= l.tail.map(x => iterateOnFormula(x,ProofLinkPassing))
+          if(next == 0){
+            if(SchemaProofDB.getLinkTerms(name2).length != 0 && SchemaProofDB.getLinkTerms(name2).length == newList.length) {
+
+              val ProofLinkPassingNew = SchemaProofDB.getLinkTerms(name2).zip(newList)
+              CloneLKProof2(SchemaProofDB.get(name2).base,name2,rewriterules,0,version,ProofLinkPassingNew)
+            }
+            else if(SchemaProofDB.getLinkTerms(name2).length == 0 && SchemaProofDB.getLinkTerms(name2).length == newList.length)
+              CloneLKProof2(SchemaProofDB.get(name2).base,name2,rewriterules,0,version,List())
+            else throw new Exception("ERROR ProofLinks are wrong !\n")
+          }
           else{
-            if(SchemaProofDB.getLinkTerms(name2).length != 0 && SchemaProofDB.getLinkTerms(name2).length == l.tail.length) {
-              val ProofLinkPassingNew = SchemaProofDB.getLinkTerms(name2).zip(l.tail)
+            if(SchemaProofDB.getLinkTerms(name2).length != 0 && SchemaProofDB.getLinkTerms(name2).length == newList.length) {
+              val ProofLinkPassingNew = SchemaProofDB.getLinkTerms(name2).zip(newList)
               applySchemaSubstitution2(name2,next,ProofLinkPassingNew)
             }
-            else if(SchemaProofDB.getLinkTerms(name2).length == 0 && SchemaProofDB.getLinkTerms(name2).length == l.tail.length)
+            else if(SchemaProofDB.getLinkTerms(name2).length == 0 && SchemaProofDB.getLinkTerms(name2).length == newList.length)
               applySchemaSubstitution2(name2,next,List())
             else throw new Exception("ERROR ProofLinks are wrong !\n")
           }
@@ -695,27 +697,8 @@ object CloneLKProof2 {
 
 }
 object iterateOnFormula {
-  import at.logic.language.hol._
-  def apply(form:HOLFormula,ProofLinkPassing:List[Pair[HOLExpression,HOLExpression]]):HOLFormula = {
-    if(ProofLinkPassing.length > 0){
-      var tempform = form
-    ProofLinkPassing.map( x => {
-      tempform = cloneMySol.apply2(tempform,x._1,x._2)
-      tempform })
-      tempform
-    }
-    else form
-  }
-  def apply2(term:HOLExpression,ProofLinkPassing:List[Pair[HOLExpression,HOLExpression]]):HOLExpression = {
-    if(ProofLinkPassing.length > 0){
-      var tempterm = term
-      ProofLinkPassing.map( x => {
-        tempterm = cloneMyTerm(tempterm,x._1,x._2)
-        tempterm })
-        tempterm
-    }
-    else term
-  }
+  def apply(form:HOLFormula,ProofLinkPassing:List[Pair[HOLExpression,HOLExpression]]):HOLFormula = ProofLinkPassing.foldLeft(form)( (f, pair) => cloneMySol(f,pair._1,pair._2))
+  def apply(term:HOLExpression,ProofLinkPassing:List[Pair[HOLExpression,HOLExpression]]):HOLExpression = ProofLinkPassing.foldLeft(term)( (t, pair) => {cloneMyTerm(t,pair._1,pair._2)})
 }
 object cloneMySol{
   def apply(form:HOLFormula, proofSize: Int ):HOLFormula = {
@@ -760,33 +743,33 @@ object cloneMySol{
       case _ => throw new Exception("ERROR in unfolding missing formula !\n" + form.toString + "\n")
     }
   }
-  def apply2(form:HOLFormula, IN:HOLExpression, OUT:HOLExpression):HOLFormula = {
+  def apply(form:HOLFormula, IN:HOLExpression, OUT:HOLExpression):HOLFormula = {
     form match {
       case Neg(nF) => {
-        val finForm = apply2(nF.asInstanceOf[HOLFormula],IN,OUT)
+        val finForm = apply(nF.asInstanceOf[HOLFormula],IN,OUT)
         Neg(finForm)
       }
       case And(lF,rF) => {
-        val finFormL = apply2(lF,IN,OUT)
-        val finFormR = apply2(rF,IN,OUT)
+        val finFormL = apply(lF,IN,OUT)
+        val finFormR = apply(rF,IN,OUT)
         And(finFormL,finFormR)
       }
       case Or(lF,rF) => {
-        val finFormL = apply2(lF,IN,OUT)
-        val finFormR = apply2(rF,IN,OUT)
+        val finFormL = apply(lF,IN,OUT)
+        val finFormR = apply(rF,IN,OUT)
         Or(finFormL,finFormR)
       }
       case Imp(lF,rF) => {
-        val finFormL = apply2(lF,IN,OUT)
-        val finFormR = apply2(rF,IN,OUT)
+        val finFormL = apply(lF,IN,OUT)
+        val finFormR = apply(rF,IN,OUT)
         Imp(finFormL,finFormR)
       }
       case AllVar(aV,aF) => {
-        val finForm = apply2(aF,IN,OUT)
+        val finForm = apply(aF,IN,OUT)
         AllVar(aV,finForm)
       }
       case ExVar(aV,aF) => {
-        val finForm = apply2(aF,IN,OUT)
+        val finForm = apply(aF,IN,OUT)
         ExVar(aV,finForm)
       }
       case Equation(l,r) => Equation(cloneMyTerm(l,IN,OUT),cloneMyTerm(r,IN,OUT))
@@ -805,7 +788,6 @@ object cloneMySol{
 }
 
 object cloneMyTerm{
-  import at.logic.language.hol._
   def apply(term:HOLExpression , proofSize:Int):HOLExpression = {
     term match {
       case Function(ConstantStringSymbol(n),l,t) if n =="schS" && t == ind => Function(ConstantStringSymbol(n),l.map(x => apply(x,proofSize)),t)
@@ -821,8 +803,8 @@ object cloneMyTerm{
   }
   def apply(term:HOLExpression , IN:HOLExpression, OUT:HOLExpression):HOLExpression = {
     term match {
-      case Function(ConstantStringSymbol(n),l,t) if n =="schS" && t == ind => Function(ConstantStringSymbol(n),l,t)
-      case HOLVar(VariableStringSymbol(n),t) if n== "k" && t == ind =>  HOLVar(VariableStringSymbol(n),t)
+      case Function(ConstantStringSymbol("schS"),l,Tindex()) => Function(ConstantStringSymbol("schS"),l,Tindex())
+      case HOLVar(VariableStringSymbol("k"),Tindex()) =>  HOLVar(VariableStringSymbol("k"),Tindex())
       case Function(ConstantStringSymbol(n),l,t) if t == ind => Function(ConstantStringSymbol(n),l.map(x => apply(x,IN,OUT)),t)
       case Function(ConstantStringSymbol(n),l,t) if t == i => IN match {
           case Function(ConstantStringSymbol(ni),li,ti) if n == ni && l.equals(li) && t == ti => OUT
