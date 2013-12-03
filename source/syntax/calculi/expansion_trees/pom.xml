@@ -19,7 +19,7 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>unification</artifactId>
+      <artifactId>matching</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>

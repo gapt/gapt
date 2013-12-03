@@ -136,6 +136,21 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case HOLAbs(_, x) => this +: x.subTerms
       case HOLApp(x, y) => this +: (x.subTerms ++ y.subTerms)
     }
+    // Returns the quantifier free part of a prenex formula
+    def getMatrix : HOLFormula = {
+      assert(this.isPrenex)
+      this match {
+        case Var(_,_) |
+             Atom(_,_) |
+             Imp(_,_) |
+             And(_,_) |
+             Or(_,_) |
+             Neg(_) => this.asInstanceOf[HOLFormula]
+        case ExVar(x,f0) => f0.getMatrix
+        case AllVar(x,f0) => f0.getMatrix
+        case _ => throw new Exception("ERROR: Unexpected case while extracting the matrix of a formula.")
+      }
+    }
   }
 
   trait HOLFormula extends HOLExpression with Formula {

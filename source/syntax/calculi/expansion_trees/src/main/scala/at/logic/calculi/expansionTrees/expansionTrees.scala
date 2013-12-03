@@ -1,11 +1,9 @@
 package at.logic.calculi.expansionTrees
 
-import at.logic.language.hol._
-import at.logic.language.fol.{FOLFormula, FOLTerm, FOLExpression}
-import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL}
+import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, _}
 import at.logic.utils.ds.trees._
 import at.logic.language.lambda.substitutions._
-import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.algorithms.matching.hol._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base.types.FSequent
@@ -114,28 +112,24 @@ object qFreeToExpansionTree {
   }
 }
 
-// Builds an expansion tree given a *prenex first order* formula and 
+// Builds an expansion tree given a *prenex* formula and 
 // its instances (or substitutions) using only weak quantifiers. 
 //
-// NOTE: initially, this could be implemented for non-prenex formulas in HOL. 
+// NOTE: initially, this could be implemented for non-prenex formulas. 
 // What needs to be implemented is a method to remove the quantifiers of a
-// non-prenex formula (taking care about the renaming of variables) and a
-// matching that would return the substitutions (there is a HOL matching
-// implemented, but it is called NaiveIncompleteMatchingAlgorithm, and I am not
-// sure whether I trust this name :P ).
+// non-prenex formula (taking care about the renaming of variables).
 object prenexToExpansionTree {
-  def apply(f: FOLFormula, lst: List[FOLFormula]) : ExpansionTree = {
+  def apply(f: HOLFormula, lst: List[HOLFormula]) : ExpansionTree = {
     val fMatrix = f.getMatrix
 
     // Each possible instance will generate an expansion tree, and they all 
     // have the same root.
     val children = lst.foldLeft(List[(ExpansionTree, HOLExpression)]()) { 
       case (acc, instance) =>
-        val subs = FOLUnificationAlgorithm.unify(fMatrix, instance)
-        // WARNING: Considering only the first substitution
+        val subs = NaiveIncompleteMatchingAlgorithm.matchTerm(fMatrix, instance)
         val expTree = subs match {
-          case h::t => apply_(f, h) // WARNING: considering only the first substitution
-          case Nil => throw new Exception("ERROR: prenexToExpansionTree: No substitutions found for:\n" + 
+          case Some(sub) => apply_(f, sub) 
+          case None => throw new Exception("ERROR: prenexToExpansionTree: No substitutions found for:\n" + 
             "Matrix: " + fMatrix + "\nInstance: " + instance)
         }
         expTree match {
@@ -148,14 +142,18 @@ object prenexToExpansionTree {
     WeakQuantifier(f, children)
   }
 
-  def apply_(f: FOLFormula, sub: Substitution[FOLExpression]) : ExpansionTree = f match {
-    case AllVar(v, _) => 
+  def apply_(f: HOLFormula, sub: Substitution[HOLExpression]) : ExpansionTree = f match {
+    case AllVar(v, form) => 
       val t = sub.getTerm(v)
-      val newf = f.instantiate(t.asInstanceOf[FOLTerm])
+      val one_sub = Substitution[HOLExpression](v, t)
+      val newf = one_sub(form).asInstanceOf[HOLFormula]
+      //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))
-    case ExVar(v, _) => 
+    case ExVar(v, form) => 
       val t = sub.getTerm(v)
-      val newf = f.instantiate(t.asInstanceOf[FOLTerm])
+      val one_sub = Substitution[HOLExpression](v, t)
+      val newf = one_sub(form).asInstanceOf[HOLFormula]
+      //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))
     case _ => qFreeToExpansionTree(f)
   }
