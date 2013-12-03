@@ -1062,7 +1062,7 @@ object printProofStats {
   //unfolding a proof for a concrete instance
   object unfoldProof {
     def apply(name: String, i:Int): LKProof = {
-      applySchemaSubstitution2(name, i)
+      applySchemaSubstitution2(name, i, List())
     }
 
     def apply(i: Int): Unit = {
@@ -1083,7 +1083,7 @@ object printProofStats {
         //      val varphi = applySchemaSubstitution2("\\varphi",1, db)
         //      va
         // l varphi = applySchemaSubstitution2("\\tau",1, db)
-        val sigma = applySchemaSubstitution2("\\sigma",i)
+        //val sigma = applySchemaSubstitution2("\\sigma",i)
         //Main.display("sigma", sigma);
         //while(true){}
     }

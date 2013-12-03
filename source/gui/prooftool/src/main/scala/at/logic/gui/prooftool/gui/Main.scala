@@ -42,6 +42,7 @@ import at.logic.transformations.ceres.ACNF.ACNF
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.language.hol.HOLExpression
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -1283,7 +1284,7 @@ object Main extends SimpleSwingApplication {
           val proof = try { // This is a hack! In the future these two functions should be merged.
             applySchemaSubstitution(name, number)
           } catch {
-            case e: UnfoldException => applySchemaSubstitution2(name, number)
+            case e: UnfoldException => applySchemaSubstitution2(name, number,  List())
           }
           db.addProofs((name + "↓" + number, proof)::Nil)
           body.contents = new Launcher(Some(name + "↓" + number, proof), defaultFontSize)

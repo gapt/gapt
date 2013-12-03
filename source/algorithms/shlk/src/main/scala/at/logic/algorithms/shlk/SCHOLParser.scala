@@ -11,11 +11,9 @@ import at.logic.language.schema._
 import at.logic.language.lambda.typedLambdaCalculus._
 import collection.mutable.{Map => MMap}
 import at.logic.language.lambda.types.Definitions._
-import logicSymbols.ConstantStringSymbol
 import java.io.InputStreamReader
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.algorithms.lk._
-import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.And
 import at.logic.language.hol.Or
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
