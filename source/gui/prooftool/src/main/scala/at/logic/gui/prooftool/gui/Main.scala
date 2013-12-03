@@ -33,7 +33,7 @@ import at.logic.transformations.ceres.clauseSets.{renameCLsymbols, StandardClaus
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{Projections, DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
-import at.logic.algorithms.shlk.{FixedFOccs, applySchemaSubstitution2, applySchemaSubstitution}
+import at.logic.algorithms.shlk.{FixedFOccs,CloneLKProof2, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
 import at.logic.transformations.skolemization.skolemize
@@ -42,7 +42,7 @@ import at.logic.transformations.ceres.ACNF.ACNF
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.language.hol.HOLExpression
+import at.logic.language.hol.{HOLFormula, HOLExpression}
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -1282,9 +1282,11 @@ object Main extends SimpleSwingApplication {
       body.getContent.getData.get match {
         case (name: String, p: LKProof) =>
           val proof = try { // This is a hack! In the future these two functions should be merged.
-            applySchemaSubstitution(name, number)
+            val aa = applySchemaSubstitution2(name, number,  List())
+            CloneLKProof2(aa._2,name,aa._1,number-1,0,List())._2
+
           } catch {
-            case e: UnfoldException => applySchemaSubstitution2(name, number,  List())
+            case e: UnfoldException => applySchemaSubstitution(name, number)
           }
           db.addProofs((name + "↓" + number, proof)::Nil)
           body.contents = new Launcher(Some(name + "↓" + number, proof), defaultFontSize)

@@ -1062,7 +1062,7 @@ object printProofStats {
   //unfolding a proof for a concrete instance
   object unfoldProof {
     def apply(name: String, i:Int): LKProof = {
-      applySchemaSubstitution2(name, i, List())
+      applySchemaSubstitution2(name, i, List())._2
     }
 
     def apply(i: Int): Unit = {
