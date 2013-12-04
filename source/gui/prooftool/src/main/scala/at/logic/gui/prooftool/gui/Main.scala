@@ -1282,9 +1282,7 @@ object Main extends SimpleSwingApplication {
       body.getContent.getData.get match {
         case (name: String, p: LKProof) =>
           val proof = try { // This is a hack! In the future these two functions should be merged.
-            val aa = applySchemaSubstitution2(name, number,  List())
-            CloneLKProof2(aa._2,name,aa._1,number-1,0,List())._2
-
+            applySchemaSubstitution2(name, number,  List())
           } catch {
             case e: UnfoldException => applySchemaSubstitution(name, number)
           }
