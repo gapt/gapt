@@ -20,15 +20,33 @@ import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftR
 
 object solvePropositional extends at.logic.utils.logging.Logger {
 
-  def apply(seq: FSequent): Option[LKProof] = {
-    debug("running solvePropositional")
-    prove(seq) match {
-      case Some(p) => {
+  def apply( seq: FSequent ): Option[LKProof] = {
+    debug( "running solvePropositional" )
+
+    val seq_norm = FSequent( seq.antecedent.toSet.toList, seq.succedent.toSet.toList )
+    prove( seq_norm ) match {
+      case Some( p ) => {
+        debug( "finished solvePropositional succesfully" )
+        //debug("# of contraction left rules: " + statistics.contLeftNumber(p))
+        //debug("# of contraction right rules: " + statistics.contRightNumber(p))
+        //debug("# of rules: " + statistics.rulesNumber(p))
+        Some( CleanStructuralRules( addWeakenings( p, seq )))
+      }
+      case None => {
+        debug( "finished solvePropositional unsuccesfully" ) 
+        None
+      }
+    }
+  }
+
+  def applyWOCleaning(seq: FSequent): Option[LKProof] = {
+    debug( "running solvePropositional" )
+
+    val seq_norm = FSequent( seq.antecedent.toSet.toList, seq.succedent.toSet.toList )
+    prove( seq_norm ) match {
+      case Some( p ) => {
         debug("finished solvePropositional succesfully")
-        debug("# of contraction left rules: " + statistics.contLeftNumber(p))
-        debug("# of contraction right rules: " + statistics.contRightNumber(p))
-        debug("# of rules: " + statistics.rulesNumber(p))
-        Some(CleanStructuralRules(p))
+        Some( addWeakenings( p, seq ))
       }
       case None => {
         debug("finished solvePropositional unsuccesfully")
@@ -37,26 +55,15 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     }
   }
 
-  def applyWOCleaning(seq: FSequent): Option[LKProof] = {
-    debug("running solvePropositional")
-    val r = prove(seq)
-    r match {
-      case Some(_) => debug("finished solvePropositional succesfully")
-      case None => debug("finished solvePropositional unsuccesfully")
-    }
-
-    r
-  }
-
   // Returns a boolean indicating if the sequent is provable.
-  def isTautology(seq: FSequent) : Boolean = prove(seq) match {
+  def isTautology(seq: FSequent) : Boolean = applyWOCleaning(seq) match {
     case Some(p) => true
     case None => false
   }
 
   // Method that throws an exception instead of returning None
   // Used in sFOparser.
-  def autoProp(seq: FSequent) : LKProof = prove(seq) match {
+  def autoProp(seq: FSequent) : LKProof = applyWOCleaning(seq) match {
     case Some(p) => CleanStructuralRules(p)
     case None => throw new Exception("Sequent is not provable.")
   }
@@ -65,6 +72,8 @@ object solvePropositional extends at.logic.utils.logging.Logger {
     val ant_set = seq.antecedent.toSet
     val suc_set = seq.succedent.toSet
     if (( ant_set.size != seq.antecedent.size ) || ( suc_set.size != seq.succedent.size )) {
+      // NOTE: this should never happen, apply* ensures that inital goal sequent is set-normalized,
+      //       and prove preserves the property of being set-normalized.
       warn( "proving a sequent which is not set-normalized" )
       /*
       warn( "antecedent size (list): " + seq.antecedent.size )
