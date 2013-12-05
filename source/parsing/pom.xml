@@ -19,7 +19,7 @@
 	  <module>ivy</module>
     <module>latex_parsing</module>
     <module>arithmetic_parsing</module>
-    <module>veriT</module>
+    <module>veriT_parsing</module>
   </modules>
 
   <dependencies>

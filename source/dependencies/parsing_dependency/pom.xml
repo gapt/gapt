@@ -44,7 +44,7 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>veriT</artifactId>
+      <artifactId>veriT_parsing</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
