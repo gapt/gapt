@@ -185,7 +185,7 @@ class MiscTest extends SpecificationWithJUnit {
 
         val testfilename = "target" + separator + "test-classes" + separator + "test" + i + ".verit"
 
-        val p = VeriTParser.getExpansionProof(testfilename)
+        val p = VeriTParser.getExpansionProof(testfilename).get
 
         val formulas = ETapplyToExpansionSequent(ETtoDeep.apply, p)
         val seq = FSequent(formulas._1, formulas._2)
@@ -205,7 +205,7 @@ class MiscTest extends SpecificationWithJUnit {
 
         val testfilename = "target" + separator + "test-classes" + separator + "test" + i + ".verit"
 
-        val p = VeriTParser.getExpansionProof(testfilename)
+        val p = VeriTParser.getExpansionProof(testfilename).get
 
         val formulas = ETapplyToExpansionSequent(ETtoDeep.apply, p)
         val seq = FSequent(formulas._1, formulas._2)

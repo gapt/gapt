@@ -310,7 +310,7 @@ object VeriTParser extends RegexParsers {
     ((eq_congr_pred, List(instance)) :: symm)
   }
 
-  def getExpansionProof(filename : String) : (Seq[ExpansionTree], Seq[ExpansionTree]) = {
+  def getExpansionProof(filename : String) : Option[(Seq[ExpansionTree], Seq[ExpansionTree])] = {
     VeriTParserLogger.trace("FILE: " + filename)
     try {
       parseAll(proof, new FileReader(filename)) match {
@@ -335,11 +335,14 @@ object VeriTParser extends RegexParsers {
         throw e
     }
   }
-  // TODO: implement a method that will simply check if something is
-  // unsatisfiable or not.
 
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
-  def proof : Parser[(Seq[ExpansionTree], Seq[ExpansionTree])] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
+  def proof : Parser[Option[(Seq[ExpansionTree], Seq[ExpansionTree])]] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
+
+    // Relying on the fact that if the formula is unsatisfiable, a proof is
+    // always printed. If there is no proof, the result is sat.
+    case Nil ~ Nil => None
+    
     case pp ~ r => 
      
       val input = pp.last
@@ -358,16 +361,19 @@ object VeriTParser extends RegexParsers {
       val ant = axiomET ++ inputET
 
       val cons = List()
-      (ant.toSeq, cons.toSeq)
+      Some( (ant.toSeq, cons.toSeq) )
   }
   
   def label : Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
   
   // FILE HEADER
-  def header : Parser[String] = success | unsat | title
+  def header : Parser[String] = success | unsat | sat | title | msg
   def success : Parser[String] = "success"
   def unsat : Parser[String] = "unsat"
-  def title : Parser[String] = "verit dev - the VERI(T) theorem prover (UFRN/LORIA)."
+  def sat : Parser[String] = "sat"
+  // TODO: find out what is the general format of this title.
+  def title : Parser[String] = "verit dev - the VERI(T) theorem prover (UFRN/LORIA)." | "veriT 201310d - the SMT-solver veriT (UFRN/LORIA)."
+  def msg : Parser[String] = "Formula is Satisfiable"
  
   // INPUT PROCESSING RULES
   // Get only the formula on the last one of these rules.
@@ -399,7 +405,7 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances(c)
   }
 
-  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | or_pos | and_neg | not_and
+  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | or_pos | and_neg | not_and | not_or
   // Rules that I don't care
   def resolution : Parser[List[Instances]] = "resolution" ~> premises <~ conclusion
   def and : Parser[List[Instances]] = "and" ~> premises <~ conclusion
@@ -408,6 +414,7 @@ object VeriTParser extends RegexParsers {
   def or_pos : Parser[List[Instances]] = "or_pos" ~> conclusion ^^ { case _ => Nil }
   def and_neg : Parser[List[Instances]] = "and_neg" ~> conclusion ^^ { case _ => Nil }
   def not_and : Parser[List[Instances]] = "not_and" ~> premises <~ conclusion
+  def not_or : Parser[List[Instances]] = "not_or" ~> premises <~ conclusion
   
   // I don't care about premises. I only use the leaves
   def premises : Parser[List[Instances]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
@@ -437,6 +444,9 @@ object VeriTParser extends RegexParsers {
     case name ~ args => 
       val n = ConstantStringSymbol(name)
       Atom(n, args)
+  } | name ^^ {
+    // No parenthesis around unary symbols
+    case name => Atom(ConstantStringSymbol(name), Nil)
   }
 
   // Syntax of let-expressions:
