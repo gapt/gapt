@@ -11,7 +11,7 @@ import at.logic.provers.veriT._
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lk.base.types.FSequent
 
-object EquationalProver extends Prover {
+class EquationalProver extends Prover {
 
   // Use prover 9 to get lk proof and verit for validity check.
 
