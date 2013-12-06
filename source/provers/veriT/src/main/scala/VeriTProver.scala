@@ -16,7 +16,13 @@ object VeriTProver extends Prover {
     val in_file = VeriTExporter(s, "toProve.smt")
 
     // Execute the system command and get the result as a string.
-    val result = "veriT --proof-version=1 --proof=- toProve.smt".!!
+    val result = try { "veriT --proof-version=1 --proof=- toProve.smt".!! }
+    catch {
+      case e: IOException => throw new Exception("VeriT is not installed.")
+    }
+
+    println("result: " + result)
+
     in_file.delete() match {
       case true => ()
       case false => throw new Exception("Error deleting smt file.")

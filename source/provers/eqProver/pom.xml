@@ -20,7 +20,7 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>veriTProver</artifactId>
+      <artifactId>veriT</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
