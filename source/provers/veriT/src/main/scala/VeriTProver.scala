@@ -1,3 +1,4 @@
+
 package at.logic.provers.veriT
 
 import scala.sys.process._
