@@ -7,7 +7,7 @@ package at.logic.calculi.lk
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
-import at.logic.language.fol.{Neg => FOLNeg, Or => FOLOr, And => FOLAnd, Imp => FOLImp, Atom => FOLAtom, AllVar => FOLAllVar}
+import at.logic.language.fol.{Neg => FOLNeg, Or => FOLOr, And => FOLAnd, Imp => FOLImp, Atom => FOLAtom, AllVar => FOLAllVar, Equation => FOLEquation}
 import at.logic.language.fol.{FOLVar, FOLTerm, FOLFormula}
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
@@ -133,21 +133,21 @@ package macroRules {
       * @param s2 The proof which contains the (x=z) which is to be shown.
       * @return A proof wich s2 as a subtree and the formula (x=z) replaced by (x=y) and (y=z).
       */
-    def apply (eq: ConstantStringSymbol, x: FOLTerm, y: FOLTerm, z: FOLTerm, s2: LKProof) : LKProof = {
+    def apply (x: FOLTerm, y: FOLTerm, z: FOLTerm, s2: LKProof) : LKProof = {
 
       val xv = FOLVar(VariableStringSymbol("x"))
       val yv = FOLVar(VariableStringSymbol("y"))
       val zv = FOLVar(VariableStringSymbol("z"))
 
       //Forall xyz.(x = y ^ y = z -> x = z)
-      val Trans = FOLAllVar(xv, FOLAllVar(yv, FOLAllVar(zv, FOLImp(FOLAnd(FOLAtom(eq, xv::yv::Nil) , FOLAtom(eq, yv::zv::Nil) ), FOLAtom(eq, xv::zv::Nil)))))
-      def TransX(x:FOLTerm) = FOLAllVar(yv, FOLAllVar(zv, FOLImp(FOLAnd(FOLAtom(eq, x::yv::Nil) , FOLAtom(eq, yv::zv::Nil) ), FOLAtom(eq, x::zv::Nil))))
-      def TransXY(x:FOLTerm, y:FOLTerm) = FOLAllVar(zv, FOLImp(FOLAnd(FOLAtom(eq, x::y::Nil) , FOLAtom(eq, y::zv::Nil) ), FOLAtom(eq, x::zv::Nil)))
-      def TransXYZ(x:FOLTerm, y: FOLTerm, z:FOLTerm) = FOLImp(FOLAnd(FOLAtom(eq, x::y::Nil) , FOLAtom(eq, y::z::Nil) ), FOLAtom(eq, x::z::Nil))
+      val Trans = FOLAllVar(xv, FOLAllVar(yv, FOLAllVar(zv, FOLImp(FOLAnd(FOLEquation( xv, yv) , FOLEquation( yv, zv) ), FOLEquation( xv, zv)))))
+      def TransX(x:FOLTerm) = FOLAllVar(yv, FOLAllVar(zv, FOLImp(FOLAnd(FOLEquation( x, yv) , FOLEquation( yv, zv) ), FOLEquation( x, zv))))
+      def TransXY(x:FOLTerm, y:FOLTerm) = FOLAllVar(zv, FOLImp(FOLAnd(FOLEquation( x, y) , FOLEquation( y, zv) ), FOLEquation( x, zv)))
+      def TransXYZ(x:FOLTerm, y: FOLTerm, z:FOLTerm) = FOLImp(FOLAnd(FOLEquation( x, y) , FOLEquation( y, z) ), FOLEquation( x, z))
 
-      val xy = FOLAtom(eq, x::y::Nil)
-      val yz = FOLAtom(eq, y::z::Nil)
-      val xz = FOLAtom(eq, x::z::Nil)
+      val xy = FOLEquation( x, y)
+      val yz = FOLEquation( y, z)
+      val xz = FOLEquation( x, z)
 
       val ax_xy = Axiom(xy::Nil, xy::Nil)
       val ax_yz = Axiom(yz::Nil, yz::Nil)
