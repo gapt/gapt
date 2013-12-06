@@ -102,7 +102,7 @@ object SimplifyStruct {
     case A(_) => s
     case Dual(EmptyPlusJunction()) => EmptyTimesJunction()
     case Dual(EmptyTimesJunction()) => EmptyPlusJunction()
-    case Dual(x) => SimplifyStruct(x)
+    case Dual(x) => Dual(SimplifyStruct(x))
     case Times(x,EmptyTimesJunction(),_) => SimplifyStruct(x)
     case Times(EmptyTimesJunction(),x,_) => SimplifyStruct(x)
     case Times(x,Dual(y), aux) if x.formula_equal(y) =>

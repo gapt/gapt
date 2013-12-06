@@ -21,6 +21,9 @@ import at.logic.calculi.lk.propositionalRules.{ContractionLeftRule, Axiom, NegLe
 class clauseSchemaTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   import at.logic.language.schema._
+
+  sequential
+
   "clauseSchemaTest" should {
     "create a correct schema clause" in {
       //println(Console.RED+"\n\n       clauseSchemaTest\n\n"+Console.RESET)

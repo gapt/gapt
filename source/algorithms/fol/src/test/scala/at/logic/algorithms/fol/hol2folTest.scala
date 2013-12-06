@@ -35,12 +35,15 @@ class hol2folTest extends SpecificationWithJUnit {
     "be correctly reduced into FOL terms for" in {
       "Atom - A(x:(i->i), a:o->i)" in {
         reduceHolToFol(new MyParserHOL("A(x:(i->i), a:(o->i))").getTerm(),imap,iid) must beEqualTo (new MyParserFOL("A(x, a)").getTerm())
+        convertHolToFol(new MyParserHOL("A(x:i, a:i)").getTerm()) must beEqualTo (new MyParserFOL("A(x, a)").getTerm())
       }
       "Function - f(x:(i->i), a:(o->i)):(o->o)" in {
         reduceHolToFol(new MyParserHOL("f(x:(i->i), a:(o->i)):(o->o)").getTerm(),imap,iid) must beEqualTo (new MyParserFOL("f(x, a)").getTerm())
+        convertHolToFol.convertTerm(new MyParserHOL("f(x:i, a:i):i").getTerm()) must beEqualTo (new MyParserFOL("f(x, a)").getTerm())
       }
       "Connective - And A(x:(i->i), a:(o->i)) B(x:(i->i), b:(o->i))" in {
         reduceHolToFol(new MyParserHOL("And A(x:(i->i), a:(o->i)) B(x:(i->i), b:(o->i))").getTerm(),imap,iid) must beEqualTo (new MyParserFOL("And A(x, a) B(x, b)").getTerm())
+        convertHolToFol(new MyParserHOL("And A(x:i, a:i) B(x:i, b:i)").getTerm()) must beEqualTo (new MyParserFOL("And A(x, a) B(x, b)").getTerm())
       }
       "Abstraction - f(Abs x:(i->i) A(x:(i->i), a:(o->i))):(o->o)" in {
         reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), a:(o->i))):(o->o)").getTerm(),imap,iid) must beEqualTo (new MyParserFOL("f(q_{1})").getTerm())
@@ -49,11 +52,21 @@ class hol2folTest extends SpecificationWithJUnit {
         reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm(),imap,iid) must beEqualTo (new MyParserFOL("f(q_{1}(y))").getTerm())
       }
       "Two terms - f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o) and g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)" in {
+        println("two terms")
         val map = mutable.Map[LambdaExpression, ConstantStringSymbol]()
         var id = new {var idd = 0; def nextId = {idd = idd+1; idd}}
-        (reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm(),map,id)::
-        reduceHolToFol(new MyParserHOL("g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)").getTerm(),map,id)::Nil) must beEqualTo(
-          new MyParserFOL("f(q_{1}(y))").getTerm()::new MyParserFOL("g(q_{1}(z))").getTerm()::Nil)
+        val t1 = new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm()
+        val t2 = new MyParserHOL("g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)").getTerm()
+        val r1 = reduceHolToFol(t1,map,id)
+        println("map="+map)
+        val r2 = reduceHolToFol(t2,map,id)
+        val s1 = new MyParserFOL("f(q_{1}(y))").getTerm()
+        val s2 = new MyParserFOL("g(q_{1}(z))").getTerm()
+        println(t1)
+        println(t2)
+        println(r1)
+        println(r2)
+        (r1::r2::Nil) must beEqualTo(s1::s2::Nil)
       }
     }
   }

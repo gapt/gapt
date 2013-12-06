@@ -98,7 +98,7 @@ import at.logic.algorithms.hlk.{HybridLatexExporter, HybridLatexParser}
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.transformations.ceres.clauseSets.{SimplifyStruct, StandardClauseSet}
-import scala.reflect.runtime.universe._
+import scala.collection.mutable
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -166,7 +166,7 @@ object printProofStats {
       }
     catch
     {
-      case _ =>
+      case _ : Exception =>
         (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase().proofs
     }
   }
@@ -178,7 +178,7 @@ object printProofStats {
       }
     catch
     {
-      case _ =>
+      case _ : Exception =>
         (new XMLReader(new InputStreamReader(new FileInputStream(file))) with XMLProofDatabaseParser).getProofDatabase()
     }
   }
@@ -396,7 +396,7 @@ object printProofStats {
           ("Definitions", imap.toList.map(x => (x._1, createExampleFOLConstant(x._1, x._2))))::sectionsPre
         }
       catch {
-        case _ => sectionsPre
+        case _ : Exception => sectionsPre
       }
       (new FileWriter(outputFile) with SequentsListLatexExporter with HOLTermArithmeticalExporter).exportSequentList(ls map (_.toFSequent),sections).close
     }
@@ -414,6 +414,13 @@ object printProofStats {
             <variabledefinitions/>
             </proofdatabase>, "UTF-8", true,
             scala.xml.dtd.DocType( "proofdatabase", scala.xml.dtd.SystemID( "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd" ) , Nil ) )
+    }
+  }
+
+  object exportLatex {
+    def apply(list : List[FSequent], fn : String) = {
+      val writer = (new FileWriter( fn ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+      writer.exportSequentList( list , Nil).close
     }
   }
 
@@ -865,34 +872,76 @@ object printProofStats {
   }
 
   object css {
-    def apply(s:Struct) : (List[FSequent], List[FSequent])  = {
-      apply(structToClausesList(SimplifyStruct(s)))
+    def apply(s:Struct) : (List[FSequent], List[FSequent], List[FSequent], FOLConstantsMap)  = {
+      val clauselist = structToClausesList(SimplifyStruct(s))
+      val (fcmap, fol,hol) = apply(clauselist)
+      (clauselist.map( _.toFSequent), fol, hol, fcmap)
     }
 
-    def apply(l:List[Sequent]) : (List[FSequent], List[FSequent])  =
+    def apply(l:List[Sequent]) : (FOLConstantsMap, List[FSequent], List[FSequent])  =
       prunes(l)
 
-    def prunes(l:List[Sequent]) : (List[FSequent], List[FSequent]) = {
+    def prunes(l:List[Sequent]) : (FOLConstantsMap, List[FSequent], List[FSequent]) = {
         prunefs(l map (_.toFSequent()))
     }
 
-    def prunefs(l:List[FSequent]) : (List[FSequent], List[FSequent]) = {
-      (removeSubsumed(extractFOL(l)).sorted(FSequentOrdering), extractHOL(l).toSet.toList.sorted(FSequentOrdering))
+    def prunefs(l:List[FSequent]) : (FOLConstantsMap,List[FSequent], List[FSequent]) = {
+      val (fcmap, fol) = extractFOL(l)
+      (fcmap,removeSubsumed(fol).sorted(FSequentOrdering), extractHOL(l).toSet.toList.sorted(FSequentOrdering))
     }
 
-    def extractFOL(l : List[FSequent]) : List[FSequent] = l.flatMap(x => try {
-      hol2fol(x.toFormula())
-      FSequent(x.antecedent.map(hol2fol.apply), x.succedent.map(hol2fol.apply))::Nil
-    } catch {
-      case e:Exception => Nil
-    })
+    type FOLConstantsMap = Map[ConstantStringSymbol,LambdaExpression]
+    def extractFOL(l : List[FSequent]) : (FOLConstantsMap, List[FSequent]) = {
+      val map = mutable.Map[LambdaExpression,ConstantStringSymbol]()
+      val counter = new {private var state = 0; def nextId = { state = state +1; state}}
+
+      val fol = l.flatMap(x => try {
+        hol2folpure(x) ::Nil
+      } catch {
+        case e:Exception => Nil
+      })
+
+      val rmap = map.foldLeft(Map[ConstantStringSymbol,LambdaExpression]())((m, pair) => {
+        require(! m.isDefinedAt(pair._2), "No duplicate constant assignment allowed during hol2fol conversion!")
+        m + ((pair._2,pair._1)) })
+      (rmap,fol)
+    }
 
     def extractHOL(l : List[FSequent]) : List[FSequent] = l.flatMap(x => try {
-      hol2fol(x.toFormula())
+      hol2folpure(x.toFormula())
       Nil
     } catch {
       case e:Exception => x::Nil
     })
+
+    type Symboltable = (Map[TA, Set[VariableSymbolA]], Map[TA,Set[ConstantSymbolA]])
+    val emptysmboltable = (Map[TA, Set[VariableSymbolA]](), Map[TA,Set[ConstantSymbolA]]())
+    def extractSymbolTable(l : List[FSequent]) : Symboltable  =
+      l.foldLeft(emptysmboltable)((table,x) => {
+        val (vt,ct) = extractSymbolTable(x.toFormula())
+        val (vt_,ct_) = table
+        (vt ++ vt_, ct ++ct_)
+    })
+
+    import at.logic.language.lambda.typedLambdaCalculus.{App => LambdaApp, Abs => LambdaAbs}
+    def extractSymbolTable(l:LambdaExpression) : Symboltable = l match {
+      case Var(sym:LogicalSymbolsA,_) =>
+        emptysmboltable
+      case Var(sym:VariableSymbolA,ta) =>
+        val (vt,ct) = emptysmboltable
+        (vt + ((ta,Set(sym))), ct)
+      case Var(sym:ConstantSymbolA,ta) =>
+        val (vt,ct) = emptysmboltable
+        (vt, ct + ((ta,Set(sym))))
+      case LambdaApp(s,t) =>
+        val (vt1,ct1) = extractSymbolTable(s)
+        val (vt2,ct2) = extractSymbolTable(t)
+        (vt1 ++ vt2, ct1++ct2)
+      case LambdaAbs(x,t) =>
+        val (vt1,ct1) = extractSymbolTable(x)
+        val (vt2,ct2) = extractSymbolTable(t)
+        (vt1 ++ vt2, ct1++ct2)
+    }
   }
 
   object sequent {
@@ -1097,6 +1146,10 @@ object printProofStats {
       reduceHolToFol( term  )
 
   }
+
+  object hol2folpure extends convertHolToFol
+  object replaceAbstractions extends replaceAbstractions
+
 
   object tbillc {
     def help() = println(helptext)

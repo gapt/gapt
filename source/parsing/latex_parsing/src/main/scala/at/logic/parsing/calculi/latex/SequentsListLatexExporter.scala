@@ -75,8 +75,97 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     getOutput.write("""\section{Clauses}""")
     getOutput.write("\n")
     ls.foreach(x => {exportSequent(x); getOutput.write(mdskip)})
+    printTypes(ls)
     getOutput.write("""\end{document}""")
     this
+  }
+
+  private def getFSVars(fs:FSequent) : Set[Var] = fs.formulas.toSet.flatMap(getVars)
+  private def getVars(l:LambdaExpression) : Set[Var] = l match {
+    case Var(_,_) => Set(l.asInstanceOf[Var])
+    case Abs(x,t) => getVars(t) + x
+    case App(s,t) => getVars(s) ++ getVars(t)
+  }
+
+  def printTypes(l: List[FSequent]) = {
+    val (vmap, cmap) = getTypes(l)
+    getOutput.write("\\subsection{Variable Types}\n")
+
+    getOutput.write("\\[\\begin{array}{ll}\n")
+    for ((key,set) <- vmap.toList.sortBy(_._1)(TAOrdering)) {
+      var set_ = set
+      while (set_.nonEmpty) {
+        val (ten,rest) = set_.splitAt(10)
+        getOutput.write(ten.mkString("",", "," & ")+typeToString(key))
+        getOutput.write(" \\\\\n")
+        set_ = rest
+      }
+    }
+    getOutput.write("""\end{array}\]""")
+
+    getOutput.write("\\subsection{Constant Types}\n")
+    getOutput.write("\\[\\begin{array}{ll}\n")
+    for ((key,set) <- cmap.toList.sortBy(_._1)(TAOrdering)) {
+      var set_ = set
+      while (set_.nonEmpty) {
+        val (ten,rest) = set_.splitAt(10)
+        getOutput.write(ten.mkString("",", "," & ")+typeToString(key))
+        getOutput.write(" \\\\\n")
+        set_ = rest
+      }
+    }
+    getOutput.write("""\end{array}\]""")
+  }
+
+  def typeToString(t:TA, outermost : Boolean = true) : String = t match {
+    case Ti() => "i"
+    case To() => "o"
+    case Tindex() => "w"
+    case t1 -> t2 =>
+      typeToString(t1) +
+      " > " +
+      typeToString(t2)
+  }
+
+  def typeToString_(t:TA) : String = t match {
+    case Ti() => "i"
+    case To() => "o"
+    case Tindex() => "w"
+    case t1 -> t2 =>
+      ("(") +
+        typeToString(t1) +
+        " > " +
+        typeToString(t2) +
+      ")"
+  }
+
+  private def getTypes(l:List[FSequent]) = {
+    val allvars = l.foldLeft(Set[Var]())((rec,fs) => rec ++ getFSVars(fs))
+    val vars = allvars.filter(_.name.isInstanceOf[VariableSymbolA])
+    val consts = allvars.filter(x => x.name.isInstanceOf[ConstantSymbolA] && !x.name.isInstanceOf[LogicalSymbolsA])
+    val svars = vars.map(_.name.toString())
+    val cvars = consts.map(_.name.toString())
+    if (cvars.exists(svars.contains(_)) || svars.exists(cvars.contains(_)))
+      println("WARNING: exported const and varset are not disjunct!")
+
+    val varmap = vars.foldLeft(Map[TA,Set[String]]())((map, v) => {
+      if (map contains v.exptype) {
+        val nset =  map(v.exptype) + v.name.toString()
+        map + ((v.exptype, nset))
+      } else {
+        map + ((v.exptype, Set(v.name.toString())))
+      }
+    })
+    val constmap = consts.foldLeft(Map[TA,Set[String]]())((map, v) => {
+      if (map contains v.exptype) {
+        val nset =  map(v.exptype) + v.name.toString()
+        map + ((v.exptype, nset))
+      } else {
+        map + ((v.exptype, Set(v.name.toString())))
+      }
+    })
+
+    (varmap,constmap)
   }
 
   private def printOnMatch(a: Any) = a match {
@@ -84,7 +173,8 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     case ta: TA => getOutput.write("$" + latexType(ta) + "$")
     case _ => getOutput.write(a.toString)
   }
-  
+
+
   private def exportTerm1(f: LambdaExpression) = {
     getOutput.write("$")
     exportTerm(f)

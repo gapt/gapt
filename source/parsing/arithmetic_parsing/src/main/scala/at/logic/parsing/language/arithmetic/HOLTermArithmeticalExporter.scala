@@ -10,6 +10,7 @@ package at.logic.parsing.language.arithmetic
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol._
+import at.logic.language.fol
 import at.logic.parsing.OutputExporter
 import at.logic.language.lambda.typedLambdaCalculus._
 
@@ -34,6 +35,8 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
     case Atom(ConstantStringSymbol(">"), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" > """); exportTerm(y); getOutput.write(")")}
     case Atom(BiggerThanSymbol, x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" > """); exportTerm(y); getOutput.write(")")}
     case Atom(ConstantStringSymbol("="), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" = """); exportTerm(y); getOutput.write(")")}
+    case Equation(x,y) => {getOutput.write("("); exportTerm(x); getOutput.write(""" = """); exportTerm(y); getOutput.write(")")}
+    case fol.Equation(x,y) => {getOutput.write("("); exportTerm(x); getOutput.write(""" = """); exportTerm(y); getOutput.write(")")}
     case BigAnd(v, f, s, e) => {
       getOutput.write("("); getOutput.write("""\bigwedge_{"""); exportTerm(v); 
                                 getOutput.write(" = "); exportTerm(s) ; getOutput.write("}^{"); exportTerm(e);

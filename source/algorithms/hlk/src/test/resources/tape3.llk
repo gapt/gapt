@@ -1,8 +1,6 @@
 
 % ===== START OF TYPEDEFS ===== %
 
-% *, +, 0, 1, <, A, ARITH_1, ARITH_2, ARITH_3, ARITH_4, AX, BASE, BIF0, BIF1, C, I, IF0, IF1, IIF0, IIF1, MAIN, MON, MONstep, MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}, MONstep_{b1}, NOCC, NOCCstep, NOCCstep_{a}, NOCCstep_{b}, P, STEP, T, X, \Delta, \Gamma, \alpha, \beta, \delta, \gamma, \kappa, \nu, \pi_1, \rho, \sigma, be, bm, f, h, h', h_1, i, i_1, i_2, ie, ite, j, j_1, k, n, s, t, x, x_1, y, y_1 %
-
 % variables %
 \VARDEC{ i, i_1, i_2, j, j_1, k, n, s, x, x_1, y, y_1, z, n_0, n_1}{i}
 \VARDEC{\alpha, \beta, \delta, \gamma, \kappa, \nu, \sigma}{i}
@@ -21,7 +19,7 @@
 \CONSTDEC{C, MONstep}{o}
 \CONSTDEC{IF0, IF1}{i>i>o}
 \CONSTDEC{MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}}{o}
-\CONSTDEC{MONstep_{b1}, NOCCstep, NOCCstep_{a}, NOCCstep_{b}, OLDTAPE, OLDTAPE2, TAPEPROOF, \pi_1}{o}
+\CONSTDEC{NOCCstep, NOCCstep_{a}, NOCCstep_{b}, OLDTAPE, OLDTAPE2, TAPEPROOF, \pi_1}{o}
 \CONSTDEC{BASE, STEP, MAIN, \rho}{i>o}
 
 % definitions  %
@@ -417,15 +415,6 @@
 \CONTRL{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{h'(i_1) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 \EQR{AX, h'(n)<\alpha, MON(h',n), j_1<(n+1)+1, i_1<j_1, i_1<n+1}{(\ite{ \benc{i_1<n+1} }{h'(i_1)}{\alpha}) < (\ite{ \benc{j_1<n+1} }{h'(j_1)}{\alpha})}
 \CONTINUEWITH{MONstep_{a1}}  
-
-% ===== END OF PROOF ===== %
-
-
-% ===== START OF PROOF ===== %
-
-
- \AX{AX, j_1<(n+1)+1, i_1<j_1, i_1 = n+1}{}
- \CONTINUEWITH{MONstep_{b1}}  
 
 % ===== END OF PROOF ===== %
 
