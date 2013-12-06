@@ -183,8 +183,18 @@ import base.types._
     }
 
     def toFormula() : HOLFormula = this.toFSequent().toFormula()
-    // checks whether this sequent is of the form F :- F
+
+    // checks whether this sequent is of the form F :- F 
+    // TODO: name of this function should be changed -  there are many tautologies of different shape - new name: e.g. isIdAxiom
     def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head.formula == succedent.head.formula
+
+    // checks whether this sequent is of the form :- t = t
+    def isReflexivity = antecedent.size == 0 && succedent.size == 1 && (
+      succedent.head.formula match {
+        case Equation( s, t ) => ( s == t )
+        case _ => false
+      }
+    )
 
     def occurrences = antecedent ++ succedent
 

@@ -813,5 +813,20 @@ object addContractions {
 
 }
 
-
+/**
+ * @return true iff this proof contains a reflexivity axiom or an equational inference
+ **/
+object containsEqualityReasoning {
+  def apply( p: LKProof ): Boolean = p match {
+    case Axiom( seq ) => seq.isReflexivity
+    // equational rules
+    case EquationLeft1Rule( _, _, _, _, _, _ ) => true
+    case EquationLeft2Rule( _, _, _, _, _, _ ) => true
+    case EquationRight1Rule( _, _, _, _, _, _ ) => true
+    case EquationRight2Rule( _, _, _, _, _, _ ) => true
+    // other rules
+    case UnaryLKProof( _, p1, _, _, _ ) => apply( p1 )
+    case BinaryLKProof( _, p1, p2, _, _, _, _ ) => apply( p1 ) || apply( p2 )
+  }
+}
 

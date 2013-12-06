@@ -720,8 +720,14 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
 
 \begin{prooftree}
 \AxiomCm{}
-\RightLabelm{(\mt{Axiom})}
+\RightLabelm{(\mt{Identity Axiom})}
 \UnaryInfCm{\Gamma, A \seq \Delta, A}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Reflexivity Axiom})}
+\UnaryInfCm{\Gamma \seq \Delta, t = t}
 \end{prooftree}
 
 \subsubsection*{Cut}

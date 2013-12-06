@@ -50,7 +50,6 @@ package propositionalRules {
 
     /** <pre>Creates an axiom with the sequent seq (consisting of the
       * antecedent sL and the succedent sR).
-      * sL and sR have to have a shared formula.
       *
       * The rule: 
       * 
@@ -58,8 +57,8 @@ package propositionalRules {
       *   sL |- sR
       * </pre>
       *
-      * @param s1 The sequent of the axiom.
-      * @return The LKProof consisting of s1 as its axiom.
+      * @param seq The sequent of the axiom.
+      * @return The LKProof consisting of the axiom seq.
     */
     def apply(seq: Sequent) : LeafTree[Sequent] with NullaryLKProof = {
       if (seq.antecedent.exists((fo:FormulaOccurrence) => (fo.ancestors.size > 0) ))
@@ -71,7 +70,7 @@ package propositionalRules {
     }
 
     /** <pre>Creates an axiom consisting of the antecedent ant and
-      * the succeedent suc. ant and suc have to have a shared formula.
+      * the succeedent suc.
       *
       * The rule: 
       * 
@@ -81,7 +80,7 @@ package propositionalRules {
       *
       * @param ant The antecedent the axiom.
       * @param suc The succedent of the axiom.
-      * @return The LKProof consisting of (ant |- suc) as its axiom.
+      * @return The LKProof consisting of the axiom (ant |- suc).
       */
     def apply[T](ant: Seq[Formula], suc: Seq[Formula]) (implicit factory: FOFactory) = {
       val left: Seq[FormulaOccurrence] = ant.map(x => factory.createFormulaOccurrence(x.asInstanceOf[HOLFormula], Nil))
