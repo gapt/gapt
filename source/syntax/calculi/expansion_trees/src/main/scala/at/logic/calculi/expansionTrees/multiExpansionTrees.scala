@@ -1,7 +1,7 @@
 package at.logic.calculi.expansionTrees
 
 import at.logic.language.hol._
-import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL}
+import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL}
 import at.logic.utils.ds.trees._
 
 /**
@@ -57,7 +57,7 @@ case class Atom(formula: HOLFormula) extends MultiExpansionTree with TerminalNod
 // Can I call this using the dot notation? (met.toFormulaM)
 def toFormulaM(tree: MultiExpansionTree): HOLFormula = tree match {
   case Atom(f) => f
-  case Not(t1) => Neg(toFormulaM(t1))
+  case Not(t1) => NegHOL(toFormulaM(t1))
   case And(t1,t2) => AndHOL(toFormulaM(t1), toFormulaM(t2))
   case Or(t1,t2) => OrHOL(toFormulaM(t1), toFormulaM(t2))
   case Imp(t1,t2) => ImpHOL(toFormulaM(t1), toFormulaM(t2))

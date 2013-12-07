@@ -11,7 +11,7 @@ import swing._
 import event.MouseClicked
 import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
-import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NotET, Atom => AtomET}
+import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Neg => NegET, Atom => AtomET}
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.image.BufferedImage
 import at.logic.language.hol._
@@ -54,7 +54,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
       contents += label("⊃",ft)
       contents += new DrawExpansionTree(right,ft)
       contents += parenthesis._2
-    case NotET(tree) =>
+    case NegET(tree) =>
       contents += label("¬",ft)
       contents += new DrawExpansionTree(tree,ft)
     case AtomET(f) =>
@@ -101,7 +101,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
       extractTerms(left) ::: extractTerms(right)
     case ImpET(left, right) =>
       extractTerms(left) ::: extractTerms(right)
-    case NotET(tree) => extractTerms(tree)
+    case NegET(tree) => extractTerms(tree)
     case AtomET(f) => Nil
   }
 
@@ -137,7 +137,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
 //      if (ll == Nil) rl
 //      else if (rl == Nil) ll
 //      else ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Imp(f1,f2)))
-//    case NotET(tree) =>
+//    case NegET(tree) =>
 //      extractFormulas(tree,formula,n,start).map(f => Neg(f))
 //    case AtomET(f) => if (start) List(f) else Nil
 //  }

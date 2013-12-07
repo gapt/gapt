@@ -8,7 +8,7 @@ import at.logic.language.hol.{HOLExpression, HOLVar}
 object compressQuantifiers {
   def apply(tree: ExpansionTree): MultiExpansionTree = tree match {
     case Atom(f) => mAtom(f)
-    case Not(t1) => mNot(compressQuantifiers(t1))
+    case Neg(t1) => mNot(compressQuantifiers(t1))
     case And(t1,t2) => mAnd(compressQuantifiers(t1), compressQuantifiers(t2))
     case Or(t1,t2) => mOr(compressQuantifiers(t1), compressQuantifiers(t2))
     case Imp(t1,t2) => mImp(compressQuantifiers(t1), compressQuantifiers(t2))
