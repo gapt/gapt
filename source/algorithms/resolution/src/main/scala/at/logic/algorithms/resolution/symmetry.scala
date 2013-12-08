@@ -6,7 +6,7 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.resolution.robinson._
-import at.logic.language.fol.{Equation, FOLTerm, FOLFormula, FOLExpression}
+import at.logic.language.fol.{Equation => FOLEquation, FOLTerm, FOLFormula, FOLExpression}
 import at.logic.language.hol._
 import at.logic.language.lambda.substitutions.Substitution
 import at.logic.language.lambda.typedLambdaCalculus.{Var, App}
@@ -31,7 +31,7 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
       to.foldLeft( HashMap[Formula, Formula]() )( (map, to_f) => {
         val from_f = from.find( from_f => (from_f == to_f) || ( (from_f, to_f) match
         {
-          case (Equation(from_l, from_r), Equation(to_l, to_r)) if from_l == to_r && from_r == to_l => true
+          case (FOLEquation(from_l, from_r), FOLEquation(to_l, to_r)) if from_l == to_r && from_r == to_l => true
           case _ => false
         }))
 
@@ -66,11 +66,11 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
   {
     trace("in apply sym with f = " + f + ", pos = " + pos)
     val (left, right) = f match {
-      case Equation(l, r) => (l, r)
+      case FOLEquation(l, r) => (l, r)
     }
-    val newe = Equation(right, left)
-    val refl = Equation(left, left)
-      val s = Substitution[FOLExpression]()
+    val newe = FOLEquation(right, left)
+    val refl = FOLEquation(left, left)
+    val s = Substitution[FOLExpression]()
 
     if (pos)
     {
@@ -91,12 +91,12 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
 
     val init = InitialClause(from.antecedent.map(f=>f.asInstanceOf[FOLFormula]), from.succedent.map(f=>f.asInstanceOf[FOLFormula]))
     val s_neg = neg_map.keySet.foldLeft(init)( (p, f) => f match {
-        case Equation(_, _) if neg_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], false)
+        case FOLEquation(_, _) if neg_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], false)
         case _ => p
       })
 
     pos_map.keySet.foldLeft(s_neg)( (p, f) => f match {
-        case Equation(_, _) if pos_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], true)
+        case FOLEquation(_, _) if pos_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], true)
         case _ => p
     })
   }
@@ -117,10 +117,23 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
     rec(p)(cs)
   }
 
-  def rec( p: RobinsonResolutionProof)(implicit cs: Seq[FSequent] ) : RobinsonResolutionProof = p match {
+  def rec( p: RobinsonResolutionProof)(implicit cs: Seq[FSequent] ) : RobinsonResolutionProof = {
+    var fac = false
+    val res = p match {
     case InitialClause(cls) => handleInitialClause( cls.toFClause, cs )
 
-    case Factor(r, p, a, s) => Factor( rec( p ), a(0)(0).formula, a(0).size, a(1)(0).formula, a(1).size, s )
+    case Factor(r, p, a, s) => {
+      fac = true 
+      a match {
+        case lit1 :: Nil => {
+          val pos = p.root.succedent.contains(lit1.head)
+          Factor(rec(p), lit1.head.formula, lit1.size, pos, s)
+        }
+        case lit1::lit2::Nil =>
+          Factor(rec(p), lit1.head.formula, lit1.size, lit2.head.formula, lit2.size, s)
+        case _ => throw new Exception("Factor rule for "+p.root+" does not have one or two primary formulas!")
+      }
+    }
     case Variant(r, p, s) => Variant( rec( p  ), s )
     case Resolution(r, p1, p2, a1, a2, s) => Resolution( rec( p1 ), rec( p2 ), a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
     case Paramodulation(r, p1, p2, a1, a2, p, s) => 
@@ -128,4 +141,11 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
     // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
     case at.logic.calculi.resolution.instance.Instance(_,p,s) => at.logic.calculi.resolution.instance.Instance(rec(p),s)
   }
+  (res.root.positive ++ res.root.negative).foreach( fo => assert(fo.formula.isInstanceOf[FOLFormula]))
+  if (fac) {
+    trace("old: " + p.root)
+    trace("new: " + res.root)
+  }
+  res
+}
 }
