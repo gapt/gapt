@@ -7,7 +7,7 @@
 package at.logic.provers.prover9
 
 import at.logic.provers.Prover
-import at.logic.algorithms.resolution.RobinsonToLK
+import at.logic.algorithms.resolution.{RobinsonToLK, fixSymmetry, CNFn}
 import at.logic.calculi.resolution.base._
 import at.logic.calculi.lk.base._
 import at.logic.language.lambda.typedLambdaCalculus._
@@ -156,7 +156,13 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
     tptpToLadr( tmp_file.getAbsolutePath, input_file )
     tmp_file.delete
-    runP9OnLADR(input_file, output_file)
+    // also pass along a CNF of the negated sequent so that
+    // the proof obtained by prover9 can be fixed to have
+    // as the clauses the clauses of this CNF (and not e.g.
+    // these clauses modulo symmetry)
+    //
+    // Oh my, the casting! :-(
+  runP9OnLADR(input_file, output_file, Some(CNFn(seq.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList))
   }
 
   def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
@@ -167,10 +173,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
     trace("converting tptp to ladr")
     tptpToLadr( tmp_file.getAbsolutePath, input_file )
     tmp_file.delete
-    runP9OnLADR(input_file, output_file)
+    runP9OnLADR(input_file, output_file, Some(named_sequents.map( p => p._2) ))
   }
 
-    def runP9OnLADR( input_file: String, output_file: String ) : Option[RobinsonResolutionProof] = {
+    def runP9OnLADR( input_file: String, output_file: String, clauses: Option[Seq[FSequent]] = None ) : Option[RobinsonResolutionProof] = {
     // find out which symbols have been renamed
     // this information should eventually be used when
     // parsing the prover9 proof
@@ -199,9 +205,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
           trace( "doing name replacement" )
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
           trace( "done doing name replacement" )
+          val ret = if (clauses != None) fixSymmetry(tp9proof, clauses.get) else tp9proof
           //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
 
-          Some(tp9proof)
+          Some(ret)
         } catch {
           case e : Exception =>
             warn("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
@@ -224,7 +231,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
           trace( "doing name replacement" )
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
           trace( "done doing name replacement" )
-          Some(tp9proof)
+          val ret = if (clauses != None) fixSymmetry(tp9proof, clauses.get) else tp9proof
+          Some(ret)
         } catch {
           case _: Exception => None // Prover9 ran out of things to do (sos list exhausted).
         }
@@ -335,8 +343,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
     val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
     val rproof = IvyToRobinson(iproof)
+
     //val mproof = InstantiateElimination(rproof)
     val mproof = rproof
+    //val mproof = if (clauses != None) fixSymmetry(rproof, clauses.get) else rproof
     pt_file.delete
     ivy_file.delete
 

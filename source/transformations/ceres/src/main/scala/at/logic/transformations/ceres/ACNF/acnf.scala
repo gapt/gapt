@@ -242,7 +242,7 @@ object getInstantiationsOfTheIndexedFOVars {
       case Variant(clause, parent1, sub) => sub.map.head.asInstanceOf[(HOLVar, HOLExpression)]::apply1(parent1)
       case Factor(clause, parent1, aux, sub) => apply1(parent1)
       case Resolution(clause, parent1, parent2, lit1, lit2, sub) => apply1(parent1):::apply1(parent2)
-      case Paramodulation(clause, parent1, parent2, lit1, lit2, sub) => apply1(parent1):::apply1(parent2)
+      case Paramodulation(clause, parent1, parent2, lit1, lit2, _, sub) => apply1(parent1):::apply1(parent2)
     }
   }
   def apply(rp: RobinsonResolutionProof): List[(HOLVar, HOLExpression)] = renameVVarToZVar(apply1(rp))

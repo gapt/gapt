@@ -133,7 +133,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
           val u2 = applySub(recConvert(p2, seq,map,createAxiom),fol2hol(s))._1
           introduceContractions(CutRule(u1, u2, s(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula]),seq)
         }
-        case Paramodulation(r, p1, p2, a1, a2, s) => {
+        case Paramodulation(r, p1, p2, a1, a2, _, s) => {
 
           val u1 = applySub(recConvert(p1, seq,map,createAxiom),fol2hol(s))._1
           val u2 = applySub(recConvert(p2, seq,map,createAxiom),fol2hol(s))._1

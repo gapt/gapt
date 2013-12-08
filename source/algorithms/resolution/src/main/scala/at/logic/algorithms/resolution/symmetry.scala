@@ -1,0 +1,131 @@
+package at.logic.algorithms.resolution
+
+import scala.collection.immutable.HashMap
+import at.logic.calculi.lk.base.types._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
+import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.resolution.robinson._
+import at.logic.language.fol.{Equation, FOLTerm, FOLFormula, FOLExpression}
+import at.logic.language.hol._
+import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.typedLambdaCalculus.{Var, App}
+import at.logic.calculi.resolution.base.{FClause, Clause}
+import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, CleanStructuralRules, CloneLKProof}
+
+
+/**
+  Sometimes, we have a resolution refutation of a set of clauses C
+  and want a refutation of a set C', such that C' is C modulo applications
+  of symmetry. This algorithm transforms a refutation of C to a refutation
+  of C'.
+**/
+object fixSymmetry extends at.logic.utils.logging.Logger {
+
+  private def getSymmetryMap( to: FClause, from: FSequent ) = {
+    trace("computing symmetry map from " + from + " to " + to)
+    var err = false
+
+    def createMap( from: Seq[Formula], to: Seq[Formula] ) = {
+      trace("computing map from " + from + " to " + to)
+      to.foldLeft( HashMap[Formula, Formula]() )( (map, to_f) => {
+        val from_f = from.find( from_f => (from_f == to_f) || ( (from_f, to_f) match
+        {
+          case (Equation(from_l, from_r), Equation(to_l, to_r)) if from_l == to_r && from_r == to_l => true
+          case _ => false
+        }))
+
+        if ( from_f != None )
+          map + (( from_f.get, to_f ))
+          // from -= from_f.get
+        else {
+          err = true
+          map 
+        }}
+      )
+  }
+
+    var avail_pos = from.succedent.map( f => f.asInstanceOf[FOLFormula] )
+    var avail_neg = from.antecedent.map( f => f.asInstanceOf[FOLFormula] )
+
+    val neg_map = createMap( avail_neg, to.neg )
+    val pos_map = createMap( avail_pos, to.pos )
+
+    if (err)
+      None
+    else
+      Some((neg_map, pos_map))
+  }
+
+  private def canDeriveBySymmetry( to: FClause, from: FSequent ) = getSymmetryMap( to, from ) match {
+    case Some(_) => true
+    case None => false
+  }
+
+  private def applySymm( p: RobinsonResolutionProof, f: FOLFormula, pos: Boolean ) =
+  {
+    trace("in apply sym with f = " + f + ", pos = " + pos)
+    val (left, right) = f match {
+      case Equation(l, r) => (l, r)
+    }
+    val newe = Equation(right, left)
+    val refl = Equation(left, left)
+      val s = Substitution[FOLExpression]()
+
+    if (pos)
+    {
+      val irefl = InitialClause(Nil, refl::Nil)
+      Paramodulation( p, irefl, f, refl, newe, s, pos)
+    } else {
+      val init = InitialClause( newe::Nil, newe::Nil )
+      val init2 = InitialClause( newe::Nil, newe::Nil )
+      val eq1 = Paramodulation( init, p, newe, f, refl, s, pos )
+      val eq2 = Paramodulation( init2, eq1, newe, refl, newe, s, pos)
+      Factor( eq2, newe, 3, pos, s)
+  }
+  }
+
+  private def deriveBySymmetry( to: FClause, from: FSequent ) = {
+    trace("deriving " + to + " from " + from + " by symmetry")
+    val (neg_map, pos_map) = getSymmetryMap( to, from ).get
+
+    val init = InitialClause(from.antecedent.map(f=>f.asInstanceOf[FOLFormula]), from.succedent.map(f=>f.asInstanceOf[FOLFormula]))
+    val s_neg = neg_map.keySet.foldLeft(init)( (p, f) => f match {
+        case Equation(_, _) if neg_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], false)
+        case _ => p
+      })
+
+    pos_map.keySet.foldLeft(s_neg)( (p, f) => f match {
+        case Equation(_, _) if pos_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], true)
+        case _ => p
+    })
+  }
+
+  private def handleInitialClause( cls: FClause, cs: Seq[FSequent] ) =
+    cs.find( c => canDeriveBySymmetry( cls, c ) ) match {
+      case None => {
+        warn("Could not find a clause which is equal to this clause modulo symmetry: " + cls)
+        warn("Clause set: " + cs)
+        InitialClause(cls)
+      }
+      case Some( c ) => {
+        deriveBySymmetry( cls, c )
+      }
+    }
+
+  def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ) : RobinsonResolutionProof = {
+    rec(p)(cs)
+  }
+
+  def rec( p: RobinsonResolutionProof)(implicit cs: Seq[FSequent] ) : RobinsonResolutionProof = p match {
+    case InitialClause(cls) => handleInitialClause( cls.toFClause, cs )
+
+    case Factor(r, p, a, s) => Factor( rec( p ), a(0)(0).formula, a(0).size, a(1)(0).formula, a(1).size, s )
+    case Variant(r, p, s) => Variant( rec( p  ), s )
+    case Resolution(r, p1, p2, a1, a2, s) => Resolution( rec( p1 ), rec( p2 ), a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
+    case Paramodulation(r, p1, p2, a1, a2, p, s) => 
+      Paramodulation( rec( p1 ), rec( p2 ), a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], p.formula.asInstanceOf[FOLFormula], s, p2.root.succedent.contains(a2))
+    // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
+    case at.logic.calculi.resolution.instance.Instance(_,p,s) => at.logic.calculi.resolution.instance.Instance(rec(p),s)
+  }
+}

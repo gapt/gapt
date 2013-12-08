@@ -50,6 +50,9 @@ object createContext {
   }
 
   object InitialClause {
+    def apply(c: FClause) (implicit factory: FOFactory): RobinsonResolutionProof =
+      apply( c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula] ) )
+
     def apply(ant: Seq[FOLFormula], suc: Seq[FOLFormula]) (implicit factory: FOFactory): RobinsonResolutionProof = {
       val left: Seq[FormulaOccurrence] = ant.map(factory.createFormulaOccurrence(_,Nil))
       val right: Seq[FormulaOccurrence] = suc.map(factory.createFormulaOccurrence(_,Nil))
@@ -73,6 +76,14 @@ object createContext {
 
   // left side is always resolved on positive literal and right on negative
   object Resolution {
+
+    def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof,
+              a1: FOLFormula, a2: FOLFormula, sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
+      val a1occ = p1.root.succedent.find( _.formula == a1 ).get
+      val a2occ = p2.root.antecedent.find( _.formula == a2 ).get
+      apply( p1, p2, a1occ, a2occ, sub )
+    }
+
     def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof,
               a1: FormulaOccurrence, a2: FormulaOccurrence, sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
       val term1op = p1.root.succedent.find(_ == a1)
@@ -118,6 +129,13 @@ object createContext {
   }
 
   object Paramodulation {
+    def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FOLFormula, a2: FOLFormula, newLiteral: FOLFormula, sub: Substitution[FOLExpression], pos: Boolean): RobinsonResolutionProof = {
+      val a1occ = p1.root.succedent.find( _.formula == a1 ).get
+      val list2 = if (pos) p2.root.succedent else p2.root.antecedent
+      val a2occ = list2.find( _.formula == a2 ).get
+      apply( p1, p2, a1occ, a2occ, newLiteral, sub)
+    }
+
     def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: Occurrence, a2: Occurrence, newLiteral: FOLFormula, sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
       val term1op = p1.root.succedent.find(_ == a1)
       val term2opAnt = p2.root.antecedent.find(_ == a2)
@@ -132,13 +150,14 @@ object createContext {
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub) :+ prinFormula,
               createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent, sub))
             , p1, p2)
-            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof {
+            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
                 def rule = ParamodulationType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
                 override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
                 override def name = "pmod"
                 def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
+                def prin = prinFormula::Nil
             }
 
         case (Some(term1), _ , Some(term2)) =>
@@ -148,25 +167,26 @@ object createContext {
               createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, sub),
               createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent.filterNot(_ == term2), sub)  :+ prinFormula)
             , p1, p2)
-            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof {
+            with BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas{
                 def rule = ParamodulationType
                 def aux = (term1::Nil)::(term2::Nil)::Nil
                 def substitution = sub
                 override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
                 override def name = "pmod"
                 def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
+                def prin = prinFormula::Nil
             }
         }
     }
     
     def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution[FOLExpression]) = if (proof.rule == ParamodulationType) {
-      val p = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof]
+      val p = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution[FOLExpression] with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas]
       if (p.aux.size != 2) throw new Exception("Unexpected number of auxiliary clauses during Paramodulation matching (aux.size != 2)!")
       if (p.aux(0).size != 1) throw new Exception("Unexpected number of auxiliary clauses during Paramodulation matching (aux(0).size != 1)!")
       if (p.aux(1).size != 1) throw new Exception("Unexpected number of auxiliary clauses during Paramodulation matching (aux(1).size != 1)!")
 
       Some( (p.root, p.uProof1.asInstanceOf[RobinsonResolutionProof], p.uProof2.asInstanceOf[RobinsonResolutionProof],
-        p.aux(0)(0), p.aux(1)(0), p.substitution) )
+        p.aux(0)(0), p.aux(1)(0), p.prin(0), p.substitution) )
     } else None
   }
 
@@ -229,6 +249,18 @@ object createContext {
         }
     }
 
+    /* factors cnt occurrences of a literal into 1.*/
+    def apply(p: RobinsonResolutionProof,
+              a: Formula, cnt: Int, pos: Boolean, sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
+      val list = if (pos) p.root.positive else p.root.negative
+      val occ = list.find( fo => fo.formula == a).get
+      val occs = list.foldLeft(List[FormulaOccurrence]())( (res, fo) => if (res.size < cnt - 1 && fo.formula == a) 
+          fo::res
+        else
+          res)
+      apply( p, occ, occs, sub)
+    }
+
     /* creates a factorization of two formulas (intention: one positive and one negative) of the sequent */
     def apply(p: RobinsonResolutionProof,
               a: FormulaOccurrence, oc1: Seq[FormulaOccurrence],
@@ -246,6 +278,24 @@ object createContext {
         override def name = "factor"
         def getAccumulatedSubstitution = substitution compose p.getAccumulatedSubstitution
       }
+    }
+
+    /* factors a_cnt occurrences of a (pos) and b_cnt occurrences of b (neg)
+       into 1.*/
+    def apply(p: RobinsonResolutionProof,
+              a: Formula, a_cnt: Int, b: Formula, b_cnt: Int,
+              sub: Substitution[FOLExpression]): RobinsonResolutionProof = {
+      val a_occ = p.root.negative.find( fo => fo.formula == a).get
+      val b_occ = p.root.positive.find( fo => fo.formula == b).get
+      val oc1 = p.root.negative.foldLeft(List[FormulaOccurrence]())( (res, fo) => if (res.size < a_cnt - 1 && fo.formula == a) 
+          fo::res
+        else
+          res)
+      val oc2 = p.root.positive.foldLeft(List[FormulaOccurrence]())( (res, fo) => if (res.size < b_cnt - 1 && fo.formula == b) 
+          fo::res
+        else
+          res)
+      apply( p, a_occ, oc1, b_occ, oc2, sub)
     }
 
     /* decomposes to root clause, parent proof, aux formula and the substitution needed
@@ -290,7 +340,7 @@ object Formatter {
       else
         (m2 + ((clause, h2+1)), h2+1)
 
-    case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+    case Paramodulation(clause, p1, p2, occ1, occ2, _, subst) =>
       val (m1,h1) = createMap(p1, i, map)
       val (m2,h2) = createMap(p2, h1, m1)
       if (m2 contains clause)
@@ -360,7 +410,7 @@ object Formatter {
         (str1 + str2 + "\\RL{Resolve} \n\\BI{" + f(clause.negative) + "}{" + f(clause.positive) +"}",   e1)
 
 
-      case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+      case Paramodulation(clause, p1, p2, occ1, occ2, _, subst) =>
         val (str1, e1) = tex( p1, ids, edges)
         val (str2, e2) = tex( p2, ids, e1)
         (str1 + str2 + "\\RL{Para} \n\\BI{" + f(clause.negative) + "}{" + f(clause.positive) +"}",   e1)
@@ -403,7 +453,7 @@ object Formatter {
           triple :: e2)
 
 
-    case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+    case Paramodulation(clause, p1, p2, occ1, occ2, _, subst) =>
       val (str1, e1) = gv( p1, ids, edges)
       val (str2, e2) = gv( p2, ids, e1)
       val triple = List(ids(clause), ids(p1.vertex), ids(p2.vertex))
@@ -453,7 +503,7 @@ object Formatter {
     case Resolution(clause, p1, p2, occ1, occ2, subst) =>
       indent + "(" + ids(clause) +") Resolution(["+clause+"] aux1=["+ occ1.formula + "] aux2=["+occ2.formula + "] sub=" + subst + ")\n" +
         apply("  "+indent, p1, ids) + apply("  "+indent, p2, ids)
-    case Paramodulation(clause, p1, p2, occ1, occ2, subst) =>
+    case Paramodulation(clause, p1, p2, occ1, occ2, _, subst) =>
       indent + "(" + ids(clause) + ") Paramodulation(["+clause+"] aux1=["+ occ1.formula + "] aux2=["+occ2.formula + "])\n" +
         apply("  "+indent, p1, ids) + apply("  "+indent, p2, ids)
     case Factor(clause, p1, occs, sub) =>

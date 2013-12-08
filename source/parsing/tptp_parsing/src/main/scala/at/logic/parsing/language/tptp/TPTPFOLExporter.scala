@@ -27,6 +27,7 @@ object TPTPFOLExporter extends at.logic.utils.logging.Logger {
 
   def toFormula(s: FSequent): HOLFormula =  HOLOR( s._1.toList.map( f => HOLNEG( f ) ) ++ s._2 )
 
+  // convert a named list of clauses to a CNF refutation problem.
   // TODO: have to give a different name because of erasure :-(
   def tptp_problem_named( ss: List[Pair[String, FSequent]] ) =
     ss.foldLeft("")( (s, p) => s + sequentToProblem( p._2, p._1 ) + "\n")
@@ -35,6 +36,7 @@ object TPTPFOLExporter extends at.logic.utils.logging.Logger {
   def tptp_proof_problem( seq : FSequent ) =
     "fof( to_prove, conjecture, " + exportFormula ( hol2fol( toFormula(seq) ) )+ ").\n"
 
+  // convert a list of clauses to a CNF refutation problem.
   def tptp_problem( ss: List[FSequent] ) =
     tptp_problem_named( ss.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ) )
 

@@ -273,7 +273,7 @@ object printProofStats {
           val closure = FSequent(endsequent.antecedent map (x => univclosure( x.asInstanceOf[FOLFormula])),
               endsequent.succedent map (x => existsclosure( x.asInstanceOf[FOLFormula])))
 
-          Robinson2LK(proof,closure)
+            Robinson2LK(at.logic.algorithms.resolution.fixSymmetry(proof, CNFn(endsequent.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList),closure)
       } else {
         //if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
         //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")

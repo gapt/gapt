@@ -60,14 +60,19 @@ object PCNF {
         }
       }
       case None =>
+        // check for tautology
+        a.pos.find(p => a.neg.exists( n => n == p )) match {
+          case Some(f) => (Axiom(a.neg, a.pos), f.asInstanceOf[HOLFormula], false)
+          case _ => 
         // check for reflexivity
-        a.pos.find(f => f match {
-          case Equation(a,b) if a == b => true
-          case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
-          case  _ => false
-        }) match {
-         case Some(f) => (Axiom(List(),List(f)),f.asInstanceOf[HOLFormula],false)
-          case _ => throw new ResolutionException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]", Nil, a::cnf.toList )
+          a.pos.find(f => f match {
+            case Equation(a,b) if a == b => true
+            case at.logic.language.fol.Equation(a,b) if a == b => true // TOFIX: remove when bug 224 is solved
+            case  _ => false
+          }) match {
+           case Some(f) => (Axiom(List(),List(f)),f.asInstanceOf[HOLFormula],false)
+            case _ => throw new ResolutionException("Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString(";\n") + "\n]", Nil, a::cnf.toList )
+          }
         }
     }
     // apply weakenings

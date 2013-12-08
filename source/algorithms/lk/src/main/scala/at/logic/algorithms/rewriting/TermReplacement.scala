@@ -221,7 +221,7 @@ object TermReplacement extends Logger {
 
 
 
-        case Paramodulation(clause, parent1, parent2, lit1, lit2, sub) =>
+        case Paramodulation(clause, parent1, parent2, lit1, lit2, _, sub) =>
           val (rpmap1, rmap1, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val (rpmap2, rmap2, rparent2) = if (pmap contains parent2) add_pmap(pmap, parent2) else rename_resproof(parent2, irules, smap, rpmap1)
 

@@ -80,7 +80,7 @@ object ResolutionSubstitution {
           val np = Resolution(np1,np2,nlit1,nlit2, subst)
           extend_pmap(pmap2, p, sub, np)
 
-        case Paramodulation(clause, p1, p2, lit1, lit2, subst) =>
+        case Paramodulation(clause, p1, p2, lit1, lit2, _, subst) =>
           require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
           val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
           val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution[HOLExpression]], pmap1)
@@ -371,7 +371,7 @@ object InstantiateElimination {
         extend_pmap(nmap, getVars(clause,rforbidden), inference, rpmap2)
 
 
-      case Paramodulation(clause, Instance(iclause1, iparent1, isub1), Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
+      case Paramodulation(clause, Instance(iclause1, iparent1, isub1), Instance(iclause2, iparent2, isub2), occ1, occ2, _, sub ) =>
         val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
@@ -402,7 +402,7 @@ object InstantiateElimination {
 
         extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1 ++ nvars2), inference, rpmap2)
 
-      case Paramodulation(clause, Instance(iclause1, iparent1, isub1), parent2, occ1, occ2, sub ) =>
+      case Paramodulation(clause, Instance(iclause1, iparent1, isub1), parent2, occ1, occ2, _, sub ) =>
         val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
@@ -438,7 +438,7 @@ object InstantiateElimination {
 
         extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1), inference, rpmap2)
 
-      case Paramodulation(clause, parent1, Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
+      case Paramodulation(clause, parent1, Instance(iclause2, iparent2, isub2), occ1, occ2, _, sub ) =>
         val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
@@ -463,7 +463,7 @@ object InstantiateElimination {
 
         extend_pmap(nmap, getVars(clause,rforbidden ++ nvars2), inference, rpmap2)
 
-      case Paramodulation(clause, parent1, parent2, occ1, occ2, sub ) =>
+      case Paramodulation(clause, parent1, parent2, occ1, occ2, _, sub ) =>
         val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
@@ -630,7 +630,7 @@ object InstantiateElimination {
           occmatcher(_,_,rmap1 ++ rmap2))
         extend_pmap(nmap, emptyVarSet, inference, rpmap2)
 
-      case Paramodulation(clause, parent1, parent2, occ1, occ2, sub) =>
+      case Paramodulation(clause, parent1, parent2, occ1, occ2, _, sub) =>
         val (rpmap1, rmap1, _, rparent1) = imerge(parent1, pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, _, rparent2) = imerge(parent2, rpmap1)
