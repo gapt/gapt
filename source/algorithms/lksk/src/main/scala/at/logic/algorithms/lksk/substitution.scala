@@ -12,7 +12,7 @@ import at.logic.algorithms.lk.{applySubstitution => LKapplySubstitution, ProofTr
 import at.logic.language.lambda.substitutions.Substitution
 import scala.collection.mutable
 
-object applySubstitution {
+object applySubstitution extends at.logic.utils.logging.Logger {
   import ProofTransformationUtils.computeMap
 
 
@@ -53,13 +53,15 @@ def apply( proof: LKProof, subst: Substitution[HOLExpression] ) : (LKProof, Map[
     }
     case ForallSkLeftRule(p, s, a, m, t) => {
       val new_parent = apply( p, subst )
-      val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.apply(t), a.skolem_label.contains(t) )
+      val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.apply(t), !m.skolem_label.contains(t) )
+      //assert(new_proof.prin(0).skolem_label.size == m.skolem_label.size )
       val es = toLabelledSequent( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
     }
     case ExistsSkRightRule(p, s, a, m, t) => {
       val new_parent = apply( p, subst )
-      val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.apply(t), a.skolem_label.contains(t) )
+      val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2(a), subst(m.formula).asInstanceOf[HOLFormula], subst.apply(t), !m.skolem_label.contains(t) )
+      //assert(new_proof.prin(0).skolem_label.size == m.skolem_label.size )
       val es = toLabelledSequent( p.root )
       ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
     }
