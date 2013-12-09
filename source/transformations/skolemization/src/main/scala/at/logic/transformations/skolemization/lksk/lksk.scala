@@ -23,6 +23,7 @@ import at.logic.algorithms.lk.getCutAncestors
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.occurrences.factory
+import at.logic.algorithms.hlk._
 
 
 object LKtoLKskc extends Logger {
@@ -41,6 +42,11 @@ object LKtoLKskc extends Logger {
     proof.root.succedent.foreach( fo => subst_terms.update( fo, EmptyLabel() ) )
     rec( proof, subst_terms, cut_occs )._1
   }
+
+  private def f(f:HOLExpression) : String = HybridLatexExporter.getFormulaString(f,true, false)
+  private def f(s:Sequent) : String =
+    s.antecedent.map( { case LabelledFormulaOccurence(formula,_,l) => f(formula) + ":label"+l.map(f).mkString("{",",","}")  } ).mkString(";")+ " :- " +
+      s.succedent.map( { case LabelledFormulaOccurence(formula,_,l) => f(formula) + ":label"+l.map(f).mkString("{",",","}")  } ).mkString(";")
 
   // TODO: refactor this method! There is redundancy w.r.t. the symmetric rules
   // like ForallLeft, ExistsRight etc. For an example, see algorithms.lk.substitution
@@ -89,6 +95,7 @@ object LKtoLKskc extends Logger {
             info( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
             val s = Function( f, args, alpha )
             val subst = Substitution[HOLExpression]( v, s )
+            info("Substitution="+subst+" End-sequent:"+this.f(r._1.root))
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )

@@ -19,12 +19,13 @@ import base.LabelledFormulaOccurence.lfo2fo
 import base.TypeSynonyms._
 import at.logic.calculi.lk.base.types._
 
-import at.logic.calculi.lk.base.{Sequent,AuxiliaryFormulas,PrincipalFormulas, SubstitutionTerm}
+import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType}
 import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.base.{NullaryLKProof, LKProof,createContext,UnaryLKProof,LKRuleCreationException}
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.lk.base.types.FSequent
+import scala.Some
 
 
 // lksk proofs
@@ -104,9 +105,9 @@ object ForallSkLeftRule {
         // in the XML parser. We need first-order unification for that.
         //assert( betaNormalize( App( sub, subst_t ) ) == aux )
         if ( !s1.root.antecedent.contains( auxf ) )
-          throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
+          throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
         if ( !auxf.skolem_label.contains( subst_t ) )
-          throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term. Label: " + auxf.skolem_label.toString + ", substitution term: " + subst_t.toString)
+          throw new LKUnaryRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term. Label: " + auxf.skolem_label.toString + ", substitution term: " + subst_t.toString, s1, auxf.formula::Nil)
         val prinFormula = 
           LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)
         new UnaryTree[Sequent](
@@ -119,7 +120,7 @@ object ForallSkLeftRule {
             override def name = "\u2200:l (sk)"
           }
       }
-      case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
+      case _ => throw new LKUnaryRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.", s1, List(auxf.formula))
     }
   }
 
@@ -139,9 +140,9 @@ object ExistsSkRightRule {
       case Ex( sub, _ ) => {
         //assert( betaNormalize( App( sub, subst_t ) ) == aux )
         if ( !s1.root.succedent.contains( auxf ) )
-          throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
+          throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
         if ( !auxf.skolem_label.contains( subst_t ) )
-          throw new LKRuleCreationException("Auxiliary formula occurrence label of ForallSkLeftRule does not contain substitution term.")
+          throw new LKUnaryRuleCreationException("Auxiliary formula occurrence label of ExistsSkLeftRule does not contain substitution term.", s1, auxf.formula::Nil)
         val prinFormula = 
           LKskFOFactory.createWeakQuantMain(main, auxf, if (removeFromLabel) Some(subst_t) else None)
         new UnaryTree[Sequent](
@@ -154,7 +155,7 @@ object ExistsSkRightRule {
             override def name = "\u2203:r (sk)"
           }
       }
-      case _ => throw new LKRuleCreationException("Main formula of ExistsSkRightRule must have a universal quantifier as head symbol.")
+      case _ => throw new LKUnaryRuleCreationException("Main formula of ExistsSkRightRule must have a universal quantifier as head symbol.", s1, List(auxf.formula))
     }
   }
 
@@ -173,7 +174,7 @@ object ForallSkRightRule {
       case All( sub, _ ) => {
         // TODO: check Skolem term
         if (!s1.root.succedent.contains( auxf ) )
-          throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
+          throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
         val prinFormula = auxf.factory.createFormulaOccurrence(main, auxf::Nil).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryTree[Sequent](
           new LabelledSequent(createContext(s1.root.antecedent).asInstanceOf[Seq[LabelledFormulaOccurrence]],
@@ -186,7 +187,7 @@ object ForallSkRightRule {
             override def name = "\u2200:r (sk)"
           }
         }
-      case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
+      case _ => throw new LKUnaryRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.", s1, auxf.formula::Nil)
     }
   }
 
@@ -205,7 +206,7 @@ object ExistsSkLeftRule {
       case Ex( sub, _ ) => {
         // TODO: check Skolem term
         if (!s1.root.antecedent.contains( auxf ) )
-          throw new LKRuleCreationException("Premise does not contain the given formula occurrence.")
+          throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
         val prinFormula = auxf.factory.createFormulaOccurrence(main, auxf::Nil).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryTree[Sequent](
           new LabelledSequent(createContext((s1.root.antecedent.filterNot( _ == auxf))).asInstanceOf[Seq[LabelledFormulaOccurrence]] :+ prinFormula, createContext((s1.root.succedent)).asInstanceOf[Seq[LabelledFormulaOccurrence]]), s1 )
@@ -217,7 +218,7 @@ object ExistsSkLeftRule {
             override def name = "\u2203:l (sk)"
           }
         }
-      case _ => throw new LKRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.")
+      case _ => throw new LKUnaryRuleCreationException("Main formula of ForallLeftRule must have a universal quantifier as head symbol.", s1, auxf.formula::Nil)
     }
   }
 

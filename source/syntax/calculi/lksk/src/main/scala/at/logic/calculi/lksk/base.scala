@@ -37,6 +37,8 @@ package base {
 
   object LabelledFormulaOccurence {
     implicit def lfo2fo(s : LabelledFormulaOccurrence) : HOLFormula = s.formula
+
+    def unapply(fo : LabelledFormulaOccurrence) = Some(fo.formula, fo.ancestors, fo.skolem_label)
   }
 
 
