@@ -3,6 +3,8 @@ package at.logic.parsing.veriT
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.fol._
 import at.logic.language.lambda.types._
+import at.logic.language.lambda.symbols._
+import at.logic.utils.latex._
 import java.io._
 
 object VeriTExporter {
@@ -56,10 +58,12 @@ object VeriTExporter {
   // (Note: here we would only use propositional formulas, but it is already
   // implemented for quantifiers just in case...)
   private def getSymbols(f: FOLExpression) : Set[(String, Int, TA)] = f match {
+    case FOLVar(s) => Set( (toASCIIString(s), 0, Ti()) )
+    case FOLConst(s) => Set( (toASCIIString(s), 0, Ti()) )
     case Atom(pred, args) => 
-      Set( (pred.toString, args.size, f.exptype) ) ++ args.foldLeft(Set[(String, Int, TA)]())( (acc, f) => getSymbols(f) ++ acc)
+      Set( (toASCIIString(pred), args.size, f.exptype) ) ++ args.foldLeft(Set[(String, Int, TA)]())( (acc, f) => getSymbols(f) ++ acc)
     case Function(fun, args) => 
-      Set( (fun.toString, args.size, f.exptype) ) ++ args.foldLeft(Set[(String, Int, TA)]())( (acc, f) => getSymbols(f) ++ acc)
+      Set( (toASCIIString(fun), args.size, f.exptype) ) ++ args.foldLeft(Set[(String, Int, TA)]())( (acc, f) => getSymbols(f) ++ acc)
     case And(f1, f2) => getSymbols(f1) ++ getSymbols(f2)
     case Or(f1, f2) => getSymbols(f1) ++ getSymbols(f2)
     case Imp(f1, f2) => getSymbols(f1) ++ getSymbols(f2)
@@ -71,19 +75,34 @@ object VeriTExporter {
 
   private def toSMTFormat(f: FOLExpression) : String = f match {
     // TODO: use lst2string instead. Should be available after the merging of the lambda calculus
+    case FOLVar(s) => toASCIIString(s)
+    case FOLConst(s) => toASCIIString(s)
     case Atom(pred, args) => 
       if(args.size == 0) {
-        pred.toString
+        toASCIIString(pred)
       }
       else {
-        "(" + pred.toString + " " + args.foldLeft("")( (acc, t) => toSMTFormat(t) + " " + acc) + ")"
+        "(" + toASCIIString(pred) + " " + args.foldLeft("")( (acc, t) => toSMTFormat(t) + " " + acc) + ")"
       }
     // Functions should have arguments.
-    case Function(fun, args) => "(" + fun.toString + " " + args.foldLeft("")( (acc, t) => toSMTFormat(t) + " " + acc) + ")"
+    case Function(fun, args) => "(" + toASCIIString(fun) + " " + args.foldLeft("")( (acc, t) => toSMTFormat(t) + " " + acc) + ")"
     case And(f1, f2) => "(and " + toSMTFormat(f1) + " " + toSMTFormat(f2) + ")"
     case Or(f1, f2) => "(or " + toSMTFormat(f1) + " " + toSMTFormat(f2) + ")"
-    case Imp(f1, f2) => "(implies " + toSMTFormat(f1) + " " + toSMTFormat(f2) + ")"
+    case Imp(f1, f2) => "(=> " + toSMTFormat(f1) + " " + toSMTFormat(f2) + ")"
     case Neg(f1) => "(not " + toSMTFormat(f1) + ")"
     case _ => throw new Exception("Undefined formula for SMT: " + f)
+  }
+
+  // TODO: move this somewhere else...
+  private def toASCIIString(s: SymbolA) : String = {
+      val str = s.toString
+      // It's a number, append a character before it.
+      if ( str.forall(c => Character.isDigit(c)) ) {
+        "n" + str
+      } 
+      else {
+        // Remove whitespaces before and after and the backslash.
+        nameToLatexString(s.toString).trim.replaceAll("""\\""", "")
+      }
   }
 }

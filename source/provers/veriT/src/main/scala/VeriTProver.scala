@@ -21,7 +21,7 @@ object VeriTProver extends Prover {
       case e: IOException => throw new Exception("VeriT is not installed.")
     }
 
-    println("result: " + result)
+    //println("result: " + result)
 
     in_file.delete() match {
       case true => ()

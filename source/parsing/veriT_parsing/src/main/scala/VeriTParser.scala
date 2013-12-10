@@ -405,14 +405,22 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances(c)
   }
 
-  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | or_pos | and_neg | not_and | not_or
+  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | or_pos | and_neg | not_and | not_or | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2
   // Rules that I don't care
+  // TODO: parse all rules
   def resolution : Parser[List[Instances]] = "resolution" ~> premises <~ conclusion
   def and : Parser[List[Instances]] = "and" ~> premises <~ conclusion
   def and_pos : Parser[List[Instances]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
+  def and_neg : Parser[List[Instances]] = "and_neg" ~> conclusion ^^ { case _ => Nil }
   def or : Parser[List[Instances]] = "or" ~> premises <~ conclusion
   def or_pos : Parser[List[Instances]] = "or_pos" ~> conclusion ^^ { case _ => Nil }
-  def and_neg : Parser[List[Instances]] = "and_neg" ~> conclusion ^^ { case _ => Nil }
+  def or_neg : Parser[List[Instances]] = "or_neg" ~> conclusion ^^ { case _ => Nil }
+  def implies : Parser[List[Instances]] = "implies" ~> premises <~ conclusion 
+  def implies_pos : Parser[List[Instances]] = "implies_pos" ~> conclusion ^^ { case _ => Nil }
+  def implies_neg1 : Parser[List[Instances]] = "implies_neg1" ~> conclusion ^^ { case _ => Nil }
+  def implies_neg2 : Parser[List[Instances]] = "implies_neg2" ~> conclusion ^^ { case _ => Nil }
+  def not_implies1 : Parser[List[Instances]] = "not_implies1" ~> premises <~ conclusion
+  def not_implies2 : Parser[List[Instances]] = "not_implies2" ~> premises <~ conclusion
   def not_and : Parser[List[Instances]] = "not_and" ~> premises <~ conclusion
   def not_or : Parser[List[Instances]] = "not_or" ~> premises <~ conclusion
   
@@ -436,6 +444,14 @@ object VeriTParser extends RegexParsers {
   }
   def orFormula : Parser[FOLFormula] = "(or" ~> rep(formula) <~ ")" ^^ { 
     case flst => Or(flst)
+  }
+  def implFormula : Parser[FOLFormula] = "(=>" ~> rep(formula) <~ ")" ^^ { 
+    case flst => 
+      val last = flst(flst.size-1)
+      val second_last = flst(flst.size-2)
+      val rest = flst.dropRight(2)
+      val imp = Imp(second_last, last)
+      rest.foldRight(imp) { case (f, acc) => Imp(f, acc) }
   }
   def notFormula : Parser[FOLFormula] = "(not" ~> formula <~ ")" ^^ { 
     case f => Neg(f)
