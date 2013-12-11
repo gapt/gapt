@@ -13,16 +13,16 @@ import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class VeriTProverTest extends SpecificationWithJUnit {
+
+  args(skipAll = !VeriTProver.isInstalled())
+
   "VeriT" should {
     "prove a v not a" in {
+      skipped("--proof-version in isValid is only supported on Giselle's machine")
       val a = Atom(ConstantStringSymbol("a"), Nil)
       val f = Or(a, Neg(a))
 
-      val r = try { VeriTProver.isValid(f) }
-      catch {
-        case e: Exception => println("VeriT not installed. Skipping test."); true
-      } 
-      r must beEqualTo (true)
+      VeriTProver.isValid(f) must beEqualTo(true)
     }
   }
 }

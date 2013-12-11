@@ -9,12 +9,7 @@ import at.logic.language.hol._
 import at.logic.calculi.resolution.base._
 import at.logic.algorithms.resolution.CNFp
   
-import java.io.BufferedReader
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileWriter
-import java.io.InputStreamReader
+import java.io._
 import java.lang.StringBuilder
 
 import at.logic.calculi.lk.base.types.FSequent
@@ -172,7 +167,7 @@ class MiniSAT extends at.logic.utils.logging.Logger {
   }
 }
 
-class MiniSATProver extends Prover with at.logic.utils.logging.Logger{
+class MiniSATProver extends Prover with at.logic.utils.logging.Logger with at.logic.utils.traits.ExternalProgram {
   def getLKProof( seq : FSequent ) : Option[at.logic.calculi.lk.base.LKProof] = 
     throw new Exception("MiniSAT does not produce proofs!")
 
@@ -186,4 +181,14 @@ class MiniSATProver extends Prover with at.logic.utils.logging.Logger{
     trace("calling MiniSAT.isValid( " + Imp(And(seq.antecedent.toList), Or(seq.succedent.toList)) + ")")
     sat.isValid(Imp(And(seq.antecedent.toList), Or(seq.succedent.toList)))
   }
+
+  def isInstalled(): Boolean =
+    try {
+      val box : Set[FClause] = Set.empty
+      (new MiniSAT).solve(box)
+      true
+    } catch  {
+      case ex: IOException => false
+    }
+
 }

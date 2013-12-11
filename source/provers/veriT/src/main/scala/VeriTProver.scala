@@ -8,7 +8,7 @@ import at.logic.parsing.veriT._
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lk.base.types.FSequent
 
-object VeriTProver extends Prover {
+object VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
 
   override def isValid(s: FSequent) : Boolean = {
 
@@ -52,4 +52,12 @@ object VeriTProver extends Prover {
     throw new Exception("It is not possible to generate LK proofs from VeriT proofs at the moment.")
   override def getLKProof(f: HOLFormula) = 
     throw new Exception("It is not possible to generate LK proofs from VeriT proofs at the moment.")
+
+  def isInstalled(): Boolean =
+    try {
+      "veriT --disable-banner".!!
+      true
+    } catch {
+      case ex: IOException => false
+    }
 }
