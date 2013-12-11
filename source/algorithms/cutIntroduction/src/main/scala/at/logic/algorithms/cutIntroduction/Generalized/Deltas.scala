@@ -331,8 +331,10 @@ object Deltas extends Logger {
 
   /** returns true iff all given terms begin with the same function symbol & the same arity.*/
   private def commonFuncHead(terms:List[FOLTerm]) = {
-    terms.tail.forall(isFunc(_:FOLTerm, (fname => fname == fromFunc(terms.head).toString))) &&
-    terms.map(fromFuncArgs(_).length).distinct.length <= 1
+    if (isFunc(terms.head)) {
+      terms.tail.forall(isFunc(_:FOLTerm, (fname => fname == fromFunc(terms.head).toString))) &&
+      terms.map(fromFuncArgs(_).length).distinct.length <= 1
+    } else false
   }
 
   /** Returns the smallest variable index occurring in a term u.
