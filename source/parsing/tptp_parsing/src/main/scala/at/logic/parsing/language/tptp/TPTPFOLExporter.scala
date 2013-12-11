@@ -22,7 +22,7 @@ object TPTPFOLExporter extends at.logic.utils.logging.Logger {
   {
     val imap = mutable.Map[LambdaExpression, ConstantStringSymbol]()
     val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
-    reduceHolToFol(f, imap, iid )
+    convertHolToFol(f)
   } 
 
   def toFormula(s: FSequent): HOLFormula =  HOLOR( s._1.toList.map( f => HOLNEG( f ) ) ++ s._2 )
