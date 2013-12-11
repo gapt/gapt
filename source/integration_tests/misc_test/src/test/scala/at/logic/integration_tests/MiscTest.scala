@@ -1,31 +1,25 @@
 /** 
  * Description: 
 **/
+/**
+ * Description:
+**/
 
 package at.logic.integration_tests
 
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.lk._
 import at.logic.parsing.calculus.xml.saveXML
-import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.macroRules._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk._
-import java.util.zip.GZIPInputStream
-import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
+import java.io.{FileInputStream, InputStreamReader}
 import java.io.File.separator
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.projections.Projections
@@ -41,8 +35,10 @@ import at.logic.transformations.ReductiveCutElim
 import at.logic.parsing.veriT.VeriTParser
 import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep, applyToExpansionSequent => ETapplyToExpansionSequent}
 import at.logic.language.hol.{And => AndHOL, Imp => ImpHOL, Or => OrHOL}
-import at.logic.provers.prover9.Prover9
-import at.logic.calculi.resolution.base.FClause
+import at.logic.provers.prover9.{Prover9, Prover9Prover}
+import at.logic.provers.veriT.VeriTProver
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.provers.minisat.MiniSATProver
 
 @RunWith(classOf[JUnitRunner])
 class MiscTest extends SpecificationWithJUnit {
@@ -178,8 +174,7 @@ class MiscTest extends SpecificationWithJUnit {
     "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT" in {
       skipped("MiniSAT fails to proof this")
 
-      val box: Set[FClause] = Set()
-      (new at.logic.provers.minisat.MiniSAT).solve(Set[FClause]()) must not(throwA[IOException]).orSkip
+      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
 
       for (i <- 0 to 4) {
 
@@ -199,23 +194,28 @@ class MiscTest extends SpecificationWithJUnit {
       }
     }
 
-    "load veriT proofs pi and verify the validity of Deep(pi) using Prover9" in {
-      skipped("test takes way too long, possibly some kind of bug")
-      for (i <- 0 to 4) {
+    "Load Prover9 proofs, extract their expansion tree an test the validity of its deep formula using veriT" in {
+      skipped("VeriT --prove-version in isValid is currently not generally available")
+      if (!VeriTProver.isInstalled()) skipped("VeriT is not installed")
 
-        val testfilename = "target" + separator + "test-classes" + separator + "test" + i + ".verit"
+      for (testBaseName <- "ALG138+1.out" :: Nil) {
 
-        val p = VeriTParser.getExpansionProof(testfilename).get
+        val testFilePath = "target" + separator + "test-classes" + separator + testBaseName
 
-        val formulas = ETapplyToExpansionSequent(ETtoDeep.apply, p)
-        val seq = FSequent(formulas._1, formulas._2)
+        val (resProof, seq) = Prover9.parse_prover9(testFilePath)
+        val lkProof = new Prover9Prover().getLKProof(seq).get
+
+        val expansionSequent = extractExpansionTrees(lkProof)
+
+        val formulas = ETapplyToExpansionSequent(ETtoDeep.apply, expansionSequent)
+        val seqToProve = FSequent(formulas._1, formulas._2)
 
         /*
         println("file: " +testfilename)
         println("formula: " +seq)
         */
 
-        (new at.logic.provers.prover9.Prover9Prover).isValid(seq) must beTrue
+        VeriTProver.isValid(seqToProve) must beEqualTo (true)
       }
     }
   }
