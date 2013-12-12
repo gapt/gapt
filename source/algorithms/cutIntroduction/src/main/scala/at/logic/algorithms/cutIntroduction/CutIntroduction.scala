@@ -211,6 +211,21 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
       case e: TimeOutException =>
         status = phase + "_timeout"
         None
+      case e: OutOfMemoryError =>
+        status = "cutintro_out_of_memory"
+        None
+      case e: StackOverflowError =>
+        status = "cutintro_stack_overflow"
+        None
+      case e: CutIntroUncompressibleException =>
+        status = "cutintro_uncompressible"
+        None
+      case e: CutIntroEHSUnprovableException =>
+        status = "cutintro_ehs_unprovable"
+        None
+      case e: Exception =>
+        status = "cutintro_other_exception"
+        None
     }
 
     ( p, status, log )

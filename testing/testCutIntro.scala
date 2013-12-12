@@ -180,8 +180,7 @@ object testCutIntro {
   /// compress the prover9-TSTP proof found in file fn
   def compressTSTPProof( fn: String, timeout: Int, useGenCutIntro: Boolean, chooseProver: Boolean ) = {
     var log_ptime_ninfcf_nqinfcf = ""
-    var parsing_status = "ok"
-    var cutintro_status = "ok"
+    var status = "ok"
     var cutintro_logline = ""
     var EqR = "n/a"
 
@@ -202,19 +201,19 @@ object testCutIntro {
       } } catch {
         case e: TimeOutException =>
           TestCutIntroLogger.trace("Parsing: Timeout")
-          parsing_status = "parsing_timeout"
+          status = "parsing_timeout"
           None
         case e: OutOfMemoryError =>
           TestCutIntroLogger.trace("Parsing: OutOfMemory: " + e)
-          parsing_status = "parsing_out_of_memory"
+          status = "parsing_out_of_memory"
           None
         case e: StackOverflowError =>
           TestCutIntroLogger.trace("Parsing: StackOverflow: " + e)
-          parsing_status = "parsing_stack_overflow"
+          status = "parsing_stack_overflow"
           None
         case e: Exception =>
           TestCutIntroLogger.trace("Parsing: Other exception: " + e)
-          parsing_status = "parsing_other_exception"
+          status = "parsing_other_exception"
           None
       }
 
@@ -223,22 +222,12 @@ object testCutIntro {
           // TODO: choosing prover depending on EqR should eventually go into the stable CLI-command for cut-introduction
           val prover = if ( chooseProver && ( EqR == "true" ) ) new EquationalProver() else new DefaultProver()
           val r = compressExpansionProof( ep, prover, useGenCutIntro, timeout )
-          cutintro_status = r._1
+          status = r._1
           cutintro_logline = r._2
         case None => ()
       }
 
-      if ( parsing_status == "ok" ) {
-        if ( cutintro_status == "ok" ) {
-          CutIntroDataLogger.trace( fn + "," + EqR + ",ok" + log_ptime_ninfcf_nqinfcf + cutintro_logline )
-        }
-        else {
-          CutIntroDataLogger.trace( fn + "," + EqR + "," + cutintro_status )
-        }
-      }
-      else {
-        CutIntroDataLogger.trace( fn + "," + EqR + "," + parsing_status )
-      }
+      CutIntroDataLogger.trace( fn + "," + EqR + "," + status + log_ptime_ninfcf_nqinfcf + cutintro_logline )
     }
   }
 
@@ -263,8 +252,7 @@ object testCutIntro {
 
   /// compress the veriT-proof str
   def compressVeriTProof( str: String, timeout: Int, useGenCutIntro: Boolean ) {
-    var parsing_status = "ok"
-    var cutintro_status = "ok"
+    var status = "ok"
     var cutintro_logline = ""
     var log_ptime_ninfcf_nqinfcf = ""
 
@@ -279,48 +267,38 @@ object testCutIntro {
 
       if ( o_ep.isEmpty ) {
         TestCutIntroLogger.trace("Parsing: no proof found")
-        parsing_status = "parsing_no_proof_found"
+        status = "parsing_no_proof_found"
       }
 
       o_ep
     } } catch {
       case e: TimeOutException =>
         TestCutIntroLogger.trace("Parsing: Timeout")
-        parsing_status = "parsing_timeout"
+        status = "parsing_timeout"
         None
       case e: OutOfMemoryError =>
         TestCutIntroLogger.trace("Parsing: OutOfMemory: " + e)
-        parsing_status = "parsing_out_of_memory"
+        status = "parsing_out_of_memory"
         None
       case e: StackOverflowError => 
         TestCutIntroLogger.trace("Parsing: StackOverflow: " + e)
-        parsing_status = "parsing_stack_overflow"
+        status = "parsing_stack_overflow"
         None
       case e: Exception =>
         TestCutIntroLogger.trace("Parsing: Other exception: " + e)
-        parsing_status = "parsing_other_exception"
+        status = "parsing_other_exception"
         None
     }
 
     opt_expproof match {
       case Some(ep) =>
         val r = compressExpansionProof( ep, new DefaultProver(), useGenCutIntro, timeout )
-        cutintro_status = r._1
+        status = r._1
         cutintro_logline = r._2
       case None => ()
     }
 
-    if ( parsing_status == "ok" ) {
-      if ( cutintro_status == "ok" ) {
-        CutIntroDataLogger.trace( str + ",n/a,ok" + log_ptime_ninfcf_nqinfcf + cutintro_logline )
-      }
-      else {
-        CutIntroDataLogger.trace( str + ",n/a," + cutintro_status )
-      }
-    }
-    else {
-      CutIntroDataLogger.trace( str + ",n/a," + parsing_status )
-    }
+    CutIntroDataLogger.trace( str + ",n/a," + status + log_ptime_ninfcf_nqinfcf + cutintro_logline )
   }
 
   /***************************** Proof Sequences ******************************/
@@ -389,15 +367,10 @@ object testCutIntro {
     else
       compressExpansionProof( extractExpansionTrees( p ), new DefaultProver(), useGenCutIntro, timeout )
 
-    val cutintro_status = r._1
+    val status = r._1
     val cutintro_logline = r._2
 
-    if ( cutintro_status == "ok" ) {
-      CutIntroDataLogger.trace( name + ",n/a,ok,n/a," + rulesNumber( p ) + "," + quantRulesNumber( p ) + cutintro_logline )
-    }
-    else {
-      CutIntroDataLogger.trace( name + ",n/a," + cutintro_status )
-    }
+    CutIntroDataLogger.trace( name + ",n/a," + status + ",n/a," + rulesNumber( p ) + "," + quantRulesNumber( p ) + cutintro_logline ) // log all, computing #infqf, #qinfcf
   }
 
   def removeEqAxioms( eseq: (Seq[ExpansionTree], Seq[ExpansionTree]) ) = {
@@ -427,36 +400,15 @@ object testCutIntro {
    * @return ( status, logline )
    **/
   def compressExpansionProof( ep: (Seq[ExpansionTree],Seq[ExpansionTree]), prover: Prover, useGenCutIntro: Boolean, timeout: Int ) : ( String, String ) = {
-    var status = "ok"
-    var logline = "," + quantRulesNumberET( ep )
+    val r = if ( useGenCutIntro )
+      Generalized.CutIntroduction.applyStat( ep, new Generalized.Deltas.UnboundedVariableDelta(), prover, timeout )
+    else
+      CutIntroduction.applyExp( ep, prover, timeout )
 
-    try {
-      val r = if ( useGenCutIntro )
-        Generalized.CutIntroduction.applyStat( ep, new Generalized.Deltas.UnboundedVariableDelta(), prover, timeout )
-      else
-        CutIntroduction.applyExp( ep, prover, timeout )
-      status = r._2
-      logline += r._3
+    val status = r._2
+    val logline = "," + quantRulesNumberET( ep ) + r._3 // log #qnodes
 
-      if ( status.endsWith( "timeout" ) ) TestCutIntroLogger.trace( "Timeout" )
-
-    } catch {
-      case e: OutOfMemoryError =>
-        TestCutIntroLogger.trace("OutOfMemory: " + e)
-        status = "cutintro_out_of_memory"
-      case e: StackOverflowError =>
-        TestCutIntroLogger.trace("StackOverflow: " + e)
-        status = "cutintro_stack_overflow"
-      case e: CutIntroUncompressibleException =>
-        TestCutIntroLogger.trace("Input Uncompressible: " + e)
-        status = "cutintro_uncompressible"
-      case e: CutIntroEHSUnprovableException =>
-        TestCutIntroLogger.trace("Extended Herbrand Sequent unprovable: " + e)
-        status = "cutintro_ehs_unprovable"
-      case e: Exception =>
-        TestCutIntroLogger.trace("Other exception: " + e)
-        status = "cutintro_other_exception"
-    }
+    TestCutIntroLogger.trace( "Finished cut-introduction with status: " + status )
 
     ( status, logline )
   }
