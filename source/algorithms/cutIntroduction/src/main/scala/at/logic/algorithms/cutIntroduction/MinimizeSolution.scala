@@ -255,13 +255,20 @@ object MinimizeSolution extends Logger {
     val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
     val succedent = ehs.prop_r ++ ehs.inst_r
 
+    trace("CALLING ISVALID ON " + Imp(And(antecedent), Or(succedent)).asInstanceOf[FOLFormula])
     prover.isValid(Imp(And(antecedent), Or(succedent)))
   }
 
   //------------------------ FORGETFUL RESOLUTION -------------------------//
   // TODO: this should go somewhere else.
 
-  class MyFClause[A](val neg: List[A], val pos: List[A])
+  class MyFClause[A](val neg: List[A], val pos: List[A]) {
+    override def equals( o: Any ) = o match {
+      case c : MyFClause[A] => neg == c.neg && pos == c.pos
+      case _ => false
+    }
+    override def toString = "Clause( " + neg.toString + " ; " + pos.toString + " )"
+  }
  
   def toMyFClause(c: FClause) = {
     val neg = c.neg.toList.map(x => x.asInstanceOf[FOLFormula])
@@ -285,6 +292,80 @@ object MinimizeSolution extends Logger {
       )
     )
   }
+
+  // We assume f is in CNF. Maybe it works also for f not
+  // in CNF (since CNFp transforms f to CNF?).
+  //
+  // Implements forgetful paramodulation.
+  def ForgetfulParamodulate(f: FOLFormula) : List[FOLFormula] =
+    ForgetfulParamodulateCNF( f ).map( cnf => CNFtoFormula( cnf ) )
+
+  // We assume f is in CNF. Maybe it works also for f not
+  // in CNF (since CNFp transforms f to CNF?).
+  //
+  // Implements forgetful paramodulation.
+  def ForgetfulParamodulateCNF(f: FOLFormula) : List[List[MyFClause[FOLFormula]]] =
+  {
+    val clauses = CNFp(f).map(c => toMyFClause(c))
+    clauses.foldLeft(List[List[MyFClause[FOLFormula]]]())( (list, c1) => 
+      list ::: clauses.dropWhile( _ != c1).foldLeft(List[List[MyFClause[FOLFormula]]]())( (list2, c2) => 
+        if ( c1 != c2 ) {  // do not paramodulate a clause into itself
+          val paras = Paramodulants( c1, c2 )
+          paras.flatMap( p => (clauses.filterNot(c => c == c1 || c == c2 ) + p).toList::list2).toList ++ list2
+        } else 
+          Nil
+      )
+    )
+  }
+
+  private def getArgs( margs: List[Set[FOLTerm]] ) = {
+    val res = margs.foldLeft(Set(List[FOLTerm]()))( (args, res) => args.flatMap( a => res.map( r => a :+ r ) ) )
+    res
+  }
+
+  // Computes ground paramodulants including the trivial one
+  def Paramodulants(s: FOLTerm, t: FOLTerm, r: FOLTerm) : Set[FOLTerm] = r match {
+    case _ if r == s => Set(t) ++ Set(r)
+    case Function(f, args) => {
+      val margs = args.map( a => Paramodulants( s, t, a ) )
+      getArgs( margs ).map( args => Function( f, args ) )
+    }
+    case _ => Set(r)
+  }
+
+  // Computes ground paramodulants without the trivial one
+  def Paramodulants(s: FOLTerm, t: FOLTerm, f: FOLFormula) : Set[FOLFormula] = {
+    val res = f match {
+    case Atom( x, args ) => {
+      val margs = args.map( a => Paramodulants( s, t, a ) )
+      getArgs( margs ).map( args => Atom( x, args ) ) - f
+    }
+  }
+    trace("paramodulants for " + s + " = " + t + " into " + f + " : " + res)
+    res
+  }
+
+  private def getParaLeft( eq: FOLFormula, aux: FOLFormula, main: FOLFormula, left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) =
+  new MyFClause( left.neg ++ right.neg.filterNot( f => f == aux ) :+ main, left.pos.filterNot( f => f == eq) ++ right.pos )
+
+  private def getParaRight( eq: FOLFormula, aux: FOLFormula, main: FOLFormula, left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) =
+  new MyFClause( left.neg ++ right.neg, left.pos.filterNot( f => f == eq) ++ right.pos.filterNot( f => f == aux ) :+ main  )
+
+  def Paramodulants( c1: MyFClause[FOLFormula], c2: MyFClause[FOLFormula] ) : Set[MyFClause[FOLFormula]] =
+    myParamodulants( c1, c2 ) ++ myParamodulants( c2, c1 )
+
+  // Computes ground paramodulants
+  def myParamodulants( left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) : Set[MyFClause[FOLFormula]]= 
+  left.pos.foldLeft(Set[MyFClause[FOLFormula]]())( (res, eq) => 
+    res ++ (eq match {
+      case Equation( s, t ) => right.neg.flatMap( aux => (Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux )).map( para =>
+        getParaLeft( eq, aux, para, left, right )
+      ) ) ++ 
+      right.pos.flatMap( aux => (Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux )).map( para =>
+        getParaRight( eq, aux, para, left, right )
+      ) ).toSet
+    case _ => Set()
+  }))
 
   /** Converts a CNF back into a FOL formula.
     */
