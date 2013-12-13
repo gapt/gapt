@@ -6,6 +6,7 @@ import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
 import at.logic.utils.latex._
 import java.io._
+import org.apache.commons.lang3.StringEscapeUtils
 
 object VeriTExporter {
 
@@ -101,8 +102,8 @@ object VeriTExporter {
         "n" + str
       } 
       else {
-        // Remove whitespaces before and after and the backslash.
-        nameToLatexString(s.toString).trim.replaceAll("""\\""", "")
+        // Attempt #3
+        StringEscapeUtils.escapeJava(s.toString).replaceAll("""\\""", "")
       }
   }
 }
