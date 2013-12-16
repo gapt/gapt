@@ -92,10 +92,10 @@ object LKtoLKskc extends Logger {
         m.formula match {
           case All(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
-            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
+            info( "Using Skolem function symbol '" + f + "' for formula " + this.f(m.formula) )
             val s = Function( f, args, alpha )
             val subst = Substitution[HOLExpression]( v, s )
-            info("Substitution="+subst+" End-sequent:"+this.f(r._1.root))
+//            info("Substitution="+subst+" End-sequent:"+this.f(r._1.root))
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )
@@ -126,7 +126,7 @@ object LKtoLKskc extends Logger {
         m.formula match {
           case Ex(_, t) => t match { case ( (alpha -> To()) -> To()) =>
             val f = getFreshSkolemFunctionSymbol
-            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula.toStringSimple )
+            info( "Using Skolem function symbol '" + f + "' for formula " + this.f(m.formula) )
             val s = Function( f, args, alpha )
             val subst = Substitution[HOLExpression]( v, s )
             val new_parent = applySubstitution( r._1, subst )

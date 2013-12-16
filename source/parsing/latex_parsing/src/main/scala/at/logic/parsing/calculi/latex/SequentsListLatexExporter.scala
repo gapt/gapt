@@ -93,7 +93,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 
     getOutput.write("\\[\\begin{array}{ll}\n")
     for ((key,set) <- vmap.toList.sortBy(_._1)(TAOrdering)) {
-      var set_ = set
+      var set_ = set.toList.sorted
       while (set_.nonEmpty) {
         val (ten,rest) = set_.splitAt(10)
         getOutput.write(ten.mkString("",", "," & ")+typeToString(key))
@@ -106,7 +106,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     getOutput.write("\\subsection{Constant Types}\n")
     getOutput.write("\\[\\begin{array}{ll}\n")
     for ((key,set) <- cmap.toList.sortBy(_._1)(TAOrdering)) {
-      var set_ = set
+      var set_ = set.toList.sorted
       while (set_.nonEmpty) {
         val (ten,rest) = set_.splitAt(10)
         getOutput.write(ten.mkString("",", "," & ")+typeToString(key))
@@ -122,9 +122,9 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     case To() => "o"
     case Tindex() => "w"
     case t1 -> t2 =>
-      typeToString(t1) +
+      typeToString_(t1) +
       " > " +
-      typeToString(t2)
+      typeToString_(t2)
   }
 
   def typeToString_(t:TA) : String = t match {
@@ -133,9 +133,9 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     case Tindex() => "w"
     case t1 -> t2 =>
       ("(") +
-        typeToString(t1) +
+        typeToString_(t1) +
         " > " +
-        typeToString(t2) +
+        typeToString_(t2) +
       ")"
   }
 

@@ -94,11 +94,13 @@ import at.logic.algorithms.unification.EequalityA
 import at.logic.language.fol.FOLConst
 import at.logic.calculi.lk.quantificationRules.ForallLeftRule
 import at.logic.parsing.language.hlk.{HLKHOLParser, DeclarationParser}
-import at.logic.algorithms.hlk.{HybridLatexExporter, HybridLatexParser}
+import at.logic.algorithms.hlk.{ExtendedProofDatabase, HybridLatexExporter, HybridLatexParser}
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.transformations.ceres.clauseSets.{SimplifyStruct, StandardClauseSet}
 import scala.collection.mutable
+import at.logic.calculi.lksk.{ExistsSkLeftRule, ForallSkRightRule}
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -125,10 +127,14 @@ object printProofStats {
   object extractStruct {
     def apply(p: LKProof) =
       StructCreators.extract( p )
-    def apply(p: LKProof, cutformula_condidtion : HOLFormula => Boolean) =
-      StructCreators.extract( p, cutformula_condidtion )
+    def apply(p: LKProof, cutformula_condition : HOLFormula => Boolean) =
+      StructCreators.extract( p, cutformula_condition )
     def apply(p: LKProof, cut_occs: Set[FormulaOccurrence]) =
       StructCreators.extract( p,cut_occs )
+  }
+
+  object simplifyStruct {
+    def apply(s:Struct) = SimplifyStruct.apply(s)
   }
 
   object structToClausesList {
@@ -372,6 +378,9 @@ object printProofStats {
     //def apply(ls: List[Sequent]) = sequentNormalize(ls map (_.toFSequent))
     def apply(ls: List[FSequent]) = sequentNormalize(ls)
   }
+
+  object applyFactoring extends factoring
+
   object writeLabelledSequentListLatex {
     def apply(ls: List[LabelledSequent], outputFile: String) = {
       // maps original types and definitions of abstractions
@@ -780,6 +789,38 @@ object printProofStats {
     def apply[T <: LambdaExpression](exp : T, map : NameReplacement.SymbolMap) : T = NameReplacement(exp, map)
     def apply(fs: FSequent, map : NameReplacement.SymbolMap) = NameReplacement(fs,map)
     def apply(p : RobinsonResolutionProof, map : NameReplacement.SymbolMap) : RobinsonResolutionProof = NameReplacement(p, map)
+  }
+
+  //TODO: find a better name for all this stuff
+  object ntape {
+    def apply(filename : String = "algorithms/hlk/src/test/resources/tape3.llk", proofname : String = "TAPEPROOF")
+    : (ExtendedProofDatabase, List[FSequent], List[FSequent], Struct, replaceAbstractions.ConstantsMap) = {
+      println("Loading proof database "+filename)
+      val p = loadLLK(filename)
+      println("Eliminating definitions:")
+      val elp = eliminateDefinitions(p, proofname)
+      println("Converting to LKskc")
+      val selp = LKtoLKskc(regularize(elp)._1)
+      println("Extracting struct")
+      val struct = extractStruct(selp, _.containsQuantifier)
+      val (full,fol,hol,csyms) = css(struct)
+      println("Simplifying clauseset")
+      val ax1 = FSequent(Nil,List(parse hlkformula "var x:i; const < : i>i>o; const 1 : i; const + : i>i>i; x<x+1"))
+      val ax2 = FSequent(Nil, List(parse hlkformula "var x,y,z:i; const + : i>i>i; x+(y+z)=(x+y)+z"))
+      val removed = subsumedClausesRemovalHOL(deleteTautologies(applyFactoring(ax1::ax2::full)))
+      val (cm, qhol) = replaceAbstractions(removed)
+      cm.toList map ( x =>
+        println(x._2+" & "+HybridLatexExporter.getFormulaString(x._1.asInstanceOf[HOLExpression],true,true)+"\\\\"))
+
+
+      val qf : List[FSequent] = selp.nodes.toList.flatMap( _ match {
+        case x@ForallSkRightRule(p,r,a,f,t)  => FSequent(a.formula::Nil,f.formula::Nil)::Nil;
+        case x@ExistsSkLeftRule(p,r,a,f,t) => FSequent(a.formula::Nil,f.formula::Nil)::Nil;
+        case _ => Nil;
+      })
+
+      (p,qhol,qf,struct,cm)
+    }
   }
 
   object proofs {
