@@ -225,6 +225,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         None
       case e: Exception =>
         status = "cutintro_other_exception"
+        error( "other exception caught during cut-introduction\n" + e )
         None
     }
 

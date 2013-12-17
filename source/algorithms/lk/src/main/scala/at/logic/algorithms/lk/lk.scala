@@ -705,7 +705,7 @@ object addWeakenings {
       }
     )
 
-    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of weakening errenous: "+proof.root+" does not weaken to "+towhat+" but "+rightcontr.root+
+    require(rightcontr.root.toFSequent.multiSetEquals( towhat ), "Context of weakening errenous:\n" + proof.root + "\ndoes not weaken to\n" + towhat + "\nbut\n" + rightcontr.root +
     " : "+(rightcontr.root.toFSequent diff towhat)+" || "+(towhat diff rightcontr.root.toFSequent))
 
     rightcontr
