@@ -264,6 +264,10 @@ object toDeep {
     case WeakQuantifier(_,cs) => OrHOL( cs.map( t => toDeep(t._1)).toList )
     case StrongQuantifier(_,_,t) => toDeep(t)
   }
+
+  def apply(expansionSequent: ExpansionSequent[ExpansionTree]): FSequent = {
+    FSequent(expansionSequent.antecedent.map(toDeep.apply), expansionSequent.succedent.map(toDeep.apply) ) // compiler wants the applys here
+  }
 }
 
 // Daniel: shouldn't this rather be called toShallow to keep in line

@@ -11,14 +11,17 @@ import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.algorithms.lk.simplification._
 import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.lk._
+import at.logic.algorithms.lk.eliminateDefinitions
 import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.writers.FileWriter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.provers.veriT.VeriTProver
+import at.logic.calculi.expansionTrees.{toDeep, ExpansionSequent}
 
-/* comment out untill atp works again
+/* comment out until atp works again
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands._
 import at.logic.provers.atp.refinements.UnitRefinement
@@ -162,9 +165,16 @@ class PrimeProofTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
-      //herbrand extract (proof)
-      //check deep formula tautology with verit HERE HERE HERE
-      //check shallow formula same as end sequent
+      if (false) { // run this code as soon as issue 260 is fixed:
+        if (VeriTProver.isInstalled()) {
+          // test expansion tree extraction by verifying that the deep formula is a tautology
+          val definitionFreeProof = eliminateDefinitions(proof) // can't extract ETs in the presence of definitions currently
+          val (ante, succ) = extractExpansionTrees(definitionFreeProof)
+          val fSequent = toDeep(new ExpansionSequent(ante, succ))
+          VeriTProver.isValid(fSequent) must beTrue
+        }
+      }
+
       //val proof_sk = skolemize( regularize( proof )._1 )
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
