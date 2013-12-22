@@ -162,6 +162,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
+      //herbrand extract (proof)
+      //check deep formula tautology with verit HERE HERE HERE
+      //check shallow formula same as end sequent
       //val proof_sk = skolemize( regularize( proof )._1 )
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )

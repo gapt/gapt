@@ -199,6 +199,7 @@ class MiscTest extends SpecificationWithJUnit {
       if (!VeriTProver.isInstalled()) skipped("VeriT is not installed")
 
       for (testBaseName <- "ALG138+1.out" :: Nil) {
+        // TODO: add cade13example.out once tptpfolexporter issues are sorted out
 
         val testFilePath = "target" + separator + "test-classes" + separator + testBaseName
 

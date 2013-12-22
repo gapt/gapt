@@ -224,8 +224,34 @@ object quantRulesNumber {
 }
 
 
-// TODO:
-class ExpansionSequent(antecedent: Seq[ExpansionTreeWithMerges], succedent: Seq[ExpansionTreeWithMerges]) { }
+
+
+class ExpansionSequent[T <: ExpansionTreeWithMerges](val antecedent: Seq[T], val succedent: Seq[T]) {
+  def toTuple(): (Seq[T], Seq[T]) = {
+    return (antecedent, succedent)
+  }
+
+  def map[B <: ExpansionTreeWithMerges](f : T => B): ExpansionSequent[B] = {
+    return new ExpansionSequent[B](antecedent.map(f), succedent.map(f))
+  }
+
+  override def toString: String = "ExpansionSequent("+antecedent+", "+succedent+")"
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[ExpansionSequent[T]]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ExpansionSequent[T] =>
+      (that canEqual this) &&
+        antecedent == that.antecedent &&
+        succedent == that.succedent
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(antecedent, succedent)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+}
 
 
 object toDeep {
@@ -353,13 +379,14 @@ object applyToExpansionSequent {
 }
 
 
-object substitute {
+object substitute extends at.logic.utils.logging.Logger {
   /**
    * Perform substitution including propagation of merge nodes
    */
   def apply(s: Substitution[HOLExpression], et: ExpansionTreeWithMerges): ExpansionTree = {
     val etSubstituted = doApplySubstitution(s, et)
-    propagateMerges(etSubstituted)
+    //merge(etSubstituted)
+    etSubstituted.asInstanceOf[ExpansionTree]
   }
 
   /**
@@ -368,6 +395,9 @@ object substitute {
    */
   def applyNoMerge(s: Substitution[HOLExpression], et: ExpansionTreeWithMerges): ExpansionTreeWithMerges = {
     doApplySubstitution(s, et)
+  }
+  def applyNoMerge(s: Substitution[HOLExpression], seq: ExpansionSequent[ExpansionTreeWithMerges]): ExpansionSequent[ExpansionTreeWithMerges] = {
+    seq.map(applyNoMerge(s, _))
   }
 
   private[expansionTrees] def doApplySubstitution(s: Substitution[HOLExpression], et: ExpansionTreeWithMerges): ExpansionTreeWithMerges = et match {
@@ -379,16 +409,24 @@ object substitute {
     case StrongQuantifier(f, v, selection) =>
       StrongQuantifier(s.apply(f).asInstanceOf[HOLFormula], s.apply(v).asInstanceOf[HOLVar], doApplySubstitution(s, selection))
     case WeakQuantifier(f, instances) =>
-      WeakQuantifier(s.apply(f).asInstanceOf[HOLFormula], mergeWeakQuantifiers(s, instances) )
+      WeakQuantifier(s.apply(f).asInstanceOf[HOLFormula], mergeWeakQuantifiers(Some(s), instances) )
     case MergeNode(t1, t2) => MergeNode(doApplySubstitution(s, t1), doApplySubstitution(s, t2))
   }
 
-  private[expansionTrees] def mergeWeakQuantifiers(s: Substitution[HOLExpression], instances: Seq[(ExpansionTreeWithMerges, HOLExpression)]): Seq[(ExpansionTreeWithMerges, HOLExpression)] = {
+  /**
+   * If present, apply Substitution s to weak quantifier instances, then create merge nodes for duplicates
+   */
+  private[expansionTrees] def mergeWeakQuantifiers(s: Option[Substitution[HOLExpression]], instances: Seq[(ExpansionTreeWithMerges, HOLExpression)]): Seq[(ExpansionTreeWithMerges, HOLExpression)] = {
     // through merging, some instances might disappear
     // keep map (substituted var -> [  ] ) to rebuild instances from it
     type InstList = ListBuffer[ExpansionTreeWithMerges]
-    var newInstances = collection.mutable.Map[HOLExpression, InstList]()
-    instances.foreach({ case (et, expr) =>  (newInstances.getOrElseUpdate(s.apply(expr), new InstList) += doApplySubstitution(s, et)) })
+    val newInstances = collection.mutable.Map[HOLExpression, InstList]()
+    s match {
+      case Some(subst) =>
+        instances.foreach({ case (et, expr) =>  (newInstances.getOrElseUpdate(subst.apply(expr), new InstList) += doApplySubstitution(subst, et)) })
+      case None =>
+        instances.foreach({ case (et, expr) =>  (newInstances.getOrElseUpdate(expr, new InstList) += et) })
+    }
 
     def createMergeNode(ets: Iterable[ExpansionTreeWithMerges]): ExpansionTreeWithMerges = {
       ets.reduce( (tree1, tree2) => MergeNode(tree1, tree2) )
@@ -398,9 +436,175 @@ object substitute {
   }
 }
 
-object propagateMerges {
-  def apply(etMerge: ExpansionTreeWithMerges): ExpansionTree = etMerge.asInstanceOf[ExpansionTree] // TODO
+
+
+object merge extends at.logic.utils.logging.Logger {
+
+  // Reduces all MergeNodes in the tree
+  def apply(tree: ExpansionTreeWithMerges): ExpansionTree = {
+    main(tree)._1
+  }
+
+  // Reduces all MergeNodes in the sequent
+  def apply(sequent: ExpansionSequent[ExpansionTreeWithMerges]): ExpansionSequent[ExpansionTree] = {
+    val allTrees = sequent.antecedent ++ sequent.succedent
+
+    trace("\n\nmerge seq in: " + sequent)
+
+
+    // apply main to all trees. if a substitution occurs, apply it to all trees and restart whole process as
+    // substitutions can create merges (potentially everywhere).
+    def applyRec(trees: Seq[ExpansionTreeWithMerges], index: Int): Seq[ExpansionTreeWithMerges] = {
+      if (index == trees.length) {
+        trees
+      } else {
+        trace("\n\nmerge on index: "+index+" tree: "+trees(index) +" trees: " + trees)
+        // define current tree and context, apply main and rebuild later
+        val context = trees.take(index) ++ trees.drop(index + 1)
+        val curTree = trees(index)
+
+        trace ("old context:"+context)
+
+        val (newTree, newContext, substitutionOccurred) = main(curTree, context)
+
+        trace ("new context:"+newContext)
+
+        assert(newContext.length == context.length)
+
+        applyRec(newContext.take(index) ++ List(newTree) ++ newContext.drop(index ),
+          index = if (substitutionOccurred) { 0 } else { index + 1 }
+        )
+      }
+    }
+
+    val allNewTrees = applyRec(allTrees, 0).asInstanceOf[Seq[ExpansionTree]]
+
+    trace("merge seq out: " + allNewTrees)
+
+    return new ExpansionSequent[ExpansionTree](
+      allNewTrees.take(sequent.antecedent.length),
+      allNewTrees.drop(sequent.antecedent.length)
+    )
+  }
+
+  /**
+   * Outer merge loop. Call merge, handle substitution occurring during merge and repeat.
+   */
+  private def main(tree: ExpansionTreeWithMerges, context: Seq[ExpansionTreeWithMerges]=Nil, substitutionOccurred: Boolean = false):
+  (ExpansionTree, Seq[ExpansionTreeWithMerges], Boolean) = {
+    trace("merge in: " + tree)
+    trace("merge in context: " + context)
+
+    val (subst, et) = detectAndMergeMergeNodes(tree)
+    subst match {
+      case Some(s) => {
+        trace ("substitution: " + s)
+        main(substitute.applyNoMerge(s, et), context.map(substitute.applyNoMerge(s, _)), substitutionOccurred = true)
+      }
+      case None => {
+        trace("merge out: " + et)
+        trace("merge out context: " + context)
+        (et.asInstanceOf[ExpansionTree], context, substitutionOccurred)
+      }
+
+    }
+  }
+
+  /**
+   * Called initially with root, search for merge nodes and calls doApplyMerge on the merge nodes
+   * If a substitution is encountered, the current state of the ET is made explicit in the return value, consisting of the substitution and the current state
+   * If no substitution is returned, the tree in the return value does not contain merge nodes
+   */
+  private def detectAndMergeMergeNodes(tree: ExpansionTreeWithMerges): (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+
+    // code which is required for all binary operators
+    def start_op2(t1: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
+                  OpFactory: (ExpansionTreeWithMerges, ExpansionTreeWithMerges) => ExpansionTreeWithMerges) :(Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+      val (subst1, res1) = detectAndMergeMergeNodes(t1)
+      subst1 match {
+        case Some(s: Substitution[HOLExpression]) =>  // found substitution, need to return right here
+          (Some(s), OpFactory(res1, t1))
+        case None => // no substitution, continue
+          val (subst2, res2) = detectAndMergeMergeNodes(t2)
+          (subst2, OpFactory(res1, res2)) // might be Some(subst) or None
+      }
+    }
+
+    tree  match {
+      case StrongQuantifier(f, v, sel) =>
+        val (subst, res)  = detectAndMergeMergeNodes(sel)
+        (subst, StrongQuantifier(f, v, res))
+      case WeakQuantifier(f, instances) => {
+        var instancesPrime = new ListBuffer[(ExpansionTreeWithMerges, HOLExpression)]
+        // try to call merge on all instances
+        // this is somewhat iterative in itself (stop on first substitution since we can't handle multiple substitutions at the same time)
+        for (instance <- instances) {
+          val (et, expr) = instance
+          val (subst, res) = detectAndMergeMergeNodes(et)
+          instancesPrime += Tuple2(res, expr)
+          subst match {
+            case Some(s: Substitution[HOLExpression]) => {
+              return (Some(s), WeakQuantifier(f, instancesPrime ++ instances.drop( instancesPrime.length)) )
+            }
+            case None =>
+          }
+        }
+        // all instances done without substitution
+        (None, WeakQuantifier(f, instancesPrime.toList))
+      }
+      case Atom(f) => (None, Atom(f))
+      case Neg(s1) => {
+        val (subst, res) = detectAndMergeMergeNodes(s1)
+        (subst, Neg(res))
+      }
+      case And(t1, t2) => start_op2(t1, t2, And(_, _))
+      case Or(t1, t2) => start_op2(t1, t2, Or(_, _))
+      case Imp(t1, t2) => start_op2(t1, t2, Imp(_, _))
+      case MergeNode(t1, t2) => doApplyMerge(t1, t2)
+    }
+  }
+
+
+  /**
+   * Returns either a substitution in case we have to do a substitution at the highest level or the merged tree
+   * Call with children of merge node
+   */
+  private def doApplyMerge(tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges): (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+
+    // similar as above, code which is required for all binary operators
+    def start_op2(s1: ExpansionTreeWithMerges, t1: ExpansionTreeWithMerges,
+                  s2: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
+                  OpFactory: (ExpansionTreeWithMerges, ExpansionTreeWithMerges) => ExpansionTreeWithMerges):
+    (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+      val (subst1, res1) = doApplyMerge(s1, s2)
+      subst1 match {
+        case Some(s: Substitution[HOLExpression]) => (Some(s), OpFactory(res1, MergeNode(t1, t2)))
+        case None =>
+          val (subst2, res2) = doApplyMerge(t1, t2)
+          (subst2, OpFactory(res1, res2)) // might be Some(subst) or None
+      }
+    }
+
+    if (tree1.isInstanceOf[Atom] && !(tree2.isInstanceOf[Atom])) (None, tree2)
+    else if (tree2.isInstanceOf[Atom]) (None, tree1)
+    else (tree1, tree2) match {
+      case (StrongQuantifier(f1, v1, sel1), StrongQuantifier(f2, v2, sel2)) if f1 == f2 =>
+        trace("encountered strong quantifier "+f1+"; doing rename "+v2+" to "+v1)
+        return (Some(Substitution[HOLExpression](v2, v1)), StrongQuantifier(f1, v1, MergeNode(sel1, sel2) ))
+      case (WeakQuantifier(f1, children1), WeakQuantifier(f2, children2)) if f1 == f2 => {
+        val newTree = WeakQuantifier(f1, substitute.mergeWeakQuantifiers(None, children1 ++ children2))
+        // merging might have caused merge-nodes and regular nodes, hence switch to detect-method
+        detectAndMergeMergeNodes(newTree)
+      }
+      case (Neg(s1), Neg(s2)) => {
+        val (subst, res) = doApplyMerge(s1, s2)
+        (subst, Neg(res))
+      }
+      case (And(s1, t1), And(s2, t2)) => start_op2(s1, t1, s2, t2, And(_, _))
+      case (Or(s1, t1), Or(s2, t2)) => start_op2(s1, t1, s2, t2, Or(_, _))
+      case (Imp(s1, t1), Imp(s2, t2)) => start_op2(s1, t1, s2, t2, Imp(_, _))
+      case _ => throw new IllegalArgumentException("Bug in merge in extractExpansionTrees. By Construction, the trees to be merge should have the same structure, which is violated.")
+    }
+  }
+
 }
-
-
-
