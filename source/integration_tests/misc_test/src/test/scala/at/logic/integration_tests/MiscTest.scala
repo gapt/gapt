@@ -161,6 +161,7 @@ class MiscTest extends SpecificationWithJUnit {
 */
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
+      skipped("Expansion trees currently don't support weakening of quantified formulas properly")
       val p = LinearExampleProof( 0, 4 )
       val pi = CutIntroduction( p, new LKProver() )
       val pe = ReductiveCutElim.eliminateAllByUppermost(pi, false)
