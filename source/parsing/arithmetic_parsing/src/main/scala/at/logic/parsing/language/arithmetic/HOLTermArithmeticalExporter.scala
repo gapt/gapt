@@ -56,17 +56,8 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
       if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
       getOutput.write(")")
     }
-//    case Atom(name, args) => {
-//      exportSymbol(name)
-//      getOutput.write("(")
-//      if (args.size > 0) exportTerm(args.head)
-//      if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
-//      getOutput.write(")")
-//    }
-
     case Atom(sym, args) => {
-      var b = true
-      sym match {
+      var nonschematic = sym match {
         case cs : ClauseSetSymbol => {
           getOutput.write("CL^{(");
 
@@ -74,25 +65,22 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
           getOutput.write("),");
           getOutput.write(cs.name);
           getOutput.write("}_{");
-          getOutput.write("{");//getOutput.write("{"+"""\"""+"color{red}");
-          b=false;
-//          if (args.size > 0) exportTerm(args.head)
-//          if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
-//          getOutput.write("}");
-
+          getOutput.write("{");
+          false;
         }
-        case _ => getOutput.write(sym.toString)
+        case _ =>
+          getOutput.write(sym.toString)
+          true
       }
-      if(b) {
+      if(nonschematic) {
         getOutput.write("(")
-//        getOutput.write("{"+"""\"""+"color{blue}")
         getOutput.write("{")
       }
 
       if (args.size > 0) exportTerm(args.head)
       if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
 
-      if(b){
+      if(nonschematic){
         getOutput.write(")}")
       }
       else
@@ -102,15 +90,14 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
   }}
 
   def exportSymbol(sym: SymbolA): Unit = sym match {
-    case cs : ClauseSetSymbol => getOutput.write("CL^{("); writeCutConf(cs.cut_occs); getOutput.write("),"); getOutput.write(cs.name); getOutput.write("}")
+    case cs : ClauseSetSymbol =>
+      getOutput.write("CL^{("); writeCutConf(cs.cut_occs);
+      getOutput.write("),");
+      getOutput.write(cs.name);
+      getOutput.write("}")
     case _ => getOutput.write(sym.toString)
   }
 
-//  private def writeCutConf( cc: CutConfiguration) = {
-//    cc._1.foreach ( f => {getOutput.write(", "); exportTerm( f )} )
-//    getOutput.write("|")
-//    cc._2.foreach ( f => {getOutput.write(", "); exportTerm( f )} )
-//  }
   private def writeCutConf( cc: CutConfiguration) = {
     if(cc._1.size > 0) {
       exportTerm( cc._1.head );

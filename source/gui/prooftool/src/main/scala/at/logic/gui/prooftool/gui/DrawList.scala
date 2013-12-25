@@ -67,6 +67,6 @@ class DrawList(val list: List[AnyRef], val fontSize: Int) extends GridPanel(0, 1
     contents += new Label(" := ") { font = ft }
     contents += label2
 
-    def expressionToLabel(e: HOLExpression) = DrawSequent.latexToLabel(DrawSequent.formulaToLatexString(e), ft)
+    def expressionToLabel(e: HOLExpression): LatexLabel = LatexLabel(ft, DrawSequent.formulaToLatexString(e))
   }
 }

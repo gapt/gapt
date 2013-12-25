@@ -188,7 +188,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
         val (quantifiers, number, formula) = analyzeFormula(holF)
         val (list1, list2) = splitList(number,list)
         if ( state.get(holF) != Some(Expand) ) {
-          val lbl = DrawSequent.latexToLabel(quantifiers, ft)
+          val lbl = LatexLabel(ft,quantifiers)
           if (allow) lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
               PopupMenu(DrawExpansionTree.this, holF, lbl, e.point.x, e.point.y)
@@ -206,7 +206,7 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
         } else {
           val formulas = expTrees.map(et => extractET(et,number)).flatten
           if (formulas != Nil) { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
-            val lbl = DrawSequent.latexToLabel(getMatrixSymbol(holF), ft)
+            val lbl = LatexLabel(ft, getMatrixSymbol(holF))
             lbl.reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close(holF)
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>

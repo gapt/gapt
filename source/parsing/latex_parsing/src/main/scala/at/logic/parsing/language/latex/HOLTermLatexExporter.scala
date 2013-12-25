@@ -17,7 +17,8 @@ import at.logic.language.schema.indexedOmegaVar
 
 trait HOLTermLatexExporter extends OutputExporter with at.logic.parsing.language.HOLTermExporter {
   // it is LambdaExpression and require because of the stupid design chose not to have a common element for HOL
-  def exportTerm(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]); t match {
+  def exportTerm(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]);
+    t match {
     case indv: indexedOmegaVar => getOutput.write(indv.name.toString + """_{""" + indv.index+"""}""")
     case Var(name, _) => getOutput.write(name.toString)
     case Neg(f) => { getOutput.write("""\neg """); exportTerm_(f); }

@@ -46,7 +46,7 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
   def initialize() { tree match {
     case utree: UnaryTree[_] =>
       val mylabel = utree.vertex match {
-        case PWeakC(_) => latexToLabel(tx, ft)
+        case PWeakC(_) => LatexLabel(ft, tx)
         case _ => new Label(tx) {
           font = ft
           val myicon = icon
@@ -156,7 +156,7 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
         }
       }) = Position.East
     case ltree: LeafTree[_] =>
-      val mylabel = latexToLabel(tx, ft)
+      val mylabel = LatexLabel(ft, tx)
       if (! str.isEmpty && tx.contains(str)) mylabel.background = new Color(0,255,0)
       else mylabel.opaque = false
       mylabel.border = bd

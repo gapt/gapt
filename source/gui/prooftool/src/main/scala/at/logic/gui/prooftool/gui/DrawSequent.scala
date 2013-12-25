@@ -14,7 +14,7 @@ import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrence
 import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, indexedOmegaVar, IntegerTerm, IntVar, IntConst, IntZero, Succ}
 import at.logic.transformations.ceres.struct.ClauseSetSymbol
 import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
-import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
+import org.scilab.forge.jlatexmath.{TeXIcon, TeXConstants, TeXFormula}
 import java.awt.{Color, Font}
 import java.awt.image.BufferedImage
 import swing._
@@ -28,8 +28,10 @@ import scala.swing.event.MouseEntered
 import scala.swing.event.MouseExited
 import at.logic.language.schema.IntZero
 import at.logic.utils.latex.nameToLatexString
+import collection.mutable
 
 object DrawSequent {
+
 
   //used by DrawClList
   def apply(seq: Sequent, ft: Font, str: String): FlowPanel = if (! str.isEmpty) {
@@ -54,14 +56,14 @@ object DrawSequent {
     private var first = true
     for (f <- seq.antecedent) {
       if (vis_occ.isEmpty || vis_occ.contains(f) ) {
-      if (! first) contents += new Label(", ") {font = ft}
-      else first = false
-      if (cut_anc.contains(f)) {
-        val fl = formulaToLabel(f.formula, ft)
-        fl.background = new Color(0,255,0)
-        contents += fl
-      }
-      else
+        if (! first) contents += new Label(", ") {font = ft}
+        else first = false
+        if (cut_anc.contains(f)) {
+          val fl = formulaToLabel(f.formula, ft)
+          fl.background = new Color(0,255,0)
+          contents += fl
+        }
+        else
         if (omega_anc.contains(f)) {
           val fl = formulaToLabel(f.formula, ft)
           fl.background = new Color(255,0,0)
@@ -75,73 +77,28 @@ object DrawSequent {
     first =true
     for (f <- seq.succedent) {
       if (vis_occ.isEmpty || vis_occ.contains(f) ) {
-      if (! first) contents += new Label(", ")  {font = ft}
-      else first = false
-      if (cut_anc.contains(f)) {
-        val fl = formulaToLabel(f.formula, ft)
-        fl.background = new Color(0,255,0)
-        contents += fl
-      }
-      else
+        if (! first) contents += new Label(", ")  {font = ft}
+        else first = false
+        if (cut_anc.contains(f)) {
+          val fl = formulaToLabel(f.formula, ft)
+          fl.background = new Color(0,255,0)
+          contents += fl
+        }
+        else
         if (omega_anc.contains(f)) {
           val fl = formulaToLabel(f.formula, ft)
           fl.background = new Color(255,0,0)
           contents += fl
         }
-          else contents += formulaToLabel(f.formula, ft)
+        else contents += formulaToLabel(f.formula, ft)
       }
     }
   }
 
-  def formulaToLabel(f: HOLFormula, ft: Font) = latexToLabel(formulaToLatexString(f), ft)
+  def formulaToLabel(f: HOLFormula, ft: Font) : LatexLabel = LatexLabel(ft,formulaToLatexString(f))
 
-  def latexToLabel(ls: String, ft: Font) = new Label {
-    background = new Color(255,255,255)
-    foreground = new Color(0,0,0)
-    font = ft
-    opaque = true
-    yLayoutAlignment = 0.5
 
-    val latexText = ls
-    val formula = try { new TeXFormula(ls) } catch { case e: Exception => throw new Exception("Could not create formula "+ls+": "+e.getMessage,e)}
-    val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, ft.getSize)
-    val myimage = new BufferedImage(myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB)
-    val g2 = myimage.createGraphics()
-	  g2.setColor(Color.white)
-	  g2.fillRect(0,0,myicon.getIconWidth,myicon.getIconHeight)
-	  myicon.paintIcon(peer, g2, 0, 0)
-
-    icon = myicon
-
-    listenTo(mouse.moves, mouse.clicks)
-    reactions += {
-      case e: MouseEntered => foreground = new Color(0,0,255)
-      case e: MouseExited => foreground = new Color(0,0,0)
-      case e: MouseClicked if (e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 2) =>
-        val d = new Dialog {
-          resizable = false
-          peer.setUndecorated(true)
-          contents = new TextField(latexText) {
-            editable = false
-            border = Swing.EmptyBorder(7)
-            tooltip = "Select text and right-click to copy."
-            font = ft.deriveFont(Font.PLAIN, 14)
-            listenTo(mouse.clicks)
-            reactions += {
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => copy()
-            }
-          }
-        //  modal = true
-          reactions += {
-            case e: WindowDeactivated if (e.source == this) => dispose()
-          }
-        }
-        d.location = locationOnScreen
-        d.open()
-    }
-  }
-
-   // this method is used by DrawTree when drawing projections.
+  // this method is used by DrawTree when drawing projections.
   // also by ProofToLatexExporter.
   def sequentToLatexString(seq: Sequent): String = {
     var s = " "
@@ -184,11 +141,11 @@ object DrawSequent {
       """ \bigvee_{ """ + formulaToLatexString(v, false) + "=" + formulaToLatexString(init, false) + "}^{" + formulaToLatexString(end, false) + "}" + formulaToLatexString(formula)
     case IndexedPredicate(constant, indices) if (constant != BiggerThanC) =>
       {if (constant.name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
-        val cl = constant.name.asInstanceOf[ClauseSetSymbol]
+      val cl = constant.name.asInstanceOf[ClauseSetSymbol]
         "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + " | " +
           cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
       } else if (constant.name.isInstanceOf[ProjectionSetSymbol]) { //parse pr variables to display cut-configuration.
-        val pr = constant.name.asInstanceOf[ProjectionSetSymbol]
+      val pr = constant.name.asInstanceOf[ProjectionSetSymbol]
         "pr^{" + pr.name +",(" + pr.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + " | " +
           pr.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
       }  //or return the predicate symbol
@@ -212,13 +169,13 @@ object DrawSequent {
     case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, false) + "}"
     case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, false) + "}"
     case Var(name, _) => if (name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
-      val cl = name.asInstanceOf[ClauseSetSymbol]
+    val cl = name.asInstanceOf[ClauseSetSymbol]
       "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
         cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
     } else if (t.asInstanceOf[Var].isBound) "z_{" + t.asInstanceOf[Var].dbIndex.get + "}" // This line is added for debugging reasons!!!
-      else if (t.exptype == ind->ind)
-        "\\textbf {" + name.toString + "}"
-      else  name.toString
+    else if (t.exptype == ind->ind)
+      "\\textbf {" + name.toString + "}"
+    else  name.toString
     case Function(name, args, _) =>
       if (name.toString == "EXP")
         args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
@@ -236,9 +193,9 @@ object DrawSequent {
     case z : IntConst => n.toString
     case IntZero() => n.toString
     case v : IntVar => if (n > 0)
-        v.toStringSimple + "+" + n.toString
-      else
-        v.toStringSimple()
+      v.toStringSimple + "+" + n.toString
+    else
+      v.toStringSimple()
     case Succ(s) => parseIntegerTerm( s, n + 1 )
     case _ => throw new Exception("Error in parseIntegerTerm(..) in gui")
   }
@@ -248,5 +205,65 @@ object DrawSequent {
       if (args.size == 1 && name.toString == parent_name) parseNestedUnaryFunction(parent_name, args.head, n+1)
       else parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + formulaToLatexString(t) + ")"
     case _ => parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + formulaToLatexString(t) + ")"
+  }
+}
+
+
+object LatexLabel {
+  private val cache = mutable.Map[(String,Font), TeXIcon]()
+  def clearCache() = this.synchronized(cache.clear())
+
+  def apply(font:Font, latexText: String) : LatexLabel = {
+    val key = (latexText,font)
+    this.synchronized({
+      val icon = cache.getOrElseUpdate(key, {
+        val formula = try { new TeXFormula(latexText) }
+        catch { case e: Exception => throw new Exception("Could not create formula "+latexText+": "+e.getMessage,e)}
+        val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, font.getSize)
+        val myimage = new BufferedImage(myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB)
+        val g2 = myimage.createGraphics()
+        g2.setColor(Color.white)
+        g2.fillRect(0,0,myicon.getIconWidth,myicon.getIconHeight)
+        myicon.paintIcon(null, g2, 0, 0)
+        myicon
+      })
+      new LatexLabel(font, latexText, icon)
+    })
+  }
+}
+
+class LatexLabel(override val font : Font, val latexText : String, val myicon : TeXIcon)
+  extends Label("", myicon, Alignment.Center) {
+  background = new Color(255,255,255)
+  foreground = new Color(0,0,0)
+  opaque = true
+  yLayoutAlignment = 0.5
+  //icon = myicon
+
+  listenTo(mouse.moves, mouse.clicks)
+  reactions += {
+    case e: MouseEntered => foreground = new Color(0,0,255)
+    case e: MouseExited => foreground = new Color(0,0,0)
+    case e: MouseClicked if (e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 2) =>
+      val d = new Dialog {
+        resizable = false
+        peer.setUndecorated(true)
+        contents = new TextField(latexText) {
+          editable = false
+          border = Swing.EmptyBorder(7)
+          tooltip = "Select text and right-click to copy."
+          font = font.deriveFont(Font.PLAIN, 14)
+          listenTo(mouse.clicks)
+          reactions += {
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => copy()
+          }
+        }
+        //  modal = true
+        reactions += {
+          case e: WindowDeactivated if (e.source == this) => dispose()
+        }
+      }
+      d.location = locationOnScreen
+      d.open()
   }
 }

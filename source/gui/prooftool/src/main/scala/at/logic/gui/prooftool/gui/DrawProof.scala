@@ -104,7 +104,8 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     repaint()
   }
 
-  def initialize() { proof match {
+  def initialize() {
+    proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
       layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, colored_omega_occurrences, visible_occurrences, str)) = Position.Center
@@ -120,7 +121,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           background = white
           opaque = false
           border = Swing.EmptyBorder(0,fSize,0,fSize)
-          val pLink = DrawSequent.latexToLabel("(\\textbf{" + link+"}" + indices.foldRight("")((i,rez) => ", "+DrawSequent.formulaToLatexString(i)+rez) + ")", ft)
+          val pLink = LatexLabel(ft,"(\\textbf{" + link+"}" + indices.foldRight("")((i,rez) => ", "+DrawSequent.formulaToLatexString(i)+rez) + ")")
           pLink.xLayoutAlignment = 0.5
           pLink.opaque = false
           pLink.border = Swing.EmptyBorder(0,0,5,0)
