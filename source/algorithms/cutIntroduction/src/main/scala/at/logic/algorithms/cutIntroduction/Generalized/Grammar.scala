@@ -93,9 +93,9 @@ object ComputeGrammars extends Logger {
 
     //The number of variables in a decomposition
     def numVars(s: types.S) = s.size
-    //The sum of the sizes of the s-vectors
-    def ssize(s: types.S) = s.map(vec => vec.size).foldLeft(0)(_ + _)
-    //The number of terms this grammar compresses (grammars that "compress" only one terms are useless and
+    //The size of the first s-vector, if it exists, and 0 otherwise.
+    def ssize(s: types.S) = safeHead(s, Nil).length
+    //The number of terms this grammar compresses (grammars that "compress" only one term are useless and
     //hence discarded here.)
     def numTerms(s: types.S, t: List[FOLTerm]) = if (s.size != 0) s.head.size else t.size
 
@@ -165,6 +165,7 @@ object ComputeGrammars extends Logger {
             } 
             else {
               trace("[smallestCoverExact]    OUTCOME: difference too large!")
+              trace("[smallestCoverExact]       u.size=" + u.size + ", difference.size=" + difference.size + ", coverSize=" + coverSize)
               getSmallestSubsets(subsets)
             }
          

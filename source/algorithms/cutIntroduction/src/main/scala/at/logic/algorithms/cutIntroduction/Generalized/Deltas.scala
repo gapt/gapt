@@ -200,7 +200,7 @@ object Deltas extends Logger {
         }
 
         //We also choose the third case, provided that the terms don't begin with a common, unary function symbol
-        if (!commonFuncHead(terms) || (commonFuncHead(terms) && fromFuncArgs(terms.head).length == 1)) {
+        if (!commonFuncHead(terms) || fromFuncArgs(terms.head).length != 1) {
           results = results + ((FOLVar(new VariableStringSymbol(eigenvariable + "_" + curInd)), List(terms), curInd+1))
         }
 

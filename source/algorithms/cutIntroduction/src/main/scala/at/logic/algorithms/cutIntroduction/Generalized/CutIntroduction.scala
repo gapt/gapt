@@ -540,14 +540,13 @@ object CutIntroduction extends Logger {
     * Variables beyond x_5 are left unchanged.
     */
   def sanitizeVars(f: FOLFormula) = {
-    //val sanitizedVars = List[(String,String)](("x","x_0"),("y","x_1"),("z","x_2"),("u","x_3"),("v","x_4"),("w","x_5")).map(
-    //  v => (FOLVar(new VariableStringSymbol(v._1)),FOLVar(new VariableStringSymbol(v._2))) )
+    val sanitizedVars = List[(String,String)](("x","x_0"),("y","x_1"),("z","x_2"),("u","x_3"),("v","x_4"),("w","x_5")).map(
+      v => (FOLVar(new VariableStringSymbol(v._1)),FOLVar(new VariableStringSymbol(v._2))) )
 
-    //sanitizedVars.foldLeft(f){(f, v) => f match {
-    //  case AllVar(_, _) => replaceLeftmostBoundOccurenceOf(v._2, v._1,f)._2
-    //  case _ => f
-    //}}
-    f
+    sanitizedVars.foldLeft(f){(f, v) => f match {
+      case AllVar(_, _) => replaceLeftmostBoundOccurenceOf(v._2, v._1,f)._2
+      case _ => f
+    }}
   }
 }
 
