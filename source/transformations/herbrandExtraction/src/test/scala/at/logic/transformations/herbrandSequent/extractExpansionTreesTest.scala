@@ -10,12 +10,52 @@ import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.types.Definitions._
 import at.logic.transformations.herbrandExtraction._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.calculi.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET}
+import at.logic.calculi.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET, Imp => ImpET}
+import at.logic.calculi.lk.base.LKProof
+import at.logic.language.fol.{FOLVar, Function => FOLFunction, Utils}
 
 @RunWith(classOf[JUnitRunner])
 class ExtractExpansionTreesTest extends SpecificationWithJUnit {
 
+  def LinearExampleProof(k: Int, n: Int): LKProof = {
+    val s = new ConstantStringSymbol("s")
+    val p = new ConstantStringSymbol("P")
+
+    val x = FOLVar(VariableStringSymbol("x"))
+    val ass = AllVar(x, Imp(Atom(p, x :: Nil), Atom(p, FOLFunction(s, x :: Nil) :: Nil)))
+    if (k == n) {
+      val a = Atom(p, Utils.numeral(n) :: Nil)
+      WeakeningLeftRule(Axiom(a :: Nil, a :: Nil), ass)
+    } else {
+      val p1 = Atom(p, Utils.numeral(k) :: Nil)
+      val p2 = Atom(p, Utils.numeral(k + 1) :: Nil)
+      val aux = Imp(p1, p2)
+      ContractionLeftRule(ForallLeftRule(ImpLeftRule(Axiom(p1 :: Nil, p1 :: Nil), LinearExampleProof(k + 1, n), p1, p2), aux, ass, Utils.numeral(k)), ass)
+    }
+  }
+
+
   "The expansion tree extraction" should {
+
+    "handle successive contractions " in {
+      val etSeq = extractExpansionTrees(LinearExampleProof(0, 2))
+
+      val p = new ConstantStringSymbol("P")
+      val x = FOLVar(VariableStringSymbol("x"))
+      val s = new ConstantStringSymbol("s")
+
+      val ass = AllVar(x, Imp(Atom(p, x :: Nil), Atom(p, FOLFunction(s, x :: Nil) :: Nil)))
+
+      etSeq._1 mustEqual List(
+        AtomET(Atom(p, Utils.numeral(0)::Nil)),
+        WeakQuantifierET( ass, List(
+          (ImpET( AtomET( Atom(p, Utils.numeral(1)::Nil)), AtomET( Atom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)),
+          (ImpET( AtomET( Atom(p, Utils.numeral(0)::Nil)), AtomET( Atom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)))
+        )
+      )
+
+      etSeq._2 mustEqual( List( AtomET( Atom(p, Utils.numeral(2)::Nil) ) ) )
+    }
 
     "do merge triggering a substitution triggering a merge" in {
 
@@ -60,4 +100,6 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
 
     }
   }
+
 }
+

@@ -1,6 +1,6 @@
 package at.logic.calculi.expansionTrees
 
-import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, _}
+import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, AllVar => AllVarHOL, ExVar => ExVarHOL, _}
 import at.logic.utils.ds.trees._
 import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.matching.hol._
@@ -16,15 +16,15 @@ import scala.collection.mutable.ListBuffer
  */
 trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula],Option[HOLExpression]] {
   override def toString() = this match {
-    case Atom(f) => f.toString
+    case Atom(f) => "Atom("+f.toString+")"
     case Neg(t1) => NegSymbol + t1.toString
     case And(t1,t2) => t1.toString + AndSymbol + t2.toString
     case Or(t1,t2) => t1.toString + OrSymbol + t2.toString
-    case Imp(t1,t2) => t1.toString + OrSymbol + t2.toString
+    case Imp(t1,t2) => t1.toString + ImpSymbol + t2.toString
     case WeakQuantifier(formula,children) => "WeakQuantifier("+formula+", "+children+")"
     case StrongQuantifier(formula, variable, selection) => "StrongQuantifier("+formula+", "+variable+", "+selection+")"
     case MergeNode(left, right) => "MergeNode("+left+", "+right+")"
-    case _ => throw new Exception("Unhandled case in ExpanstionTreeWithMerges.toString")
+    case _ => throw new Exception("Unhandled case in ExpansionTreeWithMerges.toString")
   }
 }
 
@@ -340,13 +340,13 @@ object prenexToExpansionTree {
   }
 
   def apply_(f: HOLFormula, sub: Substitution[HOLExpression]) : ExpansionTreeWithMerges = f match {
-    case AllVar(v, form) => 
+    case AllVarHOL(v, form) =>
       val t = sub.getTerm(v)
       val one_sub = Substitution[HOLExpression](v, t)
       val newf = one_sub(form).asInstanceOf[HOLFormula]
       //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       WeakQuantifier(f, List(Pair(apply_(newf, sub), t)))
-    case ExVar(v, form) => 
+    case ExVarHOL(v, form) =>
       val t = sub.getTerm(v)
       val one_sub = Substitution[HOLExpression](v, t)
       val newf = one_sub(form).asInstanceOf[HOLFormula]
@@ -435,6 +435,8 @@ object substitute extends at.logic.utils.logging.Logger {
     def createMergeNode(ets: Iterable[ExpansionTreeWithMerges]): ExpansionTreeWithMerges = {
       ets.reduce( (tree1, tree2) => MergeNode(tree1, tree2) )
     }
+
+    newInstances.remove(null) // removes pseudo-instances caused by quantifiers introduced by weakening
 
     newInstances.map(instance => (createMergeNode(instance._2), instance._1)).toList
   }
@@ -574,6 +576,7 @@ object merge extends at.logic.utils.logging.Logger {
    * Call with children of merge node
    */
   private def doApplyMerge(tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges): (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+    trace("apply merge called on: \n"+tree1+"\n"+tree2)
 
     // similar as above, code which is required for all binary operators
     def start_op2(s1: ExpansionTreeWithMerges, t1: ExpansionTreeWithMerges,
@@ -589,11 +592,10 @@ object merge extends at.logic.utils.logging.Logger {
       }
     }
 
-    if (tree1.isInstanceOf[Atom] && !(tree2.isInstanceOf[Atom])) (None, tree2)
-    else if (tree2.isInstanceOf[Atom]) (None, tree1)
-    else (tree1, tree2) match {
+    (tree1, tree2) match {
+      case (Atom(f1), Atom(f2)) if f1 == f2 => (None, Atom(f1))
       case (StrongQuantifier(f1, v1, sel1), StrongQuantifier(f2, v2, sel2)) if f1 == f2 =>
-        trace("encountered strong quantifier "+f1+"; doing rename "+v2+" to "+v1)
+        trace("encountered strong quantifier "+f1+"; renaming "+v2+" to "+v1)
         return (Some(Substitution[HOLExpression](v2, v1)), StrongQuantifier(f1, v1, MergeNode(sel1, sel2) ))
       case (WeakQuantifier(f1, children1), WeakQuantifier(f2, children2)) if f1 == f2 => {
         val newTree = WeakQuantifier(f1, substitute.mergeWeakQuantifiers(None, children1 ++ children2))
@@ -607,8 +609,53 @@ object merge extends at.logic.utils.logging.Logger {
       case (And(s1, t1), And(s2, t2)) => start_op2(s1, t1, s2, t2, And(_, _))
       case (Or(s1, t1), Or(s2, t2)) => start_op2(s1, t1, s2, t2, Or(_, _))
       case (Imp(s1, t1), Imp(s2, t2)) => start_op2(s1, t1, s2, t2, Imp(_, _))
-      case _ => throw new IllegalArgumentException("Bug in merge in extractExpansionTrees. By Construction, the trees to be merge should have the same structure, which is violated.")
+      case (MergeNode(n1, n2), _) => { // we proceed top-bottom. Sometimes we need to propagate a merge below another merge, in which case the lower merge has to be resolved first
+        val (subst, res) = doApplyMerge(n1, n2)
+        subst match {
+          case Some(s: Substitution[HOLExpression]) => (Some(s), MergeNode(res, tree2))
+          case None => doApplyMerge(res, tree2)
+        }
+      }
+      case (_, MergeNode(n1, n2)) => { // see above
+        val (subst, res) = doApplyMerge(n1, n2)
+        subst match {
+          case Some(s: Substitution[HOLExpression]) => (Some(s), MergeNode(res, tree2))
+          case None => doApplyMerge(tree1, res)
+        }
+      }
+      case _ => throw new IllegalArgumentException("Bug in merge in extractExpansionTrees. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2)
+    }
+  }
+}
+
+/**
+ * Create an expansion tree from a formula. Required for expansion tree extraction for weakenings.
+ */
+object coerceFormulaToET {
+  /**
+   * @param f formula to coerce to ET
+   * @param isAntecedent whether the formula appears in the antecedent or succedent. Relevant for quantifier instances.
+   */
+  def apply(f: HOLFormula, isAntecedent: Boolean): ExpansionTree = {
+    f match {
+      case AllVarHOL(v, formula) =>
+        if (isAntecedent) {
+          StrongQuantifier(f, null, Atom(BottomC)) // TODO: better variable than null here?
+        } else {
+          WeakQuantifier(f, Nil).asInstanceOf[ExpansionTree] // contains no merges
+        }
+      case ExVarHOL(v, formula) =>
+        if (isAntecedent) {
+          WeakQuantifier(f, Nil).asInstanceOf[ExpansionTree] // contains no merges
+        } else {
+          StrongQuantifier(f, null, Atom(TopC))
+        }
+      case AndHOL(l, r) => And(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
+      case OrHOL(l, r) => Or(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
+      case ImpHOL(l, r) => Imp(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
+      case AtomHOL(_, _) => Atom(f)
     }
   }
 
 }
+

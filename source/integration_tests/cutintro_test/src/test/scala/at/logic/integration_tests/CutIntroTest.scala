@@ -52,7 +52,6 @@ class CutIntroTest extends SpecificationWithJUnit {
 
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
-      skipped("Expansion trees currently don't support weakening of quantified formulas properly")
       val proof = LinearExampleProof( 0, 4 )
 
       //val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
