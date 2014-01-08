@@ -336,6 +336,18 @@ object VeriTParser extends RegexParsers {
     }
   }
 
+  def isUnsat(filename: String) : Boolean = {
+    parseAll(parseUnsat, new FileReader(filename)) match {
+      case Success(r, _) => r
+      case Failure(msg, next) => 
+        val msg0 = "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column
+        throw new Exception(msg0)
+      case Error(msg, next) => 
+        val msg0 = "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column
+        throw new Exception(msg0)
+    }   
+  }
+
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
   def proof : Parser[Option[(Seq[ExpansionTree], Seq[ExpansionTree])]] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
 
@@ -363,6 +375,8 @@ object VeriTParser extends RegexParsers {
       val cons = List()
       Some( (ant.toSeq, cons.toSeq) )
   }
+
+  def parseUnsat : Parser[Boolean] = title ~ rep(success) ~> (unsat ^^ { case s => true } | sat ^^ { case s => false }) <~ success
   
   def label : Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
   

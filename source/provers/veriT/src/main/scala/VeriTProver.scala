@@ -16,9 +16,9 @@ object VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
     val in_file = VeriTExporter(s, "toProve.smt")
 
     // Execute the system command and get the result as a string.
-    val result = try { "veriT --proof-version=1 --proof=- toProve.smt".!! }
+    val result = try { "veriT toProve.smt".!! }
     catch {
-      case e: IOException => throw new Exception("VeriT is not installed.")
+      case e: IOException => throw new Exception("Error while executing VeriT.")
     }
 
     //println("result: " + result)
@@ -34,15 +34,12 @@ object VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
     pw.close()
 
     // Parse the output
-    val proof = VeriTParser.getExpansionProof(out_file.getAbsolutePath())
+    val unsat = VeriTParser.isUnsat(out_file.getAbsolutePath())
     out_file.delete() match {
       case true => ()
       case false => throw new Exception("Error deleting verit file.")
     }
-    proof match {
-      case Some(_) => true
-      case None => false
-    }
+    unsat
   }
 
   // VeriT proofs are parsed as Expansion Trees.

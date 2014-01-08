@@ -18,7 +18,7 @@ class VeriTProverTest extends SpecificationWithJUnit {
 
   "VeriT" should {
     "prove a v not a" in {
-      skipped("--proof-version in isValid is only supported on Giselle's machine")
+      //skipped("--proof-version in isValid is only supported on Giselle's machine")
       val a = Atom(ConstantStringSymbol("a"), Nil)
       val f = Or(a, Neg(a))
 
