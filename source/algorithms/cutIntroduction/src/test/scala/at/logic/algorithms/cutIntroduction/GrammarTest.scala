@@ -51,6 +51,25 @@ class GrammarTest extends SpecificationWithJUnit {
             val a = FOLConst(ConstantStringSymbol("a"))
             val b = FOLConst(ConstantStringSymbol("b"))
 
+            val f1 = Function(f, a::b::Nil)
+            val f2 = Function(f, b::a::Nil)
+
+            val dec = deltaG.computeDelta(f1::f2::Nil, "α")
+
+            val alpha = FOLVar(new VariableStringSymbol("α_0"))
+            val alpha_2 = FOLVar(new VariableStringSymbol("α_1"))
+            val f_alpha = Function(f, alpha::alpha_2::Nil)
+
+            (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::f2::Nil)::Nil), (f_alpha, (a::b::Nil)::(b::a::Nil)::Nil)))
+        }
+
+        "example with a unary function symbol" in {
+            val deltaG = new ManyVariableDelta(2)
+
+            val f = ConstantStringSymbol("f")
+            val a = FOLConst(ConstantStringSymbol("a"))
+            val b = FOLConst(ConstantStringSymbol("b"))
+
             val f1 = Function(f, a::Nil)
             val f2 = Function(f, b::Nil)
 
@@ -59,7 +78,7 @@ class GrammarTest extends SpecificationWithJUnit {
             val alpha = FOLVar(new VariableStringSymbol("α_0"))
             val f_alpha = Function(f, alpha::Nil)
 
-            (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::f2::Nil)::Nil), (f_alpha, (a::b::Nil)::Nil)))
+            (dec) must beEqualTo (Set[Decomposition]((f_alpha, (a::b::Nil)::Nil)))
         }
     }
 
