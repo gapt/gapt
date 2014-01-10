@@ -5,7 +5,7 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.language.hol._
-import at.logic.calculi.expansionTrees.{WeakQuantifier => WQTree, StrongQuantifier => SQTree, And => AndTree, Or => OrTree, Imp => ImpTree, Neg => NotTree, Atom => AtomTree, MergeNode => MergeNodeTree, ExpansionSequent, ExpansionTreeWithMerges, ExpansionTree, merge => mergeTree, coerceFormulaToET}
+import at.logic.calculi.expansionTrees.{WeakQuantifier => WQTree, StrongQuantifier => SQTree, And => AndTree, Or => OrTree, Imp => ImpTree, Neg => NotTree, Atom => AtomTree, MergeNode => MergeNodeTree, ExpansionSequent, ExpansionTreeWithMerges, ExpansionTree, merge => mergeTree}
 import at.logic.calculi.lk.lkExtractors._
 import at.logic.calculi.occurrences._
 
