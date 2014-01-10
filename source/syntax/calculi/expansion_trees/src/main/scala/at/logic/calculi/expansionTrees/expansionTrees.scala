@@ -436,8 +436,6 @@ object substitute extends at.logic.utils.logging.Logger {
       ets.reduce( (tree1, tree2) => MergeNode(tree1, tree2) )
     }
 
-    newInstances.remove(null) // removes pseudo-instances caused by quantifiers introduced by weakening
-
     newInstances.map(instance => (createMergeNode(instance._2), instance._1)).toList
   }
 }
@@ -448,7 +446,7 @@ object merge extends at.logic.utils.logging.Logger {
 
   // Reduces all MergeNodes in the tree
   def apply(tree: ExpansionTreeWithMerges): ExpansionTree = {
-    main(tree)._1
+    main(tree, polarity=true)._1
   }
 
   // Reduces all MergeNodes in the sequent
@@ -471,7 +469,10 @@ object merge extends at.logic.utils.logging.Logger {
 
         trace ("old context:"+context)
 
-        val (newTree, newContext, substitutionOccurred) = main(curTree, context)
+        val isAntecedent = index < sequent.antecedent.length
+        val polarity = if (isAntecedent) false else true
+
+        val (newTree, newContext, substitutionOccurred) = main(curTree, polarity, context)
 
         trace ("new context:"+newContext)
 
@@ -495,17 +496,18 @@ object merge extends at.logic.utils.logging.Logger {
 
   /**
    * Outer merge loop. Call merge, handle substitution occurring during merge and repeat.
+   * @param polarity: true for positive
    */
-  private def main(tree: ExpansionTreeWithMerges, context: Seq[ExpansionTreeWithMerges]=Nil, substitutionOccurred: Boolean = false):
+  private def main(tree: ExpansionTreeWithMerges, polarity: Boolean, context: Seq[ExpansionTreeWithMerges] = Nil, substitutionOccurred: Boolean = false):
   (ExpansionTree, Seq[ExpansionTreeWithMerges], Boolean) = {
     trace("merge in: " + tree)
     trace("merge in context: " + context)
 
-    val (subst, et) = detectAndMergeMergeNodes(tree)
+    val (subst, et) = detectAndMergeMergeNodes(tree, polarity)
     subst match {
       case Some(s) => {
         trace ("substitution: " + s)
-        main(substitute.applyNoMerge(s, et), context.map(substitute.applyNoMerge(s, _)), substitutionOccurred = true)
+        main(substitute.applyNoMerge(s, et), polarity, context.map(substitute.applyNoMerge(s, _)), substitutionOccurred = true)
       }
       case None => {
         trace("merge out: " + et)
@@ -520,25 +522,28 @@ object merge extends at.logic.utils.logging.Logger {
    * Called initially with root, search for merge nodes and calls doApplyMerge on the merge nodes
    * If a substitution is encountered, the current state of the ET is made explicit in the return value, consisting of the substitution and the current state
    * If no substitution is returned, the tree in the return value does not contain merge nodes
+   * @param polarity: required for merging top and bottom.
    */
-  private def detectAndMergeMergeNodes(tree: ExpansionTreeWithMerges): (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+  private def detectAndMergeMergeNodes(tree: ExpansionTreeWithMerges, polarity: Boolean): (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
 
     // code which is required for all binary operators
+    // @param leftPolarity: polarity of left child
     def start_op2(t1: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
-                  OpFactory: (ExpansionTreeWithMerges, ExpansionTreeWithMerges) => ExpansionTreeWithMerges) :(Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
-      val (subst1, res1) = detectAndMergeMergeNodes(t1)
+                  OpFactory: (ExpansionTreeWithMerges, ExpansionTreeWithMerges) => ExpansionTreeWithMerges,
+                  leftPolarity: Boolean) :(Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+      val (subst1, res1) = detectAndMergeMergeNodes(t1, leftPolarity)
       subst1 match {
         case Some(s: Substitution[HOLExpression]) =>  // found substitution, need to return right here
           (Some(s), OpFactory(res1, t1))
         case None => // no substitution, continue
-          val (subst2, res2) = detectAndMergeMergeNodes(t2)
+          val (subst2, res2) = detectAndMergeMergeNodes(t2, polarity)
           (subst2, OpFactory(res1, res2)) // might be Some(subst) or None
       }
     }
 
     tree  match {
       case StrongQuantifier(f, v, sel) =>
-        val (subst, res)  = detectAndMergeMergeNodes(sel)
+        val (subst, res)  = detectAndMergeMergeNodes(sel, polarity)
         (subst, StrongQuantifier(f, v, res))
       case WeakQuantifier(f, instances) => {
         var instancesPrime = new ListBuffer[(ExpansionTreeWithMerges, HOLExpression)]
@@ -546,7 +551,7 @@ object merge extends at.logic.utils.logging.Logger {
         // this is somewhat iterative in itself (stop on first substitution since we can't handle multiple substitutions at the same time)
         for (instance <- instances) {
           val (et, expr) = instance
-          val (subst, res) = detectAndMergeMergeNodes(et)
+          val (subst, res) = detectAndMergeMergeNodes(et, polarity)
           instancesPrime += Tuple2(res, expr)
           subst match {
             case Some(s: Substitution[HOLExpression]) => {
@@ -560,13 +565,13 @@ object merge extends at.logic.utils.logging.Logger {
       }
       case Atom(f) => (None, Atom(f))
       case Neg(s1) => {
-        val (subst, res) = detectAndMergeMergeNodes(s1)
+        val (subst, res) = detectAndMergeMergeNodes(s1, !polarity) // changes polarity
         (subst, Neg(res))
       }
-      case And(t1, t2) => start_op2(t1, t2, And(_, _))
-      case Or(t1, t2) => start_op2(t1, t2, Or(_, _))
-      case Imp(t1, t2) => start_op2(t1, t2, Imp(_, _))
-      case MergeNode(t1, t2) => doApplyMerge(t1, t2)
+      case And(t1, t2) => start_op2(t1, t2, And(_, _), leftPolarity=polarity)
+      case Or(t1, t2) => start_op2(t1, t2, Or(_, _), leftPolarity=polarity)
+      case Imp(t1, t2) => start_op2(t1, t2, Imp(_, _), leftPolarity= ! polarity) // changes polarity
+      case MergeNode(t1, t2) => doApplyMerge(t1, t2, polarity)
     }
   }
 
@@ -575,52 +580,63 @@ object merge extends at.logic.utils.logging.Logger {
    * Returns either a substitution in case we have to do a substitution at the highest level or the merged tree
    * Call with children of merge node
    */
-  private def doApplyMerge(tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges): (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
+  private def doApplyMerge(tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges, polarity: Boolean): (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
     trace("apply merge called on: \n"+tree1+"\n"+tree2)
 
     // similar as above, code which is required for all binary operators
     def start_op2(s1: ExpansionTreeWithMerges, t1: ExpansionTreeWithMerges,
                   s2: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
-                  OpFactory: (ExpansionTreeWithMerges, ExpansionTreeWithMerges) => ExpansionTreeWithMerges):
+                  OpFactory: (ExpansionTreeWithMerges, ExpansionTreeWithMerges) => ExpansionTreeWithMerges,
+                  leftPolarity: Boolean):
     (Option[Substitution[HOLExpression]], ExpansionTreeWithMerges) = {
-      val (subst1, res1) = doApplyMerge(s1, s2)
+      val (subst1, res1) = doApplyMerge(s1, s2, leftPolarity)
       subst1 match {
         case Some(s: Substitution[HOLExpression]) => (Some(s), OpFactory(res1, MergeNode(t1, t2)))
         case None =>
-          val (subst2, res2) = doApplyMerge(t1, t2)
+          val (subst2, res2) = doApplyMerge(t1, t2, polarity)
           (subst2, OpFactory(res1, res2)) // might be Some(subst) or None
       }
     }
 
     (tree1, tree2) match {
+      // top/bottom merging:
+      // top [merge] A = A if !polarity
+      // bottom [merge] A = A if polarity
+      case (Atom(TopC), _) if !polarity => detectAndMergeMergeNodes(tree2, polarity)
+      case (_, Atom(TopC)) if !polarity => detectAndMergeMergeNodes(tree1, polarity)
+
+      case (Atom(BottomC), _) if polarity => detectAndMergeMergeNodes(tree2, polarity)
+      case (_, Atom(BottomC)) if polarity => detectAndMergeMergeNodes(tree1, polarity)
+
       case (Atom(f1), Atom(f2)) if f1 == f2 => (None, Atom(f1))
+
       case (StrongQuantifier(f1, v1, sel1), StrongQuantifier(f2, v2, sel2)) if f1 == f2 =>
         trace("encountered strong quantifier "+f1+"; renaming "+v2+" to "+v1)
         return (Some(Substitution[HOLExpression](v2, v1)), StrongQuantifier(f1, v1, MergeNode(sel1, sel2) ))
       case (WeakQuantifier(f1, children1), WeakQuantifier(f2, children2)) if f1 == f2 => {
         val newTree = WeakQuantifier(f1, substitute.mergeWeakQuantifiers(None, children1 ++ children2))
         // merging might have caused merge-nodes and regular nodes, hence switch to detect-method
-        detectAndMergeMergeNodes(newTree)
+        detectAndMergeMergeNodes(newTree, polarity)
       }
       case (Neg(s1), Neg(s2)) => {
-        val (subst, res) = doApplyMerge(s1, s2)
+        val (subst, res) = doApplyMerge(s1, s2, !polarity) // changes polarity
         (subst, Neg(res))
       }
-      case (And(s1, t1), And(s2, t2)) => start_op2(s1, t1, s2, t2, And(_, _))
-      case (Or(s1, t1), Or(s2, t2)) => start_op2(s1, t1, s2, t2, Or(_, _))
-      case (Imp(s1, t1), Imp(s2, t2)) => start_op2(s1, t1, s2, t2, Imp(_, _))
+      case (And(s1, t1), And(s2, t2)) => start_op2(s1, t1, s2, t2, And(_, _), leftPolarity=polarity)
+      case (Or(s1, t1), Or(s2, t2)) => start_op2(s1, t1, s2, t2, Or(_, _), leftPolarity=polarity)
+      case (Imp(s1, t1), Imp(s2, t2)) => start_op2(s1, t1, s2, t2, Imp(_, _), leftPolarity= ! polarity) //changes polarity
       case (MergeNode(n1, n2), _) => { // we proceed top-bottom. Sometimes we need to propagate a merge below another merge, in which case the lower merge has to be resolved first
-        val (subst, res) = doApplyMerge(n1, n2)
+        val (subst, res) = doApplyMerge(n1, n2, polarity)
         subst match {
           case Some(s: Substitution[HOLExpression]) => (Some(s), MergeNode(res, tree2))
-          case None => doApplyMerge(res, tree2)
+          case None => doApplyMerge(res, tree2, polarity)
         }
       }
       case (_, MergeNode(n1, n2)) => { // see above
-        val (subst, res) = doApplyMerge(n1, n2)
+        val (subst, res) = doApplyMerge(n1, n2, polarity)
         subst match {
           case Some(s: Substitution[HOLExpression]) => (Some(s), MergeNode(res, tree2))
-          case None => doApplyMerge(tree1, res)
+          case None => doApplyMerge(tree1, res, polarity)
         }
       }
       case _ => throw new IllegalArgumentException("Bug in merge in extractExpansionTrees. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2)
@@ -631,6 +647,7 @@ object merge extends at.logic.utils.logging.Logger {
 /**
  * Create an expansion tree from a formula. Required for expansion tree extraction for weakenings.
  */
+/*
 object coerceFormulaToET {
   /**
    * @param f formula to coerce to ET
@@ -656,6 +673,6 @@ object coerceFormulaToET {
       case AtomHOL(_, _) => Atom(f)
     }
   }
-
 }
+*/
 

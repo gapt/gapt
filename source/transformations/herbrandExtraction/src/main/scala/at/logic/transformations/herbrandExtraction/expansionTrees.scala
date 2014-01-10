@@ -17,13 +17,13 @@ object extractExpansionTrees {
   }
 
   private def extract(proof: LKProof): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
-    case Axiom(r) => Map(r.antecedent.map(fo => (fo,AtomTree(fo.formula))) ++
+    case Axiom(r) => Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula))) ++
                          r.succedent.map(fo => (fo, AtomTree(fo.formula))): _*)
     case UnaryLKProof(_,up,r,_,p) => {
       val map = extract(up)
       getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map) + Pair(p, (proof match {
-        case WeakeningRightRule(_,_,_) => coerceFormulaToET(p.formula, isAntecedent=true)
-        case WeakeningLeftRule(_,_,_) => coerceFormulaToET(p.formula, isAntecedent=false)
+        case WeakeningRightRule(_,_,_) => AtomTree(BottomC)
+        case WeakeningLeftRule(_,_,_) => AtomTree(TopC)
         case ForallLeftRule(_,_,a,_,t) => WQTree(p.formula, List(Pair(map(a),t)))
         case ExistsRightRule(_,_,a,_,t) => WQTree(p.formula, List(Pair(map(a),t)))
         case ForallRightRule(_,_,a,_,v) => SQTree(p.formula, v, map(a))

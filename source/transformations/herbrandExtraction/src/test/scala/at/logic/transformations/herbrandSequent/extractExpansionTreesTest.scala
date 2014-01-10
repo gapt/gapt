@@ -46,13 +46,23 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
 
       val ass = AllVar(x, Imp(Atom(p, x :: Nil), Atom(p, FOLFunction(s, x :: Nil) :: Nil)))
 
-      etSeq._1 mustEqual List(
+      val equal_permut_1 = etSeq._1 equals List(
+        AtomET(Atom(p, Utils.numeral(0)::Nil)),
+        WeakQuantifierET( ass, List(
+          (ImpET( AtomET( Atom(p, Utils.numeral(0)::Nil)), AtomET( Atom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)),
+          (ImpET( AtomET( Atom(p, Utils.numeral(1)::Nil)), AtomET( Atom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)))
+        )
+      )
+
+      val equal_permut_2 = etSeq._1 equals List(
         AtomET(Atom(p, Utils.numeral(0)::Nil)),
         WeakQuantifierET( ass, List(
           (ImpET( AtomET( Atom(p, Utils.numeral(1)::Nil)), AtomET( Atom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)),
           (ImpET( AtomET( Atom(p, Utils.numeral(0)::Nil)), AtomET( Atom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)))
         )
       )
+
+      (equal_permut_1 || equal_permut_2) must beTrue
 
       etSeq._2 mustEqual( List( AtomET( Atom(p, Utils.numeral(2)::Nil) ) ) )
     }
@@ -98,6 +108,18 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
                             )
       )))
 
+    }
+
+    "handle polarity" in {
+      val p0 = Axiom(BottomC::Nil, TopC::Nil)
+      val p1 = WeakeningRightRule(p0, TopC) // weakened, hence bot on right side
+      val p2 = ContractionRightRule(p1, TopC) // polarity is positive, so bottom [merge] top = top
+      val p3 = WeakeningLeftRule(p2, BottomC) // weakened, hence top on left side
+      val p4 = ContractionLeftRule(p3, BottomC) // negative polarity, bottom must win
+
+      val (ante, succ) = extractExpansionTrees(p4)
+      ante mustEqual AtomET(BottomC)::Nil
+      succ mustEqual AtomET(TopC)::Nil
     }
   }
 
