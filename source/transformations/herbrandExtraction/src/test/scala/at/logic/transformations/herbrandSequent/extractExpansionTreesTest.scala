@@ -12,7 +12,7 @@ import at.logic.transformations.herbrandExtraction._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.calculi.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET, Imp => ImpET}
 import at.logic.calculi.lk.base.LKProof
-import at.logic.language.fol.{FOLVar, Function => FOLFunction, Utils}
+import at.logic.language.fol.{Function => FOLFunction, FOLConst, FOLVar, Utils}
 
 @RunWith(classOf[JUnitRunner])
 class ExtractExpansionTreesTest extends SpecificationWithJUnit {
@@ -120,6 +120,30 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val (ante, succ) = extractExpansionTrees(p4)
       ante mustEqual AtomET(BottomC)::Nil
       succ mustEqual AtomET(TopC)::Nil
+    }
+
+    "handle multiple formulas in axiom" in {
+      val s = new ConstantStringSymbol("s")
+      val c = FOLConst(new ConstantStringSymbol("c"))
+      val d = FOLConst(new ConstantStringSymbol("d"))
+      val x = FOLVar(VariableStringSymbol("x"))
+      val p = new ConstantStringSymbol("P")
+
+      val f = AllVar(x, Atom(p, x::Nil))
+
+      val p0_0 = Axiom(Atom(p, c::Nil)::f::Nil, Atom(p, c::Nil)::Nil)
+
+      val p0_1 = Axiom(Atom(p, d::Nil)::Nil, Atom(p, d::Nil)::Nil)
+      val p0_2 = ForallLeftRule(p0_1, Atom(p, d::Nil), f, d)
+
+      val p1 = AndRightRule(p0_0, p0_2, Atom(p, c::Nil), Atom(p, d::Nil))
+      val p2 = ContractionLeftRule(p1, f)
+
+      val (ante, succ) = extractExpansionTrees(p2)
+
+      ante.count(_.isInstanceOf[WeakQuantifierET]) mustEqual 1
+      ante.count(_.isInstanceOf[AtomET]) mustEqual 1
+
     }
   }
 

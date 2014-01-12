@@ -17,8 +17,27 @@ object extractExpansionTrees {
   }
 
   private def extract(proof: LKProof): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
-    case Axiom(r) => Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula))) ++
-                         r.succedent.map(fo => (fo, AtomTree(fo.formula))): _*)
+    case Axiom(r) => {
+      // guess the axiom: must be an atom and appear left as well as right
+      // can't use set intersection, but lists are small enough to do it manually
+      val axiomCandidates = (r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals elem2))).filter(_.formula.isAtom)
+
+      if (axiomCandidates.size > 1) {
+        println("Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: "+axiomCandidates)
+      }
+
+      if (axiomCandidates.isEmpty) {
+        println("Warning: No candidates for axiom formula in expansion tree extraction, treating it as list of formulas")
+        // this behaviour is convenient for development, as it allows to work reasonably with invalid axioms
+        Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula) )) ++
+             r.succedent.map(fo => (fo, AtomTree(fo.formula) )): _*)
+      } else {
+        val axiomFormula = axiomCandidates(0)
+
+        Map(r.antecedent.map(fo => (fo, AtomTree(if (fo syntaxEquals axiomFormula) fo.formula else TopC) )) ++
+             r.succedent.map(fo => (fo, AtomTree(if (fo syntaxEquals axiomFormula) fo.formula else BottomC) )): _*)
+      }
+    }
     case UnaryLKProof(_,up,r,_,p) => {
       val map = extract(up)
       getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map) + Pair(p, (proof match {
