@@ -223,7 +223,6 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "Extract expansion tree from tape proof" in {
-      skipped("proof contains axioms that are not supported, enable when another version of the proof is available")
 
       val testFilePath = "target" + separator + "test-classes" + separator + "tape3.llk"
       val tokens = HybridLatexParser.parseFile(testFilePath)
@@ -232,9 +231,7 @@ class MiscTest extends SpecificationWithJUnit {
       val (_,p)::_ = proofs
       val elp = AtomicExpansion(DefinitionElimination(db.Definitions,p))
       val reg = regularize(elp)
-      val (ante, succ) = extractExpansionTrees(reg._1).toTuple()
-      println("a: "+ante)
-      println("s: "+succ)
+      extractExpansionTrees(reg._1) must throwA[IllegalArgumentException]
     }
   }
 }

@@ -22,13 +22,20 @@ object extractExpansionTrees {
       // can't use set intersection, but lists are small enough to do it manually
       val axiomCandidates = (r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals elem2))).filter(_.formula.isAtom)
 
-
       if (axiomCandidates.size > 1) {
         println("Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: "+axiomCandidates)
       }
 
       if (axiomCandidates.isEmpty) {
-        println("Warning: No candidates for axiom formula in expansion tree extraction, treating it as list of formulas: " + r)
+        def allAtoms(l : Seq[FormulaOccurrence]) = l.forall(_.formula.isAtom)
+        if (allAtoms( r.antecedent ) && allAtoms( r.succedent ) ) {
+          println("Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: "+r)
+          Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula) )) ++
+               r.succedent.map(fo => (fo, AtomTree(fo.formula) )): _*)
+        } else {
+          throw new IllegalArgumentException("Error: Axiom sequent in expansion tree extraction contains no atom A on left and right side and contains non-atomic formulas: "+r)
+        }
+
         // this behaviour is convenient for development, as it allows to work reasonably with invalid axioms
         Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula) )) ++
              r.succedent.map(fo => (fo, AtomTree(fo.formula) )): _*)
