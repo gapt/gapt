@@ -6,7 +6,7 @@ import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, prenexToExpansionTree, qFreeToExpansionTree}
+import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree}
 import java.io.FileReader
 import at.logic.utils.logging.Logger
 
@@ -310,7 +310,7 @@ object VeriTParser extends RegexParsers {
     ((eq_congr_pred, List(instance)) :: symm)
   }
 
-  def getExpansionProof(filename : String) : Option[(Seq[ExpansionTree], Seq[ExpansionTree])] = {
+  def getExpansionProof(filename : String) : Option[ExpansionSequent] = {
     VeriTParserLogger.trace("FILE: " + filename)
     try {
       parseAll(proof, new FileReader(filename)) match {
@@ -349,7 +349,7 @@ object VeriTParser extends RegexParsers {
   }
 
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
-  def proof : Parser[Option[(Seq[ExpansionTree], Seq[ExpansionTree])]] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
+  def proof : Parser[Option[ExpansionSequent]] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
 
     // Relying on the fact that if the formula is unsatisfiable, a proof is
     // always printed. If there is no proof, the result is sat.
@@ -373,7 +373,7 @@ object VeriTParser extends RegexParsers {
       val ant = axiomET ++ inputET
 
       val cons = List()
-      Some( (ant.toSeq, cons.toSeq) )
+      Some( new ExpansionSequent(ant.toSeq, cons.toSeq) )
   }
 
   def parseUnsat : Parser[Boolean] = title ~ rep(success) ~> (unsat ^^ { case s => true } | sat ^^ { case s => false }) <~ success

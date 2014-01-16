@@ -46,7 +46,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
 
       val ass = AllVar(x, Imp(Atom(p, x :: Nil), Atom(p, FOLFunction(s, x :: Nil) :: Nil)))
 
-      val equal_permut_1 = etSeq._1 equals List(
+      val equal_permut_1 = etSeq.antecedent equals List(
         AtomET(Atom(p, Utils.numeral(0)::Nil)),
         WeakQuantifierET( ass, List(
           (ImpET( AtomET( Atom(p, Utils.numeral(0)::Nil)), AtomET( Atom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)),
@@ -54,7 +54,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
         )
       )
 
-      val equal_permut_2 = etSeq._1 equals List(
+      val equal_permut_2 = etSeq.antecedent equals List(
         AtomET(Atom(p, Utils.numeral(0)::Nil)),
         WeakQuantifierET( ass, List(
           (ImpET( AtomET( Atom(p, Utils.numeral(1)::Nil)), AtomET( Atom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)),
@@ -64,7 +64,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
 
       (equal_permut_1 || equal_permut_2) must beTrue
 
-      etSeq._2 mustEqual( List( AtomET( Atom(p, Utils.numeral(2)::Nil) ) ) )
+      etSeq.succedent mustEqual( List( AtomET( Atom(p, Utils.numeral(2)::Nil) ) ) )
     }
 
     "do merge triggering a substitution triggering a merge" in {
@@ -94,7 +94,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val p4 = ExistsLeftRule(p3, Atom(P, beta::Nil), ExVar(x, Atom(P, x::Nil)), beta)
       val p5 = ContractionLeftRule(p4, ExVar(x, Atom(P, x::Nil)))
 
-      val (ante, succ) = extractExpansionTrees( p5 )
+      val (ante, succ) = extractExpansionTrees( p5 ).toTuple()
 
       ante mustEqual( List(StrongQuantifierET( ExVar(x, Atom(P, x::Nil)), alpha, AtomET(Atom(P, alpha::Nil)))) )
       // this assumes that the first variable wins, f(beta) would also be valid
@@ -117,7 +117,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val p3 = WeakeningLeftRule(p2, BottomC) // weakened, hence top on left side
       val p4 = ContractionLeftRule(p3, BottomC) // negative polarity, bottom must win
 
-      val (ante, succ) = extractExpansionTrees(p4)
+      val (ante, succ) = extractExpansionTrees(p4).toTuple()
       ante mustEqual AtomET(BottomC)::Nil
       succ mustEqual AtomET(TopC)::Nil
     }
@@ -139,10 +139,10 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val p1 = AndRightRule(p0_0, p0_2, Atom(p, c::Nil), Atom(p, d::Nil))
       val p2 = ContractionLeftRule(p1, f)
 
-      val (ante, succ) = extractExpansionTrees(p2)
+      val etSeq = extractExpansionTrees(p2)
 
-      ante.count(_.isInstanceOf[WeakQuantifierET]) mustEqual 1
-      ante.count(_.isInstanceOf[AtomET]) mustEqual 1
+      etSeq.antecedent.count(_.isInstanceOf[WeakQuantifierET]) mustEqual 1
+      etSeq.antecedent.count(_.isInstanceOf[AtomET]) mustEqual 1
 
     }
   }

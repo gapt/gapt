@@ -216,9 +216,9 @@ object quantRulesNumber {
     case StrongQuantifier(_,_,et) => quantRulesNumber(et) + 1
   }
 
-  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : Int = {
-    val qAnt = ep._1.foldLeft(0)( (sum, et) => quantRulesNumber(et) + sum)
-    val qSuc = ep._2.foldLeft(0)( (sum, et) => quantRulesNumber(et) + sum)
+  def apply(ep: ExpansionSequent) : Int = {
+    val qAnt = ep.antecedent.foldLeft(0)( (sum, et) => quantRulesNumber(et) + sum)
+    val qSuc = ep.succedent.foldLeft(0)( (sum, et) => quantRulesNumber(et) + sum)
     qAnt + qSuc
   }
 }
@@ -226,21 +226,21 @@ object quantRulesNumber {
 
 
 
-class ExpansionSequent[T <: ExpansionTreeWithMerges](val antecedent: Seq[T], val succedent: Seq[T]) {
-  def toTuple(): (Seq[T], Seq[T]) = {
+class ExpansionSequent(val antecedent: Seq[ExpansionTree], val succedent: Seq[ExpansionTree]) {
+  def toTuple(): (Seq[ExpansionTree], Seq[ExpansionTree]) = {
     return (antecedent, succedent)
   }
 
-  def map[B <: ExpansionTreeWithMerges](f : T => B): ExpansionSequent[B] = {
-    return new ExpansionSequent[B](antecedent.map(f), succedent.map(f))
+  def map(f : ExpansionTree => ExpansionTree): ExpansionSequent = {
+    return new ExpansionSequent(antecedent.map(f), succedent.map(f))
   }
 
   override def toString: String = "ExpansionSequent("+antecedent+", "+succedent+")"
 
-  def canEqual(other: Any): Boolean = other.isInstanceOf[ExpansionSequent[T]]
+  def canEqual(other: Any): Boolean = other.isInstanceOf[ExpansionSequent]
 
   override def equals(other: Any): Boolean = other match {
-    case that: ExpansionSequent[T] =>
+    case that: ExpansionSequent =>
       (that canEqual this) &&
         antecedent == that.antecedent &&
         succedent == that.succedent
@@ -251,6 +251,9 @@ class ExpansionSequent[T <: ExpansionTreeWithMerges](val antecedent: Seq[T], val
     val state = Seq(antecedent, succedent)
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
+}
+object ExpansionSequent {
+  def unapply(etSeq: ExpansionSequent) = Some( etSeq.toTuple() )
 }
 
 
@@ -265,7 +268,7 @@ object toDeep {
     case StrongQuantifier(_,_,t) => toDeep(t)
   }
 
-  def apply(expansionSequent: ExpansionSequent[ExpansionTree]): FSequent = {
+  def apply(expansionSequent: ExpansionSequent): FSequent = {
     FSequent(expansionSequent.antecedent.map(toDeep.apply), expansionSequent.succedent.map(toDeep.apply) ) // compiler wants the applys here
   }
 }
@@ -288,10 +291,10 @@ object toFormula {
 
 // Returns the end-sequent of the proof represented by this expansion tree
 object toSequent {
-  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree])) : Sequent = {
+  def apply(ep: ExpansionSequent): Sequent = {
     // TODO: there MUST be an easier way...
-    val ant = ep._1.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
-    val cons = ep._2.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
+    val ant = ep.antecedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
+    val cons = ep.succedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
 
     Sequent(ant, cons)
   }
@@ -365,20 +368,10 @@ object removeFromExpansionSequent {
    * @param seq: specifies formulas to remove; formulas in the antecedent/consequent will remove expansion trees in the antecedent/consequent of the expansion tree
    *             expansion trees are removed if Sh(e) \in seq (using default equality, which is alpha equality)
    */
-  def apply(etSeq: (Seq[ExpansionTree], Seq[ExpansionTree]), seq: FSequent) :  (Seq[ExpansionTree], Seq[ExpansionTree]) = {
-    val ante = etSeq._1.filter( et => ! seq._1.contains( toFormula(et) ) )
-    val cons = etSeq._2.filter( et => ! seq._2.contains( toFormula(et) ) )
-    (ante, cons)
-  }
-}
-
-/**
- * Applies a function to all expansion trees in an expansion sequent
- * TODO: Implement proper handling of expansion sequents (special class like Sequent?)
- */
-object applyToExpansionSequent {
-  def apply[T](fun: ExpansionTree => T, etSeq: (Seq[ExpansionTree], Seq[ExpansionTree])) : (Seq[T], Seq[T]) = {
-    (etSeq._1.map(fun), etSeq._2.map(fun))
+  def apply(etSeq: ExpansionSequent, seq: FSequent) :  ExpansionSequent = {
+    val ante = etSeq.antecedent.filter( et => ! seq._1.contains( toFormula(et) ) )
+    val cons = etSeq.succedent.filter( et => ! seq._2.contains( toFormula(et) ) )
+    new ExpansionSequent(ante, cons)
   }
 }
 
@@ -399,9 +392,6 @@ object substitute extends at.logic.utils.logging.Logger {
    */
   def applyNoMerge(s: Substitution[HOLExpression], et: ExpansionTreeWithMerges): ExpansionTreeWithMerges = {
     doApplySubstitution(s, et)
-  }
-  def applyNoMerge(s: Substitution[HOLExpression], seq: ExpansionSequent[ExpansionTreeWithMerges]): ExpansionSequent[ExpansionTreeWithMerges] = {
-    seq.map(applyNoMerge(s, _))
   }
 
   private[expansionTrees] def doApplySubstitution(s: Substitution[HOLExpression], et: ExpansionTreeWithMerges): ExpansionTreeWithMerges = et match {
@@ -450,10 +440,11 @@ object merge extends at.logic.utils.logging.Logger {
   }
 
   // Reduces all MergeNodes in the sequent
-  def apply(sequent: ExpansionSequent[ExpansionTreeWithMerges]): ExpansionSequent[ExpansionTree] = {
-    val allTrees = sequent.antecedent ++ sequent.succedent
+  def apply(etSeq: (Seq[ExpansionTreeWithMerges], Seq[ExpansionTreeWithMerges])): ExpansionSequent = {
+    val (antecedent, succedent) = etSeq
+    val allTrees = antecedent ++ succedent
 
-    trace("\n\nmerge seq in: " + sequent)
+    trace("\n\nmerge seq in: " + antecedent + " |- " + succedent )
 
 
     // apply main to all trees. if a substitution occurs, apply it to all trees and restart whole process as
@@ -469,7 +460,7 @@ object merge extends at.logic.utils.logging.Logger {
 
         trace ("old context:"+context)
 
-        val isAntecedent = index < sequent.antecedent.length
+        val isAntecedent = index < antecedent.length
         val polarity = if (isAntecedent) false else true
 
         val (newTree, newContext, substitutionOccurred) = main(curTree, polarity, context)
@@ -488,9 +479,9 @@ object merge extends at.logic.utils.logging.Logger {
 
     trace("merge seq out: " + allNewTrees)
 
-    return new ExpansionSequent[ExpansionTree](
-      allNewTrees.take(sequent.antecedent.length),
-      allNewTrees.drop(sequent.antecedent.length)
+    return new ExpansionSequent(
+      allNewTrees.take(antecedent.length),
+      allNewTrees.drop(antecedent.length)
     )
   }
 

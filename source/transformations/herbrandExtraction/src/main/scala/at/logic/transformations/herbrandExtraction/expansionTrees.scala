@@ -11,9 +11,9 @@ import at.logic.calculi.occurrences._
 
 object extractExpansionTrees {
 
-  def apply(proof: LKProof): Tuple2[Seq[ExpansionTree],Seq[ExpansionTree]] = {
+  def apply(proof: LKProof): ExpansionSequent = {
     val map = extract(proof)
-    mergeTree( new ExpansionSequent[ExpansionTreeWithMerges](proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) ).toTuple()
+    mergeTree( (proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) )
   }
 
   private def extract(proof: LKProof): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
@@ -22,12 +22,13 @@ object extractExpansionTrees {
       // can't use set intersection, but lists are small enough to do it manually
       val axiomCandidates = (r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals elem2))).filter(_.formula.isAtom)
 
+
       if (axiomCandidates.size > 1) {
         println("Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: "+axiomCandidates)
       }
 
       if (axiomCandidates.isEmpty) {
-        println("Warning: No candidates for axiom formula in expansion tree extraction, treating it as list of formulas")
+        println("Warning: No candidates for axiom formula in expansion tree extraction, treating it as list of formulas: " + r)
         // this behaviour is convenient for development, as it allows to work reasonably with invalid axioms
         Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula) )) ++
              r.succedent.map(fo => (fo, AtomTree(fo.formula) )): _*)

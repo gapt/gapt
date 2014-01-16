@@ -130,7 +130,7 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
       val etSubst2 = StrongQuantifier(AllVar(x, AtomHOL(P, x::Nil) ), y, Atom( AtomHOL(P, y::Nil)) )
       val fy = Function(f, y::Nil, i)
       val fz = Function(f, z::Nil, i)
-      val seq = new ExpansionSequent[ExpansionTreeWithMerges](Nil,
+      val seq = (Nil,
         // only succedent:
         MergeNode(etSubst1, etSubst2) ::
         WeakQuantifier(ExVar(x, AtomHOL(Q, x::Nil)), List(
@@ -145,12 +145,12 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
 
       // merge will trigger a substitution y -> z
 
-      val testResult = new ExpansionSequent[ExpansionTreeWithMerges](Nil,
-        StrongQuantifier(AllVar(x, AtomHOL(P, x::Nil)), z, Atom( AtomHOL(P, z::Nil))) ::
+      val testResult = new ExpansionSequent(Nil,
+        (StrongQuantifier(AllVar(x, AtomHOL(P, x::Nil)), z, Atom( AtomHOL(P, z::Nil))) ::
         WeakQuantifier(ExVar(x, AtomHOL(Q, x::Nil)), List( (Atom(AtomHOL(Q, fz::Nil)), fz))) ::
         Atom( AtomHOL(P, z::Nil) ) ::
         Atom( AtomHOL(P, z::Nil) ) ::
-        Nil
+        Nil).asInstanceOf[Seq[ExpansionTree]]
       )
 
       mergedSeq mustEqual testResult

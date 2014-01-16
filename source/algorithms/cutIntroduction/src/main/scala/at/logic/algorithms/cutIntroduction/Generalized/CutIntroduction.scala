@@ -25,7 +25,7 @@ import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.interpolation._
 import at.logic.algorithms.resolution._
-import at.logic.calculi.expansionTrees.{ExpansionTree, toSequent, quantRulesNumber => quantRulesNumberET}
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
@@ -68,7 +68,7 @@ object CutIntroduction extends Logger {
     * @return The LK proof with cut if cut introduction was successful and None otherwise.
     *         The cause of failure will be printed on the console.
     */
-  def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), numVars: Constraint[Int], prover: Prover) : Option[LKProof] = {
+  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: Prover) : Option[LKProof] = {
     val deltaVec = numVars match {
       case NoConstraint => { println("Using UnboundedVariableDelta."); Some(new UnboundedVariableDelta()) }
       case ExactBound(1) => { println("Using OneVariableDelta."); Some(new OneVariableDelta()) }
@@ -99,7 +99,7 @@ object CutIntroduction extends Logger {
     * The choice of delta vector determines how many variables the cut formula may contain.
     * E.g.: OneVariableDelta leads to cut formulas [forall x] F, UnboundedVariableDelta leads to [forall x1,...xn] F (for a priori unknown n).
     */
-  private def apply(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), prover: Prover, delta: DeltaVector) : LKProof = {
+  private def apply(ep: ExpansionSequent, prover: Prover, delta: DeltaVector) : LKProof = {
 
     val endSequent = toSequent(ep)
     println("\nEnd sequent: " + endSequent)
@@ -184,7 +184,7 @@ object CutIntroduction extends Logger {
     *         s is a status string, and l is a logging string with quantitative data,
     *         see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
     */
-  def applyStat(ep: (Seq[ExpansionTree], Seq[ExpansionTree]), delta: DeltaVector, prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */ ) : ( Option[LKProof] , String, String ) = {
+  def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */ ) : ( Option[LKProof] , String, String ) = {
     var log = ""
     var status = "ok"
     var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"

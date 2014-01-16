@@ -16,7 +16,7 @@ import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, Stru
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.expansionTrees.ExpansionTree
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent}
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.proofs.Proof
 import at.logic.calculi.lk.base.LKProof
@@ -108,8 +108,8 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None
-    case expTrees: (Seq[ExpansionTree],Seq[ExpansionTree]) =>
-      layout(new DrawHerbrandSequent[ExpansionTree](expTrees, fSize)) = c
+    case expTrees: ExpansionSequent =>
+      layout(new DrawHerbrandSequent[ExpansionTree](expTrees.toTuple(), fSize)) = c
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None

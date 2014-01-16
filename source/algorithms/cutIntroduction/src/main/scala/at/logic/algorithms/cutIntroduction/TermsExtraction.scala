@@ -34,10 +34,10 @@ object TermsExtraction {
 
   // An expansion proof is a pair of expansion trees, one for each formula in
   // the antecedent and succedent of the end-sequent
-  def apply(expProof: (Seq[ExpansionTree], Seq[ExpansionTree])) : Map[FOLFormula, List[List[FOLTerm]]] = {
+  def apply(expProof: ExpansionSequent) : Map[FOLFormula, List[List[FOLTerm]]] = {
     
     // Transform to a list of MultiExpansionTrees
-    val multiExpTrees = (expProof._1.map(et => compressQuantifiers(et))) ++ (expProof._2.map(et => compressQuantifiers(et)))
+    val multiExpTrees = (expProof.antecedent.map(et => compressQuantifiers(et))) ++ (expProof.succedent.map(et => compressQuantifiers(et)))
 
     // Extract the terms
     multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
