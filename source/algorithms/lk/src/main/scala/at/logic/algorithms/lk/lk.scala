@@ -665,7 +665,9 @@ object addWeakenings {
     val s_ant = s.antecedent
     val s_suc = s.succedent
 
-    assert(check && root_ant.forall(e => s_ant.contains(e)) && root_suc.forall(e => s_suc.contains(e)))
+    if (check) {
+      assert(root_ant.forall(e => s_ant.contains(e)) && root_suc.forall(e => s_suc.contains(e)))
+    }
 
     // Take formulas that occur in s and do not occur in p's end-sequent
     val diff_ant = s_ant.diff(root_ant) 
@@ -767,7 +769,10 @@ object addContractions {
     val s_ant = s.antecedent
     val s_suc = s.succedent
 
-    assert(check && s_ant.forall(e => root_ant.contains(e)) && s_suc.forall(e => root_suc.contains(e)))
+    if (check) {
+      assert(s_ant.forall(e => root_ant.contains(e)) && s_suc.forall(e => root_suc.contains(e)))
+    }
+
 
     // Take formulas that occur in p's end sequent and do not occur in s
     val diff_ant = root_ant.diff(s_ant)
