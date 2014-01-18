@@ -773,7 +773,7 @@ object printProofStats {
 
   // called "proveProp" and not autoProp to be more consistent with many other commands which are (or start with) a verb
   object proveProp {
-    def apply( seq: FSequent ) : Option[LKProof] = solvePropositional(seq)
+    def apply( seq: FSequent ) : Option[LKProof] = solve.solvePropositional(seq)
     def apply( f: HOLFormula ) : Option[LKProof] = apply( FSequent( Nil, f::Nil ))
   }
 

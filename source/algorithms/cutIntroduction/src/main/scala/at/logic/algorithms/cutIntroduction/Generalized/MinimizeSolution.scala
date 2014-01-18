@@ -17,7 +17,6 @@ import at.logic.algorithms.resolution._
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
-import at.logic.algorithms.lk.solvePropositional._
 import at.logic.calculi.lk.base._
 import at.logic.algorithms.cutIntroduction.{Grammar => BaseGrammar, ExtendedHerbrandSequent => BaseExtendedHerbrandSequent,
                                             CutIntroduction => BaseCutIntroduction, DeltaTable => BaseDeltaTable,

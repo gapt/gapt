@@ -397,7 +397,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
 class DefaultProver extends Prover {
   def getLKProof( seq : FSequent ) : Option[LKProof] =
-    new LKWOCleaningProver().getLKProof( seq )
+    new LKProver(cleanStructuralRules=false).getLKProof( seq )
 
   override def isValid( seq : FSequent ) : Boolean = 
     new MiniSATProver().isValid( seq )

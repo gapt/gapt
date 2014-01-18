@@ -429,7 +429,7 @@ abstract trait SimpleLKParser extends JavaTokenParsers with HLKFormulaParser {
 
 
   def autoprop: Parser[incomplete.Inference] = sautoprop ~> "(" ~> sequent <~ ")" ^^ { seq  =>
-    incomplete.Inference("autoprop", (global, local) => (solvePropositional.autoProp(seq), local)  )
+    incomplete.Inference("autoprop", (global, local) => (solve.solvePropositional(seq, throwOnError=true).get, local)  )
   }
 
 
