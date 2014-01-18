@@ -33,5 +33,12 @@
       <artifactId>normalization</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
-  </dependencies>
+
+		<dependency>
+			<groupId>at.logic</groupId>
+			<artifactId>expansion_trees</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+
+	</dependencies>
 </project>

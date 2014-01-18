@@ -19,9 +19,9 @@ import at.logic.algorithms.lk.statistics._
 import at.logic.calculi.lk.lkSpecs.beSyntacticFSequentEqual
 
 @RunWith(classOf[JUnitRunner])
-class SolvePropositionalTest extends SpecificationWithJUnit {
+class SolveTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
-  "SolvePropositionalTest" should {
+  "SolveTest" should {
     "solve the sequents" in {
       val k = IntVar(new VariableStringSymbol("k"))
       val real_n = IntVar(new VariableStringSymbol("n"))
@@ -60,15 +60,15 @@ class SolvePropositionalTest extends SpecificationWithJUnit {
 
       val fseq = FSequent(A0 :: A1 :: Nil, bigo :: Nil)
 
-      val p = solvePropositional(fseq)
+      val p = solve.solvePropositional(fseq)
 
       // TODO: something with these...
-      solvePropositional(FSequent(Neg(And(Neg(A), Neg(B))) :: Nil, Or(A , B) :: Nil))
-      solvePropositional(FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil))
-      solvePropositional(FSequent(And(A , B) :: Nil, Neg(Or(Neg(A), Neg(B))) :: Nil))
-      solvePropositional(FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil))
-      solvePropositional(FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil))
-      solvePropositional(FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil))
+      solve.solvePropositional(FSequent(Neg(And(Neg(A), Neg(B))) :: Nil, Or(A , B) :: Nil))
+      solve.solvePropositional(FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil))
+      solve.solvePropositional(FSequent(And(A , B) :: Nil, Neg(Or(Neg(A), Neg(B))) :: Nil))
+      solve.solvePropositional(FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil))
+      solve.solvePropositional(FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil))
+      solve.solvePropositional(FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil))
       
       val c2 = HOLConst(new ConstantStringSymbol("c"), Ti())
       val d2 = HOLConst(new ConstantStringSymbol("d"), Ti())
@@ -87,7 +87,7 @@ class SolvePropositionalTest extends SpecificationWithJUnit {
       val seq15 = FSequent(Pc2::impPc2Pd2::imp_andPc2Pd2_Pe2::Nil, Pe2::Nil)
       val seq16 = FSequent(Pc2::Nil, Pd2::Nil)
 
-      solvePropositional(seq16) must beEqualTo (None)
+      solve.solvePropositional(seq16) must beEqualTo (None)
     }
 
     "prove non-atomic axioms (1)" in {
