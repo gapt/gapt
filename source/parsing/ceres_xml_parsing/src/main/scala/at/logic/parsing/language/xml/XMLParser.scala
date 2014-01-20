@@ -36,7 +36,22 @@ import scala.Predef._
 class ProofDatabase(val Definitions: Map[HOLExpression,HOLExpression],
                     val proofs: List[Pair[String,LKProof]],
                     val axioms: List[FSequent],
-                    val sequentLists: List[Pair[String,List[FSequent]]] );
+                    val sequentLists: List[Pair[String,List[FSequent]]] ) {
+  //Does a proof lookup by name
+  def proof(name:String) : LKProof = {
+    val ps = proofs.filter(_._1 == name)
+    require(ps.nonEmpty, "Could not find proof "+name+" in proof database!")
+    if (ps.size>1) println("Warning: Proof "+name+" occurs more than once in proof database!")
+    ps(0)._2
+  }
+
+  def sequentlist(name:String) : List[FSequent] = {
+    val ps = sequentLists.filter(_._1 == name)
+    require(ps.nonEmpty, "Could not find sequent list "+name+" in proof database!")
+    if (ps.size>1) println("Warning: sequent list "+name+" occurs more than once in proof database!")
+    ps(0)._2
+  }
+}
 
 class TestException(val formulas : (HOLExpression, HOLFormula)) extends Exception
 

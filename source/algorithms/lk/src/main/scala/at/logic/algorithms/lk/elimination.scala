@@ -90,8 +90,12 @@ object CleanStructuralRules {
       val new_proof = cleanStructuralRules(p)
 
       // Finding corresponding occurrences on the new proof (both should be there!!!)
-      val new_a1 = new_proof.root.antecedent.filter(x => x =^ a1)(0)
-      val new_a2 = new_proof.root.antecedent.filter(x => x =^ a2)(1)
+      require(a1.formula == a2.formula, "Aux formulas in a contraction must be teh same, but are "+a1+" and "+a2)
+      val aux = new_proof.root.antecedent.filter(x => x.formula == a1.formula)
+      require(aux.length >= 2, "Auxiliary formulas must occur at least twice in the proof!")
+
+      val new_a1 = aux(0)
+      val new_a2 = aux(1)
 
       val w1 = isWeakened(new_a1, new_proof)
       val w2 = isWeakened(new_a2, new_proof)
@@ -119,8 +123,12 @@ object CleanStructuralRules {
       val new_proof = cleanStructuralRules(p)
       
       // Finding corresponding occurrences on the new proof (both should be there!!!)
-      val new_a1 = new_proof.root.succedent.filter(x => x =^ a1)(0)
-      val new_a2 = new_proof.root.succedent.filter(x => x =^ a2)(1)
+      require(a1.formula == a2.formula, "Aux formulas in a contraction must be teh same, but are "+a1+" and "+a2)
+      val aux = new_proof.root.succedent.filter(x => x.formula == a1.formula)
+      require(aux.length >= 2, "Auxiliary formulas must occur at least twice in the proof!")
+
+      val new_a1 = aux(0)
+      val new_a2 = aux(1)
 
       val w1 = isWeakened(new_a1, new_proof)
       val w2 = isWeakened(new_a2, new_proof)

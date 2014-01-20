@@ -38,6 +38,7 @@ object CLIMain {
   import at.logic.algorithms.cutIntroduction.Generalized.Deltas._
   import at.logic.algorithms.lk.statistics._
   import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
+  import at.logic.gui.prooftool.gui.{Main => PT}
   import help.{apply => help}
   import at.logic.cli.GPL.{apply => copying, printLicense => license}
 
@@ -52,7 +53,7 @@ object CLIMain {
   println(" software, and you are welcome to redistribute it under certain")
   println(" conditions; type `copying' for details.")
   println()
-"""
+               """
 
   def main(args: Array[String]) {
     val f = File.createTempFile("cli-script", ".scala")

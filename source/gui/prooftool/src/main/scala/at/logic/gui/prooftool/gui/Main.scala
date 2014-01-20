@@ -43,6 +43,8 @@ import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.hol.{HOLFormula, HOLExpression}
+import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -150,6 +152,26 @@ object Main extends SimpleSwingApplication {
       document.close()
     } catch {
         case e: Throwable => errorMessage("Can't export to pdf! \n\n" + getExceptionString(e))
+    } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+    case _ =>
+  }}
+
+
+  def fExportPng() { chooser.showSaveDialog(mBar) match {
+    case FileChooser.Result.Approve => try {
+      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+
+      val component = body.getContent.contents.head
+      val width = component.size.width
+      val height = component.size.height
+      val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+      val g = img.createGraphics()
+      component.paint(g)
+      val result = chooser.selectedFile.getPath
+      val path = if (result.endsWith(".png")) result else result + ".png"
+      ImageIO.write(img, "png", new File(path));
+    } catch {
+      case e: Throwable => errorMessage("Can't export to png! \n\n" + getExceptionString(e))
     } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
     case _ =>
   }}
@@ -355,13 +377,19 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used by "Cycle through cuts"
-  private var cuts : List[LKProof] = null
-  private var current_cut : Iterator[LKProof] = null
+  private var searchResult : List[LKProof] = null
+  private var currentResult : Iterator[LKProof] = null
+
 
   // Should be called whenever the proof is changed.
   def resetCuts() {
-    cuts = null
-    current_cut = null
+    searchResult = null
+    currentResult = null
+  }
+
+  def setSearchResult(l:List[LKProof]) = if (l != null) {
+    searchResult = l
+    currentResult = l.iterator
   }
 
   val mBar: MenuBar = new MenuBar() {
@@ -402,6 +430,16 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Export as PDF") { fExportPdf() }) {
         mnemonic = Key.D
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, JActionEvent.CTRL_MASK))
+        border = customBorder
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case DisableMenus => enabled = false
+          case EnableMenus => enabled = true
+        }
+      }
+      contents += new MenuItem(Action("Export as PNG") { fExportPng() }) {
+        mnemonic = Key.N
+        //this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.CTRL_MASK))
         border = customBorder
         listenTo(ProofToolPublisher)
         reactions += {
@@ -565,17 +603,23 @@ object Main extends SimpleSwingApplication {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, JActionEvent.ALT_MASK))
         border = customBorder
       }
-      contents += new MenuItem(Action("Cycle through cuts") { 
-        // TODO: reset cuts when loading a proof
-        if ( cuts == null )
-          cuts = getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof])
-        if ( current_cut == null || !current_cut.hasNext )
-          current_cut = cuts.iterator
-
-        val cut = current_cut.next()
-        scrollToProof(cut)
+      contents += new MenuItem(Action("Find Cuts") {
+        searchResult = getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof])
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
+        border = customBorder
+      }
+      contents += new MenuItem(Action("Cycle through search results") {
+        // TODO: reset cuts when loading a proof
+        if ( searchResult == null )
+
+        if ( currentResult == null || !currentResult.hasNext )
+          currentResult = searchResult.iterator
+
+        val cut = currentResult.next()
+        scrollToProof(cut)
+      }) {
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.ALT_MASK))
         border = customBorder
       }
       contents += new Separator
