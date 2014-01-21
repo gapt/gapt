@@ -442,10 +442,11 @@ object printProofStats {
   }
 
   object exportLLK {
-    def apply(lkproof : LKProof) = HybridLatexExporter(lkproof)
+    def apply(lkproof : LKProof, enable_latex : Boolean) = HybridLatexExporter(lkproof,enable_latex)
+    def apply(lkproof : LKProof) = HybridLatexExporter(lkproof,true)
     def apply(lkproof : LKProof, filename:String) = {
       val file = new JBufferedWriter(new JFileWriter(filename))
-      file.write(HybridLatexExporter(lkproof))
+      file.write(HybridLatexExporter(lkproof, true))
       file.close
     }
   }

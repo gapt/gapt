@@ -25,17 +25,39 @@ class HybridLatexExporter(val expandTex : Boolean) {
     s3
   }
 
+  def apply(db : ExtendedProofDatabase, escape_latex : Boolean) = {
+    val types0 = db.eproofs.foldLeft(Map[SymbolA,TA]())((t, p) => getTypes(p._2,t) )
+    val types1 = db.axioms.foldLeft(types0)((m,fs) => getTypes(fs,m))
+    val types2  = db.sequentLists.foldLeft(types1)((m,el) =>
+      el._2.foldLeft(m)((m_,fs) => getTypes(fs,m_))
+    )
+    val types = db.eproofs.keySet.foldLeft(types2)((m,x) => getTypes(x,m))
 
-  def apply(lkp : LKProof, escape_latex : Boolean =false) = {
-    val declarations = generateDeclarations(lkp)
+    val sb = new StringBuilder()
+    sb.append(generateDeclarations(types))
+    sb.append("\n\n")
+    for (p <- db.eproofs) {
+      sb.append(generateProof(p._2,"", escape_latex))
+      sb.append("\n")
+      sb.append("\\CONTINUEWITH{"+ getFormulaString(p._1, true, escape_latex) +"}")
+      sb.append("\n")
+    }
+
+    sb.toString()
+  }
+
+
+  def apply(lkp : LKProof, escape_latex : Boolean) = {
+    val types = getTypes(lkp, Map[SymbolA,TA]())
+    val declarations = generateDeclarations(types)
     val proofs = generateProof(lkp, "", escape_latex)
 
     declarations + "\n\\CONSTDEC{THEPROOF}{o}\n\n" + proofs + "\\CONTINUEWITH{THEPROOF}"
   }
 
-  def generateDeclarations(p: LKProof) : String= {
-    val formulas = p.nodes.flatMap(_.asInstanceOf[LKProof].root.toFSequent.formulas)
-    val types = formulas.foldLeft(Map[SymbolA,TA]())((map,f) => getTypes(f, map)).filterNot(_._1.isInstanceOf[LogicalSymbolsA])
+
+
+  def generateDeclarations(types : Map[SymbolA, TA]) : String= {
     val (vars,   rest1) = types.partition( p => p._1.isInstanceOf[VariableSymbolA])
     //val (defs, rest2) = rest1.partition( p => p._1.isInstanceOf[ConstantSymbolA] && p._1.toString.contains("["))
     val (consts, rest3) = rest1.partition( p => p._1.isInstanceOf[ConstantSymbolA])
@@ -80,6 +102,15 @@ class HybridLatexExporter(val expandTex : Boolean) {
     val sv = rvmap.map( x => "\\VARDEC{"+x._2.mkString(", ")+"}{"+x._1+"}")
     val sc = rcmap.map( x => "\\CONSTDEC{"+x._2.mkString(", ")+"}{"+x._1+"}")
     sv.mkString("\n") +"\n" + sc.mkString("\n")
+  }
+
+  def getTypes(p:LKProof, acc : Map[SymbolA,TA]) : Map[SymbolA,TA] = {
+    val formulas = p.nodes.flatMap(_.asInstanceOf[LKProof].root.toFSequent.formulas)
+    formulas.foldLeft(acc)((map,f) => getTypes(f, map)).filterNot(_._1.isInstanceOf[LogicalSymbolsA])
+  }
+
+  def getTypes(p:FSequent, acc : Map[SymbolA,TA]) : Map[SymbolA,TA] = {
+    p.formulas.foldLeft(acc)( (m,f) =>  getTypes(f,m))
   }
 
   def getTypes(exp : LambdaExpression, map : Map[SymbolA, TA]) : Map[SymbolA, TA] = exp match {
@@ -143,14 +174,14 @@ class HybridLatexExporter(val expandTex : Boolean) {
       //if (outermost) str else "(" + str + ")"
       str
     case Function(sym, args, _) =>
-        if (args.length == 2 && sym.toString.matches("""[+\-*/]"""))
-          "("+getFormulaString(args(0), false,escape_latex) +" "+sym.toString+" "+getFormulaString(args(1),false,escape_latex)+")"
-        else {
-          if (args.isEmpty)
-            nameToLatexString(sym.toString)
-          else
-            nameToLatexString(sym.toString) + (if (args.isEmpty) " " else args.map(getFormulaString(_, false,escape_latex)).mkString("(",", ",")"))
-        }
+      if (args.length == 2 && sym.toString.matches("""[+\-*/]"""))
+        "("+getFormulaString(args(0), false,escape_latex) +" "+sym.toString+" "+getFormulaString(args(1),false,escape_latex)+")"
+      else {
+        if (args.isEmpty)
+          nameToLatexString(sym.toString)
+        else
+          nameToLatexString(sym.toString) + (if (args.isEmpty) " " else args.map(getFormulaString(_, false,escape_latex)).mkString("(",", ",")"))
+      }
 
     case HOLVar(v,_) => v.toString
     case HOLConst(c, _) => c.toString

@@ -107,46 +107,17 @@
 
 % ===== START OF PROOF ===== %
 
-\AX{MON(h_1,\alpha)}{MON(h_1,\alpha) }
-\WEAKL{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
-
-\AX{ NOCC(h_1,\alpha,\sigma)}{NOCC(h_1,\alpha,\sigma)}
-\EXR{\sigma}{ NOCC(h_1,\alpha,\sigma)}{( exists s NOCC(h_1,\alpha,s))}
-\ANDR{T,MON(h_1,\alpha), NOCC(h_1,\alpha,\sigma)}{MON(h_1,\alpha) & ( exists s NOCC(h_1,\alpha,s))}
-\EXR{h_1} {T,MON(h_1,\alpha), NOCC(h_1,\alpha,\sigma)}{( exists h (MON(h,\alpha) & ( exists s NOCC(h,\alpha,s))))}
-\ANDL{T, MON(h_1,\alpha) & NOCC(h_1,\alpha,\sigma)}{( exists h (MON(h,\alpha) & ( exists s NOCC(h,\alpha,s))))}
-\EXL{h_1}{T, ( exists h (MON(h,\alpha) & NOCC(h,\alpha,\sigma)))}{( exists h (MON(h,\alpha) & ( exists s NOCC(h,\alpha,s))))}
-\ALLL{\alpha}{T, ( all n  exists h (MON(h,n) & NOCC(h,n,\sigma)))}{( exists h (MON(h,\alpha) & ( exists s NOCC(h,\alpha,s))))}
-\DEF{T,A(\sigma)}{( exists h (MON(h,\alpha) & ( exists s NOCC(h,\alpha,s))))}
-\ALLR{\alpha}{T,A(\sigma)}{( all n  exists h (MON(h,n) & ( exists s NOCC(h,n,s))))}
-\DEF{T,A(\sigma)}{C}
-\CONTINUEWITH{\rho(\sigma)}
-
-% ===== END OF PROOF ===== %
-
-
-% ===== START OF PROOF ===== %
-
 \CONTINUEFROM{OLDTAPE2}{AX,T}{I(0),I(1)}
 
-\CONTINUEFROM{MAIN(0)}{AX, I(0)}{A(0)}
+\CONTINUEFROM{MAIN(0)}{AX, I(0)}{C}
 
-\CUT{AX, AX, T}{A(0),I(1)}
-\CONTRL{AX, T}{A(0),I(1)}
+\CUT{AX, AX, T}{C,I(1)}
+\CONTRL{AX, T}{C,I(1)}
 
-\CONTINUEFROM{MAIN(1)}{AX, I(1)}{A(1)}
-\CUT{AX, AX, T}{A(0),A(1)}
-\CONTRL{AX, T}{A(0),A(1)}
-\ORR{AX, T}{A(0)| A(1)}
-
-
-\CONTINUEFROM{\rho(0)}{T,A(0)}{C}
-\CONTINUEFROM{\rho(1)}{T,A(1)}{C}
-\ORL{T, T, A(0) | A(1)}{C,C}
-\CONTRL{T, A(0) | A(1)}{C,C}
-\CONTRR{T,A(0) | A(1)}{C}
-\CUT{AX,T, T}{C}
-\CONTRL{AX, T}{C}
+\CONTINUEFROM{MAIN(1)}{AX, I(1)}{C}
+\CUT{AX, AX, T}{C,C}
+\CONTRL{AX, T}{C,C}
+\CONTRR{AX, T}{C}
 \CONTINUEWITH{TAPEPROOF}
 
 % ===== END OF PROOF ===== %
@@ -162,11 +133,19 @@
 
   \ANDR{AX,I(\sigma)}{( exists h (MON(h,0) & NOCC(h,0,\sigma))) & ( all n (( exists h (MON(h,n) & NOCC(h,n,\sigma)))  -> ( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma)))))}
 
-  \AX{A(\sigma)}{A(\sigma)}
-  \DEF{( all n ( exists h (MON(h,n) & NOCC(h,n,\sigma))))}{A(\sigma)}
+  \AX{MON(h',n_0)}{MON(h',n_0)}
+  \AX{NOCC(h',n_0,\sigma)}{NOCC(h',n_0,\sigma)}
+  \EXR{}{NOCC(h',n_0,\sigma)}{( exists s NOCC(h',n_0,s))}
+  \ANDR{MON(h',n_0), NOCC(h',n_0,\sigma)}{MON(h',n_0) & ( exists s NOCC(h',n_0,s))}
+  \ANDL{MON(h',n_0) & NOCC(h',n_0,\sigma)}{MON(h',n_0) & ( exists s NOCC(h',n_0,s))}
+  \EXR{}{MON(h',n_0) & NOCC(h',n_0,\sigma)}{( exists h (MON(h,n_0) & ( exists s NOCC(h,n_0,s))))}
+  \EXL{}{( exists h (MON(h,n_0) & NOCC(h,n_0,\sigma)))}{( exists h (MON(h,n_0) & ( exists s NOCC(h,n_0,s))))}
+  \ALLL{}{(all n ( exists h (MON(h,n) & NOCC(h,n,\sigma))))}{( exists h (MON(h,n_0) & ( exists s NOCC(h,n_0,s))))}
+  \ALLR{}{( all n ( exists h (MON(h,n) & NOCC(h,n,\sigma))))}{( all n ( exists h (MON(h,n) & ( exists s NOCC(h,n,s)))))}
+  \DEF{( all n ( exists h (MON(h,n) & NOCC(h,n,\sigma))))}{C}
 
-  \IMPL{AX,I(\sigma), ( exists h (MON(h,0) & NOCC(h,0,\sigma))) & ( all n (( exists h (MON(h,n) & NOCC(h,n,\sigma))) -> ( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma))))) -> ( all n ( exists h (MON(h,n) & NOCC(h,n,\sigma)))) }{A(\sigma)}
-  \INSTAXIOM{IND: sub(Y=(\lambda x ( exists h ((MON(h,x) & NOCC(h,x,\sigma))))))}{AX,I(\sigma)}{A(\sigma)}
+  \IMPL{AX,I(\sigma), ( exists h (MON(h,0) & NOCC(h,0,\sigma))) & ( all n (( exists h (MON(h,n) & NOCC(h,n,\sigma))) -> ( exists h (MON(h,n+1) & NOCC(h,n+1,\sigma))))) -> ( all n ( exists h (MON(h,n) & NOCC(h,n,\sigma)))) }{C}
+  \INSTAXIOM{IND: sub(Y=(\lambda x ( exists h ((MON(h,x) & NOCC(h,x,\sigma))))))}{AX,I(\sigma)}{C}
   \CONTINUEWITH{MAIN(\sigma)}
 
 % ===== END OF PROOF ===== %
