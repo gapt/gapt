@@ -17,6 +17,8 @@ object LatexProofExporter extends HybridLatexExporter(true)
 object HybridLatexExporter extends HybridLatexExporter(false)
 
 class HybridLatexExporter(val expandTex : Boolean) {
+  val emptyTypeMap = Map[SymbolA,TA]()
+
   def nameToLatexString(s:String, escapebrack : Boolean = true) : String = {
     val s1 = at.logic.utils.latex.nameToLatexString(s)
     //val s2 = if (escapebrack) s1.replaceAll("\\[","(").replaceAll("\\]",")") else s1
@@ -26,7 +28,7 @@ class HybridLatexExporter(val expandTex : Boolean) {
   }
 
   def apply(db : ExtendedProofDatabase, escape_latex : Boolean) = {
-    val types0 = db.eproofs.foldLeft(Map[SymbolA,TA]())((t, p) => getTypes(p._2,t) )
+    val types0 = db.eproofs.foldLeft(emptyTypeMap)((t, p) => getTypes(p._2,t) )
     val types1 = db.axioms.foldLeft(types0)((m,fs) => getTypes(fs,m))
     val types2  = db.sequentLists.foldLeft(types1)((m,el) =>
       el._2.foldLeft(m)((m_,fs) => getTypes(fs,m_))
@@ -48,7 +50,7 @@ class HybridLatexExporter(val expandTex : Boolean) {
 
 
   def apply(lkp : LKProof, escape_latex : Boolean) = {
-    val types = getTypes(lkp, Map[SymbolA,TA]())
+    val types = getTypes(lkp, emptyTypeMap)
     val declarations = generateDeclarations(types)
     val proofs = generateProof(lkp, "", escape_latex)
 

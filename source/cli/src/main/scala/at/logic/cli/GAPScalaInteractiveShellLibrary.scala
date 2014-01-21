@@ -522,6 +522,7 @@ object printProofStats {
     }
   }
 
+
 /*************************** Cut introduction algorithm **********************************/
 
   import at.logic.algorithms.cutIntroduction._
@@ -781,9 +782,23 @@ object printProofStats {
   object format {
     def apply(p: ResolutionProof[Clause]) = asHumanReadableString(p)
 
-      def asHumanReadableString(p: ResolutionProof[Clause]) = Formatter.asHumanReadableString(p)
-      def asGraphVizString(p:ResolutionProof[Clause]) = Formatter.asGraphViz(p)
-      def asTex(p:ResolutionProof[Clause]) = Formatter.asTex(p)
+    def asHumanReadableString(p: ResolutionProof[Clause]) = Formatter.asHumanReadableString(p)
+    def asGraphVizString(p:ResolutionProof[Clause]) = Formatter.asGraphViz(p)
+    def asTex(p:ResolutionProof[Clause]) = Formatter.asTex(p)
+
+    def llk(f:HOLFormula, latex : Boolean = false) = HybridLatexExporter.getFormulaString(f, true, latex)
+    def tllk(f:HOLFormula, latex : Boolean = false) = {
+      val (ctypes,nctypes) = HybridLatexExporter.getTypes(f, HybridLatexExporter.emptyTypeMap).partition(_.isInstanceOf[ConstantSymbolA])
+      val (vtypes, _) = nctypes.partition(_.isInstanceOf[VariableSymbolA])
+
+      val fs = HybridLatexExporter.getFormulaString(f, true, latex)
+
+      val cs = ctypes.foldLeft("")((str,p) => str + "const "+ p._1 +" : " + HybridLatexExporter.getTypeString(p._2)+";")
+      val vs = vtypes.foldLeft("")((str,p) => str + "var "+ p._1 +" : " + HybridLatexExporter.getTypeString(p._2)+";")
+      cs+vs+fs
+    }
+
+
   }
 
   object rename {
@@ -1186,6 +1201,9 @@ object printProofStats {
 
     def apply(term: HOLFormula) : FOLFormula =
       reduceHolToFol( term  )
+
+    def apply(f:FSequent) : FSequent =
+      FSequent(f.antecedent.map(hol2fol.apply),f.succedent.map(hol2fol.apply))
 
   }
 
