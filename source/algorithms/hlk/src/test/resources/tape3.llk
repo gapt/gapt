@@ -720,28 +720,6 @@
 
 % ===== START OF PROOF ===== %
 
-
-\AX{f((n_0 + n_1)) = 0}{f((n_0 + n_1)) = 0}
-\AX{}{(n_0 + n_1) = (n_1 + n_0)}
-\AX{f((n_1 + n_0)) = 1}{f((n_1 + n_0)) = 1}
-\EQL{f((n_0 + n_1)) = 1}{f((n_1 + n_0)) = 1}
-\ORL{(f((n_0 + n_1)) = 0) |  (f((n_0 + n_1)) = 1)}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
-\ALLL{(n_0 + n_1)}{( all x ((f(x) = 0) |  (f(x) = 1)))}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
-\DEF{T}{f((n_0 + n_1)) = 0,f((n_1 + n_0)) = 1}
-\EXR{n_0}{T}{f((n_0 + n_1)) = 0,( exists y (f((n_1 + y)) = 1))}
-\EXR{n_1}{T}{( exists y (f((n_1 + y)) = 1)),( exists y (f((n_0 + y)) = 0))}
-\ALLR{n_1}{T}{( exists y (f((n_0 + y)) = 0)),( all x ( exists y (f((x + y)) = 1)))}
-\ALLR{n_0}{T}{( all x ( exists y (f((x + y)) = 1))),( all x ( exists y (f((x + y)) = 0)))}
-\DEF{T}{( all x ( exists y (f((x + y)) = 0))),I(1)}
-\DEF{T}{I(1),I(0)}
-
-  \CONTINUEWITH{OLDTAPE}
-
-% ===== END OF PROOF ===== %
-
-
-% ===== START OF PROOF ===== %
-
   \AX{AX,0<(n_1+1)}{0<(n_1+1)}
   \INSTAXIOM{A19}{AX}{0<(n_1+1)}
 

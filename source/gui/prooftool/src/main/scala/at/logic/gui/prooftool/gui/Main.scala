@@ -604,20 +604,22 @@ object Main extends SimpleSwingApplication {
         border = customBorder
       }
       contents += new MenuItem(Action("Find Cuts") {
-        searchResult = getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof])
+        setSearchResult(getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof]))
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
         border = customBorder
       }
       contents += new MenuItem(Action("Cycle through search results") {
         // TODO: reset cuts when loading a proof
-        if ( searchResult == null )
+        if ( currentResult != null) {
+          if (currentResult.hasNext ) {
+            val cut = currentResult.next()
+            scrollToProof(cut)
 
-        if ( currentResult == null || !currentResult.hasNext )
-          currentResult = searchResult.iterator
-
-        val cut = currentResult.next()
-        scrollToProof(cut)
+          } else {
+            currentResult = searchResult.iterator
+          }
+        }
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.ALT_MASK))
         border = customBorder

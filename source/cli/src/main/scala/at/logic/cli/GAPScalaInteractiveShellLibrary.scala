@@ -857,6 +857,45 @@ object printProofStats {
     }
   }
 
+  object lkproof {
+    def cutrules(p:LKProof): Set[LKProof] = p.nodes.flatMap(_ match {
+      case c@CutRule(_,_,_,_,_) =>
+        List(c.asInstanceOf[LKProof])
+      case _ =>
+        Nil
+    }
+    )
+
+    def cutoccurrences(p:LKProof) = p.nodes.flatMap(_ match {
+      case CutRule(_,_,_,a1,a2) =>
+        List(a1,a2)
+      case _ =>
+        Nil
+    }
+    )
+
+    def cutformulas(p: LKProof) = cutoccurrences(p).map(_.formula)
+
+    def axiomrules(p:LKProof) : Set[LKProof] = p.nodes.flatMap(_ match {
+      case a@Axiom(_) =>
+        List(a.asInstanceOf[LKProof])
+      case _ =>
+        Nil
+    }
+    )
+
+    def axiomoccurrences(p:LKProof) = p.nodes.flatMap(_ match {
+      case Axiom(fs) =>
+        fs.occurrences
+      case _ =>
+        Nil
+    }
+    )
+
+    def axiomformulas(p: LKProof) = axiomoccurrences(p).map(_.formula)
+  }
+
+
   object huet {
     import at.logic.parsing.readers.StringReader
     import at.logic.parsing.language.simple._

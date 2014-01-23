@@ -16,6 +16,8 @@ import at.logic.calculi.lk.definitionRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
 import scala.collection.immutable.HashSet
+import at.logic.calculi.lksk
+import at.logic.calculi.lksk.base.LabelledFormulaOccurrence
 
 object Projections {
   // This method computes the standard projections according to the original CERES definition.
@@ -26,6 +28,11 @@ object Projections {
     implicit val factory = defaultFormulaOccurrenceFactory
     proof match {
       case Axiom(s) => Set(Axiom(s))
+      case lksk.ExistsSkLeftRule(p,_,a,m,v) => handleLKSKStrongQuantRule( proof, p, a, m, v, lksk.ExistsSkLeftRule.apply )
+      case lksk.ForallSkRightRule(p,_,a,m,v) => handleLKSKStrongQuantRule( proof, p, a, m, v, lksk.ForallSkRightRule.apply )
+      case lksk.ExistsSkRightRule(p,_,a,m,t) => handleLKSKWeakQuantRule( proof, p, a, m, t, lksk.ExistsSkRightRule.apply )
+      case lksk.ForallSkLeftRule(p,_,a,m,t) => handleLKSKWeakQuantRule( proof, p, a, m, t, lksk.ForallSkLeftRule.apply )
+
       case ForallRightRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a.formula, m, v, ForallRightRule.apply )
       case ExistsLeftRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a.formula, m, v, ExistsLeftRule.apply )
       case AndRightRule(p1, p2, _, a1, a2, m) => handleBinaryRule( proof, p1, p2, a1.formula, a2.formula, m, AndRightRule.apply )
@@ -65,13 +72,13 @@ object Projections {
   }
 
   def handleBinaryESAnc( proof: LKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, s1: Set[LKProof], s2: Set[LKProof],
-    constructor: (LKProof, LKProof, HOLFormula, HOLFormula) => LKProof) =
+                         constructor: (LKProof, LKProof, HOLFormula, HOLFormula) => LKProof) =
     s1.foldLeft( Set.empty[LKProof] )( (s, p1) =>
       s ++ s2.map( p2 => constructor( p1, p2, proof.aux.head.head.formula, proof.aux.tail.head.head.formula ) ) )
 
   def getESAncs( proof: LKProof, cut_ancs: Set[FormulaOccurrence] ) =
     Pair( proof.root.antecedent.filter( fo => !cut_ancs.contains( fo ) ),
-          proof.root.succedent.filter( fo => !cut_ancs.contains( fo ) ) )
+      proof.root.succedent.filter( fo => !cut_ancs.contains( fo ) ) )
 
   // Handles the case of a binary rule operating on a cut-ancestor.
   def handleBinaryCutAnc( proof: LKProof, p1: LKProof, p2: LKProof, s1: Set[LKProof], s2: Set[LKProof], cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
@@ -87,16 +94,16 @@ object Projections {
   }
 
   def handleContractionRule( proof: LKProof, p: LKProof, a1: HOLFormula, a2: HOLFormula, m: FormulaOccurrence,
-    constructor: (LKProof, HOLFormula) => LKProof)(implicit
-    cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ) )
-      if (cut_ancs.contains( m ) ) s
-      else s.map( pm => constructor( pm, a1) )
-    }
+                             constructor: (LKProof, HOLFormula) => LKProof)(implicit
+                                                                            cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
+  {
+    val s = apply( p, copySetToAncestor( cut_ancs ) )
+    if (cut_ancs.contains( m ) ) s
+    else s.map( pm => constructor( pm, a1) )
+  }
 
   def handleUnaryRule( proof: LKProof, p: LKProof, a: HOLFormula, w: HOLFormula, m: FormulaOccurrence,
-    constructor: (LKProof, HOLFormula, HOLFormula) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
+                       constructor: (LKProof, HOLFormula, HOLFormula) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     if (cut_ancs.contains( m ) ) s
@@ -104,8 +111,8 @@ object Projections {
   }
 
   def handleWeakeningRule( proof: LKProof, p: LKProof, m: FormulaOccurrence,
-    constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas)(implicit
-    cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
+                           constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas)(implicit
+                                                                                                 cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     if (cut_ancs.contains( m ) ) s
@@ -113,8 +120,8 @@ object Projections {
   }
 
   def handleDefRule( proof: LKProof, p: LKProof, a: HOLFormula, m: FormulaOccurrence,
-    constructor: (LKProof, HOLFormula, HOLFormula) => LKProof)(implicit
-    cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
+                     constructor: (LKProof, HOLFormula, HOLFormula) => LKProof)(implicit
+                                                                                cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     if (cut_ancs.contains( m ) ) s
@@ -122,8 +129,8 @@ object Projections {
   }
 
   def handleNegRule( proof: LKProof, p: LKProof, a: HOLFormula, m: FormulaOccurrence,
-    constructor: (LKProof, HOLFormula) => LKProof)(implicit
-    cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
+                     constructor: (LKProof, HOLFormula) => LKProof)(implicit
+                                                                    cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
   {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     if (cut_ancs.contains( m ) ) s
@@ -131,15 +138,46 @@ object Projections {
   }
 
   def handleWeakQuantRule( proof: LKProof, p: LKProof, a: HOLFormula, m: FormulaOccurrence, t: HOLExpression,
-    constructor: (LKProof, HOLFormula, HOLFormula, HOLExpression) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
+                           constructor: (LKProof, HOLFormula, HOLFormula, HOLExpression) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     if (cut_ancs.contains(m)) s
     else s.map( pm => constructor( pm, a, m.formula, t) )
   }
 
+  def handleLKSKWeakQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: FormulaOccurrence, t: HOLExpression,
+                               constructor: (LKProof, LabelledFormulaOccurrence, HOLFormula, HOLExpression, Boolean) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( cut_ancs ) )
+    if (cut_ancs.contains(m)) s
+    else {
+      require(p.root.occurrences.contains(a), "Error projecting a lksk Weak Quantifier rule! Auxiliary formula not contained in parent!")
+      val in_antecedent = p.root.antecedent.contains(a)
+
+      val set = s.map( pm => {
+        val r = if (in_antecedent) {
+          //TODO: check label
+          pm.root.antecedent.find(lo => lo.formula == a.formula)
+        } else {
+          //TODO: check label
+          pm.root.succedent.find(lo => lo.formula == a.formula)
+        }
+
+        r match {
+          case Some(auxf) =>
+            //TODO: check if the label has to be removed!
+            constructor( pm, auxf.asInstanceOf[LabelledFormulaOccurrence], m.formula, t, true)
+          case _ =>
+            throw new Exception("Error projecting a lksk Weak Quantifier rule! Could not find auxformula in projection parent!")
+        }
+      }
+      )
+      set
+    }
+  }
+
+
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: HOLFormula, a2: HOLFormula,
-    m: FormulaOccurrence, constructor: (LKProof, LKProof, HOLFormula, HOLFormula) => LKProof)( implicit
-    cut_ancs: Set[FormulaOccurrence]) = {
+                        m: FormulaOccurrence, constructor: (LKProof, LKProof, HOLFormula, HOLFormula) => LKProof)( implicit
+                                                                                                                   cut_ancs: Set[FormulaOccurrence]) = {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs )
     val s2 = apply( p2, new_cut_ancs )
@@ -150,8 +188,8 @@ object Projections {
   }
 
   def handleEqRule( proof: LKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: HOLFormula, a2: HOLFormula,
-    m: FormulaOccurrence, constructor: (LKProof, LKProof, HOLFormula, HOLFormula, HOLFormula) => LKProof)( implicit
-    cut_ancs: Set[FormulaOccurrence]) = {
+                    m: FormulaOccurrence, constructor: (LKProof, LKProof, HOLFormula, HOLFormula, HOLFormula) => LKProof)( implicit
+                                                                                                                           cut_ancs: Set[FormulaOccurrence]) = {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs )
     val s2 = apply( p2, new_cut_ancs )
@@ -164,7 +202,14 @@ object Projections {
   }
 
   def handleStrongQuantRule( proof: LKProof, p: LKProof, a: HOLFormula, m: FormulaOccurrence, v: HOLVar,
-    constructor: (LKProof, HOLFormula, HOLFormula, HOLVar) => LKProof)( implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
+                             constructor: (LKProof, HOLFormula, HOLFormula, HOLVar) => LKProof)( implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( cut_ancs ) )
+    if (cut_ancs.contains( m ) ) s
+    else throw new Exception("The proof is not skolemized!") // s.map( p => constructor( p, a, m.formula, v ) )
+  }
+
+  def handleLKSKStrongQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: FormulaOccurrence, skolemterm: HOLExpression,
+                                 constructor: (LKProof, LabelledFormulaOccurrence, HOLFormula, HOLExpression) => LKProof)( implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     if (cut_ancs.contains( m ) ) s
     else throw new Exception("The proof is not skolemized!") // s.map( p => constructor( p, a, m.formula, v ) )
@@ -195,7 +240,7 @@ object DeleteRedundantSequents {
     l match {
       case seq1::ls => {
         if (seq.antecedent.toList.map(fo => fo.formula).toSet == seq1.antecedent.toList.map(fo => fo.formula).toSet &&
-            seq.succedent.toList.map(fo => fo.formula).toSet == seq1.succedent.toList.map(fo => fo.formula).toSet
+          seq.succedent.toList.map(fo => fo.formula).toSet == seq1.succedent.toList.map(fo => fo.formula).toSet
         ) true
         else member(seq, ls)
       }
