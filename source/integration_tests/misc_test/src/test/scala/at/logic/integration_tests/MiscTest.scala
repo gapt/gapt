@@ -1,6 +1,3 @@
-/** 
- * Description: 
-**/
 /**
  * Description:
 **/
@@ -223,7 +220,6 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "Extract expansion tree from tape proof" in {
-
       val testFilePath = "target" + separator + "test-classes" + separator + "tape3.llk"
       val tokens = HybridLatexParser.parseFile(testFilePath)
       val db = HybridLatexParser.createLKProof(tokens)
@@ -231,7 +227,33 @@ class MiscTest extends SpecificationWithJUnit {
       val (_,p)::_ = proofs
       val elp = AtomicExpansion(DefinitionElimination(db.Definitions,p))
       val reg = regularize(elp)
-      extractExpansionTrees(reg._1) must throwA[IllegalArgumentException]
+      extractExpansionTrees(reg._1) must throwA[IllegalArgumentException] // currently contains problematic definitions
+    }
+
+    "Construct proof with expansion sequent extracted from proof 1/2" in {
+        val y = FOLVar(new VariableStringSymbol("y"))
+        val x = FOLVar(new VariableStringSymbol("x"))
+        val Py = Atom(new ConstantStringSymbol("P"), y :: Nil)
+        val Px = Atom(new ConstantStringSymbol("P"), x :: Nil)
+        val AllxPx = AllVar(x, Px)
+
+        // test with 1 weak & 1 strong
+        val p1 = Axiom(Py :: Nil, Py :: Nil)
+        val p2 = ForallLeftRule(p1, Py, AllxPx, y)
+        val p3 = ForallRightRule(p2, Py, AllxPx, y)
+
+        val etSeq = extractExpansionTrees(p3)
+
+        val proof = solve.solveFOL(p3.root.toFSequent, etSeq)
+        proof.isDefined must beTrue
+      }
+
+    "Construct proof with expansion sequent extracted from proof 2/2" in {
+
+      val proof = LinearExampleProof(0, 4)
+
+      val proofPrime = solve.solveFOL(proof.root.toFSequent, extractExpansionTrees(proof))
+      proofPrime.isDefined must beTrue
     }
   }
 }

@@ -143,6 +143,10 @@ class SolveTest extends SpecificationWithJUnit {
       (fssymbols diff psymbols) must beEmpty
     }
 
+
+    // tests of solveFOL in MiscTest, such that it can be used in combination with extractExpansionTrees
+
+
   }
 }
 

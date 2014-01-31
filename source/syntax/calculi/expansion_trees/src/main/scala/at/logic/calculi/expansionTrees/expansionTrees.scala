@@ -52,6 +52,10 @@ trait TerminalNodeAWithEquality[+V, +E] extends TerminalNodeA[V, E] {
     (this.node equals obj.asInstanceOf[TerminalNodeA[V, E]].node)
 }
 
+// with these, you can access the children of trees if you only know that they are binary and not their concrete type (which you sometimes know from proof construction)
+trait BinaryExpansionTree extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] { }
+trait UnaryExpansionTree extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] { }
+
 /**
  * Represents Qx A +u1 E_1 ... +u_n E_n this way:
  * @param formula A
@@ -67,6 +71,8 @@ object WeakQuantifier {
   def apply(formula: HOLFormula, instances: Seq[(ExpansionTreeWithMerges, HOLExpression)]) =
     if (instances.forall({case (et, _) => et.isInstanceOf[ExpansionTree] }))  new WeakQuantifier(formula, instances) with ExpansionTree
     else new WeakQuantifier(formula, instances)
+  // user of this functions must take care that no merges are passed here
+  def applyWithoutMerge(formula: HOLFormula, instances: Seq[(ExpansionTree, HOLExpression)]) = new WeakQuantifier(formula, instances) with ExpansionTree
   def unapply(et: ExpansionTreeWithMerges) = et match {
     case weakQuantifier : WeakQuantifier => Some( (weakQuantifier.formula, weakQuantifier.instances) )
     case _ => None
@@ -84,7 +90,7 @@ object WeakQuantifier {
  * @param variable u
  * @param selection E
  */
-protected[expansionTrees] class StrongQuantifier(val formula: HOLFormula, val variable: HOLVar, val selection: ExpansionTreeWithMerges)
+class StrongQuantifier(val formula: HOLFormula, val variable: HOLVar, val selection: ExpansionTreeWithMerges)
   extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] {
   lazy val node = Some(formula)
   lazy val children = List(Pair(selection,Some(variable)))
@@ -107,14 +113,12 @@ object StrongQuantifier {
   }
 }
 
-case class MergeNode(left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges)
-  extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]]  {
+case class MergeNode(left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges) extends BinaryExpansionTree {
   val node = None
   lazy val children = List(Pair(left, None), Pair(right, None))
 }
 
-protected[expansionTrees] class And(val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges)
-  extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] {
+protected[expansionTrees] class And(val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges) extends BinaryExpansionTree {
   val node = None
   lazy val children = List(Pair(left,None),Pair(right,None))
 }
@@ -134,8 +138,7 @@ object And {
   }
 }
 
-protected[expansionTrees] class Or(val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges)
-  extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] {
+protected[expansionTrees] class Or(val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges) extends BinaryExpansionTree {
   val node = None
   lazy val children = List(Pair(left,None),Pair(right,None))
 }
@@ -155,8 +158,7 @@ object Or {
   }
 }
 
-protected[expansionTrees] class Imp(val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges)
-  extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] {
+protected[expansionTrees] class Imp(val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges) extends BinaryExpansionTree {
   val node = None
   lazy val children = List(Pair(left,None),Pair(right,None))
 }
@@ -176,7 +178,7 @@ object Imp {
   }
 }
 
-protected[expansionTrees] class Neg(val tree: ExpansionTreeWithMerges) extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] {
+protected[expansionTrees] class Neg(val tree: ExpansionTreeWithMerges) extends UnaryExpansionTree {
   val node = None
   lazy val children = List(Pair(tree,None))
 }
@@ -228,11 +230,39 @@ object quantRulesNumber {
 
 class ExpansionSequent(val antecedent: Seq[ExpansionTree], val succedent: Seq[ExpansionTree]) {
   def toTuple(): (Seq[ExpansionTree], Seq[ExpansionTree]) = {
-    return (antecedent, succedent)
+    (antecedent, succedent)
   }
 
   def map(f : ExpansionTree => ExpansionTree): ExpansionSequent = {
-    return new ExpansionSequent(antecedent.map(f), succedent.map(f))
+    new ExpansionSequent(antecedent.map(f), succedent.map(f))
+  }
+
+  def addToAntecedent(et: ExpansionTree): ExpansionSequent = {
+    new ExpansionSequent(et +: antecedent, succedent)
+  }
+
+  def addToSuccedent(et: ExpansionTree): ExpansionSequent = {
+    new ExpansionSequent(antecedent, et +: succedent)
+  }
+
+  def removeFromAntecedent(et: ExpansionTree): ExpansionSequent = {
+    require(antecedent.exists(_ eq et))
+    new ExpansionSequent(antecedent.filterNot(_ eq et), succedent)
+  }
+
+  def removeFromSuccedent(et: ExpansionTree): ExpansionSequent = {
+    require(succedent.exists(_ eq et))
+    new ExpansionSequent(antecedent, succedent.filterNot(_ eq et))
+  }
+
+  def replaceInAntecedent(from: ExpansionTree, to: ExpansionTree): ExpansionSequent = {
+    require(antecedent.exists(_ eq from))
+    new ExpansionSequent(antecedent.map(et => if (et eq from) to else et), succedent)
+  }
+
+  def replaceInSuccedent(from: ExpansionTree, to: ExpansionTree): ExpansionSequent = {
+    require(succedent.exists(_ eq from))
+    new ExpansionSequent(antecedent, succedent.map(et => if (et eq from) to else et))
   }
 
   override def toString: String = "ExpansionSequent("+antecedent+", "+succedent+")"
@@ -300,6 +330,18 @@ object toSequent {
   }
 }
 
+
+object getETOfFormula {
+  def apply(etSeq: ExpansionSequent, f: HOLFormula, isAntecedent: Boolean): Option[ExpansionTree] = {
+    getFromExpansionTreeList( if (isAntecedent) etSeq.antecedent else etSeq.succedent, f )
+  }
+  def getFromExpansionTreeList(ets: Seq[ExpansionTree], f: HOLFormula) : Option[ExpansionTree] = ets match {
+    case head :: tail =>
+      if (toFormula(head) syntaxEquals f) Some(head)
+      else getFromExpansionTreeList(tail, f)
+    case Nil => None
+  }
+ }
 // Builds an expansion tree given a quantifier free formula
 object qFreeToExpansionTree {
   def apply(f : HOLFormula) : ExpansionTree = f match {
