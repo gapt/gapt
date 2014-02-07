@@ -54,8 +54,27 @@ trait TerminalNodeAWithEquality[+V, +E] extends TerminalNodeA[V, E] {
 
 // with these, you can access the children of trees if you only know that they are binary and not their concrete type (which you sometimes know from proof construction)
 trait BinaryExpansionTree extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] { }
+object BinaryExpansionTree {
+  def unapply(et: ExpansionTree) = et match {
+    case bET : BinaryExpansionTree => Some( (bET.children(0)._1.asInstanceOf[ExpansionTree], (bET.children(1)._1.asInstanceOf[ExpansionTree]) ) )
+    case _ => None
+  }
+  def unapply(et: ExpansionTreeWithMerges) = et match {
+    case bET : BinaryExpansionTree => Some( (bET.children(0)._1, bET.children(1)._1 ) )
+    case _ => None
+  }
+}
 trait UnaryExpansionTree extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula],Option[HOLExpression]] { }
-
+object UnaryExpansionTree {
+  def unapply(et: ExpansionTree) = et match {
+    case uET : UnaryExpansionTree => Some( (uET.children(0)._1.asInstanceOf[ExpansionTree] ) )
+    case _ => None
+  }
+  def unapply(et: ExpansionTreeWithMerges) = et match {
+    case uET : UnaryExpansionTree => Some( (uET.children(0)._1) )
+    case _ => None
+  }
+}
 /**
  * Represents Qx A +u1 E_1 ... +u_n E_n this way:
  * @param formula A

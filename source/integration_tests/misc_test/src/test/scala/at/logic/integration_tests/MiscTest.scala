@@ -244,7 +244,7 @@ class MiscTest extends SpecificationWithJUnit {
 
         val etSeq = extractExpansionTrees(p3)
 
-        val proof = solve.solveFOL(p3.root.toFSequent, etSeq)
+        val proof = solve.expansionProofToLKProof(p3.root.toFSequent, etSeq)
         proof.isDefined must beTrue
       }
 
@@ -252,7 +252,7 @@ class MiscTest extends SpecificationWithJUnit {
 
       val proof = LinearExampleProof(0, 4)
 
-      val proofPrime = solve.solveFOL(proof.root.toFSequent, extractExpansionTrees(proof))
+      val proofPrime = solve.expansionProofToLKProof(proof.root.toFSequent, extractExpansionTrees(proof))
       proofPrime.isDefined must beTrue
     }
   }

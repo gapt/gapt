@@ -17,6 +17,7 @@ import org.specs2.execute.Success
 import at.logic.language.lambda.types.{To, Ti}
 import at.logic.algorithms.lk.statistics._
 import at.logic.calculi.lk.lkSpecs.beSyntacticFSequentEqual
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toSequent}
 
 @RunWith(classOf[JUnitRunner])
 class SolveTest extends SpecificationWithJUnit {
@@ -144,8 +145,34 @@ class SolveTest extends SpecificationWithJUnit {
     }
 
 
-    // tests of solveFOL in MiscTest, such that it can be used in combination with extractExpansionTrees
+    // tests of expansionProofToLKProof also in MiscTest, such that it can be used in combination with extractExpansionTrees
 
+    "prove sequent where quantifier order matters" in {
+      // example from Chaudhuri et.al.: A multi-focused proof system ...
+      val List(x,y,u,v)    = List("x","y","u","v") map (x => HOLVar(VariableStringSymbol(x), Ti()))
+      val c = HOLConst(ConstantStringSymbol("c"), Ti())
+      val d = ConstantStringSymbol("d")
+
+
+      val formula = ExVar(x, Or( Neg( Atom(d, x::Nil) ), AllVar(y, Atom(d, y::Nil)))) // exists x (-d(x) or forall y d(y))
+
+      val inst1 = OrET(
+        NegET( AtomET( Atom(d, u::Nil))), // -d(u)
+        StrongQuantifierET( AllVar(y, Atom(d, y::Nil)), v, AtomET(Atom(d, v::Nil))) // forall y d(y) +^v d(v)
+      )
+
+      val inst2 = OrET(
+        NegET( AtomET( Atom(d, c::Nil))), // -d(c)
+        StrongQuantifierET( AllVar(y, Atom(d, y::Nil)), u, AtomET(Atom(d, u::Nil))) // forall y d(y) +^u d(u)
+      )
+
+      // here, the second tree, containing c, must be expanded before u, as u is used as eigenvar in the c branch
+      val et = WeakQuantifierET.applyWithoutMerge(formula, List( (inst1, u), (inst2, c)))
+      val etSeq = new ExpansionSequent(Nil, et::Nil)
+
+      val lkProof = solve.expansionProofToLKProof( toSequent(etSeq).toFSequent, etSeq )
+      lkProof.isDefined must beTrue
+    }
 
   }
 }

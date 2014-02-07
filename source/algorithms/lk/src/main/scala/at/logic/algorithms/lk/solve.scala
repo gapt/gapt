@@ -7,7 +7,7 @@ import at.logic.calculi.lk.macroRules._
 import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.calculi.slk._
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, BinaryExpansionTree, getETOfFormula, StrongQuantifier, WeakQuantifier, toFormula}
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, BinaryExpansionTree, getETOfFormula, StrongQuantifier, WeakQuantifier, toFormula, UnaryExpansionTree, Atom => AtomET}
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.lambda.typedLambdaCalculus.{VariantGenerator, VariableNameGenerator, Var}
 import at.logic.language.schema.{BigAnd, BigOr, SchemaSubstitution1, SchemaFormula, IntVar, Pred}
@@ -20,6 +20,7 @@ import at.logic.provers.Prover
 import at.logic.calculi.lk.equationalRules.{EquationRight1Rule, EquationRight2Rule, EquationLeft2Rule, EquationLeft1Rule}
 import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.algorithms.lk.ExpansionTreeProofStrategy.ExpansionTreeAction
 
 
 /**
@@ -42,35 +43,25 @@ object solve extends at.logic.utils.logging.Logger {
       None
     }
 
-    val seq_norm = FSequent( seq.antecedent.toSet.toList, seq.succedent.toSet.toList )
-    prove( seq_norm, new PropositionalProofStrategy ) match {
-      case Some( p ) => {
-        debug( "finished solvePropositional successfully" )
-        //debug("# of contraction left rules: " + statistics.contLeftNumber(p))
-        //debug("# of contraction right rules: " + statistics.contRightNumber(p))
-        //debug("# of rules: " + statistics.rulesNumber(p))
-        val pWithWeakening = addWeakenings( p, seq )
-        Some(if (cleanStructuralRules) CleanStructuralRules( pWithWeakening ) else pWithWeakening)
-      }
-      case None => {
-        debug( "finished solvePropositional unsuccessfully" )
-
-        if (throwOnError) {
-           throw new Exception("Sequent is not provable.")
-        } else {
-          None
-        }
-      }
-    }
+    startProving(seq,  new PropositionalProofStrategy, cleanStructuralRules, throwOnError)
   }
 
-  def solveFOL(seq: FSequent, expansionSequent: ExpansionSequent, cleanStructuralRules: Boolean = true, throwOnError: Boolean = false): Option[LKProof] = {
-    debug( "\nrunning solveFOL" )
+
+  /**
+   * "Solving" for FOL: Use instances from expansion sequent to create LK proof for a sequent
+   */
+  def expansionProofToLKProof(seq: FSequent, expansionSequent: ExpansionSequent, cleanStructuralRules: Boolean = true, throwOnError: Boolean = false): Option[LKProof] = {
+    debug( "\nrunning expansionProofToLKProof" )
+    startProving(seq,  new ExpansionTreeProofStrategy(expansionSequent), cleanStructuralRules, throwOnError)
+  }
+
+  // internal interface method
+  private def startProving(seq: FSequent, strategy: ProofStrategy, cleanStructuralRules: Boolean, throwOnError: Boolean): Option[LKProof] = {
     val seq_norm = FSequent(seq.antecedent.toSet.toList, seq.succedent.toSet.toList)
 
-    prove(seq_norm, new ExpansionTreeProofStrategy(expansionSequent)) match {
+    prove(seq_norm, strategy) match {
       case Some(p) => {
-        debug( "finished solveFOL successfully" )
+        debug("finished proof successfully")
         val pWithWeakening = addWeakenings(p, seq)
         Some(if (cleanStructuralRules) CleanStructuralRules(pWithWeakening) else pWithWeakening)
       }
@@ -92,6 +83,7 @@ object solve extends at.logic.utils.logging.Logger {
     }
 
     trace("proving: "+seq)
+    trace("with strat: "+strategy)
 
     if (SolveUtils.isAxiom(seq)) {
       val (f, rest) = SolveUtils.getAxiomfromSeq(seq)
@@ -104,10 +96,12 @@ object solve extends at.logic.utils.logging.Logger {
 
     else {
 
+      trace("no axiom, calc next step")
+
       // main step: ask strategy what to do
       strategy.calcNextStep(seq) match {
         case Some(action) => {
-          trace("strategy has selected: " + action + " action.form: " + action.formula)
+          trace("strategy has selected: " + action + " action.form: " + action.formula + "\n")
 
           // dumbly apply whatever rule matches to this formula
           action.loc match {
@@ -129,7 +123,7 @@ object solve extends at.logic.utils.logging.Logger {
 
 
   private def applyActionAntecedent(action: ProofStrategy.Action, seq: FSequent): Option[LKProof] = {
-    // sequent without principial sequent to help building upper sequent
+    // sequent without principal sequent to help building upper sequent
     val rest = FSequent(seq.antecedent.diff(action.formula :: Nil), seq.succedent)
     // proof strategies for children (with expansion sequents according to children or no changes in the propositional case)
     val nextProofStrategies = action.getNextStrategies()
@@ -148,9 +142,6 @@ object solve extends at.logic.utils.logging.Logger {
       case AllVar(v, f) => {
         val quantifiedTerm = action.getQuantifiedTerm().get // must be defined in this case
         val auxFormula = Substitution[HOLExpression](v, quantifiedTerm)(f).asInstanceOf[HOLFormula]
-
-        debug("applying forall left, term: " + quantifiedTerm + "; aux: " + auxFormula + "; main: " + action.formula)
-
         val p_ant = action.formula +: auxFormula +: rest.antecedent
         val p_suc = rest.succedent
         val premise = FSequent(p_ant, p_suc)
@@ -366,7 +357,7 @@ object solve extends at.logic.utils.logging.Logger {
 
       case AllVar(v, f) => {
         val eigenVar = action.getQuantifiedTerm().get.asInstanceOf[HOLVar]
-        val auxFormula = Substitution[HOLExpression](v, eigenVar)(action.formula).asInstanceOf[HOLFormula]
+        val auxFormula = Substitution[HOLExpression](v, eigenVar)(f).asInstanceOf[HOLFormula]
 
         val p_ant = rest.antecedent
         val p_suc = auxFormula +: rest.succedent
@@ -378,14 +369,14 @@ object solve extends at.logic.utils.logging.Logger {
 
       case ExVar(v, f) => {
         val quantifiedTerm = action.getQuantifiedTerm().get
-        val auxFormula = Substitution[HOLExpression](v, quantifiedTerm)(action.formula).asInstanceOf[HOLFormula]
+        val auxFormula = Substitution[HOLExpression](v, quantifiedTerm)(f).asInstanceOf[HOLFormula]
         val p_ant = rest.antecedent
         val p_suc = action.formula +: auxFormula +: rest.succedent
         val premise = FSequent(p_ant, p_suc)
         prove(premise, nextProofStrategies(0)).map(proof => {
             // weak quantifier, keep formula
-            val p1 = ContractionRightRule(proof, action.formula)
-            ExistsRightRule(p1, auxFormula, action.formula, quantifiedTerm)
+            val p1 = ExistsRightRule(proof, auxFormula, action.formula, quantifiedTerm)
+            ContractionRightRule(p1, action.formula)
         })
       }
 
@@ -426,14 +417,6 @@ object solve extends at.logic.utils.logging.Logger {
           prove(upremise, nextProofStrategies(0)).map(proof =>
             OrRight1Rule(proof, f1, f2)
           )
-          /*
-          prove(upremise, nextProofStrategies(0)) match {
-            case Some(proof) =>
-              val proof_or1 = OrRight1Rule(proof, f1.asInstanceOf[HOLFormula], f2.asInstanceOf[HOLFormula])
-              Some(proof_or1)
-            case None => None
-          }
-          */
         }
         else if (SolveUtils.checkDuplicate(Nil, f1.asInstanceOf[HOLFormula] :: Nil, seq)) {
           val up_ant = rest.antecedent
@@ -644,6 +627,8 @@ class PropositionalProofStrategy extends ProofStrategy with at.logic.utils.loggi
 
 class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends PropositionalProofStrategy with at.logic.utils.logging.Logger {
 
+  override def toString(): String = "ExpansionTreeProofStrategy("+expansionSequent+")"
+
   override def calcNextStep(seq: FSequent): Option[ProofStrategy.Action] = {
     if (SolveUtils.isAxiom(seq) || SolveUtils.findNonschematicAxiom(seq).isDefined) {
       throw new RuntimeException("Prove strategy called on axiom: " + seq)
@@ -672,16 +657,69 @@ class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends
     }
   }
 
+  /**
+   * need to override find-methods as we keep track of the state of the expansion sequent here
+   */
+  override def findUnaryLeft(seq: FSequent) : Option[ProofStrategy.Action] =
+    seq.antecedent.find(f => f match {
+      case Neg(_) | And(_,_) => true
+      case BigAnd(_, _, _, _) => throw new IllegalArgumentException("Found BigAnd in expansionProofToLKProof (Schema formulas are not supported by expansion trees)")
+      case _ => false
+    }).map(formula => formula match {
+      case Neg(f1) =>
+        val et = getETOfFormula(expansionSequent, formula, isAntecedent=true).get
+        val etSeq1 = expansionSequent.removeFromAntecedent(et).addToSuccedent(et.asInstanceOf[UnaryExpansionTree].children(0)._1.asInstanceOf[ExpansionTree])
+        val ps1 = new ExpansionTreeProofStrategy(etSeq1)
+        new ExpansionTreeProofStrategy.ExpansionTreeAction(formula, FormulaLocation.Antecedent, None, List[ProofStrategy](ps1))
+      case And(f1, f2) =>
+        val et = getETOfFormula(expansionSequent, formula, isAntecedent=true).get
+        val etSeq =
+          expansionSequent
+            .removeFromAntecedent(et)
+            .addToAntecedent(et.asInstanceOf[BinaryExpansionTree].children(0)._1.asInstanceOf[ExpansionTree])
+            .addToAntecedent(et.asInstanceOf[BinaryExpansionTree].children(1)._1.asInstanceOf[ExpansionTree])
+        val ps1 = new ExpansionTreeProofStrategy(etSeq)
+        new ExpansionTreeProofStrategy.ExpansionTreeAction(formula, FormulaLocation.Antecedent, None, List[ProofStrategy](ps1))
+    })
+
+  override def findUnaryRight(seq: FSequent) : Option[ProofStrategy.Action] =
+    seq.succedent.find(f => f match {
+      case Neg(_) | Imp(_,_) | Or(_,_) => true
+      case BigOr(_, _, _, _) => throw new IllegalArgumentException("Found BigOr in expansionProofToLKProof (Schema formulas are not supported by expansion trees)")
+      case _ => false
+    }).map(formula => formula match {
+      case Neg(f1) =>
+        val et = getETOfFormula(expansionSequent, formula, isAntecedent=false).get
+        val etSeq1 = expansionSequent.removeFromSuccedent(et).addToAntecedent(et.asInstanceOf[UnaryExpansionTree].children(0)._1.asInstanceOf[ExpansionTree])
+        val ps1 = new ExpansionTreeProofStrategy(etSeq1)
+        new ExpansionTreeProofStrategy.ExpansionTreeAction(formula, FormulaLocation.Succedent, None, List[ProofStrategy](ps1))
+      case Imp(f1, f2) =>
+        val et = getETOfFormula(expansionSequent, formula, isAntecedent=false).get
+        val etSeq = expansionSequent
+          .replaceInSuccedent(et, et.asInstanceOf[BinaryExpansionTree].children(1)._1.asInstanceOf[ExpansionTree])
+          .addToAntecedent(et.asInstanceOf[BinaryExpansionTree].children(0)._1.asInstanceOf[ExpansionTree])
+        val ps1 = new ExpansionTreeProofStrategy(etSeq)
+        new ExpansionTreeProofStrategy.ExpansionTreeAction(formula, FormulaLocation.Succedent, None, List[ProofStrategy](ps1))
+      case Or(f1, f2) =>
+        val et = getETOfFormula(expansionSequent, formula, isAntecedent=false).get
+        val etSeq = expansionSequent
+          .replaceInSuccedent(et, et.asInstanceOf[BinaryExpansionTree].children(1)._1.asInstanceOf[ExpansionTree])
+          .addToSuccedent(et.asInstanceOf[BinaryExpansionTree].children(0)._1.asInstanceOf[ExpansionTree])
+        val ps1 = new ExpansionTreeProofStrategy(etSeq)
+        new ExpansionTreeProofStrategy.ExpansionTreeAction(formula, FormulaLocation.Succedent, None, List[ProofStrategy](ps1))
+    })
+
+
   override def findBinaryRight(seq: FSequent): Option[ProofStrategy.Action] =
     seq.succedent.find(f => f match {
       case And(_, _) => true
-      case BigAnd(_, _, _, _) => throw new IllegalArgumentException("Found BigAnd in solveFOL (Schema formulas are not supported by expansion trees)")
+      case BigAnd(_, _, _, _) => throw new IllegalArgumentException("Found BigAnd in expansionProofToLKProof (Schema formulas are not supported by expansion trees)")
       case _ => false
     }).map(formula => {
       // prepare new proof strategies for children
       val et = getETOfFormula(expansionSequent, formula, isAntecedent=false).get
-      val etSeq1 = expansionSequent.replaceInSuccedent(et, et.asInstanceOf[BinaryExpansionTree].children(0).asInstanceOf[ExpansionTree])
-      val etSeq2 = expansionSequent.replaceInSuccedent(et, et.asInstanceOf[BinaryExpansionTree].children(1).asInstanceOf[ExpansionTree])
+      val etSeq1 = expansionSequent.replaceInSuccedent(et, et.asInstanceOf[BinaryExpansionTree].children(0)._1.asInstanceOf[ExpansionTree])
+      val etSeq2 = expansionSequent.replaceInSuccedent(et, et.asInstanceOf[BinaryExpansionTree].children(1)._1.asInstanceOf[ExpansionTree])
       val ps1 = new ExpansionTreeProofStrategy(etSeq1)
       val ps2 = new ExpansionTreeProofStrategy(etSeq2)
       new ExpansionTreeProofStrategy.ExpansionTreeAction(formula, FormulaLocation.Succedent, None, List[ProofStrategy](ps1, ps2))
@@ -690,7 +728,7 @@ class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends
    override def findBinaryLeft(seq: FSequent) : Option[ProofStrategy.Action] = {
     seq.antecedent.find(f => f match {
       case Imp(_,_) | Or(_,_) => true
-      case BigOr(_, _, _, _) => throw new IllegalArgumentException("Found BigOr in solveFOL (Schema formulas are not supported by expansion trees)")
+      case BigOr(_, _, _, _) => throw new IllegalArgumentException("Found BigOr in expansionProofToLKProof (Schema formulas are not supported by expansion trees)")
       case _ => false
     }).map(formula => formula match {
       // differentiate again between Imp and Or as formulas appear in different locations when proving
@@ -718,54 +756,112 @@ class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends
 
 
   def findStrongQuantifier(seq: FSequent): Option[ExpansionTreeProofStrategy.ExpansionTreeAction] = {
-    // just one instance, can just use it
-    // return etseq (in strat) with removed, but keep instance
+    // find one instance, can just use it
+    // return etseq (in strategy) with formula removed, but keep instance
 
     val anteResult = expansionSequent.antecedent.collectFirst({
-      case et @ StrongQuantifier(formula, variable, selection) =>
-      val newEtSeq = expansionSequent.replaceInAntecedent(et, selection.asInstanceOf[ExpansionTree])
-      new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Antecedent, Some(variable),
-        List(new ExpansionTreeProofStrategy(newEtSeq)))
+      case et@StrongQuantifier(formula, variable, selection) =>
+        val newEtSeq = expansionSequent.replaceInAntecedent(et, selection.asInstanceOf[ExpansionTree])
+        new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Antecedent, Some(variable),
+          List(new ExpansionTreeProofStrategy(newEtSeq)))
     })
 
     anteResult.orElse(
       expansionSequent.succedent.collectFirst({
-        case et @ StrongQuantifier(formula, variable, selection) =>
-        val newEtSeq = expansionSequent.replaceInSuccedent(et, selection.asInstanceOf[ExpansionTree])
-        new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Antecedent, Some(variable),
-          List(new ExpansionTreeProofStrategy(newEtSeq)))
+        case et@StrongQuantifier(formula, variable, selection) =>
+          val newEtSeq = expansionSequent.replaceInSuccedent(et, selection.asInstanceOf[ExpansionTree])
+          new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Succedent, Some(variable),
+            List(new ExpansionTreeProofStrategy(newEtSeq)))
       })
     )
   }
 
 
+  /**
+   * Check if *any* of vars appears as strong quantifier somewhere in et
+   * Naive approach: always check everything.
+   * This data does not really change (except on et seq changes), so it could be cached/precalculated for efficiency in the future
+   */
+  private def doVariablesAppearInStrongQuantifier(vars: Set[Var], et: ExpansionTree): Boolean = {
+    et match {
+      case StrongQuantifier(formula, v, sel) =>
+        vars.contains(v) || doVariablesAppearInStrongQuantifier(vars, sel)
+      case WeakQuantifier(formula, instances) =>
+        instances.exists( entry => doVariablesAppearInStrongQuantifier(vars, entry._1) )
+      case BinaryExpansionTree(child1, child2) =>
+        doVariablesAppearInStrongQuantifier(vars, child1) || doVariablesAppearInStrongQuantifier(vars, child2)
+      case UnaryExpansionTree(child1) => doVariablesAppearInStrongQuantifier(vars, child1)
+      case AtomET(_) => false
+    }
+  }
+
+
   def findWeakQuantifier(seq: FSequent): Option[ExpansionTreeProofStrategy.ExpansionTreeAction] = {
-    // TODO
     // check which of the terms to use (just ones that aren't there yet)
     // return etseq (in strat) with instance removed
-    // check cyclicity!
     // -> check for:
     // any of set of variables of term used as expansion term in weak quantifier expansion is used as strong quantifier elsewhere (and hasn't been reduced so far, i.e. appears in current expansion sequent)
     // also in cyclicity condition: expand outer instantiations before inner (can't magically make inner part of formula appear, only rule by rule). this is done automatically if only outermost occurences of weak
     // quantifier instances are checked here
 
-     val anteResult = expansionSequent.antecedent.collectFirst({
-      case et @ WeakQuantifier(formula, instances) =>
-       // TODO: cyclicity check
-        val instancePicked = instances(0)
-        val newInstances = instances.filterNot(_ eq instancePicked)
-        val newEtSeq0 =
-          if (newInstances.isEmpty)  { expansionSequent.removeFromAntecedent(et) }
-          else  {  expansionSequent.replaceInAntecedent(et, WeakQuantifier.applyWithoutMerge(formula, newInstances)) }
-        val newEtSeq = newEtSeq0.addToAntecedent(instancePicked._1)
-        new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Antecedent, Some(instancePicked._2),
-          List(new ExpansionTreeProofStrategy(newEtSeq)))
-     })
+    def getFirstApplicableInstanceOfWeakQuantifier(instances: Seq[(ExpansionTree, HOLExpression)]) = {
+      val firstApplicable = instances.find(inst => inst match {
+        case (et: ExpansionTree, term: HOLExpression) =>
+          // check if free variables of term appear in any strong quantifier
+          val vars = term.getFreeVariables().toSet
+          val doVarsAppear = doVariablesAppearInStrongQuantifier(vars, _: ExpansionTree)
+          val canUseInstance = expansionSequent.succedent.forall(!doVarsAppear(_)) && expansionSequent.antecedent.forall(!doVarsAppear(_))
+          canUseInstance
+      })
+      firstApplicable
+    }
 
-    anteResult.orElse(
-      // TODO : succ
-     None
+
+    val anteResult: Option[ExpansionTreeProofStrategy.ExpansionTreeAction] = expansionSequent.antecedent.foldLeft(None: Option[ExpansionTreeProofStrategy.ExpansionTreeAction])((old, et) =>
+    // want to return first match, so return old if defined or check next
+      old.orElse( {
+        et match {
+          case WeakQuantifier(formula, instances) =>
+            getFirstApplicableInstanceOfWeakQuantifier(instances).map(instancePicked => {
+              val newInstances = instances.filterNot(_ eq instancePicked)
+              // drop et as soon as all instances have been picked (from etseq, will stick in actual sequent for simplicity but never be chosen)
+              val newEtSeq0 =
+                if (newInstances.isEmpty) {expansionSequent.removeFromAntecedent(et)}
+                else {expansionSequent.replaceInAntecedent(et, WeakQuantifier.applyWithoutMerge(formula, newInstances))}
+              val newEtSeq = newEtSeq0.addToAntecedent(instancePicked._1)
+              new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Antecedent, Some(instancePicked._2),
+                List(new ExpansionTreeProofStrategy(newEtSeq)))
+            })
+          case _ => None
+        }
+      })
     )
+
+    if (anteResult.isDefined) { // this should be anteResult.getOrElse (as anywhere else), but the scala compiler tries really hard to prevent this, so who am i to force it..
+      anteResult
+    } else {
+      val succResult: Option[ExpansionTreeProofStrategy.ExpansionTreeAction] =
+        expansionSequent.succedent.foldLeft(None: Option[ExpansionTreeProofStrategy.ExpansionTreeAction])((old, et) =>
+        // want to return first match, so return old if defined or check next
+        old.orElse( {
+          et match {
+            case WeakQuantifier(formula, instances) =>
+              getFirstApplicableInstanceOfWeakQuantifier(instances).map(instancePicked => {
+                val newInstances = instances.filterNot(_ eq instancePicked)
+                // drop et as soon as all instances have been picked
+                val newEtSeq0 =
+                  if (newInstances.isEmpty) {expansionSequent.removeFromSuccedent(et)}
+                  else {expansionSequent.replaceInSuccedent(et, WeakQuantifier.applyWithoutMerge(formula, newInstances))}
+                val newEtSeq = newEtSeq0.addToSuccedent(instancePicked._1)
+                new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Succedent, Some(instancePicked._2),
+                  List(new ExpansionTreeProofStrategy(newEtSeq)))
+              })
+            case _ => None
+          }
+        })
+      )
+      succResult
+    }
   }
 }
 
@@ -781,13 +877,15 @@ object ExpansionTreeProofStrategy {
 
 
 private object SolveUtils extends at.logic.utils.logging.Logger {
-    // Checks if the sequent is of the form A, \Gamma |- A, \Delta
-  def isAxiom(seq: FSequent): Boolean =
-    seq.antecedent.exists(f =>
-      seq.succedent.exists(f2 =>
-        f == f2 && f.isAtom
-      )
+  // Checks if the sequent is of the form A, \Gamma |- A, \Delta
+  def isAxiom(seq: FSequent): Boolean = {
+    seq.antecedent.exists( f =>
+      f.isAtom &&
+        seq.succedent.exists(f2 =>
+          f.syntaxEquals(f2)
+        )
     )
+  }
 
   def findNonschematicAxiom(seq: FSequent) : Option[(HOLFormula,HOLFormula)] = {
     val axs = for (f  <- seq.antecedent.toList;
