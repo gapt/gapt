@@ -1,0 +1,28 @@
+\VARDEC{x, y, \alpha, \beta}{i}
+\CONSTDEC{f,g}{i>i}
+\CONSTDEC{0, 1}{i}
+\CONSTDEC{+}{i>(i>i)}
+\CONSTDEC{P}{i>(i>o)}
+\CONSTDEC{Q}{i>o}
+\CONSTDEC{THEPROOF,THEPROOF2, CPROOF}{o}
+
+\AX{P(\alpha,f(\alpha))}{P(\alpha,f(\alpha))}
+\ALLL{}{(all x P(x,f(x)))}{P(\alpha,f(\alpha))}
+\EXR{}{(all x P(x,f(x)))}{(exists y P(\alpha,y))}
+\ALLR{}{(all x P(x,f(x)))}{(all x (exists y P(x,y)))}
+
+\CONTINUEWITH{THEPROOF}
+
+\AX{P(\alpha,g(\alpha))}{P(\alpha,g(\alpha))}
+\ALLL{}{(all x P(x,g(x)))}{P(\alpha,g(\alpha))}
+\EXR{}{(all x P(x,g(x)))}{(exists y P(\alpha,y))}
+\ALLR{}{(all x P(x,g(x)))}{(all x (exists y P(x,y)))}
+
+\CONTINUEWITH{THEPROOF2}
+
+
+\CONTINUEFROM{THEPROOF}{(all x P(x,f(x)))}{(all x (exists y P(x,y)))}
+\CONTINUEFROM{THEPROOF2}{(all x P(x,g(x)))}{(all x (exists y P(x,y)))}
+\ORL{(all x P(x,f(x))) | (all x P(x,g(x)))}{(all x (exists y P(x,y))), (all x (exists y P(x,y)))}
+\CONTRR{(all x P(x,f(x))) | (all x P(x,g(x)))}{(all x (exists y P(x,y)))}
+\CONTINUEWITH{CPROOF}

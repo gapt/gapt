@@ -63,7 +63,7 @@ package base {
 
     def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence = {
       val l = ancestors.head.skolem_label
-      assert( ancestors.forall( a => a.skolem_label == l ) )
+      assert( ancestors.forall( a => a.skolem_label == l )  , "Error creating labelled formula occurrence: ancestor labels of "+l+"do not agree: "+ancestors.map(_.skolem_label).mkString(",") )
       new LabelledFormulaOccurrence(formula, ancestors, l)
     }
 

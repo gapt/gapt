@@ -205,7 +205,7 @@ class sFOparserTest extends SpecificationWithJUnit {
       dbTRS.clear
       dbTRS.add(g, Tuple2(base1, base2), Tuple2(step1, step2))
 //      val sigma = applySchemaSubstitution2("\\sigma",2, db)
-      //val sigma = applySchemaSubstitution2("\\varphi",3)
+      val sigma = applySchemaSubstitution2("\\varphi",3)
       //println("\n\n")
 //      val a = foVar("a")
 //      val t = sTerm(g, Succ(IntZero()), a::Nil)

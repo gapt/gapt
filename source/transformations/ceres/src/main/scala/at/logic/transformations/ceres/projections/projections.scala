@@ -18,6 +18,7 @@ import at.logic.calculi.lk.base.{LKProof,Sequent,PrincipalFormulas}
 import scala.collection.immutable.HashSet
 import at.logic.calculi.lksk
 import at.logic.calculi.lksk.base.LabelledFormulaOccurrence
+import at.logic.calculi.lksk.base.TypeSynonyms.Label
 
 object Projections {
   // This method computes the standard projections according to the original CERES definition.
@@ -28,10 +29,13 @@ object Projections {
     implicit val factory = defaultFormulaOccurrenceFactory
     proof match {
       case Axiom(s) => Set(Axiom(s))
+
       case lksk.ExistsSkLeftRule(p,_,a,m,v) => handleLKSKStrongQuantRule( proof, p, a, m, v, lksk.ExistsSkLeftRule.apply )
       case lksk.ForallSkRightRule(p,_,a,m,v) => handleLKSKStrongQuantRule( proof, p, a, m, v, lksk.ForallSkRightRule.apply )
       case lksk.ExistsSkRightRule(p,_,a,m,t) => handleLKSKWeakQuantRule( proof, p, a, m, t, lksk.ExistsSkRightRule.apply )
       case lksk.ForallSkLeftRule(p,_,a,m,t) => handleLKSKWeakQuantRule( proof, p, a, m, t, lksk.ForallSkLeftRule.apply )
+      case lksk.WeakeningLeftRule(p, _, m) => handleLKSKWeakeningRule( proof, p, m, lksk.WeakeningLeftRule.createDefault )
+      case lksk.WeakeningRightRule(p, _, m) => handleLKSKWeakeningRule( proof, p, m, lksk.WeakeningRightRule.createDefault )
 
       case ForallRightRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a.formula, m, v, ForallRightRule.apply )
       case ExistsLeftRule(p, _, a, m, v) => handleStrongQuantRule( proof, p, a.formula, m, v, ExistsLeftRule.apply )
@@ -89,6 +93,7 @@ object Projections {
 
   // Apply weakenings to add the end-sequent ancestor of the other side to the projection.
   def weakenESAncs( esancs: Pair[Seq[FormulaOccurrence], Seq[FormulaOccurrence]], s: Set[LKProof] ) = {
+    //TODO: add correct labels in lksk weakenings
     val wl = s.map( p => esancs._1.foldLeft( p )( (p, fo) => WeakeningLeftRule( p, fo.formula ) ) )
     wl.map( p => esancs._2.foldLeft( p )( (p, fo) => WeakeningRightRule( p, fo.formula ) ) )
   }
@@ -119,6 +124,17 @@ object Projections {
     else s.map( pm => constructor( pm, m.formula ) )
   }
 
+  def handleLKSKWeakeningRule( proof: LKProof, p: LKProof, m: LabelledFormulaOccurrence,
+                               constructor: (LKProof, HOLFormula, Label) => LKProof with PrincipalFormulas)(implicit
+                                                                                                            cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
+  {
+    val s = apply( p, copySetToAncestor( cut_ancs ) )
+    if (cut_ancs.contains( m ) ) s
+    else {
+      s.map( pm => constructor( pm, m.formula, m.skolem_label ) )
+    }
+  }
+
   def handleDefRule( proof: LKProof, p: LKProof, a: HOLFormula, m: FormulaOccurrence,
                      constructor: (LKProof, HOLFormula, HOLFormula) => LKProof)(implicit
                                                                                 cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] =
@@ -144,7 +160,7 @@ object Projections {
     else s.map( pm => constructor( pm, a, m.formula, t) )
   }
 
-  def handleLKSKWeakQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: FormulaOccurrence, t: HOLExpression,
+  def handleLKSKWeakQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: LabelledFormulaOccurrence, t: HOLExpression,
                                constructor: (LKProof, LabelledFormulaOccurrence, HOLFormula, HOLExpression, Boolean) => LKProof)(implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
     if (cut_ancs.contains(m)) s
@@ -153,18 +169,19 @@ object Projections {
       val in_antecedent = p.root.antecedent.contains(a)
 
       val set = s.map( pm => {
+        //TODO: check label
         val r = if (in_antecedent) {
-          //TODO: check label
           pm.root.antecedent.find(lo => lo.formula == a.formula)
         } else {
-          //TODO: check label
           pm.root.succedent.find(lo => lo.formula == a.formula)
         }
 
+        val label_removed = m.skolem_label.diff(a.skolem_label).nonEmpty || a.skolem_label.diff(m.skolem_label).nonEmpty
+//        if (label_removed) println("label was removed!") else println("keeping label!")
+
         r match {
           case Some(auxf) =>
-            //TODO: check if the label has to be removed!
-            constructor( pm, auxf.asInstanceOf[LabelledFormulaOccurrence], m.formula, t, true)
+            constructor( pm, auxf.asInstanceOf[LabelledFormulaOccurrence], m.formula, t, label_removed)
           case _ =>
             throw new Exception("Error projecting a lksk Weak Quantifier rule! Could not find auxformula in projection parent!")
         }
@@ -181,6 +198,7 @@ object Projections {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs )
     val s2 = apply( p2, new_cut_ancs )
+    //println("Binary rule on:\n"+s1.map(_.root)+"\n"+s2.map(_.root))
     if ( cut_ancs.contains( m ) )
       handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs )
     else
@@ -208,11 +226,33 @@ object Projections {
     else throw new Exception("The proof is not skolemized!") // s.map( p => constructor( p, a, m.formula, v ) )
   }
 
-  def handleLKSKStrongQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: FormulaOccurrence, skolemterm: HOLExpression,
+  def handleLKSKStrongQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: LabelledFormulaOccurrence, skolemterm: HOLExpression,
                                  constructor: (LKProof, LabelledFormulaOccurrence, HOLFormula, HOLExpression) => LKProof)( implicit cut_ancs: Set[FormulaOccurrence]) : Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ) )
-    if (cut_ancs.contains( m ) ) s
-    else throw new Exception("The proof is not skolemized!") // s.map( p => constructor( p, a, m.formula, v ) )
+    if (cut_ancs.contains(m)) s
+    else {
+      require(p.root.occurrences.contains(a), "Error projecting a lksk Weak Quantifier rule! Auxiliary formula not contained in parent!")
+      val in_antecedent = p.root.antecedent.contains(a)
+
+      val set = s.map( pm => {
+        //TODO: check label
+        val r = if (in_antecedent) {
+          pm.root.antecedent.find(lo => lo.formula == a.formula)
+        } else {
+          pm.root.succedent.find(lo => lo.formula == a.formula)
+        }
+
+
+        r match {
+          case Some(auxf) =>
+            constructor( pm, auxf.asInstanceOf[LabelledFormulaOccurrence], m.formula, skolemterm)
+          case _ =>
+            throw new Exception("Error projecting a lksk Weak Quantifier rule! Could not find auxformula in projection parent!")
+        }
+      }
+      )
+      set
+    }
   }
 
   def copySetToAncestor( set: Set[FormulaOccurrence] ) = set.foldLeft( new HashSet[FormulaOccurrence] )( (s, fo) => s ++ fo.ancestors )

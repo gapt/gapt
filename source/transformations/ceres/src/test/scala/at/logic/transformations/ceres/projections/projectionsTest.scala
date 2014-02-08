@@ -40,16 +40,50 @@ import at.logic.calculi.lk.base.{FSequent, Sequent}
 import java.io.{FileInputStream, InputStreamReader}
 import scala.Console
 import at.logic.transformations.skolemization.skolemize
-
-
-//import at.logic.language.fol._
-//import at.logic.language.hol._
-//import at.logic.language.hol.logicSymbols._
-
-
+import at.logic.algorithms.hlk.HybridLatexParser
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 @RunWith(classOf[JUnitRunner])
 class ProjectionsTest extends SpecificationWithJUnit {
+  val slash = java.io.File.separator
+  val path = "target"+slash+"test-classes"+slash
+
+  "must work for the tape proof with equality" in {
+    val tokens = HybridLatexParser.parseFile(path+"tape-undef.llk")
+    val pdb =HybridLatexParser.createLKProof(tokens)
+    val p = pdb.proof("THEPROOF")
+    val projections = Projections(p)
+    projections.size must be_>(0)
+  }
+
+  "must work for the tape proof with equality in lksk" in {
+    skipped("labeling does not work")
+    val tokens = HybridLatexParser.parseFile(path+"tape-undef.llk")
+    val pdb =HybridLatexParser.createLKProof(tokens)
+    val p = pdb.proof("THEPROOF")
+    val sp = LKtoLKskc(p)
+    val projections = Projections(sp)
+    projections.size must be_>(0)
+  }
+
+  "must work for a simple proof (weak + strong quantifiers, no contractions) in lksk" in {
+    val tokens = HybridLatexParser.parseFile(path+"simple_cut.llk")
+    val pdb =HybridLatexParser.createLKProof(tokens)
+    val p = pdb.proof("THEPROOF")
+    val sp = LKtoLKskc(p)
+    val projections = Projections(sp)
+    projections.size must be_>(0)
+  }
+
+  "must work for a simple proof (weak + strong quantifiers + contractions) in lksk" in {
+    val tokens = HybridLatexParser.parseFile(path+"simple_cut.llk")
+    val pdb =HybridLatexParser.createLKProof(tokens)
+    val p = pdb.proof("CPROOF")
+    val sp = LKtoLKskc(p)
+    val projections = Projections(sp)
+    projections.size must be_>(0)
+  }
+
   /*    implicit val factory = defaultFormulaOccurrenceFactory
 import at.logic.language.schema._
 "ProjectionsTest" should {
