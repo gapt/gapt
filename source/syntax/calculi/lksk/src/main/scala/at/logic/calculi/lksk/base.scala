@@ -50,7 +50,7 @@ package base {
       if (ancestors.forall(_.isInstanceOf[LabelledFormulaOccurrence]))
         createOccurrence(formula, (ancestors.asInstanceOf[Seq[LabelledFormulaOccurrence]]).toList )
       else //TODO: we can not check if the label is unchanged in unlabelled ancestors
-        throw new Exception("ancestors not labelled")
+        throw new Exception("ancestors not labelled "+ancestors.filterNot(_.isInstanceOf[LabelledFormulaOccurrence]).mkString("(",",",")"))
     }
 
     def createContextFormulaOccurrenceWithSubst(formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], sub: Substitution[HOLExpression]) = {
@@ -63,7 +63,8 @@ package base {
 
     def createOccurrence(formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence = {
       val l = ancestors.head.skolem_label
-      assert( ancestors.forall( a => a.skolem_label == l )  , "Error creating labelled formula occurrence: ancestor labels of "+l+"do not agree: "+ancestors.map(_.skolem_label).mkString(",") )
+      if(! ancestors.forall( a => a.skolem_label == l ))
+        throw new Exception("Error creating labelled formula occurrence: ancestor labels of "+l+" do not agree: "+ancestors.map(_.skolem_label).mkString(",") )
       new LabelledFormulaOccurrence(formula, ancestors, l)
     }
 

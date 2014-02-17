@@ -1,5 +1,3 @@
-// TODO: can this file be deleted?
-
 package at.logic.transformations.ceres.projections
 
 import org.specs2.mutable._
@@ -57,7 +55,6 @@ class ProjectionsTest extends SpecificationWithJUnit {
   }
 
   "must work for the tape proof with equality in lksk" in {
-    skipped("labeling does not work")
     val tokens = HybridLatexParser.parseFile(path+"tape-undef.llk")
     val pdb =HybridLatexParser.createLKProof(tokens)
     val p = pdb.proof("THEPROOF")
@@ -83,6 +80,16 @@ class ProjectionsTest extends SpecificationWithJUnit {
     val projections = Projections(sp)
     projections.size must be_>(0)
   }
+
+  "must work for a simple proof with cut in lksk" in {
+    val tokens = HybridLatexParser.parseFile(path+"simple_cut.llk")
+    val pdb =HybridLatexParser.createLKProof(tokens)
+    val p = pdb.proof("CUTPROOF")
+    val sp = LKtoLKskc(p)
+    val projections = Projections(sp)
+    projections.size must be_>(0)
+  }
+
 
   /*    implicit val factory = defaultFormulaOccurrenceFactory
 import at.logic.language.schema._
