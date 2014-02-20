@@ -23,16 +23,19 @@ trait StillmanSubsumptionAlgorithm[T <: LambdaExpression] extends SubsumptionAlg
     ST(s1._1.map(x => neg(x)) ++ s1._2.map(x => x),
       s2._1.map(x => neg(x)) ++ s2._2.map(x => x), 
       Substitution[T](),
-      Nil)
+      Nil
+    )
 
-  def ST(ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: T => T, restrictedDomain: List[Var]): Boolean =
+  def ST(ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: Substitution[T], restrictedDomain: List[Var]): Boolean =
     ls1 match {
       case Nil => true // first list is exhausted
       case x::ls =>
         val sx = sub(x.asInstanceOf[T]);
         ls2.exists(t =>
           matchAlg.matchTerm(sx.asInstanceOf[T], sub(t.asInstanceOf[T]), restrictedDomain) match {
-            case Some(sub2) => ST(ls, ls2, sub2 compose sub, restrictedDomain)
+            case Some(sub2) =>
+              val nsub : Substitution[T] = sub2.compose(sub)
+              ST(ls, ls2, nsub, restrictedDomain ++ nsub.map.flatMap(_._2.freeVariables))
             case _ => false
       })
   }
