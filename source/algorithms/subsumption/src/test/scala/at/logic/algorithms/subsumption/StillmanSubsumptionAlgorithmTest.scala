@@ -49,9 +49,14 @@ class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
       "P(x,x) | P(x,a) and P(a,a)" in {
         MyAlg.subsumes(new MyParser("P(x,x) | P(x,a).").getClauseList.head, new MyParser("P(a,a).").getClauseList.head) must beEqualTo (true)
       }
+      "P(x,y) and P(x,y)" in {
+        MyAlg.subsumes(new MyParser("P(x,y).").getClauseList.head, new MyParser("P(x,y).").getClauseList.head) must beEqualTo (true)
+      }
+      "P(x,y) and P(x1,y1)" in {
+        MyAlg.subsumes(new MyParser("P(x,y).").getClauseList.head, new MyParser("P(x1,y1).").getClauseList.head) must beEqualTo (true)
+      }
+
       "P(x,y) and P(y,x)" in {
-        //TODO:Fixme!
-        skipped("does not work!")
         MyAlg.subsumes(new MyParser("P(x,y).").getClauseList.head, new MyParser("P(y,x).").getClauseList.head) must beEqualTo (true)
       }
 

@@ -34,6 +34,11 @@ import at.logic.calculi.lk.base.types.FSequent
  */
 object reduceHolToFol extends reduceHolToFol
 class reduceHolToFol {
+  private def folexp2term(exp:FOLExpression) = exp match {
+    case e:FOLTerm => exp.asInstanceOf[FOLTerm]
+    case _ => throw new Exception("Cannot cast "+exp+" to a fol term!"+exp.getClass)
+  }
+
   //TODO: replace mutable maps by immutable ones to allow parallelism. Need to check the calls for sideffects on the maps
   def apply(formula: HOLFormula, scope: mutable.Map[LambdaExpression, ConstantStringSymbol], id: {def nextId: Int}): FOLFormula = {
     val immscope = Map[LambdaExpression, ConstantStringSymbol]() ++ scope
@@ -76,22 +81,26 @@ class reduceHolToFol {
 
   def apply_(f:HOLFormula) : FOLFormula =
     apply_(f.asInstanceOf[HOLExpression]).asInstanceOf[FOLFormula]
+
+  //assumes we are on the logical level of the hol formula - all types are mapped to i, i>o or i>i>o respectively
   def apply_(term: HOLExpression): FOLExpression = {
     term match {
       case e : FOLExpression => e // if it's already FOL - great, we are done.
       case z:indexedFOVar => FOLVar(new VariableStringSymbol(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString))
       case fov: foVar => FOLVar(new VariableStringSymbol(fov.name.toString))
       case foc: foConst => FOLConst(new ConstantStringSymbol(foc.name.toString))
-      case HOLNeg(n) => Neg(reduceHolToFol(n))
-      case HOLAnd(n1,n2) => And(reduceHolToFol(n1), reduceHolToFol(n2))
-      case HOLOr(n1,n2) => Or(reduceHolToFol(n1), reduceHolToFol(n2))
-      case HOLImp(n1,n2) => Imp(reduceHolToFol(n1), reduceHolToFol(n2))
-      case HOLAllVar(v: HOLVar,n) => AllVar(reduceHolToFol(v).asInstanceOf[FOLVar], reduceHolToFol(n))
-      case HOLExVar(v: HOLVar,n) => ExVar(reduceHolToFol(v).asInstanceOf[FOLVar], reduceHolToFol(n))
-      case HOLAtom(n: ConstantSymbolA, ls) => Atom(n, ls.map(x => reduceHolToFol(x).asInstanceOf[FOLTerm]))
-      case HOLFunction(n: ConstantSymbolA, ls, _) => Function(n, ls.map(x => reduceHolToFol(x).asInstanceOf[FOLTerm]))
       case HOLVar(n, _) => FOLVar(n)
       case HOLConst(n, _) => FOLConst(n)
+      case HOLNeg(n) => Neg(apply_(n))
+      case HOLAnd(n1,n2) => And(apply_(n1), apply_(n2))
+      case HOLOr(n1,n2) => Or(apply_(n1), apply_(n2))
+      case HOLImp(n1,n2) => Imp(apply_(n1), apply_(n2))
+      case HOLAllVar(v: HOLVar,n) => AllVar(apply_(v).asInstanceOf[FOLVar], apply_(n))
+      case HOLExVar(v: HOLVar,n) => ExVar(apply_(v).asInstanceOf[FOLVar], apply_(n))
+      case HOLAtom(n, ls) =>
+        Atom(ConstantStringSymbol(n.toString()), ls.map(x => folexp2term(apply_termlevel(x))))
+      case HOLFunction(n, ls, _) =>
+        Function(ConstantStringSymbol(n.toString), ls.map(x => folexp2term(apply_(x))))
 
       //this case is added for schema
       case HOLApp(func,arg) => {
@@ -107,6 +116,43 @@ class reduceHolToFol {
       case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions
     }
   }
+
+  //if we encountered an atom, we need to convert logical formulas to the term level too
+  def apply_termlevel(term: HOLExpression): FOLTerm = {
+    term match {
+      case e : FOLTerm => e // if it's already FOL - great, we are done.
+      case z:indexedFOVar => FOLVar(new VariableStringSymbol(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString))
+      case fov: foVar => FOLVar(new VariableStringSymbol(fov.name.toString))
+      case foc: foConst => FOLConst(new ConstantStringSymbol(foc.name.toString))
+      case HOLVar(n, _) => FOLVar(n)
+      case HOLConst(n, _) => FOLConst(n)
+      case HOLNeg(n) => Function(NegSymbol,  List(apply_termlevel(n)))
+      case HOLAnd(n1,n2) => Function(AndSymbol, List(apply_termlevel(n1), apply_termlevel(n2)))
+      case HOLOr(n1,n2) => Function(OrSymbol, List(apply_termlevel(n1), apply_termlevel(n2)))
+      case HOLImp(n1,n2) => Function(ImpSymbol, List(apply_termlevel(n1), apply_termlevel(n2)))
+      case HOLAllVar(v: HOLVar,n) =>
+        Function(ForallSymbol, List(apply_termlevel(v).asInstanceOf[FOLVar], apply_termlevel(n)))
+      case HOLExVar(v: HOLVar,n) =>
+        Function(ExistsSymbol, List(apply_termlevel(v).asInstanceOf[FOLVar], apply_termlevel(n)))
+      case HOLAtom(n: SymbolA, ls) =>
+        Function(ConstantStringSymbol(n.toString()), ls.map(x => folexp2term(apply_termlevel(x))))
+      case HOLFunction(n: ConstantSymbolA, ls, _) => Function(n, ls.map(x => folexp2term(apply_termlevel(x))))
+
+      //this case is added for schema
+      case HOLApp(func,arg) => {
+        func match {
+          case HOLVar(sym,_) => {
+            val new_arg = apply_(arg).asInstanceOf[FOLTerm]
+            return at.logic.language.fol.Function(new ConstantStringSymbol(sym.toString), new_arg::Nil)
+          }
+          case _ => println("\nWARNING: FO schema term!\n")
+        }
+        throw new Exception("\nProbably unrecognized object from schema!\n")
+      }
+      case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions
+    }
+  }
+
 
 
   //transforms a ground integer term to Int

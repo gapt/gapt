@@ -91,8 +91,12 @@ object Projections {
         val new_cut_ancs = copySetToAncestor( cut_ancs )
         val s1 = apply( p1, new_cut_ancs, pred )
         val s2 = apply( p2, new_cut_ancs, pred )
-        handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs )
-      }
+        s1.foldLeft( Set.empty[LKProof] )( (s, p1) =>
+          s ++ s2.map( p2 =>
+          {
+            val List(aux1,aux2) = pickrule(proof, List(p1.root,p2.root), List(a1, a2))
+            CutRule( p1, p2, aux1, aux2 )
+          }))      }
       case _ => throw new Exception("No such a rule in Projections.apply")
     }
     } catch {

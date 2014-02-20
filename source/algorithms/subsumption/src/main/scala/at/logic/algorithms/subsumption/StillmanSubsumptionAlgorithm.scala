@@ -22,15 +22,19 @@ trait StillmanSubsumptionAlgorithm[T <: LambdaExpression] extends SubsumptionAlg
   def subsumes(s1: FSequent, s2: FSequent): Boolean =
     ST(s1._1.map(x => neg(x)) ++ s1._2.map(x => x),
       s2._1.map(x => neg(x)) ++ s2._2.map(x => x), 
-      Substitution(), 
-      (s2._1.flatMap(x => x.freeVariables) ++ s2._2.flatMap(x => x.freeVariables)).toList)
+      Substitution[T](),
+      Nil)
 
-  def ST(ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: T => T, restrictedDomain: List[Var]): Boolean = ls1 match {
-    case Nil => true // first list is exhausted
-    case x::ls => val sx = sub(x.asInstanceOf[T]); ls2.exists(t => matchAlg.matchTerm(sx.asInstanceOf[T], sub(t.asInstanceOf[T]), restrictedDomain) match {
-      case Some(sub2) => ST(ls, ls2, sub2 compose sub, restrictedDomain)
-      case _ => false
-    })
+  def ST(ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: T => T, restrictedDomain: List[Var]): Boolean =
+    ls1 match {
+      case Nil => true // first list is exhausted
+      case x::ls =>
+        val sx = sub(x.asInstanceOf[T]);
+        ls2.exists(t =>
+          matchAlg.matchTerm(sx.asInstanceOf[T], sub(t.asInstanceOf[T]), restrictedDomain) match {
+            case Some(sub2) => ST(ls, ls2, sub2 compose sub, restrictedDomain)
+            case _ => false
+      })
   }
 
   // should be generic but right now supports only hol and fol
