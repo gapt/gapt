@@ -282,15 +282,15 @@ G: at.logic.language.fol.FOLFormula = $\forall$x.(P(x, f(x))$\supset\exists$y.P(
 Also prover9 syntax is supported: %TODO: add citation
 
 \begin{lstlisting}
-scala> val PG = parse p9 "(all x P(x,f(x))) -> (all x (exists y P(x,y)))"
-PG: at.logic.language.fol.FOLFormula = (∀x.P(x, f(x))⊃∀x.∃y.P(x, y))
+scala>  val PG = parse p9 "(all x (P(x,f(x)) -> (exists y P(x,y))))"
+PG: at.logic.language.fol.FOLFormula = ∀x.(P(x, f(x))⊃∃y.P(x, y))
 \end{lstlisting}
 
 The prover9 syntax was also extended to higher-order logic, where type declarations are added:
 
 \begin{lstlisting}
-scala> val HG = parse hlkformula "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x P(x,f(x))) -> (all x (exists y P(x,y)))"
-HG: at.logic.language.hol.HOLFormula = (∀x:ο.P(x:ο, f(x:ο):ι): o⊃∀x:ο.∃y:ι.P(x:ο, y:ι): o)
+scala> val HG = parse hlkformula "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))"
+HG: at.logic.language.hol.HOLFormula = ∀x:ο.(P(x:ο, f(x:ο):ι): o⊃∃y:ι.P(x:ο, y:ι): o)
 \end{lstlisting}
 
 
