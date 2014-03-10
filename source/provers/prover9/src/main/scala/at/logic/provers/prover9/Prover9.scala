@@ -160,9 +160,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
     // the proof obtained by prover9 can be fixed to have
     // as the clauses the clauses of this CNF (and not e.g.
     // these clauses modulo symmetry)
-    //
-    // Oh my, the casting! :-(
-  runP9OnLADR(input_file, output_file, Some(CNFn(seq.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList))
+    val cs = Some(CNFn(seq.toFormula).map(_.toFSequent).toList)
+    runP9OnLADR(input_file, output_file, cs)
   }
 
   def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
@@ -205,6 +204,21 @@ object Prover9 extends at.logic.utils.logging.Logger {
           trace( "doing name replacement" )
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
           trace( "done doing name replacement" )
+          /*
+          trace("Proof size: "+tp9proof.size)
+          for (fs <- tp9proof.nodes.map(_.vertex.asInstanceOf[Clause].toFSequent());
+               f <- fs.formulas) {
+            trace("Checking proof formula "+f)
+            require(f.isInstanceOf[FOLFormula], "Formula "+f+" in "+fs+" is not a FOL formula!")
+          }
+          */
+
+          trace("CS size: "+clauses.getOrElse(Seq()).size)
+          for (fs <- clauses.getOrElse(Seq());
+               f <- fs.formulas) {
+            trace("Checking cs formula "+f)
+            require(f.isInstanceOf[FOLFormula], "Formula "+f+" in "+fs+" is not a FOL formula!")
+          }
           val ret = if (clauses != None) fixSymmetry(tp9proof, clauses.get) else tp9proof
           //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
 
@@ -212,6 +226,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
         } catch {
           case e : Exception =>
             warn("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
+            trace(e.getStackTraceString)
             Some(InitialClause(Nil,Nil))
         }
       case 1 => throw new Prover9Exception("A fatal error occurred (user's syntax error or Prover9's bug).")
@@ -221,7 +236,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
         // a proof has been found. Hack-ish solution: Try to parse, if
         // we fail, we assume that no proof was actually produced.
         //
-        // FIXME: throw a specific expection in case no proof is found
+        // FIXME: throw a specific exception in case no proof is found
         // and handle it here.
         // 
         try {
@@ -230,8 +245,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
           trace( "done parsing prover9 to robinson" )
           trace( "doing name replacement" )
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
+
           trace( "done doing name replacement" )
           val ret = if (clauses != None) fixSymmetry(tp9proof, clauses.get) else tp9proof
+          trace( "done fixing symmetry" )
           Some(ret)
         } catch {
           case _: Exception => None // Prover9 ran out of things to do (sos list exhausted).

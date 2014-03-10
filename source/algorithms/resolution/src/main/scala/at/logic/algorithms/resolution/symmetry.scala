@@ -21,6 +21,11 @@ import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, Cle
   of C'.
 **/
 object fixSymmetry extends at.logic.utils.logging.Logger {
+  private def toFOL(f:Formula) : FOLFormula = try {
+    f.asInstanceOf[FOLFormula]
+  } catch {
+    case e:Exception => throw new Exception("Could not interpret "+f+" to a first order formula!")
+  }
 
   private def getSymmetryMap( to: FClause, from: FSequent ) = {
     trace("computing symmetry map from " + from + " to " + to)
@@ -45,8 +50,8 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
       )
   }
 
-    var avail_pos = from.succedent.map( f => f.asInstanceOf[FOLFormula] )
-    var avail_neg = from.antecedent.map( f => f.asInstanceOf[FOLFormula] )
+    val avail_pos = from.succedent.map( f => toFOL(f) )
+    val avail_neg = from.antecedent.map( f => toFOL(f) )
 
     val neg_map = createMap( avail_neg, to.neg )
     val pos_map = createMap( avail_pos, to.pos )
@@ -89,14 +94,14 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
     trace("deriving " + to + " from " + from + " by symmetry")
     val (neg_map, pos_map) = getSymmetryMap( to, from ).get
 
-    val init = InitialClause(from.antecedent.map(f=>f.asInstanceOf[FOLFormula]), from.succedent.map(f=>f.asInstanceOf[FOLFormula]))
+    val init = InitialClause(from.antecedent.map(toFOL), from.succedent.map(toFOL))
     val s_neg = neg_map.keySet.foldLeft(init)( (p, f) => f match {
-        case FOLEquation(_, _) if neg_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], false)
+        case FOLEquation(_, _) if neg_map(f) != f => applySymm(p, toFOL(f), false)
         case _ => p
       })
 
     pos_map.keySet.foldLeft(s_neg)( (p, f) => f match {
-        case FOLEquation(_, _) if pos_map(f) != f => applySymm(p, f.asInstanceOf[FOLFormula], true)
+        case FOLEquation(_, _) if pos_map(f) != f => applySymm(p, toFOL(f), true)
         case _ => p
     })
   }
@@ -135,9 +140,9 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
       }
     }
     case Variant(r, p, s) => Variant( rec( p  ), s )
-    case Resolution(r, p1, p2, a1, a2, s) => Resolution( rec( p1 ), rec( p2 ), a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
+    case Resolution(r, p1, p2, a1, a2, s) => Resolution( rec( p1 ), rec( p2 ), toFOL(a1.formula), toFOL(a2.formula), s )
     case Paramodulation(r, p1, p2, a1, a2, p, s) => 
-      Paramodulation( rec( p1 ), rec( p2 ), a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], p.formula.asInstanceOf[FOLFormula], s, p2.root.succedent.contains(a2))
+      Paramodulation( rec( p1 ), rec( p2 ), toFOL(a1.formula), toFOL(a2.formula), toFOL(p.formula), s, p2.root.succedent.contains(a2))
     // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
     case at.logic.calculi.resolution.instance.Instance(_,p,s) => at.logic.calculi.resolution.instance.Instance(rec(p),s)
   }

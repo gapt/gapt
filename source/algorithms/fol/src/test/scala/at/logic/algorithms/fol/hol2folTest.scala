@@ -26,6 +26,7 @@ import hol2fol._
 import scala.collection.mutable
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.language.hol.logicSymbols.ConstantStringSymbol
+import at.logic.language.fol.FOLVar
 
 @RunWith(classOf[JUnitRunner])
 class hol2folTest extends SpecificationWithJUnit {
@@ -93,6 +94,23 @@ class hol2folTest extends SpecificationWithJUnit {
         //TODO: something in the conversion is still weird, fix it
 
       }
+    }
+  }
+
+  "Type replacement" should {
+    "work for simple terms" in {
+      val fterm1 = fol.Function(ConstantStringSymbol("f"), List(
+        fol.FOLConst(ConstantStringSymbol("q_1")),
+        fol.FOLConst(ConstantStringSymbol("c"))))
+
+      val fterm2 = fol.AllVar(fol.FOLVar(VariableStringSymbol("x")),
+                              fol.Atom(ConstantStringSymbol("P"),
+                                       List(fol.FOLVar(VariableStringSymbol("q_1")),
+                                            fol.FOLConst(ConstantStringSymbol("q_1"))) ))
+
+      val hterm1 = changeTypeIn(fol2hol(fterm1), Map[String, TA](("q_1", Ti()->Ti()) ))
+      val hterm2 = changeTypeIn(fol2hol(fterm2), Map[String, TA](("q_1", Ti()->Ti()) ))
+      ok
     }
   }
 }

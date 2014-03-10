@@ -26,6 +26,7 @@ package hol2fol {
 import at.logic.language.hol.HOLOrdering
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.base.types.FSequent
+import at.logic.language.lambda.substitutions.Substitution
 
 
 /**
@@ -276,6 +277,58 @@ class convertHolToFol {
 object createExampleFOLConstant {
   def apply(le: LambdaExpression, css: ConstantStringSymbol) = FOLConst(css)
 }
+
+/**
+ * Introducing abstractions and converting to fol changes more complex types to fol compatible ones. With changeTypeIn
+ * you can change them back.
+ */
+object changeTypeIn {
+  type TypeMap = Map[String, TA]
+
+  /* TODO: this broken, since e.g. for (a b) q with type(q)=alpha, type(b)=beta then type(a)=beta > (alpha > gamma)
+     we need to actually change the type of a when changing the type of q
+    */
+  def oldapply(e:LambdaExpression, tmap : TypeMap) : LambdaExpression = e match {
+    case Var(name, ta) =>
+      if (tmap.contains(name.toString()))
+        e.factory.createVar(name, tmap(name.toString()))
+      else
+        e
+    case App(s,t) => s.factory.createApp(oldapply(s,tmap), oldapply(t,tmap))
+    case Abs(x,t) => t.factory.createAbs(oldapply(x,tmap).asInstanceOf[Var], oldapply(t,tmap))
+  }
+
+  //Remark: this only works for changing the type of leaves in the term tree!
+  def apply(e:HOLExpression, tmap : TypeMap) : HOLExpression = e match {
+    case HOLVar(name, ta) => if (tmap contains name.toString()) HOLVar(name, tmap(name.toString())) else e
+    case HOLConst(name, ta) => if (tmap contains name.toString()) HOLConst(name, tmap(name.toString())) else e
+    case HOLFunction(f, args, rv) => HOLFunction(f, args.map(x => apply(x,tmap)), rv)
+    case HOLAtom(f, args) => HOLAtom(f, args.map(x => apply(x,tmap)))
+    case HOLNeg(x) => HOLNeg(apply(x,tmap))
+    case HOLAnd(s,t) => HOLAnd(apply(s,tmap), apply(t,tmap))
+    case HOLOr(s,t) => HOLOr(apply(s,tmap), apply(t,tmap))
+    case HOLImp(s,t) => HOLImp(apply(s,tmap), apply(t,tmap))
+    case HOLAllVar(x,t) => HOLAllVar(apply(x.asInstanceOf[HOLVar],tmap).asInstanceOf[HOLVar], apply(t,tmap))
+    case HOLExVar(x,t) => HOLExVar(apply(x.asInstanceOf[HOLVar],tmap).asInstanceOf[HOLVar], apply(t,tmap))
+    case HOLAbs(x,t) => HOLAbs(apply(x.asInstanceOf[HOLVar],tmap).asInstanceOf[HOLVar], apply(t,tmap))
+    case HOLApp(s,t) => HOLApp(apply(s,tmap), apply(t,tmap))
+    case _ => throw new Exception("Unhandled case of a HOL Formula! "+e)
+
+  }
+  def apply(e:FOLExpression, tmap : TypeMap) : FOLExpression = apply(e.asInstanceOf[HOLExpression], tmap).asInstanceOf[FOLExpression]
+  def apply(e:HOLFormula, tmap : TypeMap) : HOLFormula = apply(e.asInstanceOf[HOLExpression], tmap).asInstanceOf[HOLFormula]
+  def apply(e:FOLFormula, tmap : TypeMap) : FOLFormula = apply(e.asInstanceOf[HOLExpression], tmap).asInstanceOf[FOLFormula]
+
+  //different names bc of type erasure
+  def holsub(s:Substitution[HOLExpression], tmap : TypeMap) : Substitution[HOLExpression] = Substitution[HOLExpression](s.map.map(x =>
+    (apply(x._1.asInstanceOf[HOLVar], tmap).asInstanceOf[Var], apply(x._2, tmap) )
+  ))
+
+  def folsub(s:Substitution[FOLExpression], tmap : TypeMap) : Substitution[FOLExpression] = Substitution[FOLExpression](s.map.map(x =>
+    (apply(x._1.asInstanceOf[HOLVar], tmap).asInstanceOf[Var], apply(x._2, tmap) )
+  ))
+}
+
 
 
 }
