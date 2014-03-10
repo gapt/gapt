@@ -838,12 +838,12 @@ object printProofStats {
       (p,qhol,qf,struct,cm)
     }
 
-    val rrename = List(("s25",(2,"s_{25}")), ("s9",(2,"s_{9}")),
+    val rrename = NameReplacement.emptySymbolMap ++ List(("s25",(2,"s_{25}")), ("s9",(2,"s_{9}")),
                        ("q1",(0,"q_{1}")), ("q2",(0,"q_{2}")),
-                       ("s10",(1,"s_{10}")), ("s26",(1,"s_{26}"))).toMap
+                       ("s10",(1,"s_{10}")), ("s26",(1,"s_{26}")))
 
 
-    def convert(rp : RobinsonResolutionProof, es : FSequent) = NameReplacement(rp,es,rrename)
+    def convert(rp : RobinsonResolutionProof, es : FSequent) = NameReplacement(rp,rrename)
 
 
   }
