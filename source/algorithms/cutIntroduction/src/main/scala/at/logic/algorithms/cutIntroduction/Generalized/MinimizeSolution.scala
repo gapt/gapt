@@ -23,11 +23,54 @@ import at.logic.algorithms.cutIntroduction.{Grammar => BaseGrammar, ExtendedHerb
                                             DefaultProver, CutIntroUncompressibleException, CutIntroEHSUnprovableException,
                                             CutIntroException, TermsExtraction, FlatTermSet, DeltaTableException}
 
-object MinimizeSolution {
+object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def apply(ehs: ExtendedHerbrandSequent, prover: Prover) = {
     val minSol = improveSolution(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
+  }
+
+  def applyEq(ehs: ExtendedHerbrandSequent, prover: Prover) = {
+    val minSol = improveSolutionEq(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
+    new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
+  }
+
+  // This algorithm improves the solution using forgetful resolution and forgetful paramodulation.
+  // The algorithm does naive search and is very redundant. An improved algorithm is not yet implemented,
+  // but should be (e.g. analogously to improveSolution2)
+  //
+  // returns the list of improved solutions found by the forgetful resolution
+  // and forgetful paramodulation (i.e. from the forgetful equality consequence generator).
+
+  private def improveSolutionEq(ehs: ExtendedHerbrandSequent, prover: Prover) : List[FOLFormula] = {
+    trace("entering improveSolutionEq")
+    val cutFormula = ehs.cutFormula
+
+    // Remove quantifier 
+    val (xs, f) = removeQuantifiers( cutFormula )
+
+    // Transform to conjunctive normal form
+    trace( "starting CNF-Transformation" )
+    val cnf = f.toCNF
+    trace( "finished CNF-Transformation" )
+
+    // Exhaustive search over the resolvents (depth-first search),
+    // returns the list of all solutions found.
+    var count = 0
+
+    def searchSolution(f: FOLFormula) : List[FOLFormula] =
+      f :: oneStepEqualityImprovement(f).foldRight(List[FOLFormula]()) ( (r, acc) =>
+          if( isValidWith(ehs, prover, addQuantifiers( r, xs ))) {
+            count = count + 1
+            searchSolution(r) ::: acc
+          }
+          else {
+            count = count + 1
+            acc
+          }
+        )
+
+    searchSolution(cnf).map(s => addQuantifiers( s, xs ))
   }
 
   //---------------------------------------------------------------------------
@@ -227,6 +270,14 @@ object MinimizeSolution {
     new MyFClause[FOLFormula](neg, pos)
   }
 
+  // Implements the consequence generator for equality improvement:
+  // either forgetful resolution or forgetful paramodulation.
+  def oneStepEqualityImprovement(f: FOLFormula) : List[FOLFormula] = {
+    trace("entering oneStepEqualityImprovement")
+    val res = ForgetfulResolve(f) ++ ForgetfulParamodulate(f)
+    res
+  }
+
   // We assume f is in CNF. Maybe it works also for f not
   // in CNF (since CNFp transforms f to CNF?).
   //
@@ -243,6 +294,85 @@ object MinimizeSolution {
       )
     )
   }
+
+  // We assume f is in CNF. Maybe it works also for f not
+  // in CNF (since CNFp transforms f to CNF?).
+  //
+  // Implements forgetful paramodulation.
+  def ForgetfulParamodulate(f: FOLFormula) : List[FOLFormula] =
+  {
+    val res = ForgetfulParamodulateCNF( f ).map( cnf => CNFtoFormula( cnf.toList ) )
+    trace("forgetful paramodulation generated " + res.size + " formulas.")
+    res
+  }
+
+  // Implements forgetful paramodulation.
+  def ForgetfulParamodulateCNF(f: FOLFormula) : List[Set[MyFClause[FOLFormula]]] =
+    ForgetfulParamodulateCNF( CNFp(f).map(c => toMyFClause(c)) )
+
+  // Implements forgetful paramodulation.
+  def ForgetfulParamodulateCNF(clauses: Set[MyFClause[FOLFormula]]) : List[Set[MyFClause[FOLFormula]]] =
+  {
+    clauses.foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list, c1) =>
+      list ::: clauses.dropWhile( _ != c1).foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list2, c2) =>
+        if ( c1 != c2 ) {  // do not paramodulate a clause into itself
+          val paras = Paramodulants( c1, c2 )
+          paras.map( p => (clauses.filterNot(c => c == c1 || c == c2 ) + p)).toList ++ list2
+        } else
+          list2
+      )
+    )
+  }
+
+  private def getArgs( margs: List[Set[FOLTerm]] ) = {
+    val res = margs.foldLeft(Set(List[FOLTerm]()))( (args, res) => args.flatMap( a => res.map( r => a :+ r ) ) )
+    res
+  }
+
+  // Computes ground paramodulants including the trivial one
+  def Paramodulants(s: FOLTerm, t: FOLTerm, r: FOLTerm) : Set[FOLTerm] = r match {
+    case _ if r == s => Set(t) ++ Set(r)
+    case Function(f, args) => {
+      val margs = args.map( a => Paramodulants( s, t, a ) )
+      getArgs( margs ).map( args => Function( f, args ) )
+    }
+    case _ => Set(r)
+  }
+
+  // Computes ground paramodulants without the trivial one
+  def Paramodulants(s: FOLTerm, t: FOLTerm, f: FOLFormula) : Set[FOLFormula] = {
+    val res = f match {
+    case Atom( x, args ) => {
+      val margs = args.map( a => Paramodulants( s, t, a ) )
+      getArgs( margs ).map( args => Atom( x, args ) ) - f
+    }
+  }
+    trace("paramodulants for " + s + " = " + t + " into " + f + " : " + res)
+    res
+  }
+
+  private def getParaLeft( eq: FOLFormula, aux: FOLFormula, main: FOLFormula, left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) =
+  new MyFClause( left.neg ++ right.neg.filterNot( f => f == aux ) :+ main, left.pos.filterNot( f => f == eq) ++ right.pos )
+
+  private def getParaRight( eq: FOLFormula, aux: FOLFormula, main: FOLFormula, left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) =
+  new MyFClause( left.neg ++ right.neg, left.pos.filterNot( f => f == eq) ++ right.pos.filterNot( f => f == aux ) :+ main  )
+
+  def Paramodulants( c1: MyFClause[FOLFormula], c2: MyFClause[FOLFormula] ) : Set[MyFClause[FOLFormula]] =
+    myParamodulants( c1, c2 ) ++ myParamodulants( c2, c1 )
+
+  // Computes ground paramodulants
+  def myParamodulants( left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) : Set[MyFClause[FOLFormula]]=
+  left.pos.foldLeft(Set[MyFClause[FOLFormula]]())( (res, eq) =>
+    res ++ (eq match {
+      case Equation( s, t ) => right.neg.flatMap( aux => (Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux )).map( para =>
+        getParaLeft( eq, aux, para, left, right )
+      ) ) ++
+      right.pos.flatMap( aux => (Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux )).map( para =>
+        getParaRight( eq, aux, para, left, right )
+      ) ).toSet
+    case _ => Set()
+  }))
+
 
   /** Converts a CNF back into a FOL formula.
     */
@@ -263,9 +393,10 @@ object MinimizeSolution {
     else { And(nonEmptyClauses.map( c => Or(c.pos.map(l => l._1) ++ c.neg.map( l => Neg(l._1) )) )) }
   }
 
-  // Checks if complementary literals exist.
+  // Checks if complementary literals exist, and if
+  // the clauses are not identical.
   def resolvable(l: MyFClause[FOLFormula], r: MyFClause[FOLFormula]) =
-    l.pos.exists( f => r.neg.contains(f) ) || l.neg.exists(f => r.pos.contains(f))
+    l != r && l.pos.exists( f => r.neg.contains(f) ) || l.neg.exists(f => r.pos.contains(f))
 
   // Assumes that resolvable(l, r). Does propositional resolution.
   // TODO: incorporate contraction.

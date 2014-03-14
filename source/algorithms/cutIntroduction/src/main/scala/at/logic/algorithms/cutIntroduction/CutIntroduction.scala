@@ -7,6 +7,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.provers.Prover
 import at.logic.provers.prover9.Prover9Prover
+import at.logic.provers.eqProver.EquationalProver
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.language.lambda.substitutions._
 import at.logic.language.hol.logicSymbols._
@@ -103,6 +104,71 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     smallestProof
   }
 
+  /**
+   * Copy'n'paste of the above, using the equality consequence generator and (by default)
+   * equational prover to improve the solution.
+   **/
+  def applyEq( proof: LKProof, prover: Prover = new EquationalProver() ) : LKProof = applyEq( extractExpansionTrees( proof ), prover)
+
+  def applyEq(ep: ExpansionSequent, prover: Prover) : LKProof = {
+    val endSequent = toSequent(ep)
+    println("\nEnd sequent: " + endSequent)
+
+    // Assign a fresh function symbol to each quantified formula in order to
+    // transform tuples into terms.
+    val termsTuples = TermsExtraction(ep)
+    val terms = new FlatTermSet(termsTuples)
+    println( "Size of term set: " + terms.termset.size )
+
+    val grammars = ComputeGrammars(terms)
+
+    println( "\nNumber of grammars: " + grammars.length )
+
+    if(grammars.length == 0) {
+      throw new CutIntroUncompressibleException("\nNo grammars found." +
+        " The proof cannot be compressed using a cut with one universal quantifier.\n")
+    }
+
+    // Compute the proofs for each of the smallest grammars
+    val smallest = grammars.head.size
+    val smallestGrammars = grammars.filter(g => g.size == smallest)
+
+    println( "Smallest grammar-size: " + smallest )
+    println( "Number of smallest grammars: " + smallestGrammars.length )
+
+    // maps a grammar to a proof and a corresponding extended Herbrand-sequent
+    def buildProof(grammar:Grammar, prover:Prover) = {
+
+      val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
+      val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+      val ehs1 = MinimizeSolution.applyEq(ehs, prover)
+
+      // TODO Uncomment when fixed.
+      // Call interpolant before or after minimization??
+      //val interpolant = computeInterpolant(ehs1, grammar.s)
+      //val cutFormula = AllVar(xvar, And(conj, interpolant.asInstanceOf[FOLFormula]))
+      //val ehs2 = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula)
+
+      val proof = buildProofWithCut(ehs1, prover)
+      val final_proof = CleanStructuralRules( proof )
+
+      ( final_proof, ehs1 )
+    }
+
+    val proofs = smallestGrammars.map(buildProof(_, prover))
+
+    // Sort the list by size of proofs
+    val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
+
+    val smallestProof = sorted.head._1
+    val ehs = sorted.head._2
+
+    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")
+    println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+
+    smallestProof
+}
+
 
   /**
    * Experimental implementation of cut-introduction algorithm
@@ -111,13 +177,14 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    * @param prover: The prover used for checking validity and constructing the final proof.
                     Default: use MiniSAT for validity check, LK proof search for proof building.
    * @param timeout: the timeout (in seconds)
+   * @param useForgetfulPara: whether to use also forgetful paramodulation when improving solution
    *
    * @return a triple ( p: Option[LKProof], s: String, l: String ) where s is a status string,
    * and l is a logging string with quantitative data,
    * see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
    **/
   def applyExp( ep: ExpansionSequent, prover: Prover = new DefaultProver(),
-                timeout: Int = 3600 /* 1 hour */ ) : ( Option[LKProof] , String, String ) = {
+                timeout: Int = 3600 /* 1 hour */, useForgetfulPara: Boolean = false ) : ( Option[LKProof] , String, String ) = {
     var log = ""
     var status = "ok"
     var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
@@ -174,7 +241,10 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         val t1 = System.currentTimeMillis
         val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
         val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-        val ehs1 = MinimizeSolution.apply2(ehs, prover)
+        val ehs1 = if ( useForgetfulPara )
+          MinimizeSolution.applyEq(ehs, prover)
+        else
+          MinimizeSolution.apply2(ehs, prover)
         val t2 = System.currentTimeMillis
         SolutionCTime += t2 - t1
    

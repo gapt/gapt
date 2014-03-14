@@ -1323,7 +1323,7 @@ package propositionalRules {
         case _ =>
           //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule imp:l with the given formulas "
           //  +term1+" in "+s1.root+" and "+term2+" in "+s2.root)
-          throw new LKBinaryRuleCreationException("c:l", s1, term1, s2, term2)
+          throw new LKBinaryRuleCreationException("impl:l", s1, term1, s2, term2)
       }
     }
     private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {

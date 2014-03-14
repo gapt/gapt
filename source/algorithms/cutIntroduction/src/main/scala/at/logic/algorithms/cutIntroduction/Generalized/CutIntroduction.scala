@@ -29,7 +29,6 @@ import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, toSeque
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
-import at.logic.calculi.expansionTrees.{ExpansionTree, toSequent, quantRulesNumber => quantRulesNumberET}
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.utils.executionModels.timeout._
 import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
@@ -177,14 +176,15 @@ object CutIntroduction extends Logger {
     * @param prover The prover used for checking validity and constructing the final proof.
     *                Default: use MiniSAT for validity check, LK proof search for proof building.
     * @param timeout the timeout (in seconds)
-    * @return 
+    * @param useForgetfulPara whether to use also forgetful paramodultion when improving solution
+    *
     * @return a triple ( p: Option[LKProof], s: String, l: String ).
     *         The p is the LK proof with cut if cut introduction was successful and None otherwise.
     *         If it is None, the cause of failure will be printed on the console.
     *         s is a status string, and l is a logging string with quantitative data,
     *         see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
     */
-  def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */ ) : ( Option[LKProof] , String, String ) = {
+  def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */, useForgetfulPara: Boolean = false ) : ( Option[LKProof] , String, String ) = {
     var log = ""
     var status = "ok"
     var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
@@ -241,7 +241,10 @@ object CutIntroduction extends Logger {
         val t1 = System.currentTimeMillis
         val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
         val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-        val ehs1 = MinimizeSolution(ehs, prover)
+        val ehs1 = if ( useForgetfulPara )
+          MinimizeSolution.applyEq(ehs, prover)
+        else
+          MinimizeSolution(ehs, prover)
         val t2 = System.currentTimeMillis
         SolutionCTime += t2 - t1
    

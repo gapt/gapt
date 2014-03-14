@@ -3,7 +3,7 @@
  *******************************************************
 
 GAPT is a proof theory framework. The framework aims at
- creating data types, algorithms, parsers, transformations 
+creating data types, algorithms, parsers, transformations 
 and other components common in proof theory in general 
 and automated proof theory in particular. 
 
@@ -26,18 +26,18 @@ Running:
   we found useful over time.
 
 * Alternatively, you can run the jar files directly by calling
-  'java -Xss2m -Xmx2g -jar gapt-cli-1.5.jar' 
+  'java -Xss2m -Xmx2g -jar gapt-cli-1.6.jar' 
   and 
-  'java -Xss2m -Xmx2g -jar prooftool-1.5.jar' 
+  'java -Xss2m -Xmx2g -jar prooftool-1.6.jar' 
 
 
 License: GAPT is free software licensed under the GNU General
- Public  License Version 3. See the file COPYING for details.
+Public  License Version 3. See the file COPYING for details.
 
- Instructions on downloading the sources can be found at:
+Instructions on downloading the sources can be found at:
   http://code.google.com/p/gapt/source/checkout
 
- Compilation Instructions can be found at:
+Compilation Instructions can be found at:
   http://code.google.com/p/gapt/wiki/Installation
 
 Notes:

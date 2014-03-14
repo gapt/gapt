@@ -4,7 +4,7 @@
 # the CLI jar package and runs the scala interpreter
 # (preference is given to the development version)
 
-export VERSION="1.5"
+export VERSION="1.6"
 export JARNAME="cli-$VERSION-jar-with-dependencies.jar"
 export RELEASE="gapt-cli-$VERSION.jar"
 export SCP=""

@@ -11,7 +11,7 @@
 	<artifactId>prooftool</artifactId>
 	<packaging>jar</packaging>
 	<name>Proof Tool</name>
-	<version>1.5</version>
+	<version>1.6</version>
 
 	<build>
 		<plugins>

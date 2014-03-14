@@ -112,6 +112,14 @@ object Prover9 extends at.logic.utils.logging.Logger {
     isValid(input_file, output_file)
   }
 
+  private def fileContainsProof( file: String ) : Boolean = {
+    val proof_str = "============================== PROOF ================================="
+    val s = scala.io.Source.fromFile(file)
+    val ret = s.getLines.exists( line => line.startsWith( proof_str ) )
+    s.close()
+    ret
+  }
+
   def isValid( input_file: String, output_file: String ) : Boolean = {
     trace( "running prover9" )
     val ret = runP9( input_file, output_file )
@@ -125,8 +133,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
         // Sometimes, prover9 returns with this exit code even though
         // a proof has been found. 
         //
-        // TODO: look through the proof for evidence that prover9 found a proof
-        throw new Prover9Exception("Prover9 ran out of things to do (sos list exhausted).")
+        // Hence we look through the proof for evidence that prover9 found a proof
+        fileContainsProof( output_file )
       }
       case 3 => {
         throw new Prover9Exception("The max_megs (memory limit) parameter was exceeded.")
