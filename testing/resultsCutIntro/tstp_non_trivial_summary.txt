@@ -1,6 +1,7 @@
 Total number of proofs: 6341
-Total number of proofs with non-trivial termsets: 2819
-Time limit exceeded or exception during parsing: 1182
-Time limit exceeded or exception during terms extraction: 69
-Average instances per quantified formula: 5.978673627250539
-Average termset size: 35.415394
+Total number of proofs with trivial termsets: 2255
+Total number of proofs with non-trivial termsets: 2849
+Time limit exceeded or exception during parsing: 1087
+Time limit exceeded or exception during terms extraction: 150
+Average instances per quantified formula: 6.452350966216557
+Average termset size: 40.762722
