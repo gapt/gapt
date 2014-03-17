@@ -79,13 +79,6 @@ package logicSymbols {
     def toCode = "TopSymbol"
   }
 
-  // Symbols for a Herbrand array.
-  case object HArraySymbol extends LogicalSymbolsA {
-    override def unique = "HArraySymbol"
-    override def toString = "HA"
-    def toCode = "HArraySymbol"
-  }
-
   case class ConstantStringSymbol( val string : String ) extends ConstantSymbolA with StringSymbol
   {
     def toCode = "ConstantStringSymbol( \"" + string + "\" )"

@@ -103,13 +103,17 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None
+/*
+ * do we need (vertical) display of sequents in prooftool?
+ *
     case fSequent: FSequent =>
       layout(new DrawHerbrandSequent[HOLFormula]((fSequent.antecedent,fSequent.succedent), fSize)) = c
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None
-    case expTrees: ExpansionSequent =>
-      layout(new DrawHerbrandSequent[ExpansionTree](expTrees.toTuple(), fSize)) = c
+*/
+    case expSequent: ExpansionSequent =>
+      layout(new DrawExpansionSequent(expSequent, fSize)) = c
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None

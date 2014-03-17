@@ -660,10 +660,6 @@ object printProofStats {
     def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = ExtractInterpolant( p, npart, ppart )
   }
 
-  object extractHerbrandSequent {
-    def apply( p: LKProof ) = at.logic.transformations.herbrandExtraction.ExtractHerbrandSequent(p)
-  }
-
   object eliminateInstaces {
     def apply(p:RobinsonResolutionProof) = InstantiateElimination.apply(p)
   }

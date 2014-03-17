@@ -24,8 +24,10 @@
 \newcommand{\RightLabelm}[1]{\RightLabel{$#1$}}
 \newcommand{\AxiomCm}[1]{\AxiomC{$#1$}}
 
-%Normal text in math mode ("math text")
+% Normal text in math mode ("math text")
 \newcommand{\mt}[1]{\textnormal{#1}}
+% CLI-style names,words,... within normal text
+\newcommand{\cli}[1]{{\tt {#1}}}
 
 \newenvironment{meta}{\color{red}}{\color{black}}
 
@@ -221,7 +223,7 @@ returns a list of length 1 as shown by entering
 scala> proofs.length
 \end{lstlisting}
 %
-Its only element is {\tt proofs(0)}, the name of this proof can be obtained by
+Its only element is \cli{proofs(0)}, the name of this proof can be obtained by
 entering
 %
 \begin{lstlisting}
@@ -241,7 +243,7 @@ entering
 scala> prooftool( proof )
 \end{lstlisting}
 %
-In the folder {\tt ../examples/simple} you can find a number of further simple
+In the folder \cli{../examples/simple} you can find a number of further simple
 examples that illustrate different aspects of GAPT.
 
 
@@ -298,7 +300,7 @@ HG: at.logic.language.hol.HOLFormula = ∀x:ο.(P(x:ο, f(x:ο):ι): o⊃∃y:ι
 TODO: add the other parsers, describe syntax in detail
 \end{meta}
 
-A collection of formula sequences can be found in the file {\tt examples/FormulaSequence.scala}.
+A collection of formula sequences can be found in the file \cli{../examples/FormulaSequence.scala}.
 Have a look at this code to see how to compose formulas without the parser. This file is
 a scala script that can be loaded into the CLI by entering
 %
@@ -448,7 +450,7 @@ scala> prooftool( p5 )
 \end{lstlisting}
 
 The system comes with a collection of example proof sequences in the file
-{\tt examples/ProofSequences.scala} which are generated in the above style.
+\cli{../examples/ProofSequences.scala} which are generated in the above style.
 Have a look at this code for more complicated proof constructions. In order
 to load these proof sequences into the CLI, enter:
 \begin{lstlisting}
@@ -495,40 +497,29 @@ I: at.logic.language.hol.HOLFormula = ($\bot$:o $\lor$ q:o)
 
 \subsection{Expansion Trees}
 
-\begin{meta}
- how to extract expansion trees, how to view them in prooftool, remove extractHerbrandSequent in the long run
-\end{meta}
+Expansion trees are a compact representation of cut-free proofs. They have originally been
+introduced in~\cite{Miller87Compact}. GAPT contains an implementation of
+expansion trees for higher-order logic including functions for extracting expansion
+trees from proofs, for merging expansion trees, for pruning and transforming them
+in various ways and for viewing
+them in a comfortable way in the graphical user interface.
 
-\paragraph{\textbf{extractHerbrandSequent: LKProof $\rightarrow$ Sequent}}
+An expansion tree contains the instances of the quantifiers for a formula. In order
+to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expansion trees.
 
-A proof in first order logic can be concisely represented with a Herbrand
-sequent. Since this sequent is purely propositional, this is a way of reducing
-first order logic to propositional logic. In short, if $\varphi$ is a proof and
-$H$ is its Herbrand sequent, then $H$ contains all instances of the formulas in
-the end-sequent of $\varphi$ and $H$ is a tautology. It is important to note
-that $\varphi$ may not have strong quantifiers nor cuts on quantified formulas.
-A more detailed explanation of Herbrand sequent extraction can be found in
-\ref{Hetzl2008}. 
-
-This method extracts a Herbrand sequent from a proof $\varphi$ that satisfies
-the constraints. 
-An execution and output of this command is shown below. The proof $p$ used is the
-``Linear Example Proof'' for $n=4$,
-which is a proof without cuts of the end sequent:
-
-$$P0, \forall x. (Px \rightarrow Psx) \vdash Ps^4 0$$
-
+Suppose we are in the command-line interface and have a value \cli{p} which is a cut-free \cli{LKProof}.
+We can then extract the expansion sequent of \cli{p} by:
 \begin{lstlisting}
-scala> var hs = extractHerbrandSequent(p)
-hs: at.logic.calculi.lk.base.types.FSequent =
-([(P(s(s(s(0))))->P(s(s(s(s(0)))))), (P(s(s(0)))->P(s(s(s(0))))),
-(P(s(0))->P(s(s(0)))), (P(0)->P(s(0))), P(0)], [P(s(s(s(s(0)))))])
+scala> val E = extractExpansionTrees( p )
 \end{lstlisting}
+This expansion sequent can then be viewed in the graphical user interface by simply calling:
+\begin{lstlisting}
+scala> prooftool( E )
+\end{lstlisting}
+Prooftool is then intialized with displaying the end-sequent of \cli{p}, i.e.\ the shallow sequent
+of \cli{E}. The user can then selectively expand quantifiers by clicking on them, see~\cite{Hetzl13Understanding}
+for a detailed description.
 
-Observe that this sequent (represented by two lists, one for the antecedent and
-one for the succedent) is a tautology, is propositional and contains all
-instances of $\forall x. (Px \rightarrow Psx)$ that must be used in a cut-free
-proof.
 
 \section{Cut-Elimination by Resolution}
 

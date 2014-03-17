@@ -98,7 +98,6 @@ trait FOLExpression extends HOLExpression with FOL {
       case Neg(x) => "Neg(" + x.toCode + ")"
       case ExVar(x,f) => "ExVar(" + x.toCode + ", " + f.toCode + ")"
       case AllVar(x,f) => "AllVar(" + x.toCode + ", " + f.toCode + ")"
-      //case HArray(f1, f2) => "HArray(" + f1.toCode + ", " + f2.toCode + ")"
     }
   }
 

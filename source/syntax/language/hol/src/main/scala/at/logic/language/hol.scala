@@ -40,7 +40,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case Neg(x) => NegSymbol + x.toString
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
-      case HArray(f1, f2) => "(" + f1.toString + HArraySymbol + f2.toString + ")"
       case Abs(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
       case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
@@ -65,7 +64,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case Neg(x) => NegSymbol + x.toPrettyString_
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
-      case HArray(f1, f2) =>  f1.toPrettyString_ + HArraySymbol + f2.toPrettyString_
       case Abs(v, exp) => "λ" + v.toString + "." + exp.toString
       case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
@@ -88,7 +86,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case Neg(x) => NegSymbol + x.toPrettyString_
       case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
       case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
-      case HArray(f1, f2) => "(" + f1.toPrettyString_ + HArraySymbol + f2.toPrettyString_ + ")"
       case Abs(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
       case App(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     }
@@ -101,7 +98,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
       case And(x,y) => x.containsQuantifier || y.containsQuantifier
       case Or(x,y) => x.containsQuantifier || y.containsQuantifier
       case Imp(x,y) => x.containsQuantifier || y.containsQuantifier
-      case HArray(x,y) => x.containsQuantifier || y.containsQuantifier
       case Neg(x) => x.containsQuantifier
       case ExVar(x,f) => true
       case AllVar(x,f) => true
@@ -232,8 +228,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
   case object AndC extends HOLConst(AndSymbol, "(o -> (o -> o))")
   case object OrC extends HOLConst(OrSymbol, "(o -> (o -> o))")
   case object ImpC extends HOLConst(ImpSymbol, "(o -> (o -> o))")
-  // Synthetic connective to represent Herbrand Arrays
-  case object HArrayC extends HOLConst(HArraySymbol, "(o -> (o -> o))")
   class ExQ protected[hol](e:TA) extends HOLConst(ExistsSymbol, ->(e,"o"))
   class AllQ protected[hol](e:TA) extends HOLConst(ForallSymbol, ->(e,"o"))
   case class EqC(e:TA) extends HOLConst(EqSymbol, ->(e, ->(e,"o")))
@@ -320,17 +314,6 @@ trait Formula extends LambdaExpression {require(exptype == To())}
     def unapply(expression: LambdaExpression) = expression match {
         case App(App(EqC(_),left),right) => Some( left.asInstanceOf[HOLExpression],right.asInstanceOf[HOLExpression] )
         case _ => None
-    }
-  }
-
-  // Herbrand array definition
-  object HArray {
-    def apply(left : HOLFormula, right: HOLFormula) = {
-      App(App(HArrayC, left), right).asInstanceOf[HOLFormula]
-    }
-    def unapply(expression: LambdaExpression) = expression match {
-      case App(App(HArrayC, left), right) => Some(left.asInstanceOf[HOLFormula], right.asInstanceOf[HOLFormula])
-      case _ => None
     }
   }
 

@@ -5,7 +5,7 @@
 # (preference is given to the development version)
 
 export VERSION="1.6"
-export JARNAME="prooftool-$VERSION-SNAPSHOT-jar-with-dependencies.jar"
+export JARNAME="prooftool-$VERSION-jar-with-dependencies.jar"
 export RELEASE="prooftool-$VERSION.jar"
 export SCP=""
 export RCP=""

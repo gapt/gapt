@@ -35,7 +35,7 @@ import at.logic.transformations.ceres.projections.{Projections, DeleteTautology,
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
 import at.logic.algorithms.shlk.{FixedFOccs,CloneLKProof2, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
-import at.logic.transformations.herbrandExtraction.{ExtractHerbrandSequent, extractExpansionTrees}
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.clauseSchema.{resolutionProofSchemaDB, InstantiateResSchema}
 import at.logic.transformations.ceres.ACNF.ACNF
@@ -571,9 +571,6 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
-      contents += new Separator
-      contents += new Separator
-      contents += new Separator
       contents += new MenuItem(Action("Mark Cut- & Ω-Ancestors") { markCutOmegaAncestors(FixedFOccs.foccs) }) {
         border = customBorder
         enabled = false
@@ -699,7 +696,6 @@ object Main extends SimpleSwingApplication {
       contents += new Separator
       contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(body.getContent.getData.get._2.asInstanceOf[LKProof]) }) { border = customBorder }
       contents += new Separator
-      contents += new MenuItem(Action("Extract Herbrand Sequent") { herbrandSequent() }) { border = customBorder }
       contents += new MenuItem(Action("Extract Expansion Tree") { expansionTree() }) { border = customBorder }
       contents += new Separator
       contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK() }) { border = customBorder }
@@ -1040,16 +1036,6 @@ object Main extends SimpleSwingApplication {
         errorMessage("Cannot parse the specified resolution schema!\n\n" + getExceptionString(e))
     }
   }
-
-  def herbrandSequent() { try {
-    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val hs = ExtractHerbrandSequent(body.getContent.getData.get._2.asInstanceOf[LKProof])
-    body.contents = new Launcher(Some("Herbrand Sequent",hs),14)
-    body.cursor = java.awt.Cursor.getDefaultCursor
-  } catch {
-    case e: Throwable =>
-      errorMessage("Cannot extract Herbrand Sequent!\n\n" + getExceptionString(e))
-  }}
 
   def expansionTree() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
