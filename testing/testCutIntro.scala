@@ -4,7 +4,7 @@ import scala.collection.immutable.HashMap
 import org.slf4j.LoggerFactory
 
 import at.logic.utils.executionModels.timeout._
-import at.logic.calculi.expansionTrees.{ExpansionTree,removeFromExpansionSequent,quantRulesNumber => quantRulesNumberET}
+import at.logic.calculi.expansionTrees.{ExpansionTree,ExpansionSequent,removeFromExpansionSequent,quantRulesNumber => quantRulesNumberET}
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.lk._
 import at.logic.provers.prover9._
@@ -384,7 +384,7 @@ object testCutIntro {
     CutIntroDataLogger.trace( name + ",n/a," + status + ",n/a," + rulesNumber( p ) + "," + quantRulesNumber( p ) + cutintro_logline ) // log all, computing #infqf, #qinfcf
   }
 
-  def removeEqAxioms( eseq: (Seq[ExpansionTree], Seq[ExpansionTree]) ) = {
+  def removeEqAxioms( eseq: ExpansionSequent ) = {
    // removes all equality axioms that appear in ../examples/ProofSequences.scala
    val R = parse.fol( "Forall x =(x,x)" )
    val S = parse.fol( "Forall x Forall y Imp =(x,y) =(y,x)" )
@@ -410,7 +410,7 @@ object testCutIntro {
    *
    * @return ( status, logline )
    **/
-  def compressExpansionProof( ep: (Seq[ExpansionTree],Seq[ExpansionTree]), prover: Prover, useGenCutIntro: Boolean, timeout: Int, useForgetfulPara: Boolean ) : ( String, String ) = {
+  def compressExpansionProof( ep: ExpansionSequent, prover: Prover, useGenCutIntro: Boolean, timeout: Int, useForgetfulPara: Boolean ) : ( String, String ) = {
     val r = if ( useGenCutIntro )
       //// FIXME: only temporarily useGenCutIntro will have the effect of using Generalized.Deltas.OneVariableDelta()
       Generalized.CutIntroduction.applyStat( ep, new Generalized.Deltas.OneVariableDelta(), prover, timeout, useForgetfulPara )
