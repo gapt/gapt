@@ -35,7 +35,7 @@ object CLIMain {
   import at.logic.algorithms.lk.regularize
   import at.logic.calculi.occurrences.FormulaOccurrence
   import at.logic.algorithms.cutIntroduction.FlatTermSet
-  import at.logic.algorithms.cutIntroduction.Generalized.Deltas._
+  import at.logic.algorithms.cutIntroduction.Deltas._
   import at.logic.algorithms.lk.statistics._
   import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
   import at.logic.gui.prooftool.gui.{Main => PT}

@@ -1,16 +1,32 @@
-package at.logic.algorithms.cutIntroduction.Generalized
-
+package at.logic.algorithms.cutIntroduction
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
 import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
+import at.logic.provers.Prover
+import at.logic.provers.prover9.Prover9Prover
+import at.logic.provers.eqProver.EquationalProver
+import at.logic.provers.minisat.MiniSATProver
+import at.logic.language.lambda.substitutions._
+import at.logic.language.hol.logicSymbols._
+import at.logic.language.hol.HOLFormula
+import at.logic.calculi.lk.base._
+import at.logic.calculi.lk.base.types._
+import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk.quantificationRules._
+import at.logic.language.lambda.symbols._
+import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.algorithms.lk._
+import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.interpolation._
+import at.logic.algorithms.resolution._
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.utils.executionModels.timeout._
+
 import at.logic.utils.logging.Logger
-import at.logic.algorithms.cutIntroduction.{Grammar => BaseGrammar, ExtendedHerbrandSequent => BaseExtendedHerbrandSequent,
-                                            CutIntroduction => BaseCutIntroduction, DeltaTable => BaseDeltaTable,
-                                            DefaultProver, CutIntroUncompressibleException, CutIntroEHSUnprovableException,
-                                            CutIntroException, TermsExtraction, FlatTermSet, DeltaTableException}
 
 /** Represents the vector Delta(t_1,...,t_n), i.e. one row of the Delta-table
   * (for details, see gapt/doc/deltavector.tex, Chapter "Generalized Delta-Vector").

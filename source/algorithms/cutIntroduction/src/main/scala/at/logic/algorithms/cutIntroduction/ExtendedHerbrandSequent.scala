@@ -16,8 +16,16 @@ import at.logic.language.fol._
 import at.logic.language.fol.Utils._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._
+import at.logic.algorithms.resolution._
+import at.logic.calculi.resolution.base.FClause
 import at.logic.utils.logging.Logger
 import scala.collection.immutable.Stack
+import at.logic.algorithms.cutIntroduction.MinimizeSolution.MyFClause
+import at.logic.utils.dssupport.ListSupport.mapAccumL
+import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
+import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch
+import at.logic.utils.executionModels.searchAlgorithms.SetNode
+import at.logic.provers.minisat.MiniSAT
 
 
 // NOTE: implemented for the one cut case.
@@ -45,7 +53,7 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
       case _ => acc
     }
   }
-  // Instanciated (previously ex. quantified) formulas on the right
+  // Instantiated (previously ex. quantified) formulas on the right
   val inst_r : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
@@ -55,18 +63,24 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     }
   }
 
-  // Separating the formulas that contain or not the eigenvariable
-  val antecedent = prop_l ++ inst_l.filter(f => !f.freeVariables.contains(g.eigenvariable))
-  val antecedent_alpha = inst_l.filter(f => f.freeVariables.contains(g.eigenvariable))
-  val succedent = prop_r ++ inst_r.filter(f => !f.freeVariables.contains(g.eigenvariable))
-  val succedent_alpha = inst_r.filter(f => f.freeVariables.contains(g.eigenvariable))
+  // Separating the formulas that contain/don't contain eigenvariables
+  def varFree(f : FOLFormula) = f.freeVariables.intersect(g.eigenvariables.toSet).isEmpty
+  val antecedent = prop_l ++ inst_l.filter(varFree)
+  val antecedent_alpha = inst_l.filter(x => !varFree(x))
+  val succedent = prop_r ++ inst_r.filter(varFree)
+  val succedent_alpha = inst_r.filter(x => !varFree(x))
 
-  val cutFormula = if(cf == null) CutIntroduction.computeCanonicalSolution(seq, g) else cf
+  //trace("antecent: " + prop_l + " ++ " + inst_l.filter(varFree))
+  //trace("antecent_alpha: " + inst_l.filter(x => !varFree(x)))
+  //trace("succedent: " + prop_r + " ++ " + inst_r.filter(varFree))
+  //trace("succedent_alpha: " + inst_r.filter(x => !varFree(x)))
+
+  var cutFormula = if(cf == null) CutIntroduction.computeCanonicalSolution(seq, g) else cf
 
   override def toString = {
 
     // For printing Xα -> ^ Xsi
-    val X = ConstantStringSymbol("X")
+    /*val X = ConstantStringSymbol("X")
     val alpha = FOLVar(new VariableStringSymbol("α"))
     val xalpha = Atom(X, alpha::Nil)
     // X[s_i] forall i
@@ -81,7 +95,8 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val str3 = succedent.foldRight("") ( (f, acc) => acc + f + ", ")
     val str4 = cutFormula match { case AllVar( x, f ) => "λ " + x + ". " + f }
       
-    (str1 + str0 + implication + " :- " + str3 + str2 + " where " + X + " = " + str4)
-  }
+    (str1 + str0 + implication + " :- " + str3 + str2 + " where " + X + " = " + str4)*/
 
+    ""
+  }
 }

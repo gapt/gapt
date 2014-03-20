@@ -9,6 +9,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.algorithms.cutIntroduction._
+import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
 
 import at.logic.algorithms.lk._
 
@@ -61,7 +62,7 @@ class CutIntroTest extends SpecificationWithJUnit {
         )
       )
 
-      CutIntroduction( proof, new LKProver() )
+      CutIntroduction( proof, ExactBound(1), new LKProver() )
 
       termset must haveTheSameElementsAs ( LinearExampleTermset( 4 ) )
     }

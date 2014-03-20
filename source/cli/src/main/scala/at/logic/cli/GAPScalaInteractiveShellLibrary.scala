@@ -20,7 +20,7 @@ import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.hol._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.algorithms.unification.{MulACEquality, MulACUEquality}
-import at.logic.algorithms.cutIntroduction.Generalized.Deltas._
+import at.logic.algorithms.cutIntroduction.Deltas._
 
 import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent}
 import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
@@ -525,13 +525,15 @@ object printProofStats {
 
 /*************************** Cut introduction algorithm **********************************/
 
-  import at.logic.algorithms.cutIntroduction._
-  import at.logic.algorithms.cutIntroduction.Generalized.{Grammar => GeneralizedGrammar,
-                                                          ComputeGrammars => ComputeGeneralizedGrammars,
-                                                          ExtendedHerbrandSequent => GeneralizedExtendedHerbrandSequent,
-                                                          CutIntroduction => CutIntroductionG}
-  import at.logic.algorithms.cutIntroduction.Generalized.DeltaVector
-  import at.logic.algorithms.cutIntroduction.Generalized.Deltas._
+  import at.logic.algorithms.cutIntroduction.{Grammar,
+                                              ComputeGrammars,
+                                              ExtendedHerbrandSequent,
+                                              CutIntroduction,
+                                              FlatTermSet,
+                                              TermsExtraction,
+                                              MinimizeSolution}
+  import at.logic.algorithms.cutIntroduction.DeltaVector
+  import at.logic.algorithms.cutIntroduction.Deltas._
   object extractTerms {
     def apply( p: LKProof ) = {
       val ts = new FlatTermSet(TermsExtraction(p))
@@ -549,17 +551,7 @@ object printProofStats {
 
   object computeGrammars {
     def apply(terms: FlatTermSet) = {
-      val g = ComputeGrammars(terms)
-        g.size match {
-          case 0 => throw new Exception("No grammars found for this list of terms.")
-          case n => println(n + " grammars found.\n"); g
-        }
-    }
-  }
-
-  object computeGrammarsG {
-    def apply(terms: FlatTermSet) = {
-      val g = ComputeGeneralizedGrammars(terms, new UnboundedVariableDelta())
+      val g = ComputeGrammars(terms, new UnboundedVariableDelta())
         g.size match {
           case 0 => throw new Exception("No grammars found for this list of terms.")
           case n => println(n + " grammars found.\n"); g
@@ -577,24 +569,9 @@ object printProofStats {
     }
   }
 
-  object seeNFirstGrammarsG {
-    def apply(lst: List[GeneralizedGrammar], n: Int) = {
-      println("\n");
-      for(i <- 0 to n-1) {
-        println(i + ". " + lst(i).toPrettyString + "\n(size = " + lst(i).size + ")\n"  )
-      }
-      println("\nNote that the function symbols 'tuplei' are inserted by the system as part of the algorithm.")
-    }
-  }
-
   object generateExtendedHerbrandSequent {
     def apply( es: Sequent, g: Grammar) =
       new ExtendedHerbrandSequent(es, g)
-  }
-
-  object generateGeneralizedExtendedHerbrandSequent {
-    def apply( es: Sequent, g: GeneralizedGrammar) =
-      new GeneralizedExtendedHerbrandSequent(es, g)
   }
 
   object computeCanonicalSolution {
@@ -616,38 +593,21 @@ object printProofStats {
   object buildProofWithCut {
     def apply(ehs: ExtendedHerbrandSequent) = {
       val p = CutIntroduction.buildProofWithCut( ehs, new at.logic.algorithms.cutIntroduction.DefaultProver() )
-      CleanStructuralRules( p )
+      p.flatMap(x => Some(CleanStructuralRules( x )))
     }
   }
 
   object cutIntro {
-    def apply( p: LKProof ) : LKProof = CutIntroduction( p )
-    def apply( p: LKProof, prover: at.logic.provers.Prover ) : LKProof = CutIntroduction( p, prover )
-    def apply( ep: ExpansionSequent) : LKProof =
-      CutIntroduction( ep, new at.logic.algorithms.cutIntroduction.DefaultProver() )
-    def apply( ep: ExpansionSequent, prover: at.logic.provers.Prover ) : LKProof =
-      CutIntroduction( ep, prover )
-  }
-
-  object cutIntroExp {
-    def apply( p: LKProof ) : LKProof = apply( extractExpansionTrees( p ))
-    def apply( p: LKProof, prover: at.logic.provers.Prover ) : LKProof = apply( extractExpansionTrees( p ), prover)
-    def apply( ep: ExpansionSequent) : LKProof = CutIntroduction.applyExp( ep )._1.get
-    def apply( ep: ExpansionSequent, prover: at.logic.provers.Prover ) : LKProof =
-      CutIntroduction.applyExp( ep, prover )._1.get
-  }
-
-  object cutIntroG {
-    def apply( p: LKProof, numVars : Constraint[Int] ) = CutIntroductionG( p, numVars )
-    def apply( p: LKProof, numVars : Constraint[Int], prover: at.logic.provers.Prover ) = CutIntroductionG( p, numVars, prover )
+    def apply( p: LKProof, numVars : Constraint[Int] ) = CutIntroduction( p, numVars )
+    def apply( p: LKProof, numVars : Constraint[Int], prover: at.logic.provers.Prover ) = CutIntroduction( p, numVars, prover )
     def apply( ep: ExpansionSequent, numVars : Constraint[Int] )  =
-      CutIntroductionG( ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver() )
+      CutIntroduction( ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver() )
     def apply( ep: ExpansionSequent, numVars : Constraint[Int], prover: at.logic.provers.Prover ) =
-      CutIntroductionG( ep, numVars, prover )
+      CutIntroduction( ep, numVars, prover )
     def applyStat( ep: ExpansionSequent, delta: DeltaVector ) =
-      CutIntroductionG.applyStat( ep, delta)._1.get
+      CutIntroduction.applyStat( ep, delta)._1.get
     def applyStat( ep: ExpansionSequent, delta: DeltaVector, prover: at.logic.provers.Prover ) =
-      CutIntroductionG.applyStat( ep, delta, prover )._1.get
+      CutIntroduction.applyStat( ep, delta, prover )._1.get
   }
 
 /*****************************************************************************************/
@@ -1461,16 +1421,11 @@ object printProofStats {
           |   unfoldProof: (String, Int) => LKProof
           |
           | Cut-Introduction:
-          |   cutIntro: LKProof => LKProof - cut-introduction in auto mode
-          |   cutIntroExp: LKProof => LKProof - experimental implementation of cut-introduction
-          |   cutIntroG: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
+          |   cutIntro: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
           |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
           |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
-          |   computeGrammarsG: FlatTermSet => List[GeneralizedGrammar] - computes all the grammars of a given list of terms with an unbounded number of variables (returns a list ordered by symbolic complexity)
           |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
-          |   seeNFirstGrammarsG: List[GeneralizedGrammar], Int => Unit - prints the first n grammars from a list
           |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
-          |   generateGeneralizedExtendedHerbrandSequent: Sequent, GeneralizedGrammar => GeneralizedExtendedHerbrandSequent - generates the Generalized Extended Herbrand Sequent from an end-sequent of a proof and a grammar
           |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
           |   minimizeSolution: ExtendedHerbrandSequent => ExtendedHerbrandSequent - minimizes the solution associated with the extended Herbrand sequent returning another Herbrand sequent with this minimal solution
           |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent

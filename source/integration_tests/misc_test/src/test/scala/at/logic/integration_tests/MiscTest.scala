@@ -27,6 +27,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 import at.logic.algorithms.cutIntroduction._
+import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
 import at.logic.transformations.ReductiveCutElim
 
 import at.logic.parsing.veriT.VeriTParser
@@ -141,7 +142,7 @@ class MiscTest extends SpecificationWithJUnit {
       val ax3 = Axiom(B::Nil, B::Nil)
       val ax4 = Axiom(A::Nil, A::Nil)
       val ax5 = Axiom(C::Nil, C::Nil)
-//      val ax6 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)
+//      val ax6 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)ExactBound(1)
       val r1 = AndRightRule(ax1,ax2,A,B)//.asInstanceOf[LKProof]
       var r2 = AndLeftRule(r1,A,B)
       val r3 = AndRightRule(ax3,ax4,B,A)
@@ -162,7 +163,7 @@ class MiscTest extends SpecificationWithJUnit {
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       val p = LinearExampleProof( 0, 4 )
-      val pi = CutIntroduction( p, new LKProver() )
+      val pi = CutIntroduction( p, ExactBound(1), new LKProver() ).get
       val pe = ReductiveCutElim.eliminateAllByUppermost(pi, false)
 
       ReductiveCutElim.isCutFree(p) must beEqualTo( true )

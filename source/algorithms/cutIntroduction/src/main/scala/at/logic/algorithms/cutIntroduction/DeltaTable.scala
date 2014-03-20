@@ -5,37 +5,83 @@
  * Implements the delta-different of a set of terms 
  * (E.g.: delta(f(a), f(b)) = [f(alpha)], [a, b]
  * 
+ *
+ * !NOTE!
+ * The delta-table method of cut-introduction is sound but NOT complete!
+ * First, a complete method would require a merging of keys across lines, not
+ * just the selection of subsets in the same line
+ * (see technical report deltavec.tex for details).
+ *
+ * Second, folding the delta-table only produces decompositions U,S which
+ * result in EXACTLY the termset T being decomposed, not a superset of it.
+ * That is, if a decomposition U ° S is returned, then T = U ° S, not
+ * T \subseteq U ° S.
+ *
+ * To give an example where producing supersets would be advantageous:
+ * imagine a proof where the terms P(0),...,P(2^n - 1) occur.
+ * The decomposition of this termset is very inelegant, but if we
+ * we to produce a decomposition for P(0),...,P(2^n), we'd have a
+ * much smaller and equally serviceable solution.
+ *
  * */
  
 package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol._
+import at.logic.language.fol.Utils._
+import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.logging.Logger
+import at.logic.algorithms.cutIntroduction.Deltas._
 
-// TODO: should I use grammars instead of pairs here?
+//package-global definitions
+package object types {
+  /** A term with variables */
+  type U = FOLTerm
+  /** The s-vector for a single variable in u */
+  type SVector = List[FOLTerm]
+  /** The list of s-vectors of a substitution */
+  type S = List[SVector]
+  /* A decomposition constisting u and S */
+  type Decomposition = (U,S)
+}
 
 class DeltaTableException(msg: String) extends Exception(msg)
 
-class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
+
+/** A generalized delta table whose rows contains the results
+  * of Delta_G(...) instead of Delta(...).
+  *
+  * A generalized delta table contains decompositions for subsets of a termset and
+  * one can extract grammars from it by simply iterating through its rows.
+  *
+  * For details, see "Algorithmic Introduction of Quantified Cuts (Hetzl et al 2013)"
+  * and deltavector.tex/.pdf in the /doc-directory.
+  *
+  * @param terms The terms occurring in an LK proof.
+  * @param eigenvariable The name of eigenvariable that should be introduced in the decompositions.
+  */
+class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector) extends Logger {
+  var termsAdded : Int = 0
    
-  var table = new HashMap[List[FOLTerm], List[(FOLTerm, List[FOLTerm])]] 
+  var table = new HashMap[types.S, List[(types.U, List[FOLTerm])]] 
+  val trivialEv = FOLVar(new VariableStringSymbol(eigenvariable + "_0"))
 
   // Fills the delta table with some terms
 
-  var termsAdded : Int = 0
-
   // Initialize with empty decomposition
-  //trace( "initializing delta-table" )
+  trace( "initializing generalized delta-table" )
   add(Nil, null, Nil)
 
+
   for (n <- 1 until terms.length+1) {
-    //trace( "adding simple grammars for " + n + " terms to delta-table" )
+    trace( "adding simple grammars for " + n + " terms to generalized delta-table" )
 
     // Take only the simple grammars of term sets of size (n-1) from the current delta table
-    val one_less = getEntriesOfSize(n-1)
+    // Filter the keys (S) according to size
+    val one_less = table.filter( e => safeHead(e._1,Nil).length == n - 1)
 
     trace("_____________________________________________________")
     trace("DT contains " + table.size + " elements. Filtered to " + one_less.size)
@@ -44,13 +90,16 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
     trace(one_less.toString())
     trace("_____________________________________________________")
 
+
     termsAdded = 0
 
+    //Go through each the decompositions for each (n-1)-sized key and try to add terms.
     one_less.foreach { case (s, pairs) =>
 
       // Iterate over the list of decompositions
       pairs.foreach { case (u, ti) =>
         // Only choose terms that are after the last term in tl
+
         val maxIdx = terms.lastIndexWhere(e => ti.contains(e))
         val termsToAdd = terms.slice(maxIdx + 1, (terms.size + 1))
 
@@ -63,13 +112,12 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
         // Compute delta of the incremented list
         termsToAdd.foreach {case e =>
           val incrementedtermset = ti :+ e
-          val p = delta(incrementedtermset, eigenvariable)
+          val p = delta.computeDelta(incrementedtermset, eigenvariable)
 
           trace("---------------------------------------------------------")
-          trace("Computed delta of " + incrementedtermset)
+          trace("Computed deltaG of " + incrementedtermset)
           trace("Result:")
-          trace("u: " + p._1)
-          trace("s: " + p._2)
+          trace(p.toString())
           trace("---------------------------------------------------------")
 
           termsAdded = termsAdded + 1
@@ -85,9 +133,8 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
           // corresponds to a formula with more than one quantifier. Right now, it
           // is better to not worry about this and rather consider it a potential
           // for further improvement.
-          if (p._2.size == 1 || p._2 != (incrementedtermset)) {
-            // Update delta-table
-            add(p._2, p._1, incrementedtermset)
+          p.foreach{ case(u,s) =>
+            if (incrementedtermset.size == 1 || u != trivialEv) add(s, u, incrementedtermset)
           }
         }
 
@@ -95,8 +142,23 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
     }
   }
 
-  def add(s: List[FOLTerm], u: FOLTerm, t: List[FOLTerm]) {
- 
+
+
+
+
+
+
+
+  /** Adds a decomposition (u,s), under the key s, to the delta table.
+    * Specifically, s is the index and (u,T) is the key, where (u,S) is
+    * a decomposition of T.
+    * If the key already exists, (u,T) is appended the list of existing values */
+  def add(s: types.S, u: types.U, t: List[FOLTerm]) {
+    trace("-------------ADD:")
+    trace("s: " + s)
+    trace("t: " + t)
+    trace("u: " + u)
+
     if(table.contains(s)) {
       val lst = table(s)
       table += (s -> ((u, t) :: lst) )
@@ -105,14 +167,6 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
       table += ( s -> ((u, t)::Nil) )
     }
   }
-
-  def get(s: List[FOLTerm]) = table(s)
- 
-  def getEntriesOfSize(n: Int) = {
-    table.filter( e => e._1.length == n)
-  }
-
-  def size = table.size
 
   def numberOfPairs = table.foldRight(0) { case ((k, lst), acc) => lst.size + acc }
 
@@ -125,9 +179,9 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
    * @prln the function used for printing
    **/
   def printStats( prln:  String => Unit ) {
-    prln( "number of lines: " + size )
+    prln( "number of lines: " + table.size )
     prln( "total number of pairs: " + numberOfPairs )
-    prln( "avg. number of pairs / line: " + ( numberOfPairs.toFloat / size ) )
+    prln( "avg. number of pairs / line: " + ( numberOfPairs.toFloat / table.size ) )
     prln( "min. number of pairs / line: " + minNumOfPairsPerLine )
     prln( "max. number of pairs / line: " + maxNumOfPairsPerLine )
 
@@ -139,86 +193,15 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: FOLVar) extends Logger {
       case ( k, num ) => prln( "% 3d".format(k) + "   " + num )
     }
   }
-}
 
-object delta {
-  // There must be a better way...
-  // TODO: this should go somewhere else?
-  def listEquals(lst1: List[FOLTerm], lst2: List[FOLTerm]) : Boolean = (lst1, lst2) match {
-    case (Nil, Nil) => true
-    case (hd1::tl1, hd2::tl2) => (hd1 =^ hd2) && listEquals(tl1, tl2)
-    case (_, _) => false
+  /*
+  def debug(msg: String) = {
+    println("============== DEBUG: DeltaTable ===============")
+    println("Where: " + msg)
+    println("Number of lines in the table: " + size)
+    println("Each line contains pairs.")
+    println("Total number of pairs: " + numberOfPairs)
+    println("================================================")
   }
- 
-  // Delta difference
-  def apply(terms: List[FOLTerm], eigenvariable: FOLVar) : (FOLTerm, List[FOLTerm]) = terms.size match {
-    // IMPORTANT!!!!
-    // With this, the constant decomposition is not found. Without this, the constant decomposition is the only one found.
-    case 1 => return (eigenvariable, terms)
-    case _ => terms.head match {
-      // If the variables are reached
-      case FOLVar(s) =>
-        // If all variables are equal
-        if ( terms.forall(t => t =^ terms.head) ) { return (FOLVar(s), Nil) }
-        // If there are different variables 
-        else { return (eigenvariable, terms) }
- 
-      // If the terms are functions
-      case Function(h, args) =>
-        // If all heads are the same
-        if ( terms.forall(t => t match {
-          case Function(h1, _) if h1 == h => true
-          case _ => false
-        }) ) {
-          // call delta recursively for every argument of every term
- 
-          // Compute a list of list of arguments
-          val allargs = terms.foldRight(List[List[FOLTerm]]()) ( (t, acc) => t match {
-              case Function(x, args) => args :: acc
-              case _ => throw new DeltaTableException("ERROR: Mal-formed terms list.")
-            })
- 
-          // The list above is a list of lists of arguments. Assume that each list
-          // of arguments has elements from 1 to n. A function should be called
-          // for a list of all elements in position i. If this was a matrix, this 
-          // is a function on the column of the matrix.
-          // By computing the transpose of this matrix, the columns are now the 
-          // rows, i.e., the inner lists. So we can just use fold to apply the
-          // function to every such list.
-          val listOfArgs = transpose(allargs)
-          val deltaOfArgs = listOfArgs.foldRight(List[(FOLTerm, List[FOLTerm])]()) ((a, acc) => delta(a, eigenvariable) :: acc)
-         
-          // A delta vector can be constructed only if the lists returned from the arguments are all the same
-          
-          // Get all non-empty sets of terms returned (we don't care about the empty ones).
-          val nonempty = deltaOfArgs.foldRight(List[List[FOLTerm]]()) ((x, acc) => x._2 match {
-            case Nil => acc
-            case t => t :: acc
-          })
- 
-          // If all the sets are empty
-          if (nonempty.length == 0) {
-            val newargs = deltaOfArgs.foldRight(List[FOLTerm]()) ((x, acc) => x._1 :: acc)
-            val u = Function(h, newargs)
-            (u, Nil) 
-          }
-          else {
-            // Check if they are the same
-            val first = nonempty.head
-            if (nonempty.forall(l => listEquals(l, first))) {
-              // All terms are the same
-              val newargs = deltaOfArgs.foldRight(List[FOLTerm]()) ((x, acc) => x._1 :: acc)
-              val u = Function(h, newargs)
-              (u, first)
-            }
-            // The terms returned from the arguments are different
-            else {
-              return (eigenvariable, terms)
-            }
-          }
-        }
-        // If head terms are different
-        else { return (eigenvariable, terms) }
-    }
-  }
+  */
 }

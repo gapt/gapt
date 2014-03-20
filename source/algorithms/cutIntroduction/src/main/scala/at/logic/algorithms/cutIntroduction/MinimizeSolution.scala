@@ -7,7 +7,6 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.utils.logging._
 import at.logic.language.fol._
 import at.logic.calculi.resolution.base.FClause
 import at.logic.language.fol.Utils._
@@ -20,64 +19,16 @@ import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearc
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.calculi.lk.base._
 
-object MinimizeSolution extends Logger {
-  
+object MinimizeSolution extends at.logic.utils.logging.Logger {
+
   def apply(ehs: ExtendedHerbrandSequent, prover: Prover) = {
     val minSol = improveSolution(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
   }
 
   def applyEq(ehs: ExtendedHerbrandSequent, prover: Prover) = {
-    trace("entering applyEq")
     val minSol = improveSolutionEq(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
-  }
-
-  def apply2(ehs: ExtendedHerbrandSequent, prover: Prover) = {
-    val minSol = improveSolution2(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
-    new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
-  }
-
-  // The canonical solution computed already has only the quantified formulas 
-  // from the end-sequent (propositional part is ignored). 
-  // 
-  // This algorithm does naive search and is very redundant. An improved algorithm 
-  // is implemented as improveSolution2.
-  //
-  // returns the list of improved solutions found by the forgetful resolution
-  // algorithm.
-  private def improveSolution(ehs: ExtendedHerbrandSequent, prover: Prover) : List[FOLFormula] = {
-
-    val cutFormula = ehs.cutFormula
-
-    // Remove quantifier 
-    val (x, f) = cutFormula match {
-      case AllVar(x, form) => (x, form)
-      case _ => throw new CutIntroException("ERROR: Canonical solution is not quantified.")
-    }
-
-    // Transform to conjunctive normal form
-    trace( "starting CNF-Transformation" )
-    val cnf = f.toCNF
-    trace( "finished CNF-Transformation" )
-
-    // Exhaustive search over the resolvents (depth-first search),
-    // returns the list of all solutions found.
-    var count = 0
-
-    def searchSolution(f: FOLFormula) : List[FOLFormula] =
-      f :: ForgetfulResolve(f).foldRight(List[FOLFormula]()) ( (r, acc) =>
-          if( isValidWith(ehs, prover, AllVar( x, r ))) {
-            count = count + 1
-            searchSolution(r) ::: acc
-          }
-          else {
-            count = count + 1
-            acc 
-          }
-        )
-
-    searchSolution(cnf).map(s => AllVar(x, s))
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation.
@@ -92,10 +43,7 @@ object MinimizeSolution extends Logger {
     val cutFormula = ehs.cutFormula
 
     // Remove quantifier 
-    val (x, f) = cutFormula match {
-      case AllVar(x, form) => (x, form)
-      case _ => throw new CutIntroException("ERROR: Canonical solution is not quantified.")
-    }
+    val (xs, f) = removeQuantifiers( cutFormula )
 
     // Transform to conjunctive normal form
     trace( "starting CNF-Transformation" )
@@ -108,17 +56,17 @@ object MinimizeSolution extends Logger {
 
     def searchSolution(f: FOLFormula) : List[FOLFormula] =
       f :: oneStepEqualityImprovement(f).foldRight(List[FOLFormula]()) ( (r, acc) =>
-          if( isValidWith(ehs, prover, AllVar( x, r ))) {
+          if( isValidWith(ehs, prover, addQuantifiers( r, xs ))) {
             count = count + 1
             searchSolution(r) ::: acc
           }
           else {
             count = count + 1
-            acc 
+            acc
           }
         )
 
-    searchSolution(cnf).map(s => AllVar(x, s))
+    searchSolution(cnf).map(s => addQuantifiers( s, xs ))
   }
 
   //---------------------------------------------------------------------------
@@ -174,22 +122,14 @@ object MinimizeSolution extends Logger {
     * @param form The canonical solution to be improved (doesn't have to be in CNF).
     * @return The list of minimal-size solutions (=the set of end nodes as described in 4.2).
     */
-   private def improveSolution2(ehs: ExtendedHerbrandSequent, prover: Prover) : List[FOLFormula] = {
-      //Create a SAT-solver for the validity check
+   private def improveSolution(ehs: ExtendedHerbrandSequent, prover: Prover) : List[FOLFormula] = {
+      val (xs, form2) = removeQuantifiers(ehs.cutFormula)
 
-      val cutFormula = ehs.cutFormula
-
-      // Remove quantifier 
-      val (x, form2) = cutFormula match {
-        case AllVar(x, form) => (x, form)
-        case _ => throw new CutIntroException("ERROR: Canonical solution is not quantified.")
-      }
+      if (xs.length == 0) { throw new CutIntroException("ERROR: Canonical solution is not quantified.") }
 
       //0. Convert to a clause set where each clause is a list of positive and negative atoms.
       //1. assign a number to every atom in F.
-      trace( "starting CNF-Transformation" )
       val fNumbered = numberAtoms(CNFp(form2.toCNF).map(c => toMyFClause(c)).toList)
-      trace( "finished CNF-Transformation" )
 
       //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
       val posNegSets = fNumbered.foldLeft(Map[FOLFormula, (Set[Int], Set[Int])]()) {(m, clause) =>
@@ -271,7 +211,7 @@ object MinimizeSolution extends Logger {
       //node-filter which checks for validity using miniSAT
       def nodeFilter(node: ResNode) : Boolean = {
         satCount = satCount + 1
-        isValidWith(ehs, prover, AllVar(x, NumberedCNFtoFormula(node.currentFormula)))
+        isValidWith(ehs, prover, addQuantifiers(NumberedCNFtoFormula(node.currentFormula), xs))
       }
 
       //Perform the DFS
@@ -279,7 +219,7 @@ object MinimizeSolution extends Logger {
 
       //All-quantify the found solutions.
       //debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
-      solutions.map(n => NumberedCNFtoFormula(n.currentFormula)).map(s => AllVar(x, s))
+      solutions.map(n => NumberedCNFtoFormula(n.currentFormula)).map(s => addQuantifiers(s, xs))
    }
 
   /** Checks if the sequent is a tautology using f as the cut formula.
@@ -292,22 +232,29 @@ object MinimizeSolution extends Logger {
     */
   def isValidWith(ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula) : Boolean = {
 
-    val body = f.instantiate(ehs.grammar.eigenvariable)
+    //Instantiate with the eigenvariables.
+    val body = ehs.grammar.eigenvariables.foldLeft(f)((f,ev) => f.instantiate(ev))
 
-    val as = ehs.grammar.s.foldRight(List[FOLFormula]()) {case (t, acc) =>
-      acc :+ f.instantiate(t) 
+    //Instantiate with all the values in s.
+    val as = ehs.grammar.s.transpose.foldLeft(List[FOLFormula]()) {case (acc, t) =>
+      (t.foldLeft(f){case (f, sval) => f.instantiate(sval)}) :: acc
     }
-    val head = And(as)
+
+    val head = andN(as)
 
     val impl = Imp(body, head)
 
     val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
     val succedent = ehs.prop_r ++ ehs.inst_r
 
-    trace("CALLING ISVALID ON " + Imp(And(antecedent), Or(succedent)).asInstanceOf[FOLFormula])
-    prover.isValid(Imp(And(antecedent), Or(succedent)))
-  }
+    //isTautology(FSequent(antecedent, succedent))
+    //trace( "calling SAT-solver" )
+    val r = prover.isValid(Imp(andN(antecedent), orN(succedent)))
+    //trace( "finished call to SAT-solver" )
 
+    r
+  }
+  
   //------------------------ FORGETFUL RESOLUTION -------------------------//
   // TODO: this should go somewhere else.
 
@@ -347,8 +294,8 @@ object MinimizeSolution extends Logger {
   def ForgetfulResolve(f: FOLFormula) : List[FOLFormula] =
   {
     val clauses = CNFp(f).map(c => toMyFClause(c))
-    clauses.foldLeft(List[FOLFormula]())( (list, c1) => 
-      list ::: clauses.dropWhile( _ != c1).foldLeft(List[FOLFormula]())( (list2, c2) => 
+    clauses.foldLeft(List[FOLFormula]())( (list, c1) =>
+      list ::: clauses.dropWhile( _ != c1).foldLeft(List[FOLFormula]())( (list2, c2) =>
         if (resolvable(c1, c2))
           CNFtoFormula( (clauses.filterNot(c => c == c1 || c == c2 ) + resolve(c1, c2)).toList )::list2
         else
@@ -375,12 +322,12 @@ object MinimizeSolution extends Logger {
   // Implements forgetful paramodulation.
   def ForgetfulParamodulateCNF(clauses: Set[MyFClause[FOLFormula]]) : List[Set[MyFClause[FOLFormula]]] =
   {
-    clauses.foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list, c1) => 
-      list ::: clauses.dropWhile( _ != c1).foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list2, c2) => 
+    clauses.foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list, c1) =>
+      list ::: clauses.dropWhile( _ != c1).foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list2, c2) =>
         if ( c1 != c2 ) {  // do not paramodulate a clause into itself
           val paras = Paramodulants( c1, c2 )
           paras.map( p => (clauses.filterNot(c => c == c1 || c == c2 ) + p)).toList ++ list2
-        } else 
+        } else
           list2
       )
     )
@@ -423,12 +370,12 @@ object MinimizeSolution extends Logger {
     myParamodulants( c1, c2 ) ++ myParamodulants( c2, c1 )
 
   // Computes ground paramodulants
-  def myParamodulants( left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) : Set[MyFClause[FOLFormula]]= 
-  left.pos.foldLeft(Set[MyFClause[FOLFormula]]())( (res, eq) => 
+  def myParamodulants( left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ) : Set[MyFClause[FOLFormula]]=
+  left.pos.foldLeft(Set[MyFClause[FOLFormula]]())( (res, eq) =>
     res ++ (eq match {
       case Equation( s, t ) => right.neg.flatMap( aux => (Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux )).map( para =>
         getParaLeft( eq, aux, para, left, right )
-      ) ) ++ 
+      ) ) ++
       right.pos.flatMap( aux => (Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux )).map( para =>
         getParaRight( eq, aux, para, left, right )
       ) ).toSet
@@ -523,7 +470,7 @@ object MinimizeSolution extends Logger {
     //If both atoms were part of the same clause, rest is non-empty. In this case, add rest's 1 clause again.
     if (rest.length > 0) { (rest.head)::f } else { f }
   }
-  
+ 
   //-----------------------------------------------------------------------//
 
 
