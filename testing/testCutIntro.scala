@@ -32,6 +32,36 @@ import at.logic.provers._
 
 val TestCutIntroLogger = LoggerFactory.getLogger("TestCutIntroLogger$")
 val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
+/**
+ * For general information about the logger, see the 'Guidelines'-page of the developer wiki.
+ *
+ * For using the abover loggers, add (for example) the following to your log4j.xml:
+ * 
+ * <appender name="CutIntroDataLogFile" class="org.apache.log4j.FileAppender">
+ *   <param name="File" value="logs/CutIntroDataLog.txt"/>
+ *   <layout class="org.apache.log4j.PatternLayout">
+ *     <param name="ConversionPattern" value="%m%n"/>
+ *   </layout>
+ * </appender>
+ *
+ * <appender name="TestCutIntroLogFile" class="org.apache.log4j.FileAppender">
+ *   <param name="File" value="logs/TestCutIntroLog.txt"/>
+ *   <layout class="org.apache.log4j.PatternLayout">
+ *     <param name="ConversionPattern" value="%m%n"/>
+ *   </layout>
+ * </appender>
+ *
+ * <logger name="CutIntroDataLogger$">
+ *   <level value="trace"/>
+ *   <appender-ref ref="CutIntroDataLogFile"/>
+ * </logger>
+ *
+ * <logger name="TestCutIntroLogger$">
+ *   <level value="trace"/>
+ *   <appender-ref ref="TestCutIntroLogFile"/>
+ * </logger>
+ *
+ **/
 
 // for testCutIntro.compressProofSequences
 :load ../examples/ProofSequences.scala
