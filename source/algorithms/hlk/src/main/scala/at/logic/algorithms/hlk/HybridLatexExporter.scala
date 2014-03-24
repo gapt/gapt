@@ -12,6 +12,7 @@ import at.logic.calculi.lk.quantificationRules._
 import at.logic.calculi.lk.equationalRules._
 import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
 import sun.management.ConnectorAddressLink
+import at.logic.calculi.lksk.{ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule}
 
 object LatexProofExporter extends HybridLatexExporter(true)
 object HybridLatexExporter extends HybridLatexExporter(false)
@@ -260,6 +261,20 @@ class HybridLatexExporter(val expandTex : Boolean) {
       generateProof(p1, "\\DEF"+fsequentString(root.toFSequent, escape_latex)+"\n"+s, escape_latex)
     case DefinitionRightRule(p1,root, _,_ ) =>
       generateProof(p1, "\\DEF"+fsequentString(root.toFSequent, escape_latex)+"\n"+s, escape_latex)
+
+    //TODO: this is only a way to write out the proof, but it cannot be read back in (labels are not handled by llk so far)
+    case ExistsSkLeftRule(p1, root, aux, main, term) =>
+      generateProof(p1, "\\EXSKL{"+ getFormulaString(term, true, escape_latex) +"}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+        + fsequentString(root.toFSequent(), escape_latex) +"\n"+s , escape_latex)
+    case ExistsSkRightRule(p1, root, aux, main, term) =>
+      generateProof(p1, "\\EXSKR{"+ getFormulaString(term, true, escape_latex) +"}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+        + fsequentString(root.toFSequent(), escape_latex) +"\n"+s, escape_latex)
+    case ForallSkLeftRule(p1, root, aux, main, term) =>
+      generateProof(p1, "\\ALLSKL{"+ getFormulaString(term, true, escape_latex) +"}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+        + fsequentString(root.toFSequent(), escape_latex) +"\n"+s, escape_latex)
+    case ForallSkRightRule(p1, root, aux, main, term) =>
+      generateProof(p1, "\\ALLSKR{"+ getFormulaString(term, true, escape_latex) +"}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+        + fsequentString(root.toFSequent(), escape_latex) +"\n"+s, escape_latex)
 
   }
 

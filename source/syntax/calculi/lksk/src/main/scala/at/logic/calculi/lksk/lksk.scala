@@ -230,3 +230,14 @@ object ExistsSkLeftRule {
     }
     else None
 }
+
+object UnaryLKSKProof {
+  def unapply(proof: LKProof) = proof match {
+    case WeakeningLeftRule(p,r,aux) => Some((WeakeningLeftRuleType, p, r, Nil, aux))
+    case WeakeningRightRule(p,r,aux) => Some((WeakeningRightRuleType, p, r, Nil, aux))
+    case ForallSkLeftRule(p,r,a,m,exp) => Some((ForallSkLeftRuleType,p,r,List(a),m))
+    case ExistsSkRightRule(p,r,a,m,exp) => Some((ExistsSkRightRuleType,p,r,List(a),m))
+    case ForallSkRightRule(p,r,a,m,exp) => Some((ForallSkRightRuleType,p,r,List(a),m))
+    case ExistsSkLeftRule(p,r,a,m,exp) => Some((ExistsLeftRuleType,p,r,List(a),m))
+  }
+}

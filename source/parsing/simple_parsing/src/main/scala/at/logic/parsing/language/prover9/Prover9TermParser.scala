@@ -69,6 +69,12 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
       throw new Exception("Error parsing prover9 formula '"+s+"' at position "+input.pos+". Error message: "+msg)
   }
 
+  def parseTerm(s:String) : FOLTerm = parseAll(term, s) match {
+    case Success(result, _) => result
+    case NoSuccess(msg, input) =>
+      throw new Exception("Error parsing prover9 term '"+s+"' at position "+input.pos+". Error message: "+msg)
+  }
+
   lazy val pformula : PackratParser[FOLFormula] = parens(formula) | allformula | exformula
   lazy val formula: PackratParser[FOLFormula] = implication
   //precedence 800

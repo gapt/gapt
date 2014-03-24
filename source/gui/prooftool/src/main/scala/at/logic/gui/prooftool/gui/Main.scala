@@ -45,6 +45,7 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.hol.{HOLFormula, HOLExpression}
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
+import ch.randelshofer.tree.sunburst.SunburstModel
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -90,6 +91,21 @@ object Main extends SimpleSwingApplication {
     }
 
     body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+
+  def displaySunburst[T](name: String, obj: TreeProof[T]) {
+    showFrame()
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    val root = new ProofNode[T](obj)
+    val info = new ProofNodeInfo[T]()
+    val model = new ReactiveSunburstModel(root, info)
+    val view = model.getView()
+    view.addListener(new Action("Yay!") { def apply() = {println("YAY!!!")} } )
+    view.setToolTipEnabled(true)
+    body.contents = Component.wrap(view)
+    body.cursor = java.awt.Cursor.getDefaultCursor
+
   }
 
 

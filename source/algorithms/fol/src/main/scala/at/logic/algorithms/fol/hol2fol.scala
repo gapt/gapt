@@ -300,8 +300,10 @@ object changeTypeIn {
 
   //Remark: this only works for changing the type of leaves in the term tree!
   def apply(e:HOLExpression, tmap : TypeMap) : HOLExpression = e match {
-    case HOLVar(name, ta) => if (tmap contains name.toString()) HOLVar(name, tmap(name.toString())) else e
-    case HOLConst(name, ta) => if (tmap contains name.toString()) HOLConst(name, tmap(name.toString())) else e
+    case HOLVar(name, ta) => if (tmap contains name.toString()) HOLVar(name, tmap(name.toString())) else
+                                                                HOLVar(name,ta)
+    case HOLConst(name, ta) => if (tmap contains name.toString()) HOLConst(name, tmap(name.toString())) else
+                                                                  HOLConst(name,ta)
     case HOLFunction(f, args, rv) => HOLFunction(f, args.map(x => apply(x,tmap)), rv)
     case HOLAtom(f, args) => HOLAtom(f, args.map(x => apply(x,tmap)))
     case HOLNeg(x) => HOLNeg(apply(x,tmap))
@@ -318,6 +320,8 @@ object changeTypeIn {
   def apply(e:FOLExpression, tmap : TypeMap) : FOLExpression = apply(e.asInstanceOf[HOLExpression], tmap).asInstanceOf[FOLExpression]
   def apply(e:HOLFormula, tmap : TypeMap) : HOLFormula = apply(e.asInstanceOf[HOLExpression], tmap).asInstanceOf[HOLFormula]
   def apply(e:FOLFormula, tmap : TypeMap) : FOLFormula = apply(e.asInstanceOf[HOLExpression], tmap).asInstanceOf[FOLFormula]
+  def apply(fs:FSequent, tmap:TypeMap) : FSequent = FSequent(fs.antecedent.map(x=> apply(x,tmap)),
+                                                             fs.succedent.map(x=> apply(x,tmap)) )
 
   //different names bc of type erasure
   def holsub(s:Substitution[HOLExpression], tmap : TypeMap) : Substitution[HOLExpression] = Substitution[HOLExpression](s.map.map(x =>

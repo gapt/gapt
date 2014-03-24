@@ -170,7 +170,8 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
           introduceContractions(retProof, seq)
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
-        case at.logic.calculi.resolution.instance.Instance(_,p,s) => applySub(recConvert(p, seq,map,createAxiom),fol2hol(s))._1
+        case at.logic.calculi.resolution.instance.Instance(_,p,s) =>
+          applySub(recConvert(p, seq,map,createAxiom),fol2hol(s))._1
       }
       map(proof.root.toFClause) = ret
       ret

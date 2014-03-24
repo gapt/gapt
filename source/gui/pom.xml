@@ -11,6 +11,7 @@
 
   <modules>
     <module>prooftool</module>
+    <module>treeviz</module>
   </modules>
 
   <packaging>pom</packaging>

@@ -97,7 +97,10 @@ object CutIntroduction extends Logger {
       try {
         Some(apply(ep, prover, deltaVec.get))
       } catch {
-        case ex : CutIntroException => { println(ex.toString()); None }
+        case ex : CutIntroException => {
+          println(ex.toString());
+          None
+        }
       }
     }
   }

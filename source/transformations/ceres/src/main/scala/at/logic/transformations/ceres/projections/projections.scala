@@ -20,6 +20,9 @@ import at.logic.calculi.lksk
 import at.logic.calculi.lksk.base.LabelledFormulaOccurrence
 import at.logic.calculi.lksk.base.TypeSynonyms.Label
 import at.logic.calculi.proofs.RuleTypeA
+import at.logic.language.lambda.types.{Ti, TA}
+import at.logic.language.lambda.symbols.VariableStringSymbol
+import at.logic.language.lambda.typedLambdaCalculus.VariableNameGenerator
 
 case class ProjectionException(message : String, original_proof: LKProof, new_proofs : List[LKProof], nested : Exception)
   extends Exception(message, nested) {
@@ -28,6 +31,49 @@ case class ProjectionException(message : String, original_proof: LKProof, new_pr
 
 object Projections {
   private def debug(lvl:Int, msg:String) = if (lvl>5) println("DEBUG: "+msg)
+  def reflexivity_projection( proof:LKProof, t : TA = Ti()) : LKProof = {
+    //TODO: in case of fol, fol equality is not used
+    //TODO: lksk is not handled
+    val es = proof.root.toFSequent()
+    val x = es.formulas.headOption match {
+      case Some(f) => f.factory.createVar(VariableStringSymbol("x"), t)
+      case None => HOLVar(VariableStringSymbol("x"), t)
+    }
+
+    var count = 0
+    val gen= new VariableNameGenerator(() => { count = count +1; "x_{"+count+"}" })
+    val x_ = gen(x, es.formulas).asInstanceOf[HOLVar]
+    val ax : LKProof = Axiom(Nil, List(Equation(x_,x_)))
+    val left = es.antecedent.foldLeft(ax)( (p, f) => WeakeningLeftRule(p,f))
+    val right = es.succedent.foldLeft(left)( (p, f) => WeakeningRightRule(p,f))
+    right
+  }
+
+  def lksk_reflexivity_projection( proof:LKProof, t : TA = Ti()) : LKProof = {
+    import at.logic.calculi.lksk
+    import lksk.base.TypeSynonyms.EmptyLabel
+
+    //TODO: in case of fol, fol equality is not used
+    val es = proof.root.toFSequent()
+    val x = es.formulas.headOption match {
+      case Some(f) => f.factory.createVar(VariableStringSymbol("x"), t)
+      case None => HOLVar(VariableStringSymbol("x"), t)
+    }
+
+    var count = 0
+    val gen= new VariableNameGenerator(() => { count = count +1; "x_{"+count+"}" })
+    val x_ = gen(x, es.formulas).asInstanceOf[HOLVar]
+    val (ax,_) = lksk.Axiom.createDefault(
+      FSequent(Nil, List(Equation(x_,x_))),
+      (List(), List(EmptyLabel()))
+    )
+    require(ax.root.occurrences.size == 1, "Couldn't create reflexivity!")
+    val left = es.antecedent.foldLeft(ax)( (p, f) => WeakeningLeftRule(p,f))
+    val right = es.succedent.foldLeft(left)( (p, f) => WeakeningRightRule(p,f))
+    require(right.root.occurrences.size == es.formulas.size + 1, "Size of end-sequent is wrong!")
+    right
+  }
+
 
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ) : Set[LKProof] = apply(proof, Set.empty[FormulaOccurrence], x => true)

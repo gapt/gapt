@@ -99,8 +99,11 @@ import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.transformations.ceres.clauseSets.{SimplifyStruct, StandardClauseSet}
 import scala.collection.mutable
-import at.logic.calculi.lksk.{ExistsSkLeftRule, ForallSkRightRule}
+import at.logic.calculi.lksk.{ExistsSkRightRule, ForallSkLeftRule, ExistsSkLeftRule, ForallSkRightRule}
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.algorithms.fol.recreateWithFactory
+import at.logic.transformations.ceres.projections.Projections
+import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
 
 object printProofStats {
     def apply(p: LKProof) = {
@@ -150,7 +153,8 @@ object printProofStats {
   }
 
   object computeProjections {
-    def apply(p: LKProof) : Set[LKProof] = at.logic.transformations.ceres.projections.Projections(p)
+    def apply(p: LKProof) : Set[LKProof] = Projections(p)
+    def apply(p: LKProof, pred : HOLFormula => Boolean) : Set[LKProof] = Projections(p, pred)
   }
 
   object computeGroundProjections {
@@ -364,7 +368,12 @@ object printProofStats {
   }
 
   object removeDuplicates {
-    def apply[A](ls: List[A]) = ls.distinct
+    def apply[A](ls: List[A]) : List[A] = apply_(ls.reverse).reverse
+    def apply_[A](ls : List[A]) : List[A] = ls match {
+      case x::xs if xs contains x => apply_(xs)
+      case x::xs /* if ! xs contains x */ => x::apply_(xs)
+      case Nil => Nil
+    }
   }
   object unitResolve {
     //def apply(ls: List[Sequent]) = simpleUnitResolutionNormalization(ls map (_.toFSequent))
@@ -486,6 +495,13 @@ object printProofStats {
         Prover9TermParserLadrStyle.parseFormula(string)
       else
         Prover9TermParser.parseFormula(string)
+    }
+
+    def p9term(string:String, use_ladr : Boolean = true) = {
+      if (use_ladr)
+        Prover9TermParserLadrStyle.parseTerm(string)
+      else
+        Prover9TermParser.parseTerm(string)
     }
 
     def slk(file:String) = {
@@ -742,10 +758,13 @@ object printProofStats {
     def asGraphVizString(p:ResolutionProof[Clause]) = Formatter.asGraphViz(p)
     def asTex(p:ResolutionProof[Clause]) = Formatter.asTex(p)
 
-    def llk(f:HOLFormula, latex : Boolean = false) = HybridLatexExporter.getFormulaString(f, true, latex)
-    def tllk(f:HOLFormula, latex : Boolean = false) = {
-      val (ctypes,nctypes) = HybridLatexExporter.getTypes(f, HybridLatexExporter.emptyTypeMap).partition(_.isInstanceOf[ConstantSymbolA])
-      val (vtypes, _) = nctypes.partition(_.isInstanceOf[VariableSymbolA])
+    def llk(f:HOLExpression, latex : Boolean = false) : String = HybridLatexExporter.getFormulaString(f, true, latex)
+    def llk(f:FSequent, latex : Boolean) : String = "\\SEQUENT" + HybridLatexExporter.fsequentString(f, latex)
+    def llk(f:FSequent) : String = llk(f,false)
+
+    def tllk(f:HOLExpression, latex : Boolean = false) = {
+      val (ctypes,nctypes) = HybridLatexExporter.getTypes(f, HybridLatexExporter.emptyTypeMap).partition(_._1.isInstanceOf[ConstantSymbolA])
+      val (vtypes, _) = nctypes.partition(_._1.isInstanceOf[VariableSymbolA])
 
       val fs = HybridLatexExporter.getFormulaString(f, true, latex)
 
@@ -765,6 +784,13 @@ object printProofStats {
 
   //TODO: find a better name for all this stuff
   object ntape {
+    val p = loadLLK("algorithms/hlk/src/test/resources/tape3.llk");
+    val elp = regularize(eliminateDefinitions(p, "TAPEPROOF"))._1;
+    val selp = at.logic.transformations.skolemization.lksk.LKtoLKskc(elp);
+    //val (rp,es) = loadProver9Proof("ntape.out")
+
+
+
     def apply(filename : String = "algorithms/hlk/src/test/resources/tape3.llk", proofname : String = "TAPEPROOF")
     : (ExtendedProofDatabase, List[FSequent], List[FSequent], Struct, replaceAbstractions.ConstantsMap) = {
       println("Loading proof database "+filename)
@@ -799,7 +825,87 @@ object printProofStats {
                        ("s10",(1,"s_{10}")), ("s26",(1,"s_{26}")))
 
 
-    def convert(rp : RobinsonResolutionProof, es : FSequent) = NameReplacement(rp,rrename)
+    def convert(rp : RobinsonResolutionProof) = NameReplacement(rp,rrename)
+    def axioms(rp : RobinsonResolutionProof) = {
+      val rrp = NameReplacement(rp, rrename)
+      val lkp = RobinsonToLK(rrp, FSequent(Nil,Nil), ((c : FClause) => Axiom(c.neg,c.pos)))
+      val axioms = lkp.nodes.flatMap(_ match { case a@Axiom(_) => List(a.root.toFSequent); case _ => List[FSequent]() })
+      val cmap = Map[String, TA](("q_{1}", Ti() -> To()), ("q_{2}", Ti() -> To()))
+      val holaxioms = axioms.map(x => recreateWithFactory(x, HOLFactory)).toList
+
+      val folaxs = holaxioms.flatMap(_.formulas).filter(_.factory != HOLFactory)
+      require(folaxs.isEmpty, "HOL Conversion didn't work on "+folaxs )
+      val raxioms = holaxioms.map(x => changeTypeIn(x,cmap))
+
+      (lkp, raxioms)
+    }
+
+    val subterm1 = parse hlkexp """const s_{9},s_{25}:(i>o)>(i>i); const s_{10},s_{26}:(i>o)>i;
+                                  const q_{1},q_{2}:i>o; const +:i>(i>i); const 1:i;
+                                  (((1 + s_{25}(q_{2}, s_{26}(q_{2}))) + 1) + 1) + s_{9}(q_{1}, s_{10}(q_{1}))"""
+    val subterm2 = parse hlkexp """const s_{9},s_{25}:(i>o)>(i>i); const s_{10},s_{26}:(i>o)>i;
+                                  const q_{1},q_{2}:i>o; const +:i>(i>i); const 1:i;
+                                  (((1 + s_{9}(q_{1}, s_{10}(q_{1}))) + 1) + 1) + s_{25}(q_{2}, s_{26}(q_{2}))"""
+
+    val subvars1 = List(1,3).map(x => parse hlkexp "var \\alpha_{"+x+"}:i; \\alpha_{"+x+"}")
+    val subvars2 = List(4,6).map(x => parse hlkexp "var \\alpha_{"+x+"}:i; \\alpha_{"+x+"}")
+    val sub = Substitution[HOLExpression]( subvars1.map(x => (x.asInstanceOf[HOLVar], subterm1)) ++
+                                           subvars2.map(x => (x.asInstanceOf[HOLVar], subterm2)))
+
+    def findProj(proof : LKProof, axioms : List[FSequent] ) = {
+      val es = proof.root.toFSequent
+      val pref = Projections.lksk_reflexivity_projection(proof)
+      println("Calculated projection to reflexivity: "+pref.root.toFSequent().diff(proof.root.toFSequent()))
+      val proj = pref:: (Projections(proof, _.containsQuantifier).toList)
+      println("Total projections size: "+proj.size)
+      val pproj = proj.map(x => (x.root.toFSequent.diff(es), x))
+      val still = new StillmanSubsumptionAlgorithm[HOLExpression] {
+        val matchAlg = NaiveIncompleteMatchingAlgorithm
+      }
+
+      val subsumed = axioms.map(x => (x, pproj.find(y => still.subsumes(y._1, x) ) ))
+      val (can_subsume, cant_subsume) = subsumed.partition(_._2.nonEmpty)
+      val substitutions = can_subsume.map(x => {
+        val (ax, Some((clause, proof))) = x
+        (still.subsumes_by(clause, ax).get, proof)
+      })
+
+      (substitutions, cant_subsume)
+    }
+
+    def hasWeakHOLRule(p:LKProof)  = p.nodes.asInstanceOf[Set[LKProof]].filter(_ match {
+      case ForallSkLeftRule(p,r,aux,f,t) if t.exptype != Ti() => true;
+      case ExistsSkRightRule(p,r,x,f,t) if t.exptype != Ti() => true;
+      case _ => false
+    } )
+
+    def sub_mising(p : LKProof, sub : Substitution[HOLExpression]) = {
+      import at.logic.calculi.lksk._
+      import at.logic.algorithms.lksk
+      val (s,_) = lksk.applySubstitution(p, sub)
+      val w = hasWeakHOLRule(s).toList
+      val winf = w.map(_ match {
+        case ForallSkLeftRule(_,_,a,m,e) => (a,m,e)
+        case ExistsSkRightRule(_,_,a,m,e) => (a,m,e)
+      })
+
+      winf
+    }
+
+    def printWorking(working : List[(Substitution[HOLExpression], LKProof)]) = {
+      val workingsubs = working.foldLeft(Map[LKProof, List[Substitution[HOLExpression]] ]())( (map, pair) => {
+        val l = map.getOrElse(pair._2, List());
+        map + ((pair._2, pair._1::l))   })
+      workingsubs.map(x => {
+        println(format.llk(x._1.root.toFSequent.diff(selp.root.toFSequent)));
+        println();
+        x._2.map(z =>
+          println(z.map.map(y =>
+            format.llk(y._1.asInstanceOf[HOLVar])+" <- "+format.llk(y._2)).mkString("Sub={",", ","}")
+          ));
+        println()
+      })
+    }
 
 
   }
