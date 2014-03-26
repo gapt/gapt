@@ -45,7 +45,9 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.hol.{HOLFormula, HOLExpression}
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
-import ch.randelshofer.tree.sunburst.SunburstModel
+import at.logic.utils.ds.mutable.trees.TreeNode
+import at.logic.algorithms.hlk.HybridLatexExporter
+import at.logic.calculi.agraphProofs.AGraphProof
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -97,13 +99,54 @@ object Main extends SimpleSwingApplication {
   def displaySunburst[T](name: String, obj: TreeProof[T]) {
     showFrame()
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.ignoreRepaint = true
+
     val root = new ProofNode[T](obj)
     val info = new ProofNodeInfo[T]()
     val model = new ReactiveSunburstModel(root, info)
     val view = model.getView()
-    view.addListener(new Action("Yay!") { def apply() = {println("YAY!!!")} } )
+
     view.setToolTipEnabled(true)
-    body.contents = Component.wrap(view)
+
+    val iv = new DrawSingleSequentInference()
+
+    val box = new BoxPanel(Orientation.Vertical)
+    box.contents ++= List(iv, Component.wrap(view))
+
+    if (obj.root.isInstanceOf[Sequent]) {
+      view.addListener(new Action("Message to Inference") {
+        def apply() = {
+          view.selected_proof match {
+            case None =>
+              iv.p_= (None)
+              box.revalidate()
+              box.repaint()
+              ()
+            case Some(p : ProofNode[_]) =>
+              iv.p_= (Some(p.proof.asInstanceOf[LKProof]))
+              box.revalidate()
+              box.repaint()
+              /*
+              p.proof.root match {
+                case s : Sequent =>
+                  println("Selected: "+ HybridLatexExporter.fsequentString(s.toFSequent(), false))
+              }
+              */
+            case _ => ()
+          }
+
+        }
+      } )
+    }
+
+
+
+
+
+    body.contents = box
+
+    body.ignoreRepaint = false
+    body.repaint()
     body.cursor = java.awt.Cursor.getDefaultCursor
 
   }

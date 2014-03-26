@@ -66,6 +66,8 @@ class MiscTest extends SpecificationWithJUnit {
     }
   }
 
+
+  sequential
   "The system" should {
     /*
 //    "parse, skolemize, extract clause set for a simple induction proof" in {
