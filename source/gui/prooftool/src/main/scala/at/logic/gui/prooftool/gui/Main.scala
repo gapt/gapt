@@ -48,6 +48,8 @@ import javax.imageio.ImageIO
 import at.logic.utils.ds.mutable.trees.TreeNode
 import at.logic.algorithms.hlk.HybridLatexExporter
 import at.logic.calculi.agraphProofs.AGraphProof
+import java.awt.Dimension
+import scala.swing.Dimension
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -109,6 +111,8 @@ object Main extends SimpleSwingApplication {
     view.setToolTipEnabled(true)
 
     val iv = new DrawSingleSequentInference()
+    val size = this.body.size
+    iv.preferredSize = new Dimension(size.getWidth.toInt, (size.getHeight / 10).toInt)
 
     val box = new BoxPanel(Orientation.Vertical)
     box.contents ++= List(iv, Component.wrap(view))
