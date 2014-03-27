@@ -32,7 +32,8 @@ import at.logic.provers._
 
 val TestCutIntroLogger = LoggerFactory.getLogger("TestCutIntroLogger$")
 val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
-/**
+
+/*
  * For general information about the logger, see the 'Guidelines'-page of the developer wiki.
  *
  * For using the abover loggers, add (for example) the following to your log4j.xml:
@@ -61,7 +62,7 @@ val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
  *   <appender-ref ref="TestCutIntroLogFile"/>
  * </logger>
  *
- **/
+ */
 
 // for testCutIntro.compressProofSequences
 :load ../examples/ProofSequences.scala
@@ -81,19 +82,10 @@ object testCutIntro {
     compressProofSequences( 60, true, true )
     */
 
-    val file = new File("../testing/resultsCutIntro/results.csv")
-    file.createNewFile()
-    val fw = new FileWriter(file.getAbsoluteFile)
-    val bw = new BufferedWriter(fw)
-
-    bw.write( "---------- now starting TSTP-Prover9/cut-intro/chooseProver/NoForgetfulPara\n" )
-    bw.flush
-    compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false, true, false, bw )
-    bw.write( "---------- now starting TSTP-Prover9/generalized cut-intro (one variable delta)/chooseProver/NoForgetfulPara\n" )
-    bw.flush
-    compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, true, true, false, bw )
-
-    bw.close()
+    CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/cut-intro/chooseProver/NoForgetfulPara" )
+    compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false, true, false )
+    CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/generalized cut-intro (one variable delta)/chooseProver/NoForgetfulPara" )
+    compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, true, true, false )
 /*
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/cut-intro/chooseProver/WithForgetfulPara" )
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false, true, true )
@@ -211,7 +203,7 @@ object testCutIntro {
   }
 
   // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
-  def compressTSTP( str: String, timeout: Int, useGenCutIntro: Boolean, chooseProver: Boolean, useForgetfulPara: Boolean, bw: BufferedWriter ) = {
+  def compressTSTP( str: String, timeout: Int, useGenCutIntro: Boolean, chooseProver: Boolean, useForgetfulPara: Boolean) = {
     
     TestCutIntroLogger.trace("================ Compressing non-trivial TSTP examples ===============")
     
@@ -223,12 +215,12 @@ object testCutIntro {
       number += 1
       val data = l.split(",")
       TestCutIntroLogger.trace("Processing proof number: " + number)
-      compressTSTPProof( data(0), timeout, useGenCutIntro, chooseProver, useForgetfulPara, bw )
+      compressTSTPProof( data(0), timeout, useGenCutIntro, chooseProver, useForgetfulPara)
     }
   }
 
   /// compress the prover9-TSTP proof found in file fn
-  def compressTSTPProof( fn: String, timeout: Int, useGenCutIntro: Boolean, chooseProver: Boolean, useForgetfulPara: Boolean, bw: BufferedWriter ) = {
+  def compressTSTPProof( fn: String, timeout: Int, useGenCutIntro: Boolean, chooseProver: Boolean, useForgetfulPara: Boolean) = {
     var log_ptime_ninfcf_nqinfcf = ""
     var status = "ok"
     var cutintro_logline = ""
@@ -250,19 +242,19 @@ object testCutIntro {
         Some( ep )
       } } catch {
         case e: TimeOutException =>
-          println("Parsing: Timeout")
+          TestCutIntroLogger.trace("Parsing: Timeout")
           status = "parsing_timeout"
           None
         case e: OutOfMemoryError =>
-          println("Parsing: OutOfMemory: " + e)
+          TestCutIntroLogger.trace("Parsing: OutOfMemory: " + e)
           status = "parsing_out_of_memory"
           None
         case e: StackOverflowError =>
-          println("Parsing: StackOverflow: " + e)
+          TestCutIntroLogger.trace("Parsing: StackOverflow: " + e)
           status = "parsing_stack_overflow"
           None
         case e: Exception =>
-          println("Parsing: Other exception: " + e)
+          TestCutIntroLogger.trace("Parsing: Other exception: " + e)
           status = "parsing_other_exception"
           None
       }
@@ -277,8 +269,7 @@ object testCutIntro {
         case None => ()
       }
 
-      bw.write( fn + "," + EqR + "," + status + log_ptime_ninfcf_nqinfcf + cutintro_logline + "\n" )
-      bw.flush
+      CutIntroDataLogger.trace( fn + "," + EqR + "," + status + log_ptime_ninfcf_nqinfcf + cutintro_logline)
     }
   }
 
@@ -349,7 +340,7 @@ object testCutIntro {
       case None => ()
     }
 
-    println( str + ",n/a," + status + log_ptime_ninfcf_nqinfcf + cutintro_logline )
+    CutIntroDataLogger.trace( str + ",n/a," + status + log_ptime_ninfcf_nqinfcf + cutintro_logline )
   }
 
   /***************************** Proof Sequences ******************************/
@@ -421,7 +412,7 @@ object testCutIntro {
     val status = r._1
     val cutintro_logline = r._2
 
-    println( name + ",n/a," + status + ",n/a," + rulesNumber( p ) + "," + quantRulesNumber( p ) + cutintro_logline ) // log all, computing #infqf, #qinfcf
+    CutIntroDataLogger.trace( name + ",n/a," + status + ",n/a," + rulesNumber( p ) + "," + quantRulesNumber( p ) + cutintro_logline ) // log all, computing #infqf, #qinfcf
   }
 
   def removeEqAxioms( eseq: ExpansionSequent ) = {
