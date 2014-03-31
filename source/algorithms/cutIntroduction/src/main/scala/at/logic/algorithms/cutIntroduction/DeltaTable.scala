@@ -40,11 +40,19 @@ import at.logic.algorithms.cutIntroduction.Deltas._
 package object types {
   /** A term with variables */
   type U = FOLTerm
-  /** The s-vector for a single variable in u */
+  /** The s-vector for a single term (the elements are the substitutions for the term's variables) */
   type SVector = List[FOLTerm]
-  /** The list of s-vectors of a substitution */
-  type S = List[SVector]
-  /* A decomposition constisting u and S */
+  /** The set of s-vectors of a substitution */
+  type S = Set[SVector]
+
+  /** A raw s-vector, computed inside a delta-vector.
+      Raw s-vectors are transposed and turned into sets to become s-vectors. */
+  type RawS = List[List[FOLTerm]]
+
+  /** A raw decomposition, i.e. a decomposition with a raw s-vector. */
+  type RawDecomposition = (U, RawS)
+  
+  /* A decomposition consisting u and S */
   type Decomposition = (U,S)
 }
 
@@ -72,8 +80,8 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector
   // Fills the delta table with some terms
 
   // Initialize with empty decomposition
-  trace( "initializing generalized delta-table" )
-  add(Nil, null, Nil)
+  println( "initializing generalized delta-table (set-based)" )
+  add(Set(), null, Nil)
 
 
   for (n <- 1 until terms.length+1) {
@@ -81,7 +89,7 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector
 
     // Take only the simple grammars of term sets of size (n-1) from the current delta table
     // Filter the keys (S) according to size
-    val one_less = table.filter( e => safeHead(e._1,Nil).length == n - 1)
+    val one_less = table.filter( e => e._1.size == n - 1)
 
     trace("_____________________________________________________")
     trace("DT contains " + table.size + " elements. Filtered to " + one_less.size)

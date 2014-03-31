@@ -33,13 +33,13 @@ class Grammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   var flatterms: FlatTermSet = null
 
   /** Returns the size of the grammar, i.e. |u| + |s| */
-  def size = u.size + safeHead(s, Nil).length //s.foldLeft(0)((n,sPart) => n + sPart.size)
+  def size = u.size + s.size
 
   /** Returns the set of eigenvariables that occur in u. */
   def eigenvariables = u.flatMap(collectVariables).filter(isEigenvariable(_:FOLVar, ev)).distinct
 
   /** Returns the number of eigenvariables that occur in this grammar. Equals this.eigenvariables.length. */
-  def numVars = s.length
+  def numVars = if (s.isEmpty) 0 else s.head.length
 
 /*
   def strictSuperGrammarOf(g : Grammar) = 
@@ -87,12 +87,12 @@ object ComputeGrammars extends Logger {
     //Helper functions for grammars
 
     //The number of variables in a decomposition
-    def numVars(s: types.S) = s.size
-    //The size of the first s-vector, if it exists, and 0 otherwise.
-    def ssize(s: types.S) = safeHead(s, Nil).length
+    //def numVars(s: types.S) = s.size
+    //The size of s.
+    //def ssize(s: types.S) = safeHead(s, Nil).length
     //The number of terms this grammar compresses (grammars that "compress" only one term are useless and
     //hence discarded here.)
-    def numTerms(s: types.S, t: List[FOLTerm]) = if (s.size != 0) s.head.size else t.size
+    def numTerms(s: types.S, t: List[FOLTerm]) = if (s.size != 0) s.size else t.size
 
 
     // This gets decremented as iterating through the delta table reveals
@@ -107,7 +107,7 @@ object ComputeGrammars extends Logger {
 
       // |U| + |S| < |T|
       // We only need to consider subsets of size |smallestGrammar| - |S| or less
-      val maxSubsetSize = smallestGrammarSize - ssize(s)
+      val maxSubsetSize = smallestGrammarSize - s.size
 
       trace("[smallestCoverExact] terms: " + terms)
       trace("[smallestCoverExact] maxSubsetSize: " + maxSubsetSize)
@@ -175,7 +175,7 @@ object ComputeGrammars extends Logger {
 
       trace("[smallestCoverExact] coverSize: " + coverSize)
 
-      smallestGrammarSize = ssize(s) + coverSize
+      smallestGrammarSize = s.size + coverSize
 
       trace("[smallestCoverExact] new smallestGrammarSize: " + smallestGrammarSize)
       coverings
@@ -210,9 +210,9 @@ object ComputeGrammars extends Logger {
 
         // Whenever we find a smaller S-vector,
         // we add the grammars in its row to the list of returned ones.
-        if(ssize(s) < smallestGrammarSize) {      
+        if(s.size < smallestGrammarSize) {      
 
-          trace("[folding DTG] - passed s.size with ssize=" + ssize(s) + ", smallestGrammarSize=" + smallestGrammarSize)              
+          trace("[folding DTG] - passed s.size with s.size=" + s.size + ", smallestGrammarSize=" + smallestGrammarSize)              
           val coverings = smallestCoverExact(s, newpairs)
 
           trace("[folding DTG] coverings: " + coverings)

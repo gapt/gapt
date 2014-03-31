@@ -54,7 +54,7 @@ object Deltas extends Logger {
     *
     * [OneVariableDelta] will return exactly one decomposition; if all terms are equal, it will return simply the first
     * term for u and Nil for s. If they are not equal, it will return some u and
-    * an S consisting of exactly one s-vector.
+    * an S consisting s-vectors of size 1.
     *
     * The variable in the returned decomposition -- if it occurrs -- will be named [eigenvariable]_0.
     */
@@ -70,7 +70,9 @@ object Deltas extends Logger {
     def computeDelta(terms: List[FOLTerm], eigenvariable: String) : Set[types.Decomposition] = {
       val (u,s1) = computeDg(terms, FOLVar(new VariableStringSymbol(eigenvariable + "_0")))
 
-      Set((u,List(s1)))
+      val s2 = s1.map(x => List(x))
+
+      Set((u,Set(s2: _*)))
     }
 
     // Delta difference
@@ -162,10 +164,14 @@ object Deltas extends Logger {
     val upperBound = numVars
 
     def computeDelta(terms: List[FOLTerm], eigenvariable: String) : Set[types.Decomposition] = {
-      computeDg(terms, eigenvariable, 0).map{ case(u,s,_) => (u,s)}
+      computeDg(terms, eigenvariable, 0).map{
+        case(u,s,_) => {
+          val s2 = Set(s.transpose: _*)
+          (u,s2)
+        }}
     }
 
-    private def computeDg(terms: List[FOLTerm], eigenvariable: String, curInd: Int) : Set[(types.U,types.S,Int)] = {
+    private def computeDg(terms: List[FOLTerm], eigenvariable: String, curInd: Int) : Set[(types.U,types.RawS,Int)] = {
 
       //Special case: only one term has been provided. This isn't part of
       //the definition of DeltaG in the paper (deltavector.tex), but
@@ -190,17 +196,17 @@ object Deltas extends Logger {
         //computePart is the only part which is significanlty different from
         //its counterpart in UnboundedVariableDelta, since it has to compute all combinations of choices
         //between the second & third cases.
-        def computePart(acc:Set[(List[types.U], types.S, Int)], ts: List[FOLTerm]) : Set[(List[types.U], types.S, Int)] = {
+        def computePart(acc:Set[(List[types.U], types.RawS, Int)], ts: List[FOLTerm]) : Set[(List[types.U], types.RawS, Int)] = {
           acc.flatMap{
             case(u,s,ind) => computeDg(ts, eigenvariable, ind).map{
               case (uPart, sPart, newInd) => (u :+ uPart, s ++ sPart, newInd) } }
         }
 
-        var results = Set[(types.U, types.S, Int)]()
+        var results = Set[(types.U, types.RawS, Int)]()
 
         //We choose the second case and filter out all the results with too many variables, then apply nub.
         if (commonFuncHead(terms)) {
-          val recursionResults = terms.map(fromFuncArgs).transpose.foldLeft(Set((Nil:List[types.U], Nil:types.S, curInd)))(computePart)
+          val recursionResults = terms.map(fromFuncArgs).transpose.foldLeft(Set((Nil:List[types.U], Nil:types.RawS, curInd)))(computePart)
           val filteredResults = recursionResults.filter{ case(_,s,_) => s.distinct.length <= upperBound}
 
           //Apply nub to each result
@@ -245,7 +251,7 @@ object Deltas extends Logger {
       * 
       * @param terms The terms t_1,...,t_n.
       * @param eigenvariable The name of the variables to insert into u. The default is "α".
-      * @return The tuple (u:FOLTerm, s:List[List[FOLTerm]]).
+      * @return The tuple (u:FOLTerm, s:types.RawS).
         Replacing α_1,...,α_q with s[1][i],...,s[q][i] results in t_i.
       */
     def computeDelta(terms: List[FOLTerm], eigenvariable: String) : Set[types.Decomposition] = {
@@ -253,29 +259,11 @@ object Deltas extends Logger {
 
       val (rawU,rawS) = computeDg(terms, eigenvariable, 0)._1
 
-      val nubbedRes = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
+      val (nubbedU,nubbedS) = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
 
-      //These are just quick asserts, designed to catch faulty delta-computations early.
-      
-      /*val vars = collectVariables(nubbedRes._1).filter(isEigenvariable(_:FOLVar,eigenvariable)).distinct.map(x => x.toString())
-      val diffs = List("α_0", "α_1", "α_2", "α_3", "α_4", "α_5", "α_6", "α_7", "α_8", "α_9", "α_10").zip(vars).map(x => x._1 == x._2).toList
-      val diffs2 = diffs.foldLeft(true)(_ && _)
+      val transposedS = Set(nubbedS.transpose: _*)
 
-      //if (!diffs2) {
-        error("Non-contiguous set of variables in UnboundedVariableDelta!")
-        throw new Exception("Non-contiguous set of variables in UnboundedVariableDelta!");
-        ???
-      } else if (vars.length != nubbedRes._2.length) {
-        error("Number of variables in u (" + vars.length + ") and number of s-vectors (" + nubbedRes._2.length + ") don't match in UnboundedVariableDelta!")
-        error("Variables in u: " + vars)
-        error("s-vectors     : " + nubbedRes._2)
-        throw new Exception("Number of variables in u (" + vars.length + ") and number of s-vectors (" + nubbedRes._2.length + ") don't match in UnboundedVariableDelta!");
-        ???
-      } else { 
-        Set(nubbedRes)
-      }*/
-
-      Set(nubbedRes)
+      Set((nubbedU, transposedS))
     }
 
     /** Computes Delta_G. Called by delta.apply.
@@ -286,7 +274,7 @@ object Deltas extends Logger {
       * @return ((u,S),newInd) - the first tuple contains the term u and the list S, the second component is the
       * number of introduced α.
       */
-    private def computeDg(terms: List[FOLTerm], eigenvariable: String, curInd: Int) : (types.Decomposition,Int) = {
+    private def computeDg(terms: List[FOLTerm], eigenvariable: String, curInd: Int) : (types.RawDecomposition,Int) = {
 
       trace("----------- entering computeDg.")
       trace("   terms: " + terms)
@@ -307,14 +295,14 @@ object Deltas extends Logger {
       }
       else if (commonFuncHead(terms)) {
           //Compute Delta_G(u_i) for all u_i
-          def computePart(acc:(List[types.U], types.S,Int), ts: List[FOLTerm]) : (List[types.U], types.S, Int) = {
+          def computePart(acc:(List[types.U], types.RawS,Int), ts: List[FOLTerm]) : (List[types.U], types.RawS, Int) = {
             val ((uPart,sPart),i:Int) = computeDg(ts, eigenvariable, acc._3)
             (acc._1 :+ uPart, acc._2 ++ sPart, i)
           }
           
           //Get the function args (unapply._2) and fold with computePart
           //The result might contain duplicate variables and therefore, nub must be applied
-          val (rawUParts, s, newInd) = terms.map(fromFuncArgs).transpose.foldLeft((Nil:List[types.U], Nil:types.S, curInd))(computePart)
+          val (rawUParts, s, newInd) = terms.map(fromFuncArgs).transpose.foldLeft((Nil:List[types.U], Nil:types.RawS, curInd))(computePart)
 
           //trace("computePart finished. Results(u,S):")
           //trace(rawUParts.toString())
@@ -388,7 +376,7 @@ object Deltas extends Logger {
     * @param (u',s') s.t. all α with identical corresponding term-lists in s have been merged together in u
     * and all duplicate lists s have been reduced to only 1 occurrence.
     */
-  private def nub (beginWith: Option[Int], eigenvariable:String, u: types.U, s: types.S): types.Decomposition = beginWith match {
+  private def nub (beginWith: Option[Int], eigenvariable:String, u: types.U, s: types.RawS): types.RawDecomposition = beginWith match {
     case None => (u,s)
     case Some(start) => {
       val indexedS = s.zip(start to (start + s.size - 1))
@@ -401,7 +389,7 @@ object Deltas extends Logger {
       trace("    nub | presentVars = " + presentVars)
 
       //Go through s, look ahead for duplicates, and delete them.
-      def nub2(u: types.U, s: List[(List[FOLTerm],Int)]) : types.Decomposition = s match {
+      def nub2(u: types.U, s: List[(List[FOLTerm],Int)]) : types.RawDecomposition = s match {
         //no variables in u -> just return (u,Nil)
         case Nil => (u,s.unzip._1)
         //variables occur -> check xs for identical s-vectors

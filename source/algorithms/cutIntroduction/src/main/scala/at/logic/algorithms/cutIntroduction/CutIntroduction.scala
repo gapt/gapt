@@ -128,7 +128,7 @@ object CutIntroduction extends Logger {
     println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
-      println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress.")
+      println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
       throw new CutIntroUncompressibleException("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier block.\n")
     }
@@ -405,7 +405,7 @@ object CutIntroduction extends Logger {
     trace("cutLeft = " + cutLeft)
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
-    val cutRight = grammar.s.transpose.foldRight(List[FOLFormula]()) { case (t, acc) =>
+    val cutRight = grammar.s.toList.foldRight(List[FOLFormula]()) { case (t, acc) =>
       (t.foldLeft(cutFormula){case (f, sval) => f.instantiate(sval)}) :: acc
     }
 
@@ -527,7 +527,7 @@ object CutIntroduction extends Logger {
   def sPart(cf: FOLFormula, s: types.S, p: LKProof) : LKProof = {
     var first = true;
 
-    s.transpose.foldLeft(p) { case (p,t) =>
+    s.toList.foldLeft(p) { case (p,t) =>
 
       //1. Partially instantiate the cut formula.
       //val pcf = (0 to t.length).toList.reverse.map(n => instantiateFirstN(cf,t,n)).toList

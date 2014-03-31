@@ -41,7 +41,9 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val alpha = FOLVar(new VariableStringSymbol("α_0"))
 
-        (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::g1::Nil)::Nil)))
+        val s = Set(((f1::g1::Nil)::Nil).transpose: _*)
+
+        (dec) must beEqualTo (Set[Decomposition]((alpha, s)))
       }
 
         "example #1" in {
@@ -60,7 +62,10 @@ class GrammarTest extends SpecificationWithJUnit {
             val alpha_2 = FOLVar(new VariableStringSymbol("α_1"))
             val f_alpha = Function(f, alpha::alpha_2::Nil)
 
-            (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::f2::Nil)::Nil), (f_alpha, (a::b::Nil)::(b::a::Nil)::Nil)))
+            val s1 = Set(((f1::f2::Nil)::Nil).transpose: _*)
+            val s2 = Set(((a::b::Nil)::(b::a::Nil)::Nil).transpose: _*)
+
+            (dec) must beEqualTo (Set[Decomposition]((alpha, s1), (f_alpha, s2.asInstanceOf[types.S])))
         }
 
         "example with a unary function symbol" in {
@@ -78,7 +83,9 @@ class GrammarTest extends SpecificationWithJUnit {
             val alpha = FOLVar(new VariableStringSymbol("α_0"))
             val f_alpha = Function(f, alpha::Nil)
 
-            (dec) must beEqualTo (Set[Decomposition]((f_alpha, (a::b::Nil)::Nil)))
+            val s = Set(((a::b::Nil)::Nil).transpose: _*)
+
+            (dec) must beEqualTo (Set[Decomposition]((f_alpha, s.asInstanceOf[types.S])))
         }
     }
 
@@ -99,7 +106,9 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val alpha = FOLVar(new VariableStringSymbol("α_0"))
 
-        (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::g1::Nil)::Nil)))
+        val s = Set(((f1::g1::Nil)::Nil).transpose: _*)
+
+        (dec) must beEqualTo (Set[Decomposition]((alpha, s)))
       }
 
       "example #1 without duplicates" in {
@@ -125,8 +134,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val alpha2 = FOLVar(new VariableStringSymbol("α_2"))
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha2::Nil)::Nil)
+        val s = Set(((a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, s.asInstanceOf[types.S])))
       }
 
       "example #2 with duplicates" in {
@@ -149,8 +159,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val alpha1 = FOLVar(new VariableStringSymbol("α_1"))
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha1::Nil)::Nil)
+        val s = Set(((a::b::Nil)::(c::d::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::Nil)::(c::d::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, s.asInstanceOf[types.S])))
       }
 
       "example #3 with alpha-elimination" in {
@@ -172,8 +183,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
 
         val uTarget = Function(f, alpha0::Function(g, c::d::Nil)::Nil)
+        val s = Set(((a::b::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, s.asInstanceOf[types.S])))
       }
 
       "example #4 with duplicates and alpha-elimination" in {
@@ -197,8 +209,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
 
         val uTarget = Function(f, Function(h, alpha0::Nil)::Function(g, c::alpha0::Nil)::Nil)
+        val s = Set(((a::b::b::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((uTarget, (a::b::b::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((uTarget, s.asInstanceOf[types.S])))
       }
     }
 
@@ -226,8 +239,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val common = Function(f, hgalpha::galpha::Nil)
 
         val dec = delta.computeDelta(f1::f2::Nil, "α")
+        val s = Set(((gc::c::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((common, (gc::c::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((common, s)))
       }
 
       "trivial decomposition" in {
@@ -252,8 +266,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val alpha = FOLVar(new VariableStringSymbol("α_0"))
 
         val dec = delta.computeDelta(f1::f2::Nil, "α")
+        val s = Set(((f1::f2::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((alpha, (f1::f2::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((alpha, s)))
 
       }
 
@@ -281,8 +296,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val common = Function(f, hgalpha::ga::Nil)
 
         val dec = delta.computeDelta(f1::f2::Nil, "α")
+        val s = Set(((gc::c::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((common, (gc::c::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((common, s)))
 
       }
 
@@ -301,8 +317,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val falpha = Function(f, alpha::Nil)
 
         val dec = delta.computeDelta(fa::f2a::f3a::Nil, "α")
+        val s = Set(((a::fa::f2a::Nil)::Nil).transpose: _*)
 
-        (dec) must beEqualTo (Set[Decomposition]((falpha, (a::fa::f2a::Nil)::Nil)))
+        (dec) must beEqualTo (Set[Decomposition]((falpha, s)))
       }
     }
 

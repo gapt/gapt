@@ -236,7 +236,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val body = ehs.grammar.eigenvariables.foldLeft(f)((f,ev) => f.instantiate(ev))
 
     //Instantiate with all the values in s.
-    val as = ehs.grammar.s.transpose.foldLeft(List[FOLFormula]()) {case (acc, t) =>
+    val as = ehs.grammar.s.toList.foldLeft(List[FOLFormula]()) {case (acc, t) =>
       (t.foldLeft(f){case (f, sval) => f.instantiate(sval)}) :: acc
     }
 
