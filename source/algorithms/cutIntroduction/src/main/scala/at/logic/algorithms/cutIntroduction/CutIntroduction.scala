@@ -426,6 +426,7 @@ object CutIntroduction extends Logger {
 
     val seq = FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha)))
 
+
     val proofLeft = prover.getLKProof(seq)
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
@@ -444,7 +445,8 @@ object CutIntroduction extends Logger {
       case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable.")
     }
 
-    val proofRight = prover.getLKProof(FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
+    val seq2 = FSequent(cutRight ++ ehs.antecedent, ehs.succedent)
+    val proofRight = prover.getLKProof(seq2)
     val rightBranch = proofRight match {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
       case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))

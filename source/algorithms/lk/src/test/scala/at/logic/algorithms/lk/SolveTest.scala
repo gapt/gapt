@@ -23,7 +23,7 @@ import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, Atom =>
 class SolveTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   "SolveTest" should {
-/*    "solve the sequents" in {
+    "solve the sequents" in {
       val k = IntVar(new VariableStringSymbol("k"))
       val real_n = IntVar(new VariableStringSymbol("n"))
       val n = k
@@ -143,7 +143,6 @@ class SolveTest extends SpecificationWithJUnit {
       (psymbols diff fssymbols).size must_== 2
       (fssymbols diff psymbols) must beEmpty
     }
-*/
 
     // tests of expansionProofToLKProof also in MiscTest, such that it can be used in combination with extractExpansionTrees
 
