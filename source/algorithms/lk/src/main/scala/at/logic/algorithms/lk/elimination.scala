@@ -63,586 +63,351 @@ object WeakeningsElimination {
 
 }
 
-// Removes the redundant weakenings and contractions.
-// Traverse the proof top-down.
-// When a contraction is encountered, check if the formulas are later weakened
-// and remove both rules (contraction and weakening)
+/**
+ * Removes the redundant weakenings and contractions.
+ * Linear algorithm. Traverses the proof top down, keeping track of the
+ * weakened formulas. Checks if the auxiliary formulas of each rule are weakened
+ * or not and treats it appropriately.
+ * TODO: make it tail-recursive.
+ */
 object CleanStructuralRules {
 
-  def apply(p: LKProof) : LKProof = cleanStructuralRules(p)
+  def apply(p: LKProof) : LKProof = cleanStructuralRules(p)._1
 
-  private def cleanStructuralRules(proof: LKProof) : LKProof = proof match {
+  private def cleanStructuralRules(pr: LKProof) : (LKProof, List[HOLFormula]) = pr match {
     // Base case: axiom
-    case Axiom(s) => proof 
+    case Axiom(s) => ( pr, Nil )
 
     // Structural rules:
-    case WeakeningLeftRule(p, _, m) =>
-      val new_proof = cleanStructuralRules(p)
-      WeakeningLeftRule(new_proof, m.formula)
+    
+    case WeakeningLeftRule(p, _, m) => 
+      val (proof, ws) = cleanStructuralRules(p)
+      ( proof, ws :+ m.formula )
     
     case WeakeningRightRule(p, _, m) =>
-      val new_proof = cleanStructuralRules(p)
-      WeakeningRightRule(new_proof, m.formula)
+      val (proof, ws) = cleanStructuralRules(p)
+      ( proof, ws :+ m.formula )
 
     case ContractionLeftRule(p, _, a1, a2, m) =>
-      // Assuming that above this contraction there are no more redundant
-      // contractions (it is the top most)
-      val new_proof = cleanStructuralRules(p)
-
-      // Finding corresponding occurrences on the new proof (both should be there!!!)
-      require(a1.formula == a2.formula, "Aux formulas in a contraction must be teh same, but are "+a1+" and "+a2)
-      val aux = new_proof.root.antecedent.filter(x => x.formula == a1.formula)
-      require(aux.length >= 2, "Auxiliary formulas must occur at least twice in the proof!")
-
-      val new_a1 = aux(0)
-      val new_a2 = aux(1)
-
-      val w1 = isWeakened(new_a1, new_proof)
-      val w2 = isWeakened(new_a2, new_proof)
-      
-      // Both formulas are weakened at some point
-      if(w1 && w2) {
-        // Only remove the weakening of one of those
-        // NOTE: By returning this proof, the contraction rule is automatically
-        // removed.
-        removeWeakeningOn(new_a1, new_proof)
+      val (proof, ws) = cleanStructuralRules(p)
+      ws.count(f => f == a1.formula) match {
+        case n if n >= 2 => ( proof, ws.diff(List(a1.formula, a2.formula)) :+ m.formula ) 
+        case n if n == 1 =>
+          assert(p.root.antecedent.exists(fo => fo.formula == a1.formula))
+          ( proof, ws.diff(List(a1.formula)) )
+        case n if n == 0 => ( ContractionLeftRule(proof, a1.formula), ws )
       }
-      // Only one formula is weakened
-      else if(w1) {
-        removeWeakeningOn(new_a1, new_proof)
-      }
-      else if (w2) {
-        removeWeakeningOn(new_a2, new_proof)
-      }
-      // No formulas are weakened, leave contraction there
-      else ContractionLeftRule(new_proof, a1.formula)
 
     case ContractionRightRule(p, _, a1, a2, m) =>
-      // Assuming that above this contraction there are no more redundant
-      // contractions (it is the top most)
-      val new_proof = cleanStructuralRules(p)
-      
-      // Finding corresponding occurrences on the new proof (both should be there!!!)
-      require(a1.formula == a2.formula, "Aux formulas in a contraction must be teh same, but are "+a1+" and "+a2)
-      val aux = new_proof.root.succedent.filter(x => x.formula == a1.formula)
-      require(aux.length >= 2, "Auxiliary formulas must occur at least twice in the proof!")
-
-      val new_a1 = aux(0)
-      val new_a2 = aux(1)
-
-      val w1 = isWeakened(new_a1, new_proof)
-      val w2 = isWeakened(new_a2, new_proof)
-      
-      // Both formulas are weakened at some point
-      if(w1 && w2) {
-        // Only remove the weakening of one of those
-        // NOTE: By returning this proof, the contraction rule is automatically
-        // removed.
-        removeWeakeningOn(new_a1, new_proof)
+      val (proof, ws) = cleanStructuralRules(p)
+      ws.count(f => f == a1.formula) match {
+        case n if n >= 2 => ( proof, ws.diff(List(a1.formula, a2.formula)) :+ m.formula ) 
+        case n if n == 1 => 
+          assert(p.root.succedent.exists(fo => fo.formula == a1.formula))
+          ( proof, ws.diff(List(a1.formula)) )
+        case n if n == 0 => ( ContractionRightRule(proof, a1.formula), ws )
       }
-      // Only one formula is weakened
-      else if(w1) {
-        removeWeakeningOn(new_a1, new_proof)
-      }
-      else if (w2) {
-        removeWeakeningOn(new_a2, new_proof)
-      }
-      // No formulas are weakened, leave contraction there
-      else ContractionRightRule(new_proof, a1.formula)
-
+ 
     case CutRule(p1, p2, _, a1, a2) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-      CutRule(new_proof1, new_proof2, a1.formula)
-
-    // Logical rules:
-    case OrLeftRule(p1, p2, _, a1, a2, m) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-
-      // Finding corresponding occurrences on the new proofs
-      val new_a1 = new_proof1.root.antecedent.filter(x => x =^ a1)(0)
-      val new_a2 = new_proof2.root.antecedent.filter(x => x =^ a2)(0)
-
-      val w1 = isWeakened(new_a1, new_proof1)
-      val w2 = isWeakened(new_a2, new_proof2)
-
-      if(w1) {
-        val new_proof12 = removeWeakeningOn(new_a1, new_proof1)
-        addWeakenings(new_proof12, proof.root.toFSequent)
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1.formula) && !proof1.root.succedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2.formula) && !proof2.root.antecedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula))
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningRightRule(proof1, a1.formula)
+          ( CutRule(p, proof2, a1.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningLeftRule(proof2, a2.formula)
+          ( CutRule(proof1, p, a1.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( CutRule(proof1, proof2, a1.formula), ws_ )
       }
-      else if(w2) {
-        val new_proof22 = removeWeakeningOn(new_a2, new_proof2)
-        addWeakenings(new_proof22, proof.root.toFSequent)
-      }
-      else OrLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
-    
-    case AndRightRule(p1, p2, _, a1, a2, m) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-      
-      // Finding corresponding occurrences on the new proofs
-      val new_a1 = new_proof1.root.succedent.filter(x => x =^ a1)(0)
-      val new_a2 = new_proof2.root.succedent.filter(x => x =^ a2)(0)
 
-      val w1 = isWeakened(new_a1, new_proof1)
-      val w2 = isWeakened(new_a2, new_proof2)
+    // Unary rules, one aux formula:
 
-      if(w1) {
-        val new_proof12 = removeWeakeningOn(new_a1, new_proof1)
-        addWeakenings(new_proof12, proof.root.toFSequent)
-      }
-      else if(w2) {
-        val new_proof22 = removeWeakeningOn(new_a2, new_proof2)
-        addWeakenings(new_proof22, proof.root.toFSequent)
-      }
-      else AndRightRule(new_proof1, new_proof2, a1.formula, a2.formula)
-    
     case NegLeftRule(p, _, a, m) =>
-      val new_proof = cleanStructuralRules(p)
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.succedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningLeftRule(new_proof2, m.formula)
-      }
-      else NegLeftRule(new_proof, a.formula)
-    
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, {(p, a, m) => NegLeftRule(p, a)} )
+  
+    case NegRightRule(p, _, a, m) =>
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, {(p, a, m) => NegRightRule(p, a)} )
+ 
     case AndLeft1Rule(p, _, a, m) =>
-      val new_proof = cleanStructuralRules(p)
-      val a2 = m.formula match {case And(_,r) => r}
-
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.antecedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningLeftRule(new_proof2, m.formula)
-      }
-      else AndLeft1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) =>
+        val a2 = m match {case And(_, r) => r}; AndLeft1Rule(p, a, a2) } )
     
     case AndLeft2Rule(p, _, a, m) =>
-      val new_proof = cleanStructuralRules(p)
-      val a2 = m.formula match {case And(l,_) => l}
-     
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.antecedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningLeftRule(new_proof2, m.formula)
-      }
-      else AndLeft2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) =>
+        val a2 = m match {case And(l, _) => l}; AndLeft2Rule(p, a2, a) } )
     
     case OrRight1Rule(p, _, a, m) =>
-      val new_proof = cleanStructuralRules(p)
-      val a2 = m.formula match {case Or(_,r) => r}
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.succedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningRightRule(new_proof2, m.formula)
-      }
-      else OrRight1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) =>
+        val a2 = m match {case Or(_, r) => r}; OrRight1Rule(p, a, a2) } )
     
     case OrRight2Rule(p, _, a, m) =>
-      val new_proof = cleanStructuralRules(p)
-      val a2 = m.formula match {case Or(l,_) => l}
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.succedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningRightRule(new_proof2, m.formula)
-      }
-      else OrRight2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
-    
-    case NegRightRule(p, _, a, m) =>
-      val new_proof = cleanStructuralRules(p)
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.antecedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningRightRule(new_proof2, m.formula)
-      }
-      else NegRightRule(new_proof, a.formula)
-    
-    case ImpLeftRule(p1, p2, _, a1, a2, m) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-      
-      // Finding corresponding occurrences on the new proofs
-      val new_a1 = new_proof1.root.succedent.filter(x => x =^ a1)(0)
-      val new_a2 = new_proof2.root.antecedent.filter(x => x =^ a2)(0)
-
-      val w1 = isWeakened(new_a1, new_proof1)
-      val w2 = isWeakened(new_a2, new_proof2)
-
-      if(w1) {
-        val new_proof12 = removeWeakeningOn(new_a1, new_proof1)
-        addWeakenings(new_proof12, proof.root.toFSequent)
-      }
-      else if(w2) {
-        val new_proof22 = removeWeakeningOn(new_a2, new_proof2)
-        addWeakenings(new_proof22, proof.root.toFSequent)
-      }
-      else ImpLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
-    
-    case ImpRightRule(p, _, a1, a2, m) =>
-      val new_proof = cleanStructuralRules(p)
-      ImpRightRule(new_proof, a1.formula, a2.formula)
-
-    case ForallLeftRule(p, _, a, m, t) => 
-      val new_proof = cleanStructuralRules(p)
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.antecedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningLeftRule(new_proof2, m.formula)
-      }
-      else ForallLeftRule(new_proof, a.formula, m.formula, t)
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) =>
+        val a2 = m match {case Or(l, _) => l}; OrRight2Rule(p, a2, a) } )
+ 
+    case ForallLeftRule(p, _, a, m, t) =>
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) => ForallLeftRule(p, a, m, t) } )
 
     case ForallRightRule(p, _, a, m, t) => 
-      val new_proof = cleanStructuralRules(p)
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.succedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningRightRule(new_proof2, m.formula)
-      }
-      else ForallRightRule(new_proof, a.formula, m.formula, t)
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) => ForallRightRule(p, a, m, t) } )
 
     case ExistsLeftRule(p, _, a, m, t) => 
-      val new_proof = cleanStructuralRules(p)
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.antecedent.filter(x => x =^ a)(0)
-
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningLeftRule(new_proof2, m.formula)
-      }
-      else ExistsLeftRule(new_proof, a.formula, m.formula, t)
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) => ExistsLeftRule(p, a, m, t) } )
 
     case ExistsRightRule(p, _, a, m, t) => 
-      val new_proof = cleanStructuralRules(p)
-      
-      // Finding corresponding occurrence on the new proof
-      val new_a = new_proof.root.succedent.filter(x => x =^ a)(0)
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) => ExistsRightRule(p, a, m, t) } )
 
-      val w1 = isWeakened(new_a, new_proof)
-      
-      if(w1) {
-        val new_proof2 = removeWeakeningOn(new_a, new_proof)
-        WeakeningRightRule(new_proof2, m.formula)
-      }
-      else ExistsRightRule(new_proof, a.formula, m.formula, t)
-
-    case EquationLeft1Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-      EquationLeft1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case EquationLeft2Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-      EquationLeft2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case EquationRight1Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-      EquationRight1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case EquationRight2Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = cleanStructuralRules(p1)
-      val new_proof2 = cleanStructuralRules(p2)
-      EquationRight2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case DefinitionLeftRule(p1,_,o1,o2) =>
-      val new_proof = cleanStructuralRules(p1)
-      DefinitionLeftRule(new_proof,o1.formula,o2.formula)
-
-    case DefinitionRightRule(p1,_,o1,o2) =>
-      val new_proof = cleanStructuralRules(p1)
-      DefinitionRightRule(new_proof,o1.formula,o2.formula)
-
-
-    // Schema rules:
+    // Schema rules (all unary with one aux formula):
     case AndLeftEquivalenceRule1(p, _, a, m) => 
-      val new_proof = cleanStructuralRules(p)
-      AndLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) => AndLeftEquivalenceRule1(p, a, m) } )
 
     case AndRightEquivalenceRule1(p, _, a, m) => 
-      val new_proof = cleanStructuralRules(p)
-      AndRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) => AndRightEquivalenceRule1(p, a, m) } )
     
     case OrLeftEquivalenceRule1(p, _, a, m) => 
-      val new_proof = cleanStructuralRules(p)
-      OrLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) => OrLeftEquivalenceRule1(p, a, m) } )
     
     case OrRightEquivalenceRule1(p, _, a, m) => 
-      val new_proof = cleanStructuralRules(p)
-      OrRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) => OrRightEquivalenceRule1(p, a, m) } )
     
     case AndLeftEquivalenceRule3(p, _, a, m) => 
-      val new_proof = cleanStructuralRules(p)
-      AndLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) => AndLeftEquivalenceRule3(p, a, m) } )
     
     case AndRightEquivalenceRule3(p, _, a, m) => 
-      val new_proof = cleanStructuralRules(p)
-      AndRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) => AndRightEquivalenceRule3(p, a, m) } )
     
     case OrLeftEquivalenceRule3(p, _, a, m) =>
-      val new_proof = cleanStructuralRules(p)
-      OrLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) => OrLeftEquivalenceRule3(p, a, m) } )
     
     case OrRightEquivalenceRule3(p, _, a, m) => 
-      val new_proof = cleanStructuralRules(p)
-      OrRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) => OrRightEquivalenceRule3(p, a, m) } )
 
+    // Definition rules (all unary with one aux formula):
+    case DefinitionLeftRule(p, _, a, m) =>
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_left(proof, ws, a.formula, m.formula, { (p, a, m) => DefinitionLeftRule(p, a, m) } )
+
+    case DefinitionRightRule(p, _, a, m) =>
+      val (proof, ws) = cleanStructuralRules(p)
+      handle_unary_one_aux_right(proof, ws, a.formula, m.formula, { (p, a, m) => DefinitionRightRule(p, a, m) } )
+
+    // Unary rules, two aux formulas:
+
+    case ImpRightRule(p, _, a1, a2, m) =>
+      val (proof, ws) = cleanStructuralRules(p)
+      (ws.contains(a1) && !proof.root.antecedent.exists(fo => fo.formula == a1.formula), 
+       ws.contains(a2) && !proof.root.succedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => ( proof, ws.diff(List(a1.formula, a2.formula)) :+ m.formula ) 
+        case (true, false) => 
+          val p1 = WeakeningLeftRule(proof, a1.formula)
+          val p2 = ImpRightRule(p1, a1.formula, a2.formula)
+          ( p2, ws.diff(List(a1.formula)) )
+        case (false, true) => 
+          val p1 = WeakeningRightRule(proof, a2.formula)
+          val p2 = ImpRightRule(p1, a1.formula, a2.formula)
+          ( p2, ws.diff(List(a2.formula)) )
+        case (false, false) => ( ImpRightRule(proof, a1.formula, a2.formula), ws )
+      }
+
+    // Binary rules: TODO: refactor the binary rules (code is duplicated)
+
+    case OrLeftRule(p1, p2, _, a1, a2, m) =>
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1) && !proof1.root.antecedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2) && !proof2.root.antecedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = ( ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula)) ) :+ m.formula
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningLeftRule(proof1, a1.formula)
+          ( OrLeftRule(p, proof2, a1.formula, a2.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningLeftRule(proof2, a2.formula)
+          ( OrLeftRule(proof1, p, a1.formula, a2.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( OrLeftRule(proof1, proof2, a1.formula, a2.formula), ws_ )
+      }
+
+    case AndRightRule(p1, p2, _, a1, a2, m) =>
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1) && !proof1.root.succedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2) && !proof2.root.succedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = (ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula))) :+ m.formula
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningRightRule(proof1, a1.formula)
+          ( AndRightRule(p, proof2, a1.formula, a2.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningRightRule(proof2, a2.formula)
+          ( AndRightRule(proof1, p, a1.formula, a2.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( AndRightRule(proof1, proof2, a1.formula, a2.formula), ws_ )
+      }
+      
+    case ImpLeftRule(p1, p2, _, a1, a2, m) =>
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1) && !proof1.root.succedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2) && !proof2.root.antecedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = (ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula))) :+ m.formula
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningRightRule(proof1, a1.formula)
+          ( ImpLeftRule(p, proof2, a1.formula, a2.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningLeftRule(proof2, a2.formula)
+          ( ImpLeftRule(proof1, p, a1.formula, a2.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( ImpLeftRule(proof1, proof2, a1.formula, a2.formula), ws_ )
+      }
+   
+    // Equation rules (all binary):
+    case EquationLeft1Rule(p1, p2, _, a1, a2, m) =>
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1) && !proof1.root.succedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2) && !proof2.root.antecedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = (ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula))) :+ m.formula
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningRightRule(proof1, a1.formula)
+          ( EquationLeft1Rule(p, proof2, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningLeftRule(proof2, a2.formula)
+          ( EquationLeft1Rule(proof1, p, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( EquationLeft1Rule(proof1, proof2, a1.formula, a2.formula, m.formula), ws_ )
+      }
+
+    case EquationLeft2Rule(p1, p2, _, a1, a2, m) =>
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1) && !proof1.root.succedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2) && !proof2.root.antecedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = (ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula))) :+ m.formula
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningRightRule(proof1, a1.formula)
+          ( EquationLeft2Rule(p, proof2, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningLeftRule(proof2, a2.formula)
+          ( EquationLeft2Rule(proof1, p, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( EquationLeft2Rule(proof1, proof2, a1.formula, a2.formula, m.formula), ws_ )
+      }
+
+    case EquationRight1Rule(p1, p2, _, a1, a2, m) =>
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1) && !proof1.root.succedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2) && !proof2.root.succedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = (ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula))) :+ m.formula
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningRightRule(proof1, a1.formula)
+          ( EquationRight1Rule(p, proof2, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningRightRule(proof2, a2.formula)
+          ( EquationRight1Rule(proof1, p, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( EquationRight1Rule(proof1, proof2, a1.formula, a2.formula, m.formula), ws_ )
+      }
+
+    case EquationRight2Rule(p1, p2, _, a1, a2, m) =>
+      val (proof1, ws1) = cleanStructuralRules(p1)
+      val (proof2, ws2) = cleanStructuralRules(p2)
+      (ws1.contains(a1) && !proof1.root.succedent.exists(fo => fo.formula == a1.formula), 
+       ws2.contains(a2) && !proof2.root.succedent.exists(fo => fo.formula == a2.formula)) match {
+        case (true, true) => 
+          val ws_ = (ws1.diff(List(a1.formula)) ++ ws2.diff(List(a2.formula))) :+ m.formula
+          (proof1, ws_) // The choice for proof1 is arbitrary
+        case (true, false) =>
+          val ws_ = ws1.diff(List(a1.formula)) ++ ws2
+          val p = WeakeningRightRule(proof1, a1.formula)
+          ( EquationRight2Rule(p, proof2, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, true) =>
+          val ws_ = ws1 ++ ws2.diff(List(a2.formula))
+          val p = WeakeningRightRule(proof2, a2.formula)
+          ( EquationRight2Rule(proof1, p, a1.formula, a2.formula, m.formula), ws_ )
+        case (false, false) =>
+          val ws_ = ws1 ++ ws2
+          ( EquationRight2Rule(proof1, proof2, a1.formula, a2.formula, m.formula), ws_ )
+      }
 
     case _ => throw new Exception("ERROR: Unexpected case while cleaning redundant structural rules.")
-
   }
+  
+  
+  private def handle_unary_one_aux_left (proof: LKProof, 
+                                    ws: List[HOLFormula], 
+                                    aux: HOLFormula, 
+                                    m: HOLFormula,
+                                    rule: ((LKProof, HOLFormula, HOLFormula) => LKProof) ) 
+  : (LKProof, List[HOLFormula]) = 
+    ws.contains(aux) && !proof.root.antecedent.exists(fo => fo.formula == aux) match {
+      case true => (proof, ws.diff(List(aux)) :+ m)
+      case false => (rule(proof, aux, m), ws)
+    }
 
-  // Checks if a formula is weakened in a proof
-  private def isWeakened(f: FormulaOccurrence, proof: LKProof) : Boolean = proof match {
-    // Base case: axiom
-    case Axiom(s) => false 
-
-    // Structural rules:
-    case WeakeningLeftRule(p, _, m) =>
-      if(getAncestors(f).contains(m) && f =^ m) true
-      else isWeakened(f, p) 
-    case WeakeningRightRule(p, _, m) =>
-      if(getAncestors(f).contains(m) && f =^ m) true
-      else isWeakened(f, p) 
-    case ContractionLeftRule(p, _, _, _, _) => isWeakened(f, p)
-    case ContractionRightRule(p, _, _, _, _) => isWeakened(f, p)
-    case CutRule(p1, p2, _, _, _) => isWeakened(f, p1) || isWeakened(f, p2)
-
-    // Logical rules:
-    case NegLeftRule(p, _, _, _) => isWeakened(f, p)
-    case NegRightRule(p, _, _, _) => isWeakened(f, p)
-    case AndLeft1Rule(p, _, _, _) => isWeakened(f, p)
-    case AndLeft2Rule(p, _, _, _) => isWeakened(f, p)
-    case AndRightRule(p1, p2, _, _, _, _) => isWeakened(f, p1) || isWeakened(f, p2)
-    case OrRight1Rule(p, _, _, _) => isWeakened(f, p)
-    case OrRight2Rule(p, _, _, _) => isWeakened(f, p)
-    case OrLeftRule(p1, p2, _, _, _, _) => isWeakened(f, p1) || isWeakened(f, p2)
-    case ImpLeftRule(p1, p2, _, _, _, _) => isWeakened(f, p1) || isWeakened(f, p2)
-    case ImpRightRule(p, _, _, _, _) => isWeakened(f, p)
-    case ForallLeftRule(p, _, _, _, _) => isWeakened(f, p) 
-    case ForallRightRule(p, _, _, _, _) => isWeakened(f, p) 
-    case ExistsLeftRule(p, _, _, _, _) => isWeakened(f, p)
-    case ExistsRightRule(p, _, _, _, _) => isWeakened(f, p)
-    case EquationLeft1Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
-    case EquationLeft2Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
-    case EquationRight1Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
-    case EquationRight2Rule(p1,p2,_,_,_,_) => isWeakened(f, p1) || isWeakened(f, p2)
-    case DefinitionLeftRule(p1,_,_,_) => isWeakened(f, p1)
-    case DefinitionRightRule(p1,_,_,_) => isWeakened(f, p1)
-
-    // Schema rules:
-    case AndLeftEquivalenceRule1(p, _, a, m) => isWeakened(f, p)
-    case AndRightEquivalenceRule1(p, _, a, m) => isWeakened(f, p) 
-    case OrLeftEquivalenceRule1(p, _, a, m) => isWeakened(f, p)
-    case OrRightEquivalenceRule1(p, _, a, m) => isWeakened(f, p)
-    case AndLeftEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
-    case AndRightEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
-    case OrLeftEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
-    case OrRightEquivalenceRule3(p, _, a, m) => isWeakened(f, p)
-    
-    case _ => throw new Exception("ERROR: Unexpected rule while checking if a formula is weakened in a proof.")
-  }
-
-  // Removes the weakening on some ancestor of f (such that it is not a proper
-  // subformula of f)
-  private def removeWeakeningOn(f: FormulaOccurrence, proof: LKProof) : LKProof = proof match {
-     case Axiom(s) => proof
-
-    // Structural rules:
-    case WeakeningLeftRule(p, _, m) => 
-      if(getAncestors(f).contains(m) && f =^ m) p
-      else {
-        val new_proof = removeWeakeningOn(f, p) 
-        WeakeningLeftRule(new_proof, m.formula)
-      }
-    case WeakeningRightRule(p, _, m) =>
-      if(getAncestors(f).contains(m) && f =^ m) p
-      else {
-        val new_proof = removeWeakeningOn(f, p) 
-        WeakeningRightRule(new_proof, m.formula)
-      }
-
-    case ContractionLeftRule(p, _, a1, a2, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      ContractionLeftRule(new_proof, a1.formula)
-    case ContractionRightRule(p, _, a1, a2, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      ContractionRightRule(new_proof, a1.formula)
-    
-    case CutRule(p1, p2, _, a1, a2) =>
-      val new_proof1 = removeWeakeningOn(f, p1)
-      val new_proof2 = removeWeakeningOn(f, p2)
-      CutRule(new_proof1, new_proof2, a1.formula)
-
-    // Logical rules:
-    case NegLeftRule(p, _, a, m ) => 
-      val new_proof = removeWeakeningOn(f, p)
-      NegLeftRule(new_proof, a.formula)
-
-    case NegRightRule(p, _, a, m ) =>
-      val new_proof = removeWeakeningOn(f, p)
-      NegRightRule(new_proof, a.formula)
-
-    case AndLeft1Rule(p, _, a, m) =>
-      val new_proof = removeWeakeningOn(f, p)
-      val a2 = m.formula match {case And(_,r) => r}
-      AndLeft1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
-
-    case AndLeft2Rule(p, _, a, m) =>
-      val new_proof = removeWeakeningOn(f, p)
-      val a2 = m.formula match {case And(l,_) => l}
-      AndLeft2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
-
-    case AndRightRule(p1, p2, _, a1, a2, m) => 
-      val new_proof1 = removeWeakeningOn(f, p1)
-      val new_proof2 = removeWeakeningOn(f, p2)
-      AndRightRule(new_proof1, new_proof2, a1.formula, a2.formula)
-
-    case OrRight1Rule(p, _, a, m) =>
-      val new_proof = removeWeakeningOn(f, p)
-      val a2 = m.formula match {case Or(_,r) => r}
-      OrRight1Rule(new_proof, a.formula, a2.asInstanceOf[HOLFormula])
-
-    case OrRight2Rule(p, _, a, m) =>
-      val new_proof = removeWeakeningOn(f, p)
-      val a2 = m.formula match {case Or(l,_) => l}
-      OrRight2Rule(new_proof, a2.asInstanceOf[HOLFormula], a.formula)
-
-    case OrLeftRule(p1, p2, _, a1, a2, m) => 
-      val new_proof1 = removeWeakeningOn(f, p1) 
-      val new_proof2 = removeWeakeningOn(f, p2)
-      OrLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
-
-    case ImpLeftRule(p1, p2, _, a1, a2, m) => 
-      val new_proof1 = removeWeakeningOn(f, p1)
-      val new_proof2 = removeWeakeningOn(f, p2)
-      ImpLeftRule(new_proof1, new_proof2, a1.formula, a2.formula)
-
-    case ImpRightRule(p, _, a1, a2, m) =>
-      val new_proof = removeWeakeningOn(f, p)
-      ImpRightRule(new_proof, a1.formula, a2.formula)
-
-    case ForallLeftRule(p, _, a, m, t) => 
-      val new_proof = removeWeakeningOn(f, p)
-      ForallLeftRule(new_proof, a.formula, m.formula, t)
-
-    case ForallRightRule(p, _, a, m, t) => 
-      val new_proof = removeWeakeningOn(f, p)
-      ForallRightRule(new_proof, a.formula, m.formula, t)
-
-    case ExistsLeftRule(p, _, a, m, t) => 
-      val new_proof = removeWeakeningOn(f, p)
-      ExistsLeftRule(new_proof, a.formula, m.formula, t)
-
-    case ExistsRightRule(p, _, a, m, t) => 
-      val new_proof = removeWeakeningOn(f, p)
-      ExistsRightRule(new_proof, a.formula, m.formula, t)
-
-    case EquationLeft1Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = removeWeakeningOn(f, p1)
-      val new_proof2 = removeWeakeningOn(f, p2)
-      EquationLeft1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case EquationLeft2Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = removeWeakeningOn(f, p1)
-      val new_proof2 = removeWeakeningOn(f, p2)
-      EquationLeft2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case EquationRight1Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = removeWeakeningOn(f, p1)
-      val new_proof2 = removeWeakeningOn(f, p2)
-      EquationRight1Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case EquationRight2Rule(p1,p2,_,o1,o2,o3) =>
-      val new_proof1 = removeWeakeningOn(f, p1)
-      val new_proof2 = removeWeakeningOn(f, p2)
-      EquationRight2Rule(new_proof1,new_proof2,o1.formula,o2.formula,o3.formula)
-
-    case DefinitionLeftRule(p1,_,o1,o2) =>
-      val new_proof = removeWeakeningOn(f, p1)
-      DefinitionLeftRule(new_proof,o1.formula,o2.formula)
-
-    case DefinitionRightRule(p1,_,o1,o2) =>
-      val new_proof = removeWeakeningOn(f, p1)
-      DefinitionRightRule(new_proof,o1.formula,o2.formula)
-
-
-     // Schema rules:
-    case AndLeftEquivalenceRule1(p, _, a, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      AndLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-
-    case AndRightEquivalenceRule1(p, _, a, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      AndRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-    
-    case OrLeftEquivalenceRule1(p, _, a, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      OrLeftEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-    
-    case OrRightEquivalenceRule1(p, _, a, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      OrRightEquivalenceRule1(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-    
-    case AndLeftEquivalenceRule3(p, _, a, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      AndLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-    
-    case AndRightEquivalenceRule3(p, _, a, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      AndRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-    
-    case OrLeftEquivalenceRule3(p, _, a, m) =>
-      val new_proof = removeWeakeningOn(f, p)
-      OrLeftEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-    
-    case OrRightEquivalenceRule3(p, _, a, m) => 
-      val new_proof = removeWeakeningOn(f, p)
-      OrRightEquivalenceRule3(new_proof, a.formula.asInstanceOf[SchemaFormula], m.formula.asInstanceOf[SchemaFormula])
-
-    case _ => throw new Exception("ERROR: Unexpected rule while removing weakening of a formula.")
-  }
-
+  private def handle_unary_one_aux_right (proof: LKProof, 
+                                    ws: List[HOLFormula], 
+                                    aux: HOLFormula, 
+                                    m: HOLFormula,
+                                    rule: ((LKProof, HOLFormula, HOLFormula) => LKProof) ) 
+  : (LKProof, List[HOLFormula]) = 
+    ws.contains(aux) && !proof.root.succedent.exists(fo => fo.formula == aux) match {
+      case true => (proof, ws.diff(List(aux)) :+ m)
+      case false => (rule(proof, aux, m), ws)
+    }
 }
