@@ -2,14 +2,15 @@ package at.logic.gui.prooftool.gui
 
 import ch.randelshofer.tree.sunburst.{SunburstNode, SunburstTree, SunburstView, SunburstModel}
 import ch.randelshofer.tree.{NodeInfo, TreeNode}
-import scala.swing.Action
+import scala.swing.Publisher
 import at.logic.calculi.treeProofs.TreeProof
+import scala.swing.event.Event
 
 /**
- * Created by marty on 3/24/14.
+ * This is a wrapper around the Sunburst Tree from the treeviz library. It provides a listener for the
+ * selection of a node in tree.
  */
-trait ReactiveSunburstView extends SunburstView {
-  private var listeners = List[Action]()
+trait ReactiveSunburstView extends SunburstView with Publisher {
   var selected : Option[SunburstNode] = None
   var selected_proof : Option[TreeNode] = None
 
@@ -22,22 +23,14 @@ trait ReactiveSunburstView extends SunburstView {
       selected = Some(newValue)
       selected_proof = Some(newValue.getNode)
     }
-    for (l <- listeners) {
-      l()
-    }
-  }
 
-  def addListener(action : Action) = {
-    listeners = action :: listeners
-  }
+    this.publish(NodeSelectedEvent(selected_proof.getOrElse(null)))
 
-  def removeListener(action : Action) = {
-    //TODO: decide if we really want to remove all actions or just the first occurrence
-    listeners = listeners.filterNot(_ == action)
   }
-
 
 }
+
+case class NodeSelectedEvent(node : TreeNode) extends Event
 
 class ReactiveSunburstModel(val root : TreeNode, info : NodeInfo)
  extends SunburstModel(root,info) {

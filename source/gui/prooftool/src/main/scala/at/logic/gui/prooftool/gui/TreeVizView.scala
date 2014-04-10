@@ -82,7 +82,7 @@ class ProofNodeInfo[T] extends NodeInfo {
     else if (rule == InitialRuleType || rule == WeakeningLeftRuleType || rule == WeakeningRightRuleType || rule == ContractionLeftRuleType || rule == ContractionRightRuleType) {
       Color.LIGHT_GRAY
     }
-    else if (rule == AndLeft1RuleType || rule == AndLeft2RuleType || rule == OrRight1RuleType || rule == OrRight2RuleType || rule == ImpRightRuleType) {
+    else if (rule == AndLeft1RuleType || rule == AndLeft2RuleType || rule == OrRight1RuleType || rule == OrRight2RuleType || rule == ImpRightRuleType || rule == NegLeftRuleType || rule == NegRightRuleType) {
       orange
     }
     else if (rule == AndRightRuleType || rule == OrLeftRuleType || rule == ImpLeftRuleType) {

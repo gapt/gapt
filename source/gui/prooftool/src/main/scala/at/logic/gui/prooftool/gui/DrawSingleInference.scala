@@ -4,15 +4,12 @@ import scala.swing._
 import at.logic.calculi.agraphProofs.{BinaryAGraphProof, UnaryAGraphProof, AGraphProof}
 import at.logic.calculi.lk.base._
 import java.awt.{Color, Font}
-import java.awt.Font._
-import scala.Some
-import scala.Some
-import scala.Some
+import scala.swing.BorderPanel.Position
 
 /**
  * Created by marty on 3/26/14.
  */
-class DrawSingleSequentInference extends ScrollPane {
+class DrawSingleSequentInference(var orientation : Orientation.Value) extends ScrollPane {
 
   def DrawSingleSequentInference() = {
     init()
@@ -25,7 +22,6 @@ class DrawSingleSequentInference extends ScrollPane {
     init();
   }
 
-  private var orientation = Orientation.Vertical
   private var box : BoxPanel = null
 
   private var aux : List[Sequent] = List()
@@ -33,12 +29,23 @@ class DrawSingleSequentInference extends ScrollPane {
   private var primary : Option[Sequent] = None
 
   val auxlabel = new Label("Auxiliary: ")
+  auxlabel.horizontalAlignment = Alignment.Left
+  auxlabel.verticalAlignment = Alignment.Top
+  auxlabel.background = Color.GREEN
+  auxlabel.horizontalTextPosition = Alignment.Left
+  auxlabel.verticalTextPosition = Alignment.Top
+
   val primlabel = new Label("Primary: ")
+  primlabel.horizontalAlignment = Alignment.Left
+  primlabel.verticalAlignment = Alignment.Top
+  primlabel.background = this.background
+  primlabel.horizontalTextPosition = Alignment.Left
+  primlabel.verticalTextPosition = Alignment.Top
 
   this.background = Color.WHITE
 
   def init() {
-    this.box = new BoxPanel(orientation)
+    this.box = new BoxPanel(noflip(orientation))
     this.viewportView = box
 
 
@@ -64,39 +71,95 @@ class DrawSingleSequentInference extends ScrollPane {
     }
 
     box.contents.clear()
+    box.background = this.background
     this.ignoreRepaint = true
 
-    if (aux.nonEmpty) {
-      val bp = new BoxPanel(Orientation.Vertical)
-      bp.background = this.background
-      val sequents = aux.map(x => {
-        val ds = DrawSequent(x, this.font, "" )
-        val box = new BoxPanel(Orientation.Horizontal)
-        ds.background = this.background
-        box.background = this.background
-        box.contents += auxlabel
-        box.contents += ds
-        box
-      }
-      )
-      bp.contents ++= sequents
-      box.contents += bp
+    noflip(this.orientation) match {
+      case Orientation.Horizontal =>
+        //println("Horizontal layout")
+        if (aux.nonEmpty) {
+          val bp = new BoxPanel(noflip(orientation))
+          bp.background = this.background
+          val sequents = aux.map(x => {
+            val ds = DrawSequent(x, this.font, "" )
+            val box = new BoxPanel(flip(orientation))
+            ds.background = this.background
+            box.background = this.background
+            box.contents += auxlabel
+            box.contents += ds
+            box
+          }
+          )
+          bp.contents ++= sequents
+          box.contents += bp
+        }
+
+        if (primary.nonEmpty) {
+          val bp = new BoxPanel(noflip(orientation))
+          bp.background = this.background
+          val sequent = DrawSequent(primary.get, this.font, "" )
+          sequent.background = this.background
+          bp.contents += primlabel
+          bp.contents += sequent
+          box.contents += bp
+        }
+        box.contents += Swing.HGlue
+
+      case Orientation.Vertical =>
+        //println("Vertical layout")
+        if (aux.nonEmpty) {
+          val bp = new BorderPanel()
+          bp.layout(auxlabel) = BorderPanel.Position.West
+          bp.background = this.background
+          bp.revalidate()
+          box.contents +=  bp
+        }
+
+
+        box.contents ++= aux.map(x => {
+          val ds = DrawSequent(x, this.font, "" )
+          ds.background = this.background
+          val bp = new BorderPanel()
+          bp.layout(ds) = Position.West
+          bp.revalidate()
+          bp.background = this.background
+          bp
+        }
+        )
+
+        if (primary.nonEmpty) {
+          val bp = new BorderPanel()
+          bp.layout(primlabel) = BorderPanel.Position.West
+          bp.background = this.background
+          bp.revalidate()
+          box.contents += bp
+
+          val sequent = DrawSequent(primary.get, this.font, "" )
+          sequent.background = this.background
+
+          val bp2 = new BorderPanel()
+          bp2.layout(sequent) = Position.West
+          bp2.background = this.background
+          bp2.revalidate()
+          box.contents += bp2
+        }
+
+        box.contents += Swing.Glue
+        box.revalidate()
     }
 
-    if (primary.nonEmpty) {
-      val bp = new BoxPanel(Orientation.Horizontal)
-      bp.background = this.background
-      val sequent = DrawSequent(primary.get, this.font, "" )
-      sequent.background = this.background
-      bp.contents += primlabel
-      bp.contents += sequent
-      box.contents += bp
-    }
 
     this.ignoreRepaint = false
     this.revalidate()
     this.repaint()
   }
+
+  private def noflip(o : Orientation.Value) =
+    if (o == Orientation.Vertical) Orientation.Vertical
+    else Orientation.Horizontal
+  private def flip(o : Orientation.Value) =
+    if (o == Orientation.Vertical) Orientation.Horizontal
+    else Orientation.Vertical
 
 
 }

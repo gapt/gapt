@@ -63,10 +63,10 @@ object Main extends SimpleSwingApplication {
   }
 
   def showFrame() {
-    top.pack()
     top.size = new Dimension(700,500)
-    top.centerOnScreen()
     top.maximize()
+    top.centerOnScreen()
+    top.pack()
     top.open()
   }
 
@@ -100,59 +100,28 @@ object Main extends SimpleSwingApplication {
 
   def displaySunburst[T](name: String, obj: TreeProof[T]) {
     showFrame()
-    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.ignoreRepaint = true
 
-    val root = new ProofNode[T](obj)
-    val info = new ProofNodeInfo[T]()
-    val model = new ReactiveSunburstModel(root, info)
-    val view = model.getView()
-
-    view.setToolTipEnabled(true)
-
-    val iv = new DrawSingleSequentInference()
-    val size = this.body.size
-    iv.preferredSize = new Dimension(size.getWidth.toInt, (size.getHeight / 10).toInt)
-
-    val box = new BoxPanel(Orientation.Vertical)
-    box.contents ++= List(iv, Component.wrap(view))
-
-    if (obj.root.isInstanceOf[Sequent]) {
-      view.addListener(new Action("Message to Inference") {
-        def apply() = {
-          view.selected_proof match {
-            case None =>
-              iv.p_= (None)
-              box.revalidate()
-              box.repaint()
-              ()
-            case Some(p : ProofNode[_]) =>
-              iv.p_= (Some(p.proof.asInstanceOf[LKProof]))
-              box.revalidate()
-              box.repaint()
-              /*
-              p.proof.root match {
-                case s : Sequent =>
-                  println("Selected: "+ HybridLatexExporter.fsequentString(s.toFSequent(), false))
-              }
-              */
-            case _ => ()
-          }
-
-        }
-      } )
+    val pv = obj.root match {
+      case s : Sequent =>
+        println("detected Sequent proof")
+        val pv = new CombinedSequentProofView[T](obj, defaultFontSize)
+        body.contents = pv
+        pv
+      case _ =>
+        println("detected arbitrary proof")
+        val pv =  new CombinedProofView[T](obj, defaultFontSize)
+        body.contents = pv
+        pv
     }
-
-
-
-
-
-    body.contents = box
-
+    pv.view.setSelectedNode(null)
     body.ignoreRepaint = false
+    body.revalidate()
+    pv.revalidate()
+    top.pack()
+    body.revalidate()
     body.repaint()
     body.cursor = java.awt.Cursor.getDefaultCursor
-
   }
 
 
