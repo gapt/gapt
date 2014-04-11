@@ -76,7 +76,7 @@ class CombinedSequentProofView[T <: Sequent](proof : TreeProof[T], fSize : Int) 
       val height = Math.max(size.height / 10, size.height - size.width)
       val restheight = size.getHeight.toInt - height
       iv.preferredSize = new Dimension(size.width, height)
-      iv.p_=(Some(proof.root))
+      //iv.p_=(Some(proof.root))
       view.setPreferredSize(new Dimension(size.width, restheight))
       this.box = new BoxPanel(Orientation.Vertical)
       box.contents ++= List(iv, Component.wrap(view))
