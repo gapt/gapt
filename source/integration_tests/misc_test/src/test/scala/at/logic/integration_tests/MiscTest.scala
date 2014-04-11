@@ -199,7 +199,6 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "Load Prover9 proofs, extract their expansion tree an test the validity of its deep formula using veriT" in {
-      skipped("VeriT --prove-version in isValid is currently not generally available")
       if (!VeriTProver.isInstalled()) skipped("VeriT is not installed")
 
       for (testBaseName <- "ALG138+1.out" :: Nil) {
