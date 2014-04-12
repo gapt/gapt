@@ -74,7 +74,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       setWindowContent(p,c)
       Some(s)
     case proof: TreeProof[_] =>
-      layout(new DrawProof(proof, fSize, Set(), Set(), Set(), "")) = c
+      layout(new DrawProof(proof, fSize, Set(), Set(), None, "")) = c
       ProofToolPublisher.publish(Loaded)
       StructPublisher.publish(UnLoaded)
       None

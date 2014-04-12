@@ -37,8 +37,8 @@ object DrawSequent {
   def apply(seq: Sequent, ft: Font, str: String): FlowPanel = if (! str.isEmpty) {
     val set: Set[FormulaOccurrence] = ( seq.antecedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ++
       seq.succedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ).toSet
-    apply(seq, ft, set, Set(), Set())
-  } else apply(seq, ft, Set(), Set(), Set())
+    apply(seq, ft, set, Set(), None)
+  } else apply(seq, ft, Set(), Set(), None)
 
   //used by DrawClList to draw FSequents
   def applyF(seq: types.FSequent, ft: Font, str: String): FlowPanel = {
@@ -49,13 +49,14 @@ object DrawSequent {
   }
 
   //used by DrawProof
-  def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence], omega_anc: Set[FormulaOccurrence], vis_occ: Set[FormulaOccurrence]) = new FlowPanel {
+  def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence], omega_anc: Set[FormulaOccurrence],
+            vis_occ: Option[Set[FormulaOccurrence]]) = new FlowPanel {
     background = new Color(255,255,255)
     opaque = false
 
     private var first = true
     for (f <- seq.antecedent) {
-      if (vis_occ.isEmpty || vis_occ.contains(f) ) {
+      if (vis_occ == None || vis_occ.get.contains(f) ) {
         if (! first) contents += new Label(", ") {font = ft}
         else first = false
         if (cut_anc.contains(f)) {
@@ -76,7 +77,7 @@ object DrawSequent {
     contents += new Label(" \u22a2 ") {font = ft}
     first =true
     for (f <- seq.succedent) {
-      if (vis_occ.isEmpty || vis_occ.contains(f) ) {
+      if (vis_occ == None || vis_occ.get.contains(f) ) {
         if (! first) contents += new Label(", ")  {font = ft}
         else first = false
         if (cut_anc.contains(f)) {

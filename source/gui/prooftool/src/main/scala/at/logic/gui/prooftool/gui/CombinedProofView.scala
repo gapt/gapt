@@ -10,6 +10,8 @@ import scala.swing.Reactions.Reaction
 /**
  * Provides a combination of DrawProof and SunburstTrees with a SingleInferenceViewer
  */
+
+/*
 class CombinedProofView[T](proof : TreeProof[T], fSize : Int) extends BorderPanel {
   //draw proof
   //val drawproof = new DrawProof(proof, fSize, Set(), Set(), Set(), "")
@@ -113,3 +115,4 @@ class CombinedSequentProofView[T <: Sequent](proof : TreeProof[T], fSize : Int) 
 
 
 }
+   */

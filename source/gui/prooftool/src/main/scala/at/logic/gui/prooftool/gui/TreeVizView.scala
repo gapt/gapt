@@ -44,8 +44,8 @@ class ProofNodeInfo[T] extends NodeInfo {
   def genShowAction(x: TreeProof[T]) = new Action("Show node in LK Viewer") {
     def apply() = {
       root match {
-        case Some(proof) =>
-          Main.display("", proof.proof)
+        case Some(node) =>
+          Main.loadProof((node.proof.name, node.proof))
           Main.scrollToProof(x)
           //TODO: fix this in some better way
 
@@ -203,6 +203,8 @@ class ProofColorizer extends Colorizer {
   def get(w:Float) = new Color(255*w, 255*w, 255*w)
 }
 
+
+// Comment from Mikheil: for what this class is used???
 class FormulaBox[V](var inference : TreeProof[V]) extends BorderPanel {
   inference match {
     case a:AuxiliaryFormulas =>

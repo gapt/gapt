@@ -22,7 +22,7 @@ import at.logic.calculi.lk.propositionalRules._
 
 class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence],
                 private var colored_omega_occurrences : Set[FormulaOccurrence],
-                private var visible_occurrences : Set[FormulaOccurrence], private var str: String)
+                private var visible_occurrences : Option[Set[FormulaOccurrence]], private var str: String)
   extends BorderPanel with MouseMotionListener {
   background = white
   opaque = false
@@ -97,7 +97,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     initialize()
   }
 
-  def setVisibleOccurrences(s : Set[FormulaOccurrence]) {
+  def setVisibleOccurrences(s : Option[Set[FormulaOccurrence]]) {
     visible_occurrences = s
     // tx = tx1 // Uncomment this line if you want to include the end-sequent.
     initialize()

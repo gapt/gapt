@@ -33,7 +33,7 @@ import at.logic.transformations.ceres.clauseSets.{renameCLsymbols, StandardClaus
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{Projections, DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
-import at.logic.algorithms.shlk.{FixedFOccs,CloneLKProof2, applySchemaSubstitution2, applySchemaSubstitution}
+import at.logic.algorithms.shlk.{FixedFOccs, applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.transformations.skolemization.skolemize
@@ -42,14 +42,9 @@ import at.logic.transformations.ceres.ACNF.ACNF
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.language.hol.{HOLFormula, HOLExpression}
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
-import at.logic.utils.ds.mutable.trees.TreeNode
-import at.logic.algorithms.hlk.HybridLatexExporter
-import at.logic.calculi.agraphProofs.AGraphProof
-import java.awt.Dimension
-import scala.swing.Dimension
+
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -63,11 +58,11 @@ object Main extends SimpleSwingApplication {
   }
 
   def showFrame() {
-    top.size = new Dimension(700,500)
-    top.maximize()
-    top.centerOnScreen()
+    top.preferredSize = new Dimension(700,500)
     top.pack()
+    top.centerOnScreen()
     top.open()
+    top.maximize()
   }
 
   lazy val top = new MainFrame {
@@ -97,9 +92,27 @@ object Main extends SimpleSwingApplication {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
+  def sunburstView() {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.getContent.getData match {
+      case Some((name, proof : TreeProof[_]) ) => initSunburstDialog(name, proof)
+      case _ => errorMessage("Proof not found!")
+    }
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
 
-  def displaySunburst[T](name: String, obj: TreeProof[T]) {
+  def initSunburstDialog(name: String, proof: TreeProof[_]) {
+    val d = new SunburstTreeDialog(name, proof)
+    d.pack()
+    d.centerOnScreen()
+    d.open()
+  }
+
+  def displaySunburst[T](name: String, proof: TreeProof[T]) {
     showFrame()
+    initSunburstDialog(name, proof)
+
+    /*body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.ignoreRepaint = true
 
     val pv = obj.root match {
@@ -120,7 +133,7 @@ object Main extends SimpleSwingApplication {
     pv.revalidate()
     top.pack()
     body.revalidate()
-    body.repaint()
+    body.repaint()*/
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -198,10 +211,12 @@ object Main extends SimpleSwingApplication {
       val height = component.size.height
       val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
       val g = img.createGraphics()
+      g.setBackground(new Color(255,255,255))
+      g.fillRect(0,0,width,height)
       component.paint(g)
       val result = chooser.selectedFile.getPath
       val path = if (result.endsWith(".png")) result else result + ".png"
-      ImageIO.write(img, "png", new File(path));
+      ImageIO.write(img, "png", new File(path))
     } catch {
       case e: Throwable => errorMessage("Can't export to png! \n\n" + getExceptionString(e))
     } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
@@ -574,7 +589,25 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
+      contents += new MenuItem(Action("Hide All Formulas") { hideAllFormulas() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
       contents += new MenuItem(Action("Hide Sequent Contexts") { hideSequentContext() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new MenuItem(Action("Show All Formulas") { showAllFormulas() }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -772,6 +805,18 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Specify Resolution Schema") { specifyResolutionSchema() } )  { border = customBorder }
       contents += new MenuItem(Action("Compute Instance") { computeInstance() } )  { border = customBorder }
     }
+    contents += new Menu("Sunburst") {
+      contents += new MenuItem(Action("Sunburst View") { sunburstView() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => enabled = true
+          case UnLoaded => enabled = false
+        }
+
+      }
+    }
     contents += new Menu("Help") {
       mnemonic = Key.H
       contents += new MenuItem(Action("About") { About() }) {
@@ -874,181 +919,6 @@ object Main extends SimpleSwingApplication {
         val all3 = ForallLeftRule(andlft, And(all_px,qa), AllVar(y, And(all_px,qy)),a)
 
         body.contents = new Launcher(Some(("Proof", all3)), defaultFontSize)
-        ProofToolPublisher.publish(EnableMenus)
-      }) { border = customBorder }
-      contents += new MenuItem(Action("Nested Expansion Tree") {
-        import at.logic.language.lambda.types.Definitions._
-        import at.logic.language.lambda.symbols.ImplicitConverters._
-        import at.logic.language.hol._
-        import at.logic.calculi.expansionTrees.{WeakQuantifier, And => AndET, Atom => AtomET}
-        val p = HOLVar("p", i -> o)
-        val a = HOLVar("a", i)
-        val b = HOLVar("b", i)
-        val a1 = HOLVar("a_1", i)
-        val b1 = HOLVar("b_1", i)
-        val a2 = HOLVar("a_2", i)
-        val b2 = HOLVar("b_2", i)
-        val q = HOLVar("q", i -> o)
-        val x = HOLVar("x", i)
-        val y = HOLVar("y", i)
-        val px = HOLAppFormula(p, x) // p(x)
-        val pa1 = HOLAppFormula(p, a1) // p(a1)
-        val pb1 = HOLAppFormula(p, b1) // p(b1)
-        val pa2 = HOLAppFormula(p, a2) // p(a2)
-        val pb2 = HOLAppFormula(p, b2) // p(b2)
-        val qb = HOLAppFormula(q, b) // q(b)
-        val qa = HOLAppFormula(q, a) // q(a)
-        val qy = HOLAppFormula(q, y) // q(a)
-        val all_px = AllVar(x, px) // forall x. p(x)
-        val all_px_and_qy = And(all_px,qy) // forall x. p(x) /\ q(y)
-        val all_all_px_and_qy = AllVar(y,all_px_and_qy) // forall y. (forall x. p(x) /\ q(y))
-        val ex_px = ExVar(x, px) // exists x. p(x)
-        val ex_px_and_qy = And(ex_px,qy) // exists x. p(x) /\ q(y)
-        val ex_ex_px_and_qy = ExVar(y,ex_px_and_qy) // exists y. (exists x. p(x) /\ q(y))
-
-        val expTree11 = new WeakQuantifier(all_px,Seq((AtomET(pa1),a1),(AtomET(pb1),b1)))
-        val expTree21 = new WeakQuantifier(all_px,Seq((AtomET(pa2),a2),(AtomET(pb2),b2)))
-        val expTree1 = new AndET(expTree11,AtomET(qa))
-        val expTree2 = new AndET(expTree21,AtomET(qb))
-        val expTree = new WeakQuantifier(all_all_px_and_qy,Seq((expTree1,a),(expTree2,b)))
-
-        val expT11 = new WeakQuantifier(ex_px,Seq((AtomET(pa1),a1),(AtomET(pb1),b1)))
-        val expT21 = new WeakQuantifier(ex_px,Seq((AtomET(pa2),a2),(AtomET(pb2),b2)))
-        val expT1 = new AndET(expT11,AtomET(qa))
-        val expT2 = new AndET(expT21,AtomET(qb))
-        val expT = new WeakQuantifier(ex_ex_px_and_qy,Seq((expT1,a),(expT2,b)))
-
-        val et = (Seq(expTree,expTree),Seq(expT,expT))
-
-        body.contents = new Launcher(Some(("Expansion Tree", et)), defaultFontSize)
-        ProofToolPublisher.publish(EnableMenus)
-      }) { border = customBorder }
-      contents += new MenuItem(Action("Nested Expansion Tree 1") {
-        import at.logic.language.lambda.types.Definitions._
-        import at.logic.language.lambda.symbols.ImplicitConverters._
-        import at.logic.language.hol._
-        import at.logic.calculi.expansionTrees.{WeakQuantifier, And => AndET, Atom => AtomET}
-        val p = HOLVar("P", i -> o)
-        val a = HOLVar("a", i)
-        val b = HOLVar("b", i)
-        val f = HOLVar("f", i -> i)
-        val g = HOLVar("g", i -> i)
-        val q = HOLVar("Q", i -> (i -> o))
-        val x = HOLVar("x", i)
-        val y = HOLVar("y", i)
-        val px = Atom(p, x::Nil) // p(x)
-        val pa = Atom(p, a::Nil) // p(a)
-        val pb = Atom(p, b::Nil) // p(b)
-        val fx = Function(f, x::Nil)
-        val fa = Function(f, a::Nil)
-        val fb = Function(f, b::Nil)
-        val gx = Function(g, x::Nil)
-        val ga = Function(g, a::Nil)
-        val gb = Function(g, b::Nil)
-        val qxfx = Atom(q, x::fx::Nil) // q(x,f(x))
-        val qxgx = Atom(q, x::gx::Nil) // q(x,g(x))
-        val qbfb = Atom(q, b::fb::Nil) // q(b,f(b))
-        val qafa = Atom(q, a::fa::Nil) // q(a,f(a))
-        val qbgb = Atom(q, b::gb::Nil) // q(b,g(b))
-        val qaga = Atom(q, a::ga::Nil) // q(a,g(a))
-        val qxy = Atom(q, x::y::Nil) // q(x,y)
-        val ant1F = Or(pa,pb)
-        val ant2F = AllVar(x, Or(qxfx,qxgx))
-        val conF = ExVar(x, And(px, ExVar(y, qxy)))
-        val ex_qay = ExVar(y, Atom(q, a::y::Nil))
-        val ex_qby = ExVar(y, Atom(q, b::y::Nil))
-
-        val ant1ET = AtomET(ant1F)
-        val ant2ET = AtomET(ant2F)
-        val expT11 = new WeakQuantifier(ex_qay,Seq((AtomET(qafa),fa),(AtomET(qaga),ga)))
-        val expT21 = new WeakQuantifier(ex_qby,Seq((AtomET(qbfb),fb),(AtomET(qbgb),gb)))
-        val expT1 = new AndET(AtomET(pa), expT11)
-        val expT2 = new AndET(AtomET(pb), expT21)
-        val conET = new WeakQuantifier(conF,Seq((expT1,a),(expT2,b)))
-
-        val et = (Seq(ant1ET,ant2ET),Seq(conET))
-
-        body.contents = new Launcher(Some(("Expansion Tree", et)), defaultFontSize)
-        ProofToolPublisher.publish(EnableMenus)
-      }) { border = customBorder }
-      contents += new MenuItem(Action("Tape Expansion Tree") { // A hack just to get a picture for the paper.
-        import at.logic.language.lambda.types.Definitions._
-        import at.logic.language.lambda.symbols.ImplicitConverters._
-        import at.logic.language.hol._
-        import at.logic.calculi.expansionTrees.{WeakQuantifier, And => AndET, Atom => AtomET}
-        val eq = HOLVar("=", i -> (i -> o))
-        // val leq = HOLVar("<=", i -> (i -> o))
-        // val max = HOLVar("max", i -> (i -> i))
-        val zero = HOLVar("0", i)
-        val O = HOLVar("O", i)
-        val I = HOLVar("I", i)
-        val f = HOLVar("f", i -> i)
-        val s = HOLVar("s", i -> i)
-        val x = HOLVar("x", i)
-        val y = HOLVar("y", i)
-        val j = HOLVar("j", i)
-
-	val sx = Function(s, x::Nil) // s(x)
-	val sy = Function(s, y::Nil) // s(y)
-	// val m = Function(max, x::y::Nil) // max(x,y)
-        val one = Function(s, zero::Nil) // s(0)
-        val two = Function(s, one::Nil) // s(s(0))
-
-        val fx = Function(f, x::Nil) // f(x)
-        val fy = Function(f, y::Nil) // f(y)
-	val f0 = Function(f, zero::Nil) // f(0)
-        val f1 = Function(f, one::Nil) // f(s(0))
-        val f2 = Function(f, two::Nil) // f(s(s(0)))
-
-        val eqfx0 = Atom(eq, fx::O::Nil) // f(x) = 0
-        val eqfx1 = Atom(eq, fx::I::Nil) // f(x) = 1
-
-	// val leqxm = Atom(leq, x::m::Nil) // x <= max(x,y)
-	// val leqym = Atom(leq, y::m::Nil) // y <= max(x,y)
-	// val leqsxy = Atom(leq, sx::y::Nil) // s(x) <= y
-	val eq0sx = Atom(eq, zero::sx::Nil) // 0 = s(x)
-        val eqsxsy = Atom(eq, sx::sy::Nil) // s(x) = s(y)
-
-        val eq0y = Atom(eq, x::one::Nil) // 0 = y
-        val eq1y = Atom(eq, x::two::Nil) // 1 = y
-        val eqxy = Atom(eq, x::y::Nil) // x = y
-        val eq01 = Atom(eq, zero::one::Nil) // 0 = 1
-        val eq02 = Atom(eq, zero::two::Nil) // 0 = 2
-        val eq12 = Atom(eq, one::two::Nil) // 1 = 2
-
-        val eqf0fy = Atom(eq, f0::fy::Nil) // f(0) = f(y)
-        val eqf1fy = Atom(eq, f1::fy::Nil) // f(1) = f(y)
-        val eqfxfy = Atom(eq, fx::fy::Nil) // f(x) = f(y)
-        val eqfxj = Atom(eq, fx::j::Nil) // f(x) = j
-        val eqfyj = Atom(eq, fy::j::Nil) // f(x) = j
-        val eqf0f1 = Atom(eq, f0::f1::Nil) // f(0) = f(1)
-        val eqf0f2 = Atom(eq, f0::f2::Nil) // f(0) = f(2)
-        val eqf1f2 = Atom(eq, f1::f2::Nil) // f(1) = f(2)
-
-	val lhs = AtomET(AllVar(x, Or(eqfx0, eqfx1))) // all x (f(x) = 0 or f(x) = 1)
-	// val lhs4 = AtomET(AllVar(x, AllVar(y, leqxm))) // all x,y (x <= max(x,y))	
-	// val lhs2 = AtomET(AllVar(x, AllVar(y, leqym))) // all x,y (y <= max(x,y))	
-	// val lhs3 = AtomET(AllVar(x, AllVar(y, Imp(leqsxy, Neg(eqxy)) ))) // all x,y (s(x) <= y impl - x = y)
-	val lhs1 = AtomET(AllVar(j, AllVar(x, AllVar(y, Imp(And(eqfxj, eqfyj), eqfxfy))))) // all j,x,y ((f(x) = j and f(y) = j) impl f(x) = f(y))	
-	val lhs2 = AtomET(AllVar(x, Neg(eq0sx))) // all x (- 0 = s(x))	
-	val lhs3 = AtomET(AllVar(x, AllVar(y, Imp(eqsxsy, eqxy) ))) // all x,y (s(x) = s(y) impl x = y)
-
-
-	val and1 = And(Neg(eq01), eqf0f1)
-	val and2 = And(Neg(eq02), eqf0f2)
-	val and3 = And(Neg(eq12), eqf1f2)
-
-        val all1 = ExVar(y, And(Neg(eq0y), eqf0fy))
-        val all2 = ExVar(y, And(Neg(eq1y), eqf1fy))
-        val all3 = ExVar(x, ExVar(y, And(Neg(eqxy), eqfxfy)))
-
-	val et1 = new WeakQuantifier(all1, Seq((AtomET(and1), one), (AtomET(and2), two)))
-	val et2 = new WeakQuantifier(all2, Seq((AtomET(and3), two)))
-	val rhs = new WeakQuantifier(all3, Seq((et1, zero), (et2, one)))
-
-        val et = (Seq(lhs, lhs1, lhs2, lhs3),Seq(rhs))
-
-        body.contents = new Launcher(Some(("Expansion Tree", et)), defaultFontSize)
         ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
     }
@@ -1326,7 +1196,35 @@ object Main extends SimpleSwingApplication {
     body.getContent.contents.head match {
       case dp: DrawProof => body.getContent.getData match {
         case Some((name, proof : LKProof) ) =>
-          dp.setVisibleOccurrences(getAuxFormulas(proof))
+          dp.setVisibleOccurrences(Some(getAuxFormulas(proof)))
+          dp.revalidate()
+        case _ => errorMessage("This is not an LK proof!")
+      }
+      case _ => errorMessage("LK proof not found!")
+    }
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  def hideAllFormulas() {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.getContent.contents.head match {
+      case dp: DrawProof => body.getContent.getData match {
+        case Some((name, proof : LKProof) ) =>
+          dp.setVisibleOccurrences(Some(Set()))
+          dp.revalidate()
+        case _ => errorMessage("This is not an LK proof!")
+      }
+      case _ => errorMessage("LK proof not found!")
+    }
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  def showAllFormulas() {
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    body.getContent.contents.head match {
+      case dp: DrawProof => body.getContent.getData match {
+        case Some((name, proof : LKProof) ) =>
+          dp.setVisibleOccurrences(None)
           dp.revalidate()
         case _ => errorMessage("This is not an LK proof!")
       }
@@ -1352,7 +1250,7 @@ object Main extends SimpleSwingApplication {
           }
           db.addProofs((name + "↓" + number, proof)::Nil)
           body.contents = new Launcher(Some(name + "↓" + number, proof), defaultFontSize)
-        case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ProjectionTerm) != None =>
+        case (name: String, pt: Tree[_]) if db.getTermTrees.exists(p => name == p._1 && p._2 == db.TermType.ProjectionTerm) =>
           val (term,list) = UnfoldProjectionTerm(name,number)
           val gterm_name = name.replace("_step","").replace("_base","")  + "↓" + number
           db.addTermTree( gterm_name, term )
@@ -1360,8 +1258,8 @@ object Main extends SimpleSwingApplication {
           body.contents = new Launcher(Some(gterm_name, term), defaultFontSize)
           infoMessage("The proof projections, corresponding to this term, are also computed.\n" +
             "They can be found in the View Proof menu!")
-        case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ClauseTerm) != None => errorMessage("Not yet implemented!")
-        case (name: String, pt: Tree[_]) if db.getTermTrees.find(p => name == p._1 && p._2 == db.TermType.ResolutionTerm) != None =>
+        case (name: String, pt: Tree[_]) if db.getTermTrees.exists(p => name == p._1 && p._2 == db.TermType.ClauseTerm) => errorMessage("Not yet implemented!")
+        case (name: String, pt: Tree[_]) if db.getTermTrees.exists(p => name == p._1 && p._2 == db.TermType.ResolutionTerm) =>
           val proof = InstantiateResSchema(name,number)
           db.addProofs(proof::Nil)
           body.contents = new Launcher(Some(proof), defaultFontSize)
@@ -1400,7 +1298,7 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-      def inputMessage(message: String, values: Seq[String]) =
+  def inputMessage(message: String, values: Seq[String]) =
     Dialog.showInput[String](body, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values,
       if (values.isEmpty) "" else values.head)
 

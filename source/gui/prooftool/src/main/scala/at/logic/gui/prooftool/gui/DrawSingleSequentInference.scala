@@ -5,10 +5,88 @@ import at.logic.calculi.agraphProofs.{BinaryAGraphProof, UnaryAGraphProof, AGrap
 import at.logic.calculi.lk.base._
 import java.awt.{Color, Font}
 import scala.swing.BorderPanel.Position
+import javax.swing.border.TitledBorder
+import scala.Some
 
 /**
  * Created by marty on 3/26/14.
  */
+class DrawSingleSequentInference(var orientation : Orientation.Value) extends ScrollPane {
+
+  def DrawSingleSequentInference() {
+    init()
+  }
+
+  private var _p : Option[LKProof] = None
+  def p() : Option[LKProof] = _p
+  def p_=(np : Option[LKProof]) = {
+    this._p = np
+    init()
+    revalidate()
+    repaint()
+  }
+
+  val auxiliaries = new BoxPanel(Orientation.Vertical) {
+    border = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 1), " Auxiliary: ")
+    background = new Color(255,255,255)
+    minimumSize = new Dimension(50,20)
+  }
+
+  val primaries = new BoxPanel(Orientation.Vertical) {
+    border = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 1), " Primary: ")
+    background = new Color(255,255,255)
+    preferredSize = new Dimension(50,20)
+  }
+
+  contents = new BoxPanel(orientation) {
+    contents += auxiliaries
+    contents += primaries
+  }
+
+  def init() {
+    val aux = p match {
+      case Some(a : UnaryLKProof with AuxiliaryFormulas) =>
+        val r = a.uProof.root
+        List(Sequent(r.antecedent.filter(a.aux(0).contains), r.succedent.filter(a.aux(0).contains)))
+      case Some(a : BinaryLKProof with AuxiliaryFormulas) =>
+        val r1 = a.uProof1.root
+        val r2 = a.uProof2.root
+        List(Sequent(r1.antecedent.filter(a.aux(0).contains), r1.succedent.filter(a.aux(0).contains)),
+          Sequent(r2.antecedent.filter(a.aux(1).contains), r2.succedent.filter(a.aux(1).contains)))
+      case _ =>
+        List()
+    }
+
+    val primary = p match {
+      case Some(pf : PrincipalFormulas) =>
+        val r = p.get.root
+        Some(Sequent(r.antecedent.filter(pf.prin.contains), r.succedent.filter(pf.prin.contains)))
+      case _ => None
+    }
+
+    auxiliaries.contents.clear()
+    primaries.contents.clear()
+
+    aux.foreach( x => { auxiliaries.contents += DrawSequent(x, font, "" ) } )
+    auxiliaries.contents += Swing.Glue
+    if (primary != None) primaries.contents += DrawSequent(primary.get, font, "" )
+    primaries.contents += Swing.Glue
+  }
+
+  def changeOrientation(o: Orientation.Value) {
+    orientation = o
+    contents = new BoxPanel(orientation) {
+      contents += auxiliaries
+      contents += primaries
+    }
+    revalidate()
+    repaint()
+  }
+
+}
+
+
+/*
 class DrawSingleSequentInference(var orientation : Orientation.Value) extends ScrollPane {
 
   def DrawSingleSequentInference() = {
@@ -163,3 +241,4 @@ class DrawSingleSequentInference(var orientation : Orientation.Value) extends Sc
 
 
 }
+*/

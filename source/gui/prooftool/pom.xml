@@ -31,6 +31,9 @@
 							<archive>
 								<manifest>
 									<mainClass>at.logic.gui.prooftool.gui.Main</mainClass>
+                                    <addDefaultImplementationEntries>
+                                        true
+                                    </addDefaultImplementationEntries>
 								</manifest>
 							</archive>
 						</configuration>

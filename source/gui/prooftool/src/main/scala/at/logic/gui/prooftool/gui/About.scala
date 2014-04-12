@@ -63,7 +63,7 @@ object About {
       c.grid = (1,2)
       layout(new Label("Vendor:") { horizontalAlignment = Alignment.Right }) = c
       c.grid = (2,0)
-      layout(new Label("1.4") { horizontalAlignment = Alignment.Left }) = c
+      layout(new Label(Main.getClass.getPackage.getImplementationVersion) { horizontalAlignment = Alignment.Left }) = c
       c.grid = (2,1)
       layout(new Label("Mikheil Rukhaia") { horizontalAlignment = Alignment.Left }) = c
       c.grid = (2,2)
