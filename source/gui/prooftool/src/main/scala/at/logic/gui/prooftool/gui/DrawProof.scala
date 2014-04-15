@@ -15,14 +15,12 @@ import at.logic.calculi.treeProofs._
 import java.awt.event.{MouseMotionListener, MouseEvent}
 import at.logic.calculi.slk.SchemaProofLinkRule
 import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.occurrences.FormulaOccurrence
 import java.awt.RenderingHints
 import at.logic.gui.prooftool.parser._
 import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.occurrences.FormulaOccurrence
 
-class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence],
-                private var colored_omega_occurrences : Set[FormulaOccurrence],
-                private var visible_occurrences : Option[Set[FormulaOccurrence]], private var str: String)
+class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var visible_occurrences : Option[Set[FormulaOccurrence]], private var str: String)
   extends BorderPanel with MouseMotionListener {
   background = white
   opaque = false
@@ -31,8 +29,8 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   private val white = new Color(255,255,255)
 
   private val bd = Swing.EmptyBorder(0,fSize*2,0,fSize*2)
-  private val ft = new Font(SANS_SERIF, PLAIN, fSize)
-  private val labelFont = new Font(SANS_SERIF, ITALIC, fSize-2)
+  private val ft = new Font(SERIF, PLAIN, fSize)
+  private val labelFont = new Font(SERIF, ITALIC, fSize-2)
   private var drawLines = true
   // The following is a hack to be able to apply searching to the end-sequent. Think about better solution.
   // The problem is that I need to "recalculate" end-sequent and need def for this reason.
@@ -40,7 +38,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   private var tx = tx1
   private def tx1 = proof.root match {
     case so: Sequent =>
-      val ds = DrawSequent(so, ft, colored_occurrences, colored_omega_occurrences, visible_occurrences)
+      val ds = DrawSequent(so, ft, visible_occurrences)
       ds.listenTo(mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher)
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
@@ -90,13 +88,6 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
   initialize()
   // end of constructor
 
-  def setColoredOccurrences(s : Set[FormulaOccurrence], omegaFOccs: Set[FormulaOccurrence]) {
-    colored_occurrences = s
-    colored_omega_occurrences = omegaFOccs
-    tx = tx1
-    initialize()
-  }
-
   def setVisibleOccurrences(s : Option[Set[FormulaOccurrence]]) {
     visible_occurrences = s
     // tx = tx1 // Uncomment this line if you want to include the end-sequent.
@@ -108,12 +99,12 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     proof match {
     case p: UnaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, colored_omega_occurrences, visible_occurrences, str)) = Position.Center
+      layout(new DrawProof(p.uProof.asInstanceOf[TreeProof[_]], fSize, visible_occurrences, str)) = Position.Center
       layout(tx) = Position.South
     case p: BinaryTreeProof[_] =>
       border = bd
-      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, colored_omega_occurrences, visible_occurrences, str)) = Position.West
-      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, colored_occurrences, colored_omega_occurrences, visible_occurrences, str)) = Position.East
+      layout(new DrawProof(p.uProof1.asInstanceOf[TreeProof[_]], fSize, visible_occurrences, str)) = Position.West
+      layout(new DrawProof(p.uProof2.asInstanceOf[TreeProof[_]], fSize, visible_occurrences, str)) = Position.East
       layout(tx) = Position.South
     case p: NullaryTreeProof[_] => p match {
       case SchemaProofLinkRule(_, link, indices) =>
@@ -121,7 +112,7 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
           background = white
           opaque = false
           border = Swing.EmptyBorder(0,fSize,0,fSize)
-          val pLink = LatexLabel(ft,"(\\textbf{" + link+"}" + indices.foldRight("")((i,rez) => ", "+DrawSequent.formulaToLatexString(i)+rez) + ")")
+          val pLink = LatexLabel(ft,"(\\textbf{" + link+"}" + indices.foldRight("")((i,rez) => ", "+DrawSequent.formulaToLatexString(i)+rez) + ")", null)
           pLink.xLayoutAlignment = 0.5
           pLink.opaque = false
           pLink.border = Swing.EmptyBorder(0,0,5,0)
@@ -154,7 +145,6 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
 
   override def paintComponent(g: Graphics2D) {
     import scala.math.max
-
 
     super.paintComponent(g)
 
@@ -202,36 +192,24 @@ class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var col
     this.peer.scrollRectToVisible(r)
   }
 
-  def getLocationOfProof(p: TreeProof[_]) : Option[Point] = 
-  {
-    if (p == proof)
-    {
+  def getLocationOfProof(p: TreeProof[_]) : Option[Point] = {
+    if (p == proof) {
       val newloc = new Point(location.x + bounds.width/2, location.y + bounds.height)
-//      location.translate(bounds.width/2, bounds.height)
       Some(newloc)
     }
-    else
-      {
-      contents.foldLeft[Option[Point]](None)( (res, dp) => if (res == None) dp match {
-                                                case x : DrawProof => {
-                                                  x.getLocationOfProof(p) match {
-                                                    case Some(loc) => {
-                                                      // need to translate
-                                                      val newloc = new Point(loc.x + location.x, loc.y + location.y)
-                                                      Some(newloc)
-                                                    }
-                                                    case _ => None
-                                                  }
-                                                  
-                                                }
-                                                case _ if dp == p => 
-                                                  // this is a DrawSequent (it does not have unapply :-( )
-                                                  // it is a leaf on top of this, so we know the location
-                                                  Some(new Point(location.x + bounds.width/2, location.y))
-                                                case _ => None
-                                                }
-                                                else  // we have found the proof already
-                                                  res)
-                                        }
+    else contents.foldLeft[Option[Point]](None)( (res, dp) =>
+      if (res == None) dp match {
+        case x : DrawProof =>
+          x.getLocationOfProof(p) match {
+            case Some(loc) => { // need to translate
+              val newloc = new Point(loc.x + location.x, loc.y + location.y)
+              Some(newloc)
+            }
+            case _ => None
+          }
+        case _ => None
+      }
+      else res // we have found the proof already
+    )
   }
 }

@@ -20,84 +20,61 @@ import java.awt.image.BufferedImage
 import swing._
 import event.{MouseClicked, MouseEntered, MouseExited, WindowDeactivated}
 import java.awt.event.MouseEvent
-import at.logic.language.lambda.types.Tindex
 import at.logic.language.lambda.types.Definitions._
-import scala.swing.event.WindowDeactivated
-import scala.swing.event.MouseClicked
-import scala.swing.event.MouseEntered
-import scala.swing.event.MouseExited
 import at.logic.language.schema.IntZero
 import at.logic.utils.latex.nameToLatexString
 import collection.mutable
+import at.logic.gui.prooftool.parser.{ShowOnly, ChangeFormulaColor, ChangeSequentColor, ProofToolPublisher}
 
 object DrawSequent {
-
+  implicit val factory = defaultFormulaOccurrenceFactory
+  implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq[FormulaOccurrence]())
+  implicit def fseq2seq(s : types.FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
 
   //used by DrawClList
   def apply(seq: Sequent, ft: Font, str: String): FlowPanel = if (! str.isEmpty) {
     val set: Set[FormulaOccurrence] = ( seq.antecedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ++
       seq.succedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ).toSet
-    apply(seq, ft, set, Set(), None)
-  } else apply(seq, ft, Set(), Set(), None)
+    apply(seq, ft, None) // TODO: fix search coloring in lists!!!
+  } else apply(seq, ft, None)
 
   //used by DrawClList to draw FSequents
-  def applyF(seq: types.FSequent, ft: Font, str: String): FlowPanel = {
-    implicit val factory = defaultFormulaOccurrenceFactory
-    implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq[FormulaOccurrence]())
-    implicit def fseq2seq(s : types.FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
-    apply(fseq2seq(seq), ft, str)
-  }
+  def applyF(seq: types.FSequent, ft: Font, str: String): FlowPanel = apply(fseq2seq(seq), ft, str)
 
   //used by DrawProof
-  def apply(seq: Sequent, ft: Font, cut_anc: Set[FormulaOccurrence], omega_anc: Set[FormulaOccurrence],
-            vis_occ: Option[Set[FormulaOccurrence]]) = new FlowPanel {
-    background = new Color(255,255,255)
-    opaque = false
+  def apply(seq: Sequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]]) = new FlowPanel {
+    opaque = false // Necessary to draw the proof properly
+    hGap = 0  // no gap between components
+
+    listenTo(ProofToolPublisher)
+    reactions += {
+      // since panel is not opaque, it cannot have a background color,
+      case ChangeSequentColor(s, color, reset) => // so change background of each component.
+        if (s == seq) contents.foreach(c => c.background = color)
+        else if (reset) contents.foreach(c => c.background = Color.white)
+    }
 
     private var first = true
     for (f <- seq.antecedent) {
       if (vis_occ == None || vis_occ.get.contains(f) ) {
-        if (! first) contents += new Label(", ") {font = ft}
+        if (! first) contents += LatexLabel(ft, ",", null)
         else first = false
-        if (cut_anc.contains(f)) {
-          val fl = formulaToLabel(f.formula, ft)
-          fl.background = new Color(0,255,0)
-          contents += fl
-        }
-        else
-        if (omega_anc.contains(f)) {
-          val fl = formulaToLabel(f.formula, ft)
-          fl.background = new Color(255,0,0)
-          contents += fl
-        }
-        else
-          contents += formulaToLabel(f.formula, ft)
+        contents += formulaToLabel(f, ft)
       }
     }
-    contents += new Label(" \u22a2 ") {font = ft}
-    first =true
+    contents += LatexLabel(ft, "\\vdash", null) // \u22a2
+    first = true
     for (f <- seq.succedent) {
       if (vis_occ == None || vis_occ.get.contains(f) ) {
-        if (! first) contents += new Label(", ")  {font = ft}
+        if (! first) contents += LatexLabel(ft, ",", null)
         else first = false
-        if (cut_anc.contains(f)) {
-          val fl = formulaToLabel(f.formula, ft)
-          fl.background = new Color(0,255,0)
-          contents += fl
-        }
-        else
-        if (omega_anc.contains(f)) {
-          val fl = formulaToLabel(f.formula, ft)
-          fl.background = new Color(255,0,0)
-          contents += fl
-        }
-        else contents += formulaToLabel(f.formula, ft)
+        contents += formulaToLabel(f, ft)
       }
     }
   }
 
-  def formulaToLabel(f: HOLFormula, ft: Font) : LatexLabel = LatexLabel(ft,formulaToLatexString(f))
-
+  def formulaToLabel(f: HOLFormula, ft: Font) : LatexLabel = LatexLabel(ft,formulaToLatexString(f),fo2occ(f))
+  def formulaToLabel(fo: FormulaOccurrence, ft: Font) : LatexLabel = LatexLabel(ft,formulaToLatexString(fo.formula),fo)
 
   // this method is used by DrawTree when drawing projections.
   // also by ProofToLatexExporter.
@@ -212,14 +189,21 @@ object DrawSequent {
 
 object LatexLabel {
   private val cache = mutable.Map[(String,Font), TeXIcon]()
+
   def clearCache() = this.synchronized(cache.clear())
 
-  def apply(font:Font, latexText: String) : LatexLabel = {
+  def apply(font:Font, latexText: String) : LatexLabel = apply(font,latexText,null)
+
+  def apply(font:Font, latexText: String, fo: FormulaOccurrence) : LatexLabel = {
     val key = (latexText,font)
     this.synchronized({
       val icon = cache.getOrElseUpdate(key, {
-        val formula = try { new TeXFormula(latexText) }
-        catch { case e: Exception => throw new Exception("Could not create formula "+latexText+": "+e.getMessage,e)}
+        val formula = try {
+          new TeXFormula(latexText)
+        } catch {
+          case e: Exception =>
+            throw new Exception("Could not create formula "+latexText+": "+e.getMessage,e)
+        }
         val myicon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, font.getSize)
         val myimage = new BufferedImage(myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB)
         val g2 = myimage.createGraphics()
@@ -228,23 +212,29 @@ object LatexLabel {
         myicon.paintIcon(null, g2, 0, 0)
         myicon
       })
-      new LatexLabel(font, latexText, icon)
+      new LatexLabel(font, latexText, icon, fo)
     })
   }
 }
 
-class LatexLabel(override val font : Font, val latexText : String, val myicon : TeXIcon)
+class LatexLabel(val ft : Font, val latexText : String, val myicon : TeXIcon, fo: FormulaOccurrence)
   extends Label("", myicon, Alignment.Center) {
-  background = new Color(255,255,255)
-  foreground = new Color(0,0,0)
+  background = Color.white
+  foreground = Color.black
+  font = ft
   opaque = true
   yLayoutAlignment = 0.5
-  //icon = myicon
+  if (latexText == ",") {
+    border = Swing.EmptyBorder(font.getSize/5,2,0,font.getSize/5)
+    icon = null
+    text = latexText
+  }
+  if (latexText == "\\vdash") border = Swing.EmptyBorder(font.getSize/6)
 
-  listenTo(mouse.moves, mouse.clicks)
+  listenTo(mouse.moves, mouse.clicks, ProofToolPublisher)
   reactions += {
-    case e: MouseEntered => foreground = new Color(0,0,255)
-    case e: MouseExited => foreground = new Color(0,0,0)
+    case e: MouseEntered => foreground = Color.blue
+    case e: MouseExited => foreground =  Color.black
     case e: MouseClicked if (e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 2) =>
       val d = new Dialog {
         resizable = false
@@ -266,5 +256,8 @@ class LatexLabel(override val font : Font, val latexText : String, val myicon : 
       }
       d.location = locationOnScreen
       d.open()
+    case ChangeFormulaColor(set, color, reset) =>
+      if (set.contains(fo)) background = color
+      else if (reset) background = Color.white
   }
 }

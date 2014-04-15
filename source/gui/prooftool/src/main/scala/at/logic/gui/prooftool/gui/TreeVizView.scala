@@ -13,9 +13,10 @@ import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.quantificationRules.{ExistsLeftRuleType, ForallRightRuleType, ExistsRightRuleType, ForallLeftRuleType}
 import at.logic.calculi.lksk.{ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType}
 import at.logic.calculi.lk.equationalRules.{EquationRight2RuleType, EquationRight1RuleType, EquationLeft2RuleType, EquationLeft1RuleType}
-import java.beans.PropertyChangeListener
 import at.logic.parsing.calculi.xml.{BinaryRuleType, UnaryRuleType, NullaryRuleType}
 import at.logic.calculi.lk.base.types.FSequent
+import scala.Exception
+import at.logic.gui.prooftool.parser.{ChangeSequentColor, ProofToolPublisher}
 
 /**
  * Created by marty on 3/18/14.
@@ -45,14 +46,15 @@ class ProofNodeInfo[T] extends NodeInfo {
     def apply() = {
       root match {
         case Some(node) =>
-          Main.loadProof((node.proof.name, node.proof))
           Main.scrollToProof(x)
-          //TODO: fix this in some better way
-
-        case None => ()
+          try {
+            ProofToolPublisher.publish(
+              ChangeSequentColor(x.asInstanceOf[LKProof].root, new Color(0,255,255), true)
+            )
+          } catch { case _: Throwable => }
+        case None =>
       }
     }
-
   }
 
   def init(root : TreeNode) = root match {

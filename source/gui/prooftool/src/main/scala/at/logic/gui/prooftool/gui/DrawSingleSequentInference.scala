@@ -73,8 +73,10 @@ class DrawSingleSequentInference(var orientation : Orientation.Value) extends Sc
     primaries.contents += Swing.Glue
   }
 
-  def changeOrientation(o: Orientation.Value) {
-    orientation = o
+  def adjustOrientation(o: Orientation.Value) {
+    orientation = if (o == Orientation.Vertical || auxiliaries.size.width > bounds.width)
+      Orientation.Vertical
+    else Orientation.Horizontal
     contents = new BoxPanel(orientation) {
       contents += auxiliaries
       contents += primaries

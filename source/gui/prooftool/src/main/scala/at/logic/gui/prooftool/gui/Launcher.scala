@@ -15,11 +15,9 @@ import javax.swing.border.TitledBorder
 import at.logic.gui.prooftool.parser.{UnLoaded, Loaded, ProofToolPublisher, StructPublisher}
 import at.logic.utils.ds.trees.Tree
 import at.logic.calculi.treeProofs.TreeProof
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent}
+import at.logic.calculi.expansionTrees.ExpansionSequent
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.proofs.Proof
-import at.logic.calculi.lk.base.LKProof
 import at.logic.transformations.ceres.struct.{structToExpressionTree, Struct}
 
 class Launcher(private val option: Option[(String, AnyRef)], private val fSize: Int) extends GridBagPanel with MouseMotionListener {
@@ -46,7 +44,7 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
         case _ => actualname
       }
       val bd: TitledBorder = Swing.TitledBorder(Swing.LineBorder(new Color(0,0,0), 2), " "+nice_name+" ")
-      bd.setTitleFont(new Font(SANS_SERIF, BOLD, 16))
+      bd.setTitleFont(new Font(SERIF, BOLD, 16))
       border = bd
     case _ =>
   }
@@ -74,12 +72,12 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       setWindowContent(p,c)
       Some(s)
     case proof: TreeProof[_] =>
-      layout(new DrawProof(proof, fSize, Set(), Set(), None, "")) = c
+      layout(new DrawProof(proof, fSize, None, "")) = c
       ProofToolPublisher.publish(Loaded)
       StructPublisher.publish(UnLoaded)
       None
     case resProof: Proof[_] =>
-      layout(new DrawResolutionProof(resProof, fSize, Set(), Set(), "")) = c
+      layout(new DrawResolutionProof(resProof, fSize, None, "")) = c
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None

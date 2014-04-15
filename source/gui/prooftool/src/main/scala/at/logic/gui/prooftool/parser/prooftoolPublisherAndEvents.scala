@@ -7,9 +7,11 @@ package at.logic.gui.prooftool.parser
  * Time: 3:00:53 PM
  */
 
-import scala.swing.Publisher
+import scala.swing.{Color, Publisher}
 import scala.swing.event.Event
 import at.logic.calculi.treeProofs.TreeProof
+import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.occurrences.FormulaOccurrence
 
 object ProofToolPublisher extends Publisher
 object StructPublisher extends Publisher
@@ -26,3 +28,7 @@ case object HideStructuralRules extends Event
 case class ShowAllRules(proof: TreeProof[_]) extends Event
 case class HideProof(proof: TreeProof[_]) extends Event
 case class ShowProof(proof: TreeProof[_]) extends Event
+
+case class ChangeSequentColor(seqList: Sequent, color: Color, reset: Boolean) extends Event
+case class ChangeFormulaColor(occurrences : Set[FormulaOccurrence], color: Color, reset: Boolean) extends Event
+case class ShowOnly(formulas : Set[FormulaOccurrence], reset: Boolean) extends Event

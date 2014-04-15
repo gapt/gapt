@@ -33,7 +33,7 @@ import at.logic.transformations.ceres.clauseSets.{renameCLsymbols, StandardClaus
 import at.logic.transformations.ceres.struct.{structToExpressionTree, StructCreators}
 import at.logic.transformations.ceres.projections.{Projections, DeleteTautology, DeleteRedundantSequents}
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
-import at.logic.algorithms.shlk.{FixedFOccs, applySchemaSubstitution2, applySchemaSubstitution}
+import at.logic.algorithms.shlk.{applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.transformations.skolemization.skolemize
@@ -41,9 +41,9 @@ import at.logic.transformations.ceres.clauseSchema.{resolutionProofSchemaDB, Ins
 import at.logic.transformations.ceres.ACNF.ACNF
 import at.logic.calculi.slk.SchemaProofDB
 import at.logic.calculi.proofs.Proof
-import at.logic.calculi.occurrences.FormulaOccurrence
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
+import java.awt.Color
 
 
 object Main extends SimpleSwingApplication {
@@ -110,6 +110,8 @@ object Main extends SimpleSwingApplication {
 
   def displaySunburst[T](name: String, proof: TreeProof[T]) {
     showFrame()
+    body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+    loadProof((name, proof))
     initSunburstDialog(name, proof)
 
     /*body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
@@ -324,12 +326,14 @@ object Main extends SimpleSwingApplication {
       body.getContent.contents.head match {
         case dp: DrawProof =>
           dp.search = input_str
-          if (dp.proof.root.isInstanceOf[Sequent]) dp.setColoredOccurrences(Search.inTreeProof(input_str, dp.proof), Set.empty[FormulaOccurrence])
+          if (dp.proof.root.isInstanceOf[Sequent])
+            ProofToolPublisher.publish(ChangeFormulaColor(Search.inTreeProof(input_str, dp.proof), Color.green, true))
           else dp.searchNotInLKProof()
           dp.revalidate()
         case dp: DrawResolutionProof =>
           dp.search = input_str
-          if (dp.proof.root.isInstanceOf[Sequent]) dp.setColoredOccurrences(Search.inResolutionProof(input_str, dp.proof))
+          if (dp.proof.root.isInstanceOf[Sequent])
+            ProofToolPublisher.publish(ChangeFormulaColor(Search.inResolutionProof(input_str, dp.proof), Color.green, true))
           else dp.searchNotInLKProof()
           dp.revalidate()
         case dt: DrawTree =>
@@ -348,11 +352,8 @@ object Main extends SimpleSwingApplication {
   }
 
   def scrollToProof(proof: TreeProof[_]) {
-    //val launcher = body.contents.head.asInstanceOf[Launcher]
     val launcher = body.getContent
     val pos = launcher.getLocationOfProof(proof).get
-    //val location = launcher.peer.location
-    //val newpos = new Point(pos.x + location.x, pos.y + location.y)
     val centered = new Rectangle( pos.x - body.bounds.width/2, pos.y - body.bounds.height, body.bounds.width, body.bounds.height )
     launcher.peer.scrollRectToVisible( centered )
   }
@@ -626,7 +627,16 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
-      contents += new MenuItem(Action("Extract Cut-Formulas") { extractCutFormulas() }) {
+      contents += new MenuItem(Action("Mark Ω-Ancestors") { markOmegaAncestors() }) {
+        border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
+      }
+      contents += new MenuItem(Action("Remove Marking") { ProofToolPublisher.publish(ChangeFormulaColor(Set(),Color.white,true)) }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -636,7 +646,7 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
-      contents += new MenuItem(Action("Mark Cut- & Ω-Ancestors") { markCutOmegaAncestors(FixedFOccs.foccs) }) {
+      contents += new MenuItem(Action("Extract Cut-Formulas") { extractCutFormulas() }) {
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -1162,16 +1172,12 @@ object Main extends SimpleSwingApplication {
   }}
 
 
-  //to mark cut-ancestors + another ancestors which are additionaly specified
-  def markCutOmegaAncestors(l: List[FormulaOccurrence]) {
+  //TODO: Must calculate omega ancestors, currently it marks nothing
+  def markOmegaAncestors() {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.getContent.contents.head match {
-      case dp: DrawProof => body.getContent.getData match {
-        case Some((_, proof : LKProof) ) =>
-          dp.setColoredOccurrences(getCutAncestors(proof), l.map(fo => getAncestors(fo)).flatten.toSet)//mark more than cut-ancestors
-          dp.revalidate()
-        case _ => errorMessage("This is not an LK proof!")
-      }
+    body.getContent.getData match {
+      case Some((_, proof : LKProof) ) =>
+        ProofToolPublisher.publish(ChangeFormulaColor(Set(), Color.red, false))
       case _ => errorMessage("LK proof not found!")
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -1179,13 +1185,9 @@ object Main extends SimpleSwingApplication {
 
   def markCutAncestors() {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.getContent.contents.head match {
-      case dp: DrawProof => body.getContent.getData match {
-        case Some((_, proof : LKProof) ) =>
-          dp.setColoredOccurrences(getCutAncestors(proof), Set.empty[FormulaOccurrence])
-          dp.revalidate()
-        case _ => errorMessage("This is not an LK proof!")
-      }
+    body.getContent.getData match {
+      case Some((_, proof : LKProof) ) =>
+        ProofToolPublisher.publish(ChangeFormulaColor(getCutAncestors(proof), Color.green, false))
       case _ => errorMessage("LK proof not found!")
     }
     body.cursor = java.awt.Cursor.getDefaultCursor

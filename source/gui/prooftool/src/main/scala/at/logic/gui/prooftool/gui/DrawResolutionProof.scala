@@ -18,8 +18,7 @@ import java.awt.RenderingHints
 import at.logic.gui.prooftool.parser._
 import at.logic.calculi.proofs.{NullaryProof, BinaryProof, UnaryProof, Proof}
 
-class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private var colored_occurrences : Set[FormulaOccurrence],
-                private var visible_occurrences : Set[FormulaOccurrence], private var str: String)
+class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private var visible_occurrences : Option[Set[FormulaOccurrence]], private var str: String)
   extends BorderPanel with MouseMotionListener {
   background = white
   opaque = false
@@ -36,7 +35,7 @@ class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private v
   private var tx = tx1
   private def tx1 = proof.root match {
     case so: Sequent =>
-      val ds = DrawSequent(so, ft, colored_occurrences, Set.empty[FormulaOccurrence], Some(visible_occurrences))
+      val ds = DrawSequent(so, ft, visible_occurrences)
       ds.listenTo(mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher)
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach(x => x.foreground = blue)
@@ -70,13 +69,7 @@ class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private v
   initialize()
   // end of constructor
 
-  def setColoredOccurrences(s : Set[FormulaOccurrence]) {
-    colored_occurrences = s
-    tx = tx1
-    initialize()
-  }
-
-  def setVisibleOccurrences(s : Set[FormulaOccurrence]) {
+  def setVisibleOccurrences(s : Option[Set[FormulaOccurrence]]) {
     visible_occurrences = s
     // tx = tx1 // Uncomment this line if you want to include the end-sequent.
     initialize()
@@ -86,12 +79,12 @@ class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private v
   def initialize() { proof match {
     case p: UnaryProof[_] =>
       border = bd
-      layout(new DrawResolutionProof(p.uProof, fSize, colored_occurrences, visible_occurrences, str)) = Position.Center
+      layout(new DrawResolutionProof(p.uProof, fSize, visible_occurrences, str)) = Position.Center
       layout(tx) = Position.South
     case p: BinaryProof[_] =>
       border = bd
-      layout(new DrawResolutionProof(p.uProof1, fSize, colored_occurrences, visible_occurrences, str)) = Position.West
-      layout(new DrawResolutionProof(p.uProof2, fSize, colored_occurrences, visible_occurrences, str)) = Position.East
+      layout(new DrawResolutionProof(p.uProof1, fSize, visible_occurrences, str)) = Position.West
+      layout(new DrawResolutionProof(p.uProof2, fSize, visible_occurrences, str)) = Position.East
       layout(tx) = Position.South
     case p: NullaryProof[_] =>
       tx.border = Swing.EmptyBorder(0,fSize,0,fSize)
