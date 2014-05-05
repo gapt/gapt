@@ -74,6 +74,101 @@ trait FOLExpression extends HOLExpression with FOL {
     }
 
   /**
+   * This function takes a FOL construction and converts it to a abbreviated string version. The abbreviated string version is made
+   * by replacing the code construction for logic symbols by string versions in the file language/hol/logicSymbols.scala.
+   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3(x)).
+   * Terms are also handled by the this function.
+   *
+  @param  this  The method has no parameters other then the object which is to be written as a string
+   *
+  @throws Exception This occurs when an unknown subformula is found when parsing the FOL construction
+   *
+  @return A String which contains the defined symbols in language/hol/logicSymbols.scala.
+   *
+   */
+  override def toAbbreviatedString() : String = {
+
+    def pretty(exp : HOLExpression) : (String, String, Int) = {
+
+      def s : (String, String, Int) = exp match {
+        case null => ("null", "null", -2)
+        case FOLVar(x) => (x.toString(), x.toString(), 0)
+        case Atom(x, args) => {
+          (x.toString() + "(" + (args.foldRight(""){  case (x,"") => "" + x.toAbbreviatedString()
+          case (x,str) => x.toAbbreviatedString() + ", " + str
+          }) + ")", x.toString(), 0)
+        }
+        case Function(x, args) => {
+          // if only 1 argument is provided
+          // check if abbreviating of recursive function calls is possible
+          if(args.length == 1)
+          {
+            val p = pretty(args.head)
+
+            // current function is equal to first and ONLY argument
+            if( p._2 == x.toString() )
+            {
+              // increment counter and return (<current-string>, <functionsymbol>, <counter>)
+              return (p._1, x.toString(), p._3+1)
+            }
+            // function symbol has changed from next to this level
+            else
+            {
+
+              // in case of multiple recursive function calls
+              if(p._3 > 0)
+              {
+                return (p._2+"^"+p._3+"("+p._1+")", x.toString(), 0)
+              }
+              // otherwise
+              else
+              {
+                return (p._1, x.toString(), 1)
+              }
+            }
+          }
+          else
+          {
+            return (x.toString()+"("+ (args.foldRight(""){   case (x,"") => x.toAbbreviatedString()
+            case (x,s) => x.toAbbreviatedString() + ", " + s
+            })+ ")", x.toString(), 0)
+          }
+
+        }
+        case And(x,y) => ("(" + x.toAbbreviatedString() + " " + AndSymbol + " " + y.toAbbreviatedString() + ")", AndSymbol.toString(), 0)
+        case Equation(x,y) => ("(" + x.toAbbreviatedString() + " " + EqSymbol + " " + y.toAbbreviatedString() + ")", EqSymbol.toString(), 0)
+        case Or(x,y) => ("(" + x.toAbbreviatedString() + " " + OrSymbol + " " + y.toAbbreviatedString() + ")", OrSymbol.toString(), 0)
+        case Imp(x,y) => ("(" + x.toAbbreviatedString() + " " + ImpSymbol + " " + y.toAbbreviatedString() + ")", ImpSymbol.toString(), 0)
+        case Neg(x) => (NegSymbol + x.toAbbreviatedString(), NegSymbol.toString(), 0)
+        case ExVar(x,f) => (ExistsSymbol + x.asInstanceOf[HOLExpression].toAbbreviatedString() + "." + f.toAbbreviatedString(), ExistsSymbol.toString(), 0)
+        case AllVar(x,f) => (ForallSymbol + x.asInstanceOf[HOLExpression].toAbbreviatedString() + "." + f.toAbbreviatedString(), ForallSymbol.toString(), 0)
+        case Abs(v, exp) => ("(λ" + v.asInstanceOf[HOLExpression].toAbbreviatedString() + "." + exp.asInstanceOf[HOLExpression].toAbbreviatedString() + ")", "λ", 0)
+        case App(l,r) => ("(" + l.asInstanceOf[HOLExpression].toAbbreviatedString() + ")(" + r.asInstanceOf[HOLExpression].toAbbreviatedString() + ")", "()()", 0)
+        case HOLConst(x) => (x.toString(),x.toString(), 0)
+        case _ => throw new Exception("ERROR: Unknown FOL expression.");
+      }
+      return s
+
+    }
+    val p = pretty(this)
+
+    val r : String = this match {
+      case Function(x, args) => {
+        if(p._1 != p._2 && p._2 != "tuple1")
+          if(p._3 > 0)
+            return p._2 + "^"+(p._3+1)+"("+p._1+") "
+          else
+            return p._1
+        else
+          return p._1
+      }
+      case _ => return p._1
+    }
+
+    return r
+  }
+
+  /**
    * This is an identity function for FOL construction, in that this
    *function takes a FOL statement, and outputs the statement as it was written/coded. Old
    *comment for this function was written as follows:
