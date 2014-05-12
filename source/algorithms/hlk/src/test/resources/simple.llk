@@ -1,0 +1,96 @@
+\CONSTDEC{PROOF,SUB2, EQPROOF, SUB3, SUB4}{o}
+\CONSTDEC{SUBPROOF }{i>o}
+
+\CONSTDEC{P}{i>i>o}
+\VARDEC{X}{i>o}
+\CONSTDEC{f,g}{i>i}
+\VARDEC{h}{i>i}
+\VARDEC{a,b}{i}
+\VARDEC{x,y,z,n}{i}
+
+\CONSTDEC{A1, A2, A3, A4}{o}
+\CONSTDEC{+}{i>i>i}
+\CONSTDEC{0,1}{i}
+\CONSTDEC{AX}{o}
+\CONSTDEC{A,B}{o}
+
+
+\AXIOMDEC{A1}{}{x+y=y+x}
+\AXIOMDEC{A2}{}{x+n = y+n -> x=y}
+\AXIOMDEC{A3}{}{x+0=x}
+\AXIOMDEC{A4}{}{x+(y+z)=(x+y)+z}
+
+% first branch into cut %
+\AX{P(f(x),a)}{P(f(x),a)}
+\AX{P(a,a)}{P(a,a)}
+\ANDR{P(a,a), P(f(x),a)}{P(f(x),a) & P(a,a)}
+\ALLL{}{(all x P(x,x)), P(f(x),a)}{P(f(x),a) & P(a,a)}
+
+% second branch into cut %
+\CONTINUEFROM{SUBPROOF(a)}{(all x P(x,f(x)))}{P(a,f(a))}
+\EXR{(\lambda x a)}{(all x P(x,f(x)))}{(exists h P(h(a),f(a)))}
+\ALLR{}{(all x P(x,f(x)))}{(all x exists h P(h(x),f(x)))}
+
+\AX{P(a,a)}{P(a,a)}
+\ANDR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a)}
+\WEAKL{P(a,a), P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), P(x,x), P(x,x)}
+\CONTRL{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), P(x,x)}
+\NEGL{-P(x,x), P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x)}
+\NEGR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x), --P(x,x)}
+\ORR{P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x) | --P(x,x)}
+\ANDL{P(f(x),a) & P(a,a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x) | --P(x,x)}
+
+
+\CUT{(all x P(x,x)), P(f(x),a), (all x P(x,f(x)))}{(all x exists h P(h(x),f(x))) & P(a,a), P(x,x) | --P(x,x)}
+\CONTINUEWITH{PROOF}
+
+
+% start of second proof %
+\AX{P(y,f(y))}{P(y,f(y))}
+\ALLL{}{(all x P(x,f(x)))}{P(y,f(y))}
+\CONTINUEWITH{SUBPROOF(y)}
+
+
+% start of third proof %
+\AX{a=b}{a=b}
+\AX{a=b}{a=b}
+\AX{f(a)=g(a)}{f(a)=g(a)}
+\AX{f(a)=g(a)}{f(a)=g(a)}
+\AX{f(a)=f(a)}{f(a)=f(a)}
+\EQR{f(a)=g(a), f(a)=f(a)}{f(a)=g(a)}
+\EQR{f(a)=g(a), f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\CONTRL{f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\EQL{a=b, f(b)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\EQL{a=b, a=b, f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\CONTRL{a=b, f(a)=g(a), f(a)=f(a)}{f(a)=f(a)}
+\CONTINUEWITH{SUB2}
+
+% start of fourth proof %
+\AX{AX}{1+(0+1)=1+(0+1)}
+\EQAXIOM{A1: 0+1=1+0}{AX}{1+(0+1)=1+(1+0)}
+\EQAXIOM{A3: 1+0=1}{AX}{1+(0+1)=1+1}
+\EQAXIOM{A4: 1+(0+1)=(1+0)+1}{AX}{(1+0)+1=1+1}
+
+\AX{1+0=1}{1+0=1}
+\IMPL{AX, (1+0)+1=1+1 -> 1+0=1}{1+0=1}
+\INSTAXIOM{A2}{AX}{1+0=1}
+
+\CONTINUEWITH{EQPROOF}
+
+
+% SUB 3 %
+
+\AX{A}{A}
+\AX{B}{B}
+\ORL{A | B}{A,B}
+\ORR{A | B}{A|B}
+\CONTINUEWITH{SUB3}
+
+% SUB 4 %
+
+\AX{0+0=0}{0+0=0}
+\ALLL{}{(all x x+0=x)}{0+0=0}
+\AX{1+0=1}{1+0=1}
+\ALLL{}{(all x x+0=x)}{1+0=1}
+\ANDR{(all x x+0=x)}{0+0=0 & 1+0=1}
+\CONTINUEWITH{SUB4}
