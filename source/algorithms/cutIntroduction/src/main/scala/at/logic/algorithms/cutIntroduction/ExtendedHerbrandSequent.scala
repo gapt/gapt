@@ -9,15 +9,11 @@
 package at.logic.algorithms.cutIntroduction
 
 import at.logic.calculi.occurrences._
+import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
 import at.logic.language.fol._
-import at.logic.language.fol.Utils._
-import at.logic.language.lambda.symbols._
-import at.logic.language.hol.logicSymbols._
 import at.logic.algorithms.resolution._
-import at.logic.calculi.resolution.base.FClause
+import at.logic.calculi.resolution.FClause
 import at.logic.utils.logging.Logger
 import scala.collection.immutable.Stack
 import at.logic.algorithms.cutIntroduction.MinimizeSolution.MyFClause
@@ -40,16 +36,16 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
   // FormulaOccurrence to HOLFormula to FOLFormula and Seq to List...
   
   // Propositional formulas on the left
-  val prop_l : List[FOLFormula] = seq.antecedent.filter(x => !x.formula.containsQuantifier).map(x => x.formula.asInstanceOf[FOLFormula]).toList
+  val prop_l : List[FOLFormula] = seq.antecedent.filter(x => !containsQuantifier(x.formula.asInstanceOf[FOLFormula])).map(x => x.formula.asInstanceOf[FOLFormula]).toList
   // Propositional formulas on the right
-  val prop_r : List[FOLFormula] = seq.succedent.filter(x => !x.formula.containsQuantifier).map(x => x.formula.asInstanceOf[FOLFormula]).toList
+  val prop_r : List[FOLFormula] = seq.succedent.filter(x => !containsQuantifier(x.formula.asInstanceOf[FOLFormula])).map(x => x.formula.asInstanceOf[FOLFormula]).toList
   
   // Instanciated (previously univ. quantified) formulas on the left
   val inst_l : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
     f match {
-      case AllVar(_, _) => f.instantiateAll(terms) :: acc
+      case AllVar(_, _) => instantiateAll(f, terms) :: acc
       case _ => acc
     }
   }
@@ -58,13 +54,13 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val terms = flatterms.getTermTuple(term)
     val f = flatterms.getFormula(term)
     f match {
-      case ExVar(_, _) => f.instantiateAll(terms) :: acc
+      case ExVar(_, _) => instantiateAll(f, terms) :: acc
       case _ => acc
     }
   }
 
   // Separating the formulas that contain/don't contain eigenvariables
-  def varFree(f : FOLFormula) = f.freeVariables.intersect(g.eigenvariables.toSet).isEmpty
+  def varFree(f : FOLFormula) = freeVariables(f).intersect(g.eigenvariables).isEmpty
   val antecedent = prop_l ++ inst_l.filter(varFree)
   val antecedent_alpha = inst_l.filter(x => !varFree(x))
   val succedent = prop_r ++ inst_r.filter(varFree)
@@ -84,8 +80,8 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
     val alpha = FOLVar(new VariableStringSymbol("α"))
     val xalpha = Atom(X, alpha::Nil)
     // X[s_i] forall i
-    val xs = grammar.s.map(t => Atom(X, t::Nil))
-    val bigConj = andN(xs)
+    val xs = grammar.s.map(t => Atom("X", t::Nil))
+    val bigConj = And(xs)
     // Implication parametrized with second order variable X (is this needed except for printing purposes??)
     val implication : FOLFormula = Imp(xalpha, bigConj)
 

@@ -1,12 +1,14 @@
 package at.logic.parsing.veriT
 
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.language.fol._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
 import at.logic.utils.latex._
 import java.io._
 import org.apache.commons.lang3.StringEscapeUtils
+import at.logic.calculi.lk.base.FSequent
+import at.logic.language.lambda.types.{Ti, To}
+
 
 object VeriTExporter {
 
@@ -47,9 +49,9 @@ object VeriTExporter {
     )
     symbols.foldLeft("(declare-sort S 0)\n") { case (acc, t) => t._3 match {
       // It is an atom
-      case To() => acc ++ "(declare-fun " + t._1 + " (" + "S "*t._2 + ") Bool)\n"
+      case To => acc ++ "(declare-fun " + t._1 + " (" + "S "*t._2 + ") Bool)\n"
       // It is a function
-      case Ti() => acc ++ "(declare-fun " + t._1 + " (" + "S "*t._2 + ") S)\n"
+      case Ti => acc ++ "(declare-fun " + t._1 + " (" + "S "*t._2 + ") S)\n"
       case _ => throw new Exception("Unexpected type for function or predicate: " + t._3)
     }
     }
@@ -59,8 +61,8 @@ object VeriTExporter {
   // (Note: here we would only use propositional formulas, but it is already
   // implemented for quantifiers just in case...)
   private def getSymbols(f: FOLExpression) : Set[(String, Int, TA)] = f match {
-    case FOLVar(s) => Set( (toASCIIString(s), 0, Ti()) )
-    case FOLConst(s) => Set( (toASCIIString(s), 0, Ti()) )
+    case FOLVar(s) => Set( (s, 0, Ti) )
+    case FOLConst(s) => Set( (s, 0, Ti) )
     case Atom(pred, args) => 
       Set( (toASCIIString(pred), args.size, f.exptype) ) ++ args.foldLeft(Set[(String, Int, TA)]())( (acc, f) => getSymbols(f) ++ acc)
     case Function(fun, args) => 
@@ -76,13 +78,12 @@ object VeriTExporter {
 
   private def toSMTFormat(f: FOLExpression) : String = f match {
     // TODO: use lst2string instead. Should be available after the merging of the lambda calculus
-    case FOLVar(s) => toASCIIString(s)
-    case FOLConst(s) => toASCIIString(s)
+    case FOLVar(s) => s
+    case FOLConst(s) => s
     case Atom(pred, args) => 
       if(args.size == 0) {
-        toASCIIString(pred)
-      }
-      else {
+        toASCIIString( pred )
+      } else {
         "(" + toASCIIString(pred) + " " + args.foldLeft("")( (acc, t) => toSMTFormat(t) + " " + acc) + ")"
       }
     // Functions should have arguments.

@@ -1,11 +1,10 @@
 package at.logic.algorithms.fol
 
-import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression}
-import at.logic.language.hol._
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression, Substitution => FOLSubstitution}
+import at.logic.language.hol.{Substitution => HOLSubstitution, _}
+import at.logic.language.lambda._
 import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.language.lambda.symbols.StringSymbol
 
 /**
  * Sometimes it is necessary to convert terms to an upper layer: e.g. applying a fol subtitution to a hol term does not
@@ -25,28 +24,31 @@ object fol2hol {
       case holf: HOLFormula => holf
     }))
 
-  def apply(sub: Substitution[FOLExpression]) : Substitution[HOLExpression] = Substitution[HOLExpression](sub.map.map(x=>
-      (fol2hol(x._1.asInstanceOf[FOLVar]).asInstanceOf[Var], fol2hol(x._2)) ))
+  def apply(sub: FOLSubstitution) : HOLSubstitution = HOLSubstitution(sub.folmap.map(x=>
+      (fol2hol(x._1).asInstanceOf[HOLVar], fol2hol(x._2)) ))
 }
 
 /**
  * This code is more generic but needs casting, since the factory can't do that */
 object recreateWithFactory {
-  def apply(e:LambdaExpression, factory : LambdaFactoryA) : LambdaExpression = e match {
-    case Var(name,t) => factory.createVar(name,t)
+  def apply(e:LambdaExpression, factory : FactoryA) : LambdaExpression = e match {
+    case Var(name,t) => factory.createVar(StringSymbol(name),t)
     case App(s,t) => factory.createApp(s,t)
     case Abs(x,t) => factory.createAbs(x,t)
   }
 
-  def apply(f:FSequent, factory : LambdaFactoryA) : FSequent = FSequent(
+  def apply(f:FSequent, factory : FactoryA) : FSequent = FSequent(
     f.antecedent.map(x => toHOLF(recreateWithFactory(x,factory))),
     f.succedent.map(x  => toHOLF(recreateWithFactory(x,factory))) )
 
-  def apply[T <: LambdaExpression, U <: LambdaExpression](sub : Substitution[U], factory : LambdaFactoryA) : Substitution[T] =
+  //TODO: Fix this!
+  /*
+  def apply[T <: LambdaExpression, U <: LambdaExpression](sub : Substitution[U], factory : FactoryA) : Substitution[T] =
     Substitution[T](
       sub.map.map( x =>
       (toT[Var](recreateWithFactory(x._1,factory)), toT[T](recreateWithFactory(x._2,factory) ))
     ))
+*/
 
   private def toHOLF(exp:LambdaExpression) : HOLFormula = toT[HOLFormula](exp)
   private def toT[T](exp:LambdaExpression) : T = try {

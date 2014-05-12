@@ -2,7 +2,6 @@ package at.logic.algorithms.lk
 
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk.base.types.FSequent
 
 /**
  * Condensation implements the redundancy optimization technique of the same name, see also

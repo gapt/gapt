@@ -1,42 +1,22 @@
 /*
  * LKExporterTest.scala
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.parsing.calculi.xml
 
-import _root_.at.logic.language.fol.{Atom, FOLConst, FOLFormula}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import scala.xml._
+import scala.xml.Utility.trim
 
 import at.logic.language.hol._
-import at.logic.language.hol.Definitions._
-import at.logic.language.hol.ImplicitConverters._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.types.Definitions._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.symbols.ImplicitConverters._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.lkSpecs.beMultisetEqual
+import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import java.util.zip.GZIPInputStream
-import java.io.{FileReader, FileInputStream, InputStreamReader}
-import java.io.File.separator
 import at.logic.parsing.calculus.xml._
-import scala.xml.Utility.trim
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.lkExtractors._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
 import at.logic.parsing.language.xml.HOLTermExporter
-import at.logic.calculi.occurrences.factory
+import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.lambda.types.To
 
 @RunWith(classOf[JUnitRunner])
 class LkExporterTest extends SpecificationWithJUnit {
@@ -44,7 +24,7 @@ class LkExporterTest extends SpecificationWithJUnit {
 
   val exporter = new LKExporter{}
 // helper to create 0-ary predicate constants
-  def pc( sym: String ) = Atom( new ConstantStringSymbol( sym ), List() )
+  def pc( sym: String ) = Atom( HOLConst(StringSymbol( sym ), To), List() )
   
   "LKExporter" should {
     "export correctly a sequent A, B :- C, D" in {

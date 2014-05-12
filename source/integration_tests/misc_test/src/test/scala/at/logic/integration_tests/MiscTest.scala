@@ -1,56 +1,58 @@
-/**
- * Description:
-**/
 
 package at.logic.integration_tests
 
-import at.logic.language.lambda.symbols._
+import at.logic.algorithms.cutIntroduction._
+import at.logic.algorithms.hlk.HybridLatexParser
+import at.logic.algorithms.lk._
+import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.rewriting.DefinitionElimination
+import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep}
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.occurrences._
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.language.hol.{And => AndHOL, Imp => ImpHOL, Or => OrHOL}
+import at.logic.language.lambda.symbols._
+import at.logic.language.lambda.types._
+import at.logic.parsing.calculus.xml.saveXML
+import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
-import at.logic.parsing.calculus.xml.saveXML
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk._
-import java.io.{FileInputStream, InputStreamReader}
-import java.io.File.separator
-import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.projections.Projections
+import at.logic.parsing.veriT.VeriTParser
+import at.logic.provers.minisat.MiniSATProver
+import at.logic.provers.prover9.{Prover9, Prover9Prover}
+import at.logic.provers.veriT.VeriTProver
+import at.logic.transformations.ReductiveCutElim
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.clauseSets.profile._
+import at.logic.transformations.ceres.projections.Projections
+import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.skolemization.skolemize
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
+
+import java.util.zip.GZIPInputStream
+import java.io.File.separator
+import java.io.{FileReader, FileInputStream, InputStreamReader}
 import at.logic.calculi.occurrences._
 import org.junit.runner.RunWith
+import org.specs2.execute.Success
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
-import at.logic.algorithms.cutIntroduction._
-import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
-import at.logic.transformations.ReductiveCutElim
-
-import at.logic.parsing.veriT.VeriTParser
-import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep}
-import at.logic.language.hol.{And => AndHOL, Imp => ImpHOL, Or => OrHOL}
-import at.logic.provers.prover9.{Prover9, Prover9Prover}
-import at.logic.provers.veriT.VeriTProver
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.provers.minisat.MiniSATProver
-import at.logic.algorithms.hlk.HybridLatexParser
-import at.logic.algorithms.lk.AtomicExpansion
-import at.logic.algorithms.rewriting.DefinitionElimination
 
 @RunWith(classOf[JUnitRunner])
 class MiscTest extends SpecificationWithJUnit {
 
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
   private def LinearExampleProof( k : Int, n : Int ) : LKProof = {
-    val s = new ConstantStringSymbol("s")
-    val c = new ConstantStringSymbol("0")
-    val p = new ConstantStringSymbol("P")
+    val s = "s"
+    val c = "0"
+    val p = "P"
 
-    val x = FOLVar( VariableStringSymbol("x") )
+    val x = FOLVar("x")
     val ass = AllVar( x, Imp( Atom( p, x::Nil ), Atom( p, Function( s, x::Nil )::Nil ) ) )
     if ( k == n ) // leaf proof
     {
@@ -228,18 +230,21 @@ class MiscTest extends SpecificationWithJUnit {
       val testFilePath = "target" + separator + "test-classes" + separator + "tape3.llk"
       val tokens = HybridLatexParser.parseFile(testFilePath)
       val db = HybridLatexParser.createLKProof(tokens)
-      val proofs = db.proofs.filter(_._1 ==  "TAPEPROOF")
+      // I have no idea why, but this makes the code get the correct proof
+      val proofs = db.proofs.filter(_._1.toString == "TAPEPROOF")
       val (_,p)::_ = proofs
       val elp = AtomicExpansion(DefinitionElimination(db.Definitions,p))
       val reg = regularize(elp)
+      val lksk_proof = LKtoLKskc(reg._1)
+      // TODO
       extractExpansionTrees(reg._1) must throwA[IllegalArgumentException] // currently contains problematic definitions
     }
 
     "Construct proof with expansion sequent extracted from proof 1/2" in {
-        val y = FOLVar(new VariableStringSymbol("y"))
-        val x = FOLVar(new VariableStringSymbol("x"))
-        val Py = Atom(new ConstantStringSymbol("P"), y :: Nil)
-        val Px = Atom(new ConstantStringSymbol("P"), x :: Nil)
+        val y = FOLVar("y")
+        val x = FOLVar("x")
+        val Py = Atom("P", y :: Nil)
+        val Px = Atom("P", x :: Nil)
         val AllxPx = AllVar(x, Px)
 
         // test with 1 weak & 1 strong

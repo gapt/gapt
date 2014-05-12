@@ -19,6 +19,10 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
+			<!--
+			lambda cal mere introduced this, uncomment in case necessary for building
+      <artifactId>lk</artifactId>
+			-->
       <artifactId>matching</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>

@@ -17,7 +17,6 @@
     <module>proofs</module>
     <module>resolution</module>
    <module>slk</module>
-   <module>lk_modulo</module>
    <module>expansion_trees</module>
   </modules>
 
@@ -31,6 +30,6 @@
       <groupId>at.logic</groupId>
       <artifactId>fol</artifactId>
       <version>1.0-SNAPSHOT</version>
-      </dependency>
+    </dependency>
   </dependencies>
 </project>

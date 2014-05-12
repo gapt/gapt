@@ -9,6 +9,7 @@ import util.parsing.combinator.PackratParsers
 import scala.collection.immutable.PagedSeq
 import scala.collection.mutable
 import scala.collection.immutable
+import at.logic.utils.dssupport.ListSupport.lst2string
 
 /**** Lisp SExpression Datatypes and Parser
  * This is a basic LISP S-expression parser, without quote character, macros or other fancy stuff.
@@ -34,13 +35,7 @@ case class List(elements : immutable.List[SExpression] ) extends SExpression {
   def ::(head : SExpression) = lisp.List(head::elements)
   def ++(list2 : lisp.List) = lisp.List(elements ++ list2.elements)
 
-  def lst2string[T](fun:(T=>String), seperator: String, l:immutable.List[T]) : String = l match {
-    case Nil => ""
-    case immutable.List(x) => fun(x)
-    case x :: xs => fun(x)  + seperator + lst2string(fun, seperator, xs)
-  }
-
-  override def toString = "("+ lst2string(((x:Any) => x.toString), " ", elements) + ")"
+  override def toString = "("+ lst2string(((x: SExpression) => x.toString), " ", elements) + ")"
   //def prepend(head : SExpression, list : lisp.List) = lisp.List(head::list.list)
 }
 

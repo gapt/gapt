@@ -1,8 +1,6 @@
 /*
  * SLKTest.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.calculi.slk
@@ -10,24 +8,13 @@ package at.logic.calculi.slk
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
+import org.specs2.execute.Success
 
 import at.logic.language.schema._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.hol.logicSymbols._
-import at.logic.calculi.lk.propositionalRules._
 import at.logic.calculi.lk.base._
+import at.logic.calculi.lk.Axiom
 import at.logic.calculi.occurrences._
-import at.logic.language.hol.HOLVarFormula._
-import at.logic.calculi.lk.propositionalRules.NegLeftRule._
-import org.specs2.execute.Success
-import at.logic.language.hol.HOLConst._
-import at.logic.language.lambda.types.Ti._
-import at.logic.language.lambda.types.->._
-import at.logic.language.lambda.types.Tindex._
-import at.logic.language.hol.Definitions._
-import at.logic.language.schema.sTerm._
-import at.logic.language.lambda.types.{Tindex, ->, Ti}
-import at.logic.language.hol.{HOLConst, HOLVar, Atom, HOLVarFormula}
+import at.logic.language.lambda.types._
 
 @RunWith(classOf[JUnitRunner])
 class SLKTest extends SpecificationWithJUnit {
@@ -36,9 +23,9 @@ class SLKTest extends SpecificationWithJUnit {
   "The calculus SLK" should {
     
     "work for a simple proof" in {
-      val i = IntVar(new VariableStringSymbol("i"))
-      val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
-      val p0 = IndexedPredicate(ConstantStringSymbol("p"), IntZero()::Nil)
+      val i = IntVar("i")
+      val pi = IndexedPredicate("p", i::Nil)
+      val p0 = IndexedPredicate("p", IntZero()::Nil)
       val f = BigAnd(i, pi, IntZero(), IntZero())
       val ax = Axiom(p0 +: Seq.empty[SchemaFormula], Seq.empty[SchemaFormula])
       val proof = AndEquivalenceRule3(ax, ax.root.antecedent.head, f)
@@ -46,10 +33,10 @@ class SLKTest extends SpecificationWithJUnit {
     }
 
     "work for AndEquivalenceRule1" in {
-      val i = IntVar(new VariableStringSymbol("i"))
-      val n = IntVar(new VariableStringSymbol("n"))
-      val ai = IndexedPredicate(new ConstantStringSymbol("A"), i::Nil)
-      val a_sn = IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil)
+      val i = IntVar("i")
+      val n = IntVar("n")
+      val ai = IndexedPredicate("A", i::Nil)
+      val a_sn = IndexedPredicate("A", Succ(n)::Nil)
       val and_1_n_ai = BigAnd(i, ai,Succ(IntZero()), n)
       val and_1_sn_ai = BigAnd(i, ai,Succ(IntZero()), Succ(n))
       val ax = Axiom(And(and_1_n_ai, a_sn) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula])
@@ -59,10 +46,10 @@ class SLKTest extends SpecificationWithJUnit {
     }
     
     "work for OrEquivalenceRule1" in {
-      val i = IntVar(new VariableStringSymbol("i"))
-      val n = IntVar(new VariableStringSymbol("n"))
-      val ai = IndexedPredicate(new ConstantStringSymbol("A"), i::Nil)
-      val a_sn = IndexedPredicate(new ConstantStringSymbol("A"), Succ(n)::Nil)
+      val i = IntVar("i")
+      val n = IntVar("n")
+      val ai = IndexedPredicate("A", i::Nil)
+      val a_sn = IndexedPredicate("A", Succ(n)::Nil)
       val or_1_n_ai = BigOr(i, ai, Succ(IntZero()), n)
       val or_1_sn_ai = BigOr(i, ai, Succ(IntZero()), Succ(n))
       val ax = Axiom(Or(or_1_n_ai, a_sn) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
@@ -72,11 +59,11 @@ class SLKTest extends SpecificationWithJUnit {
     }
     
     "work for sCutRule" in {
-      def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
-      def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
-      def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
-      val k = IntVar(new VariableStringSymbol("k"))
-      val x = hol.createVar(new VariableStringSymbol("x"), Ti(), None).asInstanceOf[HOLVar]
+      def f = SchemaConst("f", Ti->Ti)
+      def h = SchemaConst("h", ->(Tindex , ->(Ti, Ti)))
+      def g = SchemaConst("g", ->(Tindex , ->(Ti, Ti)))
+      val k = IntVar("k")
+      val x = SchemaVar("x", Ti)
       val base2 = x
       val step2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
       val base1 = sTerm(g, IntZero(), x::Nil)
@@ -85,17 +72,13 @@ class SLKTest extends SpecificationWithJUnit {
       dbTRS.add(g, Tuple2(base1, base2), Tuple2(step1, step2))
       val term1 = sTerm(g, Succ(Succ(k)), x::Nil)
       val term2 = foTerm("f",  sTerm(g, Succ(k), x::Nil)::Nil)
-      //println("\n\nterm1 = "+unfoldSTerm(term1))
-      //println("term2 = "+unfoldSTerm(term2))
-      val f1 = Atom(new ConstantStringSymbol("P"), term1::Nil)
-      val f2 = Atom(new ConstantStringSymbol("P"), term2::Nil)
-      //println("\n\nf1 = "+unfoldSFormula(f1))
-      //println("f2 = "+unfoldSFormula(f2))
+      val f1 = Atom(SchemaConst("P", term1.exptype -> To), term1::Nil)
+      val f2 = Atom(SchemaConst("P", term2.exptype -> To), term2::Nil)
 
       val ax1  = Axiom(f1::Nil, f1::Nil)
       val ax2  = Axiom(f2::Nil, f2::Nil)
       val cut = sCutRule(ax1, ax2, f1)
-      //println("\n\nroot = "+cut.root)
+      
       Success()
     }
     /*

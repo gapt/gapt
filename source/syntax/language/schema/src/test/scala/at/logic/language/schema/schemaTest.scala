@@ -1,34 +1,27 @@
 package at.logic.language.schema
 
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
-import at.logic.language.lambda.BetaReduction._
-import at.logic.language.lambda.typedLambdaCalculus.{App, Abs}
-import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
-import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.language.schema.BetaReduction._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.types._
-import at.logic.language.hol._
-import at.logic.language.hol.Definitions._
 
 @RunWith(classOf[JUnitRunner])
 class SchemaTest extends SpecificationWithJUnit {
   "Schema" should {
-    val i = IntVar(new VariableStringSymbol("i"))
+    val i = IntVar("i")
     val one = Succ(IntZero())
     val two = Succ(Succ(IntZero()))
-    val p = new ConstantStringSymbol("P")
+    val p = "P"
     val pi = IndexedPredicate(p, i::Nil)
     val p1 = IndexedPredicate(p, one::Nil)
     val p2 = IndexedPredicate(p, two::Nil)
-    val bigAnd = BigAnd(new SchemaAbs(i, pi), one, two)
+    val bigAnd = BigAnd(SchemaAbs(i, pi), one, two)
     val bigOr = BigOr(i, pi, one, two)
     val and = And(p1, p2)
     val or = Or(bigAnd, bigOr)
     val neg = Neg(or)
-    val imp = Imp(neg.asInstanceOf[HOLFormula], and.asInstanceOf[HOLFormula])
+    val imp = Imp(neg, and)
 
     
     "create IndexedPredicate correctly (1)" in {
@@ -51,26 +44,26 @@ class SchemaTest extends SpecificationWithJUnit {
     }
     
     "correctly deal with bound variables in the BigAnd extractor (2)" in {
-      val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
+      val pi = IndexedPredicate("p", i::Nil)
       val f = BigAnd(i, pi, IntZero(), IntZero())
       val res = f match {
-        case BigAnd(v, f, ub, lb) => Abs(v, f)
+        case BigAnd(v, f, ub, lb) => SchemaAbs(v, f)
       }
-      res must beEqualTo( Abs(i, pi) )
+      res must beEqualTo( SchemaAbs(i, pi) )
     }
     
     "correctly deal with bound variables in the BigAnd extractor (1)" in {
-      val pi = IndexedPredicate(ConstantStringSymbol("p"), i::Nil)
-      val p0 = IndexedPredicate(ConstantStringSymbol("p"), IntZero()::Nil)
+      val pi = IndexedPredicate("p", i::Nil)
+      val p0 = IndexedPredicate("p", IntZero()::Nil)
       val f = BigAnd(i, pi, IntZero(), IntZero())
       val res = f match {
-        case BigAnd(v, f, ub, lb) => App(Abs(v, f), ub)
+        case BigAnd(v, f, ub, lb) => SchemaApp(SchemaAbs(v, f), ub)
       }
       betaNormalize( res ) must beEqualTo( p0 )
     }
     
     "perform the unapply function in BigAnd correctly" in {
-       val iformula = new SchemaAbs(i.asInstanceOf[Var], p1)
+       val iformula = SchemaAbs(i.asInstanceOf[SchemaVar], p1)
        val bigConj = BigAnd(iformula, one, two)
        (BigAnd.unapply(bigConj).get._1 must beEqualTo (i)) &&
        (BigAnd.unapply(bigConj).get._2 must beEqualTo (p1)) &&
@@ -84,44 +77,43 @@ class SchemaTest extends SpecificationWithJUnit {
       val bt3 = BiggerThan(one, two)
       val bt4 = BiggerThan(two, i)
       bt1 must beLike {
-        case Atom(BiggerThanSymbol, x::y::Nil) => ok
+        case Atom(BiggerThanC, x::y::Nil) => ok
         case _ => ko
       }
     }
 
     "create a schematic term" in {
-      val fconst = HOLConst(new ConstantStringSymbol("f"), Tindex()->Tindex()->Tindex())
-      val gconst = HOLConst(new ConstantStringSymbol("g"), Tindex()->Tindex())
-      val hconst = HOLConst(new ConstantStringSymbol("h"), Tindex()->Tindex())
+      val fconst = SchemaConst("f", Tindex->Tindex->Tindex)
+      val gconst = SchemaConst("g", Tindex->Tindex)
+      val hconst = SchemaConst("h", Tindex->Tindex)
 
-      def g(t: HOLExpression): HOLExpression = {
-        HOLApp(gconst, t)
+      def g(t: SchemaExpression): SchemaExpression = {
+        SchemaApp(gconst, t)
       }
 
-      def h(t: HOLExpression): HOLExpression = {
-        HOLApp(hconst, t)
+      def h(t: SchemaExpression): SchemaExpression = {
+        SchemaApp(hconst, t)
       }
 
-      def f(n: IntegerTerm, v: HOLExpression): HOLExpression = {
+      def f(n: IntegerTerm, v: SchemaExpression): SchemaExpression = {
         n match {
           case IntZero() => g(n)
           case _ => g(f(Pred(n), v))
         }
       }
-
-      //print("\n\nf(4,0) = ")
-      //println(f(Succ(Succ(Succ(Succ(IntZero())))), IntZero()))
+      
+      // ?????????????????????
       true must beEqualTo (true)
     }
 
     "unfold a schematic term" in {
-      def f = HOLConst(new ConstantStringSymbol("f"), Ti()->Ti())
-      def h = HOLConst(new ConstantStringSymbol("h"), ->(Tindex() , ->(Ti(), Ti())))
-      def g = HOLConst(new ConstantStringSymbol("g"), ->(Tindex() , ->(Ti(), Ti())))
-      val k = IntVar(new VariableStringSymbol("k"))
+      def f = SchemaConst("f", Ti->Ti)
+      def h = SchemaConst("h", ->(Tindex , ->(Ti, Ti)))
+      def g = SchemaConst("g", ->(Tindex , ->(Ti, Ti)))
+      val k = IntVar("k")
       val x = foVar("x")
-      val z = indexedFOVar(new VariableStringSymbol("z"), Succ(IntZero()))
-      val z0 = indexedFOVar(new VariableStringSymbol("z"), IntZero())
+      val z = indexedFOVar("z", Succ(IntZero()))
+      val z0 = indexedFOVar("z", IntZero())
       val base1 = sTerm(g, IntZero(), x::Nil)
       val step1 = sTerm(g, Succ(k), x::Nil)
       val base2 = x
@@ -133,9 +125,8 @@ class SchemaTest extends SpecificationWithJUnit {
       val term2 = sTerm(g, IntZero(), z0::Nil)
 
       val unf = unfoldSTerm(term2)
-      //println("\n\nterm = "+term2)
-      //println("unfold = "+unf)
-      //println()
+      
+      // ?????????????????????
       true must beEqualTo (true)
       
     }

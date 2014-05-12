@@ -1,8 +1,6 @@
 /*
  * SimpleResolutionParser.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.parsing.calculi.simple
@@ -11,12 +9,7 @@ import at.logic.language.hol.{Neg, HOLFormula}
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.FSequent
-
-import at.logic.calculi.occurrences.{factory => defaultFactory}
-
-
 
 /*
  * In order to allow a complex inheritence structure where the resolutionParser trait is mixed

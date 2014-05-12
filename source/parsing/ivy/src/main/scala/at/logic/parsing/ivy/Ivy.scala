@@ -1,22 +1,14 @@
+
 package at.logic.parsing.ivy
 
-import at.logic.parsing.lisp
-import at.logic.parsing.lisp.{SExpression, SExpressionParser}
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.hol.logicSymbols.{EqSymbol, ConstantSymbolA, ConstantStringSymbol}
-import at.logic.language.lambda.symbols.{VariableStringSymbol, SymbolA}
-import at.logic.language.fol
-import at.logic.calculi.resolution.base.{FClause, Clause}
+import at.logic.parsing.lisp.{List => LispList, Atom => LispAtom, Cons => LispCons, SExpression, SExpressionParser}
+import at.logic.language.hol.HOLFormula
+import at.logic.language.fol._
+import at.logic.calculi.resolution.Clause
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.occurrences
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.hol.HOLFormula
-import fol._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import scala.collection.immutable
+import at.logic.language.lambda.types.Ti
 
 /**
  * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
@@ -74,8 +66,8 @@ object IvyParser {
 
   //decompose the proof object to a list and hand it to parse(exp: List[SExpression], found_steps : ProofMap )
   def parse(exp: SExpression, is_variable_symbol : (String => Boolean) ) : IvyResolutionProof =  exp match {
-    case lisp.List(Nil) => throw new Exception("Trying to parse an empty proof!")
-    case lisp.List(l) => parse(l, Map[String, IvyResolutionProof](), is_variable_symbol ) // extract the list of inferences from exp
+    case LispList(Nil) => throw new Exception("Trying to parse an empty proof!")
+    case LispList(l) => parse(l, Map[String, IvyResolutionProof](), is_variable_symbol ) // extract the list of inferences from exp
     case _ => throw new Exception("Parsing error: The proof object is not a list!")
   }
 
@@ -99,12 +91,12 @@ object IvyParser {
   /* parses an inference step and updates the proof map  */
   def parse_step(exp : SExpression, found_steps : ProofMap, is_variable_symbol : String => Boolean) : (ProofId, ProofMap) = {
     exp match {
-      case lisp.List(lisp.Atom(id) :: _) => () //debug("processing inference "+id)
+      case LispList(LispAtom(id) :: _) => () //debug("processing inference "+id)
       case _ => ()
     }
     exp match {
       /* ================== Atom ========================== */
-      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("input")::Nil) :: clause :: _  )  => {
+      case LispList( LispAtom(id):: LispList(LispAtom("input")::Nil) :: clause :: _  )  => {
         val fclause = parse_clause(clause, is_variable_symbol)
 
         val inference = InitialClause(id,clause,
@@ -116,9 +108,9 @@ object IvyParser {
       }
 
       /* ================== Instance ========================== */
-      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("instantiate")::lisp.Atom(parent_id):: subst_exp::Nil) :: clause :: rest  )  => {
+      case LispList( LispAtom(id):: LispList(LispAtom("instantiate")::LispAtom(parent_id):: subst_exp::Nil) :: clause :: rest  )  => {
         val parent_proof = found_steps(parent_id)
-        val sub : Substitution[FOLTerm] = parse_substitution(subst_exp, is_variable_symbol)
+        val sub : Substitution = parse_substitution(subst_exp, is_variable_symbol)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
 
         def connect(ancestors: Seq[FormulaOccurrence], formulas: Seq[HOLFormula]) :
@@ -137,9 +129,9 @@ object IvyParser {
       }
 
       /* ================== Resolution ========================== */
-      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("resolve")::
-                         lisp.Atom(parent_id1):: lisp.List(position1) ::
-                         lisp.Atom(parent_id2):: lisp.List(position2) :: Nil) ::
+      case LispList( LispAtom(id):: LispList(LispAtom("resolve")::
+                         LispAtom(parent_id1):: LispList(position1) ::
+                         LispAtom(parent_id2):: LispList(position2) :: Nil) ::
                        clause :: rest  )  => {
         val parent_proof1 = found_steps(parent_id1)
         val parent_proof2 = found_steps(parent_id2)
@@ -223,14 +215,14 @@ object IvyParser {
       }
 
       /* ================== Flip ========================== */
-      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("flip")::lisp.Atom(parent_id)::lisp.List(position)::Nil) :: clause :: rest  )  =>
+      case LispList( LispAtom(id):: LispList(LispAtom("flip")::LispAtom(parent_id)::LispList(position)::Nil) :: clause :: rest  )  =>
         val parent_proof = found_steps(parent_id)
         val fclause = parse_clause(clause, is_variable_symbol)
         val (occ, polarity, _) = get_literal_by_position(parent_proof.root, position, parent_proof.clause_exp, is_variable_symbol)
         //require(polarity == true, "Flipped literals must be positive!"+parent_proof.clause_exp+" -> "+clause)
 
         occ.formula match {
-          case fol.Equation(left,right) =>
+          case Equation(left,right) =>
             //the negative literals are the same
             def connect_directly(x:FormulaOccurrence) = x.factory.createFormulaOccurrence(x.formula, x::Nil)
 
@@ -239,7 +231,7 @@ object IvyParser {
                 val neglits = parent_proof.root.negative map connect_directly
                 val (pos1, pos2) = parent_proof.root.positive.splitAt( parent_proof.root.positive.indexOf(occ))
                 val (pos1_, pos2_) = (pos1 map connect_directly, pos2 map  connect_directly)
-                val flipped = occ.factory.createFormulaOccurrence(fol.Equation(right, left), occ::Nil)
+                val flipped = occ.factory.createFormulaOccurrence(Equation(right, left), occ::Nil)
                 val inference = Flip(id, clause, flipped, Clause(neglits, pos1_ ++ List(flipped) ++ pos2_.tail ), parent_proof)
                 require(fclause setEquals inference.root.toFSequent,
                   "Error parsing flip rule: inferred clause "+inference.root.toFSequent +
@@ -251,7 +243,7 @@ object IvyParser {
                 val poslits = parent_proof.root.positive map connect_directly
                 val (neg1, neg2) = parent_proof.root.negative.splitAt( parent_proof.root.negative.indexOf(occ))
                 val (neg1_, neg2_) = (neg1 map connect_directly, neg2 map  connect_directly)
-                val flipped = occ.factory.createFormulaOccurrence(fol.Equation(right, left), occ::Nil)
+                val flipped = occ.factory.createFormulaOccurrence(Equation(right, left), occ::Nil)
                 val inference = Flip(id, clause, flipped, Clause(neg1_ ++ List(flipped) ++ neg2_.tail, poslits ), parent_proof)
                 require(fclause setEquals inference.root.toFSequent,
                   "Error parsing flip rule: inferred clause "+inference.root.toFSequent +
@@ -265,9 +257,9 @@ object IvyParser {
         }
 
       /* ================== Paramodulation ========================== */
-      case lisp.List( lisp.Atom(id)::
-                      lisp.List(lisp.Atom("paramod")::lisp.Atom(modulant_id)::lisp.List(mposition)::
-                                                      lisp.Atom(parent_id)::  lisp.List(pposition):: Nil) ::
+      case LispList( LispAtom(id)::
+                      LispList(LispAtom("paramod")::LispAtom(modulant_id)::LispList(mposition)::
+                                                      LispAtom(parent_id)::  LispList(pposition):: Nil) ::
                       clause :: rest  )  =>
         val modulant_proof = found_steps(modulant_id)
         val parent_proof = found_steps(parent_id)
@@ -282,7 +274,7 @@ object IvyParser {
         debug("found occurrence of target formula:"+pocc+" at pos "+pposition)
 
         mocc.formula match {
-          case fol.Equation(left,right) =>
+          case Equation(left,right) =>
             def connect_directly(x:FormulaOccurrence) = x.factory.createFormulaOccurrence(x.formula, x::Nil)
             debug(polarity)
             polarity match {
@@ -344,7 +336,7 @@ object IvyParser {
         }
 
       /* ================== Propositional ========================== */
-      case lisp.List( lisp.Atom(id):: lisp.List(lisp.Atom("propositional")::lisp.Atom(parent_id)::Nil) :: clause :: rest  )  => {
+      case LispList( LispAtom(id):: LispList(LispAtom("propositional")::LispAtom(parent_id)::Nil) :: clause :: rest  )  => {
         val parent_proof = found_steps(parent_id)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
 
@@ -419,8 +411,8 @@ object IvyParser {
       }
 
       // new symbol
-      case lisp.List( lisp.Atom(id)::
-        lisp.List(lisp.Atom("new_symbol")::lisp.Atom(parent_id):: Nil) ::
+      case LispList( LispAtom(id)::
+        LispList(LispAtom("new_symbol")::LispAtom(parent_id):: Nil) ::
         clause :: rest  ) =>
 
         val parent_proof = found_steps(parent_id)
@@ -446,16 +438,6 @@ object IvyParser {
       case _ => throw new Exception("Error parsing inference rule in expression "+exp)
     }
   }
-
-
-  //gets all vars in a lambda expression
-  //TODO: add as method to lambdaexpression
-  def vars(exp : LambdaExpression) : Set[Var] = exp match {
-    case Var(_,_) => Set(exp.asInstanceOf[Var])
-    case App(s,t) => vars(s) ++ vars(t)
-    case Abs(x,t) => vars(t) ++ Set(x)
-  }
-
 
   //extracts a literal from a clause - since the clause seperates positive and negative clauses,
   // we also need the original SEXpression to make sense of the position.
@@ -492,18 +474,18 @@ object IvyParser {
 
   //term replacement
   //TODO: refactor replacement for lambda expressions
-  def replaceTerm_by_in_at(what : FOLTerm, by : FOLTerm, exp : fol.FOLExpression, pos : List[Int] )
-    : fol.FOLExpression = pos match {
+  def replaceTerm_by_in_at(what : FOLTerm, by : FOLTerm, exp : FOLExpression, pos : List[Int] )
+    : FOLExpression = pos match {
       case p::ps =>
         exp match {
-          case fol.Atom(sym, args) =>
+          case Atom(sym, args) =>
             require(1<=p && p <= args.length, "Error in parsing replacement: invalid argument position in atom!")
             val (args1, rterm::args2) = args.splitAt(p-1)
-            fol.Atom(sym, (args1 ++ List(replaceTerm_by_in_at(what,by,rterm, ps ).asInstanceOf[FOLTerm]) ++ args2))
-          case fol.Function(sym, args) =>
+            Atom(sym, (args1 ++ List(replaceTerm_by_in_at(what,by,rterm, ps ).asInstanceOf[FOLTerm]) ++ args2))
+          case Function(sym, args) =>
             require(1<=p && p <= args.length, "Error in parsing replacement: invalid argument position in function!")
             val (args1, rterm::args2) = args.splitAt(p-1)
-            fol.Function(sym, (args1 ++ List(replaceTerm_by_in_at(what,by,rterm, ps ).asInstanceOf[FOLTerm]) ++ args2))
+            Function(sym, (args1 ++ List(replaceTerm_by_in_at(what,by,rterm, ps ).asInstanceOf[FOLTerm]) ++ args2))
           case _ => throw new Exception("Error in parsing replacement: unexpected (sub)term "+exp+ " )")
         }
 
@@ -514,7 +496,7 @@ object IvyParser {
 
 
   def parse_position(l : List[SExpression]) : List[Int] = l match {
-    case lisp.Atom(x)::xs => try {
+    case LispAtom(x)::xs => try {
       x.toInt :: parse_position(xs)
     } catch {
       case e:Exception => throw new Exception("Error parsing position: cannot convert atom "+x+" to integer!")
@@ -524,17 +506,17 @@ object IvyParser {
     case _ => throw new Exception("Error parsing position: unexpected expression "+l)
   }
 
-  def parse_substitution(exp : SExpression, is_variable_symbol : String => Boolean) : Substitution[FOLTerm] = exp match {
-    case lisp.List(list) =>
-      Substitution[FOLTerm](parse_substitution_(list, is_variable_symbol))
+  def parse_substitution(exp : SExpression, is_variable_symbol : String => Boolean) : Substitution = exp match {
+    case LispList(list) =>
+      Substitution(parse_substitution_(list, is_variable_symbol))
     case _ => throw new Exception("Error parsing substitution expression "+exp+" (not a list)")
   }
 
   //Note:substitution are sometimes given as lists of cons and sometimes as two-element list...
   def parse_substitution_(exp : List[SExpression], is_variable_symbol : String => Boolean) : List[(FOLVar, FOLTerm)] = exp match {
-    case lisp.List(vexp::texp)::xs =>
+    case LispList(vexp::texp)::xs =>
       val v = parse_term(vexp, is_variable_symbol)
-      val t = parse_term(lisp.List(texp), is_variable_symbol)
+      val t = parse_term(LispList(texp), is_variable_symbol)
 
       v match {
         case v_ : FOLVar =>
@@ -543,7 +525,7 @@ object IvyParser {
           throw new Exception("Error parsing substitution expression "+exp+": substiution variable was not parsed as variable!")
       }
 
-    case lisp.Cons(vexp, texp)::xs =>
+    case LispCons(vexp, texp)::xs =>
       val v = parse_term(vexp, is_variable_symbol)
       val t = parse_term(texp, is_variable_symbol)
 
@@ -591,12 +573,12 @@ object IvyParser {
 
     for (c <- clauses) {
       c match {
-        case fol.Neg(formula) =>
+        case Neg(formula) =>
           formula match {
-            case fol.Atom(_,_) => neg = formula::neg
+            case Atom(_,_) => neg = formula::neg
             case _ => throw new Exception("Error parsing clause: negative Literal "+formula+" is not an atom!")
           }
-        case fol.Atom(_,_) =>
+        case Atom(_,_) =>
               pos = c :: pos
         case _ =>
           throw new Exception("Error parsing clause: formula "+c+" is not a literal!")
@@ -611,14 +593,14 @@ object IvyParser {
 
   //TODO: merge code with parse_clause_
   def parse_clause_frompos(exp:SExpression, pos : List[Int], is_variable_symbol : String => Boolean) : (HOLFormula, List[Int]) = exp match {
-    case lisp.List( lisp.Atom("or") :: left :: right :: Nil ) =>
+    case LispList( LispAtom("or") :: left :: right :: Nil ) =>
       pos match {
         case 1::rest =>
           left match {
-            case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
+            case LispList( LispAtom("not") :: LispList( LispAtom(name) :: args) :: Nil ) =>
               val npos = if (rest.isEmpty) rest else rest.tail //if we point to a term we have to strip the indicator for neg
-              (fol.Neg(parse_atom(name, args, is_variable_symbol)), npos )
-            case lisp.List( lisp.Atom(name) :: args) =>
+              (Neg(parse_atom(name, args, is_variable_symbol)), npos )
+            case LispList( LispAtom(name) :: args) =>
               (parse_atom(name, args, is_variable_symbol), rest)
             case _ => throw new Exception("Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object.")
           }
@@ -627,15 +609,15 @@ object IvyParser {
         case _ => throw new Exception("pos "+pos+" did not point to a literal!")
       }
 
-    case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
+    case LispList( LispAtom("not") :: LispList( LispAtom(name) :: args) :: Nil ) =>
       val npos = if (pos.isEmpty) pos else pos.tail //if we point to a term we have to strip the indicator for neg
-      (fol.Neg(parse_atom(name, args, is_variable_symbol)), npos)
+      (Neg(parse_atom(name, args, is_variable_symbol)), npos)
 
-    case lisp.List( lisp.Atom(name) :: args) =>
+    case LispList( LispAtom(name) :: args) =>
       (parse_atom(name, args, is_variable_symbol), pos)
 
     //the empty clause is denoted by false
-    case lisp.Atom("false") =>
+    case LispAtom("false") =>
       throw new Exception("Parsing Error: want to extract literal from empty clause!")
 
     case _ => throw new Exception("Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object.")
@@ -644,27 +626,27 @@ object IvyParser {
 
   //directly converts a clause as nested or expression into a list with the literals in the same order
   def parse_clause_(exp:SExpression, is_variable_symbol : String => Boolean) : List[HOLFormula] = exp match {
-    case lisp.List( lisp.Atom("or") :: left :: right :: Nil ) =>
+    case LispList( LispAtom("or") :: left :: right :: Nil ) =>
       val rightclause = parse_clause_(right, is_variable_symbol)
 
       left match {
-        case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
-          fol.Neg(parse_atom(name, args, is_variable_symbol)) :: rightclause
-        case lisp.List( lisp.Atom(name) :: args) =>
+        case LispList( LispAtom("not") :: LispList( LispAtom(name) :: args) :: Nil ) =>
+          Neg(parse_atom(name, args, is_variable_symbol)) :: rightclause
+        case LispList( LispAtom(name) :: args) =>
           parse_atom(name, args, is_variable_symbol) :: rightclause
         case _ => throw new Exception("Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object.")
       }
 
 
-    case lisp.List( lisp.Atom("not") :: lisp.List( lisp.Atom(name) :: args) :: Nil ) =>
-      //fol.Neg(parse_clause(formula, is_variable_symbol) )
-      fol.Neg(parse_atom(name, args, is_variable_symbol)) ::Nil
+    case LispList( LispAtom("not") :: LispList( LispAtom(name) :: args) :: Nil ) =>
+      //Neg(parse_clause(formula, is_variable_symbol) )
+      Neg(parse_atom(name, args, is_variable_symbol)) ::Nil
 
-    case lisp.List( lisp.Atom(name) :: args) =>
+    case LispList( LispAtom(name) :: args) =>
       parse_atom(name, args, is_variable_symbol) :: Nil
 
     //the empty clause is denoted by false
-    case lisp.Atom("false") =>
+    case LispAtom("false") =>
       List()
 
     case _ => throw new Exception("Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object.")
@@ -672,13 +654,12 @@ object IvyParser {
 
   def parse_atom(name: String, args : List[SExpression],is_variable_symbol : String => Boolean) = {
     if (is_variable_symbol(name)) throw new Exception("Parsing Error: Predicate name "+name+" does not conform to naming conventions.")
-    val sym = new ConstantStringSymbol(name)
     val argterms = args map (parse_term(_, is_variable_symbol))
     if (name == "=") {
       require(args.length == 2, "Error parsing equality: = must be a binary predicate!")
-      fol.Equation(argterms(0), argterms(1))
+      Equation(argterms(0), argterms(1))
     } else {
-      fol.Atom(sym, argterms)
+      Atom(name, argterms)
     }
 
   }
@@ -693,22 +674,21 @@ object IvyParser {
                                              ("meet_for_ivy","^"))
   def rewrite_name(s:String) : String = if (ivy_escape_table contains s) ivy_escape_table(s) else s
 
-  val symbol_nil = new ConstantStringSymbol("nil")
   def parse_term(ts : SExpression, is_variable_symbol : String => Boolean) : FOLTerm = ts match {
-    case lisp.Atom(name) =>
+    case LispAtom(name) =>
       val rname = rewrite_name(name)
       if (is_variable_symbol(rname))
-        fol.FOLVar(new VariableStringSymbol(rname))
+        FOLVar(rname)
       else
-        fol.FOLConst(new ConstantStringSymbol(rname))
-    //the proof might contain the constant nil which is parsed to an empty lisp.List. in this case the empty list
+        FOLConst(rname)
+    //the proof might contain the constant nil which is parsed to an empty LispList. in this case the empty list
     //corresponds to a constant
-    case lisp.List(lisp.List(Nil)::Nil) =>
-      fol.FOLConst(symbol_nil)
-    case lisp.List(lisp.Atom(name)::args) =>
+    case LispList(LispList(Nil)::Nil) =>
+      FOLConst("nil")
+    case LispList(LispAtom(name)::args) =>
       val rname = rewrite_name(name)
       if (is_variable_symbol(rname)) throw new Exception("Parsing Error: Function name "+rname+" does not conform to naming conventions.")
-      fol.Function(new ConstantStringSymbol(rname), args.map(parse_term(_, is_variable_symbol)) )
+      Function(rname, args.map(parse_term(_, is_variable_symbol)) )
     case _ =>
       throw new Exception("Parsing Error: Unexpected expression "+ts+" in parsing of a term.")
   }

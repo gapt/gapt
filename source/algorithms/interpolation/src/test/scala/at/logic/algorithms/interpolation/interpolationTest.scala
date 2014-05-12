@@ -7,16 +7,17 @@ import org.specs2.mutable._
 
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.types._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk._
 
 @RunWith(classOf[JUnitRunner])
 class interpolationTest extends SpecificationWithJUnit {
   "interpolation" should {
 
     "correctly interpolate an axiom with top" in {
-      val p = HOLConstFormula(new ConstantStringSymbol("p"))
+      val p = Atom(HOLConst("p", To))
       val ax = Axiom( p::Nil, p::Nil )
       val npart = Set[FormulaOccurrence]()
       val ppart = Set( ax.root.antecedent(0), ax.root.succedent(0) )
@@ -26,7 +27,7 @@ class interpolationTest extends SpecificationWithJUnit {
     }
 
     "correctly create an interpolating proof" in {
-      val p = HOLConstFormula(new ConstantStringSymbol("p"))
+      val p = Atom(HOLConst("p", To))
       val ax = Axiom( p::Nil, p::Nil )
       val npart = Set( ax.root.antecedent(0), ax.root.succedent(0) )
       val ppart = Set[FormulaOccurrence]()
@@ -38,8 +39,8 @@ class interpolationTest extends SpecificationWithJUnit {
     }
 
     "correctly interpolate a single unary inference with not p" in {
-      val p = HOLConstFormula(new ConstantStringSymbol("p"))
-      val q = HOLConstFormula(new ConstantStringSymbol("q"))
+      val p = Atom(HOLConst("p", To))
+      val q = Atom(HOLConst("q", To))
       val ax = Axiom( p::Nil, p::Nil )
       val pr = OrRight1Rule( ax, p, q )
       val npart = Set( pr.root.succedent( 0 ) )
@@ -52,8 +53,8 @@ class interpolationTest extends SpecificationWithJUnit {
     }
 
     "correctly interpolate a single binary inference with bot or q" in {
-      val p = HOLConstFormula(new ConstantStringSymbol("p"))
-      val q = HOLConstFormula(new ConstantStringSymbol("q"))
+      val p = Atom(HOLConst("p", To))
+      val q = Atom(HOLConst("q", To))
       val axp = Axiom( p::Nil, p::Nil )
       val axq = Axiom( q::Nil, q::Nil )
       val pr = OrLeftRule( axp, axq, p, q )
@@ -67,9 +68,9 @@ class interpolationTest extends SpecificationWithJUnit {
     }
 
     "correctly interpolate a small proof of 4 inference rules" in {
-      val p = HOLConstFormula(new ConstantStringSymbol("p"))
-      val q = HOLConstFormula(new ConstantStringSymbol("q"))
-      val r = HOLConstFormula(new ConstantStringSymbol("r"))
+      val p = Atom(HOLConst("p", To))
+      val q = Atom(HOLConst("q", To))
+      val r = Atom(HOLConst("r", To))
 
       val axp = Axiom( p::Nil, p::Nil )
       val axq = Axiom( q::Nil, q::Nil )

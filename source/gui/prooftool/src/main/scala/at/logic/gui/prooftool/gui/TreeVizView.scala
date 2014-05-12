@@ -1,24 +1,20 @@
 package at.logic.gui.prooftool.gui
 
 import scala.swing.{Action, BorderPanel}
-import java.awt.event.{ActionEvent, MouseMotionListener}
-import at.logic.calculi.treeProofs.TreeProof
+import at.logic.calculi.proofs.TreeProof
 import ch.randelshofer.tree._
 import at.logic.utils.ds.trees.{BinaryTree, UnaryTree, LeafTree}
 import javax.swing.event.ChangeListener
 import java.awt.Color
-import at.logic.calculi.lk.base.{Sequent, AuxiliaryFormulas, LKProof, PrincipalFormulas}
-import at.logic.algorithms.hlk.HybridLatexExporter.{fsequentString, getFormulaString}
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules.{ExistsLeftRuleType, ForallRightRuleType, ExistsRightRuleType, ForallLeftRuleType}
+import at.logic.algorithms.llk.HybridLatexExporter.fsequentString
 import at.logic.calculi.lksk.{ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType}
-import at.logic.calculi.lk.equationalRules.{EquationRight2RuleType, EquationRight1RuleType, EquationLeft2RuleType, EquationLeft1RuleType}
+import at.logic.calculi.lk._
 import at.logic.parsing.calculi.xml.{BinaryRuleType, UnaryRuleType, NullaryRuleType}
-import at.logic.calculi.lk.base.types.FSequent
-import scala.Exception
+import at.logic.calculi.lk.base._
 import at.logic.gui.prooftool.parser.{ChangeSequentColor, ProofToolPublisher}
 
 /**
+ *
  * Created by marty on 3/18/14.
  */
 
@@ -49,7 +45,7 @@ class ProofNodeInfo[T] extends NodeInfo {
           Main.scrollToProof(x)
           try {
             ProofToolPublisher.publish(
-              ChangeSequentColor(x.asInstanceOf[LKProof].root, new Color(0,255,255), true)
+              ChangeSequentColor(x.asInstanceOf[LKProof].root, new Color(0,255,255), reset=true)
             )
           } catch { case _: Throwable => }
         case None =>
@@ -68,7 +64,7 @@ class ProofNodeInfo[T] extends NodeInfo {
       throw new Exception("ProofNodeInfo only accepts ProofNodes as tree!")
   }
 
-  def getName(path : TreePath2[TreeNode]) = path.getLastPathComponent() match {
+  def getName(path : TreePath2[TreeNode]) = path.getLastPathComponent match {
     case ProofNode( p : TreeProof[_]) =>
       p.name
   }
@@ -77,7 +73,7 @@ class ProofNodeInfo[T] extends NodeInfo {
 
   def getColor(path : TreePath2[TreeNode]) = {
     import Rainbow._
-    val rule = path.getLastPathComponent().asInstanceOf[ProofNode[T]].proof.rule
+    val rule = path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.rule
     if (rule == CutRuleType) {
       green
     }
@@ -108,7 +104,7 @@ class ProofNodeInfo[T] extends NodeInfo {
   }
 
   def getCumulatedWeight(path : TreePath2[TreeNode]) = {
-    path.getLastPathComponent().asInstanceOf[ProofNode[T]].proof.size()
+    path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.size()
   }
 
   def getWeightFormatted(path : TreePath2[TreeNode]) = {
@@ -122,16 +118,16 @@ class ProofNodeInfo[T] extends NodeInfo {
       case s : Sequent =>
         val fs = s.toFSequent()
         if (! (sequentNameCache contains fs))
-          sequentNameCache(fs) = fsequentString(s.toFSequent, false)
+          sequentNameCache(fs) = fsequentString(s.toFSequent(), escape_latex = false)
         sequentNameCache(fs)
 
-      case _ => es.toString()
+      case _ => es.toString
     }
 
   }
 
   def getActions(path : TreePath2[TreeNode]) = {
-    val node = path.getLastPathComponent().asInstanceOf[ProofNode[T]].proof
+    val node = path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof
     if (! (this.actions contains node))
       this.actions = this.actions + ((node, genShowAction(node)))
     Array(this.actions(node).peer)

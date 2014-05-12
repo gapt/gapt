@@ -1,39 +1,11 @@
 package at.logic.algorithms.lksk
 
-import at.logic.calculi.lk.definitionRules.{DefinitionLeftRule, DefinitionRightRule}
-import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
-import at.logic.calculi.lk.propositionalRules.{AndLeft1Rule,AndLeft2Rule,AndRightRule,OrLeftRule,OrRight1Rule,OrRight2Rule,ContractionLeftRule,ContractionRightRule,CutRule,ImpLeftRule,ImpRightRule,NegLeftRule,NegRightRule}
-import at.logic.calculi.lk.quantificationRules.{ForallRightRule, ExistsLeftRule, ExistsRightRule, ForallLeftRule}
-import at.logic.calculi.lksk._
-import at.logic.language.hol.{HOLFormula, Or, And}
-import base.{TypeSynonyms, LabelledFormulaOccurrence, LabelledSequent}
-
-
-import at.logic.calculi.lksk._
-import at.logic.calculi.lksk.base._
+import at.logic.language.hol._
+import at.logic.calculi.lk.{Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _}
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.base.types._
-
+import at.logic.calculi.lksk._
 
 import scala.collection.mutable
-
-import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.definitionRules._
-
-
-
-import at.logic.language.hol._
-import at.logic.language.lambda.typedLambdaCalculus.{Var, freshVar}
-
-
-/**
- * Created by IntelliJ IDEA.
- * User: bruno
- * Date: 10/10/11
- * Time: 2:49 PM
- * To change this template use File | Settings | File Templates.
- */
 
 object eliminateDefinitions {
   def toLabelledSequent( so: Sequent )
@@ -47,7 +19,6 @@ object eliminateDefinitions {
   {
     proof match
     {
-      // FIXME: cast!?!
       case r @ CutRule( p1, p2, _, a1, a2 ) => {
         // first left, then right
         val rec1 = rec( p1 )
@@ -84,21 +55,13 @@ object eliminateDefinitions {
         val ls = toLabelledSequent(so)
         val ant_occs = ls.l_antecedent.toList
         val succ_occs = ls.l_succedent.toList
-        //println("ant_occs: " + ant_occs)
-        //println("succ_occs: " + succ_occs)
-        //val a = Axiom(ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ))
         val (a,labels) = Axiom.createDefault(new FSequent(ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ) ),
                                     Pair( ant_occs.map( fo => fo.skolem_label ).toList,
                                           succ_occs.map( fo => fo.skolem_label ).toList ) )
-        //println(" a : \n" + a)
         val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
-        //println("mapping antecedent formulas")
         val las = toLabelledSequent(a.root)
         las.l_antecedent.zip(ant_occs).foreach(p => {println(p); map.update( p._2, p._1)})
-        //println("mapping succedent formulas")
         las.l_succedent.zip(succ_occs).foreach(p => {println(p); map.update( p._2, p._1)})
-        //println(a.root)
-        //println("Axiom map: " + map)
         (a, map)
       }
       case WeakeningLeftRule(p, s, m) => {
@@ -180,7 +143,6 @@ object eliminateDefinitions {
       }
       case ExistsRightRule( p, s, a, m, t ) => {
         val new_parent = rec( p )
-        //println("exists_right")
         val new_proof = ExistsRightRule( new_parent._1, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ), m.formula, t )
         val ls = toLabelledSequent(p.root)
         ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
@@ -193,35 +155,31 @@ object eliminateDefinitions {
       }
       case ForallRightRule( p, s, a, m, v ) => {
         val new_parent = rec( p )
-        //println("forall")
-        //println("new_parent: " + new_parent)
-        //println(new_parent._2)
         val new_proof = ForallRightRule( new_parent._1, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ), m.formula, v )
         val ls = toLabelledSequent(p.root)
-        //println("forall ok!")
         ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
       }
       case ForallSkRightRule( p, s, a, m, sub ) => {
         val new_parent = rec( p )
-        val new_proof = ForallSkRightRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, sub )
+        val new_proof = ForallSkRightRule( new_parent._1, new_parent._2( a ).asInstanceOf[LabelledFormulaOccurrence], m.formula, sub )
         val ls = toLabelledSequent(p.root)
         ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
       }
       case ExistsSkLeftRule( p, s, a, m, sub ) => {
         val new_parent = rec( p )
-        val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, sub )
+        val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2( a ).asInstanceOf[LabelledFormulaOccurrence], m.formula, sub )
         val ls = toLabelledSequent(p.root)
         ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
       }
       case ForallSkLeftRule( p, s, a, m, t ) => {
         val new_parent = rec( p )
-        val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, t, false )  // ToDo: I have no idea whether the last parameter should be true or false
+        val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2( a ).asInstanceOf[LabelledFormulaOccurrence], m.formula, t, false )  // ToDo: I have no idea whether the last parameter should be true or false
         val ls = toLabelledSequent(p.root)
         ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
       }
       case ExistsSkRightRule( p, s, a, m, t ) => {
         val new_parent = rec( p )
-        val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2( a ).asInstanceOf[at.logic.calculi.lksk.base.LabelledFormulaOccurrence], m.formula, t, false ) // ToDo: I have no idea whether the last parameter should be true or false
+        val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2( a ).asInstanceOf[LabelledFormulaOccurrence], m.formula, t, false ) // ToDo: I have no idea whether the last parameter should be true or false
         val ls = toLabelledSequent(p.root)
         ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
       }
@@ -232,9 +190,9 @@ object eliminateDefinitions {
     val new_parent = rec( p )
     val newProof = new_parent._1
     val premiseMap = new_parent._2
-    println("premiseMap: ")
-    premiseMap.map(kv => {println(kv._1 + "  --->  " + kv._2)})
-    println("newProof: " + newProof)
+    //println("premiseMap: ")
+    //premiseMap.map(kv => {println(kv._1 + "  --->  " + kv._2)})
+    //println("newProof: " + newProof)
     val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
     val ls = toLabelledSequent(r.root)
 

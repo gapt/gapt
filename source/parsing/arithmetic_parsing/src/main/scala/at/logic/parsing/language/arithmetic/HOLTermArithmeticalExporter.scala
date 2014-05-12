@@ -1,21 +1,17 @@
 /*
  * HOLExpressionArithmeticalExporter.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.parsing.language.arithmetic
 
-import at.logic.language.lambda.symbols._
-import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol._
-import at.logic.language.fol
+import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.symbols.SymbolA
+import at.logic.language.schema.{TopC, BottomC, BigAnd, BigOr, SchemaFormula}
+import at.logic.language.schema.logicSymbols.BiggerThanSymbol
 import at.logic.parsing.OutputExporter
-import at.logic.language.lambda.typedLambdaCalculus._
-
-// for schemas
-import at.logic.language.schema.{BiggerThanSymbol, TopC, BottomC, BigAnd, BigOr, SchemaFormula}
+import at.logic.parsing.language.HOLTermExporter
 
 // FIXME: bad import, we don't want to import
 // something from transformations here.
@@ -23,40 +19,54 @@ import at.logic.transformations.ceres.struct.ClauseSetSymbol
 import at.logic.transformations.ceres.struct.TypeSynonyms.CutConfiguration
 
 
-trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.language.HOLTermExporter {
-  def exportFunction(t: LambdaExpression): Unit = {require(t.isInstanceOf[HOLExpression]); t match {
+trait HOLTermArithmeticalExporter extends OutputExporter with HOLTermExporter {
+  def exportFunction(t: HOLExpression): Unit = t match {
     case TopC => getOutput.write("\\top")
     case BottomC => getOutput.write("\\bot")
-    case Function(ConstantStringSymbol("+"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" + "); exportTerm(y); getOutput.write(")")}
-    case Function(ConstantStringSymbol("-"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" - "); exportTerm(y); getOutput.write(")")}
-    case Function(ConstantStringSymbol("*"), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" * "); exportTerm(y); getOutput.write(")")}
-    case Function(ConstantStringSymbol("""/"""), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(""" / """); exportTerm(y); getOutput.write(")")}
-    case Atom(ConstantStringSymbol("<"), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" < """); exportTerm(y); getOutput.write(")")}
-    case Atom(ConstantStringSymbol(">"), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" > """); exportTerm(y); getOutput.write(")")}
-    case Atom(BiggerThanSymbol, x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" > """); exportTerm(y); getOutput.write(")")}
-    case Atom(ConstantStringSymbol("="), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" = """); exportTerm(y); getOutput.write(")")}
-    case Equation(x,y) => {getOutput.write("("); exportTerm(x); getOutput.write(""" = """); exportTerm(y); getOutput.write(")")}
-    case fol.Equation(x,y) => {getOutput.write("("); exportTerm(x); getOutput.write(""" = """); exportTerm(y); getOutput.write(")")}
-    case BigAnd(v, f, s, e) => {
-      getOutput.write("("); getOutput.write("""\bigwedge_{"""); exportTerm(v); 
-                                getOutput.write(" = "); exportTerm(s) ; getOutput.write("}^{"); exportTerm(e);
-                                getOutput.write("}"); exportTerm(f); getOutput.write(")")}
-    // FIXME: SCALA BUG!
-    case _ => t match {
-    case BigOr(v, f, s, e) => {
-      getOutput.write("("); getOutput.write("""\bigvee_{"""); exportTerm(v); 
-                                getOutput.write(" = "); exportTerm(s) ; getOutput.write("}^{"); exportTerm(e);
-                                getOutput.write("}"); exportTerm(f); getOutput.write(")")}
+    case Function(HOLConst("+",_), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" + "); exportTerm(y); getOutput.write(")")}
+    case Function(HOLConst("-",_), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" - "); exportTerm(y); getOutput.write(")")}
+    case Function(HOLConst("*",_), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(" * "); exportTerm(y); getOutput.write(")")}
+    case Function(HOLConst("""/""",_), x::y::Nil, _) => {getOutput.write("("); exportTerm(x); getOutput.write(""" / """); exportTerm(y); getOutput.write(")")}
+    case Atom(HOLConst("<",_), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" < """); exportTerm(y); getOutput.write(")")}
+    case Atom(HOLConst(">",_), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" > """); exportTerm(y); getOutput.write(")")}
+    case Atom(HOLConst("=",_), x::y::Nil) => {getOutput.write("("); exportTerm(x); getOutput.write(""" = """); exportTerm(y); getOutput.write(")")}
+    case BigAnd(v, f, s, e) =>
+      getOutput.write("(")
+      getOutput.write("""\bigwedge_{""")
+      exportTerm(v)
+      getOutput.write(" = ")
+      exportTerm(s)
+      getOutput.write("}^{")
+      exportTerm(e)
+      getOutput.write("}")
+      exportTerm(f)
+      getOutput.write(")")
 
+    case BigOr(v, f, s, e) =>
+      getOutput.write("(")
+      getOutput.write("""\bigvee_{""")
+      exportTerm(v)
+      getOutput.write(" = ")
+      exportTerm(s)
+      getOutput.write("}^{")
+      exportTerm(e)
+      getOutput.write("}")
+      exportTerm(f)
+      getOutput.write(")")
 
-    case Function(name, args, _) => {
-      exportSymbol(name)
+    case Function(VarOrConst(name,_), args, _) => {
+      getOutput.write(name)
       getOutput.write("(")
       if (args.size > 0) exportTerm(args.head)
       if (args.size > 1) args.tail.foreach(x => {getOutput.write(","); exportTerm(x)})
       getOutput.write(")")
-    }
-    case Atom(sym, args) => {
+  }
+    case Atom(c, args) => {
+      val sym = c match {
+        case h@HOLConst(_,_) => h.asInstanceOf[HOLConst].sym
+        case h@HOLConst(_,_) => h.asInstanceOf[HOLVar].sym
+      }
+
       var nonschematic = sym match {
         case cs : ClauseSetSymbol => {
           getOutput.write("CL^{(");
@@ -87,7 +97,6 @@ trait HOLTermArithmeticalExporter extends OutputExporter with at.logic.parsing.l
         getOutput.write("}}")
     }
   }
-  }}
 
   def exportSymbol(sym: SymbolA): Unit = sym match {
     case cs : ClauseSetSymbol =>

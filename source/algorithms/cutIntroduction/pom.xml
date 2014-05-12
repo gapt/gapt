@@ -11,16 +11,11 @@
   <packaging>jar</packaging>  
   <name>Cut Introduction Algorithm</name>
   <dependencies>
-    <dependency>
+    <!--dependency>
       <groupId>at.logic</groupId>
       <artifactId>resolutionalgorithms</artifactId>
       <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>lkalgorithms</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
+    </dependency-->
     <dependency>
       <groupId>at.logic</groupId>
       <artifactId>expansionTreesAlgorithms</artifactId>
@@ -28,17 +23,7 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>shlk</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
       <artifactId>interpolation</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>ivy</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>

@@ -6,28 +6,22 @@ import at.logic.calculi.lk.base.{FSequent, LKProof, Sequent}
 import at.logic.utils.logging.Logger
 import scala.collection.mutable.{Map,HashMap}
 import at.logic.calculi.lksk._
-import at.logic.calculi.lksk.base._
-import at.logic.calculi.lksk.base.TypeSynonyms._
-import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
+import at.logic.calculi.lk.{Axiom => LKAxiom}
 import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.propositionalRules.{ImpLeftRule, AndRightRule, OrRight1Rule, ImpRightRule, WeakeningLeftRule => LKWeakeningLeftRule, OrRight2Rule, ContractionRightRule, ContractionLeftRule, WeakeningRightRule => LKWeakeningRightRule, OrLeftRule, CutRule, AndLeft1Rule, AndLeft2Rule,NegRightRule,NegLeftRule}
-import at.logic.calculi.lk.definitionRules._
-import at.logic.calculi.lk.equationalRules._
+import at.logic.calculi.lk.{ImpLeftRule, AndRightRule, OrRight1Rule, ImpRightRule, WeakeningLeftRule => LKWeakeningLeftRule, OrRight2Rule, ContractionRightRule, ContractionLeftRule, WeakeningRightRule => LKWeakeningRightRule, OrLeftRule, CutRule, AndLeft1Rule, AndLeft2Rule,NegRightRule,NegLeftRule, ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule}
+import at.logic.calculi.lk.{DefinitionLeftRule, DefinitionRightRule, EquationLeft1Rule, EquationLeft2Rule, EquationRight1Rule, EquationRight2Rule}
 import at.logic.language.hol._
-import at.logic.language.lambda.types._
-import at.logic.language.lambda._
-import at.logic.language.lambda.substitutions._
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.lk.getCutAncestors
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.occurrences.factory
-import at.logic.algorithms.hlk._
+import at.logic.calculi.lksk.TypeSynonyms.{EmptyLabel, Label}
+import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.lambda.types.FunctionType
+import at.logic.algorithms.llk.HybridLatexExporter
 
 
 object LKtoLKskc extends Logger {
-  implicit def sequent2fsequent(fs : Sequent) : FSequent = FSequent(fs.antecedent map (_.formula), fs.succedent map (_.formula))
   def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Nil)
 
   def apply(proof: LKProof) : LKProof = apply( proof, getCutAncestors( proof ) )
@@ -45,29 +39,25 @@ object LKtoLKskc extends Logger {
 
   private def f(f:HOLExpression) : String = HybridLatexExporter.getFormulaString(f,true, false)
   private def f(s:Sequent) : String =
-    s.antecedent.map( { case LabelledFormulaOccurence(formula,_,l) => f(formula) + ":label"+l.map(f).mkString("{",",","}")  } ).mkString(";")+ " :- " +
-      s.succedent.map( { case LabelledFormulaOccurence(formula,_,l) => f(formula) + ":label"+l.map(f).mkString("{",",","}")  } ).mkString(";")
+    s.antecedent.map( { case LabelledFormulaOccurrence(formula,_,l) => f(formula) + ":label"+l.map(f).mkString("{",",","}")  } ).mkString(";")+ " :- " +
+      s.succedent.map( { case LabelledFormulaOccurrence(formula,_,l) => f(formula) + ":label"+l.map(f).mkString("{",",","}")  } ).mkString(";")
 
   // TODO: refactor this method! There is redundancy w.r.t. the symmetric rules
   // like ForallLeft, ExistsRight etc. For an example, see algorithms.lk.substitution
   // and the handleEquationalRule method below!
   def rec(proof: LKProof, subst_terms: Map[FormulaOccurrence, Label], cut_occs: Set[FormulaOccurrence]) : (LKProof, Map[FormulaOccurrence,LabelledFormulaOccurrence]) = proof match {
     case LKAxiom(so) => {
-      val ant = so.antecedent
-      val succ = so.succedent
-/*
-      val a = Axiom.createDefault( Sequent( ant.map( fo => fo.formula ), succ.map( fo => fo.formula ) ),
-                     Pair( ant.map( fo => subst_terms.apply( fo ) ), 
-                           succ.map( fo => subst_terms.apply( fo ) ) ) )
-                           */
+      val ant = so.antecedent.map(fo => fo.formula)
+      val succ = so.succedent.map(fo => fo.formula)
+      val labels_ant = so.antecedent.map( fo => subst_terms( fo ) ).toList
+      val labels_succ = so.succedent.map( fo => subst_terms( fo ) ).toList
 
-      val a = Axiom.createDefault( Sequent( ant, succ ),
-                     Pair( ant.map( fo => subst_terms.apply( fo ) ).toList,
-                           succ.map( fo => subst_terms.apply( fo ) ).toList ) )
+      val a = Axiom.createDefault( FSequent( ant, succ ), Pair(labels_ant, labels_succ) )
+      
       //assert( a._1.root.isInstanceOf[LabelledSequent] )
       val map = new HashMap[FormulaOccurrence, LabelledFormulaOccurrence]
-      a._2._1.zip(a._2._1.indices).foreach( p => map.update( ant( p._2 ), p._1 ) )
-      a._2._2.zip(a._2._2.indices).foreach( p => map.update( succ( p._2 ), p._1 ) )
+      a._2._1.zip(a._2._1.indices).foreach( p => map.update( so.antecedent( p._2 ), p._1 ) )
+      a._2._2.zip(a._2._2.indices).foreach( p => map.update( so.succedent( p._2 ), p._1 ) )
       (a._1, map)
     }
     case ForallLeftRule(p, s, a, m, t) => 
@@ -90,12 +80,11 @@ object LKtoLKskc extends Logger {
         val newaux = r._2(a)
         val args = newaux.skolem_label.toList
         m.formula match {
-          case All(_, t) => t match { case ( (alpha -> To()) -> To()) =>
-            val f = getFreshSkolemFunctionSymbol
-            info( "Using Skolem function symbol '" + f + "' for formula " + this.f(m.formula) )
-            val s = Function( f, args, alpha )
-            val subst = Substitution[HOLExpression]( v, s )
-//            info("Substitution="+subst+" End-sequent:"+this.f(r._1.root))
+          case AllVar(HOLVar(_,alpha), _) =>
+            val f = HOLConst(getFreshSkolemFunctionSymbol, FunctionType(alpha, args.map(_.exptype)))
+            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
+            val s = Function( f, args )
+            val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )
@@ -105,7 +94,6 @@ object LKtoLKskc extends Logger {
             (new_proof, computeMap( p.root.antecedent ++
                                     p.root.succedent,
                                     proof, new_proof, composed_map ) )
-          }
         }
       }
       else
@@ -124,11 +112,11 @@ object LKtoLKskc extends Logger {
         val newaux = r._2(a)
         val args = newaux.skolem_label.toList
         m.formula match {
-          case Ex(_, t) => t match { case ( (alpha -> To()) -> To()) =>
-            val f = getFreshSkolemFunctionSymbol
-            info( "Using Skolem function symbol '" + f + "' for formula " + this.f(m.formula) )
-            val s = Function( f, args, alpha )
-            val subst = Substitution[HOLExpression]( v, s )
+          case ExVar(HOLVar(_,alpha), _) =>
+            val f = HOLConst(getFreshSkolemFunctionSymbol, FunctionType(alpha, args.map(_.exptype)))
+            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
+            val s = Function( f, args )
+            val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ExistsSkLeftRule(new_parent._1, new_parent._2(newaux), m.formula, s)
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )
@@ -138,7 +126,7 @@ object LKtoLKskc extends Logger {
             (new_proof, computeMap( p.root.antecedent ++
                                     p.root.succedent,
                                     proof, new_proof, composed_map ) )
-          }
+
         }
       }
       else
@@ -408,6 +396,6 @@ object LKtoLKskc extends Logger {
   var skolem_cnt = -1
   def getFreshSkolemFunctionSymbol = {
     skolem_cnt += 1
-    ConstantStringSymbol( "s_{" + skolem_cnt + "}" )
+    StringSymbol( "s_{" + skolem_cnt + "}" )
   }
 }

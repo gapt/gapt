@@ -1,7 +1,7 @@
 package at.logic.algorithms.resolution
 
 import at.logic.language.hol._
-import at.logic.calculi.resolution.base.FClause
+import at.logic.calculi.resolution.FClause
 
 /**
  * * Formulas must be regular and weakly quantified

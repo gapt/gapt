@@ -1,62 +1,41 @@
-/** 
- * Description: 
-**/
+
+/* FIXME commenting out because unification with equality is not adapted to the
+ * new lambda calculus (25.03.2014)
 
 package at.logic.integration_tests
 
-import _root_.at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-import _root_.at.logic.algorithms.unification.{ACUEquality, MulACUEquality}
-import _root_.at.logic.language.fol.{FOLExpression, FOLFormula}
-import _root_.at.logic.language.lambda.typedLambdaCalculus.LambdaExpression
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-
-import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers.XMLReaders._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.fol.hol2fol._
 import at.logic.algorithms.lk._
-import at.logic.parsing.calculus.xml.saveXML
-import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-import at.logic.parsing.writers.FileWriter
-import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
-import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
-
-/* comment out untill atp works again
-import at.logic.provers.atp.Prover
-import at.logic.provers.atp.commands._
-import at.logic.provers.atp.refinements.UnitRefinement
-*/
-import at.logic.language.lambda.symbols._
-import at.logic.language.lambda.types._
-import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols._
+import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.subsumption._
+//import at.logic.algorithms.unification.{ACUEquality, MulACUEquality}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.transformations.ceres.clauseSets.profile._
-
-//import at.logic.calculi.resolution.robinson.Clause
-import at.logic.algorithms.subsumption._
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.algorithms.fol.hol2fol._
-
-import java.util.zip.GZIPInputStream
-import java.io.File.separator
-
-import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.projections.Projections
+import at.logic.language.fol.{FOLExpression, FOLFormula}
+import at.logic.language.hol._
+import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.types._
+import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.parsing.calculus.xml.saveXML
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.tptp.TPTPFOLExporter
-
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.algorithms.fol.hol2fol._
-
+import at.logic.parsing.language.xml.XMLParser._
+import at.logic.parsing.readers.XMLReaders._
+import at.logic.parsing.writers.FileWriter
 import at.logic.provers.prover9._
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.transformations.ceres.clauseSets.profile._
+import at.logic.transformations.ceres.projections.Projections
+import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.transformations.skolemization.skolemize
 
-private object MyAlg extends StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}
+import java.io.File.separator
+import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
+import java.util.zip.GZIPInputStream
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class PrimeProofTest extends SpecificationWithJUnit {
@@ -65,9 +44,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
   def sequentToString( s: Sequent ) = {
     var ret = ""
-    s.antecedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    s.antecedent.foreach( formula => ret += formula.toString + ", ")
     ret += " :- "
-    s.succedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    s.succedent.foreach( formula => ret += formula.toString + ", ")
     ret
   }
 
@@ -111,16 +90,14 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
       //val cs = cs_hol map ( (fs : FSequent) => FSequent(fs._1.map((x:HOLFormula) => reduceHolToFol(x)), fs._2.map((x:HOLFormula) => reduceHolToFol(x)) ) )
       def iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
-      val cs = cs_hol map ( (fs : FSequent) => reduceHolToFol(fs, Map[LambdaExpression, ConstantStringSymbol](), iid) )
+      val cs = cs_hol map ( (fs : FSequent) => reduceHolToFol(fs, Map[HOLExpression, String](), iid) )
       println("# of non FOL formulas in cs =" + cs.filterNot(is_folsequent).size )
 
-      val theory = new MulACUEquality(List("+", "*") map (new ConstantStringSymbol(_)), List("0", "1") map (new ConstantStringSymbol(_)))
+      val theory = new MulACUEquality(List("+", "*"), List("0", "1"))
 
-      val subsumed = ACUEquality.apply_subsumptionalgorithm_to( (clause : FSequent, list : List[FSequent]) => list.exists( (x:FSequent) => MyAlg.subsumes(x, clause)), cs )
+      val subsumed = ACUEquality.apply_subsumptionalgorithm_to( (clause : FSequent, list : List[FSequent]) => list.exists( (x:FSequent) => StillmanSubsumptionAlgorithmFOL.subsumes(x, clause)), cs )
 
       val moduloclauses = ACUEquality.restricted_subsumption(theory, subsumed)
-
-
 
       println("Subsumed size = " + subsumed.size)
       println("Moduloclauses size = " + moduloclauses.size)
@@ -208,3 +185,4 @@ class PrimeProofTest extends SpecificationWithJUnit {
     "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=2" in prime1(2, false)
      }
 }
+*/

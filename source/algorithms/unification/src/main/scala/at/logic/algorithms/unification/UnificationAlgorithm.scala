@@ -1,19 +1,15 @@
 /*
  * UnificationAlgorithm.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.algorithms.unification
 
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.substitutions._
+import at.logic.language.fol.FOLExpression
+import at.logic.language.fol.Substitution
 
-
-trait FinitaryUnification[Expression <: LambdaExpression] {
-  def unify(term1:Expression, term2:Expression) : List[Substitution[Expression]]
+trait FinitaryUnification {
+  def unify(term1:FOLExpression, term2:FOLExpression) : List[Substitution]
 }
 
-
-trait UnificationAlgorithm[Expression <: LambdaExpression] extends FinitaryUnification[Expression]
+trait UnificationAlgorithm extends FinitaryUnification

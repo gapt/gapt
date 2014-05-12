@@ -10,7 +10,7 @@ package at.logic.gui.prooftool.gui
 import swing.SequentialContainer.Wrapper
 import javax.swing.JPopupMenu
 import swing._
-import at.logic.calculi.treeProofs.TreeProof
+import at.logic.calculi.proofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
 import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher, ShowProof, HideProof}
 import at.logic.language.hol.HOLFormula
@@ -28,13 +28,14 @@ object PopupMenu {
   def apply(tproof: TreeProof[_], component: Component, x: Int, y: Int) {
     lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
-    //  contents += new MenuItem(Action("Scroll to this sequent") { Main.scrollToProof(proof) })
+      contents += new MenuItem(Action("View Subproof as Sunburst Tree") {
+        Main.initSunburstDialog("subproof "+proof.name, tproof)
+      })
+      contents += new Separator
       contents += new MenuItem(Action("Apply Gentzen's Method (new)") { Main.newgentzen(proof) })
       contents += new MenuItem(Action("Apply Gentzen's Method") { Main.gentzen(proof) })
-      contents += new MenuItem(Action("Export Subproof in XML") { Main.fSaveProof(proof) })
-      contents += new MenuItem(Action("Export Subproof in TeX") { Main.fExportProofToTex(proof, ask = false) })
-    //  contents += new MenuItem(Action("Compute Clause Set") {} )
-    //  contents += new MenuItem(Action("Compute Clause Term") {} )
+      contents += new Separator
+      contents += new MenuItem(Action("Save Subproof as...") { Main.fSave((proof.name,proof)) })
       contents += new Separator
       contents += new MenuItem(Action("Show Proof Above") { ProofToolPublisher.publish(new ShowProof(tproof)) } )
       contents += new MenuItem(Action("Hide Proof Above") { ProofToolPublisher.publish(new HideProof(tproof)) } )

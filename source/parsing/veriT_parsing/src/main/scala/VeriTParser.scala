@@ -2,10 +2,7 @@ package at.logic.parsing.veriT
 
 import scala.util.parsing.combinator._
 import at.logic.language.fol._
-import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.BetaReduction._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree}
 import java.io.FileReader
 import at.logic.utils.logging.Logger
@@ -17,15 +14,15 @@ object VeriTParser extends RegexParsers {
   type Instances = (FOLFormula, List[FOLFormula])
 
   def genEqualities(pairs: List[(FOLTerm, FOLTerm)], eqs: List[FOLFormula]) = {
-    
+
     // Transforms the equalities provided into a list of pairs
     val eqs_pairs = eqs.map(f => f match {
       case Neg(Atom(_, List(a, b))) => (a, b)
     })
 
     // Checking which equalities were in the wrong order and generating the symmetry instances
-    val symm = pairs.foldLeft(List[Instances]()) ( (acc, p) =>
-      if ( eqs_pairs.contains((p._2, p._1)) ) {
+    val symm = pairs.foldLeft(List[Instances]())((acc, p) =>
+      if (eqs_pairs.contains((p._2, p._1))) {
         acc :+ getSymmInstances(p._2, p._1)
       }
       else {
@@ -36,32 +33,31 @@ object VeriTParser extends RegexParsers {
 
     // Generate the correct equalities
     val eqs_correct = pairs.foldRight(List[FOLFormula]()) {
-      case (p, acc) => 
-        val eq = ConstantStringSymbol("=")
-        Atom(eq, List(p._1, p._2)) :: acc
+      case (p, acc) =>
+        Atom("=", List(p._1, p._2)) :: acc
     }
-    
+
     (eqs_correct, symm)
   }
 
-  def getSymmInstances(a: FOLTerm, b: FOLTerm) : Instances = {
-    val x = FOLVar(VariableStringSymbol("x"))
-    val y = FOLVar(VariableStringSymbol("y"))
-    val eq = ConstantStringSymbol("=")
+  def getSymmInstances(a: FOLTerm, b: FOLTerm): Instances = {
+    val x = FOLVar("x")
+    val y = FOLVar("y")
+    val eq = "="
     val eq1 = Atom(eq, List(x, y))
     val eq2 = Atom(eq, List(y, x))
     val imp = Imp(eq1, eq2)
     val eq_symm = AllVar(x, AllVar(y, imp))
 
-    val i1 = eq_symm.instantiate(a).instantiate(b)
-    val i2 = eq_symm.instantiate(b).instantiate(a)
+    val i1 = instantiate(instantiate(eq_symm, a), b)
+    val i2 = instantiate(instantiate(eq_symm, b), a)
 
     (eq_symm, List(i1, i2))
   }
-  
-  def getEqReflInstances(f: List[FOLFormula]) : List[Instances] = {
-    val x = FOLVar(VariableStringSymbol("x"))
-    val eq = ConstantStringSymbol("=")
+
+  def getEqReflInstances(f: List[FOLFormula]): List[Instances] = {
+    val x = FOLVar("x")
+    val eq = "="
     val eq_refl = AllVar(x, Atom(eq, List(x, x)))
     List((eq_refl, f))
   }
@@ -69,11 +65,11 @@ object VeriTParser extends RegexParsers {
   // Assuming all the antecedents of the implication are ordered:
   // ( =(x0, x1)  ^  =(x1, x2)  ^ ... ^  =(xn-1, xn)  ->  =(x0, xn) )
   // in veriT is *always* ( not =(x0, x1) , not =(x1, x2) , ... , not =(xn-1, xn) , =(x0, xn) )
-  def getEqTransInstances(l: List[FOLFormula]) : List[Instances] = {
-    val x = FOLVar(VariableStringSymbol("x"))
-    val y = FOLVar(VariableStringSymbol("y"))
-    val z = FOLVar(VariableStringSymbol("z"))
-    val eq = ConstantStringSymbol("=")
+  def getEqTransInstances(l: List[FOLFormula]): List[Instances] = {
+    val x = FOLVar("x")
+    val y = FOLVar("y")
+    val z = FOLVar("z")
+    val eq = "="
     val eq1 = Atom(eq, List(x, y))
     val eq2 = Atom(eq, List(y, z))
     val eq3 = Atom(eq, List(x, z))
@@ -94,99 +90,104 @@ object VeriTParser extends RegexParsers {
     // =(x0, xn-1) ^ =(xn-1, xn) -> =(x0, xn)
     //
     def unfoldChain(l: List[FOLFormula]) = unfoldChain_(l.tail, l(0))
-    def unfoldChain_(l: List[FOLFormula], c: FOLFormula) : List[FOLFormula] = l.head match {
-      case Neg(Atom(eq0, List(x0, x1))) if eq0 == eq => c match {
-        // Note that the variables are:
-        // x2=x3 ^ x0=x1
-        // Checking all possible cases of atom ordering:
- 
-        // x=y ^ y=z -> x=z
-        case Neg(Atom(eq1, List(x2, x3))) if x3 == x0 =>
-          val newc = Neg(Atom(eq, List(x2, x1)))
-          // Instances
-          val f1 = eq_trans.instantiate(x2)
-          val f2 = f1.instantiate(x0) // or x3, should be the same
-          val f3 = f2.instantiate(x1)
+    def unfoldChain_(l: List[FOLFormula], c: FOLFormula): List[FOLFormula] =  l.head match {
+        case Neg(Atom(eq0, List(x0, x1))) if eq0.toString == eq => c match {
+          // Note that the variables are:
+          // x2=x3 ^ x0=x1
+          // Checking all possible cases of atom ordering:
 
-          f3 :: unfoldChain_(l.tail, newc)
+          // x=y ^ y=z -> x=z
+          case Neg(Atom(eq1, List(x2, x3))) if x3 == x0 =>
+            val newc = Neg(Atom(eq, List(x2, x1)))
+            // Instances
+            val f1 = instantiate(eq_trans, x2)
+            val f2 = instantiate(f1, x0) // or x3, should be the same
+          val f3 = instantiate(f2, x1)
 
-        // x=y ^ z=y -> x=z
-        case Neg(Atom(eq1, List(x2, x3))) if x3 == x1 =>
-          val newc = Neg(Atom(eq, List(x2, x0)))
-          // Instances
-          val f1 = eq_trans.instantiate(x2)
-          val f2 = f1.instantiate(x1) // or x3, should be the same
-          val f3 = f2.instantiate(x0)
+            f3 :: unfoldChain_(l.tail, newc)
 
-          symm = getSymmInstances(x0, x1) :: symm
+          // x=y ^ z=y -> x=z
+          case Neg(Atom(eq1, List(x2, x3))) if x3 == x1 =>
+            val newc = Neg(Atom(eq, List(x2, x0)))
+            // Instances
+            val f1 = instantiate(eq_trans, x2)
+            val f2 = instantiate(f1, x1) // or x3, should be the same
+          val f3 = instantiate(f2, x0)
 
-          f3 :: unfoldChain_(l.tail, newc)
+            symm = getSymmInstances(x0, x1) :: symm
 
-        // y=x ^ z=y -> x=z
-        case Neg(Atom(eq1, List(x2, x3))) if x2 == x1 =>
-          val newc = Neg(Atom(eq, List(x3, x0)))
-          // Instances
-          val f1 = eq_trans.instantiate(x3)
-          val f2 = f1.instantiate(x1) // or x2, should be the same
-          val f3 = f2.instantiate(x0)
+            f3 :: unfoldChain_(l.tail, newc)
 
-          symm = getSymmInstances(x0, x1) :: symm
-          symm = getSymmInstances(x2, x3) :: symm
-          
-          f3 :: unfoldChain_(l.tail, newc)
-        
-        // y=x ^ y=z -> x=z
-        case Neg(Atom(eq1, List(x2, x3))) if x2 == x0 =>
-          val newc = Neg(Atom(eq, List(x3, x1)))
-          // Instances
-          val f1 = eq_trans.instantiate(x3)
-          val f2 = f1.instantiate(x0) // or x2, should be the same
-          val f3 = f2.instantiate(x1)
-          
-          symm = getSymmInstances(x2, x3) :: symm
+          // y=x ^ z=y -> x=z
+          case Neg(Atom(eq1, List(x2, x3))) if x2 == x1 =>
+            val newc = Neg(Atom(eq, List(x3, x0)))
+            // Instances
+            val f1 = instantiate(eq_trans, x3)
+            val f2 = instantiate(f1, x1) // or x2, should be the same
+          val f3 = instantiate(f2, x0)
 
-          f3 :: unfoldChain_(l.tail, newc)
+            symm = getSymmInstances(x0, x1) :: symm
+            symm = getSymmInstances(x2, x3) :: symm
 
-        case Neg(Atom(eq1, List(x2, x3))) => 
-          val msg = "ERROR: the conclusion of the previous terms have" +  
-          " no literal in common with the next one. Are the literals out of order?" + 
-          "\nconclusion: " + c + "\nsecond literal: " + l.head
+            f3 :: unfoldChain_(l.tail, newc)
+
+          // y=x ^ y=z -> x=z
+          case Neg(Atom(eq1, List(x2, x3))) if x2 == x0 =>
+            val newc = Neg(Atom(eq, List(x3, x1)))
+            // Instances
+            val f1 = instantiate(eq_trans, x3)
+            val f2 = instantiate(f1, x0) // or x2, should be the same
+          val f3 = instantiate(f2, x1)
+
+            symm = getSymmInstances(x2, x3) :: symm
+
+            f3 :: unfoldChain_(l.tail, newc)
+
+          case Neg(Atom(eq1, List(x2, x3))) =>
+            val msg = "ERROR: the conclusion of the previous terms have" +
+              " no literal in common with the next one. Are the literals out of order?" +
+              "\nconclusion: " + c + "\nsecond literal: " + l.head
+            VeriTParserLogger.error(msg)
+            throw new Exception(msg)
+
+          case _ =>
+            val msg = "ERROR: wrong format for negated equality: " + c
+            VeriTParserLogger.error(msg)
+            throw new Exception(msg)
+        }
+
+        case Neg(Atom(eq0, List(x0, x1))) if eq0.toString != eq =>
+          val msg = "ERROR: Predicate " + eq0 + " in eq_transitive is not equality."
           VeriTParserLogger.error(msg)
           throw new Exception(msg)
 
-        case _ => 
-          val msg = "ERROR: wrong format for negated equality: " + c
+        // When reaching the final literal, check if they are the same.
+        case Atom(eq0, List(x0, x1)) if eq0.toString == eq => c match {
+          case Neg(Atom(eq1, List(x2, x3))) if x0 == x2 && x1 == x3 => Nil
+          case Neg(Atom(eq1, List(x2, x3))) if x1 == x2 && x0 == x3 => Nil
+
+          case Neg(Atom(eq1, List(x2, x3))) =>
+            val msg = "ERROR: the conclusion of the previous terms" +
+              " have no literal in common with the conclusion of the chain. Are the literals out of order? Is the conclusion" +
+              " not the last one?"
+            VeriTParserLogger.error(msg)
+            throw new Exception(msg)
+
+          case _ =>
+            val msg = "ERROR: wrong format for negated equality: " + c
+            VeriTParserLogger.error(msg)
+            throw new Exception(msg)
+        }
+
+        case Atom(eq0, List(x0, x1)) if eq0.toString != eq =>
+          val msg = "ERROR: Predicate " + eq0 + " in eq_transitive is not equality."
           VeriTParserLogger.error(msg)
           throw new Exception(msg)
-      }
 
-      case Neg(Atom(eq0, List(x0, x1))) if eq0 != eq => 
-        val msg = "ERROR: Predicate " + eq0 + " in eq_transitive is not equality."
-        VeriTParserLogger.error(msg)
-        throw new Exception(msg)
-      
-      // When reaching the final literal, check if they are the same.
-      case Atom(eq0, List(x0, x1)) if eq0 == eq => c match {
-        case Neg(Atom(eq1, List(x2, x3))) if x0 == x2 && x1 == x3 => Nil
-        case Neg(Atom(eq1, List(x2, x3))) if x1 == x2 && x0 == x3 => Nil
-        
-        case Neg(Atom(eq1, List(x2, x3))) => 
-          val msg = "ERROR: the conclusion of the previous terms" + 
-          " have no literal in common with the conclusion of the chain. Are the literals out of order? Is the conclusion" + 
-          " not the last one?"
-          VeriTParserLogger.error(msg)
-          throw new Exception(msg)
-
-        case _ => 
-          val msg = "ERROR: wrong format for negated equality: " + c
-          VeriTParserLogger.error(msg)
-          throw new Exception(msg)
-      }
-
-      case Atom(eq0, List(x0, x1)) if eq0 != eq => 
-        val msg = "ERROR: Predicate " + eq0 + " in eq_transitive is not equality."
-        VeriTParserLogger.error(msg)
-        throw new Exception(msg)
+        case _ =>
+          val msg = "Unmatched list head: "+l.head
+            VeriTParserLogger.error(msg)
+            throw new Exception(msg)
     }
 
     val instances = unfoldChain(l)
@@ -200,7 +201,7 @@ object VeriTParser extends RegexParsers {
 
     def getFunctionName(f: FOLFormula) : String = f match {
       case Atom(eq, List(f1, _)) => f1 match {
-        case Function(ConstantStringSymbol(n), _) => n 
+        case Function(n, _) => n.toString
       }
     }
     
@@ -212,18 +213,18 @@ object VeriTParser extends RegexParsers {
 
     // Generate the eq_congruent formula with the right number of literals
     def gen_eq_congr(n: Int, fname: String) : FOLFormula = {
-      val listX = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i)) ).toList
-      val listY = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i)) ).toList
+      val listX = (for{i <- 1 to n} yield FOLVar("x" + i) ).toList
+      val listY = (for{i <- 1 to n} yield FOLVar("y" + i) ).toList
       val equalities = listX.zip(listY).foldRight(List[FOLFormula]()) {
         case (p, acc) => 
-          val eq = ConstantStringSymbol("=")
+          val eq = "="
           Atom(eq, List(p._1, p._2)) :: acc
       }
       val conj = And(equalities)
-      val name = ConstantStringSymbol(fname)
+      val name = fname
       val f1 = Function(name, listX)
       val f2 = Function(name, listY)
-      val eq = ConstantStringSymbol("=")
+      val eq = "="
       val last_eq = Atom(eq, List(f1, f2))
       val matrix = Imp(conj, last_eq)
 
@@ -257,12 +258,8 @@ object VeriTParser extends RegexParsers {
   def getEqCongrPredInstances(f: List[FOLFormula]) : List[Instances] = {
 
     def getPredName(f: FOLFormula) : String = f match {
-      case Atom(p, _) => p match {
-          case ConstantStringSymbol(n) => n 
-      }
-      case Neg(Atom(p, _)) => p match {
-          case ConstantStringSymbol(n) => n 
-      }
+      case Atom(p, _) => p.toString
+      case Neg(Atom(p, _)) => p.toString
     }
 
     def getArgsLst(p1: FOLFormula, p2: FOLFormula) = (p1, p2) match {
@@ -272,14 +269,14 @@ object VeriTParser extends RegexParsers {
 
     // Generate the eq_congruent_pred with the right number of literals
     def gen_eq_congr_pred(n: Int, pname: String) : FOLFormula = {
-      val listX = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("x" + i)) ).toList
-      val listY = (for{i <- 1 to n} yield FOLVar(VariableStringSymbol("y" + i)) ).toList
+      val listX = (for{i <- 1 to n} yield FOLVar("x" + i) ).toList
+      val listY = (for{i <- 1 to n} yield FOLVar("y" + i) ).toList
       val equalities = listX.zip(listY).foldRight(List[FOLFormula]()) {
         case (p, acc) => 
-          val eq = ConstantStringSymbol("=")
+          val eq = "="
           Atom(eq, List(p._1, p._2)) :: acc
       }
-      val name = ConstantStringSymbol(pname)
+      val name = pname
       val p1 = Atom(name, listX)
       val p2 = Atom(name, listY)
       val conj = And(equalities :+ p1)
@@ -385,8 +382,7 @@ object VeriTParser extends RegexParsers {
   def success : Parser[String] = "success"
   def unsat : Parser[String] = "unsat"
   def sat : Parser[String] = "sat"
-  // TODO: find out what is the general format of this title.
-  def title : Parser[String] = "verit dev - the VERI(T) theorem prover (UFRN/LORIA)." | "veriT 201310d - the SMT-solver veriT (UFRN/LORIA)."
+  def title : Parser[String] = """veri(.*)\.""".r
   def msg : Parser[String] = "Formula is Satisfiable"
  
   // INPUT PROCESSING RULES
@@ -421,7 +417,6 @@ object VeriTParser extends RegexParsers {
 
   def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | or_pos | and_neg | not_and | not_or | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2
   // Rules that I don't care
-  // TODO: parse all rules
   def resolution : Parser[List[Instances]] = "resolution" ~> premises <~ conclusion
   def and : Parser[List[Instances]] = "and" ~> premises <~ conclusion
   def and_pos : Parser[List[Instances]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
@@ -446,10 +441,10 @@ object VeriTParser extends RegexParsers {
   def formula : Parser[FOLFormula] = andFormula | orFormula | notFormula | pred
   
   def term : Parser[FOLTerm] = constant | function 
-  def constant : Parser[FOLTerm] = name ^^ { case n => FOLConst(ConstantStringSymbol(n)) }
+  def constant : Parser[FOLTerm] = name ^^ { case n => FOLConst(n) }
   def function : Parser[FOLTerm] = "(" ~> name ~ rep(term) <~ ")" ^^ {
     case name ~ args => 
-      val n = ConstantStringSymbol(name) 
+      val n = name
       Function(n, args)
   }
 
@@ -472,11 +467,10 @@ object VeriTParser extends RegexParsers {
   }
   def pred : Parser[FOLFormula] = "(" ~> name ~ rep(term) <~ ")" ^^ { 
     case name ~ args => 
-      val n = ConstantStringSymbol(name)
-      Atom(n, args)
+      Atom(name, args)
   } | name ^^ {
     // No parenthesis around unary symbols
-    case name => Atom(ConstantStringSymbol(name), Nil)
+    case name => Atom(name, Nil)
   }
 
   // Syntax of let-expressions:

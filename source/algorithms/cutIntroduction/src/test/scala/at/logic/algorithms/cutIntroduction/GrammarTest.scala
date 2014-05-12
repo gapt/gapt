@@ -9,8 +9,6 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import scala.collection.immutable.HashMap
-import at.logic.language.lambda.symbols._
-import at.logic.language.hol.logicSymbols._
 import at.logic.language.fol._
 import TermsExtraction._
 import ComputeGrammars._
@@ -29,17 +27,17 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltaG = new ManyVariableDelta(1)
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val a = FOLConst(ConstantStringSymbol("a"))
-        val b = FOLConst(ConstantStringSymbol("b"))
+        val f = "f"
+        val g = "g"
+        val a = FOLConst("a")
+        val b = FOLConst("b")
 
         val f1 = Function(f, a::Nil)
         val g1 = Function(g, b::Nil)
 
         val dec = deltaG.computeDelta(f1::g1::Nil, "α")
 
-        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha = FOLVar("α_0")
 
         val s = Set(((f1::g1::Nil)::Nil).transpose: _*)
 
@@ -49,17 +47,17 @@ class GrammarTest extends SpecificationWithJUnit {
         "example #1" in {
             val deltaG = new ManyVariableDelta(2)
 
-            val f = ConstantStringSymbol("f")
-            val a = FOLConst(ConstantStringSymbol("a"))
-            val b = FOLConst(ConstantStringSymbol("b"))
+            val f = "f"
+            val a = FOLConst("a")
+            val b = FOLConst("b")
 
             val f1 = Function(f, a::b::Nil)
             val f2 = Function(f, b::a::Nil)
 
             val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
-            val alpha = FOLVar(new VariableStringSymbol("α_0"))
-            val alpha_2 = FOLVar(new VariableStringSymbol("α_1"))
+            val alpha = FOLVar("α_0")
+            val alpha_2 = FOLVar("α_1")
             val f_alpha = Function(f, alpha::alpha_2::Nil)
 
             val s1 = Set(((f1::f2::Nil)::Nil).transpose: _*)
@@ -71,16 +69,16 @@ class GrammarTest extends SpecificationWithJUnit {
         "example with a unary function symbol" in {
             val deltaG = new ManyVariableDelta(2)
 
-            val f = ConstantStringSymbol("f")
-            val a = FOLConst(ConstantStringSymbol("a"))
-            val b = FOLConst(ConstantStringSymbol("b"))
+            val f = "f"
+            val a = FOLConst("a")
+            val b = FOLConst("b")
 
             val f1 = Function(f, a::Nil)
             val f2 = Function(f, b::Nil)
 
             val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
-            val alpha = FOLVar(new VariableStringSymbol("α_0"))
+            val alpha = FOLVar("α_0")
             val f_alpha = Function(f, alpha::Nil)
 
             val s = Set(((a::b::Nil)::Nil).transpose: _*)
@@ -94,17 +92,17 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltaG = new UnboundedVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val a = FOLConst(ConstantStringSymbol("a"))
-        val b = FOLConst(ConstantStringSymbol("b"))
+        val f = "f"
+        val g = "g"
+        val a = FOLConst("a")
+        val b = FOLConst("b")
 
         val f1 = Function(f, a::Nil)
         val g1 = Function(g, b::Nil)
 
         val dec = deltaG.computeDelta(f1::g1::Nil, "α")
 
-        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha = FOLVar("α_0")
 
         val s = Set(((f1::g1::Nil)::Nil).transpose: _*)
 
@@ -115,23 +113,23 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltaG = new UnboundedVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val a = FOLConst(ConstantStringSymbol("a"))
-        val b = FOLConst(ConstantStringSymbol("b"))
-        val c = FOLConst(ConstantStringSymbol("c"))
-        val d = FOLConst(ConstantStringSymbol("d"))
-        val e = FOLConst(ConstantStringSymbol("e"))
-        val fc = FOLConst(ConstantStringSymbol("f"))
+        val f = "f"
+        val g = "g"
+        val a = FOLConst("a")
+        val b = FOLConst("b")
+        val c = FOLConst("c")
+        val d = FOLConst("d")
+        val e = FOLConst("e")
+        val fc = FOLConst("f")
 
         val f1 = Function(f, a::Function(g, c::d::Nil)::Nil)
         val f2 = Function(f, b::Function(g, e::fc::Nil)::Nil)
 
         val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
-        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
-        val alpha1 = FOLVar(new VariableStringSymbol("α_1"))
-        val alpha2 = FOLVar(new VariableStringSymbol("α_2"))
+        val alpha0 = FOLVar("α_0")
+        val alpha1 = FOLVar("α_1")
+        val alpha2 = FOLVar("α_2")
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha2::Nil)::Nil)
         val s = Set(((a::b::Nil)::(c::e::Nil)::(d::fc::Nil)::Nil).transpose: _*)
@@ -143,20 +141,20 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltaG = new UnboundedVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val a = FOLConst(ConstantStringSymbol("a"))
-        val b = FOLConst(ConstantStringSymbol("b"))
-        val c = FOLConst(ConstantStringSymbol("c"))
-        val d = FOLConst(ConstantStringSymbol("d"))
+        val f = "f"
+        val g = "g"
+        val a = FOLConst("a")
+        val b = FOLConst("b")
+        val c = FOLConst("c")
+        val d = FOLConst("d")
 
         val f1 = Function(f, a::Function(g, c::c::Nil)::Nil)
         val f2 = Function(f, b::Function(g, d::d::Nil)::Nil)
 
         val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
-        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
-        val alpha1 = FOLVar(new VariableStringSymbol("α_1"))
+        val alpha0 = FOLVar("α_0")
+        val alpha1 = FOLVar("α_1")
 
         val uTarget = Function(f, alpha0::Function(g, alpha1::alpha1::Nil)::Nil)
         val s = Set(((a::b::Nil)::(c::d::Nil)::Nil).transpose: _*)
@@ -168,19 +166,19 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltaG = new UnboundedVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val a = FOLConst(ConstantStringSymbol("a"))
-        val b = FOLConst(ConstantStringSymbol("b"))
-        val c = FOLConst(ConstantStringSymbol("c"))
-        val d = FOLConst(ConstantStringSymbol("d"))
+        val f = "f"
+        val g = "g"
+        val a = FOLConst("a")
+        val b = FOLConst("b")
+        val c = FOLConst("c")
+        val d = FOLConst("d")
 
         val f1 = Function(f, a::Function(g, c::d::Nil)::Nil)
         val f2 = Function(f, b::Function(g, c::d::Nil)::Nil)
 
         val dec = deltaG.computeDelta(f1::f2::Nil, "α")
 
-        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha0 = FOLVar("α_0")
 
         val uTarget = Function(f, alpha0::Function(g, c::d::Nil)::Nil)
         val s = Set(((a::b::Nil)::Nil).transpose: _*)
@@ -192,13 +190,13 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val deltaG = new UnboundedVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val h = ConstantStringSymbol("h")
-        val a = FOLConst(ConstantStringSymbol("a"))
-        val b = FOLConst(ConstantStringSymbol("b"))
-        val c = FOLConst(ConstantStringSymbol("c"))
-        val d = FOLConst(ConstantStringSymbol("d"))
+        val f = "f"
+        val g = "g"
+        val h = "h"
+        val a = FOLConst("a")
+        val b = FOLConst("b")
+        val c = FOLConst("c")
+        val d = FOLConst("d")
 
         val f1 = Function(f, Function(h, a::Nil)::Function(g, c::a::Nil)::Nil)
         val f2 = Function(f, Function(h, b::Nil)::Function(g, c::b::Nil)::Nil)
@@ -206,7 +204,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val dec = deltaG.computeDelta(f1::f2::f3::Nil, "α")
 
-        val alpha0 = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha0 = FOLVar("α_0")
 
         val uTarget = Function(f, Function(h, alpha0::Nil)::Function(g, c::alpha0::Nil)::Nil)
         val s = Set(((a::b::b::Nil)::Nil).transpose: _*)
@@ -220,10 +218,10 @@ class GrammarTest extends SpecificationWithJUnit {
         // f(hggc, ggc), f(hgc, gc) --> (f(hgA, gA), {gc, c})
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val h = ConstantStringSymbol("h")
-        val g = ConstantStringSymbol("g")
-        val c = FOLConst(new ConstantStringSymbol("c"))
+        val f = "f"
+        val h = "h"
+        val g = "g"
+        val c = FOLConst("c")
 
         val gc = Function(g, c::Nil)
         val ggc = Function( g, (Function(g, c::Nil))::Nil )
@@ -233,7 +231,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val f1 = Function(f, hggc::ggc::Nil)
         val f2 = Function(f, hgc::gc::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha = FOLVar("α_0")
         val galpha = Function(g, alpha::Nil)
         val hgalpha = Function(h, galpha::Nil)
         val common = Function(f, hgalpha::galpha::Nil)
@@ -248,12 +246,12 @@ class GrammarTest extends SpecificationWithJUnit {
         // f(hggc, gga), f(hgc, gb) --> (A, {f(hggc, gga), f(hgc, gb)})
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val h = ConstantStringSymbol("h")
-        val g = ConstantStringSymbol("g")
-        val c = FOLConst(new ConstantStringSymbol("c"))
-        val b = FOLConst(new ConstantStringSymbol("b"))
-        val a = FOLConst(new ConstantStringSymbol("a"))
+        val f = "f"
+        val h = "h"
+        val g = "g"
+        val c = FOLConst("c")
+        val b = FOLConst("b")
+        val a = FOLConst("a")
 
         val gb = Function(g, b::Nil)
         val gga = Function( g, (Function(g, a::Nil))::Nil )
@@ -263,7 +261,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val f1 = Function(f, hggc::gga::Nil)
         val f2 = Function(f, hgc::gb::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha = FOLVar("α_0")
 
         val dec = delta.computeDelta(f1::f2::Nil, "α")
         val s = Set(((f1::f2::Nil)::Nil).transpose: _*)
@@ -276,11 +274,11 @@ class GrammarTest extends SpecificationWithJUnit {
         // f(hggc, ga), f(hgc, ga) --> (f(hgA, ga), {gc, c})
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val h = ConstantStringSymbol("h")
-        val g = ConstantStringSymbol("g")
-        val c = FOLConst(new ConstantStringSymbol("c"))
-        val a = FOLConst(new ConstantStringSymbol("a"))
+        val f = "f"
+        val h = "h"
+        val g = "g"
+        val c = FOLConst("c")
+        val a = FOLConst("a")
 
         val ga = Function(g, a::Nil)
         val gc = Function(g, c::Nil)
@@ -290,7 +288,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val f1 = Function(f, hggc::ga::Nil)
         val f2 = Function(f, hgc::ga::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha = FOLVar("α_0")
         val galpha = Function(g, alpha::Nil)
         val hgalpha = Function(h, galpha::Nil)
         val common = Function(f, hgalpha::ga::Nil)
@@ -306,14 +304,14 @@ class GrammarTest extends SpecificationWithJUnit {
         // fa, f²a, f³a --> (fA, {a, fa, f²a})
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val a = FOLConst(new ConstantStringSymbol("a"))
+        val f = "f"
+        val a = FOLConst("a")
 
         val fa = Function(f, a::Nil)
         val f2a = Function(f, (Function(f, a::Nil))::Nil)
         val f3a = Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)
 
-        val alpha = FOLVar(new VariableStringSymbol("α_0"))
+        val alpha = FOLVar("α_0")
         val falpha = Function(f, alpha::Nil)
 
         val dec = delta.computeDelta(fa::f2a::f3a::Nil, "α")
@@ -331,8 +329,8 @@ class GrammarTest extends SpecificationWithJUnit {
         // fa, f²a, f³a, f⁴a
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val a = FOLConst(new ConstantStringSymbol("a"))
+        val f = "f"
+        val a = FOLConst("a")
 
         val fa = Function(f, a::Nil)
         val f2a = Function(f, (Function(f, a::Nil))::Nil)
@@ -373,9 +371,9 @@ class GrammarTest extends SpecificationWithJUnit {
         // t5 = f(g²c, gc)
         // t6 = f(g³c, g²c)
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val c = FOLConst(new ConstantStringSymbol("c"))
+        val f = "f"
+        val g = "g"
+        val c = FOLConst("c")
 
         val gc = Function(g, c::Nil)
         val g2c = Function(g, (Function(g, c::Nil))::Nil)
@@ -423,8 +421,8 @@ class GrammarTest extends SpecificationWithJUnit {
         val delta = new OneVariableDelta()
         // fa, f²a, f³a, f⁴a
 
-        val f = ConstantStringSymbol("f")
-        val a = FOLConst(new ConstantStringSymbol("a"))
+        val f = "f"
+        val a = FOLConst("a")
 
         val fa = Function(f, a::Nil)
         val f2a = Function(f, (Function(f, a::Nil))::Nil)
@@ -460,9 +458,9 @@ class GrammarTest extends SpecificationWithJUnit {
         // t6 = f(g³c, g²c)
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val g = ConstantStringSymbol("g")
-        val c = FOLConst(new ConstantStringSymbol("c"))
+        val f = "f"
+        val g = "g"
+        val c = FOLConst("c")
 
         val gc = Function(g, c::Nil)
         val g2c = Function(g, (Function(g, c::Nil))::Nil)
@@ -474,6 +472,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val t4 = Function(f, gc::c::Nil)
         val t5 = Function(f, g2c::gc::Nil)
         val t6 = Function(f, g3c::g2c::Nil)
+
 
         val alpha = "α"
         val galpha = Function(g, alpha::Nil)
@@ -507,8 +506,8 @@ class GrammarTest extends SpecificationWithJUnit {
         // a, fa, f²a, f³a
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val a = FOLConst(new ConstantStringSymbol("a"))
+        val f = "f"
+        val a = FOLConst("a")
 
         val fa = Function(f, a::Nil)
         val f2a = Function(f, (Function(f, a::Nil))::Nil)
@@ -538,9 +537,9 @@ class GrammarTest extends SpecificationWithJUnit {
         // F3 (3 quant.) -> ([fa, a, a], [f²a, fa, a], [f³a, f²a, a], [f⁴a, f³a, a])
         val delta = new OneVariableDelta()
 
-        val f = ConstantStringSymbol("f")
-        val a = FOLConst(new ConstantStringSymbol("a"))
-        val alpha = "α"
+        val f = "f"
+        val a = FOLConst("a")
+        val alpha = FOLVar("α")
 
         val fa = Function(f, a::Nil)
         val f2a = Function(f, (Function(f, a::Nil))::Nil)
@@ -548,9 +547,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val f4a = Function(f, Function(f, (Function(f, (Function(f, a::Nil))::Nil))::Nil)::Nil)
 
         // Tuple function symbols:
-        val tuple1 = ConstantStringSymbol("tuple1")
-        val tuple2 = ConstantStringSymbol("tuple2")
-        val tuple3 = ConstantStringSymbol("tuple3")
+        val tuple1 = "tuple1"
+        val tuple2 = "tuple2"
+        val tuple3 = "tuple3"
 
         // Termset for F1
         val t11 = Function(tuple1, a::Nil)

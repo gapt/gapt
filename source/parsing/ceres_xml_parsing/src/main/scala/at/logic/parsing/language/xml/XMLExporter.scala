@@ -1,27 +1,13 @@
 package at.logic.parsing.language.xml
 
-import _root_.at.logic.language.lambda.BetaReduction
-import _root_.at.logic.language.lambda.symbols.VariableSymbolA
-import _root_.at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression}
 import scala.xml._
 import dtd._
 import at.logic.parsing.ExportingException
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.definitionRules._
-import at.logic.calculi.lk.equationalRules._
+import at.logic.calculi.lk._
 import at.logic.language.hol._
 import at.logic.language.fol.{Atom => FOLAtom}
 import at.logic.language.lambda.types.Ti
-import logicSymbols.ConstantSymbolA
-
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: 10/18/11
- * Time: 2:23 PM
- */
 
 object XMLExporter {
 
@@ -46,7 +32,7 @@ object XMLExporter {
 //      throw new ExportingException("Can't save file: "+ path + "\n\n" + "Error:" + e.toString )
   }
 
-  def exportAxioms(axioms : List[types.FSequent]) = if (axioms.isEmpty) <axiomset/>
+  def exportAxioms(axioms : List[FSequent]) = if (axioms.isEmpty) <axiomset/>
     else <axiomset> { axioms.map(x => exportFSequent( x )) } </axiomset>
 
   def exportProof(name: String, proof : LKProof) =
@@ -54,7 +40,7 @@ object XMLExporter {
       { exportRule(proof) }
     </proof>
 
-  def exportSequentList(name: String, sequentList: List[types.FSequent]) =
+  def exportSequentList(name: String, sequentList: List[FSequent]) =
     <sequentlist symbol={ name }>
       { sequentList.map(x => exportFSequent( x )) }
     </sequentlist>
@@ -65,8 +51,8 @@ object XMLExporter {
       <rule symbol={ p.name } type={ ruleType }>
       { exportSequent( p.root ) }
       { exportRule( p.uProof ) }
-      { if (ruleType == "foralll2") exportLambdaSubstitution( ForallLeftRule.unapply(proof).get._5 ) }
-      { if (ruleType == "existsr2") exportLambdaSubstitution( ExistsRightRule.unapply(proof).get._5 ) }
+      { if (ruleType == "foralll2") exportLambdaSubstitution( ForallLeftRule.unapply(proof).get._5.asInstanceOf[HOLAbs] ) }
+      { if (ruleType == "existsr2") exportLambdaSubstitution( ExistsRightRule.unapply(proof).get._5.asInstanceOf[HOLAbs] ) }
       </rule>
     case p: BinaryLKProof =>
       <rule symbol={ p.name } type={ getRuleType( p ) }>
@@ -82,7 +68,7 @@ object XMLExporter {
 
   def exportSequent(s: Sequent) = exportFSequent(s.toFSequent)
 
-  def exportFSequent(fs: types.FSequent) =
+  def exportFSequent(fs: FSequent) =
     <sequent> { println(fs.toString) }
       <formulalist> { fs._1.map(x => exportFormula( x )) } </formulalist>
       <formulalist> { fs._2.map(x => exportFormula( x )) } </formulalist>
@@ -114,7 +100,7 @@ object XMLExporter {
         { exportFormula(f2) }
       </conjunctiveformula>
     case ExVar(x, f) => x.exptype match {
-      case Ti() =>
+      case Ti =>
         <quantifiedformula type="exists">
           <variable symbol={ x.name.toString } />
           { exportFormula(f) }
@@ -126,7 +112,7 @@ object XMLExporter {
         </secondorderquantifiedformula>
     }
     case AllVar(x, f) => x.exptype match {
-      case Ti() =>
+      case Ti =>
         <quantifiedformula type="all">
           <variable symbol={ x.name.toString } />
           { exportFormula(f) }
@@ -137,12 +123,12 @@ object XMLExporter {
           { exportFormula(f) }
         </secondorderquantifiedformula>
     }
-    case Atom(name : ConstantSymbolA, args) => println("FOLAtom: "+name.toString)
+    case Atom(name : HOLConst, args) => println("FOLAtom: "+name.toString)
       if (args.isEmpty) <constantatomformula symbol={ name.toString }/>
       else <constantatomformula symbol={ name.toString }>
         { args.map(x => exportTerm( x )) }
       </constantatomformula>
-    case Atom(name : VariableSymbolA, args) => println("Atom: "+name.toString)
+    case Atom(name : HOLVar, args) => println("Atom: "+name.toString)
       <variableatomformula>
         <secondordervariable symbol={ name.toString } />
         { args.map(x => exportTerm( x )) }
@@ -152,7 +138,7 @@ object XMLExporter {
 
   def exportTerm(term: HOLExpression) : Node = term match {
     case HOLVar(name, t) => t match {
-      case Ti() => <variable symbol={ name.toString } />
+      case Ti => <variable symbol={ name.toString } />
       case _ => <secondordervariable symbol={ name.toString } />
     }
     case HOLConst(name, _) => <constant symbol={ name.toString } />
@@ -163,13 +149,22 @@ object XMLExporter {
     case _ => throw new ExportingException("Can't match term: " + term.toString)
   }
 
-  def exportLambdaSubstitution(subst: HOLExpression) =
-    <lambdasubstitution>
-      { exportVariableList( subst.boundVariables ) }
-      { exportFormula( subst.subTerms(1).asInstanceOf[HOLFormula] ) /*TODO: this line is hack, should be improved */ }
-    </lambdasubstitution>
+  private def decompose(a: HOLExpression, vars: List[HOLVar]) : (HOLExpression, List[HOLVar]) = a match {
+    case HOLAbs(v, f) => decompose( f, v :: vars )
+    case _ => (a, vars)
+  }
 
-  def exportVariableList( vl : Set[Var]) =
+  private def decompose(a: HOLAbs) : (HOLExpression, List[HOLVar]) = decompose(a, Nil)
+ 
+  def exportLambdaSubstitution(subst: HOLAbs) = {
+    val (formula, vars) = decompose(subst)
+    <lambdasubstitution>
+      { exportVariableList( vars ) }
+      { exportFormula( formula.asInstanceOf[HOLFormula] ) }
+    </lambdasubstitution>
+  }
+
+  def exportVariableList( vl : List[HOLVar]) =
     <variablelist>
       { vl.map(x => <variable symbol={ x.name.toString } />) }
     </variablelist>
@@ -194,25 +189,25 @@ object XMLExporter {
 
     case ForallLeftRuleType => ForallLeftRule.unapply(proof).get._4.formula match {
       case AllVar(x, f) => x.exptype match {
-        case Ti() => "foralll"
+        case Ti => "foralll"
         case _ => "foralll2"
       }
     }
     case ForallRightRuleType => ForallRightRule.unapply(proof).get._4.formula match {
       case AllVar(x, f) => x.exptype match {
-        case Ti() => "forallr"
+        case Ti => "forallr"
         case _ => "forallr2"
       }
     }
     case ExistsLeftRuleType => ExistsLeftRule.unapply(proof).get._4.formula match {
       case ExVar(x, f) => x.exptype match {
-        case Ti() => "existsl"
-        case _ => "existsl2"
+        case Ti => "existsl"
+        case _  => "existsl2"
       }
     }
     case ExistsRightRuleType =>ExistsRightRule.unapply(proof).get._4.formula match {
       case ExVar(x, f) => x.exptype match {
-        case Ti() => "existsr"
+        case Ti => "existsr"
         case _ => "existsr2"
       }
     }

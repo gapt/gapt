@@ -6,7 +6,7 @@
 package at.logic.parsing.calculi.xml
 
 import at.logic.calculi.proofs.{NullaryRuleTypeA, UnaryRuleTypeA, BinaryRuleTypeA}
-import at.logic.calculi.treeProofs._
+import at.logic.calculi.proofs._
 import at.logic.utils.ds.trees.{LeafTree, UnaryTree, BinaryTree}
 import at.logic.parsing.language.xml.XMLParser.XMLNodeParser
 import at.logic.parsing.ParsingException

@@ -1,47 +1,31 @@
-package at.logic.provers.prover9
 
-/**
- * Created by IntelliJ IDEA.
- * User: shaolin
- * Date: 8/29/11
- * Time: 5:20 PM
- * To change this template use File | Settings | File Templates.
- */
-
-package commands {
+package at.logic.provers.prover9.commands
 
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.base.ResolutionProof
-import at.logic.calculi.resolution.base.{ResolutionProof, Clause}
-import at.logic.language.fol
+import at.logic.calculi.resolution.{ResolutionProof, Clause}
 import at.logic.language.fol._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.hol.replacements.getAtPosition
-import at.logic.language.hol.{HOLVar, HOLExpression, HOLFormula}
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.types.Ti
+import at.logic.parsing.language.prover9.{Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle}
 import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.provers.atp.Definitions._
+import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.guided.GetGuidedClausesCommand._
 import at.logic.provers.atp.commands.guided.{AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand}
 import at.logic.provers.atp.commands.replay.ReplayCommand
 import at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
-import at.logic.provers.atp.Definitions._
-import at.logic.calculi.lk.base.FSequent
-import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.sequents.{RefutationReachedCommand, fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
-import sys.process._
-import java.io._
-import scala.xml._
-import org.xml.sax.InputSource
-import javax.xml.parsers.SAXParserFactory
-import util.parsing.combinator.JavaTokenParsers
-import util.matching.Regex
+import at.logic.provers.prover9.Prover9Exception
+
 import collection.mutable.{ListBuffer, Map}
-import at.logic.language.lambda.typedLambdaCalculus.{Var, LambdaExpression, App, Abs}
-import at.logic.parsing.language.prover9.{Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle}
+import java.io._
+import javax.xml.parsers.SAXParserFactory
+import org.xml.sax.InputSource
+import scala.xml._
+import sys.process._
+import util.matching.Regex
+import util.parsing.combinator.JavaTokenParsers
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -112,8 +96,8 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
         cmnds = cmnds ++ assumption("0", List(Prover9TermParser.parseAll(Prover9TermParser.literal, "X=X").get)) // to support the xx rules
 
 
-        val X = FOLFactory.createVar(VariableStringSymbol("X"), Ti()).asInstanceOf[FOLVar]
-        val Y = FOLFactory.createVar(VariableStringSymbol("Y"), Ti()).asInstanceOf[FOLVar]
+        val X = FOLVar("X")
+        val Y = FOLVar("Y")
         val eq1 = Neg(Equation(X, Y))
         val eq2 = Equation(Y, X)
         cmnds = cmnds ++ assumption("999999", eq1::eq2::Nil) // symmetry
@@ -148,7 +132,12 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
 
     tptpIS.close()
 
-    List((state, cmnds ++ List(RefutationReachedCommand[Clause]) ))
+    val l = List((state, cmnds ++ List(RefutationReachedCommand[Clause]) ))
+    println("Parsed proof to:")
+    for (cmd <- l(0)._2) {
+      println("  cmd  : "+cmd)
+    }
+    l
   }
 
   private def returnAndPrint[T](x:T) = {/*println("Scheduling P9 Command:"+x);*/ x }
@@ -216,12 +205,13 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
 
 
 // in prover9, negated equations are considered to be one application and in gapt it is considered a negation of an equation, so two applications
+/* Used nowhere.
 case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
   def apply(state: State, data: Any) = {
     //println("Prover92GAPTPositionsCommand")
     val ls = data.asInstanceOf[Iterable[Tuple3[ResolutionProof[Clause],FormulaOccurrence,Iterable[Int]]]]
     List((state,ls.map(x => {
-      (x._1,x._2,translate(x._2.formula,x._3.toList))
+      (x._1,x._2,translate(x._2.formula, x._3.toList))
     })))
   }
   private def translate(f: HOLExpression, pos: List[Int]): List[Int] = {
@@ -233,6 +223,7 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
     }
   }
 }
+*/
 
 
 
@@ -277,24 +268,18 @@ object InferenceExtractor {
         var lastParents = new ListBuffer[String]() // this is used to monitor if the last rule by prover9 triggers a replay or not. If not, we must call replay with the parents here.
 
         (xml \\ "clause").foreach(e => {
-          //val cls = getLiterals(e)
           val inference_type = (e \\ "justification" \\ "@jstring")
           inference_type.text match {
             case "[assumption]." =>
-              /*(e\\"literal") map (x=> println("assumption:" + x))*/
-              val formula : FOLFormula = fol.Or((e \\ "literal").map( x => parser.parseFormula(x.text)))
-              //println("parsed formula: "+formula)
+              val formula = Or((e \\ "literal").map( x => parser.parseFormula(x.text)).toList)
               assumptions = formula :: assumptions
             case "[goal]." =>
-              //println("goal:"+literal);
               (e \\ "literal").foreach(literal =>
                goals = parser.parseFormula(literal.text)::goals
               )
-            case _ => ; //println("skipping: "+inference_type.text); //ignore other rules
+            case _ => ; //ignore other rules
           }
           val id = (e\"@id").text
-          //println(inference_type)
-          //println()
           lastParents = new ListBuffer[String]()
         })
 
@@ -310,21 +295,9 @@ object InferenceExtractor {
     val exitValue = proc.exitValue
 
     tptpIS.close()
-    /*
-    println("assumptions:")
-    assumptions map println
-    println("goals:")
-    goals map println
-    println
-    println("fsequent:")
-    */
-
 
 
     val fs = createFSequent(assumptions, goals)
-    /*      println(fs)
-    println()
-    println("==== End of Inferences ======") */
     fs
   }
 
@@ -347,15 +320,14 @@ object InferenceExtractor {
 
        val (as,gs) = m;
        l match {
-        case rassumption(id, formula ) => /*debug("ass "+id+" "+formula);*/ if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
-        case rgoal(id, formula )       => /*debug("goal");*/ if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
-        case variablestyle_matcher(_) => /*println("enabling prolog style variables!");*/ parser = Prover9TermParser;  m
-        case proof_start(_) => /*debug("start");*/ within_proof = 1; m
-        case proof_end(_) => /*debug("stop");*/ within_proof = 2; m
-        case _ => /*debug(".");*/ m
+        case rassumption(id, formula ) => if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
+        case rgoal(id, formula )       => if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
+        case variablestyle_matcher(_) => parser = Prover9TermParser;  m
+        case proof_start(_) => within_proof = 1; m
+        case proof_end(_) => within_proof = 2; m
+        case _ => m
       }
     })
-    //println("done")
 
     createFSequent(assumptions, goals)
 
@@ -381,19 +353,18 @@ object InferenceExtractor {
   }
 
   def implications(f:FOLFormula) : FSequent = f match {
-    case fol.Imp(f1,f2) => FSequent(conjunctions(f1),disjunctions(f2))
+    case Imp(f1,f2) => FSequent(conjunctions(f1),disjunctions(f2))
     case _ => FSequent(Nil, f::Nil)
   }
 
   def disjunctions(f:FOLFormula) : List[FOLFormula] = f match {
-    case fol.Or(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
+    case Or(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
     case _ => List[FOLFormula](f)
   }
 
   def conjunctions(f:FOLFormula) : List[FOLFormula] = f match {
-    case fol.And(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
+    case And(f1,f2) => disjunctions(f1) ++ disjunctions(f2)
     case _ => List[FOLFormula](f)
   }
 
-}
 }

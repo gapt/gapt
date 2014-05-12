@@ -9,11 +9,9 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.language.lambda.symbols._
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
 import at.logic.calculi.occurrences._
-import at.logic.language.hol.logicSymbols._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
 import at.logic.utils.logging.Logger
@@ -36,7 +34,7 @@ class Grammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   def size = u.size + s.size
 
   /** Returns the set of eigenvariables that occur in u. */
-  def eigenvariables = u.flatMap(collectVariables).filter(isEigenvariable(_:FOLVar, ev)).distinct
+  def eigenvariables = u.flatMap(f => collectVariables(f)).filter(isEigenvariable(_:FOLVar, ev)).distinct
 
   /** Returns the number of eigenvariables that occur in this grammar. Equals this.eigenvariables.length. */
   def numVars = if (s.isEmpty) 0 else s.head.length
@@ -202,7 +200,7 @@ object ComputeGrammars extends Logger {
         trace("[folding DTG] - passed size check")
 
         // Add the trivial decomposition {alpha_0} o s if s only has one vector
-        val ev = FOLVar(new VariableStringSymbol(eigenvariable + "_0"))
+        val ev = FOLVar(eigenvariable + "_0")
         val newpairs = if(s.size == 1 && s.head.forall(e => terms.contains(e)) ) { (ev, s.head) :: pairs } else pairs
 
         trace("    | newpairs:")

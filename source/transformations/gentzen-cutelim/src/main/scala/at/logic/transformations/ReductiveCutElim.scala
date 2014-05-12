@@ -8,14 +8,11 @@
 package at.logic.transformations
 
 import java.lang.Exception
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.definitionRules._
-import at.logic.calculi.lk.equationalRules._
+import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.language.hol._
 import at.logic.calculi.occurrences._
-import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.hol.Substitution
 import at.logic.algorithms.lk.{CleanStructuralRules, regularize, applySubstitution}
 
 class ReductiveCutElimException(msg: String) extends Exception(msg)

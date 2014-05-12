@@ -2,7 +2,7 @@
   <artifactId>cli</artifactId>
   <modelVersion>4.0.0</modelVersion>
   <name>Commandline Interface</name>
-  <version>1.7</version>
+  <version>1.8</version>
 
 
     <parent>
@@ -44,7 +44,7 @@
       <dependency>
           <groupId>at.logic</groupId>
           <artifactId>prooftool</artifactId>
-          <version>1.7</version>
+          <version>1.8</version>
       </dependency>
   <dependency>
       <groupId>org.scala-lang</groupId>

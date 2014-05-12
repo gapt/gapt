@@ -1,21 +1,11 @@
 package at.logic.parsing.ivy.conversion
 
 import at.logic.parsing.ivy.{InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip}
-import at.logic.calculi.resolution.robinson.{InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor,
-  Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof}
-import at.logic.language.fol
+import at.logic.calculi.resolution.robinson.{InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof}
 import at.logic.language.fol._
-import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, VariantGenerator, Var, App, Abs}
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.calculi.resolution.instance.{Instance => RInstantiate}
+import at.logic.calculi.resolution.robinson.{Instance => RInstantiate}
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.base.Clause
-import at.logic.language.fol
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import scala.Some
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.parsing.ivy.NewSymbol
-import at.logic.parsing.ivy.Flip
+import at.logic.calculi.resolution.Clause
 import at.logic.algorithms.rewriting.TermReplacement
 import at.logic.calculi.lk.base.FSequent
 
@@ -23,7 +13,7 @@ import at.logic.calculi.lk.base.FSequent
  * Converts Ivy Proofs into Robinson Resolution Proofs
  */
 object IvyToRobinson {
-  val generator : VariantGenerator = new VariantGenerator( new {var c = 10000; def nextId = {c = c+1; c}} , "iv" )
+  //val generator : VariantGenerator = new VariantGenerator( new {var c = 10000; def nextId = {c = c+1; c}} , "iv" )
   type ProofMap = Map[String, RobinsonResolutionProof]
 
   def debug(s:String) = {}
@@ -58,7 +48,7 @@ object IvyToRobinson {
           case Some(proof) => (proof, map)
           case None =>
             val (pproof, parentmap) = convert(parent, map)
-            val rproof = RInstantiate(pproof, sub.asInstanceOf[Substitution[FOLExpression]])
+            val rproof = RInstantiate(pproof, sub)
             require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating instantiation rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
             (rproof, parentmap + ((id, rproof)))
         }
@@ -81,7 +71,7 @@ object IvyToRobinson {
                 require(rparent2.vertex.antecedent(index2).formula == lit2.formula,
                   "Right parent literal "+lit2+" at pos "+ index2 +" must be correctly found!" + rparent2.vertex)
 
-                val rproof = RResolution(rparent1, rparent2, rparent1.vertex.succedent(index1), rparent2.vertex.antecedent(index2), Substitution[FOLExpression]())
+                val rproof = RResolution(rparent1, rparent2, rparent1.vertex.succedent(index1), rparent2.vertex.antecedent(index2), Substitution())
                 require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating resolution rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
                 (rproof, parentmap2 + ((id, rproof)))
               case (false,true) =>
@@ -89,7 +79,7 @@ object IvyToRobinson {
                 require(rparent2.vertex.succedent(index2).formula == lit2.formula,
                   "Right parent literal "+lit2+" at pos "+ index2 +" must be correctly found!" + rparent2.vertex)
 
-                val rproof = RResolution(rparent2, rparent1, rparent2.vertex.succedent(index2), rparent1.vertex.antecedent(index1), Substitution[FOLExpression]())
+                val rproof = RResolution(rparent2, rparent1, rparent2.vertex.succedent(index2), rparent1.vertex.antecedent(index1), Substitution())
                 require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating resolution rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
                 (rproof, parentmap2 + ((id, rproof)))
               case _ => throw new Exception("Error in processing ivy proof: resolved literals "+lit1+" and "+lit2+
@@ -157,7 +147,7 @@ object IvyToRobinson {
             require(contracted.size == 1, "Error: only one aux formula may have been factored!")
             val ianc = contracted(0).ancestors
             val aux::deleted = find_matching(ianc.toList, (rparent.root.occurrences).toList)
-            val rproof = RFactor(rparent, aux, deleted, Substitution[FOLExpression]())
+            val rproof = RFactor(rparent, aux, deleted, Substitution())
             require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating propoistional rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
             (rproof, parentmap + ((id, rproof)))
         }
@@ -169,14 +159,14 @@ object IvyToRobinson {
             val (rparent, parentmap) = convert(parent, map)
 
             //there is no robinson rule for flip, so we simulate it: from P :- Q, s=t and :- s=s prove P :- Q, t=s by paramod
-            val fol.Equation(s,t) = flipped.formula
+            val Equation(s,t) = flipped.formula
 
             //create a proof of s=s
-            val x = fol.FOLVar(new VariableStringSymbol("x"))
-            val xx = RInitialClause(Nil, fol.Equation(x,x)::Nil)
-            val ss = RInstantiate(xx, Substitution[FOLExpression]((x,t)))
+            val x = FOLVar("x")
+            val xx = RInitialClause(Nil, Equation(x,x)::Nil)
+            val ss = RInstantiate(xx, Substitution((x,t)::Nil))
             debug("instantiate "+ss)
-            //val ts = fol.Equation(s,t)
+            //val ts = Equation(s,t)
 
 
             //debug("translating inference "+id)
@@ -189,7 +179,7 @@ object IvyToRobinson {
 
             debug("flipping: "+flipped.ancestors(0)+" transformed flipped "+rflipped.get)
 
-            val rproof = RParamodulation(ss, rparent, ss.root.positive(0), rflipped.get, flipped.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())
+            val rproof = RParamodulation(ss, rparent, ss.root.positive(0), rflipped.get, flipped.formula.asInstanceOf[FOLFormula], Substitution())
             debug("from: "+flipped.ancestors(0)+" tfrom to "+rflipped.get )
             debug("flipped formula: "+flipped.formula)
             require((rproof.root.occurrences).map(_.formula).contains(flipped.formula), "flipped formula must occur in translated clause "+rproof.root)
@@ -225,7 +215,7 @@ object IvyToRobinson {
               rparent2.root.succedent.find(x => x.formula == anc2.formula )
             }
 
-            val rproof = RParamodulation(rparent1, rparent2, anc1occ, anc2occ, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]() )
+            val rproof = RParamodulation(rparent1, rparent2, anc1occ, anc2occ, lit.formula.asInstanceOf[FOLFormula], Substitution() )
 
             debug("root     :" +iproof.root)
             debug("troot    :" +rproof.root)

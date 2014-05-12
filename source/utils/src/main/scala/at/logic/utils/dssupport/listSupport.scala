@@ -58,6 +58,12 @@ object ListSupport {
       (new_acc2, y::ys)
     }
   }
+  
+  def lst2string[T](fun: T => String, separator: String, l:List[T]) : String = l match {
+    case Nil => ""
+    case List(x) => fun(x)
+    case x::xs => fun(x)  + separator + lst2string(fun, separator, xs)
+  }
 
   /** Identical to foldLeft, but with addition function which returns when the folding should be aborted.
     * If that function returns False for an element, the folding is aborted and the result of the last execution
@@ -84,6 +90,12 @@ object ListSupport {
   def safeHead[A](xs:List[A], default:A) : A = xs match {
     case Nil => default
     case (x::_) => x
+  }
+
+  def remove_doubles[T](l:List[T]) : List[T] = remove_doubles_(l.reverse).reverse
+  private def remove_doubles_[T](l:List[T]) : List[T] = l match {
+    case Nil => Nil
+    case x::xs => if (xs contains x) remove_doubles_(xs) else x::remove_doubles_(xs)
   }
 }
 

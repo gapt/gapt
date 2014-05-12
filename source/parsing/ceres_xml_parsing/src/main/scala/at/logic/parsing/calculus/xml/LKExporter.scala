@@ -10,28 +10,12 @@ package at.logic.parsing.calculus.xml
 
 import scala.xml.dtd._
 
-import at.logic.language.lambda.symbols._
-import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol._
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.types._
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.parsing.ExportingException
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.lkExtractors._
-import at.logic.calculi.lk.quantificationRules._
+import at.logic.calculi.lk.base.{FSequent, Sequent, LKProof}
 import at.logic.parsing.language.xml.HOLTermExporter
-import at.logic.calculi.lksk.{Axiom => LKskAxiom,
-WeakeningLeftRule => LKskWeakeningLeftRule,
-WeakeningRightRule => LKskWeakeningRightRule,
-ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule}
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.definitionRules._
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.FSequent
+import at.logic.calculi.lksk.{Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule, ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule}
+import at.logic.calculi.lk._
 
 trait LKExporter extends HOLTermExporter {
   //def exportSequent(seq : Sequent) = exportSequent(FSequent(seq))

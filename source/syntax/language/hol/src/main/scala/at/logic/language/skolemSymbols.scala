@@ -5,13 +5,14 @@
 package at.logic.language.hol
 
 import logicSymbols._
+import at.logic.language.lambda.symbols._
 import at.logic.utils.ds.streams.Definitions._
 
 package skolemSymbols {
   trait TSkolemSymbol
 
   object TypeSynonyms {
-    type SkolemSymbol = ConstantSymbolA with TSkolemSymbol
+    type SkolemSymbol = SymbolA with TSkolemSymbol
   }
 
   import TypeSynonyms._
@@ -33,7 +34,7 @@ package skolemSymbols {
 
   object SkolemSymbolFactory {
     private def skolem_symbol_stream_from(n: Int): Stream[SkolemSymbol] =
-      Stream.cons(new ConstantStringSymbol( "s_{" + n + "}" ) with TSkolemSymbol, skolem_symbol_stream_from( n + 1 ) )
+      Stream.cons(new StringSymbol( "s_{" + n + "}" ) with TSkolemSymbol, skolem_symbol_stream_from( n + 1 ) )
 
     private var skolem_symbol_stream = skolem_symbol_stream_from( 0 )
 

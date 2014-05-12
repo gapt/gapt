@@ -1,3 +1,9 @@
+
+/*
+Fixing this seems to require a better understanding of the algorithm due to the
+extensive use of symbols. Since it is not being used anywhere, I am commenting
+it out for now. [Giselle]
+
 package at.logic.algorithms.unification
 
 import at.logic.calculi.lk.base.types.FSequent
@@ -27,37 +33,24 @@ class Equation(val left: FOLTerm, val right : FOLTerm) {
 object Equation {
   def apply(left : FOLTerm , right : FOLTerm ) = new types.Equation(left,  right)
 
-  /*
-  def unapply(f : FOLFormula) = {
-    f match {
-      case FOLEquation(left, right) => Some(Equation(left, right))
-      case _ => None
-    }
-  }*/
-
   implicit def equation2formula(e : types.Equation) = e.toFormula()
 }
 
-abstract class REequalityA {
-  def equational_rules() : Set[types.Equation];
-  def rewrite_rules() : Set[Tuple2[FOLFormula, FOLFormula]];
-
-  def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean;
-}
-
-abstract class EequalityA extends REequalityA {
-  /* the set of rewrite rules is empty in a pure equational theory */
+abstract class EequalityA {
+  
+  // the set of rewrite rules is empty in a pure equational theory
   final override def rewrite_rules() = Set[Tuple2[FOLFormula, FOLFormula]]()
+
   override def reequal_to(s : FOLFormula, t : FOLFormula) : Boolean =
-    reequal_to_(
-      Normalization(s,0,"x", s.symbols.map(_.toString).toSet)._1,
-      Normalization(t,0,"x", t.symbols.map(_.toString).toSet)._1)
+    reequal_to_(s, t)
+      //Normalization(s,0,"x", s.symbols.map(_.toString).toSet)._1,
+      //Normalization(t,0,"x", t.symbols.map(_.toString).toSet)._1)
 
   private def reequal_to_(s : FOLFormula, t : FOLFormula) : Boolean = {
     def tuples_equals(el : Tuple2[FOLTerm, FOLTerm] ) : Boolean = (word_equalsto(el._1, el._2))
 
     (s,t) match {
-      case (Atom( sym1: ConstantSymbolA, args1: List[FOLTerm]), Atom( sym2: ConstantSymbolA, args2: List[FOLTerm])) =>
+      case (Atom( sym1, args1: List[FOLTerm]), Atom( sym2, args2: List[FOLTerm])) =>
         (sym1 == sym2) &&
           (args1.length == args2.length) &&
           ( (args1 zip args2) forall (tuples_equals))
@@ -66,17 +59,17 @@ abstract class EequalityA extends REequalityA {
         reequal_to_(f1,f2)
 
       case (And(f1,f2), And(g1,g2)) =>
-        reequal_to_(f1,g2) && reequal_to (f2,g2)
+        reequal_to_(f1,g1) && reequal_to_(f2,g2)
 
       case (Or(f1,f2), Or(g1,g2)) =>
-        reequal_to_(f1,g2) && reequal_to (f2,g2)
+        reequal_to_(f1,g1) && reequal_to_(f2,g2)
 
-      /* these two rules work only if the variables are canonically renamed in both formulas */
+      // these two rules work only if the variables are canonically renamed in both formulas
       case (AllVar(x1,t1), AllVar(x2,t2)) =>
-        (x1 == x2) && reequal_to_ (t1,t2)
+        (x1 == x2) && reequal_to_(t1,t2)
 
       case (ExVar(x1,t1), ExVar(x2,t2)) =>
-        (x1 == x2) && reequal_to_ (t1,t2)
+        (x1 == x2) && reequal_to_(t1,t2)
 
       case default => false
     }
@@ -88,7 +81,7 @@ abstract class EequalityA extends REequalityA {
 
 
 object ACUnification {
-  var algorithms  = Map[ConstantSymbolA, FinitaryUnification[FOLTerm]]()
+  var algorithms = Map[ConstantSymbolA, FinitaryUnification[FOLTerm]]()
 
   def unify(f:ConstantSymbolA, term1:FOLTerm, term2:FOLTerm) : Seq[Substitution[FOLTerm]] = {
     algorithms.get(f) match {
@@ -102,7 +95,7 @@ object ACUnification {
   }
 
    def unify(f:ConstantSymbolA, terms : List[FOLTerm]) : Seq[Substitution[FOLTerm]] = {
-    /* this is very inefficient */
+    // this is very inefficient
     terms match {
       case Nil => Seq(Substitution[FOLTerm]())
       case _::Nil => Seq(Substitution[FOLTerm]())
@@ -112,7 +105,7 @@ object ACUnification {
         val possible_substs : Seq[Seq[Substitution[FOLTerm]]] = (alternatives map (unify(f,x,_)))
         val without_nonunifiables : Seq[(Substitution[FOLTerm], Seq[Substitution[FOLTerm]])] = (subst_rest zip possible_substs) filter (! _._2.isEmpty)
 
-        /* this is nonfunctional, but probably easier to understand */
+        // this is nonfunctional, but probably easier to understand
         var result : List[Substitution[FOLTerm]] = List[Substitution[FOLTerm]]()
         for ( pair <- without_nonunifiables ) {
           val sigma = pair._1
@@ -142,10 +135,6 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
   type ListEntry = (Int, Vector, List[Vector])
   type MapEntry = (Int, List[Vector])
   type ArrayEntry = (Vector, MapEntry)
-
-//  var unit_constant = FOLConst(new ConstantStringSymbol("1"))
-
-//  val is_ac1: Boolean = false
 
   def unify(term1:FOLTerm, term2:FOLTerm) : List[Substitution[FOLTerm]] = unify(f,term1,term2)
 
@@ -440,7 +429,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
     sums
   }
 
-  /* this is rather inefficient, but generates fewer solutions */
+  // this is rather inefficient, but generates fewer solutions
   def calculateSums_new(basis: List[Vector], vlhs: Vector, vrhs: Vector, invariant: (Vector => Boolean)) = {
     var sums = Map[Vector, List[(Int, List[Vector])]]()
     val maxweight = calculateMaxWeight(vlhs, vrhs)
@@ -506,7 +495,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
 
 
 
-  /* convert list of variable symbols to a term f(x_1,f(x_2, ...)) */
+  // convert list of variable symbols to a term f(x_1,f(x_2, ...))
   def listToTerm(function: ConstantSymbolA, terms: List[VariableSymbolA]): FOLTerm = {
     terms match {
       case x :: Nil => FOLVar(x)
@@ -546,7 +535,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
   }
 
 
-  /* counts the number of symbols, those in terms1 count positively, thos in count2 negatively */
+  // counts the number of symbols, those in terms1 count positively, thos in count2 negatively
   def countSymbols(terms1: List[FOLTerm], terms2: List[FOLTerm]): List[TermCount] = {
     var result: List[TermCount] = Nil
     for (t <- terms1) {
@@ -558,7 +547,7 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
     result filter (_._2 != 0)
   }
 
-  /* finds term in list and increses its counter */
+  // finds term in list and increses its counter
   def insertTerm(term: FOLTerm, list: List[TermCount],i:Int): List[TermCount] = {
     list match {
       case Nil => List((term, i))
@@ -571,12 +560,12 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
   }
 
 
-  /* creates a function that applies a given substitution to a pair of terms */
+  // creates a function that applies a given substitution to a pair of terms
   def makesubstitute_pair(subst: Substitution[FOLTerm]): (((FOLTerm, FOLTerm)) => (FOLTerm, FOLTerm)) =
     (x: (FOLTerm, FOLTerm)) => (subst.apply(x._1), subst.apply(x._2))
 
 
-  /* occurs check : true iff term contains v */
+  // occurs check : true iff term contains v
   def occurs(v: FOLVar, term: FOLTerm): Boolean = {
     term match {
       case FOLVar(w) => v == term
@@ -586,20 +575,20 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
   }
 
 
-  /* creates a function, which checks if a vector is <= 1 at the given indices */
+  // creates a function, which checks if a vector is <= 1 at the given indices
   def makeLTEQ1Filters(ns: List[Int]): (Vector => Boolean) = (v: Vector) =>
     (ns map (v.vector(_) <= 1)).foldLeft(true)(_ && _)
 
-  /* creates a function, which checks if a vector is <= 1 at the given indices */
+  // creates a function, which checks if a vector is <= 1 at the given indices
   def makeEQ1Filters(ns: List[Int]): (Vector => Boolean) = (v: Vector) =>
     (ns map (v.vector(_) == 1)).foldLeft(true)(_ && _)
 
 
-  /* creates two filters that checks if the number of terms that later has to be unified with a constant or
-  * function term does not exceed 1. the first function is true as long as the corresponding components are <= 1,
-  * the second is true as long the corresponding components are exactly 1.
-  * the first function is intended to be checked while generating solutions, the second is to be checked after
-  * all solutions have been generated */
+  //* creates two filters that checks if the number of terms that later has to be unified with a constant or
+  //* function term does not exceed 1. the first function is true as long as the corresponding components are <= 1,
+  //* the second is true as long the corresponding components are exactly 1.
+  //* the first function is intended to be checked while generating solutions, the second is to be checked after
+  //* all solutions have been generated
   def createConstantFilter(symbols: List[FOLTerm]): ((Vector => Boolean), (Vector => Boolean)) = {
     var i: Int = 0
     var indices: List[Int] = Nil
@@ -636,23 +625,9 @@ object ACUtils {
   //performs the flattening operation below on formulas
   def flatten(f: ConstantSymbolA, formula: FOLFormula): FOLFormula = structural_fold((x:FOLTerm) => flatten(f,x), formula )
 
-  /*
-  def flatten(f: ConstantSymbolA, formula: FOLFormula): FOLFormula = {
-    formula match {
-      case Atom(p, args) => Atom(p, args map ((x:FOLTerm) => flatten(f,x)))
-      case Neg(l) => Neg(flatten(f,l))
-      case AllVar(q,l) => AllVar(q,flatten(f,l))
-      case ExVar(q,l) => ExVar(q,flatten(f,l))
-      case And(l,r) => And(flatten(f,l), flatten(f,r))
-      case Or(l,r) => Or(flatten(f,l), flatten(f,r))
-      case Imp(l,r) => Imp(flatten(f,l), flatten(f,r))
-      case _ => throw new Exception("Unkonwn operator during flattening of fomrula!")
-    }
-  } */
-
-  /* performs the rewrite rule f(s1, ... , f(t1, ... ,tm), ...sn) -> f(s1, ... ,t1, ... ,tm, ...sn) on the
-   * given term (see also: Lincoln 89 "Adventures in Associative-Commutative Unification") and sorts the
-   * the argument list lexicographically*/
+  //* performs the rewrite rule f(s1, ... , f(t1, ... ,tm), ...sn) -> f(s1, ... ,t1, ... ,tm, ...sn) on the
+  // * given term (see also: Lincoln 89 "Adventures in Associative-Commutative Unification") and sorts the
+  // * the argument list lexicographically
   def flatten(f: ConstantSymbolA, term: FOLTerm): FOLTerm = {
     term match {
       case FOLVar(_) => term
@@ -667,7 +642,7 @@ object ACUtils {
     }
   }
 
-  /* flatten but removes the neutral element, i.e. f(x) = x, f() = e*/
+  // flatten but removes the neutral element, i.e. f(x) = x, f() = e
   def flatten_andfiltersymbol(f: ConstantSymbolA, e:ConstantSymbolA, formula: FOLFormula): FOLFormula =
     structural_fold((x:FOLTerm) => flatten_andfiltersymbol(f,e,x), formula )
 
@@ -717,8 +692,8 @@ object ACUtils {
   }
 
 
-  /* removes the nesting of f in a term to a list - since the term f(g(f(x,y),z) should rewrite to
-   * f(x,y,z) instead of f(f(x,y),z), it is preferred to use flatten */
+  // removes the nesting of f in a term to a list - since the term f(g(f(x,y),z) should rewrite to
+  // f(x,y,z) instead of f(f(x,y),z), it is preferred to use flatten
   def stripFunctionSymbol(f: ConstantSymbolA, term: FOLTerm): List[FOLTerm] = {
     term match {
       case Function(fun, args) =>
@@ -918,10 +893,8 @@ object ACUEquality {
 
   //returns true if clause is reequal some element of list modulo the theory, where clause may be weakened (i.e. have additional literals)
   def clause_restricted_subsumed_in2(theory : EequalityA, clause : FSequent, list : List[FSequent]) = list.exists( (s : FSequent) =>
-    /* (  { println("looking at: "+clause + " in "+list.size);  true}) && */
     s._1.forall((f:HOLFormula) => clause._1.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
     s._2.forall((f:HOLFormula) => clause._2.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) ))
-      /* && (  {println("yes!"); true}) */
   )
 
   def restricted_subsumption(theory : EequalityA, clauses : List[FSequent]) : List[FSequent] =
@@ -956,24 +929,6 @@ object ACUEquality {
       case _ => true
     } )
   }
-
-/*
-  private def restricted_subsumption_(theory : EequalityA, clauses : List[FSequent], remaining : List[FSequent]) : List[FSequent] = {
-    remaining match {
-      case x::xs => if (clause_restricted_subsumed_in2(theory, x, clauses))
-          restricted_subsumption_(theory, clauses, xs)
-        else
-          restricted_subsumption_(theory, (clauses filterNot ((s:FSequent) =>  clause_restricted_subsumed_in2(theory, s, List(x) )) ).+:(x), xs)
-
-      case Nil=> clauses
-    }
-
-  }
-  */
-
-
-
-
 }
-
+*/
 

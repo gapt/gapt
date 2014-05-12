@@ -6,7 +6,6 @@ import swing._
 import java.awt.{Dimension, Font, Color}
 import java.awt.Font._
 import swing.event.UIElementResized
-import at.logic.language.hol.HOLFormula
 import at.logic.calculi.expansionTrees._
 
 

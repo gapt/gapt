@@ -3,12 +3,9 @@
 
 package at.logic.algorithms.rewriting
 
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lk.base.{PrincipalFormulas, BinaryLKProof, Sequent, LKProof}
-import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
-import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
+import at.logic.calculi.lk.{DefinitionRightRule, DefinitionLeftRule, EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule, ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
 import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOccurrence}
 import at.logic.language.hol._
 

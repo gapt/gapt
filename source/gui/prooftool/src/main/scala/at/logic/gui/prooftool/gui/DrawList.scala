@@ -9,7 +9,7 @@ package at.logic.gui.prooftool.gui
 
 import java.awt.{Font, Color}
 import Font._
-import at.logic.calculi.lk.base.{types, Sequent}
+import at.logic.calculi.lk.base.{Sequent, FSequent}
 import at.logic.language.hol.HOLExpression
 import swing.{FlowPanel, GridPanel, Label}
 
@@ -42,7 +42,7 @@ class DrawList(val list: List[AnyRef], val fontSize: Int) extends GridPanel(0, 1
 
     def drawMember(x: AnyRef) = x match {
       case s : Sequent => DrawSequent(s, ft, str)
-      case fs : types.FSequent => DrawSequent.applyF(fs, ft, str)
+      case fs : FSequent => DrawSequent.applyF(fs, ft, str)
       case (f1: HOLExpression, f2: HOLExpression) => drawDefinition(f1, f2, ft)
       case _ => new Label(x.toString) {
         background = new Color(255,255,255)

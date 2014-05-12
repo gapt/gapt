@@ -3,34 +3,25 @@
 **/
 package at.logic.integration_tests
 
-import at.logic.transformations.ceres.clauseSets.profile._
-
-import at.logic.transformations.ceres.struct.StructCreators
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-import  at.logic.transformations.ceres.clauseSets.profile
-
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers.XMLReaders._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk._
-import at.logic.parsing.calculus.xml.saveXML
-
+import at.logic.algorithms.lk.statistics._
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk._
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-
-import java.util.zip.GZIPInputStream
-import java.io.File.separator
-
-import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.projections.Projections
+import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.language.tptp.TPTPFOLExporter
-
+import at.logic.parsing.language.xml.XMLParser._
+import at.logic.parsing.readers.XMLReaders._
 import at.logic.provers.prover9._
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.transformations.ceres.clauseSets.profile._
+import at.logic.transformations.ceres.projections.Projections
+import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.transformations.skolemization.skolemize
+
+import java.io.File.separator
 import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
+import java.util.zip.GZIPInputStream
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
@@ -43,9 +34,9 @@ class LatticeTest extends SpecificationWithJUnit {
 
   def sequentToString( s: Sequent ) = {
     var ret = ""
-    s.antecedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    s.antecedent.foreach( formula => ret += formula.toString + ", ")
     ret += " :- "
-    s.succedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    s.succedent.foreach( formula => ret += formula.toString + ", ")
     ret
   }
 

@@ -11,51 +11,45 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.hol._
-import at.logic.language.hol.Definitions._
-import at.logic.language.hol.ImplicitConverters._
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.types.Definitions._
-import at.logic.language.lambda.types._
-import at.logic.language.lambda.symbols.ImplicitConverters._
+import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.parsing.readers.StringReader
+import at.logic.language.lambda.types._
 
 @RunWith(classOf[JUnitRunner])
 class SimpleHOLParserTest extends SpecificationWithJUnit {
   private class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
     "SimpleHOLParser" should {
-        val var1 = HOLVar(new VariableStringSymbol("x1"), i->(i->i))
+        val var1 = HOLVar(StringSymbol("x1"), Ti->(Ti->Ti))
         "parse correctly a variable" in {
             (new MyParser("x1: (i -> (i -> i))").getTerm()) must beEqualTo (var1)
         }
-        val const1 = HOLConst(new ConstantStringSymbol("c1"), i->i)
+        val const1 = HOLConst(StringSymbol("c1"), Ti->Ti)
         "parse correctly an constant" in {    
             (new MyParser("c1: (i -> i)").getTerm()) must beEqualTo (const1)
         }
-        val var2 = HOLVar(new VariableStringSymbol("x2"), i)
-        val atom1 = Atom(new ConstantStringSymbol("a"),var1::var2::const1::Nil)
+        val var2 = HOLVar(StringSymbol("x2"), Ti)
+        val atom1 = Atom(HOLConst(StringSymbol("a"), var1.exptype -> (var2.exptype -> (const1.exptype -> To))  ),var1::var2::const1::Nil)
         "parse correctly an atom" in {  
             (new MyParser("a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqualTo (atom1)
         }
         "parse correctly an abs" in {
-            (new MyParser("Abs x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqualTo (Abs(var1, atom1))
+            (new MyParser("Abs x1: (i -> (i -> i)) a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))").getTerm()) must beEqualTo (HOLAbs(var1, atom1))
         }
-        val var3 = HOLVarFormula(new VariableStringSymbol("x3"))
+        val var3 = Atom(HOLVar(StringSymbol("x3"), To))
         "parse correctly a formula variable" in {
             (new MyParser("x3: o").getTerm()) must beLike {case x: Formula => ok}
         }
         "parse correctly a formula constant" in {
             (new MyParser("c: o").getTerm()) must beLike {case x: Formula => ok}
         }
-        val f1 = Function(ConstantStringSymbol("f"), Var(ConstantStringSymbol("a"), i, hol)::Nil,i)
+        val f1 = Function(HOLConst(StringSymbol("f"), Ti -> Ti), HOLConst(StringSymbol("a"), Ti)::Nil)
         "parse correctly a function" in {
           (new MyParser("f(a:i):i")).getTerm must beEqualTo (f1)
         }
-        val f2 = Function(VariableStringSymbol("x"), Var(ConstantStringSymbol("a"), i, hol)::Nil,i)
+        val f2 = Function(HOLVar(StringSymbol("x"), Ti -> Ti), HOLConst(StringSymbol("a"), Ti)::Nil)
         "parse correctly a function variable 1" in {
-          (new MyParser("x(a:i):i")).getTerm must beEqualTo (f2)
+          val term = (new MyParser("x(a:i):i")).getTerm
+          term must beEqualTo (f2)
         }
         val and1 = And(atom1, var3)
         "parse correctly an and" in {

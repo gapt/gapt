@@ -1,32 +1,21 @@
 /*
- * propositionalRules.scala
+ * lksk.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.calculi.lksk
 
-import _root_.at.logic.language.lambda.types.->
+import at.logic.language.lambda.types.->
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
-import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.utils.ds.trees._
+import at.logic.calculi.lk.base.{Sequent, FSequent, AuxiliaryFormulas, PrincipalFormulas, SubstitutionTerm}
+import at.logic.calculi.lk.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType, Axiom => LKAxiom, _}
 import scala.collection.mutable.{Map,HashMap}
 import base._
-import base.LabelledFormulaOccurence.lfo2fo
-import base.TypeSynonyms._
-import at.logic.calculi.lk.base.types._
 
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType}
-import at.logic.calculi.lk.propositionalRules.{Axiom => LKAxiom}
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.lk.base.types.FSequent
-import scala.Some
-
+import TypeSynonyms._
 
 // lksk proofs
 // rules are extracted in the form (UpperSequent(s), LowerSequent, AuxialiaryFormula(s), PrincipalFormula(s))
@@ -99,11 +88,11 @@ object ForallSkLeftRule {
   // removeFromLabel indicates whether to remove the term subst from the label of the main formula.
   def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean) = {
     main match {
-      case All( sub, _ ) => {
+      case AllVar( x, sub) => {
         // TODO: comment in to check validity of the rule.
         // commented out at the moment because we don't know the subst term
         // in the XML parser. We need first-order unification for that.
-        //assert( betaNormalize( App( sub, subst_t ) ) == aux )
+        //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to AllVar
         if ( !s1.root.antecedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
         if ( !auxf.skolem_label.contains( subst_t ) )
@@ -137,8 +126,8 @@ object ForallSkLeftRule {
 object ExistsSkRightRule {
   def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean) = {
     main match {
-      case Ex( sub, _ ) => {
-        //assert( betaNormalize( App( sub, subst_t ) ) == aux )
+      case ExVar( x, sub ) => {
+        //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to AllVar
         if ( !s1.root.succedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
         if ( !auxf.skolem_label.contains( subst_t ) )
@@ -171,7 +160,7 @@ object ExistsSkRightRule {
 object ForallSkRightRule {
   def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression) = {
     main match {
-      case All( sub, _ ) => {
+      case AllVar( x, sub ) => {
         // TODO: check Skolem term
         if (!s1.root.succedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
@@ -203,7 +192,7 @@ object ForallSkRightRule {
 object ExistsSkLeftRule {
   def apply(s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression) = {
     main match {
-      case Ex( sub, _ ) => {
+      case ExVar( x, sub) => {
         // TODO: check Skolem term
         if (!s1.root.antecedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException("Premise does not contain the given formula occurrence.", s1, auxf.formula::Nil)
@@ -231,13 +220,4 @@ object ExistsSkLeftRule {
     else None
 }
 
-object UnaryLKSKProof {
-  def unapply(proof: LKProof) = proof match {
-    case WeakeningLeftRule(p,r,aux) => Some((WeakeningLeftRuleType, p, r, Nil, aux))
-    case WeakeningRightRule(p,r,aux) => Some((WeakeningRightRuleType, p, r, Nil, aux))
-    case ForallSkLeftRule(p,r,a,m,exp) => Some((ForallSkLeftRuleType,p,r,List(a),m))
-    case ExistsSkRightRule(p,r,a,m,exp) => Some((ExistsSkRightRuleType,p,r,List(a),m))
-    case ForallSkRightRule(p,r,a,m,exp) => Some((ForallSkRightRuleType,p,r,List(a),m))
-    case ExistsSkLeftRule(p,r,a,m,exp) => Some((ExistsLeftRuleType,p,r,List(a),m))
-  }
-}
+

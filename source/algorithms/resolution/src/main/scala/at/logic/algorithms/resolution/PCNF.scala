@@ -1,15 +1,9 @@
 package at.logic.algorithms.resolution
 
 import at.logic.calculi.lk.base.{FSequent, LKProof}
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.resolution.base.FClause
+import at.logic.calculi.lk._
+import at.logic.calculi.resolution.FClause
 import at.logic.language.hol._
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ForallLeftRule}
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.language.lambda.substitutions.Substitution
-import scala.Some
-import scala.Tuple2
 import at.logic.algorithms.lk.{applySubstitution => applySub, addContractions, addWeakenings}
 import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
 
@@ -40,8 +34,8 @@ object PCNF {
 
     // compute CNF and confirm a <- CNF(-s) up to variable renaming
     val cnf = CNFp(form)
-    var sub = Substitution[HOLExpression]()
-    var subi = Substitution[HOLExpression]()
+    var sub = Substitution()
+    var subi = Substitution()
     val op = cnf.find(y => getVariableRenaming(y,a) match {
       case Some(s) => {sub = s; subi = getVariableRenaming(a,y).get; true}
       case _ => false
@@ -75,11 +69,6 @@ object PCNF {
           }
         }
     }
-    // apply weakenings
-    /*(if (!inAntecedent) removeFirst(s.succedent,f) else s.succedent).foldLeft(
-      (if (inAntecedent) (removeFirst(s.antecedent,f)) else s.antecedent).foldLeft(p)((pr,f)
-        => WeakeningLeftRule(pr,sub(f).asInstanceOf[HOLFormula]))
-    )((pr,f) => WeakeningRightRule(pr,sub(f).asInstanceOf[HOLFormula]))*/
 
     //val missing_literals = s diff p.root.toFSequent
     val p1 = if (inAntecedent) {
@@ -116,20 +105,10 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFn(f: HOLFormula, a: FClause, sub: Substitution[HOLExpression]): LKProof = f match {
+  private def PCNFn(f: HOLFormula, a: FClause, sub: Substitution): LKProof = f match {
     case Atom(_,_) => Axiom(List(f),List(f))
     case Neg(f2) => NegRightRule(PCNFp(f2,a,sub), f2)
     case And(f1,f2) => {
-      /* see Or in PCNFp
-      // get all possible partitions of the ant and suc of the clause a
-      val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
-      // find the right partition
-      val cnf1 = CNFn(f1)
-      val cnf2 = CNFn(f2)
-      val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
-      // create the proof
-      AndRightRule(PCNFn(f1,par._1), PCNFn(f2,par._2), f1, f2)
-      */
       AndRightRule(PCNFn(f1,a,sub), PCNFn(f2,a,sub), f1, f2)
     }
     case Or(f1,f2) =>
@@ -153,7 +132,7 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFp(f: HOLFormula, a: FClause, sub: Substitution[HOLExpression]): LKProof = f match {
+  private def PCNFp(f: HOLFormula, a: FClause, sub: Substitution): LKProof = f match {
     case Atom(_,_) => Axiom(List(f),List(f))
     case Neg(f2) => NegLeftRule(PCNFn(f2,a,sub), f2)
     case And(f1,f2) =>
@@ -162,56 +141,37 @@ object PCNF {
       else throw new IllegalArgumentException("clause: " + as(a,sub) + " is not found in CNFs of ancestors: "
         +CNFp(f1) + " or " + CNFp(f2)+" of formula "+f)
     case Or(f1,f2) => {
-      /* the following is an inefficient way to compute the exact context sequents
-      // get all possible partitions of the ant and suc of the clause a
-      val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
-      // find the right partition
-      val cnf1 = CNFp(f1)
-      val cnf2 = CNFp(f2)
-      val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
-      // create the proof
-      OrLeftRule(PCNFp(f1,par._1), PCNFp(f2,par._2), f1, f2)
-      we just take the whole context and apply weakenings later */
       OrLeftRule(PCNFp(f1,a,sub), PCNFp(f2,a,sub), f1, f2)
     }
     case Imp(f1,f2) => {
-      /*
-      // get all possible partitions of the ant and suc of the clause a
-      val prod = for ((c1,c2) <- power(a.neg.toList); (d1,d2) <- power(a.pos.toList)) yield (FClause(c1,d1),FClause(c2,d2))
-      // find the right partition
-      val cnf1 = CNFn(f1)
-      val cnf2 = CNFp(f2)
-      val par = prod.find(x => cnf1.contains(x._1) && cnf2.contains(x._2)).get
-      // create the proof
-      ImpLeftRule(PCNFn(f1,par._1), PCNFp(f2,par._2), f1, f2)
-      */
       ImpLeftRule(PCNFn(f1,a,sub), PCNFp(f2,a,sub), f1, f2)
     }
     case AllVar(v,f2) => ForallLeftRule(PCNFp(f2, a,sub), f2, f, v.asInstanceOf[HOLVar])
     case _ => throw new IllegalArgumentException("unknown head of formula: " + a.toString)
   }
 
-  def getVariableRenaming(f1: FClause, f2: FClause): Option[Substitution[HOLExpression]] = {
+  def getVariableRenaming(f1: FClause, f2: FClause): Option[Substitution] = {
     if (f1.neg.size != f2.neg.size || f1.pos.size != f2.pos.size) None
     else {
       val pairs = (f1.neg.asInstanceOf[Seq[HOLExpression]].zip(f2.neg.asInstanceOf[Seq[HOLExpression]])
         ++ f1.pos.asInstanceOf[Seq[HOLExpression]].zip(f2.pos.asInstanceOf[Seq[HOLExpression]]))
       try {
-        val sub = pairs.foldLeft(Substitution[HOLExpression]())((sb,p) =>
-            sb simultaneousCompose computeSub(p))
+        val sub = pairs.foldLeft(Substitution())((sb,p) => Substitution(sb.holmap ++ computeSub(p).holmap))
         if (pairs.forall(p => sub(p._1) == p._2)) Some(sub) else None
       } catch {
         case e: Exception => None
       }
     }
   }
-  def computeSub(p: Pair[HOLExpression,HOLExpression]): Substitution[HOLExpression] = (p._1, p._2) match {
-    case (HOLVar(a,_), HOLVar(b,_)) if a == b =>Substitution[HOLExpression]()
+  def computeSub(p: (HOLExpression,HOLExpression)): Substitution = (p._1, p._2) match {
+    case (HOLVar(a,_), HOLVar(b,_)) if a == b => Substitution()
     case (v1: HOLVar, v2: HOLVar) => Substitution(v1,v2)
-    case (c1: HOLConst, c2: HOLConst) => Substitution[HOLExpression]()
+    case (c1: HOLConst, c2: HOLConst) => Substitution()
     case (HOLApp(a1,b1),HOLApp(a2,b2)) =>
-      computeSub((a1,a2)) simultaneousCompose computeSub(b1,b2)
-    case (HOLAbs(v1,a1), HOLAbs(v2,a2)) => Substitution(computeSub(a1,a2).map - v1)
+      val s1 = computeSub(a1, a2)
+      val s2 = computeSub(b1, b2)
+      Substitution(s1.holmap ++ s2.holmap)
+    case (HOLAbs(v1,a1), HOLAbs(v2,a2)) => Substitution(computeSub(a1,a2).holmap - v1)
     case _ => throw new Exception()
   }
 
@@ -238,7 +198,6 @@ object PCNF {
   }
 
   // applying sub to a clause
-  def as(a: FClause, sub: Substitution[HOLExpression]): FClause = FClause(a.neg.map(f => sub(f.asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]), a.pos.map(f =>
-      sub(f.asInstanceOf[HOLFormula]).asInstanceOf[HOLFormula]))
+  def as(a: FClause, sub: Substitution): FClause = FClause(a.neg.map(f => sub(f)), a.pos.map(f => sub(f)))
 }
 

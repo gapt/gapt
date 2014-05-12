@@ -19,7 +19,6 @@ import util.parsing.input.Position
 // to use matchers like anyInt()
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.calculi.lk.base.types.FSequent
 import java.io.File.separator
 
 @RunWith(classOf[JUnitRunner])

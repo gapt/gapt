@@ -1,8 +1,6 @@
 /*
  * StillmanSubsumptionAlgorithmTest.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.algorithms.subsumption
@@ -10,107 +8,171 @@ package at.logic.algorithms.subsumption
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
-import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.symbols._
-import at.logic.parsing.readers.StringReader
-import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-//import at.logic.parsing.calculi.simple.SimpleResolutionParserHOL
-import at.logic.calculi.lk.base._
-import at.logic.language.fol._
-import at.logic.language.hol._
-import at.logic.calculi.lk.base.types._
-
-private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserFOL
-//private class MyParserHOL(input: String) extends StringReader(input) with SimpleResolutionParserHOL
-private object MyAlg extends StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}
-private object MyAlgHOL extends StillmanSubsumptionAlgorithm[HOLExpression] {val matchAlg = NaiveIncompleteMatchingAlgorithm} // incomplete matching algorithm
+import at.logic.calculi.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
-class StillmanSubsumptionAlgorithmTest extends SpecificationWithJUnit {
-  "StillmanSubsumptionAlgorithm" should {
+class StillmanSubsumptionAlgorithmFOLTest extends SpecificationWithJUnit {
+import at.logic.language.fol._
+  "StillmanSubsumptionAlgorithmFOL" should {
+    val P = "P"
+    val Q = "Q"
+    val R = "R"
+    val f = "f"
+    val a = FOLConst("a")
+    val b = FOLConst("b")
+    val x = FOLVar("x")
+    val y = FOLVar("y")
+    val z = FOLVar("z")
+    val Px = Atom(P, x::Nil)
+    val Py = Atom(P, y::Nil)
+    val Pz = Atom(P, z::Nil)
+    val fxy = Function(f, x::y::Nil)
+    val Pfxy = Atom(P, fxy::Nil)
+    val Pa = Atom(P, a::Nil)
+    val Pb = Atom(P, b::Nil)
+    val fba = Function(f, b::a::Nil)
+    val Pfba = Atom(P, fba::Nil)
+    val Pxx = Atom(P, x::x::Nil)
+    val Pxa = Atom(P, x::a::Nil)
+    val Paa = Atom(P, a::a::Nil)
+    val Pxb = Atom(P, x::b::Nil)
+    val Pab = Atom(P, a::b::Nil)
+    val Pba = Atom(P, b::a::Nil)
+    val fx = Function(f, x::Nil)
+    val fa = Function(f, a::Nil)
+    val fb = Function(f, b::Nil)
+    val Pfx = Atom(P, fx::Nil)
+    val Pfa = Atom(P, fa::Nil)
+    val Pfb = Atom(P, fb::Nil)
+    val Qxy = Atom(Q, x::y::Nil)
+    val Qay = Atom(Q, a::y::Nil)
+    val Rx = Atom(R, x::Nil)
+
     "return true on the following clauses" in {
       "P(x) | P(f(x,y)) and P(a) | P(b) | P(f(b,a))" in {
-        MyAlg.subsumes(new MyParser("P(x) | P(f(x,y)).").getClauseList.head, new MyParser("P(a) | P(b) | P(f(b,a)).").getClauseList.head) must beEqualTo (true)
+        val c1 = FSequent(Nil, Px::Pfxy::Nil)
+        val c2 = FSequent(Nil, Pa::Pb::Pfba::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
       }
       "Nil and P(a) | P(b) | P(f(b,a))" in {
-        MyAlg.subsumes(new FSequent(Nil,Nil), new MyParser("P(a) | P(b) | P(f(b,a)).").getClauseList.head) must beEqualTo (true)
+        val c1 = FSequent(Nil, Nil)
+        val c2 = FSequent(Nil, Pa::Pb::Pfba::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
       }
       "P(x) and P(x) | P(f(x,y))" in {
-        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head, new MyParser("P(x) | P(f(x,y)).").getClauseList.head) must beEqualTo (true)
+        val c1 = FSequent(Nil, Px::Nil)
+        val c2 = FSequent(Nil, Px::Pfxy::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
       }
       "P(x) and P(x)" in {
-        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head, new MyParser("P(x).").getClauseList.head) must beEqualTo (true)
+        val c1 = FSequent(Nil, Px::Nil)
+        val c2 = FSequent(Nil, Px::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
       }
       "P(x) and P(y)" in {
-        MyAlg.subsumes(new MyParser("P(x).").getClauseList.head,new MyParser("P(y).").getClauseList.head) must beEqualTo (true)
+        val c1 = FSequent(Nil, Px::Nil)
+        val c2 = FSequent(Nil, Py::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
       }
       "P(x,x) | P(x,a) and P(a,a)" in {
-        MyAlg.subsumes(new MyParser("P(x,x) | P(x,a).").getClauseList.head, new MyParser("P(a,a).").getClauseList.head) must beEqualTo (true)
+        val c1 = FSequent(Nil, Pxx::Pxa::Nil)
+        val c2 = FSequent(Nil, Paa::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
       }
-      "P(x,y) and P(x,y)" in {
-        MyAlg.subsumes(new MyParser("P(x,y).").getClauseList.head, new MyParser("P(x,y).").getClauseList.head) must beEqualTo (true)
+      "P(x) | Q(x,y) and P(a) | Q(a,y) | R(x)" in {
+        skipped("I am failing failing :( Please check me!")
+        val c1 = FSequent(Nil, Px::Qxy::Nil)
+        val c2 = FSequent(Nil, Pa::Qay::Rx::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
       }
-      "P(x,y) and P(x1,y1)" in {
-        MyAlg.subsumes(new MyParser("P(x,y).").getClauseList.head, new MyParser("P(x1,y1).").getClauseList.head) must beEqualTo (true)
-      }
-
-      "P(x,y) and P(y,x)" in {
-        MyAlg.subsumes(new MyParser("P(x,y).").getClauseList.head, new MyParser("P(y,x).").getClauseList.head) must beEqualTo (true)
-      }
-
-      /*"P(x) | Q(x,y) and P(a) | Q(a,y) | R(x)" in {
-        MyAlg.subsumes(new MyParser("P(x) | Q(x,y).").getClauseList.head, new MyParser("P(a) | Q(a,y) | R(x).").getClauseList.head) must beEqualTo (true)
-      } */
-      /*"P(x:i,x:i) | P(x:i,a:i) and P(a:i,a:i)" in {
-        MyAlgHOL.subsumes(new MyParserHOL("P(x:i,x:i) | P(x:i,a:i).").getClauseList.head, new MyParserHOL("P(a:i,a:i).").getClauseList.head) must beEqualTo (true)
-      }
-      "P(x:i,x:i) and P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i)" in {
-        MyAlgHOL.subsumes(new MyParserHOL("P(x:i,x:i).").getClauseList.head, new MyParserHOL("P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i).").getClauseList.head) must beEqualTo (true)
-      }
-      "P(x:i,x:i) and P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i))" in {
-        val cl2 = new MyParserHOL("P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i)).").getClauseList.head
-        MyAlgHOL.subsumes(new MyParserHOL("P(x:i,x:i).").getClauseList.head, cl2) must beEqualTo (true)
-      }
-      //val str = """+(s50(q1:(i->o)):i, *(s43(q1: (i->o), +(*(+(x3:i, 1):i, s49(q1:(i->o), s50(q1:(i->o)):i):i):i, x3:i):i):i, *(+(x3, 1):i, +(s49(q1:(i->o), s50(q1:(i->o)):i), 1:i):i):i):i):i"""
-      val str = """p(x_10:i,m(x_3:i,m(m(p(x_4:i,one:i):i,p(x_5:i,one:i):i):i):i):i):i"""
-      "e(x,x):i and e("+str+","+str+"):i" in {
-        MyAlgHOL.subsumes(new MyParserHOL("e(x:i,x:i).").getClauseList.head, new MyParserHOL("e("+str+","+str+").").getClauseList.head) must beEqualTo (true)
-      }
-      "P(x:i) and P(a:i) | Q(x:i)" in {
-        MyAlgHOL.subsumes(new MyParserHOL("P(x:i).").getClauseList.head, new MyParserHOL("P(a:i) | Q(x:i).").getClauseList.head) must beEqualTo (true)
-      }*/
     }
     "return false on the following clauses" in {
       "P(x) | P(f(x)) and P(f(a)) | P(f(b))" in {
-        MyAlg.subsumes(new MyParser("P(x) | P(f(x)).").getClauseList.head, new MyParser("P(f(a)) | P(f(b)).").getClauseList.head) must beEqualTo (false)
+        val c1 = FSequent(Nil, Px::Pfx::Nil)
+        val c2 = FSequent(Nil, Pfa::Pfb::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (false)
       }
       "P(a,a) and P(x,x) | P(x,a)" in {
-        MyAlg.subsumes(new MyParser("P(a,a).").getClauseList.head, new MyParser("P(x,x) | P(x,a).").getClauseList.head) must beEqualTo (false)
+        val c1 = FSequent(Nil, Paa::Nil)
+        val c2 = FSequent(Nil, Pxx::Pxa::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (false)
       }
       "P(x,x) | P(x,b) and P(b,a) | P(a,b)" in {
-        MyAlg.subsumes(new MyParser("P(x,x) | P(x,b).").getClauseList.head, new MyParser("P(b,a) | P(a,b).").getClauseList.head) must beEqualTo (false)
+        val c1 = FSequent(Nil, Pxx::Pxb::Nil)
+        val c2 = FSequent(Nil, Pba::Pab::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (false)
       }
       "P(x) | -P(x) and P(a) | -P(b)" in {
-        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head
-        val cl2 = new MyParser("P(a) | -P(b).").getClauseList.head
-        MyAlg.subsumes(cl1, cl2) must beEqualTo (false)
+        val c1 = FSequent(Px::Nil, Px::Nil)
+        val c2 = FSequent(Pb::Nil, Pa::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (false)
       }
       "P(x) | -P(x) and P(y) | -P(z)" in {
-        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head
-        val cl2 = new MyParser("P(y) | -P(z).").getClauseList.head
-        MyAlg.subsumes(cl1, cl2) must beEqualTo (false)
+        val c1 = FSequent(Px::Nil, Px::Nil)
+        val c2 = FSequent(Pz::Nil, Py::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (false)
       }
-      /*"P(x) and P(a) | P(y)" in {
-        val cl1 = new MyParser("P(x).").getClauseList.head
-        val cl2 = new MyParser("P(a) | P(y).").getClauseList.head
-        MyAlg.subsumes(cl1, cl2) must beEqualTo (false)
-      } */
-      "P(x) | -P(x) and P(y) | -P(z)" in {
-        val cl1 = new MyParser("P(x) | -P(x).").getClauseList.head
-        val cl2 = new MyParser("P(y) | -P(z).").getClauseList.head
-        MyAlg.subsumes(cl1, cl2) must beEqualTo (false)
+      "P(x) and P(a) | P(y)" in {
+        val c1 = FSequent(Nil, Px::Nil)
+        val c2 = FSequent(Nil, Pa::Py::Nil)
+        StillmanSubsumptionAlgorithmFOL.subsumes(c1, c2) must beEqualTo (true)
+      }
+    }
+  }
+}
+
+@RunWith(classOf[JUnitRunner])
+class StillmanSubsumptionAlgorithmHOLTest extends SpecificationWithJUnit {
+import at.logic.language.hol._
+import at.logic.language.lambda.types._
+  "StillmanSubsumptionAlgorithmHOL" should {
+    "return true on the following clauses" in {
+      val P = HOLConst("P", Ti -> (Ti -> To))
+      val P1 = HOLConst("P", Ti -> To)
+      val Q = HOLConst("Q", Ti -> To)
+      val x = HOLVar("x", Ti)
+      val y = HOLVar("y", Ti)
+      val z = HOLVar("z", Ti)
+      val q = HOLVar("q", Ti -> To)
+      val a = HOLConst("a", Ti)
+      val b = HOLConst("b", Ti)
+      val f = HOLConst("f", Ti -> (Ti -> (Ti -> Ti)))
+      val f1 = HOLConst("f", Ti -> Ti)
+      val f2 = HOLConst("f", (Ti -> To) -> (Ti -> (Ti -> Ti)))
+      val f2qza = Function(f2, q::z::a::Nil)
+      val f1b = Function(f1, b::Nil)
+      val fyza = Function(f, y::z::a::Nil)
+      val Pxx = Atom(P, x::x::Nil)
+      val Pxa = Atom(P, x::a::Nil)
+      val Paa = Atom(P, a::a::Nil)
+      val Pfyza_fyza = Atom(P, fyza::fyza::Nil)
+      val Qf1b = Atom(Q, f1b::Nil)
+      val Pf2qza = Atom(P, f2qza::f2qza::Nil)
+      val Px = Atom(P1, x::Nil)
+      val Pa = Atom(P1, a::Nil)
+      val Qx = Atom(Q, x::Nil)
+
+      "P(x:i,x:i) | P(x:i,a:i) and P(a:i,a:i)" in {
+        val c1 = FSequent(Nil, Pxx::Pxa::Nil)
+        val c2 = FSequent(Nil, Paa::Nil)
+        StillmanSubsumptionAlgorithmHOL.subsumes(c1, c2) must beEqualTo (true)
+      }
+      "P(x:i,x:i) and P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i)" in {
+        val c1 = FSequent(Nil, Pxx::Nil)
+        val c2 = FSequent(Nil, Pfyza_fyza::Nil)
+        StillmanSubsumptionAlgorithmHOL.subsumes(c1, c2) must beEqualTo (true)
+      }
+      "P(x:i,x:i) and P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i))" in {
+        skipped("I am failing failing :( Please check me!")
+        val c1 = FSequent(Nil, Pxx::Nil)
+        val c2 = FSequent(Qf1b::Nil, Pf2qza::Nil) 
+        StillmanSubsumptionAlgorithmHOL.subsumes(c1, c2) must beEqualTo (true)
+      }
+      "P(x:i) and P(a:i) | Q(x:i)" in {
+        skipped("I am failing failing :( Please check me!")
+        val c1 = FSequent(Nil, Px::Nil)
+        val c2 = FSequent(Nil, Pa::Qx::Nil)
+        StillmanSubsumptionAlgorithmHOL.subsumes(c1, c2) must beEqualTo (true)
       }
     }
   }

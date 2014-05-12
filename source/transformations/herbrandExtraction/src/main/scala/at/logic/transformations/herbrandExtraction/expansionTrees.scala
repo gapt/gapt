@@ -1,12 +1,9 @@
 package at.logic.transformations.herbrandExtraction
 
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.equationalRules._
+import at.logic.calculi.lk._
 import at.logic.language.hol._
 import at.logic.calculi.expansionTrees.{WeakQuantifier => WQTree, StrongQuantifier => SQTree, And => AndTree, Or => OrTree, Imp => ImpTree, Neg => NotTree, Atom => AtomTree, MergeNode => MergeNodeTree, ExpansionSequent, ExpansionTreeWithMerges, ExpansionTree, merge => mergeTree}
-import at.logic.calculi.lk.lkExtractors._
 import at.logic.calculi.occurrences._
 
 object extractExpansionTrees {
@@ -20,14 +17,14 @@ object extractExpansionTrees {
     case Axiom(r) => {
       // guess the axiom: must be an atom and appear left as well as right
       // can't use set intersection, but lists are small enough to do it manually
-      val axiomCandidates = (r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals elem2))).filter(_.formula.isAtom)
+      val axiomCandidates = (r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals elem2))).filter( ( o => isAtom( o.formula )))
 
       if (axiomCandidates.size > 1) {
         println("Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: "+axiomCandidates)
       }
 
       if (axiomCandidates.isEmpty) {
-        def allAtoms(l : Seq[FormulaOccurrence]) = l.forall(_.formula.isAtom)
+        def allAtoms(l : Seq[FormulaOccurrence]) = l.forall( ( o => isAtom( o.formula )))
         if (allAtoms( r.antecedent ) && allAtoms( r.succedent ) ) {
           println("Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: "+r)
           Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula) )) ++
@@ -57,10 +54,10 @@ object extractExpansionTrees {
         case ExistsLeftRule(_,_,a,_,v) => SQTree(p.formula, v, map(a))
         case ContractionLeftRule(_,_,a1,a2,_) => MergeNodeTree(map(a1),map(a2))
         case ContractionRightRule(_,_,a1,a2,_) => MergeNodeTree(map(a1),map(a2))
-        case AndLeft1Rule(_,_,a,_) => {val And(_,f2) = p.formula; AndTree(map(a), AtomTree(f2))}
-        case AndLeft2Rule(_,_,a,_) => {val And(f1,_) = p.formula; AndTree(AtomTree(f1),map(a))}
-        case OrRight1Rule(_,_,a,_) => {val Or(_,f2) = p.formula; OrTree(map(a), AtomTree(f2))}
-        case OrRight2Rule(_,_,a,_) => {val Or(f1,_) = p.formula; OrTree(AtomTree(f1),map(a))}
+        case AndLeft1Rule(_,_,a,_) => {val And(_,f2) = p.formula; AndTree(map(a), AtomTree(TopC))}
+        case AndLeft2Rule(_,_,a,_) => {val And(f1,_) = p.formula; AndTree(AtomTree(TopC),map(a))}
+        case OrRight1Rule(_,_,a,_) => {val Or(_,f2) = p.formula; OrTree(map(a), AtomTree(BottomC))}
+        case OrRight2Rule(_,_,a,_) => {val Or(f1,_) = p.formula; OrTree(AtomTree(BottomC),map(a))}
         case ImpRightRule(_,_,a1,a2,_) => ImpTree(map(a1),map(a2))
         case NegLeftRule(_,_,a,_) => NotTree(map(a))
         case NegRightRule(_,_,a,_) => NotTree(map(a))

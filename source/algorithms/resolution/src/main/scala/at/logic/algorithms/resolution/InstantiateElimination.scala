@@ -1,19 +1,12 @@
 package at.logic.algorithms.resolution
 
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.robinson.{InitialClause, Factor, Resolution, Variant, Paramodulation, RobinsonResolutionProof}
-import at.logic.calculi.resolution.instance.Instance
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.types.Ti
-import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression, FOLTerm}
 import at.logic.algorithms.rewriting.NameReplacement
-import at.logic.calculi.resolution.base.Clause
-import at.logic.language.lambda.types.Ti
-import scala.Some
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.resolution.robinson.{InitialClause, Factor, Resolution, Variant, Paramodulation, Instance, RobinsonResolutionProof}
+import at.logic.calculi.resolution.Clause
 import at.logic.calculi.lk.base.Sequent
-import at.logic.utils.ds.acyclicGraphs.AGraph
-import at.logic.language.hol.{HOLFormula, HOLExpression}
+import at.logic.language.lambda.types.Ti
+import at.logic.language.fol._
 
 /**
  * Eliminates the insantiate rule from a RobinsonResolutionProof
@@ -21,13 +14,13 @@ import at.logic.language.hol.{HOLFormula, HOLExpression}
 
 
 object ResolutionSubstitution {
-  type ProofMap = Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]
-  val emptyProofMap = Map[(RobinsonResolutionProof, Substitution[HOLExpression]), RobinsonResolutionProof]()
+  type ProofMap = Map[(RobinsonResolutionProof, Substitution), RobinsonResolutionProof]
+  val emptyProofMap = Map[(RobinsonResolutionProof, Substitution), RobinsonResolutionProof]()
 
   def extend_pmap(pm : ProofMap, p : RobinsonResolutionProof,
-                  sub : Substitution[HOLExpression], value : RobinsonResolutionProof) = (p, pm + (((p,sub), value)))
+                  sub : Substitution, value : RobinsonResolutionProof) = (p, pm + (((p,sub), value)))
 
-  def apply[T](p: RobinsonResolutionProof, sub : Substitution[HOLExpression], pmap : ProofMap ) : (RobinsonResolutionProof, ProofMap) = {
+  def apply[T](p: RobinsonResolutionProof, sub : Substitution, pmap : ProofMap ) : (RobinsonResolutionProof, ProofMap) = {
     if (pmap contains ((p,sub)))
       (pmap(p,sub), pmap)
     else
@@ -40,7 +33,7 @@ object ResolutionSubstitution {
 
         case Factor(clause, p1, List(as), subst) =>
           require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
-          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution], pmap)
           var ant_or_succ1 = clause.antecedent
           clause.literals.find(_._1 == as.head) match {
             case Some((_, true)) => ant_or_succ1 = p1.root.succedent
@@ -53,7 +46,7 @@ object ResolutionSubstitution {
 
         case Factor(clause, p1, List(as,bs), subst) =>
           require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
-          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution], pmap)
           var ant_or_succ1 = clause.antecedent
           clause.literals.find(_._1 == as.head) match {
             case Some((_, true)) => ant_or_succ1 = p1.root.succedent
@@ -73,8 +66,8 @@ object ResolutionSubstitution {
 
         case Resolution(clause, p1, p2, lit1, lit2, subst) =>
           require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
-          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
-          val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution[HOLExpression]], pmap1)
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution], pmap)
+          val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution], pmap1)
           val nlit1 = find_sublit(np1.root.succedent, lit1, sub)
           val nlit2 = find_sublit(np2.root.antecedent, lit2, sub)
           val np = Resolution(np1,np2,nlit1,nlit2, subst)
@@ -82,8 +75,8 @@ object ResolutionSubstitution {
 
         case Paramodulation(clause, p1, p2, lit1, lit2, _, subst) =>
           require(subst.isIdentity == true, "we require all substitutions to be in instance rules!")
-          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution[HOLExpression]], pmap)
-          val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution[HOLExpression]], pmap1)
+          val (np1, pmap1) = ResolutionSubstitution(p1, sub.asInstanceOf[Substitution], pmap)
+          val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution], pmap1)
           val nlit1 = find_sublit(np1.root.succedent, lit1, sub)
           val nlit2 = find_sublit(np2.root.antecedent, lit2, sub)
           val Some(newlit) = p2.root.occurrences.find(occ => occ.ancestors.contains(lit1) && occ.ancestors.contains(lit2))
@@ -93,20 +86,20 @@ object ResolutionSubstitution {
 
   }
 
-  def find_sublit(oldoccs : Seq[FormulaOccurrence], newocc : FormulaOccurrence, sub : Substitution[HOLExpression]) : FormulaOccurrence = {
+  def find_sublit(oldoccs : Seq[FormulaOccurrence], newocc : FormulaOccurrence, sub : Substitution) : FormulaOccurrence = {
     oldoccs.find( x => sub(x.formula) == newocc.formula) match {
       case Some(result) => result
       case None => throw new Exception("Could not find match for "+newocc+" in "+oldoccs+" with substitution "+sub)
     }
   }
 
-  def substitute_focc( occ:FormulaOccurrence, sub : Substitution[HOLExpression]) : FormulaOccurrence = {
-    val subf = sub(occ.formula).asInstanceOf[HOLFormula]
+  def substitute_focc( occ:FormulaOccurrence, sub : Substitution) : FormulaOccurrence = {
+    val subf = sub(occ.formula).asInstanceOf[FOLFormula]
     val nanc = occ.ancestors map (substitute_focc(_, sub))
     occ.factory.createFormulaOccurrence(subf, nanc)
   }
 
-  def substitute_clause(c:Clause, sub : Substitution[HOLExpression]) : Clause = {
+  def substitute_clause(c:Clause, sub : Substitution) : Clause = {
     val nlits = c.literals map ( x =>  (substitute_focc(x._1,sub), x._2) )
     Clause(nlits)
   }
@@ -131,29 +124,30 @@ object InstantiateElimination {
   type OccMap = Map[FormulaOccurrence, FormulaOccurrence]
   val emptyOccMap = Map[FormulaOccurrence, FormulaOccurrence]()
 
-  type RenameMap = Map[Var, Var]
-  val emptyRenameMap = Map[Var, Var]()
+  type RenameMap = Map[FOLVar, FOLVar]
+  val emptyRenameMap = Map[FOLVar, FOLVar]()
 
   type ProofMap = Map[RobinsonResolutionProof, (OccMap, VarSet, RobinsonResolutionProof)]
   val emptyProofMap = Map[RobinsonResolutionProof, (OccMap, VarSet, RobinsonResolutionProof)]()
 
-  type VarSet = Set[Var]
-  val emptyVarSet = Set[Var]()
-
-
+  type VarSet = Set[FOLVar]
+  val emptyVarSet = Set[FOLVar]()
 
   /* for a given substitution s, create a new substitution t from fresh variables. return a pair (r,t) where r
    * is the renaming from old vars to new vars */
-  def extract_renaming(s:Substitution[FOLExpression], forbidden: VarSet) : (Substitution[FOLExpression], Substitution[FOLExpression], VarSet) = {
-    val vars = s.map.keySet
-    val (olds,news)= generate_freshvars(vars, forbidden)
-
+  def extract_renaming(s: Substitution, forbidden: VarSet) : (Substitution, Substitution, VarSet) = {
+    val vars = s.folmap.keys
+    val olds = vars.toList
+    val news = vars.foldLeft(List[FOLVar]()) {case (acc, v) => 
+      val newv = rename(v, acc ++ forbidden.toList)
+      newv :: acc
+    }
+    
     val olds_new = olds zip news.asInstanceOf[List[FOLExpression]]
-    val r = Substitution[FOLExpression](olds_new )
-    val t = Substitution[FOLExpression](s.map.map( (el : (Var, FOLExpression)) => (r(el._1.asInstanceOf[FOLVar]).asInstanceOf[Var], el._2) ))
+    val r = Substitution(olds_new )
+    val t = Substitution(s.folmap.map( el => (r(el._1).asInstanceOf[FOLVar], el._2) ))
 
     (r, t, news.toSet)
-
   }
 
   /* wrapper around successor(pocc,clause) -- for documentation it's better to ask what the arent clause is */
@@ -208,15 +202,16 @@ object InstantiateElimination {
     input proof. */
   def remove(p:RobinsonResolutionProof, forbidden : VarSet, pmap : ProofMap) : (ProofMap, OccMap, VarSet, RobinsonResolutionProof) = {
     if (pmap contains p) return extend_to_quadruple(pmap(p), pmap)
-    println("forbidden: "+forbidden)
-    println("clause: "+p.root)
+    //println("forbidden: "+forbidden)
+    //println("clause: "+p.root)
 
     p match {
       case InitialClause(clause) =>
         //no change for initial clause
-        extend_pmap(emptyOccMap  ++ (clause.occurrences zip clause.occurrences), forbidden ++ getVars(clause, forbidden), p, pmap )
+        extend_pmap(emptyOccMap  ++ (clause.occurrences zip clause.occurrences), forbidden ++ getVars(clause), p, pmap )
+
       case Instance(clause, parent, sub) =>
-        val (rpmap, rmap, rforbidden, rparent) = remove(parent, getVars(clause,forbidden), pmap)
+        val (rpmap, rmap, rforbidden, rparent) = remove(parent, forbidden ++ getVars(clause), pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
 
         val inference = Instance(rparent, sub)
@@ -225,10 +220,10 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap))
 
-        extend_pmap(nmap, getVars(clause, rforbidden), inference, rpmap)
+        extend_pmap(nmap, rforbidden ++ getVars(clause), inference, rpmap)
 
       case Factor(clause, Instance(iclause, iparent, isub), aux, sub) =>
-        val (rpmap, rmap, rforbidden, rparent) = remove(iparent, getVars(clause,forbidden), pmap)
+        val (rpmap, rmap, rforbidden, rparent) = remove(iparent, forbidden ++ getVars(clause), pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
         val (renaming, nsub, nvars) = extract_renaming(isub, rforbidden)
 
@@ -241,7 +236,7 @@ object InstantiateElimination {
               rparent.root.occurrences.toList,
               inference.root.occurrences.toList,
               occancmatcher(_,_,rmap))
-            extend_pmap(nmap, getVars(ivariant.root, rforbidden ++ nvars), inference , rpmap)
+            extend_pmap(nmap, rforbidden ++ nvars ++ getVars(ivariant.root), inference , rpmap)
 
           case List(a::as, b::bs) =>
             val inference = Factor(ivariant, isuccessor(a), as map isuccessor, isuccessor(b), bs map isuccessor,nsub )
@@ -249,13 +244,13 @@ object InstantiateElimination {
               clause.occurrences.toList,
               inference.root.occurrences.toList,
               occancmatcher(_,_,rmap))
-            extend_pmap(nmap, getVars(ivariant.root, rforbidden ++ nvars), inference, rpmap)
+            extend_pmap(nmap, rforbidden ++ nvars ++ getVars(ivariant.root), inference, rpmap)
           case _ =>
             throw new Exception("Unexpected auxiliary occurrences in handling of Factor rule during instantiation removal!")
         }
 
       case Factor(clause, parent, aux, sub) =>
-        val (rpmap, rmap, rforbidden, rparent) = remove(parent, getVars(clause,forbidden), pmap)
+        val (rpmap, rmap, rforbidden, rparent) = remove(parent, forbidden ++ getVars(clause), pmap)
         if (rpmap contains p) return extend_to_quadruple(rpmap(p), rpmap)
         aux match {
           case List(a::as) =>
@@ -264,7 +259,7 @@ object InstantiateElimination {
               rparent.root.occurrences.toList,
               inference.root.occurrences.toList,
               occancmatcher(_,_,rmap))
-            extend_pmap(nmap, getVars(clause,rforbidden), inference, rpmap)
+            extend_pmap(nmap, rforbidden ++ getVars(clause), inference, rpmap)
 
           case List(a::as, b::bs) =>
             val inference = Factor(rparent, rmap(a), as map rmap, rmap(b), bs map rmap, sub )
@@ -272,13 +267,13 @@ object InstantiateElimination {
               clause.occurrences.toList,
               inference.root.occurrences.toList,
               occancmatcher(_,_,rmap))
-            extend_pmap(nmap, getVars(clause,rforbidden), inference, rpmap)
+            extend_pmap(nmap, rforbidden ++ getVars(clause), inference, rpmap)
           case _ =>
             throw new Exception("Unexpected auxiliary occurrences in handling of Factor rule during instantiation removal!")
         }
 
       case Resolution(clause, Instance(iclause1, iparent1, isub1), Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -303,10 +298,10 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1 ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ nvars1 ++ nvars2 ++ getVars(clause), inference, rpmap2)
 
       case Resolution(clause, Instance(iclause1, iparent1, isub1), parent2, occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1, forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -326,10 +321,10 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ nvars1 ++ getVars(clause), inference, rpmap2)
 
       case Resolution(clause, parent1, Instance(iclause2, iparent2, isub2), occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -349,10 +344,10 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ nvars2 ++ getVars(clause), inference, rpmap2)
 
       case Resolution(clause, parent1, parent2, occ1, occ2, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -368,11 +363,11 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ getVars(clause), inference, rpmap2)
 
 
       case Paramodulation(clause, Instance(iclause1, iparent1, isub1), Instance(iclause2, iparent2, isub2), occ1, occ2, _, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -400,10 +395,10 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1 ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ nvars1 ++ nvars2 ++ getVars(clause), inference, rpmap2)
 
       case Paramodulation(clause, Instance(iclause1, iparent1, isub1), parent2, occ1, occ2, _, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(iparent1,  forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -436,10 +431,10 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rsmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars1), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ nvars1 ++ getVars(clause), inference, rpmap2)
 
       case Paramodulation(clause, parent1, Instance(iclause2, iparent2, isub2), occ1, occ2, _, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(iparent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -461,10 +456,10 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rsmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden ++ nvars2), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ nvars2 ++ getVars(clause), inference, rpmap2)
 
       case Paramodulation(clause, parent1, parent2, occ1, occ2, _, sub ) =>
-        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  getVars(clause,forbidden), pmap)
+        val (rpmap1, rmap1, rforbidden1, rparent1) = remove(parent1,  forbidden ++ getVars(clause), pmap)
         if (rpmap1 contains p) return extend_to_quadruple(rpmap1(p), rpmap1)
         val (rpmap2, rmap2, rforbidden2, rparent2) = remove(parent2, rforbidden1, rpmap1)
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
@@ -482,7 +477,7 @@ object InstantiateElimination {
           inference.root.occurrences.toList,
           occmatcher(_,_, rmap1++rmap2))
 
-        extend_pmap(nmap, getVars(clause,rforbidden), inference, rpmap2)
+        extend_pmap(nmap, rforbidden ++ getVars(clause), inference, rpmap2)
 
 
       case _ => throw new Exception("Unhandled inference: "+p)
@@ -517,16 +512,10 @@ object InstantiateElimination {
 
   //def extend_to_triple( x : (OccMap, RobinsonResolutionProof), pmap : ProofMap  ) = (pmap, x._1, x._2)
   def extend_to_quadruple( x : (OccMap, VarSet, RobinsonResolutionProof), pmap : ProofMap  ) = (pmap, x._1, x._2, x._3)
+  // Note: this method returns whatever it takes as a parameter... it can either
+  // be simplified or removed...
   def extend_pmap( o : OccMap, f:VarSet, p: RobinsonResolutionProof, pmap : ProofMap  )  :
    (ProofMap, OccMap, VarSet, RobinsonResolutionProof) = {
-    /*
-    println("***")
-    println("returning occmap: "+o)
-    println("literals: "+p.root.occurrences)
-    println("proof: "+p)
-    println("proofmap: "+pmap)
-    println()
-     */
     val r = (pmap + ((p,(o,f,p))), o, f, p )
     r
   }
@@ -651,35 +640,17 @@ object InstantiateElimination {
      }
   }
 
-  private var generated = Set[Var]()
-
-  /* for each element v in vl generate a fresh variable f, return a list of pairs (v,f) */
-  def generate_freshvars(vl:VarSet, forbidden : VarSet) : (List[Var], List[Var]) = {
-    val (olds,news) = vl.foldLeft((List[Var](), forbidden.toList ++ generated))((xs:(List[Var], List[Var]), v:Var) => {
-      val fresh = freshVar(Ti(), xs._2.toSet, (x:Int) => "x_{"+x.toString+"}" , v.factory )
-      //require(! (generated contains fresh), "Error in creating blacklist!")
-      generated = generated+fresh
-      (v::xs._1, fresh :: xs._2)
-     } )
-    (olds,news)
-  }
-
-  def commonvars[T <: LambdaExpression](s1:Substitution[T], s2: Substitution[T]) : Set[Var] = {
-    val k1 = s1.map.keySet
-    val k2 = s2.map.keySet
+  def commonvars(s1:Substitution, s2: Substitution) : Set[FOLVar] = {
+    val k1 = s1.folmap.keySet
+    val k2 = s2.folmap.keySet
     k1.filter(k2.contains) //++ k2.filter(k1.contains)
   }
 
-  def getVars(exp : LambdaExpression, vs : VarSet) : VarSet = exp match {
-    case Var(_,_) => vs + exp.asInstanceOf[Var]
-    case App(s,t) => getVars(s, getVars(t,vs))
-    case Abs(x,s) => getVars(s, vs+x)
-  }
+  // TODO: should this method go somewhere else??
+  def getVars(s:Sequent) : VarSet =
+    s.occurrences.foldLeft(Set[FOLVar]())((acc, occ) => acc ++ freeVariables(occ.formula.asInstanceOf[FOLFormula]).toSet)
 
-  def getVars(s:Sequent, forbidden : VarSet) : VarSet =
-    s.occurrences.foldLeft(forbidden)((s: VarSet, fo: FormulaOccurrence) => s ++ getVars(fo.formula,s))
-
-  def getVars(ss: Seq[Sequent], forbidden :VarSet) : VarSet = ss.foldLeft(forbidden)((set:VarSet, s:Sequent ) => getVars(s, set))
+  def getVars(ss: Seq[Sequent]) : VarSet = ss.foldLeft(Set[FOLVar]())((acc, s) => acc ++ getVars(s))
 
 }
 

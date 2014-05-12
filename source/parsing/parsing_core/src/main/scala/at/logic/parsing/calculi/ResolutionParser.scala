@@ -6,7 +6,6 @@
  */
 
 package at.logic.parsing.calculi
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base._
 import at.logic.parsing.InputParser
 

@@ -6,34 +6,26 @@
 
 package at.logic.provers.prover9
 
-import at.logic.provers.Prover
+import at.logic.algorithms.lk.applyReplacement
+import at.logic.algorithms.resolution.InstantiateElimination
 import at.logic.algorithms.resolution.{RobinsonToLK, fixSymmetry, CNFn}
-import at.logic.calculi.resolution.base._
+import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.calculi.lk.base._
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
-import at.logic.language.lambda.symbols.SymbolA
+import at.logic.calculi.lk.{CutRule, Axiom}
+import at.logic.calculi.resolution.Clause
+import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionProof}
 import at.logic.language.fol._
+import at.logic.parsing.ivy.IvyParser
+import at.logic.parsing.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
+import at.logic.parsing.ivy.conversion.IvyToRobinson
+import at.logic.parsing.language.prover9._
 import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.provers.Prover
+import at.logic.provers.prover9.commands.InferenceExtractor
 import java.io._
+import scala.collection.immutable.HashMap
 import scala.io.Source
 import scala.util.matching.Regex
-import scala.collection.immutable.HashMap
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.parsing.ivy.IvyParser
-import at.logic.parsing.ivy.conversion.IvyToRobinson
-import at.logic.calculi.resolution.robinson.{InitialClause, RobinsonResolutionProof}
-import java.io.File
-import at.logic.parsing.ivy.IvyParser.{IvyStyleVariables, PrologStyleVariables, LadrStyleVariables}
-import at.logic.algorithms.rewriting.NameReplacement
-import at.logic.algorithms.resolution.InstantiateElimination
-import at.logic.provers.prover9.commands.InferenceExtractor
-import at.logic.parsing.language.prover9._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOccurrence}
-import at.logic.calculi.lk.propositionalRules.{CutRule, Axiom}
-import at.logic.algorithms.lk.applyReplacement
 
 class Prover9Exception(msg: String) extends Exception(msg)
 
@@ -62,6 +54,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
   // path "in" to its standard input.
   private def exec( prog: String, in: String ) =
   {
+    // FIXME this line throws an exception if tptp_to_ladr is not installed!
     val p = Runtime.getRuntime.exec( prog )
 
     val out = new OutputStreamWriter( p.getOutputStream )
@@ -333,26 +326,37 @@ object Prover9 extends at.logic.utils.logging.Logger {
     proof
   }
 
-  def getVar(t:LambdaExpression, l:Set[(Int,String)]) : Set[(Int,String)] = t match {
-    case Var(ConstantStringSymbol(s),_) => l+((0,s)) ;
-    case Var(_,_) => l;
-    case AppN(Var(ConstantStringSymbol(s),_),ts) => ts.foldLeft(l)((x: Set[(Int,String)], y:LambdaExpression) => x ++ getVar(y, x) ) + ((ts.size,s))
-    case App(s,t) => getVar(s, getVar(t,l))
-    //case AppN(s,ts) => getVar(s, ts.foldLeft(l)((x: Set[(Int,String)], y:LambdaExpression) => x ++ getVar(y, x) ))
-    case Abs(_,s) => getVar(s,l)
+  // Get the constants and its arity
+  def getConstArity(t:FOLExpression) : Set[(Int,String)] = t match {
+    case FOLConst(s) => Set((0, s))
+    case FOLVar(_) => Set[(Int, String)]()
+    case Atom(h, args) => Set((args.length, h.toString)) ++ args.map(arg => getConstArity(arg)).flatten
+    case Function(h, args) => Set((args.length, h.toString)) ++ args.map(arg => getConstArity(arg)).flatten
+    
+    case And(x,y) => getConstArity(x) ++ getConstArity(y)
+    case Equation(x,y) => getConstArity(x) ++ getConstArity(y)
+    case Or(x,y) => getConstArity(x) ++ getConstArity(y)
+    case Imp(x,y) => getConstArity(x) ++ getConstArity(y)
+    case Neg(x) => getConstArity(x)
+    case ExVar(x,f) => getConstArity(f)
+    case AllVar(x,f) => getConstArity(f)
+
+//    case Var(ConstantStringSymbol(s),_) => l+((0,s)) ;
+//    case Var(_,_) => l;
+//    case AppN(Var(ConstantStringSymbol(s),_),ts) => ts.foldLeft(l)((x: Set[(Int,String)], y:LambdaExpression) => x ++ getVar(y, x) ) + ((ts.size,s))
+//    case App(s,t) => getVar(s, getVar(t,l))
+//    case Abs(_,s) => getVar(s,l)
   }
 
-
-  //def escape_constants[T<:LambdaExpression](r:RobinsonResolutionProof, f:T) : (RobinsonResolutionProof,T) = {}
   def escape_constants(r:RobinsonResolutionProof, f:FSequent) : (RobinsonResolutionProof,FSequent) = {
-    val names : Set[(Int,String)] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map((fo:FormulaOccurrence) => getVar(fo.formula,Set[(Int,String)]()))).flatten.flatten
+    val names : Set[(Int,String)] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map(fo => getConstArity(fo.formula.asInstanceOf[FOLFormula]))).flatten.flatten
     val pairs : Set[(String, (Int,String))] = (names.map((x:(Int,String)) =>
       (x._2, ((x._1, x._2.replaceAll("_","\\\\_")))   ))
       )
 
     val mapping = NameReplacement.emptySymbolMap ++ (pairs)
 
-    (NameReplacement.apply(r, mapping), NameReplacement(f,mapping))
+    (NameReplacement(r, mapping), NameReplacement(f,mapping))
   }
 
 
@@ -380,7 +384,6 @@ object Prover9 extends at.logic.utils.logging.Logger {
     val fs = if (newimpl) InferenceExtractor.viaLADR(p9_file) else InferenceExtractor.viaXML(p9_file)
     //println("extracted formula: "+fs)
     val (eproof, efs) = if (escape_underscore) escape_constants(mproof, fs)  else (mproof, fs)
-
 
     (eproof, efs)
 
@@ -426,16 +429,17 @@ class Prover9Prover extends Prover with at.logic.utils.logging.Logger {
   def ground( seq : FSequent ) : (FSequent, Map[FOLVar, FOLConst]) = {
     // FIXME: cast of formula of sequent!
     val free = seq.antecedent.flatMap( 
-      f => getFreeVariablesFOL(f.asInstanceOf[FOLFormula]) ).toSet ++ 
-      seq.succedent.flatMap( f => getFreeVariablesFOL(f.asInstanceOf[FOLFormula]) ).toSet
+      f => freeVariables(f.asInstanceOf[FOLFormula]) ).toSet ++ 
+      seq.succedent.flatMap( f => freeVariables(f.asInstanceOf[FOLFormula]) ).toSet
     // FIXME: make a better association between the consts and the vars.
     //val map = free.zip( free.map( v => new FOLConst( new CopySymbol( v.name ) ) ) ).toMap
-    val map = free.zip( free.map( v => new FOLConst( new ConstantStringSymbol( v.name.toString ) ) ) ).toMap
+    val map = free.zip( free.map( v => new FOLConst(v.sym) ) ).toMap
     trace( "grounding map in prover9: ")
     trace( map.toString )
     // FIXME: cast of formula of sequent!
-    val ret = FSequent( seq.antecedent.map( f => FOLSubstitution( f.asInstanceOf[FOLFormula], map ) ),
-      seq.succedent.map( f=> FOLSubstitution( f.asInstanceOf[FOLFormula], map ) ) )
+    val subst = Substitution(map)
+    val ret = FSequent( seq.antecedent.map( f => subst(f.asInstanceOf[FOLFormula]) ),
+      seq.succedent.map( f => subst(f.asInstanceOf[FOLFormula]) ) )
     (ret, map)
   }
 

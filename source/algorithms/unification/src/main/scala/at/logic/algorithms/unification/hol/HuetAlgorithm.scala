@@ -1,12 +1,10 @@
-package at.logic.algorithms.unification.hol
 
-/**
- * Created by IntelliJ IDEA.
- * User: cdunchev
- * Date: 5/19/11
- * Time: 11:16 AM
- * To change this template use File | Settings | File Templates.
- */
+/*
+Fixing this seems to require a better understanding of the algorithm due to the
+extensive use of AppN (which no longer exists). Since it is not being used anywhere, I am commenting
+it out for now. [Giselle]
+
+package at.logic.algorithms.unification.hol
 
 package huet {
 
@@ -357,3 +355,4 @@ import at.logic.language.lambda.BetaReduction
     }
   }
 }
+*/

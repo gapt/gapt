@@ -1,22 +1,24 @@
+
+/*
+See comment in ACUnification.scala
+
 package at.logic.algorithms.unification
 
 import at.logic.language.fol.{Function, FOLConst, FOLVar, FOLTerm}
-import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
+//import at.logic.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
 
 object TermUtils {
-  val generator = new VariableGenerator("z_")
+  //val generator = new VariableGenerator("z_")
 
-  /* returns a list of all variables in the term */
-  def getVariableContext(term: FOLTerm): List[FOLVar] = {
-    term match {
-      case FOLVar(_) => List(term.asInstanceOf[FOLVar])
-      case FOLConst(_) => Nil
-      case Function(_, args) => (args map ((x: FOLTerm) => getVariableContext(x))) reduceLeft (_ ++ _)
-    }
+  // returns a list of all variables in the term
+  def getVariableContext(term: FOLTerm): List[FOLVar] = term match {
+    case FOLVar(_) => List(term.asInstanceOf[FOLVar])
+    case FOLConst(_) => Nil
+    case Function(_, args) => (args.map(x => getVariableContext(x))).reduceLeft(_ ++ _)
   }
 
-  /* defines a lexicographic recursive term-ordering - since variables, constants and function symbols
-   * only share their namespace by convention, an ordering on term type is also implemented: const < var < fun */
+  // defines a lexicographic recursive term-ordering - since variables, constants and function symbols
+  // only share their namespace by convention, an ordering on term type is also implemented: const < var < fun
   def term_<(term1: FOLTerm, term2: FOLTerm): Boolean = {
     //var < const < f; for equal terms: symbol name string less than, for function equal symbols recursive
     term1 match {
@@ -48,7 +50,7 @@ object TermUtils {
 }
 
 object MathUtils {
-  /* greatest common divisor of x and y - only works for x>0 and y>0 */
+  // greatest common divisor of x and y - only works for x>0 and y>0
   def gcd(x: Int, y: Int) = {
     //Euclidian Algorithm
     var m = if (x < y) x else y
@@ -62,16 +64,16 @@ object MathUtils {
     m
   }
 
-  /* least common multiple of x and y */
+  // least common multiple of x and y
   def lcm(x: Int, y: Int) = x * y / gcd(x, y)
 
-  /* least common multiple of a list */
+  // least common multiple of a list
   def lcm(xs: List[Int]) = xs.foldLeft(1)((x, y) => x * y / gcd(x, y))
 
-  /* product of a list */
+  // product of a list
   def product(l: List[Int]) = l.foldLeft(1)(_ * _)
 
-  /* powerset definition for lists */
+  // powerset definition for lists
   def powerset[A](l: List[A]): List[List[A]] = {
     l match {
       case x :: xs =>
@@ -81,17 +83,16 @@ object MathUtils {
     }
   }
 
-  /* minimum of x and y */
   def min(x: Int, y: Int) = if (x < y) x else y
 
-  /* maximum of x and y */
   def max(x: Int, y: Int) = if (x > y) x else y
 
 }
 
+// TODO: put this in dssupport
 object ListUtils {
 
-  /* zip for three lists */
+  // zip for three lists
   def zip3[A, B, C](l1: List[A], l2: List[B], l3: List[C]): List[(A, B, C)] = {
     (l1, l2, l3) match {
       case (Nil, Nil, Nil) => Nil
@@ -100,11 +101,11 @@ object ListUtils {
     }
   }
 
-  /* a generalization of map: fun now returns more than one element, so the list must be flattened */
+  // a generalization of map: fun now returns more than one element, so the list must be flattened
   def collect[A, B](substitutions: List[A], fun: (A => List[B])): List[B] =
     (substitutions map fun).flatten
 
-  /* drops elements of l up to e and returns the rest */
+  // drops elements of l up to e and returns the rest
   def dropuntil[A](e: A, l: List[A]): List[A] = {
     l match {
       case Nil => Nil
@@ -112,7 +113,7 @@ object ListUtils {
     }
   }
 
-  /* an insert for insertion sort */
+  // an insert for insertion sort
   def insertIntoSortedList[A](lt_pred: (A, A) => Boolean, v: A, l: List[A]): List[A] = {
     l match {
       case Nil => List(v)
@@ -142,3 +143,4 @@ class VariableGenerator(var constant_prefix: String) {
   def getFreshVariable(): VariableSymbolA = {maxindex += 1; VariableStringSymbol(constant_prefix + potbrak(maxindex, "{") + maxindex + potbrak(maxindex, "}"))}
 
 }
+*/

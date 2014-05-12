@@ -9,7 +9,7 @@ package at.logic.gui.prooftool.parser
 
 import scala.swing.{Color, Publisher}
 import scala.swing.event.Event
-import at.logic.calculi.treeProofs.TreeProof
+import at.logic.calculi.proofs.TreeProof
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.occurrences.FormulaOccurrence
 

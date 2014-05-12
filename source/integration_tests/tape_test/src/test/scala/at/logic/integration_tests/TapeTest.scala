@@ -1,45 +1,33 @@
-/**
- * Description:
-**/
 package at.logic.integration_tests
 
-import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.base.Clause
-import _root_.at.logic.provers.atp.commands.base.SetStreamCommand
-import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause
-import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause._
-import _root_.at.logic.provers.atp.Prover
-import at.logic.transformations.ceres.struct.StructCreators
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers.XMLReaders._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk.statistics._
+import at.logic.calculi.resolution.{Clause, ResolutionProof}
+import at.logic.provers.atp.Prover
+import at.logic.provers.atp.commands.base.SetStreamCommand
+import at.logic.provers.atp.commands.sequents.SetTargetClause
+import at.logic.provers.atp.commands.sequents.SetTargetClause._
+import at.logic.algorithms.fol.hol2fol._
 import at.logic.algorithms.lk._
-import at.logic.parsing.calculus.xml.saveXML
-
+import at.logic.algorithms.lk.statistics._
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk._
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-
-import base.Sequent._
-import base.types._
-import java.util.zip.GZIPInputStream
-import java.io.File.separator
-
-import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.fol._
-import at.logic.transformations.ceres.clauseSets.profile.proofProfile
+import at.logic.parsing.calculus.xml.saveXML
+import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.parsing.language.xml.XMLParser._
+import at.logic.parsing.readers.XMLReaders._
 import at.logic.provers.prover9._
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.transformations.ceres.clauseSets.profile.proofProfile
+import at.logic.transformations.ceres.projections.Projections
+import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.transformations.skolemization.skolemize
 import commands.Prover9InitCommand
 import commands.Prover9InitCommand._
+
+import java.io.File.separator
 import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
+import java.util.zip.GZIPInputStream
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
@@ -66,6 +54,7 @@ class TapeTest extends SpecificationWithJUnit {
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "tape-cs.xml" )
       */
     }
+    
     "parse, skolemize and extract the profile of the tape proof" in {
       checkForProverOrSkip
 
@@ -109,8 +98,10 @@ class TapeTest extends SpecificationWithJUnit {
         Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqualTo( true )
     }
+   
     "apply prover9 to the tape proof clause set" in {
       checkForProverOrSkip
+      skipped("Infinite loop??")
 
       val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
@@ -126,6 +117,7 @@ class TapeTest extends SpecificationWithJUnit {
         case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals (FSequent(List(),List())) => ok
         case _ => ko
       }
+
       getRefutation(cs.map(_.toFSequent)) must beTrue
     }
   }

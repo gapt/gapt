@@ -17,18 +17,12 @@ object CLIMain {
   val script = """  
   import at.logic.cli.GAPScalaInteractiveShellLibrary._
   import at.logic.language.lambda.types._
-  import at.logic.language.lambda.typedLambdaCalculus._
+  import at.logic.language._
   import at.logic.language.hol._
   import at.logic.language.fol._
   import at.logic.calculi.lk._
   import at.logic.calculi.lk.base._
-  import at.logic.calculi.lk.propositionalRules._
-  import at.logic.calculi.lk.quantificationRules._
-  import at.logic.calculi.lk.definitionRules._
-  import at.logic.calculi.lk.equationalRules._
-  import at.logic.calculi.lk.macroRules._
-  import at.logic.calculi.lk.base.types.FSequent
-  import at.logic.calculi.lksk.base._
+  import at.logic.calculi.lksk
   import at.logic.language.lambda.symbols._
   import at.logic.language.hol.logicSymbols._
   import at.logic.transformations.skolemization.skolemize

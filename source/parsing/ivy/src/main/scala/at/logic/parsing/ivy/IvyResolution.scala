@@ -1,13 +1,13 @@
 package at.logic.parsing.ivy
 
 import at.logic.calculi.proofs.{BinaryRuleTypeA, UnaryRuleTypeA, NullaryRuleTypeA}
-import at.logic.calculi.agraphProofs.{NullaryAGraphProof, UnaryAGraphProof, BinaryAGraphProof, AGraphProof}
-import at.logic.calculi.resolution.base.Clause
+import at.logic.calculi.proofs.{NullaryAGraphProof, UnaryAGraphProof, BinaryAGraphProof, AGraphProof}
 import at.logic.utils.ds.acyclicGraphs.{LeafAGraph, UnaryAGraph, BinaryAGraph}
 import at.logic.parsing.lisp.SExpression
-import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.fol.Substitution
 import at.logic.language.fol.{FOLConst, FOLTerm}
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.resolution.Clause
 
 /**** Implementation of Ivy's Resolution Calculus ***
  * Ivy has it's own variation of resolution which only resolves over identical literals but has an instantiation rule.
@@ -94,7 +94,7 @@ case class InitialClause(id: String,
 
 case class Instantiate(id: String,
                        clause_exp : SExpression,
-                       substitution : Substitution[FOLTerm],
+                       substitution : Substitution,
                        override val vertex : Clause, override val t : IvyResolutionProof)
   extends UnaryAGraph(vertex, t) with UnaryAGraphProof[Clause] with IvyResolutionProof {
   def rule = InstantiateType

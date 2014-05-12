@@ -1,30 +1,19 @@
 /*
 * LKTest.scala
 *
-* To change this template, choose Tools | Template Manager
-* and open the template in the editor.
 */
 
 package at.logic.calculi.lk
 
-import at.logic.language.lambda.substitutions.Substitution
+import at.logic.language.lambda.Substitution
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-
 import at.logic.language.hol._
-import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.lambda.types._
-import at.logic.language.lambda.types.Definitions._
 import at.logic.language.hol.logicSymbols._
-import propositionalRules._
 import base._
-import quantificationRules._
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.calculi.lk.lkSpecs.beMultisetEqual
-import at.logic.language.lambda.symbols.ImplicitConverters._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import macroRules._
+import at.logic.language.fol.{Atom => FOLAtom, AllVar => FOLAllVar, ExVar => FOLExVar, FOLFormula, FOLConst, FOLVar}
 
 /**
 * The following properties of each rule are tested:
@@ -40,15 +29,15 @@ import macroRules._
 @RunWith(classOf[JUnitRunner])
 class LKTest extends SpecificationWithJUnit {
 
-  val c1 = HOLVar("a", i->o)
-  val v1 = HOLVar("x", i)
-  val f1 = HOLAppFormula(c1,v1)
+  val c1 = HOLVar("a", Ti->To)
+  val v1 = HOLVar("x", Ti)
+  val f1 = Atom(c1,v1::Nil)
   val ax = Axiom(f1::Nil, f1::Nil)
   val a1 = ax // Axiom return a pair of the proof and a mapping and we want only the proof here
-  val c2 = HOLVar("b", i->o)
-  val v2 = HOLVar("c", i)
-  val f2 = HOLAppFormula(c1,v1)
-  val f3 = HOLVarFormula("e")
+  val c2 = HOLVar("b", Ti->To)
+  val v2 = HOLVar("c", Ti)
+  val f2 = Atom(c1,v1::Nil)
+  val f3 = Atom(HOLVar("e", To))
   val a2 = Axiom(f2::f3::Nil, f2::f3::Nil)
   val a3 = Axiom(f2::f2::f3::Nil, f2::f2::f3::Nil)
   val ap = Axiom(f1::f1::Nil, Nil)
@@ -212,7 +201,6 @@ class LKTest extends SpecificationWithJUnit {
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (a.root.antecedent) must contain(a.prin.head)
-        //(a.root.antecedent) must contain(And(f1,f3)) // occurrences are compared and therefore the test fails
       }
 
       "- Lower sequent must not contain the auxiliary formulas" in {
@@ -386,17 +374,17 @@ class LKTest extends SpecificationWithJUnit {
     }
 
     "work for ForallLeftRule" in {
-      val q = HOLVar( "q", i -> o )
-      val x = HOLVar( "X", i )
+      val q = HOLVar( "q", Ti -> To )
+      val x = HOLVar( "X", Ti )
       val subst = HOLAbs( x, HOLApp( q, x ) ) // lambda x. q(x)
-      val p = HOLVar( "p", (i -> o) -> o )
-      val a = HOLVar( "a", i )
-      val qa = HOLAppFormula( q, a )
-      val pl = HOLAppFormula( p, subst )
+      val p = HOLVar( "p", (Ti -> To) -> To )
+      val a = HOLVar( "a", Ti )
+      val qa = Atom( q, a::Nil )
+      val pl = Atom( p, subst::Nil )
       val aux = Or( pl, qa )                  // p(lambda x. q(x)) or q(a)
-      val z = HOLVar( "Z", i -> o )
-      val pz = HOLAppFormula( p, z )
-      val za = HOLAppFormula( z, a )
+      val z = HOLVar( "Z", Ti -> To )
+      val pz = Atom( p, z::Nil )
+      val za = Atom( z, a::Nil )
       val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
       val ax = Axiom(aux::Nil, Nil)
       val rule = ForallLeftRule(ax, aux, main, subst)
@@ -407,21 +395,21 @@ class LKTest extends SpecificationWithJUnit {
       "- Principal formula must be contained in the right part of the sequent" in {
         (ant) must contain(prin1)
       }
-      /*"- Lower sequent must not contain the auxiliary formulas" in {
+      "- Lower sequent must not contain the auxiliary formulas" in {
         (ant) must not contain(aux1)
-      }     */
+      }
     }
 
     "work for ForallRightRule" in {
-      val x = HOLVar( "X", i -> o)            // eigenvar
-      val p = HOLVar( "p", (i -> o) -> o )
-      val a = HOLVar( "a", i )
-      val xa = HOLAppFormula( x, a )
-      val px = HOLAppFormula( p, x )
+      val x = HOLVar( "X", Ti -> To)            // eigenvar
+      val p = HOLVar( "p", (Ti -> To) -> To )
+      val a = HOLVar( "a", Ti )
+      val xa = Atom( x, a::Nil )
+      val px = Atom( p, x::Nil )
       val aux = Or( px, xa )                  // p(x) or x(a)
-      val z = HOLVar( "Z", i -> o )
-      val pz = HOLAppFormula( p, z )
-      val za = HOLAppFormula( z, a )
+      val z = HOLVar( "Z", Ti -> To )
+      val pz = Atom( p, z::Nil )
+      val za = Atom( z, a::Nil )
       val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
       val ax = Axiom(Nil, aux::Nil )
       val rule = ForallRightRule(ax, aux, main, x)
@@ -432,16 +420,16 @@ class LKTest extends SpecificationWithJUnit {
       "- Principal formula must be contained in the right part of the sequent" in {
         (succ) must contain(prin1)
       }
-      /*"- Lower sequent must not contain the auxiliary formulas" in {
+      "- Lower sequent must not contain the auxiliary formulas" in {
         (succ) must not contain(aux1)
-      } */
+      }
     }
 
     "work for weak quantifier rules" in {
-      val List(x,y,z) = List(("x", i->i),("y",i->i) ,("z", i->i)) map (u => HOLVar(VariableStringSymbol(u._1),u._2))
-      val List(p,a,b) = List(("P", (i->i) -> ((i->i) -> ((i->i) -> o))),
-                             ("a", i->i) ,
-                             ("b", i->i)) map (u => HOLConst(ConstantStringSymbol(u._1),u._2))
+      val List(x,y,z) = List(("x", Ti->Ti),("y",Ti->Ti) ,("z", Ti->Ti)) map (u => HOLVar(u._1,u._2))
+      val List(p,a,b) = List(("P", (Ti->Ti) -> ((Ti->Ti) -> ((Ti->Ti) -> To))),
+                             ("a", Ti->Ti) ,
+                             ("b", Ti->Ti)) map (u => HOLConst(u._1,u._2))
       val paba = Atom(p,List(a,b,a))
       val pxba = Atom(p,List(x,b,a))
       val expxba = ExVar(x,pxba)
@@ -455,6 +443,50 @@ class LKTest extends SpecificationWithJUnit {
       val ax2 = Axiom(Nil, paba::Nil)
       ExistsRightRule(ax2, ax2.root.occurrences(0), expxba, a).root.occurrences(0).formula must_==(expxba)
       ExistsRightRule(ax2, ax2.root.occurrences(0), expxba, b).root.occurrences(0).formula must_==(expxba) must throwAn[Exception]()
+    }
+
+    "work for first order proofs (1)" in {
+      val List(a,b) = List("a","b") map (FOLConst(_))
+      val List(x,y) = List("x","y") map (FOLVar(_))
+      val p = "P"
+      val pay = FOLAtom(p, List(a,y))
+      val allxpax = FOLAllVar(x,FOLAtom(p, List(a,x)))
+      val ax = Axiom(List(pay), List(pay))
+      val i1 = ForallLeftRule(ax, ax.root.antecedent(0), allxpax, y)
+      val i2 = ForallRightRule(i1, i1.root.succedent(0), allxpax, y)
+      val i3 = OrRight1Rule(i2, i2.root.succedent(0), pay)
+
+      i2.root.toFSequent match {
+        case FSequent(List(f1), List(f2)) =>
+          f1 mustEqual(allxpax)
+          f2 mustEqual(allxpax)
+          f1 must beAnInstanceOf[FOLFormula]
+          f2 must beAnInstanceOf[FOLFormula]
+        case fs @ _ =>
+          ko("Wrong result sequent "+fs)
+      }
+
+      i3.root.toFSequent.formulas map (_ must beAnInstanceOf[FOLFormula])
+    }
+
+    "work for first order proofs (2)" in {
+      val List(a,b) = List("a","b") map (FOLConst(_))
+      val List(x,y) = List("x","y") map (FOLVar(_))
+      val p = "P"
+      val pay = FOLAtom(p, List(a,y))
+      val allxpax = FOLExVar(x,FOLAtom(p, List(a,x)))
+      val ax = Axiom(List(pay), List(pay))
+      val i1 = ExistsRightRule(ax, ax.root.succedent(0), allxpax, y)
+      val i2 = ExistsLeftRule(i1, i1.root.antecedent(0), allxpax, y)
+      i2.root.toFSequent match {
+        case FSequent(List(f1), List(f2)) =>
+          f1 mustEqual(allxpax)
+          f2 mustEqual(allxpax)
+          f1 must beAnInstanceOf[FOLFormula]
+          f2 must beAnInstanceOf[FOLFormula]
+        case fs @ _ =>
+          ko("Wrong result sequent "+fs)
+      }
     }
 
   }

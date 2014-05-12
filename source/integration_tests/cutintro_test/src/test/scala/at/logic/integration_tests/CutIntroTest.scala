@@ -1,24 +1,21 @@
 package at.logic.integration_tests
 
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import at.logic.language.lambda.types._
-import at.logic.language.lambda.symbols._
-import at.logic.language.hol.logicSymbols._
-import at.logic.language.fol._
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.algorithms.cutIntroduction._
 import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
 
 import at.logic.algorithms.lk._
-
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.macroRules._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
+import at.logic.calculi.lk._
+import at.logic.language.fol._
+import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.symbols._
+import at.logic.language.lambda.types._
+import at.logic.parsing.language.tptp.TPTPFOLExporter
 
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 import scala.collection.immutable.HashSet
 
 @RunWith(classOf[JUnitRunner])
@@ -31,11 +28,11 @@ class CutIntroTest extends SpecificationWithJUnit {
 
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
   private def LinearExampleProof( k : Int, n : Int ) : LKProof = {
-    val s = new ConstantStringSymbol("s")
-    val c = new ConstantStringSymbol("0")
-    val p = new ConstantStringSymbol("P")
+    val s = "s"
+    val c = "0"
+    val p = "P"
 
-    val x = FOLVar( VariableStringSymbol("x") )
+    val x = FOLVar( "x" )
     val ass = AllVar( x, Imp( Atom( p, x::Nil ), Atom( p, Function( s, x::Nil )::Nil ) ) )
     if ( k == n ) // leaf proof
     {
@@ -65,17 +62,6 @@ class CutIntroTest extends SpecificationWithJUnit {
       CutIntroduction( proof, ExactBound(1), new LKProver() )
 
       termset must haveTheSameElementsAs ( LinearExampleTermset( 4 ) )
-    }
-
-    "FOLSubstitution should work" in {
-      val x = FOLVar( VariableStringSymbol("x") )
-      val fx = Function( ConstantStringSymbol("f"), x::Nil )
-      val c = FOLConst( ConstantStringSymbol("c") )
-      val fc = Function( ConstantStringSymbol("f"), c::Nil )
-
-      val res =  FOLSubstitution( fx, x, c )
-
-      res must beEqualTo( fc )
     }
   }
 }

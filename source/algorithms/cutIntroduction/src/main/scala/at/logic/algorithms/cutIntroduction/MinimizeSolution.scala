@@ -7,27 +7,27 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.language.fol._
-import at.logic.calculi.resolution.base.FClause
-import at.logic.language.fol.Utils._
-import at.logic.provers.minisat.MiniSAT
-import at.logic.provers.Prover
-import at.logic.utils.dssupport.ListSupport.mapAccumL
 import at.logic.algorithms.resolution._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.resolution.FClause
+import at.logic.language.fol.Utils._
+import at.logic.language.fol._
+import at.logic.provers.Prover
+import at.logic.provers.minisat.MiniSAT
+import at.logic.utils.dssupport.ListSupport.mapAccumL
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
-import at.logic.calculi.lk.base._
 
 object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def apply(ehs: ExtendedHerbrandSequent, prover: Prover) = {
-    val minSol = improveSolution(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
+    val minSol = improveSolution(ehs, prover).sortWith((r1,r2) => numOfAtoms(r1) < numOfAtoms(r2)).head
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
   }
 
   def applyEq(ehs: ExtendedHerbrandSequent, prover: Prover) = {
-    val minSol = improveSolutionEq(ehs, prover).sortWith((r1,r2) => r1.numOfAtoms < r2.numOfAtoms).head
+    val minSol = improveSolutionEq(ehs, prover).sortWith((r1,r2) => numOfAtoms(r1) < numOfAtoms(r2)).head
     new ExtendedHerbrandSequent(ehs.endSequent, ehs.grammar, minSol)
   }
 
@@ -47,7 +47,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
     // Transform to conjunctive normal form
     trace( "starting CNF-Transformation" )
-    val cnf = f.toCNF
+    val cnf = toCNF(f)
     trace( "finished CNF-Transformation" )
 
     // Exhaustive search over the resolvents (depth-first search),
@@ -129,7 +129,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
       //0. Convert to a clause set where each clause is a list of positive and negative atoms.
       //1. assign a number to every atom in F.
-      val fNumbered = numberAtoms(CNFp(form2.toCNF).map(c => toMyFClause(c)).toList)
+      val fNumbered = numberAtoms(CNFp(toCNF(form2)).map(c => toMyFClause(c)).toList)
 
       //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
       val posNegSets = fNumbered.foldLeft(Map[FOLFormula, (Set[Int], Set[Int])]()) {(m, clause) =>
@@ -233,14 +233,14 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   def isValidWith(ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula) : Boolean = {
 
     //Instantiate with the eigenvariables.
-    val body = ehs.grammar.eigenvariables.foldLeft(f)((f,ev) => f.instantiate(ev))
+    val body = ehs.grammar.eigenvariables.foldLeft(f)((f,ev) => instantiate(f, ev))
 
     //Instantiate with all the values in s.
     val as = ehs.grammar.s.toList.foldLeft(List[FOLFormula]()) {case (acc, t) =>
-      (t.foldLeft(f){case (f, sval) => f.instantiate(sval)}) :: acc
+      (t.foldLeft(f){case (f, sval) => instantiate(f, sval)}) :: acc
     }
 
-    val head = andN(as)
+    val head = And(as)
 
     val impl = Imp(body, head)
 
@@ -249,7 +249,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
     //isTautology(FSequent(antecedent, succedent))
     //trace( "calling SAT-solver" )
-    val r = prover.isValid(Imp(andN(antecedent), orN(succedent)))
+    val r = prover.isValid(Imp(And(antecedent), Or(succedent)))
     //trace( "finished call to SAT-solver" )
 
     r

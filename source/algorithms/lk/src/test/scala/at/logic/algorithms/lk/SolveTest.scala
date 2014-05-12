@@ -1,13 +1,12 @@
 package at.logic.algorithms.lk
 
-import at.logic.calculi.lk.base.LKProof
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk.propositionalRules.{Axiom, NegLeftRule}
+import at.logic.calculi.lk.base.{LKUnaryRuleCreationException, LKProof, FSequent, beSyntacticFSequentEqual}
+import at.logic.calculi.lk.{Axiom, NegLeftRule}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols.{LogicalSymbolsA, ConstantStringSymbol}
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.schema.{And => AndS, Or => OrS, Neg => NegS, Imp => ImpS, _}
+import at.logic.language.hol.logicSymbols.{LogicalSymbolA}
+import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.schema.{IntVar, Succ, IndexedPredicate, IntZero, Or => OrS, SchemaFormula, BigAnd, BigOr}
 import java.io.File.separator
 import scala.io._
 import org.specs2.mutable._
@@ -16,7 +15,6 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 import at.logic.language.lambda.types.{To, Ti}
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.lk.lkSpecs.beSyntacticFSequentEqual
 import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toSequent}
 
 @RunWith(classOf[JUnitRunner])
@@ -24,35 +22,36 @@ class SolveTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
   "SolveTest" should {
     "solve the sequents" in {
-      val k = IntVar(new VariableStringSymbol("k"))
-      val real_n = IntVar(new VariableStringSymbol("n"))
+      val k = IntVar("k")
+      val real_n = IntVar("n")
       val n = k
       val n1 = Succ(k); val n2 = Succ(n1); val n3 = Succ(n2)
       val k1 = Succ(k); val k2 = Succ(n1); val k3 = Succ(n2)
       val s = Set[FormulaOccurrence]()
 
-      val i = IntVar(new VariableStringSymbol("i"))
-      val A = IndexedPredicate(new ConstantStringSymbol("A"), i)
-      val B = IndexedPredicate(new ConstantStringSymbol("B"), i)
-      val C = IndexedPredicate(new ConstantStringSymbol("C"), i)
+      val i = IntVar("i")
+      val A = IndexedPredicate("A", i)
+      val B = IndexedPredicate("B", i)
+      val C = IndexedPredicate("C", i)
       val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
-      val four = Succ(three);val five = Succ(four); val six = Succ(Succ(four));val seven = Succ(Succ(five));       val A0 = IndexedPredicate(new ConstantStringSymbol("A"), IntZero())
-      val A1 = IndexedPredicate(new ConstantStringSymbol("A"), one)
-      val A2 = IndexedPredicate(new ConstantStringSymbol("A"), two)
-      val A3 = IndexedPredicate(new ConstantStringSymbol("A"), three)
+      val four = Succ(three);val five = Succ(four); val six = Succ(Succ(four));val seven = Succ(Succ(five))
+      val A0 = IndexedPredicate("A", IntZero())
+      val A1 = IndexedPredicate("A", one)
+      val A2 = IndexedPredicate("A", two)
+      val A3 = IndexedPredicate("A", three)
 
-      val B0 = IndexedPredicate(new ConstantStringSymbol("B"), IntZero())
+      val B0 = IndexedPredicate("B", IntZero())
 
-      val Ak = IndexedPredicate(new ConstantStringSymbol("A"), k)
-      val Ai = IndexedPredicate(new ConstantStringSymbol("A"), i)
-      val Ai1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(i))
+      val Ak = IndexedPredicate("A", k)
+      val Ai = IndexedPredicate("A", i)
+      val Ai1 = IndexedPredicate("A", Succ(i))
       val orneg = OrS(at.logic.language.schema.Neg(Ai).asInstanceOf[SchemaFormula], Ai1.asInstanceOf[SchemaFormula]).asInstanceOf[SchemaFormula]
 
-      val Ak1 = IndexedPredicate(new ConstantStringSymbol("A"), Succ(k))
-      val An = IndexedPredicate(new ConstantStringSymbol("A"), k)
-      val An1 = IndexedPredicate(new ConstantStringSymbol("A"), n1)
-      val An2 = IndexedPredicate(new ConstantStringSymbol("A"), n2)
-      val An3 = IndexedPredicate(new ConstantStringSymbol("A"), n3)
+      val Ak1 = IndexedPredicate("A", Succ(k))
+      val An = IndexedPredicate("A", k)
+      val An1 = IndexedPredicate("A", n1)
+      val An2 = IndexedPredicate("A", n2)
+      val An3 = IndexedPredicate("A", n3)
 
       val biga = BigAnd(i, A, zero, one)
       val bigo = BigOr(i, A, zero, one)
@@ -71,12 +70,15 @@ class SolveTest extends SpecificationWithJUnit {
       solve.solvePropositional(FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil))
       solve.solvePropositional(FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil))
       
-      val c2 = HOLConst(new ConstantStringSymbol("c"), Ti())
-      val d2 = HOLConst(new ConstantStringSymbol("d"), Ti())
-      val e2 = HOLConst(new ConstantStringSymbol("e"), Ti())
-      val Pc2 = Atom(new ConstantStringSymbol("P"), c2::Nil)
-      val Pd2 = Atom(new ConstantStringSymbol("P"), d2::Nil)
-      val Pe2 = Atom(new ConstantStringSymbol("P"), e2::Nil)
+      val c2 = HOLConst(new StringSymbol("c"), Ti)
+      val d2 = HOLConst(new StringSymbol("d"), Ti)
+      val e2 = HOLConst(new StringSymbol("e"), Ti)
+        
+      val P = HOLConst(new StringSymbol("P"), Ti -> To)      
+
+      val Pc2 = Atom(P, c2::Nil)
+      val Pd2 = Atom(P, d2::Nil)
+      val Pe2 = Atom(P, e2::Nil)
       val andPc2Pd2 = And(Pc2, Pd2)
       val impPc2Pd2 = Imp(Pc2, Pd2)
       val imp_andPc2Pd2_Pe2 = Imp(andPc2Pd2, Pe2)
@@ -93,13 +95,13 @@ class SolveTest extends SpecificationWithJUnit {
 
     "prove non-atomic axioms (1)" in {
       import at.logic.language.hol._
-      val List(x,y,z)    = List("x","y","z") map (x => HOLVar(VariableStringSymbol(x), Ti()))
-      val List(u,v,w) = List("u","v","w") map (x => HOLVar(VariableStringSymbol(x), Ti() -> Ti()))
-      val List(a,b,c, zero)    = List("a","b","c","0") map (x => HOLConst(ConstantStringSymbol(x), Ti()))
-      val List(f,g,h,s)    = List("f","g","h","s") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
-      val List(p,q)      = List("P","Q") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
-      val List(_Xsym,_Ysym)    = List("X","Y") map (x => VariableStringSymbol(x))
-      val List(_X,_Y)    = List(_Xsym,_Ysym) map (x => HOLVar(x, Ti() -> To()))
+      val List(x,y,z)    = List("x","y","z") map (x => HOLVar(StringSymbol(x), Ti))
+      val List(u,v,w) = List("u","v","w") map (x => HOLVar(StringSymbol(x), Ti -> Ti))
+      val List(a,b,c, zero)    = List("a","b","c","0") map (x => HOLConst(StringSymbol(x), Ti))
+      val List(f,g,h,s)    = List("f","g","h","s") map (x => HOLConst(StringSymbol(x), Ti -> Ti))
+      val List(p,q)      = List("P","Q") map (x => HOLConst(StringSymbol(x), Ti -> Ti))
+      val List(_Xsym,_Ysym)    = List("X","Y") map (x => StringSymbol(x))
+      val List(_X,_Y)    = List(_Xsym,_Ysym) map (x => HOLVar(x, Ti -> To))
 
       val xzero = Atom(_X,List(zero))
       val xx = Atom(_X,List(x))
@@ -112,45 +114,50 @@ class SolveTest extends SpecificationWithJUnit {
       proof.root.toFSequent must beSyntacticFSequentEqual (fs)
 
       //check if three different eigenvariables were introduced and nothing more
+      /* FIXME: replace toFormula.symbols call with call to getVars from utils
       val psymbols = proof.nodes.flatMap(x => x.asInstanceOf[LKProof].root.toFormula.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
       val fssymbols = fs.formulas.flatMap(_.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
       //println(psymbols)
       (psymbols diff fssymbols).size must_== 3
       (fssymbols diff psymbols) must beEmpty
+      */
     }
 
     "prove non-atomic axioms (2)" in {
       import at.logic.language.hol._
-      val List(x,y,z)    = List("x","y","z") map (x => HOLVar(VariableStringSymbol(x), Ti()))
-      val List(u,v,w) = List("u","v","w") map (x => HOLVar(VariableStringSymbol(x), Ti() -> Ti()))
-      val List(a,b,c, zero)    = List("a","b","c","0") map (x => HOLConst(ConstantStringSymbol(x), Ti()))
-      val List(f,g,h,s)    = List("f","g","h","s") map (x => HOLConst(ConstantStringSymbol(x), Ti() -> Ti()))
-      val List(psym,qsym)      = List("P","Q") map (x => ConstantStringSymbol(x))
-      val List(_Xsym,_Ysym)    = List("X","Y") map (x => VariableStringSymbol(x))
-      val List(_X,_Y)    = List(_Xsym,_Ysym) map (x => HOLVar(x, Ti() -> To()))
+      val List(x,y,z)    = List("x","y","z") map (x => HOLVar(StringSymbol(x), Ti))
+      val List(u,v,w) = List("u","v","w") map (x => HOLVar(StringSymbol(x), Ti -> Ti))
+      val List(a,b,c, zero)    = List("a","b","c","0") map (x => HOLConst(StringSymbol(x), Ti))
+      val List(f,g,h,s)    = List("f","g","h","s") map (x => HOLConst(StringSymbol(x), Ti -> Ti))
+      val List(psym,qsym)      = List("P","Q") map (x => StringSymbol(x))
+      val List(_Xsym,_Ysym)    = List("X","Y") map (x => StringSymbol(x))
+      val List(_X,_Y)    = List(_Xsym,_Ysym) map (x => HOLVar(x, Ti -> To))
 
-      val xzero = Atom(psym,List(y, Function(s,List(x))))
+      val Q = HOLConst(qsym, Ti -> (Ti -> To) )
+      val P = HOLConst(qsym, Ti -> To)
+      val xzero = Atom(Q,List(y, Function(s,List(x))))
 
       val formula = AllVar(x, Neg(ExVar(y, xzero)))
-      val fs = FSequent(List(Atom(psym,x::Nil), formula),List(formula, Atom(psym,y::Nil)))
+      val fs = FSequent(List(Atom(P,x::Nil), formula),List(formula, Atom(P,y::Nil)))
       val proof = AtomicExpansion(fs)
       //check if the derived end-sequent is correct
       proof.root.toFSequent must beSyntacticFSequentEqual (fs)
 
       //check if two different eigenvariables were introduced and nothing more
+      /* FIXME: replace toFormula.symbols call with call to getVars from utils
       val psymbols = proof.nodes.flatMap(x => x.asInstanceOf[LKProof].root.toFormula.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
       val fssymbols = fs.formulas.flatMap(_.symbols).filterNot(_.isInstanceOf[LogicalSymbolsA]).toSet
       (psymbols diff fssymbols).size must_== 2
-      (fssymbols diff psymbols) must beEmpty
+      (fssymbols diff psymbols) must beEmpty */
     }
 
     // tests of expansionProofToLKProof also in MiscTest, such that it can be used in combination with extractExpansionTrees
 
     "prove sequent where quantifier order matters" in {
       // example from Chaudhuri et.al.: A multi-focused proof system ...
-      val List(x,y,u,v)    = List("x","y","u","v") map (x => HOLVar(VariableStringSymbol(x), Ti()))
-      val c = HOLConst(ConstantStringSymbol("c"), Ti())
-      val d = ConstantStringSymbol("d")
+      val List(x,y,u,v)    = List("x","y","u","v") map (x => HOLVar(StringSymbol(x), Ti))
+      val c = HOLConst(StringSymbol("c"), Ti)
+      val d = HOLConst(StringSymbol("d"), Ti -> To)
 
 
       val formula = ExVar(x, Or( Neg( Atom(d, x::Nil) ), AllVar(y, Atom(d, y::Nil)))) // exists x (-d(x) or forall y d(y))
@@ -169,7 +176,7 @@ class SolveTest extends SpecificationWithJUnit {
       val et = WeakQuantifierET.applyWithoutMerge(formula, List( (inst1, u), (inst2, c)))
       val etSeq = new ExpansionSequent(Nil, et::Nil)
 
-      val lkProof = solve.expansionProofToLKProof( toSequent(etSeq).toFSequent, etSeq )
+      val lkProof = solve.expansionProofToLKProof(toSequent(etSeq).toFSequent, etSeq)
       lkProof.isDefined must beTrue
     }
 

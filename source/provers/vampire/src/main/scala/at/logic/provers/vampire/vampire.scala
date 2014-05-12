@@ -6,17 +6,11 @@
 
 package at.logic.provers.vampire
 
-import at.logic.calculi.resolution.base._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.substitutions._
-import at.logic.language.hol._
+import at.logic.calculi.lk.base.FSequent
 import at.logic.parsing.language.tptp.TPTPFOLExporter
+
 import java.io._
 import scala.io.Source
-import scala.util.matching.Regex
-import scala.collection.immutable.HashMap
 
 class VampireException(msg: String) extends Exception(msg)
 

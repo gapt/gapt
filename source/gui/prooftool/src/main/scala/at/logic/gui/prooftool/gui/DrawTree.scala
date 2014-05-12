@@ -188,7 +188,7 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
 
     if (drawLines) tree match {
-      case p: UnaryTree[_] => {
+      case p: UnaryTree[_] =>
         val north = this.layout.find(x => x._2 == Position.North).get._1
         val north_width = north.size.width
         val north_height = north.size.height
@@ -196,8 +196,7 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
         val center_width = center.size.width
 
         g.drawLine(north_width / 2, north_height - fSize/2, center_width / 2, north_height + fSize/2)
-      }
-      case p: BinaryTree[_] => {
+      case p: BinaryTree[_] =>
         val north = this.layout.find(x => x._2 == Position.North).get._1
         val northWidth = north.size.width
         val northHeight = north.size.height
@@ -208,7 +207,6 @@ class DrawTree(val tree: Tree[_], private val fSize: Int, private var str: Strin
 
         g.drawLine(northWidth / 2, northHeight - fSize /2, left.location.x + leftWidth / 2, northHeight + fSize /2)
         g.drawLine(northWidth / 2, northHeight - fSize /2, right.location.x + rightWidth / 2, northHeight + fSize /2)
-      }
       case _ =>
     }
   }

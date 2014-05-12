@@ -1,32 +1,27 @@
+
 package at.logic.algorithms.cutIntroduction
-import at.logic.language.fol._
-import at.logic.language.fol.Utils._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.calculi.occurrences._
-import scala.collection.immutable.HashMap
-import at.logic.utils.dssupport.ListSupport._
-import at.logic.provers.Prover
-import at.logic.provers.prover9.Prover9Prover
-import at.logic.provers.eqProver.EquationalProver
-import at.logic.provers.minisat.MiniSATProver
-import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.HOLFormula
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.base.types._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.language.lambda.symbols._
-import at.logic.language.lambda.typedLambdaCalculus._
+
+import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.interpolation._
 import at.logic.algorithms.resolution._
 import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.occurrences._
+import at.logic.language.fol.Utils._
+import at.logic.language.fol._
+import at.logic.language.hol.logicSymbols._
+import at.logic.provers.Prover
+import at.logic.provers.eqProver.EquationalProver
+import at.logic.provers.minisat.MiniSATProver
+import at.logic.provers.prover9.Prover9Prover
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.executionModels.timeout._
-
 import at.logic.utils.logging.Logger
+
+import scala.collection.immutable.HashMap
 
 /** Represents the vector Delta(t_1,...,t_n), i.e. one row of the Delta-table
   * (for details, see gapt/doc/deltavector.tex, Chapter "Generalized Delta-Vector").
@@ -63,12 +58,12 @@ object Deltas extends Logger {
     // TODO: this should go somewhere else?
     def listEquals(lst1: List[FOLTerm], lst2: List[FOLTerm]) : Boolean = (lst1, lst2) match {
       case (Nil, Nil) => true
-      case (hd1::tl1, hd2::tl2) => (hd1 =^ hd2) && listEquals(tl1, tl2)
+      case (hd1::tl1, hd2::tl2) => (hd1.syntaxEquals(hd2)) && listEquals(tl1, tl2)
       case (_, _) => false
     }
 
     def computeDelta(terms: List[FOLTerm], eigenvariable: String) : Set[types.Decomposition] = {
-      val (u,s1) = computeDg(terms, FOLVar(new VariableStringSymbol(eigenvariable + "_0")))
+      val (u,s1) = computeDg(terms, FOLVar(eigenvariable + "_0"))
 
       val s2 = s1.map(x => List(x))
 
@@ -82,9 +77,9 @@ object Deltas extends Logger {
       case 1 => return (eigenvariable, terms)
       case _ => terms.head match {
         // If the variables are reached
-        case FOLVar(s) =>
+        case FOLVar(_) | FOLConst(_) =>
           // If all variables are equal
-          if ( terms.forall(t => t =^ terms.head) ) { return (FOLVar(s), Nil) }
+          if ( terms.forall(t => t.syntaxEquals(terms.head)) ) { return (terms.head, Nil) }
           // If there are different variables 
           else { return (eigenvariable, terms) }
    
@@ -177,7 +172,7 @@ object Deltas extends Logger {
       //the definition of DeltaG in the paper (deltavector.tex), but
       //decompositions of the form (a,t.head) must be added to give the delta table a starting point.
       if (terms.size == 1) {
-        Set((FOLVar(new VariableStringSymbol(eigenvariable + "_" + curInd)), List(terms), curInd+1))
+        Set((FOLVar(eigenvariable + "_" + curInd), List(terms), curInd+1))
       }
       //The case distinction of Delta_G.
       //   First case: all terms are equal -> take one and put it into u (with no variables and curInd unchanged).
@@ -187,7 +182,7 @@ object Deltas extends Logger {
       //   The second & third case are chosen partly non-deterministically:
       //   recursing with a unary function symbol is "free" (in the sense of not increasing the number of needed variables)
       //   but otherwise, we have to choose both the 2nd and 3rd cases.
-      else if (terms.tail.forall(t => (t =^ terms.head))) {
+      else if (terms.tail.forall(t => (t.syntaxEquals(terms.head)))) {
         Set((terms.head, Nil, curInd))
       }
       else
@@ -206,7 +201,7 @@ object Deltas extends Logger {
 
         //We choose the second case and filter out all the results with too many variables, then apply nub.
         if (commonFuncHead(terms)) {
-          val recursionResults = terms.map(fromFuncArgs).transpose.foldLeft(Set((Nil:List[types.U], Nil:types.RawS, curInd)))(computePart)
+          val recursionResults = terms.map(t => fromFuncArgs(t)).transpose.foldLeft(Set((Nil:List[types.U], Nil:types.RawS, curInd)))(computePart)
           val filteredResults = recursionResults.filter{ case(_,s,_) => s.distinct.length <= upperBound}
 
           //Apply nub to each result
@@ -223,7 +218,7 @@ object Deltas extends Logger {
 
         //We also choose the third case, provided that the terms don't begin with a common, unary function symbol
         if (!commonFuncHead(terms) || fromFuncArgs(terms.head).length != 1) {
-          results = results + ((FOLVar(new VariableStringSymbol(eigenvariable + "_" + curInd)), List(terms), curInd+1))
+          results = results + ((FOLVar(eigenvariable + "_" + curInd), List(terms), curInd+1))
         }
 
         results
@@ -284,13 +279,13 @@ object Deltas extends Logger {
       //the definition of DeltaG in the paper (deltavector.tex), but
       //decompositions of the form (a,t.head) must be added to give the delta table a starting point.
       if (terms.size == 1) {
-        ((FOLVar(new VariableStringSymbol(eigenvariable + "_" + curInd)), List(terms)), curInd+1)
+        ((FOLVar(eigenvariable + "_" + curInd), List(terms)), curInd+1)
       }
       //The case distinction of Delta_G.
       //   First case: all terms are equal -> take one and put it into u (with no variables and curInd unchanged).
       //   Second case: all terms begin with the same function symbol -> recurse.
       //   Third case: otherwise -> create a new variable with the terms as s-vector and increment curInd.
-      else if (terms.tail.forall(t => (t =^ terms.head))) {
+      else if (terms.tail.forall(t => (t.syntaxEquals(terms.head)))) {
         ((terms.head, Nil), curInd)
       }
       else if (commonFuncHead(terms)) {
@@ -302,7 +297,7 @@ object Deltas extends Logger {
           
           //Get the function args (unapply._2) and fold with computePart
           //The result might contain duplicate variables and therefore, nub must be applied
-          val (rawUParts, s, newInd) = terms.map(fromFuncArgs).transpose.foldLeft((Nil:List[types.U], Nil:types.RawS, curInd))(computePart)
+          val (rawUParts, s, newInd) = terms.map(t => fromFuncArgs(t)).transpose.foldLeft((Nil:List[types.U], Nil:types.RawS, curInd))(computePart)
 
           //trace("computePart finished. Results(u,S):")
           //trace(rawUParts.toString())
@@ -325,7 +320,7 @@ object Deltas extends Logger {
           //((u,s), if (nubbedInd.nonEmpty) nubbedInd.get + 1 else curInd)
           ((u,s), newInd)
       } else {
-          ((FOLVar(new VariableStringSymbol(eigenvariable + "_" + curInd)), List(terms)), curInd+1)
+          ((FOLVar(eigenvariable + "_" + curInd), List(terms)), curInd+1)
       }
     }
   }

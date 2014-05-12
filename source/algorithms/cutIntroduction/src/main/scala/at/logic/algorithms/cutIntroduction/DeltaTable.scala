@@ -29,7 +29,6 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
-import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
@@ -75,12 +74,12 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector
   var termsAdded : Int = 0
    
   var table = new HashMap[types.S, List[(types.U, List[FOLTerm])]] 
-  val trivialEv = FOLVar(new VariableStringSymbol(eigenvariable + "_0"))
+  val trivialEv = FOLVar(eigenvariable + "_0")
 
   // Fills the delta table with some terms
 
   // Initialize with empty decomposition
-  println( "initializing generalized delta-table (set-based)" )
+  trace( "initializing generalized delta-table (set-based)" )
   add(Set(), null, Nil)
 
 
@@ -153,10 +152,6 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector
 
 
 
-
-
-
-
   /** Adds a decomposition (u,s), under the key s, to the delta table.
     * Specifically, s is the index and (u,T) is the key, where (u,S) is
     * a decomposition of T.
@@ -201,15 +196,4 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector
       case ( k, num ) => prln( "% 3d".format(k) + "   " + num )
     }
   }
-
-  /*
-  def debug(msg: String) = {
-    println("============== DEBUG: DeltaTable ===============")
-    println("Where: " + msg)
-    println("Number of lines in the table: " + size)
-    println("Each line contains pairs.")
-    println("Total number of pairs: " + numberOfPairs)
-    println("================================================")
-  }
-  */
 }

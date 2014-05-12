@@ -20,6 +20,8 @@
     <module>latex_parsing</module>
     <module>arithmetic_parsing</module>
     <module>veriT_parsing</module>
+    <module>hlk</module>
+    <module>shlk_parsing</module>
   </modules>
 
   <dependencies>
@@ -29,10 +31,5 @@
       <version>1.0-SNAPSHOT</version>
       <type>pom</type>
     </dependency>
-    <!--    <dependency>
-      <groupId>at.logic</groupId>
-      <artifactId>unification</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency> -->
   </dependencies>
 </project>

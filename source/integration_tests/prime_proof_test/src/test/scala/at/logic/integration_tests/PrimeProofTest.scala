@@ -1,54 +1,46 @@
-/** 
- * Description: 
-**/
 
 package at.logic.integration_tests
 
-import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-
+import at.logic.algorithms.fol.hol2fol._
+import at.logic.algorithms.lk._
+import at.logic.algorithms.lk.eliminateDefinitions
+import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.subsumption._
+import at.logic.calculi.expansionTrees.{toDeep, ExpansionSequent}
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.language.fol.FOLFormula
+import at.logic.language.hol._
+import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.symbols._
+import at.logic.language.lambda.types._
+import at.logic.parsing.calculi.latex.SequentsListLatexExporter
+import at.logic.parsing.calculus.xml.saveXML
+import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
+import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
-import at.logic.algorithms.lk.simplification._
-import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.lk.eliminateDefinitions
-import at.logic.parsing.calculus.xml.saveXML
-import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.writers.FileWriter
-import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
-import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.provers.prover9._
 import at.logic.provers.veriT.VeriTProver
-import at.logic.calculi.expansionTrees.{toDeep, ExpansionSequent}
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.transformations.ceres.clauseSets.profile._
+import at.logic.transformations.ceres.projections.Projections
+import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.transformations.skolemization.skolemize
+
 
 /* comment out until atp works again
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands._
 import at.logic.provers.atp.refinements.UnitRefinement
 */
-import at.logic.language.lambda.symbols._
-import at.logic.language.lambda.types._
-import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols._
-import at.logic.language.fol.FOLFormula
 
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.transformations.ceres.clauseSets.profile._
-
-//import at.logic.calculi.resolution.robinson.Clause
-import at.logic.algorithms.subsumption._
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.algorithms.fol.hol2fol._
-
-import java.util.zip.GZIPInputStream
 import java.io.File.separator
-
-import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-
-import at.logic.provers.prover9._
+import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
+import java.util.zip.GZIPInputStream
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
@@ -60,9 +52,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
   def sequentToString( s: Sequent ) = {
     var ret = ""
-    s.antecedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    s.antecedent.foreach( formula => ret += formula.toString + ", ")
     ret += " :- "
-    s.succedent.foreach( formula => ret += formula.toStringSimple + ", ")
+    s.succedent.foreach( formula => ret += formula.toString + ", ")
     ret
   }
 
@@ -105,7 +97,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
 //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
 //          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
 //      ))
-//      val sections = ("Definitions", imap.toList.map(x => (x._1, createExampleFOLConstant(x._1, x._2))))::sectionsPre
+//      val sections = ("Definitions", imap.toList.map(x => (x._1, FOLConst(x._2))))::sectionsPre
 //
 //      val dcs = deleteTautologies( cs )
 //      Console.println("dcs size: " + dcs.size)

@@ -6,13 +6,13 @@
 package at.logic.provers.minisat
 
 import at.logic.language.hol._
-import at.logic.calculi.resolution.base._
+import at.logic.calculi.resolution._
 import at.logic.algorithms.resolution.CNFp
   
 import java.io._
 import java.lang.StringBuilder
 
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 
 import at.logic.provers.Prover
 
@@ -69,8 +69,7 @@ class MiniSAT extends at.logic.utils.logging.Logger {
 
   private def updateAtoms( clauses : Set[FClause] ) =
   {
-    // FIXME: cast :-(
-    val atoms = clauses.flatMap( c => c.neg.asInstanceOf[Seq[HOLFormula]] ++ c.pos.asInstanceOf[Seq[HOLFormula]] );
+    val atoms = clauses.flatMap( c => c.neg ++ c.pos );
     atom_map = atoms.zip(1 to atoms.size).toMap
   }
   
@@ -93,10 +92,8 @@ class MiniSAT extends at.logic.utils.logging.Logger {
       sb.append(" ");
     } )
     
-    
-    // FIXME: cast :-(
-    atoms_to_str( clause.pos.asInstanceOf[Seq[HOLFormula]], true )
-    atoms_to_str( clause.neg.asInstanceOf[Seq[HOLFormula]], false )
+    atoms_to_str( clause.pos, true )
+    atoms_to_str( clause.neg, false )
 
     sb.toString()
   }

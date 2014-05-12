@@ -5,7 +5,6 @@
 package at.logic.provers.veriT
 
 import at.logic.language.fol._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith
@@ -19,7 +18,7 @@ class VeriTProverTest extends SpecificationWithJUnit {
   "VeriT" should {
     "prove a v not a" in {
       //skipped("--proof-version in isValid is only supported on Giselle's machine")
-      val a = Atom(ConstantStringSymbol("a"), Nil)
+      val a = Atom("a", Nil)
       val f = Or(a, Neg(a))
 
       VeriTProver.isValid(f) must beEqualTo(true)

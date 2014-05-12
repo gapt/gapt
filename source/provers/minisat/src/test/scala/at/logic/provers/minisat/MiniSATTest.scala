@@ -10,16 +10,10 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import at.logic.language._
-import at.logic.language.hol._
-import at.logic.calculi.resolution.base._
-import at.logic.language.lambda.symbols._
-import at.logic.language.hol.logicSymbols._
+import at.logic.language.fol._
+import at.logic.calculi.resolution._
 import at.logic.language.lambda.types._
-import logicSymbols.ImplicitConverters._
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.types.Definitions._
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class MiniSATTest extends SpecificationWithJUnit {
@@ -29,37 +23,37 @@ class MiniSATTest extends SpecificationWithJUnit {
 
   object PigeonHolePrinciple {
     // The binary relation symbol.
-    val rel = ConstantStringSymbol("R")
+    val rel = "R"
 
     def apply( ps: Int, hs: Int ) = {
       assert( ps > 1 )
-      fol.Imp( fol.Utils.andN( (1 to ps).map( p =>
-              fol.Utils.orN( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
-            fol.Utils.orN( (1 to hs).map ( h =>
-              fol.Utils.orN( (2 to ps).map( p =>
-                fol.Utils.orN( ((1 to p - 1)).map( pp =>
-                  fol.And(atom(p, h),atom(pp,h))).toList)).toList)).toList))
+      Imp( And( (1 to ps).map( p =>
+              Or( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
+            Or( (1 to hs).map ( h =>
+              Or( (2 to ps).map( p =>
+                Or( ((1 to p - 1)).map( pp =>
+                  And(atom(p, h),atom(pp,h))).toList)).toList)).toList))
     }
 
-    def atom( p: Int, h: Int ) = fol.Atom(rel, pigeon(p)::hole(h)::Nil)
+    def atom( p: Int, h: Int ) = Atom(rel, pigeon(p)::hole(h)::Nil)
 
-    def pigeon(i: Int) = fol.FOLConst(ConstantStringSymbol("p_" + i))
+    def pigeon(i: Int) = FOLConst("p_" + i)
 
-    def hole(i: Int) = fol.FOLConst(ConstantStringSymbol("h_" + i))
+    def hole(i: Int) = FOLConst("h_" + i)
   }
 
   "MiniSAT" should {
       
-    val c = HOLConst(new ConstantStringSymbol("c"), i)
-    val d = HOLConst(new ConstantStringSymbol("d"), i)
-    val e = HOLConst(new ConstantStringSymbol("e"), i)
+    val c = FOLConst("c")
+    val d = FOLConst("d")
+    val e = FOLConst("e")
     val pc = Atom("P", c::Nil)
     val pd = Atom("P", d::Nil)
     val pe = Atom("P", e::Nil)
       
     "find a model for an atom" in {
       val clause = FClause(Nil, pc::Nil)
-      
+     
       (new MiniSAT).solve( (clause::Nil).toSet ) must beLike {
         case Some(model) => ok
         case None => ko

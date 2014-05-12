@@ -6,35 +6,26 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.provers.Prover
-import at.logic.provers.prover9.Prover9Prover
-import at.logic.provers.minisat.MiniSATProver
-import at.logic.calculi.occurrences._
-import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.HOLFormula
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.base.types._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.macroRules._
-import at.logic.language.lambda.symbols._
-import at.logic.language.fol._
-import at.logic.language.fol.Utils._
-import at.logic.language.lambda.typedLambdaCalculus._
+import Deltas._
+import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.shlk._
-import at.logic.algorithms.interpolation._
 import at.logic.algorithms.resolution._
 import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.occurrences._
+import at.logic.calculi.resolution.FClause
+import at.logic.language.fol._
+import at.logic.language.hol.HOLFormula
+import at.logic.provers.Prover
+import at.logic.provers.minisat.MiniSATProver
+import at.logic.provers.prover9.Prover9Prover
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.calculi.resolution.base.FClause
-import at.logic.utils.logging.Logger
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.utils.executionModels.timeout._
 import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
-import Deltas._
+import at.logic.utils.executionModels.timeout._
+import at.logic.utils.logging.Logger
 
 class CutIntroException(msg: String) extends Exception(msg)
 class CutIntroUncompressibleException(msg: String) extends CutIntroException(msg)
@@ -269,7 +260,7 @@ object CutIntroduction extends Logger {
         val t4 = System.currentTimeMillis
         CleanStructuralRulesCTime += t4 - t3
 
-        ( pruned_proof, ehs1, cutFormula0.lcomp, ehs1.cutFormula.lcomp )
+        ( pruned_proof, ehs1, lcomp(cutFormula0), lcomp(ehs1.cutFormula) )
       }
 
       val proofs = smallestGrammars.map(buildProof)
@@ -333,10 +324,10 @@ object CutIntroduction extends Logger {
     trace("===============================================================")
 
     val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
-      val freeVars = term.freeVariables
+      val freeVars = freeVariables(term)
 
       // Taking only the terms that contain alpha
-      if( !freeVars.intersect(g.eigenvariables.toSet).isEmpty ) {
+      if( !freeVars.intersect(g.eigenvariables).isEmpty ) {
         trace("      found terms with alphas!")
         trace("      term: " + term)
         val terms = flatterms.getTermTuple(term)
@@ -353,7 +344,7 @@ object CutIntroduction extends Logger {
           trace("occurringEV: " + occurringEV)
           trace("filteredEV: " + allEV.filter(e => occurringEV.contains(e._1)))
 
-          val res = allEV.filter(e => occurringEV.contains(e._1)).foldLeft(t)((t,e) => FOLSubstitution(t, e._1, e._2))
+          val res = allEV.filter(e => occurringEV.contains(e._1)).foldLeft(t)((t,e) => Substitution(e._1, e._2).apply(t))
 
           trace("result: " + res)
 
@@ -368,13 +359,12 @@ object CutIntroduction extends Logger {
         trace("   eigenvariables: " + g.eigenvariables)
         trace("---------------------------------------------")
 
-        val fsubst = f.instantiateAll(xterms)
-        f.instantiateAll(xterms) :: acc
+        instantiateAll(f, xterms) :: acc
       }
       else acc
     }
  
-    (0 to (g.eigenvariables.size-1)).reverse.toList.foldLeft(andN(xFormulas)){(f, n) => AllVar(FOLVar(new VariableStringSymbol(varName + "_" + n)), f)}
+    (0 to (g.eigenvariables.size-1)).reverse.toList.foldLeft(And(xFormulas)){(f, n) => AllVar(FOLVar(varName + "_" + n), f)}
   }
 
 
@@ -400,13 +390,13 @@ object CutIntroduction extends Logger {
     trace(ehs.grammar.s.toString)
     trace("alphas: " + alphas)
     //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
-    val cutLeft = cutFormula.instantiateAll(alphas)
+    val cutLeft = instantiateAll(cutFormula, alphas)
 
     trace("cutLeft = " + cutLeft)
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
     val cutRight = grammar.s.toList.foldRight(List[FOLFormula]()) { case (t, acc) =>
-      (t.foldLeft(cutFormula){case (f, sval) => f.instantiate(sval)}) :: acc
+      (t.foldLeft(cutFormula){case (f, sval) => instantiate(f, sval)}) :: acc
     }
 
     //leftBranch and rightBranch correspond to the left and right branches of the proof in the middle of
@@ -430,7 +420,7 @@ object CutIntroduction extends Logger {
     val proofLeft = prover.getLKProof(seq)
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
-        val s1 = uPart(grammar.u.filter(t => !t.freeVariables.intersect(grammar.eigenvariables.toSet).isEmpty), proofLeft1, flatterms)
+        val s1 = uPart(grammar.u.filter(t => !freeVariables(t).intersect(grammar.eigenvariables).isEmpty), proofLeft1, flatterms)
 
         trace("=======================")
         trace("s1:")
@@ -461,7 +451,7 @@ object CutIntroduction extends Logger {
     val contractSucc = ehs.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) => ContractionRightRule(premise, f) }
 
     // Instantiating constant terms from U
-    Some(uPart(grammar.u.filter(t => t.freeVariables.intersect(grammar.eigenvariables.toSet).isEmpty), contractSucc, flatterms))
+    Some(uPart(grammar.u.filter(t => freeVariables(t).intersect(grammar.eigenvariables).isEmpty), contractSucc, flatterms))
   }
 
   // Both methods bellow are responsible for generating the instances of 
@@ -469,10 +459,10 @@ object CutIntroduction extends Logger {
   def genWeakQuantRules(f: FOLFormula, lst: List[FOLTerm], ax: LKProof) : LKProof = (f, lst) match {
     case (_, Nil) => ax
     case (AllVar(_,_), h::t) => 
-      val newForm = f.instantiate(h)
+      val newForm = instantiate(f, h)
       ForallLeftRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
     case (ExVar(_,_), h::t) =>
-      val newForm = f.instantiate(h)
+      val newForm = instantiate(f, h)
       ExistsRightRule(genWeakQuantRules(newForm, t, ax), newForm, f, h)
   }
 
@@ -558,7 +548,7 @@ object CutIntroduction extends Logger {
     */
   def sanitizeVars(f: FOLFormula) = {
     val sanitizedVars = List[(String,String)](("x","x_0"),("y","x_1"),("z","x_2"),("u","x_3"),("v","x_4"),("w","x_5")).map(
-      v => (FOLVar(new VariableStringSymbol(v._1)),FOLVar(new VariableStringSymbol(v._2))) )
+      v => (FOLVar(v._1),FOLVar(v._2)) )
 
     sanitizedVars.foldLeft(f){(f, v) => f match {
       case AllVar(_, _) => replaceLeftmostBoundOccurenceOf(v._2, v._1,f)._2

@@ -1,8 +1,5 @@
 /*
  * LambdaCalculusTest.scala
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.language.lambda
@@ -13,162 +10,176 @@ import org.specs2.runner.JUnitRunner
 
 import types._
 import symbols._
-import symbols.ImplicitConverters._
-import typedLambdaCalculus._
-import types.Definitions._
 import scala.math.signum
 
 @RunWith(classOf[JUnitRunner])
 class LambdaCalculusTest extends SpecificationWithJUnit {
-  private case class MyVar(nm: String) extends Var(VariableStringSymbol(nm), Ti())
+  
   "TypedLambdaCalculus" should {
     "make implicit conversion from String to Name" in {
-      (LambdaVar("p",i) ) must beEqualTo (LambdaVar("p", i ))
-    }
-    "export lambda expressions to strings correctly (1)" in {
-      val exp = LambdaVar("P", i)
-      (exportLambdaExpressionToString(exp)) must beEqualTo ("P")
-    }
-    "export lambda expressions to strings correctly (2)" in {
-      val exp = App(LambdaVar("P", i -> o), LambdaVar("x",i))
-      (exportLambdaExpressionToString(exp)) must beEqualTo ("(P x)")
-    }
-    "export lambda expressions to strings correctly (3)" in {
-      val exp1 = LambdaVar("x",i)
-      val exp2 = App(LambdaVar("P", i -> o), exp1)
-      val exp3 = Abs(exp1,exp2)
-      (exportLambdaExpressionToString(exp3)) must beEqualTo ("\\x.(P x)")
+      (Var("p",Ti) ) must beEqualTo (Var("p", Ti ))
     }
     "create N-ary abstractions (AbsN) correctly" in {
-      val v1 = LambdaVar("x",i)
-      val v2 = LambdaVar("y",i)
-      val f = LambdaVar("f",i -> (i -> o))
-      ( AbsN(v1::v2::Nil, f) match {
+      val v1 = Var("x",Ti)
+      val v2 = Var("y",Ti)
+      val f = Var("f",Ti -> (Ti -> To))
+      ( Abs(v1::v2::Nil, f) match {
         case Abs(v1,Abs(v2,f)) => true
         case _ => false
         }) must beEqualTo ( true )
     }
     "create N-ary applications (AppN) correctly" in {
-      val v1 = LambdaVar("x",i)
-      val v2 = LambdaVar("y",i)
-      val f = LambdaVar("f",i -> (i -> o))
-      ( AppN(f, List(v1,v2)) match {
+      val v1 = Var("x",Ti)
+      val v2 = Var("y",Ti)
+      val f = Var("f",Ti -> (Ti -> To))
+      ( App(f, List(v1,v2)) match {
         case App(App(f, v1), v2) => true
         case _ => false
         }) must beEqualTo ( true )
     }
   }
-
-  "AbsN1" should {
-    "extract correctly" in {
-      (LambdaVar("x",i)) must not (beLike {case AbsN1(_,_) => ok})
-    }
-  }
   
-  "De Bruijn Indices" should {
+  "Equality" should {
+    "distinguish variables with same name but different type" in {
+      val xi = Var( "x", Ti )
+      val xii = Var( "x", Ti->Ti )
+
+      ( xi ) must not be equalTo ( xii )
+      ( xi.syntaxEquals( xii )) must beEqualTo ( false )
+    }
+
+    "distinguish the constant x from the variable x" in {
+      val x_const = Const( "x", Ti )
+      val x_var = Var( "x", Ti )
+
+      ( x_const ) must not be equalTo ( x_var )
+      ( x_const.syntaxEquals( x_var )) must beEqualTo ( false )
+    }
+
+    "equate variables with same name (but different symbols)" in {
+      val v = Var( "v", Ti )
+      val v0 = Var( "v0", Ti )
+      val v_renamed = rename(v, List( v ))
+
+      v_renamed must beEqualTo ( v0 )
+      ( v_renamed.syntaxEquals( v0 ) ) must beEqualTo ( true )
+    }
+
     "work correctly for alpha conversion" in {
-      val a1 = Abs(MyVar("y"), App(LambdaVar("x",i->i), MyVar("y")))
-      val b1 = Abs(MyVar("z"), App(LambdaVar("x",i->i), MyVar("z")))
+      val a0 = Abs(Var("x", Ti->Ti), App(Var("x",Ti->Ti),Var("y",Ti)))
+      val b0 = Abs(Var("x", Ti->Ti), App(Var("x",Ti->Ti),Var("y",Ti)))
+      "- (\\x.xy) = (\\x.xy)" in {
+        (a0) must beEqualTo (b0)
+        ( a0.syntaxEquals(b0) ) must beEqualTo ( true )
+      }
+      val a1 = Abs(Var("y", Ti), App(Var("x",Ti->Ti), Var("y", Ti)))
+      val b1 = Abs(Var("z", Ti), App(Var("x",Ti->Ti), Var("z", Ti)))
       "- (\\y.xy) = (\\z.xz)" in {
         (a1) must beEqualTo (b1)
+        ( a1.syntaxEquals(b1) ) must beEqualTo ( false )
       }
-      val a2 = Abs(MyVar("y"), a1)
-      val b2 = Abs(MyVar("w"), a1)
+      val a2 = Abs(Var("y", Ti), a1)
+      val b2 = Abs(Var("w", Ti), a1)
       "- (\\y.\\y.xy) = (\\w.\\y.xy)" in {
         (a2) must beEqualTo (b2)
+        ( a2.syntaxEquals(b2) ) must beEqualTo ( false )
       }
-      val a3 = Abs(MyVar("y"), App(Abs(MyVar("y"), MyVar("x")), MyVar("y")))
-      val b3 = Abs(MyVar("w"), App(Abs(MyVar("y"), MyVar("x")), MyVar("w")))
+      val a3 = Abs(Var("y", Ti), App(Abs(Var("y", Ti), Var("x", Ti)), Var("y", Ti)))
+      val b3 = Abs(Var("w", Ti), App(Abs(Var("y", Ti), Var("x", Ti)), Var("w", Ti)))
       "- (\\y.(\\y.x)y) = (\\w.(\\y.x)w)" in {
         (a3) must beEqualTo (b3)
+        ( a3.syntaxEquals(b3) ) must beEqualTo ( false )
       }
-      val a4 = Abs(MyVar("y"), App(Abs(MyVar("y"), MyVar("x")), MyVar("y")))
-      val b4 = Abs(MyVar("y"), App(Abs(MyVar("y"), MyVar("x")), MyVar("w")))
+      val a4 = Abs(Var("y", Ti), App(Abs(Var("y", Ti), Var("x", Ti)), Var("y", Ti)))
+      val b4 = Abs(Var("y", Ti), App(Abs(Var("y", Ti), Var("x", Ti)), Var("w", Ti)))
       "- (\\y.(\\y.x)y) != (\\y.(\\y.x)w)" in {
         (a4) must not be equalTo (b4)
+        ( a4.syntaxEquals(b4) ) must beEqualTo ( false )
       }
-      val a5 = Abs(MyVar("y"), App(Abs(MyVar("y"), MyVar("y")), MyVar("y")))
-      val b5 = Abs(MyVar("y"), App(Abs(MyVar("w"), MyVar("w")), MyVar("y")))
+      val a5 = Abs(Var("y", Ti), App(Abs(Var("y", Ti), Var("y", Ti)), Var("y", Ti)))
+      val b5 = Abs(Var("y", Ti), App(Abs(Var("w", Ti), Var("w", Ti)), Var("y", Ti)))
       "- (\\y.(\\y.y)y) = (\\y.(\\w.w)y)" in {
         (a5) must beEqualTo (b5)
+        ( a5.syntaxEquals(b5) ) must beEqualTo ( false )
       }
-      val a6 = Abs(MyVar("y"), App(Abs(MyVar("y"), MyVar("y")), MyVar("y")))
-      val b6 = Abs(MyVar("y"), App(Abs(MyVar("w"), MyVar("y")), MyVar("x")))
+      val a6 = Abs(Var("y", Ti), App(Abs(Var("y", Ti), Var("y", Ti)), Var("y", Ti)))
+      val b6 = Abs(Var("y", Ti), App(Abs(Var("w", Ti), Var("y", Ti)), Var("x", Ti)))
       "- (\\y.(\\y.y)y) != (\\y.(\\w.y)y)" in {
         (a6) must not be equalTo (b6)
+        ( a6.syntaxEquals(b6) ) must beEqualTo ( false )
       }
     }
   }
 
-  "extract free and bound variables correctly" in {
-      val x = LambdaVar(VariableStringSymbol("X"), i -> o )
-      val y = LambdaVar(VariableStringSymbol("y"), i )
-      val z = LambdaVar(VariableStringSymbol("Z"), i -> o )
-      val r = LambdaVar(VariableStringSymbol("R"), (i -> o) -> (i -> ((i -> o) -> o)))
-      val a = AppN(r, x::y::z::Nil)
-      val qa = Abs( x, a )
-      val free = qa.freeVariables
-      val bound = qa.boundVariables
-      free must not (have(_ =^ x ))
-      free must have (_ =^ y )
-      free must have (_ =^ z )
-      free must have (_ =^ r )
-      bound must have (_ =^ x)
-      bound must not (have (_ =^ y))
-      bound must not (have (_ =^ z))
-      bound must not (have (_ =^ r))
-  }
-  
+  "Variable renaming" should {
+    "produce a new variable different from all in the blacklist" in {
+      val x = Var( "x", Ti )
+      val y = Var( "y", Ti )
+      val z = Var( "z", Ti )
+      val blacklist = x::y::z::Nil
+      val x_renamed = rename( x, blacklist )
 
-  "correctly order expressions" in {
-    val x = LambdaVar(VariableStringSymbol("x"), i )
-    val y = LambdaVar(VariableStringSymbol("y"), i )
-
-    val xx = Abs( x, x )
-    val yy = Abs( y, y )
-    val xy = Abs( x, y )
-
-    xx.compare( yy ) must beEqualTo( 0 )
-    xx.compare( xy ) must not be equalTo( 0 )
-    yy.compare( xy ) must not be equalTo( 0 )
-    xy.compare( xx ) must not be equalTo( 0 )
-    xy.compare( yy ) must not be equalTo( 0 )
-    signum( xx.compare( xy ) ) * signum( xy.compare( xx ) ) must beEqualTo ( -1 )
-
-    val f = LambdaVar(VariableStringSymbol("f"), i -> i)
-    val g = LambdaVar(VariableStringSymbol("g"), i -> i)
-    val fx = App( f, x )
-    val gx = App( g, x )
-    val fy = App( f, y )
-
-    fx.compare( gx ) must beEqualTo( -1 )
-    gx.compare( fx ) must beEqualTo( 1 )
-    fx.compare( fy ) must beEqualTo( -1 )
-    fy.compare( fx ) must beEqualTo( 1 )
-
-    fx.compare( xx ) must not be equalTo ( 0 )
-    fx.compare( xx ) * xx.compare( fx ) must beEqualTo ( -1 )
-    fx.compare( yy ) * yy.compare( fx ) must beEqualTo ( -1 )
-
-    val xfx = Abs( x, fx )
-    val yfx = Abs( y, fx )
-    val yfy = Abs( y, fy )
-
-    xfx.compare( yfy ) must beEqualTo( 0 )
-    xfx.compare( yfx ) must not be equalTo( 0 )
-    xfx.compare( yfx ) * yfx.compare( xfx ) must beEqualTo( -1 )
-  }
-
-  "deal correctly with bound variables in the Abs extractor" in {
-    val x = LambdaVar(VariableStringSymbol("x"), i)
-    val p = LambdaVar(VariableStringSymbol("p"), i -> o)
-    val px = App(p, x)
-    val xpx = Abs(x, px)
-
-    val res = xpx match {
-      case Abs(v, t) => Abs(v, t)
+      ( blacklist.contains( x_renamed ) ) must beEqualTo ( false )
     }
 
-    res must beEqualTo( xpx )
+    "produce a new variable different from all in the blacklist (in presence of maliciously chosen variable names)" in {
+      val v = Var( "v", Ti )
+      val v0 = Var( "v0", Ti )
+      val v_renamed = rename( v, v::v0::Nil )
+   
+      ( v_renamed ) must not be equalTo ( v0 )
+      ( v_renamed.syntaxEquals( v0 ) ) must beEqualTo ( false )
+    }
+  }
+
+  "TypedLambdaCalculus" should {
+    "extract free variables correctly" in {
+      val x = Var("X", Ti -> To )
+      val y = Var("y", Ti )
+      val z = Var("Z", Ti -> To )
+      val r = Var("R", (Ti -> To) -> (Ti -> ((Ti -> To) -> To)))
+      val a = App(r, x::y::z::Nil)
+      val qa = Abs( x, a )
+      val free = freeVariables(qa)
+      free must not (have( _.syntaxEquals(x) ))
+      free must have (_.syntaxEquals(y) )
+      free must have (_.syntaxEquals(z) )
+      free must have (_.syntaxEquals(r) )
+    }
+
+    "extract free variables correctly" in {
+      val x = Var( "x", Ti -> Ti )
+      val z = Var( "z", Ti )
+      val M = App( Abs( x, App( x, z )), x )
+
+      val fv = freeVariables(M).toSet
+      val fv_correct = Set( x, z )
+
+      fv must be equalTo( fv_correct )
+    }
+
+    "extract free variables correctly" in {
+      val x = Var( "x", Ti -> Ti )
+      val z = Var( "z", Ti )
+      val M = Abs( x, App( Abs( x, App( x, z )), x ))
+
+      val fv = freeVariables(M).toSet
+      val fv_correct = Set( z )
+
+      fv must be equalTo( fv_correct )
+    }
+
+    "deal correctly with bound variables in the Abs extractor" in {
+      val x = Var("x", Ti)
+      val p = Var("p", Ti -> To)
+      val px = App(p, x)
+      val xpx = Abs(x, px)
+
+      val res = xpx match {
+        case Abs(v, t) => Abs(v, t)
+      } 
+
+      res must beEqualTo( xpx )
+    }
   }
 }

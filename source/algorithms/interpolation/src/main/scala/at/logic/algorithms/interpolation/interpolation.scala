@@ -3,8 +3,7 @@ package at.logic.algorithms.interpolation
 
 import at.logic.language.hol._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.macroRules._
+import at.logic.calculi.lk._
 import at.logic.calculi.occurrences._
 
 class InterpolationException(msg: String) extends Exception(msg)

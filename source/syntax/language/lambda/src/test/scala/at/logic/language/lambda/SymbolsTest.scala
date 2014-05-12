@@ -17,10 +17,16 @@ import symbols._
 class SymbolsTest extends SpecificationWithJUnit {
   "Equality between symbols" should {
     "return true if it is the same class and mixed with the same string" in {
-      (new VariableStringSymbol("a")) must beEqualTo (new VariableStringSymbol("a"))
+      (VariantSymbol("a")) must beEqualTo (VariantSymbol("a"))
+    }
+    "return true if they have the same string and number" in {
+      (VariantSymbol("a", 0)) must beEqualTo (VariantSymbol("a", 0))
     }
     "return false if the two are of the same class but different strings" in {
-      (new VariableStringSymbol("a")) must not be equalTo (new VariableStringSymbol("b"))
+      (VariantSymbol("a")) must not be equalTo (VariantSymbol("b"))
+    }
+    "return false if they have the same string but different numbers" in {
+      (VariantSymbol("a", 0)) must not be equalTo (VariantSymbol("a", 1))
     }
   }
 }

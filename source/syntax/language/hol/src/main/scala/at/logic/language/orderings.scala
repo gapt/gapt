@@ -65,14 +65,14 @@ class TAOrdering extends Ordering[TA] {
     case (_ -> _, _) => 1
 
     //o < i < index
-    case (To(),Ti()) => -1
-    case (To(),Tindex()) => -1
+    case (To,Ti) => -1
+    case (To,Tindex) => -1
 
-    case (Ti(),To()) => 1
-    case (Ti(),Tindex()) => -1
+    case (Ti,To) => 1
+    case (Ti,Tindex) => -1
 
-    case (Tindex(), Ti()) => 1
-    case (Tindex(), To()) => 1
+    case (Tindex, Ti) => 1
+    case (Tindex, To) => 1
     case _ => throw new Exception("Unhandled case in type comparison: "+x+" ? "+y)
   }
 }

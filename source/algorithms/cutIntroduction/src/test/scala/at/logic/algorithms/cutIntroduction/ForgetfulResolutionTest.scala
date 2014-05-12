@@ -8,9 +8,7 @@ package at.logic.algorithms.cutIntroduction
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import scala.collection.mutable.HashMap
-import at.logic.language.lambda.symbols._
-import at.logic.language.hol.logicSymbols._
+
 import at.logic.language.fol._
 import MinimizeSolution._
 
@@ -20,9 +18,9 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
   "Forgetful Paramodulation Should" should {
 
     "successfully paramodulate a=b into f(a,a)" in {
-      val a = FOLConst(new ConstantStringSymbol("a"))
-      val b = FOLConst(new ConstantStringSymbol("b"))
-      val fs = new ConstantStringSymbol("f")
+      val a = FOLConst("a")
+      val b = FOLConst("b")
+      val fs = "f"
       val faa = Function(fs, a::a::Nil)
 
       val realab = Set( Function( fs, a::a::Nil ), Function( fs, a::b::Nil ), Function( fs, b::a::Nil ), Function( fs, b::b::Nil ) )
@@ -36,14 +34,14 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
     }
 
     "successfully apply forgetful paramodulation to { :- a = b; :- P(a, a); :- Q } " in {
-      val a = FOLConst(new ConstantStringSymbol("a"))
-      val b = FOLConst(new ConstantStringSymbol("b"))
-      val ps = new ConstantStringSymbol("P")
+      val a = FOLConst("a")
+      val b = FOLConst("b")
+      val ps = "P"
       val paa = Atom(ps, a::a::Nil)
       val pab = Atom(ps, a::b::Nil)
       val pba = Atom(ps, b::a::Nil)
       val pbb = Atom(ps, b::b::Nil)
-      val q = Atom(new ConstantStringSymbol("Q"), Nil )
+      val q = Atom("Q", Nil )
       val cq = new MyFClause( Nil, q::Nil )
       val cpaa = new MyFClause( Nil, paa::Nil )
       val cpab = new MyFClause( Nil, pab::Nil )
@@ -81,11 +79,11 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
   "Forgetful Resolution Should" should {
 
     "compute a single resolvent successfully" in {
-      val a = Atom(new ConstantStringSymbol("A"), Nil)
-      val b = Atom(new ConstantStringSymbol("B"), Nil)
-      val c = Atom(new ConstantStringSymbol("C"), Nil)
-      val d = Atom(new ConstantStringSymbol("D"), Nil)
-      val e = Atom(new ConstantStringSymbol("E"), Nil)
+      val a = Atom("A")
+      val b = Atom("B")
+      val c = Atom("C")
+      val d = Atom("D")
+      val e = Atom("E")
 
       val f = And(And(Or(a,Or(b,c)), Or(Neg(b), d)), e)
 

@@ -1,29 +1,16 @@
+
 package at.logic.algorithms.resolution
 
-/**
- * Created with IntelliJ IDEA.
- * User: shaolin
- * Date: 8/17/12
- * Time: 4:06 PM
- * To change this template use File | Settings | File Templates.
- */
-
-import at.logic.calculi.lk.base.types._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
-import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk._
 import at.logic.calculi.resolution.robinson._
-import at.logic.language.fol.{Equation, FOLTerm, FOLFormula, FOLExpression}
-import at.logic.language.hol._
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.lambda.typedLambdaCalculus.{Var, App}
-import at.logic.calculi.resolution.base.{FClause, Clause}
+import at.logic.language.fol._
+import at.logic.calculi.resolution.{FClause, Clause}
 import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, CleanStructuralRules, CloneLKProof}
 
 
 object RobinsonToLK {
-type mapT = scala.collection.mutable.Map[FClause,LKProof]
-
+  type mapT = scala.collection.mutable.Map[FClause,LKProof]
 
   //encapsulates a memo table s.t. subsequent runs of PCNF are not computed multiple times for the same c
   private class PCNFMemoTable(val endsequent : FSequent) {
@@ -42,7 +29,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
     }
   }
 
-  def fol2hol(s: Substitution[FOLExpression]):Substitution[HOLExpression] = s.asInstanceOf[Substitution[HOLExpression]]
+  //def fol2hol(s: Substitution[FOLExpression]):Substitution[HOLExpression] = s.asInstanceOf[Substitution[HOLExpression]]
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof = {
@@ -94,9 +81,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
         // use projections
         //else PCNF(seq, cls.toFClause)
           createAxiom(cls.toFClause)
-
         case Factor(r, p, a, s) => {
-
           // obtain the set of removed occurrences for each side
           val (leftContracted, rightContracted) =
             if (a.size ==1)
@@ -109,7 +94,7 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
             else throw new Exception("Unexpected number of auxiliary formulas!")
 
           // obtain upper proof recursively and apply the current substitution to the resulted LK proof
-          var res = applySub(recConvert(p,seq,map,createAxiom),fol2hol(s))._1
+          var res = applySub(recConvert(p,seq,map,createAxiom), s)._1
 
           // create a contraction for each side, for each contracted formula with a._1 and a._2 (if exists)
           // note that sub must be applied to all formulas in the lk proof
@@ -118,25 +103,25 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
             // val leftAux = a(0) since we do not compare occurrences but only formulas and all formulas are identical in LK contraction, we can ignore this value
             // hasLeft = true
             res = leftContracted.foldLeft(res)((p, fo) => ContractionLeftRule(
-              p, s(fo.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula]))
+              p, s(fo.formula)))
           }
           if (!rightContracted.isEmpty) {
             // val rightAux = if (hasLeft) a(1) else a(0)
             res = rightContracted.foldLeft(res)((p, fo) => ContractionRightRule(
-              p, s(fo.formula.asInstanceOf[FOLFormula]).asInstanceOf[HOLFormula]))
+              p, s(fo.formula)))
           }
           res
         }
-        case Variant(r, p, s) => applySub(recConvert(p, seq,map,createAxiom),fol2hol(s))._1 // the construction of an LK proof makes sure we create a tree out of the agraph
+        case Variant(r, p, s) => applySub(recConvert(p, seq,map,createAxiom), s)._1 // the construction of an LK proof makes sure we create a tree out of the agraph
         case Resolution(r, p1, p2, a1, a2, s) => {
-          val u1 = applySub(recConvert(p1, seq,map,createAxiom),fol2hol(s))._1
-          val u2 = applySub(recConvert(p2, seq,map,createAxiom),fol2hol(s))._1
+          val u1 = applySub(recConvert(p1, seq,map,createAxiom),s)._1
+          val u2 = applySub(recConvert(p2, seq,map,createAxiom),s)._1
           introduceContractions(CutRule(u1, u2, s(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula]),seq)
         }
         case Paramodulation(r, p1, p2, a1, a2, _, s) => {
 
-          val u1 = applySub(recConvert(p1, seq,map,createAxiom),fol2hol(s))._1
-          val u2 = applySub(recConvert(p2, seq,map,createAxiom),fol2hol(s))._1
+          val u1 = applySub(recConvert(p1, seq,map,createAxiom),s)._1
+          val u2 = applySub(recConvert(p2, seq,map,createAxiom),s)._1
 
           val Atom(_, s0 :: _) = a1.formula
           val s1 = s(s0.asInstanceOf[FOLExpression]).asInstanceOf[FOLTerm]
@@ -170,8 +155,8 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
           introduceContractions(retProof, seq)
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
-        case at.logic.calculi.resolution.instance.Instance(_,p,s) =>
-          applySub(recConvert(p, seq,map,createAxiom),fol2hol(s))._1
+        case Instance(_,p,s) =>
+          applySub(recConvert(p, seq,map,createAxiom),s)._1
       }
       map(proof.root.toFClause) = ret
       ret
@@ -182,11 +167,12 @@ type mapT = scala.collection.mutable.Map[FClause,LKProof]
   // if f2 contains more occurrences of the sub term than f1 then it means that this subterm was replaced by something else
   private def isRule1(f1: FOLFormula, f2: FOLFormula, t: FOLTerm): Boolean = (countSB(f2, t) > countSB(f1, t))
 
-  private def countSB(t1: HOLExpression, t2: HOLExpression): Int =
+  private def countSB(t1: FOLExpression, t2: FOLExpression): Int =
     if (t1 == t2) 1
     else t1 match {
-      case Var(_, _) => 0
+      case FOLVar(_) => 0
+      case FOLConst(_) => 0
       case Atom(_, args) => args.foldLeft(0)((n, arg) => n + countSB(arg, t2))
-      case Function(_, args, _) => args.foldLeft(0)((n, arg) => n + countSB(arg, t2))
+      case Function(_, args) => args.foldLeft(0)((n, arg) => n + countSB(arg, t2))
     }
 }

@@ -1,66 +1,62 @@
-package at.logic.algorithms.lk
 
+package at.logic.algorithms.lk.statistics
+
+import at.logic.calculi.lk._
 import at.logic.calculi.lk.base.{LKProof, Sequent}
-import at.logic.calculi.lk.lkExtractors.{UnaryLKProof, BinaryLKProof}
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.equationalRules._
-import at.logic.calculi.lk.definitionRules._
-import at.logic.language.lambda.types.TA
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.calculi.lksk.lkskExtractors.{UnaryLKskProof}
-import at.logic.language.schema._
 import at.logic.calculi.slk._
+import at.logic.language.lambda.types.TA
+import at.logic.language.hol.{HOLExpression, HOLApp, HOLAbs, HOLConst}
+import at.logic.calculi.lksk.{UnaryLKskProof}
 import scala.collection.mutable
 
-package statistics {
-  object getStatistics {
-    class LKStats( var unary: Int, var binary: Int, var cuts: Int)
-    {
-      def incUnary = {
-        unary += 1
-        this
-      }
-
-      def incBinary = {
-        binary += 1
-        this
-      }
-
-      def incCuts = {
-        cuts += 1
-        this
-      }
+object getStatistics {
+  class LKStats( var unary: Int, var binary: Int, var cuts: Int)
+  {
+    def incUnary = {
+      unary += 1
+      this
     }
 
-    def apply( p: LKProof ) : LKStats = p match {
-      case CutRule( p1, p2, _, _, _ ) => merge( getStatistics( p1 ), getStatistics( p2 ) ).incBinary.incCuts
-      case BinaryLKProof(_, p1, p2, _, _, _, _) => merge( getStatistics( p1 ), getStatistics( p2 ) ).incBinary
-      case UnaryLKProof(_, p, _, _, _) => getStatistics( p ).incUnary
-      case UnaryLKskProof(_, p, _, _, _) => getStatistics( p ).incUnary
-      case Axiom(so) => new LKStats(0, 0, 0)
+    def incBinary = {
+      binary += 1
+      this
     }
 
-    def merge( s1: LKStats, s2: LKStats ) = new LKStats( s1.unary + s2.unary, s1.binary + s2.binary, s1.cuts + s2.cuts )
-  }
-
-  // return the types of all constants in the sequents list
-  object getTypeInformation {
-    def apply(sequents: List[Sequent]): Map[LambdaExpression, TA] = {
-      val map = mutable.Map[LambdaExpression, TA]()
-      sequents.foreach(s => {s.antecedent.foreach(f => mapValues(map,f)); s.succedent.foreach(f => mapValues(map,f))})
-      map.toMap //create an immutable map from the mutable one
-    }
-    private def mapValues(map: mutable.Map[LambdaExpression, TA], f: LambdaExpression): Unit = f match {
-      case v @ Var(at.logic.language.hol.logicSymbols.ConstantStringSymbol(x), t) => map.getOrElseUpdate(v, t)
-      case App(a,b) => mapValues(map, a); mapValues(map, b)
-      case Abs(_,b) => mapValues(map, b)
-      case _ => ()
+    def incCuts = {
+      cuts += 1
+      this
     }
   }
 
-  // I think the next things should be methods, and not objects, but I could not
-  // find a place to implement them.
+  def apply( p: LKProof ) : LKStats = p match {
+    case CutRule( p1, p2, _, _, _ ) => merge( getStatistics( p1 ), getStatistics( p2 ) ).incBinary.incCuts
+    case BinaryLKProof(_, p1, p2, _, _, _, _) => merge( getStatistics( p1 ), getStatistics( p2 ) ).incBinary
+    case UnaryLKProof(_, p, _, _, _) => getStatistics( p ).incUnary
+    case UnaryLKskProof(_, p, _, _, _) => getStatistics( p ).incUnary
+    case Axiom(so) => new LKStats(0, 0, 0)
+  }
+
+  def merge( s1: LKStats, s2: LKStats ) = new LKStats( s1.unary + s2.unary, s1.binary + s2.binary, s1.cuts + s2.cuts )
+}
+
+// return the types of all constants in the sequents list
+// TODO: this can be implemented with an immutable map
+object getTypeInformation {
+  def apply(sequents: List[Sequent]): Map[HOLExpression, TA] = {
+    val map = mutable.Map[HOLExpression, TA]()
+    sequents.foreach(s => {
+      s.antecedent.foreach(f => mapValues(map, f.formula)); 
+      s.succedent.foreach(f => mapValues(map, f.formula))
+    })
+    map.toMap //create an immutable map from the mutable one
+  }
+  private def mapValues(map: mutable.Map[HOLExpression, TA], f: HOLExpression): Unit = f match {
+    case c: HOLConst => map.getOrElseUpdate(c, c.exptype)
+    case HOLApp(a,b) => mapValues(map, a); mapValues(map, b)
+    case HOLAbs(_,b) => mapValues(map, b)
+    case _ => ()
+  }
+}
 
   // Get the total number of rules of a proof
   object rulesNumber {
@@ -202,9 +198,6 @@ package statistics {
       case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
       case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
       case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      // Definition rules
-      case DefinitionLeftRule(p, _, _, _) => apply(p)
-      case DefinitionRightRule(p, _, _, _) => apply(p)
       
       case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
     }
@@ -247,12 +240,8 @@ package statistics {
       case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
       case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
       case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      // Definition rules
-      case DefinitionLeftRule(p, _, _, _) => apply(p)
-      case DefinitionRightRule(p, _, _, _) => apply(p)
       
       case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
     }
   }
 
-}

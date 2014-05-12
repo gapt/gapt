@@ -1,15 +1,13 @@
 /*
  * SimpleManager.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package at.logic.algorithms.subsumption.managers
 
-import _root_.at.logic.utils.patterns.listeners.ListenerManager
+import at.logic.utils.patterns.listeners.ListenerManager
 import at.logic.algorithms.subsumption._
-import at.logic.calculi.lk.base.types._
+import at.logic.calculi.lk.base.FSequent
 
 class SimpleManager(listener: ListenerManager[SubsumptionDSEvent],
                     sbsmpAlg: SubsumptionAlgorithm,

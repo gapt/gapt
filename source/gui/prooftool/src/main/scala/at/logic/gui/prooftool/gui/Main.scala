@@ -17,12 +17,12 @@ import javax.swing.filechooser.FileFilter
 import javax.swing.SwingUtilities
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lksk.eliminateDefinitions
-import at.logic.calculi.lk.base.types.FSequent
-import at.logic.calculi.lk.base.{Sequent, LKProof}
-import at.logic.calculi.treeProofs.TreeProof
+import at.logic.calculi.lk.base._
+import at.logic.calculi.lk._
+import at.logic.calculi.proofs.TreeProof
 import at.logic.gui.prooftool.parser._
+import at.logic.language.hol._
 import at.logic.language.schema.IntVar
-import at.logic.language.lambda.symbols.VariableStringSymbol
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.xml.{ProofDatabase, XMLExporter}
@@ -44,6 +44,13 @@ import at.logic.calculi.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
+import at.logic.language.lambda.types.{To, Ti}
+import scala.Some
+import at.logic.gui.prooftool.parser.ShowAllRules
+import at.logic.gui.prooftool.parser.ChangeFormulaColor
+import at.logic.algorithms.rewriting.DefinitionElimination
+import at.logic.algorithms.llk.HybridLatexExporter
+import at.logic.parsing.language.tptp.TPTPFOLExporter
 
 
 object Main extends SimpleSwingApplication {
@@ -80,15 +87,14 @@ object Main extends SimpleSwingApplication {
     showFrame()
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     obj match {
-        // a full db is not handled by tha launcher, se need some special case
+      // a full db is not handled by tha launcher, se need some special case
       case pdb : ProofDatabase =>
-          db.loadProofDatabase(pdb)
-          selectProofFromDB(defaultFontSize)
-          ProofToolPublisher.publish(EnableMenus)
+        db.loadProofDatabase(pdb)
+        selectProofFromDB(defaultFontSize)
+        ProofToolPublisher.publish(EnableMenus)
       case _ =>
         body.contents = new Launcher(Some(name, obj), defaultFontSize)
     }
-
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -113,187 +119,150 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     loadProof((name, proof))
     initSunburstDialog(name, proof)
-
-    /*body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.ignoreRepaint = true
-
-    val pv = obj.root match {
-      case s : Sequent =>
-        println("detected Sequent proof")
-        val pv = new CombinedSequentProofView[T](obj, defaultFontSize)
-        body.contents = pv
-        pv
-      case _ =>
-        println("detected arbitrary proof")
-        val pv =  new CombinedProofView[T](obj, defaultFontSize)
-        body.contents = pv
-        pv
-    }
-    pv.view.setSelectedNode(null)
-    body.ignoreRepaint = false
-    body.revalidate()
-    pv.revalidate()
-    top.pack()
-    body.revalidate()
-    body.repaint()*/
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
+  def fOpen() {
+    chooser.fileFilter = chooser.acceptAllFileFilter
+    chooser.showOpenDialog(mBar) match {
+      case FileChooser.Result.Approve => loadProof(chooser.selectedFile.getPath,defaultFontSize)
+      case _ =>
+    }
+  }
 
-
-  def fOpen() { chooser.showOpenDialog(mBar) match {
-    case FileChooser.Result.Approve => loadProof(chooser.selectedFile.getPath,defaultFontSize)
-    case _ =>
-  }}
-
-  def fSaveProof(tp: AnyRef) { chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Approve =>
-      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      tp match {
-        case proof: LKProof => try {
-          val result = chooser.selectedFile.getPath
-          val path = if (result.endsWith(".xml")) result else result + ".xml"
-          XMLExporter(path, "the-proof", proof)
-        } catch {
-          case e: Throwable => errorMessage("Can't save the proof! \n\n" + getExceptionString(e))
+  def fSave(pair: (String, AnyRef)) {
+    chooser.fileFilter = chooser.acceptAllFileFilter
+    chooser.showSaveDialog(mBar) match {
+      case FileChooser.Result.Approve =>
+        body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+        val result = chooser.selectedFile.getPath
+        // val pair = body.getContent.getData.get
+        pair._2 match {
+          case proof: LKProof =>
+            try {
+              if (result.endsWith(".xml") || chooser.fileFilter.getDescription == ".xml") {
+                XMLExporter(result, pair._1, proof)
+              } else if (result.endsWith(".llk") || chooser.fileFilter.getDescription == ".llk") {
+                val filename = if (result.endsWith(".llk")) result else result + ".llk"
+                val file = new JBufferedWriter(new JFileWriter(filename))
+                file.write(HybridLatexExporter(proof, escape_latex = true))
+                file.close()
+              } else if (result.endsWith(".tex") || chooser.fileFilter.getDescription == ".tex") {
+                val filename = if (result.endsWith(".tex")) result else result + ".tex"
+                val file = new JBufferedWriter(new JFileWriter(filename))
+                file.write(ProofToLatexExporter(proof))
+                file.close()
+              } else infoMessage("Proofs cannot be saved in this format.")
+            }
+            catch { case e: Throwable => errorMessage("Cannot save the proof! \n\n" + getExceptionString(e)) }
+            finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+          case list: List[_] =>
+            try {
+              val ls = list.map(x => x match {
+                case s: Sequent => s.toFSequent()
+                case fs: FSequent => fs
+                case _ => throw new Exception("Cannot save this kind of lists.")
+              })
+              if (result.endsWith(".xml") || chooser.fileFilter.getDescription == ".xml") {
+                XMLExporter(result, new ProofDatabase(Map(), Nil, Nil, List((pair._1, ls))))
+              } else if (result.endsWith(".tex") || chooser.fileFilter.getDescription == ".tex") {
+                val filename = if (result.endsWith(".tex")) result else result + ".tex"
+                (new FileWriter(filename) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+                  .exportSequentList(ls, Nil).close
+              } else if (result.endsWith(".tptp") || chooser.fileFilter.getDescription == ".tptp") {
+                val filename = if (result.endsWith(".tptp")) result else result + ".tptp"
+                val file = new JBufferedWriter(new JFileWriter( filename ))
+                file.write(TPTPFOLExporter.tptp_problem( ls ))
+                file.close()
+              } else infoMessage("Lists cannot be saved in this format.")
+            }
+            catch { case e: Throwable => errorMessage("Cannot save the list! \n\n" + getExceptionString(e)) }
+            finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+          case _ => infoMessage("Cannot save this kind of objects.")
         }
-        case _ => infoMessage("This is not a proof, can't save it!")
-      }
-      body.cursor = java.awt.Cursor.getDefaultCursor
-    case _ =>
-  }}
+      case _ =>
+    }
+  }
 
-  def fSaveAll() { chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Approve => try {
-      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      val result = chooser.selectedFile.getPath
-      val path = if (result.endsWith(".xml")) result else result + ".xml"
-      XMLExporter(path, db.getProofDB)
-    } catch {
-      case e: Throwable => errorMessage("Can't save the database! \n\n" + getExceptionString(e))
-    } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
-    case _ =>
-  }}
+  def fSaveAll() {
+    chooser.fileFilter = chooser.acceptAllFileFilter
+    chooser.showSaveDialog(mBar) match {
+      case FileChooser.Result.Approve =>
+        body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+        val result = chooser.selectedFile.getPath
+        try {
+          if (result.endsWith(".xml") || chooser.fileFilter.getDescription == ".xml") {
+            XMLExporter(result, db.getProofDB)
+          } else if (result.endsWith(".tex") || chooser.fileFilter.getDescription == ".tex") {
+            val filename = if (result.endsWith(".tex")) result else result + ".tex"
+            val file = new JBufferedWriter(new JFileWriter(filename))
+            file.write(ProofToLatexExporter(db.getProofs.map(pair => (pair._1, pair._2.asInstanceOf[LKProof]))))
+            file.close()
+          } else infoMessage("Proofs cannot be saved in this format.")
+        } catch { case e: Throwable => errorMessage("Cannot save the file! \n\n" + getExceptionString(e))
+        } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+      case _ =>
+    }
+  }
 
-  def fExportPdf() { chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Approve => try {
-      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      import java.io.FileOutputStream
-      import com.itextpdf.text.{Document, Rectangle => PdfRectangle}
-      import com.itextpdf.text.pdf.PdfWriter
+  def fExportPdf(componentOption: Option[Component]) {
+    if (componentOption != None) {
+      chooser.fileFilter = chooser.peer.getChoosableFileFilters.find(f => f.getDescription == ".pdf").get
+      chooser.showSaveDialog(mBar) match {
+        case FileChooser.Result.Approve => try {
+          body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+          import java.io.FileOutputStream
+          import com.itextpdf.text.{Document, Rectangle => PdfRectangle}
+          import com.itextpdf.text.pdf.PdfWriter
 
-      val component = body.getContent.contents.head
-      val width = component.size.width
-      val height = component.size.height
-      val document = new Document(new PdfRectangle(width, height + 20))
-      val result = chooser.selectedFile.getPath
-      val path = if (result.endsWith(".pdf")) result else result + ".pdf"
-      val writer = PdfWriter.getInstance(document, new FileOutputStream(path))
-      document.open()
-      val content = writer.getDirectContent
-      val template = content.createTemplate(width, height)
-      val g2 = template.createGraphicsShapes(width, height)
-      component.paint(g2)
-      g2.dispose()
-      content.addTemplate(template, 0, 10)
-      document.close()
-    } catch {
-        case e: Throwable => errorMessage("Can't export to pdf! \n\n" + getExceptionString(e))
-    } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
-    case _ =>
-  }}
-
-
-  def fExportPng() { chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Approve => try {
-      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-
-      val component = body.getContent.contents.head
-      val width = component.size.width
-      val height = component.size.height
-      val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-      val g = img.createGraphics()
-      g.setBackground(new Color(255,255,255))
-      g.fillRect(0,0,width,height)
-      component.paint(g)
-      val result = chooser.selectedFile.getPath
-      val path = if (result.endsWith(".png")) result else result + ".png"
-      ImageIO.write(img, "png", new File(path))
-    } catch {
-      case e: Throwable => errorMessage("Can't export to png! \n\n" + getExceptionString(e))
-    } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
-    case _ =>
-  }}
-
-  def fExportClauseSetToTPTP() { chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Approve =>
-      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      body.getContent.getData.get._2  match {
-        case l : List[_] => try {
-          val list = l.map( x => x match {
-            case s: Sequent => s.toFSequent()
-            case fs: FSequent => fs
-            case _ => throw new Exception("This is not a clause set.")
-          })
+          val component = componentOption.get
+          val width = component.size.width
+          val height = component.size.height
+          val document = new Document(new PdfRectangle(width, height + 20))
           val result = chooser.selectedFile.getPath
-          val path = if (result.endsWith(".tptp")) result else result + ".tptp"
-          val file = new JBufferedWriter(new JFileWriter( path ))
-          file.write(at.logic.parsing.language.tptp.TPTPFOLExporter.tptp_problem( list ))
-          file.close()
+          val path = if (result.endsWith(".pdf")) result else result + ".pdf"
+          val writer = PdfWriter.getInstance(document, new FileOutputStream(path))
+          document.open()
+          val content = writer.getDirectContent
+          val template = content.createTemplate(width, height)
+          val g2 = template.createGraphicsShapes(width, height)
+          component.paint(g2)
+          g2.dispose()
+          content.addTemplate(template, 0, 10)
+          document.close()
         } catch {
-            case e: Throwable => errorMessage("Can't export the clause set! \n\n" + getExceptionString(e))
-        }
-        case _ => infoMessage("This is not a clause set, can't export it!")
+          case e: Throwable => errorMessage("Can't export to pdf! \n\n" + getExceptionString(e))
+        } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+        case _ =>
       }
-      body.cursor = java.awt.Cursor.getDefaultCursor
-    case _ =>
-  }}
+    } else infoMessage("There is nothing to export!")
+  }
 
-  def fExportClauseSetToTeX() { chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Approve =>
-      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      body.getContent.getData.get._2  match {
-        case l : List[_] => try {
-          val list = l.map( x => x match {
-            case s: Sequent => s.toFSequent()
-            case fs: FSequent => fs
-            case _ => throw new Exception("This is not a clause set.")
-          })
-          val result = chooser.selectedFile.getPath
-          val path = if (result.endsWith(".tex")) result else result + ".tex"
-          (new FileWriter( path ) with SequentsListLatexExporter with HOLTermArithmeticalExporter)
-            .exportSequentList( list , Nil).close
-        } catch {
-            case e: Throwable => errorMessage("Can't export the clause set! \n\n" + getExceptionString(e))
-        }
-        case _ => infoMessage("This is not a clause set, can't export it!")
-      }
-      body.cursor = java.awt.Cursor.getDefaultCursor
-    case _ =>
-  }}
+  def fExportPng(componentOption: Option[Component]) {
+    if (componentOption != None) {
+      chooser.fileFilter = chooser.peer.getChoosableFileFilters.find(f => f.getDescription == ".png").get
+      chooser.showSaveDialog(mBar) match {
+        case FileChooser.Result.Approve => try {
+          body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
 
-  def fExportProofToTex(tp: AnyRef, ask: Boolean) { chooser.showSaveDialog(mBar) match {
-    case FileChooser.Result.Approve =>
-      body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-      tp match {
-        case proof: LKProof => try {
+          val component = componentOption.get
+          val width = component.size.width
+          val height = component.size.height
+          val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+          val g = img.createGraphics()
+          g.setBackground(new Color(255,255,255))
+          g.fillRect(0,0,width,height)
+          component.paint(g)
           val result = chooser.selectedFile.getPath
-          val path = if (result.endsWith(".tex")) result else result + ".tex"
-          val fileContent = if (ask) questionMessage("Would you like to export all proofs?") match {
-            case Dialog.Result.Yes => ProofToLatexExporter(db.getProofs.map(pair => (pair._1, pair._2.asInstanceOf[LKProof])))
-            case _ => ProofToLatexExporter(proof)
-          } else ProofToLatexExporter(proof)
-          val file = new JBufferedWriter(new JFileWriter( path ))
-          file.write(fileContent)
-          file.close()
+          val path = if (result.endsWith(".png")) result else result + ".png"
+          ImageIO.write(img, "png", new File(path))
         } catch {
-          case e: Throwable => errorMessage("Can't save the proof! \n\n" + getExceptionString(e))
-        }
-        case _ => infoMessage("This is not a proof, can't save it!")
+          case e: Throwable => errorMessage("Can't export to png! \n\n" + getExceptionString(e))
+        } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
+        case _ =>
       }
-      body.cursor = java.awt.Cursor.getDefaultCursor
-    case _ =>
-  }}
+    } else infoMessage("There is nothing to export!")
+  }
 
   // This function is changed to dispose for cli.
   // When called from cli, sys.exit forces also cli to exit.
@@ -327,13 +296,13 @@ object Main extends SimpleSwingApplication {
         case dp: DrawProof =>
           dp.search = input_str
           if (dp.proof.root.isInstanceOf[Sequent])
-            ProofToolPublisher.publish(ChangeFormulaColor(Search.inTreeProof(input_str, dp.proof), Color.green, true))
+            ProofToolPublisher.publish(ChangeFormulaColor(Search.inTreeProof(input_str, dp.proof), Color.green, reset=true))
           else dp.searchNotInLKProof()
           dp.revalidate()
         case dp: DrawResolutionProof =>
           dp.search = input_str
           if (dp.proof.root.isInstanceOf[Sequent])
-            ProofToolPublisher.publish(ChangeFormulaColor(Search.inResolutionProof(input_str, dp.proof), Color.green, true))
+            ProofToolPublisher.publish(ChangeFormulaColor(Search.inResolutionProof(input_str, dp.proof), Color.green, reset=true))
           else dp.searchNotInLKProof()
           dp.revalidate()
         case dt: DrawTree =>
@@ -345,7 +314,7 @@ object Main extends SimpleSwingApplication {
         case _ => throw new Exception("Cannot search in this object!")
       }
     } catch {
-        case e: Throwable => errorMessage(getExceptionString(e))
+      case e: Throwable => errorMessage(getExceptionString(e))
     } finally {
       body.cursor = java.awt.Cursor.getDefaultCursor
     }
@@ -453,9 +422,9 @@ object Main extends SimpleSwingApplication {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
         border = customBorder
       }
-      contents += new MenuItem(Action("Save Proof as XML") { fSaveProof(body.getContent.getData.get._2) }) {
-        mnemonic = Key.P
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, JActionEvent.CTRL_MASK))
+      contents += new MenuItem(Action("Save as...") { fSave(body.getContent.getData.get) }) {
+        mnemonic = Key.S
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, JActionEvent.CTRL_MASK))
         border = customBorder
         enabled = false
         listenTo(ProofToolPublisher)
@@ -464,9 +433,9 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => enabled = false
         }
       }
-      contents += new MenuItem(Action("Save All as XML") { fSaveAll() }) {
-        mnemonic = Key.S
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, JActionEvent.CTRL_MASK))
+      contents += new MenuItem(Action("Save all as...") { fSaveAll() }) {
+        mnemonic = Key.A
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, JActionEvent.CTRL_MASK))
         border = customBorder
         listenTo(ProofToolPublisher)
         reactions += {
@@ -475,7 +444,7 @@ object Main extends SimpleSwingApplication {
         }
       }
       contents += new Separator
-      contents += new MenuItem(Action("Export as PDF") { fExportPdf() }) {
+      contents += new MenuItem(Action("Export to PDF") { fExportPdf(body.getContent.contents.headOption) }) {
         mnemonic = Key.D
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, JActionEvent.CTRL_MASK))
         border = customBorder
@@ -485,46 +454,14 @@ object Main extends SimpleSwingApplication {
           case EnableMenus => enabled = true
         }
       }
-      contents += new MenuItem(Action("Export as PNG") { fExportPng() }) {
+      contents += new MenuItem(Action("Export to PNG") { fExportPng(body.getContent.contents.headOption) }) {
         mnemonic = Key.N
-        //this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.CTRL_MASK))
+        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.CTRL_MASK))
         border = customBorder
         listenTo(ProofToolPublisher)
         reactions += {
           case DisableMenus => enabled = false
           case EnableMenus => enabled = true
-        }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Export Clause Set as TPTP") { fExportClauseSetToTPTP() }) {
-        mnemonic = Key.T
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, JActionEvent.CTRL_MASK))
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case DisableMenus => enabled = false
-          case EnableMenus => enabled = true
-        }
-      }
-      contents += new MenuItem(Action("Export Clause Set as TeX") { fExportClauseSetToTeX() }) {
-        mnemonic = Key.E
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, JActionEvent.CTRL_MASK))
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case DisableMenus => enabled = false
-          case EnableMenus => enabled = true
-        }
-      }
-      contents += new MenuItem(Action("Export Proof as TeX") { fExportProofToTex(body.getContent.getData.get._2, ask = true) }) {
-        mnemonic = Key.A
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, JActionEvent.CTRL_MASK))
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
         }
       }
       contents += new Separator
@@ -567,7 +504,7 @@ object Main extends SimpleSwingApplication {
       }
       contents += new Separator
       contents += new MenuItem(Action("Hide Structural Rules") {
-      //  warningMessage("This feature is under development and might not work properly!")
+        //  warningMessage("This feature is under development and might not work properly!")
         ProofToolPublisher.publish(HideStructuralRules)
       }) {
         border = customBorder
@@ -636,14 +573,9 @@ object Main extends SimpleSwingApplication {
           case UnLoaded => this.enabled = false
         }
       }
-      contents += new MenuItem(Action("Remove Marking") { ProofToolPublisher.publish(ChangeFormulaColor(Set(),Color.white,true)) }) {
+      contents += new MenuItem(Action("Remove Marking") {
+        ProofToolPublisher.publish(ChangeFormulaColor(Set(),Color.white,reset=true)) }) {
         border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
       }
       contents += new Separator
       contents += new MenuItem(Action("Extract Cut-Formulas") { extractCutFormulas() }) {
@@ -674,20 +606,31 @@ object Main extends SimpleSwingApplication {
       contents += new MenuItem(Action("Jump To End-sequent") { scrollToProof(body.getContent.getData.get._2.asInstanceOf[LKProof])}) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, JActionEvent.ALT_MASK))
         border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
       }
       contents += new MenuItem(Action("Find Cuts") {
         setSearchResult(getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof]))
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
         border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
       }
-      contents += new MenuItem(Action("Cycle through search results") {
+      contents += new MenuItem(Action("Cycle through cuts") {
         // TODO: reset cuts when loading a proof
         if ( currentResult != null) {
           if (currentResult.hasNext ) {
             val cut = currentResult.next()
             scrollToProof(cut)
-
           } else {
             currentResult = searchResult.iterator
           }
@@ -695,6 +638,12 @@ object Main extends SimpleSwingApplication {
       }) {
         this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.ALT_MASK))
         border = customBorder
+        enabled = false
+        listenTo(ProofToolPublisher)
+        reactions += {
+          case Loaded => this.enabled = true
+          case UnLoaded => this.enabled = false
+        }
       }
       contents += new Separator
       contents += new Menu("View Proof") {
@@ -733,7 +682,7 @@ object Main extends SimpleSwingApplication {
             for (i <- l) contents += new MenuItem(Action(i._1) { loadResolutionProof(i) }) { border = customBorder }
         }
       }
-      contents += new MenuItem(Action("View Definition List") { loadClauseSet(("Definition List", db.getDefinitions)) }) {
+      contents += new MenuItem(Action("View Definition List") { loadClauseSet(("Definition List", db.getDefinitions.toList)) }) {
         mnemonic = Key.D
         border = customBorder
       }
@@ -758,7 +707,7 @@ object Main extends SimpleSwingApplication {
         case Loaded => enabled = true
         case UnLoaded => enabled = false
       }
-      
+
       contents += new Menu("Compute Clause Set") {
         contents += new MenuItem(Action("All Cuts") { computeClList() }) { border = customBorder }
         contents += new MenuItem(Action("Only Quantified Cuts") { computeClListOnlyQuantifiedCuts() }) { border = customBorder }
@@ -837,20 +786,15 @@ object Main extends SimpleSwingApplication {
     contents += new Menu("Tests") {
       mnemonic = Key.T
       contents += new MenuItem(Action("Non-Prenex Proof 1") {
-        import at.logic.language.lambda.types.Definitions._
-        import at.logic.language.lambda.symbols.ImplicitConverters._
-        import at.logic.language.hol._
-        import at.logic.calculi.lk.propositionalRules._
-        import at.logic.calculi.lk.quantificationRules._
-        val p = HOLVar("p", i -> o)
-        val a = HOLVar("a", i)
-        val b = HOLVar("b", i)
-        val q = HOLVar("q", i -> o)
-        val x = HOLVar("x", i)
-        val px = HOLAppFormula(p, x) // p(x)
-        val pa = HOLAppFormula(p, a) // p(a)
-        val pb = HOLAppFormula(p, b) // p(b)
-        val qa = HOLAppFormula(q, a) // q(a)
+        val p = HOLVar("p", Ti -> To)
+        val a = HOLVar("a", Ti)
+        val b = HOLVar("b", Ti)
+        val q = HOLVar("q", Ti -> To)
+        val x = HOLVar("x", Ti)
+        val px = Atom(p, x::Nil) // p(x)
+        val pa = Atom(p, a::Nil) // p(a)
+        val pb = Atom(p, b::Nil) // p(b)
+        val qa = Atom(q, a::Nil) // q(a)
         val substa = a // x -> a
         val substb = b // x -> b
         val all_px = AllVar(x, px) // forall x. p(x)
@@ -867,21 +811,16 @@ object Main extends SimpleSwingApplication {
         ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
       contents += new MenuItem(Action("Non-Prenex Proof 2") {
-        import at.logic.language.lambda.types.Definitions._
-        import at.logic.language.lambda.symbols.ImplicitConverters._
-        import at.logic.language.hol._
-        import at.logic.calculi.lk.propositionalRules._
-        import at.logic.calculi.lk.quantificationRules._
-        val p = HOLVar("p", i -> o)
-        val a = HOLVar("a", i)
-        val b = HOLVar("b", i)
-        val q = HOLVar("q", i -> o)
-        val x = HOLVar("x", i)
-        val y = HOLVar("y", i)
-        val px = HOLAppFormula(p, x) // p(x)
-        val pa = HOLAppFormula(p, a) // p(a)
-        val pb = HOLAppFormula(p, b) // p(b)
-        val qy = HOLAppFormula(q, y) // q(a)
+        val p = HOLVar("p", Ti -> To)
+        val a = HOLVar("a", Ti)
+        val b = HOLVar("b", Ti)
+        val q = HOLVar("q", Ti -> To)
+        val x = HOLVar("x", Ti)
+        val y = HOLVar("y", Ti)
+        val px = Atom(p, x::Nil) // p(x)
+        val pa = Atom(p, a::Nil) // p(a)
+        val pb = Atom(p, b::Nil) // p(b)
+        val qy = Atom(q, y::Nil) // q(a)
         val substa = a // x -> a
         val substb = b // x -> b
         val ex_px = ExVar(x, px) // exists x. p(x)
@@ -899,22 +838,17 @@ object Main extends SimpleSwingApplication {
         ProofToolPublisher.publish(EnableMenus)
       }) { border = customBorder }
       contents += new MenuItem(Action("Nested Proof 1") {
-        import at.logic.language.lambda.types.Definitions._
-        import at.logic.language.lambda.symbols.ImplicitConverters._
-        import at.logic.language.hol._
-        import at.logic.calculi.lk.propositionalRules._
-        import at.logic.calculi.lk.quantificationRules._
-        val p = HOLVar("p", i -> o)
-        val a = HOLVar("a", i)
-        val b = HOLVar("b", i)
-        val q = HOLVar("q", i -> o)
-        val x = HOLVar("x", i)
-        val y = HOLVar("y", i)
-        val px = HOLAppFormula(p, x) // p(x)
-        val pa = HOLAppFormula(p, a) // p(a)
-        val pb = HOLAppFormula(p, b) // p(b)
-        val qa = HOLAppFormula(q, a) // q(a)
-        val qy = HOLAppFormula(q, y) // q(a)
+        val p = HOLVar("p", Ti -> To)
+        val a = HOLVar("a", Ti)
+        val b = HOLVar("b", Ti)
+        val q = HOLVar("q", Ti -> To)
+        val x = HOLVar("x", Ti)
+        val y = HOLVar("y", Ti)
+        val px = Atom(p, x::Nil) // p(x)
+        val pa = Atom(p, a::Nil) // p(a)
+        val pb = Atom(p, b::Nil) // p(b)
+        val qa = Atom(q, a::Nil) // q(a)
+        val qy = Atom(q, y::Nil) // q(a)
         val substa = a // x -> a
         val substb = b // x -> b
         val all_px = AllVar(x, px) // forall x. p(x)
@@ -990,8 +924,8 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("Cut-formula List",list),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't extract CutFormula List!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't extract CutFormula List!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def computeProjections() { try {
@@ -1019,13 +953,13 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("cllist",csPre),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute ClList!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't compute ClList!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def computeSchematicClauseSet() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val n = IntVar(new VariableStringSymbol("n"))
+    val n = IntVar("n")
 
     val s = StructCreators.extractStruct( body.getContent.getData.get._1, n)
     val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
@@ -1036,13 +970,13 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("Schematic Clause Set",pair._1),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute clause set!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't compute clause set!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def computeSchematicStruct() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val n = IntVar(new VariableStringSymbol("n"))
+    val n = IntVar("n")
     val s = StructCreators.extractRelevantStruct( body.getContent.getData.get._1, n)
     val structs_base = s._2.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
     val structs_step = s._1.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
@@ -1050,8 +984,8 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some(structs_step.head._1,structs_step.head._3),defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute Struct!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't compute Struct!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def computeSchematicProjectionTerm() { try {
@@ -1062,21 +996,21 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some( pterms.head ),defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute Projection Terms!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't compute Projection Terms!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def computeClListOnlyQuantifiedCuts() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions(LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ))
-    val s = StructCreators.extract( proof_sk, f => f.containsQuantifier )
+    val s = StructCreators.extract( proof_sk, f => containsQuantifier(f) )
     val csPre : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
     db.addSeqList(csPre.map(x => x.toFSequent()))
     body.contents = new Launcher(Some("cllist",csPre),16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute clause list!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't compute clause list!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def computeStruct() { try {
@@ -1087,33 +1021,33 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("Struct",s),defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute Struct!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't compute Struct!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   // Computes the struct, ignoring propositional cuts
   def computeStructOnlyQuantifiedCuts() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
-    val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => f.containsQuantifier ) )
+    val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => containsQuantifier(f) ) )
     db.addTermTree( s )
     body.contents = new Launcher(Some("Struct",s),defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't compute Struct!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't compute Struct!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def eliminateDefsLK() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val pair = body.getContent.getData.get
-    val new_proof = eliminateDefinitions( pair._2.asInstanceOf[LKProof]   )
+    val new_proof = AtomicExpansion(DefinitionElimination(db.getDefinitions, pair._2.asInstanceOf[LKProof]))
     db.addProofs((pair._1+" without def rules", new_proof)::Nil)
     body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't eliminate definitions!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't eliminate definitions!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def eliminateDefsLKsk() { try {
@@ -1124,8 +1058,8 @@ object Main extends SimpleSwingApplication {
     body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't eliminate definitions!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't eliminate definitions!\n\n" + getExceptionString(e))
   } finally ProofToolPublisher.publish(ProofDbChanged) }
 
   def newgentzen(proof: LKProof) { try {
@@ -1143,8 +1077,8 @@ object Main extends SimpleSwingApplication {
     })
 
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't eliminate all cuts!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't eliminate all cuts!\n\n" + getExceptionString(e))
   } finally {
     db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -1163,8 +1097,8 @@ object Main extends SimpleSwingApplication {
     if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
     body.contents = new Launcher(Some("Gentzen Result:", newProof),14)
   } catch {
-      case e: Throwable =>
-        errorMessage("Couldn't eliminate all cuts!\n\n" + getExceptionString(e))
+    case e: Throwable =>
+      errorMessage("Couldn't eliminate all cuts!\n\n" + getExceptionString(e))
   } finally {
     db.addProofs(ReductiveCutElim.proofs.map(x => (x.name, x)))
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -1177,7 +1111,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.getContent.getData match {
       case Some((_, proof : LKProof) ) =>
-        ProofToolPublisher.publish(ChangeFormulaColor(Set(), Color.red, false))
+        ProofToolPublisher.publish(ChangeFormulaColor(Set(), Color.red, reset=false))
       case _ => errorMessage("LK proof not found!")
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -1187,7 +1121,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     body.getContent.getData match {
       case Some((_, proof : LKProof) ) =>
-        ProofToolPublisher.publish(ChangeFormulaColor(getCutAncestors(proof), Color.green, false))
+        ProofToolPublisher.publish(ChangeFormulaColor(getCutAncestors(proof), Color.green, reset=false))
       case _ => errorMessage("LK proof not found!")
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -1328,77 +1262,16 @@ object Main extends SimpleSwingApplication {
   }
 
   private val chooser = new FileChooser {
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".gz") || f.isDirectory) true
-        else false
+    val extensions = List(".gz",".ivy",".lks",".lksc",".llk",".pdf",".png",".rs",".tex",".tptp",".xml")
+    extensions.foreach( fe => peer.addChoosableFileFilter(
+      new FileFilter {
+        def accept(f: File): Boolean = {
+          if (f.getName.endsWith(fe) || f.isDirectory) true
+          else false
+        }
+        def getDescription = fe
       }
-
-      def getDescription: String = ".gz"
-    }
-
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".ivy") || f.isDirectory) true
-        else false
-      }
-
-      def getDescription: String = ".ivy"
-    }
-
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".lks") || f.isDirectory) true
-        else false
-      }
-
-      def getDescription: String = ".lks"
-    }
-
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".pdf") || f.isDirectory) true
-        else false
-      }
-
-      def getDescription: String = ".pdf"
-    }
-
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".rs") || f.isDirectory) true
-        else false
-      }
-
-      def getDescription: String = ".rs"
-    }
-
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".tex") || f.isDirectory) true
-        else false
-      }
-
-      def getDescription: String = ".tex"
-    }
-
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".tptp") || f.isDirectory) true
-        else false
-      }
-
-      def getDescription: String = ".tptp"
-    }
-
-    fileFilter = new FileFilter {
-      def accept(f: File): Boolean = {
-        if (f.getName.endsWith(".xml") || f.isDirectory) true
-        else false
-      }
-
-      def getDescription: String = ".xml"
-    }
+    ))
 
     fileFilter = acceptAllFileFilter
   }

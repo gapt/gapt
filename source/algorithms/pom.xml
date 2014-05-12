@@ -11,7 +11,6 @@
 
   <modules>
     <module>unification</module>
-    <module>normalization</module>
     <module>subsumption</module>
     <module>diophantine</module>
     <module>matching</module>
@@ -19,9 +18,8 @@
     <module>resolution</module>
     <module>lksk</module>
     <module>fol</module>
-    <module>hlk</module>
     <module>shlk</module>
-    <module>rewriting</module>
+    <module>llk</module>
     <module>cutIntroduction</module>
     <module>interpolation</module>
     <module>expansionTrees</module>
@@ -42,22 +40,22 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>lambda</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lk</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    <groupId>at.logic</groupId>
-      <artifactId>lksk</artifactId>
+      <artifactId>schema</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>simple_parsing</artifactId>
+      <artifactId>lk</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>slk</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>at.logic</groupId>
+      <artifactId>lksk</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>

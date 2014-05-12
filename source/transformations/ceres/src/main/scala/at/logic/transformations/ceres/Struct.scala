@@ -1,46 +1,28 @@
 /*
  * Struct.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
-package at.logic.transformations.ceres
+package at.logic.transformations.ceres.struct
 
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.substitutions._
-import at.logic.language.hol.{HOLConst, HOLFormula,HOLExpression, HOLApp}
-import at.logic.language.hol.logicSymbols._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.lkExtractors._
-import at.logic.calculi.lksk.lkskExtractors._
-import at.logic.calculi.lksk.base._
 import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
-import at.logic.utils.ds.trees._
-import at.logic.language.lambda.types.ImplicitConverters._
-
-// imports for schema stuff
-import at.logic.calculi.slk._
-//import at.logic.language.schema._
-import at.logic.language.lambda.symbols._
-import at.logic.utils.ds.Multisets._
-
-import scala.collection.immutable.HashSet
-import at.logic.calculi.lk.base.types.FSequent
-
-// for debugging
-import clauseSets.StandardClauseSet._
-
-package struct {
-
 import at.logic.algorithms.shlk._
-import clauseSchema.SchemaSubstitution3
-import at.logic.language.hol.HOLAppFormula
-import at.logic.language.schema.Pred
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.lksk.{LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence}
+import at.logic.calculi.occurrences.{defaultFormulaOccurrenceFactory, FormulaOccurrence}
+import at.logic.calculi.slk._
+import at.logic.language.hol.{Substitution => HOLSubstitution, _}
+import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.types._
+import at.logic.language.lambda.symbols.SymbolA
+import at.logic.language.schema.{Substitution => SchemaSubstitution, SchemaFormula, BiggerThan, IntZero, IntVar, IntegerTerm, IndexedPredicate, Succ, TopC, BigAnd, BigOr, Pred, SchemaVar}
 import at.logic.utils.ds.Multisets.Multiset
-import scala.annotation.tailrec
+import at.logic.utils.ds.Multisets._
+import at.logic.utils.ds.trees._
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet._
+import at.logic.transformations.ceres.RelevantCC
+import scala.collection.immutable.HashSet
 
 trait Struct {
   def formula_equal(that: Struct) : Boolean;
@@ -85,7 +67,7 @@ trait Struct {
     }
   }
   case class A(fo: FormulaOccurrence) extends Struct {// Atomic Struct
-    override def toString(): String = printSchemaProof.formulaToString(fo.formula)
+    override def toString(): String =fo.formula.toString
     override def formula_equal(s:Struct) = s match {
       case A(x) => fo.formula syntaxEquals(x.formula)
       case _ => false
@@ -166,41 +148,41 @@ trait Struct {
 
     // We define some symbols that represent the operations of the struct
 
-    case object TimesSymbol extends LogicalSymbolsA {
+    case object TimesSymbol extends LogicalSymbolA {
       override def unique = "TimesSymbol"
       override def toString = "⊗"
       def toCode = "TimesSymbol"
     }
 
-    case object PlusSymbol extends LogicalSymbolsA {
+    case object PlusSymbol extends LogicalSymbolA {
       override def unique = "PlusSymbol"
       override def toString = "⊕"
       def toCode = "PlusSymbol"
     }
 
-    case object DualSymbol extends LogicalSymbolsA {
+    case object DualSymbol extends LogicalSymbolA {
       override def unique = "DualSymbol"
       override def toString = "∼"
       def toCode = "DualSymbol"
     }
 
-    case object EmptyTimesSymbol extends LogicalSymbolsA {
+    case object EmptyTimesSymbol extends LogicalSymbolA {
       override def unique = "EmptyTimesSymbol"
       override def toString = "ε_⊗"
       def toCode = "EmptyTimesSymbol"
     }
 
-    case object EmptyPlusSymbol extends LogicalSymbolsA {
+    case object EmptyPlusSymbol extends LogicalSymbolA {
       override def unique = "EmptyPlusSymbol"
       override def toString = "ε_⊕"
       def toCode = "EmptyPlusSymbol"
     }
 
-    case object TimesC extends HOLConst(TimesSymbol, "( o -> (o -> o) )")
-    case object PlusC extends HOLConst(PlusSymbol, "( o -> (o -> o) )")
-    case object DualC extends HOLConst(DualSymbol, "(o -> o)")
-    case object EmptyTimesC extends HOLConst(EmptyTimesSymbol, "o")
-    case object EmptyPlusC extends HOLConst(EmptyPlusSymbol, "o")
+    case object TimesC extends HOLConst(TimesSymbol, Type("( o -> (o -> o) )"))
+    case object PlusC extends HOLConst(PlusSymbol, Type("( o -> (o -> o) )"))
+    case object DualC extends HOLConst(DualSymbol, Type("(o -> o)"))
+    case object EmptyTimesC extends HOLConst(EmptyTimesSymbol, To)
+    case object EmptyPlusC extends HOLConst(EmptyPlusSymbol, To)
   }
 
   // some stuff for schemata
@@ -211,21 +193,19 @@ trait Struct {
     type CutConfiguration = (Multiset[HOLFormula], Multiset[HOLFormula])
     type CutOccurrenceConfiguration = Set[FormulaOccurrence]
   }
-
-  import TypeSynonyms._
-import at.logic.language.schema.{BiggerThan, IntZero, IntVar, IntegerTerm, IndexedPredicate, Succ, TopC, BigAnd, BigOr}
-import at.logic.language.hol.{And, Or, Neg, Imp}
-import at.logic.language.schema.SchemaFormula
+  object cutConfToString { 
+    def apply(cc : TypeSynonyms.CutConfiguration) = {
+      def str( m : Multiset[HOLFormula] ) = m.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + f.toString )
+      str( cc._1 ) + " | " + str( cc._2 )
+    }
+  }
 
 
 // Takes a CutOccurrenceConfiguration and creates a CutConfiguration cc
   // by, for each o in cc, taking the element f from seq such that
   // f, where param goes to term, is equal to o.formula.
   object cutOccConfigToCutConfig {
-    def apply( so: Sequent, cc: CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]): (Multiset[HOLFormula], Multiset[HOLFormula]) = {
-//      println("\n\nso: "+so)
-//      println("\n\nfSeq: "+seq)
-//      println("\n\ncc: "+cc)
+    def apply( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm]): (Multiset[HOLFormula], Multiset[HOLFormula]) = {
       cc.foldLeft( (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
@@ -239,14 +219,12 @@ import at.logic.language.schema.SchemaFormula
       })
     }
 
-    def applyRCC( so: Sequent, cc: CutOccurrenceConfiguration): (Multiset[HOLFormula], Multiset[HOLFormula]) = {
-//      println("\n\nso: "+so)
-//      println("\n\ncc: "+cc)
+    def applyRCC( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration): (Multiset[HOLFormula], Multiset[HOLFormula]) = {
       if(cc.isEmpty)
         return (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() )
       val seq = so.toFSequent()
-      val params = IntVar(new VariableStringSymbol("k") )::Nil
-      val terms = IntVar(new VariableStringSymbol("k") )::Nil
+      val params = IntVar("k")::Nil
+      val terms = IntVar("k")::Nil
       cc.foldLeft( (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( (res, fo) => {
         val cca = res._1
         val ccs = res._2
@@ -262,21 +240,13 @@ import at.logic.language.schema.SchemaFormula
 
     def getFormulaForCC( fo: FormulaOccurrence, fs: List[HOLFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
-      val sub = Substitution[HOLExpression](params.zip(terms))
-//      println("\n\nfo.formula = "+fo.formula)
-//      println("\n\nfs = "+fs)
+      val sub = HOLSubstitution(params.zip(terms))
 
       val list = fs.filter( f => {
-//        println( sub(f).syntaxEquals(fo.formula))
-//        sub(f).syntaxEquals(fo.formula)
         sub(f).syntaxEquals(fo.formula) || f.syntaxEquals(fo.formula)
-        //sub(f) == fo.formula //WHY DOES NOT WORK ???
       }) 
-      //println("list.size = " + list.size)
       list match {
         case Nil => {
-          //println("list is Nil!?")
-          //println(list)
           throw new Exception("Could not find a formula to construct the cut-configuration!")
         }
         case x::_ => x
@@ -287,14 +257,7 @@ import at.logic.language.schema.SchemaFormula
   // In the construction of schematized clause sets, we use symbols
   // that contain a name and a cut-configuration. This class represents
   // such symbols.
-  class ClauseSetSymbol(val name: String, val cut_occs: CutConfiguration) extends ConstantSymbolA {
-    def compare( that: SymbolA ) : Int =
-      // TODO: implement
-      throw new Exception
-
-    def toCode() : String =
-      // TODO: implement
-      throw new Exception
+  class ClauseSetSymbol(val name: String, val cut_occs: TypeSynonyms.CutConfiguration) extends SymbolA {
 
     override def toString() = {
       val nice_name:String = name match {
@@ -307,13 +270,7 @@ import at.logic.language.schema.SchemaFormula
         case "\\tau" | "tau" => "τ"
         case _ => name
       }
-      // It is really problematic for prooftool to have these Console characters in the string, so please avoid them.
-      // Console.BOLD+"CL^{("+Console.RESET+ cutConfToString(cut_occs) + ")," + Console.BOLD+Console.WHITE_B+nice_name+Console.RESET +Console.BOLD+"}"+Console.RESET
       "cl^{"+ nice_name + ",(" + cutConfToString(cut_occs) + ")}"
-    }
-    private def cutConfToString( cc : CutConfiguration ) = {
-      def str( m : Multiset[HOLFormula] ) = m.foldLeft( "" )( (s, f) => s + printSchemaProof.formulaToString(f) )
-      str( cc._1 ) + "|" + str( cc._2 )
     }
   }
 
@@ -344,7 +301,7 @@ import at.logic.language.schema.SchemaFormula
 
       // assumption: all proofs in the SchemaProofDB have the
       // same running variable "k".
-      val k = IntVar(new VariableStringSymbol("k") )
+      val k = IntVar("k")
       val cs_1_f = SchemaProofDB.foldLeft[HOLFormula](TopC)((f, ps) =>
         And(cutConfigurations( ps._2.rec ).foldLeft[HOLFormula](TopC)((f2, cc) =>
           And(Imp(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ(k)::Nil ) ), 
@@ -373,43 +330,18 @@ import at.logic.language.schema.SchemaFormula
     def extractRelevantStruct(name: String, fresh_param: IntVar): Pair[List[(String,  Struct, Set[FormulaOccurrence])], List[(String,  Struct, Set[FormulaOccurrence])]] = {
       val rcc = RelevantCC(name)._1.flatten
       val rez_step = rcc.map(pair => Tuple3("Θ(" + pair._1 + "_step, (" +
-        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).rec.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, Succ(IntVar(new VariableStringSymbol("k") ))::Nil ) ) + "))",
+        cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).rec.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, Succ(IntVar("k"))::Nil ) ) + "))",
         extractStepWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
         pair._2))
 
       val rcc1 = RelevantCC(name)._2.flatten
       val rez_base = rcc1.map(pair => Tuple3("Θ(" + pair._1 + "_base, (" +
-        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).base.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, IntZero()::Nil ) ) + "))",
+        cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).base.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, IntZero()::Nil ) ) + "))",
         extractBaseWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
         pair._2))
       Pair(rez_step, rez_base)
     }
 
-//    def extractStruct(name: String, fresh_param: IntVar) : Struct =
-//    {
-//      val cs_0 = SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) =>
-//        Plus(cutConfigurations( ps._2.base ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
-//          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero()::Nil ) ), IntZero()::Nil ), ps._2.base.root ) ) ), extractBaseWithCutConfig(ps._2, cc)), s2)),
-//            s) )
-//
-//      // assumption: all proofs in the SchemaProofDB have the
-//      // same running variable "k".
-//      val k = IntVar(new VariableStringSymbol("k") )
-//      val schema = SchemaProofDB.get( name )
-////      val precond = Times(A(toOccurrence(BiggerThan(IntZero(),k), schema.rec.root)),
-////                          A(toOccurrence(BiggerThan(k, fresh_param), schema.rec.root)))
-//      val cs_1 = SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) => //Times(precond, SchemaProofDB.foldLeft[Struct](EmptyPlusJunction())((s, ps) =>
-//        Plus(cutConfigurations( ps._2.rec ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
-////        Plus(relevantCutConfigurations( name ).foldLeft[Struct](EmptyPlusJunction())((s2, cc) =>
-//
-//          Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ(k)::Nil ) ), Succ(k)::Nil ), ps._2.rec.root ) ) ), extractStepWithCutConfig(ps._2, cc), Nil), s2)
-//              ),
-//            s) )
-//
-//      val cl_n = IndexedPredicate( new ClauseSetSymbol(name, (HashMultiset[HOLFormula], HashMultiset[HOLFormula]) ),
-//                                   fresh_param::Nil )
-//      Plus(A(toOccurrence(cl_n, schema.rec.root)), Plus( cs_0 ,cs_1) )
-//    }
     private def hackGettingProof(s: String) : SchemaProof = {
       val s1 = s.replace("Θ(","")
       val s2 = s1.replace("_base","\n")
@@ -427,7 +359,7 @@ import at.logic.language.schema.SchemaFormula
 
       // assumption: all proofs in the SchemaProofDB have the
       // same running variable "k".
-      val k = IntVar(new VariableStringSymbol("k") )
+      val k = IntVar("k")
       val cs_1 = terms._1.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
         Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_step","\n").takeWhile(c => !c.equals('\n')),
           cutOccConfigToCutConfig( hackGettingProof(triple._1).rec.root, triple._3, hackGettingProof(triple._1).seq, hackGettingProof(triple._1).vars, Succ(k)::Nil ) ), Succ(k)::Nil ), hackGettingProof(triple._1).rec.root ) ) ),
@@ -441,13 +373,10 @@ import at.logic.language.schema.SchemaFormula
     //extracts the struct given the relevant CC
     def extractStructRCCstep(name: String, fresh_param: IntVar, rcc: List[(String, Set[FormulaOccurrence])]) : Struct = {
       val relevant_struct_list_step = rcc.map(pair => Tuple3("Θ(" + pair._1 + "_step, (" +
-        ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(pair._1).rec.root, pair._2 ) ) + "))",
+        cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(pair._1).rec.root, pair._2 ) ) + "))",
         extractStepWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
         pair._2))
-//      println("\n\nrelevant_struct_list_step.size = "+relevant_struct_list_step.size)
-//      val terms = extractRelevantStruct(name, fresh_param)
-      val k = IntVar(new VariableStringSymbol("k") )
-//      println("\nrelevant_struct_list_step : "+relevant_struct_list_step)
+      val k = IntVar("k")
       val cs_0 = relevant_struct_list_step.foldLeft[Struct](EmptyPlusJunction())((result, triple) =>
         Plus(Times(Dual(A(toOccurrence(IndexedPredicate( new ClauseSetSymbol( triple._1.replace("Θ(","").replace("_step","\n").takeWhile(c => !c.equals('\n')),
           cutOccConfigToCutConfig.applyRCC( hackGettingProof(triple._1).rec.root, triple._3 ) ), Succ(k)::Nil ), hackGettingProof(triple._1).rec.root ) ) ),
@@ -461,12 +390,12 @@ import at.logic.language.schema.SchemaFormula
       val relevant_struct_list_base = rcc.map(triple =>
           if (triple._2 == triple._3)
             Tuple4("Θ(" + triple._1 + "_base, (" +
-            ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(triple._1).base.root, triple._3 ) ) + "))",
+            cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(triple._1).base.root, triple._3 ) ) + "))",
             extractBaseWithCutConfig( SchemaProofDB.get(triple._1), triple._2),
             triple._2, triple._3)
           else
             Tuple4("Θ(" + triple._1 + "_base, (" +
-            ProjectionTermCreators.cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(triple._1).rec.root, triple._3 ) ) + "))",
+            cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get(triple._1).rec.root, triple._3 ) ) + "))",
             extractBaseWithCutConfig( SchemaProofDB.get(triple._1), triple._2),
             triple._2, triple._3)
       )
@@ -511,89 +440,20 @@ import at.logic.language.schema.SchemaFormula
       val occs = p.root.antecedent ++ p.root.succedent
       combinations( occs.size, occs.toSet )
     }
-
-//    computes relevant cut configurations
-//    def relevantCutConfigurations( proof_name: String ) : Set[Set[FormulaOccurrence]] = {
-//      RelevantCC(proof_name).map(set => set.map(pair => pair._2).flatten.toSet).toSet
-//    }
-
     
-    def extractStepWithCutConfig( schema: SchemaProof, cc: CutOccurrenceConfiguration ) =
+    def extractStepWithCutConfig( schema: SchemaProof, cc: TypeSynonyms.CutOccurrenceConfiguration ) =
     {
       extract( schema.rec, getAncestors( cc ) ++ getCutAncestors( schema.rec ) )
     }
-/*
-    def extractSteps(fresh_param: IntVar) = {
-      println("extracting step clause sets")
 
-      // compute for the step case (i.e. CS_1)
-      SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() ) ( (struct, ps) => {
-        val n = ps._1
-        val schema = ps._2
-        println("computing cut configurations")
-        val ccs = cutConfigurations( schema.rec )
-        println("computing cut ancestors")
-        val cut_ancs = getCutAncestors( schema.rec )
-        println("first compute for proof " + n)
-        // TODO: due to schema.vars.head in the next line, we only support
-        // proofs with a single integer parameter. To support more,
-        // the definition of ClauseSetSymbol needs to be extended.
-        val k = schema.vars.head
-
-        Times( precond, Plus( struct, ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
-        {
-          println("cut configuration: " + cc)
-          val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.rec.root, cc ) ), Succ(k)::Nil )
-          Plus(struct2, Times(Dual(A(toOccurrence(pred, schema.rec.root))), extractStepWithCutConfig(schema, cc), Nil ))
-        }), Nil))
-      })
-    }
-*/
-    def extractBaseWithCutConfig( schema: SchemaProof, cc: CutOccurrenceConfiguration ) =
+    def extractBaseWithCutConfig( schema: SchemaProof, cc: TypeSynonyms.CutOccurrenceConfiguration ) =
     {
       extract( schema.base, getAncestors( cc ) ++ getCutAncestors( schema.base ) )
     }
-/*
-    def extractBases : Struct = {
-      println("extracting base clause sets")
 
-      // create the set of all possible cut-configurations
-      // for p
-      /*
-      def toFormulaMultiset( s: Set[FormulaOccurrence] ) = s.foldLeft( HashMultiset() )( (res, o) => res + o.formula )
-      def cutConfigurations( s: Set[FormulaOccurrence] ) = combinations( s.size, toMultiset( s ) )
-      def cutConfigurations( p: LKProof ) = {
-        val ca = cutConfigurations( p.root.antecedent )
-        val cs = cutConfigurations( p.root.succedent )
-        ca.foldLeft( new HashSet[CutConfiguration] )( (res, cc) =>
-          res ++ cs.foldLeft( new HashSet[CutConfiguration] )( (res2, cc2) => res2 + (cc, cc2) ) )
-      } */
-
-
-      // compute for base case (i.e. CS_0)
-      SchemaProofDB.foldLeft[Struct]( EmptyPlusJunction() )( (struct, ps) => {
-        val n = ps._1
-        val schema = ps._2
-        val ccs = cutConfigurations( schema.base )
-        val cut_ancs = getCutAncestors( schema.base )
-        //println("first compute for proof " + n)
-        val res = Plus(struct, ccs.foldLeft[Struct]( EmptyPlusJunction() )( (struct2, cc) =>
-        {
-          //println("cut configuration: " + cc)
-          val pred = IndexedPredicate( new ClauseSetSymbol( n, cutOccConfigToCutConfig( schema.base.root, cc ) ), IntZero()::Nil )
-          val res = Times(Dual(A(toOccurrence(pred, schema.base.root))), extractBaseWithCutConfig( schema, cc ), Nil )
-          //println("obtained struct from cc: " + transformStructToClauseSet(res))
-          Plus(struct2, res)
-        }))
-        //println("obtained struct from base case:" + transformStructToClauseSet(res ))
-        res
-      })
-    }
-*/
+    // TODO this should really disappear.
     def toOccurrence( f: HOLFormula, so: Sequent ) =
     {
-//      val others = so.antecedent ++ so.succedent
-//      others.head.factory.createPrincipalFormulaOccurrence(f, Nil, others)
       defaultFormulaOccurrenceFactory.createFormulaOccurrence(f, Nil)
     }
 
@@ -644,21 +504,27 @@ import at.logic.language.schema.SchemaFormula
     }
 
     //the original version:
-//    def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
-//      val schema = SchemaProofDB.get( name )
-//      val sym = new ClauseSetSymbol( name,
-//        cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)),
-//                                 schema.seq, schema.vars, indices) )
-//      val atom = IndexedPredicate( sym, indices )
-//      A( toOccurrence( atom, so ) )
-//    }
+    def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: TypeSynonyms.CutOccurrenceConfiguration) = {
+      val schema = SchemaProofDB.get( name )
+      val sym = new ClauseSetSymbol( name,
+        cutOccConfigToCutConfig( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)),
+                                 schema.seq, schema.vars, indices) )
+      val atom = IndexedPredicate( sym, indices )
+      A( toOccurrence( atom, so ) )
+    }
 
+    // Daniel: I quote gui/prooftool/src/main/scala/at/logic/gui/prooftool/gui/Main.scala:
+    // "FixedFOccs does not exist anymore. I don't know what should be the correct parameter for this function."
+    // I don't know what the correct code is for the "new version" below, hence I replace it by
+    // the "original version" above which does not reference FixedFOccs.
+
+    /*
     //the new version: TODO:remove it!
-    def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: CutOccurrenceConfiguration) = {
+    def handleSchemaProofLink( so: Sequent , name: String, indices: List[IntegerTerm], cut_occs: TypeSynonyms.CutOccurrenceConfiguration) = {
       val root = SchemaProofDB.get( name ).rec.root
       val root_focc = root.antecedent++root.succedent
       val cutsInPLink = cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)).map(fo => if(FixedFOccs.PLinksMap.contains(fo)) FixedFOccs.PLinksMap.get(fo).get else fo)
-      println("\ncutsInPLink = "+cutsInPLink)
+      //println("\ncutsInPLink = "+cutsInPLink)
 //      root_focc.filter(fo => getAncestors(fo).intersect(cutsInPLink).nonEmpty)
 //      val sym = new ClauseSetSymbol( name, cutOccConfigToCutConfig.applyRCC( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ))))
       val sym = if ((so.antecedent ++ so.succedent).intersect(FixedFOccs.PLinksMap.keySet.toList).nonEmpty)
@@ -667,7 +533,7 @@ import at.logic.language.schema.SchemaFormula
               new ClauseSetSymbol( name, cutOccConfigToCutConfig.applyRCC( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ))))
       val atom = IndexedPredicate( sym, indices )
       A( toOccurrence( atom, so ) )
-    }
+    }*/
 
     def handleLabelledAxiom( lso: LabelledSequent , cut_occs: Set[FormulaOccurrence] ) = {
       val left = lso.l_antecedent.toList.head
@@ -703,29 +569,25 @@ import at.logic.language.schema.SchemaFormula
       case Nil => EmptyTimesJunction()
       case s1::Nil => s1
       case s1::tail => Times(s1, makeTimesJunction(tail, aux), aux)
-//      case s1::tail => new Times() with Labeled {type T = LKProof, def label: LKProof =  }
     }
   }
 
 
   //returns an arithmetically ground struct
   object groundStruct {
-    def apply(s: Struct, subst: SchemaSubstitution3) : Struct = {
+    def apply(s: Struct, subst: HOLSubstitution) : Struct = {
       s match {
         case A(fo) => {
-//          println("\nfo.formula = "+fo.formula)
-//          println("fo.formula.getClass = "+fo.formula.getClass)
           fo.formula match {
-            case IndexedPredicate(f,l) => f.name match {
+            case IndexedPredicate(f,l) => f.sym match {
               case clsym: ClauseSetSymbol => {
-//                println("clsym = ("+clsym.name+","+l.head+")")
-                return A(fo.factory.createFormulaOccurrence(subst(fo.formula).asInstanceOf[HOLFormula], Nil))
+                return A(fo.factory.createFormulaOccurrence(subst(fo.formula), Nil))
               }
-              case _ => {}//println("IndexedPredicate")
+              case _ => {}
             }
-            case _ => {}//println("complex f-la")
+            case _ => {}
           }
-          A(fo.factory.createFormulaOccurrence(subst(fo.formula).asInstanceOf[HOLFormula], Nil))
+          A(fo.factory.createFormulaOccurrence(subst(fo.formula), Nil)) // ????????????????????????
         }
         case Dual(sub) => Dual(apply(sub, subst))
         case Times(left, right, foList) => Times(apply(left, subst), apply(right, subst), foList.map(fo => fo.factory.createFormulaOccurrence(subst(fo.formula).asInstanceOf[HOLFormula], Nil)))
@@ -741,36 +603,31 @@ import at.logic.language.schema.SchemaFormula
     def apply(s: Struct) : Struct = {
       s match {
         case A(fo) => {
-//          println("fo.formula.getClass = "+fo.formula.getClass)
           fo.formula match {
-            case HOLApp(f,l) => f.asInstanceOf[HOLConst].name match {
-//            case IndexedPredicate(f,l) => f.name match {
+            case HOLApp(f,l) => f.asInstanceOf[HOLConst].sym match {
               case clsym: ClauseSetSymbol => {
                 if(l == IntZero()) {
                   val base = SchemaProofDB.get(clsym.name).base
                   //TODO: take into account the omega-ancestors
                   return StructCreators.extract(base, getCutAncestors(base))
                 }
-                println("clsym = ("+clsym.name+","+l+")")
+                //println("clsym = ("+clsym.name+","+l+")")
                 val step = SchemaProofDB.get(clsym.name).rec
                 //TODO: take into account the omega-ancestors
                 val struct = StructCreators.extract(step, getCutAncestors(step))
-                println("struct : "+struct)
-                val new_map = Map.empty[Var, IntegerTerm] + Pair(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], Pred(l.asInstanceOf[IntegerTerm]))
-                val new_subst = new SchemaSubstitution3(new_map)
-                val gr_struct = groundStruct(struct, new_subst)
-                println("ground struct : "+gr_struct)
+                //println("struct : "+struct)
+                val new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), Pred(l.asInstanceOf[IntegerTerm]))
+                val new_subst = SchemaSubstitution(new_map)
+                val gr_struct = groundStruct(struct, new_subst.asInstanceOf[HOLSubstitution])
+                //println("ground struct : "+gr_struct)
                 return unfoldGroundStruct(gr_struct)
               }
               case _ => {
-//                println("f.name = "+f.asInstanceOf[HOLConst].name)
-                if(f.asInstanceOf[HOLConst].name.toString().contains("cl^"))
-                  println("proof_name = "+f.asInstanceOf[HOLConst].name.asInstanceOf[ClauseSetSymbol].name)
-//                println("isClauseSetSym = "+f.asInstanceOf[HOLConst].name)
-//                println("IndexedPredicate")
+                //if(f.asInstanceOf[HOLConst].name.toString().contains("cl^"))
+                  //println("proof_name = "+f.asInstanceOf[HOLConst].name.asInstanceOf[ClauseSetSymbol].name)
               }
             }
-            case _ => println("complex f-la")
+            case _ => ()//println("complex f-la")
           }
           A(fo.factory.createFormulaOccurrence(fo.formula, Nil))
         }
@@ -781,6 +638,6 @@ import at.logic.language.schema.SchemaFormula
       }
     }
   }
-}
+
 
 

@@ -3,29 +3,24 @@
 
 package at.logic.provers.atp
 
-import _root_.at.logic.language.fol._
-import _root_.at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import _root_.at.logic.language.hol.{Neg, Atom}
-import _root_.at.logic.language.lambda.symbols.VariableStringSymbol
-import _root_.at.logic.parsing.language.simple.SimpleFOLParser
-import _root_.at.logic.provers.atp.commands.base.{BranchCommand, Command}
-import _root_.at.logic.provers.atp.commands.logical.DeterministicAndCommand
+import org.specs2.mutable._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
+
+import at.logic.language.fol._
+import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.provers.atp.commands.base.{BranchCommand, Command}
+import at.logic.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.calculi.lk.base.FSequent
 import at.logic.provers.atp.commands.refinements.simple._
 import at.logic.provers.atp.commands.refinements.base._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.robinson._
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.readers.StringReader
-import at.logic.calculi.resolution.base._
-import at.logic.calculi.resolution.robinson._
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
-import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-import at.logic.calculi.lk.base.types._
+import at.logic.calculi.resolution._
+import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
 private object MyProver extends Prover[Clause]
@@ -39,8 +34,8 @@ class ProverTest extends SpecificationWithJUnit {
   def stream1a: Stream[Command[Clause]] = Stream.cons(SequentsMacroCommand[Clause](
     SimpleRefinementGetCommand[Clause],
     List(VariantsCommand,ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm),FactorCommand(FOLUnificationAlgorithm),
-      SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-      SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+      SimpleForwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
+      SimpleBackwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
       InsertResolventCommand[Clause]),
     RefutationReachedCommand[Clause]), stream1a)
   def streama: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1a))
@@ -51,8 +46,8 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(BranchCommand[Clause](List(
       Stream(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
       Stream(ParamodulationCommand(FOLUnificationAlgorithm)))),
-    Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleForwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
+    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1b)))))))
   def streamb: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1b))
@@ -64,8 +59,8 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(DeterministicAndCommand[Clause]((
       List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
       List(ParamodulationCommand(FOLUnificationAlgorithm)))),
-    Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleForwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
+    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1c)))))))
   def streamc: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1c))
@@ -84,8 +79,8 @@ class ProverTest extends SpecificationWithJUnit {
     Stream.cons(DeterministicAndCommand[Clause]((
       List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm)),
       List(ParamodulationCommand(FOLUnificationAlgorithm)))),
-    Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleForwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
+    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1e))))))))
   def streame: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1e))
@@ -155,10 +150,10 @@ class ProverTest extends SpecificationWithJUnit {
     }
     "obtain the conclusion from premises" in {
       "-P(x) | P(f(x)) from -P(x) | -P(y) | P(f(x)). P(x). " in {
-        val var1 = FOLVar(new VariableStringSymbol("x"))
-        val fun1 = Function(new ConstantStringSymbol("f"), var1::Nil)
-        val lit1 = Atom(new ConstantStringSymbol("P"),var1::Nil)
-        val lit2 = Atom(new ConstantStringSymbol("P"),fun1::Nil)
+        val var1 = FOLVar("x")
+        val fun1 = Function("f", var1::Nil)
+        val lit1 = Atom("P",var1::Nil)
+        val lit2 = Atom("P",fun1::Nil)
         getRefutationd("-P(x) | -P(y) | P(f(x)). P(x).",FSequent(List(lit1),List(lit2))) must beTrue
       }
       "P(f(a)) from -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a)." in {

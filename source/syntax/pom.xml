@@ -14,7 +14,6 @@
   <modules>
     <module>language</module>
     <module>calculi</module>
-    <module>generators</module>
   </modules>
   
   <dependencies>

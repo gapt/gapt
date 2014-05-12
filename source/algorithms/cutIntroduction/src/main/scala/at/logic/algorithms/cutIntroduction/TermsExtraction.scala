@@ -9,15 +9,11 @@
 
 package at.logic.algorithms.cutIntroduction
 
+import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.quantificationRules._
-import at.logic.calculi.lk.definitionRules._
-import at.logic.calculi.lk.equationalRules._
 import at.logic.language.fol._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
-import at.logic.calculi.lk.base.types._
 import at.logic.calculi.expansionTrees._
 import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti, StrongQuantifier => StrongQuantifierMulti, toFormulaM}
 import at.logic.algorithms.lk._
@@ -41,7 +37,7 @@ object TermsExtraction {
 
     // Extract the terms
     multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
-      if(toFormulaM(mTree).isPrenex) {
+      if(isPrenex(toFormulaM(mTree).asInstanceOf[FOLFormula])) {
         mTree match {
           case WeakQuantifierMulti(form, children) => 
             val f = form.asInstanceOf[FOLFormula]

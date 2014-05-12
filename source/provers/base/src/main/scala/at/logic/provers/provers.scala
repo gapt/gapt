@@ -1,7 +1,6 @@
 package at.logic.provers
 
 import at.logic.language.hol.HOLFormula
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base._
 
 /**

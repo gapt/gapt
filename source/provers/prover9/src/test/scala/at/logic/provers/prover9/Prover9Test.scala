@@ -4,35 +4,36 @@
 
 package at.logic.provers.prover9
 
-import at.logic.language.lambda.symbols._
-import _root_.at.logic.calculi.resolution.base.ResolutionProof
-import _root_.at.logic.calculi.resolution.base.Clause
-import _root_.at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-import _root_.at.logic.parsing.language.simple.SimpleFOLParser
-import _root_.at.logic.parsing.readers.StringReader
-import _root_.at.logic.provers.atp.commands.base.{SetStreamCommand, PrependCommand}
-import _root_.at.logic.provers.atp.commands.sequents.SetTargetClause
-import _root_.at.logic.provers.atp.Prover
 import at.logic.calculi.lk.base.FSequent
-import at.logic.provers.prover9.commands.Prover9InitCommand
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mock.Mockito
-import org.mockito.Matchers._
-import java.io.IOException
-import at.logic.calculi.resolution.robinson.{Formatter, RobinsonResolutionProof}
-
 import at.logic.calculi.occurrences.factory
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-
+import at.logic.calculi.resolution.Clause
+import at.logic.calculi.resolution.ResolutionProof
+import at.logic.calculi.resolution.robinson.{Formatter, RobinsonResolutionProof}
 import at.logic.language.fol._
-import at.logic.language.hol.logicSymbols._
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.language.lambda.symbols._
+import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
+import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.parsing.readers.StringReader
+import at.logic.provers.atp.Prover
+import at.logic.provers.atp.commands.base.{SetStreamCommand, PrependCommand}
+import at.logic.provers.atp.commands.sequents.SetTargetClause
+import at.logic.provers.prover9.commands.Prover9InitCommand
 import java.io.File.separator
+import java.io.IOException
+
+import org.junit.runner.RunWith
+import org.mockito.Matchers._
+import org.specs2.mock.Mockito
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
+import at.logic.parsing.language.prover9.Prover9TermParser.parseFormula
+import at.logic.provers.prover9.commands.Prover9InitCommand
+import scala.Some
+import at.logic.provers.atp.commands.sequents.SetTargetClause
+import at.logic.provers.atp.commands.base.SetStreamCommand
 
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
-
 
 @RunWith(classOf[JUnitRunner])
 class Prover9Test extends SpecificationWithJUnit {
@@ -51,6 +52,41 @@ class Prover9Test extends SpecificationWithJUnit {
   }
 
   def getRefutation2(ls: Iterable[FSequent]) = MyProver.refute(Stream(SetTargetClause(FSequent(List(),List())), Prover9InitCommand(ls), SetStreamCommand())).next
+
+
+  "replay" should {
+    "work on the tape-in clause set" in {
+      skipped("replay does not terminate anymore")
+      val formulas = List(
+        "f(X+Y)=0",
+        "f(Y+X)=1",
+        "f(X + Z0) = 0",
+        "f(((X + Z0) + 1) + Z1) = 0",
+        "f(X + Z0) = 1",
+        "f(((X + Z0) + 1) + Z1) = 1"
+      ).map(parseFormula)
+
+      val c1 = FSequent(Nil, List(formulas(0), formulas(1)))
+      val c2 = FSequent(List(formulas(2), formulas(3)),Nil)
+      val c3 = FSequent(List(formulas(4), formulas(5)),Nil)
+
+      val ls = List(c1,c2,c3)
+
+      val prover = new Prover[Clause] {}
+
+      prover.refute(Stream(
+        SetTargetClause(FSequent(List(),List())),
+        Prover9InitCommand(ls),
+        SetStreamCommand()
+      )).next must beLike {
+        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals (FSequent(List(),List())) =>
+          ok
+        case _ =>
+          ko
+      }
+    }
+  }
+
 
   "Prover9 within ATP" should {
     /*"prove (with para) SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
@@ -147,7 +183,6 @@ class Prover9Test extends SpecificationWithJUnit {
       }) must beTrue
     }
      "prove an example from the automated deduction exercises" in {
-     (1 === 2).orSkip //workaround to simulate specs1 skip
 
       /* loops at derivation of clause 7:
         <clause id="7">
@@ -185,13 +220,13 @@ class Prover9Test extends SpecificationWithJUnit {
       //checks, if the execution of prover9 works, o.w. skip test
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
 
-      val p = Atom(new ConstantStringSymbol("P"), Nil)
+      val p = Atom("P", Nil)
       val s1 = FSequent(Nil, p::Nil)
       val s2 = FSequent(p::Nil, Nil)
       val result : Option[RobinsonResolutionProof] = Prover9.refute( s1::s2::Nil )
       result match {
         case Some(proof) =>
-          println(Formatter.asHumanReadableString(proof))
+          //println(Formatter.asHumanReadableString(proof))
           true must beEqualTo(true)
         case None => "" must beEqualTo( "Refutation failed!" )
       }
@@ -271,18 +306,15 @@ class Prover9Test extends SpecificationWithJUnit {
 
       val p = new Prover9Prover()
 
-      val s = FSequent(Nil,List(AllVar(FOLVar(new VariableStringSymbol("x")), parse("=(x,x)"))))
+      val s = FSequent(Nil,List(AllVar(FOLVar("x"), parse("=(x,x)"))))
 
 
-  /* FIXME: commented out since tptp export of quantifiers is still failing.
-     Try again after merging Giselle's changes. */
-      /*
       p.isValid(s) must beTrue
-      p.getRobinsonProof (s) must beLike {
+    // TODO: cannot yet import proofs for arbitrary formulas
+    /*  p.getRobinsonProof (s) must beLike {
         case Some(_) => ok
         case None => ko
-      }
-      */
+      } */
     }
 
     "prove { A or B :- -(-A and -B)  }" in {

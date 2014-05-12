@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <artifactId>shlk</artifactId>
   <modelVersion>4.0.0</modelVersion>
-  <name>Schematic Handy LK (+Parser)</name>
+  <name>Schematic Handy LK Algorithms</name>
 
   <parent>
   <groupId>at.logic</groupId>
@@ -11,16 +11,11 @@
 
   <packaging>jar</packaging>
 
-<dependencies>
-    <dependency>
-        <groupId>at.logic</groupId>
-        <artifactId>parsing_core</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </dependency>
+  <dependencies>
     <dependency>
         <groupId>at.logic</groupId>
         <artifactId>lkalgorithms</artifactId>
         <version>1.0-SNAPSHOT</version>
     </dependency>
-</dependencies>
+  </dependencies>
 </project>

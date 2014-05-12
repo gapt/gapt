@@ -120,7 +120,7 @@ class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private v
     if (! str.isEmpty && proof.name.contains(str)) g.setColor(new Color(0,255,0))
 
     if (drawLines) proof match {
-      case p: UnaryProof[_] => {
+      case p: UnaryProof[_] =>
         val center = this.layout.find(x => x._2 == Position.Center).get._1.asInstanceOf[DrawResolutionProof]
         val width = center.size.width + fSize*4
         val height = center.size.height
@@ -128,8 +128,7 @@ class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private v
 
         g.drawLine((width - seqLength) / 2, height, (width + seqLength) / 2, height)
         g.drawString(p.name, (fSize / 4 + width + seqLength) / 2, height + metrics.getMaxDescent)
-      }
-      case p: BinaryProof[_] => {
+      case p: BinaryProof[_] =>
         val left = this.layout.find(x => x._2 == Position.West).get._1.asInstanceOf[DrawResolutionProof]
         val leftWidth = left.size.width + fSize*4
         val right = this.layout.find(x => x._2 == Position.East).get._1.asInstanceOf[DrawResolutionProof]
@@ -141,7 +140,6 @@ class DrawResolutionProof(val proof: Proof[_], private val fSize: Int, private v
 
         g.drawLine((leftWidth - leftSeqLength) / 2, height, lineLength, height)
         g.drawString(p.name, lineLength + fSize / 4, height + metrics.getMaxDescent)
-      }
       case _ =>
     }
   }

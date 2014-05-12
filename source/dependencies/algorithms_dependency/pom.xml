@@ -34,11 +34,6 @@
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>
-      <artifactId>normalization</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>at.logic</groupId>
       <artifactId>subsumption</artifactId>
       <version>${project.version}</version>
     </dependency>

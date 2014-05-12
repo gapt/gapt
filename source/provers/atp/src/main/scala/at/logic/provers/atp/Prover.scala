@@ -4,16 +4,29 @@
 
 package at.logic.provers.atp
 
-import _root_.at.logic.provers.atp.commands.logical.DeterministicMacroCommand
+import at.logic.algorithms.matching.FOLMatchingAlgorithm
+import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
+import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.calculi.resolution.{Clause, ResolutionProof}
+import at.logic.calculi.lk.base._
+import at.logic.language.fol.FOLExpression
+import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
+import at.logic.parsing.readers.FileReader
+import at.logic.provers.atp.commands.base._
+import at.logic.provers.atp.commands.logical.DeterministicAndCommand
+import at.logic.provers.atp.commands.logical.DeterministicMacroCommand
 import at.logic.utils.executionModels.ndStream.{Configuration, NDStream}
 import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
-import at.logic.calculi.resolution.base.{Clause, ResolutionProof}
-import at.logic.calculi.lk.base._
+
 import collection.mutable.HashMap
-import at.logic.provers.atp.commands.base._
+
 import commands.guided.IsGuidedNotFoundCommand
 import commands.refinements.simple.SimpleRefinementGetCommand
 import commands.robinson.VariantsCommand
+import commands.base._
+import commands.ui._
+import commands.sequents._
+import commands.robinson._
 
 object Definitions {
   type State = HashMap[String, Any]
@@ -22,25 +35,14 @@ object Definitions {
 import Definitions._
 
 object Main {
-  import commands.base._
-  import commands.ui._
-  import commands.sequents._
-  import commands.robinson._
-  import _root_.at.logic.provers.atp.commands.logical.DeterministicAndCommand
-  import at.logic.algorithms.matching.fol.FOLMatchingAlgorithm
-  import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
-  import at.logic.language.fol.FOLExpression
-  import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-  import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-  import at.logic.parsing.readers.FileReader
 
   def stream1:  Stream[Command[Clause]] = Stream.cons(getTwoClausesFromUICommand[Clause](PromptTerminal.GetTwoClauses),
     Stream.cons(VariantsCommand,
     Stream.cons(DeterministicAndCommand[Clause]((
       List(ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand(FOLUnificationAlgorithm), FactorCommand(FOLUnificationAlgorithm)),
       List(ParamodulationCommand(FOLUnificationAlgorithm)))),
-    Stream.cons(SimpleForwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
-    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](new StillmanSubsumptionAlgorithm[FOLExpression] {val matchAlg = FOLMatchingAlgorithm}),
+    Stream.cons(SimpleForwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
+    Stream.cons(SimpleBackwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
     Stream.cons(InsertResolventCommand[Clause],
     Stream.cons(RefutationReachedCommand[Clause], stream1)))))))
   def stream: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1))
@@ -77,7 +79,7 @@ trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
 
   private[Prover] def myFun(c: Configuration[ResolutionProof[V]]): Iterable[Configuration[ResolutionProof[V]]] = {
     val conf = c.asInstanceOf[MyConfiguration]
-//    Console.println("debug -- command: " + Console.RED + conf.commands.head.getClass + Console.RESET +", data: " + conf.data + ", next Command: " + conf.commands.tail.head.getClass)
+    //Console.println("debug -- command: " + Console.RED + conf.commands.head.getClass + Console.RESET +", data: " + conf.data + ", next Command: " + conf.commands.tail.head.getClass)
     if (conf.commands.isEmpty) {
       println("\nconf.commands.isEmpty !\n")
       List()

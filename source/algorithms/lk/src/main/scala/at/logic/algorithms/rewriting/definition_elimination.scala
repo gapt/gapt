@@ -1,32 +1,15 @@
 package at.logic.algorithms.rewriting
 
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.language.fol
 import at.logic.language.hol._
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.lambda.symbols.SymbolA
-import at.logic.language.lambda.typedLambdaCalculus.{Abs, App, Var, LambdaExpression}
-import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.language.lambda.symbols.{SymbolA, StringSymbol}
+import at.logic.algorithms.matching.NaiveIncompleteMatchingAlgorithm
 import at.logic.language.fol.FOLFormula
-import at.logic.calculi.lk.propositionalRules._
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import scala.Some
-import at.logic.calculi.lk.quantificationRules.{ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule}
-import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
-import at.logic.calculi.lk.definitionRules.{DefinitionRightRule, DefinitionLeftRule}
+import at.logic.calculi.lk._
 import at.logic.algorithms.lk.AtomicExpansion
+import Util._
+
 
 object DefinitionElimination extends DefinitionElimination
 class DefinitionElimination {
@@ -47,8 +30,7 @@ class DefinitionElimination {
     val edmap = expand_dmap(dmap)
     eliminate_in_proof(replaceAll_in(edmap,_),p)
   }
-
-
+  
   def fixedpoint_val[A](f : (A=>A), l : A) : A = {
     val r = f(l)
     if (r==l) r  else fixedpoint_val(f,r)
@@ -73,9 +55,6 @@ class DefinitionElimination {
       case And(s,t) => And(replaceAll_informula(dmap,s), replaceAll_informula(dmap,t))
       case Or(s,t) => Or(replaceAll_informula(dmap,s), replaceAll_informula(dmap,t))
       case Imp(s,t) => Imp(replaceAll_informula(dmap,s), replaceAll_informula(dmap,t))
-      //TODO: fix issue 224 and remove the fol specific matches
-      case fol.AllVar(x,t) => fol.AllVar(x, replaceAll_informula(dmap, t).asInstanceOf[FOLFormula])
-      case fol.ExVar(x,t) => fol.ExVar(x, replaceAll_informula(dmap, t).asInstanceOf[FOLFormula])
       case AllVar(x,t) => AllVar(x, replaceAll_informula(dmap, t))
       case ExVar(x,t) => ExVar(x, replaceAll_informula(dmap, t))
       case HOLApp(s,t) =>
@@ -91,13 +70,13 @@ class DefinitionElimination {
 
   def try_to_matchformula(dmap:DefinitionsMap,e:HOLExpression) = c(try_to_match(dmap,e))
   def try_to_match(dmap: DefinitionsMap, e: HOLExpression): HOLExpression = {
-    dmap.keys.foldLeft(e)((v, elem) => {
-      //println("matching "+elem+" against "+v)
-      NaiveIncompleteMatchingAlgorithm.holMatch(elem,v)(Nil) match {
+    dmap.keys.foldLeft(e)((v, key) => {
+//      println("matching " + v + " against " + key)
+      NaiveIncompleteMatchingAlgorithm.holMatch(key, v)(Nil) match {
         case None => v
         case Some(sub) =>
-          val r = sub(dmap(elem))
-          //println("YES! "+sub)
+          val r = sub(dmap(key))
+//          println("YES! "+sub)
           r
       }
     }
@@ -116,23 +95,29 @@ class DefinitionElimination {
 
   private def eliminate_from_(defs : ProcessedDefinitionsMap, f : HOLFormula) : HOLFormula = {
     f match {
-      case Atom(sym, args) =>
-        defs.get(sym) match {
-          case Some((definition_args, defined_formula)) =>
-            if (args.length != definition_args.length) {
-              println("Warning: ignoring definition replacement because argument numbers dont match!")
-              f
-            } else {
-              //we need to insert the correct values for the free variables in the definition
-              //the casting is needed since we cannot make a map covariant
-              //val pairs = (definition_args zip args)  filter ((x:(HOLExpression, HOLExpression) ) => x._1.isInstanceOf[HOLVar])
-              val pairs = definition_args zip  args
-              val sub = Substitution(pairs)
-              println("Substitution:")
-              println(sub)
-              sub.apply(defined_formula).asInstanceOf[HOLFormula]
-            }
-          case _ => f
+      case Atom(e, args) => {
+          val sym = e match {
+            case v : HOLVar => v.sym
+            case c : HOLConst => c.sym
+          }
+
+          defs.get(sym) match {
+            case Some((definition_args, defined_formula)) =>
+              if (args.length != definition_args.length) {
+                println("Warning: ignoring definition replacement because argument numbers dont match!")
+                f
+              } else {
+                //we need to insert the correct values for the free variables in the definition
+                //the casting is needed since we cannot make a map covariant
+                //val pairs = (definition_args zip args)  filter ((x:(HOLExpression, HOLExpression) ) => x._1.isInstanceOf[HOLVar])
+                val pairs = definition_args zip  args
+                val sub = Substitution(pairs)
+                println("Substitution:")
+                println(sub)
+                sub.apply(defined_formula).asInstanceOf[HOLFormula]
+              }
+            case _ => f
+          }
         }
       case Neg(f1) => Neg(eliminate_from_(defs, f1))
       case AllVar(q,f1) => AllVar(q, eliminate_from_(defs, f1))
@@ -144,11 +129,8 @@ class DefinitionElimination {
     }
   }
 
-
-  import Util._
   private val emptymap = Map[FormulaOccurrence,FormulaOccurrence]() //this will be passed to some functions
   private def debug(s:String) = { }
-
 
   def eliminate_in_proof(rewrite : (HOLExpression => HOLExpression), proof : LKProof) : LKProof =
     eliminate_in_proof_(rewrite,proof)._2

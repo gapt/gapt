@@ -4,7 +4,6 @@
 
 package at.logic.parsing.language.xml
 
-import _root_.at.logic.calculi.lk.lkSpecs.{beSyntacticMultisetEqual, beMultisetEqual}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -12,23 +11,16 @@ import scala.xml._
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.language.hol._
-import at.logic.language.hol.Definitions._
-import at.logic.language.hol.ImplicitConverters._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.types.Definitions._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.symbols.ImplicitConverters._
-import at.logic.calculi.lk.propositionalRules._
+import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences.factory
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator
 import java.util.zip.GZIPInputStream
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.Expectable
+import at.logic.language.lambda.types._
 
 case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
   def apply[S <: Array[T]](v: Expectable[S]) = result( v.value.deep.equals(a.deep), "successful deepEquals", v.value.deep.toString + " not deepEquals " + a.deep.toString,v )
@@ -41,30 +33,30 @@ class XMLParserTest extends SpecificationWithJUnit {
   implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
   // helper to create 0-ary predicate constants
   def pc( sym: String ) = fo2occ(pcf(sym))
-  def pcf( sym: String ) = Atom( new ConstantStringSymbol( sym ), List() )
+  def pcf( sym: String ) = Atom( HOLConst( sym, To ), List() )
 
   "XMLParser" should {
     "parse correctly a constant c" in {
       (new NodeReader(<constant symbol="c"/>) with XMLTermParser).getTerm() must beEqualTo(
-        HOLConst(new ConstantStringSymbol("c"), "i")
+        HOLConst("c", Ti)
         )
     }
     "parse correctly a constant c from a StringReader" in {
       (new XMLReader(
         new java.io.StringReader("<constant symbol=\"c\"/>")) with XMLTermParser).getTerm() must beEqualTo(
-          HOLConst(new ConstantStringSymbol("c"), "i")
+          HOLConst("c", Ti)
         )
     }
     "parse correctly a term g(c)" in {
       (new NodeReader(<function symbol="g">
                         <constant symbol="c"/>
                       </function>) with XMLTermParser).getTerm() must beEqualTo(
-                    AppN(HOLConst(new ConstantStringSymbol("g"),"(i -> i)"), HOLConst(new ConstantStringSymbol("c"), "i")::Nil)
+                    HOLApp(HOLConst("g",Ti -> Ti), HOLConst("c", Ti))
                 )
     }
     "parse correctly a variable x" in {
       (new NodeReader(<variable symbol="x"></variable>) with XMLTermParser).getTerm() must beEqualTo (
-        HOLVar("x", "i"))
+        HOLVar("x", Ti))
 
     }
     "parse correctly a variablelist x,y,z" in {
@@ -73,7 +65,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                         <variable symbol="y"/>
                         <variable symbol="z"/>
                       </variablelist>) with XMLVariableListParser).getVariableList() must beEqualTo (
-                    HOLVar("x", "i")::HOLVar("y", "i")::HOLVar("z", "i")::Nil
+                    HOLVar("x", Ti)::HOLVar("y", Ti)::HOLVar("z", Ti)::Nil
                   )
     }
     "parse correctly a term f(x,c)" in {
@@ -81,8 +73,8 @@ class XMLParserTest extends SpecificationWithJUnit {
                         <variable symbol="x"/>
                         <constant symbol="c"/>
                       </function>) with XMLTermParser).getTerm() must beEqualTo (
-                    AppN(HOLConst(new ConstantStringSymbol("f"), "(i -> ( i -> i ))"),
-                         HOLVar("x", "i")::HOLConst(new ConstantStringSymbol("c"), "i")::Nil)
+                    Function(HOLConst("f", Ti -> (Ti -> Ti)),
+                         HOLVar("x", Ti)::HOLConst("c", Ti)::Nil)
                 )
     }
     "parse correctly an atom formula P(f(x,c),y)" in {
@@ -93,11 +85,10 @@ class XMLParserTest extends SpecificationWithJUnit {
                         </function>
                         <variable symbol="y"/>
                       </constantatomformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                      // FIXME: remove cast!
-                      Atom(new ConstantStringSymbol("P"),
-                        AppN(HOLConst(new ConstantStringSymbol("f"), "(i -> (i -> i))"),
-                           HOLVar("x", "i")::HOLConst(new ConstantStringSymbol("c"), "i")::Nil)
-                         ::HOLVar("y", "i")::Nil))
+                      Atom(HOLConst("P", Ti -> (Ti -> To)),
+                        Function(HOLConst("f", Ti -> (Ti -> Ti)),
+                           HOLVar("x", Ti)::HOLConst("c", Ti)::Nil)
+                         ::HOLVar("y", Ti)::Nil))
 
     }
     "parse correctly a conjunction of atoms P and Q" in {
@@ -115,21 +106,21 @@ class XMLParserTest extends SpecificationWithJUnit {
                           <variable symbol="x"/>
                         </constantatomformula>
                       </quantifiedformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    ExVar(HOLVar("x", "i"), 
-                      Atom(new ConstantStringSymbol("="), HOLVar("x", "i")::HOLVar("x", "i")::Nil))
+                    ExVar(HOLVar("x", Ti),
+                      Equation(HOLVar("x", Ti), HOLVar("x", Ti)))
                 )
     }
     "parse correctly a second-order variable X" in {
       (new NodeReader(<secondordervariable symbol="X"/>) with XMLSetTermParser).getSetTerm() must
-      beEqualTo(HOLVar(new VariableStringSymbol("X"), "(i -> o)"))
+      beEqualTo(HOLVar("X", Ti -> To))
     }
     "parse correctly a variable atom formula X(c)" in {
       (new NodeReader(<variableatomformula>
                         <secondordervariable symbol="X"/>
                         <constant symbol="c"/>
                       </variableatomformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    Atom(new VariableStringSymbol("X"),
-                         HOLConst(new ConstantStringSymbol("c"), "i")::Nil)
+                    Atom(HOLVar("X", Ti -> To),
+                         HOLConst("c", Ti)::Nil)
                   )
     }
     "parse correctly a second-order quantified formula (all Z)Z(c)" in {
@@ -140,9 +131,9 @@ class XMLParserTest extends SpecificationWithJUnit {
                           <constant symbol="c"/>
                         </variableatomformula>
                       </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    AllVar(HOLVar(new VariableStringSymbol("Z"), "(i -> o)"),
-                      Atom(new VariableStringSymbol("Z"),
-                           HOLConst(new ConstantStringSymbol("c"), "i")::Nil))
+                    AllVar(HOLVar("Z", Ti -> To),
+                      Atom(HOLVar("Z", Ti -> To),
+                           HOLConst("c", Ti)::Nil))
                   )
     }
     "parse correctly a LambdaExpression lambda x . P(x)" in {
@@ -154,7 +145,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                           <variable symbol="x"/>
                         </constantatomformula>
                       </lambdasubstitution>) with XMLSetTermParser).getSetTerm() must beEqualTo(
-                  Abs(HOLVar("x", "i"), Atom(new ConstantStringSymbol("P"), HOLVar("x", "i")::Nil)))
+                  HOLAbs(HOLVar("x", Ti), Atom(HOLConst("P", Ti -> To), HOLVar("x", Ti)::Nil)))
     }
     "parse correctly a LambdaExpression lambda x,y. R(x,y)" in {
       (new NodeReader(<lambdasubstitution>
@@ -167,18 +158,20 @@ class XMLParserTest extends SpecificationWithJUnit {
                           <variable symbol="y"/>
                         </constantatomformula>
                       </lambdasubstitution>) with XMLSetTermParser).getSetTerm() must beEqualTo(
-                    AbsN(HOLVar("x", "i")::HOLVar("y", "i")::Nil,
-                         Atom(new ConstantStringSymbol("R"), HOLVar("x", "i")::HOLVar("y", "i")::Nil)))
+                    HOLAbs(HOLVar("x", Ti),
+                      HOLAbs(HOLVar("y", Ti),
+                         Atom(HOLConst("R", Ti -> (Ti -> To)), HOLVar("x", Ti)::HOLVar("y", Ti)::Nil)))
+      )
     }
     "parse correctly a defined set \\cap(X, Y)" in {
       (new NodeReader(<definedset symbol="\cap" definition="\cap">
                         <secondordervariable symbol="X"/>
                         <secondordervariable symbol="Y"/>
                       </definedset>) with XMLSetTermParser).getSetTerm() must beEqualTo(
-                    AppN( HOLConst( new ConstantStringSymbol("\\cap"),
-                                    "((i -> o) -> ((i -> o) -> (i -> o)))"),
-                          HOLVar( new VariableStringSymbol("X"), "(i -> o)" )::
-                          HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil)
+                    Function( HOLConst( "\\cap",
+                                    (Ti -> To) -> ((Ti -> To) -> (Ti -> To))),
+                          HOLVar( "X", Ti -> To )::
+                          HOLVar( "Y", Ti -> To )::Nil)
                   )
     }
     "parse correctly a defined set formula \\cup(X,Y)(c)" in {
@@ -189,11 +182,11 @@ class XMLParserTest extends SpecificationWithJUnit {
                         </definedset>
                         <constant symbol="c"/>
                       </definedsetformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    App(AppN( HOLConst( new ConstantStringSymbol("\\cup"),
-                                        "((i -> o) -> ((i -> o) -> (i -> o)))"),
-                               HOLVar( new VariableStringSymbol("X"), "(i -> o)" )::
-                               HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
-                        HOLConst( new ConstantStringSymbol("c"), "i" ) ) )
+                    HOLApp(Function( HOLConst( "\\cup",
+                                        (Ti -> To) -> ((Ti -> To) -> (Ti -> To))),
+                               HOLVar( "X", Ti -> To )::
+                               HOLVar( "Y", Ti -> To )::Nil),
+                        HOLConst( "c", Ti ) ) )
     }
     "parse correctly a complex sentence (all X)(all Y)(all z) X(z) impl \\cup(X,Y)(z)" in {
       (new NodeReader(<secondorderquantifiedformula type="all">
@@ -218,16 +211,16 @@ class XMLParserTest extends SpecificationWithJUnit {
                           </quantifiedformula>
                         </secondorderquantifiedformula>
                       </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    AllVar( HOLVar( new VariableStringSymbol("X"), "(i -> o)" ),
-                      AllVar( HOLVar( new VariableStringSymbol("Y"), "(i -> o)"),
-                        AllVar( HOLVar( new VariableStringSymbol("z"), "i"),
-                          Imp( Atom( new VariableStringSymbol("X"), HOLVar( "z", "i" )::Nil ),
-                            HOLAppFormula(AppN( HOLConst( new ConstantStringSymbol("\\cup"),
-                                               "((i -> o) -> ((i -> o) -> (i -> o)))"),
-                                       HOLVar( new VariableStringSymbol("X"), "(i -> o)" )::
-                                       HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
-                                HOLVar( "z", "i" ) ) ) ) ) )
-                  )
+                    AllVar( HOLVar( "X", Ti -> To ),
+                      AllVar( HOLVar( "Y", Ti -> To),
+                        AllVar( HOLVar( "z", Ti),
+                          Imp( Atom( HOLVar("X", Ti -> To), HOLVar( "z", Ti )::Nil ),
+                            (HOLApp(Function( HOLConst( "\\cup",
+                                               (Ti -> To) -> ((Ti -> To) -> (Ti -> To))),
+                                       HOLVar( "X", Ti -> To )::
+                                       HOLVar( "Y", Ti -> To )::Nil),
+                                HOLVar( "z", Ti ) ) ).asInstanceOf[HOLFormula] ) ) ) //TODO: cast should not be neccessary
+                  ))
     }
     // BUG in specs2
     /*
@@ -444,14 +437,14 @@ class XMLParserTest extends SpecificationWithJUnit {
     }
     "parse correctly an involved proof from a file" in {
       val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test1.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
-      val X = HOLVar( new VariableStringSymbol( "X" ), i -> o )
-      val t = HOLConst( new ConstantStringSymbol( "t" ), i)
-      val s = HOLConst( new ConstantStringSymbol( "s" ), i)
-      val r = HOLConst( new ConstantStringSymbol( "r" ), i)
-      val f = HOLConst( new ConstantStringSymbol( "f" ), i -> i)
-      val x = HOLVar( new VariableStringSymbol( "x" ), i )
-      val Rs = new ConstantStringSymbol( "R" )
-      val f1 = AllVar( X, And( HOLAppFormula( X, t ), Neg( HOLAppFormula( X, s ) ) ) )
+      val X = HOLVar( "X" , Ti -> To )
+      val t = HOLConst( "t" , Ti)
+      val s = HOLConst( "s" , Ti)
+      val r = HOLConst( "r" , Ti)
+      val f = HOLConst( "f" , Ti -> Ti)
+      val x = HOLVar( "x" , Ti )
+      val Rs = HOLConst( "R", Ti -> (Ti -> To) )
+      val f1 = AllVar( X, And( Atom( X, t::Nil ), Neg( Atom( X, s::Nil ) ) ) )
       val f2 = And( Imp( Atom( Rs, r::t::Nil ), Atom( Rs, r::HOLApp( f, t )::Nil ) ),
                     ExVar( x, And( Atom( Rs, x::s::Nil ), Neg( Atom( Rs, x::HOLApp( f, s )::Nil ) ) ) ) )
 

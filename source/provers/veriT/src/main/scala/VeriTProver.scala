@@ -6,7 +6,7 @@ import java.io._
 import at.logic.provers.Prover
 import at.logic.parsing.veriT._
 import at.logic.language.hol.HOLFormula
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.calculi.lk.base.FSequent
 
 object VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
 

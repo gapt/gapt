@@ -7,11 +7,10 @@ package at.logic.gui.prooftool.gui
  * Time: 4:25 PM
  */
 
-import at.logic.calculi.lk.base.{types, Sequent}
-import at.logic.language.lambda.typedLambdaCalculus._
+import at.logic.calculi.lk.base.{FSequent, Sequent}
 import at.logic.language.hol._
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, indexedOmegaVar, IntegerTerm, IntVar, IntConst, IntZero, Succ}
+import at.logic.language.schema.{BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, indexedOmegaVar, IntegerTerm, IntVar, IntConst, Succ}
 import at.logic.transformations.ceres.struct.ClauseSetSymbol
 import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
 import org.scilab.forge.jlatexmath.{TeXIcon, TeXConstants, TeXFormula}
@@ -20,26 +19,28 @@ import java.awt.image.BufferedImage
 import swing._
 import event.{MouseClicked, MouseEntered, MouseExited, WindowDeactivated}
 import java.awt.event.MouseEvent
-import at.logic.language.lambda.types.Definitions._
 import at.logic.language.schema.IntZero
 import at.logic.utils.latex.nameToLatexString
 import collection.mutable
-import at.logic.gui.prooftool.parser.{ShowOnly, ChangeFormulaColor, ChangeSequentColor, ProofToolPublisher}
+import at.logic.gui.prooftool.parser.{ChangeFormulaColor, ChangeSequentColor, ProofToolPublisher}
+import at.logic.language.lambda.types.Tindex
 
 object DrawSequent {
   implicit val factory = defaultFormulaOccurrenceFactory
   implicit def fo2occ(f:HOLFormula) = factory.createFormulaOccurrence(f, Seq[FormulaOccurrence]())
-  implicit def fseq2seq(s : types.FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
+  implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
 
   //used by DrawClList
   def apply(seq: Sequent, ft: Font, str: String): FlowPanel = if (! str.isEmpty) {
     val set: Set[FormulaOccurrence] = ( seq.antecedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ++
       seq.succedent.filter( fo => formulaToLatexString(fo.formula).contains(str)) ).toSet
-    apply(seq, ft, None) // TODO: fix search coloring in lists!!!
+    val fp = apply(seq, ft, None)  // first create FlowPanel to pass the event
+    ProofToolPublisher.publish(ChangeFormulaColor(set,Color.green,reset=false))
+    fp
   } else apply(seq, ft, None)
 
   //used by DrawClList to draw FSequents
-  def applyF(seq: types.FSequent, ft: Font, str: String): FlowPanel = apply(fseq2seq(seq), ft, str)
+  def applyF(seq: FSequent, ft: Font, str: String): FlowPanel = apply(fseq2seq(seq), ft, str)
 
   //used by DrawProof
   def apply(seq: Sequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]]) = new FlowPanel {
@@ -96,89 +97,99 @@ object DrawSequent {
     s
   }
 
-  def formulaToLatexString(t: LambdaExpression, outermost : Boolean=true): String = t match {
-    case Neg(f) => """\neg """ + formulaToLatexString(f, false)
-    case And(f1,f2) => "(" + formulaToLatexString(f1, false) + """ \wedge """ + formulaToLatexString(f2, false) + ")"
-    case Or(f1,f2) => "(" + formulaToLatexString(f1, false) + """ \vee """ + formulaToLatexString(f2, false) + ")"
-    case Imp(f1,f2) => "(" + formulaToLatexString(f1, false) + """ \supset """ + formulaToLatexString(f2, false) + ")"
-    case ExVar(v, f) => {
-      if (v.exptype == ind->ind)
-        "(" + """\exists^{hyp} """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
+  def formulaToLatexString(t: HOLExpression, outermost : Boolean=true): String = t match {
+    case Neg(f) => """\neg """ + formulaToLatexString(f, outermost = false)
+    case And(f1,f2) => "(" + formulaToLatexString(f1, outermost = false) + """ \wedge """ + formulaToLatexString(f2, outermost = false) + ")"
+    case Or(f1,f2) => "(" + formulaToLatexString(f1, outermost = false) + """ \vee """ + formulaToLatexString(f2, outermost = false) + ")"
+    case Imp(f1,f2) => "(" + formulaToLatexString(f1, outermost = false) + """ \supset """ + formulaToLatexString(f2, outermost = false) + ")"
+    case ExVar(v, f) =>
+      if (v.exptype == Tindex->Tindex)
+        "(" + """\exists^{hyp} """ + formulaToLatexString(v, outermost = false) + """)""" + formulaToLatexString(f, outermost = false)
       else
-        "(" + """\exists """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
-    }
-    case AllVar(v, f) => {
-      if (v.exptype == ind->ind)
-        "(" + """\forall^{hyp} """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
+        "(" + """\exists """ + formulaToLatexString(v, outermost = false) + """)""" + formulaToLatexString(f, outermost = false)
+    case AllVar(v, f) =>
+      if (v.exptype == Tindex->Tindex)
+        "(" + """\forall^{hyp} """ + formulaToLatexString(v, outermost = false) + """)""" + formulaToLatexString(f, outermost = false)
       else
-        "(" + """\forall """ + formulaToLatexString(v, false) + """)""" + formulaToLatexString(f, false)
-    }
+        "(" + """\forall """ + formulaToLatexString(v, outermost = false) + """)""" + formulaToLatexString(f, outermost = false)
     case BigAnd(v, formula, init, end) =>
-      """ \bigwedge_{ """ + formulaToLatexString(v, false) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end, false) + "}" + formulaToLatexString(formula, false)
+      """ \bigwedge_{ """ + formulaToLatexString(v, outermost = false) + "=" + formulaToLatexString(init) + "}^{" + formulaToLatexString(end, outermost = false) + "}" + formulaToLatexString(formula, outermost = false)
+
     case BigOr(v, formula, init, end) =>
-      """ \bigvee_{ """ + formulaToLatexString(v, false) + "=" + formulaToLatexString(init, false) + "}^{" + formulaToLatexString(end, false) + "}" + formulaToLatexString(formula)
-    case IndexedPredicate(constant, indices) if (constant != BiggerThanC) =>
+      """ \bigvee_{ """ + formulaToLatexString(v, outermost = false) + "=" + formulaToLatexString(init, outermost = false) + "}^{" + formulaToLatexString(end, outermost = false) + "}" + formulaToLatexString(formula)
+    case IndexedPredicate(constant, indices) if constant != BiggerThanC => //Fixme: constant never is instance of ClauseSetSymbol
       {if (constant.name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
       val cl = constant.name.asInstanceOf[ClauseSetSymbol]
-        "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + " | " +
-          cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
+        "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + " | " +
+          cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + ")}"
       } else if (constant.name.isInstanceOf[ProjectionSetSymbol]) { //parse pr variables to display cut-configuration.
       val pr = constant.name.asInstanceOf[ProjectionSetSymbol]
-        "pr^{" + pr.name +",(" + pr.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + " | " +
-          pr.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
+        "pr^{" + pr.name +",(" + pr.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + " | " +
+          pr.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + ")}"
       }  //or return the predicate symbol
       else nameToLatexString(constant.name.toString)
       } + {if (indices.isEmpty) "" else indices.map(x => formulaToLatexString(x)).mkString("_{",",","}")}
     case t : IntegerTerm  => parseIntegerTerm(t, 0)
-    case Atom(name, args) =>
+    case Atom(pred, args) =>
+      val name = pred match {
+        case HOLConst(n,_) => n
+        case HOLVar(n,_) => n
+        case _ => throw new Exception("An atom can only contain a const or a var on the outermost level!")
+      }
       if (args.size == 2 &&  name.toString.matches("""(=|!=|\\neq|<|>|\\leq|\\geq|\\in|\+|-|\*|/)""")) { //!name.toString.matches("""[\w\p{InGreek}]*""")) {
         //formats infix formulas
         if (outermost) {
           //if the whole formula is an infix atom, we can skip parenthesis
-          formulaToLatexString(args.head, false) + " "+ nameToLatexString(name.toString) +" "+ formulaToLatexString(args.last, false)
+          formulaToLatexString(args.head, outermost = false) + " "+ nameToLatexString(name.toString) +" "+ formulaToLatexString(args.last, outermost = false)
         } else {
-          "(" + formulaToLatexString(args.head, false) +" "+ nameToLatexString(name.toString) +" "+ formulaToLatexString(args.last, false) + ")"
+          "(" + formulaToLatexString(args.head, outermost = false) +" "+ nameToLatexString(name.toString) +" "+ formulaToLatexString(args.last, outermost = false) + ")"
         }
       }
       else {
         //formats everything else
-        nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, false)).mkString("(",",",")")}
+        nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, outermost = false)).mkString("(",",",")")}
       }
-    case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, false) + "}"
-    case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, false) + "}"
-    case Var(name, _) => if (name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
-    val cl = name.asInstanceOf[ClauseSetSymbol]
+    case vi: indexedFOVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, outermost = false) + "}"
+    case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString(vi.index, outermost = false) + "}"
+    case v:HOLVar  if v.sym.isInstanceOf[ClauseSetSymbol] => //Fixme: never enters here because type of ClauseSetSymbol is changed
+      //parse cl variables to display cut-configuration.
+      val cl = v.sym.asInstanceOf[ClauseSetSymbol]
       "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f) ) + " | " +
-        cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, false) ) + ")}"
-    } else if (t.asInstanceOf[Var].isBound) "z_{" + t.asInstanceOf[Var].dbIndex.get + "}" // This line is added for debugging reasons!!!
-    else if (t.exptype == ind->ind)
+        cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + ")}"
+    case HOLVar(name,_) if t.exptype == Tindex -> Tindex =>
       "\\textbf {" + name.toString + "}"
-    else  name.toString
-    case Function(name, args, _) =>
+    case HOLVar(name,_) =>  name
+    case HOLConst(name,_) => name
+    case Function(f, args, _) =>
+      val name = f match {
+        case HOLConst(n,_) => n
+        case HOLVar(n,_) => n
+        case _ => throw new Exception("An atom can only contain a const or a var on the outermost level!")
+      }
+
       if (name.toString == "EXP")
         args.last.asInstanceOf[IntVar].name + "^{" + parseIntegerTerm(args.head.asInstanceOf[IntegerTerm], 0) + "}"
       else if (args.size == 1) parseNestedUnaryFunction(name.toString, args.head, 1)
       else if (args.size == 2 && name.toString.matches("""(=|!=|\\neq|<|>|\\leq|\\geq|\\in|\+|-|\*|/)"""))  //!name.toString.matches("""[\w\p{InGreek}]*"""))
-        "(" + formulaToLatexString(args.head, false) + " "+ nameToLatexString(name.toString) +" " + formulaToLatexString(args.last, false) + ")"
-      else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, false)).mkString("(",",",")")}
-    case Abs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v, false) + """.""" + formulaToLatexString(s, false) + ")"
+        "(" + formulaToLatexString(args.head, outermost = false) + " "+ nameToLatexString(name.toString) +" " + formulaToLatexString(args.last, outermost = false) + ")"
+      else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, outermost = false)).mkString("(",",",")")}
+    case HOLAbs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v, outermost = false) + """.""" + formulaToLatexString(s, outermost = false) + ")"
   }
 
   def parseIntegerTerm( t: IntegerTerm, n: Int) : String = t match {
-    // FIXME: in the first case, we implicitely assume
-    // that all IntConsts are 0!
+    // FIXME: in the first case, we implicitely assume that all IntConsts are 0!
     // this is just done for convenience, and should be changed ASAP
     case z : IntConst => n.toString
     case IntZero() => n.toString
     case v : IntVar => if (n > 0)
-      v.toStringSimple + "+" + n.toString
+      v.toPrettyString + "+" + n.toString
     else
-      v.toStringSimple()
+      v.toPrettyString
     case Succ(s) => parseIntegerTerm( s, n + 1 )
     case _ => throw new Exception("Error in parseIntegerTerm(..) in gui")
   }
 
-  def parseNestedUnaryFunction(parent_name: String, t: LambdaExpression, n: Int) : String = t match {
+  def parseNestedUnaryFunction(parent_name: String, t: HOLExpression, n: Int) : String = t match {
     case Function(name, args, _) =>
       if (args.size == 1 && name.toString == parent_name) parseNestedUnaryFunction(parent_name, args.head, n+1)
       else parent_name + {if ( n > 1 ) "^{" + n.toString + "}" else ""} + "(" + formulaToLatexString(t) + ")"
@@ -235,7 +246,7 @@ class LatexLabel(val ft : Font, val latexText : String, val myicon : TeXIcon, fo
   reactions += {
     case e: MouseEntered => foreground = Color.blue
     case e: MouseExited => foreground =  Color.black
-    case e: MouseClicked if (e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 2) =>
+    case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 2 =>
       val d = new Dialog {
         resizable = false
         peer.setUndecorated(true)
@@ -251,7 +262,7 @@ class LatexLabel(val ft : Font, val latexText : String, val myicon : TeXIcon, fo
         }
         //  modal = true
         reactions += {
-          case e: WindowDeactivated if (e.source == this) => dispose()
+          case e: WindowDeactivated if e.source == this => dispose()
         }
       }
       d.location = locationOnScreen

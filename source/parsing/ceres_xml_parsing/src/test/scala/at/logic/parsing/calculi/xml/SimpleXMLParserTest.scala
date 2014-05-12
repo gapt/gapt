@@ -12,21 +12,8 @@ import scala.xml._
 
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.language.hol._
-import at.logic.language.hol.Definitions._
-import at.logic.language.hol.ImplicitConverters._
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.typedLambdaCalculus._
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.types.Definitions._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.symbols.ImplicitConverters._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.calculi.lk.lkSpecs.beMultisetEqual
+import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-
-import java.io.{FileReader, FileInputStream, InputStreamReader}
-import java.io.File.separator
-import java.util.zip.GZIPInputStream
 
 @RunWith(classOf[JUnitRunner])
 class SimpleXMLParserTest extends SpecificationWithJUnit {

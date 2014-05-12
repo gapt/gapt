@@ -12,7 +12,7 @@ and automated proof theory in particular.
 
 Requirements:
 * Unix-compatible environment (Linux, MacOsX[2])
-* Java 1.6 or later (tested with Oracle's JVM)
+* Java 1.7 or later (tested with Oracle's JVM)
 * Prover9 (the binaries prover9, prooftrans and 
    tptp_to_ladr must be present in the path [1])
   available at: http://www.cs.unm.edu/~mccune/mace4/download 
@@ -26,9 +26,9 @@ Running:
   we found useful over time.
 
 * Alternatively, you can run the jar files directly by calling
-  'java -Xss2m -Xmx2g -jar gapt-cli-1.7.jar' 
+  'java -Xss2m -Xmx2g -jar gapt-cli-1.8.jar'
   and 
-  'java -Xss2m -Xmx2g -jar prooftool-1.7.jar' 
+  'java -Xss2m -Xmx2g -jar prooftool-1.8.jar'
 
 
 License: GAPT is free software licensed under the GNU General

@@ -3,25 +3,21 @@ package at.logic.transformations.ceres
 import at.logic.calculi.lk.base.{FSequent, LKProof}
 import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
 import at.logic.transformations.ceres.projections.Projections
-import at.logic.calculi.resolution.base.FClause
+import at.logic.calculi.resolution.FClause
 import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.algorithms.lk.CloneLKProof
 import at.logic.language.hol._
-import at.logic.calculi.lk.propositionalRules._
-import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
-import at.logic.algorithms.matching.hol.NaiveIncompleteMatchingAlgorithm
-import at.logic.transformations.ceres.ACNF.SubstituteProof
-import at.logic.language.lambda.typedLambdaCalculus.{App, LambdaExpression, Var}
+import at.logic.calculi.lk._
+import at.logic.language.hol.logicSymbols._
+import at.logic.algorithms.matching.NaiveIncompleteMatchingAlgorithm
+import at.logic.language.lambda.{App, LambdaExpression, Var}
 import at.logic.language.lambda.types.{TA, ->, Ti, To}
-import at.logic.language.lambda.symbols.VariableSymbolA
-import at.logic.language.lambda.types.Ti
+import at.logic.language.lambda.symbols._
 import scala.Some
 import at.logic.language.lambda.types.->
 import at.logic.language.lambda.types.To
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk.equationalRules.{EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule}
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm
+import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
@@ -59,11 +55,11 @@ object CERES {
   def apply(endsequent : FSequent, projections : Set[LKProof], refutation: LKProof) : LKProof = refutation match {
     case Axiom(root) =>
       val axfs = root.toFSequent()
-      projections.find(x => IncompleteHOLSubsumption.subsumes(x.root.toFSequent(),axfs) ) match {
+      projections.find(x => StillmanSubsumptionAlgorithmHOL.subsumes(x.root.toFSequent(),axfs) ) match {
         case None => throw new Exception("Could not find a projection to "+axfs+" in "+
                                           projections.map(_.root).mkString("{\n",",\n","\n}"))
         case Some(proj) =>
-          val Some(sub) = IncompleteHOLSubsumption.subsumes_by(proj.root.toFSequent(), axfs)
+          val Some(sub) = StillmanSubsumptionAlgorithmHOL.subsumes_by(proj.root.toFSequent(), axfs)
           val (subproj,_) = applySubstitution(proj,sub)
           require(subproj.root.toFSequent.multiSetEquals(axfs),
                   "Instance of projection with end-sequent "+subproj.root+" is not equal to "+axfs )
@@ -116,6 +112,3 @@ object CERES {
 
 }
 
-private object IncompleteHOLSubsumption extends StillmanSubsumptionAlgorithm[HOLExpression] {
-  val matchAlg = NaiveIncompleteMatchingAlgorithm
-}

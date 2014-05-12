@@ -12,34 +12,27 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.hol._
-import at.logic.language.hol.Definitions._
-import at.logic.language.hol.ImplicitConverters._
-import at.logic.language.lambda.typedLambdaCalculus._
 import at.logic.language.fol.{FOLVar, FOLConst, Atom => FOLAtom, Function => FOLFunction}
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.types.ImplicitConverters._
-import at.logic.language.lambda.types.Definitions._
-import at.logic.language.lambda.types._
-import at.logic.language.lambda.symbols.ImplicitConverters._
 import at.logic.parsing.readers.StringReader
-import at.logic.calculi.resolution.base._
+import at.logic.calculi.resolution._
 import at.logic.calculi.resolution.robinson._
+import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.lambda.types._
 
 @RunWith(classOf[JUnitRunner])
 class SimpleResolutionParserTest extends SpecificationWithJUnit {
 //  private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserHOL
   private class MyParser2(input: String) extends StringReader(input) with SimpleResolutionParserFOL
 
-  val pa = Atom(ConstantStringSymbol("p"),Var(ConstantStringSymbol("a"), i, hol)::Nil)
-  val pfx = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"), Var(VariableStringSymbol("x"), i, hol)::Nil,i)::Nil)
-  val px = Atom(ConstantStringSymbol("p"),Var(VariableStringSymbol("x"), i, hol)::Nil)
-  val pffa = Atom(ConstantStringSymbol("p"),Function(ConstantStringSymbol("f"),Function(ConstantStringSymbol("f"), Var(ConstantStringSymbol("a"), i, hol)::Nil,i)::Nil, i)::Nil)
+  val pa = Atom(HOLConst(StringSymbol("p"), Ti -> To),HOLConst(StringSymbol("a"), Ti)::Nil)
+  val pfx = Atom(HOLConst(StringSymbol("p"), Ti->To),Function(HOLConst(StringSymbol("f"), Ti -> Ti), HOLVar(StringSymbol("x"), Ti)::Nil)::Nil)
+  val px = Atom(HOLConst(StringSymbol("p"), Ti->To), HOLVar(StringSymbol("x"), Ti)::Nil)
+  val pffa = Atom(HOLConst(StringSymbol("p"), Ti -> To),Function(HOLConst(StringSymbol("f"),Ti->Ti),Function(HOLConst(StringSymbol("f"), Ti->Ti), HOLConst(StringSymbol("a"), Ti)::Nil)::Nil)::Nil)
 
-  val pa_fol = FOLAtom(ConstantStringSymbol("P"),FOLConst(ConstantStringSymbol("a"))::Nil)
-  val pfx_fol = FOLAtom(ConstantStringSymbol("P"),FOLFunction(ConstantStringSymbol("f"), FOLVar(VariableStringSymbol("x"))::Nil)::Nil)
-  val px_fol = FOLAtom(ConstantStringSymbol("P"),FOLVar(VariableStringSymbol("x"))::Nil)
-  val pffa_fol = FOLAtom(ConstantStringSymbol("P"),FOLFunction(ConstantStringSymbol("f"),FOLFunction(ConstantStringSymbol("f"), FOLConst(ConstantStringSymbol("a"))::Nil)::Nil)::Nil)
+  val pa_fol = FOLAtom(StringSymbol("P"),FOLConst(StringSymbol("a"))::Nil)
+  val pfx_fol = FOLAtom(StringSymbol("P"),FOLFunction("f", FOLVar(StringSymbol("x"))::Nil)::Nil)
+  val px_fol = FOLAtom(StringSymbol("P"),FOLVar(StringSymbol("x"))::Nil)
+  val pffa_fol = FOLAtom(StringSymbol("P"),FOLFunction("f",FOLFunction("f", FOLConst("a")::Nil)::Nil)::Nil)
 
   def clause_to_lists(cl : Clause) : (Seq[Formula], Seq[Formula]) = (cl.negative map (_.formula), cl.positive map (_.formula))
 

@@ -45,7 +45,7 @@ trait PropMatcher {
                     else "> Labels of failing property: " + ls.mkString("\n")
                 }
 
-                var res = Test.check(Test.Params(),r.value)//.isInstanceOf[Prop])
+                var res = Test.check(Test.Params() ,r.value)
                 res.status match {
                     case Test.Proved(args) => /* println("ok!"); println(args); */ Matcher.result(true,"OK, proved property.","",r)
                     case Test.Passed => /*println("ok!");*/ Matcher.result(true,"OK, passed "+res.succeeded+" tests.","",r)

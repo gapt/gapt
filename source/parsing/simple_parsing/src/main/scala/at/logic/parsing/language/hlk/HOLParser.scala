@@ -3,17 +3,10 @@ package at.logic.parsing.language.hlk
 import util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.PackratParsers
 
-import at.logic.language.lambda._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.language.lambda.typedLambdaCalculus.Var
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
 import at.logic.language.hol._
-import at.logic.language.lambda.symbols.VariableStringSymbol
-import at.logic.language.lambda.types.Ti
-import at.logic.language.hol.logicSymbols.ConstantStringSymbol
-import at.logic.language.lambda.types.->
-import at.logic.language.lambda.types.To
+import at.logic.language.lambda.types._
 import at.logic.language.fol
 
 /**
@@ -169,17 +162,17 @@ class DeclarationParser extends HOLASTParser {
   lazy val symbolnames = atomregexp | """((<|>)=?)|(!?=)|[+\-*]""".r
 
   // simple and complex types
-  lazy val ti : PackratParser[TA] = "i" ^^ { _ => Ti() }
-  lazy val to : PackratParser[TA] = "o" ^^ { _ => To() }
+  lazy val ti : PackratParser[TA] = "i" ^^ { _ => Ti }
+  lazy val to : PackratParser[TA] = "o" ^^ { _ => To }
   lazy val simpleType : PackratParser[TA] = ti | to
   lazy val complexType : PackratParser[TA]= ((complexType | parens(complexType)) ~ ">" ~ (complexType|parens(complexType))) ^^ { case t1 ~ _ ~ t2 => t1 -> t2} | simpleType
 
   lazy val constdecl : PackratParser[Map[String, HOLExpression] ] = "const" ~ rep1sep(symbolnames, ",") ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map (x => (x, HOLConst(ConstantStringSymbol(x), exptype))))
+    case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map (x => (x, HOLConst(x, exptype))))
   }
 
   lazy val vardecl : PackratParser[Map[String, HOLExpression] ] = "var" ~ rep1sep(symbolnames, ",") ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map (x => (x, HOLVar(VariableStringSymbol(x), exptype))))
+    case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map (x => (x, HOLVar(x, exptype))))
   }
 
   //declaration lists e.g.: var x,y :i; const a,b : i; const P : i > i > o
@@ -212,7 +205,7 @@ class HLKHOLParser {
   }
 
   def ASTtoHOLnormalized( create : String => HOLExpression, exp : ast.LambdaAST  ) : HOLExpression =
-    BetaReduction.betaNormalize(ASTtoHOL(create,exp))(BetaReduction.StrategyOuterInner.Outermost).asInstanceOf[HOLExpression]
+    BetaReduction.betaNormalize(ASTtoHOL(create,exp))
 
   //converts an ast to a holformula. create decides if the string represents a constant or variable of appropriate type
   // and returns the matching hol expression

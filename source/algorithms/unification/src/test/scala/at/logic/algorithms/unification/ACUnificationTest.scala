@@ -1,18 +1,18 @@
+
+/*
 package at.logic.algorithms.unification
 
 import at.logic.algorithms.diophantine.Vector
-import at.logic.calculi.lk.base.types.FSequent
 import at.logic.calculi.lk.base.{Sequent, FSequent}
-import at.logic.language.hol.logicSymbols.{ConstantSymbolA, ConstantStringSymbol}
-import at.logic.language.hol.{HOL, HOLFormula}
-import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.parsing.readers.StringReader
+import at.logic.language.hol.HOLFormula
+//import at.logic.parsing.language.simple.SimpleFOLParser
+//import at.logic.parsing.readers.StringReader
+import at.logic.language.fol._
+import at.logic.language.lambda.types._
+
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import at.logic.language.lambda.substitutions.Substitution
-import at.logic.language.fol._
-import at.logic.language.lambda.typedLambdaCalculus.Var
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.Expectable
 import org.specs2.execute.Skipped
@@ -20,20 +20,22 @@ import org.specs2.execute.Success
 
 @RunWith(classOf[JUnitRunner])
 class ACUnificationTest extends SpecificationWithJUnit {
-  val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
-  val parse_pred = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLFormula]
-  val f = new ConstantStringSymbol("f")
-  val g = new ConstantStringSymbol("g")
-  val debuglevel = 0
-  val latex = true
+  // Is parsing used only for avoinding constructing the terms???
+  //val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
+  //val parse_pred = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLFormula]
+  
+  val f = FOLConst("f")
+  //val g = FOLConst("g")
+  //val debuglevel = 0
+  //val latex = true
 
-  def striplatex(s:String) = if (latex) s else s.replaceAll("(\\\\|\\$|\\{|\\})","") 
-  def debug(l:Int,s:String) = if (l<=debuglevel) println(striplatex(s))
+  //def striplatex(s:String) = if (latex) s else s.replaceAll("(\\\\|\\$|\\{|\\})","") 
+  //def debug(l:Int,s:String) = if (l<=debuglevel) println(striplatex(s))
 
-  def printSubst(s:Substitution[FOLTerm]) = {
-    for (x <- s.map.toList.sortWith((x:(Var,FOLExpression), y:(Var,FOLExpression)) => x._1.toString < y._1.toString ) )
-      debug(1,"$ "+x._1+" <- "+x._2+" $\\\\")
-  }
+  //def printSubst(s:Substitution) = {
+  //  for (x <- s.map.toList.sortWith((x:(FOLVar,FOLExpression), y:(Var,FOLExpression)) => x._1.toString < y._1.toString ) )
+  //    debug(1,"$ "+x._1+" <- "+x._2+" $\\\\")
+  //}
 
   case class beSyntacticallyEqual(a: FOLTerm) extends Matcher[FOLTerm]() {
    def apply[S <: FOLTerm](v: Expectable[S]) = result(v.value.syntaxEquals(a), v.value.toString + " is syntactically equal " + a.toString, v.toString + " is not syntactically equal to " + a.toString,v)
@@ -44,37 +46,34 @@ class ACUnificationTest extends SpecificationWithJUnit {
     def apply[S <: FOLTerm](v: Expectable[S]) = result(theory.word_equalsto(v.value,  a), v.toString + " is word equal " + a.toString, v.toString + " is not word equal to " + a.toString,v)
   }
 
-  case class beACWordEqual(theory_functions : List[ConstantSymbolA], a: FOLTerm )
+  case class beACWordEqual(theory_functions : List[FOLConst], a: FOLTerm )
     extends Matcher[FOLTerm] {
      def apply[S <: FOLTerm](v: Expectable[S]) = (new beWordEqualModulo(new MulACEquality(theory_functions), a)).apply(v)
   }
 
-  case class beACUWordEqual(theory_functions : List[ConstantSymbolA], theory_constants : List[ConstantSymbolA], a: FOLTerm )
+  case class beACUWordEqual(theory_functions : List[FOLConst], theory_constants : List[FOLConst], a: FOLTerm )
     extends Matcher[FOLTerm] {
      def apply[S <: FOLTerm](v: Expectable[S]) = (new beWordEqualModulo(new MulACUEquality(theory_functions, theory_constants), a)).apply(v)
   }
 
-  def checkResult(substs:Seq[Substitution[FOLTerm]], t1:FOLTerm, t2:FOLTerm) : Boolean = {
+  def checkResult(substs:Seq[Substitution], t1:FOLTerm, t2:FOLTerm) : Boolean = {
     
-    debug(1,"")
-    debug(1,"\\subsection*{$"+ACUtils.flatten(f,t1) + "=?"  +ACUtils.flatten(f,t2)+"$}")
-    //debug(1,"                  ***")
-    debug(1,"problem : $"+t1+" =? "+t2+"$\\\\")
+    //debug(1,"")
+    //debug(1,"\\subsection*{$"+ACUtils.flatten(f,t1) + "=?"  +ACUtils.flatten(f,t2)+"$}")
+    //debug(1,"problem : $"+t1+" =? "+t2+"$\\\\")
     var i = 1
     for (subst <- substs) {
-      debug(1,"("+i+")\\\\")
+      //debug(1,"("+i+")\\\\")
       i = i+1
-      val term1 = subst.apply(t1)
-      val term2 = subst.apply(t2)
-      //debug(1,"substitution      : "+subst)
-      printSubst(subst)
-      debug(1,"substituted terms     : $" +term1 +" =? "+term2 + "$\\\\")
-      debug(1,"substituted rewritten : $"+ACUtils.flatten(f,term1)+" =? "+ACUtils.flatten(f,term2)+"$\\\\")
+      val term1 = subst(t1)
+      val term2 = subst(t2)
+      //printSubst(subst)
+      //debug(1,"substituted terms     : $" +term1 +" =? "+term2 + "$\\\\")
+      //debug(1,"substituted rewritten : $"+ACUtils.flatten(f,term1)+" =? "+ACUtils.flatten(f,term2)+"$\\\\")
       ACUtils.flatten(f,term1) must beEqualTo (ACUtils.flatten(f,term2))
     }
-    debug(1,"\\\\")
-    //debug(1,"                  ***")
-    debug(1,"")
+    //debug(1,"\\\\")
+    //debug(1,"")
     true
   }
 
@@ -82,18 +81,49 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
   "AC Unification" should {
       "rewrite terms correctly" in {
-        val terms = List("f(f(x,y),f(x,y))",
-                        "f(g(x,y),f(x,y))",
-                        "f(f(a,y),f(b,y))",
-                        "f(f(a,f(s,y)),f(f(u,v),y))"
-          ) map parse
+        val f = FOLConst("f", Ti -> (Ti -> Ti))
+        val g = FOLConst("g", Ti -> (Ti -> Ti))
+        val x = FOLVar("x")
+        val y = FOLVar("y")
+        val s = FOLVar("s")
+        val u = FOLVar("u")
+        val v = FOLVar("v")
+        val a = FOLConst("a", Ti)
+        val b = FOLConst("b", Ti)
+
+        val fxy = Function(f, x::y::Nil)
+        val fay = Function(f, a::y::Nil)
+        val fby = Function(f, b::y::Nil)
+        val fsy = Function(f, s::y::Nil)
+        val fuv = Function(f, u::v::Nil)
+        val f_a_fsy = Function(f, a::fsy::Nil)
+        val f_fuv_y = Function(f, fuv::y::Nil)
+        val gxy = Function(g, x::y::Nil)
+        val f_fxy_fxy = Function(f, fxy::fxy::Nil)
+        val f_gxy_fxy = Function(f, gxy::fxy::Nil)
+        val f_fay_fby = Function(f, fay::fby::Nil)
+        val f_f_a_fsy_f_fuv_y = Function(f, f_a_fsy::f_fuv_y::Nil)
+
+        val terms = List(f_fxy_fxy, f_gxy_fxy, f_fay_fby, f_f_a_fsy_f_fuv_y)
+        
+        //val terms = List("f(f(x,y),f(x,y))",
+        //                "f(g(x,y),f(x,y))",
+        //                "f(f(a,y),f(b,y))",
+        //                "f(f(a,f(s,y)),f(f(u,v),y))"
+        //  ) map parse
 
         val results = List(
-          List("x","y","x","y"),
-          List("g(x,y)","x","y"),
-          List("a","y","b","y"),
-          List("a","s","y","u","v","y")
-          ) map (_ map parse)
+          List(x, y, x, y),
+          List(gxy, x, y),
+          List(a, y, b, y),
+          List(a, s, y, u, v, y)
+        )
+        //val results = List(
+        //  List("x","y","x","y"),
+        //  List("g(x,y)","x","y"),
+        //  List("a","y","b","y"),
+        //  List("a","s","y","u","v","y")
+        //  ) map (_ map parse)
 
         for ((t,r) <- terms zip results) {
           val list = ACUtils nestedFunctions_toList (f,t)
@@ -104,11 +134,25 @@ class ACUnificationTest extends SpecificationWithJUnit {
       }
 
     "do normal first order unification" in {
-      val term1 = parse("g(a,h(b))")
-      val term2 = parse("g(a,b)")
-      val term3 = parse("g(x,x)")
-      val term4 = parse("g(y,x)")
-      val term5 = parse("g(h(x),x)")
+      val f = FOLConst("f")
+      val g = FOLConst("g", Ti -> (Ti -> Ti))
+      val h = FOLConst("h", Ti -> Ti)
+      val x = FOLVar("x")
+      val y = FOLVar("y")
+      val a = FOLConst("a")
+      val b = FOLConst("b")
+      //val term1 = parse("g(a,h(b))")
+      val hb = Function(h, b::Nil)
+      val term1 = Function(g, a::hb::Nil)
+      //val term2 = parse("g(a,b)")
+      val term2 = Function(g, a::b::Nil)
+      //val term3 = parse("g(x,x)")
+      val term3 = Function(g, x::x::Nil)
+      //val term4 = parse("g(y,x)")
+      val term4 = Function(g, y::x::Nil)
+      //val term5 = parse("g(h(x),x)")
+      val hx = Function(h, x::Nil)
+      val term5 = Function(g, hx::x::Nil)
 
       val s12 = ACUnification.unify(f,term1,term2)
       val s13 = ACUnification.unify(f,term1,term3)
@@ -125,29 +169,21 @@ class ACUnificationTest extends SpecificationWithJUnit {
       for (i<- List(s12,s13,s23,s35))
         i.length must beEqualTo (0)
 
-    /*  ((s14, s24,s34) match {
-        case (List(r14), List(r24),List(r34)) =>
-          val tl14 = r14.apply(term1)
-          val tr14 = r14.apply(term4)
-          val tl24 = r24.apply(term2)
-          val tr24 = r24.apply(term4)
-          val tl34 = r34.apply(term3)
-          val tr34 = r34.apply(term4)
-
-          tl14 must beEqualTo(tr14)
-          tl24 must beEqualTo(tr24)
-          tl34 must beEqualTo(tr34)
-        case _ => true
-      }) must beEqualTo (false)
-      */
         // needed for the test to be visible because of the loop
         Success()
     }
 
 
     "not unify f(x,a) = f(f(y,a),x)" in {
-      val term1 = parse("f(x,a)")
-      val term2 = parse("f(f(x,f(a,a)),y)")
+      val f = FOLConst("f", Ti -> (Ti -> Ti))
+      val x = FOLVar("x")
+      val a = FOLConst("a")
+      //val term1 = parse("f(x,a)")
+      val term1 = Function(f, x::a::Nil)
+      //val term2 = parse("f(f(x,f(a,a)),y)")
+      val faa = Function(f, a::a::Nil)
+      val fxfaa = Function(f, x::faa::Nil)
+      val term2 = Function(f, fxfaa::y::Nil)
 
       val mgu = ACUnification unify(f,term1,term2)
       mgu.length must beEqualTo (0)
@@ -174,7 +210,6 @@ class ACUnificationTest extends SpecificationWithJUnit {
       checkResult(mgu,term1,term2)
     }
 
-    /* */
     "unify f(x,f(a,x)) = f(f(y,a),x)" in {
       val term1 = parse("f(x,f(a,x))")
       val term2 = parse("f(f(x,f(a,a)),y)")
@@ -183,7 +218,6 @@ class ACUnificationTest extends SpecificationWithJUnit {
       true must beEqualTo (mgu.length>0)
       checkResult(mgu,term1,term2)
     }
-    /* */
     "unify f(x,x) = f(y,f(y,y))" in {
       val term1 = parse("f(x,x)")
       val term2 = parse("f(y,f(y,y))")
@@ -240,17 +274,9 @@ class ACUnificationTest extends SpecificationWithJUnit {
       mgu.length must beEqualTo (4)
       checkResult(mgu,term1,term2)
 
-      /* test, if subtitution compose is in prefix or postfix notation
-      val s = Substitution[FOLExpression]((parse("x").asInstanceOf[FOLVar],parse("y").asInstanceOf[FOLExpression]))
-      val t = Substitution[FOLExpression]((parse("y").asInstanceOf[FOLVar],parse("x").asInstanceOf[FOLExpression]))
-      val term = parse("f(x,y)")
-      debug(1,(s compose t) apply (term))
-      debug(1,(t compose s) apply (term))
-      */
 
     }
 
-    /* */
     "unify f(x,f(y,x)) = f(z,f(z,z))" in {
       val term1 = parse("f(x,f(y,x))")
       val term2 = parse("f(z,f(z,z))")
@@ -266,7 +292,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
       val mgu = ACUnification unify(f,term1,term2)
       mgu.length must beEqualTo (1)
-      mgu(0) must beEqualTo (Substitution[FOLTerm]())
+      mgu(0) must beEqualTo (Substitution())
       
     }
 
@@ -276,7 +302,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
       val mgu = ACUnification unify(f,term1,term2)
       mgu.length must beEqualTo (1)
-      mgu(0) must beEqualTo (Substitution[FOLTerm]())
+      mgu(0) must beEqualTo (Substitution())
     }
 
     "working unification of multiple terms" in {
@@ -288,11 +314,10 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
       val mgu = ACUnification unify(f,terms)
       //TODO: well this should work, but it does not in the current implementation. grmbl.
-      /*
-      mgu.length must beEqualTo (1)
-      mgu(0) must beEqualTo (Substitution[FOLTerm]())
-      val subterms = terms map ( (term:FOLTerm) => ACUtils.flatten(f,mgu(0).apply(term)))
-      */
+      
+      //mgu.length must beEqualTo (1)
+      //mgu(0) must beEqualTo (Substitution())
+      //val subterms = terms map ( (term:FOLTerm) => ACUtils.flatten(f,mgu(0).apply(term)))
 
     }
 
@@ -320,31 +345,9 @@ class ACUnificationTest extends SpecificationWithJUnit {
       val w = Vector(3,3,3)
       val x = Vector(3,6,4)
 
-      /*
-      true must beEqualTo (ACUnification.linearlydependent_on(v, set - v ))
-      true must beEqualTo (ACUnification.linearlydependent_on(w, set - v - w ))
-      true must beEqualTo (ACUnification.linearlydependent_on(x, set - v - w - x ))
-      */
 
       val subsumed = ACUtils.removeSubsumedVectors_new(set,Vector(2,1,3))
       true must beEqualTo (subsumed.length < set.length)
-
-      /*
-      val z_1 = Vector(0, 0, 1, 0, 1)
-      val z_2 = Vector(0, 1, 0, 0, 1)
-      val z_3 = Vector(0, 0, 2, 1, 0)
-      val z_4 = Vector(0, 1, 1, 1, 0)
-      val z_5 = Vector(0, 2, 0, 1, 0)
-      val z_6 = Vector(1, 0, 0, 0, 2)
-      val z_7 = Vector(1, 0, 0, 1, 0)
-
-      debug(1,z_4+z_6)
-      debug(1,z_2+z_4+z_6)
-      debug(1,z_1+z_5+z_6)
-      debug(1,z_1+z_2+z_5+z_6)
-      debug(1,z_1+z_2+z_7)
-      debug(1,z_1+z_2+z_6+z_7)
-        */
 
     }
 
@@ -490,3 +493,4 @@ class ACUnificationTest extends SpecificationWithJUnit {
 
   }
 }
+*/
