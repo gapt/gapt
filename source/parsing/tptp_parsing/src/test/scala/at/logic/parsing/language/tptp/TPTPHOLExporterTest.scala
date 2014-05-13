@@ -19,6 +19,9 @@ class TPTPHOLExporterTest extends SpecificationWithJUnit {
       val ay = Atom(y)
 
       println(TPTPHOLExporter(List(FSequent(Nil, List(ax,ay)))))
+
+      println(TPTPHOLExporter(List(FSequent(List(ax), Nil),
+                                   FSequent(Nil, List(ay)))))
       ok
     }
   }

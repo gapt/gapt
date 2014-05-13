@@ -13,6 +13,9 @@ class TPTPHOLExporter {
   def apply(l : List[FSequent]) : String = {
     require(l.nonEmpty, "Cannot export an empty sequent list!")
     val (vs, vnames, cs, cnames) = createNamesFromSequent(l)
+
+    printStatistics(vnames,cnames)
+
     var index = 0
     val vdecs_ = for(v <- vs) yield {
       index = index +1
@@ -41,6 +44,31 @@ class TPTPHOLExporter {
     //"% variable type declarations\n" + vdecs +
       "% constant type declarations\n" + cdecs +
       "% sequents\n" + sdecs
+  }
+
+  def printStatistics(vnames : NameMap, cnames : CNameMap) : Unit = {
+    if (cnames.isEmpty) {
+      println("% No symbol translation necessary!")
+      return ()
+    };
+    println("% Symbol translation table for THF export:")
+    val csyms = cnames.keySet.toList.map({ case HOLConst(s,_) => s})
+
+    val width = csyms.sortWith((x,y) => y.size < x.size).head.size
+    for ((c,s) <- cnames) {
+      val sym = c.sym.toString
+      print("%   ")
+      print(sym)
+      for (i <- sym.size to (width+1)) print(" ")
+      print(" -> ")
+      print(s)
+      println()
+    }
+
+    println()
+
+
+
   }
 
 
@@ -94,7 +122,7 @@ class TPTPHOLExporter {
   )
 
   def thf_sequent_dec(i:Int, f:FSequent, vmap : NameMap, cmap : CNameMap) = {
-    "thf("+i+", plain, ["+
+    "thf("+i+", conjecture, ["+
       (f.antecedent.map(f => thf_formula(f,vmap,cmap)).mkString(",")) +
      "] --> [" +
       (f.succedent.map(f => thf_formula(f,vmap,cmap)).mkString(",")) +
@@ -102,20 +130,25 @@ class TPTPHOLExporter {
   }
 
   def thf_formula_dec(i:Int, f:HOLFormula, vmap : NameMap, cmap : CNameMap) = {
-    "thf("+i+", plain, "+ thf_formula(f,vmap,cmap) +" )."
+    "thf("+i+", conjecture, "+ thf_formula(f,vmap,cmap) +" )."
+  }
+
+  def thf_negformula_dec(i:Int, f:HOLFormula, vmap : NameMap, cmap : CNameMap) = {
+    "thf("+i+", negative_conjecture, "+ thf_formula(f,vmap,cmap) +" )."
   }
 
 
   def thf_formula(f:HOLExpression, vmap : NameMap, cmap : CNameMap) : String = {
     f match {
       case Neg(x) => " ~("+thf_formula(x, vmap, cmap) +")"
-      case And(x,y) => "("+thf_formula(x, vmap, cmap) +" & " +thf_formula(y, vmap, cmap)+")"
-      case Or(x,y) => "("+thf_formula(x, vmap, cmap) +" | " +thf_formula(y, vmap, cmap)+")"
-      case Imp(x,y) => "("+thf_formula(x, vmap, cmap) +" => " +thf_formula(y, vmap, cmap)+")"
+      case And(x,y) => "("+thf_formula(x, vmap, cmap) +") & (" +thf_formula(y, vmap, cmap)+")"
+      case Or(x,y) => "("+thf_formula(x, vmap, cmap) +") | (" +thf_formula(y, vmap, cmap)+")"
+      case Imp(x,y) => "("+thf_formula(x, vmap, cmap) +") => (" +thf_formula(y, vmap, cmap)+")"
       case AllVar(x,t) => "!["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")"
       case ExVar(x,t) => "?["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")"
+      case Equation(x,y) => "(" + thf_formula(x, vmap,cmap) +") = (" + thf_formula(y, vmap,cmap) +")"
       case HOLAbs(x,t) => "^["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")"
-      case HOLApp(s,t) => "(" + thf_formula(s, vmap, cmap) + " @ " +thf_formula(t, vmap,cmap) +")"
+      case HOLApp(s,t) => "(" + thf_formula(s, vmap, cmap) + ") @ (" +thf_formula(t, vmap,cmap) +")"
       case HOLVar(_,_) => vmap(f.asInstanceOf[HOLVar])
       case HOLConst(_,_) => cmap(f.asInstanceOf[HOLConst])
       case _ => throw new Exception("TPTP export does not support outermost connective of "+f)
@@ -143,7 +176,11 @@ class TPTPHOLExporter {
   }
 
   def mkVarName(str:String, map : Map[HOLVar,String]) = {
-    val fstr = str.filter(_.toString.matches("[a-zA-Z0-9]"))
+    val fstr_ = str.filter(_.toString.matches("[a-zA-Z0-9]"))
+    val fstr = if (fstr_.isEmpty) {
+      println("Warning: "+str+" needs to be completely replaced by a fresh variable!")
+      "V"
+    } else fstr_
     val prefix = if (fstr.head.isDigit) "X"+fstr
                  else fstr.head.toUpper + fstr.tail
     val values = map.toList.map(_._2)
@@ -154,9 +191,21 @@ class TPTPHOLExporter {
   }
 
   def mkConstName(str:String, map : CNameMap) = {
-    val fstr = str.filter(_.toString.matches("[a-zA-Z0-9]"))
+    val fstr_ = str match {
+      case "+" => "plus"
+      case "-" => "minus"
+      case "*" => "times"
+      case "/" => "div"
+      case "<" => "lt"
+      case ">" => "gt"
+      case _ => str.filter(_.toString.matches("[a-zA-Z0-9]"))
+    }
+    val fstr = if (fstr_.isEmpty) {
+      println("Warning: "+str+" needs to be completely replaced by a fresh constant!")
+      "c"
+    } else fstr_
     val prefix = if (fstr.head.isDigit) "c"+fstr
-    else fstr.head.toLower + fstr.tail
+                 else fstr.head.toLower + fstr.tail
     val values = map.toList.map(_._2)
     if (values contains prefix)
       appendPostfix(prefix,values)

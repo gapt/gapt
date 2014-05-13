@@ -50,7 +50,7 @@ import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.hlk.HLKHOLParser
 import at.logic.parsing.language.prover9._
 import at.logic.parsing.language.simple._
-import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.parsing.language.tptp.{TPTPHOLExporter, TPTPFOLExporter}
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.parsing.lisp.SExpressionParser
@@ -487,6 +487,15 @@ object exportTPTP {
     file.close
   }
 }
+
+object exportTHF {
+  def apply(ls: List[FSequent], filename: String) = {
+    val file = new JBufferedWriter(new JFileWriter(filename))
+    file.write(TPTPHOLExporter(ls))
+    file.close
+  }
+}
+
 
 /*
   object exportLLK {
