@@ -47,27 +47,47 @@ class TPTPHOLExporter {
   }
 
   def printStatistics(vnames : NameMap, cnames : CNameMap) : Unit = {
-    if (cnames.isEmpty) {
+    if (cnames.isEmpty && vnames.isEmpty) {
       println("% No symbol translation necessary!")
       return ()
     };
     println("% Symbol translation table for THF export:")
     val csyms = cnames.keySet.toList.map({ case HOLConst(s,_) => s})
+    val vsyms = vnames.keySet.toList.map({ case HOLVar(s,_) => s})
 
-    val width = csyms.sortWith((x,y) => y.size < x.size).head.size
+    val width = (vsyms++csyms).sortWith((x,y) => y.size < x.size).head.size
+
     for ((c,s) <- cnames) {
       val sym = c.sym.toString
-      print("%   ")
-      print(sym)
-      for (i <- sym.size to (width+1)) print(" ")
-      print(" -> ")
-      print(s)
-      println()
+      if (sym != s) {
+        print("%   ")
+        print(sym)
+        for (i <- sym.size to (width + 1)) print(" ")
+        print(" -> ")
+        print(s)
+        println()
+      }
     }
 
-    println()
+    val cunchanged = for ((c,s) <- cnames; if (c.sym.toString == s)) yield { s }
+    if (cunchanged.nonEmpty) println("% Unhanged constants: "+cunchanged.mkString(","))
 
+    println("% ")
 
+    for ((c,s) <- vnames) {
+      val sym = c.sym.toString
+      if (sym != s) {
+        print("%   ")
+        print(sym)
+        for (i <- sym.size to (width + 1)) print(" ")
+        print(" -> ")
+        print(s)
+        println()
+      }
+    }
+
+    val vunchanged = for ((c,s) <- vnames; if (c.sym.toString == s)) yield { s }
+    if (vunchanged.nonEmpty) println("% Unhanged variables: "+vunchanged.mkString(","))
 
   }
 
@@ -192,6 +212,7 @@ class TPTPHOLExporter {
 
   def mkConstName(str:String, map : CNameMap) = {
     val fstr_ = str match {
+      case "=" => "=" //equality is handled explicitly
       case "+" => "plus"
       case "-" => "minus"
       case "*" => "times"

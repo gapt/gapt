@@ -284,7 +284,7 @@ trait TokenToLKConverter {
     def inferTerm(x: HOLVar, f:HOLFormula): HOLExpression = {
       NaiveIncompleteMatchingAlgorithm.holMatch(f, aux)(Nil) match {
         case Some(sub) =>
-          val s: HOLExpression = sub.holmap(x)
+          val s: HOLExpression = sub.holmap.getOrElse(x,x) //in case the variable was projected away, we use the identity function
           if (auxterm.nonEmpty) {
             //try to use user provided term
             val t: HOLExpression = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
@@ -334,7 +334,7 @@ trait TokenToLKConverter {
     def inferTerm(x: HOLVar, f:HOLFormula): HOLExpression = {
       NaiveIncompleteMatchingAlgorithm.holMatch(f, aux)(Nil) match {
         case Some(sub) =>
-          val s: HOLExpression = sub.holmap(x)
+          val s: HOLExpression = sub.holmap.getOrElse(x, x) //in case the term was projected away we try the identity function
           if (auxterm.nonEmpty) {
             //try to use user provided term
             val t: HOLExpression = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
