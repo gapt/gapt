@@ -53,7 +53,7 @@ case class Replacement(position: List[Int], expression: HOLExpression) {
 object getAllPositions {
   def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
   def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
-      case HOLVar(_,_) => Nil // no need to paramodulate on variable positions
+      case HOLVar(_,_) => (curPos, t)::Nil // TODO: BEFORE we did return Nil with this comment => "no need to paramodulate on variable positions", check if it's still sound
       case HOLConst(_,_) => (curPos, t)::Nil
       case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
       case AllVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
