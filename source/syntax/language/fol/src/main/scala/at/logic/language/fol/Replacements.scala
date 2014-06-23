@@ -13,7 +13,7 @@ object getAtPositionFOL {
 }
 
 object getAllPositionsFOL {
-  def apply(expression: FOLExpression): List[Tuple2[List[Int], FOLExpression]] = hol.replacements.getAllPositions(expression.asInstanceOf[hol.HOLExpression]).asInstanceOf[List[Tuple2[List[Int],FOLExpression]]]
+  def apply(expression: FOLExpression): List[Tuple2[List[Int], FOLExpression]] = hol.replacements.getAllPositions2(expression.asInstanceOf[hol.HOLExpression]).asInstanceOf[List[Tuple2[List[Int],FOLExpression]]]
 }
 
 class Replacement(position: List[Int], expression: FOLExpression) extends hol.replacements.Replacement(position,expression) {

@@ -53,7 +53,7 @@ case class Replacement(position: List[Int], expression: HOLExpression) {
 object getAllPositions {
   def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
   def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
-      case HOLVar(_,_) => (curPos, t)::Nil // TODO: BEFORE we did return Nil with this comment => "no need to paramodulate on variable positions", check if it's still sound
+      case HOLVar(_,_) => Nil // no need to paramodulate on variable positions
       case HOLConst(_,_) => (curPos, t)::Nil
       case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
       case AllVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
@@ -61,6 +61,23 @@ object getAllPositions {
       case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
       //case Abs(_, exp) => (curPos, t)::recApply(exp.asInstanceOf[HOLExpression], curPos ::: List(1))
     }
+}
+
+/*
+ * TODO: Refactor this workaround, which is used for the trat grammar decomposition (Used in getAllPositionsFOL). It just handles the HOLVar differently than getAllPositions
+ *
+ */
+object getAllPositions2 {
+  def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
+  def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
+    case HOLVar(_,_) => (curPos, t)::Nil // TODO: difference
+    case HOLConst(_,_) => (curPos, t)::Nil
+    case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
+    case AllVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
+    case Atom(_, args) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
+    case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
+    //case Abs(_, exp) => (curPos, t)::recApply(exp.asInstanceOf[HOLExpression], curPos ::: List(1))
+  }
 }
 
 object getAtPosition {

@@ -70,6 +70,7 @@ import at.logic.provers.atp.commands.robinson._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.ui._
 import at.logic.provers.minisat.MiniSAT
+import at.logic.provers.qmaxsat.QMaxSAT
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
 
@@ -694,6 +695,10 @@ object eliminateInstaces {
 
 object miniSATsolve {
   def apply(f: HOLFormula) = (new MiniSAT).solve(f)
+}
+
+object QMaxSATsolve {
+  def apply(hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula,Int]]) = (new QMaxSAT).solvePWM(hard, soft)
 }
 
 object miniSATprove {
@@ -1439,6 +1444,7 @@ object help {
         |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
         |   miniSATsolve: HOLFormula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT
         |   miniSATprove: HOLFormula => Boolean - check if a quantifier-free formula is valid using MiniSAT
+        |   qmaxSATsolve: (Set[FOLFormula], Set[Tuple2[FOLFormula,Int]]) => Option[Interpretation] - obtain a model for a set of quantifier-free formulas (interpreted as hard constraints) and a set of tuples of quantifier-free formulas (interpreted as soft constraints) w.r.t. provided weights using qmaxsat
         |
         | Proof Theory:
         |   skolemize: LKProof => LKProof - skolemize the input proof

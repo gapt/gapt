@@ -17,6 +17,7 @@
     <module>minisat</module>
     <module>veriT</module>
     <module>eqProver</module>
+    <module>qmaxsat</module>
   </modules>
 
   <packaging>pom</packaging>
