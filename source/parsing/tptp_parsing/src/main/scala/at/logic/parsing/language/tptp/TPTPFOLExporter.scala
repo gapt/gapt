@@ -91,12 +91,12 @@ object TPTPFOLExporter extends at.logic.utils.logging.Logger {
     case Imp(x,y) => "( " + tptpFormula( x ) + " => " + tptpFormula( y ) + " )"
     case AllVar(v, f) => {
       val new_map = addToMap(v)
-      "! [" + tptp(v)(new_map) + "] : " + tptpFormula(f)(new_map)
+      "(! [" + tptp(v)(new_map) + "] : " + tptpFormula(f)(new_map) + ")"
     }
     case ExVar(v, f) => 
     {
       val new_map = addToMap(v)
-      "? [" + tptp(v)(new_map) + "] : " + tptpFormula(f)(new_map)
+      "? [" + tptp(v)(new_map) + "] : " + tptpFormula(f)(new_map) + ")"
     }
   }
 
