@@ -331,6 +331,21 @@ class Prover9Test extends SpecificationWithJUnit {
       }
     }
 
+    "handle quantified antecedents" in {
+      //checks, if the execution of prover9 works, o.w. skip test
+      Prover9.refute(box) must not(throwA[IOException]).orSkip
+
+      val g1 = parse("Forall x Forall y =(+(s(x), y), s(+(x, y)))")
+      val g2 = parse("Forall z =(+(o, z), z)")
+      val g0 = parse("And =(z, o) =(z, w)")
+      val f = parse("=(+(+(z, s(s(o))), s(s(o))), +(s(s(o)), +(s(s(o)), w)))")
+
+      Prover9.prove(FSequent(List(g0,g1,g2), List(f))) must beLike {
+        case Some(_) => ok
+        case None => ko
+      }
+    }
+
   }
 
 
