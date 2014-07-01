@@ -61,15 +61,15 @@ class MapBasedInterpretation( val model : Map[FOLFormula, Boolean]) extends Inte
 // Call QMaxSAT to solve partial weighted MaxSAT instances
 class QMaxSAT extends at.logic.utils.logging.Logger {
 
-  val pathToBinary = "/bin/qmaxsat"
+  val bin = "qmaxsat"
 
   def isInstalled() : Boolean = {
-    if(new java.io.File(pathToBinary).exists())
+    if(new java.io.File(bin).exists())
     {
       return true
     }
     warn("It seems that QMaxSAT is not installed properly")
-    warn("Please put the qmaxsat binary (available at https://sites.google.com/site/qmaxsat/) into '/bin/'")
+    warn("Please put the qmaxsat binary (available at https://sites.google.com/site/qmaxsat/) into PATH")
     return false
   }
 
@@ -189,7 +189,7 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
 
     //val run = pathToBinary + " " + temp_in.getAbsolutePath() + " " + temp_out.getAbsolutePath();
     debug("Starting qmaxsat...");
-    val command = List(pathToBinary, temp_in.getAbsolutePath(), temp_out.getAbsolutePath())
+    val command = List(bin, temp_in.getAbsolutePath(), temp_out.getAbsolutePath())
     val process = Process(command)
     var output = new StringBuilder()
     var error = new StringBuilder()
