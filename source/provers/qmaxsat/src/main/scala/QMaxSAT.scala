@@ -68,6 +68,8 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
     {
       return true
     }
+    warn("It seems that QMaxSAT is not installed properly")
+    warn("Please put the qmaxsat binary (available at https://sites.google.com/site/qmaxsat/) into '/bin/'")
     return false
   }
 
