@@ -14,6 +14,13 @@ import at.logic.language.fol.replacements.getAllPositionsFOL
 import at.logic.language.fol.replacements.getAtPositionFOL
 
 
+object TreeGrammarDecomposition{
+  def apply(termset: List[FOLTerm], n:Int) = {
+    val decomp = new TreeGrammarDecomposition(termset,n)
+    decomp.suffKeys()
+    println(decomp.MCS())
+  }
+}
 
 
 class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
@@ -32,12 +39,14 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
   // a hashmap storing for every key its index in keyList
   var keyIndexMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
 
-  // stores tuples (term,keyset), where keyset is a list of indexes of keys in keyset
-  // which produce a particular term
+  // stores tuples (term,keyset), where keyset is a list of indexes of keys in keyList
+  // which produce the particular term
   var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]] = mutable.HashMap[FOLTerm,mutable.Set[Int]]()
 
   var propRules : mutable.HashMap[FOLConst,(Int,Int)] = mutable.HashMap[FOLConst,(Int,Int)]()
   var propRests : mutable.HashMap[FOLConst,(Int,Int,Int)] = mutable.HashMap[FOLConst,(Int,Int,Int)]()
+
+  var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]()
 
   /*
    * Transforms a sufficient set of keys into a propositional
@@ -65,10 +74,47 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
   }
 
   /*
+   * Given a FOLTerm and a prefix for a variable,
+   * this function returns a list of all FOLVars in t starting
+   * with the particular prefix
+   */
+  def getEigenvariables(t: FOLTerm, eigenvariable_prefix: String) : List[String] = {
+    val s = t match {
+      case Function(f,args) => args.foldLeft(Set[String]())((prevargs,arg) => prevargs ++ getEigenvariables(arg, eigenvariable_prefix))
+      case FOLVar(v) => if(v.toString.startsWith(eigenvariable_prefix)) Set[String](v.toString()) else Set[String]()
+      case _ => Set[String]()
+    }
+    s.toList
+
+  }
+
+  /*
    * TODO: Develop the formula for generating D_{L,S}(t,i,q)
    */
-  def D(tindex: Int, i: Int, qindex: Int): FOLFormula = {
-    Atom("P",Nil)
+  def D(t: FOLTerm, l: Int, q: FOLTerm): FOLFormula = {
+
+      // for every key k_j producing t
+      Or(keyMap(t).foldLeft(List[FOLFormula]())((acc1,klistindex) => {
+        // add the propositional variable x_{k_j}
+        val x_l_kj = Atom("X",List(FOLConst(l+"_"+klistindex)))
+        // get all eigenvariables occuring in the subterm t
+        val evs = getEigenvariables(t,"α")//.map(x => FOLVar(x))
+        // for every eigenvariable in k_j
+        And(evs.foldLeft(List[FOLFormula](x_l_kj))((acc2,ev) => {
+          // get the eigenvariables index i
+          val evindex = ev.split("_").last.toInt
+          var rests = mutable.MutableList[FOLFormula]()
+          val x = 0
+          // and for every element r_j in the decomposition's sublanguage S where kj is its U
+          decompMap(keyList(klistindex)).foreach(d => {
+            val rindex = termMap(d(x))
+            val qindex = termMap(q)
+            // take the rest of the particular eigenvariable
+            rests += Atom("X",List(FOLConst(rindex+"_"+evindex+"_"+qindex)))
+          })
+          (rests.toList :: acc2).asInstanceOf[List[FOLFormula]]
+      }))  :: acc1
+    }))
   }
 
   /*
@@ -82,7 +128,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
     val qindex = addToTermMap(q)
     var qsubtermIndexes = mutable.Set[Int]()
     val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc,t) => {
-      // save the index of the term for later
+      // save the index of the subterm for later
       val tindex = addToTermMap(t)
       qsubtermIndexes += tindex
 
@@ -90,11 +136,11 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
       Range(1,n+1).foldLeft(List[FOLFormula]())((acc,i) => {
         val co = FOLConst(tindex+"_"+i+"_"+qindex)
         propRests(co) = (tindex,i,qindex)
-        Imp(Atom("X",co :: Nil), D(tindex,i,qindex)) :: acc
+        Imp(Atom("X",co :: Nil), D(t,i,q)) :: acc
       })
     })
 
-    And(formulas ++ List(D(qindex,0,qindex), R(qindex,qsubtermIndexes.toSet)))
+    And(formulas ++ List(D(q,0,q), R(qindex,qsubtermIndexes.toSet)))
   }
 
   /*
@@ -254,8 +300,8 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
    * as described in Eberhard [2014], w.r.t. an eigenvariable
    */
   def calcCharPartition(t: FOLTerm, eigenvariable: String) : List[List[Int]] = {
-    var positions = getAllPositionsFOL(t)
-    var pos = positions.foldLeft(List[Option[List[Int]]]())((acc,p) => (p match {
+    val positions = getAllPositionsFOL(t)
+    val pos = positions.foldLeft(List[Option[List[Int]]]())((acc,p) => (p match {
       case (pos, FOLVar(x)) if x.startsWith(eigenvariable) => Some(pos)
       case _ => None
     }) :: acc)
@@ -304,7 +350,12 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
     // initialize delta vector
     var delta = new UnboundedVariableDelta()
     // retrieve the key, since computeDelta returns a decomposition T = U o S
-    var k = delta.computeDelta(l, eigenvariable_b).toList(0)._1
+    var decomposition = delta.computeDelta(l, eigenvariable_b).toList(0)
+
+    // add the decomposition to the key map
+    // TODO: eventually check if the eigenvariables in k are ambigous
+    val k = decomposition._1
+    decompMap(k) = decomposition._2
 
     // calculate the characteristic partition
     var charPartition = calcCharPartition(k, eigenvariable_b)
