@@ -64,14 +64,21 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
   val bin = "qmaxsat"
 
   def isInstalled() : Boolean = {
-    if(new java.io.File(bin).exists())
-    {
-      return true
+    try {
+      val box : Set[FClause] = Set.empty
+      (new QMaxSAT).solve(box,box.zipWithIndex)
+      true
+    } catch  {
+      case ex: IOException => {
+        warn("It seems that QMaxSAT is not installed properly")
+        warn("Please put the qmaxsat binary (available at https://sites.google.com/site/qmaxsat/) into PATH")
+        return false
+      }
     }
-    warn("It seems that QMaxSAT is not installed properly")
-    warn("Please put the qmaxsat binary (available at https://sites.google.com/site/qmaxsat/) into PATH")
-    return false
+
+    return true
   }
+
 
   var atom_map : Map[FOLFormula, Int] = new HashMap[FOLFormula,Int]
 
@@ -178,6 +185,9 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
     val stdout = File.createTempFile("qmaxsat",".stdout")
     stdout.deleteOnExit()
 
+    val stderr = File.createTempFile("qmaxsat",".stderr")
+    stderr.deleteOnExit()
+
     val out = new BufferedWriter(new FileWriter(temp_in))
     out.append(sb.toString())
     out.close()
@@ -195,8 +205,8 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
     var error = new StringBuilder()
     val processIO = new ProcessIO(
       _ => (), // stdin does not matter
-      stdout => scala.io.Source.fromInputStream(stdout).getLines.foreach(s => output.append(s+"\n")),
-      stderr => scala.io.Source.fromInputStream(stderr).getLines.foreach(s => error.append(s+"\n")))
+      stdout => scala.io.Source.fromInputStream(stdout, "ISO-8859-1").getLines.foreach(s => output.append(s+"\n")),
+      stderr => scala.io.Source.fromInputStream(stderr, "ISO-8859-1").getLines.foreach(s => error.append(s+"\n")))
 
     val value = process run processIO exitValue
 
