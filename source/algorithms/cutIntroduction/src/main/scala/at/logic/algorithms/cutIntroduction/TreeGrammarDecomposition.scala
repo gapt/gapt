@@ -12,18 +12,23 @@ import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import at.logic.language.fol.replacements.getAllPositionsFOL
 import at.logic.language.fol.replacements.getAtPositionFOL
+import at.logic.provers.qmaxsat.{MapBasedInterpretation, QMaxSAT}
+import scala.Some
+import scala.Tuple2
 
 
 object TreeGrammarDecomposition{
   def apply(termset: List[FOLTerm], n:Int) = {
     val decomp = new TreeGrammarDecomposition(termset,n)
     decomp.suffKeys()
-    println(decomp.MCS())
+    val f = Set(decomp.MCS(), decomp.additionalFormula())
+    val g = decomp.softConstraints()
+    println(decomp.getRules((new QMaxSAT).solvePWM(f,g)))
   }
 }
 
 
-class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
+class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.utils.logging.Logger {
 
   // an ordering to order FOLTerms by their string representation
   //val order = Ordering[String].on[FOLTerm](s => s.toString)
@@ -47,6 +52,34 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
   var propRests : mutable.HashMap[FOLConst,(Int,Int,Int)] = mutable.HashMap[FOLConst,(Int,Int,Int)]()
 
   var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]()
+
+  /*
+   * Generates the soft constraints for
+   * the MCS formulation as a partial weighted MaxSAT problem,
+   * where -x_{i,k} has cost 1 for all non-terminals α_i and keys k
+   */
+  def softConstraints() : Set[Tuple2[FOLFormula,Int]] = {
+    propRules.foldLeft(Set[Tuple2[FOLFormula,Int]]())((acc,x) => acc + Tuple2(Neg(Atom("X",List(x._1))),1))
+  }
+
+  def getRules(interpretation: Option[MapBasedInterpretation]) : Set[Tuple2[Int,FOLTerm]] = {
+    interpretation match {
+      case Some(model) => {
+      propRules.foldLeft(Set[Tuple2[Int, FOLTerm]]())((acc, x) => {
+          // if x_{i,k} is true
+          // generate the rule α_i -> k
+          if (model.interpretAtom(Atom("X", List(x._1)))) {
+            acc + Tuple2(x._2._1, keyList(x._2._2))
+          }
+          else {
+            acc
+          }
+        })
+      }
+      case None => Set.empty
+    }
+
+  }
 
   /*
    * Transforms a sufficient set of keys into a propositional
@@ -88,32 +121,47 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) {
 
   }
 
+  def additionalFormula() : FOLFormula = {
+    Or(propRules.map( x => Atom("X",List(x._1))).toList)
+  }
+
   /*
-   * TODO: Develop the formula for generating D_{L,S}(t,i,q)
+   * Generates the formula D_{L,S}(t,i,q) according to
+   * Eberhard [2014]
    */
   def D(t: FOLTerm, l: Int, q: FOLTerm): FOLFormula = {
 
-      // for every key k_j producing t
+      // for every key k_j producing t, which
+      // ONLY CONTAINS α_i, where i > l
       Or(keyMap(t).foldLeft(List[FOLFormula]())((acc1,klistindex) => {
         // add the propositional variable x_{k_j}
-        val x_l_kj = Atom("X",List(FOLConst(l+"_"+klistindex)))
+        val x_l_kj = FOLConst(l+"_"+klistindex)
+        propRules(x_l_kj) = (l,klistindex)
         // get all eigenvariables occuring in the subterm t
-        val evs = getEigenvariables(t,"α")//.map(x => FOLVar(x))
-        // for every eigenvariable in k_j
-        And(evs.foldLeft(List[FOLFormula](x_l_kj))((acc2,ev) => {
-          // get the eigenvariables index i
-          val evindex = ev.split("_").last.toInt
-          var rests = mutable.MutableList[FOLFormula]()
-          val x = 0
-          // and for every element r_j in the decomposition's sublanguage S where kj is its U
-          decompMap(keyList(klistindex)).foreach(d => {
-            val rindex = termMap(d(x))
-            val qindex = termMap(q)
-            // take the rest of the particular eigenvariable
-            rests += Atom("X",List(FOLConst(rindex+"_"+evindex+"_"+qindex)))
-          })
-          (rests.toList :: acc2).asInstanceOf[List[FOLFormula]]
-      }))  :: acc1
+        val evs = getEigenvariables(keyList(klistindex),"α")//.map(x => FOLVar(x))
+        // check if all eigenvariables α_i suffice i > l
+        if(evs.foldLeft(true)((acc,x) => acc && (x.split("_").last.toInt > l ))){
+          debug("NOT skipping key '"+keyList(klistindex)+"' for l="+l)
+          // for every eigenvariable in k_j
+          And(evs.foldLeft(List[FOLFormula](Atom("X",List(x_l_kj))))((acc2,ev) => {
+            // get the eigenvariables index i
+            val evindex = ev.split("_").last.toInt
+            var rests = mutable.MutableList[FOLFormula]()
+            val x = 0
+            // and for every element r_j in the decomposition's sublanguage S where kj is its U
+            decompMap(keyList(klistindex)).foreach(d => {
+              val rindex = termMap(d(x))
+              val qindex = termMap(q)
+              // take the rest of the particular eigenvariable
+              rests += Atom("X",List(FOLConst(rindex+"_"+evindex+"_"+qindex)))
+            })
+            (rests.toList :: acc2).asInstanceOf[List[FOLFormula]]
+          }))  :: acc1
+        }
+        else{
+          debug("Skipping key '"+keyList(klistindex)+"' for l="+l)
+          acc1
+        }
     }))
   }
 

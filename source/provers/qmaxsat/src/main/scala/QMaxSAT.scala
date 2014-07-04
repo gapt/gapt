@@ -13,7 +13,7 @@ import scala.sys.process.{ProcessIO, Process}
 import java.lang.RuntimeException
 
 // This is also occuring in the minisat package
-// TODO: eventual refactoring
+// TODO: refactoring
 trait Interpretation {
   // Interpret an atom.
   def interpretAtom(atom : FOLFormula) : Boolean
@@ -87,7 +87,7 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
   // soft are the soft constraints with weights w,
   // obtained from the QMaxSAT solver.
   // Returns None if unsatisfiable.
-  def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : Option[Interpretation] = {
+  def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : Option[MapBasedInterpretation] = {
     val hardCNF = hard.foldLeft(Set[FClause]())((acc,f) => acc ++ CNFp(f))
     val softCNFs = soft.foldLeft(Set[Tuple2[FClause,Int]]())((acc,s) => acc ++ CNFp(s._1).foldLeft(Set[Tuple2[FClause,Int]]())((acc,f) => acc + Tuple2[FClause,Int](f, s._2) ))
     trace("produced hard cnf: " + hardCNF)
@@ -97,7 +97,7 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
 
   // Returns a model of the set of clauses obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
-  def solve( hardCNF: Set[FClause], softCNFs: Set[Tuple2[FClause,Int]] ) : Option[Interpretation] =
+  def solve( hardCNF: Set[FClause], softCNFs: Set[Tuple2[FClause,Int]] ) : Option[MapBasedInterpretation] =
     getFromQMaxSat(hardCNF, softCNFs) match {
       case Some(model) => Some(new MapBasedInterpretation(model))
       case None => None
@@ -159,6 +159,7 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
     }
     else{
       top = soft.foldLeft(0)((acc,x) => acc + x._2) + 1
+      debug("TOP: "+top)
       sb.append("p wcnf " + atom_map.size + " "  + clauses.size + " " + top + nl)
     }
 
@@ -192,8 +193,8 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
     out.append(sb.toString())
     out.close()
 
-    trace( "Generated MiniSAT input: ")
-    trace(sb.toString());
+    //debug( "Generated QMaxSAT input: ")
+    //debug(sb.toString());
 
     // run qmaxsat
 
@@ -214,8 +215,8 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
     debug("qmaxsat finished.");
 
 
-    debug("IN_FILE:\n"+TextFileSlurper(temp_in));
-    debug("OUT_FILE:\n"+TextFileSlurper(temp_out));
+    //debug("IN_FILE:\n"+TextFileSlurper(temp_in));
+    //debug("OUT_FILE:\n"+TextFileSlurper(temp_out));
     debug("OUT:\n"+output.toString);
     debug("ERR:\n"+error.toString);
     // parse qmaxsat output and construct map
@@ -223,7 +224,7 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
       new FileInputStream(stdout)));
 
     val sat = in.readLine();
-    trace("QMaxSAT result: " + sat)
+    debug("result: " + sat)
     var weight = 0
     if ( output.toString.startsWith("o") ) {
       val lines = output.toString.split("\n")
@@ -235,6 +236,7 @@ class QMaxSAT extends at.logic.utils.logging.Logger {
           result = l
         }
       }
+      debug("model: "+result)
       Some( result.split(" ").
         filter(lit => !lit.equals("") && !lit.equals("v") && !lit.charAt(0).equals('0')).
         map( lit =>
