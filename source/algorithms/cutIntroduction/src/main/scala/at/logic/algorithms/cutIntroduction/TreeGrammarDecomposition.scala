@@ -21,8 +21,13 @@ object TreeGrammarDecomposition{
   def apply(termset: List[FOLTerm], n:Int) = {
     val decomp = new TreeGrammarDecomposition(termset,n)
     decomp.suffKeys()
-    val f = Set(decomp.MCS(), decomp.additionalFormula())
+    debug("Generating MinCostSAT formulation")
+    val f = Set(decomp.MCS())//, decomp.additionalFormula())
+    println("F: \n")
+    f.foreach(x => println(x+"\n"))
     val g = decomp.softConstraints()
+    println("G: \n"+g)
+    debug("Starting up QMaxSAT Solver")
     println(decomp.getRules((new QMaxSAT).solvePWM(f,g)))
   }
 }
@@ -87,13 +92,19 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
    * n the number of non-terminals
    */
   def MCS() : FOLFormula = {
-    val formula = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc)
-    And(formula)
+    And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
   }
 
   def R(qindex: Int, qsubtermIndexes: Set[Int]) : FOLFormula = {
     // for all pairs t_0,t_1 \in st({q}), s.t. t_0 != t_1
-    val pairs = qsubtermIndexes.flatMap(t0 => qsubtermIndexes.map(t1 => (t0,t1)))
+    val pairs = qsubtermIndexes.flatMap(t0 => qsubtermIndexes.foldLeft(List[(Int,Int)]())((acc,t1) => {
+      if(t1 != t0){
+        (t0,t1) :: acc
+      }
+      else{
+        acc
+      }
+    }))
     // generate the formula \neg x_{t_0,i,q} \lor \neg x_{t_1,i,q}
     And(pairs.foldLeft(List[FOLFormula]())((acc1,t) => {
       Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
@@ -141,7 +152,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
         val evs = getEigenvariables(keyList(klistindex),"α")//.map(x => FOLVar(x))
         // check if all eigenvariables α_i suffice i > l
         if(evs.foldLeft(true)((acc,x) => acc && (x.split("_").last.toInt > l ))){
-          debug("NOT skipping key '"+keyList(klistindex)+"' for l="+l)
+          //debug("NOT skipping key '"+keyList(klistindex)+"' for l="+l)
           // for every eigenvariable in k_j
           And(evs.foldLeft(List[FOLFormula](Atom("X",List(x_l_kj))))((acc2,ev) => {
             // get the eigenvariables index i
@@ -149,28 +160,30 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
             var rests = mutable.MutableList[FOLFormula]()
             val x = 0
             // and for every element r_j in the decomposition's sublanguage S where kj is its U
+            // TODO: Note: That for blocks of quantifiers here decompMap eventually does not contain mirror cases of keys like f(g(α_2),α_1), but f(g(α_1),α_2)
             decompMap(keyList(klistindex)).foreach(d => {
-              val rindex = termMap(d(x))
-              val qindex = termMap(q)
+              val rindex = addToTermMap(d(x))
+              val qindex = addToTermMap(q)
               // take the rest of the particular eigenvariable
               rests += Atom("X",List(FOLConst(rindex+"_"+evindex+"_"+qindex)))
             })
-            (rests.toList :: acc2).asInstanceOf[List[FOLFormula]]
+            (rests.toList ::: acc2)
           }))  :: acc1
         }
         else{
-          debug("Skipping key '"+keyList(klistindex)+"' for l="+l)
+          //debug("Skipping key '"+keyList(klistindex)+"' for l="+l)
           acc1
         }
     }))
   }
 
   /*
-       * Generates out of a term q the formula
-       * C_{L,S}(q) as written in Eberhard [2014]
-       */
+   * Generates out of a term q the formula
+   * C_{L,S}(q) as written in Eberhard [2014]
+   */
   def C(q: FOLTerm) : FOLFormula = {
 
+    debug("Generating C(q), where q = '"+q+"'")
     val subterms = st(q)
     // save the index of the term for later
     val qindex = addToTermMap(q)
@@ -272,7 +285,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
    */
   def suffKeys() {
 
-    var result = scala.collection.mutable.Set[FOLTerm]()
+    //var result = scala.collection.mutable.Set[FOLTerm]()
     val st = subterms(termset)
     // TODO: check how to calculate n before calling normform
     //       This is kind of tricky, because we don't know a priori
@@ -383,6 +396,37 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     case Function(x, args) => return args.foldLeft(false)((s,a) => s || eigenvariableOccurs(a, variable_prefix))
     case _ => return false
   }
+
+  /*
+   * increments the index of a FOLVar by 1
+   * TODO: Error Handling
+   */
+  def incrementIndex(v: FOLVar) : FOLVar = {
+    val parts = v.toString.split("_")
+    val index = parts.last.toInt
+    FOLVar((parts.take(parts.size - 1).foldLeft("")((acc,x) => acc+"_"+x)+"_"+(index+1)).substring(1))
+  }
+
+  def incrementAllVars(t: FOLTerm) : FOLTerm = {
+    t match {
+      case FOLVar(x) => incrementIndex(FOLVar(x))
+      case FOLConst(c) => FOLConst(c)
+      case Function(f,l) => Function(f,l.map(p => incrementAllVars(p)))
+      case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
+                t}
+    }
+  }
+
+  def replaceAllVars(t: FOLTerm, prefix1: String, prefix2:String) : FOLTerm = {
+    t match {
+      case FOLVar(x) => FOLVar(x.replace(prefix1,prefix2))
+      case FOLConst(c) => FOLConst(c)
+      case Function(f,l) => Function(f,l.map(p => replaceAllVars(p, prefix1, prefix2)))
+      case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
+        t}
+    }
+  }
+
   /*
    * normform produces, depending on a language l
    * a set of keys in normalform.
@@ -402,8 +446,9 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
     // add the decomposition to the key map
     // TODO: eventually check if the eigenvariables in k are ambigous
-    val k = decomposition._1
-    decompMap(k) = decomposition._2
+    val k = incrementAllVars(decomposition._1)//decomposition._1
+    //decompMap(k) = decomposition._2
+    decompMap(replaceAllVars(k,eigenvariable_b,eigenvariable_a)) = decomposition._2
 
     // calculate the characteristic partition
     var charPartition = calcCharPartition(k, eigenvariable_b)
@@ -414,7 +459,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     // for each ordered list of position sets
     permutedCharPartition.foreach(p => {
       // eigenvariable index
-      var index = 0
+      var index = 1
       // new_key as in Eberhard [2014]
       var new_key = k
       // for every position in the set
