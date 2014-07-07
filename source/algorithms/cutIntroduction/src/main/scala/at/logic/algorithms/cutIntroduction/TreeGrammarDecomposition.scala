@@ -13,8 +13,6 @@ import scala.collection.mutable
 import at.logic.language.fol.replacements.getAllPositionsFOL
 import at.logic.language.fol.replacements.getAtPositionFOL
 import at.logic.provers.qmaxsat.{MapBasedInterpretation, QMaxSAT}
-import scala.Some
-import scala.Tuple2
 
 
 object TreeGrammarDecomposition{
@@ -22,13 +20,14 @@ object TreeGrammarDecomposition{
     val decomp = new TreeGrammarDecomposition(termset,n)
     decomp.suffKeys()
     debug("Generating MinCostSAT formulation")
-    val f = Set(decomp.MCS())//, decomp.additionalFormula())
-    println("F: \n")
-    f.foreach(x => println(x+"\n"))
+    //val f = Set(decomp.MCS())//, decomp.additionalFormula())
+    val f = decomp.MCS()
+    //println("F: \n")
+    //f.foreach(x => println(x+"\n"))
     val g = decomp.softConstraints()
     println("G: \n"+g)
     debug("Starting up QMaxSAT Solver")
-    println(decomp.getRules((new QMaxSAT).solvePWM(f,g)))
+    println(decomp.getRules((new QMaxSAT).solvePWM(f.toSet,g)))
   }
 }
 
@@ -87,24 +86,41 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   }
 
   /*
+   * Generates out of a set S
+   * the diagonal cartesian product S² of it
+   */
+  def diagCross(l:List[Int]) : List[(Int,Int)] = {
+    l match {
+      case x::xs => xs.map(y => (x,y)) ++ diagCross(xs)
+      case _ => Nil
+    }
+  }
+
+  /*
    * Transforms a sufficient set of keys into a propositional
    * formula as described in Eberhard [2014].
    * n the number of non-terminals
    */
-  def MCS() : FOLFormula = {
-    And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
+  def MCS() : List[FOLFormula] = {
+    //And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
+    val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
+    debug("F: "+f.foldLeft("")((acc,x) => acc + "\n"+printExpression(x)))
+    return f
   }
 
   def R(qindex: Int, qsubtermIndexes: Set[Int]) : FOLFormula = {
     // for all pairs t_0,t_1 \in st({q}), s.t. t_0 != t_1
-    val pairs = qsubtermIndexes.flatMap(t0 => qsubtermIndexes.foldLeft(List[(Int,Int)]())((acc,t1) => {
+    /*val pairs = qsubtermIndexes.flatMap(t0 => qsubtermIndexes.foldLeft(List[(Int,Int)]())((acc,t1) => {
       if(t1 != t0){
         (t0,t1) :: acc
       }
       else{
         acc
       }
-    }))
+    }))*/
+    // since we don't need to generate all pairs, due to commutativity of \lor
+    // we need only the cartesian product of qsubtermindexes, without the diagonal
+    val pairs = diagCross(qsubtermIndexes.toList)
     // generate the formula \neg x_{t_0,i,q} \lor \neg x_{t_1,i,q}
     And(pairs.foldLeft(List[FOLFormula]())((acc1,t) => {
       Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
@@ -136,6 +152,29 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     Or(propRules.map( x => Atom("X",List(x._1))).toList)
   }
 
+  def printExpression(f: FOLExpression) : String = {
+    f match {
+      case And(a,b) => printExpression(a) + " ∧ " + printExpression(b)
+      case Or(a,b) => printExpression(a) + " V " + printExpression(b)
+      case Neg(e) => "¬" + printExpression(e)
+      case Imp(a,b) => printExpression(a) + " -> " + printExpression(b)
+      case FOLVar(x) => x.toString
+      case FOLConst(x) => pA(FOLConst(x))
+      case Function(f,l) => f+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
+      case Atom(a,l) => a+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
+    }
+  }
+
+  def pA(c:FOLConst) : String = {
+    val s = c.toString.split("_")
+    if(s.size == 2)
+    {
+      return "'α_"+s(0)+"'_'"+keyList(s(1).toInt)+"'"
+    }else{
+      return "'"+termset(s(0).toInt)+"'_'α_"+s(1)+"'_'"+termset(s(2).toInt)+"'"
+    }
+  }
+
   /*
    * Generates the formula D_{L,S}(t,i,q) according to
    * Eberhard [2014]
@@ -144,35 +183,41 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
       // for every key k_j producing t, which
       // ONLY CONTAINS α_i, where i > l
+      //debug("D -> keyMap("+t+") = "+keyMap(t))
       Or(keyMap(t).foldLeft(List[FOLFormula]())((acc1,klistindex) => {
         // add the propositional variable x_{k_j}
         val x_l_kj = FOLConst(l+"_"+klistindex)
         propRules(x_l_kj) = (l,klistindex)
+
+        val ruleVar : FOLFormula = Atom("X",List(x_l_kj))
+
         // get all eigenvariables occuring in the subterm t
         val evs = getEigenvariables(keyList(klistindex),"α")//.map(x => FOLVar(x))
         // check if all eigenvariables α_i suffice i > l
         if(evs.foldLeft(true)((acc,x) => acc && (x.split("_").last.toInt > l ))){
-          //debug("NOT skipping key '"+keyList(klistindex)+"' for l="+l)
+          //debug("NOT skipping key='"+keyList(klistindex)+"' for l="+l)
           // for every eigenvariable in k_j
-          And(evs.foldLeft(List[FOLFormula](Atom("X",List(x_l_kj))))((acc2,ev) => {
+          And(ruleVar :: evs.foldLeft(List[FOLFormula]())((acc2,ev) => {
             // get the eigenvariables index i
             val evindex = ev.split("_").last.toInt
             var rests = mutable.MutableList[FOLFormula]()
+            // TODO: Note: x = 0 is used due to the fact that we don't consider blocks of quantifiers
             val x = 0
             // and for every element r_j in the decomposition's sublanguage S where kj is its U
             // TODO: Note: That for blocks of quantifiers here decompMap eventually does not contain mirror cases of keys like f(g(α_2),α_1), but f(g(α_1),α_2)
-            decompMap(keyList(klistindex)).foreach(d => {
+            //debug("Generating REST-Var Conjunction for rests decompMap("+keyList(klistindex)+") = "+decompMap(keyList(klistindex)))
+
+            decompMap(keyList(klistindex)).foldLeft(List[FOLFormula]())((acc3,d) => {
               val rindex = addToTermMap(d(x))
               val qindex = addToTermMap(q)
               // take the rest of the particular eigenvariable
-              rests += Atom("X",List(FOLConst(rindex+"_"+evindex+"_"+qindex)))
-            })
-            (rests.toList ::: acc2)
-          }))  :: acc1
+              Atom("X",List(FOLConst(rindex+"_"+evindex+"_"+qindex))) :: acc3
+            }) ::: acc2
+          })) :: acc1
         }
         else{
           //debug("Skipping key '"+keyList(klistindex)+"' for l="+l)
-          acc1
+          ruleVar :: acc1
         }
     }))
   }
@@ -181,31 +226,39 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
    * Generates out of a term q the formula
    * C_{L,S}(q) as written in Eberhard [2014]
    */
-  def C(q: FOLTerm) : FOLFormula = {
+  def C(q: FOLTerm) : List[FOLFormula] = {
 
-    debug("Generating C(q), where q = '"+q+"'")
+    debug("GENERATING C(q), where q = '"+q+"'")
     val subterms = st(q)
     // save the index of the term for later
     val qindex = addToTermMap(q)
     var qsubtermIndexes = mutable.Set[Int]()
-    val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc,t) => {
+    val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc1,t) => {
       // save the index of the subterm for later
       val tindex = addToTermMap(t)
       qsubtermIndexes += tindex
 
-      // For t \in st({q}), 1 <= i <= n
-      Range(1,n+1).foldLeft(List[FOLFormula]())((acc,i) => {
+      // For t \in st({q})
+      // 1 <= i <= n
+      Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
         val co = FOLConst(tindex+"_"+i+"_"+qindex)
         propRests(co) = (tindex,i,qindex)
-        Imp(Atom("X",co :: Nil), D(t,i,q)) :: acc
-      })
+        val d = D(t,i,q)
+        //debug("D("+tindex+","+i+","+qindex+") = D("+t+","+i+","+q+") = "+d)
+        Imp(Atom("X",co :: Nil), d) :: acc2
+      }) ::: acc1
     })
-
-    And(formulas ++ List(D(q,0,q), R(qindex,qsubtermIndexes.toSet)))
+    val r = R(qindex,qsubtermIndexes.toSet)
+    val d = D(q,0,q)
+    debug("formulas = "+formulas)
+    debug("D("+q+",0,"+q+") = "+d)
+    debug("R("+qindex+","+qsubtermIndexes.toSet+") = "+r)
+    //And(
+    formulas ++ List(d, r)//)
   }
 
   /*
-   * Evetnually adds a term to the term map and returns its index
+   * Eventually adds a term to the term map and returns its index
    */
   def addToTermMap(t: FOLTerm) : Int = {
     // is the term already associated with an index?
