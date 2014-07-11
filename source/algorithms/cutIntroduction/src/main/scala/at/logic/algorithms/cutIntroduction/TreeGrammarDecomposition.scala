@@ -82,7 +82,17 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       }
       case None => Set.empty
     }
+  }
 
+
+  /*
+   * Checks if a rest r is a rest w.r.t. a key k in a term t
+   * i.e. t = k[\alpha_1 \ r(0)]...[\alpha_{n+1} \ r(n)]
+   */
+  def isRest(t: FOLTerm, k: FOLTerm, r: List[FOLTerm]) : Boolean = {
+    val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
+    val sub = Substitution(evs.zip(r))
+    return t == sub(k)
   }
 
   /*
@@ -200,18 +210,25 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
           And(ruleVar :: evs.foldLeft(List[FOLFormula]())((acc2,ev) => {
             // get the eigenvariables index i
             val evindex = ev.split("_").last.toInt
-            var rests = mutable.MutableList[FOLFormula]()
             // TODO: Note: x = 0 is used due to the fact that we don't consider blocks of quantifiers
             val x = 0
             // and for every element r_j in the decomposition's sublanguage S where kj is its U
             // TODO: Note: That for blocks of quantifiers here decompMap eventually does not contain mirror cases of keys like f(g(α_2),α_1), but f(g(α_1),α_2)
             //debug("Generating REST-Var Conjunction for rests decompMap("+keyList(klistindex)+") = "+decompMap(keyList(klistindex)))
+            val k = keyList(klistindex)
+            decompMap(k).foldLeft(List[FOLFormula]())((acc3,d) => {
 
-            decompMap(keyList(klistindex)).foldLeft(List[FOLFormula]())((acc3,d) => {
-              val rindex = addToTermMap(d(x))
-              val qindex = addToTermMap(q)
-              // take the rest of the particular eigenvariable
-              Atom("X",List(FOLConst(rindex+"_"+evindex+"_"+qindex))) :: acc3
+              // if d is a rest of k regarding t
+              // add it to the formula
+              if(isRest(t, k, d)) {
+                val rindex = addToTermMap(d(x))
+                val qindex = addToTermMap(q)
+                // take the rest of the particular eigenvariable
+                Atom("X", List(FOLConst(rindex + "_" + evindex + "_" + qindex))) :: acc3
+              }else{
+                // otherwise don't
+                acc3
+              }
             }) ::: acc2
           })) :: acc1
         }
@@ -236,6 +253,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc1,t) => {
       // save the index of the subterm for later
       val tindex = addToTermMap(t)
+      debug("Term "+t+" has index "+tindex)
       qsubtermIndexes += tindex
 
       // For t \in st({q})
