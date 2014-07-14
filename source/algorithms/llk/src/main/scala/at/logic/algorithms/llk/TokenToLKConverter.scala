@@ -277,6 +277,7 @@ trait TokenToLKConverter {
     val (mainsequent, auxsequent, _) = filterContext(oldproof.root.toFSequent, fs)
     require(auxsequent.formulas.size == 1, "Exactly one auxiliary formula in weak quantifier rule required (no autocontraction allowed)! " + auxsequent)
     val (main, aux) = ruletype match {
+      //TODO: if you use ALLL instead of ALLR, you might get an index out of bounds exception!
       case "ALLL" => (mainsequent.antecedent(0), auxsequent.antecedent(0))
       case "EXR"  => (mainsequent.succedent(0), auxsequent.succedent(0))
     }

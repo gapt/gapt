@@ -143,6 +143,21 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
       ok
     }
 
+
+    "load the commutativity of + proof from file and parse it" in {
+      try {
+        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "komm.llk")
+        val p = HybridLatexParser.createLKProof(r)
+        (p.proof("THEPROOF")) must not throwAn() //exception
+
+        ok
+      } catch {
+        case e:Exception =>
+          ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
+      }
+      ok
+    }
+
     "load the 3-2 pigeon hole example from file and parse it" in {
       try {
         val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "pigeon32.llk")
