@@ -61,7 +61,7 @@ object RelevantCC {
     val cclistbase = Utils.removeDoubles(cclist1 ::: cclist).map(pair =>{
       val seq = SchemaProofDB.get(pair._1).base.root
       val k = IntVar("k")
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), IntZero().asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), IntZero().asInstanceOf[IntegerTerm] )
       var sub = SchemaSubstitution(new_map)
       val groundccant = pair._2._1.map(fo => sub(StepMinusOne.minusOne(fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar])))
       val groundccsucc = pair._2._2.map(fo => sub(StepMinusOne.minusOne(fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar])))
@@ -85,13 +85,13 @@ object RelevantCC {
       var new_map = Map.empty[SchemaVar, IntegerTerm]
       var sub = SchemaSubstitution(new_map)
       if (len == 0)
-        new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), Succ(index.asInstanceOf[IntegerTerm]) )
+        new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Succ(index.asInstanceOf[IntegerTerm]) )
       else
       if (len == 1)
         new_map = Map.empty[SchemaVar, IntegerTerm] 
       else {
         val k = IntVar("k")
-        new_map  = Map.empty[SchemaVar, IntegerTerm] + Pair(k, StepMinusOne.intTermPlus(k, len-1 ))
+        new_map  = Map.empty[SchemaVar, IntegerTerm] + Tuple2(k, StepMinusOne.intTermPlus(k, len-1 ))
         sub = SchemaSubstitution(new_map)
         val newccAnt = seq1.antecedent.toList.filter(fo => foccsInSeqAnt.map(foo => foo.formula).contains(sub(fo.formula.asInstanceOf[SchemaFormula])))
         val newccSucc = seq1.succedent.toList.filter(fo => foccsInSeqSucc.map(foo => foo.formula).contains(sub(fo.formula.asInstanceOf[SchemaFormula])))

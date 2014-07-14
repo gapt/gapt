@@ -103,12 +103,12 @@ object ACNF {
     val ground_proj_set = projSet.map(set => GroundingProjections(set, fo2SubstDB.map.toMap)).toSet
     val end_seq = if (n == 0) {
       val ro = p1base.root
-      val new_map1 = Map.empty[SchemaVar, SchemaExpression] + Pair(k, IntZero() )
+      val new_map1 = Map.empty[SchemaVar, SchemaExpression] + Tuple2(k, IntZero() )
       var subst = SchemaSubstitution(new_map1)
       FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula.asInstanceOf[SchemaFormula]))), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula.asInstanceOf[SchemaFormula]))))
     } else {
       val ro = p1rec.root
-      val new_map1 = Map.empty[SchemaVar, SchemaExpression] + Pair(k, toIntegerTerm(n-1) )
+      val new_map1 = Map.empty[SchemaVar, SchemaExpression] + Tuple2(k, toIntegerTerm(n-1) )
       var subst = SchemaSubstitution(new_map1)
       FSequent(ro.antecedent.map(fo => unfoldSFormula(subst(fo.formula.asInstanceOf[SchemaFormula]))), ro.succedent.toList.map(fo => unfoldSFormula(subst(fo.formula.asInstanceOf[SchemaFormula]))))
     }

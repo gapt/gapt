@@ -327,7 +327,7 @@ trait Struct {
     def toFormula( s: Sequent ) : HOLFormula =
       Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[HOLFormula] )).toList ++ (s.succedent map (_.formula.asInstanceOf[HOLFormula])) )
 
-    def extractRelevantStruct(name: String, fresh_param: IntVar): Pair[List[(String,  Struct, Set[FormulaOccurrence])], List[(String,  Struct, Set[FormulaOccurrence])]] = {
+    def extractRelevantStruct(name: String, fresh_param: IntVar): Tuple2[List[(String,  Struct, Set[FormulaOccurrence])], List[(String,  Struct, Set[FormulaOccurrence])]] = {
       val rcc = RelevantCC(name)._1.flatten
       val rez_step = rcc.map(pair => Tuple3("Θ(" + pair._1 + "_step, (" +
         cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).rec.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, Succ(IntVar("k"))::Nil ) ) + "))",
@@ -339,7 +339,7 @@ trait Struct {
         cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get(pair._1).base.root, pair._2, SchemaProofDB.get(pair._1).seq, SchemaProofDB.get(pair._1).vars, IntZero()::Nil ) ) + "))",
         extractBaseWithCutConfig( SchemaProofDB.get(pair._1), pair._2),
         pair._2))
-      Pair(rez_step, rez_base)
+      Tuple2(rez_step, rez_base)
     }
 
     private def hackGettingProof(s: String) : SchemaProof = {
@@ -616,7 +616,7 @@ trait Struct {
                 //TODO: take into account the omega-ancestors
                 val struct = StructCreators.extract(step, getCutAncestors(step))
                 //println("struct : "+struct)
-                val new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), Pred(l.asInstanceOf[IntegerTerm]))
+                val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Pred(l.asInstanceOf[IntegerTerm]))
                 val new_subst = SchemaSubstitution(new_map)
                 val gr_struct = groundStruct(struct, new_subst.asInstanceOf[HOLSubstitution])
                 //println("ground struct : "+gr_struct)

@@ -307,7 +307,7 @@ object Projections extends at.logic.utils.logging.Logger {
      ) )
 
   def getESAncs( proof: LKProof, cut_ancs: Set[FormulaOccurrence] ) =
-    Pair( proof.root.antecedent.filter( fo => !cut_ancs.contains( fo ) ),
+    ( proof.root.antecedent.filter( fo => !cut_ancs.contains( fo ) ),
           proof.root.succedent.filter( fo => !cut_ancs.contains( fo ) ) )
 
   // Handles the case of a binary rule operating on a cut-ancestor.
@@ -318,7 +318,7 @@ object Projections extends at.logic.utils.logging.Logger {
   }
 
   // Apply weakenings to add the end-sequent ancestor of the other side to the projection.
-  def weakenESAncs( esancs: Pair[Seq[FormulaOccurrence], Seq[FormulaOccurrence]], s: Set[LKProof] ) = {
+  def weakenESAncs( esancs: Tuple2[Seq[FormulaOccurrence], Seq[FormulaOccurrence]], s: Set[LKProof] ) = {
     val wl = s.map( p => esancs._1.foldLeft( p )( (p, fo) => fo match {
         case locc : LabelledFormulaOccurrence =>
           //in lksk we must add the correct label

@@ -65,7 +65,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
       val struct = StructCreators.extract(p1s, getCutAncestors(p1s))
       val cs : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(struct) ))
 
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), Succ(IntZero()) )
+      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Succ(IntZero()) )
       var subst = SchemaSubstitution(new_map)
       val gr = groundStruct(struct, subst.asInstanceOf[HOLSubstitution])
       val unfold_gr = unfoldGroundStruct(gr)

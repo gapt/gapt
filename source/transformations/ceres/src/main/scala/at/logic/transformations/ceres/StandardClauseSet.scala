@@ -32,7 +32,7 @@ object StandardClauseSet {
 
 
   @tailrec
-  def transformCartesianProductToStruct(cp: List[Pair[Struct,Struct]],
+  def transformCartesianProductToStruct(cp: List[Tuple2[Struct,Struct]],
                                         aux:List[FormulaOccurrence],
                                         acc : List[Struct => Struct]): Struct = cp match {
     case (i,j)::Nil =>
@@ -135,9 +135,9 @@ object renameCLsymbols {
     cs.foreach(seq => {
       (seq.antecedent ++ seq.succedent).foreach(fo => {
         fo.formula match {
-          case IndexedPredicate(constant, indices) if (constant.name.isInstanceOf[ClauseSetSymbol]) => {
+          case IndexedPredicate(constant, indices) if constant.sym.isInstanceOf[ClauseSetSymbol] => {
             if (!map.contains(constant)) {
-              map = map + Pair(constant, HOLConst("cl_"+i.toString, Tindex->To) )
+              map = map + Tuple2(constant, HOLConst("cl_"+i.toString, Tindex->To) )
               i = i + 1
             }
           }
@@ -153,7 +153,7 @@ object renameCLsymbols {
     val list = cs.map(seq => {
       val ant = seq.antecedent.map(fo => {
         fo.formula match {
-          case IndexedPredicate(constant, indices) if (constant.name.isInstanceOf[ClauseSetSymbol]) => {
+          case IndexedPredicate(constant, indices) if constant.sym.isInstanceOf[ClauseSetSymbol] => {
             if (map.contains(constant)) {
               HOLApp(map(constant), indices.head)
             }
@@ -165,7 +165,7 @@ object renameCLsymbols {
       })
       val succ = seq.succedent.map(fo => {
         fo.formula match {
-          case IndexedPredicate(constant, indices) if (constant.name.isInstanceOf[ClauseSetSymbol]) => {
+          case IndexedPredicate(constant, indices) if constant.sym.isInstanceOf[ClauseSetSymbol] => {
             if (map.contains(constant)) {
               HOLApp(map(constant), indices.head)
             }

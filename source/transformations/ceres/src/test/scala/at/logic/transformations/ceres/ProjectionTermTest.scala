@@ -94,7 +94,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val fo = p2.root.succedent.head
 
       val pterm = ProjectionTermCreators.extract(p1, Set.empty[FormulaOccurrence], getCutAncestors(p1))
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), Succ(Succ(IntZero())).asInstanceOf[IntegerTerm]) 
+      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Succ(Succ(IntZero())).asInstanceOf[IntegerTerm])
       var sub = Substitution(new_map)
       val t = PStructToExpressionTree.applyConsole(pterm)
 
@@ -126,7 +126,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val fo = p2.root.succedent.head
 
       val pterm = ProjectionTermCreators.extract(p1, Set.empty[FormulaOccurrence], getCutAncestors(p1))
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), Succ(Succ(IntZero())).asInstanceOf[IntegerTerm])
+      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Succ(Succ(IntZero())).asInstanceOf[IntegerTerm])
       var sub = Substitution(new_map)
 
       val t = PStructToExpressionTree.applyConsole(pterm)

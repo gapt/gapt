@@ -77,7 +77,7 @@ class sClauseComposition(val sclause1: sClause, val sclause2: sClause) extends s
 object sClauseComposition {
   def apply(scl1: sClause , scl2: sClause): sClause = new sClauseComposition(scl1, scl2)
   def unaply(s: sClause) = s match {
-    case compos:sClauseComposition => Some(Pair(compos.sclause1, compos.sclause2))
+    case compos:sClauseComposition => Some(Tuple2(compos.sclause1, compos.sclause2))
     case _ => None
   }
 }
@@ -189,14 +189,14 @@ object sTermN {
 // dbTRS for σ(k+1, x, l), i.e. sTermN
 class dbTRSsTermN(val map: Map[String, Tuple2[Tuple2[SchemaExpression, SchemaExpression], Tuple2[SchemaExpression, SchemaExpression]]]) {
   def add(term: String, base: Tuple2[SchemaExpression, SchemaExpression], step: Tuple2[SchemaExpression, SchemaExpression]): dbTRSsTermN = {
-    val newMap = map + Pair(term, Tuple2(base, step))
+    val newMap = map + Tuple2(term, Tuple2(base, step))
     return new dbTRSsTermN(newMap)
   }
   override def toString() = map.keySet.foldLeft("\n\n")((acc, s) => map.get(s).get._1._1+"  →  "+map.get(s).get._1._2+"\n"+map.get(s).get._2._1+"  →  "+map.get(s).get._2._2+"\n\n"+acc)
 }
 object dbTRSsTermN {
   def apply(term: String, base: Tuple2[SchemaExpression, SchemaExpression], step: Tuple2[SchemaExpression, SchemaExpression]): dbTRSsTermN = {
-    val m = Map.empty[String, Tuple2[Tuple2[SchemaExpression, SchemaExpression], Tuple2[SchemaExpression, SchemaExpression]]] + Pair(term, Tuple2(base, step))
+    val m = Map.empty[String, Tuple2[Tuple2[SchemaExpression, SchemaExpression], Tuple2[SchemaExpression, SchemaExpression]]] + Tuple2(term, Tuple2(base, step))
     new dbTRSsTermN(m)
   }
   def apply() = new dbTRSsTermN(Map.empty[String, Tuple2[Tuple2[SchemaExpression, SchemaExpression], Tuple2[SchemaExpression, SchemaExpression]]])
@@ -208,7 +208,7 @@ class dbTRSclauseSchema(val map: Map[String, Tuple2[Tuple2[sClause, sClause], Tu
 }
 object dbTRSclauseSchema {
   def apply(term: String, base: Tuple2[sClause, sClause], step: Tuple2[sClause, sClause]): dbTRSclauseSchema = {
-    val m = Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]] + Pair(term, Tuple2(base, step))
+    val m = Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]] + Tuple2(term, Tuple2(base, step))
     new dbTRSclauseSchema(m)
   }
   def apply() = new dbTRSclauseSchema(Map.empty[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]])
@@ -226,9 +226,9 @@ object unfoldSTermN {
       case sTermN(func, i, arg) if trs.map.contains(func) => {
         if (i == IntZero()) {
           val map = if(arg.size != 0)
-                      Map[SchemaVar, SchemaExpression]() + Pair(k, i) + Pair(l, arg.last)
+                      Map[SchemaVar, SchemaExpression]() + Tuple2(k, i) + Tuple2(l, arg.last)
                     else
-                      Map[SchemaVar, SchemaExpression]() + Pair(k, i)
+                      Map[SchemaVar, SchemaExpression]() + Tuple2(k, i)
           val subst = SchemaSubstitution(map)
           val base = trs.map.get(func).get._1._2
           subst(base)
@@ -237,9 +237,9 @@ object unfoldSTermN {
           if (i == k) t
           else {
             val map = if(arg.size != 0)
-                        Map[SchemaVar, SchemaExpression]() + Pair(k, i) + Pair(l, arg.last)
+                        Map[SchemaVar, SchemaExpression]() + Tuple2(k, i) + Tuple2(l, arg.last)
                       else
-                        Map[SchemaVar, SchemaExpression]() + Pair(k, i)
+                        Map[SchemaVar, SchemaExpression]() + Tuple2(k, i)
             val subst = SchemaSubstitution(map)
             trs.map.get(func).get._2._2 match {
               case foTerm(name, arg1) => foTerm(name, apply(sTermN(func, Pred(i.asInstanceOf[IntegerTerm]) :: (arg.map(x => subst(x)))), trs)::Nil)
@@ -293,7 +293,7 @@ object unfoldSchemaClause {
           if (subst.schemamap.get(k).get.asInstanceOf[IntegerTerm] == IntZero())
             subst.schemamap
           else {
-            (subst.schemamap - k) + Pair(k, Pred(subst.schemamap.get(k).get.asInstanceOf[IntegerTerm]))
+            (subst.schemamap - k) + Tuple2(k, Pred(subst.schemamap.get(k).get.asInstanceOf[IntegerTerm]))
           }
         val new_subst = SchemaSubstitution(map)
         val l = apply(applySubToSclauseOrSclauseTerm(subst, co.sclause1).asInstanceOf[sClause], trsSclause, trsSterms, new_subst)
@@ -406,7 +406,7 @@ class sclTermVarSubstitution(val map: Map[sclTermVar, clauseSchema]) {
 
 class dbTRSclauseSetTerm(var map: Map[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]]) {
   def add(term: String, base: Tuple2[sClauseTerm, sClauseTerm], step: Tuple2[sClauseTerm, sClauseTerm]): Unit = {
-    val newMap = map + Pair(term, Tuple2(base, step))
+    val newMap = map + Tuple2(term, Tuple2(base, step))
     map = newMap
   }
   override def toString() = map.keySet.foldLeft("")((acc, s) => map.get(s).get._1._1+"  →  "+map.get(s).get._1._2+"\n"+map.get(s).get._2._1+"  →  "+map.get(s).get._2._2+acc)
@@ -414,7 +414,7 @@ class dbTRSclauseSetTerm(var map: Map[String, Tuple2[Tuple2[sClauseTerm, sClause
 //the t.r.s. for the clause schema
 object dbTRSclauseSetTerm {
   def apply(term: String, base: Tuple2[sClauseTerm, sClauseTerm], step: Tuple2[sClauseTerm, sClauseTerm]): dbTRSclauseSetTerm = {
-    val m =  Map.empty[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]] + Pair(term, Tuple2(base, step))
+    val m =  Map.empty[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]] + Tuple2(term, Tuple2(base, step))
     new dbTRSclauseSetTerm(m)
   }
   def apply() = new dbTRSclauseSetTerm( Map.empty[String, Tuple2[Tuple2[sClauseTerm, sClauseTerm], Tuple2[sClauseTerm, sClauseTerm]]])
@@ -677,7 +677,7 @@ object unfoldResolutionProofSchema {
         }
         else {
           val step2 = resolutionProofSchemaDB.map.get(rho1.name).get._2._2
-          val map = Map.empty[SchemaVar, SchemaExpression] + Pair(k, Pred(rho1.args.head.asInstanceOf[IntegerTerm]))
+          val map = Map.empty[SchemaVar, SchemaExpression] + Tuple2(k, Pred(rho1.args.head.asInstanceOf[IntegerTerm]))
           val subst = SchemaSubstitution(map)
           val rho_subst = IntVarSubstitution(step2, subst)
           apply(rho_subst)
@@ -704,14 +704,14 @@ object InstantiateResSchema {
   def getCorrectTermAndSubst(term_name:String, inst: Int): (sResolutionTerm, SchemaSubstitution) = {
     val k = IntVar("k")
     if(inst == 0) {
-      val map = Map[SchemaVar, SchemaExpression]() + Pair(k, IntZero())
+      val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, IntZero())
       val subst = SchemaSubstitution(map)
       val rho1 = resolutionProofSchemaDB.map.get(term_name).get._1._1
       (rho1, subst)
     }
     else {
       val i = toIntegerTerm(inst-1)
-      val map = Map[SchemaVar, SchemaExpression]() + Pair(k, i)
+      val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, i)
       val subst = SchemaSubstitution(map)
       val rho1 = resolutionProofSchemaDB.map.get(term_name).get._2._1
       (rho1, subst)
