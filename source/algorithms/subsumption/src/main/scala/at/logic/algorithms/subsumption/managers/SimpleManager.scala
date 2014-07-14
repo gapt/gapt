@@ -18,6 +18,6 @@ class SimpleManager(listener: ListenerManager[SubsumptionDSEvent],
   protected def addSequent(s: FSequent) = ()
   protected def removeSequent(s: FSequent) = ()
 
-  def forwardSubsumption(s: FSequent) = exists(s2 => sbsmpAlg.subsumes(s2, s))
+  def forwardSubsumption(s: FSequent) = exists((s2: FSequent) => sbsmpAlg.subsumes(s2, s))
   def backwardSubsumption(s: FSequent) = iterator().foreach(s2 => if (sbsmpAlg.subsumes(s, s2)) remove(s2))
 }

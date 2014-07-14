@@ -584,11 +584,11 @@ class ACUnification(val f:ConstantSymbolA) extends FinitaryUnification[FOLTerm] 
     (ns map (v.vector(_) == 1)).foldLeft(true)(_ && _)
 
 
-  //* creates two filters that checks if the number of terms that later has to be unified with a constant or
-  //* function term does not exceed 1. the first function is true as long as the corresponding components are <= 1,
-  //* the second is true as long the corresponding components are exactly 1.
-  //* the first function is intended to be checked while generating solutions, the second is to be checked after
-  //* all solutions have been generated
+  // creates two filters that checks if the number of terms that later has to be unified with a constant or
+  // function term does not exceed 1. the first function is true as long as the corresponding components are <= 1,
+  // the second is true as long the corresponding components are exactly 1.
+  // the first function is intended to be checked while generating solutions, the second is to be checked after
+  // all solutions have been generated
   def createConstantFilter(symbols: List[FOLTerm]): ((Vector => Boolean), (Vector => Boolean)) = {
     var i: Int = 0
     var indices: List[Int] = Nil
@@ -625,9 +625,9 @@ object ACUtils {
   //performs the flattening operation below on formulas
   def flatten(f: ConstantSymbolA, formula: FOLFormula): FOLFormula = structural_fold((x:FOLTerm) => flatten(f,x), formula )
 
-  //* performs the rewrite rule f(s1, ... , f(t1, ... ,tm), ...sn) -> f(s1, ... ,t1, ... ,tm, ...sn) on the
-  // * given term (see also: Lincoln 89 "Adventures in Associative-Commutative Unification") and sorts the
-  // * the argument list lexicographically
+  // performs the rewrite rule f(s1, ... , f(t1, ... ,tm), ...sn) -> f(s1, ... ,t1, ... ,tm, ...sn) on the
+  // given term (see also: Lincoln 89 "Adventures in Associative-Commutative Unification") and sorts the
+  // the argument list lexicographically
   def flatten(f: ConstantSymbolA, term: FOLTerm): FOLTerm = {
     term match {
       case FOLVar(_) => term

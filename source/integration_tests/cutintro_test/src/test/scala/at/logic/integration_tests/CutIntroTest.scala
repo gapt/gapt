@@ -61,7 +61,7 @@ class CutIntroTest extends SpecificationWithJUnit {
 
       CutIntroduction( proof, ExactBound(1), new LKProver() )
 
-      termset must haveTheSameElementsAs ( LinearExampleTermset( 4 ) )
+      termset must contain (exactly ( LinearExampleTermset( 4 ):_* ))
     }
   }
 }

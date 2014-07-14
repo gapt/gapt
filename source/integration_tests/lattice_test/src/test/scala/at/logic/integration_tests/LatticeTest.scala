@@ -65,6 +65,7 @@ class LatticeTest extends SpecificationWithJUnit {
       saveXML( Nil, Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, cs_path )
       (new java.io.File( cs_path ) ).exists() must beEqualTo( true )
 */
+      ok
     }
 
     "parse and skolemize the lattice proof" in {

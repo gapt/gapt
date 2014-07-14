@@ -22,6 +22,7 @@ import at.logic.language.lambda.App
  * Time: 3:02 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(classOf[JUnitRunner])
 class HybridLatexParserTest extends SpecificationWithJUnit {
   val p1 =
     """\AX{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
@@ -51,18 +52,22 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
   "Hybrid Latex-GAPT" should {
     "correctly handle latex macros in formulas (1)" in {
       checkformula("\\benc{j_1<n+1}")
+      ok
     }
 
     "correctly handle latex macros in formulas (2)" in {
       checkformula("\\ite{\\benc{j_1<n+1}}{h'(j_1)}{\\alpha}")
+      ok
     }
 
     "correctly handle latex macros in formulas (3)" in {
       checkformula("\\ite{\\ienc{j_1<n+1}}{h'(j_1)}{\\alpha}")
+      ok
     }
 
     "correctly handle latex macros in formulas (4)" in {
       checkformula("\\ite{\\benc{j_1<n+1}}{h'(j_1)}{\\alpha} = 0")
+      ok
     }
 
     "accept the proof outline" in {
@@ -83,6 +88,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case HybridLatexParser.NoSuccess(msg, input) =>
           ko("parsing error at "+input.pos +": "+msg)
       }
+      ok
     }
 
     "accept the proof outline with the parse interface" in {
@@ -93,6 +99,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case e:Exception =>
         ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
       }
+      ok
     }
 
     "correctly infer replacement terms in equalities" in {
@@ -118,7 +125,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case Different => ko("Terms "+t1+" and t2 considered as (completely) different, but they are equal!")
         case EqualModuloEquality(path) => ko("Found an equality modulo "+Equation(fa.asInstanceOf[HOLExpression],ga.asInstanceOf[HOLExpression])+" but should be equal!")
       }
-
+      ok
     }
 
 
@@ -133,6 +140,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case e:Exception =>
           ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
       }
+      ok
     }
 
     "load the 3-2 pigeon hole example from file and parse it" in {
@@ -146,6 +154,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case e:Exception =>
           ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
       }
+      ok
     }
 
     "load the tape3 proof from file" in {
@@ -160,6 +169,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
         case e:Exception =>
           ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
       }
+      ok
     }
 
 

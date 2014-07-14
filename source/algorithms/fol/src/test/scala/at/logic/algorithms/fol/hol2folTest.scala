@@ -99,7 +99,7 @@ class hol2folTest extends SpecificationWithJUnit {
         red must beEqualTo(f2)
         */
         //TODO: something in the conversion is still weird, fix it
-
+        ok
       }
     }
   }

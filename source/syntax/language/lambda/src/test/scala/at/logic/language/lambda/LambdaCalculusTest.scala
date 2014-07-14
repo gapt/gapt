@@ -141,10 +141,10 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
       val a = App(r, x::y::z::Nil)
       val qa = Abs( x, a )
       val free = freeVariables(qa)
-      free must not (have( _.syntaxEquals(x) ))
-      free must have (_.syntaxEquals(y) )
-      free must have (_.syntaxEquals(z) )
-      free must have (_.syntaxEquals(r) )
+      free must not (contain( (v: Var) => v.syntaxEquals(x) ))
+      free must (contain( (v: Var) => v.syntaxEquals(y) ))
+      free must (contain( (v: Var) => v.syntaxEquals(z) ))
+      free must (contain( (v: Var) => v.syntaxEquals(r) ))
     }
 
     "extract free variables correctly" in {

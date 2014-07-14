@@ -90,8 +90,8 @@ trait AGraph[+V] extends Graph[V] {
   object UnaryAGraph {
     def apply[V](vertex: V, t: AGraph[V]) = new UnaryAGraph[V](vertex, t)
     def unapply[V](t: AGraph[V]) = t match {
-      case t: UnaryAGraph[_] => Some((t.vertex, t.t))
-      case t: AGraph[_] => None
+      case t: UnaryAGraph[V] => Some((t.vertex, t.t))
+      case t: AGraph[V] => None
     }
   }
   class BinaryAGraph[+V](val vertex: V, val t1: AGraph[V], val t2: AGraph[V]) extends EdgeGraph[V](t2.vertex, vertex, UnionGraph[V](EdgeGraph[V](t1.vertex, vertex, VertexGraph[V](vertex, t1)), t2)) with AGraph[V] {
@@ -103,8 +103,8 @@ trait AGraph[+V] extends Graph[V] {
   object BinaryAGraph {
     def apply[V](vertex: V, t1: AGraph[V], t2: AGraph[V]) = new BinaryAGraph[V](vertex, t1, t2)
     def unapply[V](t: AGraph[V]) = t match {
-      case t: BinaryAGraph[_] => Some((t.vertex, t.t1, t.t2))
-      case t: AGraph[_] => None
+      case t: BinaryAGraph[V] => Some((t.vertex, t.t1, t.t2))
+      case t: AGraph[V] => None
     }
   }
   class ArbitraryAGraph[+V] protected (val vertex: V, val lastParent: AGraph[V], val restParents: List[AGraph[V]], graph: Graph[V])
@@ -128,8 +128,8 @@ trait AGraph[+V] extends Graph[V] {
       case t::tls => applyRec[V](vertex, tls, allParents, EdgeGraph[V](t.vertex, vertex, UnionGraph[V](graph, t)))
     }
     def unapply[V](t: AGraph[V]) = t match {
-      case t: ArbitraryAGraph[_] => Some((t.vertex, (t.lastParent::t.restParents)))
-      case t: AGraph[_] => None
+      case t: ArbitraryAGraph[V] => Some((t.vertex, (t.lastParent::t.restParents)))
+      case t: AGraph[V] => None
     }
   }
 }

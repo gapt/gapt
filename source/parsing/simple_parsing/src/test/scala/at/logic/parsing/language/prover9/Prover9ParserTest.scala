@@ -83,6 +83,7 @@ class Prover9ParserTest extends SpecificationWithJUnit {
           case Prover9TermParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
+      ok
     }
 
     "handle complex formulas" in {
@@ -102,6 +103,7 @@ class Prover9ParserTest extends SpecificationWithJUnit {
           case Prover9TermParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
+      ok
     }
 
     "goat puzzle endsequent" in {
@@ -142,7 +144,7 @@ class Prover9ParserTest extends SpecificationWithJUnit {
           case Prover9TermParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
-
+      ok
     }
 
     "parse large formula 1" in {

@@ -236,7 +236,7 @@ class FirstOrderLogicTest extends SpecificationWithJUnit {
           ok
         case _ => ko("HOL created existential quantification did not match against fol conjunction!")
       }
-
+      ok
     }
 
 

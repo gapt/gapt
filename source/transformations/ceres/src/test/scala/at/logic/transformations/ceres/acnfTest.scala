@@ -19,14 +19,14 @@ import at.logic.transformations.ceres.struct.StructCreators
 import java.io.File.separator
 import java.io.{FileInputStream, InputStreamReader}
 import org.junit.runner.RunWith
-import org.specs2.internal.scalaz.Success
+//import org.specs2.internal.scalaz.Success
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import scala.io._
 import at.logic.algorithms.lk.applySubstitution
 
 @RunWith(classOf[JUnitRunner])
-class ACNFTest extends SpecificationWithJUnit {
+class acnfTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
 
   sequential

@@ -96,7 +96,7 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-swing</artifactId>
-      <version>${scala.version}.${scala-minor.version}</version>
+      <version>2.11.0-M7</version>
     </dependency>
     <dependency>
       <groupId>at.logic</groupId>

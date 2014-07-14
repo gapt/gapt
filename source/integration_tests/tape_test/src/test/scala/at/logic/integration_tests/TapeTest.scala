@@ -53,6 +53,7 @@ class TapeTest extends SpecificationWithJUnit {
 
       saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, "target" + separator + "test-classes" + separator + "tape-cs.xml" )
       */
+      ok
     }
     
     "parse, skolemize and extract the profile of the tape proof" in {

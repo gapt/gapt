@@ -198,6 +198,7 @@ class MiscTest extends SpecificationWithJUnit {
 
         (new at.logic.provers.minisat.MiniSATProver).isValid(seq) must beTrue
       }
+      ok
     }
 
     "Load Prover9 proofs, extract their expansion tree an test the validity of its deep formula using veriT" in {
@@ -224,6 +225,7 @@ class MiscTest extends SpecificationWithJUnit {
 
         VeriTProver.isValid(seqToProve) must beEqualTo (true)
       }
+      ok
     }
 
     "Extract expansion tree from tape proof" in {

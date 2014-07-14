@@ -386,6 +386,7 @@ class Prover9Test extends SpecificationWithJUnit {
          val (robResProof, seq) = Prover9.parse_prover9("target" + separator + "test-classes" + separator + testfilename)
         (new Prover9Prover).isValid(seq) must beTrue
       }
+      ok
     }
   }
 

@@ -20,7 +20,7 @@ import at.logic.language.lambda.types._
 import at.logic.utils.ds.acyclicGraphs._
 import at.logic.utils.labeling._
 import at.logic.utils.traits.Occurrence
-import util.grammar.LabelledRHS
+//import util.grammar.LabelledRHS
 
 // inferences
 case object AllTRalType extends UnaryRuleTypeA

@@ -38,7 +38,7 @@ class LankfordSolverTest extends SpecificationWithJUnit {
 
       val r = LankfordSolver solve (lhs, rhs)
 
-      (r) must haveTheSameElementsAs (expected_result) 
+      (r) must contain (exactly (expected_result:_*)) 
     }
 
     "new solve the equation x_1 + x_2 = y_1 + y_2 + y_3" in {
@@ -54,7 +54,7 @@ class LankfordSolverTest extends SpecificationWithJUnit {
         Vector(0, 1, 0, 0, 1))
 
       val r = LankfordSolver solve (lhs, rhs)
-      (r) must haveTheSameElementsAs (expected_result)
+      (r) must contain (exactly (expected_result:_*))
     }
 
     "new solve the equation 2x_1 + x_2 +x_3= 2y_1 + y_2" in {
@@ -76,7 +76,7 @@ class LankfordSolverTest extends SpecificationWithJUnit {
       //      println("===")
       //      println(expected_result)
 
-      (r) must haveTheSameElementsAs (expected_result)
+      (r) must contain (exactly (expected_result:_*))
     }
 
     "new solve the equation x_1 = y_1 + y_2" in {
@@ -88,7 +88,7 @@ class LankfordSolverTest extends SpecificationWithJUnit {
         Vector(1, 0, 1))
 
       val r = LankfordSolver solve (lhs, rhs)
-      (r) must haveTheSameElementsAs (expected_result)    
+      (r) must contain (exactly (expected_result:_*))    
     }
   }
 }

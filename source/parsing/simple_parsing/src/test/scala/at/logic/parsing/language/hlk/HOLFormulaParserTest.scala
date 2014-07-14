@@ -93,6 +93,7 @@ class HOLASTParserTest extends SpecificationWithJUnit {
           case HOLASTParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
+      ok
     }
 
     "handle lambas" in {
@@ -115,6 +116,7 @@ class HOLASTParserTest extends SpecificationWithJUnit {
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
       debug(1,"")
+      ok
     }
 
 
@@ -131,6 +133,7 @@ class HOLASTParserTest extends SpecificationWithJUnit {
           case HOLASTParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
+      ok
     }
 
 
@@ -151,6 +154,7 @@ class HOLASTParserTest extends SpecificationWithJUnit {
           case HOLASTParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
+      ok
     }
 
 
@@ -190,6 +194,7 @@ class HOLASTParserTest extends SpecificationWithJUnit {
         case HOLASTParser.NoSuccess(msg, input) =>
           ko(input.pos.toString + ": " + msg)
       }
+      ok
     }
 
     "parse infix formulas" in {
@@ -216,7 +221,7 @@ class HOLASTParserTest extends SpecificationWithJUnit {
       println()
 
       res.map((x:(String,String)) =>"" mustEqual(x._2) )
-
+      ok
     }
 
     "parse large formula 1" in {
@@ -300,6 +305,7 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
             f mustEqual("(fails)")
         }
       }
+      ok
     }
   }
 }

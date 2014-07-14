@@ -27,9 +27,9 @@ class EmptyGraph[+V] extends Graph[V] {
   }
 object EmptyGraph {
     def apply[V]() = new EmptyGraph[V]
-    def unapply[V](g: Graph[_]) = g match {
-      case g: EmptyGraph[_] => true
-      case g: Graph[_] => false
+    def unapply[V](g: Graph[V]) = g match {
+      case g: EmptyGraph[V] => true
+      case g: Graph[V] => false
     }
   }
 class VertexGraph[+V](val v: V, val g: Graph[V]) extends Graph[V] {
@@ -42,8 +42,8 @@ class VertexGraph[+V](val v: V, val g: Graph[V]) extends Graph[V] {
 object VertexGraph {
     def apply[V](v: V, g: Graph[V]) = new VertexGraph[V](v,g)
     def unapply[V](g: Graph[V]) = g match {
-      case g: VertexGraph[_] => Some((g.v, g.g))
-      case g: Graph[_] => None
+      case g: VertexGraph[V] => Some((g.v, g.g))
+      case g: Graph[V] => None
     }
   }
 class EdgeGraph[+V](val v1: V, val v2: V, val g: Graph[V]) extends Graph[V]{
@@ -56,8 +56,8 @@ class EdgeGraph[+V](val v1: V, val v2: V, val g: Graph[V]) extends Graph[V]{
 object EdgeGraph {
     def apply[V](v1: V, v2: V, g: Graph[V]) = new EdgeGraph[V](v1,v2,g)
     def unapply[V](g: Graph[V]) = g match {
-      case g: EdgeGraph[_] => Some((g.v1, g.v2, g.g))
-      case g: Graph[_] => None
+      case g: EdgeGraph[V] => Some((g.v1, g.v2, g.g))
+      case g: Graph[V] => None
     }
   }
 class UnionGraph[+V](val g1: Graph[V], val g2: Graph[V]) extends Graph[V]{
@@ -72,8 +72,8 @@ class UnionGraph[+V](val g1: Graph[V], val g2: Graph[V]) extends Graph[V]{
 object UnionGraph {
     def apply[V](g1: Graph[V], g2: Graph[V]) = new UnionGraph[V](g1, g2)
     def unapply[V](g: Graph[V]) = g match {
-      case g: UnionGraph[_] => Some((g.g1, g.g2))
-      case g: Graph[_] => None
+      case g: UnionGraph[V] => Some((g.g1, g.g2))
+      case g: Graph[V] => None
     }
   }
 object GraphImplicitConverters {
