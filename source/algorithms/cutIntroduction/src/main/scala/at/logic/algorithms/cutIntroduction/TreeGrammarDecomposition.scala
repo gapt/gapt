@@ -22,8 +22,6 @@ object TreeGrammarDecomposition{
     debug("Generating MinCostSAT formulation")
     //val f = Set(decomp.MCS())//, decomp.additionalFormula())
     val f = decomp.MCS()
-    //println("F: \n")
-    //f.foreach(x => println(x+"\n"))
     val g = decomp.softConstraints()
     println("G: \n"+g)
     debug("Starting up QMaxSAT Solver")
@@ -114,7 +112,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   def MCS() : List[FOLFormula] = {
     //And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
     val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
-    debug("F: "+f.foldLeft("")((acc,x) => acc + "\n"+printExpression(x)))
+    debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally("α", "\\alpha")))
     return f
   }
 
@@ -164,14 +162,15 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
   def printExpression(f: FOLExpression) : String = {
     f match {
-      case And(a,b) => printExpression(a) + " ∧ " + printExpression(b)
-      case Or(a,b) => printExpression(a) + " V " + printExpression(b)
-      case Neg(e) => "¬" + printExpression(e)
-      case Imp(a,b) => printExpression(a) + " -> " + printExpression(b)
+      case And(a,b) => printExpression(a) + " \\land " + printExpression(b)
+      case Or(a,b) => printExpression(a) + " \\lor " + printExpression(b)
+      case Neg(e) => "\\neg " + printExpression(e)
+      case Imp(a,b) => printExpression(a) + " \\to " + printExpression(b)
       case FOLVar(x) => x.toString
       case FOLConst(x) => pA(FOLConst(x))
       case Function(f,l) => f+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
-      case Atom(a,l) => a+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
+      //case Atom(a,l) => a+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
+      case Atom(a,l) => l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)
     }
   }
 
@@ -179,9 +178,9 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     val s = c.toString.split("_")
     if(s.size == 2)
     {
-      return "'α_"+s(0)+"'_'"+keyList(s(1).toInt)+"'"
+      return "x_{\\alpha_{"+s(0)+"},"+keyList(s(1).toInt)+"}"
     }else{
-      return "'"+termset(s(0).toInt)+"'_'α_"+s(1)+"'_'"+termset(s(2).toInt)+"'"
+      return "x_{"+termset(s(0).toInt)+",\\alpha_{"+s(1)+"},"+termset(s(2).toInt)+"}"
     }
   }
 
