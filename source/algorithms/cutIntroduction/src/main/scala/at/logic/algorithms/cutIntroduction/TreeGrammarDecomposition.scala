@@ -13,6 +13,8 @@ import scala.collection.mutable
 import at.logic.language.fol.replacements.getAllPositionsFOL
 import at.logic.language.fol.replacements.getAtPositionFOL
 import at.logic.provers.qmaxsat.{MapBasedInterpretation, QMaxSAT}
+import scala.Some
+import scala.Tuple2
 
 
 object TreeGrammarDecomposition{
@@ -233,7 +235,8 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
         }
         else{
           //debug("Skipping key '"+keyList(klistindex)+"' for l="+l)
-          ruleVar :: acc1
+          //ruleVar :: acc1
+          acc1
         }
     }))
   }
@@ -260,7 +263,22 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
         val co = FOLConst(tindex+"_"+i+"_"+qindex)
         propRests(co) = (tindex,i,qindex)
-        val d = D(t,i,q)
+
+        val trivialKeyIndex = addKey(t)
+        val trivialKey = FOLConst(i+"_"+trivialKeyIndex)
+
+        propRules(trivialKey) = (i,trivialKeyIndex)
+        // add the trvial keys to the rhs of the implication
+        var d = D(t,i,q)
+        // Or(Nil) => if D(...) is empty
+        if(d == Or(Nil))
+        {
+          d = Atom("X", trivialKey :: Nil)
+        }
+        else{
+          d = Or(d, Atom("X", trivialKey :: Nil))
+        }
+
         //debug("D("+tindex+","+i+","+qindex+") = D("+t+","+i+","+q+") = "+d)
         Imp(Atom("X",co :: Nil), d) :: acc2
       }) ::: acc1
@@ -378,20 +396,8 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       i+=1
       val keys = normform(sub)
       // the indexes of the keys in normalform in the keyList
-      var keyIndexes = mutable.Set[Int]()
-      keys.foreach(k => {
-        // if the key does not already exist
-        // in the keyIndexMap
-        if(!keyIndexMap.exists(_._1 == k)){
-          // add it to keyList and keyIndexMap
-          keyList += k
-          keyIndexMap(k) = keyList.size - 1
-          keyIndexes += keyList.size - 1
-        }
-        else{
-          keyIndexes += keyIndexMap(k)
-        }
-      })
+      //var keyIndexes = mutable.Set[Int]()
+      val keyIndexes = keys.foldLeft(List[Int]())((acc,k) => addKey(k) :: acc)
       //keyList ++= keys
 
       // for every term t
@@ -401,7 +407,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
         // if the key does not already exist
         if(!keyMap.exists(_._1 == t)){
           // add it
-          keyMap(t) = keyIndexes
+          keyMap(t) = mutable.Set(keyIndexes :_*)
         }
         else{
           keyMap(t) ++= keyIndexes
@@ -409,6 +415,22 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       })
     })
     debug("Generated 100% of suffKeys")
+  }
+
+
+  def addKey(k : FOLTerm) : Int = {
+    // if the key does not already exist
+    // in the keyIndexMap
+    if(!keyIndexMap.exists(_._1 == k)){
+      // add it to keyList and keyIndexMap
+      keyList += k
+      keyIndexMap(k) = keyList.size - 1
+      //keyIndexes += keyList.size - 1
+    }
+    /*else{
+      keyIndexes += keyIndexMap(k)
+    }*/
+    return keyIndexMap(k)
   }
 
   /*
