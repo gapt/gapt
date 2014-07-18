@@ -15,6 +15,8 @@ import at.logic.language.fol.replacements.getAtPositionFOL
 import at.logic.provers.qmaxsat.{MapBasedInterpretation, QMaxSAT}
 import scala.Some
 import scala.Tuple2
+import scala.Some
+import scala.Tuple2
 
 
 object TreeGrammarDecomposition{
@@ -40,6 +42,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   //private var keySet : mutable.SortedSet[FOLTerm] = mutable.SortedSet[FOLTerm]()(order)
 
   var termMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+  var reverseTermMap : mutable.HashMap[Int,FOLTerm] = mutable.HashMap[Int,FOLTerm]()
   var termIndex = 0
 
   // the sufficient set of keys represented as a list
@@ -114,6 +117,8 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   def MCS() : List[FOLFormula] = {
     //And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
     val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
+    // update the reverse term map
+    reverseTermMap = mutable.HashMap(termMap.toList.map(x => x.swap).toSeq:_*)
     debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally("α", "\\alpha")))
     return f
   }
@@ -182,7 +187,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     {
       return "x_{\\alpha_{"+s(0)+"},"+keyList(s(1).toInt)+"}"
     }else{
-      return "x_{"+termset(s(0).toInt)+",\\alpha_{"+s(1)+"},"+termset(s(2).toInt)+"}"
+      return "x_{"+reverseTermMap(s(0).toInt)+",\\alpha_{"+s(1)+"},"+reverseTermMap(s(2).toInt)+"}"
     }
   }
 
@@ -396,9 +401,18 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       i+=1
       val keys = normform(sub)
       // the indexes of the keys in normalform in the keyList
-      //var keyIndexes = mutable.Set[Int]()
       val keyIndexes = keys.foldLeft(List[Int]())((acc,k) => addKey(k) :: acc)
-      //keyList ++= keys
+
+
+      // do the same also for all permutations of the keys
+      /*val keyIndexes = keyIndexes1 ::: keys.foldLeft(List[Int]())((acc,k) => getMirrorCases((k, decompMap(k))).map(d => {
+        // each of those permuted decompositions
+        // add to the decompMap
+        addToDecompMap(d)
+        // add the keys to the keyList/Map
+        addKey(d._1)
+      }) ::: acc)*/
+
 
       // for every term t
       // save the corresponding keyIndexes of the keys
@@ -418,6 +432,19 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   }
 
 
+  def addToDecompMap(decomp: types.Decomposition) {
+    // if the decomposition does not exist yet
+    if(!decompMap.exists(_._1 == decomp._1)){
+      // insert the rests into the decomposition map
+      decompMap(decomp._1) = decomp._2
+    }
+    // otherwise
+    else{
+      // add them to the existing set
+      decompMap(decomp._1) = decompMap(decomp._1) ++ decomp._2
+    }
+  }
+
   def addKey(k : FOLTerm) : Int = {
     // if the key does not already exist
     // in the keyIndexMap
@@ -435,7 +462,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
   /*
    * Adds a list of keys to the keymap
-   */
+   *
   def addToKeyMap(term: FOLTerm, keys: List[Int]) {
     // if the term is already in the map
     if(keyMap.exists(_._1 == term)){
@@ -446,7 +473,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       // create a new (term,set) pair in the map
       keyMap(term) = mutable.Set(keys :_*)
     }
-  }
+  }*/
 
   /*
    * Calculates the characteristic partition of a term t
@@ -520,9 +547,58 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   }
 
   /*
+   * Get all permutations of a decomposition, except the original one
+   * e.g.
+   * f(α_1,α_2) o [(a,b),(d,e)] =>
+   *    f(α_2,α_1) o [(b,a),(e,d)]
+   *
+   */
+  def getMirrorCases(decomp: types.Decomposition) : List[types.Decomposition] = {
+    val k = decomp._1
+    val evs = getEigenvariables(k, "α")
+    // save the indexes of the eigenvariables
+    val evsIndexes = evs.zipWithIndex
+    // get all different permutations of the eigenvariables
+    val evPermutations = evs.permutations.toList.filter( x => x != evs)
+    val subs = evPermutations.map(x => evs.zip(x))
+    subs.foldLeft(List[types.Decomposition]())((acc,sub) => permuteDecomposition(decomp, sub, evsIndexes) :: acc)
+  }
+
+  /*
+   * Given a decomposition and a substitution e.g. α_1 -> α_2, α_2 -> α_3, α_3 -> α_1
+   * the function produces a decomposition where the key is permuted by the given substitution and
+   * the rests provided in the decomposition are permuted respectively
+   * e.g.
+   *  decomp       =  [f(α_1,α_2,α_3) o [(a,b,c),(d,e,f)]]
+   *  substitution =  α_1 -> α_2, α_2 -> α_3, α_3 -> α_1
+   *  evsindexes   =  [(α_1,0),(α_2,1),(α_3,2)]
+   *  result =======> [f(α_2,α_3,α_1) o [(c,a,b),(f,d,e)]]
+   */
+  def permuteDecomposition(decomp: types.Decomposition, sub: List[(String,String)], evsIndexes: List[(String,Int)]) : types.Decomposition = {
+    val k = decomp._1
+    val rests = decomp._2
+    val evsMap = evsIndexes.toMap
+    val newrests = rests.map( rest => {
+      // for each rest do the substitutions
+      sub.foldLeft(rest)((acc, s) => {
+        val i1 = math.min(evsMap(s._1), evsMap(s._2))
+        val i2 = math.max(evsMap(s._1), evsMap(s._2))
+        // swap the 2 elements if i1 != i2
+        if(i1 != i2) {
+          acc.take(i1) ::: acc(i2) :: acc.drop(i1 + 1).take(i2 - i1 - 1) ::: acc(i1) :: acc.drop(i2 + 1)
+        }
+        else{
+          acc
+        }
+      })
+    })
+    val s = Substitution(sub.map(x => (FOLVar(x._1),FOLVar(x._2).asInstanceOf[FOLExpression])))
+    (s(decomp._1),newrests)
+  }
+
+  /*
    * normform produces, depending on a language l
    * a set of keys in normalform.
-   * TODO: check if isomorphic keys can be purged, i.e. {f(g(α_1),α_2), f(g(α_2),α_1)}
    */
   def normform(l: List[FOLTerm]) : List[FOLTerm] = {
 
@@ -540,7 +616,8 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     // TODO: eventually check if the eigenvariables in k are ambigous
     val k = incrementAllVars(decomposition._1)//decomposition._1
     //decompMap(k) = decomposition._2
-    decompMap(replaceAllVars(k,eigenvariable_b,eigenvariable_a)) = decomposition._2
+    // TODO: check if this is needed
+    //decompMap(replaceAllVars(k,eigenvariable_b,eigenvariable_a)) = decomposition._2
 
     // calculate the characteristic partition
     var charPartition = calcCharPartition(k, eigenvariable_b)
@@ -571,6 +648,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       // add the key to the outputset
       if(!eigenvariableOccurs(new_key, eigenvariable_b)){
         result += new_key
+        decompMap(new_key) = decomposition._2
       }
     })
     return result.toList
