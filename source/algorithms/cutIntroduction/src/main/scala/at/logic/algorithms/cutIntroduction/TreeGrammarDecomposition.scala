@@ -20,16 +20,20 @@ import scala.Tuple2
 
 
 object TreeGrammarDecomposition{
-  def apply(termset: List[FOLTerm], n:Int) = {
+  def apply(termset: List[FOLTerm], n:Int) : List[Grammar] = {
     val decomp = new TreeGrammarDecomposition(termset,n)
     decomp.suffKeys()
     debug("Generating MinCostSAT formulation")
     //val f = Set(decomp.MCS())//, decomp.additionalFormula())
     val f = decomp.MCS()
     val g = decomp.softConstraints()
-    println("G: \n"+g)
+    debug("G: \n"+g)
     debug("Starting up QMaxSAT Solver")
-    println(decomp.getRules((new QMaxSAT).solvePWM(f.toSet,g)))
+    val rules = decomp.getRules((new QMaxSAT).solvePWM(f.toSet,g))
+    debug("Rules: "+rules)
+    val grammars = decomp.getGrammars(rules)
+    debug("Grammars: "+grammars)
+    return grammars
   }
 }
 
@@ -102,6 +106,37 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     }
   }
 
+  def getGrammars(rules: Set[Tuple2[Int,FOLTerm]]) : List[Grammar] = {
+    var grammars = MutableList[Grammar]()
+
+    // get all nonterminals
+    val evs = rules.foldLeft(List[String]())( (acc,r) => getNonterminals(r._2, "α_") ::: acc).distinct.sorted
+
+    // don't forget to add the α_0
+    val indexes = 0 :: evs.map( x => x.split("_").last.toInt)
+
+    // divide the rules by the nonterminal index
+    //val decomps = Range(0,maximum+1).foldLeft(List[Set[FOLTerm]]())((acc,i) => rules.filter(_._1 == i).map( x => x._2) :: acc)
+    // TODO: Note that the List(x._2) instantiation is going to be obsolete when implementing support for blocks of quantifier
+    val decomps = indexes.foldLeft(List[(Int,Set[List[FOLTerm]])]())((acc,i) => (i,rules.filter(_._1 == i).map( x => List(x._2)).toSet) :: acc).toMap
+    var u = decomps(0).flatten.toList
+
+    //for(i <- Range(1,maximum+1)) {
+    for(i <- indexes){
+      if(i != 0) {
+        val s = decomps(i)
+        grammars += new Grammar(u, s, "α_" + i)
+
+        val subs = s.foldLeft(List[Substitution]())((acc2,s0) => {
+          Substitution(s0.map( s1 => (FOLVar("α_" + i), s1))) :: acc2
+        })
+
+        u = u.foldLeft(List[FOLTerm]())((acc, u0) => subs.map(sub => sub(u0)) ::: acc)
+      }
+    }
+    return grammars.toList
+  }
+
   /**
    * Checks if a rest r is a rest w.r.t. a key k in a term t
    * i.e. t = k[\alpha_1 \ r(0)]...[\alpha_{n+1} \ r(n)]
@@ -112,7 +147,8 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
    * @return true if t = {k} o {r}
    */
   def isRest(t: FOLTerm, k: FOLTerm, r: List[FOLTerm]) : Boolean = {
-    val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
+    //val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
+    val evs = getNonterminals(k, "α").sorted.map(x => FOLVar(x))
     val sub = Substitution(evs.zip(r))
     return t == sub(k)
   }
@@ -446,8 +482,8 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     val st = subterms(termset)
     //       This is kind of tricky, because we don't know a priori
     //       how large n can get
-    //       for now we just take a provided n
-    val poweredSubSets = boundedPower(st, n)
+    //       for now we just take the size of the subterms
+    val poweredSubSets = boundedPower(st, st.size+1)
 
     // for each subset of size 1 <= |sub| <= n+1,
     // add all keys of normform(sub) to keySet
