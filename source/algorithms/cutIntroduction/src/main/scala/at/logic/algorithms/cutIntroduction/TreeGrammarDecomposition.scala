@@ -36,13 +36,11 @@ object TreeGrammarDecomposition{
 
 class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.utils.logging.Logger {
 
-  // an ordering to order FOLTerms by their string representation
-  //val order = Ordering[String].on[FOLTerm](s => s.toString)
-  // the sufficient set of keys represented as a sorted set on above order
-  //private var keySet : mutable.SortedSet[FOLTerm] = mutable.SortedSet[FOLTerm]()(order)
-
+  // mapping all sub-/terms of the language to a unique index
   var termMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+  // reversed map of all sub-/terms
   var reverseTermMap : mutable.HashMap[Int,FOLTerm] = mutable.HashMap[Int,FOLTerm]()
+  // counter for uniquely defined terms indexes
   var termIndex = 0
 
   // the sufficient set of keys represented as a list
@@ -55,20 +53,37 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   // which produce the particular term
   var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]] = mutable.HashMap[FOLTerm,mutable.Set[Int]]()
 
+  // all constants of the form x_{i,k_j}, where
+  // i = non-terminal index, k_j = key
   var propRules : mutable.HashMap[FOLConst,(Int,Int)] = mutable.HashMap[FOLConst,(Int,Int)]()
+
+  // all constants of the form x_{t,i,q}, where
+  // t = subterm of q, i = non-terminal index, q = term of the language (termset)
   var propRests : mutable.HashMap[FOLConst,(Int,Int,Int)] = mutable.HashMap[FOLConst,(Int,Int,Int)]()
 
+  // mapping keys to a list of terms which can be produced by a particular key
   var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]()
 
-  /*
+  /**
    * Generates the soft constraints for
    * the MCS formulation as a partial weighted MaxSAT problem,
    * where -x_{i,k} has cost 1 for all non-terminals α_i and keys k
+   *
+   * @return G formula for QMaxSAT
    */
   def softConstraints() : Set[Tuple2[FOLFormula,Int]] = {
     propRules.foldLeft(Set[Tuple2[FOLFormula,Int]]())((acc,x) => acc + Tuple2(Neg(Atom("X",List(x._1))),1))
   }
 
+
+  /**
+   * Given an interpretation, a Set of tuples will be returned of the form
+   * (non-terminal-index,folterm), which represent a rule of the form
+   * α_i -> term (containing at most non-terminals α_j where j > i)
+   *
+   * @param interpretation a MapBasedInterpretation of the MCS formulation
+   * @return a set of rules
+   */
   def getRules(interpretation: Option[MapBasedInterpretation]) : Set[Tuple2[Int,FOLTerm]] = {
     interpretation match {
       case Some(model) => {
@@ -87,10 +102,14 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     }
   }
 
-
-  /*
+  /**
    * Checks if a rest r is a rest w.r.t. a key k in a term t
    * i.e. t = k[\alpha_1 \ r(0)]...[\alpha_{n+1} \ r(n)]
+   *
+   * @param t term
+   * @param k key
+   * @param r rest
+   * @return true if t = {k} o {r}
    */
   def isRest(t: FOLTerm, k: FOLTerm, r: List[FOLTerm]) : Boolean = {
     val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
@@ -98,9 +117,13 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     return t == sub(k)
   }
 
-  /*
-   * Generates out of a set S
-   * the diagonal cartesian product S² of it
+  /**
+   * Generates out of a list l
+   * the diagonal cartesian product l² of it
+   * minus the diagonal and mirrorcases
+   *
+   * @param l list of elements
+   * @return diagonal cartesian product of l
    */
   def diagCross(l:List[Int]) : List[(Int,Int)] = {
     l match {
@@ -109,10 +132,11 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     }
   }
 
-  /*
+  /**
    * Transforms a sufficient set of keys into a propositional
    * formula as described in Eberhard [2014].
-   * n the number of non-terminals
+   *
+   * @return
    */
   def MCS() : List[FOLFormula] = {
     //And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
@@ -123,16 +147,15 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     return f
   }
 
+  /**
+   * Generates the formula R mentioned in Eberhard [2014]
+   *
+   * @param qindex index of term in termset (language)
+   * @param qsubtermIndexes indexes of all subterms of q in termMap
+   * @return R formula
+   */
   def R(qindex: Int, qsubtermIndexes: Set[Int]) : FOLFormula = {
     // for all pairs t_0,t_1 \in st({q}), s.t. t_0 != t_1
-    /*val pairs = qsubtermIndexes.flatMap(t0 => qsubtermIndexes.foldLeft(List[(Int,Int)]())((acc,t1) => {
-      if(t1 != t0){
-        (t0,t1) :: acc
-      }
-      else{
-        acc
-      }
-    }))*/
     // since we don't need to generate all pairs, due to commutativity of \lor
     // we need only the cartesian product of qsubtermindexes, without the diagonal
     val pairs = diagCross(qsubtermIndexes.toList)
@@ -147,26 +170,33 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
         }) ++ acc1
     }))
   }
-
-  /*
+  /**
    * Given a FOLTerm and a prefix for a variable,
    * this function returns a list of all FOLVars in t starting
    * with the particular prefix
+   *
+   * @param t FOLTerm
+   * @param nonterminal_prefix prefix of non-terminals
+   * @return a list of strings representing all non-terminals in t
    */
-  def getEigenvariables(t: FOLTerm, eigenvariable_prefix: String) : List[String] = {
+  def getNonterminals(t: FOLTerm, nonterminal_prefix: String) : List[String] = {
     val s = t match {
-      case Function(f,args) => args.foldLeft(Set[String]())((prevargs,arg) => prevargs ++ getEigenvariables(arg, eigenvariable_prefix))
-      case FOLVar(v) => if(v.toString.startsWith(eigenvariable_prefix)) Set[String](v.toString()) else Set[String]()
+      case Function(f,args) => args.foldLeft(Set[String]())((prevargs,arg) => prevargs ++ getNonterminals(arg, nonterminal_prefix))
+      case FOLVar(v) => if(v.toString.startsWith(nonterminal_prefix)) Set[String](v.toString()) else Set[String]()
       case _ => Set[String]()
     }
     s.toList
 
   }
 
-  def additionalFormula() : FOLFormula = {
-    Or(propRules.map( x => Atom("X",List(x._1))).toList)
-  }
 
+  /**
+   * Returns for a given formula f (of a QMaxSAT instance) its latex code
+   * (for debugging purposes)
+   *
+   * @param f FOLExpression
+   * @return latex representation of f
+   */
   def printExpression(f: FOLExpression) : String = {
     f match {
       case And(a,b) => printExpression(a) + " \\land " + printExpression(b)
@@ -181,6 +211,13 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     }
   }
 
+  /**
+   * A method which returns a latex representation of a FOLConst according
+   * to the propositional QMaxSAT formulation
+   *
+   * @param c a FOLConst
+   * @return latex representation of c
+   */
   def pA(c:FOLConst) : String = {
     val s = c.toString.split("_")
     if(s.size == 2)
@@ -191,15 +228,19 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     }
   }
 
-  /*
+  /**
    * Generates the formula D_{L,S}(t,i,q) according to
    * Eberhard [2014]
+   *
+   * @param t subterm of q
+   * @param l index of non-terminal
+   * @param q a term of the termset (language)
+   * @return QMaxSAT formulation D_{L,S}(t,j,q)
    */
   def D(t: FOLTerm, l: Int, q: FOLTerm): FOLFormula = {
 
       // for every key k_j producing t, which
       // ONLY CONTAINS α_i, where i > l
-      //debug("D -> keyMap("+t+") = "+keyMap(t))
       Or(keyMap(t).foldLeft(List[FOLFormula]())((acc1,klistindex) => {
         // add the propositional variable x_{k_j}
         val x_l_kj = FOLConst(l+"_"+klistindex)
@@ -207,20 +248,18 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
         val ruleVar : FOLFormula = Atom("X",List(x_l_kj))
 
-        // get all eigenvariables occuring in the subterm t
-        val evs = getEigenvariables(keyList(klistindex),"α")//.map(x => FOLVar(x))
-        // check if all eigenvariables α_i suffice i > l
+        // get all nonterminals occuring in the subterm t
+        val evs = getNonterminals(keyList(klistindex),"α")//.map(x => FOLVar(x))
+        // check if all nonterminals α_i suffice i > l
         if(evs.foldLeft(true)((acc,x) => acc && (x.split("_").last.toInt > l ))){
           //debug("NOT skipping key='"+keyList(klistindex)+"' for l="+l)
-          // for every eigenvariable in k_j
+          // for every nonterminal in k_j
           And(ruleVar :: evs.foldLeft(List[FOLFormula]())((acc2,ev) => {
-            // get the eigenvariables index i
+            // get the nonterminals index i
             val evindex = ev.split("_").last.toInt
             // TODO: Note: x = 0 is used due to the fact that we don't consider blocks of quantifiers
             val x = 0
             // and for every element r_j in the decomposition's sublanguage S where kj is its U
-            // TODO: Note: That for blocks of quantifiers here decompMap eventually does not contain mirror cases of keys like f(g(α_2),α_1), but f(g(α_1),α_2)
-            //debug("Generating REST-Var Conjunction for rests decompMap("+keyList(klistindex)+") = "+decompMap(keyList(klistindex)))
             val k = keyList(klistindex)
             decompMap(k).foldLeft(List[FOLFormula]())((acc3,d) => {
 
@@ -229,7 +268,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
               if(isRest(t, k, d)) {
                 val rindex = addToTermMap(d(x))
                 val qindex = addToTermMap(q)
-                // take the rest of the particular eigenvariable
+                // take the rest of the particular nonterminal
                 Atom("X", List(FOLConst(rindex + "_" + evindex + "_" + qindex))) :: acc3
               }else{
                 // otherwise don't
@@ -239,16 +278,18 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
           })) :: acc1
         }
         else{
-          //debug("Skipping key '"+keyList(klistindex)+"' for l="+l)
-          //ruleVar :: acc1
           acc1
         }
     }))
   }
 
-  /*
+
+  /**
    * Generates out of a term q the formula
    * C_{L,S}(q) as written in Eberhard [2014]
+   *
+   * @param q term q of the termset (language)
+   * @return QMaxSAT formulation C_{L,S}(q)
    */
   def C(q: FOLTerm) : List[FOLFormula] = {
 
@@ -297,8 +338,11 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     formulas ++ List(d, r)//)
   }
 
-  /*
+
+  /**
    * Eventually adds a term to the term map and returns its index
+   * @param t term which is going to be added to the map, if it does not exist yet
+   * @return the index of t in termMap
    */
   def addToTermMap(t: FOLTerm) : Int = {
     // is the term already associated with an index?
@@ -310,6 +354,14 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     termMap(t)
   }
 
+
+  /**
+   * A method for traversing a term to return a list of all subterms
+   *
+   * @param subterms subterms so far
+   * @param term term, which is processed
+   * @return a HasMap of all subterms represented as string => subterm
+   */
   def st_trav(subterms:  HashMap[String, FOLTerm], term: FOLTerm) :  HashMap[String, FOLTerm] = {
     // if the term is not in the set of subterms yet
     // add it and add all its subterms
@@ -327,14 +379,22 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     subterms
   }
 
-  def st(term: FOLTerm) : List[FOLTerm] = {
+  /**
+   * Extracting the result of st_trav for a term t
+   * 
+   * @param t FOLTerm for which all subterms are calculated
+   * @return list of all subterms
+   */
+  def st(t: FOLTerm) : List[FOLTerm] = {
     // extract the list of all subterms of the term
-    st_trav(HashMap[String, FOLTerm](), term).map(_._2).toList
+    st_trav(HashMap[String, FOLTerm](), t).map(_._2).toList
   }
 
-  /*
+  /**
    * Generating all subterms of a language of FOLTerms
    *
+   * @param language termset for which st is called for each element
+   * @return list of all subterms
    */
   def subterms(language: List[FOLTerm]) : List[FOLTerm] = {
     val terms = HashMap[String, FOLTerm]()
@@ -346,10 +406,14 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     terms.map(_._2).toList
   }
 
-  /*
+  /**
    * Generates the powerset S as a List of a List, where
    * |S| <= n
    *
+   * @param s list
+   * @param n upperbound for the powerset
+   * @tparam A type of the list
+   * @return bounded powerset
    */
   def boundedPower[A](s: List[A], n: Int): List[List[A]] = {
     // init powerset
@@ -372,7 +436,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     (for (i <- List.range(1, n+1)) yield genLists(s,0,i)).foldLeft(List[List[A]]())( (prevLists,l) => prevLists ++ l)
   }
 
-  /*
+  /**
    * suffKeys - as described in Eberhard [2014] -
    * generates a sufficient set of keys w.r.t. a termset/language l
    */
@@ -380,11 +444,10 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
     //var result = scala.collection.mutable.Set[FOLTerm]()
     val st = subterms(termset)
-    // TODO: check how to calculate n before calling normform
     //       This is kind of tricky, because we don't know a priori
     //       how large n can get
-    //       For now, we just take the size of the set of subterms
-    val poweredSubSets = boundedPower(st, st.size+1)
+    //       for now we just take a provided n
+    val poweredSubSets = boundedPower(st, n)
 
     // for each subset of size 1 <= |sub| <= n+1,
     // add all keys of normform(sub) to keySet
@@ -403,17 +466,6 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       // the indexes of the keys in normalform in the keyList
       val keyIndexes = keys.foldLeft(List[Int]())((acc,k) => addKey(k) :: acc)
 
-
-      // do the same also for all permutations of the keys
-      /*val keyIndexes = keyIndexes1 ::: keys.foldLeft(List[Int]())((acc,k) => getMirrorCases((k, decompMap(k))).map(d => {
-        // each of those permuted decompositions
-        // add to the decompMap
-        addToDecompMap(d)
-        // add the keys to the keyList/Map
-        addKey(d._1)
-      }) ::: acc)*/
-
-
       // for every term t
       // save the corresponding keyIndexes of the keys
       // which produce this particular term
@@ -431,20 +483,12 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     debug("Generated 100% of suffKeys")
   }
 
-
-  def addToDecompMap(decomp: types.Decomposition) {
-    // if the decomposition does not exist yet
-    if(!decompMap.exists(_._1 == decomp._1)){
-      // insert the rests into the decomposition map
-      decompMap(decomp._1) = decomp._2
-    }
-    // otherwise
-    else{
-      // add them to the existing set
-      decompMap(decomp._1) = decompMap(decomp._1) ++ decomp._2
-    }
-  }
-
+  /**
+   * Adds a key k to the keyList and the keyIndexMap
+   *
+   * @param k key
+   * @return index of the key in keyList
+   */
   def addKey(k : FOLTerm) : Int = {
     // if the key does not already exist
     // in the keyIndexMap
@@ -452,51 +496,42 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       // add it to keyList and keyIndexMap
       keyList += k
       keyIndexMap(k) = keyList.size - 1
-      //keyIndexes += keyList.size - 1
     }
-    /*else{
-      keyIndexes += keyIndexMap(k)
-    }*/
     return keyIndexMap(k)
   }
 
-  /*
-   * Adds a list of keys to the keymap
-   *
-  def addToKeyMap(term: FOLTerm, keys: List[Int]) {
-    // if the term is already in the map
-    if(keyMap.exists(_._1 == term)){
-      // merge the lists
-      keyMap(term) ++: keys
-    }
-    else{
-      // create a new (term,set) pair in the map
-      keyMap(term) = mutable.Set(keys :_*)
-    }
-  }*/
 
-  /*
+  /**
    * Calculates the characteristic partition of a term t
-   * as described in Eberhard [2014], w.r.t. an eigenvariable
+   * as described in Eberhard [2014], w.r.t. a non-terminal
+   *
+   * @param t term for which the characteristic Partition is calculated
+   * @param nonterminal string representing a non-terminal
+   * @return characteristic partition of t
    */
-  def calcCharPartition(t: FOLTerm, eigenvariable: String) : List[List[Int]] = {
+  def calcCharPartition(t: FOLTerm, nonterminal: String) : List[List[Int]] = {
     val positions = getAllPositionsFOL(t)
     val pos = positions.foldLeft(List[Option[List[Int]]]())((acc,p) => (p match {
-      case (pos, FOLVar(x)) if x.startsWith(eigenvariable) => Some(pos)
+      case (pos, FOLVar(x)) if x.startsWith(nonterminal) => Some(pos)
       case _ => None
     }) :: acc)
 
     return ((pos.flatten) ::: List())
   }
 
-  /*
+  /**
    * If for a given term t, the termposition position exists
    * replace the subtree with the root at position with a FOLVar(variable_index).
    * Otherwise return the term as it is.
+   *
+   * @param t term
+   * @param variable string representation of the nonterminal prefix
+   * @param position list of positions of variable
+   * @param index nonterminal index i
+   * @return the original term if the replacement could not be processed, or t|p_1 = α_i ... t|p_n = α_i
    */
   def replaceAtPosition(t: FOLTerm, variable: String, position: List[Int], index: Int) : FOLTerm = {
     try{
-      val termToReplace = getAtPositionFOL(t,position)
       val replacement = new at.logic.language.fol.replacements.Replacement(position, FOLVar(variable+"_"+index))
       return replacement(t).asInstanceOf[FOLTerm]
     }catch{
@@ -505,27 +540,45 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     return t
   }
 
-  /*
-   * Checks if a FOLVar exists in <t> with a certain <variable_prefix>.
-   * e.g. eigenvariableOccurs(f(x1,y2,z1), "y") = True
+  /**
+   * Checks if a FOLVar exists in t with a certain variable_prefix.
+   * e.g. nonterminalOccurs(f(x1,y2,z1), "y") = true
+   *
+   * @param t term
+   * @param variable_prefix variable prefix
+   * @return true if a variable with the particular prefix exists in t, otherwise false
    */
-  def eigenvariableOccurs(t: FOLTerm, variable_prefix: String) : Boolean = t match {
+  def nonterminalOccurs(t: FOLTerm, variable_prefix: String) : Boolean = t match {
     case FOLVar(x) => return x.startsWith(variable_prefix)
     case FOLConst(x) => false
-    case Function(x, args) => return args.foldLeft(false)((s,a) => s || eigenvariableOccurs(a, variable_prefix))
+    case Function(x, args) => return args.foldLeft(false)((s,a) => s || nonterminalOccurs(a, variable_prefix))
     case _ => return false
   }
 
-  /*
-   * increments the index of a FOLVar by 1
-   * TODO: Error Handling
+
+  /**
+   * increments the index of a FOLVar by 1, if it has an index
+   * otherwise do nothing
+   *
+   * @param v FOLVar to be processed
+   * @return v with incremented index
    */
   def incrementIndex(v: FOLVar) : FOLVar = {
     val parts = v.toString.split("_")
-    val index = parts.last.toInt
-    FOLVar((parts.take(parts.size - 1).foldLeft("")((acc,x) => acc+"_"+x)+"_"+(index+1)).substring(1))
+    try {
+      val index = parts.last.toInt
+      FOLVar((parts.take(parts.size - 1).foldLeft("")((acc, x) => acc + "_" + x) + "_" + (index + 1)).substring(1))
+    }catch{
+      case e: NumberFormatException => return v //variable has no index
+    }
   }
 
+  /**
+   * for a particular term increment all variables indexes
+   *
+   * @param t term
+   * @return term with incremented variable indexes
+   */
   def incrementAllVars(t: FOLTerm) : FOLTerm = {
     t match {
       case FOLVar(x) => incrementIndex(FOLVar(x))
@@ -546,88 +599,36 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     }
   }
 
-  /*
-   * Get all permutations of a decomposition, except the original one
-   * e.g.
-   * f(α_1,α_2) o [(a,b),(d,e)] =>
-   *    f(α_2,α_1) o [(b,a),(e,d)]
-   *
-   */
-  def getMirrorCases(decomp: types.Decomposition) : List[types.Decomposition] = {
-    val k = decomp._1
-    val evs = getEigenvariables(k, "α")
-    // save the indexes of the eigenvariables
-    val evsIndexes = evs.zipWithIndex
-    // get all different permutations of the eigenvariables
-    val evPermutations = evs.permutations.toList.filter( x => x != evs)
-    val subs = evPermutations.map(x => evs.zip(x))
-    subs.foldLeft(List[types.Decomposition]())((acc,sub) => permuteDecomposition(decomp, sub, evsIndexes) :: acc)
-  }
-
-  /*
-   * Given a decomposition and a substitution e.g. α_1 -> α_2, α_2 -> α_3, α_3 -> α_1
-   * the function produces a decomposition where the key is permuted by the given substitution and
-   * the rests provided in the decomposition are permuted respectively
-   * e.g.
-   *  decomp       =  [f(α_1,α_2,α_3) o [(a,b,c),(d,e,f)]]
-   *  substitution =  α_1 -> α_2, α_2 -> α_3, α_3 -> α_1
-   *  evsindexes   =  [(α_1,0),(α_2,1),(α_3,2)]
-   *  result =======> [f(α_2,α_3,α_1) o [(c,a,b),(f,d,e)]]
-   */
-  def permuteDecomposition(decomp: types.Decomposition, sub: List[(String,String)], evsIndexes: List[(String,Int)]) : types.Decomposition = {
-    val k = decomp._1
-    val rests = decomp._2
-    val evsMap = evsIndexes.toMap
-    val newrests = rests.map( rest => {
-      // for each rest do the substitutions
-      sub.foldLeft(rest)((acc, s) => {
-        val i1 = math.min(evsMap(s._1), evsMap(s._2))
-        val i2 = math.max(evsMap(s._1), evsMap(s._2))
-        // swap the 2 elements if i1 != i2
-        if(i1 != i2) {
-          acc.take(i1) ::: acc(i2) :: acc.drop(i1 + 1).take(i2 - i1 - 1) ::: acc(i1) :: acc.drop(i2 + 1)
-        }
-        else{
-          acc
-        }
-      })
-    })
-    val s = Substitution(sub.map(x => (FOLVar(x._1),FOLVar(x._2).asInstanceOf[FOLExpression])))
-    (s(decomp._1),newrests)
-  }
-
-  /*
+  /**
    * normform produces, depending on a language l
    * a set of keys in normalform.
+   *
+   * @param l termset (language)
+   * @return key in normal form of l
    */
   def normform(l: List[FOLTerm]) : List[FOLTerm] = {
 
     val result = MutableList[FOLTerm]()
 
-    val eigenvariable_a = "α"
-    val eigenvariable_b = "β"
+    val nonterminal_a = "α"
+    val nonterminal_b = "β"
 
     // initialize delta vector
     var delta = new UnboundedVariableDelta()
     // retrieve the key, since computeDelta returns a decomposition T = U o S
-    var decomposition = delta.computeDelta(l, eigenvariable_b).toList(0)
+    var decomposition = delta.computeDelta(l, nonterminal_b).toList(0)
 
     // add the decomposition to the key map
-    // TODO: eventually check if the eigenvariables in k are ambigous
+    // TODO: eventually check if the nonterminals in k are ambigous
     val k = incrementAllVars(decomposition._1)//decomposition._1
-    //decompMap(k) = decomposition._2
-    // TODO: check if this is needed
-    //decompMap(replaceAllVars(k,eigenvariable_b,eigenvariable_a)) = decomposition._2
 
     // calculate the characteristic partition
-    var charPartition = calcCharPartition(k, eigenvariable_b)
-    // TODO: check if removing of duplicates is necessary
-    charPartition = charPartition.distinct
+    var charPartition = calcCharPartition(k, nonterminal_b)
     var permutedCharPartition = charPartition.permutations.toList
 
     // for each ordered list of position sets
     permutedCharPartition.foreach(p => {
-      // eigenvariable index
+      // nonterminal index
       var index = 1
       // new_key as in Eberhard [2014]
       var new_key = k
@@ -635,7 +636,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       // try to replace the term on that position by a non-terminal
       for( i <- Range(0,p.size)){
         var old_key = new_key
-        new_key = replaceAtPosition(new_key, eigenvariable_a, p(i), index)
+        new_key = replaceAtPosition(new_key, nonterminal_a, p(i), index)
         // if the key has changed, increment the
         // non-terminal index
         if(old_key != new_key)
@@ -643,10 +644,10 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
           index+=1
         }
       }
-      // if new_key does not contain the previously introduced non-terminals eigenvariable_b
-      // i.e. only non-terminals eigenvariable_a occur
+      // if new_key does not contain the previously introduced non-terminals nonterminal_b
+      // i.e. only non-terminals nonterminal_a occur
       // add the key to the outputset
-      if(!eigenvariableOccurs(new_key, eigenvariable_b)){
+      if(!nonterminalOccurs(new_key, nonterminal_b)){
         result += new_key
         decompMap(new_key) = decomposition._2
       }
