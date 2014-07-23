@@ -79,7 +79,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   /**
    * Generates the soft constraints for
    * the MCS formulation as a partial weighted MaxSAT problem,
-   * where -x_{i,k} has cost 1 for all non-terminals α_i and keys k
+   * where \neg x_{i,k} has cost 1 for all non-terminals α_i and keys k
    *
    * @return G formula for QMaxSAT
    */
@@ -306,8 +306,6 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
             val k = keyList(klistindex)
             decompMap(k).foldLeft(List[FOLFormula]())((acc3,d) => {
 
-              // TODO: Find out why d is only of size 1
-              debug("Rest: "+d)
               // if d is a rest of k regarding t
               // add it to the formula
               if(isRest(t, k, d)) {
@@ -349,7 +347,6 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc1,t) => {
       // save the index of the subterm for later
       val tindex = addToTermMap(t)
-      debug("Term "+t+" has index "+tindex)
       qsubtermIndexes += tindex
 
       // For t \in st({q})
@@ -446,8 +443,11 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
    */
   def subterms(language: List[FOLTerm]) : List[FOLTerm] = {
     val terms = HashMap[String, FOLTerm]()
+    // for each term of the language
     for(t <- language){
+      // if terms does not contain t yet
       if(!terms.contains(t.toString())){
+        // add it and all of its subterms to the list
         terms ++= st_trav(terms, t)
       }
     }
@@ -494,7 +494,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     val st = subterms(termset)
     //       This is kind of tricky, because we don't know a priori
     //       how large n can get
-    //       for now we just take the size of the subterms
+    // TODO: for an unknown reason we can't take n+2 here (as mentioned in the paper), so for now we just take the size of the subterms
     val poweredSubSets = boundedPower(st, st.size+2)
 
     // for each subset of size 1 <= |sub| <= n+1,
@@ -548,26 +548,14 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     return keyIndexMap(k)
   }
 
-
   /**
    * Calculates the characteristic partition of a term t
    * as described in Eberhard [2014], w.r.t. a non-terminal
    *
    * @param t term for which the characteristic Partition is calculated
-   * @param nonterminal string representing a non-terminal
    * @return characteristic partition of t
    */
-  def calcCharPartition(t: FOLTerm, nonterminal: String) : List[List[Int]] = {
-    val positions = getAllPositionsFOL(t)
-    val pos = positions.foldLeft(List[Option[List[Int]]]())((acc,p) => (p match {
-      case (pos, FOLVar(x)) if x.startsWith(nonterminal) => Some(pos)
-      case _ => None
-    }) :: acc)
-
-    return ((pos.flatten) ::: List())
-  }
-
-  def calcCharPartition2(t: FOLTerm) : List[List[List[Int]]] = {
+  def calcCharPartition(t: FOLTerm) : List[List[List[Int]]] = {
     val positions = getAllPositionsFOL(t)
     /**
      * It recursively separates the positions in the list into different
@@ -703,7 +691,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     // TODO: eventually check if the nonterminals in k are ambigous
     val k = incrementAllVars(decomposition._1)//decomposition._1
     // calculate the characteristic partition
-    var charPartition = calcCharPartition2(k)
+    var charPartition = calcCharPartition(k)
 
     // get all subsets of charPartitions of size at most n
     var permutedCharPartition = boundedPower(charPartition,n)

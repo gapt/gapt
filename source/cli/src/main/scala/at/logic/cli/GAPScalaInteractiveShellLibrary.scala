@@ -679,6 +679,18 @@ object cutIntro {
     CutIntroduction.applyStat(ep, delta, prover)._1.get
 }
 
+
+object ncutIntro {
+  def apply(p: LKProof, numVars: Constraint[Int], n: Int) = NCutIntroduction(p, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver(), n)
+
+  def apply(p: LKProof, numVars: Constraint[Int], prover: at.logic.provers.Prover, n: Int) = NCutIntroduction(p, numVars, prover, n)
+
+  def apply(ep: ExpansionSequent, numVars: Constraint[Int], n: Int) =
+    NCutIntroduction(ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver(), n)
+
+  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: at.logic.provers.Prover, n: Int) =
+    NCutIntroduction(ep, numVars, prover, n)
+}
 /*****************************************************************************************/
 
 object toClauses {
