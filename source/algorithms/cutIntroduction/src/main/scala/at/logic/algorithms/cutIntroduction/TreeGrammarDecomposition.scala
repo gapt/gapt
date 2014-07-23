@@ -2,6 +2,9 @@ package at.logic.algorithms.cutIntroduction
 
 /**
  * Created by spoerk on 7/1/14.
+ *
+ * Implements the method mentioned in Eberhard, Hetzl [2014]
+ * for decomposing trat-n grammars
  */
 
 import at.logic.language.fol._
@@ -21,16 +24,21 @@ import scala.Tuple2
 
 object TreeGrammarDecomposition{
   def apply(termset: List[FOLTerm], n:Int) : List[Grammar] = {
+    // instantiate TreeGrammarDecomposition object with the termset and n
     val decomp = new TreeGrammarDecomposition(termset,n)
+    // generating the sufficient set of keys
     decomp.suffKeys()
     debug("Generating MinCostSAT formulation")
-    //val f = Set(decomp.MCS())//, decomp.additionalFormula())
+    // Generating the MinCostSAT formulation for QMaxSAT
     val f = decomp.MCS()
+    // Generating the soft constraints for QMaxSAT to minimize the amount of rules
     val g = decomp.softConstraints()
     debug("G: \n"+g)
     debug("Starting up QMaxSAT Solver")
+    // Retrieving a model from the QMaxSAT solver and extract the rules
     val rules = decomp.getRules((new QMaxSAT).solvePWM(f.toSet,g))
     debug("Rules: "+rules)
+    // transform the rules to a Grammar
     val grammars = decomp.getGrammars(rules)
     debug("Grammars: "+grammars)
     return grammars
@@ -109,19 +117,18 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
   def getGrammars(rules: Set[Tuple2[Int,FOLTerm]]) : List[Grammar] = {
     var grammars = MutableList[Grammar]()
 
-    // get all nonterminals
+    // get all nonterminals in rules
     val evs = rules.foldLeft(List[String]())( (acc,r) => getNonterminals(r._2, "α_") ::: acc).distinct.sorted
 
     // don't forget to add the α_0
+    // to the list of all nonterminal indexes
     val indexes = 0 :: evs.map( x => x.split("_").last.toInt)
 
     // divide the rules by the nonterminal index
-    //val decomps = Range(0,maximum+1).foldLeft(List[Set[FOLTerm]]())((acc,i) => rules.filter(_._1 == i).map( x => x._2) :: acc)
-    // TODO: Note that the List(x._2) instantiation is going to be obsolete when implementing support for blocks of quantifier
+    // TODO: Note that the List(x._2) instantiation eventually is going to be obsolete when implementing support for blocks of quantifier
     val decomps = indexes.foldLeft(List[(Int,Set[List[FOLTerm]])]())((acc,i) => (i,rules.filter(_._1 == i).map( x => List(x._2)).toSet) :: acc).toMap
     var u = decomps(0).flatten.toList
 
-    //for(i <- Range(1,maximum+1)) {
     for(i <- indexes){
       if(i != 0) {
         val s = decomps(i)
@@ -150,6 +157,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     //val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
     val evs = getNonterminals(k, "α").sorted.map(x => FOLVar(x))
     val sub = Substitution(evs.zip(r))
+    //debug("Is "+t+" == "+sub(k)+" where (k: '"+k+"', sub: "+sub)
     return t == sub(k)
   }
 
@@ -293,19 +301,22 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
           And(ruleVar :: evs.foldLeft(List[FOLFormula]())((acc2,ev) => {
             // get the nonterminals index i
             val evindex = ev.split("_").last.toInt
-            // TODO: Note: x = 0 is used due to the fact that we don't consider blocks of quantifiers
-            val x = 0
+
             // and for every element r_j in the decomposition's sublanguage S where kj is its U
             val k = keyList(klistindex)
             decompMap(k).foldLeft(List[FOLFormula]())((acc3,d) => {
 
+              // TODO: Find out why d is only of size 1
+              debug("Rest: "+d)
               // if d is a rest of k regarding t
               // add it to the formula
               if(isRest(t, k, d)) {
-                val rindex = addToTermMap(d(x))
-                val qindex = addToTermMap(q)
-                // take the rest of the particular nonterminal
-                Atom("X", List(FOLConst(rindex + "_" + evindex + "_" + qindex))) :: acc3
+                d.foldLeft(List[FOLFormula]())((acc4,r) => {
+                  val rindex = addToTermMap(r)
+                  val qindex = addToTermMap(q)
+                  // take the rest of the particular nonterminal
+                  Atom("X", List(FOLConst(rindex + "_" + evindex + "_" + qindex))) :: acc4
+                })::: acc3
               }else{
                 // otherwise don't
                 acc3
@@ -334,6 +345,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     // save the index of the term for later
     val qindex = addToTermMap(q)
     var qsubtermIndexes = mutable.Set[Int]()
+    // for each subterm generate the formula according to Eberhard [2014]
     val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc1,t) => {
       // save the index of the subterm for later
       val tindex = addToTermMap(t)
@@ -483,7 +495,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     //       This is kind of tricky, because we don't know a priori
     //       how large n can get
     //       for now we just take the size of the subterms
-    val poweredSubSets = boundedPower(st, st.size+1)
+    val poweredSubSets = boundedPower(st, st.size+2)
 
     // for each subset of size 1 <= |sub| <= n+1,
     // add all keys of normform(sub) to keySet
@@ -553,6 +565,36 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     }) :: acc)
 
     return ((pos.flatten) ::: List())
+  }
+
+  def calcCharPartition2(t: FOLTerm) : List[List[List[Int]]] = {
+    val positions = getAllPositionsFOL(t)
+    /**
+     * It recursively separates the positions in the list into different
+     * partitions accorindg to their referencing terms.
+     *
+     * @param pos position list
+     * @return
+     */
+    def recCCP(pos: List[(List[Int], FOLExpression)]) : List[List[List[Int]]] = {
+      pos match {
+        case x :: xs => {
+          val result =  ((None, Some(x._1)) :: xs.foldLeft(List[(Option[(List[Int], FOLExpression)],Option[List[Int]])]())((acc,y) => {
+            // add them to the characteristic Partition if the terms match
+            if(x._2 == y._2){
+              (None, Some(y._1)) :: acc
+            }
+            else{
+              (Some(y),None) :: acc
+            }
+          }))
+          val furtherPositions = result.unzip._1.flatten
+          result.unzip._2.flatten :: recCCP(furtherPositions)// get rid of the option and concatenate with the lists of positions except the ones we just added to the current partition
+        }
+        case _ => Nil // if no positions are left
+      }
+    }
+    return recCCP(positions)
   }
 
   /**
@@ -651,30 +693,44 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
     // initialize delta vector
     var delta = new UnboundedVariableDelta()
+
+    val decomps = delta.computeDelta(l, nonterminal_b)
+
     // retrieve the key, since computeDelta returns a decomposition T = U o S
-    var decomposition = delta.computeDelta(l, nonterminal_b).toList(0)
+    var decomposition = decomps.toList(0)
 
     // add the decomposition to the key map
     // TODO: eventually check if the nonterminals in k are ambigous
     val k = incrementAllVars(decomposition._1)//decomposition._1
-
     // calculate the characteristic partition
-    var charPartition = calcCharPartition(k, nonterminal_b)
-    var permutedCharPartition = charPartition.permutations.toList
+    var charPartition = calcCharPartition2(k)
+
+    // get all subsets of charPartitions of size at most n
+    var permutedCharPartition = boundedPower(charPartition,n)
 
     // for each ordered list of position sets
-    permutedCharPartition.foreach(p => {
+    permutedCharPartition.foreach(partition => {
       // nonterminal index
-      var index = 1
+                 /*var index = 1*/
       // new_key as in Eberhard [2014]
       var new_key = k
       // for every position in the set
       // try to replace the term on that position by a non-terminal
-      for( i <- Range(0,p.size)){
+                /*for( i <- Range(0,p.size)){
+                  var old_key = new_key
+                  new_key = replaceAtPosition(new_key, nonterminal_a, p(i), index)
+                  // if the key has changed, increment the
+                  // non-terminal index
+                  if(old_key != new_key)
+                  {
+                    index+=1
+                  }
+                }*/
+      for( i <- List.range(0,partition.size)){
         var old_key = new_key
-        new_key = replaceAtPosition(new_key, nonterminal_a, p(i), index)
-        // if the key has changed, increment the
-        // non-terminal index
+        var index = 1
+        val positionSet = partition(i)
+        new_key = positionSet.foldLeft(new_key)((acc,pos) => replaceAtPosition(acc, nonterminal_a, pos, index))
         if(old_key != new_key)
         {
           index+=1
@@ -684,6 +740,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       // i.e. only non-terminals nonterminal_a occur
       // add the key to the outputset
       if(!nonterminalOccurs(new_key, nonterminal_b)){
+        //debug("Key '"+k+"' produced '"+new_key+"' with rest "+decomposition._2)
         result += new_key
         decompMap(new_key) = decomposition._2
       }
