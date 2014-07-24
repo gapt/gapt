@@ -7,381 +7,103 @@ package at.logic.algorithms.cutIntroduction
  * for decomposing trat-n grammars
  */
 
+import at.logic.algorithms.cutIntroduction.MCSMethod.MCSMethod
 import at.logic.language.fol._
-import at.logic.calculi.expansionTrees.{quantRulesNumber => quantRulesNumberET}
 import at.logic.algorithms.cutIntroduction.Deltas._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import at.logic.language.fol.replacements.getAllPositionsFOL
-import at.logic.language.fol.replacements.getAtPositionFOL
 import at.logic.provers.qmaxsat.{MapBasedInterpretation, QMaxSAT}
-import scala.Some
-import scala.Tuple2
-import scala.Some
-import scala.Tuple2
 
+
+/**
+ * MinCostSAT Method
+ * - QMaxSAT formulation
+ * - Simplex formulation
+ */
+object MCSMethod extends Enumeration {
+  type MCSMethod = Value
+  val QMaxSAT, Simplex = Value
+}
 
 object TreeGrammarDecomposition{
-  def apply(termset: List[FOLTerm], n:Int) : List[Grammar] = {
-    // instantiate TreeGrammarDecomposition object with the termset and n
-    val decomp = new TreeGrammarDecomposition(termset,n)
-    // generating the sufficient set of keys
-    decomp.suffKeys()
-    debug("Generating MinCostSAT formulation")
-    // Generating the MinCostSAT formulation for QMaxSAT
-    val f = decomp.MCS()
-    // Generating the soft constraints for QMaxSAT to minimize the amount of rules
-    val g = decomp.softConstraints()
-    debug("G: \n"+g)
-    debug("Starting up QMaxSAT Solver")
-    // Retrieving a model from the QMaxSAT solver and extract the rules
-    val rules = decomp.getRules((new QMaxSAT).solvePWM(f.toSet,g))
-    debug("Rules: "+rules)
-    // transform the rules to a Grammar
-    val grammars = decomp.getGrammars(rules)
-    debug("Grammars: "+grammars)
-    return grammars
+
+  var decomp : TreeGrammarDecomposition = _
+  def apply(termset: List[FOLTerm], n:Int, method: MCSMethod) : List[Grammar] = {
+
+    method match {
+      case MCSMethod.QMaxSAT => {
+        // instantiate TreeGrammarDecomposition object with the termset and n
+        decomp = new TreeGrammarDecompositionPWM(termset, n)
+
+      }
+      case MCSMethod.Simplex => {
+        // instantiate TreeGrammarDecomposition object with the termset and n
+        //val decomp = new TreeGrammarDecompositionSimplex(termset, n)
+        warn("Simplex method not yet implemented")
+      }
+    }
+
+    if(decomp != null) {
+      // generating the sufficient set of keys
+      decomp.suffKeys()
+      debug("Generating QMaxSAT MinCostSAT formulation")
+      // Generating the MinCostSAT formulation for QMaxSAT
+      val f = decomp.MCS()
+      // Generating the soft constraints for QMaxSAT to minimize the amount of rules
+      val g = decomp.softConstraints()
+      debug("G: \n" + g)
+      debug("Starting up QMaxSAT Solver")
+      // Retrieving a model from the QMaxSAT solver and extract the rules
+      val rules = decomp.getRules((new QMaxSAT).solvePWM(f.toSet, g))
+      debug("Rules: " + rules)
+      // transform the rules to a Grammar
+      val grammars = decomp.getGrammars(rules)
+      debug("Grammars: " + grammars)
+      return grammars
+    }
+    else{
+      error("Unsupported TreeGrammarDecomposition method.")
+      return null
+    }
   }
 }
 
+abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) extends at.logic.utils.logging.Logger {
 
-class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.utils.logging.Logger {
 
   // mapping all sub-/terms of the language to a unique index
-  var termMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+  var termMap : mutable.HashMap[FOLTerm,Int]
   // reversed map of all sub-/terms
-  var reverseTermMap : mutable.HashMap[Int,FOLTerm] = mutable.HashMap[Int,FOLTerm]()
+  var reverseTermMap : mutable.HashMap[Int,FOLTerm]
   // counter for uniquely defined terms indexes
-  var termIndex = 0
+  var termIndex : Int
 
   // the sufficient set of keys represented as a list
-  var keyList : mutable.MutableList[FOLTerm] = mutable.MutableList[FOLTerm]()
+  var keyList : mutable.MutableList[FOLTerm]
 
   // a hashmap storing for every key its index in keyList
-  var keyIndexMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+  var keyIndexMap : mutable.HashMap[FOLTerm,Int]
 
   // stores tuples (term,keyset), where keyset is a list of indexes of keys in keyList
   // which produce the particular term
-  var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]] = mutable.HashMap[FOLTerm,mutable.Set[Int]]()
-
-  // all constants of the form x_{i,k_j}, where
-  // i = non-terminal index, k_j = key
-  var propRules : mutable.HashMap[FOLConst,(Int,Int)] = mutable.HashMap[FOLConst,(Int,Int)]()
-
-  // all constants of the form x_{t,i,q}, where
-  // t = subterm of q, i = non-terminal index, q = term of the language (termset)
-  var propRests : mutable.HashMap[FOLConst,(Int,Int,Int)] = mutable.HashMap[FOLConst,(Int,Int,Int)]()
+  var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]]
 
   // mapping keys to a list of terms which can be produced by a particular key
-  var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]()
-
-  /**
-   * Generates the soft constraints for
-   * the MCS formulation as a partial weighted MaxSAT problem,
-   * where \neg x_{i,k} has cost 1 for all non-terminals α_i and keys k
-   *
-   * @return G formula for QMaxSAT
-   */
-  def softConstraints() : Set[Tuple2[FOLFormula,Int]] = {
-    propRules.foldLeft(Set[Tuple2[FOLFormula,Int]]())((acc,x) => acc + Tuple2(Neg(Atom("X",List(x._1))),1))
-  }
+  var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]
 
 
-  /**
-   * Given an interpretation, a Set of tuples will be returned of the form
-   * (non-terminal-index,folterm), which represent a rule of the form
-   * α_i -> term (containing at most non-terminals α_j where j > i)
-   *
-   * @param interpretation a MapBasedInterpretation of the MCS formulation
-   * @return a set of rules
-   */
-  def getRules(interpretation: Option[MapBasedInterpretation]) : Set[Tuple2[Int,FOLTerm]] = {
-    interpretation match {
-      case Some(model) => {
-      propRules.foldLeft(Set[Tuple2[Int, FOLTerm]]())((acc, x) => {
-          // if x_{i,k} is true
-          // generate the rule α_i -> k
-          if (model.interpretAtom(Atom("X", List(x._1)))) {
-            acc + Tuple2(x._2._1, keyList(x._2._2))
-          }
-          else {
-            acc
-          }
-        })
-      }
-      case None => Set.empty
-    }
-  }
-
-  def getGrammars(rules: Set[Tuple2[Int,FOLTerm]]) : List[Grammar] = {
-    var grammars = MutableList[Grammar]()
-
-    // get all nonterminals in rules
-    val evs = rules.foldLeft(List[String]())( (acc,r) => getNonterminals(r._2, "α_") ::: acc).distinct.sorted
-
-    // don't forget to add the α_0
-    // to the list of all nonterminal indexes
-    val indexes = 0 :: evs.map( x => x.split("_").last.toInt)
-
-    // divide the rules by the nonterminal index
-    // TODO: Note that the List(x._2) instantiation eventually is going to be obsolete when implementing support for blocks of quantifier
-    val decomps = indexes.foldLeft(List[(Int,Set[List[FOLTerm]])]())((acc,i) => (i,rules.filter(_._1 == i).map( x => List(x._2)).toSet) :: acc).toMap
-    var u = decomps(0).flatten.toList
-
-    for(i <- indexes){
-      if(i != 0) {
-        val s = decomps(i)
-        grammars += new Grammar(u, s, "α_" + i)
-
-        val subs = s.foldLeft(List[Substitution]())((acc2,s0) => {
-          Substitution(s0.map( s1 => (FOLVar("α_" + i), s1))) :: acc2
-        })
-
-        u = u.foldLeft(List[FOLTerm]())((acc, u0) => subs.map(sub => sub(u0)) ::: acc)
-      }
-    }
-    return grammars.toList
-  }
-
-  /**
-   * Checks if a rest r is a rest w.r.t. a key k in a term t
-   * i.e. t = k[\alpha_1 \ r(0)]...[\alpha_{n+1} \ r(n)]
-   *
-   * @param t term
-   * @param k key
-   * @param r rest
-   * @return true if t = {k} o {r}
-   */
-  def isRest(t: FOLTerm, k: FOLTerm, r: List[FOLTerm]) : Boolean = {
-    //val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
-    val evs = getNonterminals(k, "α").sorted.map(x => FOLVar(x))
-    val sub = Substitution(evs.zip(r))
-    //debug("Is "+t+" == "+sub(k)+" where (k: '"+k+"', sub: "+sub)
-    return t == sub(k)
-  }
-
-  /**
-   * Generates out of a list l
-   * the diagonal cartesian product l² of it
-   * minus the diagonal and mirrorcases
-   *
-   * @param l list of elements
-   * @return diagonal cartesian product of l
-   */
-  def diagCross(l:List[Int]) : List[(Int,Int)] = {
-    l match {
-      case x::xs => xs.map(y => (x,y)) ++ diagCross(xs)
-      case _ => Nil
-    }
-  }
-
-  /**
-   * Transforms a sufficient set of keys into a propositional
-   * formula as described in Eberhard [2014].
-   *
-   * @return
-   */
-  def MCS() : List[FOLFormula] = {
-    //And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
-    val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
-    // update the reverse term map
-    reverseTermMap = mutable.HashMap(termMap.toList.map(x => x.swap).toSeq:_*)
-    debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally("α", "\\alpha")))
-    return f
-  }
-
-  /**
-   * Generates the formula R mentioned in Eberhard [2014]
-   *
-   * @param qindex index of term in termset (language)
-   * @param qsubtermIndexes indexes of all subterms of q in termMap
-   * @return R formula
-   */
-  def R(qindex: Int, qsubtermIndexes: Set[Int]) : FOLFormula = {
-    // for all pairs t_0,t_1 \in st({q}), s.t. t_0 != t_1
-    // since we don't need to generate all pairs, due to commutativity of \lor
-    // we need only the cartesian product of qsubtermindexes, without the diagonal
-    val pairs = diagCross(qsubtermIndexes.toList)
-    // generate the formula \neg x_{t_0,i,q} \lor \neg x_{t_1,i,q}
-    And(pairs.foldLeft(List[FOLFormula]())((acc1,t) => {
-      Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
-        val co1 = FOLConst(t._1 + "_" + i + "_" + qindex)
-        val co2 = FOLConst(t._2 + "_" + i + "_" + qindex)
-        propRests(co1) = (t._1, i, qindex)
-        propRests(co2) = (t._2, i, qindex)
-        List(Or(Neg(Atom("X", List(co1))), Neg(Atom("X", List(co2))))) ++ acc2
-        }) ++ acc1
-    }))
-  }
-  /**
-   * Given a FOLTerm and a prefix for a variable,
-   * this function returns a list of all FOLVars in t starting
-   * with the particular prefix
-   *
-   * @param t FOLTerm
-   * @param nonterminal_prefix prefix of non-terminals
-   * @return a list of strings representing all non-terminals in t
-   */
-  def getNonterminals(t: FOLTerm, nonterminal_prefix: String) : List[String] = {
-    val s = t match {
-      case Function(f,args) => args.foldLeft(Set[String]())((prevargs,arg) => prevargs ++ getNonterminals(arg, nonterminal_prefix))
-      case FOLVar(v) => if(v.toString.startsWith(nonterminal_prefix)) Set[String](v.toString()) else Set[String]()
-      case _ => Set[String]()
-    }
-    s.toList
-
-  }
-
-
-  /**
-   * Returns for a given formula f (of a QMaxSAT instance) its latex code
-   * (for debugging purposes)
-   *
-   * @param f FOLExpression
-   * @return latex representation of f
-   */
-  def printExpression(f: FOLExpression) : String = {
-    f match {
-      case And(a,b) => printExpression(a) + " \\land " + printExpression(b)
-      case Or(a,b) => printExpression(a) + " \\lor " + printExpression(b)
-      case Neg(e) => "\\neg " + printExpression(e)
-      case Imp(a,b) => printExpression(a) + " \\to " + printExpression(b)
-      case FOLVar(x) => x.toString
-      case FOLConst(x) => pA(FOLConst(x))
-      case Function(f,l) => f+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
-      //case Atom(a,l) => a+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
-      case Atom(a,l) => l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)
-    }
-  }
-
-  /**
-   * A method which returns a latex representation of a FOLConst according
-   * to the propositional QMaxSAT formulation
-   *
-   * @param c a FOLConst
-   * @return latex representation of c
-   */
-  def pA(c:FOLConst) : String = {
-    val s = c.toString.split("_")
-    if(s.size == 2)
-    {
-      return "x_{\\alpha_{"+s(0)+"},"+keyList(s(1).toInt)+"}"
-    }else{
-      return "x_{"+reverseTermMap(s(0).toInt)+",\\alpha_{"+s(1)+"},"+reverseTermMap(s(2).toInt)+"}"
-    }
-  }
-
-  /**
-   * Generates the formula D_{L,S}(t,i,q) according to
-   * Eberhard [2014]
-   *
-   * @param t subterm of q
-   * @param l index of non-terminal
-   * @param q a term of the termset (language)
-   * @return QMaxSAT formulation D_{L,S}(t,j,q)
-   */
-  def D(t: FOLTerm, l: Int, q: FOLTerm): FOLFormula = {
-
-      // for every key k_j producing t, which
-      // ONLY CONTAINS α_i, where i > l
-      Or(keyMap(t).foldLeft(List[FOLFormula]())((acc1,klistindex) => {
-        // add the propositional variable x_{k_j}
-        val x_l_kj = FOLConst(l+"_"+klistindex)
-        propRules(x_l_kj) = (l,klistindex)
-
-        val ruleVar : FOLFormula = Atom("X",List(x_l_kj))
-
-        // get all nonterminals occuring in the subterm t
-        val evs = getNonterminals(keyList(klistindex),"α")//.map(x => FOLVar(x))
-        // check if all nonterminals α_i suffice i > l
-        if(evs.foldLeft(true)((acc,x) => acc && (x.split("_").last.toInt > l ))){
-          //debug("NOT skipping key='"+keyList(klistindex)+"' for l="+l)
-          // for every nonterminal in k_j
-          And(ruleVar :: evs.foldLeft(List[FOLFormula]())((acc2,ev) => {
-            // get the nonterminals index i
-            val evindex = ev.split("_").last.toInt
-
-            // and for every element r_j in the decomposition's sublanguage S where kj is its U
-            val k = keyList(klistindex)
-            decompMap(k).foldLeft(List[FOLFormula]())((acc3,d) => {
-
-              // if d is a rest of k regarding t
-              // add it to the formula
-              if(isRest(t, k, d)) {
-                d.foldLeft(List[FOLFormula]())((acc4,r) => {
-                  val rindex = addToTermMap(r)
-                  val qindex = addToTermMap(q)
-                  // take the rest of the particular nonterminal
-                  Atom("X", List(FOLConst(rindex + "_" + evindex + "_" + qindex))) :: acc4
-                })::: acc3
-              }else{
-                // otherwise don't
-                acc3
-              }
-            }) ::: acc2
-          })) :: acc1
-        }
-        else{
-          acc1
-        }
-    }))
-  }
-
-
-  /**
-   * Generates out of a term q the formula
-   * C_{L,S}(q) as written in Eberhard [2014]
-   *
-   * @param q term q of the termset (language)
-   * @return QMaxSAT formulation C_{L,S}(q)
-   */
-  def C(q: FOLTerm) : List[FOLFormula] = {
-
-    debug("GENERATING C(q), where q = '"+q+"'")
-    val subterms = st(q)
-    // save the index of the term for later
-    val qindex = addToTermMap(q)
-    var qsubtermIndexes = mutable.Set[Int]()
-    // for each subterm generate the formula according to Eberhard [2014]
-    val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc1,t) => {
-      // save the index of the subterm for later
-      val tindex = addToTermMap(t)
-      qsubtermIndexes += tindex
-
-      // For t \in st({q})
-      // 1 <= i <= n
-      Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
-        val co = FOLConst(tindex+"_"+i+"_"+qindex)
-        propRests(co) = (tindex,i,qindex)
-
-        val trivialKeyIndex = addKey(t)
-        val trivialKey = FOLConst(i+"_"+trivialKeyIndex)
-
-        propRules(trivialKey) = (i,trivialKeyIndex)
-        // add the trvial keys to the rhs of the implication
-        var d = D(t,i,q)
-        // Or(Nil) => if D(...) is empty
-        if(d == Or(Nil))
-        {
-          d = Atom("X", trivialKey :: Nil)
-        }
-        else{
-          d = Or(d, Atom("X", trivialKey :: Nil))
-        }
-
-        //debug("D("+tindex+","+i+","+qindex+") = D("+t+","+i+","+q+") = "+d)
-        Imp(Atom("X",co :: Nil), d) :: acc2
-      }) ::: acc1
-    })
-    val r = R(qindex,qsubtermIndexes.toSet)
-    val d = D(q,0,q)
-    debug("formulas = "+formulas)
-    debug("D("+q+",0,"+q+") = "+d)
-    debug("R("+qindex+","+qsubtermIndexes.toSet+") = "+r)
-    //And(
-    formulas ++ List(d, r)//)
-  }
+  // abstract method definitions for individual implementation
+  // w.r.t. the method type
+  def getRules(interpretation: Option[MapBasedInterpretation]) : Set[Tuple2[Int,FOLTerm]]
+  def softConstraints() : Set[Tuple2[FOLFormula,Int]]
+  def MCS() : List[FOLFormula]
+  def R(qindex: Int, qsubtermIndexes: Set[Int]) : FOLFormula
+  def printExpression(f: FOLExpression) : String
+  def pA(c:FOLConst) : String
+  def D(t: FOLTerm, l: Int, q: FOLTerm): FOLFormula
+  def C(q: FOLTerm) : List[FOLFormula]
 
 
   /**
@@ -426,7 +148,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
 
   /**
    * Extracting the result of st_trav for a term t
-   * 
+   *
    * @param t FOLTerm for which all subterms are calculated
    * @return list of all subterms
    */
@@ -651,7 +373,7 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
       case FOLConst(c) => FOLConst(c)
       case Function(f,l) => Function(f,l.map(p => incrementAllVars(p)))
       case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
-                t}
+        t}
     }
   }
 
@@ -699,21 +421,21 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     // for each ordered list of position sets
     permutedCharPartition.foreach(partition => {
       // nonterminal index
-                 /*var index = 1*/
+      /*var index = 1*/
       // new_key as in Eberhard [2014]
       var new_key = k
       // for every position in the set
       // try to replace the term on that position by a non-terminal
-                /*for( i <- Range(0,p.size)){
-                  var old_key = new_key
-                  new_key = replaceAtPosition(new_key, nonterminal_a, p(i), index)
-                  // if the key has changed, increment the
-                  // non-terminal index
-                  if(old_key != new_key)
-                  {
-                    index+=1
-                  }
-                }*/
+      /*for( i <- Range(0,p.size)){
+        var old_key = new_key
+        new_key = replaceAtPosition(new_key, nonterminal_a, p(i), index)
+        // if the key has changed, increment the
+        // non-terminal index
+        if(old_key != new_key)
+        {
+          index+=1
+        }
+      }*/
       for( i <- List.range(0,partition.size)){
         var old_key = new_key
         var index = 1
@@ -735,6 +457,351 @@ class TreeGrammarDecomposition(termset: List[FOLTerm], n: Int) extends at.logic.
     })
     return result.toList
 
+  }
+
+
+
+  def getGrammars(rules: Set[Tuple2[Int,FOLTerm]]) : List[Grammar] = {
+    var grammars = MutableList[Grammar]()
+
+    // get all nonterminals in rules
+    val evs = rules.foldLeft(List[String]())( (acc,r) => getNonterminals(r._2, "α_") ::: acc).distinct.sorted
+
+    // don't forget to add the α_0
+    // to the list of all nonterminal indexes
+    val indexes = 0 :: evs.map( x => x.split("_").last.toInt)
+
+    // divide the rules by the nonterminal index
+    // TODO: Note that the List(x._2) instantiation eventually is going to be obsolete when implementing support for blocks of quantifier
+    val decomps = indexes.foldLeft(List[(Int,Set[List[FOLTerm]])]())((acc,i) => (i,rules.filter(_._1 == i).map( x => List(x._2)).toSet) :: acc).toMap
+    var u = decomps(0).flatten.toList
+
+    for(i <- indexes){
+      if(i != 0) {
+        val s = decomps(i)
+        grammars += new Grammar(u, s, "α_" + i)
+
+        val subs = s.foldLeft(List[Substitution]())((acc2,s0) => {
+          Substitution(s0.map( s1 => (FOLVar("α_" + i), s1))) :: acc2
+        })
+
+        u = u.foldLeft(List[FOLTerm]())((acc, u0) => subs.map(sub => sub(u0)) ::: acc)
+      }
+    }
+    return grammars.toList
+  }
+
+  /**
+   * Checks if a rest r is a rest w.r.t. a key k in a term t
+   * i.e. t = k[\alpha_1 \ r(0)]...[\alpha_{n+1} \ r(n)]
+   *
+   * @param t term
+   * @param k key
+   * @param r rest
+   * @return true if t = {k} o {r}
+   */
+  def isRest(t: FOLTerm, k: FOLTerm, r: List[FOLTerm]) : Boolean = {
+    //val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
+    val evs = getNonterminals(k, "α").sorted.map(x => FOLVar(x))
+    val sub = Substitution(evs.zip(r))
+    //debug("Is "+t+" == "+sub(k)+" where (k: '"+k+"', sub: "+sub)
+    return t == sub(k)
+  }
+
+  /**
+   * Generates out of a list l
+   * the diagonal cartesian product l² of it
+   * minus the diagonal and mirrorcases
+   *
+   * @param l list of elements
+   * @return diagonal cartesian product of l
+   */
+  def diagCross(l:List[Int]) : List[(Int,Int)] = {
+    l match {
+      case x::xs => xs.map(y => (x,y)) ++ diagCross(xs)
+      case _ => Nil
+    }
+  }
+
+  /**
+   * Given a FOLTerm and a prefix for a variable,
+   * this function returns a list of all FOLVars in t starting
+   * with the particular prefix
+   *
+   * @param t FOLTerm
+   * @param nonterminal_prefix prefix of non-terminals
+   * @return a list of strings representing all non-terminals in t
+   */
+  def getNonterminals(t: FOLTerm, nonterminal_prefix: String) : List[String] = {
+    val s = t match {
+      case Function(f,args) => args.foldLeft(Set[String]())((prevargs,arg) => prevargs ++ getNonterminals(arg, nonterminal_prefix))
+      case FOLVar(v) => if(v.toString.startsWith(nonterminal_prefix)) Set[String](v.toString()) else Set[String]()
+      case _ => Set[String]()
+    }
+    s.toList
+  }
+}
+
+class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override val n: Int) extends TreeGrammarDecomposition(termset, n) {
+
+
+  // mapping all sub-/terms of the language to a unique index
+  var termMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+  // reversed map of all sub-/terms
+  var reverseTermMap : mutable.HashMap[Int,FOLTerm] = mutable.HashMap[Int,FOLTerm]()
+  // counter for uniquely defined terms indexes
+  var termIndex = 0
+
+  // the sufficient set of keys represented as a list
+  var keyList : mutable.MutableList[FOLTerm] = mutable.MutableList[FOLTerm]()
+
+  // a hashmap storing for every key its index in keyList
+  var keyIndexMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+
+  // stores tuples (term,keyset), where keyset is a list of indexes of keys in keyList
+  // which produce the particular term
+  var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]] = mutable.HashMap[FOLTerm,mutable.Set[Int]]()
+
+  // mapping keys to a list of terms which can be produced by a particular key
+  var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]()
+
+
+  // all constants of the form x_{i,k_j}, where
+  // i = non-terminal index, k_j = key
+  var propRules : mutable.HashMap[FOLConst,(Int,Int)] = mutable.HashMap[FOLConst,(Int,Int)]()
+
+  // all constants of the form x_{t,i,q}, where
+  // t = subterm of q, i = non-terminal index, q = term of the language (termset)
+  var propRests : mutable.HashMap[FOLConst,(Int,Int,Int)] = mutable.HashMap[FOLConst,(Int,Int,Int)]()
+
+
+  /**
+   * Given an interpretation, a Set of tuples will be returned of the form
+   * (non-terminal-index,folterm), which represent a rule of the form
+   * α_i -> term (containing at most non-terminals α_j where j > i)
+   *
+   * @param interpretation a MapBasedInterpretation of the MCS formulation
+   * @return a set of rules
+   */
+  def getRules(interpretation: Option[MapBasedInterpretation]) : Set[Tuple2[Int,FOLTerm]] = {
+    interpretation match {
+      case Some(model) => {
+        propRules.foldLeft(Set[Tuple2[Int, FOLTerm]]())((acc, x) => {
+          // if x_{i,k} is true
+          // generate the rule α_i -> k
+          if (model.interpretAtom(Atom("X", List(x._1)))) {
+            acc + Tuple2(x._2._1, keyList(x._2._2))
+          }
+          else {
+            acc
+          }
+        })
+      }
+      case None => Set.empty
+    }
+  }
+
+
+  /**
+   * Generates the soft constraints for
+   * the MCS formulation as a partial weighted MaxSAT problem,
+   * where \neg x_{i,k} has cost 1 for all non-terminals α_i and keys k
+   *
+   * @return G formula for QMaxSAT
+   */
+  def softConstraints() : Set[Tuple2[FOLFormula,Int]] = {
+    propRules.foldLeft(Set[Tuple2[FOLFormula,Int]]())((acc,x) => acc + Tuple2(Neg(Atom("X",List(x._1))),1))
+  }
+
+
+  /**
+   * Transforms a sufficient set of keys into a propositional
+   * formula as described in Eberhard [2014].
+   *
+   * @return
+   */
+  def MCS() : List[FOLFormula] = {
+    //And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
+    val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
+    // update the reverse term map
+    reverseTermMap = mutable.HashMap(termMap.toList.map(x => x.swap).toSeq:_*)
+    debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally("α", "\\alpha")))
+    return f
+  }
+
+  /**
+   * Generates the formula R mentioned in Eberhard [2014]
+   *
+   * @param qindex index of term in termset (language)
+   * @param qsubtermIndexes indexes of all subterms of q in termMap
+   * @return R formula
+   */
+  def R(qindex: Int, qsubtermIndexes: Set[Int]) : FOLFormula = {
+    // for all pairs t_0,t_1 \in st({q}), s.t. t_0 != t_1
+    // since we don't need to generate all pairs, due to commutativity of \lor
+    // we need only the cartesian product of qsubtermindexes, without the diagonal
+    val pairs = diagCross(qsubtermIndexes.toList)
+    // generate the formula \neg x_{t_0,i,q} \lor \neg x_{t_1,i,q}
+    And(pairs.foldLeft(List[FOLFormula]())((acc1,t) => {
+      Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
+        val co1 = FOLConst(t._1 + "_" + i + "_" + qindex)
+        val co2 = FOLConst(t._2 + "_" + i + "_" + qindex)
+        propRests(co1) = (t._1, i, qindex)
+        propRests(co2) = (t._2, i, qindex)
+        List(Or(Neg(Atom("X", List(co1))), Neg(Atom("X", List(co2))))) ++ acc2
+        }) ++ acc1
+    }))
+  }
+
+
+
+  /**
+   * Returns for a given formula f (of a QMaxSAT instance) its latex code
+   * (for debugging purposes)
+   *
+   * @param f FOLExpression
+   * @return latex representation of f
+   */
+  def printExpression(f: FOLExpression) : String = {
+    f match {
+      case And(a,b) => printExpression(a) + " \\land " + printExpression(b)
+      case Or(a,b) => printExpression(a) + " \\lor " + printExpression(b)
+      case Neg(e) => "\\neg " + printExpression(e)
+      case Imp(a,b) => printExpression(a) + " \\to " + printExpression(b)
+      case FOLVar(x) => x.toString
+      case FOLConst(x) => pA(FOLConst(x))
+      case Function(f,l) => f+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
+      //case Atom(a,l) => a+"("+l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)+")"
+      case Atom(a,l) => l.foldLeft("")((acc:String,x:FOLExpression) => printExpression(x) + ", " + acc ).dropRight(2)
+    }
+  }
+
+  /**
+   * A method which returns a latex representation of a FOLConst according
+   * to the propositional QMaxSAT formulation
+   *
+   * @param c a FOLConst
+   * @return latex representation of c
+   */
+  def pA(c:FOLConst) : String = {
+    val s = c.toString.split("_")
+    if(s.size == 2)
+    {
+      return "x_{\\alpha_{"+s(0)+"},"+keyList(s(1).toInt)+"}"
+    }else{
+      return "x_{"+reverseTermMap(s(0).toInt)+",\\alpha_{"+s(1)+"},"+reverseTermMap(s(2).toInt)+"}"
+    }
+  }
+
+  /**
+   * Generates the formula D_{L,S}(t,i,q) according to
+   * Eberhard [2014]
+   *
+   * @param t subterm of q
+   * @param l index of non-terminal
+   * @param q a term of the termset (language)
+   * @return QMaxSAT formulation D_{L,S}(t,j,q)
+   */
+  def D(t: FOLTerm, l: Int, q: FOLTerm): FOLFormula = {
+
+      // for every key k_j producing t, which
+      // ONLY CONTAINS α_i, where i > l
+      Or(keyMap(t).foldLeft(List[FOLFormula]())((acc1,klistindex) => {
+        // add the propositional variable x_{k_j}
+        val x_l_kj = FOLConst(l+"_"+klistindex)
+        propRules(x_l_kj) = (l,klistindex)
+
+        val ruleVar : FOLFormula = Atom("X",List(x_l_kj))
+
+        // get all nonterminals occuring in the subterm t
+        val evs = getNonterminals(keyList(klistindex),"α")//.map(x => FOLVar(x))
+        // check if all nonterminals α_i suffice i > l
+        if(evs.foldLeft(true)((acc,x) => acc && (x.split("_").last.toInt > l ))){
+          //debug("NOT skipping key='"+keyList(klistindex)+"' for l="+l)
+          // for every nonterminal in k_j
+          And(ruleVar :: evs.foldLeft(List[FOLFormula]())((acc2,ev) => {
+            // get the nonterminals index i
+            val evindex = ev.split("_").last.toInt
+
+            // and for every element r_j in the decomposition's sublanguage S where kj is its U
+            val k = keyList(klistindex)
+            decompMap(k).foldLeft(List[FOLFormula]())((acc3,d) => {
+
+              // if d is a rest of k regarding t
+              // add it to the formula
+              if(isRest(t, k, d)) {
+                d.foldLeft(List[FOLFormula]())((acc4,r) => {
+                  val rindex = addToTermMap(r)
+                  val qindex = addToTermMap(q)
+                  // take the rest of the particular nonterminal
+                  Atom("X", List(FOLConst(rindex + "_" + evindex + "_" + qindex))) :: acc4
+                })::: acc3
+              }else{
+                // otherwise don't
+                acc3
+              }
+            }) ::: acc2
+          })) :: acc1
+        }
+        else{
+          acc1
+        }
+    }))
+  }
+
+
+  /**
+   * Generates out of a term q the formula
+   * C_{L,S}(q) as written in Eberhard [2014]
+   *
+   * @param q term q of the termset (language)
+   * @return QMaxSAT formulation C_{L,S}(q)
+   */
+  def C(q: FOLTerm) : List[FOLFormula] = {
+
+    debug("GENERATING C(q), where q = '"+q+"'")
+    val subterms = st(q)
+    // save the index of the term for later
+    val qindex = addToTermMap(q)
+    var qsubtermIndexes = mutable.Set[Int]()
+    // for each subterm generate the formula according to Eberhard [2014]
+    val formulas: List[FOLFormula] = subterms.foldLeft(List[FOLFormula]())((acc1,t) => {
+      // save the index of the subterm for later
+      val tindex = addToTermMap(t)
+      qsubtermIndexes += tindex
+
+      // For t \in st({q})
+      // 1 <= i <= n
+      Range(1,n+1).foldLeft(List[FOLFormula]())((acc2,i) => {
+        val co = FOLConst(tindex+"_"+i+"_"+qindex)
+        propRests(co) = (tindex,i,qindex)
+
+        val trivialKeyIndex = addKey(t)
+        val trivialKey = FOLConst(i+"_"+trivialKeyIndex)
+
+        propRules(trivialKey) = (i,trivialKeyIndex)
+        // add the trvial keys to the rhs of the implication
+        var d = D(t,i,q)
+        // Or(Nil) => if D(...) is empty
+        if(d == Or(Nil))
+        {
+          d = Atom("X", trivialKey :: Nil)
+        }
+        else{
+          d = Or(d, Atom("X", trivialKey :: Nil))
+        }
+
+        //debug("D("+tindex+","+i+","+qindex+") = D("+t+","+i+","+q+") = "+d)
+        Imp(Atom("X",co :: Nil), d) :: acc2
+      }) ::: acc1
+    })
+    val r = R(qindex,qsubtermIndexes.toSet)
+    val d = D(q,0,q)
+    debug("formulas = "+formulas)
+    debug("D("+q+",0,"+q+") = "+d)
+    debug("R("+qindex+","+qsubtermIndexes.toSet+") = "+r)
+    //And(
+    formulas ++ List(d, r)//)
   }
 
 }

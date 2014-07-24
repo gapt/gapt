@@ -115,7 +115,7 @@ object NCutIntroduction extends Logger {
 
     //val grammars = ComputeGrammars(terms, delta)
 
-    val grammars = TreeGrammarDecomposition(terms.termset,n)
+    val grammars = TreeGrammarDecomposition(terms.termset,n, MCSMethod.QMaxSAT)
     //println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
@@ -195,7 +195,7 @@ object NCutIntroduction extends Logger {
       if( !freeVars.intersect(g.eigenvariables).isEmpty ) {
         debug("      found terms with alphas!")
         debug("      term: " + term)
-        //TODO: here a NullPointerException is raised. Probably because of flatterms=null. But WHY?
+        // TODO: here a NullPointerException is raised. Probably because of flatterms=null. But WHY?
         val terms = flatterms.getTermTuple(term)
         val f = flatterms.getFormula(term)
 
