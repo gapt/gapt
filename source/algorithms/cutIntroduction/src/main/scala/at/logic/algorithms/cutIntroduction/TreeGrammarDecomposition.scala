@@ -91,7 +91,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
   var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]]
 
   // mapping keys to a list of terms which can be produced by a particular key
-  var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]
+  var decompMap : mutable.HashMap[FOLTerm,mutable.Set[List[FOLTerm]]]
 
 
   // abstract method definitions for individual implementation
@@ -214,10 +214,9 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
     //var result = scala.collection.mutable.Set[FOLTerm]()
     val st = subterms(termset)
-    //       This is kind of tricky, because we don't know a priori
-    //       how large n can get
-    // TODO: for an unknown reason we can't take n+2 here (as mentioned in the paper), so for now we just take the size of the subterms
-    val poweredSubSets = boundedPower(st, st.size+2)
+    // since we only need to construct terms with n nonterminals, we only have to consider
+    // subsets of st(L') with a size of at most n+1
+    val  poweredSubSets = boundedPower(st, n+2)
 
     // for each subset of size 1 <= |sub| <= n+1,
     // add all keys of normform(sub) to keySet
@@ -452,7 +451,15 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
       if(!nonterminalOccurs(new_key, nonterminal_b)){
         //debug("Key '"+k+"' produced '"+new_key+"' with rest "+decomposition._2)
         result += new_key
-        decompMap(new_key) = decomposition._2
+        if(decompMap.exists(_._1 == new_key))
+        {
+          debug("Adding decomp("+new_key+") => "+decompMap(new_key))
+          decompMap(new_key) ++= decomposition._2
+        }
+        else {
+          decompMap(new_key) = mutable.Set(decomposition._2.toSeq :_*)
+        }
+        debug("NOW decomp("+new_key+") => "+decompMap(new_key))
       }
     })
     return result.toList
@@ -563,7 +570,7 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
   var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]] = mutable.HashMap[FOLTerm,mutable.Set[Int]]()
 
   // mapping keys to a list of terms which can be produced by a particular key
-  var decompMap : mutable.HashMap[FOLTerm,Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,Set[List[FOLTerm]]]()
+  var decompMap : mutable.HashMap[FOLTerm,mutable.Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,mutable.Set[List[FOLTerm]]]()
 
 
   // all constants of the form x_{i,k_j}, where
