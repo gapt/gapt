@@ -320,6 +320,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
   def replaceAtPosition(t: FOLTerm, variable: String, position: List[Int], index: Int) : FOLTerm = {
     try{
       val replacement = new at.logic.language.fol.replacements.Replacement(position, FOLVar(variable+"_"+index))
+
       return replacement(t).asInstanceOf[FOLTerm]
     }catch{
       case e: IllegalArgumentException =>  // Possible, nothing special to do here.
@@ -414,8 +415,11 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     // calculate the characteristic partition
     var charPartition = calcCharPartition(k)
 
+    // TODO: Check if this is right => Calculate n'=m (number of non-terminals of k)
+    val m = getNonterminals(k, nonterminal_b).size
+
     // get all subsets of charPartitions of size at most n
-    var permutedCharPartition = boundedPower(charPartition,n)
+    var permutedCharPartition = boundedPower(charPartition,m)
 
     // for each ordered list of position sets
     permutedCharPartition.foreach(partition => {
@@ -435,15 +439,17 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
           index+=1
         }
       }*/
+      var index = 1
       for( i <- List.range(0,partition.size)){
         var old_key = new_key
-        var index = 1
-        val positionSet = partition(i)
-        new_key = positionSet.foldLeft(new_key)((acc,pos) => replaceAtPosition(acc, nonterminal_a, pos, index))
-        if(old_key != new_key)
-        {
-          index+=1
-        }
+        // if there are are other non-terminals to replace, try to
+        //if(nonterminalOccurs(new_key, nonterminal_b)) {
+          val positionSet = partition(i)
+          new_key = positionSet.foldLeft(new_key)((acc, pos) => replaceAtPosition(acc, nonterminal_a, pos, index))
+          if (old_key != new_key) {
+            index += 1
+          }
+        //}
       }
       // if new_key does not contain the previously introduced non-terminals nonterminal_b
       // i.e. only non-terminals nonterminal_a occur
@@ -451,6 +457,11 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
       if(!nonterminalOccurs(new_key, nonterminal_b)){
         //debug("Key '"+k+"' produced '"+new_key+"' with rest "+decomposition._2)
         result += new_key
+        /*if(decomposition._2.filter(_.size == 1).size > 0 && getNonterminals(new_key,nonterminal_a).size == 2) {
+          debug("Adding to k="+k+" aka key=" + new_key + " decomp=" + decomposition._2)
+          debug("Positions: "+partition)
+        }*/
+
         if(decompMap.exists(_._1 == new_key))
         {
           decompMap(new_key) ++= decomposition._2
