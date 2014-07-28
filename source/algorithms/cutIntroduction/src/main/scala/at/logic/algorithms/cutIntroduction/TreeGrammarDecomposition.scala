@@ -453,13 +453,11 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
         result += new_key
         if(decompMap.exists(_._1 == new_key))
         {
-          debug("Adding decomp("+new_key+") => "+decompMap(new_key))
           decompMap(new_key) ++= decomposition._2
         }
         else {
           decompMap(new_key) = mutable.Set(decomposition._2.toSeq :_*)
         }
-        debug("NOW decomp("+new_key+") => "+decompMap(new_key))
       }
     })
     return result.toList
