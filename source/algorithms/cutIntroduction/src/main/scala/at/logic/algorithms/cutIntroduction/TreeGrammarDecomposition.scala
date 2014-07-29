@@ -42,6 +42,7 @@ object TreeGrammarDecomposition{
         // instantiate TreeGrammarDecomposition object with the termset and n
         //val decomp = new TreeGrammarDecompositionSimplex(termset, n)
         warn("Simplex method not yet implemented")
+        return null
       }
     }
 
@@ -315,12 +316,11 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
    * @param variable string representation of the nonterminal prefix
    * @param position list of positions of variable
    * @param index nonterminal index i
-   * @return the original term if the replacement could not be processed, or t|p_1 = α_i ... t|p_n = α_i
+   * @return the original term if the replacement could not be processed, or t|p = α_index
    */
   def replaceAtPosition(t: FOLTerm, variable: String, position: List[Int], index: Int) : FOLTerm = {
     try{
       val replacement = new at.logic.language.fol.replacements.Replacement(position, FOLVar(variable+"_"+index))
-
       return replacement(t).asInstanceOf[FOLTerm]
     }catch{
       case e: IllegalArgumentException =>  // Possible, nothing special to do here.
@@ -411,11 +411,11 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
     // add the decomposition to the key map
     // TODO: eventually check if the nonterminals in k are ambigous
-    val k = incrementAllVars(decomposition._1)//decomposition._1
+    val k = incrementAllVars(decomposition._1)
     // calculate the characteristic partition
     var charPartition = calcCharPartition(k)
 
-    // TODO: Check if this is right => Calculate n'=m (number of non-terminals of k)
+    // Calculate n'=m (number of non-terminals of k)
     val m = getNonterminals(k, nonterminal_b).size
 
     // get all subsets of charPartitions of size at most n
@@ -440,14 +440,19 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
         }
       }*/
       var index = 1
+      val allrests = mutable.HashMap[Int,FOLExpression]()
       for( i <- List.range(0,partition.size)){
         var old_key = new_key
         // if there are are other non-terminals to replace, try to
         //if(nonterminalOccurs(new_key, nonterminal_b)) {
           val positionSet = partition(i)
+          // since the rest fragments of all positions are the same, we can take an arbitrary one
+          val r = at.logic.language.fol.replacements.getAtPositionFOL(k,positionSet(0))
           new_key = positionSet.foldLeft(new_key)((acc, pos) => replaceAtPosition(acc, nonterminal_a, pos, index))
           if (old_key != new_key) {
             index += 1
+            // if the positions exist and we could successfully substitute all of them, we add the rest fragment to the map
+            allrests(index) = r
           }
         //}
       }
@@ -455,6 +460,14 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
       // i.e. only non-terminals nonterminal_a occur
       // add the key to the outputset
       if(!nonterminalOccurs(new_key, nonterminal_b)){
+
+        // be sure to calculate the real rests, i.e. rests from gdv, substituted with the restfragments between α_i and β_i
+        val evs = getNonterminals(k,nonterminal_b).sorted.map(x => FOLVar(x))
+        val subs = decomposition._2.map( x => Substitution(evs.zip(x)))
+        val temp = allrests.toList sortBy(_._1)
+        val temp2 = temp.unzip._2
+        val finalrests = subs.map(sub => temp2.map(x => sub(x).asInstanceOf[FOLTerm]))
+
         //debug("Key '"+k+"' produced '"+new_key+"' with rest "+decomposition._2)
         result += new_key
         /*if(decomposition._2.filter(_.size == 1).size > 0 && getNonterminals(new_key,nonterminal_a).size == 2) {
@@ -464,10 +477,10 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
         if(decompMap.exists(_._1 == new_key))
         {
-          decompMap(new_key) ++= decomposition._2
+          decompMap(new_key) ++= finalrests.toSet
         }
         else {
-          decompMap(new_key) = mutable.Set(decomposition._2.toSeq :_*)
+          decompMap(new_key) = mutable.Set(finalrests.toSeq :_*)
         }
       }
     })
