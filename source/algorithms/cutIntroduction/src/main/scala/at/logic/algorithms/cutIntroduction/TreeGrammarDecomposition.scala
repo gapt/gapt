@@ -73,6 +73,9 @@ object TreeGrammarDecomposition{
 
 abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) extends at.logic.utils.logging.Logger {
 
+  // Symbols used for non-terminals within the algorithm
+  val nonterminal_a = "α"
+  val nonterminal_b = "β"
 
   // mapping all sub-/terms of the language to a unique index
   var termMap : mutable.HashMap[FOLTerm,Int]
@@ -363,15 +366,17 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
   /**
    * for a particular term increment all variables indexes
+   * which start with provided prefix
    *
    * @param t term
    * @return term with incremented variable indexes
    */
-  def incrementAllVars(t: FOLTerm) : FOLTerm = {
+  def incrementAllVars(t: FOLTerm, prefix: String) : FOLTerm = {
     t match {
-      case FOLVar(x) => incrementIndex(FOLVar(x))
+      case FOLVar(x) if x.startsWith(prefix) => incrementIndex(FOLVar(x))
+      case FOLVar(x) => FOLVar(x)
       case FOLConst(c) => FOLConst(c)
-      case Function(f,l) => Function(f,l.map(p => incrementAllVars(p)))
+      case Function(f,l) => Function(f,l.map(p => incrementAllVars(p, prefix)))
       case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
         t}
     }
@@ -398,9 +403,6 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
     val result = MutableList[FOLTerm]()
 
-    val nonterminal_a = "α"
-    val nonterminal_b = "β"
-
     // initialize delta vector
     var delta = new UnboundedVariableDelta()
 
@@ -411,7 +413,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
     // add the decomposition to the key map
     // TODO: eventually check if the nonterminals in k are ambigous
-    val k = incrementAllVars(decomposition._1)
+    val k = incrementAllVars(decomposition._1,nonterminal_b)
     // calculate the characteristic partition
     var charPartition = calcCharPartition(k)
 
@@ -424,22 +426,11 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     // for each ordered list of position sets
     permutedCharPartition.foreach(partition => {
       // nonterminal index
-      /*var index = 1*/
+      var index = 1
       // new_key as in Eberhard [2014]
       var new_key = k
       // for every position in the set
       // try to replace the term on that position by a non-terminal
-      /*for( i <- Range(0,p.size)){
-        var old_key = new_key
-        new_key = replaceAtPosition(new_key, nonterminal_a, p(i), index)
-        // if the key has changed, increment the
-        // non-terminal index
-        if(old_key != new_key)
-        {
-          index+=1
-        }
-      }*/
-      var index = 1
       val allrests = mutable.HashMap[Int,FOLExpression]()
       for( i <- List.range(0,partition.size)){
         var old_key = new_key
@@ -494,7 +485,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     var grammars = MutableList[Grammar]()
 
     // get all nonterminals in rules
-    val evs = rules.foldLeft(List[String]())( (acc,r) => getNonterminals(r._2, "α_") ::: acc).distinct.sorted
+    val evs = rules.foldLeft(List[String]())( (acc,r) => getNonterminals(r._2, nonterminal_a+"_") ::: acc).distinct.sorted
 
     // don't forget to add the α_0
     // to the list of all nonterminal indexes
@@ -508,10 +499,10 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     for(i <- indexes){
       if(i != 0) {
         val s = decomps(i)
-        grammars += new Grammar(u, s, "α_" + i)
+        grammars += new Grammar(u, s, nonterminal_a+"_" + i)
 
         val subs = s.foldLeft(List[Substitution]())((acc2,s0) => {
-          Substitution(s0.map( s1 => (FOLVar("α_" + i), s1))) :: acc2
+          Substitution(s0.map( s1 => (FOLVar(nonterminal_a+"_"+ i), s1))) :: acc2
         })
 
         u = u.foldLeft(List[FOLTerm]())((acc, u0) => subs.map(sub => sub(u0)) ::: acc)
@@ -531,7 +522,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
    */
   def isRest(t: FOLTerm, k: FOLTerm, r: List[FOLTerm]) : Boolean = {
     //val evs = for (x <- List.range(1, 1+r.size)) yield FOLVar("α_"+x)
-    val evs = getNonterminals(k, "α").sorted.map(x => FOLVar(x))
+    val evs = getNonterminals(k, nonterminal_a).sorted.map(x => FOLVar(x))
     val sub = Substitution(evs.zip(r))
     //debug("Is "+t+" == "+sub(k)+" where (k: '"+k+"', sub: "+sub)
     return t == sub(k)
@@ -650,11 +641,10 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
    * @return
    */
   def MCS() : List[FOLFormula] = {
-    //And(termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc))
     val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
     // update the reverse term map
     reverseTermMap = mutable.HashMap(termMap.toList.map(x => x.swap).toSeq:_*)
-    debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally("α", "\\alpha")))
+    debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally(nonterminal_a, "\\alpha")))
     return f
   }
 
@@ -743,10 +733,9 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
         val ruleVar : FOLFormula = Atom("X",List(x_l_kj))
 
         // get all nonterminals occuring in the subterm t
-        val evs = getNonterminals(keyList(klistindex),"α")//.map(x => FOLVar(x))
+        val evs = getNonterminals(keyList(klistindex),nonterminal_a)
         // check if all nonterminals α_i suffice i > l
         if(evs.foldLeft(true)((acc,x) => acc && (x.split("_").last.toInt > l ))){
-          //debug("NOT skipping key='"+keyList(klistindex)+"' for l="+l)
           // for every nonterminal in k_j
           And(ruleVar :: evs.foldLeft(List[FOLFormula]())((acc2,ev) => {
             // get the nonterminals index i
@@ -819,8 +808,6 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
         else{
           d = Or(d, Atom("X", trivialKey :: Nil))
         }
-
-        //debug("D("+tindex+","+i+","+qindex+") = D("+t+","+i+","+q+") = "+d)
         Imp(Atom("X",co :: Nil), d) :: acc2
       }) ::: acc1
     })
@@ -829,8 +816,7 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
     debug("formulas = "+formulas)
     debug("D("+q+",0,"+q+") = "+d)
     debug("R("+qindex+","+qsubtermIndexes.toSet+") = "+r)
-    //And(
-    formulas ++ List(d, r)//)
+    formulas ++ List(d, r)
   }
 
 }
