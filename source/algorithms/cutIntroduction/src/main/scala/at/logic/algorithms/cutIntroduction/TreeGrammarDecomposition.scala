@@ -30,6 +30,18 @@ object MCSMethod extends Enumeration {
 object TreeGrammarDecomposition{
 
   var decomp : TreeGrammarDecomposition = _
+
+  /**
+   * Provided a termset/language, an integer n (representing the maximum number of non-terminals) and a method
+   * (e.g. MCSMethod.QMaxSAT, MCSMethod.Simplex) the TreeGrammarDecomposition algorithm described in
+   * Eberhard, Hetzl [2014] will be executed, resulting in a List of Grammars, which are minimal w.r.t. the
+   * number of rules.
+   *
+   * @param termset language on which the TGD algorithm will operate on
+   * @param n maximum number of non-terminals
+   * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
+   * @return a list of grammars
+   */
   def apply(termset: List[FOLTerm], n:Int, method: MCSMethod) : List[Grammar] = {
 
     method match {
@@ -51,13 +63,13 @@ object TreeGrammarDecomposition{
       decomp.suffKeys()
       debug("Generating QMaxSAT MinCostSAT formulation")
       // Generating the MinCostSAT formulation for QMaxSAT
-      val f = decomp.MCS()
+      val f = decomp.MCS().asInstanceOf[Set[FOLFormula]]
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
-      val g = decomp.softConstraints()
+      val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula,Int]]]
       debug("G: \n" + g)
       debug("Starting up QMaxSAT Solver")
       // Retrieving a model from the QMaxSAT solver and extract the rules
-      val rules = decomp.getRules((new QMaxSAT).solvePWM(f.toSet, g))
+      val rules = decomp.getRules((new QMaxSAT).solvePWM(f, g))
       debug("Rules: " + rules)
       // transform the rules to a Grammar
       val grammars = decomp.getGrammars(rules)
@@ -70,6 +82,7 @@ object TreeGrammarDecomposition{
     }
   }
 }
+
 
 abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) extends at.logic.utils.logging.Logger {
 
@@ -101,8 +114,8 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
   // abstract method definitions for individual implementation
   // w.r.t. the method type
   def getRules(interpretation: Option[MapBasedInterpretation]) : Set[Tuple2[Int,FOLTerm]]
-  def softConstraints() : Set[Tuple2[FOLFormula,Int]]
-  def MCS() : List[FOLFormula]
+  def softConstraints() : Any
+  def MCS() : Any
   def R(qindex: Int, qsubtermIndexes: Set[Int]) : FOLFormula
   def printExpression(f: FOLExpression) : String
   def pA(c:FOLConst) : String
@@ -382,6 +395,15 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     }
   }
 
+  /**
+   * Provided a FOLTerm, the function replaces each occurrence of a FOLVar starting with
+   * prefix1, by a FOLVar starting with prefix2 instead.
+   *
+   * @param t the FOLTerm which should be processed
+   * @param prefix1 prefix we are looking for in t
+   * @param prefix2 prefix which should replace prefix1
+   * @return a FOLTerm, where all FOLVars starting with prefix1 have been replaced by FOLVars starting with prefix2 instead
+   */
   def replaceAllVars(t: FOLTerm, prefix1: String, prefix2:String) : FOLTerm = {
     t match {
       case FOLVar(x) => FOLVar(x.replace(prefix1,prefix2))
@@ -480,7 +502,19 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
   }
 
 
-
+  /**
+   * Provided a set of rules of a grammar, the function converts them into
+   * a List of Grammars.
+   * e.g.
+   *  (1,f(α_2)), (2,g(α_3)), (3,h(0)) =>
+   *    [ ({α_1} o {f(α_2)}),
+   *      ({f(α_2)} o {f(g(α_3))}),
+   *      ({f(g(α_3))} o {f(g(h(0)))})
+   *    ]
+   *
+   * @param rules a set of of tuples of the form {(<non-terminal-index>, <FOLTerm>}
+   * @return grammars representing provided rules
+   */
   def getGrammars(rules: Set[Tuple2[Int,FOLTerm]]) : List[Grammar] = {
     var grammars = MutableList[Grammar]()
 
@@ -564,7 +598,6 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
 class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override val n: Int) extends TreeGrammarDecomposition(termset, n) {
 
-
   // mapping all sub-/terms of the language to a unique index
   var termMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
   // reversed map of all sub-/terms
@@ -629,7 +662,8 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
    *
    * @return G formula for QMaxSAT
    */
-  def softConstraints() : Set[Tuple2[FOLFormula,Int]] = {
+
+  override def softConstraints() : Set[Tuple2[FOLFormula,Int]] = {
     propRules.foldLeft(Set[Tuple2[FOLFormula,Int]]())((acc,x) => acc + Tuple2(Neg(Atom("X",List(x._1))),1))
   }
 
@@ -638,14 +672,14 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
    * Transforms a sufficient set of keys into a propositional
    * formula as described in Eberhard [2014].
    *
-   * @return
+   * @return MinCostSAT formulation of the problem for applying it to the QMaxSAT solver
    */
-  def MCS() : List[FOLFormula] = {
+  override def MCS() : Set[FOLFormula] = {
     val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
     // update the reverse term map
     reverseTermMap = mutable.HashMap(termMap.toList.map(x => x.swap).toSeq:_*)
     debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally(nonterminal_a, "\\alpha")))
-    return f
+    return f.toSet
   }
 
   /**
