@@ -3,7 +3,6 @@
  * 
  *
  */
-
 package at.logic.algorithms.cutIntroduction
 
 import Deltas._
@@ -383,7 +382,8 @@ object CutIntroduction extends Logger {
     //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
     //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
     //whole initial quantifier block instantiated to α_0,...,α_n-1.
-    val alphas = createFOLVars("α", ehs.grammar.numVars)
+    val alphas = ehs.grammar.eigenvariables
+
 
     trace("grammar (u,S): ")
     trace(ehs.grammar.u.toString)
