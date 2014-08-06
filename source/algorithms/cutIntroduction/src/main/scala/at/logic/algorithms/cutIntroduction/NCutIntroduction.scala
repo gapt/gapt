@@ -5,37 +5,14 @@
  */
 package at.logic.algorithms.cutIntroduction
 
-import Deltas._
-import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lk._
-import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.resolution._
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
+import at.logic.calculi.expansionTrees.{ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.resolution.FClause
 import at.logic.language.fol._
-import at.logic.language.hol.HOLFormula
 import at.logic.provers.Prover
-import at.logic.provers.minisat.MiniSATProver
-import at.logic.provers.prover9.Prover9Prover
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
-import at.logic.utils.executionModels.timeout._
 import at.logic.utils.logging.Logger
-
-class NCutIntroException(msg: String) extends Exception(msg)
-class NCutIntroUncompressibleException(msg: String) extends NCutIntroException(msg)
-
-/**
- * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
- * In practice it does happen if the method used for searching a proof covers a too
- * weak theory (e.g. no equality) or is not complete.
- **/
-class NCutIntroEHSUnprovableException(msg: String) extends NCutIntroException(msg)
-
 
 /** Cut introduction with cut formulas of the form [forall x1,...,xn] F.
   * In contrast to regular cut introduction, the cut formulas may contain more than one
@@ -47,79 +24,41 @@ object NCutIntroduction extends Logger {
     * an LK proof with cut if a cut formula can be found.
     *
     * @param proof The cut-free LK proof into which to introduce a cut.
-    * @param numVars a constraint (see utils.contstraint) on the number of variables to
-    *          introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
     * @param prover The prover to use for tautology checks.
     * @return The LK proof with cut if cut introduction was successful and None otherwise.
     *         The cause of failure will be printed on the console.
     */
-  def apply(proof: LKProof, numVars: Constraint[Int], prover: Prover = new DefaultProver(), n: Int) : Option[LKProof] = apply( extractExpansionTrees( proof ), numVars, prover, n)
+  def apply(proof: LKProof, prover: Prover = new DefaultProver(), n: Int) : List[LKProof] = apply( extractExpansionTrees( proof ), prover, n)
 
-  /** Performs cut introduction on an LK proof and returns 
-    * an LK proof with cut if a cut formula can be found.
-    *
-    * @param ep: The sequent of expansion trees to which cut-introduction is to be applied.
-    * @param numVars a constraint (see utils.contstraint) on the number of variables to
-    *          introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
-    * @param prover: The prover used for checking validity and constructing the final proof.
-                     Default: use MiniSAT for validity check, LK proof search for proof building.
-    * @return The LK proof with cut if cut introduction was successful and None otherwise.
-    *         The cause of failure will be printed on the console.
-    */
-  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: Prover, n: Int) : Option[LKProof] = {
-    val deltaVec = numVars match {
-      case NoConstraint => { println("Using UnboundedVariableDelta."); Some(new UnboundedVariableDelta()) }
-      case ExactBound(1) => { println("Using OneVariableDelta."); Some(new OneVariableDelta()) }
-      case UpperBound(n) => { println("Using ManyVariableDelta."); Some(new ManyVariableDelta(n)) }
-      case ExactBound(n) => {
-        println("cut Introduction with exactly n (n>1) variables is currently not supported!")
-        error("Used constraint 'ExactBound(" + n + ")' in NCutIntroduction.")
-        None
-      }
-      case c@_ => {
-        println("Invalid constraint! Only NoConstraint, ExactBound and UpperBound are permissible!")
-        error("Used invalid constraint in NCutIntroduction: " + c)
-        None
-      }
-    }
-
-    if (deltaVec.isEmpty) None else {
-      try {
-        Some(apply(ep, prover, deltaVec.get, n))
-      } catch {
-        case ex : NCutIntroException => {
-          println(ex.toString());
-          None
-        }
-      }
-    }
-  }
 
   /** Performs cut introduction with a given delta vector.
     *
     * The choice of delta vector determines how many variables the cut formula may contain.
     * E.g.: OneVariableDelta leads to cut formulas [forall x] F, UnboundedVariableDelta leads to [forall x1,...xn] F (for a priori unknown n).
     */
-  private def apply(ep: ExpansionSequent, prover: Prover, delta: DeltaVector, n: Int) : LKProof = {
+  def apply(ep: ExpansionSequent, prover: Prover, n: Int) : List[LKProof] = {
 
     val endSequent = toSequent(ep)
-    println("\nEnd sequent: " + endSequent)
+    debug("\nEnd sequent: " + endSequent)
 
     // Assign a fresh function symbol to each quantified formula in order to
     // transform tuples into terms.
     val termsTuples = TermsExtraction(ep)
     val terms = new FlatTermSet(termsTuples)
-    println("Size of term set: " + terms.termset.size)
+    debug("Size of term set: " + terms.termset.size)
 
     var beginTime = System.currentTimeMillis
 
     //val grammars = ComputeGrammars(terms, delta)
 
-    val grammars = TreeGrammarDecomposition(terms.termset,n, MCSMethod.QMaxSAT)
+    val grammars = TreeGrammarDecomposition(terms.termset,n, MCSMethod.QMaxSAT).map {
+      case g => g.flatterms = terms; g
+    }
     //println( "\nNumber of grammars: " + grammars.length )
 
+
     if(grammars.length == 0) {
-      println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
+      debug("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
       throw new CutIntroUncompressibleException("\nNo grammars found." +
         " The proof cannot be compressed using a cut with one universal quantifier block.\n")
     }
@@ -131,7 +70,7 @@ object NCutIntroduction extends Logger {
     //println( "Smallest grammar-size: " + smallest )
     //println( "Number of smallest grammars: " + smallestGrammars.length )
 
-    debug("Improving solution...")
+    //debug("Improving solution...")
 
     // Build a proof from each of the smallest grammars
     def buildProof(grammar:Grammar, prover:Prover) : Option[(LKProof, ExtendedHerbrandSequent)] = {
@@ -152,22 +91,23 @@ object NCutIntroduction extends Logger {
     }
 
     debug("   NCUTINTRO:")
-    debug("   grammar: " + grammars(0))
+    debug("   grammars: " + grammars)
 
     val proofs = grammars.map(buildProof(_, prover)).filter(proof => proof.isDefined).map(proof => proof.get)
 
     //debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
     // Sort the list by size of proofs
-    val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
+    //val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
 
-    val smallestProof = sorted.head._1
-    val ehs = sorted.head._2
+    //val smallestProof = sorted.head._1
+    //val ehs = sorted.head._2
 
-    debug("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")
-    debug("\nMinimized cut formula: " + sanitizeVars(ehs.cutFormula) + "\n")
+    //debug("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")
+    //debug("\nMinimized cut formula: " + sanitizeVars(ehs.cutFormula) + "\n")
 
-    smallestProof
+    //smallestProof
+    proofs.map(p => p._1)
   }
 
   /** Computes the canonical solution with multiple quantifiers from a generalized grammar.
@@ -249,7 +189,10 @@ object NCutIntroduction extends Logger {
     //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
     //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
     //whole initial quantifier block instantiated to α_0,...,α_n-1.
-    val alphas = createFOLVars("α", ehs.grammar.numVars)
+
+    //val alphas = createFOLVars("α", ehs.grammar.numVars)
+    debug("EVS: "+ehs.grammar.eigenvariables)
+    val alphas = ehs.grammar.eigenvariables
 
     debug("grammar (u,S): ")
     debug(ehs.grammar.u.toString)
