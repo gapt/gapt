@@ -23,6 +23,7 @@ import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.provers.Prover
 import at.logic.provers.prover9.commands.InferenceExtractor
 import java.io._
+import scala.sys.process._
 import scala.collection.immutable.HashMap
 import scala.io.Source
 import scala.util.matching.Regex
@@ -389,6 +390,16 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   }
 
+  def isInstalled(): Boolean =
+    try {
+      "tptp_to_ladr".!!
+      "prover9".!!
+      "prooftrans ivy".!!
+      "prooftrans".!!
+      true
+    } catch {
+      case ex: IOException => false
+    }
 }
 
 class Prover9Prover extends Prover with at.logic.utils.logging.Logger {

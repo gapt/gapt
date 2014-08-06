@@ -29,6 +29,8 @@ import at.logic.algorithms.lk.applySubstitution
 class acnfTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
 
+  args (skipAll = !Prover9.isInstalled ());
+
   sequential
   "ACNFTest" should {
     "should create correctly the ACNF for journal_example.lks" in {
