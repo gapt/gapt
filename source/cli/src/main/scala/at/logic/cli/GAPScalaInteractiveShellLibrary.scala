@@ -77,6 +77,7 @@ import at.logic.transformations.herbrandExtraction.{extractExpansionTrees => ext
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 import at.logic.utils.constraint.Constraint
+import at.logic.transformations.herbrandExtraction
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -1089,8 +1090,15 @@ object findDefinitions {
 }
 
 object extractExpansionTrees {
-  def apply(proof: LKProof): ExpansionSequent = at.logic.transformations.herbrandExtraction.extractExpansionTrees(proof)
+  def apply(proof: LKProof): ExpansionSequent =
+    herbrandExtraction.extractExpansionTrees(proof)
 }
+
+object extractLKSKExpansionTrees {
+  def apply(proof: LKProof): ExpansionSequent =
+    herbrandExtraction.lksk.extractLKSKExpansionTrees(proof)
+}
+
 
 object compressExpansionTree {
   def apply(tree: ExpansionTree): MultiExpansionTree = compressQuantifiers(tree)

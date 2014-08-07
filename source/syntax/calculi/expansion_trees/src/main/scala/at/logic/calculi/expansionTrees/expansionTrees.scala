@@ -376,6 +376,7 @@ class ExpansionSequent(val antecedent: Seq[ExpansionTree], val succedent: Seq[Ex
   }
 }
 object ExpansionSequent {
+  def apply(antecedent: Seq[ExpansionTree], succedent: Seq[ExpansionTree]) = new ExpansionSequent(antecedent, succedent)
   def unapply(etSeq: ExpansionSequent) = Some( etSeq.toTuple() )
 }
 
@@ -531,15 +532,17 @@ object substitute extends at.logic.utils.logging.Logger {
   }
 
   private[expansionTrees] def doApplySubstitution(s: Substitution, et: ExpansionTreeWithMerges): ExpansionTreeWithMerges = et match {
-    case Atom(f) => Atom(s.apply(f).asInstanceOf[HOLFormula])
+    case Atom(f) => Atom(s.apply(f))
     case Neg(t1) => Neg(doApplySubstitution(s, t1))
     case And(t1,t2) => And(doApplySubstitution(s, t1), doApplySubstitution(s, t2))
     case Or(t1,t2) => Or(doApplySubstitution(s, t1), doApplySubstitution(s, t2))
     case Imp(t1,t2) => Imp(doApplySubstitution(s, t1), doApplySubstitution(s, t2))
     case StrongQuantifier(f, v, selection) =>
-      StrongQuantifier(s.apply(f).asInstanceOf[HOLFormula], s.apply(v).asInstanceOf[HOLVar], doApplySubstitution(s, selection))
+      StrongQuantifier(s(f), s(v).asInstanceOf[HOLVar], doApplySubstitution(s, selection))
+    case SkolemQuantifier(f, v, selection) =>
+      SkolemQuantifier(s(f), s(v).asInstanceOf[HOLVar], doApplySubstitution(s, selection))
     case WeakQuantifier(f, instances) =>
-      WeakQuantifier(s.apply(f).asInstanceOf[HOLFormula], mergeWeakQuantifiers(Some(s), instances) )
+      WeakQuantifier(s(f), mergeWeakQuantifiers(Some(s), instances) )
     case MergeNode(t1, t2) => MergeNode(doApplySubstitution(s, t1), doApplySubstitution(s, t2))
   }
 
@@ -672,6 +675,9 @@ object merge extends at.logic.utils.logging.Logger {
       case StrongQuantifier(f, v, sel) =>
         val (subst, res)  = detectAndMergeMergeNodes(sel, polarity)
         (subst, StrongQuantifier(f, v, res))
+      case SkolemQuantifier(f, sk, sel) =>
+        val (subst, res)  = detectAndMergeMergeNodes(sel, polarity)
+        (subst, SkolemQuantifier(f, sk, res))
       case WeakQuantifier(f, instances) => {
         var instancesPrime = new ListBuffer[(ExpansionTreeWithMerges, HOLExpression)]
         // try to call merge on all instances

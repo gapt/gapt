@@ -24,7 +24,7 @@ import TypeSynonyms._
 // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
 object Axiom {
 
-  def createDefault(seq: FSequent, maps: Pair[List[Label], List[Label]]): Pair[LKProof, Pair[List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence]]] = {
+  def createDefault(seq: FSequent, maps: (List[Label], List[Label])): (LKProof, (List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence])) = {
     val left: Seq[LabelledFormulaOccurrence] =
       seq._1.zip(maps._1).map( p => createOccurrence( p._1 , p._2 ) )
     val right: Seq[LabelledFormulaOccurrence] =

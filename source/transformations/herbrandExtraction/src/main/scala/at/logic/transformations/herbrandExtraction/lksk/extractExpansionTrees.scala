@@ -15,7 +15,7 @@ import at.logic.calculi.lk.{BinaryLKProof, CutRule, UnaryLKProof}
  */
 object extractLKSKExpansionTrees extends extractLKSKExpansionTrees;
 class extractLKSKExpansionTrees  extends extractExpansionTrees {
-  override   def apply(proof: LKProof): ExpansionSequent = {
+  override def apply(proof: LKProof): ExpansionSequent = {
     val map = extract(proof)
     mergeTree( (proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) )
   }
