@@ -6,61 +6,57 @@
 
 package at.logic.cli.GAPScalaInteractiveShellLibrary
 
-import at.logic.algorithms.cutIntroduction._
+import java.io.{FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
+import java.util.zip.GZIPInputStream
+
 import at.logic.algorithms.cutIntroduction.Deltas._
+import at.logic.algorithms.cutIntroduction._
+import at.logic.algorithms.expansionTrees.compressQuantifiers
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.algorithms.fol.recreateWithFactory
-import at.logic.algorithms.expansionTrees.compressQuantifiers
-import at.logic.algorithms.hlk.{ExtendedProofDatabase, LKProofParser, SchemaFormulaParser, HybridLatexParser}
+import at.logic.algorithms.hlk.{ExtendedProofDatabase, HybridLatexParser, LKProofParser, SchemaFormulaParser}
 import at.logic.algorithms.interpolation._
-import at.logic.algorithms.lk.{deleteTautologies => deleteTaut, _}
 import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.lk.{deleteTautologies => deleteTaut, _}
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.resolution._
-import at.logic.algorithms.rewriting.{NameReplacement, DefinitionElimination}
+import at.logic.algorithms.rewriting.{DefinitionElimination, NameReplacement}
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent}
 import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
+import at.logic.calculi.expansionTrees.{ExpansionSequent, ExpansionTree}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lksk.{ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledFormulaOccurrence, LabelledSequent}
+import at.logic.calculi.lksk.{ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent}
 import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.calculi.resolution._
 import at.logic.calculi.resolution.robinson._
-import at.logic.calculi.slk.SchemaProofDB
-
 import at.logic.gui.prooftool.gui.Main
-
-import at.logic.language.fol.{Atom => FOLAtom, And => FOLAnd, Or => FOLOr, Imp => FOLImp, Neg => FOLNeg, AllVar => FOLAllVar, ExVar => FOLExVar, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _}
-import at.logic.language.hol.{Substitution => HOLSubstitution, BetaReduction => HOLBetaReduction, containsQuantifier => containsQuantifierHOL, _}
+import at.logic.language.fol.{AllVar => FOLAllVar, And => FOLAnd, Atom => FOLAtom, ExVar => FOLExVar, Imp => FOLImp, Neg => FOLNeg, Or => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _}
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.lambda.symbols._
+import at.logic.language.hol.{BetaReduction => HOLBetaReduction, Substitution => HOLSubstitution, containsQuantifier => containsQuantifierHOL, _}
 import at.logic.language.lambda.types._
-import at.logic.language.schema.{Atom => SchemaAtom, ExVar => SchemaExVar, AllVar => SchemaAllVar, _}
-
+import at.logic.language.schema.{AllVar => SchemaAllVar, Atom => SchemaAtom, ExVar => SchemaExVar, _}
 import at.logic.parsing.calculi.latex._
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.calculus.xml._
 import at.logic.parsing.ivy.conversion.IvyToRobinson
-import at.logic.parsing.ivy.{InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution, IvyParser, IvyResolutionProof}
+import at.logic.parsing.ivy.{IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution}
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.hlk.HLKHOLParser
 import at.logic.parsing.language.prover9._
 import at.logic.parsing.language.simple._
-import at.logic.parsing.language.tptp.{TPTPHOLExporter, TPTPFOLExporter}
-import at.logic.parsing.language.xml.XMLParser._
+import at.logic.parsing.language.tptp.{TPTPFOLExporter, TPTPHOLExporter}
 import at.logic.parsing.language.xml.ProofDatabase
+import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.lisp.SExpressionParser
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.shlk_parsing.{sFOParser, sFOParserCNT}
 import at.logic.parsing.veriT._
 import at.logic.parsing.writers.FileWriter
-
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand
@@ -70,28 +66,19 @@ import at.logic.provers.atp.commands.robinson._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.ui._
 import at.logic.provers.minisat.MiniSAT
-import at.logic.provers.qmaxsat.QMaxSAT
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
-
+import at.logic.provers.qmaxsat.QMaxSAT
 import at.logic.transformations.ceres.ACNF._
-import at.logic.transformations.ceres.clauseSchema._
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet._
 import at.logic.transformations.ceres.clauseSets.SimplifyStruct
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct._
 import at.logic.transformations.herbrandExtraction.{extractExpansionTrees => extractET}
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
-
 import at.logic.utils.constraint.Constraint
-import at.logic.utils.executionModels.ndStream.{NDStream, Configuration}
 
-import java.io.IOException
-import java.io.{File, FileReader, FileInputStream, InputStreamReader, FileWriter => JFileWriter, BufferedWriter=>JBufferedWriter}
-import java.util.zip.GZIPInputStream
 import scala.collection.mutable.{Map => MMap}
-import at.logic.utils.ds.acyclicGraphs.{LeafAGraph, AGraph}
 
 object printProofStats {
   def apply(p: LKProof) = {
@@ -681,12 +668,12 @@ object cutIntro {
 
 
 object ncutIntro {
-  def apply(p: LKProof, n: Int) = NCutIntroduction(p, new at.logic.algorithms.cutIntroduction.DefaultProver(), n)
+  def apply(p: LKProof, n: Int) = NCutIntroduction(p, new DefaultProver(), n)
 
   def apply(p: LKProof, prover: at.logic.provers.Prover, n: Int) = NCutIntroduction(p, prover, n)
 
   def apply(ep: ExpansionSequent, n: Int) =
-    NCutIntroduction(ep, new at.logic.algorithms.cutIntroduction.DefaultProver(), n)
+    NCutIntroduction(ep, new DefaultProver(), n)
 
   def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: at.logic.provers.Prover, n: Int) =
     NCutIntroduction(ep, prover, n)
@@ -1476,6 +1463,7 @@ object help {
         |
         | Cut-Introduction:
         |   cutIntro: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
+        |   ncutIntro: (LKProof,Int) => Option[LKProof] - performs cut introduction for a maximum of n cuts (See Int)."
         |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
         |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list

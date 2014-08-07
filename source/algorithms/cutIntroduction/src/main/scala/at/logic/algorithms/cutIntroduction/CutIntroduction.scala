@@ -36,7 +36,6 @@ class CutIntroUncompressibleException(msg: String) extends CutIntroException(msg
  **/
 class CutIntroEHSUnprovableException(msg: String) extends CutIntroException(msg)
 
-
 /** Cut introduction with cut formulas of the form [forall x1,...,xn] F.
   * In contrast to regular cut introduction, the cut formulas may contain more than one
   * universally quantified variable.
@@ -95,6 +94,24 @@ object CutIntroduction extends Logger {
     }
   }
 
+  // Build a proof from each of the smallest grammars
+  def buildProof(grammar:Grammar, prover:Prover, endSequent: Sequent) : Option[(LKProof, ExtendedHerbrandSequent)] = {
+    //trace( "building proof for grammar " + grammar.toPrettyString )
+
+    val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
+
+    trace("[buildProof] cutFormula0: " + cutFormula0)
+    trace("[buildProof] grammar: " + grammar)
+
+    val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+    val ehs1 = MinimizeSolution(ehs, prover)
+    trace ( "building final proof" )
+    val proof = buildProofWithCut(ehs1, prover)
+    trace ( "done building final proof" )
+
+    if (proof.isDefined) { Some((CleanStructuralRules(proof.get),ehs1)) } else { None }
+  }
+
   /** Performs cut introduction with a given delta vector.
     *
     * The choice of delta vector determines how many variables the cut formula may contain.
@@ -132,28 +149,10 @@ object CutIntroduction extends Logger {
 
     debug("Improving solution...")
 
-    // Build a proof from each of the smallest grammars
-    def buildProof(grammar:Grammar, prover:Prover) : Option[(LKProof, ExtendedHerbrandSequent)] = {
-      //trace( "building proof for grammar " + grammar.toPrettyString )
-
-      val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
-
-      trace("[buildProof] cutFormula0: " + cutFormula0)
-      trace("[buildProof] grammar: " + grammar)
-    
-      val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-      val ehs1 = MinimizeSolution(ehs, prover)
-      trace ( "building final proof" )
-      val proof = buildProofWithCut(ehs1, prover)
-      trace ( "done building final proof" )
-      
-      if (proof.isDefined) { Some((CleanStructuralRules(proof.get),ehs1)) } else { None }
-    }
-
     trace("   CUTINTRO:")
     trace("   smallestGrammars: " + smallestGrammars)
 
-    val proofs = smallestGrammars.map(buildProof(_, prover)).filter(proof => proof.isDefined).map(proof => proof.get)
+    val proofs = smallestGrammars.map(buildProof(_, prover, endSequent)).filter(proof => proof.isDefined).map(proof => proof.get)
 
     //debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
 
@@ -569,3 +568,63 @@ class DefaultProver extends Prover {
   }
 }
 
+/** Cut introduction with cut formulas of the form [forall x1,...,xn] F.
+  */
+object NCutIntroduction extends Logger {
+
+  /** Performs cut introduction on an LK proof and returns
+    * an LK proof with n cuts if a cut formulas can be found.
+    *
+    * @param proof The cut-free LK proof into which to introduce cuts.
+    * @param prover The prover to use for tautology checks.
+    * @return The LK proof with cuts if cut introduction was successful and None otherwise.
+    *         The cause of failure will be printed on the console.
+    */
+  def apply(proof: LKProof, prover: Prover = new DefaultProver(), n: Int) : Option[LKProof] = apply( extractExpansionTrees( proof ), prover, n)
+
+  /**
+   * Performs cut introduction with a given number of maximum cuts (n),
+   * described in Hetzl,Eberhard [2014]
+   * @param ep the expansion sequent, extracted from a cut free proof
+   * @param prover the prover to use for tautology checks
+   * @param n maximum number of cuts
+   * @return a proof with at most n introduced cuts
+   */
+  def apply(ep: ExpansionSequent, prover: Prover, n: Int) : Option[LKProof] = {
+
+    val endSequent = toSequent(ep)
+    debug("\nEnd sequent: " + endSequent)
+
+    // Assign a fresh function symbol to each quantified formula in order to
+    // transform tuples into terms.
+    val termsTuples = TermsExtraction(ep)
+    val terms = new FlatTermSet(termsTuples)
+    debug("Size of term set: " + terms.termset.size)
+
+    var beginTime = System.currentTimeMillis
+
+    //val grammars = ComputeGrammars(terms, delta)
+
+    val grammars = TreeGrammarDecomposition(terms.termset, n, MCSMethod.QMaxSAT).map {
+      case g => g.flatterms = terms; g
+    }
+    //println( "\nNumber of grammars: " + grammars.length )
+
+
+    if (grammars.length == 0) {
+      debug("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
+      //throw new CutIntroUncompressibleException("\nNo grammars found." +
+      //  " The proof cannot be compressed using a cut with one universal quantifier block.\n")
+      return None
+    }
+
+    debug("   NCUTINTRO:")
+    debug("   grammars: " + grammars)
+
+    val proofs = grammars.map(CutIntroduction.buildProof(_, prover, endSequent)).filter(proof => proof.isDefined).map(proof => proof.get)
+
+    // TODO: merge all proofs, s.t. one proof with n cuts is generated
+    val ps = proofs.map(p => p._1)
+    Some(ps(0))
+  }
+}
