@@ -813,6 +813,9 @@ object format {
   def asHumanReadableString(p: ResolutionProof[Clause]) = Formatter.asHumanReadableString(p)
 
   def asGraphVizString(p: ResolutionProof[Clause]) = Formatter.asGraphViz(p)
+  def asGraphVizString(p: LKProof) = Formatter.asGraphViz(p)
+
+  def asXml(p:LKProof) = Formatter.asXml(p)
 
   def asTex(p: ResolutionProof[Clause]) = Formatter.asTex(p)
 

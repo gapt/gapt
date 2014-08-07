@@ -23,9 +23,12 @@ import at.logic.utils.ds.trees._
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet._
 import at.logic.transformations.ceres.RelevantCC
 import scala.collection.immutable.HashSet
+import scala.math.max
 
 trait Struct {
   def formula_equal(that: Struct) : Boolean;
+  def size() : Int; //total number of nodes
+  def alternations() : Int; //number of alternations (includes duals)
 }
 
   // Times is done as an object instead of a case class since
@@ -51,12 +54,33 @@ trait Struct {
         aux.diff(auxFOccs).isEmpty && auxFOccs.diff(aux).isEmpty
       case _ => false
     }
+
+    override def size() = 1 + left.size() + right.size()
+    override def alternations() = {
+      (left,right) match {
+        case (Times(_,_,_), Times(_,_,_)) => max(left.alternations(), right.alternations())
+        case (Times(_,_,_), _) => max(left.alternations(), 1+right.alternations())
+        case (_, Times(_,_,_)) => max(1+left.alternations(), right.alternations())
+        case _ => 1+ max(left.alternations(), right.alternations())
+      }
+    }
+
   }
+
   case class Plus(left: Struct, right: Struct) extends Struct {
     override def toString(): String = Console.BLUE+"("+Console.RESET+left+Console.BLUE+" ⊕ "+Console.RESET+right+Console.BLUE+")"+Console.RESET
     override def formula_equal(s:Struct) = s match {
       case Plus(x,y) => left.formula_equal(x) && right.formula_equal(y)
       case _ => false
+    }
+    override def size() = 1 + left.size() + right.size()
+    override def alternations() = {
+      (left,right) match {
+        case (Plus(_,_), Plus(_,_)) => max(left.alternations(), right.alternations())
+        case (Plus(_,_), _) => max(left.alternations(), 1+right.alternations())
+        case (_, Plus(_,_)) => max(1+left.alternations(), right.alternations())
+        case _ => 1+ max(left.alternations(), right.alternations())
+      }
     }
   }
   case class Dual(sub: Struct) extends Struct {
@@ -65,6 +89,13 @@ trait Struct {
       case Dual(x) => sub.formula_equal(x)
       case _ => false
     }
+    override def size() = 1 + sub.size()
+    override def alternations() = {
+      sub match {
+        case Dual(_) =>  sub.alternations
+        case _ => 1+sub.size
+      }
+    }
   }
   case class A(fo: FormulaOccurrence) extends Struct {// Atomic Struct
     override def toString(): String =fo.formula.toString
@@ -72,6 +103,9 @@ trait Struct {
       case A(x) => fo.formula syntaxEquals(x.formula)
       case _ => false
     }
+
+    override def size() = 1
+    override def alternations() = 0
   }
   case class EmptyTimesJunction() extends Struct {
     override def toString(): String = Console.RED+"ε"+Console.RESET
@@ -79,6 +113,8 @@ trait Struct {
       case EmptyTimesJunction() => true
       case _ => false
     }
+    override def size() = 1
+    override def alternations() = 0
   }
   case class EmptyPlusJunction() extends Struct {
     override def toString(): String = Console.BLUE+"ε"+Console.RESET
@@ -86,6 +122,8 @@ trait Struct {
       case EmptyPlusJunction() => true
       case _ => false
     }
+    override def size() = 1
+    override def alternations() = 0
   }
 
   /* convenience object allowing to create and match a set of plus nodes */

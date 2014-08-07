@@ -28,7 +28,13 @@ case class StrongQuantifier(formula: HOLFormula, variables: Seq[HOLVar], selecti
   lazy val children = List((selection, Some(variables)))
 }
 
-case class And(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
+case class SkolemQuantifier(formula: HOLFormula, skolem_constants: Seq[HOLExpression], selection: MultiExpansionTree)
+    extends MultiExpansionTree with T1 {
+    lazy val node = Some(formula)
+    lazy val children = List((selection, Some(skolem_constants)))
+}
+
+  case class And(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Pair(left,None),Pair(right,None))
 }
@@ -63,6 +69,7 @@ def toFormulaM(tree: MultiExpansionTree): HOLFormula = tree match {
   case Imp(t1,t2) => ImpHOL(toFormulaM(t1), toFormulaM(t2))
   case WeakQuantifier(f,_) => f
   case StrongQuantifier(f,_,_) => f
+  case SkolemQuantifier(f,_,_) => f
 }
 
 def quantRulesNumber(tree: MultiExpansionTree): Int = tree match {
@@ -75,6 +82,7 @@ def quantRulesNumber(tree: MultiExpansionTree): Int = tree match {
     case ((et, _), sum) => quantRulesNumber(et) + 1 + sum
   }
   case StrongQuantifier(_,vars,et) => quantRulesNumber(et) + vars.size
+  case SkolemQuantifier(_,cs,et) => quantRulesNumber(et) + cs.size
 }
 
 }

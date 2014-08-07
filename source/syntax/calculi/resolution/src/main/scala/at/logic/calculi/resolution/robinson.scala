@@ -22,6 +22,7 @@ import at.logic.language.hol.{HOLVar, Formula, HOLExpression, Neg => HOLNeg}
 import at.logic.language.lambda.types.->
 import at.logic.utils.traits.Occurrence
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.lk.{BinaryLKProof, UnaryLKProof}
 
 /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
@@ -323,6 +324,44 @@ object Formatter {
   def apply(p: ResolutionProof[Clause]) : String = {
     apply("", p, createMap(p,1, Map[Clause, Int]())._1)
   }
+
+
+  def asGraphViz(p:LKProof) : String = {
+    asGraphViz("digraph lkproof {\n",p, 0)._1 + "\n}\n"
+  }
+
+  def asGraphViz(s : String, p:LKProof, i:Int) : (String, Int) = {
+    p match {
+      case UnaryLKProof(rule, parent, root, _, _) =>
+        val (t, j) = asGraphViz(s,parent, i)
+        val k = j+1
+        (t + "n"+k+" -> n"+j+";\n"   ,k)
+      case BinaryLKProof(rule, p1, p2, root, _, _, _) =>
+        val (t1, j1) = asGraphViz(s,p1, i)
+        val (t2, j2) = asGraphViz(t1,p2, j1)
+        val k = j2+1
+        (t2 + "n"+k+" -> n"+j1+";\n" + "n"+k+" -> n"+j2+";\n\n"   ,k)
+      case p:NullaryLKProof =>
+        (s, i+1)
+    }
+  }
+
+
+  def asXml(p:LKProof): String  = asXml("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", p)
+  def toInt(s:RuleTypeA) = s.toString.foldLeft(0)((i,c) => i+c.toInt)
+  def asXml(s : String, p:LKProof) : String = {
+    p match {
+      case UnaryLKProof(rule, parent, root, _, _) =>
+        asXml(s+"<unary rule=\""+toInt(rule)+"\">\n",parent)+"</unary>\n"
+      case BinaryLKProof(rule, p1, p2, root, _, _, _) =>
+        val t1 = asXml(s+"<binary rule=\""+toInt(rule)+"\">\n",p1)
+        val t2 = asXml(t1,p2)
+        t2 + "</binary>\n"
+      case p:NullaryLKProof =>
+        s+"<leaf rule=\""+toInt(p.rule)+"\"/>\n"
+    }
+  }
+
 
 
   def asHumanReadableString(p:ResolutionProof[Clause]) = apply(p)

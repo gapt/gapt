@@ -29,7 +29,7 @@ import at.logic.algorithms.lk.applySubstitution
 class acnfTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
 
-  args (skipAll = !Prover9.isInstalled ());
+  //args (skipAll = !Prover9.isInstalled ());
 
   sequential
   "ACNFTest" should {
