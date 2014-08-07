@@ -10,11 +10,12 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.MCSMethod.MCSMethod
 import at.logic.language.fol._
 import at.logic.algorithms.cutIntroduction.Deltas._
+import at.logic.provers.maxsat.MaxSATSolver._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import at.logic.language.fol.replacements.getAllPositionsFOL
-import at.logic.provers.qmaxsat.{MapBasedInterpretation, QMaxSAT}
+import at.logic.provers.maxsat.{MaxSATSolver, MapBasedInterpretation, MaxSAT}
 
 
 /**
@@ -24,7 +25,7 @@ import at.logic.provers.qmaxsat.{MapBasedInterpretation, QMaxSAT}
  */
 object MCSMethod extends Enumeration {
   type MCSMethod = Value
-  val QMaxSAT, Simplex = Value
+  val MaxSAT, Simplex = Value
 }
 
 object TreeGrammarDecomposition{
@@ -42,10 +43,10 @@ object TreeGrammarDecomposition{
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return a list of grammars
    */
-  def apply(termset: List[FOLTerm], n:Int, method: MCSMethod) : List[Grammar] = {
+  def apply(termset: List[FOLTerm], n:Int, method: MCSMethod, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : List[Grammar] = {
 
     method match {
-      case MCSMethod.QMaxSAT => {
+      case MCSMethod.MaxSAT => {
         // instantiate TreeGrammarDecomposition object with the termset and n
         decomp = new TreeGrammarDecompositionPWM(termset, n)
 
@@ -67,9 +68,9 @@ object TreeGrammarDecomposition{
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
       val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula,Int]]]
       debug("G: \n" + g)
-      debug("Starting up QMaxSAT Solver")
-      // Retrieving a model from the QMaxSAT solver and extract the rules
-      val rules = decomp.getRules((new QMaxSAT).solvePWM(f, g))
+      debug("Starting up "+satsolver)
+      // Retrieving a model from a MaxSAT solver and extract the rules
+      val rules = decomp.getRules((new MaxSAT(satsolver)).solvePWM(f, g))
       debug("Rules: " + rules)
       // transform the rules to a Grammar
       val grammars = decomp.getGrammars(rules)

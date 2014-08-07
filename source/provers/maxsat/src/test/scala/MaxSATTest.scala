@@ -2,7 +2,7 @@
  * Tests for the MiniSAT interface.
 **/
 
-package at.logic.provers.qmaxsat
+package at.logic.provers.maxsat
 
 
 import org.specs2.mutable._
@@ -13,10 +13,10 @@ import at.logic.language.fol._
 import at.logic.calculi.resolution._
 
 @RunWith(classOf[JUnitRunner])
-class QMaxSATTest extends SpecificationWithJUnit {
+class MaxSATTest extends SpecificationWithJUnit {
   val box: Set[FClause] = Set()
 
-  args(skipAll = !(new QMaxSAT).isInstalled())
+  args(skipAll = !(new MaxSAT(MaxSATSolver.QMaxSAT)).isInstalled() || !(new MaxSAT(MaxSATSolver.ToySAT)).isInstalled() || !(new MaxSAT(MaxSATSolver.ToySolver)).isInstalled())
 
   /*
    * Simple instance for testing wether weighted partial MaxSAT
@@ -60,7 +60,35 @@ class QMaxSATTest extends SpecificationWithJUnit {
 
     "deal correctly with a simple instance" in {
       val (hard, soft) = SimpleQMaxSATFormula()
-      (new QMaxSAT).solvePWM(hard, soft) must beLike {
+      (new MaxSAT(MaxSATSolver.QMaxSAT)).solvePWM(hard, soft) must beLike {
+        case Some(model) => if (model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x2) == true &&
+          model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x1) == false &&
+          model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x3) == false) ok
+        else ko
+        case None => ko
+      }
+    }
+  }
+
+  "ToySAT" should {
+
+    "deal correctly with a simple instance" in {
+      val (hard, soft) = SimpleQMaxSATFormula()
+      (new MaxSAT(MaxSATSolver.ToySAT)).solvePWM(hard, soft) must beLike {
+        case Some(model) => if (model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x2) == true &&
+          model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x1) == false &&
+          model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x3) == false) ok
+        else ko
+        case None => ko
+      }
+    }
+  }
+
+  "ToySolver" should {
+
+    "deal correctly with a simple instance" in {
+      val (hard, soft) = SimpleQMaxSATFormula()
+      (new MaxSAT(MaxSATSolver.ToySolver)).solvePWM(hard, soft) must beLike {
         case Some(model) => if (model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x2) == true &&
           model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x1) == false &&
           model.asInstanceOf[MapBasedInterpretation].interpret(SimpleQMaxSATFormula.x3) == false) ok

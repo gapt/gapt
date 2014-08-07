@@ -5,24 +5,21 @@
  */
 package at.logic.algorithms.cutIntroduction
 
-import Deltas._
-import at.logic.algorithms.interpolation._
+import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.resolution._
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
+import at.logic.calculi.expansionTrees.{ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.resolution.FClause
 import at.logic.language.fol._
 import at.logic.language.hol.HOLFormula
 import at.logic.provers.Prover
+import at.logic.provers.maxsat.MaxSATSolver
+import at.logic.provers.maxsat.MaxSATSolver
+import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.provers.minisat.MiniSATProver
-import at.logic.provers.prover9.Prover9Prover
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
+import at.logic.utils.constraint.{Constraint, ExactBound, NoConstraint, UpperBound}
 import at.logic.utils.executionModels.timeout._
 import at.logic.utils.logging.Logger
 
@@ -580,7 +577,7 @@ object NCutIntroduction extends Logger {
     * @return The LK proof with cuts if cut introduction was successful and None otherwise.
     *         The cause of failure will be printed on the console.
     */
-  def apply(proof: LKProof, prover: Prover = new DefaultProver(), n: Int) : Option[LKProof] = apply( extractExpansionTrees( proof ), prover, n)
+  def apply(proof: LKProof, prover: Prover = new DefaultProver(), n: Int, maxsatsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[LKProof] = apply( extractExpansionTrees( proof ), prover, n, maxsatsolver)
 
   /**
    * Performs cut introduction with a given number of maximum cuts (n),
@@ -590,7 +587,7 @@ object NCutIntroduction extends Logger {
    * @param n maximum number of cuts
    * @return a proof with at most n introduced cuts
    */
-  def apply(ep: ExpansionSequent, prover: Prover, n: Int) : Option[LKProof] = {
+  def apply(ep: ExpansionSequent, prover: Prover, n: Int, maxsatsolver: MaxSATSolver) : Option[LKProof] = {
 
     val endSequent = toSequent(ep)
     debug("\nEnd sequent: " + endSequent)
@@ -605,7 +602,7 @@ object NCutIntroduction extends Logger {
 
     //val grammars = ComputeGrammars(terms, delta)
 
-    val grammars = TreeGrammarDecomposition(terms.termset, n, MCSMethod.QMaxSAT).map {
+    val grammars = TreeGrammarDecomposition(terms.termset, n, MCSMethod.MaxSAT, maxsatsolver).map {
       case g => g.flatterms = terms; g
     }
     //println( "\nNumber of grammars: " + grammars.length )

@@ -65,10 +65,11 @@ import at.logic.provers.atp.commands.refinements.simple.SimpleRefinementGetComma
 import at.logic.provers.atp.commands.robinson._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.ui._
+import at.logic.provers.maxsat.{MaxSATSolver, MaxSAT}
+import at.logic.provers.maxsat.MaxSATSolver._
 import at.logic.provers.minisat.MiniSAT
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
-import at.logic.provers.qmaxsat.QMaxSAT
 import at.logic.transformations.ceres.ACNF._
 import at.logic.transformations.ceres.clauseSets.SimplifyStruct
 import at.logic.transformations.ceres.projections.Projections
@@ -669,15 +670,15 @@ object cutIntro {
 
 
 object ncutIntro {
-  def apply(p: LKProof, n: Int) = NCutIntroduction(p, new DefaultProver(), n)
+  def apply(p: LKProof, n: Int, maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT) = NCutIntroduction(p, new DefaultProver(), n, maxsatsolver)
 
-  def apply(p: LKProof, prover: at.logic.provers.Prover, n: Int) = NCutIntroduction(p, prover, n)
+  def apply(p: LKProof, prover: at.logic.provers.Prover, n: Int, maxsatsolver: MaxSATSolver) = NCutIntroduction(p, prover, n, maxsatsolver)
 
-  def apply(ep: ExpansionSequent, n: Int) =
-    NCutIntroduction(ep, new DefaultProver(), n)
+  def apply(ep: ExpansionSequent, n: Int, maxsatsolver: MaxSATSolver) =
+    NCutIntroduction(ep, new DefaultProver(), n, maxsatsolver)
 
-  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: at.logic.provers.Prover, n: Int) =
-    NCutIntroduction(ep, prover, n)
+  def apply(ep: ExpansionSequent, prover: at.logic.provers.Prover, n: Int, maxsatsolver: MaxSATSolver) =
+    NCutIntroduction(ep, prover, n, maxsatsolver)
 }
 /*****************************************************************************************/
 
@@ -698,7 +699,7 @@ object miniSATsolve {
 }
 
 object QMaxSATsolve {
-  def apply(hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula,Int]]) = (new QMaxSAT).solvePWM(hard, soft)
+  def apply(hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula,Int]], maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT) = (new MaxSAT(maxsatsolver)).solvePWM(hard, soft)
 }
 
 object miniSATprove {
@@ -1474,7 +1475,7 @@ object help {
         |
         | Cut-Introduction:
         |   cutIntro: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
-        |   ncutIntro: (LKProof,Int) => Option[LKProof] - performs cut introduction for a maximum of n cuts (See Int)."
+        |   ncutIntro: (LKProof,Int,[MaxSATSolver]) => Option[LKProof] - performs cut introduction for a maximum of n (Int) cuts. (optional: MaxSATSolver {QMaxSAT, ToySAT, ToySolver}")"
         |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
         |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list

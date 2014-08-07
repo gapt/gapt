@@ -35,7 +35,7 @@ trait Interpretation {
 
 // Call MiniSAT to solve quantifier-free HOLFormulas.
 class MiniSAT extends at.logic.utils.logging.Logger {
-  
+
   class MapBasedInterpretation( val model : Map[HOLFormula, Boolean]) extends Interpretation {
     def interpretAtom(atom : HOLFormula) = model.get(atom) match {
       case Some(b) => b
