@@ -245,12 +245,12 @@ object CutIntroduction extends Logger {
           MinimizeSolution(ehs, prover)
         val t2 = System.currentTimeMillis
         SolutionCTime += t2 - t1
-   
+
         phase = "prcons" // proof construction
         val proof = buildProofWithCut(ehs1, prover)
         val t3 = System.currentTimeMillis
         ProofBuildingCTime += t3 - t2
-      
+
         val pruned_proof = CleanStructuralRules( proof.get )
         val t4 = System.currentTimeMillis
         CleanStructuralRulesCTime += t4 - t3
@@ -499,7 +499,7 @@ object CutIntroduction extends Logger {
     * to get the cut formula cf back.
     *
     * Example: if f(a,b) occurs in p, the cut formula is [forall x,y] f(x,y)
-    * and the terms are [[a],[b]],
+    * and the terms are [[ a],[b]],
     * then sPart extends the proof with two ForallLeft-rules, universally
     * quantifying first a, then b, creating the cut formula in the bottom.
     * If there are multiple terms in p, the cut formula is introduced multiple
@@ -585,6 +585,7 @@ object NCutIntroduction extends Logger {
    * @param ep the expansion sequent, extracted from a cut free proof
    * @param prover the prover to use for tautology checks
    * @param n maximum number of cuts
+   * @param maxsatsolver what MaxSATSolver to use
    * @return a proof with at most n introduced cuts
    */
   def apply(ep: ExpansionSequent, prover: Prover, n: Int, maxsatsolver: MaxSATSolver) : Option[LKProof] = {
@@ -623,5 +624,156 @@ object NCutIntroduction extends Logger {
     // TODO: merge all proofs, s.t. one proof with n cuts is generated
     val ps = proofs.map(p => p._1)
     Some(ps(0))
+  }
+
+  /** Performs cut introduction on an LK proof and returns
+    * an LK proof with at most n cuts if cut formulas can be found.
+    *
+    * @param ep The sequent of expansion trees to which cut-introduction is to be applied.
+    * @param prover the prover to use for tautology checks
+    * @param n maximum number of cuts
+    * @param useForgetfulPara whether to use also forgetful paramodultion when improving solution
+    * @param maxsatsolver what MaxSATSolver to use
+    * @param timeout the timeout (in seconds)
+    *
+    * @return a triple ( p: Option[LKProof], s: String, l: String ).
+    *         The p is the LK proof with cuts if cut introduction was successful and None otherwise.
+    *         If it is None, the cause of failure will be printed on the console.
+    *         s is a status string, and l is a logging string with quantitative data,
+    *         see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
+    */
+  def applyStat(ep: ExpansionSequent, prover: Prover = new DefaultProver(), n: Int=5, maxsatsolver: MaxSATSolver=MaxSATSolver.QMaxSAT, timeout: Int = 3600 /* 1 hour */, useForgetfulPara: Boolean = false ) : ( Option[LKProof] , String, String ) = {
+    var log = ""
+    var status = "ok"
+    var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
+
+    var SolutionCTime: Long = 0
+    var ProofBuildingCTime: Long = 0
+    var CleanStructuralRulesCTime:Long = 0
+
+    val p = try { withTimeout( timeout * 1000 ) {
+      val endSequent = toSequent(ep)
+      println("\nEnd sequent: " + endSequent)
+
+      // generate term set
+      val t1 = System.currentTimeMillis
+      val termsTuples = TermsExtraction(ep)
+      val terms = new FlatTermSet(termsTuples)
+      val t2 = System.currentTimeMillis
+      log += "," + (t2 - t1) + "," + terms.termset.size // log tstime, tssize
+      println( "Size of term set: " + terms.termset.size )
+
+      // compute grammar via TreeGrammarDecomposition
+      phase = "tgd"
+      val t3 = System.currentTimeMillis
+      println("Used Solver: "+maxsatsolver)
+      val grammars = TreeGrammarDecomposition(terms.termset, n, MCSMethod.MaxSAT, maxsatsolver).map {
+        case g => g.flatterms = terms; g
+      }
+      val t4 = System.currentTimeMillis
+      log += "," + (t4 - t3) // log tgdtime
+
+      if (grammars.length == 0) {
+        throw new CutIntroUncompressibleException("\nNo grammars found." +
+          " The proof cannot be compressed using a cut with one universal quantifier.\n")
+      }
+      debug("Grammars: " + grammars)
+
+
+      // Build a proof from each of the smallest grammars
+      def buildProof(grammar:Grammar) = {
+        phase = "sol" // solving phase
+        val t1 = System.currentTimeMillis
+        val cutFormula0 = CutIntroduction.computeCanonicalSolution(endSequent, grammar)
+        val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+        val ehs1 = if ( useForgetfulPara )
+          MinimizeSolution.applyEq(ehs, prover)
+        else
+          MinimizeSolution(ehs, prover)
+        val t2 = System.currentTimeMillis
+        SolutionCTime += t2 - t1
+
+        phase = "prcons" // proof construction
+        val proof = CutIntroduction.buildProofWithCut(ehs1, prover)
+        val t3 = System.currentTimeMillis
+        ProofBuildingCTime += t3 - t2
+
+        val pruned_proof = CleanStructuralRules( proof.get )
+        val t4 = System.currentTimeMillis
+        CleanStructuralRulesCTime += t4 - t3
+
+        ( pruned_proof, ehs1, lcomp(cutFormula0), lcomp(ehs1.cutFormula) )
+      }
+
+      // convert grammars into proof
+      log += "," + grammars.foldLeft(0)((acc,g) => g.size + acc) // minimal grammar sizes
+      //val proofs = grammars.map(CutIntroduction.buildProof(_, prover, endSequent)).filter(proof => proof.isDefined).map(proof => proof.get)
+
+      // Build a proof from each of the smallest grammars
+      def buildProofStat(grammar:Grammar) = {
+        phase = "sol" // solving phase
+        val t1 = System.currentTimeMillis
+        val cutFormula0 = CutIntroduction.computeCanonicalSolution(endSequent, grammar)
+        val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
+        val ehs1 = if ( useForgetfulPara )
+          MinimizeSolution.applyEq(ehs, prover)
+        else
+          MinimizeSolution(ehs, prover)
+        val t2 = System.currentTimeMillis
+        SolutionCTime += t2 - t1
+
+        phase = "prcons" // proof construction
+        val proof = CutIntroduction.buildProofWithCut(ehs1, prover)
+        val t3 = System.currentTimeMillis
+        ProofBuildingCTime += t3 - t2
+
+        val pruned_proof = CleanStructuralRules( proof.get )
+        val t4 = System.currentTimeMillis
+        CleanStructuralRulesCTime += t4 - t3
+
+        ( pruned_proof, ehs1, lcomp(cutFormula0), lcomp(ehs1.cutFormula) )
+      }
+
+      val proofs = grammars.map(buildProofStat)
+      log += "," + SolutionCTime + "," + ProofBuildingCTime + "," + CleanStructuralRulesCTime // log sctime, pbctime, csrctime
+
+
+      // Sort the list by size of proofs
+      //val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
+
+      val smallestProofs = proofs.map(_._1)
+      val ehs = proofs.map(_._2)
+      val cansolc = proofs.map(_._3)
+      val minsolc = proofs.map(_._4)
+
+      println("\nMinimized cut formulas: " + ehs.foldLeft("")((acc,e) => e.cutFormula+" # "+acc))
+
+      log += "," + cansolc + "," + minsolc + "," + smallestProofs.foldLeft("")((acc,p) => rulesNumber( p )+"-"+acc) + "," + smallestProofs.foldLeft("")((acc,p) => quantRulesNumber( p )+"-"+acc) // log #infc, #qinfc
+
+      // TODO: merge all proofs, s.t. one proof with n cuts is generated
+      Some( smallestProofs(0) )
+
+    } } catch {
+      case e: TimeOutException =>
+        status = phase + "_timeout"
+        None
+      case e: OutOfMemoryError =>
+        status = "cutintro_out_of_memory"
+        None
+      case e: StackOverflowError =>
+        status = "cutintro_stack_overflow"
+        None
+      case e: CutIntroUncompressibleException =>
+        status = "cutintro_uncompressible"
+        None
+      case e: CutIntroEHSUnprovableException =>
+        status = "cutintro_ehs_unprovable"
+        None
+      case e: Exception =>
+        status = "cutintro_other_exception"
+        None
+    }
+
+    ( p, status, log )
   }
 }
