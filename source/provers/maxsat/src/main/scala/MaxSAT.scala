@@ -59,6 +59,10 @@ class MapBasedInterpretation( val model : Map[FOLFormula, Boolean]) extends Inte
  *   3 1 3 0
  */
 
+/**
+ * An enumeration to distinguish calls for different
+ * Max SAT Solvers
+ */
 object MaxSATSolver extends Enumeration{
   type MaxSATSolver = Value
   val QMaxSAT, ToySAT, ToySolver = Value
@@ -67,12 +71,16 @@ object MaxSATSolver extends Enumeration{
 // Call a MaxSAT solver to solve partial weighted MaxSAT instances
 class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
 
+  // the binaries of the specific MaxSATSolvers
   val qmaxsatbin = "qmaxsat"
   val toysolverbin = "toysolver"
   val toysatbin = "toysat"
 
 
-
+  /**
+   * checks if a particular Max SAT Solver is installed properly
+   * @return true if it is installed, false otherwise
+   */
   def isInstalled() : Boolean = {
     try {
       val box : Set[FClause] = Set.empty
@@ -93,13 +101,15 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   }
 
 
+  // mapping a clause to a propositional variable index
   var atom_map : Map[FOLFormula, Int] = new HashMap[FOLFormula,Int]
 
-  // Returns a model of a partial weighted MaxSAT instance, where
-  // hard are the hard constraints and
-  // soft are the soft constraints with weights w,
-  // obtained from the QMaxSAT solver.
-  // Returns None if unsatisfiable.
+  /**
+   * Solves and returns a model of a partial weighted MaxSAT instance
+   * @param hard hard constraints, which have to be fullfilled by the solution
+   * @param soft soft constraints, which come with individual weights and can be violated. Sum of weights of satisfied formulas is maximized.
+   * @return None if UNSAT, otherwise Some(minimal model)
+   */
   def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : Option[MapBasedInterpretation] = {
     val hardCNF = hard.foldLeft(Set[FClause]())((acc,f) => acc ++ CNFp(f))
     val softCNFs = soft.foldLeft(Set[Tuple2[FClause,Int]]())((acc,s) => acc ++ CNFp(s._1).foldLeft(Set[Tuple2[FClause,Int]]())((acc,f) => acc + Tuple2[FClause,Int](f, s._2) ))
@@ -108,20 +118,33 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     solve( hardCNF, softCNFs )
   }
 
-  // Returns a model of the set of clauses obtained from the MiniSAT SAT solver.
-  // Returns None if unsatisfiable.
-  def solve( hardCNF: Set[FClause], softCNFs: Set[Tuple2[FClause,Int]] ) : Option[MapBasedInterpretation] =
-    getFromQMaxSat(hardCNF, softCNFs) match {
+  /**
+   * Solves and returns a model of a partial weighted MaxSAT instance
+   * @param hardCNF hard constraints in CNF, which have to be fullfilled by the solution
+   * @param softCNF soft constraints in CNF, which come with individual weights and can be violated. Sum of weights of satisfied formulas is maximized.
+   * @return None if UNSAT, otherwise Some(minimal model)
+   */
+  def solve( hardCNF: Set[FClause], softCNF: Set[Tuple2[FClause,Int]] ) : Option[MapBasedInterpretation] =
+    getFromMaxSAT(hardCNF, softCNF) match {
       case Some(model) => Some(new MapBasedInterpretation(model))
       case None => None
     }
 
+  /**
+   * Updates atom_map according to the set of clauses
+   * @param clauses set of clauses to provide in atom_map
+   */
   private def updateAtoms( clauses : Set[FClause] ) =
   {
     val atoms = clauses.flatMap( c => c.neg.asInstanceOf[Seq[FOLFormula]] ++ c.pos.asInstanceOf[Seq[FOLFormula]] );
     atom_map = atoms.zip(1 to atoms.size).toMap
   }
 
+  /**
+   * Returns for a particular propsitional variable index the atom in atom_map
+   * @param i propsitional variable index
+   * @return atom
+   */
   private def getAtom( i : Int ) = {
     atom_map.find( p => i == p._2 ) match {
       case Some((a, n)) => Some(a)
@@ -129,16 +152,31 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     }
   }
 
-  private def getQMaxSATString(atom: FOLFormula, pos : Boolean) : String =
-    if (pos) atom_map.get(atom).get.toString else "-" + atom_map.get(atom).get
+  /**
+   * Returns for a given atom and
+   * polarization a String for a propositional Variable in .wcnf format
+   * @param atom atom to provide
+   * @param pol polarization (true, false)
+   * @return a literal in .wcnf format
+   */
+  private def getWCNFString(atom: FOLFormula, pol : Boolean) : String =
+    if (pol) atom_map.get(atom).get.toString else "-" + atom_map.get(atom).get
 
-  private def getQMaxSATString(clause : FClause, weight: Int) : String =
+  /**
+   * Returns for a given clause and weight
+   * a representation of it in .wcnf format
+   *
+   * @param clause clause to provide
+   * @param weight weight of clause
+   * @return a clause in .wcnf format
+   */
+  private def getWCNFString(clause : FClause, weight: Int) : String =
   {
     val sb = new StringBuilder()
 
     sb.append(weight + " ")
     def atoms_to_str( as : Seq[FOLFormula], pol : Boolean ) = as.foreach( a => {
-      sb.append(getQMaxSATString(a, pol));
+      sb.append(getWCNFString(a, pol));
       sb.append(" ");
     } )
 
@@ -148,6 +186,9 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     sb.toString()
   }
 
+  /**
+   * an object for converting a file's content into a string
+   */
   object TextFileSlurper {
     def apply(file: File) : String = {
       val fileLines =
@@ -158,7 +199,16 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     }
   }
 
-  private def getFromQMaxSat( hard: Set[FClause], soft: Set[Tuple2[FClause,Int]] ) :  Option[Map[FOLFormula, Boolean]] =
+  /**
+   * Converts a given partial weighted MaxSAT instance
+   * into wcnf format and invokes the solver.
+   * If the instance is satisfiable a model is returned, otherwise None
+   *
+   * @param hard clause set of hardconstraints
+   * @param soft clause set (+ weights) of soft constraints
+   * @return None if UNSAT, Some(minimal model) otherwise
+   */
+  private def getFromMaxSAT( hard: Set[FClause], soft: Set[Tuple2[FClause,Int]] ) :  Option[Map[FOLFormula, Boolean]] =
   {
     val clauses = soft.foldLeft(hard)((acc,c) => acc + c._1)
     updateAtoms(clauses)
@@ -179,13 +229,13 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     // construct qmaxsat text input
     hard.foreach ( c =>
     {
-      sb.append(getQMaxSATString(c, top))
+      sb.append(getWCNFString(c, top))
       sb.append("0")
       sb.append(nl)
     } )
     soft.foreach ( c =>
     {
-      sb.append(getQMaxSATString(c._1, c._2))
+      sb.append(getWCNFString(c._1, c._2))
       sb.append("0")
       sb.append(nl)
     } )
@@ -257,6 +307,11 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     outputToInterpretation(output.toString)
   }
 
+  /**
+   * A delegator to treat outputformats of different MaxSAT Solvers differently
+   * @param in output of sepcific MaxSAT Solver
+   * @return None if UNSAT, Some(minimal model) otherwise
+   */
   private def outputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
     solver match {
       case MaxSATSolver.QMaxSAT => {
@@ -272,6 +327,11 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     }
   }
 
+  /**
+   * A method to treat outputformat of the QMaxSAT Solver
+   * @param in output of QMaxSAT Solver
+   * @return None if UNSAT, Some(minimal model) otherwise
+   */
   private def qmaxsatOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
 
     val oLinePattern = """(?m)^o.*""".r
@@ -303,6 +363,11 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     }
   }
 
+  /**
+   * A method to treat outputformat of the ToySolver
+   * @param str output of ToySolver
+   * @return None if UNSAT, Some(minimal model) otherwise
+   */
   private def toysolverOutputToInterpretation(str: String) : Option[Map[FOLFormula, Boolean]] = {
     val sLinePattern = """(?m)^s.*""".r
     val oLinePattern = """(?m)^o.*""".r
@@ -342,6 +407,11 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     return None
   }
 
+  /**
+   * A method to treat outputformat of the ToySAT
+   * @param str output of ToySAT
+   * @return None if UNSAT, Some(minimal model) otherwise
+   */
   private def toysatOutputToInterpretation(str: String) : Option[Map[FOLFormula, Boolean]] = {
     val sLinePattern = """(?m)^s.*""".r
     val oLinePattern = """(?m)^o.*""".r
