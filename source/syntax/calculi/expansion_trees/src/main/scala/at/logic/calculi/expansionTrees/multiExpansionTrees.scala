@@ -36,19 +36,19 @@ case class SkolemQuantifier(formula: HOLFormula, skolem_constants: Seq[HOLExpres
 
   case class And(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
-  lazy val children = List(Pair(left,None),Pair(right,None))
+  lazy val children = List(Tuple2(left,None),Tuple2(right,None))
 }
 case class Or(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
-  lazy val children = List(Pair(left,None),Pair(right,None))
+  lazy val children = List(Tuple2(left,None),Tuple2(right,None))
 }
 case class Imp(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
-  lazy val children = List(Pair(left,None),Pair(right,None))
+  lazy val children = List(Tuple2(left,None),Tuple2(right,None))
 }
 case class Not(tree: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
-  lazy val children = List(Pair(tree,None))
+  lazy val children = List(Tuple2(tree,None))
 }
 case class Atom(formula: HOLFormula) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]] {
   lazy val node = Some(formula)

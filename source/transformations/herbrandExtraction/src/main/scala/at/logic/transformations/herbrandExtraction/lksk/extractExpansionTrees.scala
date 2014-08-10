@@ -20,14 +20,14 @@ class extractLKSKExpansionTrees  extends extractExpansionTrees {
     mergeTree( (proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) )
   }
 
-  private def extract(proof: LKProof): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
+  def extract(proof: LKProof): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
     case Axiom(r) =>
       handleAxiom(r)
 
     case WeakeningRightRule(parent, r, p) =>
       val map = extract(parent)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
-      contextmap + ((p, AtomTree(BottomC)))
+      contextmap + ((p, AtomTree(TopC)))
     case WeakeningLeftRule(parent, r, p) =>
       val map = extract(parent)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)

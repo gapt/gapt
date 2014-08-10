@@ -741,7 +741,8 @@ object merge extends at.logic.utils.logging.Logger {
       case (Atom(BottomC), _) if polarity => detectAndMergeMergeNodes(tree2, polarity)
       case (_, Atom(BottomC)) if polarity => detectAndMergeMergeNodes(tree1, polarity)
 
-      case (Atom(f1), Atom(f2)) if f1 == f2 => (None, Atom(f1))
+      //TODO: the f1 == f2 check is too strong if the proof contains contractions on paramodulated formulas. Find a better replacement.
+      case (Atom(f1), Atom(f2)) /* if f1 == f2 */  => (None, Atom(f1))
 
       case (StrongQuantifier(f1, v1, sel1), StrongQuantifier(f2, v2, sel2)) if f1 == f2 =>
         trace("encountered strong quantifier "+f1+"; renaming "+v2+" to "+v1)

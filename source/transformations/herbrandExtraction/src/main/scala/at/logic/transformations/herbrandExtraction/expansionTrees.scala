@@ -33,7 +33,7 @@ class extractExpansionTrees {
   def handleAxiom(r:Sequent) : Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     // guess the axiom: must be an atom and appear left as well as right
     // can't use set intersection, but lists are small enough to do it manually
-    val axiomCandidates = (r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals elem2))).filter( ( o => isAtom( o.formula )))
+    val axiomCandidates = (r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals  elem2 ))).filter( ( o => isAtom( o.formula )))
 
     if (axiomCandidates.size > 1) {
       println("Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: "+axiomCandidates)
@@ -70,23 +70,20 @@ class extractExpansionTrees {
       case ExistsLeftRule(_, _, a, _, v) => SQTree(p.formula, v, map(a))
       case ContractionLeftRule(_, _, a1, a2, _) => MergeNodeTree(map(a1), map(a2))
       case ContractionRightRule(_, _, a1, a2, _) => MergeNodeTree(map(a1), map(a2))
-      case AndLeft1Rule(_, _, a, _) => {
+      case AndLeft1Rule(_, _, a, _) =>
         val And(_, f2) = p.formula;
         AndTree(map(a), AtomTree(TopC))
-      }
-      case AndLeft2Rule(_, _, a, _) => {
+      case AndLeft2Rule(_, _, a, _) =>
         val And(f1, _) = p.formula;
         AndTree(AtomTree(TopC), map(a))
-      }
-      case OrRight1Rule(_, _, a, _) => {
+      case OrRight1Rule(_, _, a, _) =>
         val Or(_, f2) = p.formula;
         OrTree(map(a), AtomTree(BottomC))
-      }
-      case OrRight2Rule(_, _, a, _) => {
+      case OrRight2Rule(_, _, a, _) =>
         val Or(f1, _) = p.formula;
         OrTree(AtomTree(BottomC), map(a))
-      }
-      case ImpRightRule(_, _, a1, a2, _) => ImpTree(map(a1), map(a2))
+      case ImpRightRule(_, _, a1, a2, _) =>
+        ImpTree(map(a1), map(a2))
       case NegLeftRule(_, _, a, _) => NotTree(map(a))
       case NegRightRule(_, _, a, _) => NotTree(map(a))
     }))

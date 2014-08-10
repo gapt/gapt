@@ -9,7 +9,7 @@ import at.logic.calculi.lk.base.{FSequent, Sequent}
 import at.logic.language.lambda.types.{Ti, To}
 import at.logic.calculi.lksk
 import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionTrees
-import at.logic.calculi.expansionTrees.{Atom => AtomTree, Neg => NegTree, SkolemQuantifier, ExpansionTree, ExpansionSequent, WeakQuantifier}
+import at.logic.calculi.expansionTrees.{Atom => AtomTree, Neg => NegTree, SkolemQuantifier, ExpansionTree, ExpansionSequent, WeakQuantifier, Imp => ImpTree}
 import at.logic.calculi.lksk.LabelledFormulaOccurrence
 import at.logic.transformations.skolemization.lksk.{LKtoLKskc => skolemize }
 
@@ -94,6 +94,33 @@ class extractLKSKExpansionTreesTest extends SpecificationWithJUnit {
   }
 
 
+  object simpleHOLProof4 {
+    val p = HOLConst("P", Ti -> To)
+    val a = HOLVar("\\alpha", Ti)
+    val u = HOLVar("u", Ti)
+
+    val pa = Atom(p, a::Nil)
+    val pu = Atom(p, u::Nil)
+    val allpu = AllVar(u, pu)
+
+    val x = HOLVar("X", To)
+    val xatom = Atom(x, Nil)
+    val existsx = ExVar(x,xatom)
+
+    val ax = Axiom(List(pa), List(pa))
+    val i0a = ForallLeftRule(ax, ax.root.antecedent(0), allpu, a)
+    val i0b = ForallRightRule(i0a, i0a.root.succedent(0), allpu, a)
+    val i1 = ExistsRightRule(i0b, i0b.root.succedent(0), existsx, allpu)
+    val i2 = NegRightRule(i1, i1.root.antecedent(0))
+    val i2a = WeakeningLeftRule(i2, allpu)
+    val i2b = ImpRightRule(i2a, i2a.root.antecedent(0), i2a.root.succedent(1))
+    val i3 = ExistsRightRule(i2b, i2b.root.succedent(1), existsx, Imp(allpu, Neg(allpu)) )
+    val i4 = ContractionRightRule(i3, i3.root.succedent(0), i3.root.succedent(1))
+    val proof = skolemize(i4)
+  }
+
+
+
 
   "LKSK Expansion Tree Extraction" should {
     "work for an hol proof with only weak quantifiers" in {
@@ -174,6 +201,22 @@ class extractLKSKExpansionTreesTest extends SpecificationWithJUnit {
       r must_==("")
     }
 
+    "work for a skolemized hol proof with weakening" in {
+      val ExpansionSequent((Nil, List(et))) = extractLKSKExpansionTrees(simpleHOLProof4.proof)
+      //println(simpleHOLProof4.proof)
+
+      val r = et match {
+        case WeakQuantifier(_, Seq(
+        (SkolemQuantifier(_,sk1,AtomTree(_)),_),
+        (ImpTree(AtomTree(_), NegTree( WeakQuantifier(_,Seq((AtomTree(_), sk2)))  )), _)
+        )) =>
+          ""
+        case _ =>
+          "expansion tree "+et+" does not match expected pattern!"
+      }
+
+      r must_==("")
+    }
   }
 
 }
