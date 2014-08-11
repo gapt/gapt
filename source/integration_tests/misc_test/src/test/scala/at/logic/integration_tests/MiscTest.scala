@@ -239,7 +239,8 @@ class MiscTest extends SpecificationWithJUnit {
       val reg = regularize(elp)
       val lksk_proof = LKtoLKskc(reg._1)
       // TODO
-      extractExpansionTrees(reg._1) must throwA[IllegalArgumentException] // currently contains problematic definitions
+      val et = extractExpansionTrees(reg._1)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      ok
     }
 
     "Construct proof with expansion sequent extracted from proof 1/2" in {
