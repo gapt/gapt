@@ -27,11 +27,11 @@ class extractLKSKExpansionTrees  extends extractExpansionTrees {
     case WeakeningRightRule(parent, r, p) =>
       val map = extract(parent)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
-      contextmap + ((p, AtomTree(TopC)))
+      contextmap + ((p, AtomTree(BottomC)))
     case WeakeningLeftRule(parent, r, p) =>
       val map = extract(parent)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
-      contextmap + ((p, AtomTree(BottomC)))
+      contextmap + ((p, AtomTree(TopC)))
     case ForallSkLeftRule(parent, r, a, p, t) =>
       val map = extract(parent)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)

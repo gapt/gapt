@@ -79,6 +79,8 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 import at.logic.utils.constraint.Constraint
 import at.logic.transformations.herbrandExtraction
+import at.logic.algorithms.lk.{rule_isomorphic => LKrule_isomorphic}
+import at.logic.algorithms.lksk.{rule_isomorphic => LKSKrule_isomorphic}
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -413,6 +415,8 @@ object removeSubsumed {
   */
 
 object applyFactoring extends factoring
+
+object rule_isomorphic extends LKSKrule_isomorphic //this subsumes the LK version
 
 object writeLabelledSequentListLatex {
   def apply(ls: List[LabelledSequent], outputFile: String) = {

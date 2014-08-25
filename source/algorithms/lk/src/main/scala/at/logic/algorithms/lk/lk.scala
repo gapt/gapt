@@ -242,7 +242,7 @@ object eliminateDefinitions {
                        constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
-    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )
+    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2(m, new_proof.prin.head ) )
   }
 
   def handleContraction( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
@@ -447,7 +447,7 @@ object regularize {
                        constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
-    ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )  
+    ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2(m, new_proof.prin.head ) )
   }
 
   def handleContraction( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),

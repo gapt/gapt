@@ -252,7 +252,7 @@ object solve extends at.logic.utils.logging.Logger {
       case BigAnd(i, iter, from, to) =>
         val i = IntVar("i")
         if (from == to) {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val sf = subst(iter)
           val p_ant = sf +: rest.antecedent
@@ -266,7 +266,7 @@ object solve extends at.logic.utils.logging.Logger {
           }
         }
         else {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val sf1 = BigAnd(i, iter, from, Pred(to))
           val sf2 = subst(iter)
@@ -286,7 +286,7 @@ object solve extends at.logic.utils.logging.Logger {
       case BigOr(i, iter, from, to) =>
         val i = IntVar("i")
         if (from == to) {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val sf = subst(iter)
           val p_ant = sf +: rest.antecedent
@@ -300,7 +300,7 @@ object solve extends at.logic.utils.logging.Logger {
           }
         }
         else {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val p_ant1 = BigOr(i, iter, from, Pred(to)) +: rest.antecedent
           val p_suc1 = rest.succedent
@@ -457,7 +457,7 @@ object solve extends at.logic.utils.logging.Logger {
       case BigOr(i, iter, from, to) =>
         val i = IntVar("i")
         if (from == to) {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val p_ant = subst(iter) +: rest.antecedent
           val p_suc = rest.succedent
@@ -470,7 +470,7 @@ object solve extends at.logic.utils.logging.Logger {
           }
         }
         else {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val p_ant = rest.antecedent
           val p_suc = BigOr(i, iter, from, Pred(to)) +: subst(iter) +: rest.succedent
@@ -488,7 +488,7 @@ object solve extends at.logic.utils.logging.Logger {
       case BigAnd(i, iter, from, to) =>
         val i = IntVar("i")
         if (from == to) {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val p_ant = rest.antecedent
           val p_suc = subst(iter) +: rest.succedent
@@ -501,7 +501,7 @@ object solve extends at.logic.utils.logging.Logger {
           }
         }
         else {
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(i, to)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(i, to)
           val subst = new SubstitutionSchema(new_map)
           val p_ant1 = rest.antecedent
           val p_suc1 = BigAnd(i, iter, from, Pred(to)) +: rest.succedent
