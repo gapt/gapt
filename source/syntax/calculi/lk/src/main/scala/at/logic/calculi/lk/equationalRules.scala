@@ -10,7 +10,8 @@ import at.logic.language.hol._
 import at.logic.utils.ds.trees._
 import base._
 import at.logic.utils.traits.Occurrence
-import at.logic.language.lambda.{Abs, App, Var, LambdaExpression}
+import at.logic.language.lambda.{ rename => renameLambda, freeVariables => freeVariablesLambda, Substitution => SubstitutionLambda, _}
+import scala.Some
 
 
 // Equational rules
@@ -44,6 +45,7 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
         case _ if (e1 == e2) => Equal
         case _ if (e1 == s) && (e2 == t) => EqualModuloEquality(Nil)
         case (Var(_,_), Var(_,_)) => Different
+        case (Const(_,_), Const(_,_)) => Different
         case (App(l1,r1), App(l2,r2)) =>
           (checkReplacement(s,t,l1,l2), checkReplacement(s,t,r1,r2)) match {
             case (Equal, Equal) => Equal
@@ -51,7 +53,13 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
             case (Equal, EqualModuloEquality(path)) => EqualModuloEquality(2::path)
             case _ => Different
           }
-        case (Abs(v1,t1), Abs(v2,t2)) => Different
+        case (Abs(v1@Var(name1,expt1),t1), Abs(v2@Var(name2,expt2),t2)) =>
+          if (expt1 != expt2)
+            Different
+          else {
+            val vn = renameLambda(v1, freeVariablesLambda(s) ++ freeVariablesLambda(t) ++ freeVariablesLambda(t1) ++ freeVariablesLambda(t2) ) //TODO: pass the list on instead of recreating it
+            checkReplacement(s,t, SubstitutionLambda(v1,vn)(t1), SubstitutionLambda(v2,vn)(t2))
+          }
         case _ => Different
       }
     }

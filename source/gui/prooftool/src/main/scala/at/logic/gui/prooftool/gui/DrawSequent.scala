@@ -99,9 +99,22 @@ object DrawSequent {
 
   def formulaToLatexString(t: HOLExpression, outermost : Boolean=true): String = t match {
     case Neg(f) => """\neg """ + formulaToLatexString(f, outermost = false)
-    case And(f1,f2) => "(" + formulaToLatexString(f1, outermost = false) + """ \wedge """ + formulaToLatexString(f2, outermost = false) + ")"
-    case Or(f1,f2) => "(" + formulaToLatexString(f1, outermost = false) + """ \vee """ + formulaToLatexString(f2, outermost = false) + ")"
-    case Imp(f1,f2) => "(" + formulaToLatexString(f1, outermost = false) + """ \supset """ + formulaToLatexString(f2, outermost = false) + ")"
+    case And(f1,f2) =>
+      if (outermost)
+        formulaToLatexString(f1, outermost = false) + """ \wedge """ + formulaToLatexString(f2, outermost = false)
+      else
+        "(" + formulaToLatexString(f1, outermost = false) + """ \wedge """ + formulaToLatexString(f2, outermost = false) + ")"
+    case Or(f1,f2) =>
+      if (outermost)
+        formulaToLatexString(f1, outermost = false) + """ \vee """ + formulaToLatexString(f2, outermost = false)
+      else
+        "(" + formulaToLatexString(f1, outermost = false) + """ \vee """ + formulaToLatexString(f2, outermost = false) + ")"
+
+    case Imp(f1,f2) =>
+      if (outermost)
+        formulaToLatexString(f1, outermost = false) + """ \supset """ + formulaToLatexString(f2, outermost = false)
+      else
+        "(" + formulaToLatexString(f1, outermost = false) + """ \supset """ + formulaToLatexString(f2, outermost = false) + ")"
     case ExVar(v, f) =>
       if (v.exptype == Tindex->Tindex)
         "(" + """\exists^{hyp} """ + formulaToLatexString(v, outermost = false) + """)""" + formulaToLatexString(f, outermost = false)
@@ -117,12 +130,12 @@ object DrawSequent {
 
     case BigOr(v, formula, init, end) =>
       """ \bigvee_{ """ + formulaToLatexString(v, outermost = false) + "=" + formulaToLatexString(init, outermost = false) + "}^{" + formulaToLatexString(end, outermost = false) + "}" + formulaToLatexString(formula)
-    case IndexedPredicate(constant, indices) if constant != BiggerThanC => //Fixme: constant never is instance of ClauseSetSymbol
-      {if (constant.name.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
+    case IndexedPredicate(constant, indices) if constant != BiggerThanC =>
+      {if (constant.sym.isInstanceOf[ClauseSetSymbol]) { //parse cl variables to display cut-configuration.
       val cl = constant.name.asInstanceOf[ClauseSetSymbol]
         "cl^{" + cl.name +",(" + cl.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + " | " +
           cl.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + ")}"
-      } else if (constant.name.isInstanceOf[ProjectionSetSymbol]) { //parse pr variables to display cut-configuration.
+      } else if (constant.sym.isInstanceOf[ProjectionSetSymbol]) { //parse pr variables to display cut-configuration.
       val pr = constant.name.asInstanceOf[ProjectionSetSymbol]
         "pr^{" + pr.name +",(" + pr.cut_occs._1.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + " | " +
           pr.cut_occs._2.foldLeft( "" )( (s, f) => s + {if (s != "") ", " else ""} + formulaToLatexString(f, outermost = false) ) + ")}"

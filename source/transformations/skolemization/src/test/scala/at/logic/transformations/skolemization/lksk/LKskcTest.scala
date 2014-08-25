@@ -10,7 +10,7 @@ package at.logic.transformations.skolemization.lksk
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
 import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.base.Sequent
+import at.logic.calculi.lk.base.{LKProof, Sequent}
 import at.logic.calculi.lk.{OrLeftRule, Axiom => LKAxiom}
 import at.logic.calculi.lk.{ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule}
 import at.logic.calculi.lksk._
@@ -60,6 +60,11 @@ class LKskcTest extends SpecificationWithJUnit {
       val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
       val r4 = ForallRightRule( r3, exyRay, allxexyRxy, a )
       val lkskc_proof = LKtoLKskc( r4, Set() )
+
+      val occurrences : Set[FormulaOccurrence] = lkskc_proof.nodes.flatMap(x => x.asInstanceOf[LKProof].root.occurrences).toSet
+      val constants = occurrences.flatMap(x => subTerms(x.formula).filter(_ match { case VarOrConst(_,_) => true; case _ => false }))
+      println(constants)
+
       lkskc_proof.root.antecedent.toList.head must beLike{
         case o : LabelledFormulaOccurrence =>
           o.skolem_label == EmptyLabel() && o.formula == r4.root.antecedent.head.formula must_== true
