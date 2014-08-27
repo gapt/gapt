@@ -16,9 +16,9 @@ import java.awt.Color
 import at.logic.gui.prooftool.parser.ChangeSequentColor
 
 
-class SunburstTreeDialog[T](name: String, proof: TreeProof[T]) extends Dialog {
+class SunburstTreeDialog[T](name: String, proof: TreeProof[T]) extends Frame {
   title = "Sunburst view of " + name
-  modal = false
+  //modal = false
   preferredSize = new Dimension(700,500)
   peer.setDefaultCloseOperation(2) //DISPOSE_ON_CLOSE
   menuBar = new MenuBar() {

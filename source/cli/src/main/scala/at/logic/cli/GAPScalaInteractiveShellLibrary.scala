@@ -357,7 +357,8 @@ object deleteEquationalTautologies {
 
   def apply(ls: List[FSequent]) = ls.filterNot(_._2 exists ((f: HOLFormula) =>
     f match {
-      case Atom(sym, List(x, y)) => sym == "=" && x == y
+      case Atom(c : HOLConst, List(x, y)) => c.sym == "=" && x == y
+      case Atom(c : HOLVar, List(x, y)) => c.sym == "=" && x == y
       case _ => false
     }))
 

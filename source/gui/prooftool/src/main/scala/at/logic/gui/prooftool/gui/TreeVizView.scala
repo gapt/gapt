@@ -35,7 +35,7 @@ class ProofNodeInfo[T] extends NodeInfo {
   var root : Option[ProofNode[T]] = None
   var weighter : Option[Weighter] = None
   val colorizer = new ProofColorizer
-  private var actions = Map[TreeProof[T], Action]()
+  private var actions = Map[TreeProof[T], Array[Action]]()
 
 
   def genShowAction(x: TreeProof[T]) = new Action("Show node in LK Viewer") {
@@ -53,12 +53,27 @@ class ProofNodeInfo[T] extends NodeInfo {
     }
   }
 
+  def genShowSubtreeAction(x: TreeProof[T]) = new Action("Focus on subproof") {
+    def apply() = {
+      root match {
+        case Some(node) =>
+          Main.body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+          Main.body.getContent.getData match {
+            case Some((name, proof : TreeProof[_]) ) => Main.initSunburstDialog(name, x)
+            case _ => Main.errorMessage("Proof not found!")
+          }
+          Main.body.cursor = java.awt.Cursor.getDefaultCursor
+        case None =>
+      }
+    }
+  }
+
   def init(root : TreeNode) = root match {
     case p : ProofNode[T] =>
       this.root = Some(p)
       this.weighter = Some(new ProofWeighter())
       this.weighter.get.init(this.root.get)
-      this.actions = Map[TreeProof[T], Action]()
+      this.actions = Map[TreeProof[T], Array[Action]]()
 
     case _ =>
       throw new Exception("ProofNodeInfo only accepts ProofNodes as tree!")
@@ -129,8 +144,8 @@ class ProofNodeInfo[T] extends NodeInfo {
   def getActions(path : TreePath2[TreeNode]) = {
     val node = path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof
     if (! (this.actions contains node))
-      this.actions = this.actions + ((node, genShowAction(node)))
-    Array(this.actions(node).peer)
+      this.actions = this.actions + ((node, Array[Action]( genShowAction(node), genShowSubtreeAction(node) )))
+    this.actions(node).map(_.peer)
   }
 
   def getImage(path : TreePath2[TreeNode]) = null
