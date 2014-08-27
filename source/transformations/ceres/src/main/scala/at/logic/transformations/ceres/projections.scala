@@ -70,6 +70,7 @@ object Projections extends at.logic.utils.logging.Logger {
   def apply( proof: LKProof, cut_ancs: Set[FormulaOccurrence], pred : HOLFormula => Boolean) : Set[LKProof] = {
     implicit val c_ancs = cut_ancs
     try {
+      debug("working on rule "+proof.rule)
     
     proof match {
       case Axiom(s) => Set(Axiom(s))
@@ -161,7 +162,7 @@ object Projections extends at.logic.utils.logging.Logger {
 
   //picks 2 occurrences from the same list s.t. ac1 != ac2, where formulas and skolem label agree
   def pick2(aux1 : FormulaOccurrence, aux2 : FormulaOccurrence, candidates : Seq[FormulaOccurrence]) = {
-    debug("Picking "+aux1+" and "+aux2+" from "+candidates.mkString("{",",","}"))
+    //debug("Picking "+aux1+" and "+aux2+" from "+candidates.mkString("{",",","}"))
     val (ac1, candidates2) = pick1(aux1, candidates)
     require(! candidates2.contains(ac1), "Occurrence of "+ac1+" may not be contained in "+candidates2)
     val (ac2,_) = pick1(aux2, candidates2 )
@@ -170,7 +171,7 @@ object Projections extends at.logic.utils.logging.Logger {
   }
 
   def pickrule(p: LKProof, s:List[Sequent], aux : List[FormulaOccurrence]) : List[FormulaOccurrence] = {
-    debug("Pick for rule: "+p.name)
+    //debug("Pick for rule: "+p.name)
     p.rule match {
       //Unary rules
       case WeakeningLeftRuleType =>

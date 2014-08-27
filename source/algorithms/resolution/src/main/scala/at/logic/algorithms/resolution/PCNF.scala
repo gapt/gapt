@@ -6,6 +6,7 @@ import at.logic.calculi.resolution.FClause
 import at.logic.language.hol._
 import at.logic.algorithms.lk.{applySubstitution => applySub, addContractions, addWeakenings}
 import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
+import at.logic.utils.dssupport.ListSupport.removeFirst
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)
@@ -192,10 +193,6 @@ object PCNF {
     r.nonEmpty
   }
 
-  def removeFirst[A](s: Seq[A], a: A): Seq[A] = {
-    val index = s.indexOf(a)
-    s.take(index) ++ s.takeRight(s.size-index-1)
-  }
 
   // applying sub to a clause
   def as(a: FClause, sub: Substitution): FClause = FClause(a.neg.map(f => sub(f)), a.pos.map(f => sub(f)))

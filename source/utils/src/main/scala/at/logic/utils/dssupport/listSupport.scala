@@ -97,5 +97,17 @@ object ListSupport {
     case Nil => Nil
     case x::xs => if (xs contains x) remove_doubles_(xs) else x::remove_doubles_(xs)
   }
+
+  def removeFirst[A](s: Seq[A], a: A): Seq[A] = {
+    val index = s.indexOf(a)
+    s.take(index) ++ s.takeRight(s.size-index-1)
+  }
+
+  def removeFirst[A](s: List[A], a: A): List[A] = s match {
+    case Nil => Nil
+    case x::xs if x == a => xs
+    case x::xs /* x!= a */ => x::removeFirst(xs,a)
+  }
+
 }
 

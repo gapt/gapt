@@ -41,7 +41,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     writer.flush
   }
 
-  def writeRefutationProblem( named_sequents: List[Pair[String, FSequent]], file: File ) = 
+  def writeRefutationProblem( named_sequents: List[Tuple2[String, FSequent]], file: File ) =
   {
     val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
     trace("created tptp input: " + tptp)
@@ -166,7 +166,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     runP9OnLADR(input_file, output_file, cs)
   }
 
-  def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
+  def refuteNamed( named_sequents : List[Tuple2[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
   {
     val tmp_file = File.createTempFile( "gapt-prover9-ref", ".tptp", null )
     trace("writing refutational problem")

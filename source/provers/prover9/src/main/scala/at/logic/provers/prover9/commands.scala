@@ -26,6 +26,7 @@ import scala.xml._
 import sys.process._
 import util.matching.Regex
 import util.parsing.combinator.JavaTokenParsers
+import at.logic.utils.dssupport.ListSupport
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -307,8 +308,14 @@ object InferenceExtractor {
     val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r
     val rassumption = """(\d+) ([^#\.]+).*\[assumption\].""".r
     val rgoal = """(\d+) ([^#\.]+).*\[goal\].""".r
+    val deny = """(\d+) ([^#\.]+).*\[deny\((\d+)\)\].""".r
+    val clausify = """(\d+) ([^#\.]+).*\[clausify\((\d+)\)\].""".r
     val proof_start = """=+ (PROOF) =+""".r
     val proof_end = """=+ (end) of proof =+""".r
+    val searchclauses_start = """=+ (PROOF) =+""".r
+    val searchclauses_end = """=+ (end) of proof =+""".r
+
+    val rnonclause = """.*#\ label\(non_clause\)""".r
     // with_proof starts at 0, will be increased to 1 after matching proof_start and to 2 after proof_end
     // because there might be more than one proof in the file
     var within_proof = 0
@@ -316,20 +323,89 @@ object InferenceExtractor {
 
     val str_ladr = Source.fromInputStream( new FileInputStream( fn ) ).mkString
 
-    val (assumptions, goals) = str_ladr.split(System.getProperty("line.separator")).foldLeft((List[FOLFormula](), List[FOLFormula]()))((m, l) => {
+    val (assumptions, goals, _clausifies, _denials) = str_ladr.split(System.getProperty("line.separator")).foldLeft(
+      (List[FOLFormula](), List[FOLFormula](), List[String](), List[String]())) ((m, l) => {
 
-       val (as,gs) = m;
+       val (as,gs,cs, g) = m
+
        l match {
-        case rassumption(id, formula ) => if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
-        case rgoal(id, formula )       => if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
-        case variablestyle_matcher(_) => parser = Prover9TermParser;  m
-        case proof_start(_) => within_proof = 1; m
-        case proof_end(_) => within_proof = 2; m
-        case _ => m
+        case rassumption(id, formula ) if (within_proof == 1)  =>
+          val f = parser.parseFormula(formula)
+          rnonclause.findFirstIn(l) match {
+            case None => //we add only clauses, formulas have to be clausified first
+              //println("Assumption "+id+" is a clause!")
+              (f::as, gs, cs, g)
+            case Some(_) => //contains label non_clause i.e. formula
+              //println("Assumption "+id+" is a non-clause, adding to nonclausal assumptions list!")
+              (as, gs, id::cs, g)
+          }
+
+        case rgoal(id, formula )       if (within_proof == 1) =>
+          val f = parser.parseFormula(formula)
+          rnonclause.findFirstIn(l) match {
+            case None => //we add only clauses, formulas have to be clausified first
+//              println("Goal "+id+" is a clause!")
+              (as, f::gs, cs, g)
+            case Some(_) => //contains label non_clause i.e. formula
+//              println("Goal "+id+" is a non-clause, adding to nonclausal goals list!")
+              (as, gs, cs, id::g)
+          }
+        case deny(id, formula, goalid) if (within_proof == 1) && cs.contains(goalid)=>
+//          println("Deny "+id+" of assumption "+goalid)
+          val f = parser.parseFormula(formula)
+          (f::as, gs, cs, g)
+        case deny(id, formula, goalid)  if (within_proof == 1) && g.contains(goalid)=>
+          if (g.contains(id)) println("!!!")
+//          println("Deny "+id+" of goal "+goalid)
+          val f = parser.parseFormula(formula)
+          (as, f::gs, cs, g)
+        case clausify(id, formula, goalid) if (within_proof == 1) && cs.contains(goalid)=>
+//          println("Clausify "+id+" of assumption "+goalid)
+          val f = parser.parseFormula(formula)
+          (f::as, gs, cs, g)
+        case clausify(id, formula, goalid) if (within_proof == 1) && g.contains(goalid)=>
+//          println("Clausify "+id+" of goal "+goalid)
+          val f = parser.parseFormula(formula)
+          (as, f::gs, cs, g)
+        case variablestyle_matcher(_) =>
+          parser = Prover9TermParser
+          m
+        case proof_start(_) =>
+          within_proof = 1
+//          println("proofs start")
+          m
+        case proof_end(_) =>
+          within_proof = 2
+//          println("proofs end")
+          m
+        case _ =>
+//          println("NONMATCH:"+l)
+          m
       }
     })
 
-    createFSequent(assumptions, goals)
+//    println("clause assumptions:"+assumptions)
+//    println("clause goals:"+goals)
+//    println("nonclause assumptions:"+ _clausifies)
+//    println("nonclause goals:"+ _denials)
+
+
+    if (goals.isEmpty)
+      createFSequent(assumptions, goals)
+    else {
+      val (positive_goals, negated_goals) : (List[FOLFormula], List[FOLFormula]) = goals.foldLeft((List[FOLFormula](), List[FOLFormula]()))( (pair, f) => {
+        val (pg, ng) = pair
+        f  match {
+          case Neg(x) =>
+            (pg, x :: ng)
+          case _ =>
+            (f :: pg, ng)
+            //throw new Exception("Error extracting clause set from proof: Goals come from a [deny( )] statement and are negated. But "+g+" does not have an outermost negation!"  )
+        }})
+
+      createFSequent(assumptions ++ positive_goals, negated_goals)
+    }
+
 
   }
 
