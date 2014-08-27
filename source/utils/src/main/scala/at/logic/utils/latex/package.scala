@@ -67,7 +67,6 @@ package object latex {
     case "χ" => """ \chi """
     case "ψ" => """ \psi """
     case "ω" => """ \omega """
-    case "∈" => """ \in """
     case "⊥" => """ \bot """
     case "⊤" => """ \top """ 
     case _ => //if (!name.matches("""[\w]*|[+]|[=]|[*]|[<]|[>]""")) println(name)
