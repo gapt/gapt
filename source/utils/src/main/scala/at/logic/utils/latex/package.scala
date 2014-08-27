@@ -55,7 +55,6 @@ package object latex {
     case "κ" => """ \kappa """
     case "λ" => """ \lambda """
     case "μ" => """ \mu """
-    case "ν" => """ \nu """
     case "ξ" => """ \xi """
     case "ο" => """ o """
     case "π" => """ \pi """
