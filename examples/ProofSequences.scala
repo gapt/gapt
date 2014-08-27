@@ -5,22 +5,57 @@
  * scala> val p = LinearExampleProof( 5 )
  **********/
 
+import at.logic.language.fol.Substitution
+
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
 // P(0), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
 //
 // where n is an Integer parameter >= 0.
 object LinearExampleProof {
-  val s = new ConstantStringSymbol("s")
-  val p = new ConstantStringSymbol("P")
-  val c = new ConstantStringSymbol("0")
+  val s = "s"
+  val p = "P"
+  val c = "0"
 
   def apply( n: Int ) = proof( 0, n )
 
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
   def proof( k: Int, n: Int )  : LKProof =
   {
-    val x = FOLVar( VariableStringSymbol("x") )
+    val x = FOLVar( "x" )
+    val ass = AllVar( x, Imp( Atom( p, x::Nil ), Atom( p, Function( s, x::Nil )::Nil ) ) )
+    if ( k == n ) // leaf proof
+    {
+      val a = Atom( p,  Utils.numeral( n )::Nil )
+      WeakeningLeftRule( Axiom( a::Nil, a::Nil ), ass )
+    }
+    else
+    {
+      val p1 = Atom( p, Utils.numeral( k )::Nil )
+      val p2 = Atom( p, Utils.numeral( k + 1 )::Nil )
+      val aux = Imp( p1, p2 )
+      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1::Nil, p1::Nil ), proof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
+    }
+  }
+}
+
+
+// Functions to construct cut-free FOL LK proofs of the sequents
+//
+// P(0), \ALL x . P(x) -> P(s(x)), P(s^n(0)) -> P(1) :- P(s^n(1))
+//
+// where n is an Integer parameter >= 0.
+object LinearExampleProof {
+  val s = "s"
+  val p = "P"
+  val c = "0"
+
+  def apply( n: Int ) = proof( 0, n )
+
+  // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
+  def proof( k: Int, n: Int )  : LKProof =
+  {
+    val x = FOLVar( "x" )
     val ass = AllVar( x, Imp( Atom( p, x::Nil ), Atom( p, Function( s, x::Nil )::Nil ) ) )
     if ( k == n ) // leaf proof
     {
@@ -45,17 +80,17 @@ object LinearExampleProof {
 //
 // The proofs constructed here go along the diagonal of P, i.e. one X-step, then one Y-step, etc.
 object SquareDiagonalExampleProof {
-  val s = new ConstantStringSymbol("s")
-  val p = new ConstantStringSymbol("P")
-  val c = new ConstantStringSymbol("0")
+  val s = "s"
+  val p = "P"
+  val c = "0"
 
   def apply( n: Int ) = proof( 0, n )
 
   // returns LKProof with end-sequent  P(s^k(0),s^k(0)), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y . P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
   def proof( k: Int, n: Int )  : LKProof =
   {
-    val x = FOLVar( VariableStringSymbol("x") )
-    val y = FOLVar( VariableStringSymbol("y") )
+    val x = FOLVar( "x" )
+    val y = FOLVar( "y" )
 
     val assx = AllVar( x, AllVar( y, Imp( Atom( p, x::y::Nil ), Atom(p, Function( s, x::Nil )::y::Nil ) ) ) )
     def assx_aux( k: Int ) = AllVar( y, Imp( Atom( p, Utils.numeral( k )::y::Nil ), Atom(p, Utils.numeral( k + 1 )::y::Nil ) ) )
@@ -99,12 +134,12 @@ object SquareDiagonalExampleProof {
 //
 // The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed
 object SquareEdgesExampleProof {
-  val s = new ConstantStringSymbol("s")
-  val p = new ConstantStringSymbol("P")
-  val c = new ConstantStringSymbol("0")
+  val s = "s"
+  val p = "P"
+  val c = "0"
 
-  val x = FOLVar( VariableStringSymbol("x") )
-  val y = FOLVar( VariableStringSymbol("y") )
+  val x = FOLVar( "x" )
+  val y = FOLVar( "y" )
 
   val assx = AllVar( x, AllVar( y, Imp( Atom( p, x::y::Nil ), Atom(p, Function( s, x::Nil )::y::Nil ) ) ) )
   def assx_aux( k: Int ) = AllVar( y, Imp( Atom( p, Utils.numeral( k )::y::Nil ), Atom(p, Utils.numeral( k + 1 )::y::Nil ) ) )
@@ -170,17 +205,17 @@ object SquareEdgesExampleProof {
 // but unlike SquareEdgesExampleProof, different functions are used for the X- and the Y-directions.
 object SquareEdges2DimExampleProof {
   //separate sucessor for the x- and y-directions
-  val sx = new ConstantStringSymbol("s_x")
-  val sy = new ConstantStringSymbol("s_y")
+  val sx = "s_x"
+  val sy = "s_y"
   //0 of the x-axis
-  val a= new ConstantStringSymbol("a")
+  val a= "a"
   //0 of the y-axis
-  val b = new ConstantStringSymbol("b")
+  val b = "b"
 
-  val p = new ConstantStringSymbol("P")
+  val p = "P"
 
-  val x = FOLVar( VariableStringSymbol("x") )
-  val y = FOLVar( VariableStringSymbol("y") )
+  val x = FOLVar( "x" )
+  val y = FOLVar( "y" )
 
   //Converts integers into terms consisting of nested application of the successor function to 0
   def numeralX (n: Int) = Utils.iterateTerm(FOLConst( a ), sx, n)
@@ -258,11 +293,11 @@ object SquareEdges2DimExampleProof {
 //
 // where n is an Integer parameter >= 0.
 object SumExampleProof {
-  val s = new ConstantStringSymbol("s")
-  val p = new ConstantStringSymbol("P")
+  val s = "s"
+  val p = "P"
 
-  val x = FOLVar( VariableStringSymbol("x") )
-  val y = FOLVar( VariableStringSymbol("y") )
+  val x = FOLVar( "x" )
+  val y = FOLVar( "y" )
 
   val ass = AllVar( x, AllVar( y, Imp( Atom( p, Function( s, x::Nil )::y::Nil ), Atom( p, x::Function( s, y::Nil )::Nil ) ) ) )
   def ass_inst( x: Int ) = AllVar( y, Imp( Atom( p, Function( s, Utils.numeral( x )::Nil )::y::Nil ), Atom( p, Utils.numeral( x )::Function( s, y::Nil )::Nil ) ) )
@@ -303,12 +338,12 @@ object SumExampleProof {
 //
 // where n is an Integer parameter >= 0.
 object LinearEqExampleProof {
-  val a = new ConstantStringSymbol("a")
-  val f = new ConstantStringSymbol("f")
+  val a = "a"
+  val f = "f"
 
-  val x = FOLVar( VariableStringSymbol( "x" ))
-  val y = FOLVar( VariableStringSymbol( "y" ))
-  val z = FOLVar( VariableStringSymbol( "z" ))
+  val x = FOLVar( "x")
+  val y = FOLVar( "y")
+  val z = FOLVar( "z")
 
   val Refl = AllVar( x, Equation(x ,x))
   val Ass = AllVar( x, Equation( Function( f, x::Nil ), x ))
@@ -369,14 +404,14 @@ object LinearEqExampleProof {
 }
 
 object SumOfOnesF2ExampleProof {
-  val s = new ConstantStringSymbol("s")
-  val zero = new ConstantStringSymbol("0")
-  val p = new ConstantStringSymbol("+")
-  var f = new ConstantStringSymbol("f")
+  val s = "s"
+  val zero = "0"
+  val p = "+"
+  var f = "f"
 
-  val x = FOLVar( VariableStringSymbol( "x" ))
-  val y = FOLVar( VariableStringSymbol( "y" ))
-  val z = FOLVar( VariableStringSymbol( "z" ))
+  val x = FOLVar( "x")
+  val y = FOLVar( "y")
+  val z = FOLVar( "z")
 
   //Helpers
   def Fn(n: Int) = Function(f, Utils.numeral(n)::Nil)
@@ -453,14 +488,14 @@ object SumOfOnesF2ExampleProof {
   *               Forall xy.x=y -> s(x) = s(y), f(0) = 0, Forall x.f(s(x)) = f(x) + s(0)}
   */
 object SumOfOnesFExampleProof {
-  val s = new ConstantStringSymbol("s")
-  val zero = new ConstantStringSymbol("0")
-  val p = new ConstantStringSymbol("+")
-  var f = new ConstantStringSymbol("f")
+  val s = "s"
+  val zero = "0"
+  val p = "+"
+  var f = "f"
 
-  val x = FOLVar( VariableStringSymbol( "x" ))
-  val y = FOLVar( VariableStringSymbol( "y" ))
-  val z = FOLVar( VariableStringSymbol( "z" ))
+  val x = FOLVar( "x")
+  val y = FOLVar( "y")
+  val z = FOLVar( "z")
 
   //Helpers
   def Fn(n: Int) = Function(f, Utils.numeral(n)::Nil)
@@ -551,13 +586,13 @@ object SumOfOnesFExampleProof {
 //
 // where n is an Integer parameter >= 0.
 object SumOfOnesExampleProof {
-  val s = new ConstantStringSymbol("s")
-  val zero = new ConstantStringSymbol("0")
-  val p = new ConstantStringSymbol("+")
+  val s = "s"
+  val zero = "0"
+  val p = "+"
 
-  val x = FOLVar( VariableStringSymbol( "x" ))
-  val y = FOLVar( VariableStringSymbol( "y" ))
-  val z = FOLVar( VariableStringSymbol( "z" ))
+  val x = FOLVar( "x")
+  val y = FOLVar( "y")
+  val z = FOLVar( "z")
 
   // axioms
   val Refl = AllVar( x, Equation( x, x ))
@@ -737,7 +772,7 @@ class AllQuantifiedConditionalAxiomHelper(variables: List[FOLVar], conditions: L
     var instantiated_conditions = conditions
     var instantiated_consequence = consequence
     for (i <- 0 to variables.length - 1) {
-      val substitute = (x: FOLFormula) => FOLSubstitution(x, variables(i), expressions(i))
+      val substitute = (x: FOLFormula) => Substitution(variables(i), expressions(i))(x)
       instantiated_conditions = instantiated_conditions.map(substitute)
       instantiated_consequence = substitute(instantiated_consequence)
     }
@@ -749,7 +784,7 @@ class AllQuantifiedConditionalAxiomHelper(variables: List[FOLVar], conditions: L
       expressions match {
         case Nil => p
         case head :: tail => {
-          val new_axiom = axiom.instantiate(head)
+          val new_axiom = instantiate(axiom, head)
           val new_p = instantiate_axiom(tail, new_axiom, p)
 
           ForallLeftRule(new_p, new_axiom, axiom, head)
@@ -787,21 +822,21 @@ class AllQuantifiedConditionalAxiomHelper(variables: List[FOLVar], conditions: L
 
 object UniformAssociativity3ExampleProof {
 
-  val s = new ConstantStringSymbol("s")
-  val p = new ConstantStringSymbol("+")
+  val s = "s"
+  val p = "+"
 
-  val x = FOLVar( VariableStringSymbol( "x" ))
-  val y = FOLVar( VariableStringSymbol( "y" ))
-  val z = FOLVar( VariableStringSymbol( "z" ))
+  val x = FOLVar( "x")
+  val y = FOLVar( "y")
+  val z = FOLVar( "z")
 
-  val x1 = FOLVar( VariableStringSymbol( "x_1" ))
-  val x2 = FOLVar( VariableStringSymbol( "x_2" ))
-  val y1 = FOLVar( VariableStringSymbol( "y_1" ))
-  val y2 = FOLVar( VariableStringSymbol( "y_2" ))
+  val x1 = FOLVar( "x_1")
+  val x2 = FOLVar( "x_2")
+  val y1 = FOLVar( "y_1")
+  val y2 = FOLVar( "y_2")
 
-  def f1( sym: ConstantSymbolA, arg: FOLTerm ) = Function(sym, arg::Nil)
-  def f2( sym: ConstantSymbolA, arg1: FOLTerm, arg2: FOLTerm ) : FOLTerm = Function(sym, arg1::arg2::Nil)
-  def f2( arg1: FOLTerm, sym: ConstantSymbolA, arg2: FOLTerm ) : FOLTerm = f2(sym, arg1, arg2)
+  def f1( sym: String, arg: FOLTerm ) = Function(sym, arg::Nil)
+  def f2( sym: String, arg1: FOLTerm, arg2: FOLTerm ) : FOLTerm = Function(sym, arg1::arg2::Nil)
+  def f2( arg1: FOLTerm, sym: String, arg2: FOLTerm ) : FOLTerm = f2(sym, arg1, arg2)
 
   // Axioms
 
@@ -1006,19 +1041,19 @@ object UniformAssociativity3ExampleProof {
  */
 object FactorialFunctionEqualityExampleProof {
 
-  val p = new ConstantStringSymbol("+")
-  val m = new ConstantStringSymbol("*")
-  val s = new ConstantStringSymbol("s")
-  val f = new ConstantStringSymbol("f")
-  val g = new ConstantStringSymbol("g")
+  val p = "+"
+  val m = "*"
+  val s = "s"
+  val f = "f"
+  val g = "g"
 
-  val x = FOLVar(VariableStringSymbol("x"))
-  val y = FOLVar(VariableStringSymbol("y"))
-  val z = FOLVar(VariableStringSymbol("z"))
+  val x = FOLVar("x")
+  val y = FOLVar("y")
+  val z = FOLVar("z")
 
-  def f1( sym: ConstantSymbolA, arg: FOLTerm ) = Function(sym, arg::Nil)
-  def f2( sym: ConstantSymbolA, arg1: FOLTerm, arg2: FOLTerm ) : FOLTerm = Function(sym, arg1::arg2::Nil)
-  def f2( arg1: FOLTerm, sym: ConstantSymbolA, arg2: FOLTerm ) : FOLTerm = f2(sym, arg1, arg2)
+  def f1( sym: String, arg: FOLTerm ) = Function(sym, arg::Nil)
+  def f2( sym: String, arg1: FOLTerm, arg2: FOLTerm ) : FOLTerm = Function(sym, arg1::arg2::Nil)
+  def f2( arg1: FOLTerm, sym: String, arg2: FOLTerm ) : FOLTerm = f2(sym, arg1, arg2)
 
   val f_ax_1 = Equation( f1(f, Utils.numeral(0)), f1(s, Utils.numeral(0)))
   val f_ax_2 = parse.fol("Forall x =(f(s(x)), *(s(x) , f(x)))")
