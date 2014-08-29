@@ -42,7 +42,7 @@ object CLIMain {
   println("    *  See help for a list of commands. *")
   println("    *************************************")
   println()
-  println(" GAPT Copyright (C) 2013")
+  println(" GAPT Copyright (C) 2014")
   println(" This program comes with ABSOLUTELY NO WARRANTY. This is free")
   println(" software, and you are welcome to redistribute it under certain")
   println(" conditions; type `copying' for details.")
