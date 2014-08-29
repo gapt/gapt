@@ -1,0 +1,106 @@
+\VARDEC{P,Q}{o}
+\VARDEC{S}{i>o}
+\VARDEC{x,y,z}{i}
+\CONSTDEC{0,1}{i}
+\CONSTDEC{+}{i>i>i}
+\CONSTDEC{AX,THEPROOF,IND,IND1,IND2,IND3,ASSOC, XBASE, XSTEP, YBASE, YSTEP, ONE}{o}
+
+\AXIOMDEC{IND}{}{(all S (S(0) & (all x (S(x) -> S(x+1)))) -> (all x S(x)))}
+% \AXIOMDEC{ASSOC}{}{x+(y+z)=(x+y)+z} %
+\AXIOMDEC{IND1}{}{( (all y (0+y=y+0)) & (all x ((all y (x+y=y+x)) -> (all y ((x+1)+y=y+(x+1)))))) -> (all x (all y (x+y=y+x)))}
+\AXIOMDEC{IND2}{}{((0+0=0+0) & (all x ((0+x=x+0) -> (0+(x+1)=(x+1)+0)))) -> (all x (0+x=x+0))}
+\AXIOMDEC{IND3}{}{(0+1=1+0 & (all x (x+1=1+x -> (x+1)+1=1+(x+1)))) -> (all x x+1=1+x)}
+
+\CONTINUEFROM{XBASE}{IND2}{  (all y (0+y=y+0)) }
+\CONTINUEFROM{XSTEP}{IND3}{  (all x ((all y (x+y=y+x)) -> (all y ((x+1)+y=y+(x+1))))) }
+\ANDR{IND2, IND3}{  (all y (0+y=y+0)) & (all x ((all y (x+y=y+x)) -> (all y ((x+1)+y=y+(x+1))))) }
+\AX{ (all x (all y (x+y=y+x)))}{(all x all y (x+y=y+x))}
+\IMPL{IND2, IND3, ( (all y (0+y=y+0)) & (all x ((all y (x+y=y+x)) -> (all y ((x+1)+y=y+(x+1)))))) -> (all x (all y (x+y=y+x)))}{(all x all y (x+y=y+x))}
+\DEF{IND1, IND2, IND3}{(all x all y (x+y=y+x))}
+\CONTINUEWITH{THEPROOF}
+
+
+
+\AX{}{0+0=0+0}
+
+\AX{}{0+(x+1)=(0+x)+1}
+\AX{(0+x=x+0)}{(0+x=x+0)}
+
+
+\AX{}{(x+1)+0=x+(1+0)}
+
+
+\AX{}{0+1=1}
+\AX{}{1+0=1} 
+\AX{}{ 1=1 } 
+\EQR{}{ 1=1+0 }
+\EQR{}{ 0+1=1+0 }
+
+\AX{}{x+(0+1)=(x+0)+1}
+\AX{}{ (x+0)+1=(x+0)+1}
+\EQR{}{ (x+0)+1=x+(0+1)}
+\EQR{}{ (x+0)+1=x+(1+0)}
+\EQR{}{ (x+0)+1=(x+1)+0}
+\EQR{(0+x=x+0)}{ (0+x)+1=(x+1)+0}
+\EQR{(0+x=x+0)}{ (0+(x+1)=(x+1)+0)}
+\IMPR{}{(0+x=x+0) -> (0+(x+1)=(x+1)+0)}
+\ALLR{}{}{(all x ((0+x=x+0) -> (0+(x+1)=(x+1)+0)))}
+\ANDR{}{((0+0=0+0) & (all x ((0+x=x+0) -> (0+(x+1)=(x+1)+0))))}
+
+\AX{0+y=y+0}{  0+y=y+0 }
+\ALLL{}{(all x (0+x=x+0))}{  0+y=y+0 }
+\ALLR{}{(all x (0+x=x+0))}{  (all y (0+y=y+0)) }
+\IMPL{((0+0=0+0) & (all x ((0+x=x+0) -> (0+(x+1)=(x+1)+0)))) -> (all x (0+x=x+0))}{  (all y (0+y=y+0)) }
+\DEF{IND2}{  (all y (0+y=y+0)) }
+\CONTINUEWITH{XBASE}
+
+
+\CONTINUEFROM{ONE}{IND3}{ (all x (x+1=1+x))}
+
+\AX{}{(x+1)+y=x+(1+y)}
+
+
+\AX{x+(1+y)=(1+y)+x}{x+(1+y)=(1+y)+x}
+
+\AX{y+1=1+y}{y+1=1+y}  
+\ALLL{}{(all x (x+1=1+x))}{y+1=1+y} 
+
+\AX{}{(y+1)+x=y+(1+x)}
+
+\AX{x+1=1+x}{x+1=1+x}
+\AX{x+1=1+x}{ (y+(x+1)=y+(x+1)) }
+\EQR{x+1=1+x}{ (y+(1+x)=y+(x+1)) }
+\ALLL{}{(all x (x+1=1+x))}{ (y+(1+x)=y+(x+1)) }
+\EQR{(all x (x+1=1+x))}{ ((y+1)+x=y+(x+1)) }
+\EQR{(all x (x+1=1+x)), (all x (x+1=1+x))}{ ((1+y)+x=y+(x+1)) }
+\CONTRL{(all x (x+1=1+x))}{ ((1+y)+x=y+(x+1)) }
+\EQR{(all x (x+1=1+x)), x+(1+y)=(1+y)+x}{ (x+(1+y)=y+(x+1)) }
+\ALLL{}{(all x (x+1=1+x)), (all y (x+y=y+x))}{ (x+(1+y)=y+(x+1)) }
+\EQR{(all x (x+1=1+x)), (all y (x+y=y+x))}{ ((x+1)+y=y+(x+1)) }
+\CUT{IND3, (all y (x+y=y+x))}{ ((x+1)+y=y+(x+1)) }
+\ALLR{}{IND3, (all y (x+y=y+x))}{ (all y ((x+1)+y=y+(x+1))) }
+\IMPR{IND3}{(all y (x+y=y+x)) -> (all y ((x+1)+y=y+(x+1))) }
+\ALLR{}{IND3}{  (all x ((all y (x+y=y+x)) -> (all y ((x+1)+y=y+(x+1))))) }
+\CONTINUEWITH{XSTEP}
+
+
+\AX{}{0+1=1}
+ \AX{}{1+0=1} 
+ \AX{}{ 1=1 } 
+\EQR{}{ 1=1+0 }
+\EQR{}{ 0+1=1+0 }
+
+\AX{}{1+(x+1)=(1+x)+1}
+
+\AX{ x+1=1+x}{ x+1=1+x}
+\AX{}{ (x+1)+1=(x+1)+1}
+\EQR{ x+1=1+x }{ (x+1)+1=(1+x)+1}
+\EQR{ x+1=1+x }{ (x+1)+1=1+(x+1)}
+\IMPR{}{ x+1=1+x -> (x+1)+1=1+(x+1)}
+\ALLR{}{}{  (all x (x+1=1+x -> (x+1)+1=1+(x+1)))}
+\ANDR{}{ (0+1=1+0 & (all x (x+1=1+x -> (x+1)+1=1+(x+1))))}
+
+\AX{  (all x x+1=1+x)}{(all x x+1=1+x)}
+\IMPL{ (0+1=1+0 & (all x (x+1=1+x -> (x+1)+1=1+(x+1)))) -> (all x x+1=1+x)}{(all x x+1=1+x)}
+\DEF{IND3}{(all x x+1=1+x)}
+\CONTINUEWITH{ONE}

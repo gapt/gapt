@@ -1,0 +1,71 @@
+\CONSTDEC{THREETWO}{i>i>i>o}
+\CONSTDEC{PIGEONS,P1,P2,P3}{i>o}
+\CONSTDEC{PROOF}{o}
+\CONSTDEC{0,1,pigeon1,pigeon2,pigeon3}{i}
+\CONSTDEC{hole}{i>i}
+\VARDEC{x,y,z,s,t}{i}
+
+\AX{hole(x)=z}{hole(x)=z}
+\AX{hole(y)=z}{hole(y)=z}
+\ANDR{hole(x)=z, hole(y)=z}{hole(x)=z & hole(y) = z}
+\CONTINUEWITH{THREETWO(x,y,z)}
+
+
+\CONTINUEFROM{THREETWO(pigeon1,pigeon2,t)}{hole(pigeon1)=t, hole(pigeon2)=t }{hole(pigeon1) = t & hole(pigeon2) = t  }
+\ORR{hole(pigeon1)=t, hole(pigeon2)=t }{(hole(pigeon1) = t & hole(pigeon2) = t) | (hole(pigeon1) = t & hole(pigeon3) = t) | (hole(pigeon2) = t & hole(pigeon3) = t)  }
+\EXR{t}{hole(pigeon1)=t, hole(pigeon2)=t }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\CONTINUEWITH{P1(t)}
+
+\CONTINUEFROM{THREETWO(pigeon1,pigeon3,t)}{hole(pigeon1)=t, hole(pigeon3)=t  }{(hole(pigeon1) = t & hole(pigeon3) = t)  }
+\ORR{hole(pigeon1)=t,  hole(pigeon3)=t  }{(hole(pigeon1) = t & hole(pigeon3) = t) | (hole(pigeon2) = t & hole(pigeon3) = t)  }
+\ORR{hole(pigeon1)=t,  hole(pigeon3)=t  }{(hole(pigeon1) = t & hole(pigeon2) = t) | (hole(pigeon1) = t & hole(pigeon3) = t) | (hole(pigeon2) = t & hole(pigeon3) = t)  }
+\EXR{t}{hole(pigeon1)=t, hole(pigeon3)=t  }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\CONTINUEWITH{P2(t)}
+
+
+\CONTINUEFROM{THREETWO(pigeon2, pigeon3, t)}{hole(pigeon2) = t, hole(pigeon3) = t }{(hole(pigeon2) = t & hole(pigeon3) = t)  }
+\ORR{hole(pigeon2) = t, hole(pigeon3) = t }{(hole(pigeon1) = t & hole(pigeon3) = t) | (hole(pigeon2) = t & hole(pigeon3) = t)  }
+\ORR{hole(pigeon2) = t, hole(pigeon3) = t }{(hole(pigeon1) = t & hole(pigeon2) = t) | (hole(pigeon1) = t & hole(pigeon3) = t) | (hole(pigeon2) = t & hole(pigeon3) = t)  }
+\EXR{t}{hole(pigeon2) = t, hole(pigeon3) = t }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\CONTINUEWITH{P3(t)}
+
+\CONTINUEFROM{P1(0)}{hole(pigeon1)=0, hole(pigeon2)=0 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\WEAKL{hole(pigeon1)=0, hole(pigeon2)=0, hole(pigeon3)=0 | hole(pigeon3)=1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+
+
+\CONTINUEFROM{P2(0)}{hole(pigeon1)=0, hole(pigeon3)=0  }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\WEAKL{hole(pigeon1)=0, hole(pigeon2) = 1, hole(pigeon3)=0  }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+
+\CONTINUEFROM{P3(1)}{hole(pigeon2) = 1, hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\WEAKL{hole(pigeon1)=0, hole(pigeon2) = 1, hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+\ORL{hole(pigeon1)=0, hole(pigeon2) = 1, hole(pigeon3)=0 | hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+
+
+\ORL{hole(pigeon1)=0, hole(pigeon2)=0 | hole(pigeon2) = 1, hole(pigeon3)=0 | hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+
+\CONTINUEFROM{P3(0)}{hole(pigeon2)=0, hole(pigeon3)=0 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\WEAKL{hole(pigeon1) = 1, hole(pigeon2)=0, hole(pigeon3)=0 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+\CONTINUEFROM{P2(1)}{hole(pigeon1) = 1, hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\WEAKL{hole(pigeon1) = 1, hole(pigeon2)=0, hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+\ORL{hole(pigeon1) = 1, hole(pigeon2)=0, hole(pigeon3)=0 | hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+\CONTINUEFROM{P1(1)}{hole(pigeon1) = 1, hole(pigeon2) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\WEAKL{hole(pigeon1) = 1, hole(pigeon2) = 1, hole(pigeon3)=0 | hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+\ORL{hole(pigeon1) = 1, hole(pigeon2)=0 | hole(pigeon2) = 1, hole(pigeon3)=0 | hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+
+\ORL{hole(pigeon1)=0 | hole(pigeon1) = 1, hole(pigeon2)=0 | hole(pigeon2) = 1, hole(pigeon3)=0 | hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+% \ALLL{pigeon3}{hole(pigeon1)=0 | hole(pigeon1) = 1, hole(pigeon2)=0 | hole(pigeon2) = 1, hole(pigeon3)=0 | hole(pigeon3) = 1 }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))} %
+\ALLL{pigeon3}{hole(pigeon1)=0 | hole(pigeon1) = 1, hole(pigeon2)=0 | hole(pigeon2) = 1, (all x (hole(x)=0 | hole(x) = 1)) }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\ALLL{pigeon2}{hole(pigeon1)=0 | hole(pigeon1) = 1, (all x (hole(x)=0 | hole(x) = 1)), (all x (hole(x)=0 | hole(x) = 1)) }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\ALLL{pigeon1}{(all x (hole(x)=0 | hole(x) = 1)), (all x (hole(x)=0 | hole(x) = 1)), (all x (hole(x)=0 | hole(x) = 1)) }{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\CONTRL{(all x (hole(x)=0 | hole(x) = 1)), (all x (hole(x)=0 | hole(x) = 1))}{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\CONTRL{(all x (hole(x)=0 | hole(x) = 1))}{(exists s ((hole(pigeon1) = s & hole(pigeon2) = s) | (hole(pigeon1) = s & hole(pigeon3) = s) | (hole(pigeon2) = s & hole(pigeon3) = s)  ))}
+\CONTINUEWITH{PROOF}
