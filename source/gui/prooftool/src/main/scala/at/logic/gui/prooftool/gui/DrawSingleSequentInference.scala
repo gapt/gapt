@@ -75,6 +75,7 @@ class DrawSingleSequentInference(var orientation : Orientation.Value) extends Sc
         val r2 = a.uProof2.root
         List(Sequent(r1.antecedent.filter(a.aux(0).contains), r1.succedent.filter(a.aux(0).contains)),
           Sequent(r2.antecedent.filter(a.aux(1).contains), r2.succedent.filter(a.aux(1).contains)))
+
       case _ =>
         List()
     }
@@ -86,6 +87,9 @@ class DrawSingleSequentInference(var orientation : Orientation.Value) extends Sc
       case Some(pf : PrincipalFormulas) =>
         val r = p().get.root
         Some(Sequent(r.antecedent.filter(pf.prin.contains), r.succedent.filter(pf.prin.contains)))
+      case Some(p : NullaryLKProof) =>
+        Some(p.root)
+
       case _ => None
     }
     if (primary != None) primaries.contents += DrawSequent(primary.get, font, "" )
