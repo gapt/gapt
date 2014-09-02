@@ -69,6 +69,7 @@ object MaxSATSolver extends Enumeration{
 }
 
 // Call a MaxSAT solver to solve partial weighted MaxSAT instances
+// by using command shell
 class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
 
   // the binaries of the specific MaxSATSolvers
@@ -199,6 +200,14 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     }
   }
 
+  def logTime(msg: String, millisec: Long): Unit = {
+    val msec = millisec % 1000
+    val sec = (millisec / 1000) % 60
+    val minutes = ((millisec / 1000) / 60) % 60
+    val hours = (((millisec / 1000) / 60) / 60 )
+    debug(msg + " " + hours + ":" + minutes + ":" + sec + "::" + msec)
+  }
+
   /**
    * Converts a given partial weighted MaxSAT instance
    * into wcnf format and invokes the solver.
@@ -210,6 +219,8 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    */
   private def getFromMaxSAT( hard: Set[FClause], soft: Set[Tuple2[FClause,Int]] ) :  Option[Map[FOLFormula, Boolean]] =
   {
+    debug("Generating wcnf file...")
+    val startTimeGenerate = System.currentTimeMillis()
     val clauses = soft.foldLeft(hard)((acc,c) => acc + c._1)
     updateAtoms(clauses)
     val sb = new StringBuilder()
@@ -225,6 +236,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
       debug("TOP: "+top)
       sb.append("p wcnf " + atom_map.size + " "  + clauses.size + " " + top + nl)
     }
+
 
     // construct qmaxsat text input
     hard.foreach ( c =>
@@ -251,18 +263,25 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
 
     val stderr = File.createTempFile("maxsat",".stderr")
     stderr.deleteOnExit()
+    val endTimeGenerate = System.currentTimeMillis()
+    logTime("[Runtime]<wcnf-Generation> ",(endTimeGenerate-startTimeGenerate))
 
+
+    val startTimeWriteInput = System.currentTimeMillis()
     val out = new BufferedWriter(new FileWriter(temp_in))
     out.append(sb.toString())
     out.close()
-
+    val endTimeWriteInput = System.currentTimeMillis()
+    logTime("[Runtime]<wcnf-IO> ", (endTimeWriteInput-startTimeWriteInput))
     //debug( "Generated maxsat input: ")
     //debug(sb.toString());
 
     // run maxsat
 
     //val run = pathToBinary + " " + temp_in.getAbsolutePath() + " " + temp_out.getAbsolutePath();
-    debug("Starting maxsat...");
+    debug("Starting maxsat...")
+    val startTimeMaxSAT = System.currentTimeMillis()
+
     var bin = qmaxsatbin
     var options = mutable.MutableList[String]()
     var command = List[String]()
@@ -291,13 +310,13 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     val value = process run processIO exitValue
 
     debug("Exit Value = " + value)
-    debug("maxsat finished.");
+    debug("maxsat finished");
+    logTime("[Runtime]<maxsat> ", (System.currentTimeMillis()-startTimeMaxSAT))
 
-
-    debug("IN_FILE:\n"+TextFileSlurper(temp_in));
+    trace("IN_FILE:\n"+TextFileSlurper(temp_in));
     //debug("OUT_FILE:\n"+TextFileSlurper(temp_out));
-    debug("OUT:\n"+output.toString);
-    debug("ERR:\n"+error.toString);
+    trace("OUT:\n"+output.toString);
+    trace("ERR:\n"+error.toString);
     // parse maxsat output and construct map
     val in = new BufferedReader(new InputStreamReader(
       new FileInputStream(stdout)));

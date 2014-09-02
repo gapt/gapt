@@ -10,7 +10,12 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.MCSMethod.MCSMethod
 import at.logic.language.fol._
 import at.logic.algorithms.cutIntroduction.Deltas._
+import at.logic.language.hol.logicSymbols._
+import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.parsing.readers.StringReader
 import at.logic.provers.maxsat.MaxSATSolver._
+import org.apache.commons.lang3.time.DateUtils
+import org.apache.log4j.helpers.DateTimeDateFormat
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
@@ -61,14 +66,20 @@ object TreeGrammarDecomposition{
 
     if(decomp != null) {
       // generating the sufficient set of keys
+      val startTimeSuffKeys = System.currentTimeMillis()
       decomp.suffKeys()
-      debug("Generating QMaxSAT MinCostSAT formulation")
+      val endTimeSuffKeys = System.currentTimeMillis()
+      logTime("[Runtime]<suffKeys> ",(endTimeSuffKeys-startTimeSuffKeys))
+      trace("Generating QMaxSAT MinCostSAT formulation")
       // Generating the MinCostSAT formulation for QMaxSAT
+      val startTimeMCS = System.currentTimeMillis()
       val f = decomp.MCS().asInstanceOf[Set[FOLFormula]]
+      val endTimeMCS = System.currentTimeMillis()
+      logTime("[Runtime]<MCS-Formulation> ",(endTimeMCS-startTimeMCS))
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
       val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula,Int]]]
-      debug("G: \n" + g)
-      debug("Starting up "+satsolver)
+      trace("G: \n" + g)
+      trace("Starting up "+satsolver)
       // Retrieving a model from a MaxSAT solver and extract the rules
       val rules = decomp.getRules((new MaxSAT(satsolver)).solvePWM(f, g))
       debug("Rules: " + rules)
@@ -81,6 +92,14 @@ object TreeGrammarDecomposition{
       error("Unsupported TreeGrammarDecomposition method.")
       return null
     }
+  }
+
+  def logTime(msg: String, millisec: Long): Unit = {
+    val msec = millisec % 1000
+    val sec = (millisec / 1000) % 60
+    val minutes = ((millisec / 1000) / 60) % 60
+    val hours = (((millisec / 1000) / 60) / 60 )
+    debug(msg + " " + hours + ":" + minutes + ":" + sec + "::" + msec)
   }
 }
 
@@ -110,7 +129,6 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
   // mapping keys to a list of terms which can be produced by a particular key
   var decompMap : mutable.HashMap[FOLTerm,mutable.Set[List[FOLTerm]]]
-
 
   // abstract method definitions for individual implementation
   // w.r.t. the method type
@@ -446,58 +464,73 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     // get all subsets of charPartitions of size at most n
     var permutedCharPartition = boundedPower(charPartition,m)
 
-    // for each ordered list of position sets
-    permutedCharPartition.foreach(partition => {
-      // nonterminal index
-      var index = 1
-      // new_key as in Eberhard [2014]
-      var new_key = k
-      // for every position in the set
-      // try to replace the term on that position by a non-terminal
-      val allrests = mutable.HashMap[Int,FOLExpression]()
-      for( i <- List.range(0,partition.size)){
-        var old_key = new_key
-        // if there are are other non-terminals to replace, try to
-        //if(nonterminalOccurs(new_key, nonterminal_b)) {
+    // nonterminal index
+    //var index = 1
+    // TODO: BEFORE/AFTER
+    //Range(1,n+1).foreach(startindex => {
+
+
+      // for each ordered list of position sets
+      permutedCharPartition.foreach(partition => {
+
+
+        // nonterminal index
+        var index = 1
+        //var index = startindex
+
+        // new_key as in Eberhard [2014]
+        var new_key = k
+        // for every position in the set
+        // try to replace the term on that position by a non-terminal
+        val allrests = mutable.HashMap[Int, FOLExpression]()
+        for (i <- List.range(0, partition.size)) {
+          var old_key = new_key
+          // if there are are other non-terminals to replace, try to
+          //if(nonterminalOccurs(new_key, nonterminal_b)) {
           val positionSet = partition(i)
           // since the rest fragments of all positions are the same, we can take an arbitrary one
-          val r = at.logic.language.fol.replacements.getAtPositionFOL(k,positionSet(0))
+          val r = at.logic.language.fol.replacements.getAtPositionFOL(k, positionSet(0))
           new_key = positionSet.foldLeft(new_key)((acc, pos) => replaceAtPosition(acc, nonterminal_a, pos, index))
           if (old_key != new_key) {
+
             index += 1
+            // TODO: BEFORE/AFTER
+            //index = (index + 1) % (n+1)
+            //if(index == 0)
+            //   index = 1
+
             // if the positions exist and we could successfully substitute all of them, we add the rest fragment to the map
             allrests(index) = r
           }
-        //}
-      }
-      // if new_key does not contain the previously introduced non-terminals nonterminal_b
-      // i.e. only non-terminals nonterminal_a occur
-      // add the key to the outputset
-      if(!nonterminalOccurs(new_key, nonterminal_b)){
-
-        // be sure to calculate the real rests, i.e. rests from gdv, substituted with the restfragments between α_i and β_i
-        val evs = getNonterminals(k,nonterminal_b).sorted.map(x => FOLVar(x))
-        val subs = decomposition._2.map( x => Substitution(evs.zip(x)))
-        val temp = allrests.toList sortBy(_._1)
-        val temp2 = temp.unzip._2
-        val finalrests = subs.map(sub => temp2.map(x => sub(x).asInstanceOf[FOLTerm]))
-
-        //debug("Key '"+k+"' produced '"+new_key+"' with rest "+decomposition._2)
-        result += new_key
-        /*if(decomposition._2.filter(_.size == 1).size > 0 && getNonterminals(new_key,nonterminal_a).size == 2) {
-          debug("Adding to k="+k+" aka key=" + new_key + " decomp=" + decomposition._2)
-          debug("Positions: "+partition)
-        }*/
-
-        if(decompMap.exists(_._1 == new_key))
-        {
-          decompMap(new_key) ++= finalrests.toSet
+          //}
         }
-        else {
-          decompMap(new_key) = mutable.Set(finalrests.toSeq :_*)
+        // if new_key does not contain the previously introduced non-terminals nonterminal_b
+        // i.e. only non-terminals nonterminal_a occur
+        // add the key to the outputset
+        if (!nonterminalOccurs(new_key, nonterminal_b)) {
+
+          // be sure to calculate the real rests, i.e. rests from gdv, substituted with the restfragments between α_i and β_i
+          val evs = getNonterminals(k, nonterminal_b).sorted.map(x => FOLVar(x))
+          val subs = decomposition._2.map(x => Substitution(evs.zip(x)))
+          val temp = allrests.toList sortBy (_._1)
+          val temp2 = temp.unzip._2
+          val finalrests = subs.map(sub => temp2.map(x => sub(x).asInstanceOf[FOLTerm]))
+
+          //debug("Key '"+k+"' produced '"+new_key+"' with rest "+decomposition._2)
+          result += new_key
+          /*if(decomposition._2.filter(_.size == 1).size > 0 && getNonterminals(new_key,nonterminal_a).size == 2) {
+            debug("Adding to k="+k+" aka key=" + new_key + " decomp=" + decomposition._2)
+            debug("Positions: "+partition)
+          }*/
+
+          if (decompMap.exists(_._1 == new_key)) {
+            decompMap(new_key) ++= finalrests.toSet
+          }
+          else {
+            decompMap(new_key) = mutable.Set(finalrests.toSeq: _*)
+          }
         }
-      }
-    })
+      })
     return result.toList
 
   }
@@ -679,7 +712,7 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
     val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) ::: acc)
     // update the reverse term map
     reverseTermMap = mutable.HashMap(termMap.toList.map(x => x.swap).toSeq:_*)
-    debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+printExpression(x).replaceAllLiterally(nonterminal_a, "\\alpha")))
+    trace("F: "+f.foldLeft("")((acc,x) => acc + "\\\\ \n"+PrettyPrinter(x).replaceAllLiterally(nonterminal_a, "\\alpha")))
     return f.toSet
   }
 
@@ -708,6 +741,92 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
   }
 
 
+
+
+    def PrettyPrinter(e:FOLExpression) : String = {
+
+      val p = pretty(e)
+
+      val r : String = e match {
+        case Function(x, args) => {
+          //if(p._1 != p._2 && p._2 != "tuple1")
+            if(p._3 > 0)
+              return p._2 + "^"+(p._3)+"("+p._1+") "
+            else
+              return p._1
+          //else
+          //  return p._1
+        }
+        case _ => return p._1
+      }
+
+      return r
+    }
+
+    private def pretty(exp : FOLExpression) : (String, String, Int) = {
+
+      val s : (String, String, Int) = exp match {
+        case null => ("null", "null", -2)
+        case FOLVar(x) => (x.toString(), x.toString(), 0)
+        case Atom(x,args) if args.size == 1 => (PrettyPrinter(args(0)),PrettyPrinter(args(0)),0)
+        case Atom(x, args) => {
+          (x.toString() + "(" + (args.foldRight(""){  case (x,"") => "" + PrettyPrinter(x)
+          case (x,str) => PrettyPrinter(x) + ", " + str
+          }) + ")", x.toString(), 0)
+        }
+        case Function(x, args) => {
+          // if only 1 argument is provided
+          // check if abbreviating of recursive function calls is possible
+          if(args.size == 1)
+          {
+            val p = pretty(args.head)
+
+            // current function is equal to first and ONLY argument
+            if( p._2 == x.toString() )
+            {
+              // increment counter and return (<current-string>, <functionsymbol>, <counter>)
+              return (p._1, x.toString(), p._3+1)
+            }
+            // function symbol has changed from next to this level
+            else
+            {
+
+              // in case of multiple recursive function calls
+              if(p._3 > 0)
+              {
+                return (p._2+"^"+p._3+"("+p._1+")", x.toString(), 0)
+              }
+              // otherwise
+              else
+              {
+                return (p._1, x.toString(), 1)
+              }
+            }
+          }
+          else
+          {
+            return (x.toString()+"("+ (args.foldRight(""){
+              case (x,"") => PrettyPrinter(x)
+              case (x,s) => PrettyPrinter(x) + ", " + s
+            })+ ")", x.toString(), 0)
+          }
+
+        }
+        case And(x,y) => (PrettyPrinter(x) + " \\land " + PrettyPrinter(y), AndSymbol.toString(), 0)
+        case Equation(x,y) => (PrettyPrinter(x) + " " + EqSymbol + " " + PrettyPrinter(y), EqSymbol.toString(), 0)
+        case Or(x,y) => (PrettyPrinter(x) + " \\lor " + PrettyPrinter(y), OrSymbol.toString(), 0)
+        case Imp(x,y) => (PrettyPrinter(x) + " \\to " + PrettyPrinter(y), ImpSymbol.toString(), 0)
+        case Neg(x) => ("\\neg "+PrettyPrinter(x), NegSymbol.toString(), 0)
+        case ExVar(x,f) => ("\\exists " + PrettyPrinter(x) + "." + PrettyPrinter(f), ExistsSymbol.toString(), 0)
+        case AllVar(x,f) => ("\\forall " + PrettyPrinter(x) + "." + PrettyPrinter(f), ForallSymbol.toString(), 0)
+        case FOLAbs(v, exp) => ("(\\lambda " + PrettyPrinter(v) + "." + PrettyPrinter(exp), "λ", 0)
+        case FOLApp(l,r) => ("(" + PrettyPrinter(l) + ")(" + PrettyPrinter(r)+ ")", "()()", 0)
+        case FOLConst(x) => (pA(FOLConst(x)),pA(FOLConst(x)), 0)
+        case _ => throw new Exception("ERROR: Unknown FOL expression.");
+      }
+      return s
+
+    }
 
   /**
    * Returns for a given formula f (of a QMaxSAT instance) its latex code
@@ -738,14 +857,17 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
    * @return latex representation of c
    */
   def pA(c:FOLConst) : String = {
-    val s = c.toString.split("_")
-    if(s.size == 2)
-    {
-      return "x_{\\alpha_{"+s(0)+"},"+keyList(s(1).toInt)+"}"
-    }else{
-      return "x_{"+reverseTermMap(s(0).toInt)+",\\alpha_{"+s(1)+"},"+reverseTermMap(s(2).toInt)+"}"
+      val cstr = c.toString
+      val s = cstr.split("_")
+      if (cstr(0).isDigit && s.size == 2) {
+        return "x_{\\alpha_{" + s(0) + "}," + PrettyPrinter(keyList(s(1).toInt)) + "}"
+      } else if(cstr(0).isDigit && s.size == 3) {
+        return "x_{" + PrettyPrinter(reverseTermMap(s(0).toInt)) + ",\\alpha_{" + s(1) + "}," + PrettyPrinter(reverseTermMap(s(2).toInt)) + "}"
+      }
+      else{
+        return c.toString
+      }
     }
-  }
 
   /**
    * Generates the formula D_{L,S}(t,i,q) according to
@@ -812,7 +934,6 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
    */
   def C(q: FOLTerm) : List[FOLFormula] = {
 
-    debug("GENERATING C(q), where q = '"+q+"'")
     val subterms = st(q)
     // save the index of the term for later
     val qindex = addToTermMap(q)
@@ -848,9 +969,6 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
     })
     val r = R(qindex,qsubtermIndexes.toSet)
     val d = D(q,0,q)
-    debug("formulas = "+formulas)
-    debug("D("+q+",0,"+q+") = "+d)
-    debug("R("+qindex+","+qsubtermIndexes.toSet+") = "+r)
     formulas ++ List(d, r)
   }
 

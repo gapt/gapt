@@ -1465,7 +1465,6 @@ object help {
         | Proof Theory:
         |   skolemize: LKProof => LKProof - skolemize the input proof
         |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
-        |   extractHerbrandSequent: LKProof => Sequent - extract the Herbrand sequent from a proof without quantified cuts.
         |   extractExpansionTrees: LKProof => ExpansionSequent - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
         |
@@ -1480,7 +1479,7 @@ object help {
         |
         | Cut-Introduction:
         |   cutIntro: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
-        |   ncutIntro: (LKProof,Int,[MaxSATSolver]) => Option[LKProof] - performs cut introduction for a maximum of n (Int) cuts. (optional: MaxSATSolver {QMaxSAT, ToySAT, ToySolver}")"
+        |   ncutIntro: (LKProof,Int,[MaxSATSolver]) => Option[List[FOLFormula]] - performs cut introduction for a maximum of n (Int) cuts. (optional: MaxSATSolver {QMaxSAT, ToySAT, ToySolver}")"
         |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
         |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
