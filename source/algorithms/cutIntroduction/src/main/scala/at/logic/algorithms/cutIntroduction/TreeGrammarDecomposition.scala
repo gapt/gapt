@@ -79,7 +79,7 @@ object TreeGrammarDecomposition{
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
       val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula,Int]]]
       trace("G: \n" + g)
-      trace("Starting up "+satsolver)
+      debug("Starting up "+satsolver)
       // Retrieving a model from a MaxSAT solver and extract the rules
       val rules = decomp.getRules((new MaxSAT(satsolver)).solvePWM(f, g))
       debug("Rules: " + rules)

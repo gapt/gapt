@@ -112,6 +112,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @return None if UNSAT, otherwise Some(minimal model)
    */
   def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : Option[MapBasedInterpretation] = {
+    debug("Generating clauses...")
     val hardCNF = hard.foldLeft(Set[FClause]())((acc,f) => acc ++ CNFp(f))
     val softCNFs = soft.foldLeft(Set[Tuple2[FClause,Int]]())((acc,s) => acc ++ CNFp(s._1).foldLeft(Set[Tuple2[FClause,Int]]())((acc,f) => acc + Tuple2[FClause,Int](f, s._2) ))
     trace("produced hard cnf: " + hardCNF)
