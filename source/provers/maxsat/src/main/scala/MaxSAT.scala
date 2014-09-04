@@ -113,10 +113,17 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    */
   def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : Option[MapBasedInterpretation] = {
     debug("Generating clauses...")
-    val hardCNF = hard.foldLeft(Set[FClause]())((acc,f) => acc ++ CNFp(f))
-    val softCNFs = soft.foldLeft(Set[Tuple2[FClause,Int]]())((acc,s) => acc ++ CNFp(s._1).foldLeft(Set[Tuple2[FClause,Int]]())((acc,f) => acc + Tuple2[FClause,Int](f, s._2) ))
+    val startTimeClauseGen = System.currentTimeMillis()
+    //val hardCNF = hard.foldLeft(Set[FClause]())((acc,f) => acc ++ CNFp(f))
+    val hardCNF = hard.map(f => CNFp(f)).flatten
+    debug("   ...hardCNF done")
     trace("produced hard cnf: " + hardCNF)
+    //val softCNFs = soft.foldLeft(Set[Tuple2[FClause,Int]]())((acc,s) => acc ++ CNFp(s._1).map(f => (f, s._2)))
+    val softCNFs = soft.map(s => CNFp(s._1).map(f => (f, s._2))).flatten
+    debug("   ...softCNFs done")
     trace("produced soft cnf: " + softCNFs)
+    val endTimeClauseGen = System.currentTimeMillis()
+    logTime("[Runtime]<CNFp-Generation> ",(endTimeClauseGen-startTimeClauseGen))
     solve( hardCNF, softCNFs )
   }
 
