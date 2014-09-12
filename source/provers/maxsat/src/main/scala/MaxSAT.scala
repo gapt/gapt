@@ -5,7 +5,7 @@ package at.logic.provers.maxsat
 
 import java.io._
 
-import at.logic.algorithms.resolution.CNFp
+import at.logic.algorithms.resolution.{CNFp, TseitinCNF}
 import at.logic.calculi.resolution._
 import at.logic.language.fol._
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
@@ -115,7 +115,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     debug("Generating clauses...")
     val startTimeClauseGen = System.currentTimeMillis()
     //val hardCNF = hard.foldLeft(Set[FClause]())((acc,f) => acc ++ CNFp(f))
-    val hardCNF = hard.map(f => CNFp(f)).flatten
+    val hardCNF = TseitinCNF(And(hard.toList))._1
     debug("   ...hardCNF done")
     trace("produced hard cnf: " + hardCNF)
     //val softCNFs = soft.foldLeft(Set[Tuple2[FClause,Int]]())((acc,s) => acc ++ CNFp(s._1).map(f => (f, s._2)))
@@ -123,7 +123,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     debug("   ...softCNFs done")
     trace("produced soft cnf: " + softCNFs)
     val endTimeClauseGen = System.currentTimeMillis()
-    logTime("[Runtime]<CNFp-Generation> ",(endTimeClauseGen-startTimeClauseGen))
+    logTime("[Runtime]<CNF-Generation> ",(endTimeClauseGen-startTimeClauseGen))
     solve( hardCNF, softCNFs )
   }
 
