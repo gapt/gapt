@@ -23,6 +23,7 @@ import at.logic.language.lambda.types.->
 import at.logic.utils.traits.Occurrence
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.{BinaryLKProof, UnaryLKProof}
+import at.logic.calculi.lksk.UnaryLKskProof
 
 /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
@@ -336,6 +337,10 @@ object Formatter {
         val (t, j) = asGraphViz(s,parent, i)
         val k = j+1
         (t + "n"+k+" -> n"+j+";\n"   ,k)
+      case UnaryLKskProof(rule, parent, root, _, _) =>
+        val (t, j) = asGraphViz(s,parent, i)
+        val k = j+1
+        (t + "n"+k+" -> n"+j+";\n"   ,k)
       case BinaryLKProof(rule, p1, p2, root, _, _, _) =>
         val (t1, j1) = asGraphViz(s,p1, i)
         val (t2, j2) = asGraphViz(t1,p2, j1)
@@ -352,6 +357,8 @@ object Formatter {
   def asXml(s : String, p:LKProof) : String = {
     p match {
       case UnaryLKProof(rule, parent, root, _, _) =>
+        asXml(s+"<unary rule=\""+toInt(rule)+"\">\n",parent)+"</unary>\n"
+      case UnaryLKskProof(rule, parent, root, _, _) =>
         asXml(s+"<unary rule=\""+toInt(rule)+"\">\n",parent)+"</unary>\n"
       case BinaryLKProof(rule, p1, p2, root, _, _, _) =>
         val t1 = asXml(s+"<binary rule=\""+toInt(rule)+"\">\n",p1)
