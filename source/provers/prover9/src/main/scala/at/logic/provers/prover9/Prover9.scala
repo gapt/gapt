@@ -390,16 +390,40 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   }
 
-  def isInstalled(): Boolean =
-    try {
-      "tptp_to_ladr".!!
-      "prover9".!!
-      "prooftrans ivy".!!
-      "prooftrans".!!
-      true
-    } catch {
-      case ex: IOException => false
+  def isInstalled(): Boolean = {
+    if (! isLadrToTptpInstalled()) {
+      println("ladr_to_tptp not found!")
+      return false
     }
+    if (! isProver9Installed()) {
+      println("prover9 not found!")
+      return false
+    }
+    if (! isProoftransInstalled()) {
+      println("prooftrans not found!")
+      return false
+    }
+    true
+  }
+
+  def isLadrToTptpInstalled() : Boolean = callBinary("ladr_to_tptp") == 1
+  def isProver9Installed() : Boolean = callBinary("prover9") == 2
+  def isProoftransInstalled() : Boolean = callBinary("prooftrans") == 1
+
+  def callBinary(name:String) : Int = {
+    val err = StringBuilder.newBuilder
+    val out = StringBuilder.newBuilder
+    val logger = ProcessLogger(line => out ++= line, line => err ++= line)
+    try {
+      val pio = name run logger
+      pio.exitValue()
+    } catch {
+      case e:Exception =>
+        -1
+    }
+  }
+
+
 }
 
 class Prover9Prover extends Prover with at.logic.utils.logging.Logger {
