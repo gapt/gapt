@@ -118,7 +118,7 @@ object solve extends at.logic.utils.logging.Logger {
     // auxiliary function to bypass rule application if possible
     def trySkipRuleApplication(toInsertLeft: List[HOLFormula], toInsertRight: List[HOLFormula]): Option[LKProof] = { // duplicated below
       if (SolveUtils.canSkipRuleApplication(toInsertLeft, toInsertRight, seq)) {
-          prove(rest, nextProofStrategies(0)).map(WeakeningRightRule(_, action.formula))
+          prove(rest, nextProofStrategies(0)).map(WeakeningLeftRule(_, action.formula))
       } else { None }
     }
 

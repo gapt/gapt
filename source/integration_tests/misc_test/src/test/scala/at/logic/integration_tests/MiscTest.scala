@@ -41,7 +41,6 @@ import org.junit.runner.RunWith
 import org.specs2.execute.Success
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
-import org.specs2.execute.Success
 
 @RunWith(classOf[JUnitRunner])
 class MiscTest extends SpecificationWithJUnit {
@@ -86,6 +85,12 @@ class MiscTest extends SpecificationWithJUnit {
 //      (new java.io.File( cs_path ) ).exists() must beEqualTo( true )
 //    }
 //    */
+
+    "perform cut introduction on an example proof" in {
+      val p = LinearExampleProof(0, 7)
+      CutIntroduction(p, ExactBound(1))
+      Success()
+    }
 
     "skolemize a simple proof" in {
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
