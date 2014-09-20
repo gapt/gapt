@@ -87,6 +87,7 @@ class MiscTest extends SpecificationWithJUnit {
 //    */
 
     "perform cut introduction on an example proof" in {
+      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
       val p = LinearExampleProof(0, 7)
       CutIntroduction(p, ExactBound(1))
       Success()
