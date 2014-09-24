@@ -321,6 +321,25 @@ object removeQuantifiers {
   }
 }
 
+/**
+ * Closes the given formula universally
+ * @param f the formula to be closed
+ * @return forall x_1 ... forall x_n f, where {x_i | 1 <= i <= n} = FV(f)
+ */
+object univclosure{
+  def apply(f: FOLFormula) = freeVariables(f).foldRight(f)((v, g) => AllVar(v, g))
+}
+
+/**
+ * Closes the given formula existentially
+ * @param f the formula to be closed
+ * @return exists x_1 ... exists x_n f, where {x_i | 1 <= i <= n} = FV(f)
+ */
+object existsclosure{
+  def apply(f: FOLFormula) = freeVariables(f).foldRight(f)((v, g) => ExVar(v, g))
+}
+
+
 /** Removes at most n universal quantifiers from a FOL formula that begins
   * with a quantifier block.
   *

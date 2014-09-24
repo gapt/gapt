@@ -103,7 +103,7 @@ object FClause {
 }
 
 // the boolean represent isPositive as the negation is stripped from the literals
-class Clause(val literals: Seq[Pair[FormulaOccurrence,Boolean]]) extends Sequent(
+class Clause(val literals: Seq[Tuple2[FormulaOccurrence,Boolean]]) extends Sequent(
   literals.filter(!_._2).map(_._1),
   literals.filter(_._2).map(_._1)
 ) with CNF {
@@ -113,7 +113,7 @@ class Clause(val literals: Seq[Pair[FormulaOccurrence,Boolean]]) extends Sequent
 }
 
 object Clause {
-  def apply(literals: Seq[Pair[FormulaOccurrence,Boolean]]) = new Clause(literals)
+  def apply(literals: Seq[Tuple2[FormulaOccurrence,Boolean]]) = new Clause(literals)
   def apply(neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence]) = new Clause(neg.map((_,false)) ++ pos.map((_,true)))
   def unapply(s: Sequent) = s match {
     case c: Clause => Some(c.negative, c.positive)

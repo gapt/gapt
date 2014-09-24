@@ -60,7 +60,7 @@ object createContext {
       }
     }
     def apply(literals: Seq[FOLFormula]) (implicit factory: FOFactory): RobinsonResolutionProof = {
-      val lits: Seq[Pair[FormulaOccurrence,Boolean]] = literals.map(l => if (IsNeg(l)) (factory.createFormulaOccurrence(StripNeg(l),Nil),false)
+      val lits: Seq[Tuple2[FormulaOccurrence,Boolean]] = literals.map(l => if (IsNeg(l)) (factory.createFormulaOccurrence(StripNeg(l),Nil),false)
         else (factory.createFormulaOccurrence(l,Nil),true))
       new LeafAGraph[Clause](Clause(lits)) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
         def rule = InitialType

@@ -1,10 +1,11 @@
 package at.logic.algorithms.resolution
 
-import at.logic.calculi.resolution.robinson.{Resolution, RobinsonResolutionProof}
-import at.logic.calculi.resolution.ral.{Cut, Sub, RalResolutionProof}
+import at.logic.calculi.resolution.robinson.{Factor, Resolution, RobinsonResolutionProof}
+import at.logic.calculi.resolution.ral._
 import at.logic.calculi.lksk.{LabelledFormulaOccurrence, LabelledSequent}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.resolution.Clause
+import at.logic.language.hol.HOLFormula
 
 /**
  * Created by marty on 9/9/14.
@@ -17,20 +18,46 @@ object RobinsonToRal {
 
   def apply(rp : RobinsonResolutionProof) : RalResolutionProof[LabelledSequent] = apply(rp, emptyTranslationMap)._2
 
-  def apply(rp : RobinsonResolutionProof, map : TranslationMap) : (TranslationMap, RalResolutionProof[LabelledSequent]) = {
+  def apply(rp : RobinsonResolutionProof, map : TranslationMap) : (TranslationMap, RalResolutionProof[LabelledSequent]) =
     rp match {
       case Resolution(clause, p1, p2, aux1, aux2, sub) =>
         val (rmap1, rp1) = apply(p1, map)
         val (rmap2, rp2) = apply(p2, rmap1)
         val sub1 = Sub(rp1, sub)
         val sub2 = Sub(rp2, sub)
-        val rule = Cut(sub1, sub2, List(getOccFromSuccAncestor(sub1, rmap2, aux1)),
-                                   List(getOccFromAnteAncestor(sub2, rmap2, aux2)))
+        val rule = Cut(sub1, sub2, List(pickFOsucc(sub(aux1.formula), sub1.root, Nil)),
+                                   List(pickFOant(sub(aux2.formula), sub2.root, Nil)))
 
         (rmap2, rule)
 
-    }
+      case Factor(clause, parent, List(aux1@(f1::_)), sub) if clause.antecedent.contains(f1) =>
+        val (rmap1, rp1) = apply(parent, map)
+        val sub1 = Sub(rp1, sub)
+        val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(x.formula, rp1.root, list)::list).reverse
+        val rule = AFactorF(rp1, a, aux )
+        (rmap1, rule)
+
+      case Factor(clause, parent, List(aux1@(f1::_)), sub) if clause.succedent.contains(f1) =>
+        val (rmap1, rp1) = apply(parent, map)
+        val sub1 = Sub(rp1, sub)
+        val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(x.formula, rp1.root, list)::list).reverse
+        val rule = AFactorT(rp1, a, aux )
+        (rmap1, rule)
+
+      //TODO: handle factor rules with two contractions
+
+
   }
+
+
+  def pickFO(f:HOLFormula, list : Seq[LabelledFormulaOccurrence], exclusion_list : Seq[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence =
+    list.find(x => x.formula == f && ! exclusion_list.contains(x)) match {
+    case None => throw new Exception("Could not find auxiliary formula "+f+" in "+list.mkString("(",",",")"))
+    case Some(focc) => focc
+  }
+
+  def pickFOant(f:HOLFormula, fs : LabelledSequent, exclusion_list : Seq[LabelledFormulaOccurrence]) = pickFO(f, fs.l_antecedent, exclusion_list)
+  def pickFOsucc(f:HOLFormula, fs : LabelledSequent, exclusion_list : Seq[LabelledFormulaOccurrence]) = pickFO(f, fs.l_succedent, exclusion_list)
 
   def updateMap(map : TranslationMap, root1 : Clause, root2 : Clause, nroot : LabelledSequent) : TranslationMap = {
 

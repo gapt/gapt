@@ -318,9 +318,6 @@ object loadProver9LKProof {
     }
   }
 
-  def univclosure(f: FOLFormula) = FOLfreeVariables(f).foldRight(f)((v, g) => FOLAllVar(v, g))
-
-  def existsclosure(f: FOLFormula) = FOLfreeVariables(f).foldRight(f)((v, g) => FOLExVar(v, g))
 
   // What is this doing here?? C'mon people!!!
   def containsStrongQuantifiers(fs: FSequent): Boolean =

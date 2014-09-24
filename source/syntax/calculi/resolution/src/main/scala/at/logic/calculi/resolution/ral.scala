@@ -40,6 +40,10 @@ case object OrF2RalType extends UnaryRuleTypeA
 case object ImpTRalType extends UnaryRuleTypeA
 case object ImpF1RalType extends UnaryRuleTypeA
 case object ImpF2RalType extends UnaryRuleTypeA
+case object AFactorTType extends UnaryRuleTypeA
+case object AFactorFType extends UnaryRuleTypeA
+
+
 
 trait RalResolutionProof[V <: LabelledSequent] extends ResolutionProof[V]
 /* ********************* Cut and Quantifier Rules ****************************** */
@@ -481,4 +485,70 @@ object ImpT {
 }
 
 
+object AFactorT {
+  def apply[V <: LabelledSequent](s1: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2ocs : Seq[LabelledFormulaOccurrence]) = {
+    s1.root.l_succedent.find(x => x == term1oc) match {
+      case None =>
+        throw new ResolutionRuleCreationException("Auxiliary formula 1 not contained in the right part of the sequent")
+      case Some(term1) =>
+        val fterms = term2ocs.map(occ => s1.root.l_succedent.find(_ == occ)).toList
+        val terms = for (t <- fterms) yield {
+          require(t.nonEmpty, "Could not find contracted formula in succedent!")
+          val t_ = t.get
+          require(term1.formula == t_.formula, "Contracted formulas must be equal!")
+          t_
+        }
 
+        require(isAtom(term1.formula) , "Can only contract atom formulas!")
+        val f = term1.formula
+        val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1 :: terms ).asInstanceOf[LabelledFormulaOccurrence]
+        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent), createContext(s1.root.succedent filterNot(_ == term1)) ++ List(prinFormula1)), s1)
+          with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas  {
+          def rule = AFactorTType
+          def aux = (term1 :: terms)::Nil
+          def prin = prinFormula1::Nil
+        }
+    }
+  }
+
+  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == AFactorTType ) {
+    val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+    val ((a1::aux)::Nil) = pr.aux
+    val (p1::Nil) = pr.prin
+    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a1.asInstanceOf[LabelledFormulaOccurrence], aux.asInstanceOf[List[LabelledFormulaOccurrence]]), p1.asInstanceOf[LabelledFormulaOccurrence])
+  }
+}
+
+object AFactorF {
+  def apply[V <: LabelledSequent](s1: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2ocs : Seq[LabelledFormulaOccurrence]) = {
+    s1.root.l_antecedent.find(x => x == term1oc) match {
+      case None =>
+        throw new ResolutionRuleCreationException("Auxiliary formula 1 not contained in the right part of the sequent")
+      case Some(term1) =>
+        val fterms = term2ocs.map(occ => s1.root.l_antecedent.find(_ == occ)).toList
+        val terms = for (t <- fterms) yield {
+          require(t.nonEmpty, "Could not find contracted formula in antecedent!")
+          val t_ = t.get
+          require(term1.formula == t_.formula, "Contracted formulas must be equal!")
+          t_
+        }
+
+        require(isAtom(term1.formula) , "Can only contract atom formulas!")
+        val f = term1.formula
+        val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1::terms).asInstanceOf[LabelledFormulaOccurrence]
+        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent filterNot(_ == term1)) ++ List(prinFormula1), createContext(s1.root.succedent)), s1)
+          with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas  {
+          def rule = AFactorFType
+          def aux = (term1 :: terms)::Nil
+          def prin = prinFormula1::Nil
+        }
+    }
+  }
+
+  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == AFactorFType ) {
+    val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
+    val ((a1::aux)::Nil) = pr.aux
+    val (p1::Nil) = pr.prin
+    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a1.asInstanceOf[LabelledFormulaOccurrence], aux.asInstanceOf[List[LabelledFormulaOccurrence]]), p1.asInstanceOf[LabelledFormulaOccurrence])
+  }
+}
