@@ -1,10 +1,13 @@
 package at.logic.algorithms.resolution
 
-import at.logic.calculi.resolution.robinson.{Factor, Resolution, RobinsonResolutionProof}
+import at.logic.algorithms.fol.fol2hol
+import at.logic.calculi.lk.base.FSequent
+import at.logic.calculi.lksk.TypeSynonyms.{EmptyLabel, Label}
+import at.logic.calculi.resolution.Clause
+import at.logic.calculi.resolution.robinson._
 import at.logic.calculi.resolution.ral._
 import at.logic.calculi.lksk.{LabelledFormulaOccurrence, LabelledSequent}
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.Clause
 import at.logic.language.hol.HOLFormula
 
 /**
@@ -20,6 +23,13 @@ object RobinsonToRal {
 
   def apply(rp : RobinsonResolutionProof, map : TranslationMap) : (TranslationMap, RalResolutionProof[LabelledSequent]) =
     rp match {
+      case InitialClause(clause) =>
+        val fc : FSequent = clause.toFClause.toFSequent
+        val (rule, labels) = InitialSequent(fol2hol(fc), (fc.antecedent.toList.map(x => EmptyLabel()), fc.succedent.toList.map(x => EmptyLabel())))
+
+        (emptyTranslationMap, rule)
+
+
       case Resolution(clause, p1, p2, aux1, aux2, sub) =>
         val (rmap1, rp1) = apply(p1, map)
         val (rmap2, rp2) = apply(p2, rmap1)
@@ -43,6 +53,27 @@ object RobinsonToRal {
         val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(x.formula, rp1.root, list)::list).reverse
         val rule = AFactorT(rp1, a, aux )
         (rmap1, rule)
+
+      case Paramodulation(clause, paraparent, parent, equation, modulant, primary, sub ) if parent.root.antecedent contains modulant =>
+        val (rmap1, rp1) = apply(paraparent, map)
+        val (rmap2, rp2) = apply(parent, rmap1)
+        val sub1 = Sub(rp1, sub)
+        val sub2 = Sub(rp2, sub)
+        val rule = ParaF(rp1,rp2, pickFOsucc(equation.formula, rp1.root, List()), pickFOant(modulant.formula, rp2.root, List()), primary.formula)
+        (rmap2, rule)
+
+      case Paramodulation(clause, paraparent, parent, equation, modulant, primary, sub ) if parent.root.succedent contains modulant =>
+        val (rmap1, rp1) = apply(paraparent, map)
+        val (rmap2, rp2) = apply(parent, rmap1)
+        val sub1 = Sub(rp1, sub)
+        val sub2 = Sub(rp2, sub)
+        val rule = ParaT(rp1,rp2, pickFOsucc(equation.formula, rp1.root, List()), pickFOsucc(modulant.formula, rp2.root, List()), primary.formula)
+        (rmap2, rule)
+
+      case Variant(clause, parent, sub) =>
+        val (rmap1, rp1) = apply(parent, map)
+        val sub1 = Sub(rp1, sub)
+        (rmap1, sub1)
 
       //TODO: handle factor rules with two contractions
 

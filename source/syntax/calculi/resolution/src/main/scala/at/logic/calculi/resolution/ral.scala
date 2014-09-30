@@ -7,27 +7,34 @@
 
 package at.logic.calculi.resolution.ral
 
+import at.logic.calculi.lk.EquationVerifier
+import at.logic.calculi.lk.EquationVerifier.EqualModuloEquality
 import at.logic.calculi.resolution._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.calculi.lksk._
 import at.logic.calculi.lksk.TypeSynonyms._
-import at.logic.calculi.lk.base.{Sequent, AuxiliaryFormulas, PrincipalFormulas, SubstitutionTerm}
+import at.logic.calculi.lk.base._
+import at.logic.calculi.resolution.createContext
 import at.logic.language.hol._
 import at.logic.language.hol.BetaReduction._
 import at.logic.language.hol.skolemSymbols.TypeSynonyms.SkolemSymbol
 import at.logic.language.lambda.types._
 import at.logic.utils.ds.acyclicGraphs._
+import at.logic.utils.ds.trees.LeafTree
 import at.logic.utils.labeling._
 import at.logic.utils.traits.Occurrence
 //import util.grammar.LabelledRHS
 
 // inferences
+case object InitialRalType extends NullaryRuleTypeA
 case object AllTRalType extends UnaryRuleTypeA
 case object AllFRalType extends UnaryRuleTypeA
 case object ExTRalType extends UnaryRuleTypeA
 case object ExFRalType extends UnaryRuleTypeA
 case object CutRalType extends BinaryRuleTypeA
+case object ParaTRalType extends BinaryRuleTypeA
+case object ParaFRalType extends BinaryRuleTypeA
 case object SubType extends UnaryRuleTypeA
 case object NegTRalType extends UnaryRuleTypeA
 case object NegFRalType extends UnaryRuleTypeA
@@ -45,8 +52,35 @@ case object AFactorFType extends UnaryRuleTypeA
 
 
 
+
 trait RalResolutionProof[V <: LabelledSequent] extends ResolutionProof[V]
 /* ********************* Cut and Quantifier Rules ****************************** */
+object InitialSequent {
+  def apply(seq: FSequent, maps: (List[Label], List[Label]))
+  : (RalResolutionProof[LabelledSequent], (List[LabelledFormulaOccurrence], List[LabelledFormulaOccurrence])) =
+    createDefault(seq, maps, (x,y) => new LabelledSequent(x,y))
+
+
+  def createDefault[V <: LabelledSequent](seq: FSequent, maps: (List[Label], List[Label]), sequent_constructor : (Seq[LabelledFormulaOccurrence], Seq[LabelledFormulaOccurrence]) => V): (RalResolutionProof[V], (List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence])) = {
+    val left: Seq[LabelledFormulaOccurrence] =
+      seq.antecedent.zip(maps._1).map( p => createOccurrence( p._1 , p._2 ) )
+    val right: Seq[LabelledFormulaOccurrence] =
+      seq.succedent.zip(maps._2).map( p => createOccurrence( p._1, p._2 ) )
+
+    (new LeafTree[V](sequent_constructor(left, right ) )
+      with RalResolutionProof[V] with NullaryResolutionProof[V] {
+        def rule = InitialRalType
+      },
+      (left.toList,right.toList)
+    )
+  }
+
+  def createOccurrence(f: HOLFormula, l: Label): LabelledFormulaOccurrence =
+    LKskFOFactory.createInitialOccurrence(f, l)
+
+  def unapply(proof: RalResolutionProof[LabelledSequent]) = if (proof.rule == InitialRalType) Some((proof.root)) else None
+}
+
 object Cut {
   def apply[V <: LabelledSequent](s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1ocs: List[Occurrence], term2ocs: List[Occurrence]) = {
     if ( !term1ocs.isEmpty && !term2ocs.isEmpty ) throw new ResolutionRuleCreationException( "Cut in R_{al} must have at least one auxiliary formula on every side")
@@ -59,23 +93,23 @@ object Cut {
       if ( term1s.exists( x => term2s.exists( y => x != y ) ) ) throw new ResolutionRuleCreationException("Formulas to be cut are not identical")
       else {
         new BinaryAGraph[LabelledSequent](new LabelledSequent(
-            createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(term2s contains (_))),
-            createContext(s1.root.succedent filterNot(term1s contains (_))) ++ createContext(s2.root.succedent))
+          createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(term2s contains (_))),
+          createContext(s1.root.succedent filterNot(term1s contains (_))) ++ createContext(s2.root.succedent))
           , s1, s2)
           with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
-              def rule = CutRalType
-              def aux = (term1s)::(term2s)::Nil
-          }
+          def rule = CutRalType
+          def aux = (term1s)::(term2s)::Nil
+        }
       }
     }
   }
 
   def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == CutRalType) {
-      val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas]
-      val (a1::a2::Nil) = r.aux
-      Some((r.uProof1, r.uProof2, r.root, a1, a2))
-    }
-    else None
+    val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas]
+    val (a1::a2::Nil) = r.aux
+    Some((r.uProof1, r.uProof2, r.root, a1, a2))
+  }
+  else None
 }
 
 object ForallT {
@@ -97,10 +131,10 @@ object ForallT {
   }
 
   def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == AllTRalType) {
-      val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
-      val ((a::Nil)::Nil) = pr.aux
-      val (p::Nil) = pr.prin
-      Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+    val ((a::Nil)::Nil) = pr.aux
+    val (p::Nil) = pr.prin
+    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
   }
 }
 
@@ -126,11 +160,11 @@ object ForallF {
   }
 
   def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == AllFRalType) {
-      val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
-      val ((a::Nil)::Nil) = pr.aux
-      val (p::Nil) = pr.prin
-      Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
-  }  
+    val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+    val ((a::Nil)::Nil) = pr.aux
+    val (p::Nil) = pr.prin
+    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+  }
 }
 
 object ExistsF {
@@ -152,10 +186,10 @@ object ExistsF {
   }
 
   def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == ExFRalType) {
-      val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
-      val ((a::Nil)::Nil) = pr.aux
-      val (p::Nil) = pr.prin
-      Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+    val ((a::Nil)::Nil) = pr.aux
+    val (p::Nil) = pr.prin
+    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
   }
 }
 
@@ -180,24 +214,24 @@ object ExistsT {
   }
 
   def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ExTRalType) {
-      val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
-      val ((a::Nil)::Nil) = pr.aux
-      val (p::Nil) = pr.prin
-      Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
-  }  
+    val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
+    val ((a::Nil)::Nil) = pr.aux
+    val (p::Nil) = pr.prin
+    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+  }
 }
 
 object Sub {
   def apply[V <: LabelledSequent](p: RalResolutionProof[V], sub: Substitution) =
     new UnaryAGraph[LabelledSequent](new LabelledSequent(
-        p.root.antecedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( betaNormalize( sub(x.formula) ), x, x::Nil, sub)),
-        p.root.succedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( betaNormalize( sub(x.formula) ), x, x::Nil, sub))),
+      p.root.antecedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( betaNormalize( sub(x.formula) ), x, x::Nil, sub)),
+      p.root.succedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( betaNormalize( sub(x.formula) ), x, x::Nil, sub))),
       p)
       with RalResolutionProof[V] with UnaryResolutionProof[V] with AppliedSubstitution {def rule = SubType; def substitution = sub}
 
   def unapply[V <: Sequent](proof: ResolutionProof[V] with AppliedSubstitution) = if (proof.rule == SubType) {
-      val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AppliedSubstitution]
-      Some((pr.root, pr.uProof, pr.substitution))
+    val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AppliedSubstitution]
+    Some((pr.root, pr.uProof, pr.substitution))
   }
 }
 
@@ -466,8 +500,8 @@ object ImpT {
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( l ), term1::Nil).asInstanceOf[LabelledFormulaOccurrence]
         val prinFormula2 = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1::Nil).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent](new LabelledSequent(
-           createContext(s1.root.antecedent) :+ prinFormula1,
-           createContext(s1.root.succedent filterNot(_ == term1)) :+ prinFormula2), s1)
+          createContext(s1.root.antecedent) :+ prinFormula1,
+          createContext(s1.root.succedent filterNot(_ == term1)) :+ prinFormula2), s1)
           with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas  {
           def rule = ImpTRalType
           def aux = (term1::Nil)::Nil
@@ -551,4 +585,69 @@ object AFactorF {
     val (p1::Nil) = pr.prin
     Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a1.asInstanceOf[LabelledFormulaOccurrence], aux.asInstanceOf[List[LabelledFormulaOccurrence]]), p1.asInstanceOf[LabelledFormulaOccurrence])
   }
+}
+
+
+object ParaT {
+  def apply[V <: LabelledSequent](s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2oc : LabelledFormulaOccurrence, para_formula : HOLFormula) = {
+    val term1ops = s1.root.succedent.find(x => x == term1oc)
+    val term2ops = s2.root.succedent.find(x => x == term2oc)
+    (term1ops, term2ops) match {
+      case (Some(occ1@LabelledFormulaOccurrence(Equation(s,t), anc1, label1)),
+      Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
+        EquationVerifier(s,t, term2, para_formula ) match {
+          case EqualModuloEquality(path) =>
+            new BinaryAGraph[LabelledSequent](new LabelledSequent(
+              createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent),
+              createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent filterNot(_ == term2oc)))
+              , s1, s2)
+              with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
+              def rule = ParaTRalType
+              def aux = List(term1oc, term2oc)::Nil
+            }
+        }
+
+      case _ =>
+        throw  new ResolutionRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+    }
+  }
+
+  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ParaTRalType) {
+    val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas]
+    val (List(a1,a2)::Nil) = r.aux
+    Some((r.uProof1, r.uProof2, r.root, a1, a2))
+  }
+  else None
+}
+
+object ParaF {
+  def apply[V <: LabelledSequent](s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2oc : LabelledFormulaOccurrence, para_formula : HOLFormula) = {
+    val term1ops = s1.root.succedent.find(x => x == term1oc)
+    val term2ops = s2.root.antecedent.find(x => x == term2oc)
+    (term1ops, term2ops) match {
+      case (Some(occ1@LabelledFormulaOccurrence(Equation(s,t), anc1, label1)),
+      Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
+        EquationVerifier(s,t, term2, para_formula ) match {
+          case EqualModuloEquality(path) =>
+            new BinaryAGraph[LabelledSequent](new LabelledSequent(
+              createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(_ == term2oc)),
+              createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent))
+              , s1, s2)
+              with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
+              def rule = ParaFRalType
+              def aux = List(term1oc, term2oc)::Nil
+            }
+        }
+
+      case _ =>
+        throw  new ResolutionRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+    }
+  }
+
+  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ParaFRalType) {
+    val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas]
+    val (List(a1,a2)::Nil) = r.aux
+    Some((r.uProof1, r.uProof2, r.root, a1, a2))
+  }
+  else None
 }
