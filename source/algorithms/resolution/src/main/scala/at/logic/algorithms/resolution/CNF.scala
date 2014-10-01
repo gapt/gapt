@@ -1,6 +1,6 @@
 package at.logic.algorithms.resolution
 
-import at.logic.language.fol.{FOLVar, FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom, toNNF}
+import at.logic.language.fol.{FOLVar, FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom}
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{StringSymbol, SymbolA}
@@ -107,7 +107,6 @@ object TseitinCNF extends Logger {
           val sym = at.logic.language.lambda.rename(hc, fsyms ::: auxsyms.toList)
           val auxAtom = FAtom(sym, Nil)
           auxsyms += sym
-	  //hc = sym
           subformulaMap(f) = auxAtom
           return auxAtom
         }
