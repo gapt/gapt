@@ -44,10 +44,19 @@ object getRenaming {
   def apply(toRename: List[SymbolA], blackList: List[SymbolA]) : List[SymbolA] = toRename match {
     case s :: tl => 
       if ( blackList.exists(e => e == s) ) {
-        val newSym = s match {
-          case StringSymbol(n) => VariantSymbol(n, 0)
-          case VariantSymbol(n, i) => VariantSymbol(n, i+1)
+        val (name, index) = s match {
+          case StringSymbol(n) => (n, -1)
+          case VariantSymbol(n, i) => (n, i)
         }
+	val maxVariant = blackList.maxBy(symbol => symbol match {
+	  case VariantSymbol(n, i) if n == name => i
+	  case _ => -1
+	})
+	val maxIndex = maxVariant match { 
+	  case VariantSymbol(_, i) => i 
+	  case StringSymbol(_) => -1
+	}
+	val newSym = VariantSymbol(name, Math.max(maxIndex, index) + 1)
         // Put back in the list to check if the renaming does not clash again.
         getRenaming(newSym::tl, blackList)
       }
