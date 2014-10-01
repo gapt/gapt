@@ -1,6 +1,6 @@
 package at.logic.algorithms.resolution
 
-import at.logic.language.fol.{FOLVar, FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom}
+import at.logic.language.fol.{FOLVar, FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom, toNNF}
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{StringSymbol, SymbolA}
@@ -54,7 +54,7 @@ object TseitinCNF extends Logger {
 
   var subformulaMap : mutable.HashMap[FOLFormula, FOLFormula] = new mutable.HashMap[FOLFormula, FOLFormula]()
 
-  val hc = StringSymbol("Σ")
+  val hc = StringSymbol("x")
   var fsyms = List[SymbolA]()
   var auxsyms = mutable.MutableList[SymbolA]()
   /**
@@ -78,24 +78,16 @@ object TseitinCNF extends Logger {
    * @param f formula which should be transformed
    * @return tuple where 1st are clauses equivalent to f in CNF and Tseitin transformed f
    */
-  def apply(f: FOLFormula): (Set[FClause],FOLFormula) = {
+  def apply(f: FOLFormula): (Set[FClause]) = {
     // take an arbitrary atom symbol and rename it
     // s.t. it does not occure anywhere in f
     fsyms = getAtomSymbols(f)
-    
-    
+
     // parseFormula and transform it via Tseitin-Transformation
     val pf = parseFormula(f)
-
-    val tseitinF = FAnd(pf._1, pf._2)
-    trace("Tseitin transformed formula: "+tseitinF)
-
-    // call distributive CNFp to transform the Tseitin-transformed
-    // formula to a set of clauses
-    (CNFp(tseitinF),tseitinF)
-    //CNFp(tseitinF)
+    pf._2 + FClause(List(), List(pf._1))
   }
-
+  
   /**
    * Adds a FOLFormula to fol.Atom map to the subFormulas HashMap, iff
    * the subformula does not already map to an existing atom.
@@ -113,101 +105,65 @@ object TseitinCNF extends Logger {
         else {
           // generate new atomsymbol
           val sym = at.logic.language.lambda.rename(hc, fsyms ::: auxsyms.toList)
-          val auxAtom = at.logic.language.fol.Atom(sym, Nil)
+          val auxAtom = FAtom(sym, Nil)
           auxsyms += sym
+	  //hc = sym
           subformulaMap(f) = auxAtom
           return auxAtom
         }
     }
   }
 
-
-  //TODO: No full FOL support => no ExVar, AllVar skolemization implemented yet
   /**
-   * Takes a HOLFormula and parses it s.t. every subformula gets
+   * Takes a propositional FOLFormula and parses it s.t. every subformula gets
    * assigned a freshly introduced Atom which is from there on used instead of the formula
    * @param f
    * @return a Tuple2, where 1st is the prop. variable representing the formula in 2nd
    */
-  def parseFormula(f: FOLFormula): Tuple2[FOLFormula,FOLFormula] = {
+  def parseFormula(f: FOLFormula): Tuple2[FOLFormula,Set[FClause]] = f match {
+      case FAtom(_, _) => (f,Set())
+      
+      case FNeg(f2) =>
+	val pf = parseFormula(f2) 
+	val x = addIfNotExists(f)
+	val x1 = pf._1
+	val c1 = FClause(List(x, x1), List())
+	val c2 = FClause(List(), List(x, x1))
+	(x, Set(c1, c2))
 
-    // eventually freshly introduced variable
-    // or if subformula had been parsed already
-    // the prop. var. for the subformula
-    val auxVar = addIfNotExists(f)
-
-    f match {
-      case FAtom(_, _) => (f,f)
-      case FNeg(f2) => {
-        val pf2 = parseFormula(f2)
-        // if atom and formula are equal => f2 is a leaf (atom) and shall not be abbreviated
-        if(pf2._1 == pf2._2)
-          (auxVar, FAnd(FImp(auxVar, f), FImp(f, auxVar)))
-        else
-          (auxVar, FAnd(FAnd(FImp(auxVar, f), FImp(f, auxVar)), pf2._2))
-      }
-      case FAnd(f1, f2) => {
+      case FAnd(f1, f2) => 
         val pf1 = parseFormula(f1)
         val pf2 = parseFormula(f2)
+	val x = addIfNotExists(f)
+	val x1 = pf1._1
+	val x2 = pf2._1
+	val c1 = FClause(List(x), List(x1))
+	val c2 = FClause(List(x), List(x2))
+	val c3 = FClause(List(x1, x2), List(x))
+	(x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
 
-        // if atoms and formulas are equal => f1 and f2 are leafs (atoms) and shall not be abbreviated
-        if(pf1._1 == pf1._2 && pf2._1 == pf2._2)
-          (auxVar, FAnd(FImp(auxVar, f), FImp(f, auxVar)))
-        // if at least one of f1 and f2 are no atoms add further abbreviated subformulas
-        else {
-          val thisCon = FAnd(pf1._1, pf2._1)
-          var newf = FAnd(FImp(auxVar, thisCon), FImp(thisCon, auxVar))
-          // don't forget to take the equivalences of underlying subformulas with you
-          if(pf1._1 != pf1._2){
-            newf = FAnd(newf, pf1._2)
-          }
-          if(pf2._1 != pf2._2){
-            newf = FAnd(newf, pf2._2)
-          }
-          (auxVar, newf)
-        }
-      }
-      case FOr(f1, f2) => {
+      case FOr(f1, f2) => 
         val pf1 = parseFormula(f1)
         val pf2 = parseFormula(f2)
-        // if atoms and formulas are equal => f1 and f2 are leafs (atoms) and shall not be abbreviated
-        if(pf1._1 == pf1._2 && pf2._1 == pf2._2)
-          (auxVar, FAnd(FImp(auxVar, f), FImp(f, auxVar)))
-        // if at least one of f1 and f2 are no atoms add further abbreviated subformulas
-        else {
-          val thisCon = FOr(pf1._1, pf2._1)
-          var newf = FAnd(FImp(auxVar, thisCon), FImp(thisCon, auxVar))
-          // don't forget to take the equivalences of underlying subformulas with you
-          if(pf1._1 != pf1._2){
-            newf = FAnd(newf, pf1._2)
-          }
-          if(pf2._1 != pf2._2){
-            newf = FAnd(newf, pf2._2)
-          }
-          (auxVar, newf)
-        }
-      }
-      case FImp(f1, f2) => {
+	val x = addIfNotExists(f)
+	val x1 = pf1._1
+	val x2 = pf2._1
+	val c1 = FClause(List(x1), List(x))
+	val c2 = FClause(List(x2), List(x))
+	val c3 = FClause(List(x), List(x1, x2))
+	(x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
+      
+      case FImp(f1, f2) => 
         val pf1 = parseFormula(f1)
         val pf2 = parseFormula(f2)
-        // if atoms and formulas are equal => f1 and f2 are leafs (atoms) and shall not be abbreviated
-        if(pf1._1 == pf1._2 && pf2._1 == pf2._2)
-          (auxVar, FAnd(FImp(auxVar, f), FImp(f, auxVar)))
-        // if at least one of f1 and f2 are no atoms add furhter abbreviated subformulas
-        else {
-          val thisCon = FImp(pf1._1, pf2._1)
-          var newf = FAnd(FImp(auxVar, thisCon), FImp(thisCon, auxVar))
-          // don't forget to take the equivalences of underlying subformulas with you
-          if(pf1._1 != pf1._2){
-            newf = FAnd(newf, pf1._2)
-          }
-          if(pf2._1 != pf2._2){
-            newf = FAnd(newf, pf2._2)
-          }
-          (auxVar, newf)
-        }
-      }
-      case _ => throw new IllegalArgumentException("unknown head of formula: " + f.toString)
-    }
+	val x = addIfNotExists(f)
+	val x1 = pf1._1
+	val x2 = pf2._1
+	val c1 = FClause(List(), List(x, x1))
+	val c2 = FClause(List(x2), List(x))
+	val c3 = FClause(List(x, x1), List(x2))
+	(x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
+
+      case _ => throw new IllegalArgumentException("Formula not supported in Tseitin transformation: " + f.toString)
   }
 }
