@@ -23,8 +23,7 @@ import TypeSynonyms._
 class LabelledFormulaOccurrence (override val formula: HOLFormula,
                                  override val ancestors: List[LabelledFormulaOccurrence],
                                  val skolem_label: Label) extends FormulaOccurrence( formula, ancestors, LKskFOFactory ) {
-  override def toString: String = formula.toString + " (label: " + skolem_label.toString + ")"
-
+  override def toString: String = formula.toString + " [label: " + skolem_label.toString + "]"
 }
 object LabelledFormulaOccurrence {
   def unapply(fo : LabelledFormulaOccurrence) = Some(fo.formula, fo.ancestors, fo.skolem_label)
@@ -43,7 +42,7 @@ object LKskFOFactory extends FOFactory {
     val l_ancestors = ancestors.map( _.asInstanceOf[LabelledFormulaOccurrence] )
     val l = l_ancestors.head.skolem_label
     assert( l_ancestors.forall( a => a.skolem_label == l ) )
-    new LabelledFormulaOccurrence(sub(formula).asInstanceOf[HOLFormula], l_ancestors, l.map( sub(_) ) )
+    new LabelledFormulaOccurrence(sub(formula), l_ancestors, l.map( sub(_) ) )
   }
 
 
@@ -76,7 +75,7 @@ class LabelledSequent(val l_antecedent: Seq[LabelledFormulaOccurrence],
                                 val l_succedent: Seq[LabelledFormulaOccurrence])
   extends Sequent( l_antecedent.asInstanceOf[Seq[FormulaOccurrence]],
                              l_succedent.asInstanceOf[Seq[FormulaOccurrence]] ) {
-  override def toString: String = l_antecedent.toString + " :- " + l_succedent.toString
+  override def toString: String = l_antecedent.mkString(", ") + " :- " + l_succedent.mkString(", ")
 }
 
 

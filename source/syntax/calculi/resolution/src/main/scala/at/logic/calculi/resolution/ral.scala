@@ -57,8 +57,8 @@ trait RalResolutionProof[V <: LabelledSequent] extends ResolutionProof[V]
 /* ********************* Cut and Quantifier Rules ****************************** */
 object InitialSequent {
   def apply(seq: FSequent, maps: (List[Label], List[Label]))
-  : (RalResolutionProof[LabelledSequent], (List[LabelledFormulaOccurrence], List[LabelledFormulaOccurrence])) =
-    createDefault(seq, maps, (x,y) => new LabelledSequent(x,y))
+  : RalResolutionProof[LabelledSequent] =
+    createDefault(seq, maps, (x,y) => new LabelledSequent(x,y))._1
 
 
   def createDefault[V <: LabelledSequent](seq: FSequent, maps: (List[Label], List[Label]), sequent_constructor : (Seq[LabelledFormulaOccurrence], Seq[LabelledFormulaOccurrence]) => V): (RalResolutionProof[V], (List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence])) = {
@@ -83,14 +83,14 @@ object InitialSequent {
 
 object Cut {
   def apply[V <: LabelledSequent](s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1ocs: List[Occurrence], term2ocs: List[Occurrence]) = {
-    if ( !term1ocs.isEmpty && !term2ocs.isEmpty ) throw new ResolutionRuleCreationException( "Cut in R_{al} must have at least one auxiliary formula on every side")
+    if ( term1ocs.isEmpty || term2ocs.isEmpty ) throw new ResolutionRuleCreationException( "Cut in R_{al} must have at least one auxiliary formula on every side")
     val term1ops = term1ocs.map( term1oc => s1.root.succedent.find(x => x == term1oc) )
     val term2ops = term2ocs.map( term2oc => s2.root.antecedent.find(x => x == term2oc) )
     if ( term1ops.exists( x => x == None ) || term2ops.exists( x => x == None ) ) throw new ResolutionRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
     else {
       val term1s = term1ops.map( x => x.get )
       val term2s = term2ops.map( x => x.get )
-      if ( term1s.exists( x => term2s.exists( y => x != y ) ) ) throw new ResolutionRuleCreationException("Formulas to be cut are not identical")
+      if ( term1s.exists( x => term2s.exists( y => x.formula != y.formula ) ) ) throw new ResolutionRuleCreationException("Formulas to be cut are not identical")
       else {
         new BinaryAGraph[LabelledSequent](new LabelledSequent(
           createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(term2s contains (_))),

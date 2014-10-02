@@ -32,9 +32,10 @@ object fol2hol {
  * This code is more generic but needs casting, since the factory can't do that */
 object recreateWithFactory {
   def apply(e:LambdaExpression, factory : FactoryA) : LambdaExpression = e match {
-    case Var(name,t) => factory.createVar(StringSymbol(name),t)
-    case App(s,t) => factory.createApp(s,t)
-    case Abs(x,t) => factory.createAbs(x,t)
+    case Var(name,t) => factory.createVar(e.asInstanceOf[Var].sym,t)
+    case Const(name,t) => factory.createConst(e.asInstanceOf[Const].sym,t)
+    case App(s,t) => factory.createApp(recreateWithFactory(s,factory), recreateWithFactory(t,factory))
+    case Abs(x,t) => factory.createAbs(recreateWithFactory(x,factory).asInstanceOf[Var], recreateWithFactory(t,factory))
   }
 
   def apply(f:FSequent, factory : FactoryA) : FSequent = FSequent(

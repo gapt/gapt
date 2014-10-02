@@ -412,6 +412,8 @@ object removeSubsumed {
   }
   */
 
+object Robinson2Ral extends RobinsonToRal
+
 object applyFactoring extends factoring
 
 object rule_isomorphic extends LKSKrule_isomorphic //this subsumes the LK version

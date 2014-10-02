@@ -1,4 +1,3 @@
-
 package at.logic.calculi.expansionTrees
 
 import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, AllVar => AllVarHOL, ExVar => ExVarHOL, _}
