@@ -192,7 +192,7 @@ object distribute {
     case And(f1, f2) => And(distribute(f1), distribute(f2))
     case Or(f1, And(f2,f3)) => And(distribute(Or(f1,f2)), distribute(Or(f1,f3)))
     case Or(And(f1,f2), f3) => And(distribute(Or(f1,f3)), distribute(Or(f2,f3)))
-    case Or(f1, f2) => distribute(Or(distribute(f1), distribute(f2)))
+    case Or(f1, f2) => Or(distribute(f1), distribute(f2))
     case _ => throw new Exception("ERROR: Unexpected case while distributing Ors over Ands.")
   }
 }
@@ -201,6 +201,7 @@ object distribute {
 // 1. Transform to negation normal form
 // 2. Distribute Ors over Ands
 // OBS: works for propositional formulas only
+// TODO: tests for this
 object toCNF {
   def apply(f: FOLFormula) : FOLFormula = distribute(toNNF(f))
 }
