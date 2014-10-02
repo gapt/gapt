@@ -5,7 +5,7 @@
 package at.logic.language.fol
 
 import at.logic.language.lambda.FactoryA
-import at.logic.language.hol.{HOLExpression, HOLFormula, isLogicalSymbol}
+import at.logic.language.hol.{HOLExpression, HOLFormula, isLogicalSymbol, EqC => HOLEqC}
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._

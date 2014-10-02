@@ -10,6 +10,7 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.calculi.lk.base.Sequent
 import at.logic.calculi.occurrences._
+import BetaReduction.betaNormalize
 
 object TypeSynonyms {
   type Label = Set[HOLExpression]
@@ -42,7 +43,7 @@ object LKskFOFactory extends FOFactory {
     val l_ancestors = ancestors.map( _.asInstanceOf[LabelledFormulaOccurrence] )
     val l = l_ancestors.head.skolem_label
     assert( l_ancestors.forall( a => a.skolem_label == l ) )
-    new LabelledFormulaOccurrence(sub(formula), l_ancestors, l.map( sub(_) ) )
+    new LabelledFormulaOccurrence(betaNormalize(sub(formula)), l_ancestors, l.map( x => betaNormalize(sub(x)) ) )
   }
 
 

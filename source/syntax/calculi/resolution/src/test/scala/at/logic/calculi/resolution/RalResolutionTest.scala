@@ -35,7 +35,6 @@ class RalResolutionTest extends SpecificationWithJUnit{
     }
 
     "work on non-idempotent substitutions" in {
-      skipped("substitutions are applied twice in the sub rule")
       val x = HOLVar("x", Ti)
       val fx = Function(HOLConst("f", Ti -> Ti), x::Nil)
       val px = Atom(HOLConst("P", Ti->To), List(x))

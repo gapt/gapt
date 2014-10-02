@@ -224,8 +224,8 @@ object ExistsT {
 object Sub {
   def apply[V <: LabelledSequent](p: RalResolutionProof[V], sub: Substitution) =
     new UnaryAGraph[LabelledSequent](new LabelledSequent(
-      p.root.antecedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( betaNormalize( sub(x.formula) ), x, x::Nil, sub)),
-      p.root.succedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( betaNormalize( sub(x.formula) ), x, x::Nil, sub))),
+      p.root.antecedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x::Nil, sub)),
+      p.root.succedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x::Nil, sub))),
       p)
       with RalResolutionProof[V] with UnaryResolutionProof[V] with AppliedSubstitution {def rule = SubType; def substitution = sub}
 
@@ -593,22 +593,33 @@ object ParaT {
     val term1ops = s1.root.succedent.find(x => x == term1oc)
     val term2ops = s2.root.succedent.find(x => x == term2oc)
     (term1ops, term2ops) match {
-      case (Some(occ1@LabelledFormulaOccurrence(Equation(s,t), anc1, label1)),
-      Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
-        EquationVerifier(s,t, term2, para_formula ) match {
-          case EqualModuloEquality(path) =>
-            new BinaryAGraph[LabelledSequent](new LabelledSequent(
-              createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent),
-              createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent filterNot(_ == term2oc)))
-              , s1, s2)
-              with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
-              def rule = ParaTRalType
-              def aux = List(term1oc, term2oc)::Nil
+      case (Some(occ1@LabelledFormulaOccurrence(term1, anc1, label1)),
+            Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
+        require(label1 == label2, "Paramodulation requires the labels to match, but we have "+label1+" and "+label2)
+        term1 match {
+          case Equation(s,t) =>
+            EquationVerifier(s,t, term2, para_formula ) match {
+              case EqualModuloEquality(path) =>
+                val para_occ = new LabelledFormulaOccurrence(para_formula, List(occ1,occ2), label1)
+
+                new BinaryAGraph[LabelledSequent](new LabelledSequent(
+                  createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent),
+                  createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent filterNot(_ == term2oc)) ++ List(para_occ) )
+                  , s1, s2)
+                with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
+                  def rule = ParaTRalType
+                  def aux = List(term1oc, term2oc)::Nil
+                }
+              case _ =>
+                throw new Exception("Could not verify equation "+s+" = "+t+". Please check if "+para_formula+" really results from a replacement in "+term2)
             }
+          case _ => throw new Exception("Expected equation as first argument of para rule, but got: "+term1)
         }
 
-      case _ =>
-        throw  new ResolutionRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+      case (None, _)  =>
+        throw  new ResolutionRuleCreationException("Could not find auxiliary occurrence"+term1oc+ " in first parent root "+s1)
+      case _  =>
+        throw  new ResolutionRuleCreationException("Could not find auxiliary occurrence"+term2oc+ " in second parent root "+s2)
     }
   }
 
@@ -625,22 +636,35 @@ object ParaF {
     val term1ops = s1.root.succedent.find(x => x == term1oc)
     val term2ops = s2.root.antecedent.find(x => x == term2oc)
     (term1ops, term2ops) match {
-      case (Some(occ1@LabelledFormulaOccurrence(Equation(s,t), anc1, label1)),
-      Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
-        EquationVerifier(s,t, term2, para_formula ) match {
-          case EqualModuloEquality(path) =>
-            new BinaryAGraph[LabelledSequent](new LabelledSequent(
-              createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(_ == term2oc)),
-              createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent))
-              , s1, s2)
-              with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
-              def rule = ParaFRalType
-              def aux = List(term1oc, term2oc)::Nil
+      case (Some(occ1@LabelledFormulaOccurrence(term1, anc1, label1)),
+            Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
+        require(label1 == label2, "Paramodulation requires the labels to match, but we have "+label1+" and "+label2)
+        term1 match {
+          case Equation(s,t) =>
+            EquationVerifier(s,t, term2, para_formula ) match {
+              case EqualModuloEquality(path) =>
+                val para_occ = new LabelledFormulaOccurrence(para_formula, List(occ1,occ2), label1)
+                new BinaryAGraph[LabelledSequent](new LabelledSequent(
+                  createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(_ == term2oc)) ++ List(para_occ),
+                  createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent))
+                  , s1, s2)
+                with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
+                  def rule = ParaFRalType
+                  def aux = List(term1oc, term2oc)::Nil
+                }
+
+              case _ =>
+                throw new Exception("Could not verify equation "+s+" = "+t+". Please check if "+para_formula+" really results from a replacement in "+term2)
             }
+
+          case _ => throw new Exception("Expected equation as first argument of para rule, but got: "+term1)
         }
 
-      case _ =>
-        throw  new ResolutionRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+
+      case (None, _)  =>
+        throw  new ResolutionRuleCreationException("Could not find auxiliary occurrence"+term1oc+ " in first parent root "+s1)
+      case _  =>
+        throw  new ResolutionRuleCreationException("Could not find auxiliary occurrence"+term2oc+ " in second parent root "+s2)
     }
   }
 

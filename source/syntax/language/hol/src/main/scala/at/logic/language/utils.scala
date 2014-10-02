@@ -130,8 +130,8 @@ object getMatrix {
   def apply(f: HOLFormula) : HOLFormula = {
     assert(isPrenex(f))
     f match {
-      case HOLVar(_) |
-           HOLConst(_) |
+      case HOLVar(_,_) |
+           HOLConst(_,_) |
            Atom(_,_) |
            Imp(_,_) |
            And(_,_) |
@@ -232,7 +232,7 @@ object toAbbreviatedString {
       case AllVar(x,f) => (ForallSymbol + toAbbreviatedString(x) + "." + toAbbreviatedString(f), ForallSymbol.toString(), 0)
       case HOLAbs(v, exp) => ("(λ" + toAbbreviatedString(v) + "." + toAbbreviatedString(exp) + ")", "λ", 0)
       case HOLApp(l,r) => ("(" + toAbbreviatedString(l) + ")(" + toAbbreviatedString(r) + ")", "()()", 0)
-      case HOLConst(x) => (x.toString(),x.toString(), 0)
+      case HOLConst(x, exptype) => (x.toString(),x.toString(), 0)
       case _ => throw new Exception("ERROR: Unknown HOL expression.");
     }
     return s

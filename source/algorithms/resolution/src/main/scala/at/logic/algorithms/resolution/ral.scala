@@ -1,6 +1,6 @@
 package at.logic.algorithms.resolution
 
-import at.logic.algorithms.fol.fol2hol
+import at.logic.algorithms.fol.{recreateWithFactory, fol2hol}
 import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.lksk.TypeSynonyms.{EmptyLabel, Label}
 import at.logic.calculi.resolution.Clause
@@ -8,18 +8,35 @@ import at.logic.calculi.resolution.robinson._
 import at.logic.calculi.resolution.ral._
 import at.logic.calculi.lksk.{LabelledFormulaOccurrence, LabelledSequent}
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.language.fol.{FOLExpression, FOLFormula}
-import at.logic.language.hol.{HOLFactory, HOLExpression, HOLFormula}
-import at.logic.language.lambda.{FactoryA, LambdaExpression}
+import at.logic.language.fol.{FOLExpression, FOLFormula, Substitution => FOLSubstitution}
+import at.logic.language.hol._
+import at.logic.language.lambda.{Substitution => LambdaSubstitution, Var, FactoryA, LambdaExpression}
 
 /**
  * Created by marty on 9/9/14.
  */
 
-object RobinsonToRal extends RobinsonToRal
-class RobinsonToRal {
+object RobinsonToRal extends RobinsonToRal {
+  override def convert_formula(e:HOLFormula) : HOLFormula = recreateWithFactory(e,HOLFactory).asInstanceOf[HOLFormula]
+  override def convert_substitution(s:Substitution) : Substitution = {
+    recreateWithFactory(s, HOLFactory, convert_map).asInstanceOf[Substitution]
+  }
+
+  //TODO: this is somehow dirty....
+  def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution = Substitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
+}
+
+abstract class RobinsonToRal {
   type TranslationMap = Map[FormulaOccurrence, LabelledFormulaOccurrence]
   val emptyTranslationMap = Map[FormulaOccurrence, LabelledFormulaOccurrence]()
+
+  /* convert formula will be called on any formula before translation */
+  def convert_formula(e:HOLFormula) : HOLFormula;
+
+  /* convert subsitution will be called on any substitution before translation */
+  def convert_substitution(s:Substitution) : Substitution;
+
+  def convert_sequent(fs:FSequent) : FSequent = FSequent(fs.antecedent.map(convert_formula), fs.succedent.map(convert_formula))
 
   def apply(rp : RobinsonResolutionProof) : RalResolutionProof[LabelledSequent] = apply(rp, emptyTranslationMap)._2
 
@@ -27,7 +44,7 @@ class RobinsonToRal {
     rp match {
       case InitialClause(clause) =>
         val fc : FSequent = clause.toFSequent
-        val rule = InitialSequent(fol2hol(fc), (fc.antecedent.toList.map(x => EmptyLabel()), fc.succedent.toList.map(x => EmptyLabel())))
+        val rule = InitialSequent(convert_sequent(fc), (fc.antecedent.toList.map(x => EmptyLabel()), fc.succedent.toList.map(x => EmptyLabel())))
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in initial translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
         require(! rule.root.toFSequent().formulas.contains((x:HOLFormula) => x.isInstanceOf[FOLFormula]), "Formulas contain fol content!")
 
@@ -36,7 +53,7 @@ class RobinsonToRal {
 
 
       case Resolution(clause, p1, p2, aux1, aux2, sub_) =>
-        val sub = fol2hol(sub_)
+        val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(p1, map)
         val (rmap2, rp2) = apply(p2, rmap1)
         val sub1 = Sub(rp1, sub)
@@ -48,7 +65,7 @@ class RobinsonToRal {
         (rmap2, rule)
 
       case Factor(clause, parent, List(aux1@(f1::_)), sub_) if clause.antecedent.contains(f1) =>
-        val sub = fol2hol(sub_)
+        val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = Sub(rp1, sub)
         val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rp1.root, list)::list).reverse
@@ -58,7 +75,7 @@ class RobinsonToRal {
         (rmap1, rule)
 
       case Factor(clause, parent, List(aux1@(f1::_)), sub_) if clause.succedent.contains(f1) =>
-        val sub = fol2hol(sub_)
+        val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = Sub(rp1, sub)
         val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rp1.root, list)::list).reverse
@@ -67,36 +84,36 @@ class RobinsonToRal {
         (rmap1, rule)
 
       case Paramodulation(clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.antecedent contains modulant =>
-        val sub = fol2hol(sub_)
+        val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(paraparent, map)
         val (rmap2, rp2) = apply(parent, rmap1)
         val sub1 = Sub(rp1, sub)
         val sub2 = Sub(rp2, sub)
-        val rule = ParaF(rp1,rp2, pickFOsucc(sub(equation.formula), rp1.root, List()), pickFOant(sub(modulant.formula), rp2.root, List()), primary.formula)
+        val rule = ParaF(rp1,rp2, pickFOsucc(sub(equation.formula), rp1.root, List()), pickFOant(sub(modulant.formula), rp2.root, List()), convert_formula(primary.formula))
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in para translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
         (rmap2, rule)
 
       case Paramodulation(clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.succedent contains modulant =>
-        val sub = fol2hol(sub_)
+        println("translating instance from para parent:"+paraparent.root+" and "+ parent.root +" to "+clause+" with sub "+sub_)
+        val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(paraparent, map)
         val (rmap2, rp2) = apply(parent, rmap1)
         val sub1 = Sub(rp1, sub)
         val sub2 = Sub(rp2, sub)
-        val rule = ParaT(rp1,rp2, pickFOsucc(sub(equation.formula), rp1.root, List()), pickFOsucc(sub(modulant.formula), rp2.root, List()), primary.formula)
+        val rule = ParaT(rp1,rp2, pickFOsucc(sub(equation.formula), rp1.root, List()), pickFOsucc(sub(modulant.formula), rp2.root, List()), convert_formula(primary.formula))
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in para translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
         (rmap2, rule)
 
       case Variant(clause, parent, sub_) =>
-        val sub = fol2hol(sub_)
+        val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = Sub(rp1, sub)
         require(sub1.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in variant translation, translated root: "+sub1.root.toFSequent()+" is not original root "+clause.toFSequent())
         (rmap1, sub1)
 
       case Instance(clause, parent, sub_) =>
-        println("translating instance from parent:"+parent.root+" to "+clause+" with sub "+sub_)
 
-        val sub = fol2hol(sub_)
+        val sub = convert_substitution(sub_)
 //        val subexps = sub.holmap.toList.flatMap(x => List(x._1,x._2)).filterNot(checkFactory(_, HOLFactory))
 //        require(subexps.isEmpty , "Substitution contains fol content: "+subexps.map(_.factory))
         val (rmap1, rp1) = apply(parent, map)
@@ -104,7 +121,7 @@ class RobinsonToRal {
 //        require(rootexps.isEmpty, "Formulas contain fol content: "+rootexps.mkString(" ::: "))
         val rule = Sub(rp1, sub)
 
-        println("inferring instance from parent:"+rp1.root+" to "+rule.root+" with sub "+sub)
+//        println("inferring instance from parent:"+rp1.root+" to "+rule.root+" with sub "+sub)
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in instance translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
         (rmap1, rule)
 

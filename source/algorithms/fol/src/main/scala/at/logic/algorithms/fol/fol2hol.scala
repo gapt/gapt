@@ -42,14 +42,11 @@ object recreateWithFactory {
     f.antecedent.map(x => toHOLF(recreateWithFactory(x,factory))),
     f.succedent.map(x  => toHOLF(recreateWithFactory(x,factory))) )
 
-  //TODO: Fix this!
-  /*
-  def apply[T <: LambdaExpression, U <: LambdaExpression](sub : Substitution[U], factory : FactoryA) : Substitution[T] =
-    Substitution[T](
+  def apply[T <: LambdaExpression](sub : Substitution, factory : FactoryA, substitution_constructor : Map[Var,LambdaExpression] => Substitution) : Substitution =
+    substitution_constructor(
       sub.map.map( x =>
       (toT[Var](recreateWithFactory(x._1,factory)), toT[T](recreateWithFactory(x._2,factory) ))
     ))
-*/
 
   private def toHOLF(exp:LambdaExpression) : HOLFormula = toT[HOLFormula](exp)
   private def toT[T](exp:LambdaExpression) : T = try {

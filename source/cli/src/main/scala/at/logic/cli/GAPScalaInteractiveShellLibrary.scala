@@ -37,6 +37,7 @@ import at.logic.gui.prooftool.gui.Main
 import at.logic.language.fol.{AllVar => FOLAllVar, And => FOLAnd, Atom => FOLAtom, ExVar => FOLExVar, Imp => FOLImp, Neg => FOLNeg, Or => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _}
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.{BetaReduction => HOLBetaReduction, Substitution => HOLSubstitution, containsQuantifier => containsQuantifierHOL, _}
+import at.logic.language.lambda.{LambdaExpression, Var, Substitution => LambdaSubstitution}
 import at.logic.language.lambda.types._
 import at.logic.language.schema.{AllVar => SchemaAllVar, Atom => SchemaAtom, ExVar => SchemaExVar, _}
 import at.logic.parsing.calculi.latex._
@@ -412,7 +413,15 @@ object removeSubsumed {
   }
   */
 
-object Robinson2Ral extends RobinsonToRal
+object Robinson2Ral extends RobinsonToRal {
+  override def convert_formula(e:HOLFormula) : HOLFormula = recreateWithFactory(e,HOLFactory).asInstanceOf[HOLFormula]
+  override def convert_substitution(s:HOLSubstitution) : HOLSubstitution = {
+    recreateWithFactory(s, HOLFactory, convert_map).asInstanceOf[HOLSubstitution]
+  }
+
+  //TODO: this is somehow dirty....
+  def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution = HOLSubstitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
+}
 
 object applyFactoring extends factoring
 

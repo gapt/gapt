@@ -8,6 +8,8 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.{LambdaExpression, FactoryA}
 
+import scala.collection.mutable
+
 trait HOLExpression extends LambdaExpression {
 
   // Factory for App, Abs and Var
@@ -98,7 +100,16 @@ case object NegC extends HOLConst(NegSymbol, Type("(o -> o)"))
 case object AndC extends HOLConst(AndSymbol, Type("(o -> (o -> o))"))
 case object OrC extends HOLConst(OrSymbol, To -> (To -> To) )
 case object ImpC extends HOLConst(ImpSymbol, Type("(o -> (o -> o))"))
-case class EqC(e:TA) extends HOLConst(EqSymbol, ->(e, ->(e,"o")))
+private[hol] class EqC(e:TA) extends HOLConst(EqSymbol, ->(e, ->(e,"o")))
+object EqC {
+  private val es: mutable.Map[TA,EqC] = mutable.Map[TA,EqC]()
+
+  def apply(e:TA) = this.synchronized { es.getOrElseUpdate(e, new EqC(e)) }
+  def unapply(e:HOLExpression) = e match {
+    case c:HOLConst if c.sym == EqSymbol => Some(c.exptype)
+    case _ => None
+  }
+}
 
 // We do in all of them additional casting into Formula as Formula is a static type and the only way to dynamically express it is via casting.
 object Neg {
