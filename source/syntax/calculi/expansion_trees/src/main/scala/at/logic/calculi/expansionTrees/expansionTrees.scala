@@ -381,19 +381,24 @@ object ExpansionSequent {
 
 
 object toDeep {
-  def apply(tree: ExpansionTreeWithMerges): HOLFormula = tree match {
+  def apply(tree: ExpansionTreeWithMerges, pol: Int = 1): HOLFormula = tree match {
     case Atom(f) => f
-    case Neg(t1) => NegHOL(toDeep(t1))
-    case And(t1,t2) => AndHOL(toDeep(t1), toDeep(t2))
-    case Or(t1,t2) => OrHOL(toDeep(t1), toDeep(t2))
-    case Imp(t1,t2) => ImpHOL(toDeep(t1), toDeep(t2))
-    case WeakQuantifier(_,cs) => OrHOL( cs.map( t => toDeep(t._1)).toList )
-    case StrongQuantifier(_,_,t) => toDeep(t)
-    case SkolemQuantifier(_,_,t) => toDeep(t) //TODO: check if this is correct
+    case Neg(t1) => NegHOL(toDeep(t1, -pol))
+    case And(t1,t2) => AndHOL(toDeep(t1, pol), toDeep(t2, pol))
+    case Or(t1,t2) => OrHOL(toDeep(t1, pol), toDeep(t2, pol))
+    case Imp(t1,t2) => ImpHOL(toDeep(t1, -pol), toDeep(t2, pol))
+    case WeakQuantifier(_,cs) => {
+      if (pol > 0)
+        OrHOL( cs.map( t => toDeep(t._1, pol)).toList )
+      else
+        AndHOL( cs.map( t => toDeep(t._1, pol)).toList )
+    }
+    case StrongQuantifier(_,_,t) => toDeep(t, pol)
+    case SkolemQuantifier(_,_,t) => toDeep(t, pol) //TODO: check if this is correct
   }
 
   def apply(expansionSequent: ExpansionSequent): FSequent = {
-    FSequent(expansionSequent.antecedent.map(toDeep.apply), expansionSequent.succedent.map(toDeep.apply) ) // compiler wants the applys here
+    FSequent(expansionSequent.antecedent.map(toDeep.apply(_,-1)), expansionSequent.succedent.map(toDeep.apply(_,1)) ) // compiler wants the applys here
   }
 }
 

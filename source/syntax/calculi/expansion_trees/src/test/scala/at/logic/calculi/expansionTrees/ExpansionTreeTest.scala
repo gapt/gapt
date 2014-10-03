@@ -48,6 +48,20 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
       (Atom( AtomHOL(P, y::c::a::Nil) ), y)
     )
   )
+  
+  val et5 = Imp(
+    WeakQuantifier(
+      AllVar(x, AtomHOL(R, x::Nil)),
+      List(
+        (Atom(AtomHOL(R, c::Nil)), c),
+        (Atom(AtomHOL(R, d::Nil)), d)
+      )
+    ),
+    And(
+      Atom(AtomHOL(R, c::Nil)),
+      Atom(AtomHOL(R, d::Nil))
+    )
+  )
 
   "Expansion Trees substitution" should {
 
@@ -156,6 +170,25 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
 
 
 
+  }
+  
+  "toDeep" should {
+    "correctly compute the deep formula" in {
+      val form = ImpHOL(
+        AndHOL(
+          AtomHOL(R, c::Nil),
+          AtomHOL(R, d::Nil)
+        ),
+        AndHOL(
+          AtomHOL(R, c::Nil),
+          AtomHOL(R, d::Nil)
+        )
+      )
+      
+      val deep = toDeep(et5, 1)
+      
+      deep mustEqual form
+    }
   }
 
 }
