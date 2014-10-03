@@ -536,7 +536,7 @@ object AFactorT {
         require(isAtom(term1.formula) , "Can only contract atom formulas!")
         val f = term1.formula
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1 :: terms ).asInstanceOf[LabelledFormulaOccurrence]
-        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent), createContext(s1.root.succedent filterNot(_ == term1)) ++ List(prinFormula1)), s1)
+        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent), createContext(s1.root.succedent filterNot(term2ocs.contains(_))) ++ List(prinFormula1)), s1)
           with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas  {
           def rule = AFactorTType
           def aux = (term1 :: terms)::Nil
@@ -570,7 +570,7 @@ object AFactorF {
         require(isAtom(term1.formula) , "Can only contract atom formulas!")
         val f = term1.formula
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1::terms).asInstanceOf[LabelledFormulaOccurrence]
-        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent filterNot(_ == term1)) ++ List(prinFormula1), createContext(s1.root.succedent)), s1)
+        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent filterNot(term2ocs.contains(_))) ++ List(prinFormula1), createContext(s1.root.succedent)), s1)
           with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas  {
           def rule = AFactorFType
           def aux = (term1 :: terms)::Nil

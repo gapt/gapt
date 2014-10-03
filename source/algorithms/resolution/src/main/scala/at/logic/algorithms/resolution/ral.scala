@@ -1,7 +1,7 @@
 package at.logic.algorithms.resolution
 
 import at.logic.algorithms.fol.{recreateWithFactory, fol2hol}
-import at.logic.calculi.lk.base.FSequent
+import at.logic.calculi.lk.base.{LKUnaryRuleCreationException, FSequent}
 import at.logic.calculi.lksk.TypeSynonyms.{EmptyLabel, Label}
 import at.logic.calculi.resolution.Clause
 import at.logic.calculi.resolution.robinson._
@@ -25,6 +25,8 @@ object RobinsonToRal extends RobinsonToRal {
   //TODO: this is somehow dirty....
   def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution = Substitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
 }
+
+case class RalException[V <: LabelledSequent](val message : String, val rp : List[RobinsonResolutionProof], val ralp : List[RalResolutionProof[V]]) extends Exception(message);
 
 abstract class RobinsonToRal {
   type TranslationMap = Map[FormulaOccurrence, LabelledFormulaOccurrence]
@@ -56,28 +58,28 @@ abstract class RobinsonToRal {
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(p1, map)
         val (rmap2, rp2) = apply(p2, rmap1)
-        val sub1 = Sub(rp1, sub)
-        val sub2 = Sub(rp2, sub)
+        val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
+        val sub2 = if (sub.isIdentity) rp1 else Sub(rp2, sub)
         val rule = Cut(sub1, sub2, List(pickFOsucc(sub(aux1.formula), sub1.root, Nil)),
                                    List(pickFOant(sub(aux2.formula), sub2.root, Nil)))
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in resolution translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
 
         (rmap2, rule)
 
-      case Factor(clause, parent, List(aux1@(f1::_)), sub_) if clause.antecedent.contains(f1) =>
+      case Factor(clause, parent, List(aux1@(f1::_)), sub_) if parent.root.antecedent.contains(f1) =>
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
-        val sub1 = Sub(rp1, sub)
+        val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
         val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rp1.root, list)::list).reverse
         val rule = AFactorF(rp1, a, aux )
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in factor translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
 
         (rmap1, rule)
 
-      case Factor(clause, parent, List(aux1@(f1::_)), sub_) if clause.succedent.contains(f1) =>
+      case Factor(clause, parent, List(aux1@(f1::_)), sub_) if parent.root.succedent.contains(f1) =>
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
-        val sub1 = Sub(rp1, sub)
+        val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
         val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rp1.root, list)::list).reverse
         val rule = AFactorT(rp1, a, aux )
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in factor translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
@@ -87,8 +89,8 @@ abstract class RobinsonToRal {
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(paraparent, map)
         val (rmap2, rp2) = apply(parent, rmap1)
-        val sub1 = Sub(rp1, sub)
-        val sub2 = Sub(rp2, sub)
+        val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
+        val sub2 = if (sub.isIdentity) rp2 else Sub(rp2, sub)
         val rule = ParaF(rp1,rp2, pickFOsucc(sub(equation.formula), rp1.root, List()), pickFOant(sub(modulant.formula), rp2.root, List()), convert_formula(primary.formula))
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in para translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
         (rmap2, rule)
@@ -119,7 +121,7 @@ abstract class RobinsonToRal {
         val (rmap1, rp1) = apply(parent, map)
 //        val rootexps = rp1.root.toFSequent().formulas.filterNot(checkFactory(_,HOLFactory))
 //        require(rootexps.isEmpty, "Formulas contain fol content: "+rootexps.mkString(" ::: "))
-        val rule = Sub(rp1, sub)
+        val rule = if (sub.isIdentity) rp1 else Sub(rp1, sub)
 
 //        println("inferring instance from parent:"+rp1.root+" to "+rule.root+" with sub "+sub)
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in instance translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
@@ -127,6 +129,31 @@ abstract class RobinsonToRal {
 
       //TODO: handle factor rules with two contractions
 
+      case Factor(clause, parent, List(aux1@(f1::_), aux2@(f2::_)), sub_) =>
+        val sub = convert_substitution(sub_)
+        val (rmap1, rp1) = apply(parent, map)
+        val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
+
+        val rule1 = if (aux1.forall(parent.root.antecedent.contains(_))) {
+          val (a1::auxs1) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rp1.root, list)::list).reverse
+          AFactorF(rp1, a1, auxs1 )
+        } else if (aux1.forall(parent.root.succedent.contains(_))) {
+          val (a1::auxs1) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOsucc(sub(x.formula), rp1.root, list)::list).reverse
+          AFactorT(rp1, a1, auxs1 )
+        } else throw new Exception("Could not find all auxiliary occurrences of a factor rule!")
+
+        val rule2 = if (aux2.forall(parent.root.antecedent.contains(_))) {
+          val (a1::auxs1) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rule1.root, list)::list).reverse
+          AFactorF(rule1, a1, auxs1 )
+        } else if (aux1.forall(parent.root.succedent.contains(_))) {
+          val (a1::auxs1) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOsucc(sub(x.formula), rule1.root, list)::list).reverse
+          AFactorT(rule1, a1, auxs1 )
+        } else throw new Exception("Could not find all auxiliary occurrences of a factor rule!")
+
+        (rmap1, rule2)
+
+      case _ =>
+        throw new RalException("Unhandled case: ", rp::Nil, Nil)
 
   }
 
@@ -143,7 +170,6 @@ abstract class RobinsonToRal {
       println("wrong factory for "+e+" expected: "+f+" but is:"+e.factory)
       false
   }
-
 
   def pickFO(f:HOLFormula, list : Seq[LabelledFormulaOccurrence], exclusion_list : Seq[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence =
     list.find(x => x.formula == f && ! exclusion_list.contains(x)) match {

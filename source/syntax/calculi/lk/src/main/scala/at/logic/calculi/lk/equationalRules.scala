@@ -31,16 +31,22 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     def apply(s : HOLExpression, t : HOLExpression, e1 : HOLExpression, e2 : HOLExpression) = checkReplacement(s,t,e1,e2)
     //this is a convenience method, apart from that everything is general
     def apply(eq : HOLFormula, e1 : HOLFormula, e2:HOLFormula) : Option[List[Int]] = {
+      //println("try "+eq+" "+e1+" "+e2)
       eq match {
         case Equation(s,t) => apply(s,t,e1,e2) match {
-          case EqualModuloEquality(path) => Some(path)
-          case _ => None
+          case EqualModuloEquality(path) =>
+            //println("result:"+path)
+            Some(path)
+          case _ =>
+            //println("no result")
+            None
         }
         case _ => throw new Exception("Error checking for term replacement in "+e1+" and "+e2+": "+eq+" is not an equation!")
       }
     }
 
     def checkReplacement(s : LambdaExpression, t : LambdaExpression, e1 : LambdaExpression, e2 : LambdaExpression) : ReplacementResult = {
+      //println("matching "+e1+" against "+e2+" for "+s+" -> "+t)
       (e1,e2) match {
         case _ if (e1 == e2) => Equal
         case _ if (e1 == s) && (e2 == t) => EqualModuloEquality(Nil)

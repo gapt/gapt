@@ -179,7 +179,7 @@ object IvyToRobinson {
 
             debug("flipping: "+flipped.ancestors(0)+" transformed flipped "+rflipped.get)
 
-            val rproof = RParamodulation(ss, rparent, ss.root.positive(0), rflipped.get, flipped.formula.asInstanceOf[FOLFormula], Substitution())
+            val rproof = RParamodulation(rparent, ss, rflipped.get, ss.root.positive(0),  flipped.formula.asInstanceOf[FOLFormula], Substitution())
             debug("from: "+flipped.ancestors(0)+" tfrom to "+rflipped.get )
             debug("flipped formula: "+flipped.formula)
             require((rproof.root.occurrences).map(_.formula).contains(flipped.formula), "flipped formula must occur in translated clause "+rproof.root)

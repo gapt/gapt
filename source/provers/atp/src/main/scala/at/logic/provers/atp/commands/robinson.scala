@@ -53,7 +53,7 @@ case object VariantsCommand extends DataCommand[Clause] {
 
 case class ResolveCommand(alg: UnificationAlgorithm) extends DataCommand[Clause] {
   def apply(state: State, data: Any) = {
-    val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Pair[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
+    val ((p1,(lit1,b1))::(p2,(lit2,b2))::Nil) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof,Tuple2[FormulaOccurrence,Boolean]]]].toList
     val mgus = alg.unify(lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression])
     require(mgus.size < 2) // as it is first order it must have at most one mgu
     mgus.map(x => (state,  Resolution(p1,p2,lit1,lit2,x.asInstanceOf[Substitution])))
@@ -84,7 +84,7 @@ case class ClauseFactorCommand(alg: UnificationAlgorithm) extends DataCommand[Cl
     on the input of a set of literals (antecedents or succedents) it returns all possible subsets of literals which can be made equal with
     the substitution that makes them equal.
    */
-  def factor(ls: Seq[FormulaOccurrence], s: Substitution): List[Pair[List[FormulaOccurrence],Substitution]] = {
+  def factor(ls: Seq[FormulaOccurrence], s: Substitution): List[Tuple2[List[FormulaOccurrence],Substitution]] = {
     val subs = sb(ls.toList).filter(_.size > 1)
     subs.zip(subs.map(sub => unify(sub.map(_.formula.asInstanceOf[FOLFormula]),s))).filterNot(_._2 == None).map(p => (p._1,p._2.get))
   }
@@ -122,7 +122,7 @@ case class FactorCommand(alg: UnificationAlgorithm) extends DataCommand[Clause] 
     val res@ Resolution(cls, pr1, pr2, occ1, occ2, sub) = data.asInstanceOf[RobinsonResolutionProof]
     val factors1 = computeFactors(alg, pr1.root.succedent, pr1.root.succedent.filterNot(_ == occ1).toList, occ1, Substitution()/*sub.asInstanceOf[Substitution]*/, Nil)
     val factors2 = computeFactors(alg, pr2.root.antecedent, pr2.root.antecedent.filterNot(_ == occ2).toList, occ2, Substitution()/*sub.asInstanceOf[Substitution]*/, Nil)
-    (state, res) :: ((for {
+    (state, res) :: (for {
         (ls1,sub1) <- (Nil,Substitution())::factors1
         (ls2,sub2) <- (Nil,Substitution())::factors2
         if !(ls1.isEmpty && ls2.isEmpty)
@@ -138,8 +138,7 @@ case class FactorCommand(alg: UnificationAlgorithm) extends DataCommand[Clause] 
         }
         List((pr11,(occ11,true)),(pr21,(occ21,false)))
         //Resolution(pr11, pr21, occ11, occ21, sub)
-      }
-    ).flatMap(x => new ResolveCommand(alg).apply(state,x)))
+      }).flatMap(x => new ResolveCommand(alg).apply(state,x))
   }
 
   // computes factors, calling recursively to smaller sets
@@ -170,7 +169,7 @@ case class FactorCommand(alg: UnificationAlgorithm) extends DataCommand[Clause] 
 
 case class ParamodulationCommand(alg: UnificationAlgorithm) extends DataCommand[Clause] {
   def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof) = {
-    val l = ((for {
+    val l = (for {
       l1 <- p1.root.succedent
       l2 <- p2.root.antecedent ++ p2.root.succedent
       subTerm <- getAllPositions(l2.formula) // except var positions and only on positions of the same type as a or b
@@ -236,7 +235,7 @@ case class ParamodulationCommand(alg: UnificationAlgorithm) extends DataCommand[
             //println("l2 = "+l2.formula)
             List()
           }
-        }))
+        })
     //println(Console.RED)
     l
   }
@@ -295,7 +294,7 @@ case class ParamodulationCommand(alg: UnificationAlgorithm) extends DataCommand[
 // create variants to a pair of two clauses and propagate the literal and position information
 case object VariantLiteralPositionCommand extends DataCommand[Clause] {
   def apply(state: State, data: Any) = {
-    val ((p1,occ1,pos1)::(p2,occ2,pos2)::Nil) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
+    val ((p1,occ1,pos1)::(p2,occ2,pos2)::Nil) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof,Tuple2[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
     val v1 = Variant(p1)
     val v2 = Variant(p2)
     List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2),pos1),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2),pos2))))
@@ -308,7 +307,7 @@ case object VariantLiteralPositionCommand extends DataCommand[Clause] {
  // create variants to a pair of two clauses and propagate the literal information
 case object VariantLiteralCommand extends DataCommand[Clause] {
   def apply(state: State, data: Any) = {
-    val ((p1,occ1)::(p2,occ2)::Nil) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean]]]].toList
+    val ((p1,occ1)::(p2,occ2)::Nil) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof,Tuple2[FormulaOccurrence,Boolean]]]].toList
     val v1 = Variant(p1)
     val v2 = Variant(p2)
     List((state, List((v1,(v1.root.getChildOf(occ1._1).get,occ1._2)),(v2,(v2.root.getChildOf(occ2._1).get,occ2._2)))))
@@ -322,7 +321,7 @@ case object VariantLiteralCommand extends DataCommand[Clause] {
 // lit1 must always be the equation
 case class ParamodulationLiteralPositionCommand(alg: UnificationAlgorithm) extends DataCommand[Clause] {
   def apply(state: State, data: Any) = {
-    val ((p1,occ1,pos1s)::(p2,occ2,pos2s)::Nil) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof,Pair[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
+    val ((p1,occ1,pos1s)::(p2,occ2,pos2s)::Nil) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof,Tuple2[FormulaOccurrence,Boolean],Iterable[Int]]]].toList
     val pos1 = pos1s.head
     val pos2 = pos2s.toList // because bad interface in syntax should be Iterable in Replacement
     // we need to require that lit1 is an equation

@@ -14,16 +14,15 @@ import at.logic.language.lambda.types._
 import at.logic.utils.ds.acyclicGraphs._
 import at.logic.calculi.lk.base._
 import scala.collection.immutable.HashSet
+import at.logic.calculi.lk.EquationVerifier._
+import at.logic.language.hol.Formula
+import at.logic.utils.traits.Occurrence
+import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.calculi.lk.{EquationVerifier, BinaryLKProof, UnaryLKProof}
+import at.logic.calculi.lksk.UnaryLKskProof
 
 package robinson {
 
-import at.logic.language.fol.{Neg, freeVariables}
-import at.logic.language.hol.{HOLVar, Formula, HOLExpression, Neg => HOLNeg}
-import at.logic.language.lambda.types.->
-import at.logic.utils.traits.Occurrence
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.lk.{BinaryLKProof, UnaryLKProof}
-import at.logic.calculi.lksk.UnaryLKskProof
 
 /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
@@ -139,41 +138,69 @@ object createContext {
       val term2opSuc = p2.root.succedent.find(_ == a2)
 
       (term1op, term2opAnt, term2opSuc) match {
-        case (None, _ , _ ) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
-        case (_ ,None,None) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
-        case (Some(term1), Some(term2), _ ) =>
-          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
-          new BinaryAGraph[Clause](Clause(
-              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub) :+ prinFormula,
-              createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent, sub))
-            , p1, p2)
-            with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
-                def rule = ParamodulationType
-                def aux = (term1::Nil)::(term2::Nil)::Nil
-                def substitution = sub
-                override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
-                override def name = "pmod"
-                def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
-                def prin = prinFormula::Nil
-            }
+        case (None, _, _) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+        case (_, None, None) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+        case (Some(term1), Some(term2), _) =>
+          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral), term1 :: term2 :: Nil)
+          sub(term1.formula) match {
+            case Equation(s, t) =>
+              (EquationVerifier(s, t, sub(term2.formula), sub(newLiteral)), EquationVerifier(t, s, sub(term2.formula), sub(newLiteral))) match {
+                case (Different, Different) =>
+                  if (s==t) println(s+"=="+t)
+                  if (sub(term2.formula)==newLiteral) println(sub(term2.formula)+"=="+newLiteral) else println(sub(term2.formula)+"!="+newLiteral)
+                  throw new LKRuleCreationException("Could not check replacement of " + s + " by " + t + " in " + sub(term2.formula) + " equals " + prinFormula.formula)
+                case _ =>
+                //check is ok
+              }
+          }
 
-        case (Some(term1), _ , Some(term2)) =>
-          val term2 = term2opSuc.get
-          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral).asInstanceOf[FOLFormula], term1::term2::Nil)
           new BinaryAGraph[Clause](Clause(
-              createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, sub),
-              createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent.filterNot(_ == term2), sub)  :+ prinFormula)
+            createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent.filterNot(_ == term2), sub) :+ prinFormula,
+            createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent, sub))
             , p1, p2)
             with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
-                def rule = ParamodulationType
-                def aux = (term1::Nil)::(term2::Nil)::Nil
-                def substitution = sub
-                override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
-                override def name = "pmod"
-                def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
-                def prin = prinFormula::Nil
-            }
-        }
+            def rule = ParamodulationType
+            def aux = (term1 :: Nil) :: (term2 :: Nil) :: Nil
+            def substitution = sub
+            override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
+            override def name = "pmod"
+            def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
+            def prin = prinFormula :: Nil
+          }
+
+
+        case (Some(term1), _, Some(term2)) =>
+          val term2 = term2opSuc.get
+          val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral), term1 :: term2 :: Nil)
+          sub(term1.formula) match {
+            case Equation(s, t) =>
+              (EquationVerifier(s, t, sub(term2.formula), sub(newLiteral)), EquationVerifier(t, s, sub(term2.formula), sub(newLiteral))) match {
+                case (Different, Different) =>
+                  if (s==t) println(s+"=="+t)
+                  if (sub(term2.formula)==newLiteral) println(term2.formula+"=="+newLiteral)
+                  throw new LKRuleCreationException("Could not check replacement of " + s + " by " + t + " in " + sub(term2.formula) + " equals " + prinFormula)
+                case _ =>
+                  //check is ok
+              }
+          }
+
+          new BinaryAGraph[Clause](Clause(
+            createContext(p1.root.antecedent, sub) ++ createContext(p2.root.antecedent, sub),
+            createContext(p1.root.succedent.filterNot(_ == term1), sub) ++ createContext(p2.root.succedent.filterNot(_ == term2), sub) :+ prinFormula)
+            , p1, p2)
+            with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
+
+            def rule = ParamodulationType
+            def aux = (term1 :: Nil) :: (term2 :: Nil) :: Nil
+            def substitution = sub
+            override def toString = "Para(" + root.toString + ", " + p1.toString + ", " + p2.toString + ", " + substitution.toString + ")"
+            override def name = "pmod"
+            def getAccumulatedSubstitution = substitution compose p1.getAccumulatedSubstitution compose p2.getAccumulatedSubstitution
+            def prin = prinFormula :: Nil
+          }
+
+      }
+
     }
     
     def unapply(proof: ResolutionProof[Clause] with AppliedSubstitution) = if (proof.rule == ParamodulationType) {
