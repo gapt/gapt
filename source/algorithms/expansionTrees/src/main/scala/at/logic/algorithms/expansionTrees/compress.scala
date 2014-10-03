@@ -2,8 +2,7 @@
 package at.logic.algorithms.expansionTrees
 
 import at.logic.calculi.expansionTrees._
-import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => mWeakQuantifier, StrongQuantifier => mStrongQuantifier, And => mAnd, Or =>
-mOr, Imp => mImp, Not => mNot, Atom => mAtom, SkolemQuantifier => mSkolemQuantifier, MultiExpansionTree}
+import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => mWeakQuantifier, StrongQuantifier => mStrongQuantifier, And => mAnd, Or => mOr, Imp => mImp, Not => mNot, Atom => mAtom, SkolemQuantifier => mSkolemQuantifier, MultiExpansionTree, MultiExpansionSequent}
 import at.logic.language.hol.{HOLConst, HOLExpression, HOLVar}
 
 object compressQuantifiers {
@@ -21,6 +20,8 @@ object compressQuantifiers {
       val (sel, skcs) = compressSkolem(compressQuantifiers(t),cs);
       mSkolemQuantifier(f, skcs,sel)
   }
+  
+  def apply(sequent: ExpansionSequent): MultiExpansionSequent = MultiExpansionSequent(sequent.antecedent.map(this.apply), sequent.succedent.map(this.apply))
 
   private def compressStrong(tree: MultiExpansionTree, v: HOLVar): Tuple2[MultiExpansionTree, Seq[HOLVar]] = tree match {
     case mStrongQuantifier(_, vars, sel) => (sel, vars.+:(v))
