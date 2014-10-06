@@ -130,7 +130,6 @@ abstract class RobinsonToRal {
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in instance translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
         (rmap1, rule)
 
-      //TODO: handle factor rules with two contractions
 
       case Factor(clause, parent, List(aux1@(f1::_), aux2@(f2::_)), sub_) =>
   //      println("factor 2")

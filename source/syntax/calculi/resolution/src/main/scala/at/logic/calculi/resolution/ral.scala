@@ -110,10 +110,10 @@ object Cut {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == CutRalType) {
+  def unapply[V <: LabelledSequent](proof: RalResolutionProof[V]) = if (proof.rule == CutRalType) {
     val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas]
     val (a1::a2::Nil) = r.aux
-    Some((r.uProof1, r.uProof2, r.root, a1, a2))
+    Some((r.root, r.uProof1.asInstanceOf[RalResolutionProof[V]], r.uProof2.asInstanceOf[RalResolutionProof[V]], a1, a2))
   }
   else None
 }
@@ -140,7 +140,7 @@ object ForallT {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
   }
 }
 
@@ -169,7 +169,7 @@ object ForallF {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
   }
 }
 
@@ -195,7 +195,7 @@ object ExistsF {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
   }
 }
 
@@ -219,11 +219,11 @@ object ExistsT {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ExTRalType) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == ExTRalType) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence], pr.subst))
   }
 }
 
@@ -235,9 +235,9 @@ object Sub {
       p)
       with RalResolutionProof[V] with UnaryResolutionProof[V] with AppliedSubstitution {def rule = SubType; def substitution = sub}
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V] with AppliedSubstitution) = if (proof.rule == SubType) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V] with AppliedSubstitution) = if (proof.rule == SubType) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AppliedSubstitution]
-    Some((pr.root, pr.uProof, pr.substitution))
+    Some((pr.root, pr.uProof.asInstanceOf[RalResolutionProof[V]], pr.substitution))
   }
 }
 
@@ -260,11 +260,11 @@ object NegF {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == NegFRalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == NegFRalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -285,11 +285,11 @@ object NegT {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == NegTRalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == NegTRalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -311,11 +311,11 @@ object AndT1 {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == AndT1RalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == AndT1RalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -336,11 +336,11 @@ object AndT2 {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == AndT1RalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == AndT1RalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -361,11 +361,11 @@ object OrF1 {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == OrF1RalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == OrF1RalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -386,11 +386,11 @@ object OrF2 {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == OrF2RalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == OrF2RalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -411,11 +411,11 @@ object ImpF1 {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ImpF1RalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == ImpF1RalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -436,11 +436,11 @@ object ImpF2 {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ImpF2RalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == ImpF2RalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p.asInstanceOf[LabelledFormulaOccurrence]))
   }
 }
 
@@ -462,11 +462,11 @@ object AndF {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == AndFRalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == AndFRalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p1::p2::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]), p2.asInstanceOf[LabelledFormulaOccurrence])
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]), p2.asInstanceOf[LabelledFormulaOccurrence])
   }
 }
 
@@ -488,11 +488,11 @@ object OrT {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == OrTRalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == OrTRalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p1::p2::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]), p2.asInstanceOf[LabelledFormulaOccurrence])
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]), p2.asInstanceOf[LabelledFormulaOccurrence])
   }
 }
 
@@ -516,11 +516,11 @@ object ImpT {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ImpTRalType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == ImpTRalType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a::Nil)::Nil) = pr.aux
     val (p1::p2::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]), p2.asInstanceOf[LabelledFormulaOccurrence])
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a.asInstanceOf[LabelledFormulaOccurrence], p1.asInstanceOf[LabelledFormulaOccurrence]), p2.asInstanceOf[LabelledFormulaOccurrence])
   }
 }
 
@@ -552,11 +552,11 @@ object AFactorT {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == AFactorTType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == AFactorTType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a1::aux)::Nil) = pr.aux
     val (p1::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a1.asInstanceOf[LabelledFormulaOccurrence], aux.asInstanceOf[List[LabelledFormulaOccurrence]]), p1.asInstanceOf[LabelledFormulaOccurrence])
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a1.asInstanceOf[LabelledFormulaOccurrence], aux.asInstanceOf[List[LabelledFormulaOccurrence]]), p1.asInstanceOf[LabelledFormulaOccurrence])
   }
 }
 
@@ -587,11 +587,11 @@ object AFactorF {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == AFactorFType ) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == AFactorFType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas]
     val ((a1::aux)::Nil) = pr.aux
     val (p1::Nil) = pr.prin
-    Some((pr.uProof, pr.root.asInstanceOf[LabelledSequent], a1.asInstanceOf[LabelledFormulaOccurrence], aux.asInstanceOf[List[LabelledFormulaOccurrence]]), p1.asInstanceOf[LabelledFormulaOccurrence])
+    Some((pr.root.asInstanceOf[LabelledSequent], pr.uProof.asInstanceOf[RalResolutionProof[V]], a1.asInstanceOf[LabelledFormulaOccurrence], aux.asInstanceOf[List[LabelledFormulaOccurrence]]), p1.asInstanceOf[LabelledFormulaOccurrence])
   }
 }
 
@@ -639,10 +639,10 @@ object ParaT {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ParaTRalType) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == ParaTRalType) {
     val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas with Flip]
     val (List(a1,a2)::Nil) = r.aux
-    Some((r.uProof1, r.uProof2, r.root, a1, a2, r.flipped))
+    Some((r.root, r.uProof1.asInstanceOf[RalResolutionProof[V]], r.uProof2.asInstanceOf[RalResolutionProof[V]],  a1, a2, r.flipped))
   }
   else None
 }
@@ -691,10 +691,10 @@ object ParaF {
     }
   }
 
-  def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ParaFRalType) {
+  def unapply[V <: LabelledSequent](proof: ResolutionProof[V]) = if (proof.rule == ParaFRalType) {
     val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas with Flip]
     val (List(a1,a2)::Nil) = r.aux
-    Some((r.uProof1, r.uProof2, r.root, a1, a2, r.flipped))
+    Some((r.root, r.uProof1.asInstanceOf[RalResolutionProof[V]], r.uProof2.asInstanceOf[RalResolutionProof[V]], a1, a2, r.flipped))
   }
   else None
 }

@@ -103,10 +103,12 @@ object ListSupport {
     s.take(index) ++ s.takeRight(s.size-index-1)
   }
 
-  def removeFirst[A](s: List[A], a: A): List[A] = s match {
+  def removeFirst[A](s: List[A], a: A): List[A] = removeFirstWhere(s, (x:A) => a == x)
+
+  def removeFirstWhere[A](s: List[A], prop : A => Boolean): List[A] = s match {
     case Nil => Nil
-    case x::xs if x == a => xs
-    case x::xs /* x!= a */ => x::removeFirst(xs,a)
+    case x::xs if prop(x) => xs
+    case x::xs /* !prop(x) */ => x::removeFirstWhere(xs,prop)
   }
   
   /** Given a list xs, returns a list of copies of xs without the first, second, ..., last element.
