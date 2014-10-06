@@ -4,6 +4,7 @@ import at.logic.provers.Prover
 import scala.collection.mutable.{Stack, HashSet, ListBuffer}
 import at.logic.calculi.expansionTrees.multi._
 import at.logic.utils.dssupport.ListSupport.{listComplements, zipper}
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent}
 
 /** Given a MultiExpansionSequent S and a prover P, this algorithm returns a list of the minimal expansion sequents below or equal to S that P still evaluates as valid.
 
@@ -35,6 +36,8 @@ object minimalExpansionSequents {
     
     result.toList
   }
+  
+  def apply(sequent: ExpansionSequent, prover: Prover): List[ExpansionSequent] = minimalExpansionSequents(compressQuantifiers(sequent), prover).map(decompressQuantifiers.apply)
   
   def generateSuccessors(sequent: MultiExpansionSequent): List[MultiExpansionSequent] = sequent match {
     case MultiExpansionSequent(ant, suc) => {

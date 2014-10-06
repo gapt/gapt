@@ -141,6 +141,20 @@ object ListSupport {
       }
     }
   }
+  
+  /** Groups sequence xs into subsequences of elements that have the same image under function f.
+    * @param xs The sequence to be partitioned.
+    * @param f  The function.
+    */
+  def groupSeq[A, B](xs: Seq[A], f: A => B): Seq[Seq[A]] = xs match {
+    case Nil => Nil
+    case y +: ys => {
+      val z = f(y)
+      val zs = y +: ys.filter(x => (f(x) == z))
+      val rest = ys.filterNot(x => (f(x) == z))
+      zs +: groupSeq(rest, f)
+    }
+  }
 
 }
 
