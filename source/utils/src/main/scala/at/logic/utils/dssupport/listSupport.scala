@@ -108,6 +108,39 @@ object ListSupport {
     case x::xs if x == a => xs
     case x::xs /* x!= a */ => x::removeFirst(xs,a)
   }
+  
+  /** Given a list xs, returns a list of copies of xs without the first, second, ..., last element.
+    *
+    *
+    */
+  def listComplements[T](xs: List[T]) : List[List[T]] = xs match {
+    case Nil     => Nil
+    case y :: ys => ys :: listComplements(ys).map(zs => y :: zs)
+  }
+  /** Given a list xs, returns a list of copies of xs without the nth, ..., last element.
+    *
+    *
+    */  
+  def listComplements[T](xs: List[T], n: Int) : List[List[T]] = {
+    val (fst, snd) = xs splitAt (n-1)
+    listComplements(snd).map(zs => fst ++ zs)
+  }
+  
+  /** Splits a list into (nth element, elements 1,..,(n-1), elements (n+1),..,end)
+    * @param xs The list to split.
+    * @param n  The position to split at.
+    */
+  def zipper[T](xs: List[T], n: Int) : (T, List[T], List[T]) = xs match {
+    case Nil     => throw new IllegalArgumentException
+    case y :: ys => {
+      if (n == 1)
+        (y, Nil, ys)
+      else {
+        val (z, fst, snd) = zipper(ys, n-1)
+        (z, y :: fst, snd)
+      }
+    }
+  }
 
 }
 
