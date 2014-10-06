@@ -8,7 +8,7 @@
 package at.logic.calculi.resolution.ral
 
 import at.logic.calculi.lk.EquationVerifier
-import at.logic.calculi.lk.EquationVerifier.EqualModuloEquality
+import at.logic.calculi.lk.EquationVerifier.{Different, EqualModuloEquality}
 import at.logic.calculi.resolution._
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
@@ -51,6 +51,12 @@ case object AFactorTType extends UnaryRuleTypeA
 case object AFactorFType extends UnaryRuleTypeA
 
 
+trait Flip {
+  /** *
+    * in a paranmodulation rule with equation s=t, designate if it is used non-flipped (false) i.e. s=t or flipped (true) as t=s
+    */
+  val flipped : Boolean
+}
 
 
 trait RalResolutionProof[V <: LabelledSequent] extends ResolutionProof[V]
@@ -535,8 +541,9 @@ object AFactorT {
 
         require(isAtom(term1.formula) , "Can only contract atom formulas!")
         val f = term1.formula
+        val allaux = term1oc +: term2ocs
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1 :: terms ).asInstanceOf[LabelledFormulaOccurrence]
-        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent), createContext(s1.root.succedent filterNot(term2ocs.contains(_))) ++ List(prinFormula1)), s1)
+        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent), createContext(s1.root.succedent filterNot(allaux.contains(_))) ++ List(prinFormula1)), s1)
           with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas  {
           def rule = AFactorTType
           def aux = (term1 :: terms)::Nil
@@ -569,8 +576,9 @@ object AFactorF {
 
         require(isAtom(term1.formula) , "Can only contract atom formulas!")
         val f = term1.formula
+        val allaux = term1oc +: term2ocs
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1::terms).asInstanceOf[LabelledFormulaOccurrence]
-        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent filterNot(term2ocs.contains(_))) ++ List(prinFormula1), createContext(s1.root.succedent)), s1)
+        new UnaryAGraph[LabelledSequent](new LabelledSequent(createContext(s1.root.antecedent filterNot(allaux.contains(_))) ++ List(prinFormula1), createContext(s1.root.succedent)), s1)
           with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas  {
           def rule = AFactorFType
           def aux = (term1 :: terms)::Nil
@@ -596,24 +604,32 @@ object ParaT {
       case (Some(occ1@LabelledFormulaOccurrence(term1, anc1, label1)),
             Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
         require(label1 == label2, "Paramodulation requires the labels to match, but we have "+label1+" and "+label2)
-        term1 match {
+        val flip = term1 match {
           case Equation(s,t) =>
-            EquationVerifier(s,t, term2, para_formula ) match {
-              case EqualModuloEquality(path) =>
-                val para_occ = new LabelledFormulaOccurrence(para_formula, List(occ1,occ2), label1)
-
-                new BinaryAGraph[LabelledSequent](new LabelledSequent(
-                  createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent),
-                  createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent filterNot(_ == term2oc)) ++ List(para_occ) )
-                  , s1, s2)
-                with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
-                  def rule = ParaTRalType
-                  def aux = List(term1oc, term2oc)::Nil
-                }
-              case _ =>
+            (EquationVerifier(s,t, term2, para_formula ), EquationVerifier(t,s, term2, para_formula )) match {
+              case (Different, Different) =>
                 throw new Exception("Could not verify equation "+s+" = "+t+". Please check if "+para_formula+" really results from a replacement in "+term2)
+              case (EqualModuloEquality(_), _) =>
+                false
+              case (_, EqualModuloEquality(_)) =>
+                true
+              case _ =>
+                //this is a paramodulation of reflexifity
+                false
             }
           case _ => throw new Exception("Expected equation as first argument of para rule, but got: "+term1)
+        }
+
+        val para_occ = new LabelledFormulaOccurrence(para_formula, List(occ1,occ2), label1)
+
+        new BinaryAGraph[LabelledSequent](new LabelledSequent(
+          createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent),
+          createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent filterNot(_ == term2oc)) ++ List(para_occ) )
+          , s1, s2)
+          with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas with Flip {
+          def rule = ParaTRalType
+          def aux = List(term1oc, term2oc)::Nil
+          val flipped = flip
         }
 
       case (None, _)  =>
@@ -624,9 +640,9 @@ object ParaT {
   }
 
   def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ParaTRalType) {
-    val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas]
+    val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas with Flip]
     val (List(a1,a2)::Nil) = r.aux
-    Some((r.uProof1, r.uProof2, r.root, a1, a2))
+    Some((r.uProof1, r.uProof2, r.root, a1, a2, r.flipped))
   }
   else None
 }
@@ -639,26 +655,33 @@ object ParaF {
       case (Some(occ1@LabelledFormulaOccurrence(term1, anc1, label1)),
             Some(occ2@LabelledFormulaOccurrence(term2, anc2, label2))) =>
         require(label1 == label2, "Paramodulation requires the labels to match, but we have "+label1+" and "+label2)
-        term1 match {
+        val flip = term1 match {
           case Equation(s,t) =>
-            EquationVerifier(s,t, term2, para_formula ) match {
-              case EqualModuloEquality(path) =>
-                val para_occ = new LabelledFormulaOccurrence(para_formula, List(occ1,occ2), label1)
-                new BinaryAGraph[LabelledSequent](new LabelledSequent(
-                  createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(_ == term2oc)) ++ List(para_occ),
-                  createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent))
-                  , s1, s2)
-                with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
-                  def rule = ParaFRalType
-                  def aux = List(term1oc, term2oc)::Nil
-                }
-
-              case _ =>
+            (EquationVerifier(s,t, term2, para_formula ), EquationVerifier(t,s, term2, para_formula )) match {
+              case (Different, Different) =>
                 throw new Exception("Could not verify equation "+s+" = "+t+". Please check if "+para_formula+" really results from a replacement in "+term2)
+              case (EqualModuloEquality(_), _) =>
+                false
+              case (_, EqualModuloEquality(_)) =>
+                true
+              case _ =>
+                //this is a paramodulation of reflexifity
+                false
             }
-
           case _ => throw new Exception("Expected equation as first argument of para rule, but got: "+term1)
         }
+
+        val para_occ = new LabelledFormulaOccurrence(para_formula, List(occ1,occ2), label1)
+        new BinaryAGraph[LabelledSequent](new LabelledSequent(
+          createContext(s1.root.antecedent) ++ createContext(s2.root.antecedent filterNot(_ == term2oc)) ++ List(para_occ),
+          createContext(s1.root.succedent filterNot(_ == term1oc)) ++ createContext(s2.root.succedent))
+          , s1, s2)
+          with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas with Flip {
+          def rule = ParaFRalType
+          def aux = List(term1oc, term2oc)::Nil
+          val flipped = flip
+        }
+
 
 
       case (None, _)  =>
@@ -669,9 +692,9 @@ object ParaF {
   }
 
   def unapply[V <: Sequent](proof: ResolutionProof[V]) = if (proof.rule == ParaFRalType) {
-    val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas]
+    val r = proof.asInstanceOf[BinaryResolutionProof[V] with AuxiliaryFormulas with Flip]
     val (List(a1,a2)::Nil) = r.aux
-    Some((r.uProof1, r.uProof2, r.root, a1, a2))
+    Some((r.uProof1, r.uProof2, r.root, a1, a2, r.flipped))
   }
   else None
 }

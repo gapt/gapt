@@ -26,7 +26,7 @@ object RobinsonToRal extends RobinsonToRal {
   def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution = Substitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
 }
 
-case class RalException[V <: LabelledSequent](val message : String, val rp : List[RobinsonResolutionProof], val ralp : List[RalResolutionProof[V]]) extends Exception(message);
+case class RalException[V <: LabelledSequent](val message : String, val rp : List[RobinsonResolutionProof], val ralp : List[RalResolutionProof[V]], val exp : List[HOLExpression]) extends Exception(message);
 
 abstract class RobinsonToRal {
   type TranslationMap = Map[FormulaOccurrence, LabelledFormulaOccurrence]
@@ -55,11 +55,12 @@ abstract class RobinsonToRal {
 
 
       case Resolution(clause, p1, p2, aux1, aux2, sub_) =>
+        println("Resolution on "+aux1+" in "+p1.root.succedent+" and "+aux2+" in "+p2.root.antecedent+ " with sub "+sub_)
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(p1, map)
         val (rmap2, rp2) = apply(p2, rmap1)
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
-        val sub2 = if (sub.isIdentity) rp1 else Sub(rp2, sub)
+        val sub2 = if (sub.isIdentity) rp2 else Sub(rp2, sub)
         val rule = Cut(sub1, sub2, List(pickFOsucc(sub(aux1.formula), sub1.root, Nil)),
                                    List(pickFOant(sub(aux2.formula), sub2.root, Nil)))
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in resolution translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
@@ -67,6 +68,7 @@ abstract class RobinsonToRal {
         (rmap2, rule)
 
       case Factor(clause, parent, List(aux1@(f1::_)), sub_) if parent.root.antecedent.contains(f1) =>
+//        println("antecedent factor 1: "+aux1+"\n"+parent.root+"\n"+clause)
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
@@ -77,6 +79,7 @@ abstract class RobinsonToRal {
         (rmap1, rule)
 
       case Factor(clause, parent, List(aux1@(f1::_)), sub_) if parent.root.succedent.contains(f1) =>
+//        println("succedent factor 1")
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
@@ -96,7 +99,7 @@ abstract class RobinsonToRal {
         (rmap2, rule)
 
       case Paramodulation(clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.succedent contains modulant =>
-        println("translating instance from para parent:"+paraparent.root+" and "+ parent.root +" to "+clause+" with sub "+sub_)
+//        println("translating instance from para parent:"+paraparent.root+" and "+ parent.root +" to "+clause+" with sub "+sub_)
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(paraparent, map)
         val (rmap2, rp2) = apply(parent, rmap1)
@@ -130,6 +133,8 @@ abstract class RobinsonToRal {
       //TODO: handle factor rules with two contractions
 
       case Factor(clause, parent, List(aux1@(f1::_), aux2@(f2::_)), sub_) =>
+  //      println("factor 2")
+
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
@@ -153,7 +158,7 @@ abstract class RobinsonToRal {
         (rmap1, rule2)
 
       case _ =>
-        throw new RalException("Unhandled case: ", rp::Nil, Nil)
+        throw new RalException("Unhandled case: ", rp::Nil, Nil, Nil)
 
   }
 
