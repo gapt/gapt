@@ -115,15 +115,15 @@ object ListSupport {
     *
     *
     */
-  def listComplements[T](xs: List[T]) : List[List[T]] = xs match {
+  def listComplements[T](xs: Seq[T]) : Seq[Seq[T]] = xs match {
     case Nil     => Nil
-    case y :: ys => ys :: listComplements(ys).map(zs => y :: zs)
+    case y +: ys => ys +: listComplements(ys).map(zs => y +: zs)
   }
   /** Given a list xs, returns a list of copies of xs without the nth, ..., last element.
     *
     *
     */  
-  def listComplements[T](xs: List[T], n: Int) : List[List[T]] = {
+  def listComplements[T](xs: Seq[T], n: Int) : Seq[Seq[T]] = {
     val (fst, snd) = xs splitAt (n-1)
     listComplements(snd).map(zs => fst ++ zs)
   }
@@ -132,14 +132,14 @@ object ListSupport {
     * @param xs The list to split.
     * @param n  The position to split at.
     */
-  def zipper[T](xs: List[T], n: Int) : (T, List[T], List[T]) = xs match {
+  def zipper[T](xs: Seq[T], n: Int) : (T, Seq[T], Seq[T]) = xs match {
     case Nil     => throw new IllegalArgumentException
-    case y :: ys => {
+    case y +: ys => {
       if (n == 1)
         (y, Nil, ys)
       else {
         val (z, fst, snd) = zipper(ys, n-1)
-        (z, y :: fst, snd)
+        (z, y +: fst, snd)
       }
     }
   }
@@ -156,6 +156,11 @@ object ListSupport {
       val rest = ys.filterNot(x => (f(x) == z))
       zs +: groupSeq(rest, f)
     }
+  }
+  
+  def pairwiseImages[A,B,C](xs: Seq[A], ys: Seq[B], f: (A,B) => C): Seq[Seq[C]] = xs match {
+    case Nil => Nil
+    case z +: zs => ys.map(y => f(z,y)) +: pairwiseImages(zs, ys, f)
   }
 
 }
