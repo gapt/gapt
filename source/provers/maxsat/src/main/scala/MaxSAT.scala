@@ -379,7 +379,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
         (vLinePattern findFirstIn in) match{
           case None => None
           case Some(vline) => {
-            debug("model: " + vline)
+            trace("model: " + vline)
             Some(vline.split(" ").
               filter(lit => !lit.equals("") && !lit.equals("v") && !lit.charAt(0).equals('0')).
               map(lit =>
