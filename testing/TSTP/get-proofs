@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ "$1" = "" ]; then
+  echo "Please use './get-proofs leanCoP' or './get-proofs prover9'."
+  exit 0;
+fi
+
+prover=$1
+
+tar -xzf $prover.tar.gz
+
+for prob_group in `ls -d $prover/*`
+do
+  echo "Processing directory $prob_group"
+  for problem in `ls -d $prob_group/*`
+  do
+    for file in `ls $problem/*.s`
+    do
+      sed 's/^% //g' $file > $file.out
+    done
+  done
+done

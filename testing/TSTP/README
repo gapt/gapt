@@ -1,0 +1,16 @@
+This directory contains TSTP[1] solutions computed by prover9[2] and leanCoP[3]. 
+These are essentially the original output proofs in each prover's syntax, except
+from the fact that they are commented out (lines start with %). To get the actual
+proofs, please run:
+
+./get-proofs <prover>
+
+where prover is either 'leanCoP' or 'prover9'. This creates a directory with the
+prover name where all the proofs will be.
+
+Thanks to Geoff Sutcliffe for providing the files.
+
+[1] http://www.cs.miami.edu/~tptp/TSTP/
+[2] http://www.cs.unm.edu/~mccune/mace4/
+[3] http://leancop.de/
+

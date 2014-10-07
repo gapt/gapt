@@ -1,7 +1,0 @@
-This directory contains all solutions prover9 finds for the TPTP library (as of 2012). Thanks to Geoff Sutcliffe for providing the tarball Prover9.s.tgz. This tarball contains the output of prover9 in TPTP .s solution format which (for prover9) is essentially just a commented version of the original prover9 output. For testing purposes a directory tree of prover9 output files is expected. To generate this, do the following:
-
-$ tar xvfz Prover9.s.tgz
-$ ./mk_s_to_out
-
-Troubleshooting:
-1) the location of awk might not be in /bin/awk. Change location if required.
