@@ -138,8 +138,8 @@ object createContext {
       val term2opSuc = p2.root.succedent.find(_ == a2)
 
       (term1op, term2opAnt, term2opSuc) match {
-        case (None, _, _) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
-        case (_, None, None) => throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
+        case (None, _, _) => throw new LKRuleCreationException("Auxiliary equation "+ a1 +" is not contained in the succedent of "+p1.root)
+        case (_, None, None) => throw new LKRuleCreationException("Auxiliary formula"+a2 +" is not contained in the clause "+p2.root)
         case (Some(term1), Some(term2), _) =>
           val prinFormula = term2.factory.createFormulaOccurrence(sub(newLiteral), term1 :: term2 :: Nil)
           sub(term1.formula) match {

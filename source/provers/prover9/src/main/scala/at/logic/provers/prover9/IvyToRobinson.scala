@@ -5,7 +5,7 @@ import at.logic.calculi.resolution.robinson.{InitialClause => RInitialClause, Re
 import at.logic.language.fol._
 import at.logic.calculi.resolution.robinson.{Instance => RInstantiate}
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.Clause
+import at.logic.calculi.resolution.{FClause, Clause}
 import at.logic.algorithms.rewriting.TermReplacement
 import at.logic.calculi.lk.base.FSequent
 
@@ -177,14 +177,41 @@ object IvyToRobinson {
             val rflipped = (rparent.root.occurrences) find (_.formula == flippend_ancestor)
             require(rflipped.nonEmpty, "Error: cannot find flipped formula in translation of parent proof!")
 
-            debug("flipping: "+flipped.ancestors(0)+" transformed flipped "+rflipped.get)
+            (rparent.root.antecedent) find (_.formula == flippend_ancestor) match {
+              case None =>
+                /* this is a positive occurrence, i.e. we do the following:
+                *      :- s=t x C :- D       :- s=s
+                *      ----------------------------- para
+                *             :- t=s x C :- D
+                * */
 
-            val rproof = RParamodulation(rparent, ss, rflipped.get, ss.root.positive(0),  flipped.formula.asInstanceOf[FOLFormula], Substitution())
-            debug("from: "+flipped.ancestors(0)+" tfrom to "+rflipped.get )
-            debug("flipped formula: "+flipped.formula)
-            require((rproof.root.occurrences).map(_.formula).contains(flipped.formula), "flipped formula must occur in translated clause "+rproof.root)
-            require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating flip rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
-            (rproof, parentmap + ((id, rproof)))
+                debug("flipping: "+flipped.ancestors(0)+" transformed flipped "+rflipped.get)
+
+                val rproof = RParamodulation(rparent, ss, rflipped.get, ss.root.positive(0),  flipped.formula.asInstanceOf[FOLFormula], Substitution())
+                debug("from: "+flipped.ancestors(0)+" tfrom to "+rflipped.get )
+                debug("flipped formula: "+flipped.formula)
+                require((rproof.root.occurrences).map(_.formula).contains(flipped.formula), "flipped formula must occur in translated clause "+rproof.root)
+                require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating flip rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
+                (rproof, parentmap + ((id, rproof)))
+
+
+              case Some(aflipped) =>
+                /* this is a negative occurrence, i.e. we do the following:
+                *      s=t :- s=t         :- s=s
+                *      ------------------------- para
+                *             t=s :- t=s                      t=s :-   x C :- D
+                *             -------------------------------------------------- Res
+                *                             t=s :-  x C :- D
+                * */
+
+
+                val tsts = RInitialClause(FClause(List(flipped.formula), List(flipped.formula)))
+                val i1 = RParamodulation(tsts, ss, tsts.root.succedent(0), ss.root.succedent(0), aflipped.formula.asInstanceOf[FOLFormula], Substitution() )
+                val rproof = RResolution(i1, rparent, i1.root.succedent(0), rflipped.get, Substitution() )
+                (rproof, parentmap + ((id, rproof)))
+
+            }
+
         }
 
       /*TODO: orientation is so far ignored. this is no problem because the paramodulation datastructure is flexible enough.
