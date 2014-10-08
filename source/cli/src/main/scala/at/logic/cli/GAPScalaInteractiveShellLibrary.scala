@@ -11,7 +11,7 @@ import java.util.zip.GZIPInputStream
 
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.cutIntroduction._
-import at.logic.algorithms.expansionTrees.compressQuantifiers
+import at.logic.algorithms.expansionTrees.{compressQuantifiers, minimalExpansionSequents => minimalExpSeq}
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.algorithms.fol.recreateWithFactory
 import at.logic.algorithms.hlk.{ExtendedProofDatabase, HybridLatexParser, LKProofParser, SchemaFormulaParser}
@@ -25,7 +25,7 @@ import at.logic.algorithms.rewriting.{DefinitionElimination, NameReplacement}
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
+import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, MultiExpansionSequent}
 import at.logic.calculi.expansionTrees.{ExpansionSequent, ExpansionTree}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
@@ -68,7 +68,7 @@ import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.ui._
 import at.logic.provers.maxsat.{MaxSATSolver, MaxSAT}
 import at.logic.provers.maxsat.MaxSATSolver._
-import at.logic.provers.minisat.MiniSAT
+import at.logic.provers.minisat.{MiniSAT, MiniSATProver}
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
 import at.logic.transformations.ceres.ACNF._
@@ -1103,19 +1103,26 @@ object findDefinitions {
   }
 }
 
-object extractExpansionTrees {
+object extractExpansionSequent {
   def apply(proof: LKProof): ExpansionSequent =
     herbrandExtraction.extractExpansionTrees(proof)
 }
 
-object extractLKSKExpansionTrees {
+object extractLKSKExpansionSequent {
   def apply(proof: LKProof): ExpansionSequent =
     herbrandExtraction.lksk.extractLKSKExpansionTrees(proof)
 }
 
+object minimalExpansionSequents {
+  def apply(sequent: ExpansionSequent): List[ExpansionSequent] = minimalExpSeq(sequent, new MiniSATProver).toList
+}
 
 object compressExpansionTree {
   def apply(tree: ExpansionTree): MultiExpansionTree = compressQuantifiers(tree)
+}
+
+object compressExpansionSequent {
+  def apply(sequent: ExpansionSequent): MultiExpansionSequent = compressQuantifiers(sequent)
 }
 
 object eliminateDefinitions {
@@ -1473,8 +1480,10 @@ object help {
         | Proof Theory:
         |   skolemize: LKProof => LKProof - skolemize the input proof
         |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
-        |   extractExpansionTrees: LKProof => ExpansionSequent - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
+        |   extractExpansionSequent: LKProof => ExpansionSequent - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
+        |   compressExpansionSequent: ExpansionSequent => MultiExpansionSequent - compress the quantifiers in the trees of the sequent using vectors for the terms.
+        |   minimalExpansionSequents: ( ExpansionSequent, Prover ) => List[ExpansionSequent] - find all minimal expansion sequents below the given one that are still valid according to the prover.
         |
         | Cut-Elimination by Resolution:
         |   extractStruct: LKProof => Struct

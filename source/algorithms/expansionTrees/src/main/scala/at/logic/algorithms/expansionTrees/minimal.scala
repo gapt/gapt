@@ -97,15 +97,4 @@ object minimalExpansionSequents {
       else inst.map(p => generateSuccessorTrees(p._1)).flatten
     }
   }
-  
-  def containsWeakQuantifiers(tree: MultiExpansionTree): Boolean = tree match {
-    case Atom(f) => false
-    case And(left, right) => containsWeakQuantifiers(left) || containsWeakQuantifiers(right)
-    case Or(left, right)  => containsWeakQuantifiers(left) || containsWeakQuantifiers(right)
-    case Imp(left, right) => containsWeakQuantifiers(left) || containsWeakQuantifiers(right)
-    case Not(s) => containsWeakQuantifiers(s)
-    case StrongQuantifier(_,_,sel) => containsWeakQuantifiers(sel)
-    case SkolemQuantifier(_,_,sel) => containsWeakQuantifiers(sel)
-    case WeakQuantifier(_,_) => true
-  }
 }

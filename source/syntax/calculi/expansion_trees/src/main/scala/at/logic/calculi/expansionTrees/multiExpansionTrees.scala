@@ -105,6 +105,17 @@ def quantRulesNumber(tree: MultiExpansionTree): Int = tree match {
   case SkolemQuantifier(_,cs,et) => quantRulesNumber(et) + cs.size
 }
 
+def containsWeakQuantifiers(tree: MultiExpansionTree): Boolean = tree match {
+  case Atom(f) => false
+  case And(left, right) => containsWeakQuantifiers(left) || containsWeakQuantifiers(right)
+  case Or(left, right)  => containsWeakQuantifiers(left) || containsWeakQuantifiers(right)
+  case Imp(left, right) => containsWeakQuantifiers(left) || containsWeakQuantifiers(right)
+  case Not(s) => containsWeakQuantifiers(s)
+  case StrongQuantifier(_,_,sel) => containsWeakQuantifiers(sel)
+  case SkolemQuantifier(_,_,sel) => containsWeakQuantifiers(sel)
+  case WeakQuantifier(_,_) => true
+}
+
 class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succedent: Seq[MultiExpansionTree]) {
   def toTuple(): (Seq[MultiExpansionTree], Seq[MultiExpansionTree]) = {
     (antecedent, succedent)
