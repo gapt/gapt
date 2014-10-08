@@ -66,9 +66,10 @@ import at.logic.provers.atp.commands.refinements.simple.SimpleRefinementGetComma
 import at.logic.provers.atp.commands.robinson._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.ui._
+import at.logic.provers.{Prover => abstractProver}
 import at.logic.provers.maxsat.{MaxSATSolver, MaxSAT}
 import at.logic.provers.maxsat.MaxSATSolver._
-import at.logic.provers.minisat.{MiniSAT, MiniSATProver}
+import at.logic.provers.minisat.{MiniSAT}
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
 import at.logic.transformations.ceres.ACNF._
@@ -1114,7 +1115,7 @@ object extractLKSKExpansionSequent {
 }
 
 object minimalExpansionSequents {
-  def apply(sequent: ExpansionSequent): List[ExpansionSequent] = minimalExpSeq(sequent, new MiniSATProver).toList
+  def apply(sequent: ExpansionSequent, prover: abstractProver): List[ExpansionSequent] = minimalExpSeq(sequent, prover).toList
 }
 
 object compressExpansionTree {
