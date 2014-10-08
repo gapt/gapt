@@ -199,7 +199,7 @@ object IvyToRobinson {
                 /* this is a negative occurrence, i.e. we do the following:
                 *      s=t :- s=t         :- s=s
                 *      ------------------------- para
-                *             t=s :- t=s                      t=s :-   x C :- D
+                *             t=s :- t=s                      s=t :-   x C :- D
                 *             -------------------------------------------------- Res
                 *                             t=s :-  x C :- D
                 * */
