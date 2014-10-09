@@ -5,9 +5,11 @@ import at.logic.calculi.lk._
 import at.logic.calculi.lk.base.LKProof
 import at.logic.language.fol._
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.provers.maxsat.{MaxSAT, MaxSATSolver}
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
+
 
 /**
  * Created by spoerk on 09.10.14.
@@ -64,6 +66,8 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
 
   "TreeGrammarDecomposition" should {
     "extract and decompose the termset of the linear example proof of 8 (n = 1)" in {
+      if (!(new MaxSAT(MaxSATSolver.QMaxSAT)).isInstalled()) skipped("MaxSAT is not installed")
+      
       val proof = LinearExampleProof(0, 8)
       val proofLanguage = toTerms(proof)
 
@@ -79,6 +83,7 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
     }
 
     "extract and decompose the termset of the linear example proof of 18 (n = 2)" in {
+      if (!(new MaxSAT(MaxSATSolver.QMaxSAT)).isInstalled()) skipped("MaxSAT is not installed")
       skipped("this takes too long")
       val proof = LinearExampleProof(0, 18)
       val proofLanguage = toTerms(proof)
