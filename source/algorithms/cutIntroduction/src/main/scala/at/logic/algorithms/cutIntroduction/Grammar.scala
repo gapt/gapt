@@ -48,9 +48,8 @@ class Grammar(u0: List[FOLTerm], s0: types.S, ev: String) {
     (u.size > g.u.size || s.size > g.s.size)
 */
 
-  def toPrettyString : String = "{ " + u.foldRight("")((ui, str) => str + ui + ", ") + " } o { " + s.foldRight("") ((si, str) => str + si + ", " ) + " }" 
   override def toString() : String = {
-    "{ " + u.foldRight("")((ui, str) => str + ui + ", ") + " } o { " + s.foldRight("") ((si, str) => str + si + ", " ) + " }"
+    "{ " + u.mkString(",") + " } o { " + s.mkString(",") + " }"
   }
 }
 

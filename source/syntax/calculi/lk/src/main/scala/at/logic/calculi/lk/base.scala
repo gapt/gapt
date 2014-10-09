@@ -23,7 +23,7 @@ class FSequent(val antecedent : Seq[HOLFormula], val succedent : Seq[HOLFormula]
 
   // formats a sequent to a readable string
   override def toString : String =
-    lst2string(((x: HOLFormula) => x.toString), ", ", this.antecedent.toList) + " :- " + lst2string(((x: HOLFormula) => x.toString), ", ", this.succedent.toList)
+    this.antecedent.mkString(",") + " :- " + this.succedent.mkString(",")
 
   def setEquals(g:FSequent) = FSequent.setEquals(this, g)
   def multiSetEquals(g:FSequent) = FSequent.multiSetEquals(this, g)
@@ -151,28 +151,12 @@ class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formula
     }
     )
 
+  def compose(that : Sequent) = Sequent(this.antecedent ++ that.antecedent, this.succedent ++ that.antecedent)
+
   // formats a sequent to a readable string
-  // TODO: this can be done in a more functional way.
   override def toString : String = {
-    var sb = new scala.StringBuilder()
-    var first = true
-    for (f <- this.antecedent) {
-      if (!first) sb.append(", ")
-      else first = false
-      sb.append(f.formula)
-    }
-    sb.append(" :- ")
-    first = true
-    for (f <- this.succedent) {
-      if (!first) sb.append(", ")
-      else first = false
-      sb.append(f.formula)
-    }
-    sb.toString
+    this.antecedent.map(_.formula).mkString(",") + " :- " + this.succedent.map(_.formula).mkString(",")
   }
-
-
-
 
 }
 

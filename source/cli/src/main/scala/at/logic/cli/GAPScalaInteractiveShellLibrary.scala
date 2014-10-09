@@ -630,7 +630,7 @@ object seeNFirstGrammars {
   def apply(lst: List[Grammar], n: Int) = {
     println("\n");
     for (i <- 0 to n - 1) {
-      println(i + ". " + lst(i).toPrettyString + "\n(size = " + lst(i).size + ")\n")
+      println(i + ". " + lst(i) + "\n(size = " + lst(i).size + ")\n")
     }
     println("\nNote that the function symbols 'tuplei' are inserted by the system as part of the algorithm.")
   }

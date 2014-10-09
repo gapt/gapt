@@ -73,10 +73,12 @@ object LKskFOFactory extends FOFactory {
 // TODO: instead of l_antecedent, use override val antecedent
 // does not work right now because Set is not covariant!
 case class LabelledSequent(val l_antecedent: Seq[LabelledFormulaOccurrence],
-                                val l_succedent: Seq[LabelledFormulaOccurrence])
-  extends Sequent( l_antecedent.asInstanceOf[Seq[FormulaOccurrence]],
-                             l_succedent.asInstanceOf[Seq[FormulaOccurrence]] ) {
+                           val l_succedent: Seq[LabelledFormulaOccurrence])
+  extends Sequent( l_antecedent, l_succedent ) {
   override def toString: String = l_antecedent.mkString(", ") + " :- " + l_succedent.mkString(", ")
+
+  def compose(that : LabelledSequent) : LabelledSequent =
+    LabelledSequent(this.l_antecedent ++ that.l_antecedent, this.l_succedent ++ that.l_succedent)
 }
 
 
