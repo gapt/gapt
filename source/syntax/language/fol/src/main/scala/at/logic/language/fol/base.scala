@@ -69,6 +69,22 @@ object FOLAbs {
 /*********************** Factory *****************************/
 
 object FOLFactory extends FactoryA {
+
+  // We sometimes need to combine a logical constant from the HOL Layer
+  // with some syntax from the FOL layer. We manually switch the constants
+  // for the correct ones here.
+  def switchLogicalConstants( c: LambdaExpression ) : FOLExpression = c match {
+    case at.logic.language.hol.BottomC => BottomC
+    case at.logic.language.hol.TopC => TopC
+    case at.logic.language.hol.NegC => NegC
+    case at.logic.language.hol.AndC => AndC
+    case at.logic.language.hol.OrC => OrC
+    case at.logic.language.hol.ImpC => ImpC
+    case at.logic.language.hol.EqC(Ti) => EqC
+    case at.logic.language.hol.AllQ(Ti) => AllQ()
+    case at.logic.language.hol.ExQ(Ti) => ExQ()
+    case _ => c.asInstanceOf[FOLExpression]
+  }
   
   def createVar( sym: SymbolA, exptype: TA ) : FOLVar = exptype match {
     case Ti => new FOLVar(sym)
@@ -80,13 +96,21 @@ object FOLFactory extends FactoryA {
     case _ => throw new Exception("Trying to create a constant in FOL that has type different from i: " + exptype)
   }
 
-  def createApp( fun: LambdaExpression, arg: LambdaExpression ) : FOLApp = fun.exptype match {
-    case ->(_, To) => new FOLApp(fun.asInstanceOf[FOLExpression], arg.asInstanceOf[FOLExpression]) with FOLFormula
-    case ->(_, Ti) => new FOLApp(fun.asInstanceOf[FOLExpression], arg.asInstanceOf[FOLExpression]) with FOLTerm
-    case _ => new FOLApp(fun.asInstanceOf[FOLExpression], arg.asInstanceOf[FOLExpression])
+  def createApp( fun: LambdaExpression, arg: LambdaExpression ) : FOLApp = {
+    val fun_ = switchLogicalConstants(fun)
+    val arg_ = switchLogicalConstants(arg)
+    // construct App
+    fun_.exptype match {
+      case ->(_, To) => new FOLApp(fun_.asInstanceOf[FOLExpression], arg_.asInstanceOf[FOLExpression]) with FOLFormula
+      case ->(_, Ti) => new FOLApp(fun_.asInstanceOf[FOLExpression], arg_.asInstanceOf[FOLExpression]) with FOLTerm
+      case _ => new FOLApp(fun_.asInstanceOf[FOLExpression], arg_.asInstanceOf[FOLExpression])
+    }
   }
 
-  def createAbs( variable: Var, exp: LambdaExpression ) : FOLAbs = new FOLAbs( variable.asInstanceOf[FOLVar], exp.asInstanceOf[FOLExpression] )
+  def createAbs( variable: Var, exp: LambdaExpression ) : FOLAbs = {
+    val exp_ = switchLogicalConstants( exp )
+    new FOLAbs( variable.asInstanceOf[FOLVar], exp_.asInstanceOf[FOLExpression] )
+  }
 
   def createConnective(sym: SymbolA, tp: TA = Ti) : FOLLambdaConst = sym match {
     case BottomSymbol => BottomC

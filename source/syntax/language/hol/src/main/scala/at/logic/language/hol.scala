@@ -235,16 +235,16 @@ object Atom {
 }
 
 // TODO: Is it possible to simplify the quantifiers? There are too many objects for that...
-private class ExQ(e:TA) extends HOLConst(ExistsSymbol, ->(e,"o"))
-private object ExQ {
+class ExQ(e:TA) extends HOLConst(ExistsSymbol, ->(e,"o"))
+object ExQ {
   def apply(tp: TA) = new ExQ(tp)
   def unapply(v: HOLConst) = (v, v.sym) match {
     case (HOLConst(_, t), ExistsSymbol) => Some(t)
     case _ => None
   }
 }
-private class AllQ(e:TA) extends HOLConst(ForallSymbol, ->(e,"o"))
-private object AllQ {
+class AllQ(e:TA) extends HOLConst(ForallSymbol, ->(e,"o"))
+object AllQ {
   def apply(tp: TA) = new AllQ(tp)
   def unapply(v: HOLConst) = (v, v.sym) match {
     case (HOLConst(_, t), ForallSymbol) => Some(t)
