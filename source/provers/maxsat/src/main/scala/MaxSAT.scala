@@ -112,26 +112,81 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @return None if UNSAT, otherwise Some(minimal model)
    */
   def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : Option[MapBasedInterpretation] = {
+
     debug("Generating clauses...")
     val startTimeClauseGen = System.currentTimeMillis()
-    
-    val startTimeHardCNF = System.currentTimeMillis()
-    val hardCNF = TseitinCNF(And(hard.toList))
-    val endTimeHardCNF = System.currentTimeMillis()
-    logTime("[Runtime]<hard CNF-Generation> ",(endTimeHardCNF-startTimeHardCNF))
-    
+
+    // Hard CNF transformation
+    val (hardCNF, hardCNFTime) = transformToCNF(And(hard.toList))
+    logTime("[Runtime]<hard CNF-Generation> ",hardCNFTime)
     debug("   ...hardCNF done")
     trace("produced hard cnf: " + hardCNF)
-    val startTimeSoftCNF = System.currentTimeMillis()
-    val softCNFs = soft.map(s => CNFp(s._1).map(f => (f, s._2))).flatten
-    val endTimeSoftCNF = System.currentTimeMillis()
-    logTime("[Runtime]<soft CNF-Generation> ",(endTimeSoftCNF-startTimeSoftCNF))
-    
+
+    // Soft CNF transformation
+    val (softCNFs, softCNFTime) = soft.foldLeft((Set[(FClause,Int)]()), long2Long(0))((acc,s) => {
+      val (cnf, time) = transformToCNF(s._1)
+      (cnf.map(f => (f, s._2)) ++ acc._1, time+acc._2)
+    })
+    logTime("[Runtime]<soft CNF-Generation> ",softCNFTime)
     debug("   ...softCNFs done")
     trace("produced soft cnf: " + softCNFs)
+
     val endTimeClauseGen = System.currentTimeMillis()
     logTime("[Runtime]<CNF-Generation> ",(endTimeClauseGen-startTimeClauseGen))
-    solve( hardCNF, softCNFs )
+
+    val t1 = System.currentTimeMillis()
+    val interpretation = solve( hardCNF, softCNFs )
+    val t2 = System.currentTimeMillis()
+    logTime("[Runtime]<solveMaxSAT> ", (t2 - t1))
+
+    return interpretation
+  }
+
+  /**
+   * Solves and returns a model of a partial weighted MaxSAT instance
+   * Additionally returns information about the runtime
+   * @param hard hard constraints, which have to be fullfilled by the solution
+   * @param soft soft constraints, which come with individual weights and can be violated. Sum of weights of satisfied formulas is maximized.
+   * @return tuple where 1st is None if UNSAT, otherwise Some(minimal model) and 2nd is a map of runtimes
+   */
+  def solvePWMStat( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : (Option[MapBasedInterpretation], mutable.HashMap[String, Long]) = {
+
+    val timeMap = mutable.HashMap[String, Long]()
+
+    debug("Generating clauses...")
+    val startTimeClauseGen = System.currentTimeMillis()
+
+    // Hard CNF transformation
+    val (hardCNF, hardCNFTime) = transformToCNF(And(hard.toList))
+    timeMap("hardCNF") = hardCNFTime
+    logTime("[Runtime]<hard CNF-Generation> ",hardCNFTime)
+    debug("   ...hardCNF done")
+    trace("produced hard cnf: " + hardCNF)
+
+    // Soft CNF transformation
+    val (softCNFs, softCNFTime) = soft.foldLeft((Set[(FClause,Int)]()), long2Long(0))((acc,s) => {
+      val (cnf, time) = transformToCNF(s._1)
+      (cnf.map(f => (f, s._2)) ++ acc._1, time+acc._2)
+    })
+    timeMap("softCNF") = softCNFTime
+    logTime("[Runtime]<soft CNF-Generation> ",softCNFTime)
+    debug("   ...softCNFs done")
+    trace("produced soft cnf: " + softCNFs)
+
+    val solveStartTime = System.currentTimeMillis()
+    val interpretation = solve( hardCNF, softCNFs )
+    val solveTime = System.currentTimeMillis() - solveStartTime
+    timeMap("MaxSAT") = solveTime
+    logTime("[Runtime]<solveMaxSAT> ", solveTime)
+
+    return (interpretation, timeMap)
+  }
+
+  def transformToCNF(formula: FOLFormula) : (Set[FClause], Long) = {
+    val startTimeCNF = System.currentTimeMillis()
+    val cnf = TseitinCNF(formula)
+    val endTimeCNF = System.currentTimeMillis()
+    (cnf, (endTimeCNF - startTimeCNF))
   }
 
   /**
@@ -220,7 +275,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     val sec = (millisec / 1000) % 60
     val minutes = ((millisec / 1000) / 60) % 60
     val hours = (((millisec / 1000) / 60) / 60 )
-    debug(msg + " " + hours + ":" + minutes + ":" + sec + "::" + msec)
+    debug(msg + " " + hours + "h " + minutes + "min " + sec + "sec " + msec + "msec")
   }
 
   /**

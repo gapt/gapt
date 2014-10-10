@@ -626,4 +626,100 @@ object NCutIntroduction extends Logger {
     debug("Solution: "+solution)
     Some(solution)
   }
+
+
+  /**
+   * Performs cut introduction with a given number of maximum cuts (n),
+   * described in Hetzl,Eberhard [2014] and returns additional statistical information
+   * @param ep the expansion sequent, extracted from a cut free proof
+   * @param prover the prover to use for tautology checks
+   * @param n maximum number of cuts
+   * @param timeout Timeout in seconds (default: 1h)
+   * @param maxsatsolver which MaxSATSolver to use
+   * @return (canonical solution of at most n introduced cuts, status, log)
+   */
+  def applyStat(ep: ExpansionSequent, prover: Prover, n: Int, timeout: Int = 3600, maxsatsolver: MaxSATSolver) : (Option[List[FOLFormula]], String, String) = {
+
+    var log = ""
+    var status = "ok"
+    var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
+
+    var SolutionCTime: Long = 0
+    var ProofBuildingCTime: Long = 0
+    var CleanStructuralRulesCTime: Long = 0
+
+    val finalGrammars = try {
+      withTimeout(timeout * 1000) {
+        val endSequent = toSequent(ep)
+        debug("\nEnd sequent: " + endSequent)
+
+        // Assign a fresh function symbol to each quantified formula in order to
+        // transform tuples into terms.
+        val t1 = System.currentTimeMillis()
+        val termsTuples = TermsExtraction(ep)
+        val terms = new FlatTermSet(termsTuples)
+        val t2 = System.currentTimeMillis()
+        log += "termex: time="+(t2 - t1) + ", termsetsize=" + terms.termset.size
+        debug("Size of term set: " + terms.termset.size)
+
+        var beginTime = System.currentTimeMillis
+
+        //val grammars = ComputeGrammars(terms, delta)
+        val (gs, tgdstat, ltgd) = TreeGrammarDecomposition.applyStat(terms.termset, n, timeout, MCSMethod.MaxSAT, maxsatsolver)
+        log += ltgd
+        status = tgdstat
+        var grammars = List[Grammar]()
+        // if TGD successflly terminated
+        if (tgdstat == "ok") {
+          grammars = gs.get.map {
+            case g => g.flatterms = terms; g
+          }
+        }
+        // otherwise throw exception
+        else {
+          throw new TreeGrammarDecompositionException("Unable to complete TreeGrammarDecomposition")
+        }
+
+        val t3 = System.currentTimeMillis()
+        log += ", " + (t3 - t2)
+        //println( "\nNumber of grammars: " + grammars.length )
+
+
+
+        if (grammars.length == 0) {
+          debug("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
+          status = "ncutintro_uncompressible"
+          throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
+          //return None
+        }
+
+        debug("   NCUTINTRO:")
+        debug("   grammars: " + grammars)
+
+        phase = "compCanSolution"
+
+
+        // constructing canonical solution
+        val solution = grammars.map(CutIntroduction.computeCanonicalSolution(endSequent, _))
+
+        debug("Cuts: " + solution.size)
+        debug("Solution: " + solution)
+        Some(solution)
+      }
+    } catch {
+      case e: TimeOutException =>
+        status = phase + "_timeout"
+        None
+      case e: TreeGrammarDecompositionException =>
+        status = "tgd_failed"
+        None
+      case e: CutIntroUncompressibleException =>
+        status = "ncutintro_uncompressible"
+        None
+      case e: Exception =>
+        status = "ncutintro_other_exception"
+        None
+    }
+    return (finalGrammars, status, log)
+  }
 }
