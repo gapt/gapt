@@ -210,7 +210,9 @@ class MiscTest extends SpecificationWithJUnit {
     "Load Prover9 proofs, extract their expansion tree an test the validity of its deep formula using veriT" in {
       skipped("VeriT fails to proof this (at least on some systems)")
 
-      if (!VeriTProver.isInstalled()) skipped("VeriT is not installed")
+      val veriT = new VeriTProver()
+
+      if (!veriT.isInstalled()) skipped("VeriT is not installed")
 
       for (testBaseName <- "ALG138+1.out" :: Nil) {
         // TODO: add cade13example.out once tptpfolexporter issues are sorted out
@@ -229,7 +231,7 @@ class MiscTest extends SpecificationWithJUnit {
         println("formula: " +seq)
         */
 
-        VeriTProver.isValid(seqToProve) must beEqualTo (true)
+        veriT.isValid(seqToProve) must beEqualTo (true)
       }
       ok
     }

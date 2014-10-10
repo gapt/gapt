@@ -13,7 +13,9 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class VeriTProverTest extends SpecificationWithJUnit {
 
-  args(skipAll = !VeriTProver.isInstalled())
+  val veriT = new VeriTProver()
+
+  args(skipAll = !veriT.isInstalled())
 
   "VeriT" should {
     "prove a v not a" in {
@@ -21,7 +23,7 @@ class VeriTProverTest extends SpecificationWithJUnit {
       val a = Atom("a", Nil)
       val f = Or(a, Neg(a))
 
-      VeriTProver.isValid(f) must beEqualTo(true)
+      veriT.isValid(f) must beEqualTo(true)
     }
   }
 }

@@ -157,13 +157,15 @@ class PrimeProofTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
+      val veriT = new VeriTProver()
+
       if (false) { // run this code as soon as issue 260 is fixed:
-        if (VeriTProver.isInstalled()) {
+        if (veriT.isInstalled()) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           val definitionFreeProof = eliminateDefinitions(proof) // can't extract ETs in the presence of definitions currently
           val etSeq = extractExpansionTrees(definitionFreeProof)
           val fSequent = toDeep(etSeq)
-          VeriTProver.isValid(fSequent) must beTrue
+          veriT.isValid(fSequent) must beTrue
         }
       }
 

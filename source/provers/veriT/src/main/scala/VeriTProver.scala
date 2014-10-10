@@ -8,7 +8,7 @@ import at.logic.parsing.veriT._
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lk.base.FSequent
 
-object VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
+class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
 
   override def isValid(s: FSequent) : Boolean = {
 

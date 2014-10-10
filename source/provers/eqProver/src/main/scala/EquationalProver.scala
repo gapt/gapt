@@ -13,9 +13,12 @@ import at.logic.calculi.lk.base.FSequent
 
 class EquationalProver extends Prover {
 
-  // Use prover 9 to get lk proof and verit for validity check.
+  // Use prover9 to get LK proof and veriT for validity check.
 
-  override def isValid(s: FSequent) : Boolean = VeriTProver.isValid(s) 
+  override def isValid(s: FSequent) : Boolean = {
+    val p = new VeriTProver()
+    p.isValid(s) 
+  }
   
   override def getLKProof(s: FSequent) = {
     val p = new Prover9Prover()
