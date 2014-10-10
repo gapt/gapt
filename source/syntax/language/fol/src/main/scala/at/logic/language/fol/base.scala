@@ -101,15 +101,15 @@ object FOLFactory extends FactoryA {
     val arg_ = switchLogicalConstants(arg)
     // construct App
     fun_.exptype match {
-      case ->(_, To) => new FOLApp(fun_.asInstanceOf[FOLExpression], arg_.asInstanceOf[FOLExpression]) with FOLFormula
-      case ->(_, Ti) => new FOLApp(fun_.asInstanceOf[FOLExpression], arg_.asInstanceOf[FOLExpression]) with FOLTerm
-      case _ => new FOLApp(fun_.asInstanceOf[FOLExpression], arg_.asInstanceOf[FOLExpression])
+      case ->(_, To) => new FOLApp(fun_, arg_) with FOLFormula
+      case ->(_, Ti) => new FOLApp(fun_, arg_) with FOLTerm
+      case _ => new FOLApp(fun_, arg_)
     }
   }
 
   def createAbs( variable: Var, exp: LambdaExpression ) : FOLAbs = {
     val exp_ = switchLogicalConstants( exp )
-    new FOLAbs( variable.asInstanceOf[FOLVar], exp_.asInstanceOf[FOLExpression] )
+    new FOLAbs( variable.asInstanceOf[FOLVar], exp_ )
   }
 
   def createConnective(sym: SymbolA, tp: TA = Ti) : FOLLambdaConst = sym match {
