@@ -116,6 +116,20 @@ def containsWeakQuantifiers(tree: MultiExpansionTree): Boolean = tree match {
   case WeakQuantifier(_,_) => true
 }
 
+def numberOfInstances(tree: MultiExpansionTree): Int = {
+  if(!containsWeakQuantifiers(tree))
+    1
+  else tree match {
+    case And(left, right) => numberOfInstances(left) + numberOfInstances(right)
+    case Or(left, right)  => numberOfInstances(left) + numberOfInstances(right)
+    case Imp(left, right) => numberOfInstances(left) + numberOfInstances(right)
+    case Not(s) => numberOfInstances(s)
+    case StrongQuantifier(_,_,sel) => numberOfInstances(sel)
+    case SkolemQuantifier(_,_,sel) => numberOfInstances(sel)
+    case WeakQuantifier(_,inst) => inst.length
+  }
+}
+
 class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succedent: Seq[MultiExpansionTree]) {
   def toTuple(): (Seq[MultiExpansionTree], Seq[MultiExpansionTree]) = {
     (antecedent, succedent)

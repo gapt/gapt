@@ -61,8 +61,11 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   
   "Minimal expansion trees" should {
     if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
-    "be computed correctly" in {
+    "be computed correctly by the naive algorithm" in {
       minESeq mustEqual minimalExpansionSequents(eSeq, new MiniSATProver)
+    }
+    "be computed correctly by the smart algorithm" in {
+      minESeq mustEqual minimalExpansionSequentsSmart(eSeq, new MiniSATProver)
     }
   }
 }

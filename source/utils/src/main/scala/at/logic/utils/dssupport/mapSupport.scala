@@ -24,6 +24,13 @@ object MapSupport {
       case h :: t => for(eh <- m(h); et <- mapProduct(m - (h))) yield et + (h -> eh)
     }
   }
+  
+  def addNoOverwrite[A,B](m: Map[A,B], k: A, v: B): Map[A,B] = {
+    if (!m.contains(k))
+      m + ((k,v))
+    else
+      m
+  }
 
 }
 

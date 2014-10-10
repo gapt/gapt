@@ -128,6 +128,11 @@ object ListSupport {
     listComplements(snd).map(zs => fst ++ zs)
   }
   
+  def listComplements_[T](xs: Seq[T]) : Seq[(T,Seq[T])] = xs match {
+    case Nil     => Nil
+    case y +: ys => (y,ys) +: listComplements_(ys).map(p => (p._1, y +: p._2))
+  }
+  
   /** Splits a list into (nth element, elements 1,..,(n-1), elements (n+1),..,end)
     * @param xs The list to split.
     * @param n  The position to split at.
