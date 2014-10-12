@@ -83,6 +83,7 @@ import at.logic.utils.constraint.Constraint
 import at.logic.transformations.herbrandExtraction
 import at.logic.algorithms.lk.{rule_isomorphic => LKrule_isomorphic}
 import at.logic.algorithms.lksk.{rule_isomorphic => LKSKrule_isomorphic}
+import at.logic.utils.logging.Stopwatch
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -693,6 +694,12 @@ object ncutIntro {
 
   def apply(ep: ExpansionSequent, prover: at.logic.provers.Prover, n: Int, maxsatsolver: MaxSATSolver) =
     NCutIntroduction(ep, prover, n, maxsatsolver)
+
+  def applyStat(p: LKProof, n: Int, maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT, watch: Stopwatch, timeout: Int) =
+    NCutIntroduction.applyStat(p, new DefaultProver(), n, maxsatsolver, watch, timeout)
+
+  def applyStat(ep: ExpansionSequent, n: Int, maxsatsolver: MaxSATSolver, watch: Stopwatch, timeout: Int) =
+    NCutIntroduction.applyStat(ep, new DefaultProver(), n, maxsatsolver, watch, timeout)
 }
 /*****************************************************************************************/
 
@@ -712,7 +719,7 @@ object miniSATsolve {
   def apply(f: HOLFormula) = (new MiniSAT).solve(f)
 }
 
-object QMaxSATsolve {
+object MaxSATsolve {
   def apply(hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula,Int]], maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT) = (new MaxSAT(maxsatsolver)).solvePWM(hard, soft)
 }
 
@@ -1476,7 +1483,7 @@ object help {
         |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
         |   miniSATsolve: HOLFormula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT
         |   miniSATprove: HOLFormula => Boolean - check if a quantifier-free formula is valid using MiniSAT
-        |   qmaxSATsolve: (Set[FOLFormula], Set[Tuple2[FOLFormula,Int]]) => Option[Interpretation] - obtain a model for a set of quantifier-free formulas (interpreted as hard constraints) and a set of tuples of quantifier-free formulas (interpreted as soft constraints) w.r.t. provided weights using qmaxsat
+        |   maxSATsolve: (Set[FOLFormula], Set[Tuple2[FOLFormula,Int]]) => Option[Interpretation] - obtain a model for a set of quantifier-free formulas (interpreted as hard constraints) and a set of tuples of quantifier-free formulas (interpreted as soft constraints) w.r.t. provided weights using qmaxsat
         |
         | Proof Theory:
         |   skolemize: LKProof => LKProof - skolemize the input proof

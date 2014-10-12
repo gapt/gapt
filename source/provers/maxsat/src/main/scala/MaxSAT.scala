@@ -1,6 +1,3 @@
-/**
- * Created by spoerk on 6/23/14.
- */
 package at.logic.provers.maxsat
 
 import java.io._
@@ -9,12 +6,12 @@ import at.logic.algorithms.resolution.{CNFp, TseitinCNF}
 import at.logic.calculi.resolution._
 import at.logic.language.fol._
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
+import at.logic.utils.logging.Stopwatch
 import scala.collection.immutable.HashMap
 import scala.collection.mutable
 import scala.sys.process.{Process, ProcessIO}
 
 // This is also occuring in the minisat package
-// TODO: refactoring
 trait Interpretation {
   // Interpret an atom.
   def interpretAtom(atom : FOLFormula) : Boolean
@@ -65,7 +62,7 @@ class MapBasedInterpretation( val model : Map[FOLFormula, Boolean]) extends Inte
  */
 object MaxSATSolver extends Enumeration{
   type MaxSATSolver = Value
-  val QMaxSAT, ToySAT, ToySolver = Value
+  val QMaxSAT, ToySAT, ToySolver, MiniMaxSAT = Value
 }
 
 // Call a MaxSAT solver to solve partial weighted MaxSAT instances
@@ -76,7 +73,10 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   val qmaxsatbin = "qmaxsat"
   val toysolverbin = "toysolver"
   val toysatbin = "toysat"
+  val minimaxsatbin = "minimaxsat"
 
+  // mapping a clause to a propositional variable index
+  var atom_map : Map[FOLFormula, Int] = new HashMap[FOLFormula,Int]
 
   /**
    * checks if a particular Max SAT Solver is installed properly
@@ -94,52 +94,12 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
           case MaxSATSolver.QMaxSAT => warn("Please put the qmaxsat binary (available at https://sites.google.com/site/qmaxsat/) into PATH")
           case MaxSATSolver.ToySAT => warn("Please put the toysat binary (available at https://github.com/msakai/toysolver) into PATH")
           case MaxSATSolver.ToySolver => warn("Please put the toysolver binary (available at https://github.com/msakai/toysolver) into PATH")
+          case MaxSATSolver.MiniMaxSAT => warn("Please put the minimaxsat binary (available at https://github.com/izquierdo/tesis_postgrado/tree/master/src/MiniMaxSat) into PATH")
         }
         return false
       }
     }
     return true
-  }
-
-
-  // mapping a clause to a propositional variable index
-  var atom_map : Map[FOLFormula, Int] = new HashMap[FOLFormula,Int]
-
-  /**
-   * Solves and returns a model of a partial weighted MaxSAT instance
-   * @param hard hard constraints, which have to be fullfilled by the solution
-   * @param soft soft constraints, which come with individual weights and can be violated. Sum of weights of satisfied formulas is maximized.
-   * @return None if UNSAT, otherwise Some(minimal model)
-   */
-  def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : Option[MapBasedInterpretation] = {
-
-    debug("Generating clauses...")
-    val startTimeClauseGen = System.currentTimeMillis()
-
-    // Hard CNF transformation
-    val (hardCNF, hardCNFTime) = transformToCNF(And(hard.toList))
-    logTime("[Runtime]<hard CNF-Generation> ",hardCNFTime)
-    debug("   ...hardCNF done")
-    trace("produced hard cnf: " + hardCNF)
-
-    // Soft CNF transformation
-    val (softCNFs, softCNFTime) = soft.foldLeft((Set[(FClause,Int)]()), long2Long(0))((acc,s) => {
-      val (cnf, time) = transformToCNF(s._1)
-      (cnf.map(f => (f, s._2)) ++ acc._1, time+acc._2)
-    })
-    logTime("[Runtime]<soft CNF-Generation> ",softCNFTime)
-    debug("   ...softCNFs done")
-    trace("produced soft cnf: " + softCNFs)
-
-    val endTimeClauseGen = System.currentTimeMillis()
-    logTime("[Runtime]<CNF-Generation> ",(endTimeClauseGen-startTimeClauseGen))
-
-    val t1 = System.currentTimeMillis()
-    val interpretation = solve( hardCNF, softCNFs )
-    val t2 = System.currentTimeMillis()
-    logTime("[Runtime]<solveMaxSAT> ", (t2 - t1))
-
-    return interpretation
   }
 
   /**
@@ -149,44 +109,30 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param soft soft constraints, which come with individual weights and can be violated. Sum of weights of satisfied formulas is maximized.
    * @return tuple where 1st is None if UNSAT, otherwise Some(minimal model) and 2nd is a map of runtimes
    */
-  def solvePWMStat( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]] ) : (Option[MapBasedInterpretation], mutable.HashMap[String, Long]) = {
-
-    val timeMap = mutable.HashMap[String, Long]()
+  def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]], watch: Stopwatch = new Stopwatch() ) : Option[MapBasedInterpretation] = {
 
     debug("Generating clauses...")
-    val startTimeClauseGen = System.currentTimeMillis()
 
     // Hard CNF transformation
-    val (hardCNF, hardCNFTime) = transformToCNF(And(hard.toList))
-    timeMap("hardCNF") = hardCNFTime
+    watch.start()
+    val hardCNF = TseitinCNF(And(hard.toList))
+    val hardCNFTime = watch.lap("hardCNF")
     logTime("[Runtime]<hard CNF-Generation> ",hardCNFTime)
-    debug("   ...hardCNF done")
     trace("produced hard cnf: " + hardCNF)
 
     // Soft CNF transformation
-    val (softCNFs, softCNFTime) = soft.foldLeft((Set[(FClause,Int)]()), long2Long(0))((acc,s) => {
-      val (cnf, time) = transformToCNF(s._1)
-      (cnf.map(f => (f, s._2)) ++ acc._1, time+acc._2)
-    })
-    timeMap("softCNF") = softCNFTime
+    watch.start()
+    val softCNFs = soft.map(s => CNFp(s._1).map(f => (f, s._2))).flatten
+    val softCNFTime = watch.lap("softCNF")
     logTime("[Runtime]<soft CNF-Generation> ",softCNFTime)
-    debug("   ...softCNFs done")
     trace("produced soft cnf: " + softCNFs)
 
-    val solveStartTime = System.currentTimeMillis()
+    watch.start()
     val interpretation = solve( hardCNF, softCNFs )
-    val solveTime = System.currentTimeMillis() - solveStartTime
-    timeMap("MaxSAT") = solveTime
+    val solveTime = watch.lap("MaxSAT")
     logTime("[Runtime]<solveMaxSAT> ", solveTime)
 
-    return (interpretation, timeMap)
-  }
-
-  def transformToCNF(formula: FOLFormula) : (Set[FClause], Long) = {
-    val startTimeCNF = System.currentTimeMillis()
-    val cnf = TseitinCNF(formula)
-    val endTimeCNF = System.currentTimeMillis()
-    (cnf, (endTimeCNF - startTimeCNF))
+    return interpretation
   }
 
   /**
@@ -352,19 +298,20 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     debug("Starting maxsat...")
     val startTimeMaxSAT = System.currentTimeMillis()
 
-    var bin = qmaxsatbin
     var options = mutable.MutableList[String]()
     var command = List[String]()
     solver match {
       case MaxSATSolver.QMaxSAT => {
         command = List(qmaxsatbin, temp_in.getAbsolutePath(), temp_out.getAbsolutePath())
-        bin = qmaxsatbin
       }
       case MaxSATSolver.ToySAT => {
         command = List(toysatbin, "--maxsat", temp_in.getAbsolutePath())
       }
       case MaxSATSolver.ToySolver => {
         command = List(toysolverbin, "--maxsat", temp_in.getAbsolutePath())
+      }
+      case MaxSATSolver.MiniMaxSAT => {
+        command = List(minimaxsatbin, "-F=2", temp_in.getAbsolutePath())
       }
     }
 
@@ -412,6 +359,9 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
       case MaxSATSolver.ToySolver => {
         toysolverOutputToInterpretation(in)
       }
+      case MaxSATSolver.MiniMaxSAT => {
+        qmaxsatOutputToInterpretation(in)
+      }
       case _ => None
     }
   }
@@ -444,8 +394,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
               } else {
                 // positive literal
                 (getAtom(lit.toInt).get, true)
-              })
-              .toSet.toMap)
+              }).toSet.toMap)
           }
         }
       }

@@ -22,6 +22,7 @@ import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.utils.constraint.{Constraint, ExactBound, NoConstraint, UpperBound}
 import at.logic.utils.executionModels.timeout._
 import at.logic.utils.logging.Logger
+import at.logic.utils.logging.Stopwatch
 
 class CutIntroException(msg: String) extends Exception(msg)
 class CutIntroUncompressibleException(msg: String) extends CutIntroException(msg)
@@ -579,6 +580,17 @@ object NCutIntroduction extends Logger {
     */
   def apply(proof: LKProof, prover: Prover = new DefaultProver(), n: Int, maxsatsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[List[FOLFormula]] = apply( extractExpansionTrees( proof ), prover, n, maxsatsolver)
 
+  /** Performs cut introduction on an LK proof and returns
+    * a canonical Solution with n cuts if cut formulas can be found.
+    * Includes additional Stopwatch object for time measuring
+    *
+    * @param proof The cut-free LK proof into which to introduce cuts.
+    * @param prover The prover to use for tautology checks.
+    * @return The canoncial Solution with cuts if cut introduction was successful and None otherwise.
+    *         The cause of failure will be printed on the console.
+    */
+  def applyStat(proof: LKProof, prover: Prover = new DefaultProver(), n: Int, maxsatsolver: MaxSATSolver=MaxSATSolver.QMaxSAT, watch: Stopwatch, timeout: Int) : Option[List[FOLFormula]] = applyStat( extractExpansionTrees( proof ), prover, n, maxsatsolver, watch, timeout)
+
   /**
    * Performs cut introduction with a given number of maximum cuts (n),
    * described in Hetzl,Eberhard [2014]
@@ -634,43 +646,32 @@ object NCutIntroduction extends Logger {
    * @param ep the expansion sequent, extracted from a cut free proof
    * @param prover the prover to use for tautology checks
    * @param n maximum number of cuts
-   * @param timeout Timeout in seconds (default: 1h)
    * @param maxsatsolver which MaxSATSolver to use
-   * @return (canonical solution of at most n introduced cuts, status, log)
+   * @param watch stopwatch for measuring time
+   * @param timeout timeout in seconds
+   * @return (canonical solution of at most n introduced cuts, stopwatch)
    */
-  def applyStat(ep: ExpansionSequent, prover: Prover, n: Int, timeout: Int = 3600, maxsatsolver: MaxSATSolver) : (Option[List[FOLFormula]], String, String) = {
+  def applyStat(ep: ExpansionSequent, prover: Prover, n: Int, maxsatsolver: MaxSATSolver, watch: Stopwatch, timeout: Int) : Option[List[FOLFormula]] = {
 
-    var log = ""
-    var status = "ok"
     var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
 
-    var SolutionCTime: Long = 0
-    var ProofBuildingCTime: Long = 0
-    var CleanStructuralRulesCTime: Long = 0
-
-    val finalGrammars = try {
-      withTimeout(timeout * 1000) {
+    val finalGrammars = try { withTimeout( timeout * 1000) {
         val endSequent = toSequent(ep)
         debug("\nEnd sequent: " + endSequent)
 
         // Assign a fresh function symbol to each quantified formula in order to
         // transform tuples into terms.
-        val t1 = System.currentTimeMillis()
+        watch.start()
         val termsTuples = TermsExtraction(ep)
         val terms = new FlatTermSet(termsTuples)
-        val t2 = System.currentTimeMillis()
-        log += "termex: time="+(t2 - t1) + ", termsetsize=" + terms.termset.size
+        val termsetTime = watch.lap(phase)
+        debug("termex: time="+termsetTime + ", termsetsize=" + terms.termset.size)
         debug("Size of term set: " + terms.termset.size)
 
-        var beginTime = System.currentTimeMillis
-
-        //val grammars = ComputeGrammars(terms, delta)
-        val (gs, tgdstat, ltgd) = TreeGrammarDecomposition.applyStat(terms.termset, n, timeout, MCSMethod.MaxSAT, maxsatsolver)
-        log += ltgd
-        status = tgdstat
+        val gs = TreeGrammarDecomposition.applyStat(terms.termset, n, watch, MCSMethod.MaxSAT, maxsatsolver)
         var grammars = List[Grammar]()
         // if TGD successflly terminated
-        if (tgdstat == "ok") {
+        if (watch.errorStatus.toLowerCase() == "ok") {
           grammars = gs.get.map {
             case g => g.flatterms = terms; g
           }
@@ -680,15 +681,9 @@ object NCutIntroduction extends Logger {
           throw new TreeGrammarDecompositionException("Unable to complete TreeGrammarDecomposition")
         }
 
-        val t3 = System.currentTimeMillis()
-        log += ", " + (t3 - t2)
-        //println( "\nNumber of grammars: " + grammars.length )
-
-
 
         if (grammars.length == 0) {
           debug("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
-          status = "ncutintro_uncompressible"
           throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
           //return None
         }
@@ -696,30 +691,39 @@ object NCutIntroduction extends Logger {
         debug("   NCUTINTRO:")
         debug("   grammars: " + grammars)
 
-        phase = "compCanSolution"
-
+        phase = "computeCanonicalSolution"
 
         // constructing canonical solution
+        watch.start()
         val solution = grammars.map(CutIntroduction.computeCanonicalSolution(endSequent, _))
+        watch.stop(phase)
 
         debug("Cuts: " + solution.size)
         debug("Solution: " + solution)
         Some(solution)
-      }
-    } catch {
-      case e: TimeOutException =>
-        status = phase + "_timeout"
-        None
-      case e: TreeGrammarDecompositionException =>
-        status = "tgd_failed"
-        None
-      case e: CutIntroUncompressibleException =>
-        status = "ncutintro_uncompressible"
-        None
-      case e: Exception =>
-        status = "ncutintro_other_exception"
-        None
+      } } catch {
+    case e: TimeOutException =>
+      watch.errorStatus = phase + "_timeout"
+      None
+    case e: OutOfMemoryError =>
+      watch.errorStatus = "ncutintro_out_of_memory"
+      None
+    case e: StackOverflowError =>
+      watch.errorStatus = "ncutintro_stack_overflow"
+      None
+    case e: Exception =>
+      watch.errorStatus = "ncutintro_other_exception"
+      None
+    case e: TreeGrammarDecompositionException =>
+      watch.errorStatus = "tgd_failed"
+      None
+    case e: CutIntroUncompressibleException =>
+      watch.errorStatus = "ncutintro_uncompressible"
+      None
+    case e: Exception =>
+      watch.errorStatus = "ncutintro_other_exception"
+      None
     }
-    return (finalGrammars, status, log)
+    return finalGrammars
   }
 }
