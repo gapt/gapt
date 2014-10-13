@@ -37,9 +37,14 @@ object VeriTExporter {
     val s1 = ant.foldLeft(""){ case (acc, f) =>
       "(assert " + toSMTFormat(f) + ")\n" + acc
     }
-    val negs = succ.map(x => Neg(x))
-    val disj = Or(negs)
-    s1 + "(assert " + toSMTFormat(disj) + ")\n"
+    
+    if (succ.length == 0) {
+      s1
+    } else {
+      val negs = succ.map(x => Neg(x))
+      val disj = Or(negs)
+      s1 + "(assert " + toSMTFormat(disj) + ")\n"
+    }
   }
   
   // Gets all the symbols and arities that occur in the formulas of the list
@@ -89,7 +94,7 @@ object VeriTExporter {
         "(" + toASCIIString(pred) + " " + args.foldLeft("")( (acc, t) => toSMTFormat(t) + " " + acc) + ")"
       }
     // Functions should have arguments.
-    case Function(fun, args) => "(" + toASCIIString(fun) + " " + args.foldLeft("")( (acc, t) => toSMTFormat(t) + " " + acc) + ")"
+    case Function(fun, args) => "(" + toASCIIString(fun) + " " + args.foldRight("")( (t, acc) => toSMTFormat(t) + " " + acc) + ")"
     case And(f1, f2) => "(and " + toSMTFormat(f1) + " " + toSMTFormat(f2) + ")"
     case Or(f1, f2) => "(or " + toSMTFormat(f1) + " " + toSMTFormat(f2) + ")"
     case Imp(f1, f2) => "(=> " + toSMTFormat(f1) + " " + toSMTFormat(f2) + ")"
