@@ -273,16 +273,30 @@ object exportLLK {
   }
 }
 
+object escape_underscore {
+  def escape_constants(r:RobinsonResolutionProof, fs:List[FSequent]) : (RobinsonResolutionProof,List[FSequent]) = {
+    val names : Set[(Int,String)] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map(fo =>
+      getArityOfConstants(fo.formula.asInstanceOf[FOLFormula]))).flatten.flatten
+
+    val pairs : Set[(String, (Int,String))] = (names.map((x:(Int,String)) =>
+      (x._2, ((x._1, x._2.replaceAll("_","\\\\_")))   ))
+      )
+
+    val mapping = NameReplacement.emptySymbolMap ++ (pairs)
+
+    (NameReplacement(r, mapping), fs.map(f => NameReplacement(f,mapping)))
+  }
+
+}
 
 
 object loadProver9Proof {
-  def apply(filename: String, escape_underscore: Boolean = true, newimpl: Boolean = true):
-  (RobinsonResolutionProof, FSequent) = Prover9.parse_prover9(filename, escape_underscore, newimpl)
+  def apply(filename: String):  (RobinsonResolutionProof, FSequent, FSequent) = Prover9.parse_prover9(filename)
 }
 
 object loadProver9LKProof {
-  def apply(filename: String, newimpl: Boolean = true, forceSkolemization: Boolean = false): LKProof = {
-    val (proof, endsequent) = Prover9.parse_prover9(filename, false, newimpl)
+  def apply(filename: String, forceSkolemization: Boolean = false): LKProof = {
+    val (proof, endsequent, clauses) = Prover9.parse_prover9(filename)
     //println("skolemizing endsequent: "+endsequent)
     //val sendsequent = skolemize(endsequent)
     //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))

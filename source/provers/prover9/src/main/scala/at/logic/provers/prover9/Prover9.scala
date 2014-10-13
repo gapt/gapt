@@ -201,7 +201,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
       case 0 =>
         try  {
           trace( "parsing prover9 to robinson" )
-          val p9proof = parse_prover9(output_file, true, true)
+          val p9proof = parse_prover9(output_file)
           trace( "done parsing prover9 to robinson" )
           trace( "doing name replacement" )
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
@@ -228,7 +228,9 @@ object Prover9 extends at.logic.utils.logging.Logger {
         } catch {
           case e : Exception =>
             warn("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
-            trace(e.getStackTraceString)
+            val stackelements = e.getStackTrace
+            for (ste <- stackelements)
+              trace(ste.getFileName + ":"+ ste.getLineNumber +" " + ste.getClassName+"."+ste.getMethodName)
             Some(InitialClause(Nil,Nil))
         }
       case 1 => throw new Prover9Exception("A fatal error occurred (user's syntax error or Prover9's bug).")
@@ -243,7 +245,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
         // 
         try {
           trace( "parsing prover9 to robinson" )
-          val p9proof = parse_prover9(output_file, true, true)
+          val p9proof = parse_prover9(output_file)
           trace( "done parsing prover9 to robinson" )
           trace( "doing name replacement" )
           val tp9proof = NameReplacement(p9proof._1, symbol_map)
@@ -327,42 +329,9 @@ object Prover9 extends at.logic.utils.logging.Logger {
     proof
   }
 
-  // Get the constants and its arity
-  def getConstArity(t:FOLExpression) : Set[(Int,String)] = t match {
-    case FOLConst(s) => Set((0, s))
-    case FOLVar(_) => Set[(Int, String)]()
-    case Atom(h, args) => Set((args.length, h.toString)) ++ args.map(arg => getConstArity(arg)).flatten
-    case Function(h, args) => Set((args.length, h.toString)) ++ args.map(arg => getConstArity(arg)).flatten
-    
-    case And(x,y) => getConstArity(x) ++ getConstArity(y)
-    case Equation(x,y) => getConstArity(x) ++ getConstArity(y)
-    case Or(x,y) => getConstArity(x) ++ getConstArity(y)
-    case Imp(x,y) => getConstArity(x) ++ getConstArity(y)
-    case Neg(x) => getConstArity(x)
-    case ExVar(x,f) => getConstArity(f)
-    case AllVar(x,f) => getConstArity(f)
 
-//    case Var(ConstantStringSymbol(s),_) => l+((0,s)) ;
-//    case Var(_,_) => l;
-//    case AppN(Var(ConstantStringSymbol(s),_),ts) => ts.foldLeft(l)((x: Set[(Int,String)], y:LambdaExpression) => x ++ getVar(y, x) ) + ((ts.size,s))
-//    case App(s,t) => getVar(s, getVar(t,l))
-//    case Abs(_,s) => getVar(s,l)
-  }
-
-  def escape_constants(r:RobinsonResolutionProof, f:FSequent) : (RobinsonResolutionProof,FSequent) = {
-    val names : Set[(Int,String)] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map(fo => getConstArity(fo.formula.asInstanceOf[FOLFormula]))).flatten.flatten
-    val pairs : Set[(String, (Int,String))] = (names.map((x:(Int,String)) =>
-      (x._2, ((x._1, x._2.replaceAll("_","\\\\_")))   ))
-      )
-
-    val mapping = NameReplacement.emptySymbolMap ++ (pairs)
-
-    (NameReplacement(r, mapping), NameReplacement(f,mapping))
-  }
-
-
-  /* Takes the output of prover9, extracts a resolution proof and the endsequent. */
-  def parse_prover9(p9_file : String, escape_underscore : Boolean = false, newimpl : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
+  /* Takes the output of prover9, extracts a resolution proof, the original endsequent and the clauses. */
+  def parse_prover9(p9_file : String) : (RobinsonResolutionProof, FSequent, FSequent) = {
 
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
     p9_to_p9(p9_file, pt_file.getCanonicalPath)
@@ -382,12 +351,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
 //    val fs = Prover9TermParser.normalizeFSequent(InferenceExtractor(p9_file))
 
-    val fs = if (newimpl) InferenceExtractor.viaLADR(p9_file) else InferenceExtractor.viaXML(p9_file)
+    val fs = InferenceExtractor.viaLADR(p9_file)
+    val clauses = InferenceExtractor.clausesViaLADR(p9_file)
     //println("extracted formula: "+fs)
-    val (eproof, efs) = if (escape_underscore) escape_constants(mproof, fs)  else (mproof, fs)
-
-    (eproof, efs)
-
+    (mproof, fs,clauses)
   }
 
   def isInstalled(): Boolean = {

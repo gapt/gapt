@@ -22,7 +22,7 @@ def apply( proof: LKProof, subst: Substitution ) : (LKProof, Map[LabelledFormula
       val seq = FSequent(ant_occs.map( fo => subst(fo.formula) ), succ_occs.map( fo => subst(fo.formula) ) )
       val labels_ant = ant_occs.map( fo => fo.skolem_label.map( t => subst(t) ) ).toList
       val labels_succ = succ_occs.map( fo => fo.skolem_label.map( t => subst(t) ) ).toList
-      val (a, (antecedent, succedent)) = Axiom.createDefault(seq, Pair(labels_ant, labels_succ) )
+      val (a, (antecedent, succedent)) = Axiom.createDefault(seq, Tuple2(labels_ant, labels_succ) )
 
       require(antecedent.length >= ant_occs.length, "cannot create translation map: old proof antecedent is shorter than new one")
       require(succedent.length >= succ_occs.length, "cannot create translation map: old proof succedent is shorter than new one")
@@ -35,13 +35,13 @@ def apply( proof: LKProof, subst: Substitution ) : (LKProof, Map[LabelledFormula
       val new_parent = apply( p, subst )
       val new_proof = WeakeningLeftRule.createDefault( new_parent._1, subst(m.formula), m.skolem_label.map( e => subst.apply(e) ) )
       val es = toLabelledSequent( p.root )
-      ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )
+      ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Tuple2(m, new_proof.prin.head ) )
     }
     case WeakeningRightRule(p, s, m) => {
       val new_parent = apply( p, subst )
       val new_proof = WeakeningRightRule.createDefault( new_parent._1, subst(m.formula), m.skolem_label.map( e => subst.apply(e) ) )
       val es = toLabelledSequent( p.root )
-      ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )
+      ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Tuple2(m, new_proof.prin.head ) )
     }
     case ForallSkLeftRule(p, s, a, m, t) => {
       val new_parent = apply( p, subst )

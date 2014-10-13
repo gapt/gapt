@@ -9,9 +9,6 @@ import scala.util.parsing.combinator._
 
 abstract class TA {
   def ->(that: TA) = new ->(this, that)
-
-  //given a list of types [t1,t2,t3] and a type t4, create t1>(t2>(t3>t4)))
-  def prepend(l:List[TA]) : TA = l.foldRight(this)((lt, t) => lt -> t)
 }
 abstract class TAtomicA extends TA
 abstract class TComplexA extends TA
@@ -46,7 +43,7 @@ object -> {
 // with argument types from and return type to
 object FunctionType {
   def apply(to: TA, from: List[TA]) : TA = if (!from.isEmpty) from.foldRight(to)((t, acc) => ->(t, acc)) else to
-  def unapply(ta: TA): Option[Pair[TA, List[TA]]] = ta match {
+  def unapply(ta: TA): Option[Tuple2[TA, List[TA]]] = ta match {
     case TAtomicA(_) => Some(ta, Nil)
     case ->(t1, TAtomicA(t2)) => Some(t2, t1::Nil)
     case ->(t1, t2) => {

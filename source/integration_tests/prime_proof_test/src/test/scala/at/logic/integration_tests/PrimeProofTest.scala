@@ -145,8 +145,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
 //        .exportSequentList(neg.sortWith(mySort) ++ mix.sortWith(mySort) ++ pos.sortWith(mySort), sections).close
 // /*     (new FileWriter("target" + separator + "test-classes" + separator + "prime2-cs-unit.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
 //        .exportSequentList(neg2.sort(mySort) ++ mix2.sort(mySort) ++ pos2.sort(mySort), sections).close*/
-//      //saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
-//      //saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Pair("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
+//      //saveXML( Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::Tuple2("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
+//      //saveXML( Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::Tuple2("cssv", cssv.toList)::Nil, "target" + separator + "test-classes" + separator + "prime2-cs.xml" )
 //    }
 
 
@@ -206,10 +206,10 @@ class PrimeProofTest extends SpecificationWithJUnit {
         }
       }
 
-      saveXML( Pair("prime1-" + n + "-sk", proof_sk) ::
-        projs.toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
+      saveXML( Tuple2("prime1-" + n + "-sk", proof_sk) ::
+        projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Tuple2("cs", cs)::Tuple2("prf",prf)::Tuple2("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqualTo( true )
     }
 
@@ -251,10 +251,10 @@ class PrimeProofTest extends SpecificationWithJUnit {
       //Prover9.refute( cs ) must beEqualTo( true )
       //Prover9.refute( prf ) must beEqualTo( true )
 
-      saveXML( Pair("euclid-" + n + "-sk", proof_sk) ::
-        projs.toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
+      saveXML( Tuple2("euclid-" + n + "-sk", proof_sk) ::
+        projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Tuple2("cs", cs)::Tuple2("prf",prf)::Tuple2("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqualTo( true )
     }
 

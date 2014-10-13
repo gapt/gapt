@@ -81,7 +81,7 @@ class MiscTest extends SpecificationWithJUnit {
 //      val dcs = deleteTautologies( cs )
 //      val css = setNormalize( dcs )
 //      val cs_path = "target" + separator + "test-classes" + separator + "simple_ind-cs.xml"
-//      saveXML( Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, cs_path )
+//      saveXML( Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::Nil, cs_path )
 //      (new java.io.File( cs_path ) ).exists() must beEqualTo( true )
 //    }
 //    */
@@ -132,9 +132,9 @@ class MiscTest extends SpecificationWithJUnit {
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
       val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
       val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
-      saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        projs.toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf", prf)::Nil, path )
+      saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Tuple2("cs", cs)::Tuple2("prf", prf)::Nil, path )
       Success()
     }
 
@@ -219,7 +219,7 @@ class MiscTest extends SpecificationWithJUnit {
 
         val testFilePath = "target" + separator + "test-classes" + separator + testBaseName
 
-        val (resProof, seq) = Prover9.parse_prover9(testFilePath)
+        val (resProof, seq, _) = Prover9.parse_prover9(testFilePath)
         val lkProof = new Prover9Prover().getLKProof(seq).get
 
         val expansionSequent = extractExpansionTrees(lkProof)

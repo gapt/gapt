@@ -62,7 +62,7 @@ class LatticeTest extends SpecificationWithJUnit {
       val dcs = deleteTautologies( cs )
       val css = setNormalize( dcs )
       val cs_path = "target" + separator + "test-classes" + separator + "lattice-cs.xml"
-      saveXML( Nil, Pair("cs", cs)::Pair("dcs", dcs)::Pair("css", (css.toList))::Nil, cs_path )
+      saveXML( Nil, Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::Nil, cs_path )
       (new java.io.File( cs_path ) ).exists() must beEqualTo( true )
 */
       ok
@@ -108,10 +108,10 @@ class LatticeTest extends SpecificationWithJUnit {
 
       val projs = Projections( proof_sk )
       val path = "target" + separator + "test-classes" + separator + "lattice-sk.xml"
-      saveXML( Pair("lattice-sk", proof_sk) ::
-        projs.toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        // projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
+      saveXML( Tuple2("lattice-sk", proof_sk) ::
+        projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        // projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Tuple2("cs", cs)::Tuple2("prf",prf)::Tuple2("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqualTo( true )
     }
   }

@@ -668,6 +668,30 @@ object Utils extends at.logic.utils.logging.Logger {
 
 }
 
+object getArityOfConstants {
+  /**
+   * Get the constants and their arity from a given formula
+   * @param t the FOL expression from which we want to extract
+   * @return a set of pairs (arity, name)
+   **/
+  def apply(t: FOLExpression): Set[(Int, String)] = t match {
+    case FOLConst(s) => Set((0, s))
+    case FOLVar(_) => Set[(Int, String)]()
+    case Atom(h, args) => Set((args.length, h.toString)) ++ args.map(arg => getArityOfConstants(arg)).flatten
+    case Function(h, args) => Set((args.length, h.toString)) ++ args.map(arg => getArityOfConstants(arg)).flatten
+
+    case And(x, y) => getArityOfConstants(x) ++ getArityOfConstants(y)
+    case Equation(x, y) => getArityOfConstants(x) ++ getArityOfConstants(y)
+    case Or(x, y) => getArityOfConstants(x) ++ getArityOfConstants(y)
+    case Imp(x, y) => getArityOfConstants(x) ++ getArityOfConstants(y)
+    case Neg(x) => getArityOfConstants(x)
+    case ExVar(x, f) => getArityOfConstants(f)
+    case AllVar(x, f) => getArityOfConstants(f)
+  }
+}
+
+
+
 
 object toAbbreviatedString {
   /**
@@ -765,4 +789,5 @@ object toAbbreviatedString {
     return s
 
   }
+
 }

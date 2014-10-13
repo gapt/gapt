@@ -12,7 +12,7 @@ import scala.util.matching.Regex
 import at.logic.parsing.language.HOLParser
 import at.logic.language.hol._
 import at.logic.language.lambda._
-import at.logic.language.lambda.types.{To, Ti}
+import at.logic.language.lambda.types.{FunctionType, To, Ti}
 
 trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.language.lambda.types.Parsers {
   def goal = term
@@ -33,20 +33,20 @@ trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.lang
   def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ {case "Forall" ~ v ~ x => AllVar(v,x)}
   def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ {case "Exists" ~ v ~ x => ExVar(v,x)}
   def var_atom: Parser[HOLFormula] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {
-    case x ~ "(" ~ params ~ ")" => Atom(HOLVar(x, To.prepend(params.map(_.exptype))), params)
+    case x ~ "(" ~ params ~ ")" => Atom(HOLVar(x, FunctionType(To, params.map(_.exptype))), params)
   }
   def const_atom: Parser[HOLFormula] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ^^ {
-    case x ~ "(" ~ params ~ ")" => Atom(HOLConst(x, To.prepend(params.map(_.exptype))), params)
+    case x ~ "(" ~ params ~ ")" => Atom(HOLConst(x, FunctionType(To, params.map(_.exptype))), params)
   }
   def equality: Parser[HOLFormula] = /*eq_infix | */ eq_prefix // infix is problematic in higher order
   //def eq_infix: Parser[HOLFormula] = term ~ "=" ~ term ^^ {case x ~ "=" ~ y => Equation(x,y)}
   def eq_prefix: Parser[HOLFormula] = "=" ~ "(" ~ term ~ "," ~ term  ~ ")" ^^ {case "=" ~ "(" ~ x ~ "," ~ y  ~ ")" => Equation(x,y)}
   def var_func: Parser[HOLExpression] = regex(new Regex("[u-z]" + word)) ~ "(" ~ repsep(term,",") ~ ")"  ~ ":" ~ Type ^^ {
-    case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(HOLVar(x, tp.prepend(params.map(_.exptype))), params)
+    case x ~ "(" ~ params ~ ")" ~ ":" ~ tp => Function(HOLVar(x, FunctionType(tp, (params.map(_.exptype)))), params)
   }
 
   def const_func: Parser[HOLExpression] = regex(new Regex("["+symbols+"a-tA-Z0-9]" + word)) ~ "(" ~ repsep(term,",") ~ ")" ~ ":" ~ Type ^^ {
-    case x ~ "(" ~ params ~ ")" ~ ":" ~ tp  => Function(HOLConst(x, tp.prepend(params.map(_.exptype))) , params)
+    case x ~ "(" ~ params ~ ")" ~ ":" ~ tp  => Function(HOLConst(x, FunctionType(tp, (params.map(_.exptype)))) , params)
   }
 
   protected def symbol: Parser[String] = symbols.r

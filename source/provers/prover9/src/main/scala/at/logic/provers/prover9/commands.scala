@@ -230,79 +230,42 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
 
 //TODO: refactor shared code with Prover9Init
 object InferenceExtractor {
-  def apply(s:String) : FSequent = viaXML(s)
-
   private def debug(s:String) : Unit = { }
 
-  def viaXML(fn: String) : FSequent = {
-    //println("==== Extracting Inferences ======")
-    val buffer = new Array[ Byte ]( 1024 )
-    val tptpIS = new FileInputStream(fn)
-    var goals = List[FOLFormula]()
-    var assumptions = List[FOLFormula]()
-    //this was autodetection code for naming conventions, but apparently ivy has its own anyway
-    val variablestyle_matcher = """prolog_style_variables""".r
-    val str_p9 = scala.io.Source.fromInputStream( new FileInputStream( fn ) ).mkString
+  def viaLADR(fn : String) : FSequent = {
+    import scala.io.Source
 
-    val set_prolog_style_variables =
-      !(for (line <- str_p9.split(System.getProperty("line.separator"));
-           if ( variablestyle_matcher.findFirstIn(line).isDefined)) yield line).isEmpty
+    val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r
+    val rassumption = """(\d+) ([^#\.]+).*\[assumption\].""".r
+    val rgoal = """(\d+) ([^#\.]+).*\[goal\].""".r
+    val proof_start = """=+ (PROOF) =+""".r
+    val proof_end = """=+ (end) of proof =+""".r
+    // with_proof starts at 0, will be increased to 1 after matching proof_start and to 2 after proof_end
+    // because there might be more than one proof in the file
+    var within_proof = 0
+    var parser : Prover9TermParserA = Prover9TermParserLadrStyle
 
-    //println(if (set_prolog_style_variables) "prolog style variables!" else "normal style variables!")
+    val str_ladr = Source.fromInputStream( new FileInputStream( fn ) ).mkString
 
-    val parser = if (set_prolog_style_variables) Prover9TermParser else Prover9TermParserLadrStyle
+    val (assumptions, goals) = str_ladr.split(System.getProperty("line.separator")).foldLeft((List[FOLFormula](), List[FOLFormula]()))((m, l) => {
 
+       val (as,gs) = m;
+       l match {
+        case rassumption(id, formula ) => if (within_proof != 1) m else  (parser.parseFormula(formula)::as, gs)
+        case rgoal(id, formula )       => if (within_proof != 1) m else  (as, parser.parseFormula(formula)::gs)
+        case variablestyle_matcher(_) => parser = Prover9TermParser;  m
+        case proof_start(_) => within_proof = 1; m
+        case proof_end(_) => within_proof = 2; m
+        case _ => m
+      }
+    })
 
-    // here we parse the given xml
-    val pio = new ProcessIO(
-      stdin => {Stream.continually(tptpIS.read(buffer)).takeWhile(_ != -1).foreach(stdin.write(buffer,0,_));stdin.flush;stdin.close}, //writing tptp to program
-      stdout => {
-        val f = SAXParserFactory.newInstance()
-        f.setValidating(false)
-        f.setNamespaceAware(false)
-        f.setFeature("http://xml.org/sax/features/namespaces", false)
-        f.setFeature("http://xml.org/sax/features/validation", false)
-        f.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
-        f.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
-        val xml = XML.loadXML(new InputSource(stdout),f.newSAXParser())
+    createFSequent(assumptions, goals)
 
-        var lastParents = new ListBuffer[String]() // this is used to monitor if the last rule by prover9 triggers a replay or not. If not, we must call replay with the parents here.
-
-        (xml \\ "clause").foreach(e => {
-          val inference_type = (e \\ "justification" \\ "@jstring")
-          inference_type.text match {
-            case "[assumption]." =>
-              val formula = Or((e \\ "literal").map( x => parser.parseFormula(x.text)).toList)
-              assumptions = formula :: assumptions
-            case "[goal]." =>
-              (e \\ "literal").foreach(literal =>
-               goals = parser.parseFormula(literal.text)::goals
-              )
-            case _ => ; //ignore other rules
-          }
-          val id = (e\"@id").text
-          lastParents = new ListBuffer[String]()
-        })
-
-
-
-      },
-      stderr => {val err:String = scala.io.Source.fromInputStream(stderr).mkString; if (!err.isEmpty) throw new Prover9Exception(err)}
-    )
-
-    //      val p  = "tptp_to_ladr" #| "prover9" #| "prooftrans xml expand"
-    val p  = "prooftrans xml"
-    val proc = p.run(pio)
-    val exitValue = proc.exitValue
-
-    tptpIS.close()
-
-
-    val fs = createFSequent(assumptions, goals)
-    fs
   }
 
-  def viaLADR(fn : String) : FSequent = {
+
+  def clausesViaLADR(fn : String) : FSequent = {
     import scala.io.Source
 
     val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r

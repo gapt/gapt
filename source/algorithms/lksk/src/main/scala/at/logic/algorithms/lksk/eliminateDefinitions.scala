@@ -56,7 +56,7 @@ object eliminateDefinitions {
         val ant_occs = ls.l_antecedent.toList
         val succ_occs = ls.l_succedent.toList
         val (a,labels) = Axiom.createDefault(new FSequent(ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ) ),
-                                    Pair( ant_occs.map( fo => fo.skolem_label ).toList,
+                                    Tuple2( ant_occs.map( fo => fo.skolem_label ).toList,
                                           succ_occs.map( fo => fo.skolem_label ).toList ) )
         val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
         val las = toLabelledSequent(a.root)
@@ -210,7 +210,7 @@ object eliminateDefinitions {
                        m: LabelledFormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula, m.skolem_label )
     val ls = toLabelledSequent(old_parent.root)
-    ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head.asInstanceOf[LabelledFormulaOccurrence] ) )
+    ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, old_proof, new_proof, new_parent._2 ) + Tuple2(m, new_proof.prin.head.asInstanceOf[LabelledFormulaOccurrence] ) )
   }
 
   def handleContraction( new_parent: (LKProof, mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence]),

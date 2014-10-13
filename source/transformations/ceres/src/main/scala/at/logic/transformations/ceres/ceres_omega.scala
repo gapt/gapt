@@ -2,10 +2,12 @@ package at.logic.transformations.ceres
 
 import at.logic.calculi.lk._
 import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.language.hol.Equation
+import at.logic.language.lambda.types.Ti
 import at.logic.transformations.ceres.struct.Struct
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.calculi.lk.base.{Sequent, LKProof}
-import at.logic.calculi.lksk.{LabelledFormulaOccurrence, LabelledSequent}
+import at.logic.calculi.lksk.{ Axiom => LKSKAxiom, _}
 import at.logic.calculi.resolution.ral._
 
 /**
@@ -13,6 +15,15 @@ import at.logic.calculi.resolution.ral._
  */
 object ceres_omega {
   def apply(projections : Set[LKProof], ralproof : RalResolutionProof[LabelledSequent], es : LabelledSequent, struct : Struct) : (LKProof, LabelledSequent) = ralproof match {
+    //reflexivity as initial rule
+    case InitialSequent( s@LabelledSequent(Nil, List(LabelledFormulaOccurrence(Equation(x,y), anc, label)) ))
+       if (x==y) && (x.exptype == Ti) =>
+
+      val (rule,_) = LKSKAxiom.createDefault(s.toFSequent, (List(), List(label)))
+
+      (rule, LabelledSequent(Nil,Nil))
+
+
     case InitialSequent(root ) =>
       projections.find(x => {
         def removeAll(l1:List[LabelledFormulaOccurrence], l2:List[LabelledFormulaOccurrence]) = {
