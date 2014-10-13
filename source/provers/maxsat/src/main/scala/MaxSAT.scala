@@ -9,6 +9,7 @@ import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.logging.Stopwatch
 import scala.collection.immutable.HashMap
 import scala.collection.mutable
+import scala.io.Source
 import scala.sys.process.{Process, ProcessIO}
 
 // This is also occuring in the minisat package
@@ -340,7 +341,10 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
 
     //val str = Stream.continually(in.readLine()).takeWhile(_ != null).mkString("\n")
 
-    outputToInterpretation(output.toString)
+    outputToInterpretation(solver match {
+      case MaxSATSolver.QMaxSAT => Source.fromFile(temp_out).mkString
+      case _ => output.toString
+    })
   }
 
   /**
@@ -360,10 +364,18 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
         toysolverOutputToInterpretation(in)
       }
       case MaxSATSolver.MiniMaxSAT => {
-        qmaxsatOutputToInterpretation(in)
+        minimaxsatOutputToInterpretation(in)
       }
       case _ => None
     }
+  }
+
+  private def qmaxsatOutputToInterpretation(str: String): Option[Map[FOLFormula, Boolean]] = {
+    if (!str.startsWith("SAT")) return None
+
+    Some(str.lines.toList(1).split(' ')
+      .map(_.toInt).map(i => (if (i < 0) (getAtom(-i) -> false) else (getAtom(i) -> true)))
+      .collect { case (Some(a), b) => a -> b }.toMap)
   }
 
   /**
@@ -371,7 +383,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param in output of QMaxSAT Solver
    * @return None if UNSAT, Some(minimal model) otherwise
    */
-  private def qmaxsatOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
+  private def minimaxsatOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
 
     val oLinePattern = """(?m)^o.*""".r
     val vLinePattern = """(?m)^v.*""".r
