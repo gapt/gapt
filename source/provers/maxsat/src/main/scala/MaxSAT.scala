@@ -5,6 +5,7 @@ import java.io._
 import at.logic.algorithms.resolution.{CNFp, TseitinCNF}
 import at.logic.calculi.resolution._
 import at.logic.language.fol._
+import at.logic.language.hol.HOLVar
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.logging.Stopwatch
 import scala.collection.immutable.HashMap
@@ -85,9 +86,11 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    */
   def isInstalled() : Boolean = {
     try {
-      val box : Set[FClause] = Set.empty
-      solve(box,box.zipWithIndex)
-      true
+      val clause = FClause(List(), List(Atom("P")))
+      solve(Set(clause), Set(clause -> 1)) match {
+        case Some(_) => true
+        case None => throw new IOException()
+      }
     } catch  {
       case ex: IOException => {
         warn("It seems that "+solver+" is not installed properly")
