@@ -12,12 +12,11 @@ import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.language.hol.logicSymbols._
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.logging.Stopwatch
-import scala.collection.mutable.HashMap
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
-import at.logic.language.fol.replacements.getAllPositionsFOL
 import at.logic.provers.maxsat.{MaxSATSolver, MapBasedInterpretation, MaxSAT}
-
+import at.logic.utils.dssupport.ListSupport.{boundedPower, diagCross}
+import at.logic.language.fol.Utils.{st, subterms, calcCharPartition, incrementAllVars, nonterminalOccurs, replaceAtPosition, getNonterminals}
 
 /**
  * MinCostSAT Method
@@ -237,91 +236,6 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     termMap(t)
   }
 
-
-  /**
-   * A method for traversing a term to return a list of all subterms
-   *
-   * @param subterms subterms so far
-   * @param term term, which is processed
-   * @return a HasMap of all subterms represented as string => subterm
-   */
-  def st_trav(subterms:  HashMap[String, FOLTerm], term: FOLTerm) :  HashMap[String, FOLTerm] = {
-    // if the term is not in the set of subterms yet
-    // add it and add all its subterms
-    if(!subterms.contains(term.toString())){
-      // add a term
-      subterms(term.toString()) = term
-      // generate all subterms
-      val ts = term match {
-        case FOLVar(v) => Map[String, FOLTerm]()
-        case FOLConst(c) =>  Map[String, FOLTerm]()
-        case Function(f,args)  =>  args.flatMap(((t: FOLTerm) => st_trav(subterms, t)))
-      }
-      subterms ++= ts
-    }
-    subterms
-  }
-
-  /**
-   * Extracting the result of st_trav for a term t
-   *
-   * @param t FOLTerm for which all subterms are calculated
-   * @return list of all subterms
-   */
-  def st(t: FOLTerm) : List[FOLTerm] = {
-    // extract the list of all subterms of the term
-    st_trav(HashMap[String, FOLTerm](), t).toList.sortBy(_._1).map(_._2)
-  }
-
-  /**
-   * Generating all subterms of a language of FOLTerms
-   *
-   * @param language termset for which st is called for each element
-   * @return list of all subterms
-   */
-  def subterms(language: List[FOLTerm]) : List[FOLTerm] = {
-    val terms = HashMap[String, FOLTerm]()
-    // for each term of the language
-    for(t <- language){
-      // if terms does not contain t yet
-      if(!terms.contains(t.toString())){
-        // add it and all of its subterms to the list
-        terms ++= st_trav(terms, t)
-      }
-    }
-    terms.map(_._2).toList
-  }
-
-  /**
-   * Generates the powerset S as a List of a List, where
-   * |S| <= n
-   *
-   * @param s list
-   * @param n upperbound for the powerset
-   * @tparam A type of the list
-   * @return bounded powerset
-   */
-  def boundedPower[A](s: List[A], n: Int): List[List[A]] = {
-    // init powerset
-    val powerset = List[List[A]]()
-
-    // function for generating a subset of the powerset of a particular size
-    def genLists(l: List[A], i:Int, n: Int): List[List[A]] = l match {
-      // if no elements are left terminate
-      case Nil        => List[List[A]]()
-      // if we can still add an element
-      // EITHER do not add it and leave i (size of already chosen elements) as it is
-      // OR add it and increment i
-      case a :: as  if i+1 < n  => genLists(as,i,n) ++ (genLists(as,i+1,n) map (a :: _))
-      // if we can add just one more element
-      // either do so, or not
-      case a :: as  if i+1 >= n => List(List(a)) ++ genLists(as,i,n)
-    }
-    // call genLists for 1 <= i <= n times
-    // and concatenate all results, s.t. we get the intended result
-    (for (i <- List.range(1, n+1)) yield genLists(s,0,i)).foldLeft(List[List[A]]())( (prevLists,l) => prevLists ++ l)
-  }
-
   /**
    * suffKeys - as described in Eberhard [2014] -
    * generates a sufficient set of keys w.r.t. a termset/language l
@@ -332,7 +246,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     val st = subterms(termset)
     // since we only need to construct terms with n nonterminals, we only have to consider
     // subsets of st(L') with a size of at most n+1
-    val poweredSubSets = boundedPower(st, n+1)
+    val poweredSubSets = boundedPower(st.toList, n+1)
 
     // for each subset of size 1 <= |sub| <= n+1,
     // add all keys of normform(sub) to keySet
@@ -385,133 +299,9 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     return keyIndexMap(k)
   }
 
-  /**
-   * Calculates the characteristic partition of a term t
-   * as described in Eberhard [2014], w.r.t. a non-terminal
-   *
-   * @param t term for which the characteristic Partition is calculated
-   * @return characteristic partition of t
-   */
-  def calcCharPartition(t: FOLTerm) : List[List[List[Int]]] = {
-    val positions = getAllPositionsFOL(t)
-    /**
-     * It recursively separates the positions in the list into different
-     * partitions accorindg to their referencing terms.
-     *
-     * @param pos position list
-     * @return
-     */
-    def recCCP(pos: List[(List[Int], FOLExpression)]) : List[List[List[Int]]] = {
-      pos match {
-        case x :: xs => {
-          val result =  ((None, Some(x._1)) :: xs.foldLeft(List[(Option[(List[Int], FOLExpression)],Option[List[Int]])]())((acc,y) => {
-            // add them to the characteristic Partition if the terms match
-            if(x._2 == y._2){
-              (None, Some(y._1)) :: acc
-            }
-            else{
-              (Some(y),None) :: acc
-            }
-          }))
-          val furtherPositions = result.unzip._1.flatten
-          result.unzip._2.flatten :: recCCP(furtherPositions)// get rid of the option and concatenate with the lists of positions except the ones we just added to the current partition
-        }
-        case _ => Nil // if no positions are left
-      }
-    }
-    return recCCP(positions)
-  }
-
-  /**
-   * If for a given term t, the termposition position exists
-   * replace the subtree with the root at position with a FOLVar(variable_index).
-   * Otherwise return the term as it is.
-   *
-   * @param t term
-   * @param variable string representation of the nonterminal prefix
-   * @param position list of positions of variable
-   * @param index nonterminal index i
-   * @return the original term if the replacement could not be processed, or t|p = α_index
-   */
-  def replaceAtPosition(t: FOLTerm, variable: String, position: List[Int], index: Int) : FOLTerm = {
-    try{
-      val replacement = new at.logic.language.fol.replacements.Replacement(position, FOLVar(variable+"_"+index))
-      return replacement(t).asInstanceOf[FOLTerm]
-    }catch{
-      case e: IllegalArgumentException =>  // Possible, nothing special to do here.
-    }
-    return t
-  }
-
-  /**
-   * Checks if a FOLVar exists in t with a certain variable_prefix.
-   * e.g. nonterminalOccurs(f(x1,y2,z1), "y") = true
-   *
-   * @param t term
-   * @param variable_prefix variable prefix
-   * @return true if a variable with the particular prefix exists in t, otherwise false
-   */
-  def nonterminalOccurs(t: FOLTerm, variable_prefix: String) : Boolean = t match {
-    case FOLVar(x) => return x.startsWith(variable_prefix)
-    case FOLConst(x) => false
-    case Function(x, args) => return args.foldLeft(false)((s,a) => s || nonterminalOccurs(a, variable_prefix))
-    case _ => return false
-  }
 
 
-  /**
-   * increments the index of a FOLVar by 1, if it has an index
-   * otherwise do nothing
-   *
-   * @param v FOLVar to be processed
-   * @return v with incremented index
-   */
-  def incrementIndex(v: FOLVar) : FOLVar = {
-    val parts = v.toString.split("_")
-    try {
-      val index = parts.last.toInt
-      FOLVar((parts.take(parts.size - 1).foldLeft("")((acc, x) => acc + "_" + x) + "_" + (index + 1)).substring(1))
-    }catch{
-      case e: NumberFormatException => return v //variable has no index
-    }
-  }
 
-  /**
-   * for a particular term increment all variables indexes
-   * which start with provided prefix
-   *
-   * @param t term
-   * @return term with incremented variable indexes
-   */
-  def incrementAllVars(t: FOLTerm, prefix: String) : FOLTerm = {
-    t match {
-      case FOLVar(x) if x.startsWith(prefix) => incrementIndex(FOLVar(x))
-      case FOLVar(x) => FOLVar(x)
-      case FOLConst(c) => FOLConst(c)
-      case Function(f,l) => Function(f,l.map(p => incrementAllVars(p, prefix)))
-      case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
-        t}
-    }
-  }
-
-  /**
-   * Provided a FOLTerm, the function replaces each occurrence of a FOLVar starting with
-   * prefix1, by a FOLVar starting with prefix2 instead.
-   *
-   * @param t the FOLTerm which should be processed
-   * @param prefix1 prefix we are looking for in t
-   * @param prefix2 prefix which should replace prefix1
-   * @return a FOLTerm, where all FOLVars starting with prefix1 have been replaced by FOLVars starting with prefix2 instead
-   */
-  def replaceAllVars(t: FOLTerm, prefix1: String, prefix2:String) : FOLTerm = {
-    t match {
-      case FOLVar(x) => FOLVar(x.replace(prefix1,prefix2))
-      case FOLConst(c) => FOLConst(c)
-      case Function(f,l) => Function(f,l.map(p => replaceAllVars(p, prefix1, prefix2)))
-      case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
-        t}
-    }
-  }
 
   /**
    * normform produces, depending on a language l
@@ -663,38 +453,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     return t == sub(k)
   }
 
-  /**
-   * Generates out of a list l
-   * the diagonal cartesian product l² of it
-   * minus the diagonal and mirrorcases
-   *
-   * @param l list of elements
-   * @return diagonal cartesian product of l
-   */
-  def diagCross(l:List[Int]) : List[(Int,Int)] = {
-    l match {
-      case x::xs => xs.map(y => (x,y)) ++ diagCross(xs)
-      case _ => Nil
-    }
-  }
 
-  /**
-   * Given a FOLTerm and a prefix for a variable,
-   * this function returns a list of all FOLVars in t starting
-   * with the particular prefix
-   *
-   * @param t FOLTerm
-   * @param nonterminal_prefix prefix of non-terminals
-   * @return a list of strings representing all non-terminals in t
-   */
-  def getNonterminals(t: FOLTerm, nonterminal_prefix: String) : List[String] = {
-    val s = t match {
-      case Function(f,args) => args.foldLeft(Set[String]())((prevargs,arg) => prevargs ++ getNonterminals(arg, nonterminal_prefix))
-      case FOLVar(v) => if(v.toString.startsWith(nonterminal_prefix)) Set[String](v.toString()) else Set[String]()
-      case _ => Set[String]()
-    }
-    s.toList
-  }
 }
 
 class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override val n: Int) extends TreeGrammarDecomposition(termset, n) {
@@ -808,8 +567,14 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
   }
 
 
-
-
+  /**
+   * For debugging purpose.
+   * This function is helpful for providing the MinCostSAT formula in a
+   * human readable way.
+   * In order to call it one may have to call suffKeys, MCS and softConstraints first.
+   * @param e a FOLExpression
+   * @return a latex string of the particular expression
+   */
     def PrettyPrinter(e:FOLExpression) : String = {
 
       val p = pretty(e)
@@ -830,6 +595,12 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
       return r
     }
 
+  /**
+   * For debugging purpose.
+   * Helps to abbreviate certain monadic function symbols
+   * @param exp a FOLExpression
+   * @return a triple to distinguish between monadic and other function calls
+   */
     private def pretty(exp : FOLExpression) : (String, String, Int) = {
 
       val s : (String, String, Int) = exp match {

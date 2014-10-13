@@ -5,6 +5,8 @@
 
 package at.logic.utils.dssupport
 
+import scala.actors._
+
 object ListSupport {
 
   /** Cartesian product of an arbitrary list of lists */
@@ -166,6 +168,51 @@ object ListSupport {
   def pairwiseImages[A,B,C](xs: Seq[A], ys: Seq[B], f: (A,B) => C): Seq[Seq[C]] = xs match {
     case Nil => Nil
     case z +: zs => ys.map(y => f(z,y)) +: pairwiseImages(zs, ys, f)
+  }
+
+  /**
+   * Generates the powerset S as a List of a List, where
+   * |S| <= n
+   *
+   * @param s list
+   * @param n upperbound for the powerset
+   * @tparam A type of the list
+   * @return bounded powerset
+   */
+  def boundedPower[A](s: List[A], n: Int): List[List[A]] = {
+    // init powerset
+    val powerset = List[List[A]]()
+
+    // function for generating a subset of the powerset of a particular size
+    def genLists(l: List[A], i:Int, n: Int): List[List[A]] = l match {
+      // if no elements are left terminate
+      case Nil        => List[List[A]]()
+      // if we can still add an element
+      // EITHER do not add it and leave i (size of already chosen elements) as it is
+      // OR add it and increment i
+      case a :: as  if i+1 < n  => genLists(as,i,n) ++ (genLists(as,i+1,n) map (a :: _))
+      // if we can add just one more element
+      // either do so, or not
+      case a :: as  if i+1 >= n => List(List(a)) ++ genLists(as,i,n)
+    }
+    // call genLists for 1 <= i <= n times
+    // and concatenate all results, s.t. we get the intended result
+    (for (i <- List.range(1, n+1)) yield genLists(s,0,i)).foldLeft(List[List[A]]())( (prevLists,l) => prevLists ++ l)
+  }
+
+  /**
+   * Generates out of a list l
+   * the diagonal cartesian product l² of it
+   * minus the diagonal and mirrorcases
+   *
+   * @param l list of elements
+   * @return diagonal cartesian product of l
+   */
+  def diagCross(l:List[Int]) : List[(Int,Int)] = {
+    l match {
+      case x::xs => xs.map(y => (x,y)) ++ diagCross(xs)
+      case _ => Nil
+    }
   }
 
 }

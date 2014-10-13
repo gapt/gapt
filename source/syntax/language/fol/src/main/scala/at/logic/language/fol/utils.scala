@@ -4,6 +4,7 @@
 
 package at.logic.language.fol
 
+import at.logic.language.fol.replacements.getAllPositionsFOL
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols.getRenaming
 import at.logic.language.lambda.{freeVariables => freeVariablesLambda, rename => renameLambda}
@@ -11,6 +12,7 @@ import at.logic.language.hol.{isPrenex => isPrenexHOL, containsQuantifier => con
 import at.logic.language.hol.logicSymbols._
 import scala.Some
 import scala.Tuple3
+import scala.collection.mutable
 
 // Returns a list *without duplicates* of the free variables in the expression.
 // There is no guarantee on the ordering of the list.
@@ -225,21 +227,30 @@ object getMatrix {
   def apply(f: FOLFormula) : FOLFormula = getMatrixHOL(f).asInstanceOf[FOLFormula]
 }
 
-/** Replaces all free ocurrences of a variable by another variable in a FOL formula.
-  *
-  * @param variable The name of the free variable to replace.
-  * @param by The name of the new variable.
-  * @param formula The formula in which to replace [variable] with [by].
-  */
+
 object replaceFreeOccurenceOf {
   def apply(variable: String, by: String, formula: FOLFormula) : FOLFormula = {
     replaceFreeOccurenceOf(FOLVar(variable), FOLVar(by), formula)
   }
+
+  /** Replaces all free ocurrences of a variable by another variable in a FOLTerm.
+    *
+    * @param variable The name of the free variable to replace.
+    * @param by The name of the new variable.
+    * @param term The term in which to replace [variable] with [by].
+    */
   def apply(variable: String, by: String, term: FOLTerm) : FOLTerm = term match {
     case Function(f,terms) => Function(f, terms.map(x => replaceFreeOccurenceOf(variable, by, x)))
     case (v @ FOLVar(x)) => if (x.toString() == variable) FOLVar(by) else v
     case (c @ FOLConst(_)) => c
   }
+
+  /** Replaces all free ocurrences of a variable by another variable in a FOL formula.
+    *
+    * @param variable The name of the free variable to replace.
+    * @param by The name of the new variable.
+    * @param formula The formula in which to replace [variable] with [by].
+    */
   def apply(variable : FOLVar, by : FOLVar, formula : FOLFormula) : FOLFormula = {
     formula match {
       case Atom(_, args) => Substitution(variable, by).apply(formula)
@@ -290,28 +301,31 @@ object reverseCNF {
   }
 }
 
-/** Adds a list of universal quantifiers to a FOL formula.
-  * The first element of the list will be the outermost quantifier.
-  * A generalization of applying AllVar(x,f).
-  *
-  * It always holds that addQuantifiers(f,removeQuantifiers(f)._1) = f.
-  *
-  * @param f A FOL formula, typically with the free variables of xs.
-  * @param xs A list of variables [x1,...,xn] over which to universally quantify f.
-  * @return [forall x1,...,xn] f
-  */
+
 object addQuantifiers {
+  /** Adds a list of universal quantifiers to a FOL formula.
+    * The first element of the list will be the outermost quantifier.
+    * A generalization of applying AllVar(x,f).
+    *
+    * It always holds that addQuantifiers(f,removeQuantifiers(f)._1) = f.
+    *
+    * @param f A FOL formula, typically with the free variables of xs.
+    * @param xs A list of variables [x1,...,xn] over which to universally quantify f.
+    * @return [forall x1,...,xn] f
+    */
   def apply(f : FOLFormula, xs : List[FOLVar]) = xs.reverse.foldLeft(f)((f,x) => AllVar(x, f))
 }
 
-/** Strips the initial universal quantifiers from a FOL formula that begins
-  * with a quantifier block.
-  * A generalization of unapplying AllVar(x,f).
-  * 
-  * @param f A FOL formula of the form [forall x1,...,xn] f'.
-  * @return The tuple ([xn,...,x1], f').
-  */
+
 object removeQuantifiers {
+
+  /** Strips the initial universal quantifiers from a FOL formula that begins
+    * with a quantifier block.
+    * A generalization of unapplying AllVar(x,f).
+    *
+    * @param f A FOL formula of the form [forall x1,...,xn] f'.
+    * @return The tuple ([xn,...,x1], f').
+    */
   def apply(f : FOLFormula) : (List[FOLVar], FOLFormula) = f match {
     case AllVar(x, f) => {
       val (xs,fret) = removeQuantifiers(f)
@@ -321,36 +335,39 @@ object removeQuantifiers {
   }
 }
 
-/**
- * Closes the given formula universally
- * @param f the formula to be closed
- * @return forall x_1 ... forall x_n f, where {x_i | 1 <= i <= n} = FV(f)
- */
+
 object univclosure{
+  /**
+   * Closes the given formula universally
+   * @param f the formula to be closed
+   * @return forall x_1 ... forall x_n f, where {x_i | 1 <= i <= n} = FV(f)
+   */
   def apply(f: FOLFormula) = freeVariables(f).foldRight(f)((v, g) => AllVar(v, g))
 }
 
-/**
- * Closes the given formula existentially
- * @param f the formula to be closed
- * @return exists x_1 ... exists x_n f, where {x_i | 1 <= i <= n} = FV(f)
- */
+
 object existsclosure{
+  /**
+   * Closes the given formula existentially
+   * @param f the formula to be closed
+   * @return exists x_1 ... exists x_n f, where {x_i | 1 <= i <= n} = FV(f)
+   */
   def apply(f: FOLFormula) = freeVariables(f).foldRight(f)((v, g) => ExVar(v, g))
 }
 
 
-/** Removes at most n universal quantifiers from a FOL formula that begins
-  * with a quantifier block.
-  *
-  * See removeQuantifiers.
-  *
-  * @param f A FOL formula of the form [forall x1,...,xm] f'.
-  * @param n The number of quantifiers to strip.
-  * @return The tuple ([x1',...,xn], f'') where n' <= n & n' <= m and f' is a subformula
-  * of f''.
-  */
+
 object removeNQuantifiers {
+  /** Removes at most n universal quantifiers from a FOL formula that begins
+    * with a quantifier block.
+    *
+    * See removeQuantifiers.
+    *
+    * @param f A FOL formula of the form [forall x1,...,xm] f'.
+    * @param n The number of quantifiers to strip.
+    * @return The tuple ([x1',...,xn], f'') where n' <= n & n' <= m and f' is a subformula
+    * of f''.
+    */
   def apply(f: FOLFormula, n: Int) : (List[FOLVar], FOLFormula) = f match {
     case AllVar(x, f) => {
       if (n > 0) {
@@ -373,13 +390,14 @@ object createFOLVars {
   }
 }
 
-/** Returns the list (not set!) of all occurring variables, free or bound, in a FOL FORMULA, from left to right.
-  *
-  * @param f The FOL formula in which to collect the variables.
-  * @return The list of occurring variables, from left to right. If a variable occurs multiple times
-  *         in the formula, it will occur multiple times in the returned list.
-  */
+
 object collectVariables {
+  /** Returns the list (not set!) of all occurring variables, free or bound, in a FOL FORMULA, from left to right.
+    *
+    * @param f The FOL formula in which to collect the variables.
+    * @return The list of occurring variables, from left to right. If a variable occurs multiple times
+    *         in the formula, it will occur multiple times in the returned list.
+    */
   def apply(f: FOLFormula) : List[FOLVar] = f match {
     case And(f1,f2) => collectVariables(f1) ++ collectVariables(f2)
     case Or(f1,f2) => collectVariables(f1) ++ collectVariables(f2)
@@ -390,7 +408,13 @@ object collectVariables {
     case Atom(_,f1) => f1.map(f => collectVariables(f)).foldLeft(List[FOLVar]())(_ ++ _)
     case _ => throw new IllegalArgumentException("Unhandled case in fol.utils.collectVariables(FOLFormula)!")
   }
-  
+
+  /** Returns the list (not set!) of all occurring variables, free or bound, in a FOLTerm, from left to right.
+    *
+    * @param f The FOLTerm in which to collect the variables.
+    * @return The list of occurring variables, from left to right. If a variable occurs multiple times
+    *         in the formula, it will occur multiple times in the returned list.
+    */
   def apply(f: FOLTerm) : List[FOLVar] = f match {
     case FOLVar(x) => List(FOLVar(x))
     case Function(_,terms) => terms.map(t => collectVariables(t)).foldLeft(List[FOLVar]())(_ ++ _)
@@ -399,13 +423,7 @@ object collectVariables {
   }
 }
 
-/** Helper function for checking whether a FOLVar is an eigenvariable.
-  * This is used in computing cutIntroduction.Deltas.UnboundedVariableDelta
-  * and GeneralizedGrammar.eigenvariables.
-  * 
-  * isEigenvariable(x, ev) == true iff x's name matches the format [ev]_[n],
-  * where n is some non-negative integer.
-  */
+
 object isEigenvariable {
   def apply(x : FOLVar, eigenvariable : String) = x.toString.split('_') match {
     case Array(eigenvariable, n) => n.forall(Character.isDigit)
@@ -417,7 +435,7 @@ object lcomp {
   def apply(f: FOLFormula) = lcompHOL(f) 
 }
 
-object Utils {
+object Utils extends at.logic.utils.logging.Logger {
   // Constructs the FOLTerm f^k(a)
   def iterateTerm( a: FOLTerm, f: String, k: Int ) : FOLTerm =
     if ( k < 0 ) throw new Exception("iterateTerm called with negative iteration count")
@@ -461,6 +479,193 @@ object Utils {
       case Nil => Nil
     }
   }
+
+  /**
+   * A method for generating all subterms of a particular term
+   * @param term term, which is processed
+   * @param subterms [optional] for speeding up the process, if there are already some computed subterms (default: {})
+   * @return a HasMap of all subterms represented as string => subterm
+   */
+  def st(term: FOLTerm, subterms : mutable.Set[FOLTerm]= mutable.Set[FOLTerm]()) :  mutable.Set[FOLTerm] = {
+    // if the term is not in the set of subterms yet
+    // add it and add all its subterms
+    if(!subterms.contains(term)){
+      // add a term
+      subterms += term
+      // generate all subterms
+      val ts = term match {
+        case FOLVar(v) => Set[FOLTerm]()
+        case FOLConst(c) =>  Set[FOLTerm]()
+        case Function(f,args)  =>  args.flatMap(((t: FOLTerm) => st(t, subterms)))
+      }
+      subterms ++= ts
+    }
+    subterms
+  }
+
+  /**
+   * Generating all subterms of a language of FOLTerms
+   *
+   * @param language termset for which st is called for each element
+   * @return list of all subterms
+   */
+  def subterms(language: List[FOLTerm]) : Set[FOLTerm] = {
+    val terms = mutable.Set[FOLTerm]()
+    // for each term of the language
+    for(t <- language){
+      // if terms does not contain t yet
+      if(!terms.contains(t)){
+        // add it and all of its subterms to the list
+        terms ++= st(t, terms)
+      }
+    }
+    terms.toSet
+  }
+
+  /**
+   * Calculates the characteristic partition of a term t
+   * as described in Eberhard [2014], w.r.t. a non-terminal
+   *
+   * @param t term for which the characteristic Partition is calculated
+   * @return characteristic partition of t
+   */
+  def calcCharPartition(t: FOLTerm) : List[List[List[Int]]] = {
+    val positions = getAllPositionsFOL(t)
+    /**
+     * It recursively separates the positions in the list into different
+     * partitions accorindg to their referencing terms.
+     *
+     * @param pos position list
+     * @return
+     */
+    def recCCP(pos: List[(List[Int], FOLExpression)]) : List[List[List[Int]]] = {
+      pos match {
+        case x :: xs => {
+          val result =  ((None, Some(x._1)) :: xs.foldLeft(List[(Option[(List[Int], FOLExpression)],Option[List[Int]])]())((acc,y) => {
+            // add them to the characteristic Partition if the terms match
+            if(x._2 == y._2){
+              (None, Some(y._1)) :: acc
+            }
+            else{
+              (Some(y),None) :: acc
+            }
+          }))
+          val furtherPositions = result.unzip._1.flatten
+          result.unzip._2.flatten :: recCCP(furtherPositions)// get rid of the option and concatenate with the lists of positions except the ones we just added to the current partition
+        }
+        case _ => Nil // if no positions are left
+      }
+    }
+    return recCCP(positions)
+  }
+
+  /**
+   * Provided a FOLTerm, the function replaces each occurrence of a FOLVar starting with
+   * prefix1, by a FOLVar starting with prefix2 instead.
+   *
+   * @param t the FOLTerm which should be processed
+   * @param prefix1 prefix we are looking for in t
+   * @param prefix2 prefix which should replace prefix1
+   * @return a FOLTerm, where all FOLVars starting with prefix1 have been replaced by FOLVars starting with prefix2 instead
+   */
+  def replaceAllVars(t: FOLTerm, prefix1: String, prefix2:String) : FOLTerm = {
+    t match {
+      case FOLVar(x) => FOLVar(x.replace(prefix1,prefix2))
+      case FOLConst(c) => FOLConst(c)
+      case Function(f,l) => Function(f,l.map(p => replaceAllVars(p, prefix1, prefix2)))
+      case _ => {warn("An unexpected case happened. Maleformed FOLTerm."); t }
+    }
+  }
+
+  /**
+   * increments the index of a FOLVar by 1, if it has an index
+   * otherwise do nothing
+   *
+   * @param v FOLVar to be processed
+   * @return v with incremented index
+   */
+  def incrementIndex(v: FOLVar) : FOLVar = {
+    val parts = v.toString.split("_")
+    try {
+      val index = parts.last.toInt
+      FOLVar((parts.take(parts.size - 1).foldLeft("")((acc, x) => acc + "_" + x) + "_" + (index + 1)).substring(1))
+    }catch{
+      case e: NumberFormatException => return v //variable has no index
+    }
+  }
+
+  /**
+   * for a particular term increment all variables indexes
+   * which start with provided prefix
+   *
+   * @param t term
+   * @return term with incremented variable indexes
+   */
+  def incrementAllVars(t: FOLTerm, prefix: String) : FOLTerm = {
+    t match {
+      case FOLVar(x) if x.startsWith(prefix) => incrementIndex(FOLVar(x))
+      case FOLVar(x) => FOLVar(x)
+      case FOLConst(c) => FOLConst(c)
+      case Function(f,l) => Function(f,l.map(p => incrementAllVars(p, prefix)))
+      case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
+        t}
+    }
+  }
+
+  /**
+   * Checks if a FOLVar exists in t with a certain variable_prefix.
+   * e.g. nonterminalOccurs(f(x1,y2,z1), "y") = true
+   *
+   * @param t term
+   * @param variable_prefix variable prefix
+   * @return true if a variable with the particular prefix exists in t, otherwise false
+   */
+  def nonterminalOccurs(t: FOLTerm, variable_prefix: String) : Boolean = t match {
+    case FOLVar(x) => return x.startsWith(variable_prefix)
+    case FOLConst(x) => false
+    case Function(x, args) => return args.foldLeft(false)((s,a) => s || nonterminalOccurs(a, variable_prefix))
+    case _ => return false
+  }
+
+  /**
+   * If for a given term t, the termposition position exists
+   * replace the subtree with the root at position with a FOLVar(variable_index).
+   * Otherwise return the term as it is.
+   *
+   * @param t term
+   * @param variable string representation of the nonterminal prefix
+   * @param position list of positions of variable
+   * @param index nonterminal index i
+   * @return the original term if the replacement could not be processed, or t|p = α_index
+   */
+  def replaceAtPosition(t: FOLTerm, variable: String, position: List[Int], index: Int) : FOLTerm = {
+    try{
+      val replacement = new at.logic.language.fol.replacements.Replacement(position, FOLVar(variable+"_"+index))
+      return replacement(t).asInstanceOf[FOLTerm]
+    }catch{
+      case e: IllegalArgumentException =>  // Possible, nothing special to do here.
+    }
+    return t
+  }
+
+  /**
+   * Given a FOLTerm and a prefix for a variable,
+   * this function returns a list of all FOLVars in t starting
+   * with the particular prefix
+   *
+   * @param t FOLTerm
+   * @param nonterminal_prefix prefix of non-terminals
+   * @return a list of strings representing all non-terminals in t
+   */
+  def getNonterminals(t: FOLTerm, nonterminal_prefix: String) : List[String] = {
+    val s = t match {
+      case Function(f,args) => args.foldLeft(Set[String]())((prevargs,arg) => prevargs ++ getNonterminals(arg, nonterminal_prefix))
+      case FOLVar(v) => if(v.toString.startsWith(nonterminal_prefix)) Set[String](v.toString()) else Set[String]()
+      case _ => Set[String]()
+    }
+    s.toList
+  }
+
 }
 
 
