@@ -82,7 +82,6 @@ object VeriTExporter {
   }
 
   private def toSMTFormat(f: FOLExpression) : String = f match {
-    // TODO: use lst2string instead. Should be available after the merging of the lambda calculus
     case TopC => "true"
     case BottomC => "false"
     case FOLVar(s) => s

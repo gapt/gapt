@@ -21,8 +21,6 @@ class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
       case e: IOException => throw new Exception("Error while executing VeriT.")
     }
 
-    //println("result: " + result)
-
     in_file.delete() match {
       case true => ()
       case false => throw new Exception("Error deleting smt file.")
