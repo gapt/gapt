@@ -362,7 +362,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
 
   /* Takes the output of prover9, extracts a resolution proof and the endsequent. */
-  def parse_prover9(p9_file : String, escape_underscore : Boolean = true, newimpl : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
+  def parse_prover9(p9_file : String, escape_underscore : Boolean = false, newimpl : Boolean = true) : (RobinsonResolutionProof, FSequent) = {
 
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
     p9_to_p9(p9_file, pt_file.getCanonicalPath)

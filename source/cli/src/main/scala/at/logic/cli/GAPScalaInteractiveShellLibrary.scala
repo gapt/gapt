@@ -282,7 +282,7 @@ object loadProver9Proof {
 
 object loadProver9LKProof {
   def apply(filename: String, newimpl: Boolean = true, forceSkolemization: Boolean = false): LKProof = {
-    val (proof, endsequent) = Prover9.parse_prover9(filename, true, newimpl)
+    val (proof, endsequent) = Prover9.parse_prover9(filename, false, newimpl)
     //println("skolemizing endsequent: "+endsequent)
     //val sendsequent = skolemize(endsequent)
     //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
