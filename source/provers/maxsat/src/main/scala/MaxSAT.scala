@@ -341,10 +341,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
 
     //val str = Stream.continually(in.readLine()).takeWhile(_ != null).mkString("\n")
 
-    outputToInterpretation(solver match {
-      case MaxSATSolver.QMaxSAT => Source.fromFile(temp_out).mkString
-      case _ => output.toString
-    })
+    outputToInterpretation(output.toString)
   }
 
   /**
@@ -364,18 +361,10 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
         toysolverOutputToInterpretation(in)
       }
       case MaxSATSolver.MiniMaxSAT => {
-        minimaxsatOutputToInterpretation(in)
+        qmaxsatOutputToInterpretation(in)
       }
       case _ => None
     }
-  }
-
-  private def qmaxsatOutputToInterpretation(str: String): Option[Map[FOLFormula, Boolean]] = {
-    if (!str.startsWith("SAT")) return None
-
-    Some(str.lines.toList(1).split(' ')
-      .map(_.toInt).map(i => (if (i < 0) (getAtom(-i) -> false) else (getAtom(i) -> true)))
-      .collect { case (Some(a), b) => a -> b }.toMap)
   }
 
   /**
@@ -383,7 +372,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param in output of QMaxSAT Solver
    * @return None if UNSAT, Some(minimal model) otherwise
    */
-  private def minimaxsatOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
+  private def qmaxsatOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
 
     val oLinePattern = """(?m)^o.*""".r
     val vLinePattern = """(?m)^v.*""".r
