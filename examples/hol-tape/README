@@ -1,1 +1,17 @@
 These are higher order proofs in the LKsk calculus given as LLK format.
+
+To see them start the cli (assuming you are in the gapt/source directory) and call the following commands:
+
+/* loads a simple combinatory proof (the pigeon hole principle for 3 pigeons and 2 holes) and shows the expansion tree */
+val pdb = loadLLK("../examples/hol-tape/pigeon32.llk")
+prooftool(pdb.proof("PROOF"))
+
+val et = extractExpansionSequent(pdb.proof("PROOF"))
+prooftool(et)
+
+/* loads a simple combinatory proof (the pigeon hole principle for 3 pigeons and 2 holes) and shows the expansion tree */
+val pdb = loadLLK("../examples/hol-tape/kommfo.llk")
+prooftool(pdb.proof("THEPROOF"))
+
+val elp = eliminateDefinitions(pdb, "THEPROOF")
+prooftool(elp)
