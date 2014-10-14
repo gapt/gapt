@@ -74,28 +74,20 @@ object decompressQuantifiers {
   def apply(sequent: MultiExpansionSequent): ExpansionSequent = ExpansionSequent(sequent.antecedent.map(this.apply), sequent.succedent.map(this.apply))
   
   private def decompressStrong(f: HOLFormula, eig: Seq[HOLVar], sel: ExpansionTree): ExpansionTree = f match {
-    case AllVar(v, subF) => StrongQuantifier(f, eig.head, decompressStrong(instantiate(f,eig.head), eig.tail, sel))
-    case ExVar(v, subF) => StrongQuantifier(f, eig.head, decompressStrong(instantiate(f,eig.head), eig.tail, sel))
+    case AllVar(_,_) | ExVar(_,_) => StrongQuantifier(f, eig.head, decompressStrong(instantiate(f,eig.head), eig.tail, sel))
     case _ => sel   
   }
   
   private def decompressSkolem(f: HOLFormula, exp: Seq[HOLExpression], sel: ExpansionTree): ExpansionTree = f match {
-    case AllVar(v, subF) => SkolemQuantifier(f, exp.head, decompressSkolem(instantiate(f,exp.head), exp.tail, sel))
-    case ExVar(v, subF) => SkolemQuantifier(f, exp.head, decompressSkolem(instantiate(f,exp.head), exp.tail, sel))
+    case AllVar(_,_) | ExVar(_,_) => SkolemQuantifier(f, exp.head, decompressSkolem(instantiate(f,exp.head), exp.tail, sel))
     case _ => sel   
   }
   
   private def decompressWeak(f: HOLFormula, instances: Seq[(ExpansionTree, Seq[HOLExpression])]): ExpansionTree = f match {
-    case ExVar(v, subF) => {
-      val foo = groupSeq(instances.map(p => (p._2.head, p._1, p._2.tail)), (t: Tuple3[HOLExpression, ExpansionTree, Seq[HOLExpression]]) => t._1).map(l => (l.head._1, l.map(t => (t._2, t._3)))) // Result: foo is a list of elements of the form (t, [(E_1, s_1),..,(E_n, s_n)]). I am so sorry for this.
-      val fooNew = foo.map(p => (p._1, decompressWeak(instantiate(f,p._1), p._2))) // Result: fooNew is a list of elements of the form (t, E)
-      merge(WeakQuantifier(f, fooNew.map(p => (p._2, p._1)))) // Why is it necessary to use merge here?
-    }
-    
-    case AllVar(v, subF) => { // This case is exactly the same as the previous one.
-      val foo = groupSeq(instances.map(p => (p._2.head, p._1, p._2.tail)), (t: Tuple3[HOLExpression, ExpansionTree, Seq[HOLExpression]]) => t._1).map(l => (l.head._1, l.map(t => (t._2, t._3))))
-      val fooNew = foo.map(p => (p._1, decompressWeak(instantiate(f,p._1), p._2)))
-      merge(WeakQuantifier(f, fooNew.map(p => (p._2, p._1))))
+    case ExVar(_,_) | AllVar(_,_) => {
+      val groupedInstances = groupSeq(instances.map(p => (p._2.head, p._1, p._2.tail)), (t: Tuple3[HOLExpression, ExpansionTree, Seq[HOLExpression]]) => t._1).map(l => (l.head._1, l.map(t => (t._2, t._3)))) // Result: groupedInstances is a list of elements of the form (t, [(E_1, s_1),..,(E_n, s_n)]).
+      val newInstances = groupedInstances.map(p => (p._1, decompressWeak(instantiate(f,p._1), p._2))) // Result: newInstances is a list of elements of the form (t, E)
+      merge(WeakQuantifier(f, newInstances.map(p => (p._2, p._1))))
     }
     
     case _ => instances.head._1
