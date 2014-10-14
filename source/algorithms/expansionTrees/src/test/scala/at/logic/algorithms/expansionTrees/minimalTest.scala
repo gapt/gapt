@@ -59,8 +59,9 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   )))
   ).map(compressQuantifiers.apply)
   
+  args(skipAll = !(new MiniSATProver).isInstalled())
+
   "Minimal expansion trees" should {
-    if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
     "be computed correctly by the naive algorithm" in {
       minESeq mustEqual minimalExpansionSequents(eSeq, new MiniSATProver)
     }
