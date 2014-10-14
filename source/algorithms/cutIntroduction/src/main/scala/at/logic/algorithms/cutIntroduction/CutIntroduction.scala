@@ -94,7 +94,6 @@ object CutIntroduction extends Logger {
 
   // Build a proof from each of the smallest grammars
   def buildProof(grammar:Grammar, prover:Prover, endSequent: Sequent) : Option[(LKProof, ExtendedHerbrandSequent)] = {
-    //trace( "building proof for grammar " + grammar.toPrettyString )
 
     val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
 
