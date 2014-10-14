@@ -69,7 +69,7 @@ object getAllPositions {
  */
 object getAllPositions2 {
   def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
-  def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
+  def recApply(t: HOLExpression, curPos: List[Int]): List[(List[Int], HOLExpression)] = t match {
     case HOLVar(_,_) => (curPos, t)::Nil // TODO: difference
     case HOLConst(_,_) => (curPos, t)::Nil
     case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))

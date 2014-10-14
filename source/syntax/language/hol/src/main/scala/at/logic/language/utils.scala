@@ -7,11 +7,25 @@ package at.logic.language.hol
 
 import at.logic.language.lambda.{freeVariables => freeVariablesLambda, rename => renameLambda}
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.lambda.types.TA
-import scala.Some
+import at.logic.language.lambda.types.{Ti, TA}
 
 object freeVariables {
+  /**
+   * Computes a list of all HOL Variables of an expression, including repetitions.
+   * @param e the expressions to extract from
+   * @return the list of free variables in e
+   */
   def apply(e: HOLExpression) : List[HOLVar] = freeVariablesLambda(e).asInstanceOf[List[HOLVar]]
+}
+
+object freeHOVariables {
+  /**
+   * Computes a list of all HOL Variables which are not of type i in a formula, including repetitions. Together with
+   * checks on quantifiers, this can be used to decide if a formula has "true" higher-order content.
+   * @param f the expressions to extract from
+   * @return the list of free variables with type != Ti in e
+   */
+  def apply(f:HOLFormula) = freeVariables(f).filter(_ match { case HOLVar(_,Ti) => false; case _ => true})
 }
 
 // matches for consts and vars, but nothing else

@@ -187,6 +187,7 @@ object DrawSequent {
         "(" + formulaToLatexString(args.head, outermost = false) + " "+ nameToLatexString(name.toString) +" " + formulaToLatexString(args.last, outermost = false) + ")"
       else nameToLatexString(name.toString) + {if (args.isEmpty) "" else args.map(x => formulaToLatexString(x, outermost = false)).mkString("(",",",")")}
     case HOLAbs(v, s) => "(" + """ \lambda """ + formulaToLatexString(v, outermost = false) + """.""" + formulaToLatexString(s, outermost = false) + ")"
+    case HOLApp(s,t) => formulaToLatexString(s, outermost = false) + "(" + formulaToLatexString(t, outermost = false) + ")"
   }
 
   def parseIntegerTerm( t: IntegerTerm, n: Int) : String = t match {

@@ -5,6 +5,7 @@
 package at.logic.algorithms.fol.hol2fol
 
 import at.logic.language.fol.{Substitution => FOLSubstitution, _}
+import at.logic.language.hol.replacements.{Replacement, getAllPositions2, getAllPositions}
 import at.logic.language.hol.{HOLExpression, HOLVar, HOLConst, Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom, HOLFormula}
 import at.logic.language.hol.{ExVar => HOLExVar, AllVar => HOLAllVar, Substitution => HOLSubstitution}
 import at.logic.language.hol
@@ -32,8 +33,8 @@ class reduceHolToFol {
   }
 
   //TODO: replace mutable maps by immutable ones to allow parallelism. Need to check the calls for sideffects on the maps
-  def apply(formula: HOLFormula, scope: mutable.Map[LambdaExpression, StringSymbol], id: {def nextId: Int}): FOLFormula = {
-    val immscope = Map[LambdaExpression, StringSymbol]() ++ scope
+  def apply(formula: HOLFormula, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FOLFormula = {
+    val immscope = replaceAbstractions.emptymap ++ scope
     val (scope_, qterm) = replaceAbstractions(formula, immscope, id)
     scope ++= scope_
     apply_( qterm).asInstanceOf[FOLFormula]
@@ -42,7 +43,7 @@ class reduceHolToFol {
   // convienience method creating empty scope and default id
   def apply(term: HOLExpression) : FOLExpression = {
     val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-    val emptymap = mutable.Map[LambdaExpression, StringSymbol]()
+    val emptymap = mutable.Map[HOLExpression, StringSymbol]()
     reduceHolToFol( term, emptymap, counter )
   }
 
@@ -50,15 +51,15 @@ class reduceHolToFol {
   //inner cast needed to call the correct apply method
     reduceHolToFol(formula.asInstanceOf[HOLExpression]).asInstanceOf[FOLFormula]
 
-  def apply(term: HOLExpression, scope: mutable.Map[LambdaExpression, StringSymbol], id: {def nextId: Int}) = {
-    val immscope = Map[LambdaExpression, StringSymbol]() ++ scope
+  def apply(term: HOLExpression, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}) = {
+    val immscope = replaceAbstractions.emptymap ++ scope
     val (scope_, qterm) = replaceAbstractions(term, immscope, id)
     scope ++= scope_
     apply_( qterm)
   }
 
-  def apply(s: FSequent, scope: mutable.Map[LambdaExpression, StringSymbol], id: {def nextId: Int}): FSequent = {
-    val immscope = Map[LambdaExpression,StringSymbol]() ++ scope
+  def apply(s: FSequent, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FSequent = {
+    val immscope = replaceAbstractions.emptymap ++ scope
     val (scope1, ant) = s.antecedent.foldLeft((immscope, List[HOLFormula]()))((r, formula) => {
       val (scope_, f_) = replaceAbstractions(formula, r._1, id)
       (scope_, f_.asInstanceOf[HOLFormula] :: r._2)
@@ -178,11 +179,11 @@ class reduceHolToFol {
 
 object replaceAbstractions extends replaceAbstractions
 class replaceAbstractions {
-  type ConstantsMap = Map[LambdaExpression,StringSymbol]
+  type ConstantsMap = Map[HOLExpression,StringSymbol]
+  val emptymap = Map[HOLExpression, StringSymbol]()
 
   def apply(l : List[FSequent]) : (ConstantsMap, List[FSequent]) = {
     val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-    val emptymap = Map[LambdaExpression, StringSymbol]()
     l.foldLeft((emptymap,List[FSequent]()))( (rec,el) => {
       val (scope_,f) = rec
       val (nscope, rfs) = replaceAbstractions(el, scope_,counter)
@@ -214,7 +215,6 @@ class replaceAbstractions {
         state = state + 1; state
       }
     }
-    val emptymap = Map[LambdaExpression, StringSymbol]()
     apply(e, emptymap, counter)._2
   }
 
@@ -263,6 +263,23 @@ class replaceAbstractions {
     case _ =>
       throw new Exception("Unhandled case in abstraction replacement!"+e)
 
+  }
+}
+
+object undoReplaceAbstractions extends undoReplaceAbstractions
+class undoReplaceAbstractions {
+  import replaceAbstractions.ConstantsMap
+
+  def apply(e : HOLExpression, map : ConstantsMap) = {
+    val stringsmap = map.map(x => (x._2.toString(), x._1)) //inverting the map works because the symbols are unique
+    val repl = getAllPositions2(e).foldLeft(e)( (exp, position) =>
+        //we check if the position is a constant with an abstraction symbol
+        position._2 match {
+          case HOLConst(name,_) if stringsmap.contains(name) =>
+            //if yes, we replace it by the original expression
+            Replacement(position._1, stringsmap(name))(exp)
+          case _ => exp
+    })
   }
 }
 

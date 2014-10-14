@@ -37,6 +37,7 @@ import at.logic.gui.prooftool.gui.Main
 import at.logic.language.fol.{AllVar => FOLAllVar, And => FOLAnd, Atom => FOLAtom, ExVar => FOLExVar, Imp => FOLImp, Neg => FOLNeg, Or => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _}
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.{BetaReduction => HOLBetaReduction, Substitution => HOLSubstitution, containsQuantifier => containsQuantifierHOL, _}
+import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.{LambdaExpression, Var, Substitution => LambdaSubstitution}
 import at.logic.language.lambda.types._
 import at.logic.language.schema.{AllVar => SchemaAllVar, Atom => SchemaAtom, ExVar => SchemaExVar, _}
@@ -73,6 +74,7 @@ import at.logic.provers.minisat.{MiniSAT}
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
 import at.logic.transformations.ceres.ACNF._
+import at.logic.transformations.ceres.ceres_omega
 import at.logic.transformations.ceres.clauseSets.SimplifyStruct
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct._
@@ -146,6 +148,8 @@ object computeGroundProjections {
     groundSubs.map(subs => projections.map(pr => renameIndexedVarInProjection(pr, subs))).flatten.toSet
   }
 }
+
+object CERESomega extends ceres_omega
 
 object buildACNF {
   def apply(ref: LKProof, projs: Set[LKProof], es: FSequent) = ACNF(ref, projs, es)
@@ -437,6 +441,21 @@ object Robinson2Ral extends RobinsonToRal {
 
   //TODO: this is somehow dirty....
   def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution = HOLSubstitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
+}
+
+object GenerateRobinson2Ral {
+  def apply(hol2folscope : collection.mutable.Map[LambdaExpression, StringSymbol]) : RobinsonToRal = new RobinsonToRal {
+    override def convert_formula(e:HOLFormula) : HOLFormula = {
+
+      recreateWithFactory(e,HOLFactory).asInstanceOf[HOLFormula]
+    }
+    override def convert_substitution(s:HOLSubstitution) : HOLSubstitution = {
+      recreateWithFactory(s, HOLFactory, convert_map).asInstanceOf[HOLSubstitution]
+    }
+
+    //TODO: this is somehow dirty....
+    def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution = HOLSubstitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
+  }
 }
 
 object applyFactoring extends factoring
@@ -1300,6 +1319,8 @@ object hol2fol {
 object hol2folpure extends convertHolToFol
 
 object replaceAbstractions extends replaceAbstractions
+
+object undoReplaceAbstractions extends undoReplaceAbstractions
 
 
 object tbillc {

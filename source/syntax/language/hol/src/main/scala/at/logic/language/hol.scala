@@ -219,7 +219,13 @@ object Atom {
   def unapply( expression: HOLExpression ) = expression match {
     case HOLApp(c: HOLConst,_) if isLogicalSymbol(c) => None
     case HOLApp(HOLApp(c: HOLConst,_),_) if isLogicalSymbol(c) => None
-    case HOLApp(_,_) if (expression.exptype == To) => Some( unapply_(expression) )
+    case HOLApp(_,_) if (expression.exptype == To) => unapply_(expression) match {
+      /* the head constant must be a var or a constant, e.g. (\ x.Fx) s is not atomic, but its beta normal form
+       * Fs is. */
+      case p@(HOLVar(_,_), _) => Some(p)
+      case p@(HOLConst(_,_), _) => Some(p)
+      case _ => None
+    }
     case HOLConst(_,_) if (expression.exptype == To) => Some( (expression, Nil) )
     case HOLVar(_,_) if (expression.exptype == To) => Some( (expression, Nil) )
     case _ => None
@@ -231,6 +237,8 @@ object Atom {
     case HOLApp(e1, e2) => 
       val t = unapply_(e1)
       (t._1, t._2 :+ e2)
+    case HOLAbs(x,t) =>
+      (e, Nil)
   }
 }
 

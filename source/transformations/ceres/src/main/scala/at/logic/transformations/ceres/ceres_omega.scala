@@ -7,21 +7,35 @@ import at.logic.language.lambda.types.Ti
 import at.logic.transformations.ceres.struct.Struct
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.calculi.lk.base.{Sequent, LKProof}
-import at.logic.calculi.lksk.{ Axiom => LKSKAxiom, _}
+import at.logic.calculi.lksk
+import at.logic.calculi.lksk.{ Axiom => LKSKAxiom, _ }
 import at.logic.calculi.resolution.ral._
 
 /**
  * Created by marty on 10/6/14.
  */
-object ceres_omega {
+object ceres_omega extends ceres_omega
+class ceres_omega {
+  /**
+    * Applies the CERES_omega method to a proof.
+    * @param projections This is the set of projections to use. A projection to reflexvity is generated if needed.
+    * @param ralproof The R_al proof to use as skeleton.
+    * @param es The end-sequent of the original proof.
+    * @param struct The struct of the original proof. (unused at the moment)
+    * @return an LKProof with atomic cuts only
+    */
   def apply(projections : Set[LKProof], ralproof : RalResolutionProof[LabelledSequent], es : LabelledSequent, struct : Struct) : (LKProof, LabelledSequent) = ralproof match {
     //reflexivity as initial rule
     case InitialSequent( s@LabelledSequent(Nil, List(LabelledFormulaOccurrence(Equation(x,y), anc, label)) ))
        if (x==y) && (x.exptype == Ti) =>
 
-      val (rule,_) = LKSKAxiom.createDefault(s.toFSequent, (List(), List(label)))
+      val rule = LKSKAxiom(s.toFSequent, (List(), List(label)))
+      val reflexivity_occ = rule.root.succedent(0).asInstanceOf[LabelledFormulaOccurrence]
+      val weakened_left = es.l_antecedent.foldLeft(rule)( (r, fo) => lksk.WeakeningLeftRule(r, fo.formula, fo.skolem_label))
+      val weakened_right = es.l_antecedent.foldLeft(weakened_left)( (r, fo) => lksk.WeakeningRightRule(r, fo.formula, fo.skolem_label))
+      val reflexivity_successor = pickFOWithAncestor(rule.root.asInstanceOf[LabelledSequent].l_antecedent, reflexivity_occ)
 
-      (rule, LabelledSequent(Nil,Nil))
+      (weakened_right, LabelledSequent(Nil, List(reflexivity_successor)) )
 
 
     case InitialSequent(root ) =>
@@ -61,8 +75,9 @@ object ceres_omega {
         ContractionLeftRule(proof, pickFOWithAncestor(proof.root.antecedent,c2), pickFOWithAncestor(proof.root.antecedent, occ )) )
 
       val rule = CutRule(cleft, cright, pickFOWithAncestor(cleft.root.succedent, c1), pickFOWithAncestor(cright.root.antecedent, c2))
-      val nclauses = filterByAncestor(rule.root.asInstanceOf[LabelledSequent], clause1 compose clause2)
-      (rule, nclauses)
+      val crule = contractEndsequent(rule, es)
+      val nclauses = filterByAncestor(crule.root.asInstanceOf[LabelledSequent], clause1 compose clause2)
+      (crule, nclauses)
 
     case AFactorF(root, parent, contr, aux, _) =>
       val (lkparent, clause1) = ceres_omega(projections, parent, es, struct)
@@ -87,8 +102,9 @@ object ceres_omega {
       val eqn : FormulaOccurrence = findAuxByFormulaAndLabel(p1occ, clause1.l_succedent, Nil)
       val modulant : FormulaOccurrence = findAuxByFormulaAndLabel(p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_antecedent, Nil)
       val rule = if (!flipped) EquationLeft1Rule(lkparent1, lkparent2, eqn, modulant, principial.formula) else EquationLeft2Rule(lkparent1, lkparent2, eqn, modulant, principial.formula)
-      val nclauses = filterByAncestor(rule.root.asInstanceOf[LabelledSequent], clause1 compose clause2)
-      (rule, nclauses)
+      val crule = contractEndsequent(rule, es)
+      val nclauses = filterByAncestor(crule.root.asInstanceOf[LabelledSequent], clause1 compose clause2)
+      (crule, nclauses)
 
     case ParaT(root, parent1, parent2, p1occ, p2occ, principial, flipped) =>
       val (lkparent1, clause1) = ceres_omega(projections, parent1, es, struct)
@@ -116,6 +132,50 @@ object ceres_omega {
   candidates.diff(exclusion_list).find(pred) match {
     case Some(fo) => fo
     case None => throw new Exception("Could not find a candidate for "+aux+" in "+candidates.mkString(", ")+exclusion_list.mkString(" ignoring: ",", ","."))
+  }
+
+  /**
+   * After an application of a binary rule, end-sequent material might be duplicated. This method adds contractions
+   * for every end-sequent formula.
+   * @param p a proof with an end-sequent of the form: es x es x C (where C is some additional content)
+   * @param es the end-sequent material which occurs twice
+   * @return a proof with an end-sequent of the form: es x C
+   */
+  def contractEndsequent(p : LKProof, es : LabelledSequent) : LKProof = {
+    val contr_left = es.l_antecedent.foldLeft(p)( (rp, fo) => {
+      rp.root.asInstanceOf[LabelledSequent].l_antecedent.find(x =>
+        x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
+        case Some(occ1) =>
+          rp.root.asInstanceOf[LabelledSequent].l_antecedent.find(x =>
+            occ1 != x && x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
+            case Some(occ2) =>
+              ContractionLeftRule(rp, occ1, occ2)
+            case None =>
+              throw new Exception("During contraction of the end-sequent, could not find a second antecedent occurrence of "+fo+" in "+rp.root)
+          }
+
+        case None =>
+          throw new Exception("During contraction of the end-sequent, could not find an antecedent occurrence of "+fo+" in "+rp.root)
+      }
+    })
+    val contr_right = es.l_antecedent.foldLeft(contr_left)( (rp, fo) => {
+      rp.root.asInstanceOf[LabelledSequent].l_succedent.find(x =>
+        x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
+        case Some(occ1) =>
+          rp.root.asInstanceOf[LabelledSequent].l_succedent.find(x =>
+            occ1 != x && x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
+            case Some(occ2) =>
+              ContractionRightRule(rp, occ1, occ2)
+            case None =>
+              throw new Exception("During contraction of the end-sequent, could not find a second succeedejt occurrence of "+fo+" in "+rp.root)
+          }
+
+        case None =>
+          throw new Exception("During contraction of the end-sequent, could not find an succedent occurrence of "+fo+" in "+rp.root)
+      }
+    })
+
+    contr_right
   }
 
   /* TODO: this might not work if we have atom formulas in the end-sequent. then a formula which comes from a weakining

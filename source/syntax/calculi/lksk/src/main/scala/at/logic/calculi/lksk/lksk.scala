@@ -5,16 +5,11 @@
 
 package at.logic.calculi.lksk
 
-import at.logic.language.lambda.types.->
-import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.utils.ds.trees._
-import at.logic.calculi.lk.base.{Sequent, FSequent, AuxiliaryFormulas, PrincipalFormulas, SubstitutionTerm}
+import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.{InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType, Axiom => LKAxiom, _}
-import scala.collection.mutable.{Map,HashMap}
-import base._
-
 import TypeSynonyms._
 
 // lksk proofs
@@ -23,6 +18,13 @@ import TypeSynonyms._
 // actual rule extractor/factories
 // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
 object Axiom {
+  /**
+   * Creates an LKSK Axiom rule from the given unlabeled sequent a pair of labels
+   * @param seq unlabeled sequent of the axiom
+   * @param maps pair of lists with labels for the antecedent and succedent
+   * @return an LKProof of the Axiom
+   */
+  def apply(seq: FSequent, maps: (List[Label], List[Label])) : LKProof = createDefault(seq, maps)._1
 
   def createDefault(seq: FSequent, maps: (List[Label], List[Label])): (LKProof, (List[LabelledFormulaOccurrence],List[LabelledFormulaOccurrence])) = {
     val left: Seq[LabelledFormulaOccurrence] =
@@ -38,6 +40,15 @@ object Axiom {
 }
 
 object WeakeningLeftRule {
+  /**
+   * Creates a rule weakening in the given formula and label
+   * @param s1 the parent proof
+   * @param f the formula weakened in
+   * @param l the label
+   * @return an LKProof with last rule weakening left
+   */
+  def apply(s1: LKProof, f: HOLFormula, l: Label) = createDefault(s1, f, l)
+
   def createDefault(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula : LabelledFormulaOccurrence = LKskFOFactory.createInitialOccurrence(f, l)
     // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
@@ -58,6 +69,15 @@ object WeakeningLeftRule {
 }
 
 object WeakeningRightRule {
+  /**
+   * Creates a rule weakening in the given formula and label
+   * @param s1 the parent proof
+   * @param f the formula weakened in
+   * @param l the label
+   * @return an LKProof with last rule weakening left
+   */
+  def apply(s1: LKProof, f: HOLFormula, l : Label) : LKProof = createDefault(s1, f, l)
+
   def createDefault(s1: LKProof, f: HOLFormula, l: Label) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence(f, l)
     new UnaryTree[Sequent](

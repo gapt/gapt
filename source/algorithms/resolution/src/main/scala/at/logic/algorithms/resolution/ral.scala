@@ -55,7 +55,7 @@ abstract class RobinsonToRal {
 
 
       case Resolution(clause, p1, p2, aux1, aux2, sub_) =>
-        println("Resolution on "+aux1+" in "+p1.root.succedent+" and "+aux2+" in "+p2.root.antecedent+ " with sub "+sub_)
+        //println("Resolution on "+aux1+" in "+p1.root.succedent+" and "+aux2+" in "+p2.root.antecedent+ " with sub "+sub_)
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(p1, map)
         val (rmap2, rp2) = apply(p2, rmap1)
@@ -79,11 +79,11 @@ abstract class RobinsonToRal {
         (rmap1, rule)
 
       case Factor(clause, parent, List(aux1@(f1::_)), sub_) if parent.root.succedent.contains(f1) =>
-//        println("succedent factor 1")
+        println("succedent factor 1: "+aux1+"\n"+parent.root+"\n"+clause)
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
-        val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rp1.root, list)::list).reverse
+        val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOsucc(sub(x.formula), rp1.root, list)::list).reverse
         val rule = AFactorT(rp1, a, aux )
         require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in factor translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
         (rmap1, rule)
