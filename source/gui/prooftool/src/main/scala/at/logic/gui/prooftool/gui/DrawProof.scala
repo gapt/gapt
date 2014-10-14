@@ -22,11 +22,12 @@ import at.logic.calculi.occurrences.FormulaOccurrence
 
 class DrawProof(val proof: TreeProof[_], private val fSize: Int, private var visible_occurrences : Option[Set[FormulaOccurrence]], private var str: String)
   extends BorderPanel with MouseMotionListener {
-  background = white
-  opaque = false
   private val blue = new Color(0,0,255)
   private val black = new Color(0,0,0)
   private val white = new Color(255,255,255)
+
+  background = white
+  opaque = false
 
   private val bd = Swing.EmptyBorder(0,fSize*2,0,fSize*2)
   private val ft = new Font(SERIF, PLAIN, fSize)

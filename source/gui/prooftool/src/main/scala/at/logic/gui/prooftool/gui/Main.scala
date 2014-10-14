@@ -45,7 +45,6 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
 import at.logic.language.lambda.types.{To, Ti}
-import scala.Some
 import at.logic.gui.prooftool.parser.ShowAllRules
 import at.logic.gui.prooftool.parser.ChangeFormulaColor
 import at.logic.algorithms.rewriting.DefinitionElimination
@@ -57,6 +56,7 @@ object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
   val db = new FileParser
   val defaultFontSize = 12
+  var launcher_history = List[(String, AnyRef, Int)]()
 
   override def startup(args: Array[String]) {
     showFrame()
@@ -93,7 +93,7 @@ object Main extends SimpleSwingApplication {
         selectProofFromDB(defaultFontSize)
         ProofToolPublisher.publish(EnableMenus)
       case _ =>
-        body.contents = new Launcher(Some(name, obj), defaultFontSize)
+        updateLauncher(name, obj, defaultFontSize)
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -120,6 +120,32 @@ object Main extends SimpleSwingApplication {
     loadProof((name, proof))
     initSunburstDialog(name, proof)
     body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  def updateLauncher(name : String, proofobject : AnyRef, fSize : Int) : Unit = this.synchronized {
+    val entry = (name, proofobject, fSize)
+    this.launcher_history = entry :: this.launcher_history.filterNot(_ == entry)
+    mBar.updateHistoryMenu(launcher_history)
+    this.body.contents = new Launcher(Some((name, proofobject)), fSize)
+   }
+
+  def clearLauncher() = this.synchronized {
+    this.body.contents = new Launcher(None, defaultFontSize)
+  }
+
+  def clearLauncherHistory()= this.synchronized {
+    this.launcher_history = Nil
+    clearLauncher()
+  }
+
+  def updateWithLastLauncher() = this.synchronized {
+    this.launcher_history match {
+      case current :: (last@(name, obj, size) :: rest) =>
+        this.launcher_history = rest
+        updateLauncher(name, obj, size)
+      case _ =>
+        ()
+    }
   }
 
   def fOpen() {
@@ -330,14 +356,14 @@ object Main extends SimpleSwingApplication {
   // Used for PopupMenu, loads proof directly
   def loadProof(proof: LKProof) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(Some(proof.name, proof), defaultFontSize)
+    updateLauncher(proof.name, proof, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used for ViewProof menu
   def loadProof(proof: (String, TreeProof[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(Some(proof), defaultFontSize)
+    updateLauncher(proof._1, proof._2, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
     resetCuts()
   }
@@ -345,7 +371,7 @@ object Main extends SimpleSwingApplication {
   // Used for ViewResolutionProof menu
   def loadResolutionProof(proof: (String, Proof[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(Some(proof), 14)
+    updateLauncher(proof._1, proof._2, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -361,35 +387,39 @@ object Main extends SimpleSwingApplication {
   //tries to display some proof from the db
   def selectProofFromDB(fontSize:Int){
     val proofs = db.getProofs
-    if (proofs.size > 0) body.contents = new Launcher(Some(proofs.head), fontSize)
+    if (proofs.nonEmpty)
+      updateLauncher(proofs.head._1, proofs.head._2, fontSize)
     else if (db.getSequentLists.size > 0)
-      body.contents = new Launcher(Some(db.getSequentLists.head), fontSize)
+      updateLauncher("",db.getSequentLists.head, fontSize)
     else if (db.getTermTrees.size > 0)
-      body.contents = new Launcher(Some((db.getTermTrees.head._1,db.getTermTrees.head._3)), fontSize)
+      updateLauncher(db.getTermTrees.head._1,db.getTermTrees.head._3, fontSize)
     else if (db.getResolutionProofs.size > 0)
-      body.contents = new Launcher(Some(db.getResolutionProofs.head), fontSize)
-    else body.contents = new Launcher(None, fontSize)
+      updateLauncher("", db.getResolutionProofs.head, fontSize)
+    else clearLauncher()
 
   }
 
   // Used by View Clause List menu
   def loadClauseSet(clList: (String, List[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(Some(clList), defaultFontSize)
+    updateLauncher("clauses", clList, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used by View Struct menu
   def loadStruct(struct: (String, Tree[_])) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(Some(struct), defaultFontSize)
+    updateLauncher("struct", struct, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   // Used for Zooming
   def load(option: Option[(String, AnyRef)], fontSize: Int) {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    body.contents = new Launcher(option, fontSize)
+    option match {
+      case Some((name, obj)) => updateLauncher(name, obj, fontSize)
+      case None => clearLauncher()
+    }
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -397,6 +427,17 @@ object Main extends SimpleSwingApplication {
   private var searchResult : List[LKProof] = null
   private var currentResult : Iterator[LKProof] = null
 
+  def focusNextCut() = {
+    // TODO: reset cuts when loading a proof
+    if (Main.currentResult != null) {
+      if (Main.currentResult.hasNext) {
+        val cut = Main.currentResult.next()
+        Main.scrollToProof(cut)
+      } else {
+        Main.currentResult = Main.searchResult.iterator
+      }
+    }
+  }
 
   // Should be called whenever the proof is changed.
   def resetCuts() {
@@ -409,464 +450,7 @@ object Main extends SimpleSwingApplication {
     currentResult = l.iterator
   }
 
-  val mBar: MenuBar = new MenuBar() {
-    import javax.swing.KeyStroke
-    import java.awt.event.{KeyEvent, ActionEvent => JActionEvent}
-
-    focusable = true
-    val customBorder = Swing.EmptyBorder(5,3,5,3)
-    contents += new Menu("File") {
-      mnemonic = Key.F
-      contents += new MenuItem(Action("Open...") { fOpen() }) {
-        mnemonic = Key.O
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, JActionEvent.CTRL_MASK))
-        border = customBorder
-      }
-      contents += new MenuItem(Action("Save as...") { fSave(body.getContent.getData.get) }) {
-        mnemonic = Key.S
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, JActionEvent.CTRL_MASK))
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Save all as...") { fSaveAll() }) {
-        mnemonic = Key.A
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, JActionEvent.CTRL_MASK))
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case DisableMenus => enabled = false
-          case EnableMenus => enabled = true
-        }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Export to PDF") { fExportPdf(body.getContent.contents.headOption) }) {
-        mnemonic = Key.D
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, JActionEvent.CTRL_MASK))
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case DisableMenus => enabled = false
-          case EnableMenus => enabled = true
-        }
-      }
-      contents += new MenuItem(Action("Export to PNG") { fExportPng(body.getContent.contents.headOption) }) {
-        mnemonic = Key.N
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.CTRL_MASK))
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case DisableMenus => enabled = false
-          case EnableMenus => enabled = true
-        }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Exit") { fExit() }) {
-        mnemonic = Key.X
-        peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, JActionEvent.CTRL_MASK))
-        border = customBorder
-      }
-    }
-    contents += new Menu("Edit") {
-      mnemonic = Key.E
-      listenTo(ProofToolPublisher)
-      reactions += {
-        case DisableMenus => enabled = false
-        case EnableMenus => enabled = true
-      }
-      contents += new MenuItem(Action("Search...") { search() }) {
-        mnemonic = Key.S
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, JActionEvent.CTRL_MASK))
-        border = customBorder
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Show Leaves") { StructPublisher.publish(ShowLeaf) }) {
-        border = customBorder
-        enabled = false
-        listenTo(StructPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Hide Leaves") { StructPublisher.publish(HideLeaf) }) {
-        border = customBorder
-        enabled = false
-        listenTo(StructPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Hide Structural Rules") {
-        //  warningMessage("This feature is under development and might not work properly!")
-        ProofToolPublisher.publish(HideStructuralRules)
-      }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Show All Rules") {
-        ProofToolPublisher.publish(new ShowAllRules(body.getContent.getData.get._2.asInstanceOf[TreeProof[_]]))
-      }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Hide All Formulas") { hideAllFormulas() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Hide Sequent Contexts") { hideSequentContext() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Show All Formulas") { showAllFormulas() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Mark Cut-Ancestors") { markCutAncestors() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Mark Ω-Ancestors") { markOmegaAncestors() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Remove Marking") {
-        ProofToolPublisher.publish(ChangeFormulaColor(Set(),Color.white,reset=true)) }) {
-        border = customBorder
-      }
-      contents += new Separator
-      contents += new MenuItem(Action("Extract Cut-Formulas") { extractCutFormulas() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-    }
-    contents += new Menu("View") {
-      mnemonic = Key.V
-      listenTo(ProofToolPublisher)
-      reactions += {
-        case DisableMenus => enabled = false
-        case EnableMenus => enabled = true
-      }
-      contents += new MenuItem(Action("Zoom In") { zoomIn() }) {
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP , JActionEvent.ALT_MASK))
-        border = customBorder
-      }
-      contents += new MenuItem(Action("Zoom Out") { zoomOut() }) {
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, JActionEvent.ALT_MASK))
-        border = customBorder
-      }
-      contents += new MenuItem(Action("Jump To End-sequent") { scrollToProof(body.getContent.getData.get._2.asInstanceOf[LKProof])}) {
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, JActionEvent.ALT_MASK))
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Find Cuts") {
-        setSearchResult(getCutsAsProofs(body.getContent.getData.get._2.asInstanceOf[LKProof]))
-      }) {
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, JActionEvent.ALT_MASK))
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Cycle through cuts") {
-        // TODO: reset cuts when loading a proof
-        if ( currentResult != null) {
-          if (currentResult.hasNext ) {
-            val cut = currentResult.next()
-            scrollToProof(cut)
-          } else {
-            currentResult = searchResult.iterator
-          }
-        }
-      }) {
-        this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.ALT_MASK))
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => this.enabled = true
-          case UnLoaded => this.enabled = false
-        }
-      }
-      contents += new Separator
-      contents += new Menu("View Proof") {
-        MenuScroller.setScrollerFor(this.peer)
-        mnemonic = Key.P
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case ProofDbChanged =>
-            val l = db.getProofs
-            contents.clear()
-            for (i <- l) contents += new MenuItem(Action(i._1) { loadProof(i) }) { border = customBorder }
-        }
-      }
-      contents += new Menu("View Clause List") {
-        MenuScroller.setScrollerFor(this.peer)
-        mnemonic = Key.C
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case ProofDbChanged =>
-            val l = db.getSequentLists
-            contents.clear()
-            for (i <- l) contents += new MenuItem(Action(i._1) { loadClauseSet(i) }) { border = customBorder }
-        }
-      }
-      contents += new Menu("View Resolution Proof") {
-        MenuScroller.setScrollerFor(this.peer)
-        mnemonic = Key.P
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case ProofDbChanged =>
-            val l = db.getResolutionProofs
-            contents.clear()
-            for (i <- l) contents += new MenuItem(Action(i._1) { loadResolutionProof(i) }) { border = customBorder }
-        }
-      }
-      contents += new MenuItem(Action("View Definition List") { loadClauseSet(("Definition List", db.getDefinitions.toList)) }) {
-        mnemonic = Key.D
-        border = customBorder
-      }
-      contents += new Menu("View Term Tree") {
-        MenuScroller.setScrollerFor(this.peer)
-        mnemonic = Key.T
-        border = customBorder
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case ProofDbChanged =>
-            val l = db.getTermTrees
-            contents.clear()
-            for (i <- l) contents += new MenuItem(Action(i._1) { loadStruct((i._1,i._3)) }) { border = customBorder }
-        }
-      }
-    }
-    contents += new Menu("LK Proof") {
-      mnemonic = Key.L
-      enabled = false
-      listenTo(ProofToolPublisher)
-      reactions += {
-        case Loaded => enabled = true
-        case UnLoaded => enabled = false
-      }
-
-      contents += new Menu("Compute Clause Set") {
-        contents += new MenuItem(Action("All Cuts") { computeClList() }) { border = customBorder }
-        contents += new MenuItem(Action("Only Quantified Cuts") { computeClListOnlyQuantifiedCuts() }) { border = customBorder }
-      }
-      contents += new Menu("Compute Struct") {
-        contents += new MenuItem(Action("All Cuts") { computeStruct() }) { border = customBorder }
-        contents += new MenuItem(Action("Only Quantified Cuts") { computeStructOnlyQuantifiedCuts() }) { border = customBorder }
-      }
-      contents += new MenuItem(Action("Compute Projections") { computeProjections() }) { border = customBorder }
-      contents += new Separator
-      contents += new MenuItem(Action("Apply Gentzen's Method") { gentzen(body.getContent.getData.get._2.asInstanceOf[LKProof]) }) { border = customBorder }
-      contents += new Separator
-      contents += new MenuItem(Action("Extract Expansion Tree") { expansionTree() }) { border = customBorder }
-      contents += new Separator
-      contents += new MenuItem(Action("Eliminate Definitions") { eliminateDefsLK() }) { border = customBorder }
-      contents += new MenuItem(Action("Skolemize") { skolemizeProof() }) { border = customBorder }
-      contents += new MenuItem(Action("Regularize") { regularizeProof() }) { border = customBorder }
-    }
-    contents += new Menu("LKS Proof") {
-      mnemonic = Key.P
-      listenTo(ProofToolPublisher)
-      reactions += {
-        case DisableMenus => enabled = false
-        case EnableMenus => enabled = true
-      }
-      contents += new MenuItem(Action("Compute Clause Set") { computeSchematicClauseSet() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Compute Struct") { computeSchematicStruct() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Compute Projection Term") { computeSchematicProjectionTerm() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
-        }
-      }
-      contents += new MenuItem(Action("Compute ACNF") { computeACNF() }) { border = customBorder }
-      contents += new MenuItem(Action("Specify Resolution Schema") { specifyResolutionSchema() } )  { border = customBorder }
-      contents += new MenuItem(Action("Compute Instance") { computeInstance() } )  { border = customBorder }
-    }
-    contents += new Menu("Sunburst") {
-      contents += new MenuItem(Action("Sunburst View") { sunburstView() }) {
-        border = customBorder
-        enabled = false
-        listenTo(ProofToolPublisher)
-        reactions += {
-          case Loaded => enabled = true
-          case UnLoaded => enabled = false
-        }
-
-      }
-    }
-    contents += new Menu("Help") {
-      mnemonic = Key.H
-      contents += new MenuItem(Action("About") { About() }) {
-        mnemonic = Key.A
-        border = customBorder
-      }
-    }
-    contents += new Menu("Tests") {
-      mnemonic = Key.T
-      contents += new MenuItem(Action("Non-Prenex Proof 1") {
-        val p = HOLVar("p", Ti -> To)
-        val a = HOLVar("a", Ti)
-        val b = HOLVar("b", Ti)
-        val q = HOLVar("q", Ti -> To)
-        val x = HOLVar("x", Ti)
-        val px = Atom(p, x::Nil) // p(x)
-        val pa = Atom(p, a::Nil) // p(a)
-        val pb = Atom(p, b::Nil) // p(b)
-        val qa = Atom(q, a::Nil) // q(a)
-        val substa = a // x -> a
-        val substb = b // x -> b
-        val all_px = AllVar(x, px) // forall x. p(x)
-
-        val axm1 = Axiom(pa::Nil, pa::Nil)
-        val axm2 = Axiom(pb::Nil, pb::Nil)
-        val all1 = ForallLeftRule(axm1, pa, all_px, substa)
-        val all2 = ForallLeftRule(axm2, pb, all_px, substb)
-        val andrght = AndRightRule(all1, all2, pa, pb)
-        val contr = ContractionLeftRule(andrght, all_px)
-        val andlft = AndLeft1Rule(contr, all_px, qa)
-
-        body.contents = new Launcher(Some(("Proof", andlft)), defaultFontSize)
-        ProofToolPublisher.publish(EnableMenus)
-      }) { border = customBorder }
-      contents += new MenuItem(Action("Non-Prenex Proof 2") {
-        val p = HOLVar("p", Ti -> To)
-        val a = HOLVar("a", Ti)
-        val b = HOLVar("b", Ti)
-        val q = HOLVar("q", Ti -> To)
-        val x = HOLVar("x", Ti)
-        val y = HOLVar("y", Ti)
-        val px = Atom(p, x::Nil) // p(x)
-        val pa = Atom(p, a::Nil) // p(a)
-        val pb = Atom(p, b::Nil) // p(b)
-        val qy = Atom(q, y::Nil) // q(a)
-        val substa = a // x -> a
-        val substb = b // x -> b
-        val ex_px = ExVar(x, px) // exists x. p(x)
-        val ex_qy = ExVar(y, qy)
-
-        val axm1 = Axiom(pa::Nil, pa::Nil)
-        val axm2 = Axiom(pb::Nil, pb::Nil)
-        val exists1 = ExistsRightRule(axm1, pa, ex_px, substa)
-        val exists2 = ExistsRightRule(axm2, pb, ex_px, substb)
-        val orlft = OrLeftRule(exists1, exists2, pa, pb)
-        val contr = ContractionRightRule(orlft, ex_px)
-        val orrght = OrRight1Rule(contr, ex_px, ex_qy)
-
-        body.contents = new Launcher(Some(("Proof", orrght)), defaultFontSize)
-        ProofToolPublisher.publish(EnableMenus)
-      }) { border = customBorder }
-      contents += new MenuItem(Action("Nested Proof 1") {
-        val p = HOLVar("p", Ti -> To)
-        val a = HOLVar("a", Ti)
-        val b = HOLVar("b", Ti)
-        val q = HOLVar("q", Ti -> To)
-        val x = HOLVar("x", Ti)
-        val y = HOLVar("y", Ti)
-        val px = Atom(p, x::Nil) // p(x)
-        val pa = Atom(p, a::Nil) // p(a)
-        val pb = Atom(p, b::Nil) // p(b)
-        val qa = Atom(q, a::Nil) // q(a)
-        val qy = Atom(q, y::Nil) // q(a)
-        val substa = a // x -> a
-        val substb = b // x -> b
-        val all_px = AllVar(x, px) // forall x. p(x)
-
-        val axm1 = Axiom(pa::Nil, pa::Nil)
-        val axm2 = Axiom(pb::Nil, pb::Nil)
-        val all1 = ForallLeftRule(axm1, pa, all_px, substa)
-        val all2 = ForallLeftRule(axm2, pb, all_px, substb)
-        val andrght = AndRightRule(all1, all2, pa, pb)
-        val contr = ContractionLeftRule(andrght, all_px)
-        val andlft = AndLeft1Rule(contr, all_px, qa)
-        val all3 = ForallLeftRule(andlft, And(all_px,qa), AllVar(y, And(all_px,qy)),a)
-
-        body.contents = new Launcher(Some(("Proof", all3)), defaultFontSize)
-        ProofToolPublisher.publish(EnableMenus)
-      }) { border = customBorder }
-    }
-  }
+  val mBar = new MyMenubar
 
   def specifyResolutionSchema() {
     val t = TextAreaDialog("Please enter resolution proof schema:")
@@ -874,7 +458,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
       db.rsFileReader(new InputStreamReader(new ByteArrayInputStream(t.get.getBytes("UTF-8"))))
       val tp = db.getTermTrees.head
-      body.contents = new Launcher(Some((tp._1,tp._3)),14)
+      updateLauncher(tp._1, tp._3, 14)
       body.cursor = java.awt.Cursor.getDefaultCursor
       ProofToolPublisher.publish(ProofDbChanged)
     } catch {
@@ -886,7 +470,7 @@ object Main extends SimpleSwingApplication {
   def expansionTree() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val et = extractExpansionTrees(body.getContent.getData.get._2.asInstanceOf[LKProof])
-    body.contents = new Launcher(Some("Expansion Tree",et),14)
+    updateLauncher("Expansion Tree",et, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -898,7 +482,7 @@ object Main extends SimpleSwingApplication {
     val data = body.getContent.getData.get
     val proof = skolemize(data._2.asInstanceOf[LKProof])
     db.addProofs((data._1+"_sk", proof)::Nil)
-    body.contents = new Launcher(Some(data._1+"_sk",proof),14)
+    updateLauncher(data._1+"_sk", proof, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -910,7 +494,7 @@ object Main extends SimpleSwingApplication {
     val data = body.getContent.getData.get
     val proof = regularize(data._2.asInstanceOf[LKProof])._1
     db.addProofs((data._1+"_reg", proof)::Nil)
-    body.contents = new Launcher(Some(data._1+"_reg",proof),14)
+    updateLauncher(data._1+"_reg",proof, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -921,7 +505,7 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val list = cutformulaExtraction( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     db.addSeqList("cutFormulaList ", list.map(x => x.toFSequent()) )
-    body.contents = new Launcher(Some("Cut-formula List",list),16)
+    updateLauncher("Cut-formula List", list, 16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -936,7 +520,7 @@ object Main extends SimpleSwingApplication {
     ).toList
     val proofs = proof_projs.map(p => (proof._1 + "_prj_" + proof_projs.indexOf(p), p))
     db.addProofs( proofs )
-    body.contents = new Launcher(Some( proofs.head ),defaultFontSize)
+    updateLauncher( proofs.head._1, proofs.head._2 ,defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -950,7 +534,7 @@ object Main extends SimpleSwingApplication {
     val csPre : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
 
     db.addSeqList(csPre.map(x => x.toFSequent()))
-    body.contents = new Launcher(Some("cllist",csPre),16)
+    updateLauncher("cllist", csPre, 16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -967,7 +551,7 @@ object Main extends SimpleSwingApplication {
 
     db.addSeqList(pair._1) //.map(x => x.toFSequent()))
     db.addDefinitions(pair._2)
-    body.contents = new Launcher(Some("Schematic Clause Set",pair._1),16)
+    updateLauncher("Schematic Clause Set", pair._1, 16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -981,7 +565,7 @@ object Main extends SimpleSwingApplication {
     val structs_base = s._2.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
     val structs_step = s._1.map(pair => (pair._1, db.TermType.ClauseTerm, structToExpressionTree.prunedTree(pair._2)) )
     db.addTrees( structs_step ::: structs_base )
-    body.contents = new Launcher(Some(structs_step.head._1,structs_step.head._3),defaultFontSize)
+    updateLauncher(structs_step.head._1, structs_step.head._3, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -993,7 +577,7 @@ object Main extends SimpleSwingApplication {
     val proof_name = body.getContent.getData.get._1
     val pterms = ProjectionTermCreators(proof_name)
     db.addTrees( pterms.map(pair => (pair._1, db.TermType.ProjectionTerm, pair._2)) )
-    body.contents = new Launcher(Some( pterms.head ),defaultFontSize)
+    updateLauncher(pterms.head._1, pterms.head._2, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -1006,7 +590,7 @@ object Main extends SimpleSwingApplication {
     val s = StructCreators.extract( proof_sk, f => containsQuantifier(f) )
     val csPre : List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet(s) ))
     db.addSeqList(csPre.map(x => x.toFSequent()))
-    body.contents = new Launcher(Some("cllist",csPre),16)
+    updateLauncher("cllist", csPre, 16)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -1018,7 +602,7 @@ object Main extends SimpleSwingApplication {
     val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
     val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk ) )
     db.addTermTree( s )
-    body.contents = new Launcher(Some("Struct",s),defaultFontSize)
+    updateLauncher("Struct", s, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -1031,7 +615,7 @@ object Main extends SimpleSwingApplication {
     val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
     val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => containsQuantifier(f) ) )
     db.addTermTree( s )
-    body.contents = new Launcher(Some("Struct",s),defaultFontSize)
+    updateLauncher("Struct", s, defaultFontSize)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -1043,7 +627,7 @@ object Main extends SimpleSwingApplication {
     val pair = body.getContent.getData.get
     val new_proof = AtomicExpansion(DefinitionElimination(db.getDefinitions, pair._2.asInstanceOf[LKProof]))
     db.addProofs((pair._1+" without def rules", new_proof)::Nil)
-    body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
+    updateLauncher(pair._1+" without Definitions", new_proof, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -1055,7 +639,7 @@ object Main extends SimpleSwingApplication {
     val pair = body.getContent.getData.get
     val new_proof = eliminateDefinitions( LKtoLKskc( pair._2.asInstanceOf[LKProof] )  )
     db.addProofs((pair._1+" without def rules", new_proof)::Nil)
-    body.contents = new Launcher(Some("Proof without Definitions",new_proof),14)
+    updateLauncher("Proof without Definitions", new_proof, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {
     case e: Throwable =>
@@ -1095,7 +679,7 @@ object Main extends SimpleSwingApplication {
     val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
     val newProof = replaceSubproof(oldProof, proof, newSubproof)
     if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
-    body.contents = new Launcher(Some("Gentzen Result:", newProof),14)
+    updateLauncher("Gentzen Result:", newProof, 14)
   } catch {
     case e: Throwable =>
       errorMessage("Couldn't eliminate all cuts!\n\n" + getExceptionString(e))
@@ -1185,20 +769,20 @@ object Main extends SimpleSwingApplication {
             case e: UnfoldException => applySchemaSubstitution(name, number)
           }
           db.addProofs((name + "↓" + number, proof)::Nil)
-          body.contents = new Launcher(Some(name + "↓" + number, proof), defaultFontSize)
+          updateLauncher(name + "↓" + number, proof, defaultFontSize)
         case (name: String, pt: Tree[_]) if db.getTermTrees.exists(p => name == p._1 && p._2 == db.TermType.ProjectionTerm) =>
           val (term,list) = UnfoldProjectionTerm(name,number)
           val gterm_name = name.replace("_step","").replace("_base","")  + "↓" + number
           db.addTermTree( gterm_name, term )
           db.addProofs(list)
-          body.contents = new Launcher(Some(gterm_name, term), defaultFontSize)
+          updateLauncher(gterm_name, term, defaultFontSize)
           infoMessage("The proof projections, corresponding to this term, are also computed.\n" +
             "They can be found in the View Proof menu!")
         case (name: String, pt: Tree[_]) if db.getTermTrees.exists(p => name == p._1 && p._2 == db.TermType.ClauseTerm) => errorMessage("Not yet implemented!")
         case (name: String, pt: Tree[_]) if db.getTermTrees.exists(p => name == p._1 && p._2 == db.TermType.ResolutionTerm) =>
           val proof = InstantiateResSchema(name,number)
           db.addProofs(proof::Nil)
-          body.contents = new Launcher(Some(proof), defaultFontSize)
+          updateLauncher(proof._1, proof._2, defaultFontSize)
         case _ => errorMessage("Cannot instantiate the object!")
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
@@ -1224,7 +808,7 @@ object Main extends SimpleSwingApplication {
         val input = result.get
         val proof = ACNF(input._1, input._2, input._3)
         db.addProofs((input._1 + "↓" + input._3 + "_acnf", proof)::Nil)
-        body.contents = new Launcher(Some(input._1 + "↓" + input._3 + "_acnf", proof), defaultFontSize)
+        updateLauncher(input._1 + "↓" + input._3 + "_acnf", proof, defaultFontSize)
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
       ProofToolPublisher.publish(ProofDbChanged)
@@ -1291,3 +875,4 @@ object Main extends SimpleSwingApplication {
   }
   */
 }
+
