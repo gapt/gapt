@@ -1,6 +1,7 @@
 
 package at.logic.provers.veriT
 
+import at.logic.calculi.expansionTrees.ExpansionSequent
 import scala.sys.process._
 import java.io._
 import at.logic.provers.Prover
@@ -38,6 +39,16 @@ class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
       case false => throw new Exception("Error deleting verit file.")
     }
     unsat
+  }
+
+  def getExpansionSequent(s: FSequent): Option[ExpansionSequent] = {
+    val smtBenchmark = File.createTempFile("verit_input", ".smt")
+    smtBenchmark.deleteOnExit()
+
+    VeriTExporter(s, smtBenchmark.getAbsolutePath)
+
+    val output = s"veriT --proof=- --proof-version=1 $smtBenchmark".!!
+    VeriTParser.getExpansionProof(new StringReader(output))
   }
 
   // VeriT proofs are parsed as Expansion Trees.

@@ -4,7 +4,7 @@ import scala.util.parsing.combinator._
 import at.logic.language.fol._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree}
-import java.io.FileReader
+import java.io.{Reader, FileReader}
 import at.logic.utils.logging.Logger
 
 object VeriTParserLogger extends Logger
@@ -307,10 +307,14 @@ object VeriTParser extends RegexParsers {
     ((eq_congr_pred, List(instance)) :: symm)
   }
 
-  def getExpansionProof(filename : String) : Option[ExpansionSequent] = {
+  def getExpansionProof(filename: String): Option[ExpansionSequent] = {
     VeriTParserLogger.trace("FILE: " + filename)
+    getExpansionProof(new FileReader(filename))
+  }
+
+  def getExpansionProof(reader: Reader): Option[ExpansionSequent] = {
     try {
-      parseAll(proof, new FileReader(filename)) match {
+      parseAll(proof, reader) match {
         case Success(r, _) => r
         case Failure(msg, next) => 
           val msg0 = "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column

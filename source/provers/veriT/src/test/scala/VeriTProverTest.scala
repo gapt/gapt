@@ -4,6 +4,7 @@
 
 package at.logic.provers.veriT
 
+import at.logic.calculi.lk.base.FSequent
 import at.logic.language.fol._
 
 import org.specs2.mutable._
@@ -24,6 +25,13 @@ class VeriTProverTest extends SpecificationWithJUnit {
       val f = Or(a, Neg(a))
 
       veriT.isValid(f) must beEqualTo(true)
+    }
+
+    "parse the proof of a |- a" in {
+      val a = Atom("a")
+      val s = FSequent(List(a), List(a))
+
+      veriT.getExpansionSequent(s) must not be None
     }
   }
 }
