@@ -355,16 +355,16 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   private def outputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
     solver match {
       case MaxSATSolver.QMaxSAT => {
-        qmaxsatOutputToInterpretation(in)
+        multiVLineOutputToInterpretation(in)
       }
       case MaxSATSolver.ToySAT => {
         toysatOutputToInterpretation(in)
       }
       case MaxSATSolver.ToySolver => {
-        toysolverOutputToInterpretation(in)
+        multiVLineOutputToInterpretation(in)
       }
       case MaxSATSolver.MiniMaxSAT => {
-        qmaxsatOutputToInterpretation(in)
+        singleVLineOutputToInterpretation(in)
       }
       case _ => None
     }
@@ -375,7 +375,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param in output of QMaxSAT Solver
    * @return None if UNSAT, Some(minimal model) otherwise
    */
-  private def qmaxsatOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
+  private def singleVLineOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
 
     val oLinePattern = """(?m)^o.*""".r
     val vLinePattern = """(?m)^v.*""".r
@@ -410,7 +410,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param str output of ToySolver
    * @return None if UNSAT, Some(minimal model) otherwise
    */
-  private def toysolverOutputToInterpretation(str: String) : Option[Map[FOLFormula, Boolean]] = {
+  private def multiVLineOutputToInterpretation(str: String) : Option[Map[FOLFormula, Boolean]] = {
     val sLinePattern = """(?m)^s.*""".r
     val oLinePattern = """(?m)^o.*""".r
     val vLinePattern = """(?m)^v.*""".r
