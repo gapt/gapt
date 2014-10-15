@@ -7,12 +7,13 @@ import at.logic.utils.dssupport.ListSupport.{listComplements, zipper}
 import at.logic.utils.dssupport.MapSupport.addNoOverwrite
 import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent}
 import at.logic.language.hol.HOLExpression
+import at.logic.utils.logging.Logger
 
 
 /** Given a MultiExpansionSequent S and a prover P, this algorithm returns a list of the minimal expansion sequents below or equal to S that P still evaluates as valid.
 
 */
-object minimalExpansionSequents {
+object minimalExpansionSequents extends Logger {
   
   def apply(sequent: MultiExpansionSequent, prover: Prover) : Seq[MultiExpansionSequent] = {
     val result= new HashSet[MultiExpansionSequent] // The list of minimal expansion proofs will be constructed iteratively. A HashSet is used so that duplicates are immediately disregarded.
@@ -22,7 +23,9 @@ object minimalExpansionSequents {
       stack.push(sequent) // The sequent under consideration is placed on the stack if it is tautological.
     
     while (!stack.isEmpty) {
+      info("Retrieving sequent from stack")
       var current = stack.pop() // Topmost element of stack is retrieved. We already know it is tautological; only need to consider its successors.
+      info("Generating successors")
       var newSequents = generateSuccessors(current) // All successor expansion sequents are generated.
       var minimal = true // We assume that the current sequent is minimal unless we prove otherwise.
       
@@ -33,8 +36,10 @@ object minimalExpansionSequents {
         }
       }
       
-      if (minimal)
+      if (minimal) {
+        info("Minimal sequent found.")
         result += current // If the current sequent is minimal, we add it to the results.
+      }
     }
     
     result.toSeq
@@ -105,8 +110,7 @@ object minimalExpansionSequents {
 /** An optimized version of minimalExpansionSequents.
   * It's implemented as a class + companion object because the algorithm uses a map that is constructed iteratively and it's convenient to have access to it from arbitrary points.
   */
-class minimalExpansionSequentsSmart (val sequent: MultiExpansionSequent, val prover: Prover) {
-  type Instance = Tuple2[MultiExpansionTree, Seq[HOLExpression]]
+class minimalExpansionSequentsSmart (val sequent: MultiExpansionSequent, val prover: Prover) extends Logger {
   
   val maxRemovedInstance = new mMap[MultiExpansionSequent,Int] // This assigns to each MultiExpansionSequent S the maximum of all numbers n with the following property: S can be obtained from a MultiExpansionSequent S' by removing the nth instance of S'.
   
@@ -115,18 +119,23 @@ class minimalExpansionSequentsSmart (val sequent: MultiExpansionSequent, val pro
     val stack = new Stack[MultiExpansionSequent] // Invariant: the stack only contains valid expansion sequents.
     
     if (prover.isValid(sequent.toDeep)) {
+      debug("The starting sequent is tautological.")
       stack.push(sequent) // The sequent under consideration is placed on the stack if it is valid.
       maxRemovedInstance += ((sequent, 0)) // The input sequent is assigned number 0 to denote that no instances at all have been removed from it.
     }
     
     while (!stack.isEmpty) {
+      info("Retrieving sequent from stack")
       val (current) = stack.pop() // Topmost element of stack is retrieved. We already know it is tautological; only need to consider its successors.
+      debug("Retrieved sequent " + current + ".")
       val n = maxRemovedInstance(current)
+      info("Generating successors")
       val newSequents = generateSuccessors(current) // All successor expansion sequents are generated.
       var minimal = true // We assume that the current sequent is minimal unless we find a counterexample.
       
       for (i <- 1 to newSequents.length) { // Iterate over the generated successors
         val s = newSequents(i-1)
+        debug("Testing successor " + i)
         if (prover.isValid(s.toDeep)) {
           if (i >= n) // This is the core of the optimization: Avoid pushing sequents on the stack multiple times.
             stack.push(s) // Push valid sequents on the stack
@@ -135,8 +144,10 @@ class minimalExpansionSequentsSmart (val sequent: MultiExpansionSequent, val pro
         }
       }
       
-      if (minimal)
+      if (minimal) {
+        info("Minimal sequent found.")
         result += current // If the current sequent is minimal, we add it to the results.
+      }
     }
     
     result.toSeq
