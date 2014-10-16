@@ -6,13 +6,10 @@ package at.logic.algorithms.fol.hol2fol
 
 import at.logic.language.fol.{Substitution => FOLSubstitution, _}
 import at.logic.language.hol.replacements.{Replacement, getAllPositions2, getAllPositions}
-import at.logic.language.hol.{HOLExpression, HOLVar, HOLConst, Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom, HOLFormula}
-import at.logic.language.hol.{ExVar => HOLExVar, AllVar => HOLAllVar, Substitution => HOLSubstitution}
+import at.logic.language.hol.{Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom, ExVar => HOLExVar, AllVar => HOLAllVar, Substitution => HOLSubstitution, _}
 import at.logic.language.hol
 import scala.collection.mutable
-import at.logic.language.hol.{HOLApp, HOLAbs, Function => HOLFunction}
 import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexedFOVar}
-import at.logic.language.hol.HOLOrdering
 import at.logic.calculi.lk.base.FSequent
 import at.logic.language.lambda.LambdaExpression
 import at.logic.language.hol.logicSymbols._
@@ -245,7 +242,7 @@ class replaceAbstractions {
       //systematically rename free variables for the index
       //val normalizeda = e.variant(new VariantGenerator(new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName"))
       //TODO: replaceAbstractions is broken, because we don't normalize variables atm
-      val normalizeda = e
+      val (normalizeda, mapping) = normalizeFreeVariables(e)
       //println("e: "+e)
       //println("norm: "+normalizeda)
       //update scope with a new constant if neccessary

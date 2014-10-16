@@ -111,6 +111,27 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
     }
   }
 
+  "Hash Codes" should {
+    "be equal for alpha equal terms" in {
+      val t1 = App(Const("P", Ti -> To), Var("x", Ti))
+      val t2 = App(Const("P", Ti -> To), Var("y", Ti))
+      val t3 = Abs( Var("x", Ti), t1)
+      val t4 = Abs( Var("y", Ti), t2)
+      val t5 = Abs( Var("x", Ti), t1)
+      val t6 = Abs( Var("y", Ti), t2)
+
+      val l = List(t1,t2,t3,t4,t5,t6)
+      l.forall(x => l.forall(y => {
+        if (x == y)
+          x.hashCode() must_== y.hashCode()
+        else
+          true
+      }))
+
+      ok("all tests passed")
+    }
+  }
+
   "Variable renaming" should {
     "produce a new variable different from all in the blacklist" in {
       val x = Var( "x", Ti )

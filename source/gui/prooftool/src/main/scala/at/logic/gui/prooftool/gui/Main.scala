@@ -9,7 +9,6 @@ package at.logic.gui.prooftool.gui
 
 import scala.swing._
 import BorderPanel._
-import event.Key
 import swing.Dialog.Message
 import swing.Swing.EmptyIcon
 import java.io.{BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File}
@@ -18,7 +17,6 @@ import javax.swing.SwingUtilities
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
 import at.logic.calculi.proofs.TreeProof
 import at.logic.gui.prooftool.parser._
 import at.logic.language.hol._
@@ -44,8 +42,6 @@ import at.logic.calculi.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
-import at.logic.language.lambda.types.{To, Ti}
-import at.logic.gui.prooftool.parser.ShowAllRules
 import at.logic.gui.prooftool.parser.ChangeFormulaColor
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.algorithms.llk.HybridLatexExporter

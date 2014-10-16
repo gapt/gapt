@@ -5,6 +5,8 @@
 
 package at.logic.language.hol
 
+import at.logic.language.hol.replacements.{getAllPositions2, getAllPositions}
+import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.{freeVariables => freeVariablesLambda, rename => renameLambda}
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types.{Ti, TA}
@@ -139,8 +141,16 @@ object lcomp {
   }
 }
 
-// Returns the quantifier free part of a prenex formula
+/**
+ * Returns the quantifier free part of a prenex formula
+ */
 object getMatrix {
+  /**
+   * Strips the outermost block of quantifiers from a formula f in prenex form. The result is also called the
+   * matrix of f.
+   * @param f the formula of the form Qx1.Qx2. ... .Qxn.F[x1,...xn] where F is quantifier free. (n may be 0)
+   * @return the stripped formula F[x1,...,xn]
+   */
   def apply(f: HOLFormula) : HOLFormula = {
     assert(isPrenex(f))
     f match {
@@ -155,6 +165,81 @@ object getMatrix {
       case AllVar(x,f0) => getMatrix(f0)
       case _ => throw new Exception("ERROR: Unexpected case while extracting the matrix of a formula.")
     }
+  }
+}
+
+object normalizeFreeVariables {
+  /**
+   * Systematically renames the free variables by their left-to-right occurence in a HOL Formula f to x_{i} where all
+   * x_{i} are different from the names of all bound variables in the term. I.e. reversing the substitution yields
+   * the syntactically same formula.
+   *
+   * @param f the formula to be normalized
+   * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
+   */
+  def apply(f:HOLFormula) : (HOLFormula, Substitution) = apply(f.asInstanceOf[HOLExpression]).asInstanceOf[(HOLFormula, Substitution)]
+
+  /**
+   * Systematically renames the free variables by their left-to-right occurence in a HOL Expression f to x_{i} where all
+   * x_{i} are different from the names of all bound variables in the term. I.e. reversing the substitution yields
+   * the syntactically same formula.
+   *
+   * @param f the expression to be normalized
+   * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
+   */
+  def apply(f:HOLExpression) : (HOLExpression, Substitution) = {
+    var i = 0
+    //generate a blacklist that prevents renaming of bound variables
+    val blacklist = getAllPositions2(f).flatMap(_._2 match {
+      case AllVar(x,_) => List(x.sym.toString)
+      case ExVar(x,_) => List(x.sym.toString)
+      case _ => Nil
+    })
+
+    apply(f, () => {
+      var name = "x_{" + i + "}"
+      do {
+        i = i + 1;
+        name = "x_{" + i + "}"
+      } while (blacklist.contains(name))
+      name
+    })
+  }
+
+  /**
+   * Works exactly like normalizeFreeVaribles(f:HOLFormula) but allows the specification of your own name generator.
+   * Please note that such a normalized formula is still only unique up to alpha equality. Compare for example
+   * (all y P(x,y)) with (all x_{0} P(x,x_{0}):
+   * the first normalizes to (all y P(x_{0},y whereas the second normalizes to (all x_{0}1 P(x_{0},x_{0}1).
+   *
+   * @param f the formula to be normalized
+   * @param freshName a function which generates a fresh name every call.
+   * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
+   */
+  def apply(f:HOLFormula, freshName : () => String) : (HOLFormula, Substitution) =
+    apply(f.asInstanceOf[HOLExpression], freshName).asInstanceOf[(HOLFormula, Substitution)]
+
+  /**
+   * Works exactly like normalizeFreeVaribles(f:HOLExpression) but allows the specification of your own name generator.
+   * Please note that such a normalized formula is still only unique up to alpha equality. Compare for example
+   * (all y P(x,y)) with (all x_{0} P(x,x_{0}):
+   * the first normalizes to (all y P(x_{0},y whereas the second normalizes to (all x_{0}1 P(x_{0},x_{0}1).
+   *
+   * @param f the formula to be normalized
+   * @param freshName a function which generates a fresh name every call.
+   * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
+   */
+  def apply(f:HOLExpression, freshName : () => String) : (HOLExpression, Substitution) = {
+    val vs = freeVariables(f)
+    val map = vs.foldLeft(Map[HOLVar, HOLVar]())( (map, v) => {
+      if (map.contains(v)) map else {
+        val name = freshName()
+        map + ((v, v.factory.createVar(StringSymbol(name), v.exptype).asInstanceOf[HOLVar]))
+      }
+    })
+
+    val sub = Substitution(map)
+    (sub(f), sub)
   }
 }
 

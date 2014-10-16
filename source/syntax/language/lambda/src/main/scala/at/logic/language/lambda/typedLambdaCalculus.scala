@@ -53,7 +53,10 @@ class Var(val sym: SymbolA, val exptype: TA) extends LambdaExpression {
   // Printing
   override def toString() = "Var(" + name + "," + exptype + ")"
 
-  override def hashCode() = (41 * name.hashCode) + exptype.hashCode
+  /* hash code needs to be equal modulo alpha equality. ignoring the variable name might reduce the efficency of HashMap,
+     but it fulfills the contract that : x equals y implies x.hashCode == y.hashCode
+   */
+  override def hashCode() = 41 * "Var".hashCode + exptype.hashCode
 }
 object Var {
   def apply(name: String, exptype: TA) = LambdaFactory.createVar(StringSymbol(name), exptype)
@@ -161,7 +164,7 @@ class Abs(val variable: Var, val term: LambdaExpression) extends LambdaExpressio
   def exptype: TA = ->(variable.exptype, term.exptype)
   
   override def equals(a: Any) = alphaEquals(a, Map[Var, Var]())
-  
+
   // Syntactic equality
   def syntaxEquals(e: LambdaExpression) = e match {
     case Abs(v, exp) => (v.syntaxEquals(variable) && exp.syntaxEquals(term) && e.exptype == exptype)
@@ -182,8 +185,11 @@ class Abs(val variable: Var, val term: LambdaExpression) extends LambdaExpressio
 
   // Printing
   override def toString() = "Abs(" + variable + "," + term + ")"
-  
-  override def hashCode() = (41 * variable.hashCode) + term.hashCode
+
+  /* hash code needs to be equal modulo alpha equality. ignoring the variable name might reduce the efficency of HashMap,
+     but it fulfills the contract that : x equals y implies x.hashCode == y.hashCode
+   */
+  override def hashCode() = 41 * "Abs".hashCode + term.hashCode
 }
 object Abs {
   def apply(v: Var, t: LambdaExpression) = t.factory.createAbs(v, t)

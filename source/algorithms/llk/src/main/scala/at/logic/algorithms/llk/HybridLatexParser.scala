@@ -34,8 +34,34 @@ case class ExtendedProofDatabase(eproofs : Map[HOLFormula, LKProof],
  * and definition declarations, and RTokens represent a rule inference.
  */
 abstract class Token
+
+/**
+ * A TToken represents an LLK type declaration.
+ * @param decltype either "VARDEC" or "CONSTDEC"
+ * @param names a list of symbol names
+ * @param types the assigned type
+ */
 case class TToken(decltype : String, names : List[String], types : TA ) extends Token
+
+/**
+ * An AToken represents an Axiom declaration or Definition declaration.
+ * @param rule either "AXIOMDEF", "PREDDEF" or"FUNDEF"
+ * @param name the (unique) name of the definition/axiom
+ * @param antecedent the antecedent of the declaration sequent (not yet typechecked)
+ * @param succedent the succedent of the declaration sequent (not yet typechecked)
+ */
 case class AToken(rule:String, name : Option[LambdaAST], antecedent: List[LambdaAST], succedent:List[LambdaAST]) extends Token
+
+/**
+ * A RToken represents a rule application.
+ * @param rule One out of "AX", "ALLL", "ALLR", "EXL", "EXR", "ANDL", "ANDR", "ORL", "ORR", "IMPL", "IMPR", "NEGL",
+ *             "NEGR", "CUT", "EQL", "EQR", "WEAKL", "WEAKR", "CONTRL", "CONTRR", "DEF", "BETA", "INSTAXIOM"
+ * @param name quantifier rules allow optional specification of the subsitution term, definitions and axiom instantiations
+ *             take the referenced declaration, etc.
+ * @param antecedent the antecedent of the declaration sequent (not yet typechecked)
+ * @param succedent the antecedent of the declaration sequent (not yet typechecked)
+ * @param sub some rules like axiom instantiation specify substitutions, which are passed as list of var-term pairs
+ */
 case class RToken(rule:String, name : Option[LambdaAST],  antecedent: List[LambdaAST],
                      succedent:List[LambdaAST], sub:List[(ast.Var,LambdaAST)]) extends Token
 
@@ -120,7 +146,7 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
   }
 
   lazy val rule2 : PackratParser[Token] = ("\\" ~>
-    "(AX|AND[LR]|OR[LR]|IMP[LR]|NEG[LR]|EQ[LR]|WEAK[LR]|CONTR[LR]|CUT|DEF|BETA|PREDDEF|FUNDEF)".r
+    "(AX|AND[LR]|OR[LR]|IMP[LR]|NEG[LR]|EQ[LR]|WEAK[LR]|CONTR[LR]|CUT|DEF|BETA|PREDDEF|FUNDEF|TAUTCOMPLETION|AUTOPROP)".r
     <~ "{") ~ (repsep(formula, ",") <~ "}") ~ ("{" ~> repsep(formula,",") <~ "}") ^^ { _ match {
       case (name@"PREDDEF") ~ de ~ to => AToken(name, None, de, to)
       case (name@"FUNDEF") ~ de ~ to => AToken(name, None, de, to)

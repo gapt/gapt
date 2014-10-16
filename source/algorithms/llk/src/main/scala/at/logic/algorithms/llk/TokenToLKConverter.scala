@@ -7,7 +7,7 @@ import at.logic.language.hol._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk._
 import at.logic.algorithms.matching.NaiveIncompleteMatchingAlgorithm
-import at.logic.algorithms.lk.applySubstitution
+import at.logic.algorithms.lk.{solve, AtomicExpansion, applySubstitution}
 import at.logic.language.lambda.Var
 import at.logic.calculi.lk.EquationVerifier._
 import at.logic.language.lambda.BetaReduction._
@@ -152,6 +152,25 @@ trait TokenToLKConverter {
           proofstack = Axiom(ant, suc) :: proofstack
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
             "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+        case "TAUTCOMPLETION" =>
+          require(ant.size == 1, "Tautological Axiom Completion needs exactly one formula in the antecedent, not "+ant.mkString(","))
+          require(suc.size == 1, "Tautological Axiom Completion needs exactly one formula in the succedent, not "+suc.mkString(","))
+          require(ant(0) == suc(0), "Tautological Axiom Completion can only expand sequents of the form F :- F, not "+FSequent(ant,suc))
+          val rule = AtomicExpansion(FSequent(ant,suc))
+          proofstack = rule :: proofstack
+          require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
+            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+        case "AUTOPROP" =>
+          try {
+            val Some(rule) = solve.solvePropositional(FSequent(ant, suc), true, true)
+            proofstack = rule :: proofstack
+            require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
+              "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+          } catch {
+            case e : Exception =>
+              throw new HybridLatexParserException("Autopropositional failed with the message: "+e.getMessage+"\nStack Trace:\n"+
+                e.getStackTrace.mkString("", "\n","\n"), e)
+          }
         // --- quantifier rules ---
         case "ALLL" =>
           proofstack = handleWeakQuantifier(proofstack, name, fs, auxterm, naming, rt)

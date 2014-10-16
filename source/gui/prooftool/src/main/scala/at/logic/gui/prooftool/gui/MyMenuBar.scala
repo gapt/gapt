@@ -27,6 +27,10 @@ class MyMenubar extends MenuBar {
 
   def updateHistoryMenu(history : List[(String, AnyRef, Int)]) = {
     history_menu.contents.clear()
+    history_menu.contents += new MenuItem(Action("Clear History") {
+      Main.clearLauncherHistory()
+    })
+    history_menu.contents += new Separator
     for ( (name,obj, size) <- history )
       history_menu.contents += new MenuItem(
         Action(name +" ("+size+")") {
