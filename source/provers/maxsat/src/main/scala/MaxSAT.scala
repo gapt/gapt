@@ -371,8 +371,9 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   }
 
   /**
-   * A method to treat outputformat of the QMaxSAT Solver
-   * @param in output of QMaxSAT Solver
+   * A method to treat outputformat of a MaxSATSolver with
+   * a single line starting with a 'v'
+   * @param str output string of the MaxSAT Solver
    * @return None if UNSAT, Some(minimal model) otherwise
    */
   private def singleVLineOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {
@@ -406,8 +407,9 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   }
 
   /**
-   * A method to treat outputformat of the ToySolver
-   * @param str output of ToySolver
+   * A method to treat outputformat of a MaxSATSolver with
+   * multiple lines starting with a 'v'
+   * @param str output string of the MaxSAT Solver
    * @return None if UNSAT, Some(minimal model) otherwise
    */
   private def multiVLineOutputToInterpretation(str: String) : Option[Map[FOLFormula, Boolean]] = {

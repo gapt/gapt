@@ -735,7 +735,7 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
         // and sort them
         val evs = getNonterminals(keyList(klistindex),nonterminal_a).distinct.sorted
         // get their respective indexes
-        val evIndexes = evs.map(x => x.split("_").last.toInt)
+        val evIndexes = evs.map(x => x.split("_").last.toInt).sorted
         // check if all nonterminals α_i suffice i > l
         if(evIndexes.forall(evi => evi > l )){
 
@@ -767,9 +767,17 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
             }
             rests ::: acc2
           })
-          // connect them through a conjunction and add them to the
-          // list of disjunctions
-          And(conjunctionList) :: acc1
+          // if not a single valid rest had been found for a non-trivial key, don't
+          // add the rule
+          if(conjunctionList.size == 1 && evIndexes.size > 0)
+          {
+            acc1
+          }
+          else {
+            // connect them through a conjunction and add them to the
+            // list of disjunctions
+            And(conjunctionList) :: acc1
+          }
         }
         else{
           acc1

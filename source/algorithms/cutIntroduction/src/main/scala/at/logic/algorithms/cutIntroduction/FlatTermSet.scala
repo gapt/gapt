@@ -49,12 +49,12 @@ class FlatTermSet(terms: Map[FOLFormula, List[List[FOLTerm]]]) {
 
   def getFormula(t: FOLTerm) = t match {
     case Function(symbol, _) => formulaFunction(symbol.toString)
-    case _ => throw new FlatTermSetException("Term is not a function")
+    case _ => throw new FlatTermSetException("Term is not a function: "+t)
   }
 
   def getTermTuple(t: FOLTerm) = t match {
     case Function(_, tuple) => tuple
-    case _ => throw new FlatTermSetException("Term is not a function")
+    case _ => throw new FlatTermSetException("Term is not a function: "+t)
   }
 
   object TupleFunction {
