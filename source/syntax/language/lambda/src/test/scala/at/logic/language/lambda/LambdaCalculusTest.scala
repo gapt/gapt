@@ -10,6 +10,7 @@ import org.specs2.runner.JUnitRunner
 
 import types._
 import symbols._
+import scala.collection.immutable.{HashSet, HashMap}
 import scala.math.signum
 
 @RunWith(classOf[JUnitRunner])
@@ -130,6 +131,28 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
 
       ok("all tests passed")
     }
+
+    "make maps and sets properly defined" in {
+      val t1 = App(Const("P", Ti -> To), Var("x", Ti))
+      val t2 = App(Const("P", Ti -> To), Var("y", Ti))
+      val t3 = Abs( Var("x", Ti), t1)
+      val t4 = Abs( Var("y", Ti), t2)
+      val t5 = Abs( Var("x", Ti), t1)
+      val t6 = Abs( Var("y", Ti), t2)
+
+      val map = HashMap[LambdaExpression, Int]()
+      val set = HashSet[LambdaExpression]()
+
+      val nmap = map + ((t3,1)) + ((t4,2))
+      nmap(t3) must_==(2) //the entry for the alpha equal formula must have been overwritten
+      nmap.size must_==(1) //t3 and t4 are considered equal, so the keyset must not contain both
+      nmap must beEqualTo( Map[LambdaExpression, Int]() + ((t3,1)) + ((t4,2))) //map and hashmap must agree
+
+      val nset = set + t3 + t4
+      nset.size must_==(1) //t3 and t4 are considered equal, so the set must not contain both
+      nset must beEqualTo( Set() + t3 + t4 ) //hashset and set must agree
+    }
+
   }
 
   "Variable renaming" should {

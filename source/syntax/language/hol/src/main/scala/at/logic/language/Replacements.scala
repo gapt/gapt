@@ -59,7 +59,7 @@ object getAllPositions {
       case AllVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
       case Atom(_, args) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
       case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
-      //case Abs(_, exp) => (curPos, t)::recApply(exp.asInstanceOf[HOLExpression], curPos ::: List(1))
+      case HOLAbs(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
     }
 }
 
@@ -76,7 +76,7 @@ object getAllPositions2 {
     case AllVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
     case Atom(_, args) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
     case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
-    //case Abs(_, exp) => (curPos, t)::recApply(exp.asInstanceOf[HOLExpression], curPos ::: List(1))
+    case HOLAbs(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
   }
 }
 
@@ -89,7 +89,7 @@ object getAtPosition {
     case (ExVar(_, exp), 1::rest) => getAtPosition(exp, rest)
     case (Atom(_, args), n::rest) => getAtPosition(args(n-1).asInstanceOf[HOLExpression], rest)
     case (Function(_, args, _), n::rest) => getAtPosition(args(n-1).asInstanceOf[HOLExpression], rest)
-    //case (Abs(_, exp), 1::rest) => getAtPosition(exp.asInstanceOf[HOLExpression], rest)
+    case (HOLAbs(_, exp), 1::rest) => getAtPosition(exp, rest)
     case (_, n::rest) => throw new IllegalArgumentException("trying to obtain a subterm of " + expression + " at position: " + n)
   }
 }

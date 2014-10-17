@@ -120,14 +120,15 @@ class reduceHolToFol {
       case foc: foConst => FOLConst(foc.name.toString)
       case HOLVar(n, _) => FOLVar(n)
       case HOLConst(n, _) => FOLConst(n)
-      case HOLNeg(n) => Function(NegSymbol,  List(apply_termlevel(n)))
-      case HOLAnd(n1,n2) => Function(AndSymbol, List(apply_termlevel(n1), apply_termlevel(n2)))
-      case HOLOr(n1,n2) => Function(OrSymbol, List(apply_termlevel(n1), apply_termlevel(n2)))
-      case HOLImp(n1,n2) => Function(ImpSymbol, List(apply_termlevel(n1), apply_termlevel(n2)))
+      //we cannot use the logical symbols directly because they are treated differently by the Function matcher
+      case HOLNeg(n) => Function(NegSymbol.toString,  List(apply_termlevel(n)))
+      case HOLAnd(n1,n2) => Function(AndSymbol.toString, List(apply_termlevel(n1), apply_termlevel(n2)))
+      case HOLOr(n1,n2) => Function(OrSymbol.toString, List(apply_termlevel(n1), apply_termlevel(n2)))
+      case HOLImp(n1,n2) => Function(ImpSymbol.toString, List(apply_termlevel(n1), apply_termlevel(n2)))
       case HOLAllVar(v: HOLVar,n) =>
-        Function(ForallSymbol, List(apply_termlevel(v).asInstanceOf[FOLVar], apply_termlevel(n)))
+        Function(ForallSymbol.toString, List(apply_termlevel(v).asInstanceOf[FOLVar], apply_termlevel(n)))
       case HOLExVar(v: HOLVar,n) =>
-        Function(ExistsSymbol, List(apply_termlevel(v).asInstanceOf[FOLVar], apply_termlevel(n)))
+        Function(ExistsSymbol.toString, List(apply_termlevel(v).asInstanceOf[FOLVar], apply_termlevel(n)))
       case HOLAtom(n: SymbolA, ls) =>
         Function(n, ls.map(x => folexp2term(apply_termlevel(x))))
       case HOLFunction(HOLConst(name, _), ls, _) =>
@@ -241,7 +242,7 @@ class replaceAbstractions {
     case HOLAbs(v, exp) =>
       //systematically rename free variables for the index
       //val normalizeda = e.variant(new VariantGenerator(new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName"))
-      //TODO: replaceAbstractions is broken, because we don't normalize variables atm
+      //TODO: check if variable renaming is really what we want
       val (normalizeda, mapping) = normalizeFreeVariables(e)
       //println("e: "+e)
       //println("norm: "+normalizeda)
