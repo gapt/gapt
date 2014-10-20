@@ -28,7 +28,7 @@ class Grammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   val eigenvariable = ev
 
   // Is this the best solution?
-  var flatterms: FlatTermSet = null
+  var terms: TermSet = null
 
   /** Returns the size of the grammar, i.e. |u| + |s| */
   def size = u.size + s.size
@@ -57,7 +57,7 @@ class Grammar(u0: List[FOLTerm], s0: types.S, ev: String) {
   */
 object ComputeGrammars extends Logger {
   // Uses findValidGrammar2.
-  def apply(terms: FlatTermSet, delta: DeltaVector) : List[Grammar] = apply(terms.termset, delta).map{ case g => g.flatterms = terms; g }
+  def apply(terms: TermSet, delta: DeltaVector) : List[Grammar] = apply(terms.set, delta).map{ case g => g.terms = terms; g }
 
   def apply(terms: List[FOLTerm], delta: DeltaVector) : List[Grammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.

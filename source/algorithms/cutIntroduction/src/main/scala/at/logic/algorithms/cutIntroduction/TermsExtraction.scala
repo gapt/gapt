@@ -1,24 +1,44 @@
 /**
- * Terms extraction
+ * Extraction of terms for the cut-introduction algorithm.
  *
- * Returns a list with the terms used to instantiate each weakly quantified
- * formula.
- * Implemented for the cut-introduction algorithm.
- * NOTE: This algorithm was developed for prenex formulas only.
- */
+ * NOTE: Prenex formulas only.
+ *
+ * Collects all tuples of terms used to instantiate blocks of quantifiers and
+ * stores these tuples in a map. The map associates each formula with the
+ * respective tuples used to instantiate its quantifier block.
+ * In order to use the term set in the cut-introduction algorithm, the map is
+ * transformed into a single list of terms (termset) where the tuples of each
+ * formula are prefixed with a fresh function symbol "f_i". This transformation
+ * is done by the TermSet class, which stores the new term set and the mapping
+ * of fresh function symbols to their respective formulas.
+ *
+ * Example: 
+ *
+ * Map:
+ * F1 -> [(a,b), (c,d)]
+ * F2 -> [(e), (f), (g)]
+ *
+ * List of terms (termset):
+ * [f_1(a,b), f_1(c,d), f_2(e), f_2(f), f_2(g)]
+ *
+ * Name mapping (formulaFunction):
+ * f_1 -> F1
+ * f_2 -> F2
+ *
+ * */
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.language.fol._
-import at.logic.calculi.occurrences._
-import scala.collection.immutable.HashMap
+import at.logic.algorithms.expansionTrees._ 
+import at.logic.algorithms.lk._
 import at.logic.calculi.expansionTrees._
 import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti, StrongQuantifier => StrongQuantifierMulti, toFormulaM}
-import at.logic.algorithms.lk._
-import at.logic.algorithms.expansionTrees._ 
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.occurrences._
+import at.logic.language.fol._
 import at.logic.transformations.herbrandExtraction._
+import scala.collection.immutable.HashMap
 
 class TermsExtractionException(msg: String) extends Exception(msg)
 
@@ -26,17 +46,17 @@ object TermsExtraction {
 
   // If all the quantified formulas have only one quantifier, each list of
   // the list will have only one element
-  def apply(proof: LKProof) : Map[FOLFormula, List[List[FOLTerm]]] = apply(extractExpansionTrees(proof))
+  def apply(proof: LKProof) : TermSet = apply(extractExpansionTrees(proof))
 
   // An expansion proof is a pair of expansion trees, one for each formula in
   // the antecedent and succedent of the end-sequent
-  def apply(expProof: ExpansionSequent) : Map[FOLFormula, List[List[FOLTerm]]] = {
+  def apply(expProof: ExpansionSequent) : TermSet = {
     
     // Transform to a list of MultiExpansionTrees
     val multiExpTrees = (expProof.antecedent.map(et => compressQuantifiers(et))) ++ (expProof.succedent.map(et => compressQuantifiers(et)))
 
     // Extract the terms
-    multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
+    val tuple_set = multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
       if(isPrenex(toFormulaM(mTree).asInstanceOf[FOLFormula])) {
         mTree match {
           case WeakQuantifierMulti(form, children) => 
@@ -53,6 +73,44 @@ object TermsExtraction {
       }
       else throw new TermsExtractionException("ERROR: Trying to extract the terms of an expansion proof with non-prenex formulas.")
     }
+
+    new TermSet (tuple_set)
   }
 }
 
+class TermSet (terms: Map[FOLFormula, List[List[FOLTerm]]]){
+
+  var formulaFunction = new HashMap[String, FOLFormula]
+  var set : List[FOLTerm] = Nil
+
+  terms.foreach{
+    case (f, lst) =>
+      val functionSymbol = new TupleFunction
+      formulaFunction += (functionSymbol.name -> f)
+      set = lst.foldRight(set) {
+        case (tuple, acc) => Function(functionSymbol.name, tuple) :: acc
+      }
+  }
+
+  def getFormula(t: FOLTerm) = t match {
+    case Function(symbol, _) => formulaFunction(symbol.toString)
+    case _ => throw new TermsExtractionException("Term is not a function: "+t)
+  }
+
+  def getTermTuple(t: FOLTerm) = t match {
+    case Function(_, tuple) => tuple
+    case _ => throw new TermsExtractionException("Term is not a function: "+t)
+  }
+
+  object TupleFunction {
+    private var current = 0
+    private def inc = {
+      current += 1
+      current
+    }
+  }
+  class TupleFunction {
+    val id = TupleFunction.inc
+    val name = "tuple" + id
+  }
+}

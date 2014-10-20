@@ -29,7 +29,7 @@ import at.logic.provers.minisat.MiniSAT
 class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) extends Logger {
  
   val endSequent = seq
-  val flatterms = g.flatterms
+  val terms = g.terms
   val grammar = g
 
   // From ".map" on are lots of castings just to make the data structure right :-|
@@ -42,19 +42,19 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
   
   // Instanciated (previously univ. quantified) formulas on the left
   val inst_l : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
-    val terms = flatterms.getTermTuple(term)
-    val f = flatterms.getFormula(term)
+    val set = terms.getTermTuple(term)
+    val f = terms.getFormula(term)
     f match {
-      case AllVar(_, _) => instantiateAll(f, terms) :: acc
+      case AllVar(_, _) => instantiateAll(f, set) :: acc
       case _ => acc
     }
   }
   // Instantiated (previously ex. quantified) formulas on the right
   val inst_r : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
-    val terms = flatterms.getTermTuple(term)
-    val f = flatterms.getFormula(term)
+    val set = terms.getTermTuple(term)
+    val f = terms.getFormula(term)
     f match {
-      case ExVar(_, _) => instantiateAll(f, terms) :: acc
+      case ExVar(_, _) => instantiateAll(f, set) :: acc
       case _ => acc
     }
   }
@@ -65,11 +65,6 @@ class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) e
   val antecedent_alpha = inst_l.filter(x => !varFree(x))
   val succedent = prop_r ++ inst_r.filter(varFree)
   val succedent_alpha = inst_r.filter(x => !varFree(x))
-
-  //trace("antecent: " + prop_l + " ++ " + inst_l.filter(varFree))
-  //trace("antecent_alpha: " + inst_l.filter(x => !varFree(x)))
-  //trace("succedent: " + prop_r + " ++ " + inst_r.filter(varFree))
-  //trace("succedent_alpha: " + inst_r.filter(x => !varFree(x)))
 
   var cutFormula = if(cf == null) CutIntroduction.computeCanonicalSolution(seq, g) else cf
 

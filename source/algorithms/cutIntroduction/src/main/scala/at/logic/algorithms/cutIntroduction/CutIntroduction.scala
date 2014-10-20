@@ -119,15 +119,12 @@ object CutIntroduction extends Logger {
     val endSequent = toSequent(ep)
     println("\nEnd sequent: " + endSequent)
 
-    // Assign a fresh function symbol to each quantified formula in order to
-    // transform tuples into terms.
-    val termsTuples = TermsExtraction(ep)
-    val terms = new FlatTermSet(termsTuples)
-    println("Size of term set: " + terms.termset.size)
+    val termset = TermsExtraction(ep)
+    println("Size of term set: " + termset.set.size)
 
     var beginTime = System.currentTimeMillis;
 
-    val grammars = ComputeGrammars(terms, delta)
+    val grammars = ComputeGrammars(termset, delta)
 
     println( "\nNumber of grammars: " + grammars.length )
 
@@ -197,23 +194,22 @@ object CutIntroduction extends Logger {
     
       // generate term set
       val t1 = System.currentTimeMillis
-      val termsTuples = TermsExtraction(ep)
-      val terms = new FlatTermSet(termsTuples)
+      val termset = TermsExtraction(ep)
       val t2 = System.currentTimeMillis
-      log += "," + (t2 - t1) + "," + terms.termset.size // log tstime, tssize
-      println( "Size of term set: " + terms.termset.size )
+      log += "," + (t2 - t1) + "," + termset.set.size // log tstime, tssize
+      println( "Size of term set: " + termset.set.size )
 
       // compute delta-table
       phase = "dtg" // "delta-table generation"
       val t3 = System.currentTimeMillis
       val eigenvariable = "α"
-      val deltatable = new DeltaTable(terms.termset, eigenvariable, delta)
+      val deltatable = new DeltaTable(termset.set, eigenvariable, delta)
       val t4 = System.currentTimeMillis
 
       // read off grammars from delta-table
       phase = "dtr" // "delta-table readout"
-      val gs = ComputeGrammars.findValidGrammars(terms.termset, deltatable, eigenvariable)
-      val grammars = gs.map{ case g => g.flatterms = terms; g }.sortWith((g1, g2) => g1.size < g2.size )
+      val gs = ComputeGrammars.findValidGrammars(termset.set, deltatable, eigenvariable)
+      val grammars = gs.map{ case g => g.terms = termset; g }.sortWith((g1, g2) => g1.size < g2.size )
       val t5 = System.currentTimeMillis
       log += "," + (t4 - t3) + "," + (t5 - t4) // log dtgtime, dtrtime
 
@@ -304,7 +300,7 @@ object CutIntroduction extends Logger {
     */
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
 
-    val flatterms = g.flatterms
+    val terms = g.terms
     val varName = "x"
 
     trace("===============================================================")
@@ -325,12 +321,12 @@ object CutIntroduction extends Logger {
       if( !freeVars.intersect(g.eigenvariables).isEmpty ) {
         trace("      found terms with alphas!")
         trace("      term: " + term)
-        val terms = flatterms.getTermTuple(term)
-        val f = flatterms.getFormula(term)
+        val set = terms.getTermTuple(term)
+        val f = terms.getFormula(term)
 
         //Some subset of g's eigenvariables occurs in every term. This generates
         //substitutions to replace each occurring EV a_i with a quantified variables x_i.
-        val xterms = terms.map(t => {
+        val xterms = set.map(t => {
           val vars = createFOLVars(varName, g.eigenvariables.length+1)
           val allEV = g.eigenvariables.zip(vars)
           val occurringEV = collectVariables(t).filter(isEigenvariable(_:FOLVar, g.eigenvariable)).distinct
@@ -349,7 +345,7 @@ object CutIntroduction extends Logger {
 
         trace("ComputeCanoicalSolutionG:")
         trace("   f: " + f)
-        trace("   terms: " + terms)
+        trace("   terms: " + set)
         trace("   xterms: " + xterms)
         trace("   eigenvariables: " + g.eigenvariables)
         trace("---------------------------------------------")
@@ -373,7 +369,7 @@ object CutIntroduction extends Logger {
     val endSequent = ehs.endSequent
     val cutFormula = sanitizeVars(ehs.cutFormula)
     val grammar = ehs.grammar
-    val flatterms = grammar.flatterms
+    val terms = grammar.terms
     
     //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
     //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
@@ -416,7 +412,7 @@ object CutIntroduction extends Logger {
     val proofLeft = prover.getLKProof(seq)
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
-        val s1 = uPart(grammar.u.filter(t => !freeVariables(t).intersect(grammar.eigenvariables).isEmpty), proofLeft1, flatterms)
+        val s1 = uPart(grammar.u.filter(t => !freeVariables(t).intersect(grammar.eigenvariables).isEmpty), proofLeft1, terms)
 
         trace("=======================")
         trace("s1:")
@@ -447,7 +443,7 @@ object CutIntroduction extends Logger {
     val contractSucc = ehs.succedent.foldRight(contractAnt.asInstanceOf[LKProof]) { case (f, premise) => ContractionRightRule(premise, f) }
 
     // Instantiating constant terms from U
-    Some(uPart(grammar.u.filter(t => freeVariables(t).intersect(grammar.eigenvariables).isEmpty), contractSucc, flatterms))
+    Some(uPart(grammar.u.filter(t => freeVariables(t).intersect(grammar.eigenvariables).isEmpty), contractSucc, terms))
   }
 
   // Both methods bellow are responsible for generating the instances of 
@@ -465,29 +461,29 @@ object CutIntroduction extends Logger {
   /** Proves the u-part of a grammar.
     *
     */
-  def uPart(us: List[types.U], ax: LKProof, flatterms: FlatTermSet) : LKProof = {
+  def uPart(us: List[types.U], ax: LKProof, terms: TermSet) : LKProof = {
     us.foldLeft(ax) {
       case (ax, term) => 
         //Get the arguments of a single u
-        val terms = flatterms.getTermTuple(term)
-        val f = flatterms.getFormula(term)
+        val set = terms.getTermTuple(term)
+        val f = terms.getFormula(term)
 
         f match { 
           case AllVar(_, _) =>
             try {
-              ContractionLeftRule(genWeakQuantRules(f, terms, ax), f)
+              ContractionLeftRule(genWeakQuantRules(f, set, ax), f)
             }
             catch {
               // Not able to contract the formula because it was the last
               // substitution
-              case e: LKRuleCreationException => genWeakQuantRules(f, terms, ax)
+              case e: LKRuleCreationException => genWeakQuantRules(f, set, ax)
             }
           case ExVar(_, _) =>
             try {
-              ContractionRightRule(genWeakQuantRules(f, terms, ax), f)
+              ContractionRightRule(genWeakQuantRules(f, set, ax), f)
             }
             catch {
-              case e: LKRuleCreationException => genWeakQuantRules(f, terms, ax)
+              case e: LKRuleCreationException => genWeakQuantRules(f, set, ax)
             }
         }
     }
@@ -604,18 +600,13 @@ object NCutIntroduction extends Logger {
     val endSequent = toSequent(ep)
     debug("\nEnd sequent: " + endSequent)
 
-    // Assign a fresh function symbol to each quantified formula in order to
-    // transform tuples into terms.
-    val termsTuples = TermsExtraction(ep)
-    val terms = new FlatTermSet(termsTuples)
-    debug("Size of term set: " + terms.termset.size)
+    val termset = TermsExtraction(ep)
+    debug("Size of term set: " + termset.set.size)
 
     var beginTime = System.currentTimeMillis
 
-    //val grammars = ComputeGrammars(terms, delta)
-
-    val grammars = TreeGrammarDecomposition(terms.termset, n, MCSMethod.MaxSAT, maxsatsolver).map {
-      case g => g.flatterms = terms; g
+    val grammars = TreeGrammarDecomposition(termset.set, n, MCSMethod.MaxSAT, maxsatsolver).map {
+      case g => g.terms = termset; g
     }
     //println( "\nNumber of grammars: " + grammars.length )
 
@@ -658,21 +649,18 @@ object NCutIntroduction extends Logger {
         val endSequent = toSequent(ep)
         debug("\nEnd sequent: " + endSequent)
 
-        // Assign a fresh function symbol to each quantified formula in order to
-        // transform tuples into terms.
         watch.start()
-        val termsTuples = TermsExtraction(ep)
-        val terms = new FlatTermSet(termsTuples)
+        val termset = TermsExtraction(ep)
         val termsetTime = watch.lap(phase)
-        debug("termex: time="+termsetTime + ", termsetsize=" + terms.termset.size)
-        debug("Size of term set: " + terms.termset.size)
+        debug("termex: time="+termsetTime + ", termsetsize=" + termset.set.size)
+        debug("Size of term set: " + termset.set.size)
 
-        val gs = TreeGrammarDecomposition.applyStat(terms.termset, n, watch, MCSMethod.MaxSAT, maxsatsolver)
+        val gs = TreeGrammarDecomposition.applyStat(termset.set, n, watch, MCSMethod.MaxSAT, maxsatsolver)
         var grammars = List[Grammar]()
         // if TGD successflly terminated
         if (watch.errorStatus.toLowerCase() == "ok") {
           grammars = gs.get.map {
-            case g => g.flatterms = terms; g
+            case g => g.terms = termset; g
           }
         }
         // otherwise throw exception
