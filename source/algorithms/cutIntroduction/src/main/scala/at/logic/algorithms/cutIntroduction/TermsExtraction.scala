@@ -44,18 +44,12 @@ class TermsExtractionException(msg: String) extends Exception(msg)
 
 object TermsExtraction {
 
-  // If all the quantified formulas have only one quantifier, each list of
-  // the list will have only one element
   def apply(proof: LKProof) : TermSet = apply(extractExpansionTrees(proof))
 
-  // An expansion proof is a pair of expansion trees, one for each formula in
-  // the antecedent and succedent of the end-sequent
   def apply(expProof: ExpansionSequent) : TermSet = {
     
-    // Transform to a list of MultiExpansionTrees
     val multiExpTrees = (expProof.antecedent.map(et => compressQuantifiers(et))) ++ (expProof.succedent.map(et => compressQuantifiers(et)))
 
-    // Extract the terms
     val tuple_set = multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
       if(isPrenex(toFormulaM(mTree).asInstanceOf[FOLFormula])) {
         mTree match {

@@ -636,22 +636,22 @@ object parse {
 
 object extractTerms {
   def apply(p: LKProof) = {
-    val ts = new FlatTermSet(TermsExtraction(p))
-    println("\nTerm set: {" + ts.termset + "}")
-    println("Size of term set: " + ts.termset.size)
+    val ts = TermsExtraction(p)
+    println("\nTerm set: {" + ts.set + "}")
+    println("Size of term set: " + ts.set.size)
     ts
   }
 
   def apply(ep: ExpansionSequent) = {
-    val ts = new FlatTermSet(TermsExtraction(ep))
-    println("\nTerm set: {" + ts.termset + "}")
-    println("Size of term set: " + ts.termset.size)
+    val ts = TermsExtraction(ep)
+    println("\nTerm set: {" + ts.set + "}")
+    println("Size of term set: " + ts.set.size)
     ts
   }
 }
 
 object computeGrammars {
-  def apply(terms: FlatTermSet) = {
+  def apply(terms: TermSet) = {
     val g = ComputeGrammars(terms, new UnboundedVariableDelta())
     g.size match {
       case 0 => throw new Exception("No grammars found for this list of terms.")
@@ -716,7 +716,6 @@ object cutIntro {
     CutIntroduction.applyStat(ep, delta, prover)._1.get
 }
 
-
 object ncutIntro {
   def apply(p: LKProof, n: Int, maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT) = NCutIntroduction(p, new DefaultProver(), n, maxsatsolver)
 
@@ -734,6 +733,7 @@ object ncutIntro {
   def applyStat(ep: ExpansionSequent, n: Int, maxsatsolver: MaxSATSolver, watch: Stopwatch, timeout: Int) =
     NCutIntroduction.applyStat(ep, new DefaultProver(), n, maxsatsolver, watch, timeout)
 }
+
 /*****************************************************************************************/
 
 object toClauses {

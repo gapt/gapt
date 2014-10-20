@@ -39,9 +39,8 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
 
   private def toTerms(p: LKProof): List[FOLTerm] = {
     val testtree = extractExpansionTrees(p)
-    val testtermsTuples = TermsExtraction(testtree)
-    val testterms = new FlatTermSet(testtermsTuples)
-    val testlanguage = testterms.termset.toList
+    val testterms = TermsExtraction(testtree)
+    val testlanguage = testterms.set
     testlanguage
   }
 

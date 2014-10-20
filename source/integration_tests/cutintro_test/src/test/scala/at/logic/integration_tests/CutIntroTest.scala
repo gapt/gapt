@@ -52,16 +52,12 @@ class CutIntroTest extends SpecificationWithJUnit {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
       val proof = LinearExampleProof( 0, 4 )
 
-      //val termset = termsExtraction( proof ).foldLeft( new HashSet[FOLTerm]() )( (s, l) => s ++ l._2 )
-      val termset = TermsExtraction(proof).foldRight(List[FOLTerm]()) ( (t, acc) => 
-        t._2.foldRight(acc) ((lst, ac) =>
-          lst ++ ac
-        )
-      )
+      val termset = TermsExtraction (proof)
+      val set = termset.set.foldRight (List[FOLTerm]()) ( (t, acc) => termset.getTermTuple (t) ++ acc)
 
       CutIntroduction( proof, ExactBound(1), new LKProver() )
 
-      termset must contain (exactly ( LinearExampleTermset( 4 ):_* ))
+      set must contain (exactly ( LinearExampleTermset( 4 ):_* ))
     }
   }
 }
