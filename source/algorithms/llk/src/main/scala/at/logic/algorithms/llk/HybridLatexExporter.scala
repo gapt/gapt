@@ -8,7 +8,7 @@ import at.logic.language.hol._
 import at.logic.calculi.lk._
 import at.logic.calculi.lksk.{ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule}
 import at.logic.algorithms.hlk.ExtendedProofDatabase
-import at.logic.language.hol.logicSymbols.LogicalSymbolA
+import at.logic.language.hol.logicSymbols.{EqSymbol, LogicalSymbolA}
 import at.logic.algorithms.hlk.ExtendedProofDatabase
 
 object LatexProofExporter extends HybridLatexExporter(true)
@@ -113,8 +113,10 @@ class HybridLatexExporter(val expandTex : Boolean) {
 
   def getTypes(exp : LambdaExpression, vmap : Map[String, TA], cmap : Map[String,TA]) : (Map[String, TA], Map[String,TA]) = exp match {
     case Var(name, exptype) =>
-      if (exp.asInstanceOf[Var].sym.isInstanceOf[LogicalSymbolA])
+      val sym = exp.asInstanceOf[Var].sym
+      if (sym.isInstanceOf[LogicalSymbolA] || sym == EqSymbol) {
         (vmap, cmap)
+      }
       else if (vmap.contains(name)) {
         if (vmap(name) != exptype) throw new Exception("Symbol clash for "+name+" "+vmap(name)+" != "+exptype)
         (vmap, cmap)
@@ -123,9 +125,11 @@ class HybridLatexExporter(val expandTex : Boolean) {
       }
 
     case Const(name, exptype) =>
-      if (exp.asInstanceOf[Const].sym.isInstanceOf[LogicalSymbolA])
+      val sym = exp.asInstanceOf[Const].sym
+      if (sym.isInstanceOf[LogicalSymbolA] || sym == EqSymbol) { //the equation symbol is not a logical symbol
         (vmap, cmap)
-      if (cmap.contains(name)) {
+      }
+      else if (cmap.contains(name)) {
         if (cmap(name) != exptype) throw new Exception("Symbol clash for "+name+" "+cmap(name)+" != "+exptype)
         (vmap, cmap)
       } else {

@@ -108,6 +108,39 @@ trait LatexReplacementParser extends DeclarationParser {
   }
   } | iatom3
 
+
+  //accept latex connectives
+  override lazy val implication: PackratParser[LambdaAST]  = (dis_or_con ~ ("<->"|"->"|"<-"|"\\impl") ~ dis_or_con) ^^ { _ match {
+    case f ~ "->"  ~ g => ast.Imp(f,g)
+    case f ~ "\\impl"  ~ g => ast.Imp(f,g)
+    case f ~ "<-"  ~ g => ast.Imp(g,f)
+    case f ~ "<->" ~ g => ast.And(ast.Imp(f,g), ast.Imp(g,f))
+  }} | dis_or_con
+
+  override lazy val disjunction: PackratParser[LambdaAST]  =
+    (conlit ~ (("|" | "\\lor") ~> disjunction) ^^ {case f ~ g => ast.Or(f,g)}) | conlit
+
+  override lazy val conjunction: PackratParser[LambdaAST]  =
+    ( qliteral ~ (("&" | "\\land") ~> conjunction)   ^^ { case f ~ g => ast.And(f,g) }) | qliteral
+
+  override lazy val allformula_ : PackratParser[LambdaAST]   =
+    (("all" | "\\forall")    ~> atom2 ~ ( allformula_ | exformula_ | formula) ) ^^ {case v ~ f => ast.All(v,f) }
+
+  override lazy val exformula_ : PackratParser[LambdaAST]    =
+    (("exists" | "\\exists") ~> atom2 ~ ( allformula_ | exformula_ | formula) ) ^^ { case v ~ f => ast.Exists(v,f) }
+
+  override lazy val negation:PackratParser[LambdaAST] =
+    (("""(-|\\neg)""".r) ~> literal2 ^^ { x => ast.Neg(x) }) | absOrAtomWeq
+
+  lazy val reservedset = Set("\\neg","\\land","\\lor","\\impl","\\forall","\\exists")
+  override lazy val atomsymb: Parser[String] = atomsymb2 ^? (
+    { case x if ! (reservedset contains x)  => x },
+    (x => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names")
+  )
+
+  lazy val atomsymb2: Parser[String] = atomregexp
+
+
 }
 
 object HybridLatexParser extends HybridLatexParser
