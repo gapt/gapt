@@ -22,7 +22,6 @@ class PublishingBuffer[A] extends MBuffer[A] with ListenerManager[PublishingBuff
   def +=(elem: A): this.type = {val ret = buffer += elem; fireEvent(PublishingBufferEvent(Add,elem)); this}
   def +=:(elem: A): this.type = {val ret = buffer.+=:(elem); fireEvent(PublishingBufferEvent(Add,elem)); this}
   def insertAll(n: Int, elems: Traversable[A]): Unit = {buffer.insertAll(n,elems); elems.foreach(e => fireEvent(PublishingBufferEvent(Add,e)))}   
-  override def readOnly: Seq[A] = buffer.readOnly
   def iterator: Iterator[A] = buffer.iterator  
   def insertAll(n: Int, iter: Iterable[A]): Unit = {buffer.insertAll(n, iter); iter.foreach(elem => fireEvent(PublishingBufferEvent(Add,elem)))}
   def update(n: Int, newelem: A): Unit = {val oldelem = buffer(n); buffer.update(n, newelem); fireEvent(PublishingBufferEvent(Remove,oldelem)); fireEvent(PublishingBufferEvent(Add,newelem))}

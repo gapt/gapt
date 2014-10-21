@@ -9,7 +9,6 @@ package at.logic.utils.executionModels
  */
 
 import collection.mutable.{Queue => MQueue}
-import collection.immutable.Stack
 import collection.immutable.Queue
 import scala.math.Ordering.Implicits._
 import at.logic.utils.logging.Logger
@@ -52,17 +51,15 @@ package searchAlgorithms {
   }
 
   /** A stack. Turns the generic search into a DFS. */
-  class DFSColl[ElemType](val s:Stack[ElemType]) extends SearchCollection[ElemType] {
-    override def topElem : ElemType = { s.top }
-    override def popElem : DFSColl[ElemType] = { new DFSColl[ElemType](s.pop) }
-    override def putElem(x:ElemType) : DFSColl[ElemType] = { new DFSColl[ElemType](s.push(x)) }
-    override def size = { s.size }
+  class DFSColl[ElemType](val s: List[ElemType]) extends SearchCollection[ElemType] {
+    override def topElem : ElemType = s.head
+    override def popElem : DFSColl[ElemType] = new DFSColl[ElemType](s.tail)
+    override def putElem(x:ElemType) : DFSColl[ElemType] = new DFSColl[ElemType](x::s)
+    override def size = s.size
 
-    def this() = this(Stack[ElemType]())
+    def this() = this(List[ElemType]())
 
-    override def toString() : String = {
-      s.toList.toString()
-    }
+    override def toString() : String = s.toString()
   }
 
   /** A queue. Turns the generic search into a BFS. */

@@ -1,8 +1,6 @@
 /*
  * Trees.scala
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 
@@ -70,7 +68,7 @@ package trees {
     private[trees] def isTree: Boolean = true // any unary tree is a tree if its child component is a tree, therefore, as we accept a valid tree as argument, nothing should be done here.
     def leaves = t.leaves
     val node = vertex
-    val children = List(Pair(t,()))
+    val children = List( (t,()) )
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = unaryF(t.fold(leafF)(unaryF)(binaryF), vertex)
   }
   object UnaryTree {
@@ -90,7 +88,7 @@ package trees {
 
     def leaves = t1.leaves ++ t2.leaves
     val node = vertex
-    val children = List(Pair(t1,()),Pair(t2,()))
+    val children = List( (t1,()), (t2,()) )
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = binaryF(t1.fold(leafF)(unaryF)(binaryF),
       t2.fold(leafF)(unaryF)(binaryF), vertex)
   }
@@ -109,7 +107,7 @@ package trees {
     def leaves = (restParents :+ lastParent).flatMap(_.leaves).toSet
     def isTree = true //TOFIX!!!
     val node = vertex
-    val children = (restParents :+ lastParent).flatMap(_.leaves).map(Pair(_,()))
+    val children = (restParents :+ lastParent).flatMap(_.leaves).map( (_,()) )
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = throw new UnsupportedOperationException("fold is not implemented for ArbitraryTrees")
   }
 
