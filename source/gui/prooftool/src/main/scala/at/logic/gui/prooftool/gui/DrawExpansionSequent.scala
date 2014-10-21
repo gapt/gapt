@@ -9,22 +9,7 @@ import swing.event.UIElementResized
 import at.logic.calculi.expansionTrees._
 import event.MouseClicked
 import java.awt.event.MouseEvent
-import scala.swing.event.ComponentEvent
 import scala.collection.mutable.ListBuffer
-
-object Events {
-  case class CloseAllEvent(comp: Component) extends ComponentEvent {
-    override val source = comp
-  }
-
-  case class OpenAllEvent(comp: Component) extends ComponentEvent {
-    override val source = comp
-  }
-
-  case class ExpandAllEvent(comp: Component) extends ComponentEvent {
-    override val source = comp
-  }
-}
 
 class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
