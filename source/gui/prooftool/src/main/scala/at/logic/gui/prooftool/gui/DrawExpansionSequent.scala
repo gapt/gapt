@@ -7,7 +7,24 @@ import java.awt.{Dimension, Font, Color}
 import java.awt.Font._
 import swing.event.UIElementResized
 import at.logic.calculi.expansionTrees._
+import event.MouseClicked
+import java.awt.event.MouseEvent
+import scala.swing.event.ComponentEvent
+import scala.collection.mutable.ListBuffer
 
+object Events {
+  case class CloseAllEvent(comp: Component) extends ComponentEvent {
+    override val source = comp
+  }
+
+  case class OpenAllEvent(comp: Component) extends ComponentEvent {
+    override val source = comp
+  }
+
+  case class ExpandAllEvent(comp: Component) extends ComponentEvent {
+    override val source = comp
+  }
+}
 
 class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
@@ -16,6 +33,8 @@ class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: 
   //private val height = toolkit.getScreenSize.height - 150
   preferredSize = calculateOptimalSize
   dividerLocation = preferredSize.width / 2
+  val antecedent = new ListBuffer[DrawExpansionTree]
+  val succedent = new ListBuffer[DrawExpansionTree]
   leftComponent = side(ExpSequent.antecedent, "Antecedent", ft)
   rightComponent = side(ExpSequent.succedent, "Succedent", ft)
 
@@ -39,13 +58,18 @@ class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: 
       font = ft.deriveFont(Font.BOLD)
       opaque = true
       border = Swing.EmptyBorder(10)
+      listenTo(mouse.clicks)
+      reactions += {
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+          PopupMenu(DrawExpansionSequent.this, this, e.point.x, e.point.y)
+      }
     }
     contents += new ScrollPane {
       peer.getVerticalScrollBar.setUnitIncrement( 20 )
       peer.getHorizontalScrollBar.setUnitIncrement( 20 )
       contents = new BoxPanel(Orientation.Vertical) {
         background = new Color(255,255,255)
-        expTrees.foreach( f => contents += draw(f) )
+        expTrees.foreach( f => {val det = draw(f); contents += det; if (label == "Antecedent") antecedent += det else succedent += det} )
       }
     }
   }

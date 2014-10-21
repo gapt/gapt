@@ -14,6 +14,7 @@ import at.logic.calculi.proofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
 import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher, ShowProof, HideProof}
 import at.logic.language.hol.HOLFormula
+import at.logic.calculi.expansionTrees._
 
 
 class PopupMenu extends Component with Wrapper {
@@ -57,6 +58,20 @@ object PopupMenu {
       contents += new MenuItem(Action("Expand") { det.expand(f) })
     }
     popupMenu.show(component, x, y)
+  }
+  
+  def apply(des: DrawExpansionSequent, label: Label, x: Int, y: Int) {
+    val popupMenu = new PopupMenu {
+      val side = if (label.text == "Antecedent")
+        des.antecedent
+      else
+        des.succedent
+        
+      contents += new MenuItem(Action("Close") { side.foreach(det => det.close(toFormula(det.expansionTree))) })
+      //contents += new MenuItem(Action("Open") {  })
+      //contents += new MenuItem(Action("Expand") {  })
+    }
+    popupMenu.show(label, x, y)
   }
 }
 
