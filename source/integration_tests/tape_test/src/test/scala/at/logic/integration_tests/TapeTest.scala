@@ -23,7 +23,7 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.clauseSets.profile.proofProfile
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct.StructCreators
-import at.logic.transformations.ceres.CERES
+import at.logic.transformations.ceres.{CERES, CERESR2LK}
 
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
@@ -171,7 +171,7 @@ class TapeTest extends SpecificationWithJUnit {
       val tapeproj = Projections(foltape)
       val refproj = CERES.refProjection(foltape.root.toFSequent)
 
-      val acnf = CERES.viaPlugging(foltape.root.toFSequent, tapeproj + refproj, taperp)
+      val acnf = CERESR2LK(foltape.root.toFSequent, tapeproj + refproj, taperp)
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect({case c@CutRule(_,_,_,aux,_) if containsQuantifier(aux.formula) => c}) must beEmpty
