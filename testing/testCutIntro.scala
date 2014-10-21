@@ -73,15 +73,24 @@ object testCutIntro {
   def compressAll() = {
     // note: the "now starting" - lines are logged in the data file so that it can be separated into the particular test runs later
 
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/cut-intro" )
-    compressProofSequences( 60, false, false )
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/generalized cut-intro" )
-    compressProofSequences( 60, true, false )
-    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/cut-intro/EquationalProver" )
-    compressProofSequences( 60, false, true )
-    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/generalized cut-intro/EquationalProver" )
-    compressProofSequences( 60, true, true )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeq/cut-intro/NoForgetfulPara" )
+    compressProofSequences( 60, false, false, false )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeq/generalized cut-intro/NoForgetfulPara" )
+    compressProofSequences( 60, true, false, false )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/cut-intro/EquationalProver/NoForgetfulPara" )
+    compressProofSequences( 60, false, true, false )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/generalized cut-intro/EquationalProver/NoForgetfulPara" )
+    compressProofSequences( 60, true, true, false )
 
+    CutIntroDataLogger.trace( "---------- now starting ProofSeq/cut-intro/WithForgetfulPara" )
+    compressProofSequences( 60, false, false, true )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeq/generalized cut-intro/WithForgetfulPara" )
+    compressProofSequences( 60, true, false, true )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/cut-intro/EquationalProver/WithForgetfulPara" )
+    compressProofSequences( 60, false, true, true )
+    CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/generalized cut-intro/EquationalProver/WithForgetfulPara" )
+    compressProofSequences( 60, true, true, true )
+    
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/cut-intro/chooseProver/NoForgetfulPara" )
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false, true, false )
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/generalized cut-intro (one variable delta)/chooseProver/NoForgetfulPara" )
