@@ -121,10 +121,10 @@ object skolemize extends Logger {
 
       case ForallRightRule(p, _, a, m, v) => /*debug("all,r",p,a::m::Nil, Nil, v::Nil);*/ handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply )
       case ExistsLeftRule(p, _, a, m, v) => /*debug("ex,l",p,a::m::Nil, Nil, v::Nil);*/ handleStrongQuantRule( proof, p, a, m, v, ExistsLeftRule.apply )
-      case ForallLeftRule(p, _, a, m, t) => /*debug("ex,r",p,a::m::Nil, Nil, t::Nil);*/ handleWeakQuantRule( proof, p, a, m, t, 1, ForallLeftRule.computeAux,
-        ForallLeftRule.apply)
-      case ExistsRightRule(p, _, a, m, t) => /*debug("all,l",p,a::m::Nil, Nil, t::Nil);*/ handleWeakQuantRule( proof, p, a, m, t, 0, ExistsRightRule.computeAux,
-        ExistsRightRule.apply)
+      case ForallLeftRule(p, _, a, m, t) => /*debug("ex,r",p,a::m::Nil, Nil, t::Nil);*/
+        handleWeakQuantRule( proof, p, a, m, t, 1, ForallLeftRule.apply)
+      case ExistsRightRule(p, _, a, m, t) => /*debug("all,l",p,a::m::Nil, Nil, t::Nil);*/
+        handleWeakQuantRule( proof, p, a, m, t, 0, ExistsRightRule.apply)
       case WeakeningLeftRule(p, _, m) => handleWeakeningRule( proof, p, m, 1, WeakeningLeftRule.apply)
       case WeakeningRightRule(p, _, m) => handleWeakeningRule( proof, p, m, 0, WeakeningRightRule.apply)
       case ContractionLeftRule(p, _, a1, a2, _) => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply)
@@ -304,7 +304,6 @@ object skolemize extends Logger {
 
   def handleWeakQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, t: HOLExpression,
       pol: Int,
-      computeAux: (HOLFormula, HOLExpression) => HOLFormula,
       constructor: (LKProof, FormulaOccurrence, HOLFormula, HOLExpression) => LKProof)(implicit
       symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
       inst_map: Map[FormulaOccurrence, List[HOLExpression]],

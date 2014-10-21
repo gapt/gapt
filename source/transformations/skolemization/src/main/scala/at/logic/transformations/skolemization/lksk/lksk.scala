@@ -52,7 +52,7 @@ object LKtoLKskc extends Logger {
       val labels_ant = so.antecedent.map( fo => subst_terms( fo ) ).toList
       val labels_succ = so.succedent.map( fo => subst_terms( fo ) ).toList
 
-      val a = Axiom.createDefault( FSequent( ant, succ ), Pair(labels_ant, labels_succ) )
+      val a = Axiom.createDefault( FSequent( ant, succ ), Tuple2(labels_ant, labels_succ) )
       
       //assert( a._1.root.isInstanceOf[LabelledSequent] )
       val map = new HashMap[FormulaOccurrence, LabelledFormulaOccurrence]
@@ -252,7 +252,7 @@ object LKtoLKskc extends Logger {
       val sk_proof = WeakeningLeftRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
-                 Pair( m, sk_proof.prin.head ) )
+                 Tuple2( m, sk_proof.prin.head ) )
     }
     case LKWeakeningRightRule(p, s, m) => {
       val new_label_map = copyMapFromAncestor( s.antecedent ++ (s.succedent filterNot(_ == m)), subst_terms )
@@ -260,7 +260,7 @@ object LKtoLKskc extends Logger {
       val sk_proof = WeakeningRightRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
-                 Pair( m, sk_proof.prin.head ) )
+                 Tuple2( m, sk_proof.prin.head ) )
     }
     case ContractionRightRule(p, s, a1, a2, m) => {
       val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
@@ -374,7 +374,7 @@ object LKtoLKskc extends Logger {
                               term: HOLExpression, context: Seq[FormulaOccurrence], cut_occs: Set[FormulaOccurrence],
                               constructor: (LKProof, LabelledFormulaOccurrence, HOLFormula, HOLExpression, Boolean) => LKProof )
   = {
-      val new_label_map = copyMapFromAncestor( context, subst_terms ) + Pair(aux, subst_terms(main) + term)
+      val new_label_map = copyMapFromAncestor( context, subst_terms ) + Tuple2(aux, subst_terms(main) + term)
       val r = rec( parent, new_label_map, cut_occs )
       val sk_proof = constructor( r._1, r._2(aux), main.formula, term,
                                 !subst_terms(main).contains(term) )
@@ -387,8 +387,8 @@ object LKtoLKskc extends Logger {
 
   def copyMapFromAncestor( fos: Seq[FormulaOccurrence], map: Map[FormulaOccurrence, Label] ) :
     Map[FormulaOccurrence, Label] = map ++ 
-                                    fos.map( fo => Pair(fo.ancestors.head, map( fo ) ) ) ++ 
-                                    fos.map( fo => Pair(fo.ancestors.last, map( fo ) ) )
+                                    fos.map( fo => Tuple2(fo.ancestors.head, map( fo ) ) ) ++
+                                    fos.map( fo => Tuple2(fo.ancestors.last, map( fo ) ) )
 
   // TODO: implement this in a reasonable way!
   // Tomer suggested a skolem symbol trait to distinguish skolem symbols from normal symbols

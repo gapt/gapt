@@ -13,21 +13,50 @@ import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
 import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.algorithms.lk.{addWeakenings, applySubstitution}
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
+import at.logic.provers.prover9.Prover9
+import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 
 import at.logic.transformations.ceres.projections.Projections
+import at.logic.transformations.ceres.struct.StructCreators
 
 
 /**
- * Created with IntelliJ IDEA.
- * User: marty
- * Date: 11/10/13
- * Time: 7:11 PM
- * To change this template use File | Settings | File Templates.
+ * Two implementations of first-order CERES, one (CERES) grounding the proof before the transformation, the other (CERESR2LK)
+ * performing the task inline in the Robinson2LK method.
  */
-
-object CERESR2LK {
+object CERESR2LK extends CERESR2LK
+class CERESR2LK {
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   * @param p a first-order LKProof (structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
+   *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
+   * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
+   */
+  def apply(p:LKProof) : LKProof = apply(p, x => true)
+
+  /**
+   * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   * @param p a first-order LKProof (structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
+   *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
+   * @param pred a predicate to specify which cut formulas to eliminate
+   *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
+   * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
+   */
+  def apply(p:LKProof, pred : HOLFormula => Boolean) : LKProof = {
+    val es = p.root.toFSequent()
+    val proj = Projections(p, pred)
+
+    val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(p, pred))
+    Prover9.refute(tapecl.map(_.toFSequent())) match {
+      case None => throw new Exception("Prover9 could not refute the characteristic clause set!")
+      case Some(rp) =>
+        apply(es, proj, rp)
+    }
+  }
+
+  /**
+   * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   * Please note that the formulas in the different input proofs need to come from the same layer (i.e. both FOL or both HOL)
    * @param endsequent The end-sequent of the original proof
    * @param proj The projections of the original proof
    * @param rp A resolution refutation
@@ -36,12 +65,42 @@ object CERESR2LK {
   def apply(endsequent : FSequent, proj : Set[LKProof], rp : RobinsonResolutionProof) = {
     RobinsonToLK(rp, endsequent, fc => CERES.findMatchingProjection(endsequent, proj)(fc.toFSequent))
   }
+
 }
 
-object CERES {
-  //TODO: this works for classical CERES only
+object CERES extends CERES
+class CERES {
+  /**
+   * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   * @param p a first-order LKProof (structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
+   *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
+   * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
+   */
+  def apply(p:LKProof) : LKProof = apply(p, x => true)
+
+  /**
+   * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   * @param p a first-order LKProof (structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
+   *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
+   * @param pred a predicate to specify which cut formulas to eliminate
+   *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
+   * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
+   */
+  def apply(p:LKProof, pred : HOLFormula => Boolean) : LKProof = {
+    val es = p.root.toFSequent()
+    val proj = Projections(p, pred)
+
+    val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(p, pred))
+    Prover9.refute(tapecl.map(_.toFSequent())) match {
+      case None => throw new Exception("Prover9 could not refute the characteristic clause set!")
+      case Some(rp) =>
+        val lkproof = RobinsonToLK(rp)
+        apply(es, proj, lkproof)
+    }
+  }
+
   def apply(lkproof : LKProof, refutation: LKProof, pred : HOLFormula => Boolean) : LKProof = {
-    CERES(lkproof.root.toFSequent(), Projections(lkproof), refutation)
+    CERES(lkproof.root.toFSequent(), Projections(lkproof, pred), refutation)
   }
 
   /**

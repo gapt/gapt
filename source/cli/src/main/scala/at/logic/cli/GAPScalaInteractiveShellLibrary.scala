@@ -80,6 +80,7 @@ import at.logic.transformations.ceres.struct._
 import at.logic.transformations.herbrandExtraction.{extractExpansionTrees => extractET}
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
+import at.logic.transformations.ceres.{CERES, CERESR2LK}
 import at.logic.utils.constraint.Constraint
 import at.logic.transformations.herbrandExtraction
 import at.logic.algorithms.lk.{rule_isomorphic => LKrule_isomorphic}
@@ -149,6 +150,8 @@ object computeGroundProjections {
 }
 
 object CERESomega extends ceres_omega
+object foCERES extends CERESR2LK
+object foCERESground extends CERES
 
 object buildACNF {
   def apply(ref: LKProof, projs: Set[LKProof], es: FSequent) = ACNF(ref, projs, es)
