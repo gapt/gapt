@@ -16,8 +16,9 @@ import at.logic.utils.traits.Occurrence
 case class LKQuantifierException(root : Sequent,
                                  formula_occ : FormulaOccurrence,
                                  term : HOLExpression,
-                                 calculated_formula : HOLFormula) extends Exception {
-  override def getMessage = "Substituting the term "+term+"back into the given formula " + formula_occ.formula +" gives " + calculated_formula.toPrettyString + " instead of " + formula_occ.formula.toPrettyString+")"
+                                 calculated_formula : HOLFormula,
+                                 quantifier_var : HOLVar) extends Exception {
+  override def getMessage = "Substituting the term "+term+" for " + quantifier_var+ "  back into the given formula " + formula_occ.formula +" gives " + calculated_formula.toPrettyString + " instead of " + formula_occ.formula.toPrettyString+")"
 }
 
 // Quantifier rules
@@ -386,16 +387,6 @@ object ExistsLeftRule extends StrongRuleHelper(false) {
 
 
 class QuantifierRuleHelper(polarity : Boolean) {
-  def computeAux( main: HOLFormula, term: HOLExpression ) = main match {
-    case AllVar( v, sub ) => 
-      val s = Substitution(v, term)
-      betaNormalize( s(sub) )
-    case ExVar( v, sub ) =>  
-      val s = Substitution(v, term)
-      betaNormalize( s(sub) )
-    case _ => throw new LKRuleCreationException("Main formula of a quantifier rule must start with a strong quantfier.")
-  }
-
   private[lk] def getPrinFormula(main: HOLFormula, aux_fo: FormulaOccurrence) = {
     aux_fo.factory.createFormulaOccurrence(main, aux_fo::Nil)
   }
@@ -460,17 +451,27 @@ class StrongRuleHelper(polarity : Boolean) extends QuantifierRuleHelper(polarity
 }
 
 class WeakRuleHelper(polarity : Boolean) extends QuantifierRuleHelper(polarity) {
+  def computeAux( main: HOLFormula, term: HOLExpression ) = main match {
+    case AllVar( v, sub ) =>
+      val s = Substitution(v, term)
+      (v, betaNormalize( s(sub) ))
+    case ExVar( v, sub ) =>
+      val s = Substitution(v, term)
+      (v, betaNormalize( s(sub) ))
+    case _ => throw new LKRuleCreationException("Main formula of a quantifier rule must start with a strong quantfier.")
+  }
+
   private[lk] def getTerms(s1: Sequent, term1oc: Occurrence, main: HOLFormula, term: HOLExpression) = {
     val foccs = if (polarity==false) s1.antecedent else s1.succedent
     foccs.find(_ == term1oc) match {
       case None => throw new LKRuleCreationException("Auxiliary formulas are not contained in the correct part of the sequent!")
       case Some(aux_fo) =>
-        val comp_aux = computeAux( main, term )
+        val (v, comp_aux) = computeAux( main, term )
         //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
         //If it fails, you are doing something seriously wrong!
         //In any case do NOT remove it without telling everyone!
         if (comp_aux != aux_fo.formula)
-          throw new LKQuantifierException(s1, aux_fo, term, comp_aux)
+          throw new LKQuantifierException(s1, aux_fo, term, comp_aux, v)
         aux_fo
     }
   }

@@ -287,12 +287,15 @@ class undoReplaceAbstractions {
  */
 object convertHolToFol extends convertHolToFol
 class convertHolToFol {
-  def apply(e:LambdaExpression) : FOLFormula = convertFormula(e)
+  def apply(e:HOLExpression) : FOLExpression = e match {
+    case f : HOLFormula => convertFormula(f)
+    case _ => convertTerm(e)
+  }
   def apply(e:HOLFormula) : FOLFormula = convertFormula(e)
   def apply(fs:FSequent) : FSequent =
     FSequent(fs.antecedent.map(apply), fs.succedent.map(apply))
 
-  def convertFormula(e:LambdaExpression) : FOLFormula = e match {
+  def convertFormula(e:HOLFormula) : FOLFormula = e match {
     case HOLAtom(HOLConst(sym, exptype), args)
       if (args.filterNot(_.exptype == Ti).isEmpty) =>
       Atom(sym, args map convertTerm)
@@ -306,7 +309,7 @@ class convertHolToFol {
     case _ => throw new Exception("Could not convert term "+e+" to first order!")
   }
 
-  def convertTerm(e:LambdaExpression) : FOLTerm = e match {
+  def convertTerm(e:HOLExpression) : FOLTerm = e match {
     case HOLVar(x, Ti) => FOLVar(x)
     case HOLConst(x, Ti) => FOLConst(x)
     case HOLFunction(HOLConst(f, FunctionType(Ti,_)), args, Ti)

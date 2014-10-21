@@ -24,6 +24,14 @@ object TermReplacement extends Logger {
     rename_term(term, what,by)
   }
 
+  def apply(f : HOLFormula, what : HOLExpression, by : HOLExpression) : HOLFormula = {
+    require(what.exptype == by.exptype)
+    rename_term(f.asInstanceOf[HOLExpression], what,by).asInstanceOf[HOLFormula]
+  }
+
+  def apply(term : HOLFormula, p : Map[HOLExpression,HOLExpression]) : HOLFormula =
+    apply(term.asInstanceOf[HOLExpression], p).asInstanceOf[HOLFormula]
+
   def apply(term : HOLExpression, p : Map[HOLExpression,HOLExpression]) : HOLExpression =
     p.foldLeft(term)((t, x) => { /*debug(1,"looking for "+x+" in "+t);*/ apply(t,x._1, x._2) })
 

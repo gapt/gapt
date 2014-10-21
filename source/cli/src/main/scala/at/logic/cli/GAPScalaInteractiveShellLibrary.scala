@@ -1,4 +1,3 @@
-
 /*
  * GAPScalaInteractiveShellLibrary.scala
  *
@@ -70,7 +69,7 @@ import at.logic.provers.atp.commands.ui._
 import at.logic.provers.{Prover => abstractProver}
 import at.logic.provers.maxsat.{MaxSATSolver, MaxSAT}
 import at.logic.provers.maxsat.MaxSATSolver._
-import at.logic.provers.minisat.{MiniSAT}
+import at.logic.provers.minisat.MiniSAT
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
 import at.logic.transformations.ceres.ACNF._
@@ -904,7 +903,25 @@ object format {
     */
 }
 
+
+object mapProof extends map_proof {
+  val help =
+    """mapProof(l : LKProof, fun : HOLExpression => HOLExpression) : LKProof
+      |
+      |Applies the function fun to every formula in the proof. This can result in incorrect proofs.
+    """.stripMargin
+}
+
 object rename {
+  val help =
+    """
+      | rename(exp: HOLExpression, map: SymbolMap): HOLExpression
+      | rename(fs: FSequent, map: SymbolMap) : HOLExpression
+      | rename(p: RobinsonResolutionProof, map: SymbolMap): RobinsonResolutionProof
+      |
+      | The symbol map is a map from oldname:String to pairs of (a:Int,newname). Applying
+      | rename will replace every occurrence of a symbol with oldname and arity a by newname.
+    """.stripMargin
   def apply(exp: HOLExpression, map: NameReplacement.SymbolMap): HOLExpression = NameReplacement(exp, map)
 
   def apply(fs: FSequent, map: NameReplacement.SymbolMap) = NameReplacement(fs, map)

@@ -17,7 +17,7 @@ object applySubstitution {
                        constructor: (LKProof, HOLFormula) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
      val new_proof = constructor( new_parent._1, betaNormalize(subst(m.formula)) )
-    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Pair(m, new_proof.prin.head ) )
+    ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + ((m, new_proof.prin.head )) )
   }
   def handleContraction( new_parent: (LKProof, Map[FormulaOccurrence, FormulaOccurrence]),
                          old_parent: LKProof,

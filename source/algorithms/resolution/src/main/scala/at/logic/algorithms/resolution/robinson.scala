@@ -155,8 +155,11 @@ object RobinsonToLK {
           introduceContractions(retProof, seq)
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
-        case Instance(_,p,s) =>
-          applySub(recConvert(p, seq,map,createAxiom),s)._1
+        case Instance(root,p,s) =>
+          println("applying sub "+s+" to "+root)
+          val rp = recConvert(p, seq,map,createAxiom)
+          println("lk proof root is "+rp.root)
+          applySub(rp,s)._1
       }
       map(proof.root.toFClause) = ret
       ret
