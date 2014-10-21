@@ -1017,6 +1017,7 @@ object UniformAssociativity3ExampleProof {
 
   def apply_conditional_equality(equalities: List[FOLFormula], result: FOLFormula, p: LKProof) : LKProof = {
     equalities match {
+      case Nil => p
       case head :: Nil => {
         val ax = Axiom(head::Nil, head::Nil)
         ImpLeftRule(ax, p, head, result)

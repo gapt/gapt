@@ -10,6 +10,10 @@ import at.logic.algorithms.lk._
 import at.logic.provers.prover9._
 import at.logic.provers.eqProver._
 import at.logic.provers._
+import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+
+// for testCutIntro.compressProofSequences
+:load ../examples/ProofSequences.scala
 
 /**********
  * test script for the cut-introduction algorithm on output proofs from prover9,
@@ -18,7 +22,7 @@ import at.logic.provers._
  *
  * scala> :load ../testing/testCutIntro.scala
  *
- * scala> testCutIntro.findNonTrivialTSTPExamples( "../testing/prover9-TSTP/", 60 )
+ * scala> testCutIntro.findNonTrivialTSTPExamples( "../testing/TSTP/prover9/", 60 )
  *
  * test the tests by
  * scala> testCutIntro.compressTSTP( "../testing/resultsCutIntro/tstp_minitest.csv", 60, true, true, true )
@@ -64,14 +68,11 @@ val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
  *
  */
 
-// for testCutIntro.compressProofSequences
-:load ../examples/ProofSequences.scala
-
 object testCutIntro {
 
   def compressAll() = {
     // note: the "now starting" - lines are logged in the data file so that it can be separated into the particular test runs later
-    /*
+
     CutIntroDataLogger.trace( "---------- now starting ProofSeq/cut-intro" )
     compressProofSequences( 60, false, false )
     CutIntroDataLogger.trace( "---------- now starting ProofSeq/generalized cut-intro" )
@@ -80,25 +81,21 @@ object testCutIntro {
     compressProofSequences( 60, false, true )
     CutIntroDataLogger.trace( "---------- now starting ProofSeqEq/generalized cut-intro/EquationalProver" )
     compressProofSequences( 60, true, true )
-    */
 
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/cut-intro/chooseProver/NoForgetfulPara" )
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false, true, false )
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/generalized cut-intro (one variable delta)/chooseProver/NoForgetfulPara" )
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, true, true, false )
-/*
+    
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/cut-intro/chooseProver/WithForgetfulPara" )
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, false, true, true )
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/generalized cut-intro/chooseProver/WithForgetfulPara" )
     compressTSTP( "../testing/resultsCutIntro/tstp_non_trivial_termset.csv", 60, true, true, true )
-*/
 
-    /*
     CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/cut-intro/DefaultProver" )
     compressVeriT( "../testing/veriT-SMT-LIB/QF_UF/", 60, false )
     CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/generalized cut-intro/DefaultProver" )
     compressVeriT( "../testing/veriT-SMT-LIB/QF_UF/", 60, true )
-    */
   }
 
   var total = 0
@@ -114,7 +111,7 @@ object testCutIntro {
   var error_rule_count = 0
   var finished = 0
   // Hashmap containing proofs with non-trivial termsets
-  var termsets = HashMap[String, FlatTermSet]()
+  var termsets = HashMap[String, TermSet]()
   // File name -> q-rules before cut, rules before cut, q-rules after
   // cut, rules after cut
   var rulesInfo = HashMap[String, (Int, Int, Int, Int)]()
@@ -143,7 +140,7 @@ object testCutIntro {
     var ts_size = 0
     val data = termsets.foldLeft("") {
       case (acc, (k, v)) =>
-        val tssize = v.termset.size
+        val tssize = v.set.size
         val n_functions = v.formulaFunction.size
         instance_per_formula += tssize.toFloat/n_functions.toFloat
         ts_size += tssize
@@ -179,7 +176,7 @@ object testCutIntro {
         case Some(p) => 
           runWithTimeout(timeout * 1000){ 
             val ts = extractTerms(p)
-            val tssize = ts.termset.size
+            val tssize = ts.set.size
             val n_functions = ts.formulaFunction.size
             if(tssize > n_functions) {
               termsets += (file.getAbsolutePath -> ts)
