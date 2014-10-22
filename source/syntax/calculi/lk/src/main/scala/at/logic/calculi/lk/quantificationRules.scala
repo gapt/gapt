@@ -13,12 +13,14 @@ import at.logic.utils.ds.trees._
 import base._
 import at.logic.utils.traits.Occurrence
 
-case class LKQuantifierException(root : Sequent,
-                                 formula_occ : FormulaOccurrence,
+case class LKQuantifierException(main : HOLFormula,
+				 aux: HOLFormula,
                                  term : HOLExpression,
                                  calculated_formula : HOLFormula,
                                  quantifier_var : HOLVar) extends Exception {
-  override def getMessage = "Substituting the term "+term+" for " + quantifier_var+ "  back into the given formula " + formula_occ.formula +" gives " + calculated_formula.toPrettyString + " instead of " + formula_occ.formula.toPrettyString+")"
+  override def getMessage = "Substituting the variable " + quantifier_var + 
+    " with the term " + term + " in the formula " + main + 
+    " gives " + calculated_formula + " instead of " + aux
 }
 
 // Quantifier rules
@@ -471,7 +473,7 @@ class WeakRuleHelper(polarity : Boolean) extends QuantifierRuleHelper(polarity) 
         //If it fails, you are doing something seriously wrong!
         //In any case do NOT remove it without telling everyone!
         if (comp_aux != aux_fo.formula)
-          throw new LKQuantifierException(s1, aux_fo, term, comp_aux, v)
+          throw new LKQuantifierException(main, aux_fo.formula, term, comp_aux, v)
         aux_fo
     }
   }
