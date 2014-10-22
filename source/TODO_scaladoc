@@ -1,0 +1,24 @@
+
+This file contains a list of packages/classes/objects on which more
+scaladoc(umentation) is needed. Please feel free to add further documentation
+requests to it. May it serve as an inspiration for the documentation day
+on November 7 ;-)
+
+at.logic.language.lambda.longNormalForm
+at.logic.language.fol.instantiate
+                     .instantiateAll
+                     .toCNF (which CNF-computation?, relationship to CNFp, CNFn?)
+at.logic.language.hol.replacements._
+at.logic.language.fol.replacements._
+at.logic.algorithms.lk.addWeakeningandContraction
+                      .addWeakenings
+                      .addContractions
+                      .getCutsAsProofs
+                      .map_proof
+                      .rule_isomorphic
+at.logic.calculi.lk.LKQuantifierException
+                   .base.PrincipalFormulas
+                   .base.AuxiliaryFormulas
+at.logic.parsing.ivy._
+at.logic.transformations.ReductiveCutElim
+
