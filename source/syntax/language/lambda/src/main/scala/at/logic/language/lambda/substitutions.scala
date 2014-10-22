@@ -20,7 +20,7 @@ class Substitution(val map: Map[Var, LambdaExpression]) {
                           "Error creating substitution: variable "+s._1+" has type "+s._1.exptype+
                           " but subterm "+s._2+" has type "+s._2.exptype )
 
-  // Substitution (capture-avoinding)
+  // Substitution (capture-avoiding)
   // as in http://en.wikipedia.org/wiki/Lambda_calculus#Capture-avoiding_substitutions   
   def apply(t: LambdaExpression): LambdaExpression = t match {
     case v : Var if map.contains(v) => map(v)
@@ -31,24 +31,23 @@ class Substitution(val map: Map[Var, LambdaExpression]) {
     case Abs(v, t1) =>
       val fv = range
       val dom = domain
-      if (domain.contains(v)) {
+      
+      val newSub = if (domain.contains(v)) {
         // Abs(x, t) [x -> u] = Abs(x, t)
         // The replacement of v is not done, removing it from the substitution and applying to t1
         val newMap = map - v
-        val newSub = Substitution(newMap)
-        Abs(v, newSub(t1))
-      }
-      else if (!fv.contains(v)) {
-        // No variable capture
-        Abs(v, apply(t1))
-      }
-      else {
+        Substitution(newMap)
+      } else this
+      
+      val (freshVar, newTerm) = if (fv.contains(v)) {
         // Variable captured, renaming the abstracted variable
         val freshVar = rename(v, fv)
         val sub = Substitution(v, freshVar)
         val newTerm = sub(t1)
-        Abs(freshVar, apply(newTerm))
-      }
+	(freshVar, newTerm)
+      } else (v, t1)
+
+      Abs(freshVar, newSub(newTerm))
   }
 
   def domain : List[Var] = map.keys.toList
