@@ -8,7 +8,7 @@ package at.logic.gui.prooftool.gui
 */
 
 import swing._
-import event.MouseClicked
+import scala.swing.event.{MouseExited, MouseEntered, MouseClicked, Event}
 import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
 import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NegET, Atom => AtomET, getVars}
@@ -21,6 +21,10 @@ object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
+class HighlightEvent(val source: Component) extends Event
+
+class UnHighlightEvent(val source: Component) extends Event
+
 class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: Font) extends BoxPanel(Orientation.Horizontal) {
 
   import ExpansionTreeState._
@@ -30,6 +34,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
   xLayoutAlignment = 0
   private val state = scala.collection.mutable.Map.empty[HOLFormula, ExpansionTreeState.Value]
   val logger = LoggerFactory.getLogger("drawExpTreeLogger")
+  val highlightColor = Color.red
   initialize
 
   def initialize = {
@@ -74,28 +79,134 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks) // We don't want atoms to react to mouse behavior.
         contents += lbl
       case NegET(t) =>
-        contents += label("¬", ft)
-        contents += treeToComponent(t, allow)
+        val conn = label("¬", ft)
+        val subF = treeToComponent(t, allow)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case _: MouseEntered =>
+            //conn.publish(new HighlightEvent(conn))
+            logger.trace("MouseEntered event received")
+            conn.foreground = highlightColor
+          case e: HighlightEvent =>
+            //conn.publish(e)
+            logger.trace("Highlight event received")
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            //conn.publish(new UnHighlightEvent(conn))
+            logger.trace("MouseExited event received")
+            conn.foreground = Color.black
+          case e: UnHighlightEvent =>
+            //conn.publish(e)
+            logger.trace("UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF.listenTo(conn)
+        contents += conn
+        contents += subF
       case AndET(t1, t2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        val conn = label("∧", ft)
+        val subF1 = treeToComponent(t1, allow)
+        val subF2 = treeToComponent(t2, allow)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case _: MouseEntered =>
+            //conn.publish(new HighlightEvent(conn))
+            logger.trace("MouseEntered event received")
+            conn.foreground = highlightColor
+            parenthesis._1.foreground = highlightColor
+            parenthesis._2.foreground = highlightColor
+          case e: HighlightEvent =>
+            //conn.publish(e)
+            logger.trace("Highlight event received")
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            //conn.publish(new UnHighlightEvent(conn))
+            logger.trace("MouseExited event received")
+            conn.foreground = Color.black
+            parenthesis._1.foreground = Color.black
+            parenthesis._2.foreground = Color.black
+          case e: UnHighlightEvent =>
+            //conn.publish(e)
+            logger.trace("UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF1.listenTo(conn)
+        subF2.listenTo(conn)
         contents += parenthesis._1
-        contents += treeToComponent(t1, allow)
-        contents += label("∧", ft)
-        contents += treeToComponent(t2, allow)
+        contents += subF1
+        contents += conn
+        contents += subF2
         contents += parenthesis._2
       case OrET(t1, t2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        val conn = label("∨", ft)
+        val subF1 = treeToComponent(t1, allow)
+        val subF2 = treeToComponent(t2, allow)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case _: MouseEntered =>
+            //conn.publish(new HighlightEvent(conn))
+            logger.trace("MouseEntered event received")
+            conn.foreground = highlightColor
+            parenthesis._1.foreground = highlightColor
+            parenthesis._2.foreground = highlightColor
+          case e: HighlightEvent =>
+            //conn.publish(e)
+            logger.trace("Highlight event received")
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            //conn.publish(new UnHighlightEvent(conn))
+            logger.trace("MouseExited event received")
+            conn.foreground = Color.black
+            parenthesis._1.foreground = Color.black
+            parenthesis._2.foreground = Color.black
+          case e: UnHighlightEvent =>
+            //conn.publish(e)
+            logger.trace("UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF1.listenTo(conn)
+        subF2.listenTo(conn)
         contents += parenthesis._1
-        contents += treeToComponent(t1, allow)
-        contents += label("∨", ft)
-        contents += treeToComponent(t2, allow)
+        contents += subF1
+        contents += conn
+        contents += subF2
         contents += parenthesis._2
       case ImpET(t1, t2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        val conn = label("⊃", ft)
+        val subF1 = treeToComponent(t1, allow)
+        val subF2 = treeToComponent(t2, allow)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case _: MouseEntered =>
+            //conn.publish(new HighlightEvent(conn))
+            logger.trace("MouseEntered event received")
+            conn.foreground = highlightColor
+            parenthesis._1.foreground = highlightColor
+            parenthesis._2.foreground = highlightColor
+          case e: HighlightEvent =>
+            //conn.publish(e)
+            logger.trace("Highlight event received")
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            //conn.publish(new UnHighlightEvent(conn))
+            logger.trace("MouseExited event received")
+            conn.foreground = Color.black
+            parenthesis._1.foreground = Color.black
+            parenthesis._2.foreground = Color.black
+          case e: UnHighlightEvent =>
+            //conn.publish(e)
+            logger.trace("UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF1.listenTo(conn)
+        subF2.listenTo(conn)
         contents += parenthesis._1
-        contents += treeToComponent(t1, allow)
-        contents += label("⊃", ft)
-        contents += treeToComponent(t2, allow)
+        contents += subF1
+        contents += conn
+        contents += subF2
         contents += parenthesis._2
       case WeakQuantifier(formula, instances) =>
         val terms = instances.map(i => i._2.toList).toList
@@ -282,28 +393,135 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
 
     formula match {
       case Neg(f) =>
-        contents += label("¬", ft)
-        contents += drawFormula(f)
+        val conn = label("¬", ft)
+        val subF = drawFormula(f)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case _: MouseEntered =>
+            conn.publish(new HighlightEvent(conn))
+            logger.trace("¬: MouseEntered event received")
+            conn.foreground = highlightColor
+          case e: HighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("¬: Highlight event received")
+            logger.trace((conn == e.source).toString)
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            conn.publish(new UnHighlightEvent(conn))
+            logger.trace("¬: MouseExited event received")
+            conn.foreground = Color.black
+          case e: UnHighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("¬: UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF.listenTo(conn)
+        contents += conn
+        contents += subF
       case And(f1, f2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        val conn = label("∧", ft)
+        val subF1 = drawFormula(f1)
+        val subF2 = drawFormula(f2)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case _: MouseEntered =>
+            conn.publish(new HighlightEvent(conn))
+            logger.trace("∧: MouseEntered event received")
+            conn.foreground = highlightColor
+            parenthesis._1.foreground = highlightColor
+            parenthesis._2.foreground = highlightColor
+          case e: HighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("∧: Highlight event received")
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            //conn.publish(new UnHighlightEvent(conn))
+            logger.trace("∧: MouseExited event received")
+            conn.foreground = Color.black
+            parenthesis._1.foreground = Color.black
+            parenthesis._2.foreground = Color.black
+          case e: UnHighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("∧: UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF1.listenTo(conn)
+        subF2.listenTo(conn)
         contents += parenthesis._1
-        contents += drawFormula(f1)
-        contents += label("∧", ft)
-        contents += drawFormula(f2)
+        contents += subF1
+        contents += conn
+        contents += subF2
         contents += parenthesis._2
       case Or(f1, f2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        val conn = label("∨", ft)
+        val subF1 = drawFormula(f1)
+        val subF2 = drawFormula(f2)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case e: MouseEntered =>
+            conn.publish(new HighlightEvent(conn))
+            logger.trace("∨: MouseEntered event received")
+            conn.foreground = highlightColor
+            parenthesis._1.foreground = highlightColor
+            parenthesis._2.foreground = highlightColor
+          case e: HighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("∨: Highlight event received")
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            conn.publish(new UnHighlightEvent(conn))
+            logger.trace("∨: MouseExited event received")
+            conn.foreground = Color.black
+            parenthesis._1.foreground = Color.black
+            parenthesis._2.foreground = Color.black
+          case e: UnHighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("∨: UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF1.listenTo(conn)
+        subF2.listenTo(conn)
         contents += parenthesis._1
-        contents += drawFormula(f1)
-        contents += label("∨", ft)
-        contents += drawFormula(f2)
+        contents += subF1
+        contents += conn
+        contents += subF2
         contents += parenthesis._2
       case Imp(f1, f2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        val conn = label("⊃", ft)
+        val subF1 = drawFormula(f1)
+        val subF2 = drawFormula(f2)
+        conn.listenTo(conn.mouse.moves)
+        conn.reactions += {
+          case _: MouseEntered =>
+            conn.publish(new HighlightEvent(conn))
+            logger.trace("Imp: MouseEntered event received")
+            conn.foreground = highlightColor
+            parenthesis._1.foreground = highlightColor
+            parenthesis._2.foreground = highlightColor
+          case e: HighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("Imp: Highlight event received")
+            conn.foreground = highlightColor
+          case _: MouseExited =>
+            conn.publish(new UnHighlightEvent(conn))
+            logger.trace("Imp: MouseExited event received")
+            conn.foreground = Color.black
+            parenthesis._1.foreground = Color.black
+            parenthesis._2.foreground = Color.black
+          case e: UnHighlightEvent =>
+            if (conn != e.source) conn.publish(e)
+            logger.trace("Imp: UnHighlight event received")
+            conn.foreground = Color.black
+        }
+        subF1.listenTo(conn)
+        subF2.listenTo(conn)
         contents += parenthesis._1
-        contents += drawFormula(f1)
-        contents += label("⊃", ft)
-        contents += drawFormula(f2)
+        contents += subF1
+        contents += conn
+        contents += subF2
         contents += parenthesis._2
       case ExVar(v, f) =>
         contents += label("(\\exists " + DrawSequent.formulaToLatexString(v) + ")", ft)
@@ -314,6 +532,14 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
       case _ =>
         val lbl = DrawSequent.formulaToLabel(formula,ft)
         lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks)
+        lbl.reactions += {
+          case _: HighlightEvent =>
+            lbl.foreground = highlightColor
+            logger.trace("Atom: Highlight event received")
+          case _: UnHighlightEvent =>
+            lbl.foreground = Color.black
+            logger.trace("UnHighlightEvent received")
+        }
         contents += lbl
     }
   }
