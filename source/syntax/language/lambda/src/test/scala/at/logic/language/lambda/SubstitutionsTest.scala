@@ -144,6 +144,17 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       val term2 = Abs(Var("x",Ti), App(Abs(Var("x",Ti), App(Var("f",Ti->Ti),Var("x",Ti))),Var("x",Ti)))
       (sub(term1)) must beEqualTo (term2)
     }
+    "correctly apply a substitution when a bound variable appears both in its domain and its range" in {
+      val x = Var("x", Ti)
+      val y = Var("y", Ti)
+      val z = Var("z", Ti)
+      val u = Var("u", Ti)
+      val f = Var("f", Ti->(Ti->Ti) )
+      val term1 = Abs( y, App( App( f, x ), y ))
+      val sub = Substitution( List(( x, y ), ( y, z )))
+      val term2 = Abs( u, App( App( f, y ), u ))
+      (sub(term1)) must beEqualTo (term2)
+    }
     "work correctly on subterms of abs (i.e. the variables which were bound there are no longer bound)" in {
       val term1 = Abs(Var("F",Ti->Ti),Abs(Var("x",Ti), App(Var("F",Ti->Ti),Var("x",Ti))))
       val sub = Substitution(term1.variable, Abs(Var("x",Ti), App(Var("f",Ti->Ti),Var("x",Ti))))
