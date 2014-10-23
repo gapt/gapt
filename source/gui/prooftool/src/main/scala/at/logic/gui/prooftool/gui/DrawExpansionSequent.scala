@@ -5,13 +5,16 @@ package at.logic.gui.prooftool.gui
 import swing._
 import java.awt.{Dimension, Font, Color}
 import java.awt.Font._
-import swing.event.UIElementResized
+import scala.swing.event.{MouseExited, MouseEntered, UIElementResized, MouseClicked}
 import at.logic.calculi.expansionTrees._
-import event.MouseClicked
 import java.awt.event.MouseEvent
 import scala.collection.mutable.ListBuffer
+import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
+import at.logic.algorithms.expansionTrees.compressQuantifiers
 
-class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
+
+
+class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
   background = new Color(255,255,255)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   //private val width = toolkit.getScreenSize.width - 150
@@ -20,8 +23,9 @@ class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: 
   dividerLocation = preferredSize.width / 2
   val antecedent = new ListBuffer[DrawExpansionTree]
   val succedent = new ListBuffer[DrawExpansionTree]
-  leftComponent = side(ExpSequent.antecedent, "Antecedent", ft)
-  rightComponent = side(ExpSequent.succedent, "Succedent", ft)
+  val mExpSequent = compressQuantifiers(expSequent)
+  leftComponent = side(mExpSequent.antecedent, "Antecedent", ft)
+  rightComponent = side(mExpSequent.succedent, "Succedent", ft)
 
   listenTo(Main.top)
   reactions += {
@@ -38,13 +42,15 @@ class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: 
     else new Dimension(width, height)
   }
 
-  def side(expTrees: Seq[ExpansionTree], label: String, ft: Font) = new BoxPanel(Orientation.Vertical) {
+  def side(expTrees: Seq[MultiExpansionTree], label: String, ft: Font) = new BoxPanel(Orientation.Vertical) {
     contents += new Label(label) {
       font = ft.deriveFont(Font.BOLD)
       opaque = true
       border = Swing.EmptyBorder(10)
-      listenTo(mouse.clicks)
+      listenTo(mouse.clicks, mouse.moves)
       reactions += {
+        case e: MouseEntered => foreground = Color.blue
+        case e: MouseExited => foreground =  Color.black
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
           PopupMenu(DrawExpansionSequent.this, this, e.point.x, e.point.y)
       }
@@ -59,7 +65,8 @@ class DrawExpansionSequent(val ExpSequent: ExpansionSequent, private val fSize: 
     }
   }
 
-  def draw(et: ExpansionTree) = {
+  def draw(et: MultiExpansionTree) = {
+    println("Adding expansion tree " + et)
     val comp = new DrawExpansionTree(et,ft)
     comp.border = Swing.EmptyBorder(10)
     comp

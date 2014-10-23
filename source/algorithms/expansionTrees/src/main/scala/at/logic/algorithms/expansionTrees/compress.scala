@@ -4,7 +4,7 @@ package at.logic.algorithms.expansionTrees
 import at.logic.calculi.expansionTrees._
 import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => mWeakQuantifier, StrongQuantifier => mStrongQuantifier, And => mAnd, Or => mOr, Imp => mImp, Not => mNot, Atom => mAtom, SkolemQuantifier => mSkolemQuantifier, MultiExpansionTree, MultiExpansionSequent}
 import at.logic.language.hol.{HOLConst, HOLExpression, HOLVar, ExVar, AllVar, HOLFormula, Substitution, instantiate}
-import at.logic.utils.dssupport.ListSupport.{groupSeq}
+import at.logic.utils.dssupport.ListSupport.groupSeq
 
 /** Converts an ExpansionTree to a MultiExpansionTree by squishing quantifiers together into blocks.
   * There is also an apply method for sequents.

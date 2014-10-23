@@ -11,54 +11,29 @@ import swing._
 import event.MouseClicked
 import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
-import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Neg => NegET, Atom => AtomET}
+import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NegET, Atom => AtomET, getVars}
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.image.BufferedImage
 import at.logic.language.hol._
+import org.slf4j.LoggerFactory
 
 object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) extends BoxPanel(Orientation.Horizontal) {
+class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: Font) extends BoxPanel(Orientation.Horizontal) {
+
   import ExpansionTreeState._
-  background = new Color(255,255,255)
+
+  background = new Color(255, 255, 255)
   yLayoutAlignment = 0.5
   xLayoutAlignment = 0
-  private val state = scala.collection.mutable.Map.empty[HOLFormula,ExpansionTreeState.Value]
+  private val state = scala.collection.mutable.Map.empty[HOLFormula, ExpansionTreeState.Value]
+  val logger = LoggerFactory.getLogger("drawExpTreeLogger")
   initialize
 
-  def initialize = expansionTree match {
-    case WeakQuantifier(f, seq) =>
-      contents += formulaToComponent(f,extractTerms(expansionTree),seq.map(pair => pair._1).toList,allow = true)
-    case StrongQuantifier(f, v, et1) =>
-      contents += formulaToComponent(f,extractTerms(expansionTree),List(et1),allow = true)
-    case AndET(left, right) =>
-      val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
-      contents += parenthesis._1
-      contents += new DrawExpansionTree(left,ft)
-      contents += label("∧",ft)
-      contents += new DrawExpansionTree(right,ft)
-      contents += parenthesis._2
-    case OrET(left, right) =>
-      val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
-      contents += parenthesis._1
-      contents += new DrawExpansionTree(left,ft)
-      contents += label("∨",ft)
-      contents += new DrawExpansionTree(right,ft)
-      contents += parenthesis._2
-    case ImpET(left, right) =>
-      val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
-      contents += parenthesis._1
-      contents += new DrawExpansionTree(left,ft)
-      contents += label("⊃",ft)
-      contents += new DrawExpansionTree(right,ft)
-      contents += parenthesis._2
-    case NegET(tree) =>
-      contents += label("¬",ft)
-      contents += new DrawExpansionTree(tree,ft)
-    case AtomET(f) =>
-      contents += formulaToComponent(f,Nil,Nil,allow = true) // use false to lock the dummy quantifiers.
+  def initialize = {
+    contents += treeToComponent(expansionTree, allow = true)
   }
 
   def close(f: HOLFormula) {
@@ -82,210 +57,185 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
     revalidate()
   }
 
-  // Extracts list of lists of terms from the expansion tree.
-  // Each list of terms corresponds to an instantiation of all quantifiers.
-  def extractTerms(et: ExpansionTree): List[List[HOLExpression]] = et match {
-    case WeakQuantifier(f, seq) =>
-      seq.foldLeft(List.empty[List[HOLExpression]])((r, pair) => r ::: {
-        val tmp = extractTerms(pair._1)
-        if (tmp == Nil) List(List(pair._2))
-        else tmp.map(l => pair._2 :: l)
-      })
-    case StrongQuantifier(f, v, et1) =>
-      val tmp = extractTerms(et1)
-      if (tmp == Nil) List(List(v))
-      else tmp.map(l => List(v) ::: l)
-    case AndET(left, right) =>
-      extractTerms(left) ::: extractTerms(right)
-    case OrET(left, right) =>
-      extractTerms(left) ::: extractTerms(right)
-    case ImpET(left, right) =>
-      extractTerms(left) ::: extractTerms(right)
-    case NegET(tree) => extractTerms(tree)
-    case AtomET(f) => Nil
-  }
-
-//  // Extracts list of formulas from the expansion tree at depth n.
-//  def extractFormulas(et: ExpansionTree, formula: HOLFormula, n: Int, start: Boolean): List[HOLFormula] = et match {
-//    case WeakQuantifier(f, seq) =>
-//      if (f == formula) seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: extractFormulas(pair._1,formula,n,start = true))
-//      else if (f.subTerms.contains(formula)) seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: extractFormulas(pair._1,formula,n,start))
-//      else if (n > 1) seq.foldLeft(List.empty[HOLFormula])((r, pair) => r ::: extractFormulas(pair._1,formula,n-1,start))
-//      else if (start) List(f)
-//      else Nil
-//    case StrongQuantifier(f, v, et1) =>
-//      if (f == formula) extractFormulas(et1,formula,n,start = true)
-//      else if (f.subTerms.contains(formula)) extractFormulas(et1,formula,n,start)
-//      else if (n > 1) extractFormulas(et1,formula,n-1,start)
-//      else if (start) List(f)
-//      else Nil
-//    case AndET(left, right) =>
-//      val ll = extractFormulas(left,formula,n,start)
-//      val rl = extractFormulas(right,formula,n,start)
-//      if (ll == Nil) rl
-//      else if (rl == Nil) ll
-//      else ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => And(f1,f2)))
-//    case OrET(left, right) =>
-//      val ll = extractFormulas(left,formula,n,start)
-//      val rl = extractFormulas(right,formula,n,start)
-//      if (ll == Nil) rl
-//      else if (rl == Nil) ll
-//      else ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Or(f1,f2)))
-//    case ImpET(left, right) =>
-//      val ll = extractFormulas(left,formula,n,start)
-//      val rl = extractFormulas(right,formula,n,start)
-//      if (ll == Nil) rl
-//      else if (rl == Nil) ll
-//      else ll.foldLeft(List.empty[HOLFormula])((r, f1) => r ::: rl.map(f2 => Imp(f1,f2)))
-//    case NegET(tree) =>
-//      extractFormulas(tree,formula,n,start).map(f => Neg(f))
-//    case AtomET(f) => if (start) List(f) else Nil
-//  }
-
-  // Extracts list of ExpansionTrees from the expansion tree at depth n.
-  def extractET(et: ExpansionTree,n: Int): List[ExpansionTree] = {
-    if (n == 1) List(et)
-    else et match {
-      case WeakQuantifier(f, seq) =>
-        seq.map(pair => extractET(pair._1,n-1)).flatten.toList
-      case StrongQuantifier(f, v, et1) =>
-        extractET(et1,n-1)
-      case _ => throw new Exception("Something went wrong in DrawExpansionTree!")
-    }
-  }
-
-  def formulaToComponent(holF: HOLFormula, list: List[List[HOLExpression]], expTrees: List[ExpansionTree], allow: Boolean): BoxPanel = new BoxPanel(Orientation.Horizontal) {
-    background = new Color(255,255,255)
+  /** This function is responsible for converting an expansion tree to a component.
+    * @param expTree The tree to be converted.
+    * @param allow Whether the root node of expTree should be clickable. Might be obsolete.
+    * @return A BoxPanel representing expTree.
+    */
+  def treeToComponent(expTree: MultiExpansionTree, allow: Boolean): BoxPanel = new BoxPanel(Orientation.Horizontal) {
+    println("Drawing " + expTree)
+    background = new Color(255, 255, 255)
     yLayoutAlignment = 0.5
     opaque = false
 
-    holF match {
-      case Neg(f) =>
-        contents += label("¬",ft)
-        contents += formulaToComponent(f,list,expTrees,allow)
-      case And(f1,f2) =>
-        val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
+    expTree match {
+      case AtomET(f) =>
+        val lbl = DrawSequent.formulaToLabel(f, ft)
+        lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks) // We don't want atoms to react to mouse behavior.
+        contents += lbl
+      case NegET(t) =>
+        contents += label("¬", ft)
+        contents += treeToComponent(t, allow)
+      case AndET(t1, t2) =>
+        val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,list,expTrees,allow)
-        contents += label("∧",ft)
-        contents += formulaToComponent(f2,list,expTrees,allow)
+        contents += treeToComponent(t1, allow)
+        contents += label("∧", ft)
+        contents += treeToComponent(t2, allow)
         contents += parenthesis._2
-      case Or(f1,f2) =>
-        val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
+      case OrET(t1, t2) =>
+        val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,list,expTrees,allow)
-        contents += label("∨",ft)
-        contents += formulaToComponent(f2,list,expTrees,allow)
+        contents += treeToComponent(t1, allow)
+        contents += label("∨", ft)
+        contents += treeToComponent(t2, allow)
         contents += parenthesis._2
-      case Imp(f1,f2) =>
-        val parenthesis = connectParenthesis(label("(",ft), label(")",ft))
+      case ImpET(t1, t2) =>
+        val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
         contents += parenthesis._1
-        contents += formulaToComponent(f1,list,expTrees,allow)
-        contents += label("⊃",ft)
-        contents += formulaToComponent(f2,list,expTrees,allow)
+        contents += treeToComponent(t1, allow)
+        contents += label("⊃", ft)
+        contents += treeToComponent(t2, allow)
         contents += parenthesis._2
-      case ExVar(_,_) | AllVar(_,_) =>
-        val (quantifiers, number, formula) = analyzeFormula(holF)
-        val (list1, list2) = splitList(number,list)
-        if ( state.get(holF) != Some(Expand) ) {
-          val lbl = LatexLabel(ft,quantifiers)
-          if (allow) lbl.reactions += {
-            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-              PopupMenu(DrawExpansionTree.this, holF, lbl, e.point.x, e.point.y)
-            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
-              if (state.get(holF) == Some(Open)) expand(holF)
-              else open(holF)
-          } else {
-            lbl.deafTo(lbl.mouse.clicks)
-            lbl.tooltip = "First expand all the qauntifiers till the root!" // alternative message "The block of quantifiers is locked!"
-          }
-          contents += lbl
-          if ( state.get(holF) == Some(Open) ) contents += drawTerms(list1)
-          // according to the paper, nested quantifiers can be opened/expanded only if all the quantifiers till root is expanded.
-          contents += formulaToComponent(formula,list2,expTrees,allow = false)
-        } else {
-          val formulas = expTrees.map(et => extractET(et,number)).flatten
-          if (formulas != Nil) { // Assumed that proofs are skolemized, i.e. there is no quantifier alternation.
-            val lbl = LatexLabel(ft, getMatrixSymbol(holF))
+      case WeakQuantifier(formula, instances) =>
+        val terms = instances.map(i => i._2.toList).toList
+        val subtrees = instances.map(i => i._1).toList
+        val quantifiers = quantifierBlock(expTree) // quantifiers is a string containing the quantifier block represented by this weak node.
+
+        if (state.get(formula) == Some(Expand)) {
+          // We first consider the case that the top-level quantifier is expanded.
+          if (subtrees != Nil) {
+            val lbl = LatexLabel(ft, getMatrixSymbol(formula))
             lbl.reactions += {
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close(holF)
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close(formula)
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-                PopupMenu(DrawExpansionTree.this, holF, lbl, e.point.x, e.point.y)
+                PopupMenu(DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y)
             }
             contents += lbl
-            contents += drawMatrix(formulas)
-          } else { // If formulas are empty, quantified formula comes from weakening so leave it unchanged.
-            state -= holF
-            contents += formulaToComponent(holF,list2,expTrees,allow)
+            contents += drawMatrix(subtrees)
+          }
+          else {
+            state -= formula
+            contents += drawFormula(instances.head._1.toShallow) // If there are no terms to expand the quantifier with, we can safely call drawFormula.
           }
         }
-      case _ =>
-        val lbl = DrawSequent.formulaToLabel(holF,ft)
-        lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks)
-        contents += lbl
+        else {
+          // The current tree is either open or closed.
+          val lbl = LatexLabel(ft, quantifiers)
+
+          if (allow) lbl.reactions += {
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+              PopupMenu(DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y)
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
+              if (state.get(formula) == Some(Open)) expand(formula)
+              else open(formula)
+          }
+          else {
+            lbl.deafTo(lbl.mouse.clicks)
+            lbl.tooltip = "First expand all the quantifiers till the root!" // alternative message "The block of quantifiers is locked!"
+          }
+
+          contents += lbl
+          if (state.get(formula) == Some(Open)) contents += drawTerms(terms) // If the quantifier block is open, we draw its terms.
+          contents += drawFormula(instances.head._1.toShallow) // Since the current quantifier block is not expanded, we needn't worry about the state of child trees and can call drawFormula.
+        }
+
+      case StrongQuantifier(formula, vars, sel) => // This case is mostly analogous to the WeakQuantifier one.
+        val terms = List(vars.toList)
+        val subtrees = List(sel)
+        val quantifiers = quantifierBlock(expTree)
+
+        if (state.get(formula) == Some(Expand)) {
+          if (subtrees != Nil) {
+            val lbl = LatexLabel(ft, getMatrixSymbol(formula))
+            lbl.reactions += {
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close(formula)
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+                PopupMenu(DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y)
+            }
+            contents += lbl
+            contents += drawMatrix(subtrees)
+          }
+          else {
+            state -= formula
+            contents += drawFormula(sel.toShallow)
+          }
+        }
+        else {
+          val lbl = LatexLabel(ft, quantifiers)
+
+          if (allow) lbl.reactions += {
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+              PopupMenu(DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y)
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
+              if (state.get(formula) == Some(Open)) expand(formula)
+              else open(formula)
+          }
+          else {
+            lbl.deafTo(lbl.mouse.clicks)
+            lbl.tooltip = "First expand all the quantifiers till the root!" // alternative message "The block of quantifiers is locked!"
+          }
+
+          contents += lbl
+          if (state.get(formula) == Some(Open)) contents += drawTerms(terms)
+          contents += drawFormula(sel.toShallow)
+        }
     }
   }
 
   def getMatrixSymbol(formula: HOLFormula) = formula match {
-    case ExVar(_,_) => "\\bigvee"
-    case AllVar(_,_) => "\\bigwedge"
+    case ExVar(_, _) => "\\bigvee"
+    case AllVar(_, _) => "\\bigwedge"
     case _ => throw new Exception("Something went wrong in DrawExpansionTree!")
   }
 
-  // String represents the first n quantifiers in a raw,
-  // Int is the number n,
-  // HOLFormula is the rest of formula
-  def analyzeFormula(formula: HOLFormula): (String,Int,HOLFormula) = formula match {
-    case ExVar(v,f) =>
-      val tuple = analyzeFormula(f)
-      ("(" + "\\exists " + DrawSequent.formulaToLatexString(v) + ")" + tuple._1, tuple._2 + 1, tuple._3)
-    case AllVar(v,f) =>
-      val tuple = analyzeFormula(f)
-      ("(" + "\\forall " + DrawSequent.formulaToLatexString(v) + ")" + tuple._1, tuple._2 + 1, tuple._3)
-    case _ => ("",0,formula)
-  }
-
-  // Splits each list of terms at the position n in the list of lists of terms.
-  // This is necessary for nested quantifiers in formulas.
-  def splitList(n: Int, list: List[List[HOLExpression]]) = {
-    val tmp = list.map(l =>
-      if (l.size >= n) l.splitAt(n)
-      else throw new Exception("Something went wrong in DrawExpansionTree!")
-    )
-    val list1 = tmp.map(pair => pair._1)
-    val list2 = tmp.filter(pair => pair._2 != Nil).map(pair => pair._2)
-    (list1, list2)
+  /**
+   * @param et A MultiExpansionTree (either StrongQuantifier or WeakQuantifier)
+   * @return A string containing the quantifier block represented by this quantifier node.
+   */
+  def quantifierBlock(et: MultiExpansionTree): String = et match {
+    case StrongQuantifier(_, _, _) | WeakQuantifier(_, _) =>
+      val vars = getVars(et)
+      val f = et.toShallow
+      f match {
+        case AllVar(_, _) => vars.foldLeft("")((str: String, v: HOLVar) => str + "(\\forall " + DrawSequent.formulaToLatexString(v) + ")")
+        case ExVar(_, _) => vars.foldLeft("")((str: String, v: HOLVar) => str + "(\\exists " + DrawSequent.formulaToLatexString(v) + ")")
+      }
   }
 
   // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
   // List of terms are separated by ; and terms in a list by ,
   def drawTerms(list: List[List[HOLExpression]]) = new BoxPanel(Orientation.Horizontal) {
-    background = new Color(255,255,255)
+    background = new Color(255, 255, 255)
     yLayoutAlignment = 0.5
 
-    contents += label("\\langle",ft)
+    contents += label("\\langle", ft)
     var firstList = true
     list.foreach(l => {
-      if (! firstList) {
-        val lbl = label("\\; ; \\;",ft)
+      if (!firstList) {
+        val lbl = label("\\; ; \\;", ft)
         lbl.yLayoutAlignment = 0.35
         contents += lbl
       } else firstList = false
       var firstTerm = true
       l.foreach(t => {
-        if (! firstTerm) {
-          val lbl = label(",",ft)
+        if (!firstTerm) {
+          val lbl = label(",", ft)
           lbl.yLayoutAlignment = 0
           contents += lbl
         } else firstTerm = false
-        contents += label(DrawSequent.formulaToLatexString(t),ft)
+        contents += label(DrawSequent.formulaToLatexString(t), ft)
       })
     })
-    contents += label("\\rangle",ft)
+    contents += label("\\rangle", ft)
   }
 
-  // Draws list of formulas like single column matrix surrounded by < >.
-  def drawMatrix(list: List[ExpansionTree]) = new BoxPanel(Orientation.Vertical) {
+  /**
+   *
+   * @param list A list of MultiExpansionTrees.
+   * @return A BoxPanel containing the elements of list stacked on top of each other and surrounded by angle brackets.
+   */
+  def drawMatrix(list: List[MultiExpansionTree]) = new BoxPanel(Orientation.Vertical) {
     background = new Color(255,255,255)
     yLayoutAlignment = 0.5
     border = Swing.EmptyBorder(0,ft.getSize,0,ft.getSize)
@@ -320,6 +270,51 @@ class DrawExpansionTree(val expansionTree: ExpansionTree, private val ft: Font) 
 
       g.drawLine(rightAngleNodeX, anglesNodeY, rightAngleEdgesX, anglesEdge1Y)
       g.drawLine(rightAngleNodeX, anglesNodeY, rightAngleEdgesX, anglesEdge2Y)
+    }
+  }
+
+
+  def drawFormula(formula: HOLFormula): BoxPanel = new BoxPanel(Orientation.Horizontal) {
+    logger.trace("drawFormula called on formula " + formula)
+    background = new Color(255, 255, 255)
+    yLayoutAlignment = 0.5
+    opaque = false
+
+    formula match {
+      case Neg(f) =>
+        contents += label("¬", ft)
+        contents += drawFormula(f)
+      case And(f1, f2) =>
+        val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        contents += parenthesis._1
+        contents += drawFormula(f1)
+        contents += label("∧", ft)
+        contents += drawFormula(f2)
+        contents += parenthesis._2
+      case Or(f1, f2) =>
+        val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        contents += parenthesis._1
+        contents += drawFormula(f1)
+        contents += label("∨", ft)
+        contents += drawFormula(f2)
+        contents += parenthesis._2
+      case Imp(f1, f2) =>
+        val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
+        contents += parenthesis._1
+        contents += drawFormula(f1)
+        contents += label("⊃", ft)
+        contents += drawFormula(f2)
+        contents += parenthesis._2
+      case ExVar(v, f) =>
+        contents += label("(\\exists " + DrawSequent.formulaToLatexString(v) + ")", ft)
+        contents += drawFormula(f)
+      case AllVar(v, f) =>
+        contents += label("(\\forall " + DrawSequent.formulaToLatexString(v) + ")", ft)
+        contents += drawFormula(f)
+      case _ =>
+        val lbl = DrawSequent.formulaToLabel(formula,ft)
+        lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks)
+        contents += lbl
     }
   }
 

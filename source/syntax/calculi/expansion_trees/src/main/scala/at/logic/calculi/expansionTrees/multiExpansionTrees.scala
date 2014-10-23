@@ -17,61 +17,70 @@ type T1 = NonTerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]]
 
 trait MultiExpansionTree extends TreeA[Option[HOLFormula],Option[Seq[HOLExpression]]] {
   def toDeep(pol: Int): HOLFormula
+  def toShallow: HOLFormula
 }
 
-case class WeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpansionTree, Seq[HOLExpression]]]) 
+case class WeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpansionTree, Seq[HOLExpression]]])
   extends MultiExpansionTree with T1 {
-    lazy val node = Some(formula)
-    lazy val children = instances.map(x => (x._1,Some(x._2)))
-    
-    override def toDeep(pol: Int): HOLFormula = {
-      if (pol > 0)
-        OrHOL( instances.map( t => t._1.toDeep(pol)).toList )
-      else
-        AndHOL(instances.map( t => t._1.toDeep(pol)).toList )
+  lazy val node = Some(formula)
+  lazy val children = instances.map(x => (x._1,Some(x._2)))
+
+  override def toDeep(pol: Int): HOLFormula = {
+    if (pol > 0)
+      OrHOL( instances.map( t => t._1.toDeep(pol)).toList )
+    else
+      AndHOL(instances.map( t => t._1.toDeep(pol)).toList )
     }
+  override def toShallow = formula
 }
 
 case class StrongQuantifier(formula: HOLFormula, variables: Seq[HOLVar], selection: MultiExpansionTree)
   extends MultiExpansionTree with T1 {
   lazy val node = Some(formula)
   lazy val children = List((selection, Some(variables)))
-  
+
   override def toDeep(pol: Int): HOLFormula = selection.toDeep(pol)
+  override def toShallow = formula
 }
 
 case class SkolemQuantifier(formula: HOLFormula, skolem_constants: Seq[HOLExpression], selection: MultiExpansionTree)
     extends MultiExpansionTree with T1 {
     lazy val node = Some(formula)
     lazy val children = List((selection, Some(skolem_constants)))
-    
+
     override def toDeep(pol: Int): HOLFormula = selection.toDeep(pol)
+    override def toShallow = formula
 }
 
 case class And(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(left,None),Tuple2(right,None))
-  
+
   override def toDeep(pol: Int): HOLFormula = AndHOL(left.toDeep(pol), right.toDeep(pol))
+  override def toShallow = AndHOL(left.toShallow, right.toShallow)
 }
 case class Or(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(left,None),Tuple2(right,None))
   override def toDeep(pol: Int): HOLFormula = OrHOL(left.toDeep(pol), right.toDeep(pol))
+  override def toShallow = OrHOL(left.toShallow, right.toShallow)
 }
 case class Imp(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(left,None),Tuple2(right,None))
   override def toDeep(pol: Int): HOLFormula = ImpHOL(left.toDeep(-pol), right.toDeep(pol))
+  override def toShallow = ImpHOL(left.toShallow, right.toShallow)
 }
 case class Not(tree: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(tree,None))
   override def toDeep(pol: Int): HOLFormula = NegHOL(tree.toDeep(-pol))
+  override def toShallow = NegHOL(tree.toShallow)
 }
 case class Atom(formula: HOLFormula) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]] {
   lazy val node = Some(formula)
   override def toDeep(pol: Int): HOLFormula = formula
+  override def toShallow = formula
 }
 
 // TODO: is there a way to make this and the toFormula method from ExpansionTree
@@ -129,6 +138,34 @@ def numberOfInstances(tree: MultiExpansionTree): Int = {
     case WeakQuantifier(_,inst) => inst.length
   }
 }
+  def getVars(tree: MultiExpansionTree): List[HOLVar] = tree match {
+    case WeakQuantifier(f,_) =>
+      f match {
+        case ExVar(v, subF) => v +: getVarsEx(subF)
+        case AllVar(v, subF) => v +: getVarsAll(subF)
+      }
+    case StrongQuantifier(f,_,_) =>
+      f match {
+        case ExVar(v, subF) => v +: getVarsEx(subF)
+        case AllVar(v, subF) => v +: getVarsAll(subF)
+      }
+    case SkolemQuantifier(f,_,_) =>
+      f match {
+        case ExVar(v, subF) => v +: getVarsEx(subF)
+        case AllVar(v, subF) => v +: getVarsAll(subF)
+      }
+    case _ => Nil
+  }
+
+  def getVarsEx(form: HOLFormula): List[HOLVar] = form match {
+    case ExVar(v,f) => v +: getVarsEx(f)
+    case _ => Nil
+  }
+
+  def getVarsAll(form: HOLFormula): List[HOLVar] = form match {
+    case AllVar(v,f) => v +: getVarsAll(f)
+    case _ => Nil
+  }
 
 class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succedent: Seq[MultiExpansionTree]) {
   def toTuple(): (Seq[MultiExpansionTree], Seq[MultiExpansionTree]) = {
@@ -183,11 +220,11 @@ class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succede
     val state = Seq(antecedent, succedent)
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
-  
+
   def toDeep() : FSequent = {
     val newAnt = antecedent.map(t => t.toDeep(-1))
     val newSuc = succedent.map(t => t.toDeep(1))
-    
+
     FSequent(newAnt, newSuc)
   }
 }

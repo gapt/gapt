@@ -67,15 +67,15 @@ object PopupMenu {
       else
         des.succedent
         
-      contents += new MenuItem(Action("Close all") { side.foreach(det => det.close(toFormula(det.expansionTree))) })
+      contents += new MenuItem(Action("Close all") { side.foreach(det => det.close(det.expansionTree.toShallow)) })
       contents += new MenuItem(Action("Open all") {
         for (det <- side) {
-          val subFs = firstQuantifiers(toFormula(det.expansionTree))
+          val subFs = firstQuantifiers(det.expansionTree.toShallow)
           subFs.foreach(det.open)
         }
       })
       
-      contents += new MenuItem(Action("Expand all") { side.foreach(det => expandRecursive(det, toFormula(det.expansionTree))) })
+      contents += new MenuItem(Action("Expand all") { side.foreach(det => expandRecursive(det, det.expansionTree.toShallow)) })
     }
     popupMenu.show(label, x, y)
   }
