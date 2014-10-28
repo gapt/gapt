@@ -11,7 +11,7 @@ import swing._
 import scala.swing.event.{MouseExited, MouseEntered, MouseClicked, Event}
 import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
-import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NegET, Atom => AtomET, getVars}
+import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NegET, Atom => AtomET, getVars, getSubformula}
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.image.BufferedImage
 import at.logic.language.hol._
@@ -174,6 +174,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         else {
           // The current tree is either open or closed.
           val lbl = LatexLabel(ft, quantifiers)
+          val subF = getSubformula(expTree)
 
           if (allow) lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -189,7 +190,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
 
           contents += lbl
           if (state.get(formula) == Some(Open)) contents += drawTerms(terms) // If the quantifier block is open, we draw its terms.
-          contents += drawFormula(instances.head._1.toShallow) // Since the current quantifier block is not expanded, we needn't worry about the state of child trees and can call drawFormula.
+          contents += drawFormula(subF) // Since the current quantifier block is not expanded, we needn't worry about the state of child trees and can call drawFormula.
         }
 
       case StrongQuantifier(formula, vars, sel) => // This case is mostly analogous to the WeakQuantifier one.
@@ -215,6 +216,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         }
         else {
           val lbl = LatexLabel(ft, quantifiers)
+          val subF = getSubformula(expTree)
 
           if (allow) lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -230,7 +232,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
 
           contents += lbl
           if (state.get(formula) == Some(Open)) contents += drawTerms(terms)
-          contents += drawFormula(sel.toShallow)
+          contents += drawFormula(subF)
         }
     }
   }

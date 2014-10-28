@@ -157,18 +157,57 @@ def numberOfInstances(tree: MultiExpansionTree): Int = {
     case _ => Nil
   }
 
-  def getVarsEx(form: HOLFormula): List[HOLVar] = form match {
+  private def getVarsEx(form: HOLFormula): List[HOLVar] = form match {
     case ExVar(v,f) => v +: getVarsEx(f)
     case _ => Nil
   }
 
-  def getVarsAll(form: HOLFormula): List[HOLVar] = form match {
+  private def getVarsAll(form: HOLFormula): List[HOLVar] = form match {
     case AllVar(v,f) => v +: getVarsAll(f)
     case _ => Nil
   }
 
+  /** Strips off the first n quantifiers of a formula. It's only well-defined for formulas that begin with at least n quantifiers.
+   * 
+   * @param form A HOLFormula
+   * @param n Number of quantifiers to be removed
+   * @return form without the first n quantifiers
+   */
+  private def removeQuantifiers(form: HOLFormula, n: Int): HOLFormula =
+    if (n == 0)
+      form
+    else form match {
+      case AllVar(_,f) => removeQuantifiers(f, n-1)
+      case ExVar(_,f) => removeQuantifiers(f, n-1)
+  }
+
+  /** Returns a node's shallow formula minus the quantifiers represented by that node.
+   *
+   * @param et A MultiExpansionTree
+   * @return The shallow formula of et minus the quantifiers of et
+   */
+  def getSubformula(et: MultiExpansionTree): HOLFormula = et match {
+    case WeakQuantifier(_,_) | StrongQuantifier(_,_,_) | SkolemQuantifier(_,_,_)  =>
+      val n = numberOFQuantifiers(et)
+      val f = et.toShallow
+      removeQuantifiers(f,n)
+    case _ => et.toShallow
+  }
+
+  /** Returns the number of quantifiers represented by a node.
+   * 
+   * @param et A MultiExpansionTree
+   * @return The number of quantifiers represented by et's root
+   */
+  def numberOFQuantifiers(et: MultiExpansionTree): Int = et match {
+    case WeakQuantifier(_, inst) => inst.head._2.length
+    case StrongQuantifier(_, vars, _) => vars.length
+    case SkolemQuantifier(_, skol, _) => skol.length
+    case _ => 0
+  }
+
 class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succedent: Seq[MultiExpansionTree]) {
-  def toTuple(): (Seq[MultiExpansionTree], Seq[MultiExpansionTree]) = {
+  def toTuple: (Seq[MultiExpansionTree], Seq[MultiExpansionTree]) = {
     (antecedent, succedent)
   }
 
@@ -221,7 +260,7 @@ class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succede
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 
-  def toDeep() : FSequent = {
+  def toDeep : FSequent = {
     val newAnt = antecedent.map(t => t.toDeep(-1))
     val newSuc = succedent.map(t => t.toDeep(1))
 
@@ -230,7 +269,7 @@ class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succede
 }
 object MultiExpansionSequent {
   def apply(antecedent: Seq[MultiExpansionTree], succedent: Seq[MultiExpansionTree]) = new MultiExpansionSequent(antecedent, succedent)
-  def unapply(etSeq: MultiExpansionSequent) = Some( etSeq.toTuple() )
+  def unapply(etSeq: MultiExpansionSequent) = Some( etSeq.toTuple )
 }
 
 object toDeep {
