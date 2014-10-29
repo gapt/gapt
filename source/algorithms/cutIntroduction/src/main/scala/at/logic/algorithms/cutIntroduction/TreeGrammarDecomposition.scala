@@ -191,24 +191,24 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
   val nonterminal_b = "β"
 
   // mapping all sub-/terms of the language to a unique index
-  var termMap : mutable.HashMap[FOLTerm,Int]
+  var termMap : mutable.Map[FOLTerm,Int]
   // reversed map of all sub-/terms
-  var reverseTermMap : mutable.HashMap[Int,FOLTerm]
+  var reverseTermMap : mutable.Map[Int,FOLTerm]
   // counter for uniquely defined terms indexes
   var termIndex : Int
 
   // the sufficient set of keys represented as a list
   var keyList : mutable.MutableList[FOLTerm]
 
-  // a hashmap storing for every key its index in keyList
-  var keyIndexMap : mutable.HashMap[FOLTerm,Int]
+  // a Map storing for every key its index in keyList
+  var keyIndexMap : mutable.Map[FOLTerm,Int]
 
   // stores tuples (term,keyset), where keyset is a list of indexes of keys in keyList
   // which produce the particular term
-  var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]]
+  var keyMap : mutable.Map[FOLTerm,mutable.Set[Int]]
 
   // mapping keys to a list of terms which can be produced by a particular key
-  var decompMap : mutable.HashMap[FOLTerm,mutable.Set[List[FOLTerm]]]
+  var decompMap : mutable.Map[FOLTerm,mutable.Set[List[FOLTerm]]]
 
   // abstract method definitions for individual implementation
   // w.r.t. the method type
@@ -345,7 +345,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
         var new_key = k
         // for every position in the set
         // try to replace the term on that position by a non-terminal
-        val allrests = mutable.HashMap[Int, FOLExpression]()
+        val allrests = mutable.Map[Int, FOLExpression]()
         for (i <- List.range(0, partition.size)) {
           // backup new_key since we want to know at the end if we were able
           // to substitute anything
@@ -460,33 +460,33 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override val n: Int) extends TreeGrammarDecomposition(termset, n) {
 
   // mapping all sub-/terms of the language to a unique index
-  var termMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+  var termMap : mutable.Map[FOLTerm,Int] = mutable.Map[FOLTerm,Int]()
   // reversed map of all sub-/terms
-  var reverseTermMap : mutable.HashMap[Int,FOLTerm] = mutable.HashMap[Int,FOLTerm]()
+  var reverseTermMap : mutable.Map[Int,FOLTerm] = mutable.Map[Int,FOLTerm]()
   // counter for uniquely defined terms indexes
   var termIndex = 0
 
   // the sufficient set of keys represented as a list
   var keyList : mutable.MutableList[FOLTerm] = mutable.MutableList[FOLTerm]()
 
-  // a hashmap storing for every key its index in keyList
-  var keyIndexMap : mutable.HashMap[FOLTerm,Int] = mutable.HashMap[FOLTerm,Int]()
+  // a Map storing for every key its index in keyList
+  var keyIndexMap : mutable.Map[FOLTerm,Int] = mutable.Map[FOLTerm,Int]()
 
   // stores tuples (term,keyset), where keyset is a list of indexes of keys in keyList
   // which produce the particular term
-  var keyMap : mutable.HashMap[FOLTerm,mutable.Set[Int]] = mutable.HashMap[FOLTerm,mutable.Set[Int]]()
+  var keyMap : mutable.Map[FOLTerm,mutable.Set[Int]] = mutable.Map[FOLTerm,mutable.Set[Int]]()
 
   // mapping keys to a list of terms which can be produced by a particular key
-  var decompMap : mutable.HashMap[FOLTerm,mutable.Set[List[FOLTerm]]] = mutable.HashMap[FOLTerm,mutable.Set[List[FOLTerm]]]()
+  var decompMap : mutable.Map[FOLTerm,mutable.Set[List[FOLTerm]]] = mutable.Map[FOLTerm,mutable.Set[List[FOLTerm]]]()
 
 
   // all constants of the form x_{i,k_j}, where
   // i = non-terminal index, k_j = key
-  var propRules : mutable.HashMap[FOLFormula,(Int,Int)] = mutable.HashMap[FOLFormula,(Int,Int)]()
+  var propRules : mutable.Map[FOLFormula,(Int,Int)] = mutable.Map[FOLFormula,(Int,Int)]()
 
   // all constants of the form x_{t,i,q}, where
   // t = subterm of q, i = non-terminal index, q = term of the language (termset)
-  var propRests : mutable.HashMap[FOLFormula,(Int,Int,Int)] = mutable.HashMap[FOLFormula,(Int,Int,Int)]()
+  var propRests : mutable.Map[FOLFormula,(Int,Int,Int)] = mutable.Map[FOLFormula,(Int,Int,Int)]()
 
 
   /**
@@ -538,7 +538,7 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
   override def MCS() : Set[FOLFormula] = {
     val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc)
     // update the reverse term map
-    reverseTermMap = mutable.HashMap(termMap.toList.map(x => x.swap).toSeq:_*)
+    reverseTermMap = mutable.Map(termMap.toList.map(x => x.swap).toSeq:_*)
     debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\\\\\ \n"+PrettyPrinter(x).replaceAllLiterally(nonterminal_a, "\\alpha")))
    return f.toSet
   }
@@ -837,6 +837,8 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
     })
     val r = R(qindex,qsubtermIndexes.toSet)
     val d = D(q,0,q)
+    // don't forget to add the possibility to the disjunctions
+    // that \alpha_0 => trivialkey
     val trivialKeyIndex = addKey(q)
     val trivialKeyRule = Atom(0+"_"+trivialKeyIndex, Nil)
     propRules(trivialKeyRule) = (0, trivialKeyIndex)
