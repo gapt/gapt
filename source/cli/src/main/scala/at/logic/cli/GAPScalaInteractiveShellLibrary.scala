@@ -44,7 +44,7 @@ import at.logic.language.schema.{AllVar => SchemaAllVar, Atom => SchemaAtom, ExV
 import at.logic.parsing.calculi.latex._
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.calculus.xml._
-import at.logic.parsing.hoare.{SimpleProgramParser, ProgramParser}
+import at.logic.parsing.hoare.ProgramParser
 import at.logic.parsing.ivy.conversion.IvyToRobinson
 import at.logic.parsing.ivy.{IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution}
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
@@ -624,7 +624,7 @@ object parse {
     exp.asInstanceOf[HOLFormula]
   }
 
-  def program(s: String): Program = SimpleProgramParser.parseProgram(s)
+  def program(s: String): Program = ProgramParser.parseProgram(s)
 
   def help() = {
     println("fol: String => FOLFormula")
