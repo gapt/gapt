@@ -14,7 +14,6 @@ import at.logic.calculi.proofs.TreeProof
 import at.logic.calculi.lk.base.LKProof
 import at.logic.gui.prooftool.parser.{ProofDbChanged, ProofToolPublisher, ShowProof, HideProof}
 import at.logic.language.hol.{HOLFormula, Neg, And, Imp, Or, ExVar, AllVar, Atom}
-import at.logic.calculi.expansionTrees.toFormula
 
 
 class PopupMenu extends Component with Wrapper {
@@ -60,24 +59,20 @@ object PopupMenu {
     popupMenu.show(component, x, y)
   }
   
-  def apply(des: DrawExpansionSequent, label: Label, x: Int, y: Int) {
+  def apply(ced: CedentPanel, x: Int, y: Int) {
     val popupMenu = new PopupMenu {
-      val side = if (label.text == "Antecedent")
-        des.antecedent
-      else
-        des.succedent
-        
-      contents += new MenuItem(Action("Close all") { side.foreach(det => det.close(det.expansionTree.toShallow)) })
+      val trees = ced.treeList.drawnExpansionTrees
+      contents += new MenuItem(Action("Close all") { trees.foreach(det => det.close(det.expansionTree.toShallow)) })
       contents += new MenuItem(Action("Open all") {
-        for (det <- side) {
+        for (det <- trees) {
           val subFs = firstQuantifiers(det.expansionTree.toShallow)
           subFs.foreach(det.open)
         }
       })
       
-      contents += new MenuItem(Action("Expand all") { side.foreach(det => expandRecursive(det, det.expansionTree.toShallow)) })
+      contents += new MenuItem(Action("Expand all") { trees.foreach(det => expandRecursive(det, det.expansionTree.toShallow)) })
     }
-    popupMenu.show(label, x, y)
+    popupMenu.show(ced.titleLabel, x, y)
   }
   
   def firstQuantifiers(f: HOLFormula): List[HOLFormula] = f match {

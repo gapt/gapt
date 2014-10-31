@@ -8,7 +8,7 @@ package at.logic.gui.prooftool.gui
 */
 
 import swing._
-import scala.swing.event.{MouseExited, MouseEntered, MouseClicked, Event}
+import scala.swing.event.{MouseExited, MouseEntered, MouseClicked}
 import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
 import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NegET, Atom => AtomET, getVars, getSubformula}
@@ -64,7 +64,6 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
     * @return A BoxPanel representing expTree.
     */
   def treeToComponent(expTree: MultiExpansionTree, allow: Boolean): BoxPanel = new BoxPanel(Orientation.Horizontal) {
-    println("Drawing " + expTree)
     background = new Color(255, 255, 255)
     yLayoutAlignment = 0.5
     opaque = false
