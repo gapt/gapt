@@ -27,11 +27,11 @@ class VeriTParsingTest extends SpecificationWithJUnit {
     
     "parse correctly an example from QG-classification" in {
       val formulas = VeriTParser.getExpansionProof("target/test-classes/test3.verit")
-      formulas.get.antecedent must haveSize(5)
+      formulas.get.antecedent must haveSize(9)
     }
     "parse correctly a different eq_congruent 1" in {
       val formulas = VeriTParser.getExpansionProof("target/test-classes/iso_icl439.smt2.proof_flat")
-      formulas.get.antecedent must haveSize(5)
+      formulas.get.antecedent must haveSize(15)
     }
     // If the test above is commented out. This one fails with stackoverflow o.O
     "parse correctly a different eq_congruent 2" in {

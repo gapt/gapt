@@ -350,6 +350,7 @@ object VeriTParser extends RegexParsers {
   }
 
   // Each list of formulas corresponds to the formulas occurring in one of the axioms.
+  // Assuming all the input and input processing rules occur before the resolution steps (i.e. the proof itself).
   def proof : Parser[Option[ExpansionSequent]] = rep(header) ~> rep(preprocess) ~ rep(rules) ^^ {
 
     // Relying on the fact that if the formula is unsatisfiable, a proof is
@@ -357,9 +358,17 @@ object VeriTParser extends RegexParsers {
     case Nil ~ Nil => None
     
     case pp ~ r => 
+
+      val preamblemap = pp.foldLeft (Map[String, List[FOLFormula]]()) ( (acc, p) => acc + p)
+      val usedclauses = r.foldLeft (List[String]()) ( (acc, p) => acc ++ p._1).distinct
      
-      val input = pp.last
-      val axioms = r.flatten
+      val input = preamblemap.foldLeft (List[FOLFormula]()) { case (acc, p) =>
+	if (usedclauses.contains (p._1)) {
+	  acc ++ p._2
+	}
+	else acc
+      }
+      val axioms = r.foldLeft (List[Instances]()) ( (acc, p) => acc ++ p._2)
       
       // Join the instances of the same quantified formula
       val keys = axioms.map(p => p._1).distinct 
@@ -390,8 +399,7 @@ object VeriTParser extends RegexParsers {
   def msg : Parser[String] = "Formula is Satisfiable"
  
   // INPUT PROCESSING RULES
-  // Get only the formula on the last one of these rules.
-  def preprocess : Parser[List[FOLFormula]] = "(set" ~ label ~ "(" ~> rulePreProc <~ "))"
+  def preprocess : Parser[(String, List[FOLFormula])] = "(set" ~> label ~ "(" ~ rulePreProc <~ "))" ^^ { case l ~ "(" ~ r => (l, r) }
   def rulePreProc : Parser[List[FOLFormula]] = input | tmp_distinct_elim | tmp_alphaconv | tmp_let_elim 
   def input : Parser[List[FOLFormula]] = "input" ~> conclusion
   def tmp_distinct_elim : Parser[List[FOLFormula]] = "tmp_distinct_elim" ~ premises ~> conclusion  
@@ -399,8 +407,9 @@ object VeriTParser extends RegexParsers {
   def tmp_let_elim : Parser[List[FOLFormula]] = "tmp_let_elim" ~ premises ~> conclusion
 
   // RESOLUTION RULES AND EQUALITY AXIOMS
-  def rules : Parser[List[Instances]] = "(set" ~ label ~ "(" ~> rule <~ "))"
-  def rule : Parser[List[Instances]] = eqAxiom | innerRule
+  // Inner rules return the labels of the clauses used and equality axioms returns the axiom and its instances
+  def rules : Parser[(List[String], List[Instances])] = "(set" ~ label ~ "(" ~> rule <~ "))"
+  def rule : Parser[(List[String], List[Instances])] = eqAxiom ^^ { case i => (Nil, i) } | innerRule ^^ { case s => (s, Nil) }
   def eqAxiom : Parser[List[Instances]] = eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
   def eq_reflexive : Parser[List[Instances]] = "eq_reflexive" ~> conclusion ^^ {
     case c => 
@@ -419,26 +428,26 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances(c)
   }
 
-  def innerRule : Parser[List[Instances]] = resolution | and | and_pos | or | or_pos | and_neg | not_and | not_or | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2
-  // Rules that I don't care
-  def resolution : Parser[List[Instances]] = "resolution" ~> premises <~ conclusion
-  def and : Parser[List[Instances]] = "and" ~> premises <~ conclusion
-  def and_pos : Parser[List[Instances]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
-  def and_neg : Parser[List[Instances]] = "and_neg" ~> conclusion ^^ { case _ => Nil }
-  def or : Parser[List[Instances]] = "or" ~> premises <~ conclusion
-  def or_pos : Parser[List[Instances]] = "or_pos" ~> conclusion ^^ { case _ => Nil }
-  def or_neg : Parser[List[Instances]] = "or_neg" ~> conclusion ^^ { case _ => Nil }
-  def implies : Parser[List[Instances]] = "implies" ~> premises <~ conclusion 
-  def implies_pos : Parser[List[Instances]] = "implies_pos" ~> conclusion ^^ { case _ => Nil }
-  def implies_neg1 : Parser[List[Instances]] = "implies_neg1" ~> conclusion ^^ { case _ => Nil }
-  def implies_neg2 : Parser[List[Instances]] = "implies_neg2" ~> conclusion ^^ { case _ => Nil }
-  def not_implies1 : Parser[List[Instances]] = "not_implies1" ~> premises <~ conclusion
-  def not_implies2 : Parser[List[Instances]] = "not_implies2" ~> premises <~ conclusion
-  def not_and : Parser[List[Instances]] = "not_and" ~> premises <~ conclusion
-  def not_or : Parser[List[Instances]] = "not_or" ~> premises <~ conclusion
+  def innerRule : Parser[List[String]] = resolution | and | and_pos | and_neg | or | or_pos | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2 | not_and | not_or
+  // Rules that I don't care except if they use some clause (collecting their labels)
+  def resolution : Parser[List[String]] = "resolution" ~> premises <~ conclusion
+  def and : Parser[List[String]] = "and" ~> premises <~ conclusion
+  def and_pos : Parser[List[String]] = "and_pos" ~> conclusion  ^^ { case _ => Nil }
+  def and_neg : Parser[List[String]] = "and_neg" ~> conclusion ^^ { case _ => Nil }
+  def or : Parser[List[String]] = "or" ~> premises <~ conclusion
+  def or_pos : Parser[List[String]] = "or_pos" ~> conclusion ^^ { case _ => Nil }
+  def or_neg : Parser[List[String]] = "or_neg" ~> conclusion ^^ { case _ => Nil }
+  def implies : Parser[List[String]] = "implies" ~> premises <~ conclusion 
+  def implies_pos : Parser[List[String]] = "implies_pos" ~> conclusion ^^ { case _ => Nil }
+  def implies_neg1 : Parser[List[String]] = "implies_neg1" ~> conclusion ^^ { case _ => Nil }
+  def implies_neg2 : Parser[List[String]] = "implies_neg2" ~> conclusion ^^ { case _ => Nil }
+  def not_implies1 : Parser[List[String]] = "not_implies1" ~> premises <~ conclusion
+  def not_implies2 : Parser[List[String]] = "not_implies2" ~> premises <~ conclusion
+  def not_and : Parser[List[String]] = "not_and" ~> premises <~ conclusion
+  def not_or : Parser[List[String]] = "not_or" ~> premises <~ conclusion
   
-  // I don't care about premises. I only use the leaves
-  def premises : Parser[List[Instances]] = ":clauses (" ~ rep(label) ~ ")" ^^ { case _ => Nil}
+  // Collecting the clauses' labels used in the proof
+  def premises : Parser[List[String]] = ":clauses (" ~> rep(label) <~ ")"
   def conclusion : Parser[List[FOLFormula]] = ":conclusion (" ~> rep(expression) <~ ")"
  
   def expression : Parser[FOLFormula] = formula | let
