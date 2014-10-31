@@ -20,7 +20,8 @@
 		<!-- <module>applet</module> -->
 		<module>parsing</module>
 		<module>integration_tests</module>
-	</modules>
+        <module>hoare</module>
+    </modules>
 
 	<licenses>
 		<license>

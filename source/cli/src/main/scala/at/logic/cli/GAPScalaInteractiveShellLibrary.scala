@@ -34,6 +34,7 @@ import at.logic.calculi.resolution._
 import at.logic.calculi.resolution.robinson._
 import at.logic.gui.prooftool.gui.Main
 import at.logic.language.fol.{AllVar => FOLAllVar, And => FOLAnd, Atom => FOLAtom, ExVar => FOLExVar, Imp => FOLImp, Neg => FOLNeg, Or => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _}
+import at.logic.language.hoare.Program
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.{BetaReduction => HOLBetaReduction, Substitution => HOLSubstitution, containsQuantifier => containsQuantifierHOL, _}
 import at.logic.language.lambda.symbols.StringSymbol
@@ -43,6 +44,7 @@ import at.logic.language.schema.{AllVar => SchemaAllVar, Atom => SchemaAtom, ExV
 import at.logic.parsing.calculi.latex._
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.calculus.xml._
+import at.logic.parsing.hoare.{SimpleProgramParser, ProgramParser}
 import at.logic.parsing.ivy.conversion.IvyToRobinson
 import at.logic.parsing.ivy.{IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution}
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
@@ -621,6 +623,8 @@ object parse {
     require(exp.isInstanceOf[HOLFormula], "Expression is no HOL Formula!")
     exp.asInstanceOf[HOLFormula]
   }
+
+  def program(s: String): Program = SimpleProgramParser.parseProgram(s)
 
   def help() = {
     println("fol: String => FOLFormula")

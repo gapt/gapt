@@ -25,6 +25,7 @@ object CLIMain {
   import at.logic.calculi.lksk
   import at.logic.language.lambda.symbols._
   import at.logic.language.hol.logicSymbols._
+  import at.logic.language.hoare._
   import at.logic.transformations.skolemization.skolemize
   import at.logic.algorithms.lk.regularize
   import at.logic.calculi.occurrences.FormulaOccurrence
