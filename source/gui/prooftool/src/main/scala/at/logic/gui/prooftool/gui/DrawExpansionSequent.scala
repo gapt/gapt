@@ -2,7 +2,6 @@ package at.logic.gui.prooftool.gui
 
 // The code in this file displays expansion sequents.
 
-import scala.collection.mutable
 import swing._
 import java.awt.{Dimension, Font, Color}
 import java.awt.Font._
@@ -13,7 +12,7 @@ import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
 import at.logic.algorithms.expansionTrees.compressQuantifiers
 import org.slf4j.LoggerFactory
 
-/** These events are used to tell a CedentPane that two expansion trees should be switched, necessitating a redraw.
+/** These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.
  *
  * @param from Number of the first tree to be switched
  * @param to Number of the second tree to be switched
@@ -31,7 +30,13 @@ class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: 
   background = new Color(255,255,255)
   private val ft = new Font(SANS_SERIF, PLAIN, fSize)
   preferredSize = calculateOptimalSize
-  dividerLocation = preferredSize.width / 2
+  dividerLocation =
+    if (expSequent.antecedent.isEmpty)
+      preferredSize.width / 5
+    else if (expSequent.succedent.isEmpty)
+      preferredSize.width * 4/5
+    else
+      preferredSize.width / 2
 
   listenTo(Main.top)
   reactions += {
@@ -55,13 +60,13 @@ class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: 
   rightComponent = new CedentPanel(mExpSequent.succedent, "Succedent", ft)
 }
 
-/** Class for displaying a list of expansion trees and a title. Also takes care of swapping trees.
+/** Class for displaying a list of expansion trees and a title.
  *
  * @param cedent The list of expansion trees to be displayed
  * @param title The title to be displayed at the top
  * @param ft The font to be used
  */
-class CedentPanel(cedent: Seq[MultiExpansionTree], val title: String, ft: Font) extends BoxPanel(Orientation.Vertical) {
+class CedentPanel(val cedent: Seq[MultiExpansionTree], val title: String, val ft: Font) extends BoxPanel(Orientation.Vertical) {
   val logger = LoggerFactory.getLogger("drawExpSeqLogger")
 
   //Code for the title label
@@ -79,14 +84,7 @@ class CedentPanel(cedent: Seq[MultiExpansionTree], val title: String, ft: Font) 
   }
 
   //Code for the expansion tree list
-  val n = cedent.length
-  val expansionTrees = new mutable.ArraySeq[MultiExpansionTree](n) //This is mutable so we can reorder the trees
-
-  for (i <- 0 to n-1) {
-    expansionTrees.update(i, cedent(i))
-  }
-
-  var treeList = updateTreeList() //treeList is the panel that contains the list of trees. It's contained in a ScrollPane.
+  var treeList = new TreeListPanel(cedent, ft)//treeList is the panel that contains the list of trees. It's contained in a ScrollPane.
   val scrollPane = new ScrollPane {
     peer.getVerticalScrollBar.setUnitIncrement( 20 )
     peer.getHorizontalScrollBar.setUnitIncrement( 20 )
@@ -94,32 +92,9 @@ class CedentPanel(cedent: Seq[MultiExpansionTree], val title: String, ft: Font) 
     contents = treeList
   }
 
-  /** Returns a TreeListPanel corresponding to the current order of the expansion trees.
-    * It gets called at the beginning and every time trees are switched.
-   *
-   * @return A new TreeListPanel that displays the trees in the current order.
-   */
-  def updateTreeList(): TreeListPanel = {
-    val list = new TreeListPanel(expansionTrees.toSeq, ft)
-    list.numLabels.foreach(listenTo(_)) //We listen to the numLabels so we can receive SwitchEvents.
-    list
-  }
-
   //Add the title label and the scroll pane to the contents
   contents += titleLabel
   contents += scrollPane
-
-  //Reactions for handling SwitchEvents, i.e. switch the trees, update members, and redraw.
-  reactions += {
-    case e: SwitchEvent =>
-      val (to, from) = (e.to-1, e.from-1)
-      val tmp = expansionTrees(to)
-      expansionTrees.update(to, expansionTrees(from))
-      expansionTrees.update(from, tmp)
-      treeList = updateTreeList()
-      scrollPane.contents = treeList
-      revalidate()
-  }
 }
 
 /** Class that displays a list of expansion trees.
@@ -134,22 +109,45 @@ class TreeListPanel(trees: Seq[MultiExpansionTree], ft: Font) extends BoxPanel(O
   val n = trees.length
   var selected: Option[NumLabel] = None // We note which numLabel is currently selected (if any).
   val numLabels = (1 to n).map(i => new NumLabel(i)) // Generate numLabels from 1 to n
-  val drawnExpansionTrees = trees.map(t => new DrawExpansionTree(t, ft)) // Draw all the trees
-  val lines = numLabels zip drawnExpansionTrees
+  numLabels.foreach{listenTo(_)}
 
-  lines.foreach{ p =>
-    val (iLabel, det) = p
-    val line = new BoxPanel(Orientation.Horizontal) { // Each line consists of a numLabel and an expansion tree
-      background = new Color(255, 255, 255)
-      yLayoutAlignment = 0.5
-      xLayoutAlignment = 0
+  val drawnTrees = new Array[DrawExpansionTree](n) // Draw all the trees. This is a mutable array so we can reorder the drawn trees.
+  for (i <- 0 to n-1)
+    drawnTrees(i) = new DrawExpansionTree(trees(i), ft)
 
-      border = Swing.EmptyBorder(10)
-      contents += iLabel
-      contents += det
+  drawLines()
+
+  def drawLines() {
+    contents.clear()
+    val lines = numLabels zip drawnTrees
+
+    for ((iLabel, det) <- lines) {
+      val line = new BoxPanel(Orientation.Horizontal) {
+        // Each line consists of a numLabel and an expansion tree
+        background = new Color(255, 255, 255)
+        yLayoutAlignment = 0.5
+        xLayoutAlignment = 0
+
+        border = Swing.EmptyBorder(10)
+        contents += iLabel
+        contents += det
+      }
+
+      contents += line
     }
+  }
 
-    contents += line
+  //Reactions for handling SwitchEvents, i.e. switch the trees, update members, and redraw.
+  reactions += {
+    case e: SwitchEvent =>
+      val (to, from) = (e.to-1, e.from-1)
+      val tmp = drawnTrees(to)
+      drawnTrees(to) = drawnTrees(from)
+      drawnTrees(from) = tmp
+
+      drawLines()
+      revalidate()
+      repaint()
   }
 
   /** A label that displays a number n as "n: ".

@@ -58,10 +58,11 @@ object PopupMenu {
     }
     popupMenu.show(component, x, y)
   }
-  
+
+  // PopupMenu for the title label of either cedent
   def apply(ced: CedentPanel, x: Int, y: Int) {
     val popupMenu = new PopupMenu {
-      val trees = ced.treeList.drawnExpansionTrees
+      val trees = ced.treeList.drawnTrees
       contents += new MenuItem(Action("Close all") { trees.foreach(det => det.close(det.expansionTree.toShallow)) })
       contents += new MenuItem(Action("Open all") {
         for (det <- trees) {
@@ -71,6 +72,11 @@ object PopupMenu {
       })
       
       contents += new MenuItem(Action("Expand all") { trees.foreach(det => expandRecursive(det, det.expansionTree.toShallow)) })
+      contents += new MenuItem(Action("Reset") {
+        ced.treeList = new TreeListPanel(ced.cedent, ced.ft)
+        ced.scrollPane.contents = ced.treeList
+        ced.revalidate()
+      })
     }
     popupMenu.show(ced.titleLabel, x, y)
   }
