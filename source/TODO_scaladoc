@@ -16,6 +16,8 @@ at.logic.algorithms.lk.addWeakeningandContraction
                       .getCutsAsProofs
                       .map_proof
                       .rule_isomorphic
+                      .factoring
+at.logic.algorithms.unification._
 at.logic.calculi.lk.LKQuantifierException
                    .base.PrincipalFormulas
                    .base.AuxiliaryFormulas
