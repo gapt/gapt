@@ -84,7 +84,7 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.{CERES, CERESR2LK}
 import at.logic.utils.constraint.Constraint
-import at.logic.transformations.herbrandExtraction
+import at.logic.transformations.{ReductiveCutElim, herbrandExtraction}
 import at.logic.algorithms.lk.{rule_isomorphic => LKrule_isomorphic}
 import at.logic.algorithms.lksk.{rule_isomorphic => LKSKrule_isomorphic}
 import at.logic.utils.logging.Stopwatch
@@ -1190,6 +1190,10 @@ object compressExpansionSequent {
   def apply(sequent: ExpansionSequent): MultiExpansionSequent = compressQuantifiers(sequent)
 }
 
+object eliminateCuts {
+  def apply(proof: LKProof): LKProof = ReductiveCutElim.eliminateAllByUppermost(proof, steps = false)
+}
+
 object eliminateDefinitions {
   def apply(db: ProofDatabase, name: String): LKProof = {
     val proofs = db.proofs.filter(_._1 == name)
@@ -1546,6 +1550,7 @@ object help {
         |
         | Proof Theory:
         |   skolemize: LKProof => LKProof - skolemize the input proof
+        |   eliminateCuts: LKProof => LKProof - eliminate cuts by Gentzen's method
         |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
         |   extractExpansionSequent: LKProof => ExpansionSequent - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
