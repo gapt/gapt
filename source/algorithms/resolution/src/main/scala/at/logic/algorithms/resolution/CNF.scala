@@ -78,9 +78,9 @@ object TseitinCNF extends Logger {
    * @param f formula which should be transformed
    * @return tuple where 1st are clauses equivalent to f in CNF and Tseitin transformed f
    */
-  def apply(f: FOLFormula): (Set[FClause]) = {
+  def apply(f: FOLFormula): Set[FClause] = {
     // take an arbitrary atom symbol and rename it
-    // s.t. it does not occure anywhere in f
+    // s.t. it does not occur anywhere in f
     fsyms = getAtomSymbols(f)
 
     // parseFormula and transform it via Tseitin-Transformation
@@ -93,24 +93,23 @@ object TseitinCNF extends Logger {
    * the subformula does not already map to an existing atom.
    * The representing atom is returned.
    * In case f is an atom itself, nothing will be added to the subformulas HashMap and the atom itself is return as 1st/2nd
-   * @param f subformula to be eventually added to subformulas HashMap
+   * @param f subformula to possibly be added to subformulas HashMap
    * @return an atom either representing the subformula or f if f is already an atom
    */
   def addIfNotExists(f: FOLFormula): FOLFormula = f match {
     case Atom(h,args) => f
-    case _ => {
-        if (subformulaMap.exists(_._1 == f)) {
-          return subformulaMap(f)
-        }
-        else {
-          // generate new atomsymbol
-          val sym = at.logic.language.lambda.rename(hc, fsyms ::: auxsyms.toList)
-          val auxAtom = FAtom(sym, Nil)
-          auxsyms += sym
-          subformulaMap(f) = auxAtom
-          return auxAtom
-        }
-    }
+    case _ =>
+      if (subformulaMap.isDefinedAt(f)) {
+        subformulaMap(f)
+      }
+      else {
+        // generate new atom symbol
+        val sym = at.logic.language.lambda.rename(hc, fsyms ::: auxsyms.toList)
+        val auxAtom = FAtom(sym, Nil)
+        auxsyms += sym
+        subformulaMap(f) = auxAtom
+        auxAtom
+      }
   }
 
   /**
@@ -120,49 +119,49 @@ object TseitinCNF extends Logger {
    * @return a Tuple2, where 1st is the prop. variable representing the formula in 2nd
    */
   def parseFormula(f: FOLFormula): Tuple2[FOLFormula,Set[FClause]] = f match {
-      case FAtom(_, _) => (f,Set())
-      
-      case FNeg(f2) =>
-	val pf = parseFormula(f2) 
-	val x = addIfNotExists(f)
-	val x1 = pf._1
-	val c1 = FClause(List(x, x1), List())
-	val c2 = FClause(List(), List(x, x1))
-	(x, Set(c1, c2))
+    case FAtom(_, _) => (f, Set())
 
-      case FAnd(f1, f2) => 
-        val pf1 = parseFormula(f1)
-        val pf2 = parseFormula(f2)
-	val x = addIfNotExists(f)
-	val x1 = pf1._1
-	val x2 = pf2._1
-	val c1 = FClause(List(x), List(x1))
-	val c2 = FClause(List(x), List(x2))
-	val c3 = FClause(List(x1, x2), List(x))
-	(x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
+    case FNeg(f2) =>
+      val pf = parseFormula(f2)
+      val x = addIfNotExists(f)
+      val x1 = pf._1
+      val c1 = FClause(List(x, x1), List())
+      val c2 = FClause(List(), List(x, x1))
+      (x, pf._2 ++ Set(c1, c2))
 
-      case FOr(f1, f2) => 
-        val pf1 = parseFormula(f1)
-        val pf2 = parseFormula(f2)
-	val x = addIfNotExists(f)
-	val x1 = pf1._1
-	val x2 = pf2._1
-	val c1 = FClause(List(x1), List(x))
-	val c2 = FClause(List(x2), List(x))
-	val c3 = FClause(List(x), List(x1, x2))
-	(x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
-      
-      case FImp(f1, f2) => 
-        val pf1 = parseFormula(f1)
-        val pf2 = parseFormula(f2)
-	val x = addIfNotExists(f)
-	val x1 = pf1._1
-	val x2 = pf2._1
-	val c1 = FClause(List(), List(x, x1))
-	val c2 = FClause(List(x2), List(x))
-	val c3 = FClause(List(x, x1), List(x2))
-	(x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
+    case FAnd(f1, f2) =>
+      val pf1 = parseFormula(f1)
+      val pf2 = parseFormula(f2)
+      val x = addIfNotExists(f)
+      val x1 = pf1._1
+      val x2 = pf2._1
+      val c1 = FClause(List(x), List(x1))
+      val c2 = FClause(List(x), List(x2))
+      val c3 = FClause(List(x1, x2), List(x))
+      (x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
 
-      case _ => throw new IllegalArgumentException("Formula not supported in Tseitin transformation: " + f.toString)
+    case FOr(f1, f2) =>
+      val pf1 = parseFormula(f1)
+      val pf2 = parseFormula(f2)
+      val x = addIfNotExists(f)
+      val x1 = pf1._1
+      val x2 = pf2._1
+      val c1 = FClause(List(x1), List(x))
+      val c2 = FClause(List(x2), List(x))
+      val c3 = FClause(List(x), List(x1, x2))
+      (x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
+
+    case FImp(f1, f2) =>
+      val pf1 = parseFormula(f1)
+      val pf2 = parseFormula(f2)
+      val x = addIfNotExists(f)
+      val x1 = pf1._1
+      val x2 = pf2._1
+      val c1 = FClause(List(), List(x, x1))
+      val c2 = FClause(List(x2), List(x))
+      val c3 = FClause(List(x, x1), List(x2))
+      (x, pf1._2 ++ pf2._2 ++ Set(c1, c2, c3))
+
+    case _ => throw new IllegalArgumentException("Formula not supported in Tseitin transformation: " + f.toString)
   }
 }

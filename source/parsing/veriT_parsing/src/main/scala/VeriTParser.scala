@@ -22,7 +22,7 @@ object VeriTParser extends RegexParsers {
 
     // Checking which equalities were in the wrong order and generating the symmetry instances
     val symm = pairs.foldLeft(List[Instances]())((acc, p) =>
-      if (eqs_pairs.contains((p._2, p._1))) {
+      if (eqs_pairs.contains((p._2, p._1)) && p._1 != p._2) {
         acc :+ getSymmInstances(p._2, p._1)
       }
       else {
@@ -304,7 +304,7 @@ object VeriTParser extends RegexParsers {
     }
     val instance = Imp(And(eqs_correct :+ p1), p2)
     
-    ((eq_congr_pred, List(instance)) :: symm)
+    (eq_congr_pred, List(instance)) :: symm
   }
 
   def getExpansionProof(filename: String): Option[ExpansionSequent] = {

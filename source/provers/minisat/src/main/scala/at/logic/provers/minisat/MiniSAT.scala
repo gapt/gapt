@@ -5,9 +5,10 @@
 
 package at.logic.provers.minisat
 
+import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._
 import at.logic.calculi.resolution._
-import at.logic.algorithms.resolution.CNFp
+import at.logic.algorithms.resolution.{CNFp, TseitinCNF}
   
 import java.io._
 import java.lang.StringBuilder
@@ -34,7 +35,7 @@ trait Interpretation {
 }
 
 // Call MiniSAT to solve quantifier-free HOLFormulas.
-class MiniSAT extends at.logic.utils.logging.Logger {
+class MiniSAT extends at.logic.utils.logging.Stopwatch {
 
   class MapBasedInterpretation( val model : Map[HOLFormula, Boolean]) extends Interpretation {
     def interpretAtom(atom : HOLFormula) = model.get(atom) match {
@@ -54,9 +55,18 @@ class MiniSAT extends at.logic.utils.logging.Logger {
   // Returns a model of the formula obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
   def solve( f: HOLFormula ) : Option[Interpretation] = {
-    val cnf = CNFp(f)
+    info("Computing CNF ...")
+    start()
+    val cnf = f match {
+      case f1: FOLFormula => info("Calling TseitinCNF"); TseitinCNF(f1)
+      case _ => info("Calling CNFp"); CNFp(f)
+    }
+    lap("Cnf done")
     trace("produced cnf: " + cnf)
-    solve( cnf )
+    val int = solve( cnf )
+    lap("Solving done")
+    info(toFormattedString())
+    int
   }
   
   // Returns a model of the set of clauses obtained from the MiniSAT SAT solver.
