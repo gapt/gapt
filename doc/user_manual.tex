@@ -580,7 +580,7 @@ scala> :load ../examples/ProofSequences.scala
 %
 First of all, we instantiate the desired proof and store this in a variable:
 \begin{lstlisting}
-scala> val p = LinearExampleProof(9) 
+scala> val p = LinearExampleProof(9)
 \end{lstlisting}
 
 You will see that a big string representing the proof is printed. If desired,
@@ -600,31 +600,19 @@ extract the terms used to instantiate the $\forall$ quantifiers of the
 end-sequent:
 \begin{lstlisting}
 scala> val ts = extractTerms(p)
-The term set contains 9 terms.
 \end{lstlisting}
 The system indicates how many terms were extracted, which is nine for this case,
 as expected. The next step consists in computing grammars that generate this
 term set:
 \begin{lstlisting}
 scala> val grms = computeGrammars(ts)
-693 grammars found.
 \end{lstlisting}
-The number of grammars found is shown, 693 in this case. They are ordered
-by size, and one can see the first ones by calling:
+The number of grammars found is shown, 26 in this case. This list of grammars is guaranteed
+to contain all grammars of minimal size (but not all grammars as the algorithm
+will not generate grammars larger than others already generated).
+The grammars are ordered by size, and one can see the first ones by calling:
 \begin{lstlisting}
 scala> seeNFirstGrammars(grms, 5)
-0. \{ tuple1(s(s(s(\(\alpha\))))), tuple1(\(\alpha\)), tuple1(s(s(s(s(s(s(\(\alpha\)))))))) \} o \{ 0, s(0), s(s(0)) \}
-(size = 6)
-1. \{ tuple1(s(\(\alpha\))), tuple1(s(s(\(\alpha\)))), tuple1(\(\alpha\)) \} o \{ 0, s(s(s(0))), s(s(s(s(s(s(0)))))) \}
-(size = 6)
-2. \{ tuple1(s(0)), tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))) \} o \{ 0, s(s(s(s(0)))), 
-s(s(s(s(s(0))))) \}(size = 7)
-3. \{ tuple1(s(s(0))), tuple1(\(\alpha\)), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
-s(s(s(s(s(0))))) \}(size = 7)
-4. \{ tuple1(\(\alpha\)), tuple1(s(s(\(\alpha\)))), tuple1(s(s(s(\(\alpha\))))), tuple1(s(\(\alpha\))) \} o \{ 0, s(s(s(s(0)))), 
-s(s(s(s(s(0))))) \}(size = 7)
-
-Note that the function symbols 'tuplei' are inserted by the system as part of the algorithm.
 \end{lstlisting}
 This will print on the screen the first 5 grammars, and we can choose which one
 to use for compressing the proof, in this case we take the second one:
@@ -634,25 +622,16 @@ scala> val g = grms(1)
 Given the end-sequent of the proof and a grammar, the extended Herbrand sequent can be computed:
 \begin{lstlisting}
 scala> val ehs = generateExtendedHerbrandSequent(p.root, g)
-ehs: at.logic.algorithms.cutIntroduction.ExtendedHerbrandSequent = 
-P(0), (P(s(\(\alpha\)))\(\impl\)P(s(s(\(\alpha\))))), (P(s(s(\(\alpha\))))\(\impl\)P(s(s(s(\(\alpha\)))))),(P(\(\alpha\))\(\impl\)P(s(\(\alpha\)))),
-(X(\(\alpha\))\(\impl\)(X(s(s(s(s(s(s(0)))))))\(\wedge\)(X(s(s(s(0))))\(\wedge\)X(0)))) :- 
-P(s(s(s(s(s(s(s(s(s(0)))))))))),
 \end{lstlisting}
 As it was shown in \cite{HetzlXXAlgorithmic}, the cut-introduction problem has a
 canonical solution:
 \begin{lstlisting}
 scala> val cs = computeCanonicalSolution(p.root, g)
-Note that the clauses that do not contain the eigenvariable were already removed.
-cs: at.logic.language.fol.FOLFormula = 
-\(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
 \end{lstlisting}
 The extended Herbrand sequent generated previously has the canonical solution as
 default, but this solution can be improved.. 
 \begin{lstlisting}
 scala> minimizeSolution(ehs)
-Previous solution: \(\forall\)x.((P(x)\(\impl\)P(s(x)))\(\wedge\)((P(s(s(x)))\(\impl\)P(s(s(s(x)))))\(\wedge\)(P(s(x))\(\impl\)P(s(s(x))))))
-Improved solution: \(\forall\)x.(P(s(s(s(x))))\(\vee \neg\)P(x))
 \end{lstlisting}
 Finally, the proof with cut is constructed:
 \begin{lstlisting}
@@ -672,11 +651,13 @@ Quantifier complexity: 6
 We showed how to run the cut-introduction algorithm step by step. There is,
 though, a command comprising all these steps:
 \begin{lstlisting}
-scala> val fp2 = cutIntro(p)
+scala> val fp2 = cutIntro( p, NoConstraint )
 \end{lstlisting}
 Regarding the choice of the grammar, this command will compute the proofs with
 all minimal grammars and choose the smallest one (with respect to the number of rules).
-
+The second parameter, \texttt{NoConstraint}, indicates that the quantifier
+block in the cut to be generated may be of arbitrary length, an alternative is
+e.g.~\texttt{UpperBound(2)} to limit the length of the block to 2 quantifiers.
 
 \section{Miscellaneous}
 
