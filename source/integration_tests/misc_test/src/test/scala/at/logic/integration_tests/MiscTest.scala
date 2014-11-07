@@ -38,6 +38,7 @@ import java.io.File.separator
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import at.logic.calculi.occurrences._
 import org.junit.runner.RunWith
+import org.slf4j.LoggerFactory
 import org.specs2.execute.Success
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
@@ -45,6 +46,7 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class MiscTest extends SpecificationWithJUnit {
 
+  private val logger = LoggerFactory.getLogger("MiscTestLogger")
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
   private def LinearExampleProof( k : Int, n : Int ) : LKProof = {
     val s = "s"
@@ -87,6 +89,7 @@ class MiscTest extends SpecificationWithJUnit {
 //    */
 
     "perform cut introduction on an example proof" in {
+      println("Performing cut introduction test")
       if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
       val p = LinearExampleProof(0, 7)
       CutIntroduction(p, ExactBound(1))
@@ -94,6 +97,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a simple proof" in {
+      println("Performing skolemization test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
@@ -104,6 +108,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a proof with a simple definition" in {
+      println("Performing another skolemization test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
@@ -114,6 +119,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a proof with a complex definition" in {
+      println("Performing yet another skolemization test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
@@ -124,6 +130,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "extract projections and clause set from a skolemized proof" in {
+      println("Performing projection extraction test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
@@ -172,36 +179,31 @@ class MiscTest extends SpecificationWithJUnit {
 */
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
+      println("Performing cut introduction and elimination")
       val p = LinearExampleProof( 0, 4 )
       val pi_ = CutIntroduction( p, ExactBound(1), new LKProver() )
       val Some(pi) = pi_
-      val pe = ReductiveCutElim.eliminateAllByUppermost(pi, false)
+      val pe = ReductiveCutElim.eliminateAllByUppermost(pi, steps = false)
 
-      ReductiveCutElim.isCutFree(p) must beEqualTo( true )
+      ReductiveCutElim.isCutFree(p)  must beEqualTo( true )
       ReductiveCutElim.isCutFree(pi) must beEqualTo( false )
       ReductiveCutElim.isCutFree(pe) must beEqualTo( true )
     }
 
 
     "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT" in {
-      skipped("MiniSAT fails to proof this")
 
       if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
 
-      for (i <- 0 to 4) {
-
+      for (i <- List(0,1,3)) { // Tests 2 and 4 take comparatively long.
         val testfilename = "target" + separator + "test-classes" + separator + "test" + i + ".verit"
-
         val p = VeriTParser.getExpansionProof(testfilename).get
-
-        val formulas = ETtoDeep(p)
-        val seq = FSequent(formulas._1, formulas._2)
+        val seq = ETtoDeep(p)
 
         /*
         println("file: " +testfilename)
         println("formula: " +seq)
         */
-
         (new at.logic.provers.minisat.MiniSATProver).isValid(seq) must beTrue
       }
       ok

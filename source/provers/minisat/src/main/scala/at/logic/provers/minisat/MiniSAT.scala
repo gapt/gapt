@@ -55,17 +55,14 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
   // Returns a model of the formula obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
   def solve( f: HOLFormula ) : Option[Interpretation] = {
-    info("Computing CNF ...")
     start()
     val cnf = f match {
-      case f1: FOLFormula => info("Calling TseitinCNF"); TseitinCNF(f1)
-      case _ => info("Calling CNFp"); CNFp(f)
+      case f1: FOLFormula => TseitinCNF(f1)
+      case _              => CNFp(f)
     }
     lap("Cnf done")
-    trace("produced cnf: " + cnf)
     val int = solve( cnf )
     lap("Solving done")
-    info(toFormattedString())
     int
   }
   
