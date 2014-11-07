@@ -4,11 +4,12 @@ import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression, Substitution =>
 import at.logic.language.hol.{Substitution => HOLSubstitution, _}
 import at.logic.language.lambda._
 import at.logic.calculi.lk.base.FSequent
-import at.logic.language.lambda.symbols.StringSymbol
 
 /**
- * Sometimes it is necessary to convert terms to an upper layer: e.g. applying a fol subtitution to a hol term does not
- * work if the result is not first order.
+ * Converts objects from the FOL layer to the HOL layer.
+ *
+ * (Sometimes it is necessary to convert terms to an upper layer: e.g. applying a FOL substitution to a HOL term does not
+ * work if the result is not in FOL.)
  */
 object fol2hol {
   def apply(e:FOLExpression) : HOLExpression = recreateWithFactory(e, HOLFactory).asInstanceOf[HOLExpression]
@@ -29,7 +30,9 @@ object fol2hol {
 }
 
 /**
- * This code is more generic but needs casting, since the factory can't do that */
+ * Converts an object to another layer.  For example, a FOLFormula to the HOL layer, i.e. returning a HOLFormula.
+ */
+// This code is more generic but needs casting, since the factory can't do that
 object recreateWithFactory {
   def apply(e:LambdaExpression, factory : FactoryA) : LambdaExpression = e match {
     case Var(name,t) => factory.createVar(e.asInstanceOf[Var].sym,t)
