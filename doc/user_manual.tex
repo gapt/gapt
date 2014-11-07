@@ -662,31 +662,18 @@ e.g.~\texttt{UpperBound(2)} to limit the length of the block to 2 quantifiers.
 \section{Miscellaneous}
 
 The method \texttt{printProofStats: LKProof $\rightarrow$ Unit}
-takes a proof and prints some statistics about it, namely the number
-of unary, binary and cut rules. If you have a variable storing the result of 
-\texttt{loadProofs(...)}, one way to get the first proof of the list is: 
-\texttt{proof.head.\_2}. If \texttt{proof} is the one defined on the previous 
-example:
+takes a proof and prints some statistics about it. It is helpful
+for getting a first impression of a proof; use it for example as:
 
 \begin{lstlisting}
-scala> printPoofStats(proof.head._2)
-unary: 2
-binary: 1
-cuts: 0
+scala> printPoofStats( p )
+------------- Statistics ---------------
+Cuts: 1
+Number of quantifier inferences: 8
+Number of inferences: 19
+Quantifier complexity: 6
+----------------------------------------
 \end{lstlisting}
-
-Of course you can always assing this to a variable and use it as a parameter:
-
-\begin{lstlisting}
-scala> var theproof = proof.head._2
-theproof: at.logic.calculi.lk.base.LKProof = ExistsRightRuleType( :- $\exists$(x.($\forall$(y.(((a P x) $\wedge$ (a Q y)))))), ForallRightRuleType( :- $\forall$(y.(((a P b) $\wedge$ (a Q y)))), AndRightRuleType( :- ((a P b) $\wedge$ (a Q \beta)), InitialRuleType( :- (a P b)), InitialRuleType( :- (a Q \beta)))))
-
-scala> printPoofStats(theproof)
-unary: 2
-binary: 1
-cuts: 0
-\end{lstlisting}
-
 
 \vfill
 \pagebreak
