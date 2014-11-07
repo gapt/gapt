@@ -32,7 +32,7 @@ class Prover9Exception(msg: String) extends Exception(msg)
 
 object Prover9 extends at.logic.utils.logging.Logger {
 
-  def writeProofProblem( seq: FSequent, file: File ) =
+  private def writeProofProblem( seq: FSequent, file: File ) =
   {
     val tptp = TPTPFOLExporter.tptp_proof_problem( seq )
     trace("created tptp input: " + tptp)
@@ -41,7 +41,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     writer.flush
   }
 
-  def writeRefutationProblem( named_sequents: List[Tuple2[String, FSequent]], file: File ) =
+  private def writeRefutationProblem( named_sequents: List[Tuple2[String, FSequent]], file: File ) =
   {
     val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
     trace("created tptp input: " + tptp)
@@ -67,14 +67,14 @@ object Prover9 extends at.logic.utils.logging.Logger {
     ( p.exitValue, str )
   }
 
-  def exec_in_out( cmd : String, in: String, out: String ) = {
+  private def exec_in_out( cmd : String, in: String, out: String ) = {
     val ret = exec(cmd, in)
     val str_ladr = ret._2
     writeToFile( str_ladr, out )
     ret._1
   }
 
-  def writeToFile( str: String, file: String ) = {
+  private def writeToFile( str: String, file: String ) = {
     val out = new FileWriter( file )
     out.write( str )
     out.close
@@ -82,10 +82,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   /* these are shortcuts for executing the programs; all take an input and an output file and
      return the exit status of the tool used */
-  def tptpToLadr(in:String, out:String) = exec_in_out("tptp_to_ladr",in,out)
-  def runP9(in:String, out:String) = exec_in_out("prover9",in,out)
-  def p9_to_ivy(in:String, out:String) = exec_in_out("prooftrans ivy",in,out)
-  def p9_to_p9(in:String, out:String) = exec_in_out("prooftrans",in,out)
+  private def tptpToLadr(in:String, out:String) = exec_in_out("tptp_to_ladr",in,out)
+  private def runP9(in:String, out:String) = exec_in_out("prover9",in,out)
+  private def p9_to_ivy(in:String, out:String) = exec_in_out("prooftrans ivy",in,out)
+  private def p9_to_p9(in:String, out:String) = exec_in_out("prooftrans",in,out)
 
   /* Check if a sequent is valid using prover9 without parsing the proof */
   def isValid( seq : FSequent ) : Boolean = {
@@ -97,7 +97,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     ret
   }
 
-  def isValid( seq: FSequent, input_file: String, output_file: String ) : Boolean = {
+  private def isValid( seq: FSequent, input_file: String, output_file: String ) : Boolean = {
     val tmp_file = File.createTempFile( "gapt-prover9-proof", ".tptp", null )
     writeProofProblem( seq, tmp_file )
 
@@ -114,7 +114,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     ret
   }
 
-  def isValid( input_file: String, output_file: String ) : Boolean = {
+  private def isValid( input_file: String, output_file: String ) : Boolean = {
     trace( "running prover9" )
     val ret = runP9( input_file, output_file )
     trace( "prover9 finished" )
@@ -151,7 +151,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
   }
 
 
-  def prove( seq : FSequent, input_file: String, output_file : String ) : Option[RobinsonResolutionProof] =
+  private def prove( seq : FSequent, input_file: String, output_file : String ) : Option[RobinsonResolutionProof] =
   {
     val tmp_file = File.createTempFile( "gapt-prover9-proof", ".tptp", null )
     writeProofProblem( seq, tmp_file )
@@ -166,7 +166,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     runP9OnLADR(input_file, output_file, cs)
   }
 
-  def refuteNamed( named_sequents : List[Tuple2[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
+  private def refuteNamed( named_sequents : List[Tuple2[String, FSequent]], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
   {
     val tmp_file = File.createTempFile( "gapt-prover9-ref", ".tptp", null )
     trace("writing refutational problem")
@@ -177,7 +177,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     runP9OnLADR(input_file, output_file, Some(named_sequents.map( p => p._2) ))
   }
 
-    def runP9OnLADR( input_file: String, output_file: String, clauses: Option[Seq[FSequent]] = None ) : Option[RobinsonResolutionProof] = {
+  private def runP9OnLADR( input_file: String, output_file: String, clauses: Option[Seq[FSequent]] = None ) : Option[RobinsonResolutionProof] = {
     // find out which symbols have been renamed
     // this information should eventually be used when
     // parsing the prover9 proof
@@ -283,7 +283,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
     }
   }
 
-  def refute( sequents: List[FSequent], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
+  private def refute( sequents: List[FSequent], input_file: String, output_file: String ) : Option[RobinsonResolutionProof] =
     refuteNamed( sequents.zipWithIndex.map( p => ("sequent" + p._2, p._1) ), input_file, output_file )
 
   /**
@@ -373,11 +373,11 @@ object Prover9 extends at.logic.utils.logging.Logger {
     true
   }
 
-  def isLadrToTptpInstalled() : Boolean = callBinary("ladr_to_tptp") == 1
-  def isProver9Installed() : Boolean = callBinary("prover9") == 2
-  def isProoftransInstalled() : Boolean = callBinary("prooftrans") == 1
+  private def isLadrToTptpInstalled() : Boolean = callBinary("ladr_to_tptp") == 1
+  private def isProver9Installed() : Boolean = callBinary("prover9") == 2
+  private def isProoftransInstalled() : Boolean = callBinary("prooftrans") == 1
 
-  def callBinary(name:String) : Int = {
+  private def callBinary(name:String) : Int = {
     val err = StringBuilder.newBuilder
     val out = StringBuilder.newBuilder
     val logger = ProcessLogger(line => out ++= line, line => err ++= line)
@@ -428,7 +428,7 @@ class Prover9Prover extends Prover with at.logic.utils.logging.Logger {
   }
 
   // Grounds a sequent by replacing variables by new constants.
-  def ground( seq : FSequent ) : (FSequent, Map[FOLVar, FOLConst]) = {
+  private def ground( seq : FSequent ) : (FSequent, Map[FOLVar, FOLConst]) = {
     // FIXME: cast of formula of sequent!
     val free = seq.antecedent.flatMap( 
       f => freeVariables(f.asInstanceOf[FOLFormula]) ).toSet ++ 
@@ -445,7 +445,7 @@ class Prover9Prover extends Prover with at.logic.utils.logging.Logger {
     (ret, map)
   }
 
-  def unground( p: LKProof, map: Map[FOLVar, FOLConst] ) =
+  private def unground( p: LKProof, map: Map[FOLVar, FOLConst] ) =
     applyReplacement( p, map.map( x => x.swap ) )._1
 
   /* TODO: should use this when grounding instead of ConstantStringSymbol
