@@ -12,7 +12,7 @@ import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.language.hol.logicSymbols._
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.dssupport.ListSupport
-import at.logic.utils.logging.Stopwatch
+import at.logic.utils.logging.{Logger, Stopwatch}
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import at.logic.provers.maxsat.{MaxSATSolver, MapBasedInterpretation, MaxSAT}
@@ -31,7 +31,7 @@ object MCSMethod extends Enumeration {
 
 class TreeGrammarDecompositionException(msg: String) extends Exception(msg)
 
-object TreeGrammarDecomposition{
+object TreeGrammarDecomposition extends Logger {
 
   var decomp : TreeGrammarDecomposition = _
 

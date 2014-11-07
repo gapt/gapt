@@ -1,4 +1,6 @@
+import at.logic.calculi.expansionTrees.multi.WeakQuantifier
 import at.logic.cli.GAPScalaInteractiveShellLibrary._
+import at.logic.language.hol.Neg
 import at.logic.language.hoare.{ForLoop, SimpleLoopProblem}
 
 val p = parse.program("for y < z do x := set(x, s(y), get(x, y)) od")
@@ -19,10 +21,18 @@ println(slp.loop.body)
 println(slp.programVariables)
 println(slp.pi(0))
 
-println(slp.instanceSequent(2))
+val instanceSeq = slp.instanceSequent(1)
+println(instanceSeq)
+val proof = prover9.getProof(instanceSeq).get
 
-val proof = prover9.getProof(slp.instanceSequent(1)).get
-println(proof)
+val expansionSequent = compressExpansionSequent(extractExpansionSequent(proof))
+expansionSequent.antecedent.foreach {
+  case WeakQuantifier(formula, instances) =>
+    println(s"$formula:")
+    instances.foreach { case (inst, terms) => println(s"  $terms ($inst)") }
+  case _ => Nil
+}
+val deepSequent = expansionSequent.toDeep
+deepSequent.antecedent.foreach(println(_))
+deepSequent.succedent.foreach(f => println(Neg(f)))
 
-val expansionSequent = extractExpansionSequent(proof)
-println(expansionSequent)
