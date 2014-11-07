@@ -200,7 +200,7 @@ To quit the interactive shell, just type \texttt{:quit} and press enter.
 In order to see the list of all available commands, type \texttt{help} and
 press enter.
 
-\section{File Input/Output}
+\section{File Input/Output}\label{sec.fileio}
 
 \begin{meta}
 TODO: first some general talk on file formats, then: give examples for saving and loading
@@ -468,9 +468,19 @@ TODO: mention shlk! and llk -- at least: give a short example for each
 
 \subsection{Cut-Elimination (Gentzen's method)}
 
-\begin{meta}
-TODO: short example, e.g.~from examples/simple 
-\end{meta}
+The GAPT-system contains an implementation of reductive cut-elimination
+\`{a} la Gentzen. It can be used as follows: first we load a proof p
+with cuts (as in Section~\ref{sec.fileio}).
+%
+\begin{lstlisting}
+scala> val p = loadProofs( "../examples/simple/fol1.xml.gz" )(0)._2
+\end{lstlisting}
+%
+and then call the cut-elimination procedure:
+\begin{lstlisting}
+scala> val q = eliminateCuts( p )
+\end{lstlisting}
+
 
 
 \subsection{Skolemization}
