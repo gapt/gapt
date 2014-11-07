@@ -525,8 +525,7 @@ Expansion trees are a compact representation of cut-free proofs. They have origi
 introduced in~\cite{Miller87Compact}. GAPT contains an implementation of
 expansion trees for higher-order logic including functions for extracting expansion
 trees from proofs, for merging expansion trees, for pruning and transforming them
-in various ways and for viewing
-them in a comfortable way in the graphical user interface.
+in various ways and for viewing them in a comfortable way in the graphical user interface.
 
 An expansion tree contains the instances of the quantifiers for a formula. In order
 to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expansion trees.
@@ -534,7 +533,7 @@ to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expan
 Suppose we are in the command-line interface and have a value \cli{p} which is a cut-free \cli{LKProof}.
 We can then extract the expansion sequent of \cli{p} by:
 \begin{lstlisting}
-scala> val E = extractExpansionTrees( p )
+scala> val E = extractExpansionSequent( p )
 \end{lstlisting}
 This expansion sequent can then be viewed in the graphical user interface by simply calling:
 \begin{lstlisting}
