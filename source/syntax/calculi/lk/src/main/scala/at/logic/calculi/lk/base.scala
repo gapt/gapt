@@ -1,66 +1,91 @@
-/*
- * base.scala
- *
- */
-
 package at.logic.calculi.lk.base
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.utils.ds.trees._
-import at.logic.utils.dssupport.ListSupport.lst2string
 
+/**
+ * A sequent Γ ⊢ Δ of formulas.
+ *
+ * @param antecedent The formulas on the left side of the sequent.
+ * @param succedent The formulas on the right side of the sequent.
+ */
 class FSequent(val antecedent : Seq[HOLFormula], val succedent : Seq[HOLFormula]) {
   val _1 = antecedent
   val _2 = succedent
 
+  /**
+   * Equality treating each side of the sequent as list, i.e. respecting order and multiplicity.
+   */
   override def equals(fs : Any) : Boolean = fs match {
     case FSequent(ant, succ) => (this.antecedent equals ant) && (this.succedent equals succ)
     case _ => false
   }
 
-  // formats a sequent to a readable string
+  override def hashCode: Int = 31 * antecedent.hashCode() + succedent.hashCode()
+
   override def toString : String =
     this.antecedent.mkString(",") + " :- " + this.succedent.mkString(",")
 
-  def setEquals(g:FSequent) = FSequent.setEquals(this, g)
-  def multiSetEquals(g:FSequent) = FSequent.multiSetEquals(this, g)
+  /**
+   * Equality treating each side of the sequent as a set.
+   */
+  def setEquals(o: FSequent) = Set(_1) == Set(o._1) && Set(_2) == Set(o._2)
+
+  /**
+   * Equality treating each side of the sequent as a multiset.
+   */
+  def multiSetEquals(o: FSequent) =
+    _1.diff(o._1).isEmpty && _2.diff(o._2).isEmpty &&
+      o._1.diff(_1).isEmpty && o._2.diff(_2).isEmpty
+
+  /**
+   * The formula on both sides of the sequent, i.e. the concatenation of antecedent and succedent.
+   */
   def formulas : Seq[HOLFormula] = antecedent ++ succedent
 
-  def diff(that : FSequent) = FSequent(this.antecedent diff that.antecedent, this.succedent diff that.succedent)
+  /**
+   * Removes the given other sequent from this one, i.e. the other antecedents from our antecedents, and the other
+   * succedents from our succedents.
+   */
+  def diff(other : FSequent) = FSequent(this.antecedent diff other.antecedent, this.succedent diff other.succedent)
 
-  /*
-   compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
-  */
+  /**
+   * Composes two sequents by taking the concatenation of the formulas on the left side, and on the right side.
+   */
   def compose(other: FSequent) = FSequent(antecedent ++ other.antecedent, succedent ++ other.succedent)
 
+  /**
+   * Interpretation of the sequent as a formula.
+   */
   def toFormula : HOLFormula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
 
+  /**
+   * Are both sides of the sequent empty?
+   */
   def isEmpty = _1.isEmpty && _2.isEmpty
 
+  /**
+   * Sorts each side of the sequent by [[HOLOrdering]].
+   * 
+   * @return A copy of this sequent where the two sides are sorted.
+   */
   def sorted = FSequent(_1.sorted(HOLOrdering), _2.sorted(HOLOrdering))
-
 }
 
 object FSequent {
   def apply(ant: Seq[HOLFormula], succ: Seq[HOLFormula]) : FSequent =  new FSequent(ant,succ)
+
+  /**
+   * Constructs an [[FSequent]] from a [[Sequent]], by ignoring where the formulas occur.
+   */
   def apply(seq : Sequent) : FSequent = FSequent(seq.antecedent map (_.formula), seq.succedent map (_.formula))
 
+  /**
+   * Destructs an [[FSequent]] into a tuple of its antecedent and succedent.
+   */
   def unapply(f: FSequent) : Option[(Seq[HOLFormula], Seq[HOLFormula])] = Some( (f.antecedent, f.succedent) )
-
-  def setEquals(f: FSequent, g: FSequent) : Boolean =
-    Set(f._1) == Set(g._1) &&
-      Set(f._2) == Set(g._2)
-
-  def multiSetEquals(f : FSequent, g : FSequent) : Boolean =
-    f._1.diff(g._1).isEmpty && f._2.diff(g._2).isEmpty &&
-      g._1.diff(f._1).isEmpty && g._2.diff(f._2).isEmpty
-
-
-  /*
-   compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
-  */
 }
 
 object FSequentOrdering extends FSequentOrdering;

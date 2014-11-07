@@ -489,7 +489,7 @@ object XMLParser {
 
 
           // check whether conclusion has been correctly constructed
-          assert( FSequent.multiSetEquals( root, conc ), triple._1.root.toString + " does not equal " + conc.toString + "(rule type " + rt + ")")
+          assert(root multiSetEquals conc, triple._1.root.toString + " does not equal " + conc.toString + "(rule type " + rt + ")")
           // check whether the permutation of the formula occurrences corresponds to the conclusion
           def checkPerm( perm: Array[FormulaOccurrence], list: Seq[Formula] ) =
             perm.zip( perm.indices ).foreach( p => assert( p._1.formula == list.apply( p._2 ),
