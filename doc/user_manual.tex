@@ -272,28 +272,27 @@ scala> exportXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
 \section{Entering Formulas}\label{sec.entering_formulas}
 
 Formulas can be entered as strings which are parsed as follows:
+%
 \begin{lstlisting}
-scala> val F = parse.fol( "Imp A Imp B And A B" )
-F: at.logic.language.fol.FOLFormula = (A$\supset$(B$\supset$(A$\land$B)))
+scala> val F = parseFOL( "Imp A Imp B And A B" )
 \end{lstlisting}
-For a first-order examples consider:
+%
+For a proper first-order formula consider for example:
+%
 \begin{lstlisting}
-scala> val G = parse.fol( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
-G: at.logic.language.fol.FOLFormula = $\forall$x.(P(x, f(x))$\supset\exists$y.P(x, y))
+scala> val G = parseFOL( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
 \end{lstlisting}
-
+%
 Also prover9 syntax is supported: %TODO: add citation
-
+%
 \begin{lstlisting}
-scala>  val PG = parse p9 "(all x (P(x,f(x)) -> (exists y P(x,y))))"
-PG: at.logic.language.fol.FOLFormula = ∀x.(P(x, f(x))⊃∃y.P(x, y))
+scala> val H = parseProver9( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
 \end{lstlisting}
-
+%
 The prover9 syntax was also extended to higher-order logic, where type declarations are added:
-
+%
 \begin{lstlisting}
-scala> val HG = parse hlkformula "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))"
-HG: at.logic.language.hol.HOLFormula = ∀x:ο.(P(x:ο, f(x:ο):ι): o⊃∃y:ι.P(x:ο, y:ι): o)
+scala> val I = parseLLKFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
 \end{lstlisting}
 
 
