@@ -2,8 +2,7 @@ package at.logic.calculi
 
 import at.logic.language.hol._
 
-// FIXME: This should be a package.
-object occurrences {
+package occurrences {
 
   /**
    * A formula occurrence is an occurrence of a [[HOLFormula]] in a proof.  Both formulas in different sequents and
@@ -35,11 +34,6 @@ object occurrences {
       else ancestors.exists(_.isAncestor(o))
   }
 
-  /**
-   * Implicitly converts a [[FormulaOccurrence]] to the formula its occurrence it records.
-   */
-  implicit def formulaOccurrenceToFormula(fo: FormulaOccurrence): Formula = fo.formula
-
 //FO = FormulaOccurrence
   /**
    * Formula occurrence factory.  This factory is stored in [[FormulaOccurrence]] itself, sometimes passed via an
@@ -65,6 +59,14 @@ trait FOFactory {
     private[occurrences] def freshId() = { id_counter = id_counter +1; id_counter }
   }
 
+}
+
+package object occurrences {
   implicit val factory = defaultFormulaOccurrenceFactory
+
+  /**
+   * Implicitly converts a [[FormulaOccurrence]] to the formula its occurrence it records.
+   */
+  implicit def formulaOccurrenceToFormula(fo: FormulaOccurrence): Formula = fo.formula
 }
 
