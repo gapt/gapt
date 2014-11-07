@@ -560,6 +560,47 @@ object exportTHF {
   }
   */
 
+object parseFOL {
+  private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
+
+  def apply( s: String ) = { new CLIParserFOL(s).getTerm.asInstanceOf[FOLFormula] }
+}
+
+object parseHOL {
+  private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
+
+  def apply( s: String ) = { new CLIParserHOL(s).getTerm }
+}
+
+object loadSLK {
+  def apply( f: String ) = { sFOParser.parseProofFlat(new InputStreamReader(new FileInputStream(f))) }
+}
+
+object parseLISP {
+  def apply( s: String ) = { SExpressionParser.parseString( s ) }
+}
+
+object parseLLKExp {
+  def apply( s: String ) = { HLKHOLParser.parse( s ) }
+}
+
+object parseLLKFormula {
+  def apply( s: String ) = {
+    val exp = HLKHOLParser.parse(s)
+    require(exp.isInstanceOf[HOLFormula], "Expression is no HOL Formula!")
+    exp.asInstanceOf[HOLFormula]
+  }
+}
+
+object parseProver9 {
+  def apply( s: String, use_ladr: Boolean = true) = {
+    if (use_ladr)
+      Prover9TermParserLadrStyle.parseFormula( s )
+    else
+      Prover9TermParser.parseFormula( s )
+  }
+}
+
 object parse {
 
   private class CLIParserFOL(input: String) extends StringReader(input) with SimpleFOLParser
@@ -1509,21 +1550,19 @@ object equation_example {
   }
 }
 
-
 object help {
   def apply() = {
     val msg =
-
       """
         | Available commands:
         |
         | Parsing:
-        |   parse.fol: String => FOLFormula - example: "Forall x Imp P(x,f(x)) Exists y P(x,y)"
-        |   parse.hol: String => HOLExpression
-        |   parse.slk: String => Map[String, Pair[LKProof, LKProof]]
-        |   parse.lisp: String => List[SExpression]
-        |   parse hlkexp: String => HOLExpression - example: "var x,y: i>o; (\\ x => (\\y => (x=y) ))"
-        |   parse hlkformula: String => HOLFormula -  example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
+        |   parseFOL: String => FOLFormula - example: "Forall x Imp P(x,f(x)) Exists y P(x,y)"
+        |   parseHOL: String => HOLExpression
+        |   parseLISP: String => List[SExpression]
+        |   parseLLKExp: String => HOLExpression - example: "var x,y: i>o; (\\ x => (\\y => (x=y) ))"
+        |   parseLLKFormula: String => HOLFormula -  example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
+        |   parseProver9: String => FOLFormula - example: "(all x (P(x,f(x)) -> (exists y P(x,y))))"
         |
         | File Input/Output:
         |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
@@ -1531,6 +1570,7 @@ object help {
         |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
         |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
         |   loadHLK : String => LKProof - load a proof in the HLK 2 format from given filename
+        |   loadSLK: String => Map[String, Pair[LKProof, LKProof]] - loads an SLK file
         |   loadVeriTProof : String => ExpansionSequent - loads a veriT proof in the form of an expansion proof.
         |   exportXML: List[Proof], List[String], String => Unit
         |   exportTPTP: List[Proof], List[String], String => Unit
