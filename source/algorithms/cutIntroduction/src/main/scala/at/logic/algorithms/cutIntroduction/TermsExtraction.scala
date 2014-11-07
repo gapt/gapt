@@ -29,13 +29,10 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.algorithms.expansionTrees._ 
-import at.logic.algorithms.lk._
+import at.logic.algorithms.expansionTrees._
 import at.logic.calculi.expansionTrees._
-import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => WeakQuantifierMulti, StrongQuantifier => StrongQuantifierMulti, toFormulaM}
-import at.logic.calculi.lk._
+import at.logic.calculi.expansionTrees.{MWeakQuantifier , MStrongQuantifier}
 import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences._
 import at.logic.language.fol._
 import at.logic.transformations.herbrandExtraction._
 import scala.collection.immutable.HashMap
@@ -48,12 +45,12 @@ object TermsExtraction {
 
   def apply(expProof: ExpansionSequent) : TermSet = {
     
-    val multiExpTrees = (expProof.antecedent.map(et => compressQuantifiers(et))) ++ (expProof.succedent.map(et => compressQuantifiers(et)))
+    val multiExpTrees = expProof.antecedent.map(et => compressQuantifiers(et)) ++ expProof.succedent.map(et => compressQuantifiers(et))
 
     val tuple_set = multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {case (mTree, map) =>
-      if(isPrenex(toFormulaM(mTree).asInstanceOf[FOLFormula])) {
+      if(isPrenex(mTree.toShallow.asInstanceOf[FOLFormula])) {
         mTree match {
-          case WeakQuantifierMulti(form, children) => 
+          case MWeakQuantifier(form, children) =>
             val f = form.asInstanceOf[FOLFormula]
             val terms = children.map{ case (tree, termsSeq) => termsSeq.map(t => t.asInstanceOf[FOLTerm]).toList}.toList
             if(map.contains(f) ) {
@@ -61,7 +58,7 @@ object TermsExtraction {
               map + (f -> (t ++ terms) )
             }
             else map + (f -> terms)
-          case StrongQuantifierMulti(_,_,_) => throw new TermsExtractionException("ERROR: Found strong quantifier while extracting terms.")
+          case MStrongQuantifier(_,_,_) => throw new TermsExtractionException("ERROR: Found strong quantifier while extracting terms.")
           case _ => map
         }
       }

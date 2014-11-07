@@ -24,7 +24,7 @@ import at.logic.algorithms.rewriting.{DefinitionElimination, NameReplacement}
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, MultiExpansionSequent}
+import at.logic.calculi.expansionTrees.{MultiExpansionTree, MultiExpansionSequent}
 import at.logic.calculi.expansionTrees.{ExpansionSequent, ExpansionTree}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._

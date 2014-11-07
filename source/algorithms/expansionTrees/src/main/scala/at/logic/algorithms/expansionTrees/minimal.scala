@@ -2,7 +2,7 @@ package at.logic.algorithms.expansionTrees
 
 import at.logic.provers.Prover
 import scala.collection.mutable.{ListBuffer, HashMap => mMap}
-import at.logic.calculi.expansionTrees.multi._
+import at.logic.calculi.expansionTrees.{MultiExpansionSequent, MultiExpansionTree, MAnd, MAtom, MOr, MImp, MNeg, MWeakQuantifier, MSkolemQuantifier, MStrongQuantifier}
 import at.logic.utils.dssupport.ListSupport.{listComplements, zipper}
 import at.logic.calculi.expansionTrees.ExpansionSequent
 import at.logic.utils.logging.Logger
@@ -130,7 +130,7 @@ private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpans
             newSequents += newS
           }
         }
-        instanceCounter += numberOfInstances(tree)
+        instanceCounter += tree.numberOfInstances
       }
 
       // Loop over the succedent, analogous to the one over the antecedent.
@@ -166,7 +166,7 @@ private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpans
             newSequents += newS
           }
         }
-        instanceCounter += numberOfInstances(tree)
+        instanceCounter += tree.numberOfInstances
       }
 
       newSequents.toSeq
@@ -178,29 +178,29 @@ private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpans
    * @return All trees that have exactly one fewer instance than the input.
    */
   def generateSuccessorTrees(tree: MultiExpansionTree): Seq[MultiExpansionTree] = tree match {
-    case Atom(f) => Nil
-    case Not(s) => generateSuccessorTrees(s).map(Not.apply)
-    case And(left, right) =>
+    case MAtom(f) => Nil
+    case MNeg(s) => generateSuccessorTrees(s).map(MNeg.apply)
+    case MAnd(left, right) =>
       val sLeft = generateSuccessorTrees(left)
       val sRight = generateSuccessorTrees(right)
-      sLeft.map(t => And(t, right)) ++ sRight.map(t => And(left,t))
-    case Or(left, right) =>
+      sLeft.map(t => MAnd(t, right)) ++ sRight.map(t => MAnd(left,t))
+    case MOr(left, right) =>
       val sLeft = generateSuccessorTrees(left)
       val sRight = generateSuccessorTrees(right)
-      sLeft.map(t => Or(t, right)) ++ sRight.map(t => Or(left,t))
-    case Imp(left, right) =>
+      sLeft.map(t => MOr(t, right)) ++ sRight.map(t => MOr(left,t))
+    case MImp(left, right) =>
       val sLeft = generateSuccessorTrees(left)
       val sRight = generateSuccessorTrees(right)
-      sLeft.map(t => Imp(t, right)) ++ sRight.map(t => Imp(left,t))
+      sLeft.map(t => MImp(t, right)) ++ sRight.map(t => MImp(left,t))
 
-    case StrongQuantifier(f, vars, sel) => generateSuccessorTrees(sel).map(StrongQuantifier.apply(f,vars,_))
-    case SkolemQuantifier(f, vars, sel) => generateSuccessorTrees(sel).map(SkolemQuantifier.apply(f,vars,_))
+    case MStrongQuantifier(f, vars, sel) => generateSuccessorTrees(sel).map(MStrongQuantifier.apply(f,vars,_))
+    case MSkolemQuantifier(f, vars, sel) => generateSuccessorTrees(sel).map(MSkolemQuantifier.apply(f,vars,_))
        
-    case WeakQuantifier(f, inst) =>
-      if (!containsWeakQuantifiers(inst.head._1)) { //In this case we are in a bottommost weak quantifier node, which means that we will actually remove instances.
+    case MWeakQuantifier(f, inst) =>
+      if (!inst.head._1.containsWeakQuantifiers) { //In this case we are in a bottommost weak quantifier node, which means that we will actually remove instances.
         if (inst.length > 1) {
           val instances = listComplements(inst) //These two lines generate all expansion trees that result from removing an instance from tree.
-          instances.map(i => WeakQuantifier(f,i))
+          instances.map(i => MWeakQuantifier(f,i))
         }
         else Nil
       }

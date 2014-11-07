@@ -8,7 +8,7 @@ import java.awt.Font._
 import scala.swing.event.{MouseExited, MouseEntered, UIElementResized, MouseClicked, Event}
 import at.logic.calculi.expansionTrees._
 import java.awt.event.MouseEvent
-import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
+import at.logic.calculi.expansionTrees.MultiExpansionTree
 import at.logic.algorithms.expansionTrees.compressQuantifiers
 import org.slf4j.LoggerFactory
 

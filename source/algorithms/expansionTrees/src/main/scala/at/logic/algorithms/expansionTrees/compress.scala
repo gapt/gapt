@@ -2,7 +2,7 @@
 package at.logic.algorithms.expansionTrees
 
 import at.logic.calculi.expansionTrees._
-import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => mWeakQuantifier, StrongQuantifier => mStrongQuantifier, And => mAnd, Or => mOr, Imp => mImp, Not => mNot, Atom => mAtom, SkolemQuantifier => mSkolemQuantifier, MultiExpansionTree, MultiExpansionSequent}
+import at.logic.calculi.expansionTrees.{MWeakQuantifier, MStrongQuantifier, MAnd, MOr, MImp, MNeg, MAtom, MSkolemQuantifier, MultiExpansionTree, MultiExpansionSequent}
 import at.logic.language.hol.{HOLExpression, HOLVar, ExVar, AllVar, HOLFormula, instantiate}
 import at.logic.utils.dssupport.ListSupport.groupSeq
 
@@ -18,18 +18,18 @@ object compressQuantifiers {
    * @return The corresponding MultiExpansionTree.
    */
   def apply(tree: ExpansionTree): MultiExpansionTree = tree match {
-    case Atom(f) => mAtom(f)
-    case Neg(t1) => mNot(compressQuantifiers(t1))
-    case And(t1,t2) => mAnd(compressQuantifiers(t1), compressQuantifiers(t2))
-    case Or(t1,t2) => mOr(compressQuantifiers(t1), compressQuantifiers(t2))
-    case Imp(t1,t2) => mImp(compressQuantifiers(t1), compressQuantifiers(t2))
-    case WeakQuantifier(f,is) => mWeakQuantifier(f, is.flatMap(x => compressWeak(compressQuantifiers(x._1),x._2)))
+    case Atom(f) => MAtom(f)
+    case Neg(t1) => MNeg(compressQuantifiers(t1))
+    case And(t1,t2) => MAnd(compressQuantifiers(t1), compressQuantifiers(t2))
+    case Or(t1,t2) => MOr(compressQuantifiers(t1), compressQuantifiers(t2))
+    case Imp(t1,t2) => MImp(compressQuantifiers(t1), compressQuantifiers(t2))
+    case WeakQuantifier(f,is) => MWeakQuantifier(f, is.flatMap(x => compressWeak(compressQuantifiers(x._1),x._2)))
     case StrongQuantifier(f,v,t) => val (sel, vars) =
       compressStrong(compressQuantifiers(t),v)
-      mStrongQuantifier(f, vars,sel)
+      MStrongQuantifier(f, vars,sel)
     case SkolemQuantifier(f,cs,t) =>
       val (sel, skcs) = compressSkolem(compressQuantifiers(t),cs)
-      mSkolemQuantifier(f, skcs,sel)
+      MSkolemQuantifier(f, skcs,sel)
   }
 
   /**
@@ -40,17 +40,17 @@ object compressQuantifiers {
   def apply(sequent: ExpansionSequent): MultiExpansionSequent = MultiExpansionSequent(sequent.antecedent.map(this.apply), sequent.succedent.map(this.apply))
 
   private def compressStrong(tree: MultiExpansionTree, v: HOLVar): Tuple2[MultiExpansionTree, Seq[HOLVar]] = tree match {
-    case mStrongQuantifier(_, vars, sel) => (sel, vars.+:(v))
+    case MStrongQuantifier(_, vars, sel) => (sel, vars.+:(v))
     case _ => (tree, List(v))
   }
 
   private def compressSkolem(tree: MultiExpansionTree, sk: HOLExpression): Tuple2[MultiExpansionTree, Seq[HOLExpression]] = tree match {
-    case mSkolemQuantifier(_, cs, sel) => (sel, cs.+:(sk))
+    case MSkolemQuantifier(_, cs, sel) => (sel, cs.+:(sk))
     case _ => (tree, List(sk))
   }
 
   private def compressWeak(tree: MultiExpansionTree, e: HOLExpression): Seq[Tuple2[MultiExpansionTree, Seq[HOLExpression]]] = tree match {
-    case mWeakQuantifier(_, is) => is.map(x => (x._1, x._2.+:(e)))
+    case MWeakQuantifier(_, is) => is.map(x => (x._1, x._2.+:(e)))
     case _ => List((tree, List(e)))
   }
 }
@@ -68,21 +68,21 @@ object decompressQuantifiers {
    * @return The corresponding ExpansionTree.
    */
   def apply(tree: MultiExpansionTree): ExpansionTree = tree match {
-    case mAtom(f) => Atom(f)
-    case mNot(t1) => Neg(decompressQuantifiers(t1))
-    case mAnd(t1,t2) => And(decompressQuantifiers(t1), decompressQuantifiers(t2))
-    case mOr(t1,t2) => Or(decompressQuantifiers(t1), decompressQuantifiers(t2))
-    case mImp(t1,t2) => Imp(decompressQuantifiers(t1), decompressQuantifiers(t2))
+    case MAtom(f) => Atom(f)
+    case MNeg(t1) => Neg(decompressQuantifiers(t1))
+    case MAnd(t1,t2) => And(decompressQuantifiers(t1), decompressQuantifiers(t2))
+    case MOr(t1,t2) => Or(decompressQuantifiers(t1), decompressQuantifiers(t2))
+    case MImp(t1,t2) => Imp(decompressQuantifiers(t1), decompressQuantifiers(t2))
     
-    case mStrongQuantifier(f, eig, sel) =>
+    case MStrongQuantifier(f, eig, sel) =>
       val selNew = decompressQuantifiers(sel)
       decompressStrong(f, eig, selNew)
 
-    case mSkolemQuantifier(f, exp, sel) =>
+    case MSkolemQuantifier(f, exp, sel) =>
       val selNew = decompressQuantifiers(sel)
       decompressSkolem(f, exp, selNew)
 
-    case mWeakQuantifier(f, instances) =>
+    case MWeakQuantifier(f, instances) =>
       val instancesNew = instances.map(p => (decompressQuantifiers(p._1), p._2))
       decompressWeak(f, instancesNew)
   }

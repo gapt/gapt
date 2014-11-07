@@ -11,7 +11,7 @@ import swing._
 import scala.swing.event.{MouseExited, MouseEntered, MouseClicked}
 import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
-import at.logic.calculi.expansionTrees.multi.{MultiExpansionTree, WeakQuantifier, StrongQuantifier, And => AndET, Or => OrET, Imp => ImpET, Not => NegET, Atom => AtomET, getVars, getSubformula}
+import at.logic.calculi.expansionTrees.{MultiExpansionTree, MWeakQuantifier, MStrongQuantifier, MAnd, MOr, MImp, MNeg, MAtom}
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.image.BufferedImage
 import at.logic.language.hol._
@@ -69,11 +69,11 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
     opaque = false
 
     expTree match {
-      case AtomET(f) =>
+      case MAtom(f) =>
         val lbl = DrawSequent.formulaToLabel(f, ft)
         lbl.deafTo(lbl.mouse.moves, lbl.mouse.clicks) // We don't want atoms to react to mouse behavior.
         contents += lbl
-      case NegET(t) =>
+      case MNeg(t) =>
         val conn = label("¬", ft)
         val subF = treeToComponent(t, allow)
         this.listenTo(conn.mouse.moves)
@@ -85,7 +85,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         }
         contents += conn
         contents += subF
-      case AndET(t1, t2) =>
+      case MAnd(t1, t2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
         val conn = label("∧", ft)
         val subF1 = treeToComponent(t1, allow)
@@ -106,7 +106,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case OrET(t1, t2) =>
+      case MOr(t1, t2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
         val conn = label("∨", ft)
         val subF1 = treeToComponent(t1, allow)
@@ -127,7 +127,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case ImpET(t1, t2) =>
+      case MImp(t1, t2) =>
         val parenthesis = connectParenthesis(label("(", ft), label(")", ft))
         val conn = label("⊃", ft)
         val subF1 = treeToComponent(t1, allow)
@@ -148,7 +148,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case WeakQuantifier(formula, instances) =>
+      case MWeakQuantifier(formula, instances) =>
         val terms = instances.map(i => i._2.toList).toList
         val subtrees = instances.map(i => i._1).toList
         val quantifiers = quantifierBlock(expTree) // quantifiers is a string containing the quantifier block represented by this weak node.
@@ -173,7 +173,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         else {
           // The current tree is either open or closed.
           val lbl = LatexLabel(ft, quantifiers)
-          val subF = getSubformula(expTree)
+          val subF = expTree.getSubformula
 
           if (allow) lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -192,7 +192,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
           contents += drawFormula(subF) // Since the current quantifier block is not expanded, we needn't worry about the state of child trees and can call drawFormula.
         }
 
-      case StrongQuantifier(formula, vars, sel) => // This case is mostly analogous to the WeakQuantifier one.
+      case MStrongQuantifier(formula, vars, sel) => // This case is mostly analogous to the WeakQuantifier one.
         val terms = List(vars.toList)
         val subtrees = List(sel)
         val quantifiers = quantifierBlock(expTree)
@@ -215,7 +215,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
         }
         else {
           val lbl = LatexLabel(ft, quantifiers)
-          val subF = getSubformula(expTree)
+          val subF = expTree.getSubformula
 
           if (allow) lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -247,8 +247,8 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
    * @return A string containing the quantifier block represented by this quantifier node.
    */
   def quantifierBlock(et: MultiExpansionTree): String = et match {
-    case StrongQuantifier(_, _, _) | WeakQuantifier(_, _) =>
-      val vars = getVars(et)
+    case MStrongQuantifier(_, _, _) | MWeakQuantifier(_, _) =>
+      val vars = et.getVars
       val f = et.toShallow
       f match {
         case AllVar(_, _) => vars.foldLeft("")((str: String, v: HOLVar) => str + "(\\forall " + DrawSequent.formulaToLatexString(v) + ")")
