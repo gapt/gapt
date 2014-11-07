@@ -1,28 +1,23 @@
-/*
- * FOLerization.scala
- */
-
 package at.logic.algorithms.fol.hol2fol
 
-import at.logic.language.fol.{Substitution => FOLSubstitution, _}
-import at.logic.language.hol.replacements.{Replacement, getAllPositions2, getAllPositions}
-import at.logic.language.hol.{Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom, ExVar => HOLExVar, AllVar => HOLAllVar, Substitution => HOLSubstitution, _}
-import at.logic.language.hol
-import scala.collection.mutable
-import at.logic.language.schema.{IntZero,Succ,foVar, foConst,IntegerTerm,indexedFOVar}
 import at.logic.calculi.lk.base.FSequent
-import at.logic.language.lambda.LambdaExpression
+import at.logic.language.fol.{Substitution => FOLSubstitution, _}
+import at.logic.language.hol
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.schema.IntZero
+import at.logic.language.hol.replacements.{Replacement, getAllPositions2}
+import at.logic.language.hol.{AllVar => HOLAllVar, And => HOLAnd, Atom => HOLAtom, ExVar => HOLExVar, Function => HOLFunction, Imp => HOLImp, Neg => HOLNeg, Or => HOLOr, Substitution => HOLSubstitution, _}
 import at.logic.language.lambda.symbols.{StringSymbol, SymbolA}
-import at.logic.language.lambda.types.{To, TA, Ti, FunctionType}
+import at.logic.language.lambda.types.{FunctionType, TA, Ti, To}
+import at.logic.language.schema.{IntZero, IntegerTerm, Succ, foConst, foVar, indexedFOVar}
+
+import scala.collection.mutable
 
 
+object reduceHolToFol extends reduceHolToFol
 /**
  * Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
  * replaced by constants. Open lambda expressions are changed by functions.
  */
-object reduceHolToFol extends reduceHolToFol
 class reduceHolToFol {
   private def folexp2term(exp:FOLExpression) = exp match {
     case e:FOLTerm => exp.asInstanceOf[FOLTerm]
@@ -30,8 +25,8 @@ class reduceHolToFol {
   }
 
   //TODO: replace mutable maps by immutable ones to allow parallelism. Need to check the calls for sideffects on the maps
-  def apply(formula: HOLFormula, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FOLFormula = {
-    val immscope = replaceAbstractions.emptymap ++ scope
+  private[hol2fol] def apply(formula: HOLFormula, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FOLFormula = {
+    val immscope = Map[HOLExpression, StringSymbol]() ++ scope
     val (scope_, qterm) = replaceAbstractions(formula, immscope, id)
     scope ++= scope_
     apply_( qterm).asInstanceOf[FOLFormula]
@@ -41,22 +36,22 @@ class reduceHolToFol {
   def apply(term: HOLExpression) : FOLExpression = {
     val counter = new {private var state = 0; def nextId = { state = state +1; state}}
     val emptymap = mutable.Map[HOLExpression, StringSymbol]()
-    reduceHolToFol( term, emptymap, counter )
+    apply( term, emptymap, counter )
   }
 
   def apply(formula: HOLFormula) : FOLFormula =
   //inner cast needed to call the correct apply method
     reduceHolToFol(formula.asInstanceOf[HOLExpression]).asInstanceOf[FOLFormula]
 
-  def apply(term: HOLExpression, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}) = {
-    val immscope = replaceAbstractions.emptymap ++ scope
+  private[hol2fol] def apply(term: HOLExpression, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}) = {
+    val immscope = Map[HOLExpression, StringSymbol]() ++ scope
     val (scope_, qterm) = replaceAbstractions(term, immscope, id)
     scope ++= scope_
     apply_( qterm)
   }
 
-  def apply(s: FSequent, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FSequent = {
-    val immscope = replaceAbstractions.emptymap ++ scope
+  private def apply(s: FSequent, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FSequent = {
+    val immscope = Map[HOLExpression, StringSymbol]() ++ scope
     val (scope1, ant) = s.antecedent.foldLeft((immscope, List[HOLFormula]()))((r, formula) => {
       val (scope_, f_) = replaceAbstractions(formula, r._1, id)
       (scope_, f_.asInstanceOf[HOLFormula] :: r._2)
@@ -69,11 +64,11 @@ class reduceHolToFol {
     FSequent( ant map apply_, succ map apply_  )
   }
 
-  def apply_(f:HOLFormula) : FOLFormula =
+  private def apply_(f:HOLFormula) : FOLFormula =
     apply_(f.asInstanceOf[HOLExpression]).asInstanceOf[FOLFormula]
 
   //assumes we are on the logical level of the hol formula - all types are mapped to i, i>o or i>i>o respectively
-  def apply_(term: HOLExpression): FOLExpression = {
+  private def apply_(term: HOLExpression): FOLExpression = {
     term match {
       case e : FOLExpression => e // if it's already FOL - great, we are done.
       case z:indexedFOVar => FOLVar(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString)
@@ -112,7 +107,7 @@ class reduceHolToFol {
   }
 
   //if we encountered an atom, we need to convert logical formulas to the term level too
-  def apply_termlevel(term: HOLExpression): FOLTerm = {
+  private def apply_termlevel(term: HOLExpression): FOLTerm = {
     term match {
       case e : FOLTerm => e // if it's already FOL - great, we are done.
       case z:indexedFOVar => FOLVar(z.name.toString ++ intTermLength(z.index.asInstanceOf[IntegerTerm]).toString)
@@ -176,13 +171,19 @@ class reduceHolToFol {
 
 
 object replaceAbstractions extends replaceAbstractions
+
+/**
+ * Replace lambda-abstractions by constants.
+ *
+ * Each abstraction in an [[at.logic.calculi.lk.base.FSequent]] is replaced by a separate constant symbol; the used
+ * constants are returned in a Map.
+ */
 class replaceAbstractions {
   type ConstantsMap = Map[HOLExpression,StringSymbol]
-  val emptymap = Map[HOLExpression, StringSymbol]()
 
   def apply(l : List[FSequent]) : (ConstantsMap, List[FSequent]) = {
     val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-    l.foldLeft((emptymap,List[FSequent]()))( (rec,el) => {
+    l.foldLeft((Map[HOLExpression,StringSymbol](),List[FSequent]()))( (rec,el) => {
       val (scope_,f) = rec
       val (nscope, rfs) = replaceAbstractions(el, scope_,counter)
       (nscope, rfs::f)
@@ -190,7 +191,7 @@ class replaceAbstractions {
     })
   }
 
-  def apply(f:FSequent, scope : ConstantsMap, id: {def nextId: Int}) : (ConstantsMap,FSequent) = {
+  private[hol2fol] def apply(f:FSequent, scope : ConstantsMap, id: {def nextId: Int}) : (ConstantsMap,FSequent) = {
     val (scope1, ant) = f.antecedent.foldLeft((scope,List[HOLFormula]()))((rec,formula) => {
       val (scope_, f) = rec
       val (nscope, nformula) = replaceAbstractions(formula, scope_, id)
@@ -213,14 +214,14 @@ class replaceAbstractions {
         state = state + 1; state
       }
     }
-    apply(e, emptymap, counter)._2
+    apply(e, Map[HOLExpression, StringSymbol](), counter)._2
   }
 
   def apply(formula: HOLFormula) : HOLFormula =
     apply(formula.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]
 
   // scope and id are used to give the same names for new functions and constants between different calls of this method
-  def apply(e : HOLExpression, scope : ConstantsMap, id: {def nextId: Int})
+  private[hol2fol] def apply(e : HOLExpression, scope : ConstantsMap, id: {def nextId: Int})
   : (ConstantsMap, HOLExpression) = e match {
     case HOLVar(_,_) =>
       (scope,e)
@@ -265,6 +266,9 @@ class replaceAbstractions {
 }
 
 object undoReplaceAbstractions extends undoReplaceAbstractions
+/**
+ * Replaces the constants introduced by [[replaceAbstractions]] with the original lambda-abstractions.
+ */
 class undoReplaceAbstractions {
   import replaceAbstractions.ConstantsMap
 
@@ -281,11 +285,11 @@ class undoReplaceAbstractions {
   }
 }
 
+object convertHolToFol extends convertHolToFol
 /**
- * In contrast to reduceHolToFol, we recreate the term via the fol constructors but
+ * In contrast to [[reduceHolToFol]], we recreate the term via the fol constructors but
  * do not try to remove higher-order content.
  */
-object convertHolToFol extends convertHolToFol
 class convertHolToFol {
   def apply(e:HOLExpression) : FOLExpression = e match {
     case f : HOLFormula => convertFormula(f)
@@ -318,11 +322,6 @@ class convertHolToFol {
     case _ => throw new Exception("Could not convert term "+e+" to first order!")
   }
 
-}
-
-// TODO - support generated function symbols by checking the arity from le and add the variables to the returned term. Right now only constants are supported
-object createExampleFOLConstant {
-  def apply(le: LambdaExpression, css: StringSymbol) = FOLConst(css)
 }
 
 /**
@@ -388,12 +387,12 @@ object changeTypeIn {
                                                              fs.succedent.map(x=> apply(x,tmap)) )
 
   //different names bc of type erasure
-  def holsub(s:HOLSubstitution, tmap : TypeMap) : HOLSubstitution = HOLSubstitution(
+  private def holsub(s:HOLSubstitution, tmap : TypeMap) : HOLSubstitution = HOLSubstitution(
     s.holmap.map(x =>
     (apply(x._1, tmap).asInstanceOf[HOLVar], apply(x._2, tmap) )
   ))
 
-  def folsub(s:FOLSubstitution, tmap : TypeMap) : FOLSubstitution = FOLSubstitution(s.folmap.map(x =>
+  private def folsub(s:FOLSubstitution, tmap : TypeMap) : FOLSubstitution = FOLSubstitution(s.folmap.map(x =>
     (apply(x._1, tmap).asInstanceOf[FOLVar], apply(x._2, tmap) )
   ))
 }
