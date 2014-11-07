@@ -343,14 +343,14 @@ object sFOParserCNT {
       //      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
       //        case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
       ////          println("\n\npLink")
-      //          SchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
+      //          SchemaProofLinkRule(sequent.toFSequent, name, v::Nil)
       //        }
       //      }
 
       def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ repsep(term,",") ~ ")"  ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   l   ~ ")"  ~ sequent ~ ")" => {
           //          println("\n\npLink")
-          FOSchemaProofLinkRule(sequent.toFSequent(), name, l)
+          FOSchemaProofLinkRule(sequent.toFSequent, name, l)
         }
       }
 
@@ -658,7 +658,7 @@ object sFOParserCNT {
       }
 
       def autoprop: Parser[LKProof] = "autoprop(" ~ sequent ~ ")" ^^ {
-        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional(seq.toFSequent(), throwOnError=true).get
+        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional(seq.toFSequent, throwOnError=true).get
       }
 
       def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {

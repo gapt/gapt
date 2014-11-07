@@ -212,7 +212,7 @@ object checkProofLinks1 {
         val sub_ant = ps.seq.antecedent.map(f => sub(f.asInstanceOf[SchemaFormula]))
         val sub_suc = ps.seq.succedent.map(f => sub(f.asInstanceOf[SchemaFormula]))
 
-        if(sub_ant.toSet != so.toFSequent()._1.toSet || sub_suc.toSet != so.toFSequent()._2.toSet)
+        if(sub_ant.toSet != so.toFSequent._1.toSet || sub_suc.toSet != so.toFSequent._2.toSet)
         {
           println("\n checkProofLinks1 for proof "+ name +" FAIL")
           ps.seq._1.foreach(f => println("\n"+f))

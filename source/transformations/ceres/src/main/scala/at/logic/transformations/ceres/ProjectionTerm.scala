@@ -617,7 +617,7 @@ object ProjectionTermDB extends Iterable[(String, ProjectionTerm)] with Traversa
     }
 
     def filterProjectionSet(proofs: List[LKProof], end_seq: FSequent): List[LKProof] = proofs.filter(proof => {
-      val proj_end_seq = proof.root.toFSequent()
+      val proj_end_seq = proof.root.toFSequent
       proj_end_seq.antecedent.diff(end_seq.antecedent).intersect(proj_end_seq.succedent.diff(end_seq.succedent)).isEmpty
     })
 

@@ -202,22 +202,22 @@ object SCHOLParser {
       def pFOLinkNoArg: Parser[LKProof] = "pLink(" ~ "(" ~ """[\\]*[a-z0-9]+""".r ~ "," ~ OrdinalTerms ~ ")" ~ sequent ~ ")" ^^ {
         case "pLink(" ~ "(" ~ name ~ "," ~   l   ~ ")"  ~ sequent ~ ")" => {
 
-          FOSchemaProofLinkRule(sequent.toFSequent(), name, List(l).asInstanceOf[List[SchemaExpression]])
+          FOSchemaProofLinkRule(sequent.toFSequent, name, List(l).asInstanceOf[List[SchemaExpression]])
         }
       }
       def pFOLinkNoTwoArg: Parser[LKProof] = "pLink(" ~ "(" ~ """[\\]*[a-z0-9]+""".r ~ "," ~ OrdinalTerms ~ "," ~ repsep(IndividualordinalExpressions,",") ~ ")" ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   l1  ~ "," ~ l2   ~ ")"  ~ sequent ~ ")" => {
-          FOSchemaProofLinkRule(sequent.toFSequent(), name, List(l1).asInstanceOf[List[SchemaExpression]]++l2.asInstanceOf[List[SchemaExpression]])
+          FOSchemaProofLinkRule(sequent.toFSequent, name, List(l1).asInstanceOf[List[SchemaExpression]]++l2.asInstanceOf[List[SchemaExpression]])
         }
       }
       def pFOLinkNoOneArg: Parser[LKProof] = "pLink(" ~ "(" ~ """[\\]*[a-z0-9]+""".r ~ "," ~ OrdinalTerms ~ "," ~  repsep(IndividualSort,",") ~ ")" ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   l1  ~ "," ~ l2   ~ ")"  ~ sequent ~ ")" => {
-          FOSchemaProofLinkRule(sequent.toFSequent(), name, List(l1).asInstanceOf[List[SchemaExpression]]++l2)
+          FOSchemaProofLinkRule(sequent.toFSequent, name, List(l1).asInstanceOf[List[SchemaExpression]]++l2)
         }
       }
       def pFOLinkArg: Parser[LKProof] = "pLink(" ~ "(" ~ """[\\]*[a-z0-9]+""".r ~ "," ~ OrdinalTerms ~ "," ~ repsep(IndividualSort,",") ~ "," ~  repsep(IndividualordinalExpressions,",") ~ ")" ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   l1  ~ "," ~ l2   ~ "," ~ l3 ~ ")"  ~ sequent ~ ")" => {
-          FOSchemaProofLinkRule(sequent.toFSequent(), name, List(l1).asInstanceOf[List[SchemaExpression]]++l2++l3)
+          FOSchemaProofLinkRule(sequent.toFSequent, name, List(l1).asInstanceOf[List[SchemaExpression]]++l2++l3)
         }
       }
       def orR1: Parser[LKProof] = "orR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
@@ -415,7 +415,7 @@ object SCHOLParser {
         }
       }
       def autoprop: Parser[LKProof] = "autoprop(" ~ sequent ~ ")" ^^ {
-        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional(seq.toFSequent(), throwOnError=true).get
+        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional(seq.toFSequent, throwOnError=true).get
       }
       def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "termDefL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {

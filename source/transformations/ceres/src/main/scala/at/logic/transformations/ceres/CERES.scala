@@ -43,11 +43,11 @@ class CERESR2LK {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply(p:LKProof, pred : HOLFormula => Boolean) : LKProof = {
-    val es = p.root.toFSequent()
+    val es = p.root.toFSequent
     val proj = Projections(p, pred)
 
     val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(p, pred))
-    Prover9.refute(tapecl.map(_.toFSequent())) match {
+    Prover9.refute(tapecl.map(_.toFSequent)) match {
       case None => throw new Exception("Prover9 could not refute the characteristic clause set!")
       case Some(rp) =>
         apply(es, proj, rp)
@@ -87,11 +87,11 @@ class CERES {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply(p:LKProof, pred : HOLFormula => Boolean) : LKProof = {
-    val es = p.root.toFSequent()
+    val es = p.root.toFSequent
     val proj = Projections(p, pred)
 
     val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(p, pred))
-    Prover9.refute(tapecl.map(_.toFSequent())) match {
+    Prover9.refute(tapecl.map(_.toFSequent)) match {
       case None => throw new Exception("Prover9 could not refute the characteristic clause set!")
       case Some(rp) =>
         val lkproof = RobinsonToLK(rp)
@@ -100,7 +100,7 @@ class CERES {
   }
 
   def apply(lkproof : LKProof, refutation: LKProof, pred : HOLFormula => Boolean) : LKProof = {
-    CERES(lkproof.root.toFSequent(), Projections(lkproof, pred), refutation)
+    CERES(lkproof.root.toFSequent, Projections(lkproof, pred), refutation)
   }
 
   /**
@@ -112,7 +112,7 @@ class CERES {
    */
   def apply(endsequent : FSequent, projections : Set[LKProof], refutation: LKProof) : LKProof = refutation match {
     case Axiom(root) =>
-      findMatchingProjection(endsequent, projections)(root.toFSequent())
+      findMatchingProjection(endsequent, projections)(root.toFSequent)
 
     case CutRule(p1,p2,root,aux1,aux2) =>
       val rp1 = CERES(endsequent, projections, p1)
@@ -157,11 +157,11 @@ class CERES {
 
   def findMatchingProjection(endsequent : FSequent, projections : Set[LKProof]) : (FSequent => LKProof) = {
     (axfs: FSequent) => {
-      projections.find(x => StillmanSubsumptionAlgorithmHOL.subsumes(x.root.toFSequent() diff endsequent, axfs)) match {
+      projections.find(x => StillmanSubsumptionAlgorithmHOL.subsumes(x.root.toFSequent diff endsequent, axfs)) match {
         case None => throw new Exception("Could not find a projection to " + axfs + " in " +
           projections.map(_.root).mkString("{\n", ",\n", "\n}"))
         case Some(proj) =>
-          val Some(sub) = StillmanSubsumptionAlgorithmHOL.subsumes_by(proj.root.toFSequent() diff endsequent, axfs)
+          val Some(sub) = StillmanSubsumptionAlgorithmHOL.subsumes_by(proj.root.toFSequent diff endsequent, axfs)
           val (subproj, _) = applySubstitution(proj, sub)
           require((subproj.root.toFSequent diff endsequent).multiSetEquals(axfs),
             "Instance of projection with end-sequent " + subproj.root + " is not equal to " + axfs + " x " + endsequent)

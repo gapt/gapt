@@ -669,7 +669,7 @@ object addWeakeningAndContraction {
       }
     )
 
-    val context2 = rightweak.root.toFSequent() diff towhat
+    val context2 = rightweak.root.toFSequent diff towhat
     val leftcontr : LKProof = context2.antecedent.foldLeft(rightweak)((intermediate, f) =>
       try {
         ContractionLeftRule(intermediate, f)

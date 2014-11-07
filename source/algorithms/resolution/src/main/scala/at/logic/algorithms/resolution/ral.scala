@@ -47,8 +47,8 @@ abstract class RobinsonToRal {
       case InitialClause(clause) =>
         val fc : FSequent = clause.toFSequent
         val rule = InitialSequent(convert_sequent(fc), (fc.antecedent.toList.map(x => EmptyLabel()), fc.succedent.toList.map(x => EmptyLabel())))
-        require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in initial translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
-        require(! rule.root.toFSequent().formulas.contains((x:HOLFormula) => x.isInstanceOf[FOLFormula]), "Formulas contain fol content!")
+        require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in initial translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
+        require(! rule.root.toFSequent.formulas.contains((x:HOLFormula) => x.isInstanceOf[FOLFormula]), "Formulas contain fol content!")
 
 
         (emptyTranslationMap, rule)
@@ -63,7 +63,7 @@ abstract class RobinsonToRal {
         val sub2 = if (sub.isIdentity) rp2 else Sub(rp2, sub)
         val rule = Cut(sub1, sub2, List(pickFOsucc(sub(aux1.formula), sub1.root, Nil)),
                                    List(pickFOant(sub(aux2.formula), sub2.root, Nil)))
-        require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in resolution translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
+        require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in resolution translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
 
         (rmap2, rule)
 
@@ -74,7 +74,7 @@ abstract class RobinsonToRal {
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
         val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOant(sub(x.formula), rp1.root, list)::list).reverse
         val rule = AFactorF(rp1, a, aux )
-        require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in factor translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
+        require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in factor translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
 
         (rmap1, rule)
 
@@ -85,7 +85,7 @@ abstract class RobinsonToRal {
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
         val (a::aux) = aux1.foldLeft(List[LabelledFormulaOccurrence]())((list,x) => pickFOsucc(sub(x.formula), rp1.root, list)::list).reverse
         val rule = AFactorT(rp1, a, aux )
-        require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in factor translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
+        require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in factor translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
         (rmap1, rule)
 
       case Paramodulation(clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.antecedent contains modulant =>
@@ -95,7 +95,7 @@ abstract class RobinsonToRal {
         val sub1 = if (sub.isIdentity) rp1 else Sub(rp1, sub)
         val sub2 = if (sub.isIdentity) rp2 else Sub(rp2, sub)
         val rule = ParaF(rp1,rp2, pickFOsucc(sub(equation.formula), rp1.root, List()), pickFOant(sub(modulant.formula), rp2.root, List()), convert_formula(primary.formula))
-        require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in para translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
+        require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in para translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
         (rmap2, rule)
 
       case Paramodulation(clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.succedent contains modulant =>
@@ -106,14 +106,14 @@ abstract class RobinsonToRal {
         val sub1 = Sub(rp1, sub)
         val sub2 = Sub(rp2, sub)
         val rule = ParaT(rp1,rp2, pickFOsucc(sub(equation.formula), rp1.root, List()), pickFOsucc(sub(modulant.formula), rp2.root, List()), convert_formula(primary.formula))
-        require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in para translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
+        require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in para translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
         (rmap2, rule)
 
       case Variant(clause, parent, sub_) =>
         val sub = convert_substitution(sub_)
         val (rmap1, rp1) = apply(parent, map)
         val sub1 = Sub(rp1, sub)
-        require(sub1.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in variant translation, translated root: "+sub1.root.toFSequent()+" is not original root "+clause.toFSequent())
+        require(sub1.root.toFSequent  multiSetEquals clause.toFSequent, "Error in variant translation, translated root: "+sub1.root.toFSequent+" is not original root "+clause.toFSequent)
         (rmap1, sub1)
 
       case Instance(clause, parent, sub_) =>
@@ -122,12 +122,12 @@ abstract class RobinsonToRal {
 //        val subexps = sub.holmap.toList.flatMap(x => List(x._1,x._2)).filterNot(checkFactory(_, HOLFactory))
 //        require(subexps.isEmpty , "Substitution contains fol content: "+subexps.map(_.factory))
         val (rmap1, rp1) = apply(parent, map)
-//        val rootexps = rp1.root.toFSequent().formulas.filterNot(checkFactory(_,HOLFactory))
+//        val rootexps = rp1.root.toFSequent.formulas.filterNot(checkFactory(_,HOLFactory))
 //        require(rootexps.isEmpty, "Formulas contain fol content: "+rootexps.mkString(" ::: "))
         val rule = if (sub.isIdentity) rp1 else Sub(rp1, sub)
 
 //        println("inferring instance from parent:"+rp1.root+" to "+rule.root+" with sub "+sub)
-        require(rule.root.toFSequent()  multiSetEquals clause.toFSequent(), "Error in instance translation, translated root: "+rule.root.toFSequent()+" is not original root "+clause.toFSequent())
+        require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in instance translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
         (rmap1, rule)
 
 

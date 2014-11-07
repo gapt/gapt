@@ -44,7 +44,7 @@ class SubstituteProofTest extends SpecificationWithJUnit {
       val fs = map("P2").root.toFSequent
       val fssub = FSequent(fs.antecedent map (x => sub1(x)),
                            fs.succedent map (x => sub1(x)))
-      p_.root.toFSequent() must beSyntacticFSequentEqual (fssub)
+      p_.root.toFSequent must beSyntacticFSequentEqual (fssub)
     }
 
     "work on simple proofs (3)" in {
@@ -54,7 +54,7 @@ class SubstituteProofTest extends SpecificationWithJUnit {
       p_.root must beSyntacticMultisetEqual (map("P3").root)
       val fssub = FSequent(fs.antecedent map (x => sub1(x)),
         fs.succedent map (x => sub1(x)))
-      p_.root.toFSequent() must beSyntacticFSequentEqual (fssub)
+      p_.root.toFSequent must beSyntacticFSequentEqual (fssub)
     }
 
 

@@ -1231,7 +1231,7 @@ object ntape {
   def findProj(proof: LKProof, axioms: List[FSequent]) = {
     val es = proof.root.toFSequent
     val pref = Projections.lksk_reflexivity_projection(proof)
-    println("Calculated projection to reflexivity: " + pref.root.toFSequent().diff(proof.root.toFSequent()))
+    println("Calculated projection to reflexivity: " + pref.root.toFSequent.diff(proof.root.toFSequent))
     val proj = pref :: (Projections(proof, x => containsQuantifierHOL(x)).toList)
     println("Total projections size: " + proj.size)
     val pproj = proj.map(x => (x.root.toFSequent.diff(es), x))
@@ -1410,7 +1410,7 @@ object css {
     prunes(l)
 
   def prunes(l: List[Sequent]): (FOLConstantsMap, List[FSequent], List[FSequent]) = {
-    prunefs(l map (_.toFSequent()))
+    prunefs(l map (_.toFSequent))
   }
 
   def prunefs(l: List[FSequent]): (FOLConstantsMap, List[FSequent], List[FSequent]) = {

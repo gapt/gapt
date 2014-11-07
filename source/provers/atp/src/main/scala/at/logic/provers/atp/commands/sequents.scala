@@ -76,7 +76,7 @@ case class SubsumedTargedSetFromClauseSetCommand[V <: Sequent]() extends ResultC
     val target = state("targetClause").asInstanceOf[FSequent]
     val clauses = state("clauses").asInstanceOf[Traversable[ResolutionProof[V]]]
     val alg = StillmanSubsumptionAlgorithmFOL
-    val res = clauses.find(c => alg.subsumes(c.root.toFSequent(), target))
+    val res = clauses.find(c => alg.subsumes(c.root.toFSequent, target))
     res
   }
 }
@@ -86,7 +86,7 @@ case class SubsumedTargedReachedCommand[V <: Sequent]() extends ResultCommand[V]
   def apply(state: State, data: Any) = {
     val target = state("targetClause").asInstanceOf[FSequent]
     val d = data.asInstanceOf[ResolutionProof[V]]
-    if (firstSubsumesSecond(d.root.toFSequent(),target)) Some(d)
+    if (firstSubsumesSecond(d.root.toFSequent,target)) Some(d)
     else None
   }
   def firstSubsumesSecond(s1: FSequent, s2: FSequent): Boolean = {
@@ -165,7 +165,7 @@ case class SimpleForwardSubsumptionCommand[V <: Sequent](a: SubsumptionAlgorithm
   def apply(state: State, data: Any) = {
     val manager = getManager(state)
     val res = data.asInstanceOf[ResolutionProof[V]]
-    val res1 = res.root.toFSequent()
+    val res1 = res.root.toFSequent
     if (manager.forwardSubsumption(res1)) List() else List((state,data))
   }
   override def toString = "SimpleForwardSubsumptionCommand("+a.getClass+")"
@@ -176,7 +176,7 @@ case class SimpleBackwardSubsumptionCommand[V <: Sequent](a: SubsumptionAlgorith
   def apply(state: State, data: Any) = {
     val manager = getManager(state)
     val res = data.asInstanceOf[ResolutionProof[V]]
-    val res1 = res.root.toFSequent()
+    val res1 = res.root.toFSequent
     manager.backwardSubsumption(res1)
     List((state,data))
   }

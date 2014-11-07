@@ -131,9 +131,9 @@ class ProofNodeInfo[T] extends NodeInfo {
     val es = path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.root
     es match {
       case s : Sequent =>
-        val fs = s.toFSequent()
+        val fs = s.toFSequent
         if (! (sequentNameCache contains fs))
-          sequentNameCache(fs) = fsequentString(s.toFSequent(), escape_latex = false)
+          sequentNameCache(fs) = fsequentString(s.toFSequent, escape_latex = false)
         sequentNameCache(fs)
 
       case _ => es.toString

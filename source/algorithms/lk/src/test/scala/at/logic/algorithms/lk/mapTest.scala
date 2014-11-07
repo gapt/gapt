@@ -35,7 +35,7 @@ class mapTest extends SpecificationWithJUnit {
 
     "be able to convert a hol proof to a fol proof" in {
       val (proof, _) = map_proof(p1, convertHolToFol.apply )
-      for (f <- proof.root.toFSequent().formulas) {
+      for (f <- proof.root.toFSequent.formulas) {
         val r = if (f.isInstanceOf[FOLFormula]) "" else (f.toString+" is not a fol formula")
         "" must_== (r)
       }
@@ -64,7 +64,7 @@ class mapTest extends SpecificationWithJUnit {
       }
 
       val (cutproof, _) = map_proof(cut, fun )
-      for (f <- cutproof.root.toFSequent().formulas) {
+      for (f <- cutproof.root.toFSequent.formulas) {
         val r = if (f.isInstanceOf[FOLFormula]) "" else (f.toString+" is not a fol formula")
         "" must_== (r)
       }

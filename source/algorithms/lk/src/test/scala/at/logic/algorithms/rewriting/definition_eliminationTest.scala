@@ -108,7 +108,7 @@ class definition_eliminationTest extends SpecificationWithJUnit {
       val elp = DefinitionElimination( dmap, i12 )
       println(elp)
       val expected = FSequent(List(AllVar(x,AllVar(y, pxy)), And(AllVar(y,pxy), AllVar(x,qx))), List(ExVar(x, And(qx, AllVar(y,pxy)))))
-      expected must beSyntacticFSequentEqual(elp.root.toFSequent())
+      expected must beSyntacticFSequentEqual(elp.root.toFSequent)
     }
 
     "work on a simple proof with equality" in {

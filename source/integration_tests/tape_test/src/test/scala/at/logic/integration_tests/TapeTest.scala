@@ -140,7 +140,7 @@ class TapeTest extends SpecificationWithJUnit {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(foltape))
-      val Some(taperp) = Prover9.refute(tapecl.map(_.toFSequent()))
+      val Some(taperp) = Prover9.refute(tapecl.map(_.toFSequent))
       val lkref = RobinsonToLK(taperp)
 
       //get projections etc
@@ -151,7 +151,7 @@ class TapeTest extends SpecificationWithJUnit {
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect({case c@CutRule(_,_,_,aux,_) if containsQuantifier(aux.formula) => c}) must beEmpty
-      acnf.root.toFSequent() must beSyntacticFSequentEqual(foltape.root.toFSequent())
+      acnf.root.toFSequent must beSyntacticFSequentEqual(foltape.root.toFSequent)
 
     }
 
@@ -165,7 +165,7 @@ class TapeTest extends SpecificationWithJUnit {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(foltape))
-      val Some(taperp) = Prover9.refute(tapecl.map(_.toFSequent()))
+      val Some(taperp) = Prover9.refute(tapecl.map(_.toFSequent))
 
       //get projections etc
       val tapeproj = Projections(foltape)
@@ -175,7 +175,7 @@ class TapeTest extends SpecificationWithJUnit {
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect({case c@CutRule(_,_,_,aux,_) if containsQuantifier(aux.formula) => c}) must beEmpty
-      acnf.root.toFSequent() must beSyntacticFSequentEqual(foltape.root.toFSequent())
+      acnf.root.toFSequent must beSyntacticFSequentEqual(foltape.root.toFSequent)
 
     }
 

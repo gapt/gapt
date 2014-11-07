@@ -131,8 +131,8 @@ class MiscTest extends SpecificationWithJUnit {
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
       val s = at.logic.transformations.ceres.struct.StructCreators.extract( proof )
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent() )
-      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent() ))
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
+      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
       val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
       saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
         projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),

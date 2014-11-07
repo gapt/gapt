@@ -27,7 +27,7 @@ object Projections extends at.logic.utils.logging.Logger {
   def reflexivity_projection( proof:LKProof, t : TA = Ti) : LKProof = {
     //TODO: in case of fol, fol equality is not used
     //TODO: lksk is not handled
-    val es = proof.root.toFSequent()
+    val es = proof.root.toFSequent
     val x = es.formulas.headOption match {
       case Some(f) => f.factory.createVar(StringSymbol("x"), t)
       case None => HOLVar(StringSymbol("x"), t)
@@ -44,7 +44,7 @@ object Projections extends at.logic.utils.logging.Logger {
   def lksk_reflexivity_projection( proof:LKProof, t : TA = Ti) : LKProof = {
 
     //TODO: in case of fol, fol equality is not used
-    val es = proof.root.toFSequent()
+    val es = proof.root.toFSequent
     val x = es.formulas.headOption match {
       case Some(f) => f.factory.createVar(StringSymbol("x"), t)
       case None => HOLVar(StringSymbol("x"), t)

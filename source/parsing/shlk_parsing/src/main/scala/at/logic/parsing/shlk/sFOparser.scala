@@ -31,7 +31,7 @@ object sFOParser {
     sp.parseAll(sp.sequent, txt) match {
       case res @ sp.Success(result, input) => {
 //        println("\n\nSUCCESS parse :) \n")
-        return res.result.toFSequent()
+        return res.result.toFSequent
       }
       case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
         throw new Exception("Error in sFOParser.parseSequent : "+x.toString)
@@ -432,14 +432,14 @@ object sFOParser {
 //      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
 //        case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
 ////          println("\n\npLink")
-//          SchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
+//          SchemaProofLinkRule(sequent.toFSequent, name, v::Nil)
 //        }
 //      }
 
       def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
           //          println("\n\npLink")
-          FOSchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
+          FOSchemaProofLinkRule(sequent.toFSequent, name, v::Nil)
         }
       }
 
@@ -705,7 +705,7 @@ object sFOParser {
       }
 
       def autoprop: Parser[LKProof] = "autoprop(" ~ sequent ~ ")" ^^ {
-        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional(seq.toFSequent(), throwOnError=true).get
+        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional(seq.toFSequent, throwOnError=true).get
       }
       
       def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {

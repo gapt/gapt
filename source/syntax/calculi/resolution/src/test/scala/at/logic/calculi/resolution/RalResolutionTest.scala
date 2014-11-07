@@ -30,7 +30,7 @@ class RalResolutionTest extends SpecificationWithJUnit{
       val i6 = NegT(i5, i5.root.l_succedent(0))
       val i7 = Cut(i4,i6,List(i4.root.l_succedent(0)), List(i6.root.l_antecedent(0)))
 
-      i7.root.toFSequent() must_== (FSequent(Nil,Nil))
+      i7.root.toFSequent must_== (FSequent(Nil,Nil))
       ok
     }
 

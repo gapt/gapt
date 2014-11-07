@@ -30,7 +30,7 @@ object SHLK {
     sp.parseAll(sp.sequent, txt) match {
       case res @ sp.Success(result, input) => {
 //        println("\n\nSUCCESS parse :) \n")
-        return res.result.toFSequent()
+        return res.result.toFSequent
       }
       case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
         throw new Exception("Error in SHLK.parseSequent : "+x.toString)
@@ -376,7 +376,7 @@ object SHLK {
       def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
         case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
 //          println("\n\npLink")
-          SchemaProofLinkRule(sequent.toFSequent(), name, v::Nil)
+          SchemaProofLinkRule(sequent.toFSequent, name, v::Nil)
         }
       }
 

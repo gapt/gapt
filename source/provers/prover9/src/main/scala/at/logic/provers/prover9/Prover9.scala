@@ -208,7 +208,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
           trace( "done doing name replacement" )
           /*
           trace("Proof size: "+tp9proof.size)
-          for (fs <- tp9proof.nodes.map(_.vertex.asInstanceOf[Clause].toFSequent());
+          for (fs <- tp9proof.nodes.map(_.vertex.asInstanceOf[Clause].toFSequent);
                f <- fs.formulas) {
             trace("Checking proof formula "+f)
             require(f.isInstanceOf[FOLFormula], "Formula "+f+" in "+fs+" is not a FOL formula!")

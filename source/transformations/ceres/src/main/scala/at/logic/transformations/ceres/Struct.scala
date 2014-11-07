@@ -260,7 +260,7 @@ trait Struct {
     def applyRCC( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration): (Multiset[HOLFormula], Multiset[HOLFormula]) = {
       if(cc.isEmpty)
         return (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() )
-      val seq = so.toFSequent()
+      val seq = so.toFSequent
       val params = IntVar("k")::Nil
       val terms = IntVar("k")::Nil
       cc.foldLeft( (HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( (res, fo) => {
