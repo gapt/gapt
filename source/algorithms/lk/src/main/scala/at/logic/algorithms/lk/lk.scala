@@ -10,7 +10,7 @@ import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashSet
 import ProofTransformationUtils.computeMap
 
-object ProofTransformationUtils {
+object ProofTransformationUtils  {
   // FIXME: adapted from LKtoLKskc!
   def computeMap[T<:FormulaOccurrence]( occs: Seq[T], old_proof: LKProof,
                   new_proof: LKProof, old_map : Map[T, T]) :
@@ -22,7 +22,15 @@ object ProofTransformationUtils {
 
 }
 
+/**
+ * Extracts the cut-ancestor formulas from a proof.
+ */
 object getCutAncestors {
+  /**
+   * Extracts the cut-ancestors from a given LK proof.
+   * @param p an arbitrary LK proof
+   * @return a set of ancestor (formula) occurrences
+   */
   def apply( p: LKProof ): Set[FormulaOccurrence] = {
     p match {
       case TermEquivalenceRule1(p1, _, _, _) => return getCutAncestors( p1 )
@@ -43,7 +51,13 @@ object getCutAncestors {
       case _ => throw  new Exception("\n\nMissing rule in getCutAncestors(...) : "+p.name+"\n\n")
     }
   }
-  // This method returns only ancestors of cut-formulas that satisfy a given predicate.
+
+  /**
+   * Extracts the cut-ancestors from a given LK proof fulfilling a predicate.
+   * @param p an arbitrary LK proof
+   * @param predicate a function returning true if a cut-ancestor formula should be included in the set
+   * @return a set of ancestor (formula) occurrences
+   */
   def apply( p: LKProof, predicate : HOLFormula => Boolean )
     : Set[FormulaOccurrence] = p match {
       case CutRule(p1, p2, _, a1, a2) => if (predicate(a1.formula)) {
@@ -71,13 +85,24 @@ object getAncestors {
     o.foldLeft( new HashSet[FormulaOccurrence] )( (res, o) => res ++ apply( o ) )
 }
 
+/**
+ * Extracts all auxiliary formulas in a proof.
+ */
 object getAuxFormulas {
+  /**
+   * Extracts all auxiliary formulas in a proof.
+   * @param proof an arbitrary LK proof
+   * @return a set of auxiliary formula occurrences
+   */
   def apply(proof: LKProof): Set[FormulaOccurrence] = proof match {
       case UnaryLKProof(_,p,_,auxs,main) => (getAuxFormulas( p ) ++ auxs.toSet) + main
       case BinaryLKProof(_,p1,p2,_,aux1,aux2,main) =>
         val set = getAuxFormulas( p1 ) ++ getAuxFormulas( p2 ) ++ Set(aux1,aux2)
-        if (main == None) set
-        else set + main.get
+        main match {
+          case None => set
+          case Some(occ) => set + occ
+        }
+
       case Axiom(_) => Set[FormulaOccurrence]()
       // support LKsk
       case UnaryLKskProof(_,p,_,auxs,main) => (getAuxFormulas( p ) ++ auxs.toSet) + main
@@ -87,6 +112,10 @@ object getAuxFormulas {
   }
 }
 
+/**
+ * An implementation of definition elmination which guesses the definitions.
+ * Alternatively, you can use [[at.logic.algorithms.rewriting.DefinitionElimination]] instead, which gets the definitions explicitly passed.
+ */
 object eliminateDefinitions {
 
   def apply( p: LKProof ) = rec( p )._1
@@ -562,9 +591,15 @@ object replaceSubproof {
   }
 }
 
-// returns a List[LKProof] of all the cuts
-// in an LKProof
+/**
+ * Extracts a list of suproofs which end in a cut rule.
+ */
 object getCutsAsProofs {
+  /**
+   * Extracts a list of suproofs which end in a cut rule.
+   * @param p an arbitrary LK proof
+   * @return the list of the subproofs
+   */
   def apply(p:LKProof) : List[LKProof] = p match {
     case CutRule(p1,p2,root,aux1,aux2) => apply(p1) ++ apply(p2) ++ List(p)
     case x : NullaryLKProof => Nil
@@ -579,19 +614,40 @@ object getCutsAsProofs {
   }
 }
 
+/**
+ * Extracts the cut-formulas from an LK proof.
+ */
 object cutformulaExtraction {
+  /**
+   * Extracts the cut-formulas from an LK proof.
+   * @param p an arbitrary LK proof
+   * @return a list of Sequents :- CutFormula
+   */
   def apply(p:LKProof) = getCutFormulas(p)
 
-  def getCutFormulas(p:LKProof) : List[Sequent] = {
+  private def getCutFormulas(p:LKProof) : List[Sequent] = {
     getCutsAsProofs(p) map ((x: LKProof) =>
       x match { case CutRule(_,_,_,aux,_) => Sequent(Nil, List(aux)) }
       )
   }
 }
 
-// Adds weakenings to p in order to obtain the sequent s as the end-sequent.
-// Note: s should be a super-set of p's end-sequent. This assertion can be turned off be passing check=false
+/**
+ * Adds weakenings to p in order to obtain the sequent s as the end-sequent.
+ * @note s should be a super-set of p's end-sequent. This assertion can be turned off be passing check=false
+ */
 object addWeakenings {
+  /**
+   * Adds weakenings to an LK proof p such that all formulas contained in the FSequent s
+   * are contained.
+   * @note We expect, that s is a super-set of p's end-sequent. In some cases, some optimizations
+   *       might pass a reduced s. For these cases, it is possible to turn off the error checking.
+   *
+   * @param p an arbitrary LK proof
+   * @param s the intended end-sequent of the weakened proof
+   * @param check if true, we throw an exception if the end-sequent contains formulas not in s
+   * @return p with appened weakenings
+   */
   def apply(p: LKProof, s: FSequent, check : Boolean = true) = {
     val root_ant = p.root.antecedent.map(x => x.formula)
     val root_suc = p.root.succedent.map(x => x.formula)
@@ -620,7 +676,6 @@ object addWeakenings {
   //TODO: this is an alternative version which intentionally does less error checking, it could be merged with the other one
   /* Apply weakening rules to a proof until a given end-sequent is obtained.
     Throws an exception if this is impossible. */
-
   def weaken(proof : LKProof, towhat : FSequent) : LKProof = {
     val context = towhat diff proof.root.toFSequent
     val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>
@@ -649,7 +704,17 @@ object addWeakenings {
 }
 
 
+/**
+ * Adds weakennings and contractions to obtain a given the end-sequent.
+ */
 object addWeakeningAndContraction {
+  /**
+   * Weakens in every formula in toWhat which is not contained in the end-sequent of the
+   * given proof. Then contracts duplicates to the number of occurrences in towhat.
+   * @param proof an arbitrary LK proof
+   * @param towhat the end-sequent we want to obtain
+   * @return a proof of towhat
+   */
   def apply(proof : LKProof, towhat : FSequent) : LKProof = {
     val context = towhat diff proof.root.toFSequent
     val leftweak : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>

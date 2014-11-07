@@ -148,7 +148,7 @@ object SHLK {
 //--------------------------------- parse SLK proof -----------------------
 
   //plabel should return the proof corresponding to this label
-  def parseProof(txt: InputStreamReader): MMap[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]] = {
+  def parseProof(txt: InputStreamReader): MMap[String, Tuple2[MMap[String, LKProof], MMap[String, LKProof]]] = {
     var mapBase = MMap.empty[String, LKProof]
     var mapStep = MMap.empty[String, LKProof]
     var map  = MMap.empty[String, LKProof]
@@ -159,7 +159,7 @@ object SHLK {
     var error_buffer = ""
 //    lazy val sp2 = new ParserTxt
 //    sp2.parseAll(sp2.line, txt)
-    val bigMMap = MMap.empty[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]]
+    val bigMMap = MMap.empty[String, Tuple2[MMap[String, LKProof], MMap[String, LKProof]]]
     val mapPredicateToArity = MMap.empty[String, Int]
     lazy val sp = new SimpleSLKParser
 
@@ -216,7 +216,7 @@ object SHLK {
       def slkProof: Parser[Unit] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step" ~ "{" ~ rep(mappingStep) ~ "}"  ^^ {
         case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" => {
 //          proofName = str
-          bigMMap.put(str, Pair(mapBase, mapStep))
+          bigMMap.put(str, Tuple2(mapBase, mapStep))
           SchemaProofDB.put(new SchemaProof(str, IntVar("k")::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
@@ -276,7 +276,7 @@ object SHLK {
 //          val map: MMap[Var, T])
 //          val subst: SchemaSubstitution1[SchemaExpression] = new SchemaSubstitution1[SchemaExpression]()
 //          val new_ind = subst(ind)
-//          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
+//          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Tuple2(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
 //          val new_subst = new SchemaSubstitution1(new_map)
 
           IndexedPredicate(x, l)

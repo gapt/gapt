@@ -57,6 +57,7 @@ import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.lisp.SExpressionParser
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.readers.XMLReaders._
+import at.logic.parsing.shlk.SchemaFormulaParser
 import at.logic.parsing.shlk_parsing.{sFOParser, sFOParserCNT}
 import at.logic.parsing.veriT._
 import at.logic.parsing.writers.FileWriter
@@ -976,7 +977,7 @@ object parse {
 
   private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
 
-//  private class CLIParserSchema(input: String) extends StringReader(input) with SchemaFormulaParser
+  private class CLIParserSchema(input: String) extends StringReader(input) with SchemaFormulaParser
 
   def fol(string: String) = {
     new CLIParserFOL(string).getTerm.asInstanceOf[FOLFormula]
@@ -992,7 +993,7 @@ object parse {
   }
 
   def sfo(string: String) = {
-    //new CLIParserSchema(string) getTerm
+    new CLIParserSchema(string) getTerm
   }
 
   def p9(string: String, use_ladr: Boolean = true) = {

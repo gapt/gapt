@@ -30,18 +30,18 @@ object sFOParserCNT {
   //--------------------------------- parse SLK proof -----------------------
 
 
-  def parseProofFlat(txt: InputStreamReader): MMap[String, Pair[LKProof, LKProof]] =
+  def parseProofFlat(txt: InputStreamReader): MMap[String, Tuple2[LKProof, LKProof]] =
   {
     val map = parseProof( txt )
     map.map( pp => {
       val name = pp._1
       val pair = pp._2
-      (name, Pair(pair._1.get("root").get, pair._2.get("root").get))
+      (name, Tuple2(pair._1.get("root").get, pair._2.get("root").get))
     })
   }
 
   //plabel should return the proof corresponding to this label
-  def parseProof(txt: InputStreamReader): MMap[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]] = {
+  def parseProof(txt: InputStreamReader): MMap[String, Tuple2[MMap[String, LKProof], MMap[String, LKProof]]] = {
     var mapBase = MMap.empty[String, LKProof]
     var mapStep = MMap.empty[String, LKProof]
     var map  = MMap.empty[String, LKProof]
@@ -52,7 +52,7 @@ object sFOParserCNT {
     var error_buffer = ""
     //    lazy val sp2 = new ParserTxt
     //    sp2.parseAll(sp2.line, txt)
-    val bigMMap = MMap.empty[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]]
+    val bigMMap = MMap.empty[String, Tuple2[MMap[String, LKProof], MMap[String, LKProof]]]
     val mapPredicateToArity = MMap.empty[String, Int]
     dbTRS.clear
     lazy val sp = new SimpleSLKParser
@@ -96,7 +96,7 @@ object sFOParserCNT {
       def slkProof: Parser[Any] = "proof" ~ name ~ "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
         case                       "proof" ~  str ~ str1 ~      seq    ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
           //          proofName = str
-          bigMMap.put(str, Pair(mapBase, mapStep))
+          bigMMap.put(str, Tuple2(mapBase, mapStep))
           SchemaProofDB.put(new SchemaProof(str, IntVar("k")::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
@@ -195,7 +195,7 @@ object sFOParserCNT {
           //          val map: MMap[Var, T])
           //          val subst: SchemaSubstitution1[SchemaExpression] = new SchemaSubstitution1[SchemaExpression]()
           //          val new_ind = subst(ind)
-          //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Pair(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
+          //          val new_map = (subst.map - subst.map.head._1.asInstanceOf[Var]) + Tuple2(subst.map.head._1.asInstanceOf[Var], Pred(new_ind.asInstanceOf[IntegerTerm]) )
           //          val new_subst = new SchemaSubstitution1(new_map)
 
           IndexedPredicate(x, l)
@@ -766,7 +766,7 @@ object RW {
           val k = IntVar("k")
           val from = IndexedPredicate(ipred.name, Succ(k))
           val to = map.get(from).get
-          val new_map = Map.empty[SchemaVar, IntegerTerm] + Pair(IntVar("k"), Pred(l.head.asInstanceOf[IntegerTerm]))
+          val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Pred(l.head.asInstanceOf[IntegerTerm]))
           val subst = Substitution(new_map) //this was once a SchemaSubstitutionCNF, the normal substitution could make trouble here
           return rewriteGroundFla( subst(to), map)
         }
