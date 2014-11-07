@@ -7,9 +7,11 @@ import at.logic.language.fol.Substitution
 import at.logic.language.hol.HOLExpression
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 
-// Builds an expansion tree given a *prenex first order* formula and 
-// its instances (or substitutions) using only weak quantifiers. 
-//
+/**
+ * Builds an expansion tree given a *prenex first order* formula and
+ * its instances (or substitutions) using only weak quantifiers.
+ */
+
 // NOTE: initially, this could be implemented for non-prenex formulas in HOL. 
 // What needs to be implemented is a method to remove the quantifiers of a
 // non-prenex formula (taking care about the renaming of variables) and a
@@ -27,7 +29,7 @@ object prenexToExpansionTree {
         val subs = FOLUnificationAlgorithm.unify(fMatrix, instance)
         // WARNING: Considering only the first substitution
         val expTree = subs match {
-          case h::t => apply_(f, h) // WARNING: considering only the first substitution
+          case h::t => applySubstitution(f, h) // WARNING: considering only the first substitution
           case Nil => throw new Exception("ERROR: prenexToExpansionTree: No substitutions found for:\n" + 
             "Matrix: " + fMatrix + "\nInstance: " + instance)
         }
@@ -40,15 +42,15 @@ object prenexToExpansionTree {
     WeakQuantifier(f, children).asInstanceOf[ExpansionTree]
   }
 
-  def apply_(f: FOLFormula, sub: Substitution) : ExpansionTree = f match {
+  private def applySubstitution(f: FOLFormula, sub: Substitution) : ExpansionTree = f match {
     case AllVar(v, _) =>
       val t = sub.folmap(v)
       val newf = instantiate(f, t.asInstanceOf[FOLTerm])
-      WeakQuantifier(f, List(Tuple2(apply_(newf, sub), t))).asInstanceOf[ExpansionTree]
+      WeakQuantifier(f, List(Tuple2(applySubstitution(newf, sub), t))).asInstanceOf[ExpansionTree]
     case ExVar(v, _) => 
       val t = sub.folmap(v)
       val newf = instantiate(f, t.asInstanceOf[FOLTerm])
-      WeakQuantifier(f, List(Tuple2(apply_(newf, sub), t))).asInstanceOf[ExpansionTree]
+      WeakQuantifier(f, List(Tuple2(applySubstitution(newf, sub), t))).asInstanceOf[ExpansionTree]
     case _ => qFreeToExpansionTree(f)
   }
   
