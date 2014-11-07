@@ -482,12 +482,17 @@ scala> val q = eliminateCuts( p )
 \end{lstlisting}
 
 
-
 \subsection{Skolemization}
 
-\begin{meta}
-short example for proof skolemization 
-\end{meta}
+Skolemization consists of replacing the variables bound by strong quantifiers in the end-sequent of a proof
+by new function symbols thus obtaining a validity-equivalent sequent. In the GAPT-system Skolemization
+is implemented for proofs and can be used, e.g.~as follows:
+%
+\begin{lstlisting}
+scala> val proofs = loadProofs( "../examples/prime/ceres_xml/prime1-1.xml.gz" )
+scala> val p = proofs(0)._2
+scala> val q = skolemize( p )
+\end{lstlisting}
 
 
 \subsection{Interpolation}
