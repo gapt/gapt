@@ -7,21 +7,21 @@ import at.logic.utils.dssupport.ListSupport.{listComplements, zipper}
 import at.logic.calculi.expansionTrees.ExpansionSequent
 import at.logic.utils.logging.Logger
 
-/** Algorithm that given an expansion sequent S computes the list of expansion sequents below S that are valid and minimal.
-  *
+/**
+  * Given an expansion sequent S, this algorithm computes the list of expansion sequents below S that are valid and minimal.
   */
 object minimalExpansionSequents {
-  /** Applies the algorithm to a MultiExpansionSequent.
-   *
+  /**
+   * Applies the algorithm to a MultiExpansionSequent.
    * @param sequent The MultiExpansionSequent to be evaluated.
    * @param prover The prover used for the evaluation.
    * @return A sequence of minimal expansion sequents.
    */
   def apply(sequent: MultiExpansionSequent, prover: Prover) : Seq[MultiExpansionSequent] =
-    new minimalExpansionSequents(sequent, prover).compute
+    new minimalExpansionSequents(sequent, prover).compute()
 
-  /** Applies the algorithm to an ExpansionSequent by compressing and decompressing.
-   *
+  /**
+   * Applies the algorithm to an ExpansionSequent by compressing and decompressing.
    * @param sequent The ExpansionSequent to be evaluated.
    * @param prover The prover used for the evaluation.
    * @return A sequence of minimal expansion sequents.
@@ -29,20 +29,20 @@ object minimalExpansionSequents {
   def apply(sequent: ExpansionSequent, prover: Prover): Seq[ExpansionSequent] = minimalExpansionSequents(compressQuantifiers(sequent), prover).map(decompressQuantifiers.apply)
 }
 
-/** This class implements the actual algorithm.
- *
+/**
+ * Given an expansion sequent S, this algorithm computes the list of expansion sequents below S that are valid and minimal.
  * @param sequent The MultiExpansionSequent to be evaluated.
  * @param prover The prover used for the evaluation.
  */
-class minimalExpansionSequents (val sequent: MultiExpansionSequent, val prover: Prover) extends Logger {
+private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpansionSequent, val prover: Prover) extends Logger {
   
   val maxRemovedInstance = new mMap[MultiExpansionSequent,Int] // This assigns to each MultiExpansionSequent S the maximum of all numbers n with the following property: S can be obtained from a MultiExpansionSequent S' by removing the nth instance of S'.
 
-  /** This function simply performs the algorithm.
-   *
+  /**
+   * This function simply performs the algorithm.
    * @return A sequence of minimal expansion sequents.
    */
-  def compute : Seq[MultiExpansionSequent] = {
+  def compute(): Seq[MultiExpansionSequent] = {
     val result= new ListBuffer[MultiExpansionSequent] // The list of minimal expansion proofs will be constructed iteratively.
     val stack = new scala.collection.mutable.Stack[MultiExpansionSequent] // Invariant: the stack only contains valid expansion sequents.
     
@@ -86,7 +86,8 @@ class minimalExpansionSequents (val sequent: MultiExpansionSequent, val prover: 
     result.toSeq
   }
 
-  /** Given a MultiExpansionSequent, this generates all sequents obtained by removing one instance from one tree.
+  /**
+   * Given a MultiExpansionSequent, this generates all sequents obtained by removing one instance from one tree.
    * It also updates the maxRemovedInstance map.
    * @param sequent The expansion sequent under consideration.
    * @return A sequence containing all one-instance successors.
@@ -171,8 +172,8 @@ class minimalExpansionSequents (val sequent: MultiExpansionSequent, val prover: 
       newSequents.toSeq
   }
 
-  /** Given a MultiExpansionTree, this produces all trees obtained by erasing exactly one instance.
-   *
+  /**
+   * Given a MultiExpansionTree, this produces all trees obtained by erasing exactly one instance.
    * @param tree The tree under consideration.
    * @return All trees that have exactly one fewer instance than the input.
    */

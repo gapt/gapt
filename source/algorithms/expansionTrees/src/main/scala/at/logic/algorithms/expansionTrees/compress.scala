@@ -3,13 +3,20 @@ package at.logic.algorithms.expansionTrees
 
 import at.logic.calculi.expansionTrees._
 import at.logic.calculi.expansionTrees.multi.{WeakQuantifier => mWeakQuantifier, StrongQuantifier => mStrongQuantifier, And => mAnd, Or => mOr, Imp => mImp, Not => mNot, Atom => mAtom, SkolemQuantifier => mSkolemQuantifier, MultiExpansionTree, MultiExpansionSequent}
-import at.logic.language.hol.{HOLConst, HOLExpression, HOLVar, ExVar, AllVar, HOLFormula, Substitution, instantiate}
+import at.logic.language.hol.{HOLExpression, HOLVar, ExVar, AllVar, HOLFormula, instantiate}
 import at.logic.utils.dssupport.ListSupport.groupSeq
 
-/** Converts an ExpansionTree to a MultiExpansionTree by squishing quantifiers together into blocks.
-  * There is also an apply method for sequents.
+/**
+  * Converts an ExpansionTree to a MultiExpansionTree by squishing quantifiers together into blocks.
+  * Can also be called on ExpansionSequents.
   */  
 object compressQuantifiers {
+
+  /**
+   * Compresses an ExpansionTree.
+   * @param tree The ExpansionTree to be compressed.
+   * @return The corresponding MultiExpansionTree.
+   */
   def apply(tree: ExpansionTree): MultiExpansionTree = tree match {
     case Atom(f) => mAtom(f)
     case Neg(t1) => mNot(compressQuantifiers(t1))
@@ -18,13 +25,18 @@ object compressQuantifiers {
     case Imp(t1,t2) => mImp(compressQuantifiers(t1), compressQuantifiers(t2))
     case WeakQuantifier(f,is) => mWeakQuantifier(f, is.flatMap(x => compressWeak(compressQuantifiers(x._1),x._2)))
     case StrongQuantifier(f,v,t) => val (sel, vars) =
-      compressStrong(compressQuantifiers(t),v);
+      compressStrong(compressQuantifiers(t),v)
       mStrongQuantifier(f, vars,sel)
     case SkolemQuantifier(f,cs,t) =>
-      val (sel, skcs) = compressSkolem(compressQuantifiers(t),cs);
+      val (sel, skcs) = compressSkolem(compressQuantifiers(t),cs)
       mSkolemQuantifier(f, skcs,sel)
   }
-  
+
+  /**
+   * Compresses an ExpansionSequent by mapping over the antecedent and succedent.
+   * @param sequent The ExpansionSequent to be compressed.
+   * @return The corresponding MultiExpansionSequent.
+   */
   def apply(sequent: ExpansionSequent): MultiExpansionSequent = MultiExpansionSequent(sequent.antecedent.map(this.apply), sequent.succedent.map(this.apply))
 
   private def compressStrong(tree: MultiExpansionTree, v: HOLVar): Tuple2[MultiExpansionTree, Seq[HOLVar]] = tree match {
@@ -43,10 +55,18 @@ object compressQuantifiers {
   }
 }
 
-/** Converts a MultiExpansionTree to an ExpansionTree by picking quantifier blocks apart.
-  * There is also an apply method for sequents. The interesting parts happen in the private methods decompress{Strong,Weak,Skolem}.
+/**
+  * Converts a MultiExpansionTree to an ExpansionTree by picking quantifier blocks apart.
+  * Can also be called on MultiExpansionSequents.
+  * The interesting parts happen in the private methods decompress{Strong,Weak,Skolem}.
   */ 
 object decompressQuantifiers {
+
+  /**
+   * Decompresses a MultiExpansionTree.
+   * @param tree The MultiExpansionTree to be decompressed.
+   * @return The corresponding ExpansionTree.
+   */
   def apply(tree: MultiExpansionTree): ExpansionTree = tree match {
     case mAtom(f) => Atom(f)
     case mNot(t1) => Neg(decompressQuantifiers(t1))
@@ -54,23 +74,24 @@ object decompressQuantifiers {
     case mOr(t1,t2) => Or(decompressQuantifiers(t1), decompressQuantifiers(t2))
     case mImp(t1,t2) => Imp(decompressQuantifiers(t1), decompressQuantifiers(t2))
     
-    case mStrongQuantifier(f, eig, sel) => {
+    case mStrongQuantifier(f, eig, sel) =>
       val selNew = decompressQuantifiers(sel)
       decompressStrong(f, eig, selNew)
-    }
-    
-    case mSkolemQuantifier(f, exp, sel) => {
+
+    case mSkolemQuantifier(f, exp, sel) =>
       val selNew = decompressQuantifiers(sel)
       decompressSkolem(f, exp, selNew)
-    }
-    
-    case mWeakQuantifier(f, instances) => {
+
+    case mWeakQuantifier(f, instances) =>
       val instancesNew = instances.map(p => (decompressQuantifiers(p._1), p._2))
       decompressWeak(f, instancesNew)
-      
-    }
   }
-  
+
+  /**
+   * Decompresses a MultiExpansionSequent by mapping over the antecedent and succedent.
+   * @param sequent The MultiExpansionSequent to be decompressed.
+   * @return The corresponding ExpansionSequent.
+   */
   def apply(sequent: MultiExpansionSequent): ExpansionSequent = ExpansionSequent(sequent.antecedent.map(this.apply), sequent.succedent.map(this.apply))
   
   private def decompressStrong(f: HOLFormula, eig: Seq[HOLVar], sel: ExpansionTree): ExpansionTree = f match {
@@ -84,12 +105,11 @@ object decompressQuantifiers {
   }
   
   private def decompressWeak(f: HOLFormula, instances: Seq[(ExpansionTree, Seq[HOLExpression])]): ExpansionTree = f match {
-    case ExVar(_,_) | AllVar(_,_) => {
-      val groupedInstances = groupSeq(instances.map(p => (p._2.head, p._1, p._2.tail)), (t: Tuple3[HOLExpression, ExpansionTree, Seq[HOLExpression]]) => t._1).map(l => (l.head._1, l.map(t => (t._2, t._3)))) // Result: groupedInstances is a list of elements of the form (t, [(E_1, s_1),..,(E_n, s_n)]).
+    case ExVar(_,_) | AllVar(_,_) =>
+      val groupedInstances = groupSeq(instances.map(p => (p._2.head, p._1, p._2.tail)), (t: (HOLExpression, ExpansionTree, Seq[HOLExpression])) => t._1).map(l => (l.head._1, l.map(t => (t._2, t._3)))) // Result: groupedInstances is a list of elements of the form (t, [(E_1, s_1),..,(E_n, s_n)]).
       val newInstances = groupedInstances.map(p => (p._1, decompressWeak(instantiate(f,p._1), p._2))) // Result: newInstances is a list of elements of the form (t, E)
       merge(WeakQuantifier(f, newInstances.map(p => (p._2, p._1))))
-    }
-    
+
     case _ => instances.head._1
   }
 }
