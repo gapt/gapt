@@ -86,7 +86,7 @@ class ProverTest extends SpecificationWithJUnit {
   def streame: Stream[Command[Clause]] = Stream.cons(SetTargetClause(FSequent(List(),List())), Stream.cons(SearchForEmptyClauseCommand[Clause], stream1e))
 
   def getRefutation(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streamc)).next must beLike {
-      case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => ok
+      case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root =^ Clause(List(),List()) => ok
       case _ => ko
     }
    def getRefutationd(str: String, f: FSequent): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streamd(f))).next must beLike {
@@ -94,7 +94,7 @@ class ProverTest extends SpecificationWithJUnit {
       case _ => ko
     }
    def getRefutatione(str: String): Boolean = MyProver.refute(Stream.cons(SetClausesCommand(new MyParser(str).getClauseList), streame)).next must beLike {
-      case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root setEquals Clause(List(),List()) => ok
+      case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root =^ Clause(List(),List()) => ok
       case _ => ko
     }
 

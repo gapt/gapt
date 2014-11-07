@@ -117,34 +117,12 @@ class FSequentOrdering extends Ordering[FSequent]  {
 
 /**
  * Sequent of formulas tracking their occurrences in a proof.  Each formula together with its occurrence in a proof is
- * stored as a [[FormulaOccurrence]].
+ * stored as a [[at.logic.calculi.occurrences.FormulaOccurrence]].
  *
  * @param antecedent  The formulas on the left side.
  * @param succedent  The formulas on the right side.
  */
 class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[FormulaOccurrence]) {
-
-  //TODO improve both equals methods
-  /**
-   * Equality treating each side as a multiset.
-   */
-  def multisetEquals( o: Sequent ) =
-    antecedent.diff(antecedent).isEmpty && succedent.diff(succedent).isEmpty &&
-      antecedent.diff(antecedent).isEmpty && succedent.diff(succedent).isEmpty
-
-  /**
-   * Equality treating each side as a set.
-   */
-  def setEquals(o: Sequent) = Set(antecedent) == Set(antecedent) && Set(succedent) == Set(succedent)
-
-  /**
-   * Equality treating each side as a multiset.
-   */
-  override def equals(o: Any) = o match {
-    case s: Sequent => multisetEquals(s)
-    case _ => false
-  }
-
   /**
    * Equality treating each side as a multiset of formulas, ignoring the occurrence.
    */
@@ -161,7 +139,7 @@ class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formula
   def =^(o: Sequent): Boolean = syntacticMultisetEquals(o)
   
   /**
-   * Removes the specified [[FormulaOccurrence]]s from each side.
+   * Removes the specified [[at.logic.calculi.occurrences.FormulaOccurrence]]s from each side.
    */
   def removeFormulasAtOccurrences(occs: Seq[FormulaOccurrence]): Sequent = Sequent(
     antecedent.filterNot(x => occs.contains(x)),

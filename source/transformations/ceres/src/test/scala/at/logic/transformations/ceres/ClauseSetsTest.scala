@@ -37,10 +37,9 @@ class ClauseSetsTest extends SpecificationWithJUnit {
 
       val struct = Times(Plus(A(fa), A(fb)), Plus(A(fc), A(fd)))
       val cs = StandardClauseSet.transformStructToClauseSet( struct )
-      val res = cs.forall( seq => seq.multisetEquals( Sequent( Nil, fa::fc::Nil ) ) ||
-                                 seq.multisetEquals( Sequent( Nil, fa::fd::Nil ) ) ||
-                                 seq.multisetEquals( Sequent( Nil, fb::fc::Nil ) ) ||
-                                 seq.multisetEquals( Sequent( Nil, fb::fd::Nil ) ) )
+      val res = cs.forall( seq => seq.antecedent.isEmpty && (
+        seq =^ Sequent(Nil, List(fa,fc)) || seq =^ Sequent(Nil, List(fa,fd)) ||
+        seq =^ Sequent(Nil, List(fb,fc)) || seq =^ Sequent(Nil, List(fb,fd))))
       res must beTrue
     }
 
