@@ -22,7 +22,6 @@ at.logic.calculi.lk.LKQuantifierException
                    .base.PrincipalFormulas
                    .base.AuxiliaryFormulas
 at.logic.parsing.ivy._ar
-at.logic.transformations.ReductiveCutElim
 
 
 Remark: we can remove the sunbrust trees, but we delete the jar file for it, so there are links called <error> in the generated doc.
