@@ -69,6 +69,8 @@ object ReductiveCutElim {
       @param pred_done A predicate deciding when to terminate the algorithm.
       @param pred_cut A predicate deciding whether or not to reduce a cut encountered
              when traversing the proof.
+
+      @returns The proof as it is after pred_done returns true.
   */
   def apply(proof: LKProof, _steps: Boolean, pred_done: LKProof => Boolean, pred_cut: (LKProof, LKProof) => Boolean): LKProof = {
     steps = _steps
@@ -93,6 +95,7 @@ object ReductiveCutElim {
 
       @param proof The proof to subject to cut-elimination.
       @param steps Collect the list of subproofs arising during cut-elimination.
+      @returns The cut-free proof.
   */
   def apply(proof: LKProof, steps : Boolean = false) = eliminateAllByUppermost( proof, steps )
 
@@ -103,6 +106,7 @@ object ReductiveCutElim {
 
       @param proof The proof to subject to cut-elimination.
       @param steps Collect the list of subproofs arising during cut-elimination.
+      @returns The cut-free proof.
   */
   def eliminateAllByUppermost(proof: LKProof, steps: Boolean) : LKProof =
     apply(proof, steps, {x => false}, 
