@@ -5,11 +5,11 @@
 
 package at.logic.calculi.lk
 
+import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.utils.ds.trees._
 import base._
-import at.logic.utils.traits.Occurrence
 import at.logic.language.lambda.{ rename => renameLambda, freeVariables => freeVariablesLambda, Substitution => SubstitutionLambda, _}
 import scala.Some
 
@@ -98,7 +98,7 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
       * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
       * @return An LK Proof ending with the new inference.
       */ 
-    def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
+    def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
       val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
       val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc :: auxocc :: Nil)
 
@@ -147,7 +147,7 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
     * @return The sequent (sL, A[T1/b], tL |- sR, tR).
     */ 
-  def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
     val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
 
@@ -192,7 +192,7 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     }
   }
 
-  private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.antecedent.find(_ == term2oc)
     if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
@@ -222,7 +222,7 @@ object EquationLeft2Rule {
     *      sL, A[T1/a], tL |- sR, tR
     * </pre>
     */
-  def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {      
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
     val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
     val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
 
@@ -250,7 +250,7 @@ object EquationLeft2Rule {
     *      sL, A[T1/a], tL |- sR, tR
     * </pre>
     */
-  def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
     val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
 
@@ -279,7 +279,7 @@ object EquationLeft2Rule {
     }
   }
 
-  private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.antecedent.find(_ == term2oc)
     if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
@@ -326,7 +326,7 @@ object EquationRight1Rule {
     * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
     * @return An LK Proof ending with the new inference.
     */ 
-  def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {      
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
     val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
     val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
 
@@ -371,7 +371,7 @@ object EquationRight1Rule {
     * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
     * @return The sequent (sL, A[T1/b], tL |- sR, tR).
     */ 
-  def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
     val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
 
@@ -416,7 +416,7 @@ object EquationRight1Rule {
     }
   }
 
-  private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.succedent.find(_ == term2oc)
     if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
@@ -447,7 +447,7 @@ object EquationRight2Rule {
     *      sL, tL |- sR, tR, A[T1/a]
     * </pre>
     */
-  def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {      
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
     val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
     val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
 
@@ -475,7 +475,7 @@ object EquationRight2Rule {
     *      sL, tL |- sR, tR, A[T1/a]
     * </pre>
     */
-  def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
     val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
 
@@ -504,7 +504,7 @@ object EquationRight2Rule {
     }
   }
 
-  private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.succedent.find(_ == term2oc)
     if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")

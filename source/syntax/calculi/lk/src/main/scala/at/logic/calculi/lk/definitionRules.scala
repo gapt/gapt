@@ -10,7 +10,6 @@ import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.utils.ds.trees._
 import base._
-import at.logic.utils.traits.Occurrence
 
 // Definition rules
 case object DefinitionLeftRuleType extends UnaryRuleTypeA
@@ -39,7 +38,7 @@ object DefinitionLeftRule {
     * @param main The formula with which A is to be replaced.
     * @return An LK Proof ending with the new inference.
     */ 
-  def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula) = {
     val aux_fo = getTerms(s1.root, term1oc)
     val prinFormula = aux_fo.factory.createFormulaOccurrence(main, aux_fo::Nil)
 
@@ -76,7 +75,7 @@ object DefinitionLeftRule {
     * @param main The formula with which A is to be replaced.
     * @return The sequent (sL, main |- sR).
     */ 
-  def apply(s1: Sequent, term1oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula) = {
     val aux_fo = getTerms(s1, term1oc)
     val prinFormula = aux_fo.factory.createFormulaOccurrence(main, aux_fo::Nil)
     
@@ -86,7 +85,7 @@ object DefinitionLeftRule {
     
     Sequent(antecedent, succedent)
   }
-  private def getTerms(s1: Sequent, term1oc: Occurrence) = {
+  private def getTerms(s1: Sequent, term1oc: FormulaOccurrence) = {
     val term1op = s1.antecedent.find(_ == term1oc)
     if (term1op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
     else {
@@ -153,7 +152,7 @@ object DefinitionRightRule {
     * @param main The formula with which A is to be replaced.
     * @return An LK Proof ending with the new inference.
     */ 
-  def apply(s1: LKProof, term1oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula) = {
     val aux_fo = getTerms(s1.root, term1oc)
     val prinFormula = aux_fo.factory.createFormulaOccurrence(main, aux_fo::Nil)
     
@@ -190,7 +189,7 @@ object DefinitionRightRule {
     * @param main The formula with which A is to be replaced.
     * @return The sequent (sL |- sR, main).
     */ 
-  def apply(s1: Sequent, term1oc: Occurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula) = {
      val aux_fo = getTerms(s1, term1oc)
     val prinFormula = aux_fo.factory.createFormulaOccurrence(main, aux_fo::Nil)
     
@@ -200,7 +199,7 @@ object DefinitionRightRule {
 
     Sequent(antecedent, succedent)
   }
-  private def getTerms(s1: Sequent, term1oc: Occurrence) = {
+  private def getTerms(s1: Sequent, term1oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {

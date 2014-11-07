@@ -7,7 +7,6 @@ import at.logic.calculi.lk._
 import at.logic.language.schema._
 import at.logic.language.schema.BetaReduction._
 import at.logic.utils.ds.trees._
-import at.logic.utils.traits.Occurrence
 import at.logic.calculi.lk.{ContractionRightRuleType, ContractionLeftRuleType, CutRuleType, Axiom}
 import at.logic.language.hol.HOLExpression
 
@@ -703,7 +702,7 @@ object TermLeftEquivalenceRule1 {
 }
 
 object sCutRule {
-  def apply(s1: LKProof, s2: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc)
     val sequent = getSequent(s1.root, s2.root, term1, term2)
 
@@ -714,7 +713,7 @@ object sCutRule {
       override def name = "cut"
     }
   }
-  def apply(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val (term1, term2) = getTerms(s1, s2, term1oc, term2oc)
     getSequent(s1, s2, term1, term2)
   }
@@ -727,7 +726,7 @@ object sCutRule {
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
     }
   }
-  private def getTerms(s1: Sequent, s2: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.antecedent.find(_ == term2oc)
     if (term1op == None || term2op == None) {
@@ -747,7 +746,7 @@ object sCutRule {
       }
     }
   }
-  private def getSequent(s1: Sequent, s2: Sequent, term1: Occurrence, term2: Occurrence) = {
+  private def getSequent(s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence) = {
     val ant1 = createContext(s1.antecedent)
     val ant2 = createContext(s2.antecedent.filterNot(_ == term2))
     val antecedent = ant1 ++ ant2
@@ -767,7 +766,7 @@ object sCutRule {
 
 
 object sContractionLeftRule {
-  def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val (term1, term2) = getTerms(s1.root, term1oc, term2oc)
     val prinFormula = getPrinFormula(term1, term2)
     val sequent = getSequent(s1.root, term1, term2, prinFormula)
@@ -780,7 +779,7 @@ object sContractionLeftRule {
       override def name = "c:l"
     }
   }
-  def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  def apply(s1: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val (term1, term2) = getTerms(s1, term1oc, term2oc)
     val prinFormula = getPrinFormula(term1, term2)
     getSequent(s1, term1, term2, prinFormula)
@@ -792,7 +791,7 @@ object sContractionLeftRule {
       case _ => throw new LKRuleCreationException("No matching formulas found to contract.")
     }
   }
-  private def getTerms(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  private def getTerms(s1: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.antecedent.find(_ == term1oc)
     val term2op = s1.antecedent.find(_ == term2oc)
     if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
@@ -828,7 +827,7 @@ object sContractionLeftRule {
 
 
 object sContractionRightRule {
-  def apply(s1: LKProof, term1oc: Occurrence, term2oc: Occurrence) = {
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val (term1, term2) = getTerms(s1.root, term1oc, term2oc)
     val prinFormula = getPrinFormula(term1, term2)
     val sequent = getSequent(s1.root, term1, term2, prinFormula)
@@ -841,7 +840,7 @@ object sContractionRightRule {
       override def name = "c:r"
     }
   }
-  def apply(s1: Sequent, term1oc: Occurrence, term2oc: Occurrence) = {
+  def apply(s1: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val (term1, term2) = getTerms(s1, term1oc, term2oc)
     val prinFormula = getPrinFormula(term1, term2)
     getSequent(s1, term1, term2, prinFormula)
@@ -853,7 +852,7 @@ object sContractionRightRule {
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
     }
   }
-  private def getTerms(s1 : Sequent, term1oc : Occurrence, term2oc : Occurrence) = {
+  private def getTerms(s1 : Sequent, term1oc : FormulaOccurrence, term2oc : FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s1.succedent.find(_ == term2oc)
     if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
@@ -1145,7 +1144,7 @@ object ForallHyperLeftRule {
     }
   }
 
-  def apply(s1: LKProof, term1oc: Occurrence, main: SchemaFormula, term: SchemaExpression) : LKProof = {
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression) : LKProof = {
     val (aux_fo, aux_form) = getTerms(s1.root, term1oc, main, term)
     val prinFormula = getPrinFormula(main, aux_fo)
     val sequent = getSequent(s1.root, aux_fo, prinFormula)
@@ -1159,12 +1158,12 @@ object ForallHyperLeftRule {
       override def name = "\u2200 hyp:l"
     }
   }
-  def apply(s1: Sequent, term1oc: Occurrence, main: SchemaFormula, term: SchemaExpression) = {
+  def apply(s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression) = {
     val (aux_fo, aux_form) = getTerms(s1, term1oc, main, term)
     val prinFormula = getPrinFormula(main, aux_fo)
     getSequent(s1, aux_fo, prinFormula)
   }
-  private def getTerms(s1: Sequent, term1oc: Occurrence, main: SchemaFormula, term: SchemaExpression) = {
+  private def getTerms(s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression) = {
     val term1op = s1.antecedent.find(_ == term1oc)
     if (term1op == None) {
       def o2s(occ:FormulaOccurrence) = occ +" formula="+occ.formula+ " ancestors="+occ.ancestors
@@ -1209,7 +1208,7 @@ object ExistsHyperRightRule {
     case _ => throw new LKRuleCreationException("Main formula of ExistsRightRule must have a universal quantifier as head symbol.")
   }
 
-  def apply(s1: LKProof, term1oc: Occurrence, main: SchemaFormula, term: SchemaExpression) : LKProof = {
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression) : LKProof = {
     val aux_fo = getTerms(s1.root, term1oc, main, term)
     val prinFormula = getPrinFormula(main, aux_fo)
     val sequent = getSequent(s1.root, aux_fo, prinFormula)
@@ -1223,12 +1222,12 @@ object ExistsHyperRightRule {
       override def name = "\u2203 hyp:r"
     }
   }
-  def apply(s1: Sequent, term1oc: Occurrence, main: SchemaFormula, term: SchemaExpression) = {
+  def apply(s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression) = {
     val aux_fo = getTerms(s1, term1oc, main, term)
     val prinFormula = getPrinFormula(main, aux_fo)
     getSequent(s1, aux_fo, prinFormula)
   }
-  private def getTerms(s1: Sequent, term1oc: Occurrence, main: SchemaFormula, term: SchemaExpression) = {
+  private def getTerms(s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression) = {
     val term1op = s1.succedent.find(_ == term1oc)
     if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -1262,7 +1261,7 @@ object ForallHyperRightRule {
       case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
     }
 
-  def apply( s1: LKProof, term1oc: Occurrence, main: SchemaFormula, eigen_var: SchemaVar ) : LKProof = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) : LKProof = {
     val aux_fo = getTerms(s1.root, term1oc, main, eigen_var)
     val prinFormula = getPrinFormula(main, aux_fo)
     val sequent = getSequent(s1.root, aux_fo, prinFormula)
@@ -1276,12 +1275,12 @@ object ForallHyperRightRule {
       override def name = "\u2200 hyp:r"
     }
   }
-  def apply( s1: Sequent, term1oc: Occurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
+  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
     val aux_fo = getTerms(s1, term1oc, main, eigen_var)
     val prinFormula = getPrinFormula(main, aux_fo)
     getSequent(s1, aux_fo, prinFormula)
   }
-  private def getTerms(s1: Sequent, term1oc: Occurrence, main: SchemaFormula, eigen_var: SchemaVar) = {
+  private def getTerms(s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar) = {
     val term1op = s1.succedent.find(_ == term1oc)
     if (term1op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
     else {
@@ -1328,7 +1327,7 @@ object ExistsHyperLeftRule {
       case _ => throw new LKRuleCreationException("No matching formula occurrence found for application of the rule with the given auxiliary formula")
     }
 
-  def apply( s1: LKProof, term1oc: Occurrence, main: SchemaFormula, eigen_var: SchemaVar ) : LKProof = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) : LKProof = {
     val aux_fo = getTerms(s1.root, term1oc, main, eigen_var)
     val prinFormula = getPrinFormula(main, aux_fo)
     val sequent = getSequent(s1.root, aux_fo, prinFormula)
@@ -1342,12 +1341,12 @@ object ExistsHyperLeftRule {
       override def name = "\u2203 hyp:l"
     }
   }
-  def apply( s1: Sequent, term1oc: Occurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
+  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
     val aux_fo = getTerms(s1, term1oc, main, eigen_var)
     val prinFormula = getPrinFormula(main, aux_fo)
     getSequent(s1, aux_fo, prinFormula)
   }
-  private def getTerms( s1: Sequent, term1oc: Occurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
+  private def getTerms( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
     val term1op = s1.antecedent.find(_ == term1oc)
     if (term1op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {

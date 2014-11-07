@@ -14,7 +14,6 @@ import at.logic.language.hol._
 import at.logic.language.hol.skolemSymbols.TypeSynonyms.SkolemSymbol
 import at.logic.language.lambda.types.{TA, FunctionType}
 import at.logic.utils.ds.acyclicGraphs._
-import at.logic.utils.traits.Occurrence
 
 trait ResolutionProof[V <: Sequent] extends AGraphProof[V]
 

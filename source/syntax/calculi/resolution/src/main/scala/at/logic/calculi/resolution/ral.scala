@@ -23,7 +23,6 @@ import at.logic.language.lambda.types._
 import at.logic.utils.ds.acyclicGraphs._
 import at.logic.utils.ds.trees.LeafTree
 import at.logic.utils.labeling._
-import at.logic.utils.traits.Occurrence
 //import util.grammar.LabelledRHS
 
 // inferences
@@ -88,7 +87,7 @@ object InitialSequent {
 }
 
 object Cut {
-  def apply[V <: LabelledSequent](s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1ocs: List[Occurrence], term2ocs: List[Occurrence]) = {
+  def apply[V <: LabelledSequent](s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1ocs: List[FormulaOccurrence], term2ocs: List[FormulaOccurrence]) = {
     if ( term1ocs.isEmpty || term2ocs.isEmpty ) throw new ResolutionRuleCreationException( "Cut in R_{al} must have at least one auxiliary formula on every side")
     val term1ops = term1ocs.map( term1oc => s1.root.succedent.find(x => x == term1oc) )
     val term2ops = term2ocs.map( term2oc => s2.root.antecedent.find(x => x == term2oc) )

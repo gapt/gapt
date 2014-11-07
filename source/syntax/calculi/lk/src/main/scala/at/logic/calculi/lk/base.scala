@@ -9,7 +9,6 @@ import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
 import at.logic.language.hol._
 import at.logic.utils.ds.trees._
-import at.logic.utils.traits.Occurrence
 import at.logic.utils.dssupport.ListSupport.lst2string
 
 class FSequent(val antecedent : Seq[HOLFormula], val succedent : Seq[HOLFormula]) {
@@ -125,12 +124,12 @@ class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formula
   }
 
   def =^(o: Sequent): Boolean = syntacticMultisetEquals(o)
-  def removeFormulasAtOccurrences(occs: Seq[Occurrence]): Sequent = Sequent(
+  def removeFormulasAtOccurrences(occs: Seq[FormulaOccurrence]): Sequent = Sequent(
     antecedent.filterNot(x => occs.contains(x)),
     succedent.filterNot(x => occs.contains(x))
   )
 
-  def getChildOf(fo: Occurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
+  def getChildOf(fo: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
 
   def toFSequent() : FSequent = {
     FSequent(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
@@ -182,7 +181,7 @@ case class LKBinaryRuleCreationException(name: String, parent1: LKProof, aux1 : 
 class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
 trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {
-  def getDescendantInLowerSequent(fo: Occurrence): Option[FormulaOccurrence] = {
+  def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
     (root.antecedent ++ root.succedent).filter(x => x.ancestors.find(y => y == fo) != None) match {
       case x::Nil => Some(x)
       case Nil => None

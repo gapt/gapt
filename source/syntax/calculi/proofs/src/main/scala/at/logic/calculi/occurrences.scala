@@ -1,7 +1,6 @@
 package at.logic.calculi
 
 import at.logic.language.hol._
-import at.logic.utils.traits.Occurrence
 
 // FIXME: This should be a package.
 object occurrences {
@@ -15,7 +14,7 @@ object occurrences {
    *                   this will include the disjunction is occurrence.
    * @param factory  The formula occurrence factory [[FOFactory]] used to construct this occurrence.
    */
-  class FormulaOccurrence(val formula: HOLFormula, val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) extends Occurrence {
+  class FormulaOccurrence(val formula: HOLFormula, val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) {
     /**
      * Auto-incremented integer identifying this occurrence.
      */

@@ -16,7 +16,6 @@ import at.logic.calculi.lk.base._
 import scala.collection.immutable.HashSet
 import at.logic.calculi.lk.EquationVerifier._
 import at.logic.language.hol.Formula
-import at.logic.utils.traits.Occurrence
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.lk.{EquationVerifier, BinaryLKProof, UnaryLKProof}
 import at.logic.calculi.lksk.UnaryLKskProof
@@ -132,7 +131,7 @@ object createContext {
       apply( p1, p2, a1occ, a2occ, newLiteral, sub)
     }
 
-    def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: Occurrence, a2: Occurrence, newLiteral: FOLFormula, sub: Substitution): RobinsonResolutionProof = {
+    def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FormulaOccurrence, a2: FormulaOccurrence, newLiteral: FOLFormula, sub: Substitution): RobinsonResolutionProof = {
       val term1op = p1.root.succedent.find(_ == a1)
       val term2opAnt = p2.root.antecedent.find(_ == a2)
       val term2opSuc = p2.root.succedent.find(_ == a2)

@@ -17,7 +17,6 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.utils.ds.acyclicGraphs._
 import at.logic.calculi.lk.base.{Sequent, AuxiliaryFormulas, PrincipalFormulas, SubstitutionTerm}
-import at.logic.utils.traits.Occurrence
 
 // inferences
 case object NotTType extends UnaryRuleTypeA
@@ -39,7 +38,7 @@ case object SubType extends UnaryRuleTypeA
 case object CutType extends BinaryRuleTypeA
 
 object Cut {
-  def apply[V <: Sequent](s1: ResolutionProof[V], s2: ResolutionProof[V], term1oc: Occurrence, term2oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], s2: ResolutionProof[V], term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     val term2op = s2.root.antecedent.find(x => x == term2oc)
     if (term1op == None || term2op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
@@ -70,7 +69,7 @@ object Cut {
 
 
 object NotT {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -95,7 +94,7 @@ object NotT {
 }
 
 object NotF {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -120,7 +119,7 @@ object NotF {
 }
 
 object OrT {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -146,7 +145,7 @@ object OrT {
 }
 
 object OrFL {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -171,7 +170,7 @@ object OrFL {
 }
 
 object OrFR {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -196,7 +195,7 @@ object OrFR {
 }
 
 object AndF {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -222,7 +221,7 @@ object AndF {
 }
 
 object AndTL {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -247,7 +246,7 @@ object AndTL {
 }
 
 object AndTR {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -272,7 +271,7 @@ object AndTR {
 }
 
 object ImplT {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -298,7 +297,7 @@ object ImplT {
 }
 
 object ImplFL {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -323,7 +322,7 @@ object ImplFL {
 }
 
 object ImplFR {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -349,7 +348,7 @@ object ImplFR {
 
 
 object ForallT {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence, v: HOLVar ) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence, v: HOLVar ) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -375,7 +374,7 @@ object ForallT {
 }
 
 object ForallF {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence, sk: SkolemSymbol ) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence, sk: SkolemSymbol ) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -404,7 +403,7 @@ object ForallF {
 }
 
 object ExistsF {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence, v: HOLVar ) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence, v: HOLVar ) = {
     val term1op = s1.root.antecedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
@@ -430,7 +429,7 @@ object ExistsF {
 }
 
 object ExistsT {
-  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: Occurrence, sk: SkolemSymbol ) = {
+  def apply[V <: Sequent](s1: ResolutionProof[V], term1oc: FormulaOccurrence, sk: SkolemSymbol ) = {
     val term1op = s1.root.succedent.find(x => x == term1oc)
     if (term1op == None) throw new ResolutionRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
     else {
