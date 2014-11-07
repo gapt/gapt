@@ -746,21 +746,21 @@ object buildProofWithCut {
 }
 
 object cutIntro {
-  def apply(p: LKProof, numVars: Constraint[Int]) = CutIntroduction(p, numVars)
+  def apply(p: LKProof, numVars: Constraint[Int]) = CutIntroduction(p, numVars, verbose = true)
 
-  def apply(p: LKProof, numVars: Constraint[Int], prover: at.logic.provers.Prover) = CutIntroduction(p, numVars, prover)
+  def apply(p: LKProof, numVars: Constraint[Int], prover: at.logic.provers.Prover) = CutIntroduction(p, numVars, prover, verbose = true)
 
   def apply(ep: ExpansionSequent, numVars: Constraint[Int]) =
-    CutIntroduction(ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver())
+    CutIntroduction(ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver(), verbose = true)
 
   def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: at.logic.provers.Prover) =
-    CutIntroduction(ep, numVars, prover)
+    CutIntroduction(ep, numVars, prover, verbose = true)
 
   def applyStat(ep: ExpansionSequent, delta: DeltaVector) =
-    CutIntroduction.applyStat(ep, delta)._1.get
+    CutIntroduction.applyStat(ep, delta, verbose = true)._1.get
 
   def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: at.logic.provers.Prover) =
-    CutIntroduction.applyStat(ep, delta, prover)._1.get
+    CutIntroduction.applyStat(ep, delta, prover, verbose = true)._1.get
 }
 
 object ncutIntro {

@@ -8,13 +8,12 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
+import at.logic.calculi.expansionTrees.{ExpansionSequent, toSequent}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.language.fol._
 import at.logic.language.hol.HOLFormula
 import at.logic.provers.Prover
-import at.logic.provers.maxsat.MaxSATSolver
 import at.logic.provers.maxsat.MaxSATSolver
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.provers.minisat.MiniSATProver
@@ -40,54 +39,49 @@ class CutIntroEHSUnprovableException(msg: String) extends CutIntroException(msg)
   */
 object CutIntroduction extends Logger {
 
-  /** Performs cut introduction on an LK proof and returns 
+  /** Performs cut introduction on an LK proof and returns
     * an LK proof with cut if a cut formula can be found.
     *
     * @param proof The cut-free LK proof into which to introduce a cut.
-    * @param numVars a constraint (see utils.contstraint) on the number of variables to
-    *          introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
+    * @param numVars a constraint (see utils.constraint) on the number of variables to introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
     * @param prover The prover to use for tautology checks.
-    * @return The LK proof with cut if cut introduction was successful and None otherwise.
-    *         The cause of failure will be printed on the console.
+    * @param verbose Whether output should be verbose.
+    * @return The LK proof with cut if cut introduction was successful and None otherwise. The cause of failure will be printed on the console.
     */
-  def apply(proof: LKProof, numVars: Constraint[Int], prover: Prover = new DefaultProver()) : Option[LKProof] = apply( extractExpansionTrees( proof ), numVars, prover)
+  def apply(proof: LKProof, numVars: Constraint[Int], prover: Prover = new DefaultProver(), verbose: Boolean) : Option[LKProof] = apply( extractExpansionTrees( proof ), numVars, prover, verbose)
 
-  /** Performs cut introduction on an LK proof and returns 
-    * an LK proof with cut if a cut formula can be found.
-    *
-    * @param ep: The sequent of expansion trees to which cut-introduction is to be applied.
-    * @param numVars a constraint (see utils.contstraint) on the number of variables to
-    *          introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
-    * @param prover: The prover used for checking validity and constructing the final proof.
-                     Default: use MiniSAT for validity check, LK proof search for proof building.
-    * @return The LK proof with cut if cut introduction was successful and None otherwise.
-    *         The cause of failure will be printed on the console.
-    */
-  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: Prover) : Option[LKProof] = {
+  /** Performs cut introduction on an LK proof and returns an LK proof with cut if a cut formula can be found.
+   *
+   * @param ep The sequent of expansion trees to which cut-introduction is to be applied.
+   * @param numVars a constraint (see utils.constraint) on the number of variables to introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
+   * @param prover The prover used for checking validity and constructing the final proof. Default: use MiniSAT for validity check, LK proof search for proof building.
+   * @param verbose Whether output should be verbose.
+   * @return The LK proof with cut if cut introduction was successful and None otherwise. The cause of failure will be printed on the console.
+   */
+  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: Prover, verbose: Boolean) : Option[LKProof] = {
     val deltaVec = numVars match {
-      case NoConstraint => { println("Using UnboundedVariableDelta."); Some(new UnboundedVariableDelta()) }
-      case ExactBound(1) => { println("Using OneVariableDelta."); Some(new OneVariableDelta()) }
-      case UpperBound(n) => { println("Using ManyVariableDelta."); Some(new ManyVariableDelta(n)) }
-      case ExactBound(n) => {
-        println("cut Introduction with exactly n (n>1) variables is currently not supported!")
+      case NoConstraint  =>  if (verbose) println("Using UnboundedVariableDelta."); Some(new UnboundedVariableDelta())
+      case ExactBound(1) =>  if (verbose) println("Using OneVariableDelta."); Some(new OneVariableDelta())
+      case UpperBound(n) =>  if (verbose) println("Using ManyVariableDelta."); Some(new ManyVariableDelta(n))
+      case ExactBound(n) =>
+        if (verbose) println("cut Introduction with exactly n (n>1) variables is currently not supported!")
         error("Used constraint 'ExactBound(" + n + ")' in cutIntroduction.")
         None
-      }
-      case c@_ => {
-        println("Invalid constraint! Only NoConstraint, ExactBound and UpperBound are permissible!")
+
+      case c@_ =>
+        if (verbose) println("Invalid constraint! Only NoConstraint, ExactBound and UpperBound are permissible!")
         error("Used invalid constraint in cutIntroduction: " + c)
         None
-      }
+
     }
 
     if (deltaVec.isEmpty) None else {
       try {
-        Some(apply(ep, prover, deltaVec.get))
+        Some(apply(ep, prover, deltaVec.get, verbose))
       } catch {
-        case ex : CutIntroException => {
-          println(ex.toString());
+        case ex : CutIntroException =>
+          println(ex.toString)
           None
-        }
       }
     }
   }
@@ -114,22 +108,22 @@ object CutIntroduction extends Logger {
     * The choice of delta vector determines how many variables the cut formula may contain.
     * E.g.: OneVariableDelta leads to cut formulas [forall x] F, UnboundedVariableDelta leads to [forall x1,...xn] F (for a priori unknown n).
     */
-  private def apply(ep: ExpansionSequent, prover: Prover, delta: DeltaVector) : LKProof = {
+  private def apply(ep: ExpansionSequent, prover: Prover, delta: DeltaVector, verbose: Boolean) : LKProof = {
 
     val endSequent = toSequent(ep)
-    println("\nEnd sequent: " + endSequent)
+    if (verbose) println("\nEnd sequent: " + endSequent)
 
     val termset = TermsExtraction(ep)
-    println("Size of term set: " + termset.set.size)
+    if (verbose) println("Size of term set: " + termset.set.size)
 
-    var beginTime = System.currentTimeMillis;
+    var beginTime = System.currentTimeMillis
 
     val grammars = ComputeGrammars(termset, delta)
 
-    println( "\nNumber of grammars: " + grammars.length )
+    if (verbose) println( "\nNumber of grammars: " + grammars.length )
 
     if(grammars.length == 0) {
-      println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
+      if (verbose) println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
       throw new CutIntroUncompressibleException("\nNo grammars found." + 
         " The proof cannot be compressed using a cut with one universal quantifier block.\n")
     }
@@ -138,8 +132,8 @@ object CutIntroduction extends Logger {
     val smallest = grammars.head.size
     val smallestGrammars = grammars.filter(g => g.size == smallest)
 
-    println( "Smallest grammar-size: " + smallest )
-    println( "Number of smallest grammars: " + smallestGrammars.length )
+    if (verbose) println( "Smallest grammar-size: " + smallest )
+    if (verbose) println( "Number of smallest grammars: " + smallestGrammars.length )
 
     debug("Improving solution...")
 
@@ -156,8 +150,8 @@ object CutIntroduction extends Logger {
     val smallestProof = sorted.head._1
     val ehs = sorted.head._2
 
-    println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")  
-    println("\nMinimized cut formula: " + sanitizeVars(ehs.cutFormula) + "\n")
+    if (verbose) println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")
+    if (verbose) println("\nMinimized cut formula: " + sanitizeVars(ehs.cutFormula) + "\n")
 
     smallestProof
   }
@@ -179,7 +173,7 @@ object CutIntroduction extends Logger {
     *         s is a status string, and l is a logging string with quantitative data,
     *         see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
     */
-  def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */, useForgetfulPara: Boolean = false ) : ( Option[LKProof] , String, String ) = {
+  def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */, useForgetfulPara: Boolean = false, verbose: Boolean ) : ( Option[LKProof] , String, String ) = {
     var log = ""
     var status = "ok"
     var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
@@ -190,14 +184,14 @@ object CutIntroduction extends Logger {
 
     val p = try { withTimeout( timeout * 1000 ) {
       val endSequent = toSequent(ep)
-      println("\nEnd sequent: " + endSequent)
+      if (verbose) println("\nEnd sequent: " + endSequent)
     
       // generate term set
       val t1 = System.currentTimeMillis
       val termset = TermsExtraction(ep)
       val t2 = System.currentTimeMillis
       log += "," + (t2 - t1) + "," + termset.set.size // log tstime, tssize
-      println( "Size of term set: " + termset.set.size )
+      if (verbose) println( "Size of term set: " + termset.set.size )
 
       // compute delta-table
       phase = "dtg" // "delta-table generation"
@@ -213,7 +207,7 @@ object CutIntroduction extends Logger {
       val t5 = System.currentTimeMillis
       log += "," + (t4 - t3) + "," + (t5 - t4) // log dtgtime, dtrtime
 
-      println( "\nNumber of grammars: " + grammars.length )
+      if (verbose) println( "\nNumber of grammars: " + grammars.length )
 
       if(grammars.length == 0) {
         throw new CutIntroUncompressibleException("\nNo grammars found." + 
@@ -224,8 +218,8 @@ object CutIntroduction extends Logger {
       val smallest = grammars.head.size
       val smallestGrammars = grammars.filter(g => g.size == smallest)
 
-      println( "Smallest grammar-size: " + smallest )
-      println( "Number of smallest grammars: " + smallestGrammars.length )
+      if (verbose) println( "Smallest grammar-size: " + smallest )
+      if (verbose) println( "Number of smallest grammars: " + smallestGrammars.length )
 
       log += "," + smallest + "," + smallestGrammars.length // mgsize, #mg
 
@@ -266,7 +260,7 @@ object CutIntroduction extends Logger {
       val cansolc = sorted.head._3
       val minsolc = sorted.head._4
 
-      println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
+      if (verbose) println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
       log += "," + cansolc + "," + minsolc + "," + rulesNumber( smallestProof ) + "," + quantRulesNumber( smallestProof ) // log #infc, #qinfc
 
@@ -318,7 +312,7 @@ object CutIntroduction extends Logger {
       val freeVars = freeVariables(term)
 
       // Taking only the terms that contain alpha
-      if( !freeVars.intersect(g.eigenvariables).isEmpty ) {
+      if( freeVars.intersect(g.eigenvariables).nonEmpty ) {
         trace("      found terms with alphas!")
         trace("      term: " + term)
         val set = terms.getTermTuple(term)
@@ -378,8 +372,8 @@ object CutIntroduction extends Logger {
 
 
     trace("grammar (u,S): ")
-    trace(ehs.grammar.u.toString)
-    trace(ehs.grammar.s.toString)
+    trace(ehs.grammar.u.toString())
+    trace(ehs.grammar.s.toString())
     trace("alphas: " + alphas)
     //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
     val cutLeft = instantiateAll(cutFormula, alphas)
@@ -388,7 +382,7 @@ object CutIntroduction extends Logger {
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
     val cutRight = grammar.s.toList.foldRight(List[FOLFormula]()) { case (t, acc) =>
-      (t.foldLeft(cutFormula){case (f, sval) => instantiate(f, sval)}) :: acc
+      t.foldLeft(cutFormula) { case (f, sval) => instantiate(f, sval)} :: acc
     }
 
     //leftBranch and rightBranch correspond to the left and right branches of the proof in the middle of
@@ -404,15 +398,15 @@ object CutIntroduction extends Logger {
     trace("   resulting in cutLeft: " + cutLeft)
     trace("ehs.succedent: " + ehs.succedent)
     trace("ehs.succedent_alpha: " + ehs.succedent_alpha)
-    trace(FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))).toString())
+    trace(FSequent(ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: (ehs.succedent ++ ehs.succedent_alpha)).toString())
 
-    val seq = FSequent((ehs.antecedent ++ ehs.antecedent_alpha), (cutLeft +: (ehs.succedent ++ ehs.succedent_alpha)))
+    val seq = FSequent(ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))
 
 
     val proofLeft = prover.getLKProof(seq)
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
-        val s1 = uPart(grammar.u.filter(t => !freeVariables(t).intersect(grammar.eigenvariables).isEmpty), proofLeft1, terms)
+        val s1 = uPart(grammar.u.filter(t => freeVariables(t).intersect(grammar.eigenvariables).nonEmpty), proofLeft1, terms)
 
         trace("=======================")
         trace("s1:")
@@ -509,7 +503,7 @@ object CutIntroduction extends Logger {
     *         containing extactly one occurrence of the cut formula.
     */
   def sPart(cf: FOLFormula, s: types.S, p: LKProof) : LKProof = {
-    var first = true;
+    var first = true
 
     s.toList.foldLeft(p) { case (p,t) =>
 
@@ -658,7 +652,7 @@ object NCutIntroduction extends Logger {
         val gs = TreeGrammarDecomposition.applyStat(termset.set, n, watch, MCSMethod.MaxSAT, maxsatsolver)
         var grammars = List[Grammar]()
         // if TGD successflly terminated
-        if (watch.errorStatus.toLowerCase() == "ok") {
+        if (watch.errorStatus.toLowerCase == "ok") {
           grammars = gs.get.map {
             case g => g.terms = termset; g
           }
@@ -711,6 +705,6 @@ object NCutIntroduction extends Logger {
       watch.errorStatus = "ncutintro_other_exception"
       None
     }
-    return finalGrammars
+    finalGrammars
   }
 }

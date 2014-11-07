@@ -89,15 +89,13 @@ class MiscTest extends SpecificationWithJUnit {
 //    */
 
     "perform cut introduction on an example proof" in {
-      println("Performing cut introduction test")
       if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
       val p = LinearExampleProof(0, 7)
-      CutIntroduction(p, ExactBound(1))
+      CutIntroduction(p, ExactBound(1), verbose = false)
       Success()
     }
 
     "skolemize a simple proof" in {
-      println("Performing skolemization test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
@@ -108,7 +106,6 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a proof with a simple definition" in {
-      println("Performing another skolemization test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
@@ -119,7 +116,6 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a proof with a complex definition" in {
-      println("Performing yet another skolemization test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
@@ -130,14 +126,13 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "extract projections and clause set from a skolemized proof" in {
-      println("Performing projection extraction test")
       val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
       val s = at.logic.transformations.ceres.struct.StructCreators.extract( proof )
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
-      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent() )
+      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent() ))
       val path = "target" + separator + "test-classes" + separator + "test1p-out.xml"
       saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
         projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
@@ -179,9 +174,8 @@ class MiscTest extends SpecificationWithJUnit {
 */
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
-      println("Performing cut introduction and elimination")
       val p = LinearExampleProof( 0, 4 )
-      val pi_ = CutIntroduction( p, ExactBound(1), new LKProver() )
+      val pi_ = CutIntroduction( p, ExactBound(1), new LKProver(), verbose = false )
       val Some(pi) = pi_
       val pe = ReductiveCutElim.eliminateAllByUppermost(pi, steps = false)
 

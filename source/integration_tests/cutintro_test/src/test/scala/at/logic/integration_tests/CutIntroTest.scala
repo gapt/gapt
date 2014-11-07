@@ -55,7 +55,7 @@ class CutIntroTest extends SpecificationWithJUnit {
       val termset = TermsExtraction (proof)
       val set = termset.set.foldRight (List[FOLTerm]()) ( (t, acc) => termset.getTermTuple (t) ++ acc)
 
-      CutIntroduction( proof, ExactBound(1), new LKProver() )
+      CutIntroduction( proof, ExactBound(1), new LKProver(), verbose = false )
 
       set must contain (exactly ( LinearExampleTermset( 4 ):_* ))
     }

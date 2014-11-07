@@ -1,10 +1,9 @@
 package at.logic.algorithms.resolution
 
-import at.logic.language.fol.{FOLVar, FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom}
+import at.logic.language.fol.{FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom}
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{StringSymbol, SymbolA}
-import at.logic.language.lambda.types.To
 import at.logic.utils.logging.Logger
 
 import scala.collection.mutable
@@ -15,7 +14,7 @@ import scala.collection.mutable
  */
 
   /**
-   * computes the set CNF^+
+   * computes the set CNF^+^
    */
   object CNFp {
     def apply(f: HOLFormula): Set[FClause] = f match {
@@ -30,7 +29,7 @@ import scala.collection.mutable
   }
 
   /**
-   * computes the set CNF^-
+   * computes the set CNF^-^
    */
   object CNFn {
     def apply(f: HOLFormula): Set[FClause] = f match {
@@ -115,7 +114,7 @@ object TseitinCNF extends Logger {
   /**
    * Takes a propositional FOLFormula and parses it s.t. every subformula gets
    * assigned a freshly introduced Atom which is from there on used instead of the formula
-   * @param f
+   * @param f The formula to be parsed.
    * @return a Tuple2, where 1st is the prop. variable representing the formula in 2nd
    */
   def parseFormula(f: FOLFormula): Tuple2[FOLFormula,Set[FClause]] = f match {
