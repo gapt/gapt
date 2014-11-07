@@ -6,7 +6,7 @@ import at.logic.language.hol._
 import at.logic.utils.ds.trees._
 
 /**
- * A sequent Γ ⊢ Δ of formulas.
+ * A sequent Γ :- Δ of formulas.
  *
  * @param antecedent The formulas on the left side of the sequent.
  * @param succedent The formulas on the right side of the sequent.
@@ -46,8 +46,7 @@ class FSequent(val antecedent : Seq[HOLFormula], val succedent : Seq[HOLFormula]
   def formulas : Seq[HOLFormula] = antecedent ++ succedent
 
   /**
-   * Removes the given other sequent from this one, i.e. the other antecedents from our antecedents, and the other
-   * succedents from our succedents.
+   * Takes the multiset difference between two sequents, i.e. each side separately.
    */
   def diff(other : FSequent) = FSequent(this.antecedent diff other.antecedent, this.succedent diff other.succedent)
 
@@ -88,7 +87,11 @@ object FSequent {
   def unapply(f: FSequent) : Option[(Seq[HOLFormula], Seq[HOLFormula])] = Some( (f.antecedent, f.succedent) )
 }
 
-object FSequentOrdering extends FSequentOrdering;
+object FSequentOrdering extends FSequentOrdering
+
+/**
+ * Ordering for sequents.
+ */
 class FSequentOrdering extends Ordering[FSequent]  {
   def compare(x:FSequent,y:FSequent)  : Int = {
     if (x.antecedent.size < y.antecedent.size) -1 else
@@ -112,62 +115,87 @@ class FSequentOrdering extends Ordering[FSequent]  {
 }
 
 
-
+/**
+ * Sequent of formulas tracking their occurrences in a proof.  Each formula together with its occurrence in a proof is
+ * stored as a [[FormulaOccurrence]].
+ *
+ * @param antecedent  The formulas on the left side.
+ * @param succedent  The formulas on the right side.
+ */
 class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[FormulaOccurrence]) {
 
   //TODO improve both equals methods
-  def multisetEquals( o: Sequent ) = o.antecedent.diff(antecedent).isEmpty &&
-    o.succedent.diff(succedent).isEmpty &&
-    antecedent.diff(o.antecedent).isEmpty &&
-    succedent.diff(o.succedent).isEmpty
-  def setEquals(o: Sequent ) = antecedent.forall(a => o.antecedent.contains(a)) &&
-    succedent.forall(a => o.succedent.contains(a)) &&
-    o.antecedent.forall(a => antecedent.contains(a)) &&
-    o.succedent.forall(a => succedent.contains(a))
+  /**
+   * Equality treating each side as a multiset.
+   */
+  def multisetEquals( o: Sequent ) =
+    antecedent.diff(antecedent).isEmpty && succedent.diff(succedent).isEmpty &&
+      antecedent.diff(antecedent).isEmpty && succedent.diff(succedent).isEmpty
+
+  /**
+   * Equality treating each side as a set.
+   */
+  def setEquals(o: Sequent) = Set(antecedent) == Set(antecedent) && Set(succedent) == Set(succedent)
+
+  /**
+   * Equality treating each side as a multiset.
+   */
   override def equals(o: Any) = o match {
     case s: Sequent => multisetEquals(s)
     case _ => false
   }
 
-  // compares the multiset of formulas
-  def syntacticMultisetEquals(o: Sequent ) = {
-    val ta = this.antecedent.map (_.formula)
-    val ts = this.succedent.map (_.formula)
-    val oa = o.antecedent.map (_.formula)
-    val os = o.succedent.map (_.formula)
+  /**
+   * Equality treating each side as a multiset of formulas, ignoring the occurrence.
+   */
+  def syntacticMultisetEquals(o: Sequent) = FSequent(this) multiSetEquals FSequent(o)
 
-    oa.diff(ta).isEmpty &&  os.diff(ts).isEmpty &&  ta.diff(oa).isEmpty && ts.diff(os).isEmpty
-  }
+  /**
+   * Equality treating each side as a multiset of formulas, ignoring the occurrence.
+   */
+  def syntacticMultisetEquals(o: FSequent) = FSequent(this) multiSetEquals o
 
-  def syntacticMultisetEquals(o: FSequent ) = {
-    val ta = this.antecedent.map (_.formula)
-    val ts = this.succedent.map (_.formula)
-    val oa = o._1
-    val os = o._2
-
-    oa.diff(ta).isEmpty &&  os.diff(ts).isEmpty &&  ta.diff(oa).isEmpty && ts.diff(os).isEmpty
-  }
-
+  /**
+   * Equality treating each side as a multiset of formulas, ignoring the occurrence.
+   */
   def =^(o: Sequent): Boolean = syntacticMultisetEquals(o)
+  
+  /**
+   * Removes the specified [[FormulaOccurrence]]s from each side.
+   */
   def removeFormulasAtOccurrences(occs: Seq[FormulaOccurrence]): Sequent = Sequent(
     antecedent.filterNot(x => occs.contains(x)),
     succedent.filterNot(x => occs.contains(x))
   )
 
-  def getChildOf(fo: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(fo))
+  /**
+   * Finds the first occurrence in this sequent having the given ancestor.
+   */
+  def getChildOf(ancestor: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(ancestor))
 
-  def toFSequent() : FSequent = {
-    FSequent(antecedent.map(fo => fo.formula), succedent.map(fo => fo.formula))
-  }
+  /**
+   * Converts to an [[FSequent]], ignoring where the formulas occur.
+   */
+  def toFSequent: FSequent = FSequent(this)
 
-  def toFormula = Or( antecedent.toList.map( f => Neg( f.formula ) ) ++ succedent.map(_.formula) )
+  /**
+   * Interpretation of the sequent as formula.
+   */
+  def toFormula = toFSequent toFormula
 
-  // checks whether this sequent is of the form F :- F
+  /**
+   * Is this sequent of the form F :- F?
+   */
   def isTaut = antecedent.size == 1 && succedent.size == 1 && antecedent.head.formula == succedent.head.formula
 
+  /**
+   * Occurrences on both sides of the sequent, i.e. the concatenation of antecedent and succedent.
+   */
   def occurrences = antecedent ++ succedent
 
-  // checks whether this sequent is of the form :- t = t
+  /**
+   * Is this sequent of the form :- t = t?
+   */
   def isReflexivity = antecedent.size == 0 && succedent.size == 1 && (
     succedent.head.formula match {
       case Equation( s, t ) => ( s == t )
@@ -175,13 +203,13 @@ class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formula
     }
     )
 
+  /**
+   * Composes with the other sequent.  The result is the concatenation of the two antecedents as antecedent, and the
+   * two succedents as succedent.
+   */
   def compose(that : Sequent) = Sequent(this.antecedent ++ that.antecedent, this.succedent ++ that.antecedent)
 
-  // formats a sequent to a readable string
-  override def toString : String = {
-    this.antecedent.map(_.formula).mkString(",") + " :- " + this.succedent.map(_.formula).mkString(",")
-  }
-
+  override def toString: String = toFSequent toString
 }
 
 object Sequent {
