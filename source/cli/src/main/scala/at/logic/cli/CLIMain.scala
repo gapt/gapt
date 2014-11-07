@@ -48,7 +48,7 @@ object CLIMain {
   println(" software, and you are welcome to redistribute it under certain")
   println(" conditions; type `copying' for details.")
   println()
-               """
+  """
 
   def main(args: Array[String]) {
     val f = File.createTempFile("cli-script", ".scala")

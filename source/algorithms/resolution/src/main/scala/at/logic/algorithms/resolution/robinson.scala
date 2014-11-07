@@ -74,7 +74,7 @@ object RobinsonToLK {
     if (map.contains(proof.root.toFClause)) {
       CloneLKProof(map(proof.root.toFClause))
     } else {
-      val ret = proof match {
+      val ret : LKProof = proof match {
         case InitialClause(cls) => //
         // if (seq.antecedent.isEmpty && seq.succedent.isEmpty)
         // Axiom(cls.negative.map(_.formula), cls.positive.map(_.formula))
@@ -159,7 +159,14 @@ object RobinsonToLK {
           println("applying sub "+s+" to "+root)
           val rp = recConvert(p, seq,map,createAxiom)
           println("lk proof root is "+rp.root)
-          applySub(rp,s)._1
+          try {
+            applySub(rp, s)._1
+          } catch {
+            case e@LKQuantifierException(root, occf, term, formula, qvar) =>
+             throw new LKUnaryRuleCreationException("Substitution errror: "+s+":\n"+e.getMessage, rp, List(occf, formula))
+            case e:Throwable =>
+              throw new Exception("Unhandled error:"+e.getMessage, e)
+          }
       }
       map(proof.root.toFClause) = ret
       ret

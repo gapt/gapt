@@ -7,12 +7,30 @@ package at.logic.language.hol.replacements
 
 import at.logic.language.hol._
 
-  
+/**
+ * Replacement represents the rewriting notion of a hole at a certain position. We expect that
+ * the passed expression will replace the subterm indicated at the given position. Positions are
+ * denoted like in term rewriting.
+ * @example {{{
+ *          val expr = And(Atom("P", List(FOLConst("a"), FOLConst("b"))), Atom("Q", Nil))
+ *          val f = Replacement(List(1,2), FOLVar("x" ))(expr)
+ *          f == And(Atom("P", List(FOLConst("a"), FOLVar("x"))), Atom("Q", Nil))
+ *          }}}
+ *
+ * @param position A path of branchings in the term tree. Nil is the root position, 1 is the first argument  etc.
+ * @param expression The term which will be inserted.
+ */
 case class Replacement(position: List[Int], expression: HOLExpression) {
-  def apply(exp: HOLExpression):HOLExpression = replace(position, exp)
+  /**
+   * Applies the replacement of the classes expression at the classes position to the given term.
+   * @param term The term in which we perform the replacement.
+   * @return an expression identical to term except that it contains expression as a subtree at the position
+   */
+  def apply(term: HOLExpression):HOLExpression = replace(position, term)
 
   // To avoid all the casting...
-  private def replace(pos: List[Int], f: HOLFormula) : HOLFormula = replace(pos, f.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]
+  private def replace(pos: List[Int], f: HOLFormula) : HOLFormula =
+    replace(pos, f.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]
 
   private def replace(pos: List[Int], exp: HOLExpression):HOLExpression = {
     (pos, exp)  match {
@@ -49,10 +67,19 @@ case class Replacement(position: List[Int], expression: HOLExpression) {
   }
 }
 
-// return all positions except var positions
+/**
+ * Calculates a list of all subterms of an expression together with their respective positions.
+ * Variabls are excluded. To include them, use getAllPositions2.
+ */
+//TODO: rename getAllpositions2 to getAllPositions and replace calls to this by the general method and filter
 object getAllPositions {
+  /**
+   * Calculates a list of all subterms of an expression together with their respective positions.
+   * @param expression an arbitrary hol epxression
+   * @return a list of pairs (position, subterm)
+   */
   def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
-  def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
+  private def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
       case HOLVar(_,_) => Nil // no need to paramodulate on variable positions
       case HOLConst(_,_) => (curPos, t)::Nil
       case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
@@ -63,13 +90,18 @@ object getAllPositions {
     }
 }
 
-/*
- * TODO: Refactor this workaround, which is used for the trat grammar decomposition (Used in getAllPositionsFOL). It just handles the HOLVar differently than getAllPositions
- *
+ //TODO: Refactor this workaround, which is used for the trat grammar decomposition (Used in getAllPositionsFOL). It just handles the HOLVar differently than getAllPositions
+/**
+ * Calculates a list of all subterms of an expression together with their respective positions.
  */
 object getAllPositions2 {
+  /**
+   * Calculates a list of all subterms of an expression together with their respective positions.
+   * @param expression an arbitrary hol epxression
+   * @return a list of pairs (position, subterm)
+   */
   def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
-  def recApply(t: HOLExpression, curPos: List[Int]): List[(List[Int], HOLExpression)] = t match {
+  private def recApply(t: HOLExpression, curPos: List[Int]): List[(List[Int], HOLExpression)] = t match {
     case HOLVar(_,_) => (curPos, t)::Nil // TODO: difference
     case HOLConst(_,_) => (curPos, t)::Nil
     case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
@@ -80,7 +112,16 @@ object getAllPositions2 {
   }
 }
 
+/**
+ * Returns a specific subterm within a position.
+ */
 object getAtPosition {
+  /**
+   * Returns the subterm at expression | pos
+   * @param expression An arbitrary hol expression
+   * @param pos A path of branchings in the term tree. Nil is the root position, 1 is the first argument  etc.
+   * @return The subterm, if it exists.
+   */
   def apply(expression: HOLExpression, pos: List[Int]): HOLExpression = (expression, pos) match {
     case (t, Nil) => t
     case (HOLVar(_,_), n) => throw new IllegalArgumentException("trying to obtain a subterm of a variable at position: " + n)

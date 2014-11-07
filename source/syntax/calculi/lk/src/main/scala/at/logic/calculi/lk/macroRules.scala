@@ -14,6 +14,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.utils.ds.trees._
 import base._
 
+object AndLeftRule {
   /** <pre>Replaces a formulas A, B (marked by term1oc & term2oc) with the conjunction
     * A ^ B in the antecedent of a sequent. 
     * 
@@ -29,7 +30,6 @@ import base._
     * @param term2oc The occurrence of B in the antecedent of s2.
     * @return An LK Proof ending with the new inference.
     */ 
-object AndLeftRule {
   def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val p0 = AndLeft1Rule( s1, term1oc, term2oc.formula.asInstanceOf[HOLFormula] )
     val p1 = AndLeft2Rule( p0, term1oc.formula.asInstanceOf[HOLFormula], p0.getDescendantInLowerSequent( term2oc ).get )
@@ -171,9 +171,9 @@ object OrRightRule {
       *     sL, Forall x1,..,xN.A |- sR
       * </pre>
       *
-      * @params s1 The top proof with (sL, A[x1\term1,...,xN\termN] |- sR) as the bocttommost sequent.
-      * @params main A formula of the form (Forall x1,...,xN.A).
-      * @params terms The list of terms with which to instantiate main. The caller of this
+      * @param s1 The top proof with (sL, A[x1\term1,...,xN\termN] |- sR) as the bocttommost sequent.
+      * @param main A formula of the form (Forall x1,...,xN.A).
+      * @param terms The list of terms with which to instantiate main. The caller of this
       * method has to ensure the correctness of these terms, and, specifically, that
       * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof s1.
       */
@@ -211,9 +211,9 @@ object OrRightRule {
       * where y1,...,yN are eigenvariables.
       * </pre>
       *
-      * @params s1 The top proof with (sL |- sR, A[x1\y1,...,xN\yN]) as the bocttommost sequent.
-      * @params main A formula of the form (Forall x1,...,xN.A).
-      * @params terms The list of eigenvariables with which to instantiate main. The caller of this
+      * @param s1 The top proof with (sL |- sR, A[x1\y1,...,xN\yN]) as the bocttommost sequent.
+      * @param main A formula of the form (Forall x1,...,xN.A).
+      * @param eigenvariables The list of eigenvariables with which to instantiate main. The caller of this
       * method has to ensure the correctness of these terms, and, specifically, that
       * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof s1.
       */

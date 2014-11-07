@@ -99,7 +99,7 @@ object ForallLeftRule extends WeakRuleHelper(false) {
     * </pre>
     *
     * @param s1 The sequent (sL, A[term/x] |- sR).
-    * @param aux The formula A[term/x], in which a term is to be all-quantified.
+    * @param term1oc The formula A[term/x], in which a term is to be all-quantified.
     * @param main The resulting (Forall x.A), with some (not necessarily all) instances of term replaced by a newly introduced variable.
     * @param term The term to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
     * @return The sequent (sL, Forall x.A |- sR).
@@ -277,7 +277,7 @@ object ForallRightRule extends StrongRuleHelper(true) {
     * </pre>
     *
     * @param s1 The sequent (sL |- sR, A[y/x]).
-    * @param aux The formula A[y/x], in which a free variable y is to be all-quantified.
+    * @param term1oc The formula A[y/x], in which a free variable y is to be all-quantified.
     * @param main The resulting (Forall x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
     * @param eigen_var The eigenvariable to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
     * @return The sequent (sL |- sR, Forall x.A).
@@ -367,7 +367,7 @@ object ExistsLeftRule extends StrongRuleHelper(false) {
     * </pre>
     *
     * @param s1 The sequent (sL, A[y/x] |- sR).
-    * @param aux The formula A[y/x], in which a free variable y is to be existentially quantified.
+    * @param term1oc The formula A[y/x], in which a free variable y is to be existentially quantified.
     * @param main The resulting (Forall x.A), with some (not necessarily all) instances of the free variable eigen_var replaced by a newly introduced variable.
     * @param eigen_var The eigenvariable to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
     * @return The sequent (sL, Exists x.A |- sR).

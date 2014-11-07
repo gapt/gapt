@@ -980,7 +980,7 @@ object rename {
 //TODO: find a better name for all this stuff
 object ntape {
   val p = loadLLK("algorithms/llk/src/test/resources/tape3.llk");
-  val elp = regularize(eliminateDefinitions(p, "TAPEPROOF"))._1;
+  val elp = regularize(definitionElimination(p, "TAPEPROOF"))._1;
   val selp = at.logic.transformations.skolemization.lksk.LKtoLKskc(elp);
 
   //val (rp,es) = loadProver9Proof("ntape.out")
@@ -991,7 +991,7 @@ object ntape {
     println("Loading proof database " + filename)
     val p = loadLLK(filename)
     println("Eliminating definitions:")
-    val elp = eliminateDefinitions(p, proofname)
+    val elp = definitionElimination(p, proofname)
     println("Converting to LKskc")
     val selp = LKtoLKskc(regularize(elp)._1)
     println("Extracting struct")
@@ -1231,16 +1231,12 @@ object compressExpansionSequent {
   def apply(sequent: ExpansionSequent): MultiExpansionSequent = compressQuantifiers(sequent)
 }
 
-object eliminateCuts {
-  def apply(proof: LKProof): LKProof = ReductiveCutElim.eliminateAllByUppermost(proof, steps = false)
-}
-
-object eliminateDefinitions {
+object definitionElimination {
   def apply(db: ProofDatabase, name: String): LKProof = {
     val proofs = db.proofs.filter(_._1 == name)
     require(proofs.nonEmpty, "Proof " + name + " not contained in proof database: " + db.proofs.map(_._1))
-    val (_, p) :: _ = proofs
-    eliminateDefinitions(db.Definitions, p)
+    val ((_, p)) :: _ = proofs
+    apply(db.Definitions, p)
   }
 
   def apply(definition_map: Map[HOLExpression, HOLExpression], p: LKProof): LKProof =
@@ -1596,6 +1592,8 @@ object help {
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
         |   compressExpansionSequent: ExpansionSequent => MultiExpansionSequent - compress the quantifiers in the trees of the sequent using vectors for the terms.
         |   minimalExpansionSequents: ( ExpansionSequent, Prover ) => List[ExpansionSequent] - find all minimal expansion sequents below the given one that are still valid according to the prover.
+        |   foCERES : LKProof => LKProof - apply the CERES method for first-order logic on the input proof. The proof must be on
+        |                                  the first order layer, have a skolemized end-sequent and may not contain definition rules
         |
         | Cut-Elimination by Resolution:
         |   extractStruct: LKProof => Struct

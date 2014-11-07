@@ -693,9 +693,25 @@ object addWeakeningAndContraction {
   }
 }
 
-// Adds contractions to p in order to obtain the sequent s as the end-sequent.
-// Note: s should be a sub-set of p's end-sequent. This assertion can be turned off be passing check=false
+/**
+ * Adds contractions to p in order to obtain the sequent s as the end-sequent.
+ * @note s should be a sub-set of p's end-sequent. This assertion can be turned off be passing check=false
+ */
 object addContractions {
+  /**
+   * Adds contractions to the LK proof p such that no formula occurs more often than in
+   * the given sequent s. If check is enabled (default), an exception is thrown if the
+   * contracted end-sequent is not equivalent to to s.
+   * @note Turning the check off us useful for certain optimizations of proof transformations.
+   *       Sometimes a formula is weakened in, in order to to be contracted later on. Instead,
+   *       we could skip the weakening, but pass an end-sequent which contains the weakened formula
+   *       even though it is not present in the end-sequent (so far).
+   *
+   * @param p an arbitrary LK proof
+   * @param s the intended end-sequent
+   * @param check
+   * @return
+   */
   def apply(p: LKProof, s: FSequent, check : Boolean = true) = {
     val root_ant = p.root.antecedent.map(x => x.formula)
     val root_suc = p.root.succedent.map(x => x.formula)
@@ -705,7 +721,6 @@ object addContractions {
     if (check) {
       assert(s_ant.forall(e => root_ant.contains(e)) && s_suc.forall(e => root_suc.contains(e)))
     }
-
 
     // Take formulas that occur in p's end sequent and do not occur in s
     val diff_ant = root_ant.diff(s_ant)
@@ -722,9 +737,10 @@ object addContractions {
   }
 
   //TODO: this is an alternative version which intentionally does less error checking, it could be merged with the other one
-  /* Apply contraction rules to a proof until a given end-sequent is obtained.
-    Throws an exception if this is impossible. */
-
+  /**
+   *  Apply contraction rules to a proof until a given end-sequent is obtained.
+   *  Throws an exception if this is impossible.
+   */
   def contract(proof : LKProof, towhat : FSequent) : LKProof = {
     val context = proof.root.toFSequent diff towhat
     val leftcontr : LKProof = context.antecedent.foldLeft(proof)((intermediate, f) =>

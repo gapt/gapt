@@ -8,8 +8,8 @@ at.logic.language.lambda.longNormalForm
 at.logic.language.fol.instantiate
                      .instantiateAll
                      .toCNF (which CNF-computation?, relationship to CNFp, CNFn?)
-at.logic.language.hol.replacements._
-at.logic.language.fol.replacements._
+done: at.logic.language.hol.replacements._
+done: at.logic.language.fol.replacements._
 at.logic.algorithms.lk.addWeakeningandContraction
                       .addWeakenings
                       .addContractions
@@ -21,6 +21,8 @@ at.logic.algorithms.unification._
 at.logic.calculi.lk.LKQuantifierException
                    .base.PrincipalFormulas
                    .base.AuxiliaryFormulas
-at.logic.parsing.ivy._
+at.logic.parsing.ivy._ar
 at.logic.transformations.ReductiveCutElim
 
+
+Remark: we can remove the sunbrust trees, but we delete the jar file for it, so there are links called <error> in the generated doc.
