@@ -17,34 +17,59 @@ import at.logic.algorithms.lk.{CleanStructuralRules, regularize, applySubstituti
 
 class ReductiveCutElimException(msg: String) extends Exception(msg)
 
+/** This object implements a version of Gentzen's cut-elimination
+proof for our sequent calculus LK. For details, please
+refer to the documentation of the apply methods.
+*/
+
 object ReductiveCutElim {
   // This list stores a list of subproofs that are reduced
   // during the run of the algorithm.
   private var proofList: List[LKProof] = Nil
   private var steps = false
 
+
+  /** After calling apply with steps = true, the list of
+      proofs arising during cut-elimination can be obtained
+      from this method.
+
+      @returns The list of proofs arising during cut-elimination
+               after apply() has been called. Nil otherwise.
+  */
   def proofs = proofList
   def proofs_=(plist: List[LKProof]) = proofList = plist
 
-  // Does cut-elimination.
-  // 
-  // pred_cut decides whether a cut should be reduced,
-  // its first argument is the global proof in which we
-  // operate. Its second argument is the subproof ending
-  // in a cut which is under consideration. We reduce the
-  // cut if pred_cut returns true.
-  //
-  // pred_done gets the global proof as an argument.
-  //
-  // The algorithm loops recursive walks through the proof
-  // and reduces a cut whenever pred_cut says so. After
-  // every reduction, pred_done is checked. The algorithm
-  // terminates iff pred_done returns true or the proof is
-  // cut-free.
-  //
-  // We assume that proof is regular! Further regularization
-  // is done during cut-reduction when necessary.
-  //
+  /** This methods implements a version of Gentzen's cut-elimination
+      proof parameterized by a strategy given by pred_cut and
+      pred_done.
+
+      The method traverses an LKProof recursively from the bottom
+      up. When it reaches a cut, the method calls pred_cut(global, sub),
+      where global is complete proof under consideration, while sub
+      is the subproof of global ending in the cut. If this call returns
+      true, the cut is reduced using the usual Gentzen cut-elimination
+      rules. If the call returns false, the traversion continues.
+
+      After every application of a reduction, pred_done(global) is called.
+      If it returns true, the algorithm terminates, returning the current proof.
+      If it returns false, the algorithm continues to traverse the proof.
+
+      This means that pred_cut and pred_done allow the definition of a (not necessarily
+      terminating!) cut-elimination strategy. A standard implementation (reducing
+      left-uppermost cuts until the proof is cut-free) is provided by another
+      apply method in this class.
+
+      Note: We assume that proof is regular, i.e. that an eigenvariable
+      of a quantifier rule in proof is used by exactly one such quantifier rule.
+      Further regularization is done during cut-elimination whenever necessary.
+
+      @param proof The proof to subject to cut-elimination.
+      @param _steps Collect the list of subproofs arising during cut-elimination.
+             This list can be obtained by the proofs method.
+      @param pred_done A predicate deciding when to terminate the algorithm.
+      @param pred_cut A predicate deciding whether or not to reduce a cut encountered
+             when traversing the proof.
+  */
   def apply(proof: LKProof, _steps: Boolean, pred_done: LKProof => Boolean, pred_cut: (LKProof, LKProof) => Boolean): LKProof = {
     steps = _steps
 
@@ -61,10 +86,33 @@ object ReductiveCutElim {
     pr
   }
 
-  def eliminateAllByUppermost(proof: LKProof, steps: Boolean) =
+  /** This methods implements a version of Gentzen's cut-elimination
+      proof using the (known to be terminating) strategy of reducing
+      a left-uppermost cut. The algorithm terminates when all cuts
+      have been eliminated.
+
+      @param proof The proof to subject to cut-elimination.
+      @param steps Collect the list of subproofs arising during cut-elimination.
+  */
+  def apply(proof: LKProof, steps : Boolean = false) = eliminateAllByUppermost( proof, steps )
+
+  /** This methods implements a version of Gentzen's cut-elimination
+      proof using the (known to be terminating) strategy of reducing
+      a left-uppermost cut. The algorithm terminates when all cuts
+      have been eliminated.
+
+      @param proof The proof to subject to cut-elimination.
+      @param steps Collect the list of subproofs arising during cut-elimination.
+  */
+  def eliminateAllByUppermost(proof: LKProof, steps: Boolean) : LKProof =
     apply(proof, steps, {x => false}, 
           { (_, cut) => cut match { case CutRule(p1,p2,_,_,_) => isCutFree(p1) && isCutFree(p2) } })
 
+  /** This method checks whether a proof is cut-free.
+
+      @param proof The proof to check for cut-freeness.
+      @return True if proof does not contain the cut rule, False otherwise.
+  */
   def isCutFree(proof: LKProof): Boolean = proof match {
     case Axiom(_) => true
     case p: UnaryLKProof => isCutFree(p.uProof)
@@ -73,7 +121,7 @@ object ReductiveCutElim {
       else isCutFree(p.uProof1) && isCutFree(p.uProof2)
   }
 
-  // Implements cut-elimination.
+  // Implements the Gentzen cut-reduction rules.
   private def cutElim(proof: LKProof)(implicit pred: LKProof => Boolean) : LKProof = proof match {
     case Axiom(_) => proof
     case WeakeningLeftRule(up, _, pf) => WeakeningLeftRule(cutElim(up), pf.formula)

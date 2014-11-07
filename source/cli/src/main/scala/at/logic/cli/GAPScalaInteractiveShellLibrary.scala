@@ -355,7 +355,7 @@ object MaxSATsolve {
 // object skolemize taken from imports
 
 object eliminateCuts {
-  def apply(proof: LKProof): LKProof = ReductiveCutElim.eliminateAllByUppermost(proof, steps = false)
+  def apply(proof: LKProof): LKProof = ReductiveCutElim(proof)
 }
 
 object extractInterpolant {
