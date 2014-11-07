@@ -132,7 +132,7 @@
       </dependency>
       <dependency>
           <groupId>at.logic</groupId>
-          <artifactId>hlk</artifactId>
+          <artifactId>simple_parsing</artifactId>
           <version>1.0-SNAPSHOT</version>
       </dependency>
       <dependency>

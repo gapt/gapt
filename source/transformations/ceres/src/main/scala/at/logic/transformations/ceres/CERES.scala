@@ -44,9 +44,10 @@ class CERESR2LK {
    */
   def apply(p:LKProof, pred : HOLFormula => Boolean) : LKProof = {
     val es = p.root.toFSequent
-    val proj = Projections(p, pred)
+    val proj = Projections(p, pred) + CERES.refProjection(es)
 
     val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(p, pred))
+
     Prover9.refute(tapecl.map(_.toFSequent)) match {
       case None => throw new Exception("Prover9 could not refute the characteristic clause set!")
       case Some(rp) =>
@@ -63,7 +64,7 @@ class CERESR2LK {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply(endsequent : FSequent, proj : Set[LKProof], rp : RobinsonResolutionProof) = {
-    RobinsonToLK(rp, endsequent, fc => CERES.findMatchingProjection(endsequent, proj)(fc.toFSequent))
+    RobinsonToLK(rp, endsequent, fc => CERES.findMatchingProjection(endsequent, proj + CERES.refProjection(endsequent))(fc.toFSequent))
   }
 
 }
@@ -91,16 +92,17 @@ class CERES {
     val proj = Projections(p, pred)
 
     val tapecl = StandardClauseSet.transformStructToClauseSet(StructCreators.extract(p, pred))
+    val refl = refProjection(es)
     Prover9.refute(tapecl.map(_.toFSequent)) match {
       case None => throw new Exception("Prover9 could not refute the characteristic clause set!")
       case Some(rp) =>
         val lkproof = RobinsonToLK(rp)
-        apply(es, proj, lkproof)
+        apply(es, proj + refl, lkproof)
     }
   }
 
   def apply(lkproof : LKProof, refutation: LKProof, pred : HOLFormula => Boolean) : LKProof = {
-    CERES(lkproof.root.toFSequent, Projections(lkproof, pred), refutation)
+    CERES(lkproof.root.toFSequent, Projections(lkproof, pred) + refProjection(lkproof.root.toFSequent), refutation)
   }
 
   /**

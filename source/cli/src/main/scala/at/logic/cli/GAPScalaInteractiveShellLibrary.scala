@@ -13,7 +13,7 @@ import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.expansionTrees.{compressQuantifiers, minimalExpansionSequents => minimalExpSeq}
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.algorithms.fol.recreateWithFactory
-import at.logic.algorithms.hlk.{ExtendedProofDatabase, HybridLatexParser, LKProofParser, SchemaFormulaParser}
+import at.logic.algorithms.hlk.{ExtendedProofDatabase, HybridLatexParser}
 import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.lk.{deleteTautologies => deleteTaut, _}
@@ -765,6 +765,7 @@ object loadIvyProof {
 
 }
 
+
 object exportLLK {
   def apply(lkproof : LKProof, enable_latex : Boolean) = HybridLatexExporter(lkproof,enable_latex)
   def apply(lkproof : LKProof) = HybridLatexExporter(lkproof,true)
@@ -975,7 +976,7 @@ object parse {
 
   private class CLIParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
 
-  private class CLIParserSchema(input: String) extends StringReader(input) with SchemaFormulaParser
+//  private class CLIParserSchema(input: String) extends StringReader(input) with SchemaFormulaParser
 
   def fol(string: String) = {
     new CLIParserFOL(string).getTerm.asInstanceOf[FOLFormula]
@@ -991,7 +992,7 @@ object parse {
   }
 
   def sfo(string: String) = {
-    new CLIParserSchema(string) getTerm
+    //new CLIParserSchema(string) getTerm
   }
 
   def p9(string: String, use_ladr: Boolean = true) = {
