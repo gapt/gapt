@@ -1,50 +1,69 @@
-/*
- * occurrences.scala
- *
- * This file supply traits and convenience classes to wrap LambdaExpressions with some ID so they can be easily retrieved from sequents.
- */
-
 package at.logic.calculi
 
 import at.logic.language.hol._
 import at.logic.utils.traits.Occurrence
 
-/**
- * The user can use abstract occurrences that mark different formulas or use positions as occurrences
- */
+// FIXME: This should be a package.
 object occurrences {
 
-  trait HasAncestors {
-  val ancestors: Seq[Occurrence]
-}
+  /**
+   * A formula occurrence is an occurrence of a [[HOLFormula]] in a proof.  Both formulas in different sequents and
+   * multiple occurrences of the same formula (e.g. introduced by contraction) have a different [[FormulaOccurrence]].
+   *
+   * @param formula  The formula of which this is an occurrence.
+   * @param ancestors  What occurrences caused this occurrence, i.e. if this occurrence is introduced by or-right, then
+   *                   this will include the disjunction is occurrence.
+   * @param factory  The formula occurrence factory [[FOFactory]] used to construct this occurrence.
+   */
+  class FormulaOccurrence(val formula: HOLFormula, val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) extends Occurrence {
+    /**
+     * Auto-incremented integer identifying this occurrence.
+     */
+    val id = defaultFormulaOccurrenceFactory.freshId()
 
-  class FormulaOccurrence(val formula: HOLFormula,  override val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) extends Occurrence with HasAncestors {
-    val id = defaultFormulaOccurrenceFactory.freshId()   //makes it easier to detect problems with identic formulas/ancestors but different object ids
-    override def toString = formula.toString + "[" + id + "]"
+    override def toString = s"$formula[$id]"
 
     override def clone() : java.lang.Object = {
       println("Cloning ID: "+id)
       super.clone()
     }
-    // returns true if o is an ancestor of the current occurrence
+
+    /**
+     * Recursively checks whether the argument is an ancestor of this occurrence.
+     */
     def isAncestor(o: FormulaOccurrence): Boolean =
       if (this == o) true
       else ancestors.exists(_.isAncestor(o))
   }
 
-  implicit def focc2f(fo: FormulaOccurrence): Formula = fo.formula
+  /**
+   * Implicitly converts a [[FormulaOccurrence]] to the formula its occurrence it records.
+   */
+  implicit def formulaOccurrenceToFormula(fo: FormulaOccurrence): Formula = fo.formula
 
 //FO = FormulaOccurrence
+  /**
+   * Formula occurrence factory.  This factory is stored in [[FormulaOccurrence]] itself, sometimes passed via an
+   * implicit {{{factory}}} parameter, or directly linked to [[defaultFormulaOccurrenceFactory]].
+   *
+   * Specialized factories can return instances of subclasses of [[FormulaOccurrence]],
+   * e.g. [[at.logic.calculi.lksk.LKskFOFactory]].
+   *
+   * FIXME: The only supported factory is [[defaultFormulaOccurrenceFactory]] at the moment.
+   */
 trait FOFactory {
   def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence
 }
 
+  /**
+   * Creates instances of [[FormulaOccurrence]].
+   */
   object defaultFormulaOccurrenceFactory extends FOFactory {
     def createFormulaOccurrence(formula: HOLFormula, ancestors: Seq[FormulaOccurrence]): FormulaOccurrence =
       new FormulaOccurrence(formula, ancestors, this)
 
     private var id_counter = 10000
-    def freshId() = { id_counter = id_counter +1; id_counter }
+    private[occurrences] def freshId() = { id_counter = id_counter +1; id_counter }
   }
 
   implicit val factory = defaultFormulaOccurrenceFactory
