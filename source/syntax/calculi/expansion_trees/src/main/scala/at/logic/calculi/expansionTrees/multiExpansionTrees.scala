@@ -1,7 +1,7 @@
 
 package at.logic.calculi.expansionTrees
 
-import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, _}
+import at.logic.language.hol.{And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, _}
 import at.logic.utils.ds.trees._
 import at.logic.calculi.lk.base.FSequent
 
@@ -16,10 +16,25 @@ object multi {
 type T1 = NonTerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]]
 
 trait MultiExpansionTree extends TreeA[Option[HOLFormula],Option[Seq[HOLExpression]]] {
+  /** Computes the expansion tree's deep formula.
+   *
+   * @param pol Determines whether the tree is negated (<0) or not (>0).
+   * @return The deep formula.
+   */
   def toDeep(pol: Int): HOLFormula
+
+  /**Computes the expansion tree's shallow formula.
+   *
+   * @return The shallow formula.
+   */
   def toShallow: HOLFormula
 }
 
+  /** Models a block of weak quantifiers.
+   * Qx,,1,, … Qx,,n,, F +^''t'',,1,,^ E_1 … +^''t'',,n,,^ E_n
+   * @param formula The formula expanded by this tree.
+   * @param instances The instance blocks used for the weak quantifiers.
+   */
 case class WeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpansionTree, Seq[HOLExpression]]])
   extends MultiExpansionTree with T1 {
   lazy val node = Some(formula)
@@ -34,6 +49,12 @@ case class WeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpans
   override def toShallow = formula
 }
 
+  /** Models a block of strong quantifiers.
+   * Qx,,1,, … Qx,,n,, F +^''α''^ E
+   * @param formula The formula expanded by this tree.
+   * @param variables The vector ''α'' of eigenvariables used for the quantifiers.
+   * @param selection The expansion tree E.
+   */
 case class StrongQuantifier(formula: HOLFormula, variables: Seq[HOLVar], selection: MultiExpansionTree)
   extends MultiExpansionTree with T1 {
   lazy val node = Some(formula)
@@ -42,7 +63,12 @@ case class StrongQuantifier(formula: HOLFormula, variables: Seq[HOLVar], selecti
   override def toDeep(pol: Int): HOLFormula = selection.toDeep(pol)
   override def toShallow = formula
 }
-
+  /** Models a block of symbol quantifiers.
+   * Qx,,1,, … Qx,,n,, F +^''c''^ E
+  * @param formula The formula expanded by this tree.
+  * @param skolem_constants The vector ''c'' of skolem symbols used for the quantifiers.
+  * @param selection The expansion tree E.
+  */
 case class SkolemQuantifier(formula: HOLFormula, skolem_constants: Seq[HOLExpression], selection: MultiExpansionTree)
     extends MultiExpansionTree with T1 {
     lazy val node = Some(formula)
@@ -52,6 +78,11 @@ case class SkolemQuantifier(formula: HOLFormula, skolem_constants: Seq[HOLExpres
     override def toShallow = formula
 }
 
+  /** Models a conjunction.
+   *  E,,1,, ∧ E,,2,,
+   * @param left The tree E,,1,,.
+   * @param right The tree E,,2,,.
+   */
 case class And(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(left,None),Tuple2(right,None))
@@ -59,24 +90,45 @@ case class And(left: MultiExpansionTree, right: MultiExpansionTree) extends Mult
   override def toDeep(pol: Int): HOLFormula = AndHOL(left.toDeep(pol), right.toDeep(pol))
   override def toShallow = AndHOL(left.toShallow, right.toShallow)
 }
+
+  /** Models a disjunction.
+   * E,,1,, ∨ E,,2,,
+   * @param left The tree E,,1,,.
+   * @param right The tree E,,2,,.
+   */
 case class Or(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(left,None),Tuple2(right,None))
   override def toDeep(pol: Int): HOLFormula = OrHOL(left.toDeep(pol), right.toDeep(pol))
   override def toShallow = OrHOL(left.toShallow, right.toShallow)
 }
+  /** Models an implication.
+    * E,,1,, → E,,2,,
+    * @param left The tree E,,1,,.
+    * @param right The tree E,,2,,.
+    */
 case class Imp(left: MultiExpansionTree, right: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(left,None),Tuple2(right,None))
   override def toDeep(pol: Int): HOLFormula = ImpHOL(left.toDeep(-pol), right.toDeep(pol))
   override def toShallow = ImpHOL(left.toShallow, right.toShallow)
 }
+
+  /** Models a negation.
+   * ¬ E,,,,
+   * @param tree The tree E.
+   */
 case class Not(tree: MultiExpansionTree) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List(Tuple2(tree,None))
   override def toDeep(pol: Int): HOLFormula = NegHOL(tree.toDeep(-pol))
   override def toShallow = NegHOL(tree.toShallow)
 }
+
+  /** Models an atomic expansion tree.
+   * Atom(f)
+   * @param formula The formula f.
+   */
 case class Atom(formula: HOLFormula) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]] {
   lazy val node = Some(formula)
   override def toDeep(pol: Int): HOLFormula = formula
@@ -138,6 +190,13 @@ def numberOfInstances(tree: MultiExpansionTree): Int = {
     case WeakQuantifier(_,inst) => inst.length
   }
 }
+
+  /** Gets the list of variables instantiated by this node.
+    * It will be empty for non-quantifier nodes.
+   *
+   * @param tree The expansion tree under consideration.
+   * @return
+   */
   def getVars(tree: MultiExpansionTree): List[HOLVar] = tree match {
     case WeakQuantifier(f,_) =>
       f match {
@@ -167,7 +226,8 @@ def numberOfInstances(tree: MultiExpansionTree): Int = {
     case _ => Nil
   }
 
-  /** Strips off the first n quantifiers of a formula. It's only well-defined for formulas that begin with at least n quantifiers.
+  /** Strips off the first n quantifiers of a formula.
+    * It's only well-defined for formulas that begin with at least n quantifiers.
    * 
    * @param form A HOLFormula
    * @param n Number of quantifiers to be removed
@@ -184,7 +244,7 @@ def numberOfInstances(tree: MultiExpansionTree): Int = {
   /** Returns a node's shallow formula minus the quantifiers represented by that node.
    *
    * @param et A MultiExpansionTree
-   * @return The shallow formula of et minus the quantifiers of et
+   * @return The shallow formula of et minus the quantifiers of et (if any).
    */
   def getSubformula(et: MultiExpansionTree): HOLFormula = et match {
     case WeakQuantifier(_,_) | StrongQuantifier(_,_,_) | SkolemQuantifier(_,_,_)  =>
@@ -206,38 +266,81 @@ def numberOfInstances(tree: MultiExpansionTree): Int = {
     case _ => 0
   }
 
+
+  /** Implements sequents of MultiExpansionTrees, analogous to [[at.logic.calculi.expansionTrees.ExpansionSequent]]s.
+   *
+   * @param antecedent The antecedent of the sequent.
+   * @param succedent The succedent of the sequent.
+   */
 class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succedent: Seq[MultiExpansionTree]) {
   def toTuple: (Seq[MultiExpansionTree], Seq[MultiExpansionTree]) = {
     (antecedent, succedent)
   }
 
+    /** Maps a function over the sequent.
+     *
+     * @param f A function of type [[at.logic.calculi.expansionTrees.multi.MultiExpansionTree]] → [[at.logic.calculi.expansionTrees.multi.MultiExpansionTree]]
+     * @return The result of the map.
+     */
   def map(f : MultiExpansionTree => MultiExpansionTree): MultiExpansionSequent = {
     new MultiExpansionSequent(antecedent.map(f), succedent.map(f))
   }
 
+    /** Adds an expansion tree to the antecedent of the sequent.
+     *
+     * @param et The expansion tree to be added.
+     * @return The extended sequent.
+     */
   def addToAntecedent(et: MultiExpansionTree): MultiExpansionSequent = {
     new MultiExpansionSequent(et +: antecedent, succedent)
   }
 
+    /** Adds an expansion tree to the succedent of the sequent.
+      *
+      * @param et The expansion tree to be added.
+      * @return The extended sequent.
+      */
   def addToSuccedent(et: MultiExpansionTree): MultiExpansionSequent = {
     new MultiExpansionSequent(antecedent, et +: succedent)
   }
 
+    /** Removes an expansion tree from the antecedent of the sequent.
+     *
+     * @param et The expansion tree to be removed.
+     * @return The reduced sequent.
+     */
   def removeFromAntecedent(et: MultiExpansionTree): MultiExpansionSequent = {
     require(antecedent.exists(_ eq et))
     new MultiExpansionSequent(antecedent.filterNot(_ eq et), succedent)
   }
 
+    /** Removes an expansion tree from the succedent of the sequent.
+      *
+      * @param et The expansion tree to be removed.
+      * @return The reduced sequent.
+      */
   def removeFromSuccedent(et: MultiExpansionTree): MultiExpansionSequent = {
     require(succedent.exists(_ eq et))
     new MultiExpansionSequent(antecedent, succedent.filterNot(_ eq et))
   }
 
+    /** Replaces an expansion in the antecedent.
+     *
+     * @param from The expansion tree to be replaced.
+     * @param to The replacement tree.
+     * @return The modified sequent.
+     */
   def replaceInAntecedent(from: MultiExpansionTree, to: MultiExpansionTree): MultiExpansionSequent = {
     require(antecedent.exists(_ eq from))
     new MultiExpansionSequent(antecedent.map(et => if (et eq from) to else et), succedent)
   }
 
+    /** Replaces an expansion in the succedent.
+      *
+      * @param from The expansion tree to be replaced.
+      * @param to The replacement tree.
+      * @return The modified sequent.
+      */
   def replaceInSuccedent(from: MultiExpansionTree, to: MultiExpansionTree): MultiExpansionSequent = {
     require(succedent.exists(_ eq from))
     new MultiExpansionSequent(antecedent, succedent.map(et => if (et eq from) to else et))
@@ -270,12 +373,6 @@ class MultiExpansionSequent(val antecedent: Seq[MultiExpansionTree], val succede
 object MultiExpansionSequent {
   def apply(antecedent: Seq[MultiExpansionTree], succedent: Seq[MultiExpansionTree]) = new MultiExpansionSequent(antecedent, succedent)
   def unapply(etSeq: MultiExpansionSequent) = Some( etSeq.toTuple )
-}
-
-object toDeep {
-  def apply(tree: MultiExpansionTree, pol: Int = 1): HOLFormula = tree.toDeep(pol)
-
-  def apply(expansionSequent: MultiExpansionSequent): FSequent = expansionSequent.toDeep
 }
 
 }

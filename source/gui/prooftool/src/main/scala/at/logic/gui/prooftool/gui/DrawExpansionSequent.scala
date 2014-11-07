@@ -12,15 +12,15 @@ import at.logic.calculi.expansionTrees.multi.MultiExpansionTree
 import at.logic.algorithms.expansionTrees.compressQuantifiers
 import org.slf4j.LoggerFactory
 
-/** These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.
- *
+/**
+ * These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.
  * @param from Number of the first tree to be switched
  * @param to Number of the second tree to be switched
  */
-class SwitchEvent(val from: Int, val to: Int) extends Event
+private[gui] class SwitchEvent(val from: Int, val to: Int) extends Event
 
-/** This class takes care of drawing an ExpansionSequent.
- *
+/**
+ * This class takes care of drawing an ExpansionSequent.
  * @param expSequent The expansion sequent to be displayed
  * @param fSize The font size.
  */
@@ -56,12 +56,14 @@ class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: 
   //Code for contents
   val logger = LoggerFactory.getLogger("drawExpSeqLogger")
   val mExpSequent = compressQuantifiers(expSequent) //The input sequent is converted to MultiExpansionTrees
-  leftComponent = new CedentPanel(mExpSequent.antecedent, "Antecedent", ft)
-  rightComponent = new CedentPanel(mExpSequent.succedent, "Succedent", ft)
+  val antecedentPanel: CedentPanel = new CedentPanel(mExpSequent.antecedent, "Antecedent", ft)
+  val succedentPanel: CedentPanel = new CedentPanel(mExpSequent.succedent, "Succedent", ft)
+  leftComponent = antecedentPanel
+  rightComponent = succedentPanel
 }
 
-/** Class for displaying a list of expansion trees and a title.
- *
+/**
+ * Class for displaying a list of expansion trees and a title.
  * @param cedent The list of expansion trees to be displayed
  * @param title The title to be displayed at the top
  * @param ft The font to be used
@@ -97,8 +99,8 @@ class CedentPanel(val cedent: Seq[MultiExpansionTree], val title: String, val ft
   contents += scrollPane
 }
 
-/** Class that displays a list of expansion trees.
- *
+/**
+ * Class that displays a list of expansion trees.
  * @param trees The list of trees to be displayed
  * @param ft The font
  */
@@ -117,7 +119,7 @@ class TreeListPanel(trees: Seq[MultiExpansionTree], ft: Font) extends BoxPanel(O
 
   drawLines()
 
-  def drawLines() {
+  private def drawLines() {
     contents.clear()
     val lines = numLabels zip drawnTrees
 
@@ -150,7 +152,8 @@ class TreeListPanel(trees: Seq[MultiExpansionTree], ft: Font) extends BoxPanel(O
       repaint()
   }
 
-  /** A label that displays a number n as "n: ".
+  /**
+   * A label that displays a number n as "n: ".
    * It can be selected and deselected by left-clicking. If first one and then another of these in the same panel is
    * selected, a SwitchEvent will be published.
    * @param number The number to be displayed
@@ -176,16 +179,16 @@ class TreeListPanel(trees: Seq[MultiExpansionTree], ft: Font) extends BoxPanel(O
         }
     }
 
-    /** Determines what happens when a numLabel is selected.
-     *
+    /**
+     * Determines what happens when a numLabel is selected.
      */
     def select(): Unit = {
       foreground = Color.green
       panel.selected = Some(this.asInstanceOf[panel.type#NumLabel])
     }
 
-    /** Determines what happens when a numLabel is deselected.
-      *
+    /**
+      * Determines what happens when a numLabel is deselected.
       */
     def deselect(): Unit = {
       foreground = Color.black
