@@ -68,7 +68,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
-      //val proof_sk = skolemize( regularize( proof )._1 )
+      //val proof_sk = skolemize( regularize( proof ) )
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
@@ -136,7 +136,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
-      //val proof_sk = skolemize( regularize( proof )._1 )
+      //val proof_sk = skolemize( regularize( proof ) )
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 

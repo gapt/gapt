@@ -488,7 +488,7 @@ object Main extends SimpleSwingApplication {
   def regularizeProof() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     val data = body.getContent.getData.get
-    val proof = regularize(data._2.asInstanceOf[LKProof])._1
+    val proof = regularize(data._2.asInstanceOf[LKProof])
     db.addProofs((data._1+"_reg", proof)::Nil)
     updateLauncher(data._1+"_reg",proof, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor

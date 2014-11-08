@@ -134,7 +134,7 @@ class TapeTest extends SpecificationWithJUnit {
       checkForProverOrSkip
       //get the proof
       val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
-      val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("the-proof"))._1))
+      val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("the-proof"))))
       val (foltape,_) = map_proof(elp, convertHolToFol.apply)
 
 
@@ -159,7 +159,7 @@ class TapeTest extends SpecificationWithJUnit {
       checkForProverOrSkip
       //get the proof
       val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
-      val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("the-proof"))._1))
+      val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("the-proof"))))
       val (foltape,_) = map_proof(elp, convertHolToFol.apply)
 
 

@@ -306,21 +306,21 @@ object eliminateDefinitions {
 
 }
 
+// TODO: please scaladocument this
 object regularize {
 
-  def apply( p: LKProof ) = {
-    val blacklist = variables(p)
-    rec( p, blacklist )
-  }
+  def apply( p: LKProof ) : LKProof = recApply( p )._1
 
-  def rec( proof: LKProof, vars: List[HOLVar] ) : (LKProof, List[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) =
+  def recApply( proof: LKProof ) : ( LKProof, List[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) = recApply( proof, variables( proof ))
+
+  def recApply( proof: LKProof, vars: List[HOLVar] ) : ( LKProof, List[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) =
   {
     proof match
     {
       case r @ CutRule( p1, p2, _, a1, a2 ) => {
         // first left, then right
-        val rec1 = rec( p1, vars )
-        val rec2 = rec( p2, rec1._2 )
+        val rec1 = recApply( p1, vars )
+        val rec2 = recApply( p2, rec1._2 )
         val new_proof = CutRule( rec1._1, rec2._1, rec1._3( a1 ), rec2._3( a2 ) )
         ( new_proof, rec2._2, computeMap( p1.root.antecedent ++
         (p1.root.succedent.filter(_ != a1)), r, new_proof, rec1._3 ) ++
@@ -361,47 +361,47 @@ object regularize {
         (a, vars, map)
       }
       case WeakeningLeftRule(p, s, m) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         handleWeakening( ( new_parent._1, new_parent._3 ), p, proof, new_parent._2, WeakeningLeftRule.apply, m )
       }
       case WeakeningRightRule(p, s, m) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         handleWeakening( ( new_parent._1, new_parent._3 ), p, proof, new_parent._2, WeakeningRightRule.apply, m )
       }
       case ContractionLeftRule(p, s, a1, a2, m) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         handleContraction( ( new_parent._1, new_parent._3 ), p, proof, a1, a2, new_parent._2, ContractionLeftRule.apply )
       }
       case ContractionRightRule(p, s, a1, a2, m) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         handleContraction( ( new_parent._1, new_parent._3 ), p, proof, a1, a2, new_parent._2, ContractionRightRule.apply )
       }
       case AndLeft1Rule(p, s, a, m) => {
         val f = m.formula match { case And(_, w) => w }
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = AndLeft1Rule( new_parent._1, new_parent._3( a ), f )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case AndLeft2Rule(p, s, a, m) => {
         val f = m.formula match { case And(w, _) => w }
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._3( a ) )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case OrRight1Rule(p, s, a, m) => {
         val f = m.formula match { case Or(_, w) => w }
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = OrRight1Rule( new_parent._1, new_parent._3( a ), f )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case OrRight2Rule(p, s, a, m) => {
         val f = m.formula match { case Or(w, _) => w }
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = OrRight2Rule( new_parent._1, f, new_parent._3( a ) )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case ImpRightRule(p, s, a1, a2, m) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = ImpRightRule( new_parent._1,
                                       new_parent._3( a1 ),
                                       new_parent._3( a2 ) )
@@ -409,40 +409,40 @@ object regularize {
       }
 
       case NegLeftRule(p, s, a, m) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = NegLeftRule( new_parent._1, new_parent._3( a ) )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case NegRightRule(p, s, a, m) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = NegRightRule( new_parent._1, new_parent._3( a ) )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case DefinitionRightRule( p, s, a, m ) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = DefinitionRightRule( new_parent._1, new_parent._3( a ), m.formula )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case DefinitionLeftRule( p, s, a, m ) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = DefinitionLeftRule( new_parent._1, new_parent._3( a ), m.formula )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case ForallLeftRule( p, s, a, m, t ) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = ForallLeftRule( new_parent._1, new_parent._3( a ), m.formula, t )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case ExistsRightRule( p, s, a, m, t ) => {
-        val new_parent = rec( p, vars )
+        val new_parent = recApply( p, vars )
         val new_proof = ExistsRightRule( new_parent._1, new_parent._3( a ), m.formula, t )
         ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
       }
       case ExistsLeftRule( p, s, a, m, v ) => {
-        val (nparent, blacklist, table) = rec( p, vars :+ v )
+        val (nparent, blacklist, table) = recApply( p, vars :+ v )
         val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
         {
-          val new_var0 = HOLVar(v.name.toString.replaceAll("_.*$",""), v.exptype)
+          val new_var0 = HOLVar(v.name.toString.replaceAll("_.*$",""), v.exptype) // FIXME: this should use HOLVar.rename
           val new_var = rename(new_var0, blacklist)
           val new_new_parent = applySubstitution( nparent, Substitution( v, new_var ) )
           val new_map =  table.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
@@ -454,10 +454,10 @@ object regularize {
         ( new_proof, new_blacklist, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_map ) )
       }
       case ForallRightRule( p, s, a, m, v ) => {
-        val (nparent, blacklist, table) = rec( p, vars :+ v )
+        val (nparent, blacklist, table) = recApply( p, vars :+ v )
         val (new_proof, new_blacklist, new_map) = if ( blacklist.contains( v ) ) // rename eigenvariable
         {
-          val new_var0 = HOLVar(v.name.toString.replaceAll("_.*$",""), v.exptype)
+          val new_var0 = HOLVar(v.name.toString.replaceAll("_.*$",""), v.exptype) // FIXME: this should use HOLVar.rename
           val new_var = rename(new_var0, blacklist)
           val new_new_parent = applySubstitution( nparent, Substitution( v, new_var ) )
           val new_map = table.transform( (k, v) => new_new_parent._2( v ) ) // compose maps
@@ -496,8 +496,8 @@ object regularize {
                         m :HOLFormula, vars: List[HOLVar],
                         constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula) => BinaryLKProof with AuxiliaryFormulas ) = {
        // first left, then right
-      val rec1 = rec( p1, vars )
-      val rec2 = rec( p2, rec1._2 )
+      val rec1 = recApply( p1, vars )
+      val rec2 = recApply( p2, rec1._2 )
       val new_proof = constructor( rec1._1, rec2._1, rec1._3( a1 ), rec2._3( a2 ) , m )
       ( new_proof, rec2._2, computeMap( p1.root.antecedent ++ p1.root.succedent, r, new_proof, rec1._3 ) ++
                    computeMap( p2.root.antecedent ++ p2.root.succedent, r, new_proof, rec2._3 ) )
@@ -506,14 +506,15 @@ object regularize {
   def handleBinaryProp( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, vars: List[HOLVar],
     constructor: (LKProof, LKProof, FormulaOccurrence, FormulaOccurrence) => BinaryLKProof with AuxiliaryFormulas ) = {
        // first left, then right
-      val (rec1, vars1, map1) = rec( p1, vars )
-      val (rec2, vars2, map2) = rec( p2, vars1 )
+      val (rec1, vars1, map1) = recApply( p1, vars )
+      val (rec2, vars2, map2) = recApply( p2, vars1 )
       val new_proof = constructor( rec1, rec2, map1( a1 ), map2( a2 ) )
       ( new_proof, vars2, computeMap( p1.root.antecedent ++ p1.root.succedent, r, new_proof, map1 ) ++
                    computeMap( p2.root.antecedent ++ p2.root.succedent, r, new_proof, map2 ) )
   }
 
 
+  // FIXME: this does not belong here - it is not specific to regularization
   def variables(e: HOLExpression) : List[HOLVar] = e match {
     case v: HOLVar => List(v)
     case c: HOLConst => List()

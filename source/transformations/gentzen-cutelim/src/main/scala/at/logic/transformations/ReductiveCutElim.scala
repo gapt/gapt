@@ -76,7 +76,7 @@ object ReductiveCutElim {
     steps = _steps
 
     proofList = proof::Nil
-    // var pr = regularize(proof)._1
+    // var pr = regularize(proof)
     var pr = proof
     do {
       def pred(local: LKProof) = pred_cut(pr, local)
@@ -250,14 +250,14 @@ object ReductiveCutElim {
   //case (ContractionRightRule(up, _, aux1, aux2, prin), proof: LKProof) => //Can't match this, why??? Fixed: moved as a subcase of UnaryLKProof
     case (proof: LKProof, ContractionLeftRule(up, _, aux1, aux2, prin)) =>
       if (prin.formula == cutFormula2) {
-        val proof1 = regularize(proof)._1
+        val proof1 = regularize(proof)
         var tmp: LKProof = CutRule(proof1, CutRule(proof, up, aux1.formula), aux2.formula)
         var alreadySeen = false
         for (i <- proof.root.antecedent) tmp = ContractionLeftRule(tmp, i.formula)
         for (i <- proof.root.succedent)
           if (i.formula != cutFormula1 || alreadySeen) tmp = ContractionRightRule(tmp, i.formula)
           else alreadySeen = true
-        regularize(tmp)._1
+        regularize(tmp)
       }
       else ContractionLeftRule(CutRule(proof, up, cutFormula2), aux1.formula)
     // These are cases for nontautological axioms on the left (cases on the right are not needed because, since we
@@ -292,14 +292,14 @@ object ReductiveCutElim {
         val aux2 = unap.get._4
         val prin = unap.get._5
         if (prin.formula == cutFormula1) {
-          val proof1 = regularize(proof)._1
+          val proof1 = regularize(proof)
           var tmp: LKProof = CutRule(CutRule(up, proof, aux1.formula), proof1, aux2.formula)
           var alreadySeen = false
           for (i <- proof.root.antecedent)
             if (i.formula != cutFormula2 || alreadySeen) tmp = ContractionLeftRule(tmp, i.formula)
             else alreadySeen = true
           for (i <- proof.root.succedent) tmp = ContractionRightRule(tmp, i.formula)
-          regularize(tmp)._1
+          regularize(tmp)
         }
         else ContractionRightRule(CutRule(up, proof, cutFormula1), aux1.formula)
       } else reduceUnaryLeft(unary, proof, cutFormula1)

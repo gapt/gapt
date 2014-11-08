@@ -22,7 +22,7 @@ class RegularizationTest extends SpecificationWithJUnit {
       val ax2 = Axiom( px::Nil, px::Nil )
       val proof = CutRule( ax1, ax2, ax1.root.succedent.head, ax2.root.antecedent.head )
       val p_s = regularize( proof )
-      val s2 = p_s._1.root.toFSequent
+      val s2 = p_s.root.toFSequent
       s2 must beEqualTo( s )
     }
 
@@ -47,7 +47,7 @@ class RegularizationTest extends SpecificationWithJUnit {
       val r4 = WeakeningLeftRule(r3, Pxyk)
 
       val proof = CutRule(l4,r4,l4.root.succedent(1), r4.root.antecedent(1))
-      val (rproof, blacklist, _) = regularize(proof)
+      val (rproof, blacklist, _) = regularize.recApply(proof)
       
       //val names = List("a","b","x","y","k","l","P","Q")
       val names = List(a, b, x, y, k, l, P, Q)
@@ -88,7 +88,7 @@ class RegularizationTest extends SpecificationWithJUnit {
       val r4 = WeakeningLeftRule(r3, Pxyk)
 
       val proof = CutRule(l4,r4,l4.root.succedent(1), r4.root.antecedent(1))
-      val (rproof, blacklist, _) = regularize(proof)
+      val (rproof, blacklist, _) = regularize.recApply(proof)
 
       //val names = List("a_1","a_2","x","y","k","l","P","Q")
       val names = List(a, b, x, y, k, l, P, Q)

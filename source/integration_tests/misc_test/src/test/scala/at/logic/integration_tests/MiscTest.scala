@@ -241,9 +241,9 @@ class MiscTest extends SpecificationWithJUnit {
       val (_,p)::_ = proofs
       val elp = AtomicExpansion(DefinitionElimination(db.Definitions,p))
       val reg = regularize(elp)
-      val lksk_proof = LKtoLKskc(reg._1)
+      val lksk_proof = LKtoLKskc(reg)
       // TODO
-      val et = extractExpansionTrees(reg._1)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      val et = extractExpansionTrees(reg)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
     }
 
