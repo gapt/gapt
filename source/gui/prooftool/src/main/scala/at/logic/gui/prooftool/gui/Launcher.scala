@@ -84,12 +84,12 @@ class Launcher(private val option: Option[(String, AnyRef)], private val fSize: 
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(Loaded)
       None
-    case list: List[AnyRef] =>
+    case list: List[_] =>
       layout(new DrawList(list, fSize)) = c
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None
-    case set: Set[AnyRef] => // use the case for lists for sets, too
+    case set: Set[_] => // use the case for lists for sets, too
       layout(new DrawList(set.toList, fSize)) = c
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)

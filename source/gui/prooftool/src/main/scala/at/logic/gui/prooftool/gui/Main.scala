@@ -180,11 +180,11 @@ object Main extends SimpleSwingApplication {
             finally { body.cursor = java.awt.Cursor.getDefaultCursor }
           case list: List[_] =>
             try {
-              val ls = list.map(x => x match {
+              val ls = list.map {
                 case s: Sequent => s.toFSequent
                 case fs: FSequent => fs
                 case _ => throw new Exception("Cannot save this kind of lists.")
-              })
+              }
               if (result.endsWith(".xml") || chooser.fileFilter.getDescription == ".xml") {
                 XMLExporter(result, new ProofDatabase(Map(), Nil, Nil, List((pair._1, ls))))
               } else if (result.endsWith(".tex") || chooser.fileFilter.getDescription == ".tex") {
@@ -833,12 +833,12 @@ object Main extends SimpleSwingApplication {
   def questionMessage(question: String) =
     Dialog.showConfirmation(body, question, "ProofTool Question", Dialog.Options.YesNo, Message.Question)
 
-  def getExceptionString(e: Throwable) = {
+  def getExceptionString(e: Throwable): String = {
     val st = e.toString.replaceAll(",",",\n") + "\n"
     val trace = e.getStackTrace
     if (trace.length > 10)
       Range(0,10).map(i => trace.apply(i)).foldLeft(st)((s, x) => s + "\n   at " + x.toString) + "\n   ......."
-    else e.getStackTraceString
+    else e.getStackTrace.toString
   }
 
   private val chooser = new FileChooser {

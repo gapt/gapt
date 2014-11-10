@@ -45,7 +45,7 @@ class Vector(val vector: List[Int]) {
 
   def lex_<(v: Vector): Boolean = Vector.lex_<(this, v)
 
-  override def equals(v: Any): Boolean = {try {vector equals v.asInstanceOf[Vector].vector} catch {case _ => false}}
+  override def equals(v: Any): Boolean = {try {vector equals v.asInstanceOf[Vector].vector} catch {case _: Throwable => false}}
 
   override def toString = "Vector(" + (vector.foldRight(")")((x: Int, y: String) => if (y == ")") x.toString + y else x + "," + y))
 

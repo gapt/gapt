@@ -13,7 +13,7 @@ import at.logic.calculi.lk.base.{Sequent, FSequent}
 import at.logic.language.hol.HOLExpression
 import swing.{FlowPanel, GridPanel, Label}
 
-class DrawList(val list: List[AnyRef], val fontSize: Int) extends GridPanel(0, 1) {
+class DrawList(val list: List[Any], val fontSize: Int) extends GridPanel(0, 1) {
   background = new Color(255,255,255)
   private var str: String = ""
   initialize()
@@ -40,7 +40,7 @@ class DrawList(val list: List[AnyRef], val fontSize: Int) extends GridPanel(0, 1
       }
     }
 
-    def drawMember(x: AnyRef) = x match {
+    def drawMember(x: Any) = x match {
       case s : Sequent => DrawSequent(s, ft, str)
       case fs : FSequent => DrawSequent.applyF(fs, ft, str)
       case (f1: HOLExpression, f2: HOLExpression) => drawDefinition(f1, f2, ft)

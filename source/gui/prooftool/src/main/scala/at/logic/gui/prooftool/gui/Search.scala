@@ -30,17 +30,23 @@ object Search {
   }
 
   def inResolutionProof(str: String, tree: Proof[_]): Set[FormulaOccurrence] = tree match {
-    case p: NullaryProof[Sequent] =>
-      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-        p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
-    case p: UnaryProof[Sequent] =>
-      inResolutionProof(str, p.uProof) ++
-        ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-          p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
-    case p: BinaryProof[Sequent] =>
-      inResolutionProof(str, p.uProof1) ++ inResolutionProof(str, p.uProof2) ++
-        ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-          p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
+    case p: NullaryProof[_] => p.root match {
+      case s: Sequent =>
+        (s.antecedent.filter (fo => DrawSequent.formulaToLatexString (fo.formula).contains (str) ) ++
+         s.succedent.filter  (fo => DrawSequent.formulaToLatexString (fo.formula).contains (str) ) ).toSet
+    }
+    case p: UnaryProof[_] => p.root match {
+      case s: Sequent =>
+        inResolutionProof(str, p.uProof) ++
+          (s.antecedent.filter (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
+           s.succedent.filter  (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str))).toSet
+    }
+    case p: BinaryProof[_] => p.root match {
+      case s: Sequent =>
+        inResolutionProof(str, p.uProof1) ++ inResolutionProof(str, p.uProof2) ++
+          (s.antecedent.filter (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
+           s.succedent.filter  (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str))).toSet
+    }
     case _ => throw new Exception("Cannot search in this object!")
   }
 }

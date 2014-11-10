@@ -213,7 +213,7 @@ object loadProver9LKProof {
       //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
 
       val fclauses: Set[FClause] = proof.nodes.map {
-        case InitialClause(clause: Clause) => clause.toFClause;
+        case InitialClause(clause) => clause.toFClause
         case _ => FClause(Nil, Nil)
       }.filter((x: FClause) => x match {
         case FClause(Nil, Nil) => false;

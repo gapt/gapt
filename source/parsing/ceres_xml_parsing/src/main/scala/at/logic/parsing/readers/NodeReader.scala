@@ -59,7 +59,7 @@ object XMLReaders {
           case  _ => throw e
         }
 
-        case _ => println("other error"); null
+        case _: Throwable => println("other error"); null
       }
     }
 

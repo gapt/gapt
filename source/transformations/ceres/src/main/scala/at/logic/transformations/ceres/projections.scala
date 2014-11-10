@@ -134,7 +134,7 @@ object Projections extends at.logic.utils.logging.Logger {
         //throw ProjectionException(e.getMessage, proof, Nil, null)
         throw e
       case e : Exception =>
-        throw ProjectionException("Error computing projection: "+e.getMessage+"\n"+e.getStackTraceString, proof, Nil, e)
+        throw ProjectionException("Error computing projection: "+e.getMessage+"\n"+e.getStackTrace, proof, Nil, e)
     }
   }
 
@@ -551,25 +551,23 @@ object DeleteReduntantFOfromSequent {
 object DeleteRedundantSequents {
   private def member(seq : Sequent, l : List[Sequent]): Boolean = {
     l match {
-      case seq1::ls => {
+      case seq1::ls =>
         if (seq.antecedent.toList.map(fo => fo.formula).toSet == seq1.antecedent.toList.map(fo => fo.formula).toSet &&
           seq.succedent.toList.map(fo => fo.formula).toSet == seq1.succedent.toList.map(fo => fo.formula).toSet
         ) true
         else member(seq, ls)
-      }
       case _ => false
     }
   }
 
   def apply(l : List[Sequent]): List[Sequent] = {
     l match {
-      case x::ls => {
+      case x::ls =>
         val new_ls = apply(ls)
         if (member(x, new_ls))
           new_ls
         else
           x::new_ls
-      }
       case _ => List[Sequent]()
     }
   }
