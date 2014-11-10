@@ -15,6 +15,7 @@ import Utility._
 
 object Utility {
   type T1 = NonTerminalNodeA[Option[HOLFormula],Option[Seq[HOLExpression]]]
+  type Instance = (MultiExpansionTree, Seq[HOLExpression])
 
   /** If formula starts with ∃x,,1,,…∃x,,n,,, returns [x,,1,,,…,x,,n,,]. Otherwise returns Nil.
     *
@@ -106,7 +107,7 @@ trait MultiExpansionTree extends TreeA[Option[HOLFormula],Option[Seq[HOLExpressi
   * @param formula The formula expanded by this tree.
   * @param instances The instance blocks used for the weak quantifiers.
   */
-case class MWeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpansionTree, Seq[HOLExpression]]])
+case class MWeakQuantifier(formula: HOLFormula, instances: Seq[Instance])
   extends MultiExpansionTree with T1 {
   lazy val node = Some(formula)
   lazy val children = instances.map(x => (x._1,Some(x._2)))
@@ -121,7 +122,7 @@ case class MWeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpan
 
   override def containsWeakQuantifiers = true
 
-  override def numberOfInstances = instances.length
+  override def numberOfInstances = instances.foldLeft(0)((acc, inst) => acc + inst._1.numberOfInstances)
 
   override def getVars = formula match {
     case ExVar(v, subF) => v +: getVarsEx(subF)
@@ -140,7 +141,7 @@ case class MWeakQuantifier(formula: HOLFormula, instances: Seq[Tuple2[MultiExpan
   *
   * Qx,,1,, … Qx,,n,, F +^'''α'''^ E
   * @param formula The formula expanded by this tree.
-  * @param variables The vector ''α'' of eigenvariables used for the quantifiers.
+  * @param variables The vector '''α''' of eigenvariables used for the quantifiers.
   * @param selection The expansion tree E.
   */
 case class MStrongQuantifier(formula: HOLFormula, variables: Seq[HOLVar], selection: MultiExpansionTree)
@@ -171,7 +172,7 @@ case class MStrongQuantifier(formula: HOLFormula, variables: Seq[HOLVar], select
   *
   * Qx,,1,, … Qx,,n,, F +^'''c'''^ E
   * @param formula The formula expanded by this tree.
-  * @param skolemSymbols The vector ''c'' of skolem symbols used for the quantifiers.
+  * @param skolemSymbols The vector '''c''' of skolem symbols used for the quantifiers.
   * @param selection The expansion tree E.
   */
 case class MSkolemQuantifier(formula: HOLFormula, skolemSymbols: Seq[HOLExpression], selection: MultiExpansionTree)
