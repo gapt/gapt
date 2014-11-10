@@ -36,16 +36,16 @@ object SCHOLParser {
   //--------------------------------- parse SLK proof -----------------------
 
 
-  def parseProofFlat(txt: InputStreamReader): MMap[String, Pair[LKProof, LKProof]] =
+  def parseProofFlat(txt: InputStreamReader): MMap[String, Tuple2[LKProof, LKProof]] =
   {
     val map = parseProof( txt )
     map.map( pp => {
       val name = pp._1
       val pair = pp._2
-      (name, Pair(pair._1.get("root").get, pair._2.get("root").get))
+      (name, Tuple2(pair._1.get("root").get, pair._2.get("root").get))
     })
   }
-  def parseProof(txt: InputStreamReader): MMap[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]] = {
+  def parseProof(txt: InputStreamReader): MMap[String, Tuple2[MMap[String, LKProof], MMap[String, LKProof]]] = {
     var mapBase = MMap.empty[String, LKProof]
     var mapStep = MMap.empty[String, LKProof]
     var map  = MMap.empty[String, LKProof]
@@ -54,7 +54,7 @@ object SCHOLParser {
     var error_buffer = ""
     //    lazy val sp2 = new ParserTxt
     //    sp2.parseAll(sp2.line, txt)
-    val bigMMap = MMap.empty[String, Pair[MMap[String, LKProof], MMap[String, LKProof]]]
+    val bigMMap = MMap.empty[String, Tuple2[MMap[String, LKProof], MMap[String, LKProof]]]
    // val mapPredicateToArity = MMap.empty[String, Int]
     dbTRS.clear
     lazy val sp = new SimpleSCHOLParser
@@ -91,7 +91,7 @@ object SCHOLParser {
       }
       def slkProof: Parser[Any] = "proof" ~ """[\\]*[a-z0-9]+""".r ~ "given" ~  "[" ~ repsep(term|IndividualordinalExpressions,",") ~ "]" ~  "proves" ~ sequent ~ "base" ~ "{" ~ line  ~ "}" ~ "step"   ~ "{" ~ rep(mappingStep) ~ "}" ~ rep("""-""".r)  ^^ {
         case                       "proof" ~  str ~ "given" ~ "[" ~ linkparams ~ "]" ~  "proves" ~   seq  ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~     line2        ~ "}" ~ procents => {
-          bigMMap.put(str, Pair(mapBase, mapStep))
+          bigMMap.put(str, Tuple2(mapBase, mapStep))
           SchemaProofDB.put(new SchemaProof(str, IntVar("k")::Nil, seq.toFSequent, mapBase.get("root").get, mapStep.get("root").get))
           SchemaProofDB.putLinkTerms(str,linkparams)
           mapBase = MMap.empty[String, LKProof]

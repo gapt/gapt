@@ -45,7 +45,7 @@ object unfoldSTerm {
       case sTerm(func, i, arg) if dbTRS.map.contains(func) => {
         if (i == IntZero()) {
           val base = dbTRS.map.get(func).get._1._2
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(x, arg.head)
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(x, arg.head)
           val subst = Substitution(new_map)
           subst(base)
         }
@@ -75,7 +75,7 @@ object unfoldSINDTerm {
         else if (i == k) e
         else {
           val step = dbTRS.map.get(func).get._2._2
-          val new_map = Map[SchemaVar, SchemaExpression]() + Pair(k, Pred(i.asInstanceOf[IntegerTerm]))
+          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Pred(i.asInstanceOf[IntegerTerm]))
           val subst = Substitution(new_map)
           subst(step)
         }

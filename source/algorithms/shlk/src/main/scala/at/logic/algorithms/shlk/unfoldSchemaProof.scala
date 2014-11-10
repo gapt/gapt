@@ -154,7 +154,7 @@ object applySchemaSubstitution {
                 apply(SchemaProofDB.get(link).rec, subst, cnt)
               }
               else {
-                val new_map = (subst.schemamap - subst.schemamap.head._1) + Pair(subst.schemamap.head._1, Pred(new_ind.asInstanceOf[IntegerTerm]) )
+                val new_map = (subst.schemamap - subst.schemamap.head._1) + Tuple2(subst.schemamap.head._1, Pred(new_ind.asInstanceOf[IntegerTerm]) )
                 val new_subst = Substitution(new_map)
                 apply(SchemaProofDB.get(link).rec, new_subst, cnt-1)
               }

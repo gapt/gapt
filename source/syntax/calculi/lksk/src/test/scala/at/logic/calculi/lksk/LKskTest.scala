@@ -25,9 +25,9 @@ class LKskTest extends SpecificationWithJUnit {
   val v2 = HOLVar("c", Ti)
   val f2 = Atom(c1,v1::Nil)
   val f3 = Atom(HOLVar("e", To))
-  val ax = Axiom.createDefault(new FSequent(f1::Nil, f1::Nil), Pair((EmptyLabel() + f2)::Nil, EmptyLabel()::Nil ))
+  val ax = Axiom.createDefault(new FSequent(f1::Nil, f1::Nil), Tuple2((EmptyLabel() + f2)::Nil, EmptyLabel()::Nil ))
   val a1 = ax._1 // Axiom return a pair of the proof and a mapping and we want only the proof here
-  val a2 = (Axiom.createDefault(new FSequent(f1::Nil, f1::Nil), Pair((EmptyLabel() + f2)::Nil, (EmptyLabel() + f3)::Nil) ) )._1
+  val a2 = (Axiom.createDefault(new FSequent(f1::Nil, f1::Nil), Tuple2((EmptyLabel() + f2)::Nil, (EmptyLabel() + f3)::Nil) ) )._1
 
 
   "The factories/extractors for LKsk" should {

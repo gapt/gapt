@@ -93,7 +93,7 @@ trait LKExporter extends HOLTermExporter {
 }
 
 object saveXML {
-  def apply( proofs: List[Pair[String, LKProof]], sequentlists: List[Pair[String, List[FSequent]]], filename: String ) =
+  def apply( proofs: List[Tuple2[String, LKProof]], sequentlists: List[Tuple2[String, List[FSequent]]], filename: String ) =
   {
     val exporter = new LKExporter{}
     val p_xmls = proofs.map( p => exporter.exportProof(p._1, p._2) )

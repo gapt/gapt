@@ -16,7 +16,7 @@ class VampireException(msg: String) extends Exception(msg)
 
 object Vampire {
 
-  def writeProblem( named_sequents: List[Pair[String, FSequent]], file_name: String ) =
+  def writeProblem( named_sequents: List[Tuple2[String, FSequent]], file_name: String ) =
   {
 
     val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
@@ -63,7 +63,7 @@ object Vampire {
     ret._1
   }
 
-  def refuteNamed( named_sequents : List[Pair[String, FSequent]], input_file: String, output_file: String ) : Boolean =
+  def refuteNamed( named_sequents : List[Tuple2[String, FSequent]], input_file: String, output_file: String ) : Boolean =
   {
     writeProblem( named_sequents, input_file )
 

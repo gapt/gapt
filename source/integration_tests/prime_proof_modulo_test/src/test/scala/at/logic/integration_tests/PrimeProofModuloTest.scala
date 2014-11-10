@@ -122,9 +122,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
         }
       }
 
-      saveXML( Pair("prime1-" + n + "-sk", proof_sk) ::
-        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
+      saveXML( Tuple2("prime1-" + n + "-sk", proof_sk) ::
+        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Tuple2("cs", cs)::Tuple2("prf",prf)::Tuple2("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqualTo( true )
     }
 
@@ -166,9 +166,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
       //Prover9.refute( cs ) must beEqualTo( true )
       //Prover9.refute( prf ) must beEqualTo( true )
 
-      saveXML( Pair("euclid-" + n + "-sk", proof_sk) ::
-        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Pair( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Pair("cs", cs)::Pair("prf",prf)::Pair("cs_prf_intersection", prf_cs_intersect)::Nil, path )
+      saveXML( Tuple2("euclid-" + n + "-sk", proof_sk) ::
+        projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Tuple2("cs", cs)::Tuple2("prf",prf)::Tuple2("cs_prf_intersection", prf_cs_intersect)::Nil, path )
       (new java.io.File( path ) ).exists() must beEqualTo( true )
     }
 

@@ -26,9 +26,9 @@ import at.logic.calculi.lk.base.FSequent
 import scala.Predef._
 
 class ProofDatabase(val Definitions: Map[HOLExpression,HOLExpression],
-                    val proofs: List[Pair[String,LKProof]],
+                    val proofs: List[Tuple2[String,LKProof]],
                     val axioms: List[FSequent],
-                    val sequentLists: List[Pair[String,List[FSequent]]] ) {
+                    val sequentLists: List[Tuple2[String,List[FSequent]]] ) {
   //Does a proof lookup by name
   def proof(name:String) : LKProof = {
     val ps = proofs.filter(_._1 == name)

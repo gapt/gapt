@@ -212,11 +212,10 @@ object loadProver9LKProof {
       //if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
       //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
 
-      val fclauses: Set[FClause] = proof.nodes.map(_ match {
-        case InitialClause(clause) => clause.toFClause;
+      val fclauses: Set[FClause] = proof.nodes.map {
+        case InitialClause(clause: Clause) => clause.toFClause;
         case _ => FClause(Nil, Nil)
-      }
-      ).filter((x: FClause) => x match {
+      }.filter((x: FClause) => x match {
         case FClause(Nil, Nil) => false;
         case _ => true
       })
@@ -621,7 +620,7 @@ object help {
         |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
         |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
         |   loadLLK : String => LKProof - load a proof in the LLK format from given filename
-        |   loadSLK: String => Map[String, Pair[LKProof, LKProof]] - loads an SLK file
+        |   loadSLK: String => Map[String, Tuple2[LKProof, LKProof]] - loads an SLK file
         |   loadVeriTProof : String => ExpansionSequent - loads a veriT proof in the form of an expansion proof.
         |   exportXML: List[Proof], List[String], String => Unit
         |   exportTPTP: List[Proof], List[String], String => Unit
@@ -975,7 +974,7 @@ object parse {
     println("hlkexp: String => HOLExpression")
     println("hlkformula: String => HOLFormula")
     println("hol: String => HOLExpression")
-    println("slk: String => Map[String, Pair[LKProof, LKProof]]")
+    println("slk: String => Map[String, Tuple2[LKProof, LKProof]]")
   }
 }
 
