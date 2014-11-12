@@ -92,14 +92,12 @@ class MiniSATTest extends SpecificationWithJUnit {
     }
     
     "deal correctly with the pigeonhole problem" in {
-      (new MiniSAT).isValid(PigeonHolePrinciple(2,2)) must beFalse
-      (new MiniSAT).isValid(PigeonHolePrinciple(3,3)) must beFalse
-      (new MiniSAT).isValid(PigeonHolePrinciple(4,4)) must beFalse
-      
-      (new MiniSAT).isValid(PigeonHolePrinciple(2,1)) must beTrue
-      (new MiniSAT).isValid(PigeonHolePrinciple(3,2)) must beTrue
-      (new MiniSAT).isValid(PigeonHolePrinciple(4,3)) must beTrue
-      (new MiniSAT).isValid(PigeonHolePrinciple(4,1)) must beTrue
+      val fparams = List((2,2),(3,3),(4,4))
+      val tparams = List((2,1),(3,2),(4,3),(4,1))
+      def problem(pair: (Int,Int)) = (new MiniSAT).isValid(PigeonHolePrinciple(pair._1,pair._2))
+
+      fparams.map(problem) must_== fparams.map(x => false)
+      tparams.map(problem) must_== tparams.map(x => true)
     }
   }
 }
