@@ -53,7 +53,7 @@ object Axiom {
     *   sL |- sR
     * </pre>
     *
-    * @param s1 The sequent of the axiom.
+    * @param seq The sequent of the axiom.
     * @return The LKProof consisting of s1 as its axiom.
   */
   def apply(seq: Sequent) : LeafTree[Sequent] with NullaryLKProof = {
@@ -139,20 +139,21 @@ object WeakeningLeftRule {
     else None
 }
 
-/** <pre>Introduces a formula into the succedent of a sequent.
-  *
-  * The rule: 
-  *  (rest of s1)
-  *   sL |- sR
-  * ------------- (WeakeningRight)
-  *  sL |- sR, f
-  * </pre>
-  *
-  * @param s1 The top proof with (sL |- sR) as the bottommost sequent.
-  * @param f The formula to introduce below s1.
-  * @return An LKProof ending with the new inference.
-  */ 
+
 object WeakeningRightRule {
+  /** <pre>Introduces a formula into the succedent of a sequent.
+    *
+    * The rule:
+    *  (rest of s1)
+    *   sL |- sR
+    * ------------- (WeakeningRight)
+    *  sL |- sR, f
+    * </pre>
+    *
+    * @param s1 The top proof with (sL |- sR) as the bottommost sequent.
+    * @param f The formula to introduce below s1.
+    * @return An LKProof ending with the new inference.
+    */
   def apply(s1: LKProof, f: HOLFormula) (implicit factory: FOFactory) = {
     val prinFormula = getPrinFormula(f)
     val sequent = getSequent(s1.root, prinFormula)
@@ -558,14 +559,14 @@ object AndRightRule {
     * (rest of s1)       (rest of s2)
     * sL |- sR, A        tL |- tR, B
     * ------------------------------ (AndRight)
-    *    sL, tL |- sR, tR, A ^ B
+    *    sL, tL |- sR, tR, A ∧ B
     * </pre>
     * 
     * @param s1 The left proof with A in the succedent of its bottommost sequent.
     * @param s2 The right proof with B in the succedent of its bottommost sequent.
     * @param term1oc The occurrence of A in s1.
     * @param term2oc The occurrence of B in s2.
-    * @return An LK proof with s1 & s2 as its two subtrees and (sL, tL |- sR, tR, A ^ B) as its bottommost sequent.
+    * @return An LK proof with s1 & s2 as its two subtrees and (sL, tL |- sR, tR, A ∧ B) as its bottommost sequent.
     */ 
   def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val (term1, term2) = getTerms(s1.root, s2.root, term1oc, term2oc)
@@ -587,14 +588,14 @@ object AndRightRule {
       *
       * Let s1 be the sequent (sL |- sR, A).
       * let s2 be the sequent (tL |- tR, B).
-      * The function returns (sL, tL |- sR, tR, A ^ B).
+      * The function returns (sL, tL |- sR, tR, A ∧ B).
       * </pre>
       * 
       * @param s1 The left sequent.
       * @param s2 The right sequent.
       * @param term1oc The occurrence of A in s1.
       * @param term2oc The occurrence of B in s2.
-      * @return The sequent (sL, tL |- sR, tR, A ^ B).
+      * @return The sequent (sL, tL |- sR, tR, A ∧ B).
       */ 
     def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
       val (term1, term2) = getTerms(s1, s2, term1oc, term2oc)
@@ -613,14 +614,14 @@ object AndRightRule {
       * (rest of s1)             (rest of s2)
       * sL |- sR, term1        tL |- tR, term2
       * -------------------------------------- (AndRight)
-      *    sL, tL |- sR, tR, term1 ^ term2
+      *    sL, tL |- sR, tR, term1 ∧ term2
       * </pre>
       * 
       * @param s1 The left proof with A in the succedent of its bottommost sequent.
       * @param s2 The right proof with B in the succedent of its bottommost sequent.
       * @param term1 The left part of the conjunction in s1.
       * @param term2 The right part of the conjunction in s2.
-      * @return An LK proof with s1 & s2 as its two subtrees and (sL, tL |- sR, tR, term1 ^ term2) as its bottommost sequent.
+      * @return An LK proof with s1 & s2 as its two subtrees and (sL, tL |- sR, tR, term1 ∧ term2) as its bottommost sequent.
       */ 
     def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryLKProof with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
       ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
@@ -679,13 +680,13 @@ object AndLeft1Rule {
   def computeAux( main: HOLFormula ) = main match { case And(l, _) => l }
 
   /** <pre>Replaces a formula F (marked by term1oc) with the conjunction
-    * F ^ term2 in the antecedent of a sequent. 
+    * F ∧ term2 in the antecedent of a sequent.
     * 
     * The rule: 
     *     (rest of s1)
     *     sL, F |- sR
     * ------------------- (AndLeft1)
-    * sL, F ^ term2 |- sR
+    * sL, F ∧ term2 |- sR
     * </pre>
     * 
     * @param s1 The top proof with (sL, F |- sR) as the bottommost sequent.
@@ -708,13 +709,13 @@ object AndLeft1Rule {
   }
 
   /** Replaces a formula F (marked by term1oc) with the conjunction
-    * F ^ term2 in the antecedent of a sequent. This function merely
+    * F ∧ term2 in the antecedent of a sequent. This function merely
     * returns a sequent, not a proof.
     * 
     * @param s1 The sequent (sL, F |- sR).
     * @param term1oc The occurrence of F in the antecedent of s1
     * @param term2 The new term to add.
-    * @return The sequent (sL, F ^ term2 |- sR).
+    * @return The sequent (sL, F ∧ term2 |- sR).
     */
   def apply(s1: Sequent, term1oc: FormulaOccurrence, term2: HOLFormula) = {
     val term1 = getTerms(s1, term1oc)
@@ -723,14 +724,14 @@ object AndLeft1Rule {
   }
 
   /** <pre>Replaces a formula term1 with the conjunction
-    * term1 ^ term2 in the antecedent of a sequent.
+    * term1 ∧ term2 in the antecedent of a sequent.
     * If term1 occurs more than once, only one occurrence is replaced.
     * 
     * The rule: 
     *     (rest of s1)
     *   sL, term1 |- sR
     * ----------------------- (AndLeft1)
-    * sL, term1 ^ term2 |- sR
+    * sL, term1 ∧ term2 |- sR
     * </pre>
     * 
     * @param s1 The top proof with (sL, term1 |- sR) as the bottommost sequent.
@@ -782,13 +783,13 @@ object AndLeft2Rule {
   def computeAux( main: HOLFormula ) = main match { case And(_, r) => r }
 
   /** <pre>Replaces a formula F (marked by term2oc) with the conjunction
-    * term1 ^ F in the antecedent of a sequent. 
+    * term1 ∧ F in the antecedent of a sequent.
     * 
     * The rule: 
     *     (rest of s1)
     *     sL, F |- sR
     * ------------------- (AndLeft2)
-    * sL, term1 ^ F |- sR
+    * sL, term1 ∧ F |- sR
     * </pre>
     * 
     * @param s1 The top proof with (sL, F |- sR) as the bottommost sequent.
@@ -811,13 +812,13 @@ object AndLeft2Rule {
   }
 
   /** Replaces a formula F (marked by term2oc) with the conjunction
-    * term1 ^ F in the antecedent of a sequent. This function merely
+    * term1 ∧ F in the antecedent of a sequent. This function merely
     * returns a sequent, not a proof.
     * 
     * @param s1 The sequent (sL, F |- sR).
     * @param term1 The new term to add.
     * @param term2oc The occurrence of F in the antecedent of s1
-    * @return The sequent (sL, F ^ term2 |- sR).
+    * @return The sequent (sL, F ∧ term2 |- sR).
     */
   def apply(s1: Sequent, term1: HOLFormula, term2oc: FormulaOccurrence) = {
     val term2 = getTerms(s1, term2oc)
@@ -826,14 +827,14 @@ object AndLeft2Rule {
   }
 
   /** <pre>Replaces a formula term2 with the conjunction
-    * term1 ^ term2 in the antecedent of a sequent.
+    * term1 ∧ term2 in the antecedent of a sequent.
     * If term1 occurs more than once, only one occurrence is replaced.
     * 
     * The rule: 
     *     (rest of s1)
     *   sL, term2 |- sR
     * ----------------------- (AndLeft2)
-    * sL, term1 ^ term2 |- sR
+    * sL, term1 ∧ term2 |- sR
     * </pre>
     * 
     * @param s1 The top proof with (sL, term2 |- sR) as the bottommost sequent.
@@ -1299,8 +1300,8 @@ object ImpLeftRule {
     * 
     * @param s1 The left proof with A in the succedent of its bottommost sequent.
     * @param s2: The right proof with B in the antecedent of its bottommost sequent.
-    * @param term The formula in s1.
-    * @param term The formula in s2.
+    * @param term1 The formula in s1.
+    * @param term2 The formula in s2.
     * @return An LK proof with s1 & s2 as its two subtrees and (sL, tL, term1 -> term2 |- sR, tR) as its bottommost sequent.
     */ 
   def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
@@ -1630,7 +1631,7 @@ object NegRightRule {
     * </pre>
     * 
     * @param s1 The top proof with (sL, term1 |- sR) as the bottommost sequent.
-    * @param term1 The formula to negate.
+    * @param term1oc The formula to negate.
     * @return An LK Proof ending with the new inference.
     */ 
   private def getTerms(s1: Sequent, term1oc: FormulaOccurrence) = {

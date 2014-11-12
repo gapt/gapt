@@ -201,11 +201,11 @@ class LKRuleCreationException(msg: String) extends LKRuleException(msg)
 //these two classes allow detailed error diagnosis
 case class LKUnaryRuleCreationException(name: String, parent: LKProof, aux : List[HOLFormula])
   extends LKRuleCreationException("") {
-  override def getMessage() = "Could not create lk rule "+name+" from parent "+parent.root+" with auxiliary formulas "+aux.mkString(", ")
+  override def getMessage = "Could not create lk rule "+name+" from parent "+parent.root+" with auxiliary formulas "+aux.mkString(", ")
 }
 case class LKBinaryRuleCreationException(name: String, parent1: LKProof, aux1 : HOLFormula,  parent2: LKProof, aux2 : HOLFormula)
   extends LKRuleCreationException("") {
-  override def getMessage() = "Could not create lk rule "+name+" from left parent "+parent1.root+" with auxiliary formula "+aux1+
+  override def getMessage = "Could not create lk rule "+name+" from left parent "+parent1.root+" with auxiliary formula "+aux1+
     " and right parent "+parent2.root+" with auxiliary formula "+aux2
 }
 
@@ -213,7 +213,7 @@ class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
 trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {
   def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-    (root.antecedent ++ root.succedent).filter(x => x.ancestors.find(y => y == fo) != None) match {
+    (root.antecedent ++ root.succedent).filter(x => x.ancestors.contains(fo)) match {
       case x::Nil => Some(x)
       case Nil => None
       case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
@@ -242,6 +242,10 @@ trait SubstitutionTerm {
 }
 trait Eigenvariable {
   def eigenvar: HOLVar
+}
+
+trait TermPositions {
+  def termPos: List[HOLPosition]
 }
 
 // method for creating the context of the lower sequent. Essentially creating nre occurrences

@@ -7,31 +7,32 @@ package at.logic.language.hol
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.{LambdaExpression, FactoryA}
+import at.logic.language.hol.HOLPosition._
 
 import scala.collection.mutable
 
 trait HOLExpression extends LambdaExpression {
 
   // Factory for App, Abs and Var
-  override def factory : FactoryA = HOLFactory
-  
+  override def factory: FactoryA = HOLFactory
+
   // How many toString methods does one need??
   override def toString = this match {
-    case HOLVar(x,tpe) => x.toString + ":" + tpe.toString
-    case HOLConst(x,tpe) => x.toString + ":" + tpe.toString
+    case HOLVar(x, tpe) => x.toString + ":" + tpe.toString
+    case HOLConst(x, tpe) => x.toString + ":" + tpe.toString
     case Atom(x, args) => x + "(" +
-      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
-      else args.foldLeft("")((s,a) => s+a.toString)) + "): o"
+      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s, a) => s + ", " + a.toString)
+      else args.foldLeft("")((s, a) => s + a.toString)) + "): o"
     case Function(x, args, tpe) => x + "(" +
-      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toString)
-      else args.foldLeft("")((s,a) => s+a.toString)) + "):" + tpe.toString
-    case And(x,y) => "(" + x.toString + AndSymbol + y.toString + ")"
-    case Equation(x,y) => "(" + x.toString + EqSymbol + y.toString + ")"
-    case Or(x,y) => "(" + x.toString + OrSymbol + y.toString + ")"
-    case Imp(x,y) => "(" + x.toString + ImpSymbol + y.toString + ")"
+      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s, a) => s + ", " + a.toString)
+      else args.foldLeft("")((s, a) => s + a.toString)) + "):" + tpe.toString
+    case And(x, y) => "(" + x.toString + AndSymbol + y.toString + ")"
+    case Equation(x, y) => "(" + x.toString + EqSymbol + y.toString + ")"
+    case Or(x, y) => "(" + x.toString + OrSymbol + y.toString + ")"
+    case Imp(x, y) => "(" + x.toString + ImpSymbol + y.toString + ")"
     case Neg(x) => NegSymbol + x.toString
-    case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toString
-    case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toString
+    case ExVar(x, f) => ExistsSymbol + x.toString + "." + f.toString
+    case AllVar(x, f) => ForallSymbol + x.toString + "." + f.toString
     case HOLAbs(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
     case HOLApp(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     case _ => throw new Exception("Unrecognized symbol.")
@@ -39,25 +40,25 @@ trait HOLExpression extends LambdaExpression {
 
   //outer pretty printing, has no parenthesis around
   //TODO: introduce binding priorities and skip more parens
-  def toPrettyString : String = this match {
-    case HOLVar(x,tpe) => x.toString
-    case HOLConst(x,tpe) => x.toString
-    case Atom(c: HOLConst, List(left,right)) if c.sym == EqSymbol =>
-      left.toPrettyString_ + " "+ EqSymbol + " " + right.toPrettyString_
+  def toPrettyString: String = this match {
+    case HOLVar(x, tpe) => x.toString
+    case HOLConst(x, tpe) => x.toString
+    case Atom(c: HOLConst, List(left, right)) if c.sym == EqSymbol =>
+      left.toPrettyString_ + " " + EqSymbol + " " + right.toPrettyString_
     case Atom(x, args) =>
       x + "(" +
-      (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
-      else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
+        (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s, a) => s + ", " + a.toPrettyString_)
+        else args.foldLeft("")((s, a) => s + a.toPrettyString_)) + ")"
     case Function(x, args, tpe) => x + "(" +
-      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
-      else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
-    case And(x,y) => x.toPrettyString_ + AndSymbol + y.toPrettyString_
-    case Equation(x,y) => x.toPrettyString_ + EqSymbol + y.toPrettyString_
-    case Or(x,y) => x.toPrettyString_ + OrSymbol + y.toPrettyString_
-    case Imp(x,y) => x.toPrettyString_ + ImpSymbol + y.toPrettyString_
+      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s, a) => s + ", " + a.toPrettyString_)
+      else args.foldLeft("")((s, a) => s + a.toPrettyString_)) + ")"
+    case And(x, y) => x.toPrettyString_ + AndSymbol + y.toPrettyString_
+    case Equation(x, y) => x.toPrettyString_ + EqSymbol + y.toPrettyString_
+    case Or(x, y) => x.toPrettyString_ + OrSymbol + y.toPrettyString_
+    case Imp(x, y) => x.toPrettyString_ + ImpSymbol + y.toPrettyString_
     case Neg(x) => NegSymbol + x.toPrettyString_
-    case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
-    case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
+    case ExVar(x, f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
+    case AllVar(x, f) => ForallSymbol + x.toString + "." + f.toPrettyString_
     case HOLAbs(v, exp) => "λ" + v.toString + "." + exp.toString
     case HOLApp(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     case _ => throw new Exception("Unrecognized symbol.")
@@ -65,29 +66,95 @@ trait HOLExpression extends LambdaExpression {
 
   //inner pretty printing, has parenthesis around
   def toPrettyString_ : String = this match {
-    case HOLVar(x,tpe) => x.toString
-    case HOLConst(x,tpe) => x.toString
-    case Atom(c: HOLConst, List(left,right)) if c.sym == EqSymbol =>
+    case HOLVar(x, tpe) => x.toString
+    case HOLConst(x, tpe) => x.toString
+    case Atom(c: HOLConst, List(left, right)) if c.sym == EqSymbol =>
       left.toPrettyString_ + " = " + right.toPrettyString_
     case Atom(x, args) => x + "(" +
-      (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
-      else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
+      (if (args.size > 1) args.head.toPrettyString_ + args.tail.foldLeft("")((s, a) => s + ", " + a.toPrettyString_)
+      else args.foldLeft("")((s, a) => s + a.toPrettyString_)) + ")"
     case Function(x, args, tpe) => x + "(" +
-      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s,a) => s+", "+a.toPrettyString_)
-      else args.foldLeft("")((s,a) => s+a.toPrettyString_)) + ")"
-    case And(x,y) => "(" + x.toPrettyString_ + AndSymbol + y.toPrettyString_ + ")"
-    case Equation(x,y) => "(" + x.toPrettyString_ + EqSymbol + y.toPrettyString_ + ")"
-    case Or(x,y) => "(" + x.toPrettyString_ + OrSymbol + y.toPrettyString_ + ")"
-    case Imp(x,y) => "(" + x.toPrettyString_ + ImpSymbol + y.toPrettyString_ + ")"
+      (if (args.size > 1) args.head.toString + args.tail.foldLeft("")((s, a) => s + ", " + a.toPrettyString_)
+      else args.foldLeft("")((s, a) => s + a.toPrettyString_)) + ")"
+    case And(x, y) => "(" + x.toPrettyString_ + AndSymbol + y.toPrettyString_ + ")"
+    case Equation(x, y) => "(" + x.toPrettyString_ + EqSymbol + y.toPrettyString_ + ")"
+    case Or(x, y) => "(" + x.toPrettyString_ + OrSymbol + y.toPrettyString_ + ")"
+    case Imp(x, y) => "(" + x.toPrettyString_ + ImpSymbol + y.toPrettyString_ + ")"
     case Neg(x) => NegSymbol + x.toPrettyString_
-    case ExVar(x,f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
-    case AllVar(x,f) => ForallSymbol + x.toString + "." + f.toPrettyString_
+    case ExVar(x, f) => ExistsSymbol + x.toString + "." + f.toPrettyString_
+    case AllVar(x, f) => ForallSymbol + x.toString + "." + f.toPrettyString_
     case HOLAbs(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
     case HOLApp(l, r) => "(" + l.toString + ")" + "(" + r.toString + ")"
     case _ => throw new Exception("Unrecognized symbol.")
   }
-}
 
+  /** Retrieves this expression's subexpression at a given position.
+    *
+    * @param pos The position to be retrieved.
+    * @return The subexpression at pos.
+    */
+  def apply(pos: HOLPosition): HOLExpression =
+    if (pos.isEmpty)
+      this
+    else {
+      val rest = pos.tail
+      (pos.head, this) match {
+        case (1, HOLApp(HOLApp(_,left),_)) => left(rest)
+        case (2, HOLApp(HOLApp(_,_),right)) => right(rest)
+        case (n, Atom(_, args)) if args.length >= n => args(n - 1)(rest)
+        case (n, Function(_, args,_)) if args.length >= n => args(n - 1)(rest)
+        case _ => throw new IllegalArgumentException("Position (" + pos + ") does not exist in the expression (" + this + ")")
+      }
+    }
+
+  /** Retrieves this expression's subexpression at a given position, if there is one.
+    *
+    * @param pos The position to be retrieved.
+    * @return If there is a subexpression at that position, return that expression wrapped in Some. Otherwise None.
+    */
+  def get(pos: HOLPosition): Option[HOLExpression] =
+    if (pos.isEmpty)
+      Some(this)
+    else {
+      val rest = pos.tail
+      (pos.head, this) match {
+        case (1, HOLApp(HOLApp(_,left),_)) => left get rest
+        case (2, HOLApp(HOLApp(_,_),right)) => right get rest
+        case (n, Atom(_, args)) if args.length >= n => args(n - 1) get rest
+        case (n, Function(_, args,_)) if args.length >= n => args(n - 1) get rest
+        case _ => None
+      }
+    }
+
+  /** Tests whether this expression has a subexpression at a given position.
+    *
+    * @param pos The position to be tested.
+    * @return Whether this(pos) is defined.
+    */
+  def definedAt(pos: HOLPosition): Boolean =
+    if (pos.isEmpty)
+      true
+    else {
+      val rest = pos.tail
+      (pos.head, this) match {
+        case (1, HOLApp(HOLApp(_,left),_)) => left definedAt rest
+        case (2, HOLApp(HOLApp(_,_),right)) => right definedAt  rest
+        case (n, Atom(_, args)) if args.length >= n => args(n - 1) definedAt rest
+        case (n, Function(_, args, _)) if args.length >= n =>  args(n - 1) definedAt rest
+        case _ => false
+      }
+    }
+
+  /** Finds all positions of a subexpression in this expression.
+   *
+   * @param exp The expression to be found.
+   * @return A list containing all positions of the search expression.
+   */
+  def find(exp: HOLExpression): List[HOLPosition] = getSomePositions(this, _ == exp)
+
+
+
+}
 // Should this be here?
 trait Formula extends LambdaExpression {require(exptype == To)}
 
@@ -297,5 +364,3 @@ object AllVar {
     case _ => None
   }
 }
-
-

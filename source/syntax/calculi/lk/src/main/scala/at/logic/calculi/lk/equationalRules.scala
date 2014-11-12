@@ -11,7 +11,6 @@ import at.logic.language.hol._
 import at.logic.utils.ds.trees._
 import base._
 import at.logic.language.lambda.{ rename => renameLambda, freeVariables => freeVariablesLambda, Substitution => SubstitutionLambda, _}
-import scala.Some
 
 
 // Equational rules
@@ -23,10 +22,10 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
   //TODO: perhaps there is a better place for this
   object EquationVerifier {
     //results
-    abstract class ReplacementResult;
-    case object Equal extends ReplacementResult;
-    case object Different extends ReplacementResult;
-    case class EqualModuloEquality(path : List[Int]) extends ReplacementResult;
+    abstract class ReplacementResult
+    case object Equal extends ReplacementResult
+    case object Different extends ReplacementResult
+    case class EqualModuloEquality(path : List[Int]) extends ReplacementResult
 
     def apply(s : HOLExpression, t : HOLExpression, e1 : HOLExpression, e2 : HOLExpression) = checkReplacement(s,t,e1,e2)
     //this is a convenience method, apart from that everything is general
@@ -48,7 +47,7 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     def checkReplacement(s : LambdaExpression, t : LambdaExpression, e1 : LambdaExpression, e2 : LambdaExpression) : ReplacementResult = {
       //println("matching "+e1+" against "+e2+" for "+s+" -> "+t)
       (e1,e2) match {
-        case _ if (e1 == e2) => Equal
+        case _ if e1 == e2 => Equal
         case _ if (e1 == s) && (e2 == t) => EqualModuloEquality(Nil)
         case (Var(_,_), Var(_,_)) => Different
         case (Const(_,_), Const(_,_)) => Different
@@ -82,12 +81,12 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
       * 
       * The rule: 
       * (rest of s1)       (rest of s2)
-      * sL |- a=b, sR    tr, A[T1/a] |- tR
+      * sL |- a=b, sR    tL, A[T1/a] |- tR
       * ------------------------------------ (EqLeft1)
       *      sL, A[T1/b], tL |- sR, tR
       * </pre>
       * 
-      * @param s1 The left proof with the equarion a=b in the succedent in its bottommost sequent.
+      * @param s1 The left proof with the equation a=b in the succedent in its bottommost sequent.
       * @param s2 The right proof with a formula A[T1/a] in the antecedent of its bottommost sequent,
       *        in which some term T1 has been replaced by the term a. Note that identical terms to
       *        T1 may occur elsewhere in A. These will not be changed.
@@ -118,6 +117,51 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
         def prin = prinFormula :: Nil
 
         override def name = "e:l1"
+      }
+    }
+
+    def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition) = {
+      val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
+      val eq = eqocc.formula
+
+      eq match {
+        case Equation(s,t) =>
+          val aux = auxocc.formula
+          val term = aux.get(pos)
+
+          term match {
+            case Some(`s`) =>
+              val prin = aux //TODO: Dummy code. Actual replacement code should be here.
+              val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+              val ant1 = createContext(s1.root.antecedent)
+              val ant2 = createContext(s2.root.antecedent.filterNot(_ == auxocc))
+              val antecedent = ant1 ++ ant2 :+ prinOcc
+              val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
+              val suc2 = createContext(s2.root.succedent)
+              val succedent = suc1 ++ suc2
+
+              new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+                with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+                def rule = EquationLeft1RuleType
+
+                def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+
+                def prin = prinOcc :: Nil
+                
+                def termPos = List(pos)
+
+                override def name = "e:l1"
+              }
+
+            case Some(x) =>
+              throw new Exception("Wrong term in auxiliary formula "+aux+" at position "+pos+".")
+
+            case None =>
+              throw new Exception("Position "+pos+" is not well-defined for formula "+aux+".")
+          }
+
+        case _ =>
+          throw new Exception("Formula occurrence "+eqocc+" is not an equation.")
       }
     }
 
@@ -186,7 +230,7 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     * @return An LK Proof ending with the new inference.
     */ 
   def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-    ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
+    (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.antecedent.filter(x => x.formula == term2).toList) match {
       case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
       case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
     }
@@ -272,11 +316,10 @@ object EquationLeft2Rule {
     *      sL, A[T1/a], tL |- sR, tR
     * </pre>
     */
-  def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-    ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.antecedent.filter(x => x.formula == term2)).toList) match {
-      case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-    }
+  def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+    (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.antecedent.filter(x => x.formula == term2).toList) match {
+    case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+    case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
   }
 
   private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
@@ -409,11 +452,10 @@ object EquationRight1Rule {
     * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
     * @return An LK Proof ending with the new inference.
     */ 
-  def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-    ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
-      case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-    }
+  def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+    (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.succedent.filter(x => x.formula == term2).toList) match {
+    case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+    case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
   }
 
   private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
@@ -497,11 +539,10 @@ object EquationRight2Rule {
     *      sL, tL |- sR, tR, A[T1/a]
     * </pre>
     */
-  def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
-    ((s1.root.succedent.filter(x => x.formula == term1)).toList,(s2.root.succedent.filter(x => x.formula == term2)).toList) match {
-      case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-    }
+  def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+    (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.succedent.filter(x => x.formula == term2).toList) match {
+    case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
+    case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
   }
 
   private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
