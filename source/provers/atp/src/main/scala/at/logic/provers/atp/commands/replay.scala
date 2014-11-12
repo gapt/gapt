@@ -81,7 +81,7 @@ case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent)
         ),
         SimpleForwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
         SimpleBackwardSubsumptionCommand[Clause](StillmanSubsumptionAlgorithmFOL),
-        PrintStateCommand,
+//        PrintStateCommand,
         InsertResolventCommand[Clause]),
       RefutationReachedCommand[Clause]), stream1)
       //RefutationReachedCommand is replaced by SubsumedTargedReachedCommand

@@ -10,12 +10,12 @@ at.logic.language.fol.instantiate
                      .toCNF (which CNF-computation?, relationship to CNFp, CNFn?)
 done: at.logic.language.hol.replacements._
 done: at.logic.language.fol.replacements._
-at.logic.algorithms.lk.addWeakeningandContraction
-                      .addWeakenings
-                      .addContractions
-                      .getCutsAsProofs
+done: at.logic.algorithms.lk.addWeakeningandContraction
+done:                      .addWeakenings
+done:                      .addContractions
+done:                      .getCutsAsProofs
                       .map_proof
-                      .rule_isomorphic
+done:                      .rule_isomorphic
                       .factoring
 at.logic.algorithms.unification._
 at.logic.calculi.lk.LKQuantifierException

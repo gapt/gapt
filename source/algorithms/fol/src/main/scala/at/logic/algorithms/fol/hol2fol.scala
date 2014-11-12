@@ -15,44 +15,109 @@ import scala.collection.mutable
 
 object reduceHolToFol extends reduceHolToFol
 /**
- * Try to reduce high order terms to first order terms by changing the types if possible. Closed lambda expression are
- * replaced by constants. Open lambda expressions are changed by functions.
+ * Creates a FOL formula from a HOL formula, but applies transformations which do _not_ preserve validity!
+ * Transformations applied:
+ *
+ *  - Replace all subterms (\x.t) by a constant. The scope parameter is needed to pass existing term-constant mappings.
+ *  - Change the type of constants and variables s.t. they are first order (i.e. HOLConst("c", To->Ti) is mapped to FOLConst("c",Ti)
+ *  - Logical operators inside the term structure are replaced by first order terms
+ *
+ * @note Make sure you need all of these tricks. If you have a HOL formula which actually is a FOL formula, use
+ *       [[convertHolToFol]]. To replace abstraction subterms, use [[replaceAbstractions]]. Both have clear and easily
+ *       revertible semantics.
+ *
  */
 class reduceHolToFol {
+
   private def folexp2term(exp:FOLExpression) = exp match {
     case e:FOLTerm => exp.asInstanceOf[FOLTerm]
     case _ => throw new Exception("Cannot cast "+exp+" to a fol term!"+exp.getClass)
   }
 
-  //TODO: replace mutable maps by immutable ones to allow parallelism. Need to check the calls for sideffects on the maps
-  private[hol2fol] def apply(formula: HOLFormula, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FOLFormula = {
-    val immscope = Map[HOLExpression, StringSymbol]() ++ scope
-    val (scope_, qterm) = replaceAbstractions(formula, immscope, id)
-    scope ++= scope_
-    apply_( qterm).asInstanceOf[FOLFormula]
-  }
 
-  // convienience method creating empty scope and default id
+  /**
+   * Convenience method when only a single expression is converted. Multiple expressions need to pass a scope which
+   * holds the replacements which happened so far.
+   * @param term a HOL expression to convert
+   * @return the reduced FOL expression
+   */
   def apply(term: HOLExpression) : FOLExpression = {
     val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-    val emptymap = mutable.Map[HOLExpression, StringSymbol]()
-    apply( term, emptymap, counter )
+    val emptymap = Map[HOLExpression, StringSymbol]()
+    apply( term, emptymap, counter )._1
   }
 
+  /**
+   * Convenience method when only a single formula is converted. Multiple expressions need to pass a scope which
+   * holds the replacements which happened so far.
+   * @param formula a HOL formula to convert
+   * @return the reduced FOL formula
+   */
   def apply(formula: HOLFormula) : FOLFormula =
   //inner cast needed to call the correct apply method
     reduceHolToFol(formula.asInstanceOf[HOLExpression]).asInstanceOf[FOLFormula]
 
-  private[hol2fol] def apply(term: HOLExpression, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}) = {
-    val immscope = Map[HOLExpression, StringSymbol]() ++ scope
-    val (scope_, qterm) = replaceAbstractions(term, immscope, id)
-    scope ++= scope_
-    apply_( qterm)
+  /**
+   * Convenience method when only a single fsequent is converted. Multiple expressions need to pass a scope which
+   * holds the replacements which happened so far.
+   * @param fs an fsequent to convert
+   * @return the reduced fsequent
+   */
+  def apply(fs: FSequent) : FSequent = {
+    val counter = new {private var state = 0; def nextId = { state = state +1; state}}
+    val emptymap = Map[HOLExpression, StringSymbol]()
+    apply(fs, emptymap, counter)._1
   }
 
-  private def apply(s: FSequent, scope: mutable.Map[HOLExpression, StringSymbol], id: {def nextId: Int}): FSequent = {
-    val immscope = Map[HOLExpression, StringSymbol]() ++ scope
-    val (scope1, ant) = s.antecedent.foldLeft((immscope, List[HOLFormula]()))((r, formula) => {
+  /**
+   * Convenience method when a single  list of fsequents is converted. Multiple expressions need to pass a scope which
+   * holds the replacements which happened so far.
+   * @param fs an fsequent to convert
+   * @return the reduced fsequent
+   */
+  def apply(fs: List[FSequent]) : List[FSequent] = {
+    val counter = new {private var state = 0; def nextId = { state = state +1; state}}
+    val emptymap = Map[HOLExpression, StringSymbol]()
+    apply(fs, emptymap, counter)._1
+  }
+
+
+  /**
+   * Apply method for a formula when scope needs to passed on in a recursion.
+   * @param formula the formula to convert
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
+   *              sequents or lists of formulas.
+   * @param id an object with a function which nextId, which provides new numbers.
+   * @return a pair of the reduced formula and the updated scope
+   */
+  def apply(formula: HOLFormula, scope: Map[HOLExpression, StringSymbol], id: {def nextId: Int}): (FOLFormula, Map[HOLExpression,StringSymbol]) = {
+    val (scope_, qterm) = replaceAbstractions(formula, scope, id)
+    (apply_( qterm).asInstanceOf[FOLFormula], scope_)
+  }
+
+  /**
+   * Apply method for a an expression when scope needs to passed on in a recursion.
+   * @param term the expression to convert
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
+   *              sequents or lists of formulas.
+   * @param id an object with a function which nextId, which provides new numbers.
+   * @return a pair of the reduced expression and the updated scope
+   */
+  def apply(term: HOLExpression, scope: Map[HOLExpression, StringSymbol], id: {def nextId: Int}) = {
+    val (scope_, qterm) = replaceAbstractions(term, scope, id)
+    (apply_( qterm), scope_)
+  }
+
+  /**
+   * Apply method for a an FSequent when scope needs to passed on in a recursion.
+   * @param s the fsequent to convert
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
+   *              sequents or lists of formulas.
+   * @param id an object with a function which nextId, which provides new numbers.
+   * @return a pair of the reduced expression and the updated scope
+   */
+  def apply(s: FSequent, scope: Map[HOLExpression, StringSymbol], id: {def nextId: Int}): (FSequent, Map[HOLExpression,StringSymbol]) = {
+    val (scope1, ant) = s.antecedent.foldLeft((scope, List[HOLFormula]()))((r, formula) => {
       val (scope_, f_) = replaceAbstractions(formula, r._1, id)
       (scope_, f_.asInstanceOf[HOLFormula] :: r._2)
     })
@@ -60,9 +125,28 @@ class reduceHolToFol {
       val (scope_, f_) = replaceAbstractions(formula, r._1, id)
       (scope_, f_.asInstanceOf[HOLFormula] :: r._2)
     })
-    scope ++= scope2
-    FSequent( ant map apply_, succ map apply_  )
+
+    (FSequent( ant.reverse map apply_, succ.reverse map apply_  ), scope ++ scope2)
   }
+
+
+  /**
+   * Apply method for a an FSequent when scope needs to passed on in a recursion.
+   * @param fss the fsequent to convert
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
+   *              sequents or lists of formulas.
+   * @param id an object with a function which nextId, which provides new numbers.
+   * @return a pair of the reduced expression and the updated scope
+   */
+  def apply(fss: List[FSequent], scope: Map[HOLExpression, StringSymbol], id: {def nextId: Int}): (List[FSequent], Map[HOLExpression,StringSymbol]) = {
+    fss.foldRight((List[FSequent](), scope))((fs, pair) => {
+      val (list, scope) = pair
+      val (fs_, scope_) = apply(fs, scope, id)
+      (fs_ :: list, scope_)
+    })
+
+  }
+
 
   private def apply_(f:HOLFormula) : FOLFormula =
     apply_(f.asInstanceOf[HOLExpression]).asInstanceOf[FOLFormula]
@@ -94,13 +178,14 @@ class reduceHolToFol {
       //this case is added for schema
       case HOLApp(func,arg) => {
         func match {
-          case HOLVar(sym,_) => {
+          case HOLVar(sym,_) =>
             val new_arg = apply_(arg).asInstanceOf[FOLTerm]
             return Function(sym, new_arg::Nil)
-          }
-          case _ => println("\nWARNING: FO schema term!\n")
+
+          case _ =>
+            println("WARNING: FO schema term: "+term)
+            throw new Exception("Probably unrecognized object from schema!")
         }
-        throw new Exception("\nProbably unrecognized object from schema!\n")
       }
       case _ => throw new IllegalArgumentException("Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom") // for cases of higher order atoms and functions
     }
@@ -191,7 +276,7 @@ class replaceAbstractions {
     })
   }
 
-  private[hol2fol] def apply(f:FSequent, scope : ConstantsMap, id: {def nextId: Int}) : (ConstantsMap,FSequent) = {
+  def apply(f:FSequent, scope : ConstantsMap, id: {def nextId: Int}) : (ConstantsMap,FSequent) = {
     val (scope1, ant) = f.antecedent.foldLeft((scope,List[HOLFormula]()))((rec,formula) => {
       val (scope_, f) = rec
       val (nscope, nformula) = replaceAbstractions(formula, scope_, id)
@@ -221,16 +306,12 @@ class replaceAbstractions {
     apply(formula.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]
 
   // scope and id are used to give the same names for new functions and constants between different calls of this method
-  private[hol2fol] def apply(e : HOLExpression, scope : ConstantsMap, id: {def nextId: Int})
+  def apply(e : HOLExpression, scope : ConstantsMap, id: {def nextId: Int})
   : (ConstantsMap, HOLExpression) = e match {
     case HOLVar(_,_) =>
       (scope,e)
     case HOLConst(_,_) =>
       (scope,e)
-    case HOLApp(s,t) =>
-      val (scope1,s1) = replaceAbstractions(s, scope, id)
-      val (scope2,t1) = replaceAbstractions(t, scope1, id)
-      (scope2, HOLApp(s1,t1))
     //quantifiers should be kept
     case HOLAllVar(x,f) =>
       val (scope_, e_) = replaceAbstractions(f,scope,id)
@@ -238,6 +319,10 @@ class replaceAbstractions {
     case HOLExVar(x,f) =>
       val (scope_, e_) = replaceAbstractions(f,scope,id)
       (scope_, HOLExVar(x,e_.asInstanceOf[HOLFormula]))
+    case HOLApp(s,t) =>
+      val (scope1,s1) = replaceAbstractions(s, scope, id)
+      val (scope2,t1) = replaceAbstractions(t, scope1, id)
+      (scope2, HOLApp(s1,t1))
     // This case replaces an abstraction by a function term.
     // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant use the same symbol
     case HOLAbs(v, exp) =>
@@ -272,9 +357,14 @@ object undoReplaceAbstractions extends undoReplaceAbstractions
 class undoReplaceAbstractions {
   import replaceAbstractions.ConstantsMap
 
-  def apply(e : HOLExpression, map : ConstantsMap) = {
+  def apply(fs : FSequent, map : ConstantsMap) : FSequent = FSequent(
+                                                              fs.antecedent.map(apply(_,map)),
+                                                              fs.succedent.map(apply(_,map))
+                                                             )
+  def apply(f : HOLFormula, map : ConstantsMap) : HOLFormula = apply(f.asInstanceOf[HOLExpression], map).asInstanceOf[HOLFormula]
+  def apply(e : HOLExpression, map : ConstantsMap) : HOLExpression = {
     val stringsmap = map.map(x => (x._2.toString(), x._1)) //inverting the map works because the symbols are unique
-    val repl = getAllPositions2(e).foldLeft(e)( (exp, position) =>
+    getAllPositions2(e).foldLeft(e)( (exp, position) =>
         //we check if the position is a constant with an abstraction symbol
         position._2 match {
           case HOLConst(name,_) if stringsmap.contains(name) =>

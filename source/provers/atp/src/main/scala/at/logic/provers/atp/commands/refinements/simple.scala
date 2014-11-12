@@ -46,7 +46,7 @@ private[refinements] class SimpleRefinement[V <: Sequent](clauses: PublishingBuf
     pairs ++= clauses.map(a => (s, a))
   }
   protected def removeClause(s: ResolutionProof[V]) = {
-    pairs.filter(x => x._1.root == s || x._2.root == s).foreach(x => pairs -= x)
+    pairs.filter(x => (x._1.root syntacticMultisetEquals s.root) || (x._2.root syntacticMultisetEquals s.root)).foreach(x => pairs -= x)
   }
   def isEmpty: Boolean = pairs.isEmpty
 

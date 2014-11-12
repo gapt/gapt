@@ -1426,18 +1426,7 @@ object sequent {
   }
 }
 
-object hol2fol {
-
-  def apply(term: HOLExpression): FOLExpression =
-    reduceHolToFol(term)
-
-  def apply(term: HOLFormula): FOLFormula =
-    reduceHolToFol(term)
-
-  def apply(f: FSequent): FSequent =
-    FSequent(f.antecedent.map(hol2fol.apply), f.succedent.map(hol2fol.apply))
-
-}
+object hol2fol extends reduceHolToFol
 
 object replaceAbstractions extends replaceAbstractions
 

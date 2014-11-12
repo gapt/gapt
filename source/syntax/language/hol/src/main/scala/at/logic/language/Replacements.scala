@@ -78,16 +78,10 @@ object getAllPositions {
    * @param expression an arbitrary hol epxression
    * @return a list of pairs (position, subterm)
    */
-  def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
-  private def recApply(t: HOLExpression, curPos: List[Int]): List[Tuple2[List[Int], HOLExpression]] = t match {
-      case HOLVar(_,_) => Nil // no need to paramodulate on variable positions
-      case HOLConst(_,_) => (curPos, t)::Nil
-      case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
-      case AllVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
-      case Atom(_, args) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
-      case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
-      case HOLAbs(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
-    }
+  def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = getAllPositions2(expression) filter (_ match {
+    case HOLVar(_,_) => false
+    case _ => true
+  })
 }
 
  //TODO: Refactor this workaround, which is used for the trat grammar decomposition (Used in getAllPositionsFOL). It just handles the HOLVar differently than getAllPositions
@@ -102,13 +96,23 @@ object getAllPositions2 {
    */
   def apply(expression: HOLExpression): List[Tuple2[List[Int], HOLExpression]] = recApply(expression, List())
   private def recApply(t: HOLExpression, curPos: List[Int]): List[(List[Int], HOLExpression)] = t match {
-    case HOLVar(_,_) => (curPos, t)::Nil // TODO: difference
+    case HOLVar(_,_) => (curPos, t)::Nil
     case HOLConst(_,_) => (curPos, t)::Nil
-    case ExVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
+    case ExVar(_, exp)  => (curPos, t)::recApply(exp, curPos ::: List(1))
     case AllVar(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
-    case Atom(_, args) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
-    case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el => recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
+    case Atom(_, args) => (curPos, t)::args.zipWithIndex.flatMap(el =>
+                                        recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
+    case Function(_, args, _) => (curPos, t)::args.zipWithIndex.flatMap(el =>
+                                        recApply(el._1.asInstanceOf[HOLExpression], curPos ::: List(el._2+1)))
     case HOLAbs(_, exp) => (curPos, t)::recApply(exp, curPos ::: List(1))
+    case Neg(f) => (curPos, t)::recApply(f, curPos ::: List(1))
+    case Or(f,g)  => (curPos, t)::recApply(f, curPos ::: List(1)) ::: recApply(g, curPos ::: List(2))
+    case And(f,g) => (curPos, t)::recApply(f, curPos ::: List(1)) ::: recApply(g, curPos ::: List(2))
+    case Imp(f,g) => (curPos, t)::recApply(f, curPos ::: List(1)) ::: recApply(g, curPos ::: List(2))
+    case HOLApp(s,t) =>
+      throw new Exception("Application of "+s+" to "+ t + " is unhandled (no logical operator, no Atom, no Function)!")
+    case _ =>
+      throw new Exception("Case for "+t+" not handled!")
   }
 }
 

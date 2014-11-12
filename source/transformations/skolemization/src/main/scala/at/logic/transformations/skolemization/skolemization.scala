@@ -2,7 +2,7 @@ package at.logic.transformations.skolemization
 
 // This package implements formula and proof Skolemization.
 
-import at.logic.algorithms.fol.hol2fol._
+import at.logic.algorithms.fol.hol2fol.convertHolToFol
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.{HashMap,HashSet}
@@ -61,7 +61,7 @@ object skolemize extends Logger {
   def apply(f: FOLFormula, pol: Int) : FOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
 
   /* formula skolemization -- symbols provides the skolem symbols to introduce */
-  def apply(f: FOLFormula, pol: Int, symbols: Stream[SymbolA]) : FOLFormula = reduceHolToFol(skolemize( f, pol, symbols ))
+  def apply(f: FOLFormula, pol: Int, symbols: Stream[SymbolA]) : FOLFormula = convertHolToFol(skolemize( f, pol, symbols ))
   /*
 
   Idea of the algorithm: Going upwards in the prooftree, we remember the 

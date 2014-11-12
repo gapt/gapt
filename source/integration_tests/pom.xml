@@ -12,6 +12,7 @@
   <modules>
       <module>prime_proof_test</module>
     <module>tape_test</module>
+    <module>ntape_test</module>
     <module>misc_test</module>
     <module>cutintro_test</module>
     <module>lattice_test</module>

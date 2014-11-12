@@ -24,7 +24,7 @@ import at.logic.parsing.readers.StringReader
 
 @RunWith(classOf[JUnitRunner])
 class hol2folTest extends SpecificationWithJUnit {
-  def imap = mutable.Map[HOLExpression, StringSymbol]() // the scope for most tests is just the term itself
+  def imap = Map[HOLExpression, StringSymbol]() // the scope for most tests is just the term itself
   def iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
 
   private class MyParserHOL(input: String) extends StringReader(input) with SimpleHOLParser
@@ -64,21 +64,22 @@ class hol2folTest extends SpecificationWithJUnit {
       "Abstraction - f(Abs x:(i->i) A(x:(i->i), a:(o->i))):(o->o)" in {
         val holf = new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), a:(o->i))):(o->o)").getTerm()
         val folf = new MyParserFOL("f(q_{1})").getTerm()
-        reduceHolToFol(holf,imap,iid) must beEqualTo (folf)
+        reduceHolToFol(holf) must beEqualTo (folf)
       }
       "Abstraction - f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)" in {
-        val red = reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm(),imap,iid)
+        val red = reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm())
         val fol = (new MyParserFOL("f(q_{1}(y))").getTerm())
         red must beEqualTo (fol)
       }
 
       //TODO: check if this test case is really what we want
       "Two terms - f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o) and g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)" in {
-        val map = imap //create new map
         var id = iid // create new id function
-        (reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm(),map,id)::
-         reduceHolToFol(new MyParserHOL("g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)").getTerm(),map,id)::Nil) must beEqualTo(
-        new MyParserFOL("f(q_{1}(y))").getTerm()::new MyParserFOL("g(q_{1}(z))").getTerm()::Nil)
+        val (f1,scope1) = reduceHolToFol(new MyParserHOL("f(Abs x:(i->i) A(x:(i->i), y:(o->i))):(o->o)").getTerm(),imap,id)
+        val (f2,scope2) = reduceHolToFol(new MyParserHOL("g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)").getTerm(),scope1,id)
+
+        List(f1,f2) must beEqualTo(
+        List(new MyParserFOL("f(q_{1}(y))").getTerm(), new MyParserFOL("g(q_{1}(z))").getTerm()))
       }
 
       "Correctly convert from type o to i on the termlevel" in {

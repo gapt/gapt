@@ -11,14 +11,12 @@ import lisp.{SExpressionParser}
 
 /**
  * Test for the Ivy interface.
- * FIXME: all tests are skipped
  */
 @RunWith(classOf[JUnitRunner])
 class IvyToRobinsonTest extends SpecificationWithJUnit {
 
   "The Ivy Parser " should {
     " parse the test files factor.ivy and factor2.ivy " in {
-      skipped("file missing")
       try {
         val result = SExpressionParser("target" + separator + "test-classes" + separator +"factor.ivy")
         result must not beEmpty
@@ -54,7 +52,6 @@ class IvyToRobinsonTest extends SpecificationWithJUnit {
 
 
     " parse the test file manyliterals.ivy " in {
-      skipped("file missing")
       try {
         val result = SExpressionParser("target" + separator + "test-classes" + separator +"manyliterals.ivy")
         result must not beEmpty
@@ -113,7 +110,6 @@ class IvyToRobinsonTest extends SpecificationWithJUnit {
   }
 
   " parse the test file GRA014+1.ivy " in {
-    skipped("file missing")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"GRA014+1.ivy")
       result must not beEmpty
@@ -136,7 +132,6 @@ class IvyToRobinsonTest extends SpecificationWithJUnit {
   }
 
   " parse the test file GEO037-2.ivy " in {
-    skipped("file missing")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"GEO037-2.ivy")
       result must not beEmpty
@@ -159,7 +154,6 @@ class IvyToRobinsonTest extends SpecificationWithJUnit {
   }
 
   " parse the test file issue221.ivy " in {
-    skipped("file missing")
     try {
       val result = SExpressionParser("target" + separator + "test-classes" + separator +"issue221.ivy")
       result must not beEmpty

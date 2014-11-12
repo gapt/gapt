@@ -1,5 +1,6 @@
 package at.logic.transformations.ceres
 
+import at.logic.algorithms.lksk.applySubstitution
 import at.logic.calculi.lk._
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.language.hol.Equation
@@ -76,7 +77,7 @@ class ceres_omega {
 
       val rule = CutRule(cleft, cright, pickFOWithAncestor(cleft.root.succedent, c1), pickFOWithAncestor(cright.root.antecedent, c2))
       val crule = contractEndsequent(rule, es)
-      val nclauses = filterByAncestor(crule.root.asInstanceOf[LabelledSequent], clause1 compose clause2)
+      val nclauses = filterByAncestor(crule.root, clause1 compose clause2)
       (crule, nclauses)
 
     case AFactorF(root, parent, contr, aux, _) =>
@@ -84,7 +85,7 @@ class ceres_omega {
       val c1 = findAuxByFormulaAndLabel(contr, clause1.l_antecedent, Nil)
       val c2 = findAuxByFormulaAndLabel(contr, clause1.l_antecedent, c1::Nil)
       val rule = ContractionLeftRule(lkparent, c1, c2)
-      val nclauses = filterByAncestor(rule.root.asInstanceOf[LabelledSequent], clause1)
+      val nclauses = filterByAncestor(rule.root, clause1)
       (rule, nclauses)
 
     case AFactorT(root, parent, contr, aux, _) =>
@@ -92,7 +93,7 @@ class ceres_omega {
       val c1 = findAuxByFormulaAndLabel(contr, clause1.l_succedent, Nil)
       val c2 = findAuxByFormulaAndLabel(contr, clause1.l_succedent, c1::Nil)
       val rule = ContractionRightRule(lkparent, c1, c2)
-      val nclauses = filterByAncestor(rule.root.asInstanceOf[LabelledSequent], clause1)
+      val nclauses = filterByAncestor(rule.root, clause1)
       (rule, nclauses)
 
 
@@ -103,7 +104,7 @@ class ceres_omega {
       val modulant : FormulaOccurrence = findAuxByFormulaAndLabel(p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_antecedent, Nil)
       val rule = if (!flipped) EquationLeft1Rule(lkparent1, lkparent2, eqn, modulant, principial.formula) else EquationLeft2Rule(lkparent1, lkparent2, eqn, modulant, principial.formula)
       val crule = contractEndsequent(rule, es)
-      val nclauses = filterByAncestor(crule.root.asInstanceOf[LabelledSequent], clause1 compose clause2)
+      val nclauses = filterByAncestor(crule.root, clause1 compose clause2)
       (crule, nclauses)
 
     case ParaT(root, parent1, parent2, p1occ, p2occ, principial, flipped) =>
@@ -112,18 +113,31 @@ class ceres_omega {
       val eqn : FormulaOccurrence = findAuxByFormulaAndLabel(p1occ, clause1.l_succedent, Nil)
       val modulant : FormulaOccurrence = findAuxByFormulaAndLabel(p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_succedent, Nil)
       val rule = if (!flipped) EquationRight1Rule(lkparent1, lkparent2, eqn, modulant, principial.formula) else EquationRight2Rule(lkparent1, lkparent2, eqn, modulant, principial.formula)
-      val nclauses = filterByAncestor(rule.root.asInstanceOf[LabelledSequent], clause1 compose clause2)
+      val nclauses = filterByAncestor(rule.root, clause1 compose clause2)
       (rule, nclauses)
 
+    case Sub(root, parent, sub) =>
+      val (lkparent, clause1) = ceres_omega(projections, parent, es, struct)
+      val rule = applySubstitution(lkparent, sub)._1
+      val nclauses = filterByAncestor(rule.root, clause1)
+      (rule, nclauses)
 
     case _ => throw new Exception("Unhandled case: "+ralproof)
   }
 
 
-  def filterByAncestor(root:LabelledSequent, anc : LabelledSequent) : LabelledSequent = LabelledSequent(
-    root.l_antecedent.filter(x => anc.l_antecedent.exists(y => tranAncestors(x).contains(y))),
-    root.l_succedent.filter(x => anc.l_succedent.exists(y => tranAncestors(x).contains(y)))
-  )
+  def filterByAncestor(sequent:Sequent, anc : LabelledSequent) : LabelledSequent = {
+    try {
+      val root = sequentToLabelledSequent(sequent)
+      LabelledSequent(
+        root.l_antecedent.filter(x => anc.l_antecedent.exists(y => tranAncestors(x).contains(y))),
+        root.l_succedent.filter(x => anc.l_succedent.exists(y => tranAncestors(x).contains(y)))
+      )
+    } catch {
+      case e:Exception =>
+        throw new Exception("Could not filter "+sequent+" by ancestors "+anc+": "+e.getMessage, e)
+    }
+  }
 
   def findAuxByFormulaAndLabel(aux : LabelledFormulaOccurrence, candidates : Seq[LabelledFormulaOccurrence], exclusion_list : Seq[LabelledFormulaOccurrence]) =
     findAux(aux, candidates, x => x.skolem_label == aux.skolem_label && x.formula == aux.formula, exclusion_list)
