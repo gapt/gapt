@@ -163,8 +163,4 @@ class Stopwatch() extends Logger {
     times.toList.foldLeft("")((acc,t) => "\n"+t._1+";"+t._2+";")
   }
 
-  def toTuple(): (String, String) = {
-    (ListSupport.lst2string(((time: Tuple2[String, String]) => time._2), ", ", times.toList), errorStatus)
-  }
-
 }
