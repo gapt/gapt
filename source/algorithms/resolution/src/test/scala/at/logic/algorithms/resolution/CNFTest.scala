@@ -50,7 +50,7 @@ class CNFTest extends SpecificationWithJUnit {
         FClause(List(x, r), List(x0)),
         FClause(List(x), List(p, q))
       )
-      cnf must beEqualTo(expected)
+      cnf._1 must beEqualTo(expected)
     }
   }
 }

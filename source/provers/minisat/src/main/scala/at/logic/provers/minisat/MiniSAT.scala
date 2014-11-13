@@ -57,10 +57,10 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
   def solve( f: HOLFormula ) : Option[Interpretation] = {
     start()
     val cnf = f match {
-      case f1: FOLFormula => TseitinCNF(f1)
+      case f1: FOLFormula => TseitinCNF(f1)._1
       case _              => CNFp(f)
     }
-    lap("Cnf done")
+    lap("CNF done")
     val int = solve( cnf )
     lap("Solving done")
     int

@@ -8,7 +8,7 @@ import at.logic.language.fol._
 import at.logic.language.hol.HOLVar
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.logging.Stopwatch
-import scala.collection.immutable.HashMap
+import scala.collection.immutable.Map
 import scala.collection.mutable
 import scala.io.Source
 import scala.sys.process.{Process, ProcessIO}
@@ -78,7 +78,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   val minimaxsatbin = "minimaxsat"
 
   // mapping a clause to a propositional variable index
-  var atom_map : Map[FOLFormula, Int] = new HashMap[FOLFormula,Int]
+  var atom_map : Map[FOLFormula, Int] = Map[FOLFormula,Int]()
 
   /**
    * checks if a particular Max SAT Solver is installed properly
@@ -119,7 +119,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
 
     // Hard CNF transformation
     watch.start()
-    val hardCNF = TseitinCNF(And(hard.toList))
+    val hardCNF = TseitinCNF(And(hard.toList))._1
     val hardCNFTime = watch.lap("hardCNF")
     logTime("[Runtime]<hard CNF-Generation> ",hardCNFTime)
     trace("produced hard cnf: " + hardCNF)
@@ -373,7 +373,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   /**
    * A method to treat outputformat of a MaxSATSolver with
    * a single line starting with a 'v'
-   * @param str output string of the MaxSAT Solver
+   * @param in output string of the MaxSAT Solver
    * @return None if UNSAT, Some(minimal model) otherwise
    */
   private def singleVLineOutputToInterpretation(in: String) : Option[Map[FOLFormula, Boolean]] = {

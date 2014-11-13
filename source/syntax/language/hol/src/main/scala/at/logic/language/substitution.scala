@@ -26,4 +26,3 @@ object Substitution {
   def apply(map: Map[HOLVar, HOLExpression]): Substitution = new Substitution( map )
   def apply() = new Substitution(Map())
 }
-

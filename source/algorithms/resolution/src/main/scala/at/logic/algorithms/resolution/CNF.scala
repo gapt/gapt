@@ -49,9 +49,34 @@ import scala.collection.mutable
     }
   }
 
-object TseitinCNF extends Logger {
+object TseitinCNF {
+  /**
+   * Generates from a formula f a Set of FClauses in CNF by using Tseitin's Transformation
+   * @param f formula which should be transformed
+   * @param tseitinInstance a previously called TseitinCNF instance, which provides dependencies for future computations
+   * @return triple where 1st are clauses equivalent to f in CNF, 2nd is the subformulaMap and 3rd is an atomBlacklist for eventual further TseitinCNF computations
+   */
+  def apply(f: FOLFormula, tseitinInstance: TseitinCNF = null): (Set[FClause], TseitinCNF) = {
 
-  var subformulaMap : mutable.HashMap[FOLFormula, FOLFormula] = new mutable.HashMap[FOLFormula, FOLFormula]()
+    val tseitin = tseitinInstance match {
+      case null => new TseitinCNF()
+      case _ => {
+        val t = new TseitinCNF()
+        t.subformulaMap ++= tseitinInstance.subformulaMap
+        t.auxsyms ++= tseitinInstance.auxsyms
+        t.fsyms ++= tseitinInstance.fsyms
+        t
+      }
+    }
+
+    (tseitin.transform(f), tseitin)
+  }
+}
+
+class TseitinCNF extends Logger {
+
+  // add already known subformulas
+  val subformulaMap = mutable.Map[FOLFormula, FOLFormula]()
 
   val hc = StringSymbol("x")
   var fsyms = List[SymbolA]()
@@ -72,12 +97,7 @@ object TseitinCNF extends Logger {
     case _ => throw new IllegalArgumentException("unknown head of formula: " + f.toString)
   }
 
-  /**
-   * Generates from a formula f a Set of FClauses in CNF by using Tseitin's Transformation
-   * @param f formula which should be transformed
-   * @return tuple where 1st are clauses equivalent to f in CNF and Tseitin transformed f
-   */
-  def apply(f: FOLFormula): Set[FClause] = {
+  def transform(f: FOLFormula) : Set[FClause]= {
     // take an arbitrary atom symbol and rename it
     // s.t. it does not occur anywhere in f
     fsyms = getAtomSymbols(f)
@@ -86,7 +106,7 @@ object TseitinCNF extends Logger {
     val pf = parseFormula(f)
     pf._2 + FClause(List(), List(pf._1))
   }
-  
+
   /**
    * Adds a FOLFormula to fol.Atom map to the subFormulas HashMap, iff
    * the subformula does not already map to an existing atom.
