@@ -88,69 +88,48 @@ trait HOLExpression extends LambdaExpression {
     case _ => throw new Exception("Unrecognized symbol.")
   }
 
+  def arity: Int = this match {
+    case HOLVar(_,_) | HOLConst(_,_) => 0
+    case Neg(_) | AllVar(_,_) | ExVar(_,_) => 1
+    case BinaryConnective(_,_) => 2
+    case Atom(_, args) => args.length
+    case Function(_, args,_) => args.length
+    case HOLAbs(_,_) => 1
+    case _ => throw new Exception("Unhandled HOLExpression "+this+".")
+  }
   /** Retrieves this expression's subexpression at a given position.
     *
     * @param pos The position to be retrieved.
     * @return The subexpression at pos.
     */
-  def apply(pos: HOLPosition): HOLExpression =
-    if (pos.isEmpty)
-      this
-    else {
-      val rest = pos.tail
-      (pos.head, this) match {
-        case (1, HOLApp(HOLApp(_,left),_)) => left(rest)
-        case (2, HOLApp(HOLApp(_,_),right)) => right(rest)
-        case (n, Atom(_, args)) if args.length >= n => args(n - 1)(rest)
-        case (n, Function(_, args,_)) if args.length >= n => args(n - 1)(rest)
-        case _ => throw new IllegalArgumentException("Position (" + pos + ") does not exist in the expression (" + this + ")")
-      }
-    }
+  def apply(pos: HOLPosition): HOLExpression = get(pos) match {
+    case Some(f) => f
+    case None => throw new Exception("Position "+pos+" does not exist in expression "+this+".")
+  }
 
   /** Retrieves this expression's subexpression at a given position, if there is one.
     *
     * @param pos The position to be retrieved.
-    * @return If there is a subexpression at that position, return that expression wrapped in Some. Otherwise None.
+    * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
     */
-  def get(pos: HOLPosition): Option[HOLExpression] =
-    if (pos.isEmpty)
-      Some(this)
-    else {
-      val rest = pos.tail
-      (pos.head, this) match {
-        case (1, HOLApp(HOLApp(_,left),_)) => left get rest
-        case (2, HOLApp(HOLApp(_,_),right)) => right get rest
-        case (n, Atom(_, args)) if args.length >= n => args(n - 1) get rest
-        case (n, Function(_, args,_)) if args.length >= n => args(n - 1) get rest
-        case _ => None
-      }
-    }
+  def get(pos: HOLPosition): Option[HOLExpression]
 
   /** Tests whether this expression has a subexpression at a given position.
     *
     * @param pos The position to be tested.
     * @return Whether this(pos) is defined.
     */
-  def definedAt(pos: HOLPosition): Boolean =
-    if (pos.isEmpty)
-      true
-    else {
-      val rest = pos.tail
-      (pos.head, this) match {
-        case (1, HOLApp(HOLApp(_,left),_)) => left definedAt rest
-        case (2, HOLApp(HOLApp(_,_),right)) => right definedAt  rest
-        case (n, Atom(_, args)) if args.length >= n => args(n - 1) definedAt rest
-        case (n, Function(_, args, _)) if args.length >= n =>  args(n - 1) definedAt rest
-        case _ => false
-      }
-    }
+  def isDefinedAt(pos: HOLPosition): Boolean = toLambdaPositionOption(this)(pos) match {
+    case Some(_) => true
+    case None => false
+  }
 
   /** Finds all positions of a subexpression in this expression.
    *
-   * @param exp The expression to be found.
-   * @return A list containing all positions of the search expression.
+   * @param exp The subexpression to be found.
+   * @return A list containing all positions where exp occurs.
    */
-  def find(exp: HOLExpression): List[HOLPosition] = getSomePositions(this, _ == exp)
+  def find(exp: HOLExpression): List[HOLPosition] = getPositions(this, _ == exp)
 
 
 
