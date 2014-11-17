@@ -54,9 +54,9 @@ object VeriTExporter {
     )
     symbols.foldLeft("(declare-sort S 0)\n") { case (acc, t) => t._3 match {
       // It is an atom
-      case To => acc ++ "(declare-fun " + t._1 + " (" + "S "*t._2 + ") Bool)\n"
+      case To => acc ++ "(declare-fun " + toASCIIString(t._1) + " (" + "S "*t._2 + ") Bool)\n"
       // It is a function
-      case Ti => acc ++ "(declare-fun " + t._1 + " (" + "S "*t._2 + ") S)\n"
+      case Ti => acc ++ "(declare-fun " + toASCIIString(t._1) + " (" + "S "*t._2 + ") S)\n"
       case _ => throw new Exception("Unexpected type for function or predicate: " + t._3)
     }
     }
@@ -66,8 +66,8 @@ object VeriTExporter {
   // (Note: here we would only use propositional formulas, but it is already
   // implemented for quantifiers just in case...)
   private def getSymbols(f: FOLExpression) : Set[(String, Int, TA)] = f match {
-    case FOLVar(s) => Set( (s, 0, Ti) )
-    case FOLConst(s) => Set( (s, 0, Ti) )
+    case FOLVar(s) => Set( (toASCIIString(s), 0, Ti) )
+    case FOLConst(s) => Set( (toASCIIString(s), 0, Ti) )
     case Atom(pred, args) => 
       Set( (toASCIIString(pred), args.size, f.exptype) ) ++ args.foldLeft(Set[(String, Int, TA)]())( (acc, f) => getSymbols(f) ++ acc)
     case Function(fun, args) => 
@@ -84,8 +84,8 @@ object VeriTExporter {
   private def toSMTFormat(f: FOLExpression) : String = f match {
     case TopC => "true"
     case BottomC => "false"
-    case FOLVar(s) => s
-    case FOLConst(s) => s
+    case FOLVar(s) => toASCIIString(s)
+    case FOLConst(s) => toASCIIString(s)
     case Atom(pred, args) => 
       if(args.size == 0) {
         toASCIIString( pred )
@@ -102,15 +102,15 @@ object VeriTExporter {
   }
 
   // TODO: move this somewhere else...
-  private def toASCIIString(s: SymbolA) : String = {
-      val str = s.toString
+  private def toASCIIString(s: SymbolA) : String = toASCIIString(s.toString)
+  private def toASCIIString(s: String) : String = {
       // It's a number, append a character before it.
-      if ( str.forall(c => Character.isDigit(c)) ) {
-        "n" + str
+      if ( s.forall(c => Character.isDigit(c)) ) {
+        "n" + s
       } 
       else {
         // Attempt #3
-        StringEscapeUtils.escapeJava(s.toString).replaceAll("""\\""", "")
+        StringEscapeUtils.escapeJava(s).replaceAll("""\\""", "")
       }
   }
 }
