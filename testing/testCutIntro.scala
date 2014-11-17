@@ -453,7 +453,7 @@ object testCutIntro {
     //  CutIntroduction.applyStat( ep, new Deltas.OneVariableDelta(), prover, timeout, useForgetfulPara )
     //else
     //  CutIntroduction.applyExp( ep, prover, timeout, useForgetfulPara )
-    val r = CutIntroduction.applyStat( ep, new Deltas.OneVariableDelta(), prover, timeout, useForgetfulPara )
+    val r = CutIntroduction.applyStat( ep, new Deltas.OneVariableDelta(), prover, timeout, useForgetfulPara, false )
 
     val status = r._2
     val logline = "," + quantRulesNumberET( ep ) + r._3 // log #qnodes
