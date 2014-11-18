@@ -17,7 +17,13 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
   val matchAlg = NaiveIncompleteMatchingAlgorithm
 
   def subsumes(s1: FSequent, s2: FSequent): Boolean = subsumes_by(s1,s2).nonEmpty
- 
+
+  /**
+   * Calculates the subtitution to apply to s1 in order to subsume s2. if it exists
+   * @param s1 a clause
+   * @param s2 a clause
+   * @return if s1 subsumes s2, the substitution necessary. None otherwise.
+   */
   def subsumes_by(s1: FSequent, s2: FSequent) : Option[SubstitutionHOL] = {
     val left = s1._1.map(x => NegHOL(x)) ++ s1._2.map(x => x)
     val right = s2._1.map(x => NegHOL(x)) ++ s2._2.map(x => x)

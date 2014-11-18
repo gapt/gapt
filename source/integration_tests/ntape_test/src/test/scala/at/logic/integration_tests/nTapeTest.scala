@@ -7,6 +7,7 @@ import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk.{AtomicExpansion, regularize}
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
+import at.logic.calculi.lksk.sequentToLabelledSequent
 import at.logic.language.hol._
 
 import at.logic.provers.prover9._
@@ -14,7 +15,7 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct.StructCreators
 
-import at.logic.transformations.ceres.{CERES, CERESR2LK}
+import at.logic.transformations.ceres.{ceres_omega, CERES, CERESR2LK}
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import org.junit.runner.RunWith
@@ -48,6 +49,7 @@ class nTapeTest extends SpecificationWithJUnit {
           ko("could not refute clause set")
         case Some(rp) =>
           val ralp = RobinsonToRal(rp)
+          val acnf = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
 
           ok
       }

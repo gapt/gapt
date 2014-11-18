@@ -12,9 +12,39 @@ import at.logic.calculi.occurrences._
 import at.logic.language.schema.IndexedPredicate
 import at.logic.language.lambda.types.{To, Tindex}
 import at.logic.language.hol.{HOLExpression, HOLApp, HOLConst, HOLFormula}
-import scala.collection.immutable.HashSet
 import scala.annotation.tailrec
+import scala.util.control.TailCalls._
 
+
+/**
+ * Should calculate the same clause set as [[StandardClauseSet]], but without the intermediate representation of a
+ * normalized struct.
+ */
+object AlternativeStandardClauseSet {
+  def apply(struct:Struct) : Set[FSequent] = struct match {
+    case A(fo) => Set(FSequent(Nil, List(fo.formula)))
+    case Dual(A(fo)) => Set(FSequent(List(fo.formula), Nil))
+    case EmptyPlusJunction() => Set()
+    case EmptyTimesJunction() => Set(FSequent(Nil,Nil))
+    case Plus(EmptyPlusJunction(), x) => apply(x)
+    case Plus(x, EmptyPlusJunction()) => apply(x)
+    case Plus(x,y) => apply(x) ++ apply(y)
+    case Times(EmptyTimesJunction(), x, _) => apply(x)
+    case Times(x, EmptyTimesJunction(), _) => apply(x)
+    case Times(x,y, _) =>
+      val xs = apply(x)
+      val ys = apply(y)
+      for( x1 <- xs; y1 <- ys) yield { x1 compose y1 }
+    case _ => throw new Exception("Unhandled case: "+struct)
+  }
+}
+
+/**
+ * This implements the standard clause set from Bruno's thesis. It has a computational drawback: we create the normalized
+ * struct first, which is later on converted to a clause set. The normalized struct easily becomes so big that recursive
+ * functions run out of stack. The [[AlternativeStandardClauseSet]] performs a direct conversion, which can handle bigger
+ * sizes.
+ */
 object StandardClauseSet {
   def normalize(struct:Struct):Struct = struct match {
     case s: A => s
@@ -46,39 +76,75 @@ object StandardClauseSet {
   }
 
   private def merge(s1:Struct, s2:Struct, aux: List[FormulaOccurrence]):Struct = {
+    println("merge on sizes "+s1.size+" and "+s2.size)
     val (list1,list2) = (getTimesJunctions(s1),getTimesJunctions(s2))
     val cartesianProduct = for (i <- list1; j <- list2) yield (i,j)
+    println("done: "+s1.size+" and "+s2.size)
     transformCartesianProductToStruct(cartesianProduct, aux, Nil)
   }
 
-  private def getTimesJunctions(struct: Struct):List[Struct] = struct match {
+
+  /** *
+    * This is the optimized version of [[slowgetTimesJunctions]] in continuation passing style.
+    * @param struct the input struct
+    * @return a flattened version of the tree withtimes and junctions
+    */
+  private def getTimesJunctions(struct:Struct): List[Struct] = getTimesJunctions(struct, (x:List[Struct]) => done(x)).result
+
+  /**
+    * This is the optimized version of [[slowgetTimesJunctions]] in continuation passing style.
+    * @param struct the input struct
+    * @param fun the continuation
+    * @return a tailrec object representing the result
+    */
+  private def getTimesJunctions(struct: Struct, fun : List[Struct] => TailRec[List[Struct]]): TailRec[List[Struct]] = struct match {
+    case s: Times => fun(List(s))
+    case s: EmptyTimesJunction => fun(List(s))
+    case s: A => fun(List(s))
+    case s: Dual => fun(List(s))
+    case s: EmptyPlusJunction => fun(Nil)
+    case Plus(s1,s2) => tailcall(getTimesJunctions(s1, (x:List[Struct]) =>
+                                  tailcall(getTimesJunctions(s2, (y:List[Struct]) =>  fun(x:::y)  ))))
+  }
+
+  private def slowgetTimesJunctions(struct: Struct):List[Struct] = struct match {
     case s: Times => s::Nil
     case s: EmptyTimesJunction => s::Nil
     case s: A => s::Nil
     case s: Dual => s::Nil
     case s: EmptyPlusJunction => Nil
-    case Plus(s1,s2) => getTimesJunctions(s1):::getTimesJunctions(s2)
+    case Plus(s1,s2) => slowgetTimesJunctions(s1):::slowgetTimesJunctions(s2)
   }
 
-  private def getLiterals(struct:Struct):List[Struct] = struct match {
+  private def getLiterals(struct:Struct) : List[Struct] = getLiterals(struct, x => done(x)).result
+  private def getLiterals(struct:Struct, fun : List[Struct] => TailRec[List[Struct]] ) : TailRec[List[Struct]] = struct match {
+    case s: A => fun(s::Nil)
+    case s: Dual => fun(s::Nil)
+    case s: EmptyTimesJunction => fun(Nil)
+    case s: EmptyPlusJunction => fun(Nil)
+    case Plus(s1,s2) => tailcall( getLiterals(s1, x =>
+                             tailcall(getLiterals(s2, y => fun(x:::y)) )))
+    case Times(s1,s2,_) => tailcall( getLiterals(s1, x =>
+                                      tailcall(getLiterals(s2, y => fun(x:::y)) )))
+  }
+
+  private def slowgetLiterals(struct:Struct):List[Struct] = struct match {
     case s: A => s::Nil
     case s: Dual => s::Nil
     case s: EmptyTimesJunction => Nil
     case s: EmptyPlusJunction => Nil
-    case Plus(s1,s2) => getLiterals(s1):::getLiterals(s2)
-    case Times(s1,s2,_) => getLiterals(s1):::getLiterals(s2)
+    case Plus(s1,s2) => slowgetLiterals(s1):::slowgetLiterals(s2)
+    case Times(s1,s2,_) => slowgetLiterals(s1):::slowgetLiterals(s2)
   }
 
+
+  private def isDual(s:Struct):Boolean = s match {case x: Dual => true; case _ => false}
+
   private def clausifyTimesJunctions(struct: Struct): Sequent = {
-    def isDual(s:Struct):Boolean = s match {case x: Dual => true; case _ => false}
     val literals = getLiterals(struct)
     val (negative,positive) = literals.partition(x => isDual(x))
     val negativeFO: Seq[FormulaOccurrence] = negative.map(x => x.asInstanceOf[Dual].sub.asInstanceOf[A].fo) // extracting the formula occurrences from the negative literal structs
     val positiveFO: Seq[FormulaOccurrence] = positive.map(x => x.asInstanceOf[A].fo)     // extracting the formula occurrences from the positive atomic struct
-    def convertListToSet[T](list:List[T]):Set[T] = list match {
-      case x::rest => convertListToSet(rest)+x
-      case Nil => new HashSet[T]
-    }
     Sequent(negativeFO, positiveFO)
   }
 
