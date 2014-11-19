@@ -176,7 +176,7 @@ class ReplayTest extends SpecificationWithJUnit {
       val eaa = parse("=(a,a)")
       val s = FSequent(List(eaa,eaa),Nil)
       (getRefutation2(List(s)) match {
-        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) => true
+        case Some(a) if a.asInstanceOf[ResolutionProof[Clause]].root.toFSequent multiSetEquals  (FSequent(List(),List())) => true
         case _ => false
       }) must beTrue
     }
@@ -207,7 +207,7 @@ class ReplayTest extends SpecificationWithJUnit {
       val s3 = FSequent(Nil,List(idem))
       val s4 = FSequent(List(ncomm), Nil)
       (getRefutation2(List(s1,s2,s3,s4)) match {
-        case Some(a) if a.asInstanceOf[RobinsonResolutionProof].toTreeProof.root syntacticMultisetEquals (FSequent(List(),List())) =>
+        case Some(a) if a.asInstanceOf[RobinsonResolutionProof].root.toFSequent multiSetEquals  (FSequent(List(),List())) =>
           //println(Formatter.asHumanReadableString(a)   )
           //println("======= GraphViz output: =======\n" + Formatter.asGraphViz(a)   )
           true
