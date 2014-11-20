@@ -48,8 +48,8 @@ object FOLConst {
   }
 }
 
-class FOLApp protected[fol] (function: FOLExpression, arg: FOLExpression) extends HOLApp(function, arg) with FOLExpression
-object FOLApp {
+protected[fol] class FOLApp protected[fol] (function: FOLExpression, arg: FOLExpression) extends HOLApp(function, arg) with FOLExpression
+protected[fol] object FOLApp {
   def apply(f: FOLExpression, arg: FOLExpression) : FOLApp = f.factory.createApp(f, arg).asInstanceOf[FOLApp] 
   def unapply(e: FOLExpression) = e match {
     case a: FOLApp => Some( (a.function.asInstanceOf[FOLExpression], a.arg.asInstanceOf[FOLExpression]) )
@@ -57,8 +57,8 @@ object FOLApp {
   }
 }
 
-class FOLAbs protected[fol] (variable: FOLVar, term: FOLExpression) extends HOLAbs(variable, term) with FOLExpression
-object FOLAbs {
+protected[fol] class FOLAbs protected[fol] (variable: FOLVar, term: FOLExpression) extends HOLAbs(variable, term) with FOLExpression
+protected[fol] object FOLAbs {
   def apply(variable: FOLVar, expression: FOLExpression) : FOLAbs = expression.factory.createAbs(variable, expression).asInstanceOf[FOLAbs]
   def unapply(e: FOLExpression) = e match {
     case a: FOLAbs => Some( (a.variable.asInstanceOf[FOLVar], a.term.asInstanceOf[FOLExpression]) )

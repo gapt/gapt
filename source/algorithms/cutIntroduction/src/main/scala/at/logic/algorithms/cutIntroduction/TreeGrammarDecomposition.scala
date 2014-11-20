@@ -657,8 +657,8 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
         case Neg(x) => ("\\neg "+PrettyPrinter(x), NegSymbol.toString(), 0)
         case ExVar(x,f) => ("\\exists " + PrettyPrinter(x) + "." + PrettyPrinter(f), ExistsSymbol.toString(), 0)
         case AllVar(x,f) => ("\\forall " + PrettyPrinter(x) + "." + PrettyPrinter(f), ForallSymbol.toString(), 0)
-        case FOLAbs(v, exp) => ("(\\lambda " + PrettyPrinter(v) + "." + PrettyPrinter(exp), "λ", 0)
-        case FOLApp(l,r) => ("(" + PrettyPrinter(l) + ")(" + PrettyPrinter(r)+ ")", "()()", 0)
+        //case FOLAbs(v, exp) => ("(\\lambda " + PrettyPrinter(v) + "." + PrettyPrinter(exp), "λ", 0)
+        //case FOLApp(l,r) => ("(" + PrettyPrinter(l) + ")(" + PrettyPrinter(r)+ ")", "()()", 0)
         case FOLConst(x) => (x.toString, x.toString, 0) //(pA(FOLConst(x)),pA(FOLConst(x)), 0)
         case _ => throw new Exception("ERROR: Unknown FOL expression.");
       }
