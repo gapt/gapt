@@ -91,7 +91,7 @@ class MiscTest extends SpecificationWithJUnit {
     "perform cut introduction on an example proof" in {
       if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
       val p = LinearExampleProof(0, 7)
-      CutIntroduction(p, ExactBound(1), verbose = false)
+      CutIntroduction.one_cut_one_quantifier(p, false)
       Success()
     }
 
@@ -175,8 +175,7 @@ class MiscTest extends SpecificationWithJUnit {
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       val p = LinearExampleProof( 0, 4 )
-      val pi_ = CutIntroduction( p, ExactBound(1), new LKProver(), verbose = false )
-      val Some(pi) = pi_
+      val pi = CutIntroduction.one_cut_one_quantifier(p, false)
       val pe = ReductiveCutElim.eliminateAllByUppermost(pi, steps = false)
 
       ReductiveCutElim.isCutFree(p)  must beEqualTo( true )

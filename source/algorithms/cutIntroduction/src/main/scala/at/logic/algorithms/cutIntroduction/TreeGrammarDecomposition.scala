@@ -12,7 +12,7 @@ import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.language.hol.logicSymbols._
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.dssupport.ListSupport
-import at.logic.utils.logging.{Logger, Stopwatch}
+import at.logic.utils.logging.Stopwatch
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import at.logic.provers.maxsat.{MaxSATSolver, MapBasedInterpretation, MaxSAT}
@@ -31,7 +31,7 @@ object MCSMethod extends Enumeration {
 
 class TreeGrammarDecompositionException(msg: String) extends Exception(msg)
 
-object TreeGrammarDecomposition extends Logger {
+object TreeGrammarDecomposition {
 
   var decomp : TreeGrammarDecomposition = _
 
@@ -46,7 +46,7 @@ object TreeGrammarDecomposition extends Logger {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return a list of grammars
    */
-  def apply(termset: List[FOLTerm], n:Int, method: MCSMethod, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : List[Grammar] = {
+  def apply(termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : List[Grammar] = {
 
     method match {
       case MCSMethod.MaxSAT => {
@@ -57,7 +57,6 @@ object TreeGrammarDecomposition extends Logger {
       case MCSMethod.Simplex => {
         // instantiate TreeGrammarDecomposition object with the termset and n
         //val decomp = new TreeGrammarDecompositionSimplex(termset, n)
-        warn("Simplex method not yet implemented")
         return null
       }
     }
@@ -67,25 +66,15 @@ object TreeGrammarDecomposition extends Logger {
       val startTimeSuffKeys = System.currentTimeMillis()
       decomp.suffKeys()
       val endTimeSuffKeys = System.currentTimeMillis()
-      logTime("[Runtime]<suffKeys> ",(endTimeSuffKeys-startTimeSuffKeys))
-      trace("Generating QMaxSAT MinCostSAT formulation")
       // Generating the MinCostSAT formulation for QMaxSAT
-      val startTimeMCS = System.currentTimeMillis()
       val f = decomp.MCS().asInstanceOf[Set[FOLFormula]]
-      val endTimeMCS = System.currentTimeMillis()
-      logTime("[Runtime]<MCS-Formulation> ",(endTimeMCS-startTimeMCS))
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
       val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula,Int]]]
-      trace("G: \n" + g)
-      debug("Starting up "+satsolver)
       // Retrieving a model from a MaxSAT solver and extract the rules
       val interpretation = (new MaxSAT(satsolver)).solvePWM(f, g)
       val rules = decomp.getRules(interpretation)
-      debug("Number of rules: "+rules.size)
-      debug("Rules: " + rules)
       // transform the rules to a Grammar
       val grammars = decomp.getGrammars(rules)
-      debug("Grammars: " + grammars)
       return grammars
     }
     else{
@@ -107,7 +96,7 @@ object TreeGrammarDecomposition extends Logger {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return (list of grammars, status, log)
    */
-  def applyStat(termset: List[FOLTerm], n:Int, watch: Stopwatch, method: MCSMethod=MCSMethod.MaxSAT, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[List[Grammar]] = {
+  def applyStat(termset: List[FOLTerm], n:Int, method: MCSMethod=MCSMethod.MaxSAT, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[List[Grammar]] = {
 
     var phase = "TGD"
 
@@ -122,7 +111,6 @@ object TreeGrammarDecomposition extends Logger {
       case MCSMethod.Simplex => {
         // instantiate TreeGrammarDecomposition object with the termset and n
         //val decomp = new TreeGrammarDecompositionSimplex(termset, n)
-        warn("Simplex method not yet implemented")
         return null
       }
     }
@@ -131,60 +119,36 @@ object TreeGrammarDecomposition extends Logger {
 
       phase = "suffKeys"
 
-      watch.start()
       // generating the sufficient set of keys
       decomp.suffKeys()
-      val suffKeysTime = watch.lap(phase)
-      logTime("[Runtime]<suffKeys> ", suffKeysTime)
-      trace("Generating QMaxSAT MinCostSAT formulation")
 
       phase = "MCS"
 
       // Generating the MinCostSAT formulation for QMaxSAT
-      watch.start()
       val f = decomp.MCS().asInstanceOf[Set[FOLFormula]]
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
       val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula, Int]]]
-      trace("G: \n" + g)
-      val mcsTime = watch.lap(phase)
-      logTime("[Runtime]<MCS-Formulation> ", mcsTime)
-
-      debug("Preparing input for " + satsolver)
 
       phase = "CNF/MaxSAT"
 
       // Retrieving a model from a MaxSAT solver and extract the rules
-      val interpretation = (new MaxSAT(satsolver)).solvePWM(f, g, watch)
+      val interpretation = (new MaxSAT(satsolver)).solvePWM(f, g)
 
       phase = "interpret"
-      watch.start()
       val rules = decomp.getRules(interpretation)
-      watch.lap(phase)
-      debug("Number of rules: " + rules.size)
-      debug("Rules: " + rules)
 
       // transform the rules to a Grammar
       grammars = decomp.getGrammars(rules)
-      debug("Grammars: " + grammars)
     }
     else {
-      error("Unsupported TreeGrammarDecomposition method.")
       throw new TreeGrammarDecompositionException("Unsupported TreeGrammarDecomposition method")
     }
     Some(grammars)
   }
-
-  def logTime(msg: String, millisec: Long): Unit = {
-    val msec = millisec % 1000
-    val sec = (millisec / 1000) % 60
-    val minutes = ((millisec / 1000) / 60) % 60
-    val hours = (((millisec / 1000) / 60) / 60 )
-    debug(msg + " " + hours + "h " + minutes + "min " + sec + "sec " + msec+" msec")
-  }
 }
 
 
-abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) extends at.logic.utils.logging.Logger {
+abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) {
 
   // Symbols used for non-terminals within the algorithm
   val nonterminal_a = "α"
@@ -251,17 +215,7 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
 
     // for each subset of size 1 <= |sub| <= n+1,
     // add all keys of normform(sub) to keySet
-    var i = 0
-    var x = 0
     poweredSubSets.foreach( sub => {
-      // just for logging
-      val t = (100*(i.toFloat/poweredSubSets.size)).toInt
-      if( t % 10 == 0 && t != x)
-      {
-        x = t
-        debug("Generated "+(100*(i.toFloat/poweredSubSets.size)).toInt+"% of suffKeys")
-      }
-      i+=1
       val keys = normform(sub)
       // the indexes of the keys in normalform in the keyList
       val keyIndexes = keys.foldLeft(List[Int]())((acc,k) => addKey(k) :: acc)
@@ -280,7 +234,6 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
         }
       })
     })
-    debug("Generated 100% of suffKeys")
   }
 
   /**
@@ -539,7 +492,6 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
     val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc)
     // update the reverse term map
     reverseTermMap = mutable.Map(termMap.toList.map(x => x.swap).toSeq:_*)
-    debug("F: "+f.foldLeft("")((acc,x) => acc + "\\\\\\\\ \n"+PrettyPrinter(x).replaceAllLiterally(nonterminal_a, "\\alpha")))
    return f.toSet
   }
 

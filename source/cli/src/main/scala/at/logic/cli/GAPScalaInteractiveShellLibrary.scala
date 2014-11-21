@@ -479,43 +479,23 @@ object unfoldProof {
  ******************************************************************************/
 
 object cutIntro {
-  def apply(p: LKProof, numVars: Constraint[Int]) = CutIntroduction(p, numVars, verbose = true)
+  
+  def apply () = {
+    println("There are three available methods for introducing cut(s):")
+    println("- one_cut_one_quantifier")
+    println("- one_cut_many_quantifiers")
+    println("- many_cuts_one_quantifier")
+    println("See documentation for more details.")
+  }
 
-  def apply(p: LKProof, numVars: Constraint[Int], prover: at.logic.provers.Prover) = CutIntroduction(p, numVars, prover, verbose = true)
+  def one_cut_one_quantifier (p: LKProof) = CutIntroduction.one_cut_one_quantifier (p, true)
+  def one_cut_one_quantifier (es: ExpansionSequent, hasEquality: Boolean) = CutIntroduction.one_cut_one_quantifier (es, hasEquality, true)
 
-  def apply(ep: ExpansionSequent, numVars: Constraint[Int]) =
-    CutIntroduction(ep, numVars, new at.logic.algorithms.cutIntroduction.DefaultProver(), verbose = true)
+  def one_cut_many_quantifiers (p: LKProof) = CutIntroduction.one_cut_many_quantifiers (p, true)
+  def one_cut_many_quantifiers (es: ExpansionSequent, hasEquality: Boolean) = CutIntroduction.one_cut_many_quantifiers (es, hasEquality, true)
 
-  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: at.logic.provers.Prover) =
-    CutIntroduction(ep, numVars, prover, verbose = true)
-
-  // for collecting statistics
-  def applyStat(ep: ExpansionSequent, delta: DeltaVector) =
-    CutIntroduction.applyStat(ep, delta, verbose = true)._1.get
-
-  // for collecting statistics
-  def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: at.logic.provers.Prover) =
-    CutIntroduction.applyStat(ep, delta, prover, verbose = true)._1.get
-}
-
-object ncutIntro {
-  def apply(p: LKProof, n: Int, maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT) = NCutIntroduction(p, new DefaultProver(), n, maxsatsolver)
-
-  def apply(p: LKProof, prover: at.logic.provers.Prover, n: Int, maxsatsolver: MaxSATSolver) = NCutIntroduction(p, prover, n, maxsatsolver)
-
-  def apply(ep: ExpansionSequent, n: Int, maxsatsolver: MaxSATSolver) =
-    NCutIntroduction(ep, new DefaultProver(), n, maxsatsolver)
-
-  def apply(ep: ExpansionSequent, prover: at.logic.provers.Prover, n: Int, maxsatsolver: MaxSATSolver) =
-    NCutIntroduction(ep, prover, n, maxsatsolver)
-
-  // for collecting statistics
-  def applyStat(p: LKProof, n: Int, maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT, watch: Stopwatch, timeout: Int) =
-    NCutIntroduction.applyStat(p, new DefaultProver(), n, maxsatsolver, watch, timeout)
-
-  // for collecting statistics
-  def applyStat(ep: ExpansionSequent, n: Int, maxsatsolver: MaxSATSolver, watch: Stopwatch, timeout: Int) =
-    NCutIntroduction.applyStat(ep, new DefaultProver(), n, maxsatsolver, watch, timeout)
+  def many_cuts_one_quantifier (p: LKProof) = CutIntroduction.many_cuts_one_quantifier (p, true)
+  def many_cuts_one_quantifier (es: ExpansionSequent, hasEquality: Boolean) = CutIntroduction.many_cuts_one_quantifier (es, hasEquality, true)
 }
 
 object extractTerms {

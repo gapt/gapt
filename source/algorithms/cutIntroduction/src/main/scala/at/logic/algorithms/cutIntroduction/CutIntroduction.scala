@@ -8,20 +8,17 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{ExpansionSequent, toSequent}
+import at.logic.calculi.expansionTrees.{ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.language.fol._
 import at.logic.language.hol.HOLFormula
+import at.logic.provers.eqProver._
 import at.logic.provers.Prover
 import at.logic.provers.maxsat.MaxSATSolver
-import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
-import at.logic.utils.constraint.{Constraint, ExactBound, NoConstraint, UpperBound}
 import at.logic.utils.executionModels.timeout._
-import at.logic.utils.logging.Logger
-import at.logic.utils.logging.Stopwatch
 
 class CutIntroException(msg: String) extends Exception(msg)
 class CutIntroUncompressibleException(msg: String) extends CutIntroException(msg)
@@ -33,180 +30,218 @@ class CutIntroUncompressibleException(msg: String) extends CutIntroException(msg
  **/
 class CutIntroEHSUnprovableException(msg: String) extends CutIntroException(msg)
 
-/** Cut introduction with cut formulas of the form [forall x1,...,xn] F.
-  * In contrast to regular cut introduction, the cut formulas may contain more than one
-  * universally quantified variable.
-  */
-object CutIntroduction extends Logger {
+object CutIntroduction {
 
-  /** Performs cut introduction on an LK proof and returns
-    * an LK proof with cut if a cut formula can be found.
+  // Public methods: timeout of one hour
+  
+  /** Tries to introduce one cut with one quantifier to the LKProof. 
     *
-    * @param proof The cut-free LK proof into which to introduce a cut.
-    * @param numVars a constraint (see utils.constraint) on the number of variables to introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
-    * @param prover The prover to use for tautology checks.
-    * @param verbose Whether output should be verbose.
-    * @return The LK proof with cut if cut introduction was successful and None otherwise. The cause of failure will be printed on the console.
+    * @param proof The proof for introducing a cut.
+    * @param verbose Whether information about the cut-introduction process 
+    *        should be printed on screen.
+    * @return A proof with one quantified cut.
+    * @throws An exception when the proof is not found.
     */
-  def apply(proof: LKProof, numVars: Constraint[Int], prover: Prover = new DefaultProver(), verbose: Boolean) : Option[LKProof] = apply( extractExpansionTrees( proof ), numVars, prover, verbose)
+  def one_cut_one_quantifier (proof: LKProof, verbose: Boolean) = 
+  execute(proof, false, 3600, verbose) match {
+    case (Some(p), _, _, None) => p
+    case (None, _, _, Some(e)) => throw e
+    case _ => throw new CutIntroException("Wrong return value in cut introduction.")
+  } 
+  /** Tries to introduce one cut with one quantifier to the proof represented by
+    * the ExpansionSequent.
+    *
+    * @param es The expansion sequent representing a proof for introducing a cut.
+    * @param hasEquality True if the proof represented by es is in a theory
+    *        modulo equality, false otherwise.
+    * @param verbose Whether information about the cut-introduction process 
+    *        should be printed on screen.
+    * @return A proof with one quantified cut.
+    * @throws An exception when the proof is not found.
+    */
+  def one_cut_one_quantifier (es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean) = 
+  execute(es, hasEquality, false, -1, 3600, verbose) match {
+    case (Some(p), _, _, None) => p
+    case (None, _, _, Some(e)) => throw e
+    case _ => throw new CutIntroException("Wrong return value in cut introduction.")
+  } 
+  /** Tries to introduce one cut with as many quantifiers as possible to the LKProof. 
+    *
+    * @param proof The proof for introducing a cut.
+    * @param verbose Whether information about the cut-introduction process 
+    *        should be printed on screen.
+    * @return A proof with one quantified cut.
+    * @throws An exception when the proof is not found.
+    */
+  def one_cut_many_quantifiers (proof: LKProof, verbose: Boolean) = 
+  execute(proof, true, 3600, verbose) match {
+    case (Some(p), _, _, None) => p
+    case (None, _, _, Some(e)) => throw e
+    case _ => throw new CutIntroException("Wrong return value in cut introduction.")
+  } 
+  /** Tries to introduce one cut with as many quantifiers as possible to the
+    * proof represented by the ExpansionSequent.
+    *
+    * @param es The expansion sequent representing a proof for introducing a cut.
+    * @param hasEquality True if the proof represented by es is in a theory
+    *        modulo equality, false otherwise.
+    * @param verbose Whether information about the cut-introduction process 
+    *        should be printed on screen.
+    * @return A proof with one quantified cut.
+    * @throws An exception when the proof is not found.
+    */
+  def one_cut_many_quantifiers (es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean) = 
+  execute(es, hasEquality, true, -1, 3600, verbose) match {
+    case (Some(p), _, _, None) => p
+    case (None, _, _, Some(e)) => throw e
+    case _ => throw new CutIntroException("Wrong return value in cut introduction.")
+  } 
+  /** Tries to introduce many cuts with one quantifier each to the LKProof. 
+    *
+    * @param proof The proof for introducing a cut.
+    * @param verbose Whether information about the cut-introduction process 
+    *        should be printed on screen.
+    * @return A list of cut-formulas.
+    * @throws An exception when the cut-formulas are not found.
+    */
+  def many_cuts_one_quantifier (proof: LKProof, verbose: Boolean) = 
+  execute(proof, 2, 3600, verbose) match {
+    case (Some(p), _, _, None) => p
+    case (None, _, _, Some(e)) => throw e
+    case _ => throw new CutIntroException("Wrong return value in cut introduction.")
+  } 
+  /** Tries to introduce many cuts with one quantifier each to the proof
+    * represented by the ExpansionSequent.
+    *
+    * @param es The expansion sequent representing a proof for introducing a cut.
+    * @param hasEquality True if the proof represented by es is in a theory
+    *        modulo equality, false otherwise.
+    * @param verbose Whether information about the cut-introduction process 
+    *        should be printed on screen.
+    * @return A list of cut-formulas.
+    * @throws An exception when the proof is not found.
+    */
+  def many_cuts_one_quantifier (es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean) = 
+  execute(es, hasEquality, -1, 2, 3600, verbose) match {
+    case (Some(p), _, _, None) => p
+    case (None, _, _, Some(e)) => throw e
+    case _ => throw new CutIntroException("Wrong return value in cut introduction.")
+  } 
 
-  /** Performs cut introduction on an LK proof and returns an LK proof with cut if a cut formula can be found.
+  // Methods to be called for the experiments, only return status and log information
+  def one_cut_one_quantifier_stat (proof: LKProof) = execute(proof, false, 3600, false) match {
+    case (_, status, log, _) => (status, log)
+  } 
+  def one_cut_one_quantifier_stat (es: ExpansionSequent, hasEquality: Boolean) = execute(es, hasEquality, false, -1, 3600, false) match {
+    case (_, status, log, _) => (status, log)
+  } 
+  def one_cut_many_quantifiers_stat (proof: LKProof) = execute(proof, true, 3600, false) match {
+    case (_, status, log, _) => (status, log)
+  } 
+  def one_cut_many_quantifiers_stat (es: ExpansionSequent, hasEquality: Boolean) = execute(es, hasEquality, true, -1, 3600, false) match {
+    case (_, status, log, _) => (status, log)
+  } 
+  def many_cuts_one_quantifier_stat (proof: LKProof) = execute(proof, 2, 3600, false) match {
+    case (_, status, log, _) => (status, log)
+  } 
+  def many_cuts_one_quantifier_stat (es: ExpansionSequent, hasEquality: Boolean) = execute(es, hasEquality, -1, 2, 3600, false) match {
+    case (_, status, log, _) => (status, log)
+  } 
+
+  /* 
+   * ATTENTION
+   * Actual implementation of cut introduction.
+   * Here all the work is done and logging/time information is collected.
+   * All other methods should call these execute methods and process the return values
+   * according to the usage.
+   * The two first 'execute' methods use the delta-table (by Stefan Hetzl) for computing grammars.
+   * The two last methods use a maxsat formulation (by Sebastian Eberhard) for computing grammars.
+   * Consequently, the two first methods will introduce one cut (with one or many quantifiers)
+   * while the two last methods will introduce many cuts with one quantifier each.
    *
-   * @param ep The sequent of expansion trees to which cut-introduction is to be applied.
-   * @param numVars a constraint (see utils.constraint) on the number of variables to introduce. Valid constraints are NoConstraint, ExactBound(1), UpperBound(n) (n>0).
-   * @param prover The prover used for checking validity and constructing the final proof. Default: use MiniSAT for validity check, LK proof search for proof building.
-   * @param verbose Whether output should be verbose.
-   * @return The LK proof with cut if cut introduction was successful and None otherwise. The cause of failure will be printed on the console.
    */
-  def apply(ep: ExpansionSequent, numVars: Constraint[Int], prover: Prover, verbose: Boolean) : Option[LKProof] = {
-    val deltaVec = numVars match {
-      case NoConstraint  =>  if (verbose) println("Using UnboundedVariableDelta."); Some(new UnboundedVariableDelta())
-      case ExactBound(1) =>  if (verbose) println("Using OneVariableDelta."); Some(new OneVariableDelta())
-      case UpperBound(n) =>  if (verbose) println("Using ManyVariableDelta."); Some(new ManyVariableDelta(n))
-      case ExactBound(n) =>
-        if (verbose) println("cut Introduction with exactly n (n>1) variables is currently not supported!")
-        error("Used constraint 'ExactBound(" + n + ")' in cutIntroduction.")
-        None
 
-      case c@_ =>
-        if (verbose) println("Invalid constraint! Only NoConstraint, ExactBound and UpperBound are permissible!")
-        error("Used invalid constraint in cutIntroduction: " + c)
-        None
+  type LogTuple = (Int, Int, Int, Int, Int, Int, Int, Int, Int, Long, Long, Long, Long, Long, Long)
 
-    }
+  private def execute(proof: LKProof, manyQuantifiers: Boolean, timeout: Int, verbose: Boolean) :
+  (Option[LKProof], String, LogTuple, Option[Throwable]) = {
 
-    if (deltaVec.isEmpty) None else {
-      try {
-        Some(apply(ep, prover, deltaVec.get, verbose))
-      } catch {
-        case ex : CutIntroException =>
-          println(ex.toString)
-          None
-      }
-    }
+    val clean_proof = CleanStructuralRules(proof)
+    val num_rules = rulesNumber(clean_proof)
+    val ep = extractExpansionTrees(clean_proof)
+    val hasEquality = containsEqualityReasoning(clean_proof)
+    execute(ep, hasEquality, manyQuantifiers, num_rules, timeout, verbose)
   }
 
-  // Build a proof from each of the smallest grammars
-  def buildProof(grammar:Grammar, prover:Prover, endSequent: Sequent) : Option[(LKProof, ExtendedHerbrandSequent)] = {
-
-    val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
-
-    trace("[buildProof] cutFormula0: " + cutFormula0)
-    trace("[buildProof] grammar: " + grammar)
-
-    val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-    val ehs1 = MinimizeSolution(ehs, prover)
-    trace ( "building final proof" )
-    val proof = buildProofWithCut(ehs1, prover)
-    trace ( "done building final proof" )
-
-    if (proof.isDefined) { Some((CleanStructuralRules(proof.get),ehs1)) } else { None }
-  }
-
-  /** Performs cut introduction with a given delta vector.
-    *
-    * The choice of delta vector determines how many variables the cut formula may contain.
-    * E.g.: OneVariableDelta leads to cut formulas [forall x] F, UnboundedVariableDelta leads to [forall x1,...xn] F (for a priori unknown n).
-    */
-  private def apply(ep: ExpansionSequent, prover: Prover, delta: DeltaVector, verbose: Boolean) : LKProof = {
-
-    val endSequent = toSequent(ep)
-    if (verbose) println("\nEnd sequent: " + endSequent)
-
-    val termset = TermsExtraction(ep)
-    if (verbose) println("Size of term set: " + termset.set.size)
-
-    var beginTime = System.currentTimeMillis
-
-    val grammars = ComputeGrammars(termset, delta)
-
-    if (verbose) println( "\nNumber of grammars: " + grammars.length )
-
-    if(grammars.length == 0) {
-      if (verbose) println("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
-      throw new CutIntroUncompressibleException("\nNo grammars found." + 
-        " The proof cannot be compressed using a cut with one universal quantifier block.\n")
+  private def execute(ep: ExpansionSequent, hasEquality: Boolean, manyQuantifiers: Boolean, num_lk_rules: Int, timeout: Int, verbose: Boolean) : 
+  (Option[LKProof], String, LogTuple, Option[Throwable]) = {
+    
+    val prover = hasEquality match {
+      case true => new EquationalProver()
+      case false => new DefaultProver()
     }
 
-    // Compute the proofs for each of the smallest grammars
-    val smallest = grammars.head.size
-    val smallestGrammars = grammars.filter(g => g.size == smallest)
+    var phase = "termex"
+    var time = System.currentTimeMillis
 
-    if (verbose) println( "Smallest grammar-size: " + smallest )
-    if (verbose) println( "Number of smallest grammars: " + smallestGrammars.length )
-
-    debug("Improving solution...")
-
-    trace("   CUTINTRO:")
-    trace("   smallestGrammars: " + smallestGrammars)
-
-    val proofs = smallestGrammars.map(buildProof(_, prover, endSequent)).filter(proof => proof.isDefined).map(proof => proof.get)
-
-    //debug("Improve solutions time: " + (System.currentTimeMillis - beginTime))
-
-    // Sort the list by size of proofs
-    val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
-
-    val smallestProof = sorted.head._1
-    val ehs = sorted.head._2
-
-    if (verbose) println("\nGrammar chosen: {" + ehs.grammar.u + "} o {" + ehs.grammar.s + "}")
-    if (verbose) println("\nMinimized cut formula: " + sanitizeVars(ehs.cutFormula) + "\n")
-
-    smallestProof
-  }
-
-  /** Performs cut introduction on an LK proof and returns 
-    * an LK proof with cut if a cut formula can be found.
-    *
-    * @param ep The sequent of expansion trees to which cut-introduction is to be applied.
-    * @param delta The delta vector to use. Choices are OneVariableDelta for classical cut introduction,
-    *        UnboundedVariableDelta for as many variables as needed and ManyVariableDelta(n) for at most n variables.
-    * @param prover The prover used for checking validity and constructing the final proof.
-    *                Default: use MiniSAT for validity check, LK proof search for proof building.
-    * @param timeout the timeout (in seconds)
-    * @param useForgetfulPara whether to use also forgetful paramodultion when improving solution
-    *
-    * @return a triple ( p: Option[LKProof], s: String, l: String ).
-    *         The p is the LK proof with cut if cut introduction was successful and None otherwise.
-    *         If it is None, the cause of failure will be printed on the console.
-    *         s is a status string, and l is a logging string with quantitative data,
-    *         see testing/resultsCutIntro/stats.ods ('format' sheet) for details.
-    */
-  def applyStat(ep: ExpansionSequent, delta: DeltaVector, prover: Prover = new DefaultProver(), timeout: Int = 3600 /* 1 hour */, useForgetfulPara: Boolean = false, verbose: Boolean ) : ( Option[LKProof] , String, String ) = {
-    var log = ""
+    // The following information is returned (String, Tuple) by this method
     var status = "ok"
-    var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
+    
+    val rulesLKProof = num_lk_rules
+    val quantRules = quantRulesNumberET(ep)
+    var rulesLKProofWithCut = -1
+    var quantRulesWithCut = -1
+    var termsetSize = -1
+    var minimalGrammarSize = -1
+    var numMinimalGrammars = -1
+    var canonicalSolutionSize = -1
+    var minimizedSolutionSize = -1
+    var termsetExtractionTime: Long = -1
+    var deltaTableGenerationTime: Long = -1
+    var grammarFindingTime: Long = -1
+    var improvingSolutionTime: Long = -1
+    var buildProofTime: Long = -1
+    var cleanStructuralRulesTime: Long = -1
 
-    var SolutionCTime: Long = 0
-    var ProofBuildingCTime: Long = 0
-    var CleanStructuralRulesCTime:Long = 0
+    // From this point on, anything that involves modifying already
+    // declared variables are concerned with time measurement and
+    // logging. All the rest is the algorithm itself.
 
-    val p = try { withTimeout( timeout * 1000 ) {
+    val (proof, error) = try { withTimeout( timeout * 1000 ) {
+
       val endSequent = toSequent(ep)
       if (verbose) println("\nEnd sequent: " + endSequent)
     
-      // generate term set
-      val t1 = System.currentTimeMillis
+      /********** Term set Extraction **********/ 
       val termset = TermsExtraction(ep)
-      val t2 = System.currentTimeMillis
-      log += "," + (t2 - t1) + "," + termset.set.size // log tstime, tssize
+      
+      termsetExtractionTime = System.currentTimeMillis - time
+      time = System.currentTimeMillis
+      termsetSize = termset.set.size
       if (verbose) println( "Size of term set: " + termset.set.size )
 
-      // compute delta-table
-      phase = "dtg" // "delta-table generation"
-      val t3 = System.currentTimeMillis
+      /********** Delta Table Computation **********/
+      phase = "delta_table_computation"
+
+      val delta = manyQuantifiers match {
+	case true => new UnboundedVariableDelta()
+	case false => new OneVariableDelta()
+      }
       val eigenvariable = "α"
       val deltatable = new DeltaTable(termset.set, eigenvariable, delta)
-      val t4 = System.currentTimeMillis
 
-      // read off grammars from delta-table
-      phase = "dtr" // "delta-table readout"
+      deltaTableGenerationTime =  System.currentTimeMillis - time
+      time = System.currentTimeMillis
+
+      /********** Grammar finding **********/
+      phase = "grammar_finding"
+
       val gs = ComputeGrammars.findValidGrammars(termset.set, deltatable, eigenvariable)
       val grammars = gs.map{ case g => g.terms = termset; g }.sortWith((g1, g2) => g1.size < g2.size )
-      val t5 = System.currentTimeMillis
-      log += "," + (t4 - t3) + "," + (t5 - t4) // log dtgtime, dtrtime
 
+      // Adding up the generation of the delta-table so it is comparable with the other method.
+      grammarFindingTime =  deltaTableGenerationTime + System.currentTimeMillis - time
+      time = System.currentTimeMillis
       if (verbose) println( "\nNumber of grammars: " + grammars.length )
 
       if(grammars.length == 0) {
@@ -214,107 +249,234 @@ object CutIntroduction extends Logger {
           " The proof cannot be compressed using a cut with one universal quantifier.\n")
       }
 
-      // Compute the proofs for each of the smallest grammars
+      /********** Proof Construction **********/
       val smallest = grammars.head.size
       val smallestGrammars = grammars.filter(g => g.size == smallest)
 
+      minimalGrammarSize = smallest
+      numMinimalGrammars = smallestGrammars.length
       if (verbose) println( "Smallest grammar-size: " + smallest )
       if (verbose) println( "Number of smallest grammars: " + smallestGrammars.length )
 
-      log += "," + smallest + "," + smallestGrammars.length // mgsize, #mg
-
-      // Build a proof from each of the smallest grammars
-      def buildProof(grammar:Grammar) = {
+      improvingSolutionTime = 0
+      buildProofTime = 0
+      cleanStructuralRulesTime = 0
+      
+      val proofs = smallestGrammars.map { case grammar =>
         phase = "sol" // solving phase
-        val t1 = System.currentTimeMillis
+        time = System.currentTimeMillis
+
         val cutFormula0 = computeCanonicalSolution(endSequent, grammar)
         val ehs = new ExtendedHerbrandSequent(endSequent, grammar, cutFormula0)
-        val ehs1 = if ( useForgetfulPara )
-          MinimizeSolution.applyEq(ehs, prover)
-        else
-          MinimizeSolution(ehs, prover)
-        val t2 = System.currentTimeMillis
-        SolutionCTime += t2 - t1
+        val ehs1 = hasEquality match {
+	  case true => MinimizeSolution.applyEq(ehs, prover)
+	  case false => MinimizeSolution.apply(ehs, prover)
+	}
+
+        improvingSolutionTime += System.currentTimeMillis - time
+	time = System.currentTimeMillis
 
         phase = "prcons" // proof construction
-        val proof = buildProofWithCut(ehs1, prover)
-        val t3 = System.currentTimeMillis
-        ProofBuildingCTime += t3 - t2
 
-        val pruned_proof = CleanStructuralRules( proof.get )
-        val t4 = System.currentTimeMillis
-        CleanStructuralRulesCTime += t4 - t3
+        val proof = buildProofWithCut(ehs1, prover)
+        
+	buildProofTime += System.currentTimeMillis - time
+	time = System.currentTimeMillis
+
+        val pruned_proof = CleanStructuralRules (proof.get)
+        
+	cleanStructuralRulesTime += System.currentTimeMillis - time
 
         ( pruned_proof, ehs1, lcomp(cutFormula0), lcomp(ehs1.cutFormula) )
       }
 
-      val proofs = smallestGrammars.map(buildProof)
-
-      log += "," + SolutionCTime + "," + ProofBuildingCTime + "," + CleanStructuralRulesCTime // log sctime, pbctime, csrctime
-
       // Sort the list by size of proofs
       val sorted = proofs.sortWith((p1, p2) => rulesNumber(p1._1) < rulesNumber(p2._1))
-
       val smallestProof = sorted.head._1
       val ehs = sorted.head._2
-      val cansolc = sorted.head._3
-      val minsolc = sorted.head._4
 
+      canonicalSolutionSize = sorted.head._3
+      minimizedSolutionSize = sorted.head._4
+      rulesLKProofWithCut = rulesNumber (smallestProof)
+      quantRulesWithCut = quantRulesNumber (smallestProof)
       if (verbose) println("\nMinimized cut formula: " + ehs.cutFormula + "\n")
 
-      log += "," + cansolc + "," + minsolc + "," + rulesNumber( smallestProof ) + "," + quantRulesNumber( smallestProof ) // log #infc, #qinfc
-
-      Some( smallestProof )
+      (Some(smallestProof), None)
     } } catch {
       case e: TimeOutException =>
         status = phase + "_timeout"
-        None
+	(None, Some(e))
       case e: OutOfMemoryError =>
         status = "cutintro_out_of_memory"
-        None
+	(None, Some(e))
       case e: StackOverflowError =>
         status = "cutintro_stack_overflow"
-        None
+	(None, Some(e))
       case e: CutIntroUncompressibleException =>
         status = "cutintro_uncompressible"
-        None
+	(None, Some(e))
       case e: CutIntroEHSUnprovableException =>
         status = "cutintro_ehs_unprovable"
-        None
+	(None, Some(e))
       case e: Exception =>
         status = "cutintro_other_exception"
-        None
+	(None, Some(e))
     }
 
-    ( p, status, log )
+    val tuple = (rulesLKProof, 
+                 quantRules, 
+                 rulesLKProofWithCut, 
+                 quantRulesWithCut, 
+                 termsetSize, 
+                 minimalGrammarSize, 
+                 numMinimalGrammars,
+                 canonicalSolutionSize, 
+                 minimizedSolutionSize, 
+                 termsetExtractionTime, 
+                 deltaTableGenerationTime, 
+                 grammarFindingTime, 
+                 improvingSolutionTime, 
+                 buildProofTime, 
+                 cleanStructuralRulesTime)
+
+    (proof, status, tuple, error)
   }
 
+  private def execute(proof: LKProof, n: Int, timeout: Int, verbose: Boolean) :
+  (Option[List[FOLFormula]], String, LogTuple, Option[Throwable]) = {
 
-  /** Computes the canonical solution with multiple quantifiers from a generalized grammar.
+    val clean_proof = CleanStructuralRules(proof)
+    val num_rules = rulesNumber(clean_proof)
+    val ep = extractExpansionTrees(clean_proof)
+    val hasEquality = containsEqualityReasoning(clean_proof)
+    execute(ep, hasEquality, num_rules, n, timeout, verbose)
+  }
+
+  private def execute(ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Int, verbose: Boolean) : 
+  (Option[List[FOLFormula]], String, LogTuple, Option[Throwable]) = {
+    
+    val prover = hasEquality match {
+      case true => new EquationalProver()
+      case false => new DefaultProver()
+    }
+    val maxsatsolver = MaxSATSolver.QMaxSAT
+
+    var phase = "termex"
+    var time = System.currentTimeMillis
+
+    // The following information is returned (String, Tuple) by this method
+    var status = "ok"
+    
+    val rulesLKProof = num_lk_rules
+    val quantRules = quantRulesNumberET(ep)
+    var rulesLKProofWithCut = -1
+    var quantRulesWithCut = -1
+    var termsetSize = -1
+    var minimalGrammarSize = -1
+    var numMinimalGrammars = -1
+    var canonicalSolutionSize = -1
+    var minimizedSolutionSize = -1
+    var termsetExtractionTime: Long = -1
+    var deltaTableGenerationTime: Long = -1
+    var grammarFindingTime: Long = -1
+    var improvingSolutionTime: Long = -1
+    var buildProofTime: Long = -1
+    var cleanStructuralRulesTime: Long = -1
+
+    val (cut_formulas, error) = try { withTimeout( timeout * 1000) {
+        
+      val endSequent = toSequent(ep)
+      if (verbose) println("\nEnd sequent: " + endSequent)
+
+      /********** Terms Extraction **********/
+      val termset = TermsExtraction(ep)
+      
+      termsetExtractionTime = System.currentTimeMillis - time
+      time = System.currentTimeMillis
+      termsetSize = termset.set.size
+      if (verbose) println( "Size of term set: " + termset.set.size )
+
+      /********** Grammar finding **********/
+      val gs = TreeGrammarDecomposition.applyStat(termset.set, n, MCSMethod.MaxSAT, maxsatsolver)
+      var grammars = gs match {
+	case Some(grammar_list) => grammar_list.map { case g => g.terms = termset; g }
+        case None =>
+          throw new TreeGrammarDecompositionException("Unable to complete TreeGrammarDecomposition")
+      }
+
+      if (grammars.length == 0) {
+        throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
+      }
+
+      /********** Proof Construction **********/ // TODO
+      val smallest = grammars.head.size
+      val smallestGrammars = grammars.filter(g => g.size == smallest)
+
+      minimalGrammarSize = smallest
+      numMinimalGrammars = smallestGrammars.length
+      if (verbose) println( "Smallest grammar-size: " + smallest )
+      if (verbose) println( "Number of smallest grammars: " + smallestGrammars.length )
+      
+      phase = "computeCanonicalSolution"
+      val solutions = smallestGrammars.map(g => computeCanonicalSolution(endSequent, g))
+
+      (Some(solutions), None)
+    } } catch {
+      case e: TimeOutException =>
+        status = phase + "_timeout"
+        (None, Some(e))
+      case e: OutOfMemoryError =>
+        status = "cutintro_out_of_memory"
+        (None, Some(e))
+      case e: StackOverflowError =>
+        status = "cutintro_stack_overflow"
+        (None, Some(e))
+      case e: Exception =>
+        status = "cutintro_other_exception"
+        (None, Some(e))
+      case e: TreeGrammarDecompositionException =>
+        status = "tgd_failed"
+        (None, Some(e))
+      case e: CutIntroUncompressibleException =>
+        status = "cutintro_uncompressible"
+        (None, Some(e))
+      case e: Exception =>
+        status = "cutintro_other_exception"
+        (None, Some(e))
+    }
+    
+    val tuple = (rulesLKProof, 
+                 quantRules, 
+                 rulesLKProofWithCut, 
+                 quantRulesWithCut, 
+                 termsetSize, 
+                 minimalGrammarSize, 
+                 numMinimalGrammars,
+                 canonicalSolutionSize, 
+                 minimizedSolutionSize, 
+                 termsetExtractionTime, 
+                 deltaTableGenerationTime, 
+                 grammarFindingTime, 
+                 improvingSolutionTime, 
+                 buildProofTime, 
+                 cleanStructuralRulesTime)
+
+    (cut_formulas, status, tuple, error)
+  }
+
+  /** 
+    * Computes the canonical solution with multiple quantifiers from a generalized grammar.
     */
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
 
     val terms = g.terms
     val varName = "x"
 
-    trace("===============================================================")
-    trace("   g.u:\n")
-    trace(g.u.toString())
-    trace("===============================================================")
-    trace("g.eigenvariables: \n")
-    trace(g.eigenvariables.toString())
-    trace("===============================================================")
-    trace("    g.s:\n")
-    trace(g.s.toString())
-    trace("===============================================================")
-
     val xFormulas = g.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
       val freeVars = freeVariables(term)
 
       // Taking only the terms that contain alpha
       if( freeVars.intersect(g.eigenvariables).nonEmpty ) {
-        trace("      found terms with alphas!")
-        trace("      term: " + term)
         val set = terms.getTermTuple(term)
         val f = terms.getFormula(term)
 
@@ -325,24 +487,11 @@ object CutIntroduction extends Logger {
           val allEV = g.eigenvariables.zip(vars)
           val occurringEV = collectVariables(t).filter(isEigenvariable(_:FOLVar, g.eigenvariable)).distinct
 
-          trace("allEV: " + allEV)
-          trace("occurringEV: " + occurringEV)
-          trace("filteredEV: " + allEV.filter(e => occurringEV.contains(e._1)))
-
           val res = allEV.filter(e => occurringEV.contains(e._1)).foldLeft(t)((t,e) => Substitution(e._1, e._2).apply(t))
-
-          trace("result: " + res)
 
           //edge case: The current term is constant. In this case, we don't instantiate the variables inside, but leave it as is.
           if (collectVariables(t).filter(isEigenvariable(_:FOLVar, g.eigenvariable)).isEmpty) { t } else { res }
         })
-
-        trace("ComputeCanoicalSolutionG:")
-        trace("   f: " + f)
-        trace("   terms: " + set)
-        trace("   xterms: " + xterms)
-        trace("   eigenvariables: " + g.eigenvariables)
-        trace("---------------------------------------------")
 
         instantiateAll(f, xterms) :: acc
       }
@@ -361,7 +510,7 @@ object CutIntroduction extends Logger {
   def buildProofWithCut(ehs: ExtendedHerbrandSequent, prover: Prover) : Option[LKProof] = {
 
     val endSequent = ehs.endSequent
-    val cutFormula = sanitizeVars(ehs.cutFormula)
+    val cutFormula = ehs.cutFormula
     val grammar = ehs.grammar
     val terms = grammar.terms
     
@@ -370,15 +519,8 @@ object CutIntroduction extends Logger {
     //whole initial quantifier block instantiated to α_0,...,α_n-1.
     val alphas = ehs.grammar.eigenvariables
 
-
-    trace("grammar (u,S): ")
-    trace(ehs.grammar.u.toString())
-    trace(ehs.grammar.s.toString())
-    trace("alphas: " + alphas)
     //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
     val cutLeft = instantiateAll(cutFormula, alphas)
-
-    trace("cutLeft = " + cutLeft)
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
     val cutRight = grammar.s.toList.foldRight(List[FOLFormula]()) { case (t, acc) =>
@@ -388,17 +530,7 @@ object CutIntroduction extends Logger {
     //leftBranch and rightBranch correspond to the left and right branches of the proof in the middle of
     //p. 5; untilCut merges these together with a cut.
 
-    //trace( "calling solvePropositional" )
     //solvePropositional need only be called with the non-instantiated cutLeft (with the quantifier block in front)
-    trace("===FSEQUENT===")
-    trace("ehs.antecedent: " + ehs.antecedent)
-    trace("ehs.antecedent_alpha: " + ehs.antecedent_alpha)
-    trace("cutFormula: " + cutFormula)
-    trace("   instatiated with alphas: " + alphas)
-    trace("   resulting in cutLeft: " + cutLeft)
-    trace("ehs.succedent: " + ehs.succedent)
-    trace("ehs.succedent_alpha: " + ehs.succedent_alpha)
-    trace(FSequent(ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: (ehs.succedent ++ ehs.succedent_alpha)).toString())
 
     val seq = FSequent(ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))
 
@@ -407,13 +539,6 @@ object CutIntroduction extends Logger {
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
         val s1 = uPart(grammar.u.filter(t => freeVariables(t).intersect(grammar.eigenvariables).nonEmpty), proofLeft1, terms)
-
-        trace("=======================")
-        trace("s1:")
-        trace(s1.toString())
-        trace("=======================")
-        trace("CF: " + cutFormula)
-        trace("alphas: " + alphas)
 
         //Add sequents to all-quantify the cut formula in the right part of s1
         ForallRightBlock(s1, cutFormula, alphas)
@@ -425,7 +550,7 @@ object CutIntroduction extends Logger {
     val proofRight = prover.getLKProof(seq2)
     val rightBranch = proofRight match {
       case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
-      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + FSequent(cutRight ++ ehs.antecedent, ehs.succedent))
+      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + seq2)
     }
     //trace( "done calling solvePropositional" )
 
@@ -455,7 +580,7 @@ object CutIntroduction extends Logger {
   /** Proves the u-part of a grammar.
     *
     */
-  def uPart(us: List[types.U], ax: LKProof, terms: TermSet) : LKProof = {
+  private def uPart(us: List[types.U], ax: LKProof, terms: TermSet) : LKProof = {
     us.foldLeft(ax) {
       case (ax, term) => 
         //Get the arguments of a single u
@@ -502,7 +627,7 @@ object CutIntroduction extends Logger {
     * @return p, extended with ForallLeft- and ContractionLeft-rules,
     *         containing extactly one occurrence of the cut formula.
     */
-  def sPart(cf: FOLFormula, s: types.S, p: LKProof) : LKProof = {
+  private def sPart(cf: FOLFormula, s: types.S, p: LKProof) : LKProof = {
     var first = true
 
     s.toList.foldLeft(p) { case (p,t) =>
@@ -526,23 +651,9 @@ object CutIntroduction extends Logger {
       }
     }
   }
-
-  /**
-    * A quick sanitizing function which renames the variables of the cut formula
-    * from x_0,x_1,... to x,y,...
-    * Variables beyond x_5 are left unchanged.
-    */
-  def sanitizeVars(f: FOLFormula) = {
-    val sanitizedVars = List[(String,String)](("x","x_0"),("y","x_1"),("z","x_2"),("u","x_3"),("v","x_4"),("w","x_5")).map(
-      v => (FOLVar(v._1),FOLVar(v._2)) )
-
-    sanitizedVars.foldLeft(f){(f, v) => f match {
-      case AllVar(_, _) => replaceLeftmostBoundOccurenceOf(v._2, v._1,f)._2
-      case _ => f
-    }}
-  }
 }
 
+// TODO: move to prover package
 class DefaultProver extends Prover {
   def getLKProof( seq : FSequent ) : Option[LKProof] =
     new LKProver(cleanStructuralRules=false).getLKProof( seq )
@@ -555,156 +666,3 @@ class DefaultProver extends Prover {
   }
 }
 
-/** Cut introduction with cut formulas of the form [forall x1,...,xn] F.
-  */
-object NCutIntroduction extends Logger {
-
-  /** Performs cut introduction on an LK proof and returns
-    * a canonical Solution with n cuts if cut formulas can be found.
-    *
-    * @param proof The cut-free LK proof into which to introduce cuts.
-    * @param prover The prover to use for tautology checks.
-    * @return The canoncial Solution with cuts if cut introduction was successful and None otherwise.
-    *         The cause of failure will be printed on the console.
-    */
-  def apply(proof: LKProof, prover: Prover = new DefaultProver(), n: Int, maxsatsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[List[FOLFormula]] = apply( extractExpansionTrees( proof ), prover, n, maxsatsolver)
-
-  /** Performs cut introduction on an LK proof and returns
-    * a canonical Solution with n cuts if cut formulas can be found.
-    * Includes additional Stopwatch object for time measuring
-    *
-    * @param proof The cut-free LK proof into which to introduce cuts.
-    * @param prover The prover to use for tautology checks.
-    * @return The canoncial Solution with cuts if cut introduction was successful and None otherwise.
-    *         The cause of failure will be printed on the console.
-    */
-  def applyStat(proof: LKProof, prover: Prover = new DefaultProver(), n: Int, maxsatsolver: MaxSATSolver=MaxSATSolver.QMaxSAT, watch: Stopwatch, timeout: Int) : Option[List[FOLFormula]] = applyStat( extractExpansionTrees( proof ), prover, n, maxsatsolver, watch, timeout)
-
-  /**
-   * Performs cut introduction with a given number of maximum cuts (n),
-   * described in Hetzl,Eberhard [2014]
-   * @param ep the expansion sequent, extracted from a cut free proof
-   * @param prover the prover to use for tautology checks
-   * @param n maximum number of cuts
-   * @param maxsatsolver which MaxSATSolver to use
-   * @return canonical solution of at most n introduced cuts
-   */
-  def apply(ep: ExpansionSequent, prover: Prover, n: Int, maxsatsolver: MaxSATSolver) : Option[List[FOLFormula]] = {
-
-    val endSequent = toSequent(ep)
-    debug("\nEnd sequent: " + endSequent)
-
-    val termset = TermsExtraction(ep)
-    debug("Size of term set: " + termset.set.size)
-
-    var beginTime = System.currentTimeMillis
-
-    val grammars = TreeGrammarDecomposition(termset.set, n, MCSMethod.MaxSAT, maxsatsolver).map {
-      case g => g.terms = termset; g
-    }
-    //println( "\nNumber of grammars: " + grammars.length )
-
-
-    if (grammars.length == 0) {
-      debug("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
-      //throw new CutIntroUncompressibleException("\nNo grammars found." +
-      //  " The proof cannot be compressed using a cut with one universal quantifier block.\n")
-      return None
-    }
-
-    debug("   NCUTINTRO:")
-    debug("   grammars: " + grammars)
-
-    // constructing canonical solution
-    val solution = grammars.map(CutIntroduction.computeCanonicalSolution(endSequent, _))
-
-    debug("Cuts: "+solution.size)
-    debug("Solution: "+solution)
-    Some(solution)
-  }
-
-
-  /**
-   * Performs cut introduction with a given number of maximum cuts (n),
-   * described in Hetzl,Eberhard [2014] and returns additional statistical information
-   * @param ep the expansion sequent, extracted from a cut free proof
-   * @param prover the prover to use for tautology checks
-   * @param n maximum number of cuts
-   * @param maxsatsolver which MaxSATSolver to use
-   * @param watch stopwatch for measuring time
-   * @param timeout timeout in seconds
-   * @return (canonical solution of at most n introduced cuts, stopwatch)
-   */
-  def applyStat(ep: ExpansionSequent, prover: Prover, n: Int, maxsatsolver: MaxSATSolver, watch: Stopwatch, timeout: Int) : Option[List[FOLFormula]] = {
-
-    var phase = "termex" // used for knowing when a TimeOutException has been thrown, "term extraction"
-
-    val finalGrammars = try { withTimeout( timeout * 1000) {
-        val endSequent = toSequent(ep)
-        debug("\nEnd sequent: " + endSequent)
-
-        watch.start()
-        val termset = TermsExtraction(ep)
-        val termsetTime = watch.lap(phase)
-        debug("termex: time="+termsetTime + ", termsetsize=" + termset.set.size)
-        debug("Size of term set: " + termset.set.size)
-
-        val gs = TreeGrammarDecomposition.applyStat(termset.set, n, watch, MCSMethod.MaxSAT, maxsatsolver)
-        var grammars = List[Grammar]()
-        // if TGD successflly terminated
-        if (watch.errorStatus.toLowerCase == "ok") {
-          grammars = gs.get.map {
-            case g => g.terms = termset; g
-          }
-        }
-        // otherwise throw exception
-        else {
-          throw new TreeGrammarDecompositionException("Unable to complete TreeGrammarDecomposition")
-        }
-
-
-        if (grammars.length == 0) {
-          debug("ERROR CUT-INTRODUCTION: No grammars found. Cannot compress!")
-          throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
-          //return None
-        }
-
-        debug("   NCUTINTRO:")
-        debug("   grammars: " + grammars)
-
-        phase = "computeCanonicalSolution"
-
-        // constructing canonical solution
-        watch.start()
-        val solution = grammars.map(CutIntroduction.computeCanonicalSolution(endSequent, _))
-        watch.stop(phase)
-
-        debug("Cuts: " + solution.size)
-        debug("Solution: " + solution)
-        Some(solution)
-      } } catch {
-    case e: TimeOutException =>
-      watch.errorStatus = phase + "_timeout"
-      None
-    case e: OutOfMemoryError =>
-      watch.errorStatus = "ncutintro_out_of_memory"
-      None
-    case e: StackOverflowError =>
-      watch.errorStatus = "ncutintro_stack_overflow"
-      None
-    case e: Exception =>
-      watch.errorStatus = "ncutintro_other_exception"
-      None
-    case e: TreeGrammarDecompositionException =>
-      watch.errorStatus = "tgd_failed"
-      None
-    case e: CutIntroUncompressibleException =>
-      watch.errorStatus = "ncutintro_uncompressible"
-      None
-    case e: Exception =>
-      watch.errorStatus = "ncutintro_other_exception"
-      None
-    }
-    finalGrammars
-  }
-}
