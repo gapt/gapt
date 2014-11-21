@@ -1,8 +1,6 @@
 package at.logic.integration_tests
 
 import at.logic.algorithms.cutIntroduction._
-import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
-
 import at.logic.algorithms.lk._
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._

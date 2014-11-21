@@ -31,7 +31,6 @@ import at.logic.transformations.ceres.struct.StructCreators
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.utils.constraint.{Constraint, NoConstraint, ExactBound, UpperBound}
 
 import java.util.zip.GZIPInputStream
 import java.io.File.separator

@@ -84,7 +84,6 @@ import at.logic.transformations.herbrandExtraction.{extractExpansionTrees => ext
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.{CERES, CERESR2LK}
-import at.logic.utils.constraint.Constraint
 import at.logic.transformations.{ReductiveCutElim, herbrandExtraction}
 import at.logic.algorithms.lk.{rule_isomorphic => LKrule_isomorphic}
 import at.logic.algorithms.lksk.{rule_isomorphic => LKSKrule_isomorphic}
@@ -640,7 +639,9 @@ object help {
         |   unfoldProof: (String, Int) => LKProof
         |
         | Cut-Introduction:
-        |   cutIntro: (LKProof,Constraint[Int]) => Option[LKProof] - performs cut introduction with an arbitrary number quantifiers. The second argument can be "NoConstraint, ExactBound(n), UpperBound(n)"
+        |   cutIntro.one_cut_one_quantifier (LKProof) => LKProof - Introduces one cut with one quantifier to an LK proof.
+        |   cutIntro.one_cut_many_quantifiers (LKProof) => LKProof - Introduces one cut with an arbitrary number of quantifiers to an LKProof.
+        |   cutIntro.many_cuts_one_quantifier (LKProof) => List[FOLFormula] - Introduces many cuts with one quantifier each to an LKProof. Returns the cut-formulas.
         |   ncutIntro: (LKProof,Int,[MaxSATSolver]) => Option[List[FOLFormula]] - performs cut introduction for a maximum of n (Int) cuts. (optional: MaxSATSolver {QMaxSAT, ToySAT, ToySolver}")"
         |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
