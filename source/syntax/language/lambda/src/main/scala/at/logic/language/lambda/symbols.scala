@@ -54,7 +54,7 @@ object getRenaming {
 	})
 	val maxIndex = maxVariant match { 
 	  case VariantSymbol(_, i) => i 
-	  case StringSymbol(_) => -1
+	  case _ => -1
 	}
 	val newSym = VariantSymbol(name, Math.max(maxIndex, index) + 1)
         // Put back in the list to check if the renaming does not clash again.
