@@ -40,8 +40,27 @@ import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
 
 /*
+ * Each log line is a tuple consisting in the following values in this order:
+ * 
+ * name of the proof or file
+ * description of the status of the operation
+ * number of rules in the LK proof
+ * number of quantifier rules in the LK proof
+ * number of rules in the proof with cut
+ * number of quantifier rules in the proof with cut
+ * size of the term-set extracted
+ * size of the minimal grammar found
+ * number of minimal grammars
+ * size of the canonical solution (logical complexity)
+ * size of the minimized solution (logical complexity)
+ * time for extracting the term set
+ * time for generating the delta-table (when applicable)
+ * time for finding the grammar (this includes the the time for generating the delta-table)
+ * time for improving the solution
+ * time for building the proof
+ * time for cleaning the structural rules of the final proof
+ * -------------
  * For general information about the logger, see the 'Guidelines'-page of the developer wiki.
- *
  * For using the abover loggers, add (for example) the following to your log4j.xml:
  * 
  * <appender name="CutIntroDataLogFile" class="org.apache.log4j.FileAppender">
@@ -94,38 +113,34 @@ object testCutIntro {
    * All calls to cut-introduction and logging are done exclusively here
    *
    */
-  def compressLKProof (proof: LKProof, timeout: Int, method: Int, name: String, status: String) = {
-    val clean_proof = CleanStructuralRules(proof)
-    compressExpansionProof (extractExpansionTrees(clean_proof), containsEqualityReasoning(clean_proof), timeout, method, name, status)
+  def compressLKProof (proof: LKProof, timeout: Int, method: Int, name: String, status: String) =
+  status match {
+    case "ok" =>
+      val (cut_intro_status, info_tuple) = method match {
+        case 0 => CutIntroduction.one_cut_one_quantifier_stat (proof)
+        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (proof)
+        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (proof)
+      }
+      val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
+      CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
+    case _ =>
+      // Failed already during parsing, logging
+      CutIntroDataLogger.trace(name + "," + status + ", , , , , , , , , , , , , , , " )
   }
 
   def compressExpansionProof (ep: ExpansionSequent, hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = 
   status match {
     case "ok" =>
-      // TODO: this reasoning can be done in cut introduction
-      val prover = hasEquality match {
-        case true => new EquationalProver()
-        case false => new DefaultProver()
-      }
-      val useParamodulation = hasEquality
- 
       val (cut_intro_status, info_tuple) = method match {
-        // 1 cut, 1 quantifier
-        case 0 =>
-          CutIntroduction.applyStat( ep, new Deltas.OneVariableDelta(), prover, timeout, useParamodulation, false )
-        // 1 cut, n quantifiers
-        case 1 =>
-          CutIntroduction.applyStat( ep, new Deltas.UnboundedVariableDelta(), prover, timeout, useParamodulation, false )
-        // n cuts, 1 quantifier
-        case 2 =>
-          NCutIntroduction.applyStat( ep, new Deltas.OneVariableDelta(), prover, timeout, useParamodulation, false )
+        case 0 => CutIntroduction.one_cut_one_quantifier_stat (ep, hasEquality)
+        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (ep, hasEquality)
+        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (ep, hasEquality)
       }
-      
-      val log_string = info_tuple.foldLeft("") ( (acc, i: Int) => acc + "," + i)  
-      CutIntroDataLogger.trace(name + "," + "," + cut_intro_status + log_string )
+      val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
+      CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
     case _ =>
       // Failed already during parsing, logging
-      CutIntroDataLogger.trace(name + "," + "," + status + ", , , , , , , , , , , , , , , " )
+      CutIntroDataLogger.trace(name + "," + status + ", , , , , , , , , , , , , , , " )
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/
