@@ -608,25 +608,6 @@ object CutIntroduction {
     }
   }
 
-  /** Given a proof in which the cut formula occurs in
-    * fully instantiated form (with the terms s from a grammar),
-    * this method extends it by universally quantifying those terms
-    * to get the cut formula cf back.
-    *
-    * Example: if f(a,b) occurs in p, the cut formula is [forall x,y] f(x,y)
-    * and the terms are [[ a],[b]],
-    * then sPart extends the proof with two ForallLeft-rules, universally
-    * quantifying first a, then b, creating the cut formula in the bottom.
-    * If there are multiple terms in p, the cut formula is introduced multiple
-    * times and merged into only one occurrence via contraction.
-    *
-    * @param cf The cut formula with a quantifier block.
-    * @param s The s-Part of a grammar, where each element corresponds
-    *        to the values of one variable.
-    * @param p The proof to be extended with ForallLeft-rules below.
-    * @return p, extended with ForallLeft- and ContractionLeft-rules,
-    *         containing extactly one occurrence of the cut formula.
-    */
   private def sPart(cf: FOLFormula, s: types.S, p: LKProof) : LKProof = {
     var first = true
 
