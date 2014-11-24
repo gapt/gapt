@@ -113,13 +113,13 @@ object testCutIntro {
    * All calls to cut-introduction and logging are done exclusively here
    *
    */
-  def compressLKProof (proof: LKProof, timeout: Int, method: Int, name: String, status: String) =
+  def compressLKProof (proof: Option[LKProof], timeout: Int, method: Int, name: String, status: String) =
   status match {
     case "ok" =>
       val (cut_intro_status, info_tuple) = method match {
-        case 0 => CutIntroduction.one_cut_one_quantifier_stat (proof)
-        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (proof)
-        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (proof)
+        case 0 => CutIntroduction.one_cut_one_quantifier_stat (proof.get)
+        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (proof.get)
+        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (proof.get)
       }
       val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
       CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
@@ -128,13 +128,13 @@ object testCutIntro {
       CutIntroDataLogger.trace(name + "," + status + ", , , , , , , , , , , , , , , " )
   }
 
-  def compressExpansionProof (ep: ExpansionSequent, hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = 
+  def compressExpansionProof (ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = 
   status match {
     case "ok" =>
       val (cut_intro_status, info_tuple) = method match {
-        case 0 => CutIntroduction.one_cut_one_quantifier_stat (ep, hasEquality)
-        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (ep, hasEquality)
-        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (ep, hasEquality)
+        case 0 => CutIntroduction.one_cut_one_quantifier_stat (ep.get, hasEquality)
+        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (ep.get, hasEquality)
+        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (ep.get, hasEquality)
       }
       val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
       CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
@@ -254,11 +254,7 @@ object testCutIntro {
           None
       }
 
-      proof match {
-        case Some(p) =>
-	  compressLKProof (p, timeout, method, fn, status)
-        case None => ()
-      }
+      compressLKProof (proof, timeout, method, fn, status)
     }
   }
 
@@ -282,14 +278,14 @@ object testCutIntro {
   def compressVeriTProof (str: String, timeout: Int, method: Int) {
     var status = "ok"
 
-    val opt_expproof = try { withTimeout( timeout * 1000 ) {
-      val o_ep = loadVeriTProof (str)
+    val expproof = try { withTimeout( timeout * 1000 ) {
+      val ep = loadVeriTProof (str)
 
-      if ( o_ep.isEmpty ) {
+      if ( ep.isEmpty ) {
         status = "parsing_no_proof_found"
       }
 
-      o_ep
+      ep
     } } catch {
       case e: TimeOutException =>
         status = "parsing_timeout"
@@ -305,13 +301,8 @@ object testCutIntro {
         None
     }
 
-    opt_expproof match {
-      case Some(ep) =>
-	// VeriT proofs have the equality axioms as formulas in the end-sequent
-        compressExpansionProof (ep, false, timeout, method, str, status)
-      case None => ()
-    }
-
+    // VeriT proofs have the equality axioms as formulas in the end-sequent
+    compressExpansionProof (expproof, false, timeout, method, str, status)
   }
 
   /***************************** Proof Sequences ******************************/
@@ -320,47 +311,47 @@ object testCutIntro {
 
     for ( i <- 1 to 15 ) {
       val pn = "LinearExampleProof(" + i + ")"
-      compressLKProof (LinearExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (LinearExampleProof (i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 16 ) {
       val pn = "SquareDiagonalExampleProof(" + i + ")"
-      compressLKProof (SquareDiagonalExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (SquareDiagonalExampleProof (i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 12 ) {
       val pn = "SquareEdgesExampleProof(" + i + ")"
-      compressLKProof (SquareEdgesExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (SquareEdgesExampleProof (i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 16 ) {
       val pn = "SquareEdges2DimExampleProof(" + i + ")"
-      compressLKProof (SquareEdges2DimExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (SquareEdges2DimExampleProof(i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 15 ) {
       val pn = "LinearEqExampleProof(" + i + ")"
-      compressLKProof (LinearEqExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (LinearEqExampleProof(i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 8 ) {
       val pn = "SumOfOnesF2ExampleProof(" + i + ")"
-      compressLKProof (SumOfOnesF2ExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (SumOfOnesF2ExampleProof(i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 8 ) {
       val pn = "SumOfOnesFExampleProof(" + i + ")"
-      compressLKProof (SumOfOnesFExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (SumOfOnesFExampleProof(i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 10 ) {
       val pn = "SumOfOnesExampleProof(" + i + ")"
-      compressLKProof (SumOfOnesExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (SumOfOnesExampleProof(i)), timeout, method, pn, "ok")
     }
 
     for ( i <- 1 to 4 ) {
       val pn = "UniformAssociativity3ExampleProof(" + i + ")"
-      compressLKProof (UniformAssociativity3ExampleProof( i ), timeout, method, pn, "ok")
+      compressLKProof (Some (UniformAssociativity3ExampleProof(i)), timeout, method, pn, "ok")
     }
   }
 
