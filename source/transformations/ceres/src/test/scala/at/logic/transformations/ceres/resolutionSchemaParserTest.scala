@@ -16,7 +16,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
   sequential
   "resolutionSchemaParserTest" should {
     "should parse correctly the resolution schema in resSchema1.rs" in {
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema1.rs"))
       ParseResSchema(s)
       val k = IntVar("k")
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Succ(IntZero()))
@@ -36,7 +36,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
     }
 
     "should parse correctly the resolution schema in resSchema_sEXP.rs" in {
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema_sEXP.rs"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema_sEXP.rs"))
       ParseResSchema(s)
       val k = IntVar("k")
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Succ(IntZero()))
@@ -51,7 +51,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 
 
     "should parse correctly the resolution schema in resSchema2.rs" in {
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema2.rs"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema2.rs"))
       ParseResSchema(s)
       val k = IntVar("k")
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Succ(IntZero()))
@@ -70,7 +70,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
     }
 
     "should parse correctly the resolution schema in test.rs" in {
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test.rs"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("test.rs"))
       ParseResSchema(s)
 
       val k = IntVar("k")

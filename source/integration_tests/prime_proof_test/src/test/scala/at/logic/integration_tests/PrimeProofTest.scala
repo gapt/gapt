@@ -69,7 +69,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
   "The system" should {
 //    "parse correctly the second-order prime proof" in {
-//      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime2.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+//      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("prime2.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
 //      pdb.proofs.size must beEqualTo(1)
 //      val proof = pdb.proofs.head
 //      printStats( proof )
@@ -153,7 +153,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
     def prime1(n: Int, refute: Boolean) = {
       checkForProverOrSkip
 
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "prime1-" + n + ".xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("prime1-" + n + ".xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
@@ -217,7 +217,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
     def euclid(n: Int) = {
       checkForProverOrSkip
 
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "euclid-" + n + ".xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("euclid-" + n + ".xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 

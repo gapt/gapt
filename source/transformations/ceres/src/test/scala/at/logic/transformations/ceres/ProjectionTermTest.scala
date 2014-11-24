@@ -9,6 +9,7 @@ import at.logic.calculi.slk.{SchemaProof, SchemaProofDB}
 import at.logic.language.schema._
 import at.logic.parsing.shlk_parsing.{SHLK, sFOParser}
 import at.logic.utils.ds.trees.BinaryTree
+import at.logic.utils.testing.ClasspathFileCopier
 import clauseSchema.ParseResSchema._
 import clauseSchema._
 import java.io.File.separator
@@ -20,7 +21,7 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class ProjectionTermTest extends SpecificationWithJUnit {
+class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier {
   implicit val factory = defaultFormulaOccurrenceFactory
 
   sequential
@@ -64,7 +65,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       val root = CutRule(orl1, ax3, A1)
 
 
-      val str = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
+      val str = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("ceres-adder.lks"))
       val proof_name = "psi"
 
 
@@ -83,8 +84,8 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       skipped("Class cast exception")
 
       SchemaProofDB.clear
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
-      val res = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sEXP.lks"))
+      val res = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema1.rs"))
       val map = sFOParser.parseProof(s)
       ParseResSchema(res)
       val proof_name = "\\psi"
@@ -118,7 +119,7 @@ class ProjectionTermTest extends SpecificationWithJUnit {
       skipped("Class cast exception")
 
       SchemaProofDB.clear
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sINDauto.lks"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sINDauto.lks"))
       val map = sFOParser.parseProof(s)
       val proof_name = "\\sigma"
       val p1 = map.get(proof_name).get._2.get("root").get

@@ -38,7 +38,7 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
           val f1 = at.logic.language.schema.And(A0, BigAnd(i,Ai,IntZero(),Succ(i)))
           val ax11 = Axiom(A0::Nil, A0::Nil)
 
-          val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
+          val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("shlk-adder.lks"))
 
           val map = SHLK.parseProof(s)
 

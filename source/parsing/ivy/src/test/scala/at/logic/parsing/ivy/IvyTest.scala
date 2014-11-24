@@ -1,5 +1,6 @@
 package at.logic.parsing.ivy
 
+import at.logic.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
@@ -12,7 +13,7 @@ import lisp.{SExpressionParser}
  * Test for the Ivy interface.
  */
 @RunWith(classOf[JUnitRunner])
-class IvyTest extends SpecificationWithJUnit {
+class IvyTest extends SpecificationWithJUnit with ClasspathFileCopier {
   def dumpreader[T](r:Reader[T]) = {
     var reader = r
     println("=== dumping reader! ===")
@@ -250,8 +251,7 @@ class IvyTest extends SpecificationWithJUnit {
 
 
     " parse the test file simple.ivy " in {
-      try {
-        val result = SExpressionParser("target" + separator + "test-classes" + separator +"simple.ivy")
+        val result = SExpressionParser(tempCopyOfClasspathFile("simple.ivy"))
         result must not beEmpty
         val proof = result.head
         proof match {
@@ -268,19 +268,11 @@ class IvyTest extends SpecificationWithJUnit {
 //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
             "The proof in simple.ivy must have 9 inferences" must beEqualTo("failed")
         }
-        (true) must beEqualTo(true)
-      } catch {
-        case e:Exception =>
-        //debug("Exception parsing simple.ivy: "+e.getMessage)
-        "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
-          e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
-
-      }
+        ok
     }
 
     " parse the test file instantiations.ivy " in {
-      try {
-        val result = SExpressionParser("target" + separator + "test-classes" + separator +"instantiations.ivy")
+        val result = SExpressionParser(tempCopyOfClasspathFile("instantiations.ivy"))
         result must not beEmpty
         val proof = result.head
         proof match {
@@ -301,20 +293,11 @@ class IvyTest extends SpecificationWithJUnit {
             //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
             "The proof in instantiations.ivy must have 9 inferences" must beEqualTo("failed")
         }
-        (true) must beEqualTo(true)
-
-      } catch {
-        case e:Exception =>
-          //debug("Exception parsing instantiations.ivy: "+e.getMessage)
-          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
-            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
-
-      }
+        ok
     }
 
     " parse the test file flip.ivy " in {
-      try {
-        val result = SExpressionParser("target" + separator + "test-classes" + separator +"flip.ivy")
+        val result = SExpressionParser(tempCopyOfClasspathFile("flip.ivy"))
         result must not beEmpty
         val proof = result.head
         proof match {
@@ -333,22 +316,13 @@ class IvyTest extends SpecificationWithJUnit {
           case _ =>
             "The proof in flip.ivy must be a nonempty list" must beEqualTo("failed")
         }
-
-        "flip test passed" must beEqualTo("flip test passed")
-      } catch {
-        case e:Exception =>
-          //debug("Exception parsing simple.ivy: "+e.getMessage)
-          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
-            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
-
-      }
+        ok
     }
 
 
 
     " parse the test file resulution.ivy " in {
-      try {
-        val result = SExpressionParser("target" + separator + "test-classes" + separator +"resolution.ivy")
+        val result = SExpressionParser(tempCopyOfClasspathFile("resolution.ivy"))
         result must not beEmpty
         val proof = result.head
         proof match {
@@ -360,21 +334,12 @@ class IvyTest extends SpecificationWithJUnit {
             //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
             "The proof in resolution.ivy must have 9 inferences" must beEqualTo("failed")
         }
-        (true) must beEqualTo(true)
-
-      } catch {
-        case e:Exception =>
-          //debug("Exception parsing simple.ivy: "+e.getMessage)
-          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
-            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
-
-      }
+        ok
     }
 
 
     " parse the test files factor.ivy and factor2.ivy " in {
-      try {
-        val result = SExpressionParser("target" + separator + "test-classes" + separator +"factor.ivy")
+        val result = SExpressionParser(tempCopyOfClasspathFile("factor.ivy"))
         result must not beEmpty
         val proof = result.head
         proof match {
@@ -386,7 +351,7 @@ class IvyTest extends SpecificationWithJUnit {
             "The proof in factor.ivy must have some inferences" must beEqualTo("failed")
         }
 
-        val result2 = SExpressionParser("target" + separator + "test-classes" + separator +"factor2.ivy")
+        val result2 = SExpressionParser(tempCopyOfClasspathFile("factor2.ivy"))
         result2 must not beEmpty
         val proof2 = result2.head
         proof2 match {
@@ -397,20 +362,12 @@ class IvyTest extends SpecificationWithJUnit {
           case _ =>
             "The proof in factor.ivy must have some inferences" must beEqualTo("failed")
         }
-        (true) must beEqualTo(true)
-      } catch {
-        case e:Exception =>
-          //debug("Exception parsing factor(2).ivy: "+e.getMessage)
-          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + "\n"+
-            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
-
-      }
+        ok
     }
 
 
     " parse the test file manyliterals.ivy " in {
-      try {
-        val result = SExpressionParser("target" + separator + "test-classes" + separator +"manyliterals.ivy")
+        val result = SExpressionParser(tempCopyOfClasspathFile("manyliterals.ivy"))
         result must not beEmpty
         val proof = result.head
         proof match {
@@ -422,34 +379,17 @@ class IvyTest extends SpecificationWithJUnit {
             //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
             "The proof in manyliterals.ivy must have some inferences" must beEqualTo("failed")
         }
-        (true) must beEqualTo(true)
-
-      } catch {
-        case e:Exception =>
-          //debug("Exception parsing simple.ivy: "+e.getMessage)
-          "" must beEqualTo("Exception occurred during proof parsing! "+e.getMessage + " || "+
-            e.getStackTrace().toList.foldLeft("")((str:String, el : StackTraceElement) => str + "\n" + el.toString)  )
-
-      }
+        ok
     }
 
     " parse the test file simple2.ivy " in {
-      try {
-        val result = SExpressionParser("target" + separator + "test-classes" + separator +"simple2.ivy")
-        true must beEqualTo(true)
-      } catch {
-        case e:Exception =>
-          //debug("Exception parsing simple.ivy: "+e.getMessage)
-          true must beEqualTo(false)
-
-      }
+        val result = SExpressionParser(tempCopyOfClasspathFile("simple2.ivy"))
+        ok
     }
   }
 
   " parse the test file prime1-0sk.ivy (clause set of the 0 instance of the prime proof) " in {
-    //skipped("paramodulation still has problems")
-    try {
-      val result = SExpressionParser("target" + separator + "test-classes" + separator +"prime1-0sk.ivy")
+      val result = SExpressionParser(tempCopyOfClasspathFile("prime1-0sk.ivy"))
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -461,20 +401,11 @@ class IvyTest extends SpecificationWithJUnit {
           //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
           "The proof in prime1-0sk.ivy must have some inferences" must beEqualTo("failed")
       }
-      (true) must beEqualTo(true)
-    } catch {
-      case e:Exception =>
-        //debug("Exception parsing prime1-0sk.ivy: "+e.getMessage)
-        //debug("Stacktrace:"+e.getStackTraceString)
-        true must beEqualTo(false)
-
-    }
+      ok
   }
 
   " parse the test file GRA014+1.ivy " in {
-    //skipped("out of memory")
-    try {
-      val result = SExpressionParser("target" + separator + "test-classes" + separator +"GRA014+1.ivy")
+      val result = SExpressionParser(tempCopyOfClasspathFile("GRA014+1.ivy"))
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -486,21 +417,11 @@ class IvyTest extends SpecificationWithJUnit {
           //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
           "The proof in manyliterals.ivy must have some inferences" must beEqualTo("failed")
       }
-      (true) must beEqualTo(true)
-
-    } catch {
-      case e:Exception =>
-        //debug("Exception parsing GRA014+1.ivy: "+e.getMessage)
-        //debug("Stacktrace:"+e.getStackTraceString)
-        true must beEqualTo(false)
-
-    }
+      ok
   }
 
   " parse the test file GEO037-2.ivy " in {
-    //skipped("out of memory")
-    try {
-      val result = SExpressionParser("target" + separator + "test-classes" + separator +"GEO037-2.ivy")
+      val result = SExpressionParser(tempCopyOfClasspathFile("GEO037-2.ivy"))
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -512,21 +433,11 @@ class IvyTest extends SpecificationWithJUnit {
           //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
           "The proof in GEO037-2.ivy must have some inferences" must beEqualTo("failed")
       }
-      (true) must beEqualTo(true)
-
-    } catch {
-      case e:Exception =>
-        //debug("Exception parsing GEO037-2.ivy: "+e.getMessage)
-        //debug("Stacktrace:"+e.getStackTraceString)
-        true must beEqualTo(false)
-
-    }
+      ok
   }
 
   " parse the test file issue221.ivy " in {
-    //skipped("paramodulation still has problems")
-    try {
-      val result = SExpressionParser("target" + separator + "test-classes" + separator +"issue221.ivy")
+      val result = SExpressionParser(tempCopyOfClasspathFile("issue221.ivy"))
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -538,14 +449,7 @@ class IvyTest extends SpecificationWithJUnit {
           //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
           "The proof in issue221.ivy must have some inferences" must beEqualTo("failed")
       }
-      (true) must beEqualTo(true)
-    } catch {
-      case e:Exception =>
-        //debug("Exception parsing issue221.ivy: "+e.getMessage)
-        //debug("Stacktrace:"+e.getStackTraceString)
-        true must beEqualTo(false)
-
-    }
+      ok
   }
 
 }

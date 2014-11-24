@@ -36,8 +36,8 @@ class acnfTest extends SpecificationWithJUnit {
     "should create correctly the ACNF for journal_example.lks" in {
       skipped("Error at: at.logic.transformations.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)")
 
-      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
-      val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
+      val s1 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("ceres-journal_example.lks"))
+      val s2 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema1.rs"))
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
       val p = ACNF("\\varphi", "\\rho_1", 2)
@@ -48,8 +48,8 @@ class acnfTest extends SpecificationWithJUnit {
 //
 //    "should create correctly the ACNF for journal_example.lks" in {
 //      //println(Console.BLUE+"\n\n\n\n------- ACNF for the journal example instance = 0 ------- \n\n"+Console.RESET)
-//      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
-//      val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema1.rs"))
+//      val s1 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("ceres-journal_example.lks"))
+//      val s2 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema1.rs"))
 //      val map = sFOParser.parseProof(s1)
 //      ParseResSchema(s2)
 //      val p = ACNF("\\varphi", "\\rho_1", 0)
@@ -61,8 +61,8 @@ class acnfTest extends SpecificationWithJUnit {
     "should create correctly the ACNF for sEXP.lks" in {
       skipped("Error at: at.logic.transformations.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)")
 
-      val s1 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
-      val s2 = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "resSchema_sEXP.rs"))
+      val s1 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sEXP.lks"))
+      val s2 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema_sEXP.rs"))
       val map = sFOParser.parseProof(s1)
       ParseResSchema(s2)
       val p = ACNF("\\psi", "\\rho_1", 1)

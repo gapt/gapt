@@ -36,6 +36,7 @@ import java.util.zip.GZIPInputStream
 import java.io.File.separator
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import at.logic.calculi.occurrences._
+import at.logic.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
 import org.slf4j.LoggerFactory
 import org.specs2.execute.Success
@@ -43,7 +44,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class MiscTest extends SpecificationWithJUnit {
+class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
   private val logger = LoggerFactory.getLogger("MiscTestLogger")
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
@@ -73,7 +74,7 @@ class MiscTest extends SpecificationWithJUnit {
   "The system" should {
     /*
 //    "parse, skolemize, extract clause set for a simple induction proof" in {
-//      val proofs = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "simple_ind.xml"))) with XMLProofDatabaseParser)..getProofDatabase()
+//      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("simple_ind.xml"))) with XMLProofDatabaseParser)..getProofDatabase()
 //      proofs.size must beEqualTo(1)
 //      val proof = proofs.first
 //      val proof_sk = LKtoLKskc( proof )
@@ -95,7 +96,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a simple proof" in {
-      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
@@ -105,7 +106,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a proof with a simple definition" in {
-      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
@@ -115,7 +116,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "skolemize a proof with a complex definition" in {
-      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
@@ -125,7 +126,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "extract projections and clause set from a skolemized proof" in {
-      val proofdb = (new XMLReader(new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
@@ -188,8 +189,7 @@ class MiscTest extends SpecificationWithJUnit {
       if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
 
       for (i <- List(0,1,3)) { // Tests 2 and 4 take comparatively long.
-        val testfilename = "target" + separator + "test-classes" + separator + "test" + i + ".verit"
-        val p = VeriTParser.getExpansionProof(testfilename).get
+        val p = VeriTParser.getExpansionProof(tempCopyOfClasspathFile(s"test${i}.verit")).get
         val seq = ETtoDeep(p)
 
         /*
@@ -231,8 +231,7 @@ class MiscTest extends SpecificationWithJUnit {
     }
 
     "Extract expansion tree from tape proof" in {
-      val testFilePath = "target" + separator + "test-classes" + separator + "tape3.llk"
-      val tokens = HybridLatexParser.parseFile(testFilePath)
+      val tokens = HybridLatexParser.parseFile(tempCopyOfClasspathFile("tape3.llk"))
       val db = HybridLatexParser.createLKProof(tokens)
       // I have no idea why, but this makes the code get the correct proof
       val proofs = db.proofs.filter(_._1.toString == "TAPEPROOF")

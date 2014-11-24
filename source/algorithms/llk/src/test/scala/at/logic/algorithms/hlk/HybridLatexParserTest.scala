@@ -1,5 +1,6 @@
 package at.logic.algorithms.hlk
 
+import at.logic.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
@@ -23,7 +24,7 @@ import at.logic.language.lambda.App
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(classOf[JUnitRunner])
-class HybridLatexParserTest extends SpecificationWithJUnit {
+class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCopier {
   val p1 =
     """\AX{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
       |\AX{ NOCC(h_1,\alpha,\sigma)}{NOCC(h_1,\alpha,\sigma)}
@@ -92,14 +93,8 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
     }
 
     "accept the proof outline with the parse interface" in {
-      try {
         val r = HybridLatexParser.parse(p1)
         ok
-      } catch {
-        case e:Exception =>
-        ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
-      }
-      ok
     }
 
     "correctly infer replacement terms in equalities" in {
@@ -130,61 +125,37 @@ class HybridLatexParserTest extends SpecificationWithJUnit {
 
 
     "load the simple example from file and parse it" in {
-      try {
-        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "simple.llk")
+        val r = HybridLatexParser.parseFile(tempCopyOfClasspathFile("simple.llk"))
         val p = HybridLatexParser.createLKProof(r)
         //println(p)
 
         ok
-      } catch {
-        case e:Exception =>
-          ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
-      }
-      ok
     }
 
 
     "load the commutativity of + proof from file and parse it" in {
-      try {
-        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "komm.llk")
+        val r = HybridLatexParser.parseFile(tempCopyOfClasspathFile("komm.llk"))
         val p = HybridLatexParser.createLKProof(r)
         (p.proof("THEPROOF")) must not throwAn() //exception
 
         ok
-      } catch {
-        case e:Exception =>
-          ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
-      }
-      ok
     }
 
     "load the 3-2 pigeon hole example from file and parse it" in {
-      try {
-        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "pigeon32.llk")
+        val r = HybridLatexParser.parseFile(tempCopyOfClasspathFile("pigeon32.llk"))
         val p = HybridLatexParser.createLKProof(r)
         (p.proof("PROOF")) must not throwAn() //exception
 
         ok
-      } catch {
-        case e:Exception =>
-          ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
-      }
-      ok
     }
 
     "load the tape3 proof from file" in {
-      try {
-        val r = HybridLatexParser.parseFile("target" + separator + "test-classes" + separator + "tape3.llk")
+        val r = HybridLatexParser.parseFile(tempCopyOfClasspathFile("tape3.llk"))
         val p = HybridLatexParser.createLKProof(r)
         p.proofs.length must be_>(0)
         p.Definitions.toList.length must be_>(0)
         p.axioms.length must be_>(0)
         ok
-      } catch {
-        case e:Exception =>
-          ko("Parsing error: "+e.getMessage + " stacktrace: "+e.getStackTraceString)
-      }
-      ok
     }
 
 

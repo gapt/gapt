@@ -48,7 +48,7 @@ class TapeTest extends SpecificationWithJUnit {
   sequential
   "The system" should {
     "parse correctly the tape proof" in {
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
@@ -67,7 +67,7 @@ class TapeTest extends SpecificationWithJUnit {
     "parse, skolemize and extract the profile of the tape proof" in {
       checkForProverOrSkip
 
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
@@ -112,7 +112,7 @@ class TapeTest extends SpecificationWithJUnit {
       checkForProverOrSkip
       skipped("Infinite loop??")
 
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
 
@@ -133,7 +133,7 @@ class TapeTest extends SpecificationWithJUnit {
     "create an acnf of the tape proof via ground proof" in {
       checkForProverOrSkip
       //get the proof
-      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("the-proof"))))
       val (foltape,_) = map_proof(elp, convertHolToFol.apply)
 
@@ -158,7 +158,7 @@ class TapeTest extends SpecificationWithJUnit {
     "create an acnf of the tape proof via robinson2lk" in {
       checkForProverOrSkip
       //get the proof
-      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("tape-in.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
       val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("the-proof"))))
       val (foltape,_) = map_proof(elp, convertHolToFol.apply)
 

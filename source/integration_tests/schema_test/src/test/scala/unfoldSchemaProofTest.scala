@@ -18,7 +18,7 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
     "UnfoldSchemaProofTest" should {
       "unfold the adder.slk" in {
         val zero = IntZero(); val one = Succ(IntZero()); val two = Succ(Succ(IntZero())); val three = Succ(Succ(Succ(IntZero())))
-        val str = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "adder.lks"))
+        val str = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("schema-adder.lks"))
         val map = SHLK.parseProof(str)
         val n = IntVar("n");val n1 = Succ(n);val n2 = Succ(n1);val n3 = Succ(n2);
         val k = IntVar("k") ; val i = IntVar("i")

@@ -17,13 +17,14 @@ import at.logic.transformations.ceres.struct.StructCreators
 
 import at.logic.transformations.ceres.{ceres_omega, CERES, CERESR2LK}
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.utils.testing.ClasspathFileCopier
 
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class nTapeTest extends SpecificationWithJUnit {
+class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
   val box = List()
   def checkForProverOrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
 
@@ -31,7 +32,7 @@ class nTapeTest extends SpecificationWithJUnit {
     "extract a struct from the preprocessed proof" in {
       checkForProverOrSkip
 
-      val tokens = HybridLatexParser.parseFile("target" + File.separator + "test-classes" + File.separator + "tape3.llk")
+      val tokens = HybridLatexParser.parseFile(tempCopyOfClasspathFile("tape3.llk"))
       val pdb = HybridLatexParser.createLKProof(tokens)
       val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("TAPEPROOF"))))
       val selp = LKtoLKskc(elp)

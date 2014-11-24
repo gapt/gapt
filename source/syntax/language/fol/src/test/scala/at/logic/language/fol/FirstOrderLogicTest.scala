@@ -16,15 +16,8 @@ class FirstOrderLogicTest extends SpecificationWithJUnit {
     "construct correctly an atom formula P(x,f(y),c)" in {
       val List( p, x,y,f,c ) = List("P","x","y","f","c")
       val Pc = FOLLambdaConst(p, (Ti -> (Ti -> (Ti -> To))) )
-      try {
       Atom( p, FOLVar(x)::Function(f,FOLVar(y)::Nil)::FOLConst(c)::Nil ) must beLike {
         case FOLApp( FOLApp( FOLApp( Pc, FOLVar(x) ), FOLApp( fc, FOLVar(y) ) ), FOLConst(c) ) => ok
-      }
-      } catch {
-        case e : Exception =>
-          println(e.getMessage)
-          e.printStackTrace
-          ko
       }
     }
     "construct correctly an atom using the factory" in {

@@ -44,7 +44,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
     }
 
     "test the schematic struct in journal_example.slk" in {
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "journal_example.lks"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("ceres-journal_example.lks"))
       val map = sFOParser.parseProof(s)
       val p = map.get("\\psi").get._2.get("root").get
       ok
@@ -52,7 +52,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
 
 
     "test the schematic struct in sEXP.slk" in {
-      val s = new InputStreamReader(new FileInputStream("target" + separator + "test-classes" + separator + "sEXP.lks"))
+      val s = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sEXP.lks"))
       SchemaProofDB.clear
       val map = sFOParser.parseProof(s)
       val p1s = map.get("\\psi").get._2.get("root").get

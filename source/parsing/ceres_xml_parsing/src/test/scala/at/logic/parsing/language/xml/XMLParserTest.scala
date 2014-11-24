@@ -15,7 +15,7 @@ import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences.factory
 import at.logic.calculi.lk.base.FSequent
-import java.io.{FileReader, FileInputStream, InputStreamReader}
+import java.io.{FileInputStream, InputStreamReader}
 import java.io.File.separator
 import java.util.zip.GZIPInputStream
 import org.specs2.matcher.Matcher
@@ -421,7 +421,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                     Sequent(Nil, pc("B")::fo2occ(Or(pcf("A"), pcf("C")))::Nil))
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
-      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test3.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
+      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("xml" + separator + "test3.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqualTo(1)
       proofs.head._2.root must beSyntacticMultisetEqual(
         Sequent(Nil, pc("A")::pc("C")::pc("F")::
@@ -429,14 +429,14 @@ class XMLParserTest extends SpecificationWithJUnit {
                      fo2occ(Or(pcf("D"), pcf("G")))::Nil))
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
-      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test2.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
+      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("xml" + separator + "test2.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs
       proofs.size must beEqualTo(1)
       proofs.head._2.root must beSyntacticMultisetEqual(
                         Sequent(Nil, fo2occ(Or(pcf("A"), pcf("C")))::
                         fo2occ(Or(pcf("B"), pcf("D")))::Nil))
     }
     "parse correctly an involved proof from a file" in {
-      val proofs = (new XMLReader(new FileReader("target" + separator + "test-classes" + separator + "xml" + separator + "test1.xml")) with XMLProofDatabaseParser).getProofDatabase().proofs
+      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("xml" + separator + "test1.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs
       val X = HOLVar( "X" , Ti -> To )
       val t = HOLConst( "t" , Ti)
       val s = HOLConst( "s" , Ti)
@@ -453,12 +453,12 @@ class XMLParserTest extends SpecificationWithJUnit {
     }
 
     "parse correctly a sequentlist from a gzipped file" in {
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "xml" + separator + "slist.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("xml" + separator + "slist.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
 
       proofdb.sequentLists.size must beEqualTo(1)
     }
     "parse correctly a proof with definitions from a gzipped file" in {
-      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(new FileInputStream("target" + separator + "test-classes" + separator + "xml" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+      val proofdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("xml" + separator + "prime1-0.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
 
       proofdb.Definitions.size must beEqualTo(21)
     }
