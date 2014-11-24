@@ -409,16 +409,13 @@ object CutIntroduction {
       }
 
       /********** Proof Construction **********/ // TODO
-      val smallest = grammars.head.size
-      val smallestGrammars = grammars.filter(g => g.size == smallest)
+      val smallest = grammars(0).u.size + (grammars.foldLeft(0) ((acc, g) => acc + g.s.size))
 
       minimalGrammarSize = smallest
-      numMinimalGrammars = smallestGrammars.length
       if (verbose) println( "Smallest grammar-size: " + smallest )
-      if (verbose) println( "Number of smallest grammars: " + smallestGrammars.length )
       
       phase = "computeCanonicalSolution"
-      val solutions = smallestGrammars.map(g => computeCanonicalSolution(endSequent, g))
+      val solutions = grammars.map(g => computeCanonicalSolution(endSequent, g))
 
       (Some(solutions), None)
     } } catch {
